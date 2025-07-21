@@ -1,0 +1,431 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}إدارة المستودعات - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .warehouse-container {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .warehouse-header {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 1.5rem;
+    }
+    
+    .warehouse-card {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        margin-bottom: 1rem;
+        cursor: pointer;
+    }
+    
+    .warehouse-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    .status-active {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .status-inactive {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    
+    .warehouse-icon {
+        font-size: 2rem;
+        opacity: 0.7;
+    }
+    
+    .stats-card {
+        transition: transform 0.3s ease;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-3px);
+    }
+    
+    /* Print Styles */
+    @media print {
+        .print-controls,
+        .btn,
+        .navbar,
+        .sidebar,
+        nav {
+            display: none !important;
+        }
+        
+        .container-fluid {
+            margin: 0 !important;
+            padding: 0 !important;
+            max-width: 100% !important;
+        }
+        
+        .card {
+            border: 1px solid #000 !important;
+            box-shadow: none !important;
+            margin-bottom: 1rem !important;
+        }
+        
+        body {
+            font-size: 12px !important;
+            color: #000 !important;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            color: #000 !important;
+        }
+        
+        .print-table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+        }
+        
+        .print-table th,
+        .print-table td {
+            border: 1px solid #000 !important;
+            padding: 8px !important;
+            text-align: right !important;
+        }
+        
+        .print-table th {
+            background-color: #f5f5f5 !important;
+            font-weight: bold !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Header Section -->
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-warehouse me-2"></i>
+                    إدارة المستودعات
+                </h2>
+                <div class="btn-group print-controls">
+                    <button type="button" class="btn btn-outline-primary" onclick="printWarehouseReport()">
+                        <i class="fas fa-print me-2"></i>
+                        طباعة تقرير المستودعات
+                    </button>
+                    <a href="{% url 'inventory:warehouse_add' %}" class="btn btn-success">
+                        <i class="fas fa-plus me-2"></i>
+                        إضافة مستودع جديد
+                    </a>
+                    <a href="{% url 'inventory:list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        العودة للمخزون
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stats-card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">إجمالي المستودعات</h6>
+                            <h3 class="mb-0">{{ total_warehouses|default:0 }}</h3>
+                            <small>مستودع</small>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-warehouse fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stats-card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">المستودعات النشطة</h6>
+                            <h3 class="mb-0">{{ active_warehouses|default:0 }}</h3>
+                            <small>مستودع</small>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stats-card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">المستودعات الفرعية</h6>
+                            <h3 class="mb-0">{{ sub_warehouses|default:0 }}</h3>
+                            <small>مستودع</small>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-sitemap fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stats-card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">حركات هذا الشهر</h6>
+                            <h3 class="mb-0">{{ month_movements|default:0 }}</h3>
+                            <small>حركة</small>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-exchange-alt fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Warehouses List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="warehouse-container">
+                <div class="warehouse-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>
+                        قائمة المستودعات
+                    </h5>
+                </div>
+                
+                <div class="p-3">
+                    {% if warehouses %}
+                        {% for warehouse in warehouses %}
+                        <div class="warehouse-card">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-1 text-center">
+                                        <i class="fas fa-warehouse warehouse-icon text-primary"></i>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <h6 class="mb-1 fw-bold">{{ warehouse.name }}</h6>
+                                        <small class="text-muted">الرمز: {{ warehouse.code }}</small>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <small class="text-muted">المستودع الأساسي:</small>
+                                        <div>{{ warehouse.parent.name|default:"رئيسي" }}</div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <small class="text-muted">المدير:</small>
+                                        <div>{{ warehouse.manager.get_full_name|default:"غير محدد" }}</div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <small class="text-muted">الحالة:</small>
+                                        <div>
+                                            <span class="status-badge 
+                                                {% if warehouse.is_active %}status-active
+                                                {% else %}status-inactive{% endif %}">
+                                                {% if warehouse.is_active %}نشط
+                                                {% else %}غير نشط{% endif %}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2 text-end">
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-primary" title="عرض التفاصيل" onclick="viewWarehouse({{ warehouse.id }})">
+                                                <i class="fas fa-eye me-1"></i>
+                                                <span>عرض</span>
+                                            </button>
+                                            <button class="btn btn-outline-warning" title="تعديل" onclick="editWarehouse({{ warehouse.id }})">
+                                                <i class="fas fa-edit me-1"></i>
+                                                <span>تعديل</span>
+                                            </button>
+                                            <button class="btn btn-outline-danger" title="حذف" onclick="deleteWarehouse({{ warehouse.id }})">
+                                                <i class="fas fa-trash me-1"></i>
+                                                <span>حذف</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                {% if warehouse.address %}
+                                <div class="row mt-2">
+                                    <div class="col-md-11 offset-md-1">
+                                        <small class="text-muted">
+                                            <i class="fas fa-map-marker-alt me-1"></i>
+                                            {{ warehouse.address }}
+                                        </small>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                        
+                    {% else %}
+                        <!-- Empty State -->
+                        <div class="text-center py-5">
+                            <i class="fas fa-warehouse fa-4x text-muted mb-3"></i>
+                            <h4>لا توجد مستودعات</h4>
+                            <p class="text-muted">لم يتم إنشاء أي مستودعات بعد.</p>
+                            <a href="{% url 'inventory:warehouse_add' %}" class="btn btn-success">
+                                <i class="fas fa-plus me-2"></i>
+                                إضافة مستودع جديد
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add click handlers for warehouse cards
+    document.querySelectorAll('.warehouse-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            if (!e.target.closest('.btn')) {
+                // Navigate to warehouse details
+                console.log('Navigate to warehouse details');
+            }
+        });
+    });
+});
+
+window.viewWarehouse = function(warehouseId) {
+    // Navigate to warehouse detail view
+    window.location.href = `/ar/inventory/warehouses/${warehouseId}/`;
+}
+
+window.editWarehouse = function(warehouseId) {
+    // Navigate to warehouse edit view
+    window.location.href = `/ar/inventory/warehouses/edit/${warehouseId}/`;
+}
+
+window.deleteWarehouse = function(warehouseId) {
+    // Navigate to warehouse delete confirmation page
+    window.location.href = `/ar/inventory/warehouses/delete/${warehouseId}/`;
+}
+
+window.printWarehouseReport = function() {
+    console.log('بدء طباعة تقرير المستودعات...');
+    
+    let warehouseHTML = `
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <h1>تقرير المستودعات</h1>
+            <p>تاريخ التقرير: ${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}</p>
+        </div>
+        <table class="print-table">
+            <thead>
+                <tr>
+                    <th>رمز المستودع</th>
+                    <th>اسم المستودع</th>
+                    <th>المستودع الأساسي</th>
+                    <th>المدير</th>
+                    <th>الحالة</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    // Get warehouse data from the page
+    const warehouseCards = document.querySelectorAll('.warehouse-card');
+    console.log('عدد بطاقات المستودعات الموجودة:', warehouseCards.length);
+    if (warehouseCards.length === 0) {
+        warehouseHTML += `
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 20px;">لا توجد مستودعات للطباعة</td>
+            </tr>
+        `;
+    } else {
+        warehouseCards.forEach((card) => {
+            try {
+                const nameElement = card.querySelector('h6.fw-bold');
+                const codeElement = card.querySelector('small.text-muted');
+                const parentElement = card.querySelectorAll('.col-md-2')[1]?.querySelector('div');
+                const managerElement = card.querySelectorAll('.col-md-2')[2]?.querySelector('div');
+                const statusElement = card.querySelector('.status-badge');
+                
+                const name = nameElement ? nameElement.textContent.trim() : 'غير محدد';
+                const code = codeElement ? codeElement.textContent.replace('الرمز: ', '').trim() : 'غير محدد';
+                const parent = parentElement ? parentElement.textContent.trim() : 'رئيسي';
+                const manager = managerElement ? managerElement.textContent.trim() : 'غير محدد';
+                const status = statusElement ? statusElement.textContent.trim() : 'غير محدد';
+                
+                console.log('بيانات المستودع:', {name, code, parent, manager, status});
+                
+                warehouseHTML += `
+                    <tr>
+                        <td>${code}</td>
+                        <td>${name}</td>
+                        <td>${parent}</td>
+                        <td>${manager}</td>
+                        <td>${status}</td>
+                    </tr>
+                `;
+            } catch (error) {
+                console.warn('Error processing warehouse card:', error);
+            }
+        });
+    }
+    
+    warehouseHTML += `
+            </tbody>
+        </table>
+    `;
+    
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>تقرير المستودعات</title>
+                <meta charset="UTF-8">
+                <style>
+                    body { font-family: Arial, sans-serif; direction: rtl; }
+                    .print-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                    .print-table th, .print-table td { border: 1px solid #000; padding: 8px; text-align: right; }
+                    .print-table th { background-color: #f5f5f5; font-weight: bold; }
+                    h1 { text-align: center; margin-bottom: 20px; }
+                    p { text-align: center; margin-bottom: 20px; }
+                </style>
+            </head>
+            <body>
+                ${warehouseHTML}
+            </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
+}
+</script>
+{% endblock %}

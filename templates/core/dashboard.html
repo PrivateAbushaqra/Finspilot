@@ -1,0 +1,575 @@
+{% extends 'base.html' %}
+{% load currency_tags %}
+{% load static %}
+
+{% block title %}الشاشة الرئيسية - FinsPilot{% endblock %}
+
+{% block extra_css %}
+<style>
+.currency-section {
+    border-left: 3px solid #dee2e6;
+    padding-left: 15px;
+    margin-left: 10px;
+}
+
+.currency-section .bg-light {
+    transition: all 0.3s ease;
+}
+
+.currency-section .bg-light:hover {
+    background-color: #f8f9fa !important;
+    transform: translateX(5px);
+}
+
+.stats-card {
+    transition: all 0.3s ease;
+    border: 1px solid #e9ecef;
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.rounded-circle {
+    flex-shrink: 0;
+}
+
+.collapse .bg-light {
+    border-right: 3px solid #ffc107;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-home me-2"></i>
+        الشاشة الرئيسية
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-calendar me-1"></i>
+                {{ "now"|date:"Y-m-d" }}
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <!-- Sales Statistics -->
+    <div class="col-xl-6 col-lg-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    إحصائيات المبيعات
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="stats-card card p-3 text-center">
+                            <h6>اليوم</h6>
+                            <h4>{{ sales_stats.today.count }} فاتورة</h4>
+                            <p class="mb-0">{{ sales_stats.today.total|floatformat:3 }} {% get_currency_symbol %}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="stats-card card p-3 text-center">
+                            <h6>هذا الشهر</h6>
+                            <h4>{{ sales_stats.month.count }} فاتورة</h4>
+                            <p class="mb-0">{{ sales_stats.month.total|floatformat:3 }} {% get_currency_symbol %}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="stats-card card p-3 text-center">
+                            <h6>هذا الربع</h6>
+                            <h4>{{ sales_stats.quarter.count }} فاتورة</h4>
+                            <p class="mb-0">{{ sales_stats.quarter.total|floatformat:3 }} {% get_currency_symbol %}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="stats-card card p-3 text-center">
+                            <h6>نصف السنة</h6>
+                            <h4>{{ sales_stats.half_year.count }} فاتورة</h4>
+                            <p class="mb-0">{{ sales_stats.half_year.total|floatformat:3 }} {% get_currency_symbol %}</p>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="stats-card card p-3 text-center">
+                            <h6>هذه السنة</h6>
+                            <h4>{{ sales_stats.year.count }} فاتورة</h4>
+                            <p class="mb-0">{{ sales_stats.year.total|floatformat:3 }} {% get_currency_symbol %}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Purchase Statistics -->
+    <div class="col-xl-6 col-lg-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-shopping-cart me-2"></i>
+                    إحصائيات المشتريات
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="stats-card card p-3 text-center">
+                            <h6>اليوم</h6>
+                            <h4>{{ purchase_stats.today.count }} فاتورة</h4>
+                            <p class="mb-0">{{ purchase_stats.today.total|floatformat:3 }} {% get_currency_symbol %}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="stats-card card p-3 text-center">
+                            <h6>هذا الشهر</h6>
+                            <h4>{{ purchase_stats.month.count }} فاتورة</h4>
+                            <p class="mb-0">{{ purchase_stats.month.total|floatformat:3 }} {% get_currency_symbol %}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="stats-card card p-3 text-center">
+                            <h6>هذا الربع</h6>
+                            <h4>{{ purchase_stats.quarter.count }} فاتورة</h4>
+                            <p class="mb-0">{{ purchase_stats.quarter.total|floatformat:3 }} {% get_currency_symbol %}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="stats-card card p-3 text-center">
+                            <h6>نصف السنة</h6>
+                            <h4>{{ purchase_stats.half_year.count }} فاتورة</h4>
+                            <p class="mb-0">{{ purchase_stats.half_year.total|floatformat:3 }} {% get_currency_symbol %}</p>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="stats-card card p-3 text-center">
+                            <h6>هذه السنة</h6>
+                            <h4>{{ purchase_stats.year.count }} فاتورة</h4>
+                            <p class="mb-0">{{ purchase_stats.year.total|floatformat:3 }} {% get_currency_symbol %}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bank Balance & Quick Links -->
+<div class="row mb-4">
+    <!-- أرصدة البنوك والصناديق -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-coins me-2"></i>
+                        أرصدة البنوك والصناديق
+                    </h5>
+                    {% if user.is_superuser %}
+                        <button class="btn btn-sm btn-outline-primary" onclick="syncBalances()" id="syncBalancesBtn">
+                            <i class="fas fa-sync-alt me-1"></i>
+                            تحديث الأرصدة
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- ملخص سريع -->
+                <div class="row mb-4">
+                    <div class="col-4">
+                        <div class="text-center p-3 bg-primary bg-opacity-10 rounded">
+                            <i class="fas fa-university fa-2x text-primary mb-2"></i>
+                            <h6 class="mb-1">البنوك</h6>
+                            <small class="text-muted">
+                                {% if bank_balances %}
+                                    {% for currency, accounts in bank_balances.items %}
+                                        {{ accounts|length }}{% if not forloop.last %} + {% endif %}
+                                    {% endfor %}
+                                    حساب
+                                {% else %}
+                                    0 حساب
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-center p-3 bg-success bg-opacity-10 rounded">
+                            <i class="fas fa-cash-register fa-2x text-success mb-2"></i>
+                            <h6 class="mb-1">الصناديق</h6>
+                            <small class="text-muted">
+                                {% if cashbox_balances %}
+                                    {% for currency, cashboxes in cashbox_balances.items %}
+                                        {{ cashboxes|length }}{% if not forloop.last %} + {% endif %}
+                                    {% endfor %}
+                                    صندوق
+                                {% else %}
+                                    0 صندوق
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="text-center p-3 bg-warning bg-opacity-10 rounded">
+                            <i class="fas fa-money-check fa-2x text-warning mb-2"></i>
+                            <h6 class="mb-1">الشيكات المعلقة</h6>
+                            <small class="text-muted">
+                                {% if pending_checks_by_currency %}
+                                    {% for currency, checks_data in pending_checks_by_currency.items %}
+                                        {{ checks_data.count }}{% if not forloop.last %} + {% endif %}
+                                    {% endfor %}
+                                    شيك
+                                {% else %}
+                                    0 شيك
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- أرصدة البنوك -->
+                {% if bank_balances %}
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-primary rounded-circle me-3" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-university text-white"></i>
+                            </div>
+                            <h6 class="mb-0 text-primary">البنوك</h6>
+                        </div>
+                        {% for currency, accounts in bank_balances.items %}
+                            <div class="currency-section mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-primary border-opacity-25">
+                                    <strong class="text-primary">{{ currency }}</strong>
+                                    <span class="badge bg-primary bg-opacity-25 text-primary">{{ accounts|length }} حساب</span>
+                                </div>
+                                {% for account in accounts %}
+                                    <div class="d-flex justify-content-between align-items-center py-2 px-3 mb-1 bg-primary bg-opacity-5 rounded border border-primary border-opacity-10">
+                                        <div>
+                                            <span class="fw-medium">{{ account.name }}</span>
+                                            <small class="text-muted d-block">{{ account.account_number }}</small>
+                                        </div>
+                                        <span class="fw-bold text-primary">{{ account.balance|floatformat:3 }} {{ currency }}</span>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                
+                <!-- أرصدة الصناديق -->
+                {% if cashbox_balances %}
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-success rounded-circle me-3" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-cash-register text-white"></i>
+                            </div>
+                            <h6 class="mb-0 text-success">الصناديق</h6>
+                        </div>
+                        {% for currency, cashboxes in cashbox_balances.items %}
+                            <div class="currency-section mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-success border-opacity-25">
+                                    <strong class="text-success">{{ currency }}</strong>
+                                    <span class="badge bg-success bg-opacity-25 text-success">{{ cashboxes|length }} صندوق</span>
+                                </div>
+                                {% for cashbox in cashboxes %}
+                                    <div class="d-flex justify-content-between align-items-center py-2 px-3 mb-1 bg-success bg-opacity-5 rounded border border-success border-opacity-10">
+                                        <div>
+                                            <span class="fw-medium">{{ cashbox.name }}</span>
+                                            <small class="text-muted d-block">{{ cashbox.location|default:"غير محدد" }}</small>
+                                        </div>
+                                        <span class="fw-bold text-success">{{ cashbox.balance|floatformat:3 }} {{ currency }}</span>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                
+                <!-- الشيكات المعلقة -->
+                {% if pending_checks_by_currency %}
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-warning rounded-circle me-3" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-money-check text-white"></i>
+                            </div>
+                            <h6 class="mb-0 text-warning">الشيكات المعلقة</h6>
+                        </div>
+                        {% for currency, checks_data in pending_checks_by_currency.items %}
+                            <div class="currency-section mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-warning border-opacity-25">
+                                    <strong class="text-warning">{{ currency }}</strong>
+                                    <span class="badge bg-warning bg-opacity-25 text-warning">{{ checks_data.count }} شيك</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center py-2 px-3 mb-2 bg-warning bg-opacity-10 rounded border border-warning border-opacity-25">
+                                    <span class="fw-medium">إجمالي المبلغ</span>
+                                    <span class="fw-bold text-warning">{{ checks_data.total_amount|floatformat:3 }} {{ currency }}</span>
+                                </div>
+                                <!-- عرض تفاصيل الشيكات -->
+                                <div class="collapse" id="checkDetails-{{ forloop.counter }}">
+                                    {% for check in checks_data.checks %}
+                                        <div class="d-flex justify-content-between align-items-center py-1 px-2 mb-1 bg-warning bg-opacity-5 rounded small border border-warning border-opacity-10">
+                                            <div>
+                                                <span class="fw-medium">{{ check.customer_name }}</span>
+                                                <small class="text-muted d-block">شيك {{ check.check_number }} - {{ check.receipt_number }}</small>
+                                            </div>
+                                            <div class="text-end">
+                                                <span class="fw-bold">{{ check.amount|floatformat:3 }} {{ currency }}</span>
+                                                <small class="text-muted d-block">{{ check.due_date }}</small>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                                <button class="btn btn-outline-warning btn-sm w-100" type="button" data-bs-toggle="collapse" data-bs-target="#checkDetails-{{ forloop.counter }}">
+                                    <i class="fas fa-eye me-1"></i>
+                                    عرض التفاصيل
+                                </button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                
+                <!-- إذا لم تكن هناك بيانات -->
+                {% if not bank_balances and not cashbox_balances and not pending_checks_by_currency %}
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-info-circle fa-3x mb-3 text-muted"></i>
+                        <h6>لا توجد بيانات متاحة</h6>
+                        <p class="small">قم بإضافة حسابات بنكية أو صناديق نقدية لعرض الأرصدة</p>
+                        <div class="d-flex gap-2 justify-content-center">
+                            <a href="{% url 'banks:account_list' %}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-university me-1"></i>
+                                إدارة البنوك
+                            </a>
+                            <a href="{% url 'cashboxes:cashbox_list' %}" class="btn btn-outline-success btn-sm">
+                                <i class="fas fa-cash-register me-1"></i>
+                                إدارة الصناديق
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-link me-2"></i>
+                    روابط سريعة
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% if user.has_sales_permission %}
+                    <div class="col-6 mb-3">
+                        <a href="{% url 'sales:invoice_add' %}" class="btn btn-primary w-100">
+                            <i class="fas fa-plus me-2"></i>
+                            فاتورة مبيعات
+                        </a>
+                    </div>
+                    {% endif %}
+                    {% if user.has_purchases_permission %}
+                    <div class="col-6 mb-3">
+                        <a href="{% url 'purchases:invoice_add' %}" class="btn btn-success w-100">
+                            <i class="fas fa-plus me-2"></i>
+                            فاتورة مشتريات
+                        </a>
+                    </div>
+                    {% endif %}
+                    <div class="col-6 mb-3">
+                        <a href="{% url 'products:product_add' %}" class="btn btn-info w-100">
+                            <i class="fas fa-plus me-2"></i>
+                            منتج جديد
+                        </a>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <a href="{% url 'customers:add' %}" class="btn btn-warning w-100">
+                            <i class="fas fa-plus me-2"></i>
+                            عميل/مورد
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    توزيع المبيعات والمشتريات (الشهر الحالي)
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="salesPurchasesChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    الأداء الشهري
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="monthlyPerformanceChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- Data for Charts -->
+<div id="chart-data" 
+     data-sales-total="{{ sales_stats.month.total|default:0 }}" 
+     data-purchases-total="{{ purchase_stats.month.total|default:0 }}" 
+     style="display: none;"></div>
+
+<script>
+// Get data from HTML data attributes
+const chartData = document.getElementById('chart-data');
+const salesTotal = parseFloat(chartData.getAttribute('data-sales-total')) || 0;
+const purchasesTotal = parseFloat(chartData.getAttribute('data-purchases-total')) || 0;
+
+// Sales vs Purchases Pie Chart
+const ctx1 = document.getElementById('salesPurchasesChart').getContext('2d');
+
+new Chart(ctx1, {
+    type: 'pie',
+    data: {
+        labels: ['المبيعات', 'المشتريات'],
+        datasets: [{
+            data: [salesTotal, purchasesTotal],
+            backgroundColor: [
+                '#667eea',
+                '#764ba2'
+            ],
+            borderWidth: 2,
+            borderColor: '#fff'
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom',
+            }
+        }
+    }
+});
+
+// Monthly Performance Line Chart
+const ctx2 = document.getElementById('monthlyPerformanceChart').getContext('2d');
+new Chart(ctx2, {
+    type: 'line',
+    data: {
+        labels: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'],
+        datasets: [{
+            label: 'المبيعات',
+            data: [12000, 19000, 30000, 50000, 20000, 30000, 45000, 35000, 25000, 40000, 55000, 60000],
+            borderColor: '#667eea',
+            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+            tension: 0.4,
+            fill: true
+        }, {
+            label: 'المشتريات',
+            data: [8000, 15000, 25000, 40000, 15000, 25000, 35000, 30000, 20000, 35000, 45000, 50000],
+            borderColor: '#764ba2',
+            backgroundColor: 'rgba(118, 75, 162, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom',
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// دالة مزامنة الأرصدة
+function syncBalances() {
+    const btn = document.getElementById('syncBalancesBtn');
+    const originalText = btn.innerHTML;
+    
+    // تغيير شكل الزر أثناء التحديث
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>جاري التحديث...';
+    btn.disabled = true;
+    
+    fetch('{% url "core:sync_balances" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // إظهار رسالة نجاح
+            showMessage('success', `تم تحديث ${data.banks_updated} حساب بنكي و ${data.cashboxes_updated} صندوق`);
+            // إعادة تحميل الصفحة لعرض الأرصدة المحدثة
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showMessage('error', 'حدث خطأ أثناء التحديث');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('error', 'حدث خطأ في الاتصال');
+    })
+    .finally(() => {
+        // إعادة شكل الزر الأصلي
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
+}
+
+// دالة إظهار الرسائل
+function showMessage(type, message) {
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const iconClass = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+    
+    const alertHtml = `
+        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+            <i class="fas ${iconClass} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    // إضافة الرسالة في أعلى الصفحة
+    const container = document.querySelector('.container-fluid');
+    container.insertAdjacentHTML('afterbegin', alertHtml);
+}
+</script>
+{% endblock %}

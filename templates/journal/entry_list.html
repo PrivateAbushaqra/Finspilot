@@ -1,0 +1,682 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load humanize %}
+{% load currency_tags %}
+
+{% block title %}{% trans "قائمة القيود المحاسبية" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                <h1 class="h3 mb-0 text-gray-800">{% trans "القيود المحاسبية" %}</h1>
+                <div>
+                    <a href="{% url 'journal:entry_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>{% trans "إنشاء قيد جديد" %}
+                    </a>
+                    <a href="{% url 'journal:entries_by_type' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-filter me-2"></i>{% trans "تصفية حسب النوع" %}
+                    </a>
+                    <button onclick="printEntries()" class="btn btn-success">
+                        <i class="fas fa-print me-2"></i>{% trans "طباعة القائمة" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- فلتر البحث -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">{% trans "البحث والتصفية" %}</h6>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">{% trans "رقم القيد" %}</label>
+                            <input type="text" name="entry_number" class="form-control" 
+                                   value="{{ request.GET.entry_number }}" placeholder="{% trans 'رقم القيد' %}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">{% trans "نوع العملية" %}</label>
+                            <select name="reference_type" class="form-control">
+                                <option value="">{% trans "جميع الأنواع" %}</option>
+                                {% for type_value, type_name in reference_types %}
+                                <option value="{{ type_value }}" {% if request.GET.reference_type == type_value %}selected{% endif %}>
+                                    {{ type_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">{% trans "من تاريخ" %}</label>
+                            <input type="date" name="date_from" class="form-control" 
+                                   value="{{ request.GET.date_from }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">{% trans "إلى تاريخ" %}</label>
+                            <input type="date" name="date_to" class="form-control" 
+                                   value="{{ request.GET.date_to }}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search me-2"></i>{% trans "بحث" %}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- إحصائيات سريعة -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                {% trans "إجمالي القيود" %}
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ entries.paginator.count|intcomma }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-book fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                {% trans "إجمالي المبالغ" %}
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_amount|floatformat:3|intcomma }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- جدول القيود -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">{% trans "قائمة القيود المحاسبية" %}</h6>
+                </div>
+                <div class="card-body">
+                    {% if entries %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>{% trans "رقم القيد" %}</th>
+                                    <th>{% trans "التاريخ" %}</th>
+                                    <th>{% trans "نوع العملية" %}</th>
+                                    <th>{% trans "الوصف" %}</th>
+                                    <th>{% trans "المبلغ" %}</th>
+                                    <th>{% trans "أنشئ بواسطة" %}</th>
+                                    <th>{% trans "العمليات" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for entry in entries %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'journal:entry_detail' entry.pk %}" class="text-decoration-none">
+                                            <strong>{{ entry.entry_number }}</strong>
+                                        </a>
+                                    </td>
+                                    <td>{{ entry.entry_date|date:"j/n/Y" }}</td>
+                                    <td>
+                                        <span class="badge bg-info">{{ entry.get_reference_type_display }}</span>
+                                    </td>
+                                    <td>{{ entry.description|truncatechars:50 }}</td>
+                                    <td class="text-end">
+                                        <strong>{{ entry.total_amount|floatformat:3|intcomma }} {% get_currency_symbol %}</strong>
+                                    </td>
+                                    <td>{{ entry.created_by.get_full_name|default:entry.created_by.username }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'journal:entry_detail' entry.pk %}" 
+                                               class="btn btn-sm btn-outline-primary" title="{% trans 'عرض التفاصيل' %}">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if entry.reference_type == 'manual' %}
+                                            <a href="{% url 'journal:entry_delete' entry.pk %}" 
+                                               class="btn btn-sm btn-outline-danger" 
+                                               onclick="return confirm('{% trans 'هل أنت متأكد من حذف هذا القيد؟' %}')"
+                                               title="{% trans 'حذف القيد' %}">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if entries.has_other_pages %}
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            {% if entries.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ entries.previous_page_number }}">
+                                        <i class="fas fa-angle-right"></i>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link"><i class="fas fa-angle-right"></i></span>
+                                </li>
+                            {% endif %}
+
+                            {% for num in entries.paginator.page_range %}
+                                {% if num == entries.number %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% elif num > entries.number|add:'-3' and num < entries.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if entries.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ entries.next_page_number }}">
+                                        <i class="fas fa-angle-left"></i>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <span class="page-link"><i class="fas fa-angle-left"></i></span>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-book fa-3x text-gray-300 mb-3"></i>
+                        <h5 class="text-gray-600">{% trans "لا توجد قيود محاسبية" %}</h5>
+                        <p class="text-gray-500">{% trans "لم يتم العثور على أي قيود محاسبية بناءً على معايير البحث المحددة" %}</p>
+                        <a href="{% url 'journal:entry_create' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>{% trans "إنشاء أول قيد" %}
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+@media print {
+    /* إخفاء العناصر غير المرغوب فيها في الطباعة */
+    .no-print,
+    .btn,
+    .card-header,
+    .pagination,
+    .navbar,
+    .sidebar,
+    .topbar,
+    .footer,
+    .breadcrumb,
+    .table-responsive,
+    #dataTable,
+    form {
+        display: none !important;
+    }
+    
+    /* تعديل تخطيط الصفحة للطباعة */
+    @page {
+        size: A4 landscape;
+        margin: 15mm;
+    }
+    
+    body {
+        font-family: 'Arial', sans-serif;
+        font-size: 11px;
+        line-height: 1.2;
+        color: #000;
+        background: white;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .container-fluid {
+        max-width: 100%;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .print-header {
+        text-align: center;
+        margin-bottom: 3px;
+        border-bottom: 2px solid #000;
+        padding-bottom: 2px;
+    }
+    
+    .print-header h1 {
+        text-align: center;
+        font-size: 18px;
+        font-weight: bold;
+        margin: 0;
+        color: #000;
+    }
+    
+    .print-header .date-range {
+        font-size: 12px;
+        margin-top: 2px;
+        color: #666;
+    }
+    
+    .print-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 10px;
+    }
+    
+    .print-table th,
+    .print-table td {
+        border: 1px solid #000;
+        padding: 4px 6px;
+        text-align: right;
+        vertical-align: middle;
+        font-size: 10px;
+        line-height: 1.2;
+    }
+    
+    .print-table th {
+        background-color: #f5f5f5;
+        font-weight: bold;
+        text-align: center;
+    }
+    
+    .print-table tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+    
+    .text-center {
+        text-align: center !important;
+    }
+    
+    .text-end {
+        text-align: left !important;
+    }
+    
+    .print-summary {
+        margin-top: 10px;
+        border-top: 2px solid #000;
+        padding-top: 5px;
+    }
+    
+    .print-summary table {
+        width: 40%;
+        margin-right: auto;
+        border-collapse: collapse;
+    }
+    
+    .print-summary td {
+        padding: 3px 8px;
+        border: 1px solid #000;
+        font-weight: bold;
+        font-size: 10px;
+    }
+    
+    .print-footer {
+        position: fixed;
+        bottom: 10mm;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 10px;
+        color: #666;
+        border-top: 1px solid #ccc;
+        padding-top: 5px;
+    }
+    
+    /* تنسيق الإحصائيات العلوية للطباعة */
+    .row.mb-4 {
+        display: flex !important;
+        flex-direction: row !important;
+        justify-content: center !important;
+        margin-bottom: 2.5px !important;
+    }
+    
+    .row.mb-4 .col-md-3 {
+        flex: 0 0 auto !important;
+        width: auto !important;
+        margin: 0 10px !important;
+    }
+    
+    .card.border-left-primary,
+    .card.border-left-success {
+        display: inline-block !important;
+        width: 200px !important;
+        margin: 0 5px !important;
+        border: 1px solid #000 !important;
+        border-radius: 0 !important;
+    }
+    
+    .card-body {
+        padding: 8px !important;
+    }
+    
+    .text-xs {
+        font-size: 9px !important;
+        font-weight: bold !important;
+    }
+    
+    .h5 {
+        font-size: 12px !important;
+        margin: 2px 0 !important;
+    }
+}
+
+/* إخفاء القسم المطبوع افتراضياً */
+.print-section {
+    display: none;
+}
+
+@media print {
+    .print-section {
+        display: block !important;
+    }
+    
+    .screen-content {
+        display: none !important;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // تفعيل DataTable للجدول
+    $('#dataTable').DataTable({
+        "language": {
+            "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Arabic.json"
+        },
+        "order": [[ 1, "desc" ]],  // ترتيب حسب التاريخ تنازلي
+        "pageLength": 25,
+        "searching": false,  // إخفاء البحث المدمج لأن لدينا فلتر مخصص
+        "info": false
+    });
+});
+
+function printEntries() {
+    // حفظ المحتوى الأصلي
+    const originalContent = document.body.innerHTML;
+    
+    // إنشاء محتوى الطباعة
+    let printContent = createPrintContent();
+    
+    // استبدال محتوى الصفحة بالكامل
+    document.body.innerHTML = `
+        <style>
+            @page {
+                size: A4 landscape;
+                margin: 15mm;
+            }
+            
+            body {
+                font-family: 'Arial', sans-serif;
+                font-size: 11px;
+                line-height: 1.2;
+                color: #000;
+                background: white;
+                margin: 0;
+                padding: 0;
+            }
+            
+            .print-header {
+                text-align: center;
+                margin-bottom: 8px;
+                border-bottom: 2px solid #000;
+                padding-bottom: 8px;
+            }
+            
+            .print-header h1 {
+                font-size: 18px;
+                font-weight: bold;
+                margin: 0 0 5px 0;
+                color: #000;
+            }
+            
+            .print-header .date-range {
+                font-size: 12px;
+                margin: 0;
+                color: #666;
+            }
+            
+            .print-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 0;
+            }
+            
+            .print-table th,
+            .print-table td {
+                border: 1px solid #000;
+                padding: 4px 6px;
+                text-align: right;
+                vertical-align: middle;
+                font-size: 10px;
+                line-height: 1.2;
+            }
+            
+            .print-table th {
+                background-color: #f5f5f5;
+                font-weight: bold;
+                text-align: center;
+            }
+            
+            .print-table tr:nth-child(even) {
+                background-color: #f9f9f9;
+            }
+            
+            .text-center {
+                text-align: center !important;
+            }
+            
+            .text-end {
+                text-align: left !important;
+            }
+            
+            .print-summary {
+                margin-top: 10px;
+                border-top: 2px solid #000;
+                padding-top: 5px;
+            }
+            
+            .print-summary table {
+                width: 40%;
+                margin-right: auto;
+                border-collapse: collapse;
+            }
+            
+            .print-summary td {
+                padding: 3px 8px;
+                border: 1px solid #000;
+                font-weight: bold;
+                font-size: 10px;
+            }
+            
+            .print-footer {
+                position: fixed;
+                bottom: 10mm;
+                left: 0;
+                right: 0;
+                text-align: center;
+                font-size: 10px;
+                color: #666;
+                border-top: 1px solid #ccc;
+                padding-top: 5px;
+            }
+        </style>
+        ${printContent}
+    `;
+    
+    // طباعة الصفحة
+    window.print();
+    
+    // إرجاع المحتوى الأصلي بعد الطباعة
+    setTimeout(() => {
+        document.body.innerHTML = originalContent;
+        // إعادة تحميل الأحداث
+        location.reload();
+    }, 1000);
+}
+
+function createPrintContent() {
+    // جمع بيانات القيود من الجدول
+    const table = document.getElementById('dataTable');
+    const rows = table.querySelectorAll('tbody tr');
+    
+    // جمع الإحصائيات من الكروت
+    const totalEntriesElement = document.querySelector('.text-primary.text-uppercase.mb-1').nextElementSibling;
+    const totalAmountElement = document.querySelector('.text-success.text-uppercase.mb-1').nextElementSibling;
+    const totalEntriesCount = totalEntriesElement ? totalEntriesElement.textContent.trim() : '0';
+    const totalAmountValue = totalAmountElement ? totalAmountElement.textContent.trim() : '0';
+    
+    // إنشاء رأس الصفحة مع الإحصائيات
+    const pageHeader = `
+        <div class="print-header">
+            <h1>قائمة القيود المحاسبية</h1>
+            <div class="date-range">
+                إجمالي القيود: ${totalEntriesCount} | إجمالي المبالغ: ${totalAmountValue}
+            </div>
+        </div>
+    `;
+    
+    // إنشاء رؤوس الجدول
+    let tableContent = `
+        <table class="print-table">
+            <thead>
+                <tr>
+                    <th style="width: 10%;">رقم القيد</th>
+                    <th style="width: 12%;">التاريخ</th>
+                    <th style="width: 15%;">نوع العملية</th>
+                    <th style="width: 35%;">الوصف</th>
+                    <th style="width: 15%;">المبلغ</th>
+                    <th style="width: 13%;">أنشئ بواسطة</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    // إضافة بيانات القيود
+    let totalAmount = 0;
+    let entriesCount = 0;
+    
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length >= 6) {
+            // استخراج رقم القيد
+            const entryNumber = cells[0].querySelector('a') ? 
+                cells[0].querySelector('a').textContent.trim() : 
+                cells[0].textContent.trim();
+            
+            // استخراج التاريخ
+            const date = cells[1].textContent.trim();
+            
+            // استخراج نوع العملية
+            const type = cells[2].querySelector('.badge') ? 
+                cells[2].querySelector('.badge').textContent.trim() : 
+                cells[2].textContent.trim();
+            
+            // استخراج الوصف
+            const description = cells[3].textContent.trim();
+            
+            // استخراج المبلغ
+            const amount = cells[4].textContent.trim();
+            
+            // استخراج المنشئ
+            const creator = cells[5].textContent.trim();
+            
+            tableContent += `
+                <tr>
+                    <td class="text-center">${entryNumber}</td>
+                    <td class="text-center">${date}</td>
+                    <td class="text-center">${type}</td>
+                    <td>${description}</td>
+                    <td class="text-end">${amount}</td>
+                    <td class="text-center">${creator}</td>
+                </tr>
+            `;
+            
+            entriesCount++;
+            
+            // استخراج القيمة العددية للمبلغ
+            const numericAmount = parseFloat(amount.replace(/[^\d.-]/g, ''));
+            if (!isNaN(numericAmount)) {
+                totalAmount += numericAmount;
+            }
+        }
+    });
+    
+    tableContent += '</tbody></table>';
+    
+    // إنشاء ملخص
+    const summary = `
+        <div class="print-summary">
+            <table>
+                <tr>
+                    <td>إجمالي عدد القيود:</td>
+                    <td>${entriesCount}</td>
+                </tr>
+                <tr>
+                    <td>إجمالي المبالغ:</td>
+                    <td>${totalAmount.toLocaleString('ar')} ريال</td>
+                </tr>
+            </table>
+        </div>
+    `;
+    
+    // تحديد نطاق التاريخ إذا كان متوفراً
+    const dateFrom = document.querySelector('input[name="date_from"]')?.value || '';
+    const dateTo = document.querySelector('input[name="date_to"]')?.value || '';
+    const dateRangeInfo = (dateFrom || dateTo) ? 
+        ` | من ${dateFrom || 'البداية'} إلى ${dateTo || 'النهاية'}` : '';
+    
+    // إنشاء المحتوى الكامل
+    const fullContent = `
+        ${pageHeader.replace('</div>', dateRangeInfo + '</div>')}
+        ${tableContent}
+        ${summary}
+        <div class="print-footer">
+            تم الطباعة بتاريخ: ${new Date().toLocaleDateString('ar-SA')} - ${new Date().toLocaleTimeString('ar-SA')}
+        </div>
+    `;
+    
+    return fullContent;
+}
+</script>
+{% endblock %}

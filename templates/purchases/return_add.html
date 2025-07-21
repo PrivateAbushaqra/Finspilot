@@ -1,0 +1,314 @@
+{% extends 'base.html' %}
+{% load currency_tags %}
+
+{% block title %}إنشاء مردود مشتريات{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-undo me-2"></i>
+                        إنشاء مردود مشتريات
+                    </h3>
+                    <a href="{% url 'purchases:return_list' %}" class="btn btn-outline-secondary float-end">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        العودة إلى القائمة
+                    </a>
+                </div>
+
+                <form method="post" id="returnForm">
+                    {% csrf_token %}
+                    
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Return Information -->
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">رقم المردود <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="return_number" 
+                                           value="{{ suggested_return_number }}" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">تاريخ المردود <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" name="date" 
+                                           value="{% now 'Y-m-d' %}" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">نوع المردود <span class="text-danger">*</span></label>
+                                    <select class="form-control" name="return_type" required>
+                                        <option value="partial">مردود جزئي</option>
+                                        <option value="full">مردود كامل</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">الفاتورة الأصلية <span class="text-danger">*</span></label>
+                                    <select class="form-control" name="original_invoice" id="originalInvoiceSelect" required>
+                                        <option value="">اختر الفاتورة الأصلية</option>
+                                        {% for invoice in invoices %}
+                                            <option value="{{ invoice.id }}">
+                                                {{ invoice.supplier_invoice_number }} - {{ invoice.supplier.name }} ({{ invoice.date }})
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">سبب المردود <span class="text-danger">*</span></label>
+                                    <select class="form-control" name="return_reason" required>
+                                        <option value="">اختر سبب المردود</option>
+                                        <option value="defective">منتج معيب</option>
+                                        <option value="wrong_item">صنف خاطئ</option>
+                                        <option value="excess">فائض عن الحاجة</option>
+                                        <option value="expired">منتهي الصلاحية</option>
+                                        <option value="damaged">تالف أثناء النقل</option>
+                                        <option value="other">أخرى</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">ملاحظات</label>
+                                    <textarea class="form-control" name="notes" rows="3" 
+                                              placeholder="أدخل أي ملاحظات إضافية..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Invoice Items Section -->
+                        <div class="row mt-4" id="invoiceItemsSection" style="display: none;">
+                            <div class="col-12">
+                                <h5 class="mb-3">عناصر الفاتورة المتاحة للإرجاع</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered" id="itemsTable">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>رقم المنتج</th>
+                                                <th>اسم المنتج</th>
+                                                <th>الكمية الأصلية</th>
+                                                <th>المرتجع سابقاً</th>
+                                                <th>المتاح للإرجاع</th>
+                                                <th>الكمية المرتجعة</th>
+                                                <th>سعر الوحدة</th>
+                                                <th>نسبة الضريبة</th>
+                                                <th>المجموع</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="itemsTableBody">
+                                            <!-- Items will be loaded here via AJAX -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Totals Section -->
+                        <div class="row mt-4" id="totalsSection" style="display: none;">
+                            <div class="col-12">
+                                <div class="row justify-content-end">
+                                    <div class="col-md-4">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <div class="d-flex justify-content-between mb-2">
+                                                    <span>المجموع الفرعي:</span>
+                                                    <span id="subtotalDisplay">0.00</span>
+                                                </div>
+                                                <div class="d-flex justify-content-between mb-2">
+                                                    <span>الضريبة:</span>
+                                                    <span id="taxDisplay">0.00</span>
+                                                </div>
+                                                <hr>
+                                                <div class="d-flex justify-content-between fw-bold">
+                                                    <span>الإجمالي:</span>
+                                                    <span id="totalDisplay">0.00</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        <div class="row">
+                            <div class="col-12 text-end">
+                                <button type="submit" class="btn btn-success" id="saveButton" disabled>
+                                    <i class="fas fa-save me-2"></i>
+                                    حفظ المردود
+                                </button>
+                                <a href="{% url 'purchases:return_list' %}" class="btn btn-secondary">
+                                    <i class="fas fa-times me-2"></i>
+                                    إلغاء
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const originalInvoiceSelect = document.getElementById('originalInvoiceSelect');
+    const invoiceItemsSection = document.getElementById('invoiceItemsSection');
+    const itemsTableBody = document.getElementById('itemsTableBody');
+    const totalsSection = document.getElementById('totalsSection');
+    const saveButton = document.getElementById('saveButton');
+    
+    // Handle invoice selection
+    originalInvoiceSelect.addEventListener('change', function() {
+        const invoiceId = this.value;
+        
+        if (invoiceId) {
+            loadInvoiceItems(invoiceId);
+        } else {
+            invoiceItemsSection.style.display = 'none';
+            totalsSection.style.display = 'none';
+            saveButton.disabled = true;
+        }
+    });
+    
+    function loadInvoiceItems(invoiceId) {
+        fetch(`/purchases/ajax/get-invoice-items/${invoiceId}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayInvoiceItems(data.items);
+                    invoiceItemsSection.style.display = 'block';
+                    totalsSection.style.display = 'block';
+                    saveButton.disabled = false;
+                } else {
+                    alert('خطأ: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('حدث خطأ أثناء تحميل عناصر الفاتورة');
+            });
+    }
+    
+    function displayInvoiceItems(items) {
+        itemsTableBody.innerHTML = '';
+        
+        items.forEach(item => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${item.product_code}</td>
+                <td>${item.product_name}</td>
+                <td>${item.original_quantity}</td>
+                <td>${item.returned_quantity}</td>
+                <td>${item.remaining_quantity}</td>
+                <td>
+                    <input type="number" class="form-control returned-qty" 
+                           data-item-id="${item.id}"
+                           data-unit-price="${item.unit_price}"
+                           data-tax-rate="${item.tax_rate}"
+                           min="0" max="${item.remaining_quantity}" 
+                           step="0.001" value="0">
+                    <input type="hidden" name="item_id[]" value="${item.id}">
+                </td>
+                <td>${parseFloat(item.unit_price).toFixed(3)}</td>
+                <td>${parseFloat(item.tax_rate).toFixed(2)}%</td>
+                <td class="item-total">0.00</td>
+            `;
+            
+            itemsTableBody.appendChild(row);
+        });
+        
+        // Add event listeners to quantity inputs
+        document.querySelectorAll('.returned-qty').forEach(input => {
+            input.addEventListener('input', function() {
+                updateItemTotal(this);
+                updateGrandTotals();
+                updateReturnedQuantities();
+            });
+        });
+        
+        updateGrandTotals();
+    }
+    
+    function updateItemTotal(input) {
+        const quantity = parseFloat(input.value) || 0;
+        const unitPrice = parseFloat(input.dataset.unitPrice);
+        const taxRate = parseFloat(input.dataset.taxRate);
+        
+        const subtotal = quantity * unitPrice;
+        const taxAmount = subtotal * (taxRate / 100);
+        const total = subtotal + taxAmount;
+        
+        const totalCell = input.closest('tr').querySelector('.item-total');
+        totalCell.textContent = total.toFixed(3);
+    }
+    
+    function updateGrandTotals() {
+        let grandSubtotal = 0;
+        let grandTax = 0;
+        
+        document.querySelectorAll('.returned-qty').forEach(input => {
+            const quantity = parseFloat(input.value) || 0;
+            const unitPrice = parseFloat(input.dataset.unitPrice);
+            const taxRate = parseFloat(input.dataset.taxRate);
+            
+            if (quantity > 0) {
+                const subtotal = quantity * unitPrice;
+                const taxAmount = subtotal * (taxRate / 100);
+                
+                grandSubtotal += subtotal;
+                grandTax += taxAmount;
+            }
+        });
+        
+        const grandTotal = grandSubtotal + grandTax;
+        
+        document.getElementById('subtotalDisplay').textContent = grandSubtotal.toFixed(3);
+        document.getElementById('taxDisplay').textContent = grandTax.toFixed(3);
+        document.getElementById('totalDisplay').textContent = grandTotal.toFixed(3);
+    }
+    
+    function updateReturnedQuantities() {
+        const quantities = [];
+        document.querySelectorAll('.returned-qty').forEach(input => {
+            quantities.push(input.value || '0');
+        });
+        
+        // Remove existing hidden inputs
+        document.querySelectorAll('input[name="returned_quantity[]"]').forEach(input => {
+            input.remove();
+        });
+        
+        // Add new hidden inputs
+        quantities.forEach(qty => {
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'returned_quantity[]';
+            hiddenInput.value = qty;
+            document.getElementById('returnForm').appendChild(hiddenInput);
+        });
+    }
+    
+    // Form validation
+    document.getElementById('returnForm').addEventListener('submit', function(e) {
+        const hasReturnedItems = Array.from(document.querySelectorAll('.returned-qty'))
+            .some(input => parseFloat(input.value) > 0);
+        
+        if (!hasReturnedItems) {
+            e.preventDefault();
+            alert('يجب إدخال كمية لعنصر واحد على الأقل للإرجاع');
+            return false;
+        }
+        
+        updateReturnedQuantities();
+        return true;
+    });
+});
+</script>
+{% endblock %}

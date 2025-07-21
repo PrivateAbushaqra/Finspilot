@@ -1,0 +1,662 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load currency_tags %}
+
+{% block title %}إضافة فاتورة مبيعات - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .form-header {
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .form-section {
+        background: #f8f9fa;
+        border-radius: 6px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid #007bff;
+    }
+    
+    .product-row {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .summary-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+    }
+    
+    .btn-add-product {
+        background: linear-gradient(45deg, #28a745, #20c997);
+        border: none;
+        color: white;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-add-product:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+    }
+    
+    .required-field {
+        color: #dc3545;
+    }
+    
+    .product-code-input {
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+    }
+    
+    .products-table {
+        min-height: 200px;
+    }
+    
+    .btn-remove-product {
+        background: #dc3545;
+        border: none;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+    
+    .btn-remove-product:hover {
+        background: #c82333;
+        color: white;
+    }
+    
+    #productsTable th {
+        background-color: #343a40;
+        color: white;
+        font-weight: 600;
+        text-align: center;
+        vertical-align: middle;
+    }
+    
+    #productsTable td {
+        vertical-align: middle;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">
+                <i class="fas fa-plus-circle text-success me-2"></i>
+                إضافة فاتورة مبيعات
+            </h2>
+            <p class="text-muted mb-0">إنشاء فاتورة مبيعات جديدة</p>
+        </div>
+        <div>
+            <a href="{% url 'sales:invoice_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>
+                العودة للقائمة
+            </a>
+        </div>
+    </div>
+
+    <!-- Form Container -->
+    <div class="form-container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        <div class="form-header">
+            <h3>
+                <i class="fas fa-file-invoice-dollar text-primary me-2"></i>
+                بيانات فاتورة المبيعات
+            </h3>
+            <p class="text-muted mb-0">يرجى ملء جميع الحقول المطلوبة</p>
+        </div>
+        
+        <form method="post" id="salesInvoiceForm">
+            {% csrf_token %}
+            
+            <!-- Invoice Information Section -->
+            <div class="form-section">
+                <h5>
+                    <i class="fas fa-info-circle me-1"></i>
+                    معلومات الفاتورة
+                </h5>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_invoice_number" class="form-label">
+                                رقم الفاتورة <span class="required-field">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-hashtag"></i>
+                                </span>
+                                {% if can_edit_invoice_number %}
+                                    <input type="text" class="form-control" id="id_invoice_number" name="invoice_number"
+                                           value="{{ next_invoice_number }}" 
+                                           title="يمكنك تعديل رقم الفاتورة أو ترك الحقل للتوليد التلقائي">
+                                {% else %}
+                                    <input type="text" class="form-control bg-light" 
+                                           value="{{ next_invoice_number }}" 
+                                           readonly
+                                           title="سيتم توليد رقم الفاتورة تلقائياً من نظام إدارة أرقام المستندات">
+                                {% endif %}
+                            </div>
+                            <small class="form-text text-muted">
+                                {% if can_edit_invoice_number %}
+                                    يمكنك تعديل رقم الفاتورة أو ترك الحقل للتوليد التلقائي
+                                {% else %}
+                                    سيتم إنشاء رقم الفاتورة تلقائياً عند الحفظ (ليس لديك صلاحية تعديل الرقم)
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_date" class="form-label">
+                                تاريخ الفاتورة <span class="required-field">*</span>
+                            </label>
+                            {% if can_edit_date %}
+                                <input type="date" class="form-control" id="id_date" name="date" 
+                                       value="{{ today_date }}" required
+                                       title="يمكنك تعديل تاريخ الفاتورة">
+                                <small class="form-text text-muted">
+                                    يمكنك تعديل تاريخ الفاتورة حسب الحاجة
+                                </small>
+                            {% else %}
+                                <input type="date" class="form-control bg-light" id="id_date" name="date" 
+                                       value="{{ today_date }}" readonly
+                                       title="تاريخ اليوم (ليس لديك صلاحية تعديل التاريخ)">
+                                <small class="form-text text-muted">
+                                    تاريخ الفاتورة مثبت على تاريخ اليوم (ليس لديك صلاحية تعديل التاريخ)
+                                </small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_customer" class="form-label">
+                                العميل <span class="required-field">*</span>
+                            </label>
+                            <select class="form-select" id="id_customer" name="customer" required>
+                                <option value="">اختر العميل</option>
+                                {% for customer in customers %}
+                                    <option value="{{ customer.id }}">{{ customer.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_payment_type" class="form-label">
+                                طريقة الدفع <span class="required-field">*</span>
+                            </label>
+                            <select class="form-select" id="id_payment_type" name="payment_type" required>
+                                <option value="">اختر طريقة الدفع</option>
+                                <option value="cash">نقدي</option>
+                                <option value="credit">ذمم (آجل)</option>
+                                <option value="bank_transfer">تحويل بنكي</option>
+                                <option value="check">شيك</option>
+                                <option value="installment">تقسيط</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products Section -->
+            <div class="form-section">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5>
+                        <i class="fas fa-box me-1"></i>
+                        المنتجات
+                    </h5>
+                    <button type="button" class="btn btn-add-product" id="addProductBtn">
+                        <i class="fas fa-plus me-1"></i>
+                        إضافة منتج
+                    </button>
+                </div>
+                
+                <div class="table-responsive products-table">
+                    <table class="table table-bordered" id="productsTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th width="15%">رقم المنتج</th>
+                                <th width="20%">المنتج</th>
+                                <th width="10%">الكمية</th>
+                                <th width="12%">السعر</th>
+                                <th width="8%">ضريبة %</th>
+                                <th width="12%">قيمة الضريبة</th>
+                                <th width="12%">الإجمالي</th>
+                                <th width="6%">حذف</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTableBody">
+                            <!-- سيتم إضافة الصفوف هنا بـ JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Additional Information Section -->
+            <div class="form-section">
+                <h5>
+                    <i class="fas fa-info-circle me-1"></i>
+                    معلومات إضافية
+                </h5>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_discount" class="form-label">الخصم</label>
+                            <input type="number" class="form-control" id="id_discount" name="discount" 
+                                   min="0" step="0.01" value="0">
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <!-- مساحة فارغة للتوازن -->
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="id_notes" class="form-label">ملاحظات</label>
+                    <textarea class="form-control" id="id_notes" name="notes" rows="3" 
+                              placeholder="أي ملاحظات إضافية..."></textarea>
+                </div>
+            </div>
+
+            <!-- Invoice Summary -->
+            <div class="summary-section">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h5 class="mb-3">ملخص الفاتورة</h5>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="summary-details">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>المجموع الفرعي:</span>
+                                <strong id="subtotalDisplay">0.00 {% get_currency_symbol %}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>الخصم:</span>
+                                <strong id="discountDisplay">0.00 {% get_currency_symbol %}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>الضريبة:</span>
+                                <strong id="taxDisplay">0.00 {% get_currency_symbol %}</strong>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between mb-0">
+                                <span class="h5">الإجمالي النهائي:</span>
+                                <strong class="h5 text-warning" id="totalDisplay">0.00 {% get_currency_symbol %}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="d-flex gap-3">
+                        <button type="submit" name="action" value="save" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save me-2"></i>
+                            حفظ الفاتورة
+                        </button>
+                        <button type="submit" name="action" value="save_and_send" class="btn btn-success btn-lg">
+                            <i class="fas fa-paper-plane me-2"></i>
+                            حفظ وإرسال
+                        </button>
+                        <a href="{% url 'sales:invoice_list' %}" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-times me-2"></i>
+                            إلغاء
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Product Selection Modal -->
+<div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="productModalLabel">
+                    <i class="fas fa-search me-2"></i>
+                    اختيار منتج
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <input type="text" class="form-control" id="productSearch" placeholder="ابحث عن منتج بالكود أو الاسم...">
+                </div>
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>رقم المنتج</th>
+                                <th>اسم المنتج</th>
+                                <th>الوصف</th>
+                                <th>سعر البيع</th>
+                                <th>نسبة الضريبة</th>
+                                <th>اختيار</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productList">
+                            {% for product in products %}
+                            <tr>
+                                <td>{{ product.code }}</td>
+                                <td>{{ product.name }}</td>
+                                <td>{{ product.description|truncatechars:50|default:"لا يوجد وصف" }}</td>
+                                <td>{{ product.sale_price|floatformat:2 }}</td>
+                                <td>{{ product.tax_rate|floatformat:2 }}%</td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-primary" 
+                                            onclick="selectProduct('{{ product.id }}', '{{ product.code }}', '{{ product.name }}', '{{ product.sale_price }}', '{{ product.tax_rate }}')">
+                                        اختيار
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let productRowCounter = 0;
+let currentRow = null;
+
+// Load available products
+document.addEventListener('DOMContentLoaded', function() {
+    // Add first product row
+    addProductRow();
+});
+
+// Add Product Row
+document.getElementById('addProductBtn').addEventListener('click', addProductRow);
+
+function addProductRow() {
+    productRowCounter++;
+    const tbody = document.getElementById('productsTableBody');
+    
+    const row = document.createElement('tr');
+    row.id = `productRow${productRowCounter}`;
+    row.innerHTML = `
+        <td>
+            <input type="hidden" name="products[]" class="product-id-input">
+            <input type="hidden" name="tax_rates[]" class="tax-rate-hidden-input">
+            <input type="hidden" name="tax_amounts[]" class="tax-amount-hidden-input">
+            <div class="d-flex align-items-center">
+                <input type="text" class="form-control me-2 product-code-input" 
+                       placeholder="رقم المنتج..." readonly>
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="openProductModal(${productRowCounter})">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </td>
+        <td>
+            <input type="text" class="form-control product-name-input" 
+                   placeholder="اسم المنتج..." readonly>
+        </td>
+        <td>
+            <input type="number" class="form-control quantity-input" 
+                   name="quantities[]" min="1" value="1" step="1">
+        </td>
+        <td>
+            <input type="number" class="form-control price-input" 
+                   name="prices[]" min="0" step="0.01">
+        </td>
+        <td>
+            <input type="number" class="form-control tax-rate-input" 
+                   min="0" max="100" step="0.01" value="0">
+        </td>
+        <td>
+            <input type="text" class="form-control tax-amount-input" readonly>
+        </td>
+        <td>
+            <input type="text" class="form-control total-input" readonly>
+        </td>
+        <td class="text-center">
+            <button type="button" class="btn btn-remove-product" onclick="removeProductRow(${productRowCounter})" title="حذف">
+                <i class="fas fa-times"></i>
+            </button>
+        </td>
+    `;
+    
+    tbody.appendChild(row);
+    
+    // Attach event listeners to the new row
+    attachRowEventListeners(row);
+}
+
+function removeProductRow(rowId) {
+    const row = document.getElementById(`productRow${rowId}`);
+    if (row) {
+        // Check if this is the last row
+        const allRows = document.querySelectorAll('#productsTableBody tr');
+        if (allRows.length <= 1) {
+            alert('يجب أن تحتوي الفاتورة على منتج واحد على الأقل');
+            return;
+        }
+        
+        row.remove();
+        calculateGrandTotal();
+    }
+}
+
+function openProductModal(rowId) {
+    currentRow = rowId;
+    const modal = new bootstrap.Modal(document.getElementById('productModal'));
+    modal.show();
+}
+
+function selectProduct(productId, productCode, productName, salePrice, taxRate) {
+    if (currentRow) {
+        const row = document.getElementById(`productRow${currentRow}`);
+        const productIdInput = row.querySelector('.product-id-input');
+        const codeInput = row.querySelector('.product-code-input');
+        const nameInput = row.querySelector('.product-name-input');
+        const priceInput = row.querySelector('.price-input');
+        const taxRateInput = row.querySelector('.tax-rate-input');
+        
+        // Fill the product information
+        productIdInput.value = productId;
+        codeInput.value = productCode;
+        nameInput.value = productName;
+        priceInput.value = parseFloat(salePrice).toFixed(2);
+        taxRateInput.value = parseFloat(taxRate);
+        
+        // Close the modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('productModal'));
+        modal.hide();
+        
+        // Calculate totals
+        calculateRowTotal(row);
+        calculateGrandTotal();
+    }
+}
+
+function attachRowEventListeners(row) {
+    const quantityInput = row.querySelector('.quantity-input');
+    const priceInput = row.querySelector('.price-input');
+    const taxRateInput = row.querySelector('.tax-rate-input');
+    
+    // Calculate totals on quantity/price/tax rate change
+    quantityInput.addEventListener('input', function() {
+        calculateRowTotal(row);
+        calculateGrandTotal();
+    });
+    
+    priceInput.addEventListener('input', function() {
+        calculateRowTotal(row);
+        calculateGrandTotal();
+    });
+    
+    taxRateInput.addEventListener('input', function() {
+        calculateRowTotal(row);
+        calculateGrandTotal();
+    });
+}
+
+function calculateRowTotal(row) {
+    const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
+    const price = parseFloat(row.querySelector('.price-input').value) || 0;
+    const taxRate = parseFloat(row.querySelector('.tax-rate-input').value) || 0;
+    
+    // حساب المجموع الفرعي (قبل الضريبة)
+    const subtotal = quantity * price;
+    
+    // حساب مبلغ الضريبة
+    const taxAmount = subtotal * (taxRate / 100);
+    
+    // حساب الإجمالي (مع الضريبة)
+    const total = subtotal + taxAmount;
+    
+    // عرض النتائج
+    row.querySelector('.tax-amount-input').value = taxAmount.toFixed(2);
+    row.querySelector('.total-input').value = total.toFixed(2);
+    
+    // تحديث الحقول المخفية
+    row.querySelector('.tax-rate-hidden-input').value = taxRate;
+    row.querySelector('.tax-amount-hidden-input').value = taxAmount.toFixed(2);
+}
+
+function calculateGrandTotal() {
+    let subtotal = 0;
+    let totalTax = 0;
+    
+    // جمع المجاميع من جميع الصفوف
+    document.querySelectorAll('#productsTableBody tr').forEach(row => {
+        const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
+        const price = parseFloat(row.querySelector('.price-input').value) || 0;
+        const taxAmount = parseFloat(row.querySelector('.tax-amount-input').value) || 0;
+        
+        // إضافة إلى المجموع الفرعي (قبل الضريبة)
+        subtotal += quantity * price;
+        
+        // إضافة إلى إجمالي الضريبة
+        totalTax += taxAmount;
+    });
+    
+    const discount = parseFloat(document.getElementById('id_discount').value) || 0;
+    const total = subtotal + totalTax - discount;
+    
+    // Update display
+    document.getElementById('subtotalDisplay').textContent = subtotal.toFixed(2) + ' {% get_currency_symbol %}';
+    document.getElementById('discountDisplay').textContent = discount.toFixed(2) + ' {% get_currency_symbol %}';
+    document.getElementById('taxDisplay').textContent = totalTax.toFixed(2) + ' {% get_currency_symbol %}';
+    document.getElementById('totalDisplay').textContent = total.toFixed(2) + ' {% get_currency_symbol %}';
+}
+
+// Search in products modal
+document.getElementById('productSearch').addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+    const rows = document.querySelectorAll('#productList tr');
+    
+    rows.forEach(row => {
+        const productCode = row.cells[0].textContent.toLowerCase();
+        const productName = row.cells[1].textContent.toLowerCase();
+        const productDescription = row.cells[2].textContent.toLowerCase();
+        
+        if (productCode.includes(searchTerm) || productName.includes(searchTerm) || 
+            productDescription.includes(searchTerm)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+});
+
+// Calculate totals when discount changes
+document.getElementById('id_discount').addEventListener('input', calculateGrandTotal);
+
+// Form validation
+document.getElementById('salesInvoiceForm').addEventListener('submit', function(e) {
+    const productRows = document.querySelectorAll('#productsTableBody tr');
+    let hasValidProducts = false;
+    
+    // التحقق من وجود منتجات صالحة
+    productRows.forEach(row => {
+        const productId = row.querySelector('.product-id-input').value;
+        const quantity = row.querySelector('.quantity-input').value;
+        const price = row.querySelector('.price-input').value;
+        
+        if (productId && quantity && price && parseFloat(quantity) > 0 && parseFloat(price) >= 0) {
+            hasValidProducts = true;
+        }
+    });
+    
+    if (!hasValidProducts) {
+        e.preventDefault();
+        alert('يجب إضافة منتج واحد على الأقل مع كمية وسعر صحيحين');
+        return;
+    }
+    
+    // التحقق من العميل
+    const customer = document.getElementById('id_customer').value;
+    if (!customer) {
+        e.preventDefault();
+        alert('يرجى اختيار العميل');
+        return;
+    }
+    
+    // التحقق من نوع الدفع
+    const paymentType = document.getElementById('id_payment_type').value;
+    if (!paymentType) {
+        e.preventDefault();
+        alert('يرجى اختيار نوع الدفع');
+        return;
+    }
+    
+    // التحقق من تاريخ الفاتورة
+    const invoiceDate = document.getElementById('id_date').value;
+    if (!invoiceDate) {
+        e.preventDefault();
+        alert('يرجى تحديد تاريخ الفاتورة');
+        return;
+    }
+});
+</script>
+{% endblock %}

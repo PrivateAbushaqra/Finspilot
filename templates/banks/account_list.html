@@ -1,0 +1,641 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load currency_tags %}
+
+{% block title %}الحسابات البنكية - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .accounts-container {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .accounts-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+    }
+    
+    .account-card {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        margin-bottom: 1rem;
+    }
+    
+    .account-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .account-status {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    .status-active {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .status-inactive {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    
+    .balance-positive {
+        color: #28a745;
+        font-weight: bold;
+    }
+    
+    .balance-negative {
+        color: #dc3545;
+        font-weight: bold;
+    }
+    
+    .balance-zero {
+        color: #6c757d;
+    }
+    
+    .btn-add {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-add:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    /* CSS خاص للطباعة - تحويل الكروت إلى جدول */
+    @media print {
+        .container-fluid {
+            max-width: none !important;
+            width: 100% !important;
+        }
+        
+        /* إخفاء العناصر غير المطلوبة للطباعة */
+        .breadcrumb, .btn-add, .search-section, .no-print,
+        .btn-group, .alert, .pagination {
+            display: none !important;
+        }
+        
+        /* إنشاء رأس الجدول */
+        #accountsList::before {
+            content: "اسم الحساب\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0 البنك\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0 رقم الحساب\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0 الرصيد\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0 الحالة";
+            display: block;
+            background-color: #f8f9fa !important;
+            border: 2px solid #000 !important;
+            padding: 8px !important;
+            font-weight: bold !important;
+            text-align: center !important;
+            font-size: 10pt !important;
+            border-bottom: 2px solid #000 !important;
+        }
+        
+        /* تحويل كل حساب إلى سطر جدول */
+        .account-card {
+            display: block !important;
+            border: 1px solid #000 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: white !important;
+            page-break-inside: avoid !important;
+            box-shadow: none !important;
+        }
+        
+        .account-card .card-body {
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        
+        .account-card .row {
+            display: table-row !important;
+            margin: 0 !important;
+            border-bottom: 1px solid #ddd !important;
+        }
+        
+        .account-card .col-md-3:first-child,
+        .account-card .col-md-2 {
+            display: table-cell !important;
+            border-right: 1px solid #ddd !important;
+            padding: 6px 4px !important;
+            vertical-align: middle !important;
+            font-size: 8pt !important;
+            width: auto !important;
+            float: none !important;
+        }
+        
+        /* تخصيص عرض الأعمدة */
+        .account-card .col-md-3:first-child {
+            width: 35% !important;
+        }
+        
+        .account-card .col-md-2:nth-child(2) {
+            width: 20% !important;
+        }
+        
+        .account-card .col-md-2:nth-child(3) {
+            width: 20% !important;
+        }
+        
+        .account-card .col-md-2:nth-child(4) {
+            width: 15% !important;
+        }
+        
+        .account-card .col-md-3:last-child {
+            display: none !important; /* إخفاء عمود الإجراءات */
+        }
+        
+        /* تنسيق النصوص */
+        .account-card h6 {
+            font-size: 8pt !important;
+            margin: 0 !important;
+            font-weight: bold !important;
+        }
+        
+        .account-card small {
+            font-size: 7pt !important;
+            display: block !important;
+        }
+        
+        .account-card .fw-bold {
+            font-size: 8pt !important;
+            font-weight: bold !important;
+        }
+        
+        .balance-positive {
+            color: #000 !important;
+        }
+        
+        .balance-negative {
+            color: #000 !important;
+        }
+        
+        .account-status {
+            font-size: 7pt !important;
+            border: 1px solid #000 !important;
+            padding: 2px 4px !important;
+            background: white !important;
+            color: black !important;
+        }
+        
+        /* إعدادات الصفحة للطباعة العرضية */
+        @page {
+            size: A4 landscape !important;
+            margin: 0.5cm !important;
+        }
+        
+        body {
+            font-size: 8pt !important;
+            line-height: 1.1 !important;
+        }
+        
+        h1 {
+            font-size: 12pt !important;
+            text-align: center !important;
+            margin-bottom: 15px !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0 text-gray-800">
+                        <i class="fas fa-university text-primary me-2"></i>
+                        الحسابات البنكية
+                    </h1>
+                    <nav aria-label="breadcrumb" class="mt-2">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">الرئيسية</a></li>
+                            <li class="breadcrumb-item active">الحسابات البنكية</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div>
+                    <a href="{% url 'banks:account_add' %}" class="btn btn-add text-white">
+                        <i class="fas fa-plus me-1"></i>
+                        إضافة حساب جديد
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+            
+            <!-- Accounts Container -->
+            <div class="accounts-container">
+                <div class="accounts-header">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h4 class="mb-0">
+                                <i class="fas fa-list me-2"></i>
+                                قائمة الحسابات البنكية
+                            </h4>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <div class="d-flex justify-content-end align-items-center">
+                                <button type="button" onclick="printPage()" class="btn btn-primary btn-sm me-3" style="background-color: #007bff; border-color: #007bff;">
+                                    <i class="fas fa-print me-1"></i>
+                                    طباعة التقرير الكامل
+                                </button>
+                                <span class="me-3">
+                                    <i class="fas fa-chart-line me-1"></i>
+                                    إجمالي الحسابات: <strong>{{ total_accounts }}</strong>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-4">
+                    <!-- Search and Filter Bar -->
+                    <div class="row mb-4 no-print">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" class="form-control" placeholder="البحث في الحسابات..." id="searchAccounts">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="filterCurrency">
+                                <option value="">جميع العملات</option>
+                                {% get_active_currencies as currencies %}
+                                {% for currency in currencies %}
+                                    <option value="{{ currency.code }}">{{ currency.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="filterStatus">
+                                <option value="">جميع الحسابات</option>
+                                <option value="active">النشطة فقط</option>
+                                <option value="inactive">غير النشطة فقط</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Accounts List -->
+                    <div id="accountsList">
+                        {% if accounts %}
+                            {% for account in accounts %}
+                            <div class="account-card">
+                                <div class="card-body">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-3">
+                                            <h6 class="mb-1 fw-bold">{{ account.name }}</h6>
+                                            <small class="text-muted">{{ account.bank_name }}</small>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <small class="text-muted">رقم الحساب:</small>
+                                            <div class="fw-bold">{{ account.account_number }}</div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <small class="text-muted">الرصيد:</small>
+                                            <div class="{% if account.balance >= 0 %}balance-positive{% else %}balance-negative{% endif %}">
+                                                {{ account.balance|floatformat:3 }} {{ account.currency }}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <span class="account-status {% if account.is_active %}status-active{% else %}status-inactive{% endif %}">
+                                                {% if account.is_active %}نشط{% else %}غير نشط{% endif %}
+                                            </span>
+                                        </div>
+                                        <div class="col-md-3 text-end">
+                                            <div class="btn-group btn-group-sm no-print">
+                                                <a href="{% url 'banks:account_detail' account.pk %}" class="btn btn-outline-primary" title="عرض تفاصيل الحساب">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{% url 'banks:account_transactions' account.pk %}" class="btn btn-outline-info" title="عرض حركات الحساب">
+                                                    <i class="fas fa-list"></i>
+                                                </a>
+                                                <a href="{% url 'banks:account_edit' account.pk %}" class="btn btn-outline-warning" title="تعديل الحساب">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                {% if account.is_active %}
+                                                <a href="{% url 'banks:transfer_add' %}" class="btn btn-outline-info" title="تحويل من/إلى الحساب">
+                                                    <i class="fas fa-exchange-alt"></i>
+                                                </a>
+                                                {% endif %}
+                                                <button class="btn btn-outline-{% if account.is_active %}secondary{% else %}success{% endif %} toggle-status-btn" 
+                                                        data-account-id="{{ account.pk }}" 
+                                                        data-account-name="{{ account.name }}"
+                                                        data-current-status="{% if account.is_active %}active{% else %}inactive{% endif %}"
+                                                        title="{% if account.is_active %}إلغاء تفعيل{% else %}تفعيل{% endif %} الحساب">
+                                                    <i class="fas fa-{% if account.is_active %}pause{% else %}play{% endif %}"></i>
+                                                </button>
+                                                
+                                                {% if user.is_superuser %}
+                                                <button class="btn btn-outline-warning clear-transactions-btn" 
+                                                        data-account-id="{{ account.pk }}" 
+                                                        data-account-name="{{ account.name }}" 
+                                                        title="حذف جميع حركات الحساب">
+                                                    <i class="fas fa-eraser"></i>
+                                                </button>
+                                                {% endif %}
+                                                
+                                                <button class="btn btn-outline-danger delete-account-btn" 
+                                                        data-account-id="{{ account.pk }}" 
+                                                        data-account-name="{{ account.name }}" 
+                                                        data-account-balance="{{ account.balance }}"
+                                                        title="حذف الحساب">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                        <!-- Empty State -->
+                        <div class="empty-state">
+                            <i class="fas fa-university"></i>
+                            <h5>لا توجد حسابات بنكية بعد</h5>
+                            <p class="mb-3">ابدأ بإضافة حساب بنكي جديد لإدارة أموالك</p>
+                            <a href="{% url 'banks:account_add' %}" class="btn btn-add text-white">
+                                <i class="fas fa-plus me-1"></i>
+                                إضافة أول حساب
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Summary Cards -->
+            <div class="row mt-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0">إجمالي الحسابات</h6>
+                                    <h3 class="mb-0">{{ total_accounts }}</h3>
+                                </div>
+                                <div class="ms-3">
+                                    <i class="fas fa-university fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0">الحسابات النشطة</h6>
+                                    <h3 class="mb-0">{{ active_accounts }}</h3>
+                                </div>
+                                <div class="ms-3">
+                                    <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0">إجمالي الأرصدة</h6>
+                                    {% for currency, balance in balances_by_currency.items %}
+                                        <div class="mb-1">
+                                            <h5 class="mb-0">{{ balance|floatformat:3 }}</h5>
+                                            <small>{{ currency }}</small>
+                                        </div>
+                                    {% empty %}
+                                        <h3 class="mb-0">0.000</h3>
+                                        <small>{% get_currency_symbol %}</small>
+                                    {% endfor %}
+                                </div>
+                                <div class="ms-3">
+                                    <i class="fas fa-coins fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0">عدد العملات</h6>
+                                    <h3 class="mb-0">{{ currencies_count }}</h3>
+                                </div>
+                                <div class="ms-3">
+                                    <i class="fas fa-dollar-sign fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">تأكيد الحذف</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>هل أنت متأكد من حذف الحساب البنكي "<span id="deleteAccountName"></span>"؟</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    تحذير: هذا الإجراء لا يمكن التراجع عنه!
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <form id="deleteForm" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i>
+                        حذف الحساب
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toggle Status Confirmation Modal -->
+<div class="modal fade" id="toggleStatusModal" tabindex="-1" aria-labelledby="toggleStatusModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="toggleStatusModalLabel">تأكيد تغيير الحالة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>هل أنت متأكد من <span id="toggleAction"></span> الحساب البنكي "<span id="toggleAccountName"></span>"؟</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <form id="toggleStatusForm" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary" id="toggleStatusBtn">
+                        <i class="fas fa-check me-1"></i>
+                        تأكيد
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Search functionality
+    const searchInput = document.getElementById('searchAccounts');
+    const filterCurrency = document.getElementById('filterCurrency');
+    const filterStatus = document.getElementById('filterStatus');
+    
+    function filterAccounts() {
+        // This will be implemented when we have actual data
+        console.log('Filtering accounts...');
+    }
+    
+    if (searchInput) searchInput.addEventListener('input', filterAccounts);
+    if (filterCurrency) filterCurrency.addEventListener('change', filterAccounts);
+    if (filterStatus) filterStatus.addEventListener('change', filterAccounts);
+    
+    // Delete functionality
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    const deleteForm = document.getElementById('deleteForm');
+    const deleteAccountNameSpan = document.getElementById('deleteAccountName');
+    
+    // Toggle status functionality
+    const toggleStatusModal = new bootstrap.Modal(document.getElementById('toggleStatusModal'));
+    const toggleStatusForm = document.getElementById('toggleStatusForm');
+    const toggleAccountNameSpan = document.getElementById('toggleAccountName');
+    const toggleActionSpan = document.getElementById('toggleAction');
+    
+    document.addEventListener('click', function(e) {
+        // Handle delete button clicks
+        if (e.target.closest('.delete-account-btn')) {
+            e.preventDefault();
+            
+            const button = e.target.closest('.delete-account-btn');
+            const accountId = button.getAttribute('data-account-id');
+            const accountName = button.getAttribute('data-account-name');
+            const accountBalance = parseFloat(button.getAttribute('data-account-balance'));
+            
+            // فحص الرصيد وإعطاء رسائل توضيحية
+            if (accountBalance !== 0) {
+                alert(`لا يمكن حذف الحساب "${accountName}" لأن رصيده ${accountBalance.toFixed(3)}\n\nالطريقة الصحيحة:\n1. انتقل لصفحة التحويلات وحوّل جميع الأموال لحساب آخر\n2. ارجع هنا واضغط حذف مرة أخرى - سيُحذف الحساب حتى لو كان له معاملات!\n\nأو (للـ Superadmin):\n- اضغط "مسح جميع الحركات" ثم "حذف الحساب"`);
+                return;
+            }
+            
+            // تحديث نموذج الحذف
+            const deleteUrl = '{% url "banks:account_delete" 0 %}'.replace('/0/', '/' + accountId + '/');
+            deleteForm.action = deleteUrl;
+            deleteAccountNameSpan.textContent = accountName;
+            
+            // عرض نافذة تأكيد الحذف
+            deleteModal.show();
+        }
+        
+        // Handle toggle status button clicks
+        if (e.target.closest('.toggle-status-btn')) {
+            e.preventDefault();
+            
+            const button = e.target.closest('.toggle-status-btn');
+            const accountId = button.getAttribute('data-account-id');
+            const accountName = button.getAttribute('data-account-name');
+            const currentStatus = button.getAttribute('data-current-status');
+            
+            // تحديث نموذج تغيير الحالة
+            const toggleUrl = '{% url "banks:account_toggle_status" 0 %}'.replace('/0/', '/' + accountId + '/');
+            toggleStatusForm.action = toggleUrl;
+            toggleAccountNameSpan.textContent = accountName;
+            
+            if (currentStatus === 'active') {
+                toggleActionSpan.textContent = 'إلغاء تفعيل';
+            } else {
+                toggleActionSpan.textContent = 'تفعيل';
+            }
+            
+            // عرض نافذة تأكيد تغيير الحالة
+            toggleStatusModal.show();
+        }
+        
+        // Handle clear transactions button clicks (Superadmin only)
+        if (e.target.closest('.clear-transactions-btn')) {
+            e.preventDefault();
+            
+            const button = e.target.closest('.clear-transactions-btn');
+            const accountId = button.getAttribute('data-account-id');
+            const accountName = button.getAttribute('data-account-name');
+            
+            if (confirm(`هل أنت متأكد من حذف جميع حركات الحساب "${accountName}"؟\n\n⚠️ تحذير مهم:\n- هذا الإجراء لا يمكن التراجع عنه!\n- سيتم حذف جميع التحويلات المرتبطة بهذا الحساب\n- سيتم إعادة ضبط أرصدة جميع الحسابات المتأثرة تلقائياً\n- سيعود رصيد هذا الحساب للرصيد الأولي`)) {
+                // إنشاء نموذج مخفي لإرسال طلب POST
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '{% url "banks:clear_account_transactions" 0 %}'.replace('/0/', '/' + accountId + '/');
+                
+                // إضافة CSRF token
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrfmiddlewaretoken';
+                csrfInput.value = csrfToken;
+                form.appendChild(csrfInput);
+                
+                // إضافة النموذج للصفحة وإرساله
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

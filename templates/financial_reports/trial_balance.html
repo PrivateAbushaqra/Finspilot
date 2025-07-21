@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load tax_tags %}
+
+{% block title %}الموازنة التجريبية - Triangle{% endblock %}xtends 'base.html' %}
+{% load i18n %}
+
+{% block title %}ميزان المراجعة - Triangle{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-balance-scale me-2"></i>
+        ميزان المراجعة
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <button class="btn btn-outline-secondary me-2" onclick="window.print()">
+            <i class="fas fa-print me-1"></i>
+            طباعة
+        </button>
+        <button class="btn btn-outline-primary" onclick="exportToExcel()">
+            <i class="fas fa-file-excel me-1"></i>
+            تصدير Excel
+        </button>
+    </div>
+</div>
+
+<!-- فلاتر التقرير -->
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="date_from" class="form-label">من تاريخ</label>
+                <input type="date" class="form-control" id="date_from" name="date_from" value="{{ request.GET.date_from }}">
+            </div>
+            <div class="col-md-3">
+                <label for="date_to" class="form-label">إلى تاريخ</label>
+                <input type="date" class="form-control" id="date_to" name="date_to" value="{{ request.GET.date_to }}">
+            </div>
+            <div class="col-md-3">
+                <label for="account_type" class="form-label">نوع الحساب</label>
+                <select class="form-select" id="account_type" name="account_type">
+                    <option value="">جميع الحسابات</option>
+                    <option value="asset" {% if request.GET.account_type == 'asset' %}selected{% endif %}>الأصول</option>
+                    <option value="liability" {% if request.GET.account_type == 'liability' %}selected{% endif %}>الخصوم</option>
+                    <option value="equity" {% if request.GET.account_type == 'equity' %}selected{% endif %}>حقوق الملكية</option>
+                    <option value="revenue" {% if request.GET.account_type == 'revenue' %}selected{% endif %}>الإيرادات</option>
+                    <option value="expense" {% if request.GET.account_type == 'expense' %}selected{% endif %}>المصروفات</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i>
+                        إنشاء التقرير
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- التقرير -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-chart-bar me-2"></i>
+            ميزان المراجعة كما في 
+            {% if date_to %}
+                {{ date_to|date:"Y-m-d" }}
+            {% else %}
+                اليوم
+            {% endif %}
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if trial_balance_data %}
+        <div class="table-responsive">
+            <table class="table table-striped" id="trialBalanceTable">
+                <thead class="table-dark">
+                    <tr>
+                        <th>اسم الحساب</th>
+                        <th>نوع الحساب</th>
+                        <th class="text-end">الرصيد المدين</th>
+                        <th class="text-end">الرصيد الدائن</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for account in trial_balance_data %}
+                    <tr>
+                        <td>{{ account.name }}</td>
+                        <td>
+                            {% if account.type == 'asset' %}
+                                <span class="badge bg-primary">أصل</span>
+                            {% elif account.type == 'liability' %}
+                                <span class="badge bg-danger">خصم</span>
+                            {% elif account.type == 'equity' %}
+                                <span class="badge bg-info">حقوق ملكية</span>
+                            {% elif account.type == 'revenue' %}
+                                <span class="badge bg-success">إيراد</span>
+                            {% elif account.type == 'expense' %}
+                                <span class="badge bg-warning">مصروف</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            {% if account.debit_balance > 0 %}
+                                {{ account.debit_balance|currency_format }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            {% if account.credit_balance > 0 %}
+                                {{ account.credit_balance|currency_format }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="table-dark">
+                    <tr>
+                        <th colspan="2">الإجمالي</th>
+                        <th class="text-end">{{ total_debits|currency_format }}</th>
+                        <th class="text-end">{{ total_credits|currency_format }}</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        
+        <!-- التحقق من التوازن -->
+        <div class="row mt-3">
+            <div class="col-md-6 offset-md-3">
+                <div class="card {% if total_debits == total_credits %}border-success{% else %}border-danger{% endif %}">
+                    <div class="card-body text-center">
+                        {% if total_debits == total_credits %}
+                            <i class="fas fa-check-circle text-success fa-2x mb-2"></i>
+                            <h5 class="text-success">الميزان متوازن</h5>
+                            <p class="text-muted">إجمالي المدين = إجمالي الدائن</p>
+                        {% else %}
+                            <i class="fas fa-exclamation-circle text-danger fa-2x mb-2"></i>
+                            <h5 class="text-danger">الميزان غير متوازن</h5>
+                            <p class="text-muted">يوجد فرق في الميزان</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">لا توجد بيانات</h4>
+            <p class="text-muted">لا توجد حسابات أو معاملات في الفترة المحددة</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- ملاحظات -->
+<div class="card mt-3">
+    <div class="card-body">
+        <h6 class="card-title">
+            <i class="fas fa-info-circle me-2"></i>
+            ملاحظات مهمة
+        </h6>
+        <ul class="mb-0">
+            <li>ميزان المراجعة يعرض إجمالي الأرصدة للحسابات في الفترة المحددة</li>
+            <li>يجب أن يكون إجمالي المدين مساوياً لإجمالي الدائن</li>
+            <li>في حالة عدم التوازن، يجب مراجعة القيود المحاسبية</li>
+            <li>يتم تحديث البيانات تلقائياً عند إضافة قيود جديدة</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function exportToExcel() {
+    // تصدير الجدول إلى Excel
+    const table = document.getElementById('trialBalanceTable');
+    const wb = XLSX.utils.table_to_book(table);
+    const fileName = 'ميزان_المراجعة_' + new Date().toISOString().slice(0, 10) + '.xlsx';
+    XLSX.writeFile(wb, fileName);
+}
+
+// تحميل مكتبة XLSX للتصدير
+const script = document.createElement('script');
+script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+document.head.appendChild(script);
+</script>
+{% endblock %}

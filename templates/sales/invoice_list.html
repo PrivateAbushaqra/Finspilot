@@ -1,0 +1,416 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load currency_tags %}
+
+{% block title %}فواتير المبيعات - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .invoice-card {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        margin-bottom: 1rem;
+    }
+    
+    .invoice-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+    
+    .invoice-status {
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+    
+    .status-paid {
+        color: #28a745;
+    }
+    
+    .status-pending {
+        color: #ffc107;
+    }
+    
+    .status-overdue {
+        color: #dc3545;
+    }
+    
+    .filters-section {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    /* CSS للطباعة */
+    @media print {
+        /* إخفاء عناصر غير مطلوبة في الطباعة */
+        .btn, .form-control, .form-select, .form-label,
+        .navbar, .sidebar, .footer, nav, .breadcrumb,
+        .d-flex.justify-content-between.align-items-center.mb-4,
+        .filters-section {
+            display: none !important;
+        }
+        
+        /* إعدادات الصفحة للطباعة العرضية */
+        @page {
+            size: A4 landscape !important;
+            margin: 0.5cm !important;
+        }
+        
+        body {
+            font-size: 9pt !important;
+            line-height: 1.2 !important;
+            background: white !important;
+            color: black !important;
+        }
+        
+        /* إزالة الحاويات والحدود */
+        .container-fluid {
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+        }
+        
+        .card-body {
+            padding: 0 !important;
+        }
+        
+        /* عنوان التقرير */
+        .card-header {
+            background: white !important;
+            color: black !important;
+            border: 2px solid #000 !important;
+            text-align: center !important;
+            padding: 10px !important;
+            margin-bottom: 10px !important;
+        }
+        
+        .card-header h5 {
+            font-size: 16pt !important;
+            font-weight: bold !important;
+            margin: 0 !important;
+        }
+        
+        /* إضافة رأس الشركة */
+        .card-header::before {
+            content: "شركة المثلث للبرمجيات - نظام إدارة المحاسبة والمخازن\A تقرير فواتير المبيعات\A ────────────────────────────────";
+            display: block !important;
+            font-size: 12pt !important;
+            font-weight: bold !important;
+            margin-bottom: 8px !important;
+            white-space: pre-line !important;
+            text-align: center !important;
+        }
+        
+        /* تحسين الجدول للطباعة */
+        .table-responsive {
+            overflow: visible !important;
+        }
+        
+        .table {
+            border-collapse: collapse !important;
+            width: 100% !important;
+            border: 2px solid #000 !important;
+        }
+        
+        .table th,
+        .table td {
+            border: 1px solid #000 !important;
+            padding: 5px !important;
+            text-align: center !important;
+            font-size: 8pt !important;
+            vertical-align: middle !important;
+        }
+        
+        .table th {
+            background: #f0f0f0 !important;
+            font-weight: bold !important;
+            font-size: 9pt !important;
+        }
+        
+        /* تخصيص عرض الأعمدة */
+        .table th:nth-child(1),
+        .table td:nth-child(1) {
+            width: 15% !important; /* رقم الفاتورة */
+        }
+        
+        .table th:nth-child(2),
+        .table td:nth-child(2) {
+            width: 25% !important; /* العميل */
+            text-align: right !important;
+        }
+        
+        .table th:nth-child(3),
+        .table td:nth-child(3) {
+            width: 12% !important; /* التاريخ */
+        }
+        
+        .table th:nth-child(4),
+        .table td:nth-child(4) {
+            width: 18% !important; /* المبلغ */
+        }
+        
+        .table th:nth-child(5),
+        .table td:nth-child(5) {
+            width: 15% !important; /* الحالة */
+        }
+        
+        .table th:nth-child(6),
+        .table td:nth-child(6) {
+            display: none !important; /* إخفاء عمود الإجراءات */
+        }
+        
+        /* تنسيق الـ badges */
+        .badge {
+            color: black !important;
+            background: white !important;
+            border: 1px solid #000 !important;
+            padding: 2px 6px !important;
+            border-radius: 0 !important;
+            font-size: 7pt !important;
+        }
+        
+        /* منع قطع الصفوف */
+        .table tbody tr {
+            page-break-inside: avoid !important;
+        }
+        
+        /* إخفاء الأيقونات */
+        .fas {
+            display: none !important;
+        }
+        
+        /* إضافة تذييل للتقرير */
+        .card::after {
+            content: "────────────────────────────────\A تم إنشاء التقرير في: " attr(data-print-date) "\A شركة المثلث للبرمجيات";
+            display: block !important;
+            text-align: center !important;
+            margin-top: 15px !important;
+            padding: 10px !important;
+            border-top: 2px solid #000 !important;
+            font-size: 8pt !important;
+            white-space: pre-line !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">
+                <i class="fas fa-file-invoice-dollar text-primary me-2"></i>
+                فواتير المبيعات
+            </h2>
+            <p class="text-muted mb-0">إدارة جميع فواتير المبيعات</p>
+        </div>
+        <div>
+            <a href="{% url 'sales:invoice_add' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>
+                فاتورة جديدة
+            </a>
+            <button type="button" onclick="printPage()" class="btn btn-outline-secondary ms-2">
+                <i class="fas fa-print me-1"></i>
+                طباعة القائمة
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filters-section">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="search" class="form-label">البحث</label>
+                <input type="text" class="form-control" id="search" name="search" 
+                       value="{{ request.GET.search }}" placeholder="رقم الفاتورة أو اسم العميل">
+            </div>
+            
+            <div class="col-md-2">
+                <label for="status" class="form-label">الحالة</label>
+                <select class="form-select" id="status" name="status">
+                    <option value="">جميع الحالات</option>
+                    <option value="draft" {% if request.GET.status == 'draft' %}selected{% endif %}>مسودة</option>
+                    <option value="sent" {% if request.GET.status == 'sent' %}selected{% endif %}>مرسلة</option>
+                    <option value="paid" {% if request.GET.status == 'paid' %}selected{% endif %}>مدفوعة</option>
+                    <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>ملغاة</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="date_from" class="form-label">من تاريخ</label>
+                <input type="date" class="form-control" id="date_from" name="date_from" value="{{ request.GET.date_from }}">
+            </div>
+            
+            <div class="col-md-2">
+                <label for="date_to" class="form-label">إلى تاريخ</label>
+                <input type="date" class="form-control" id="date_to" name="date_to" value="{{ request.GET.date_to }}">
+            </div>
+            
+            <div class="col-md-3">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="fas fa-search me-1"></i>
+                        بحث
+                    </button>
+                    <a href="{% url 'sales:invoice_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-undo me-1"></i>
+                        إعادة تعيين
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Invoices List -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">قائمة الفواتير</h5>
+        </div>
+        <div class="card-body">
+            {% if invoices %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>رقم الفاتورة</th>
+                                <th>العميل</th>
+                                <th>التاريخ</th>
+                                <th>المبلغ الإجمالي</th>
+                                <th>الحالة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for invoice in invoices %}
+                            <tr>
+                                <td>
+                                    <strong>{{ invoice.invoice_number }}</strong>
+                                </td>
+                                <td>{{ invoice.customer.name|default:"غير محدد" }}</td>
+                                <td>{{ invoice.date|date:"Y-m-d" }}</td>
+                                <td>
+                                    <strong>{{ invoice.total_amount|currency_format }}</strong>
+                                </td>
+                                <td>
+                                    {% if invoice.status == 'paid' %}
+                                        <span class="badge bg-success">مدفوعة</span>
+                                    {% elif invoice.status == 'sent' %}
+                                        <span class="badge bg-warning">مرسلة</span>
+                                    {% elif invoice.status == 'draft' %}
+                                        <span class="badge bg-secondary">مسودة</span>
+                                    {% elif invoice.status == 'cancelled' %}
+                                        <span class="badge bg-danger">ملغاة</span>
+                                    {% else %}
+                                        <span class="badge bg-light text-dark">غير محدد</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{% url 'sales:invoice_detail' invoice.pk %}" 
+                                           class="btn btn-outline-primary" title="عرض">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'sales:invoice_edit' invoice.pk %}" 
+                                           class="btn btn-outline-secondary" title="تعديل">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'sales:invoice_delete' invoice.pk %}" 
+                                           class="btn btn-outline-danger" title="حذف"
+                                           onclick="return confirm('هل أنت متأكد من حذف هذه الفاتورة؟')">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if is_paginated %}
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center mt-3">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">السابق</a>
+                            </li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}">التالي</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-file-invoice fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">لا توجد فواتير مبيعات</h5>
+                    <p class="text-muted">ابدأ بإنشاء فاتورة مبيعات جديدة</p>
+                    <a href="{% url 'sales:invoice_add' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>
+                        إضافة فاتورة جديدة
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-submit form on filter change
+document.querySelectorAll('#status, #date_from, #date_to').forEach(function(element) {
+    element.addEventListener('change', function() {
+        this.form.submit();
+    });
+});
+
+// Search on Enter
+document.getElementById('search').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        this.form.submit();
+    }
+});
+
+// Add print date for print
+window.addEventListener('beforeprint', function() {
+    const now = new Date();
+    const printDate = now.toLocaleDateString('ar-SA') + ' ' + now.toLocaleTimeString('ar-SA');
+    document.querySelector('.card').setAttribute('data-print-date', printDate);
+});
+</script>
+{% endblock %}

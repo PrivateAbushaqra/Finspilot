@@ -1,0 +1,613 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load currency_tags %}
+{% load l10n %}
+
+{% block title %}تحويل بين البنك والصندوق - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .transfer-container {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .transfer-header {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 1.5rem;
+    }
+    
+    .form-section {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        background: #f8f9fa;
+    }
+    
+    .section-title {
+        color: #495057;
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .balance-info {
+        background: #e3f2fd;
+        border: 1px solid #bbdefb;
+        border-radius: 6px;
+        padding: 0.75rem;
+        margin-top: 0.5rem;
+    }
+    
+    .balance-amount {
+        font-weight: bold;
+        color: #1976d2;
+    }
+    
+    .btn-submit {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        color: white;
+        padding: 0.75rem 2rem;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+        color: white;
+    }
+    
+    .transfer-preview {
+        background: #fff3cd;
+        border: 1px solid #ffeeba;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .arrow-icon {
+        font-size: 2rem;
+        color: #28a745;
+    }
+    
+    .check-section {
+        background: #e8f5e8;
+        border: 1px solid #c3e6c3;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+    
+    /* Print Styles */
+    @media print {
+        .btn,
+        .navbar,
+        .sidebar,
+        nav,
+        .breadcrumb,
+        .transfer-header .col-md-6:last-child,
+        .print-hide {
+            display: none !important;
+        }
+        
+        .container-fluid {
+            margin: 0 !important;
+            padding: 0 !important;
+            max-width: 100% !important;
+        }
+        
+        .transfer-container {
+            box-shadow: none !important;
+            border-radius: 0 !important;
+        }
+        
+        .transfer-header {
+            background: #f8f9fa !important;
+            color: #000 !important;
+            border-bottom: 2px solid #000 !important;
+        }
+        
+        .form-section {
+            border: 1px solid #000 !important;
+            break-inside: avoid;
+        }
+        
+        body {
+            font-size: 12px !important;
+            color: #000 !important;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            color: #000 !important;
+        }
+        
+        .form-control {
+            border: 1px solid #000 !important;
+            background: transparent !important;
+        }
+        
+        .page-break {
+            page-break-before: always;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="transfer-container">
+                <div class="transfer-header">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h4 class="mb-0">
+                                <i class="fas fa-exchange-alt me-2"></i>
+                                تحويل بين البنك والصندوق
+                            </h4>
+                            <p class="mb-0 mt-2 opacity-75">إنشاء تحويل جديد بين الحساب البنكي والصناديق النقدية</p>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <button type="button" class="btn btn-outline-light me-2" onclick="printTransferForm()">
+                                <i class="fas fa-print me-1"></i>
+                                طباعة النموذج
+                            </button>
+                            <a href="{% url 'banks:transfer_list' %}" class="btn btn-light">
+                                <i class="fas fa-arrow-right me-1"></i>
+                                العودة إلى القائمة
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-4">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post" id="transferForm">
+                        {% csrf_token %}
+                        
+                        <!-- معلومات التحويل الأساسية -->
+                        <div class="form-section">
+                            <h5 class="section-title">
+                                <i class="fas fa-info-circle me-2"></i>
+                                معلومات التحويل الأساسية
+                            </h5>
+                            
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label for="transfer_number" class="form-label">رقم التحويل</label>
+                                    <input type="text" class="form-control" id="transfer_number" 
+                                           {% if transfer_sequence %}value="{{ transfer_sequence.get_formatted_number }}"{% endif %}
+                                           readonly style="background-color: #e9ecef;">
+                                    <div class="form-text">يتم توليده تلقائياً من نظام التسلسل</div>
+                                </div>
+                                
+                                <div class="col-md-3">
+                                    <label for="date" class="form-label">تاريخ التحويل <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" id="date" name="date" required>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="transfer_type" class="form-label">نوع التحويل <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="transfer_type" name="transfer_type" required>
+                                        <option value="">اختر نوع التحويل</option>
+                                        <option value="bank_to_cashbox">من البنك إلى الصندوق</option>
+                                        <option value="cashbox_to_bank">من الصندوق إلى البنك</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- اختيار البنك والصندوق -->
+                        <div class="form-section">
+                            <h5 class="section-title">
+                                <i class="fas fa-university me-2"></i>
+                                اختيار البنك والصندوق
+                            </h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="bank" class="form-label">الحساب البنكي <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="bank" name="bank" required>
+                                        <option value="">اختر الحساب البنكي</option>
+                                        {% for bank in banks %}
+                                            <option value="{{ bank.id }}" data-balance="{{ bank.balance|default_if_none:0|unlocalize }}" data-currency="{{ bank.currency|default:'JOD' }}" data-bank-name="{{ bank.bank_name }}">
+                                                {{ bank.name }} ({{ bank.bank_name }}) - {{ bank.account_number }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div id="bankBalance" class="balance-info d-none">
+                                        <i class="fas fa-wallet me-1"></i>
+                                        الرصيد الحالي: <span class="balance-amount"></span>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <label for="cashbox" class="form-label">الصندوق النقدي <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="cashbox" name="cashbox" required>
+                                        <option value="">اختر الصندوق النقدي</option>
+                                        {% for cashbox in cashboxes %}
+                                            <option value="{{ cashbox.id }}" data-balance="{{ cashbox.balance|default_if_none:0|unlocalize }}" data-currency="{{ cashbox.currency|default:'JOD' }}">
+                                                {{ cashbox.name }}
+                                                {% if cashbox.location %} - {{ cashbox.location }}{% endif %}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div id="cashboxBalance" class="balance-info d-none">
+                                        <i class="fas fa-cash-register me-1"></i>
+                                        الرصيد الحالي: <span class="balance-amount"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- معلومات الشيك -->
+                        <div class="form-section check-section">
+                            <h5 class="section-title">
+                                <i class="fas fa-money-check me-2"></i>
+                                معلومات الشيك البنكي
+                            </h5>
+                            
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label for="check_number" class="form-label">رقم الشيك <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="check_number" name="check_number" required>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <label for="check_date" class="form-label">تاريخ الشيك <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" id="check_date" name="check_date" required>
+                                </div>
+                                
+                                <div class="col-md-4" style="display: none;">
+                                    <label for="check_bank_name" class="form-label">اسم البنك للشيك <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="check_bank_name" name="check_bank_name" required readonly>
+                                    <div class="form-text text-muted">يتم ملؤه تلقائياً بناءً على الحساب البنكي المختار</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- المبالغ -->
+                        <div class="form-section">
+                            <h5 class="section-title">
+                                <i class="fas fa-dollar-sign me-2"></i>
+                                تفاصيل المبالغ
+                            </h5>
+                            
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label for="amount" class="form-label">مبلغ التحويل <span class="text-danger">*</span></label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="amount" name="amount" 
+                                               step="0.001" min="0.001" required>
+                                        <span class="input-group-text">{{ base_currency.symbol|default:"ر.أ" }}</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <label for="fees" class="form-label">رسوم التحويل</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="fees" name="fees" 
+                                               step="0.001" min="0" value="0">
+                                        <span class="input-group-text">{{ base_currency.symbol|default:"ر.أ" }}</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-4">
+                                    <label for="exchange_rate" class="form-label">سعر الصرف</label>
+                                    <input type="number" class="form-control" id="exchange_rate" name="exchange_rate" 
+                                           step="0.0001" min="0.0001" value="1">
+                                    <div class="form-text">1.0000 للعملة نفسها</div>
+                                </div>
+                            </div>
+                            
+                            <div class="transfer-preview d-none" id="transferPreview">
+                                <div class="row align-items-center">
+                                    <div class="col-md-4 text-center">
+                                        <strong id="fromAccount">المرسل</strong>
+                                        <div class="text-muted">المبلغ المخصوم: <span id="deductedAmount">0.000</span></div>
+                                    </div>
+                                    <div class="col-md-4 text-center">
+                                        <i class="fas fa-arrow-right arrow-icon"></i>
+                                    </div>
+                                    <div class="col-md-4 text-center">
+                                        <strong id="toAccount">المستقبل</strong>
+                                        <div class="text-muted">المبلغ المضاف: <span id="addedAmount">0.000</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- الوصف -->
+                        <div class="form-section">
+                            <h5 class="section-title">
+                                <i class="fas fa-comment me-2"></i>
+                                الوصف والملاحظات
+                            </h5>
+                            
+                            <div class="row">
+                                <div class="col-12">
+                                    <label for="description" class="form-label">وصف التحويل <span class="text-danger">*</span></label>
+                                    <textarea class="form-control" id="description" name="description" rows="3" required
+                                              placeholder="أدخل وصفاً مفصلاً لسبب التحويل..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- أزرار الإجراءات -->
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-submit me-3">
+                                <i class="fas fa-save me-1"></i>
+                                إنشاء التحويل
+                            </button>
+                            <a href="{% url 'banks:transfer_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-1"></i>
+                                إلغاء
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // وظيفة لملء اسم البنك للشيك تلقائياً
+    function updateCheckBankName() {
+        const bankSelect = document.getElementById('bank');
+        const checkBankNameInput = document.getElementById('check_bank_name');
+        const selectedOption = bankSelect.options[bankSelect.selectedIndex];
+        
+        if (selectedOption.value) {
+            const bankName = selectedOption.dataset.bankName;
+            if (bankName) {
+                checkBankNameInput.value = bankName;
+            }
+        } else {
+            checkBankNameInput.value = '';
+        }
+    }
+    
+    // تعيين تاريخ اليوم كقيمة افتراضية
+    const dateInput = document.getElementById('date');
+    const checkDateInput = document.getElementById('check_date');
+    const today = new Date().toISOString().split('T')[0];
+    dateInput.value = today;
+    checkDateInput.value = today;
+    
+    // تحديث اسم البنك للشيك في حالة وجود قيمة محددة مسبقاً
+    updateCheckBankName();
+    
+    // عرض أرصدة الحسابات
+    const bankSelect = document.getElementById('bank');
+    const cashboxSelect = document.getElementById('cashbox');
+    const bankBalanceDiv = document.getElementById('bankBalance');
+    const cashboxBalanceDiv = document.getElementById('cashboxBalance');
+    
+    bankSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        
+        if (selectedOption.value) {
+            const balance = selectedOption.dataset.balance;
+            const currency = selectedOption.dataset.currency;
+            
+            // تحسين عرض الرصيد لتجنب فقدان الدقة والتعامل مع القيم الفارغة
+            let formattedBalance = '0.000';
+            if (balance && balance !== 'None' && balance !== 'null') {
+                const parsedBalance = parseFloat(balance);
+                if (!isNaN(parsedBalance)) {
+                    formattedBalance = parsedBalance.toFixed(3);
+                }
+            }
+            bankBalanceDiv.querySelector('.balance-amount').textContent = 
+                formattedBalance + ' ' + (currency || 'JOD');
+            bankBalanceDiv.classList.remove('d-none');
+        } else {
+            bankBalanceDiv.classList.add('d-none');
+        }
+        
+        // تحديث اسم البنك للشيك
+        updateCheckBankName();
+        updatePreview();
+    });
+    
+    cashboxSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        if (selectedOption.value) {
+            const balance = selectedOption.dataset.balance;
+            const currency = selectedOption.dataset.currency;
+            
+            // تحسين عرض الرصيد لتجنب فقدان الدقة والتعامل مع القيم الفارغة
+            let formattedBalance = '0.000';
+            if (balance && balance !== 'None' && balance !== 'null') {
+                const parsedBalance = parseFloat(balance);
+                if (!isNaN(parsedBalance)) {
+                    formattedBalance = parsedBalance.toFixed(3);
+                }
+            }
+            cashboxBalanceDiv.querySelector('.balance-amount').textContent = 
+                formattedBalance + ' ' + (currency || 'JOD');
+            cashboxBalanceDiv.classList.remove('d-none');
+        } else {
+            cashboxBalanceDiv.classList.add('d-none');
+        }
+        updatePreview();
+    });
+    
+    // تحديث معاينة التحويل
+    function updatePreview() {
+        const transferType = document.getElementById('transfer_type').value;
+        const bankOption = bankSelect.options[bankSelect.selectedIndex];
+        const cashboxOption = cashboxSelect.options[cashboxSelect.selectedIndex];
+        const amount = parseFloat(document.getElementById('amount').value) || 0;
+        const fees = parseFloat(document.getElementById('fees').value) || 0;
+        const exchangeRate = parseFloat(document.getElementById('exchange_rate').value) || 1;
+        
+        if (transferType && bankOption.value && cashboxOption.value && amount > 0) {
+            const preview = document.getElementById('transferPreview');
+            const fromAccount = document.getElementById('fromAccount');
+            const toAccount = document.getElementById('toAccount');
+            const deductedAmount = document.getElementById('deductedAmount');
+            const addedAmount = document.getElementById('addedAmount');
+            
+            if (transferType === 'bank_to_cashbox') {
+                fromAccount.textContent = bankOption.text.split(' (')[0];
+                toAccount.textContent = cashboxOption.text.split(' -')[0];
+                deductedAmount.textContent = (amount + fees).toFixed(3);
+                addedAmount.textContent = (amount * exchangeRate).toFixed(3);
+            } else {
+                fromAccount.textContent = cashboxOption.text.split(' -')[0];
+                toAccount.textContent = bankOption.text.split(' (')[0];
+                deductedAmount.textContent = (amount + fees).toFixed(3);
+                addedAmount.textContent = (amount * exchangeRate).toFixed(3);
+            }
+            
+            preview.classList.remove('d-none');
+        } else {
+            document.getElementById('transferPreview').classList.add('d-none');
+        }
+    }
+    
+    // ربط الأحداث لتحديث المعاينة
+    document.getElementById('transfer_type').addEventListener('change', function() {
+        updatePreview();
+        updateCheckBankName();
+    });
+    document.getElementById('amount').addEventListener('input', updatePreview);
+    document.getElementById('fees').addEventListener('input', updatePreview);
+    document.getElementById('exchange_rate').addEventListener('input', updatePreview);
+    
+    // التحقق من صحة النموذج قبل الإرسال
+    document.getElementById('transferForm').addEventListener('submit', function(e) {
+        // منع الإرسال المتكرر
+        if (this.getAttribute('data-submitting') === 'true') {
+            e.preventDefault();
+            return false;
+        }
+        
+        const transferType = document.getElementById('transfer_type').value;
+        const bankSelect = document.getElementById('bank');
+        const cashboxSelect = document.getElementById('cashbox');
+        const amount = parseFloat(document.getElementById('amount').value) || 0;
+        const fees = parseFloat(document.getElementById('fees').value) || 0;
+        
+        // التحقق من أن جميع الحقول المطلوبة مملوءة
+        if (!transferType) {
+            e.preventDefault();
+            alert('يرجى اختيار نوع التحويل');
+            return false;
+        }
+        
+        if (!bankSelect.value) {
+            e.preventDefault();
+            alert('يرجى اختيار الحساب البنكي');
+            return false;
+        }
+        
+        if (!cashboxSelect.value) {
+            e.preventDefault();
+            alert('يرجى اختيار الصندوق النقدي');
+            return false;
+        }
+        
+        if (amount <= 0) {
+            e.preventDefault();
+            alert('يرجى إدخال مبلغ صحيح أكبر من صفر');
+            return false;
+        }
+        
+        // التحقق من أن اسم البنك للشيك قد تم ملؤه
+        const checkBankName = document.getElementById('check_bank_name').value.trim();
+        if (!checkBankName) {
+            e.preventDefault();
+            alert('اسم البنك للشيك مطلوب. يرجى اختيار الحساب البنكي أولاً.');
+            return false;
+        }
+        
+        // التحقق من كفاية الرصيد
+        let sourceBalance = 0;
+        let sourceName = '';
+        
+        if (transferType === 'bank_to_cashbox') {
+            const selectedBank = bankSelect.options[bankSelect.selectedIndex];
+            if (selectedBank && selectedBank.value) {
+                const balanceValue = selectedBank.dataset.balance;
+                sourceBalance = parseFloat(balanceValue) || 0;
+                sourceName = selectedBank.text.split(' (')[0].trim();
+            }
+        } else if (transferType === 'cashbox_to_bank') {
+            const selectedCashbox = cashboxSelect.options[cashboxSelect.selectedIndex];
+            if (selectedCashbox && selectedCashbox.value) {
+                const balanceValue = selectedCashbox.dataset.balance;
+                sourceBalance = parseFloat(balanceValue) || 0;
+                sourceName = selectedCashbox.text.split(' -')[0].trim();
+            }
+        }
+        
+        const totalRequired = amount + fees;
+        
+        // التحقق من أن المصدر محدد والرصيد صالح
+        if (!sourceName) {
+            e.preventDefault();
+            alert('يرجى اختيار مصدر التحويل أولاً');
+            return false;
+        }
+        
+        // التحقق من أن الرصيد رقم صالح (يمكن أن يكون صفر)
+        if (isNaN(sourceBalance)) {
+            e.preventDefault();
+            alert('خطأ في قراءة رصيد المصدر. يرجى إعادة المحاولة.');
+            return false;
+        }
+        
+        if (totalRequired > sourceBalance) {
+            e.preventDefault();
+            alert(`رصيد ${sourceName} غير كافي!\nالرصيد الحالي: ${sourceBalance.toFixed(3)}\nالمبلغ المطلوب: ${totalRequired.toFixed(3)}`);
+            return false;
+        }
+        
+        // تعيين حالة الإرسال لمنع الإرسال المتكرر
+        this.setAttribute('data-submitting', 'true');
+        
+        // تعطيل زر الإرسال
+        const submitButton = this.querySelector('button[type="submit"]');
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> جاري الإرسال...';
+        }
+        
+        // إعادة تفعيل النموذج بعد 10 ثوان في حالة فشل الإرسال
+        setTimeout(() => {
+            this.setAttribute('data-submitting', 'false');
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.innerHTML = '<i class="fas fa-save me-1"></i> إنشاء التحويل';
+            }
+        }, 10000);
+    });
+});
+
+// Print Function
+function printTransferForm() {
+    window.print();
+}
+</script>
+{% endblock %}

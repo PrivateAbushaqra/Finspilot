@@ -1,0 +1,1390 @@
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}" {% if LANGUAGE_CODE == 'ar' %}dir="rtl"{% else %}dir="ltr"{% endif %}>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Finspilot - نظام المحاسبة{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    {% if LANGUAGE_CODE == 'ar' %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    {% else %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    {% endif %}
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Session Management CSS -->
+    {% if user.is_authenticated %}
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'core/css/session-management.css' %}">
+    {% endif %}
+    
+    <!-- إعدادات الجلسة للـ JavaScript -->
+    {% if user.is_authenticated %}
+        {% load settings_tags %}
+        {% get_session_settings as session_settings %}
+        <meta name="session-timeout" content="{{ session_settings.timeout_minutes }}">
+        <meta name="session-timeout-enabled" content="{{ session_settings.enable_timeout|yesno:'true,false' }}">
+        <meta name="logout-on-browser-close" content="{{ session_settings.logout_on_browser_close|yesno:'true,false' }}">
+    {% endif %}
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+        }
+        
+        /* طباعة CSS */
+        @media print {
+            .no-print, .sidebar, .navbar, .btn, .pagination, 
+            .dropdown, .modal, .toast, .alert-dismissible .btn-close,
+            .print-hide, .search-filters, .filters, .form-control,
+            .page-title-right, .card-header .d-flex .btn, .action-buttons,
+            .actions-column, .edit-column, .delete-column, .d-none {
+                display: none !important;
+            }
+            
+            * {
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            
+            body {
+                background-color: white !important;
+                color: black !important;
+                font-size: 8pt;
+                line-height: 1.1;
+                margin: 0;
+                padding: 0;
+                font-family: 'Arial', sans-serif;
+            }
+            
+            .container, .container-fluid {
+                width: 100% !important;
+                max-width: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            
+            .row {
+                margin: 0 !important;
+            }
+            
+            .col, .col-12, [class*="col-"] {
+                padding: 0 !important;
+                width: 100% !important;
+            }
+            
+            .card {
+                border: none !important;
+                box-shadow: none !important;
+                page-break-inside: avoid;
+                margin: 0;
+                width: 100%;
+            }
+            
+            .card-header {
+                background-color: #f8f9fa !important;
+                color: black !important;
+                border: 2px solid #000 !important;
+                text-align: center;
+                padding: 8px 0;
+                margin-bottom: 15px;
+                font-weight: bold;
+                font-size: 12pt;
+            }
+            
+            .card-title, h1, h2, h3, h4, h5, h6, .page-title {
+                color: black !important;
+                text-align: center;
+                font-size: 11pt;
+                font-weight: bold;
+                margin: 5px 0;
+            }
+            
+            .card-body {
+                padding: 0 !important;
+            }
+            
+            /* تحسين عرض الجداول */
+            .table-responsive {
+                overflow: visible !important;
+            }
+            
+            .table {
+                border-collapse: collapse !important;
+                width: 100% !important;
+                margin: 0 !important;
+                font-size: 7pt;
+                table-layout: auto;
+                border: 2px solid #000 !important;
+                background-color: white !important;
+            }
+            
+            .table th, .table td {
+                border: 1px solid #000 !important;
+                padding: 2px 1px !important;
+                text-align: center !important;
+                word-wrap: break-word;
+                vertical-align: middle;
+                font-size: 7pt;
+                overflow: visible;
+                white-space: normal;
+                max-width: none;
+            }
+            
+            .table thead th {
+                background-color: #e9ecef !important;
+                color: black !important;
+                font-weight: bold !important;
+                font-size: 8pt;
+                border: 2px solid #000 !important;
+                text-align: center !important;
+            }
+            
+            .table tbody tr:nth-child(even) {
+                background-color: #f8f9fa !important;
+            }
+            
+            .table tbody tr:nth-child(odd) {
+                background-color: white !important;
+            }
+            
+            /* إخفاء عمود الإجراءات والأزرار بشكل أفضل */
+            .table th:last-child, 
+            .table td:last-child,
+            .table th:nth-last-child(1),
+            .table td:nth-last-child(1),
+            .table th:nth-last-child(2),
+            .table td:nth-last-child(2),
+            .actions-column,
+            .action-buttons,
+            .btn-group,
+            .btn-sm,
+            .edit-btn,
+            .delete-btn,
+            .view-btn,
+            .operations-column,
+            th:contains("إجراءات"),
+            th:contains("Actions"),
+            th:contains("تحكم"),
+            th:contains("عمليات") {
+                display: none !important;
+                visibility: hidden !important;
+            }
+            
+            /* إظهار جميع البيانات المهمة */
+            .table th:not(.actions-column):not([class*="action"]):not([class*="btn"]),
+            .table td:not(.actions-column):not([class*="action"]):not([class*="btn"]) {
+                display: table-cell !important;
+                visibility: visible !important;
+            }
+            
+            /* تحسين عرض النصوص الملونة */
+            .text-primary, .text-success, .text-danger, .text-warning, .text-info, .text-secondary {
+                color: black !important;
+            }
+            
+            .badge {
+                color: black !important;
+                border: 1px solid black !important;
+                background-color: white !important;
+                font-size: 6pt;
+                padding: 1px 3px;
+            }
+            
+            /* تحسين عرض البيانات المالية */
+            .balance, .amount, .price, .total, .currency {
+                font-weight: bold !important;
+                text-align: right !important;
+                direction: ltr;
+            }
+            
+            /* رأس الطباعة المحسن */
+            .print-header {
+                text-align: center;
+                margin-bottom: 20px;
+                border-bottom: 3px solid #000;
+                padding-bottom: 10px;
+                background-color: #f8f9fa !important;
+                font-size: 14pt;
+                font-weight: bold;
+            }
+            
+            .print-date {
+                text-align: left;
+                margin-bottom: 10px;
+                font-size: 7pt;
+                border-bottom: 1px solid #666;
+                padding-bottom: 3px;
+                direction: ltr;
+            }
+            
+            .print-company-info {
+                text-align: center;
+                margin-bottom: 15px;
+                font-size: 10pt;
+                font-weight: bold;
+                border: 2px solid #000;
+                padding: 5px;
+                background-color: #f0f0f0 !important;
+            }
+            
+            /* تحسين فواصل الصفحات */
+            .page-break {
+                page-break-before: always;
+            }
+            
+            @page {
+                margin: 0.5cm;
+                size: A4 landscape;
+            }
+            
+            /* منع قطع الصفوف والعناصر المهمة */
+            .table tr {
+                page-break-inside: avoid;
+            }
+            
+            .card {
+                page-break-inside: avoid;
+            }
+            
+            /* إعدادات متقدمة لرقم الصفحة */
+            @page {
+                margin: 0.5cm;
+                size: A4 landscape;
+                @bottom-center {
+                    content: "صفحة " counter(page) " من " counter(pages);
+                    font-size: 8pt;
+                    font-weight: bold;
+                }
+                @top-center {
+                    content: "تاريخ الطباعة: " attr(data-print-date);
+                    font-size: 7pt;
+                }
+            }
+            
+            /* تحسين عرض البيانات الطويلة */
+            .long-text {
+                white-space: normal !important;
+                word-wrap: break-word !important;
+                max-width: 100px;
+            }
+            
+            /* تحسين عرض التواريخ والأرقام */
+            .date-column, .number-column, .id-column {
+                white-space: nowrap !important;
+                font-family: 'Courier New', monospace;
+                font-size: 7pt;
+            }
+            
+            /* إخفاء العناصر غير الضرورية */
+            .search-form, .filter-form, .pagination-wrapper,
+            .alert, .message, .notification, .tooltip,
+            .popover, .modal-backdrop, .offcanvas {
+                display: none !important;
+            }
+            
+            /* تحسين عرض البيانات الرقمية */
+            .numeric-data {
+                text-align: right !important;
+                font-family: 'Courier New', monospace;
+                direction: ltr;
+            }
+        }
+        
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+        
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 0.75rem 1rem;
+            border-radius: 0.375rem;
+            margin: 0.25rem 0;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar .nav-link:hover {
+            color: #fff;
+            background-color: rgba(255,255,255,0.1);
+            transform: translateX(-5px);
+        }
+        
+        .sidebar .nav-link.active {
+            color: #fff !important;
+            background-color: #007bff !important;
+            border-radius: 5px;
+            font-weight: bold;
+            position: relative;
+            border-left: 4px solid #28a745;
+        }
+        
+        .sidebar .nav-link.active::before {
+            content: "●";
+            color: #28a745;
+            font-size: 12px;
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .sidebar .nav-link.active i {
+            color: white !important;
+        }
+        
+        /* تمييز القائمة الرئيسية التي تحتوي على الصفحة النشطة */
+        .sidebar .nav-item.has-active-child > a[data-bs-toggle="collapse"] {
+            background-color: rgba(0, 123, 255, 0.1);
+            border-left: 3px solid #007bff;
+            font-weight: bold;
+        }
+        
+        .main-content {
+            padding: 2rem;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 0.75rem;
+            box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+        }
+        
+        .card-header {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 0.75rem 0.75rem 0 0 !important;
+        }
+        
+        .navbar {
+            background: white !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .company-logo {
+            opacity: 0.1;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: -1;
+            max-width: 500px;
+            max-height: 500px;
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .stats-card {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 1rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(45deg, #764ba2, #667eea);
+            transform: translateY(-1px);
+        }
+        
+        /* Language Selector Styles */
+        #languageDropdown {
+            color: #495057;
+        }
+        
+        #languageDropdown:hover {
+            color: #007bff;
+        }
+        
+        .dropdown-item.active {
+            background-color: #f8f9fa;
+            color: #007bff;
+        }
+        
+        .dropdown-item button {
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: right;
+            padding: 0;
+            color: inherit;
+        }
+        
+        .dropdown-item:hover button {
+            color: inherit;
+        }
+        
+        /* تحسينات AJAX Loading */
+        .main-content {
+            min-height: 500px;
+            transition: opacity 0.2s ease-in-out;
+        }
+        
+        .sidebar .nav-link.loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        /* إضافة تأثير للرابط النشط */
+        .sidebar .nav-link.active {
+            background-color: rgba(255,255,255,0.2) !important;
+            color: #fff !important;
+            border-right: 3px solid #fff;
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Company Logo Background -->
+    {% if company_settings.logo %}
+    <img src="{{ company_settings.logo.url }}" class="company-logo" alt="شعار الشركة">
+    {% endif %}
+    
+    <!-- Top Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="{% url 'core:dashboard' %}">
+                <i class="fas fa-chart-line me-2"></i>
+                {{ company_settings.company_name }} - {% trans "لوحة التحكم" %}
+            </a>
+            
+            <div class="navbar-nav ms-auto">
+                <!-- Language Selector -->
+                <div class="nav-item dropdown me-3">
+                    <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-globe me-1"></i>
+                        {% get_current_language as LANGUAGE_CODE %}
+                        {% if LANGUAGE_CODE == 'ar' %}العربية{% else %}English{% endif %}
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <form action="{% url 'set_language' %}" method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <input name="next" type="hidden" value="{{ request.get_full_path }}" />
+                                <input name="language" type="hidden" value="ar" />
+                                <button type="submit" class="dropdown-item {% if LANGUAGE_CODE == 'ar' %}active{% endif %}">
+                                    <i class="fas fa-check me-2" {% if LANGUAGE_CODE != 'ar' %}style="visibility: hidden;"{% endif %}></i>
+                                    العربية
+                                </button>
+                            </form>
+                        </li>
+                        <li>
+                            <form action="{% url 'set_language' %}" method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <input name="next" type="hidden" value="{{ request.get_full_path }}" />
+                                <input name="language" type="hidden" value="en" />
+                                <button type="submit" class="dropdown-item {% if LANGUAGE_CODE == 'en' %}active{% endif %}">
+                                    <i class="fas fa-check me-2" {% if LANGUAGE_CODE != 'en' %}style="visibility: hidden;"{% endif %}></i>
+                                    English
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- Notifications -->
+                {% if user.is_authenticated %}
+                <div class="nav-item dropdown me-3">
+                    <a class="nav-link position-relative" href="{% url 'core:notifications' %}" id="notificationDropdown">
+                        <i class="fas fa-bell fa-lg"></i>
+                        {% if unread_notifications_count > 0 %}
+                        <span class="notification-badge">{{ unread_notifications_count }}</span>
+                        {% endif %}
+                    </a>
+                </div>
+                
+                <!-- User Menu -->
+                <div class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-user me-1"></i>
+                        {{ user.get_full_name|default:user.username }}
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{% url 'settings:index' %}"><i class="fas fa-cog me-2"></i>{% trans "الإعدادات" %}</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'admin:logout' %}"><i class="fas fa-sign-out-alt me-2"></i>{% trans "تسجيل الخروج" %}</a></li>
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            {% if user.is_authenticated %}
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <ul class="nav flex-column">
+                        <!-- Dashboard -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'core:dashboard' %}">
+                                <i class="fas fa-home me-2"></i>
+                                الشاشة الرئيسية
+                            </a>
+                        </li>
+                        
+                        <!-- Bank Accounts -->
+                        {% if user.has_banks_permission %}
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#banksMenu">
+                                <i class="fas fa-university me-2"></i>
+                                الحسابات البنكية
+                            </a>
+                            <div class="collapse" id="banksMenu">
+                                <ul class="nav flex-column ms-3">
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'banks:account_add' %}">إضافة حساب</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'banks:account_list' %}">قائمة الحسابات</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'banks:transfer_list' %}">قائمة التحويلات</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        {% endif %}
+                        
+                        <!-- Cashboxes -->
+                        {% if user.has_cashboxes_permission %}
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#cashboxesMenu">
+                                <i class="fas fa-cash-register me-2"></i>
+                                الصناديق النقدية
+                            </a>
+                            <div class="collapse" id="cashboxesMenu">
+                                <ul class="nav flex-column ms-3">
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'cashboxes:cashbox_list' %}">قائمة الصناديق</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'cashboxes:transfer_list' %}">قائمة التحويلات</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        {% endif %}
+                        
+                        <!-- Payment Receipts -->
+                        {% if user.has_receipts_permission %}
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#receiptsMenu">
+                                <i class="fas fa-receipt me-2"></i>
+                                سندات القبض
+                            </a>
+                            <div class="collapse" id="receiptsMenu">
+                                <ul class="nav flex-column ms-3">
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'receipts:receipt_add' %}">إضافة سند قبض</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'receipts:receipt_list' %}">قائمة السندات</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'receipts:check_list' %}">إدارة الشيكات</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        {% endif %}
+                        
+                        <!-- Payment Vouchers -->
+                        {% if user.has_receipts_permission %}
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#paymentsMenu">
+                                <i class="fas fa-money-bill-wave me-2"></i>
+                                سندات الصرف
+                            </a>
+                            <div class="collapse" id="paymentsMenu">
+                                <ul class="nav flex-column ms-3">
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'payments:voucher_create' %}">إضافة سند صرف</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'payments:voucher_list' %}">قائمة السندات</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        {% endif %}
+                        
+                        <!-- Products & Categories -->
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#productsMenu">
+                                <i class="fas fa-boxes me-2"></i>
+                                الفئات والمنتجات
+                            </a>
+                            <div class="collapse" id="productsMenu">
+                                <ul class="nav flex-column ms-3">
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'products:category_add' %}">إضافة فئة</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'products:product_add' %}">إضافة منتج</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'products:category_list' %}">قائمة الفئات</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'products:product_list' %}">قائمة المنتجات</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        
+                        <!-- Customers & Suppliers -->
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#customersMenu">
+                                <i class="fas fa-users me-2"></i>
+                                العملاء والموردون
+                            </a>
+                            <div class="collapse" id="customersMenu">
+                                <ul class="nav flex-column ms-3">
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'customers:add' %}">إضافة عميل/مورد</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'customers:customer_list' %}">قائمة العملاء</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'customers:supplier_list' %}">قائمة الموردون</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'customers:list' %}">قائمة العملاء والموردون</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        
+                        <!-- Purchases -->
+                        {% if user.has_purchases_permission %}
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#purchasesMenu">
+                                <i class="fas fa-shopping-cart me-2"></i>
+                                المشتريات
+                            </a>
+                            <div class="collapse" id="purchasesMenu">
+                                <ul class="nav flex-column ms-3">
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'purchases:invoice_add' %}">إنشاء فاتورة مشتريات</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'purchases:invoice_list' %}">قائمة فواتير المشتريات</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'purchases:return_add' %}">إنشاء مردود مشتريات</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'purchases:return_list' %}">قائمة مردودات المشتريات</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        {% endif %}
+                        
+                        <!-- Sales -->
+                        {% if user.has_sales_permission %}
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#salesMenu">
+                                <i class="fas fa-cash-register me-2"></i>
+                                المبيعات
+                            </a>
+                            <div class="collapse" id="salesMenu">
+                                <ul class="nav flex-column ms-3">
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'sales:invoice_add' %}">إنشاء فاتورة مبيعات</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'sales:return_add' %}">إنشاء مردود مبيعات</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'sales:invoice_list' %}">قائمة فواتير المبيعات</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'sales:return_list' %}">قائمة مردود المبيعات</a>
+                                    </li>
+                                    {% if user.has_pos_permission %}
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'sales:pos' %}">نقطة البيع</a>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </li>
+                        {% endif %}
+                        
+                        <!-- Inventory -->
+                        {% if user.has_inventory_permission %}
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#inventoryMenu">
+                                <i class="fas fa-warehouse me-2"></i>
+                                المخزون
+                            </a>
+                            <div class="collapse" id="inventoryMenu">
+                                <ul class="nav flex-column ms-3">
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'inventory:list' %}">عرض المخزون</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'inventory:warehouse_list' %}">المستودعات</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'inventory:movement_list' %}">حركة المخزون</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'inventory:low_stock' %}">تنبيهات المخزون</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        {% endif %}
+                        
+                        <!-- Revenues & Expenses -->
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#revenuesExpensesMenu">
+                                <i class="fas fa-chart-line me-2"></i>
+                                الإيرادات والمصروفات
+                            </a>
+                            <div class="collapse" id="revenuesExpensesMenu">
+                                <ul class="nav flex-column ms-3">
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'revenues_expenses:dashboard' %}">لوحة التحكم</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'revenues_expenses:category_list' %}">إدارة الفئات</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'revenues_expenses:entry_list' %}">قائمة القيود</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'revenues_expenses:entry_create' %}">إضافة قيد جديد</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'revenues_expenses:recurring_list' %}">الإيرادات المتكررة</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        
+                        <!-- Journal Entries -->
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#journalMenu">
+                                <i class="fas fa-book me-2"></i>
+                                القيود المحاسبية
+                            </a>
+                            <div class="collapse" id="journalMenu">
+                                <ul class="nav flex-column ms-3">
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'journal:dashboard' %}">لوحة التحكم</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'journal:entry_list' %}">جميع القيود</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'journal:entries_by_type' %}">القيود حسب النوع</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'journal:entry_create' %}">إنشاء قيد يدوي</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'journal:account_list' %}">دليل الحسابات</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'journal:trial_balance' %}">ميزان المراجعة</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        
+                        <!-- Assets & Liabilities -->
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#assetsLiabilitiesMenu">
+                                <i class="fas fa-balance-scale me-2"></i>
+                                الأصول والخصوم
+                            </a>
+                            <div class="collapse" id="assetsLiabilitiesMenu">
+                                <ul class="nav flex-column ms-3">
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'assets_liabilities:dashboard' %}">لوحة التحكم</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'assets_liabilities:asset_list' %}">قائمة الأصول</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'assets_liabilities:liability_list' %}">قائمة الخصوم</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+
+                        <!-- Reports -->
+                        {% if user.has_reports_permission %}
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#reportsMenu">
+                                <i class="fas fa-chart-bar me-2"></i>
+                                التقارير
+                            </a>
+                            <div class="collapse" id="reportsMenu">
+                                <ul class="nav flex-column ms-3">
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'sales:sales_report' %}">تقارير المبيعات</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'purchases:purchase_report' %}">تقارير المشتريات</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'core:tax_report' %}">تقرير الضرائب</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'core:profit_loss_report' %}">الأرباح والخسائر</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        {% endif %}
+                        
+                        <!-- System Management -->
+                        {% if user.is_admin %}
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#systemMenu">
+                                <i class="fas fa-cogs me-2"></i>
+                                إدارة النظام
+                            </a>
+                            <div class="collapse" id="systemMenu">
+                                <ul class="nav flex-column ms-3">
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'users:user_add' %}">إضافة مستخدم</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'users:user_list' %}">قائمة المستخدمين</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'users:group_list' %}">المجموعات والصلاحيات</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'core:audit_log' %}">
+                                            <i class="fas fa-history me-2"></i>
+                                            سجل الأنشطة
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'settings:document_sequences' %}">إدارة أرقام المستندات</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'settings:company' %}">إعدادات النظام</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'core:backup_export' %}">
+                                            <i class="fas fa-download me-2"></i>
+                                            النسخ الاحتياطي
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </nav>
+            {% endif %}
+            
+            <!-- Main Content -->
+            <main class="{% if user.is_authenticated %}col-md-9 ms-sm-auto col-lg-10{% else %}col-12{% endif %} px-md-4">
+                <div class="main-content" id="main-content">
+                    {% if messages %}
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    {% block content %}{% endblock %}
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // وظيفة لتحديد الصفحة النشطة في الشريط الجانبي
+        function setActiveSidebarItem() {
+            const currentUrl = window.location.pathname;
+            const sidebarLinks = document.querySelectorAll('.sidebar .nav-link[href]');
+            
+            // إزالة active من جميع الروابط
+            sidebarLinks.forEach(link => {
+                link.classList.remove('active');
+                // إزالة has-active-child من القوائم الرئيسية
+                const parentNavItem = link.closest('.nav-item');
+                if (parentNavItem) {
+                    parentNavItem.classList.remove('has-active-child');
+                }
+            });
+            
+            // العثور على الرابط المطابق للصفحة الحالية
+            let activeLink = null;
+            let exactMatch = false;
+            
+            sidebarLinks.forEach(link => {
+                const linkPath = new URL(link.href).pathname;
+                
+                // مطابقة دقيقة
+                if (linkPath === currentUrl) {
+                    activeLink = link;
+                    exactMatch = true;
+                }
+                // مطابقة جزئية (إذا لم توجد مطابقة دقيقة)
+                else if (!exactMatch && currentUrl.startsWith(linkPath) && linkPath !== '/') {
+                    activeLink = link;
+                }
+            });
+            
+            // تفعيل الرابط النشط
+            if (activeLink) {
+                activeLink.classList.add('active');
+                
+                // العثور على القائمة الرئيسية والفرعية التي تحتوي على هذا الرابط
+                const parentCollapse = activeLink.closest('.collapse');
+                if (parentCollapse) {
+                    // فتح القائمة الفرعية
+                    const bsCollapse = new bootstrap.Collapse(parentCollapse, {show: true});
+                    bsCollapse.show();
+                    
+                    // تمييز القائمة الرئيسية
+                    const mainNavItem = parentCollapse.closest('.nav-item');
+                    if (mainNavItem) {
+                        mainNavItem.classList.add('has-active-child');
+                    }
+                    
+                    // حفظ حالة القائمة المفتوحة
+                    localStorage.setItem('sidebar_' + parentCollapse.id, 'open');
+                }
+            }
+        }
+        
+        // تحديد الصفحة النشطة عند تحميل الصفحة
+        setActiveSidebarItem();
+        
+        // معالجة النقرات على روابط الشاشة الجانبية
+        const sidebarLinks = document.querySelectorAll('.sidebar .nav-link[href]:not([data-bs-toggle])');
+        
+        sidebarLinks.forEach(link => {
+            // تجاهل الروابط التي تفتح القوائم المنسدلة أو الروابط الخارجية
+            if (link.getAttribute('data-bs-toggle') === 'collapse' || 
+                link.href.startsWith('mailto:') || 
+                link.href.startsWith('tel:') ||
+                link.href.includes('#') ||
+                link.href.includes('admin:logout') ||
+                link.closest('[data-bs-toggle="collapse"]')) {
+                return;
+            }
+            
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const url = this.href;
+                const mainContent = document.getElementById('main-content');
+                
+                // تجنب إعادة تحميل نفس الصفحة
+                if (window.location.href === url) {
+                    return;
+                }
+                
+                // إضافة loading indicator
+                this.classList.add('loading');
+                mainContent.style.opacity = '0.5';
+                
+                // إضافة spinner
+                const loadingDiv = document.createElement('div');
+                loadingDiv.className = 'position-absolute top-50 start-50 translate-middle';
+                loadingDiv.innerHTML = `
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">جاري التحميل...</span>
+                    </div>
+                `;
+                mainContent.style.position = 'relative';
+                mainContent.appendChild(loadingDiv);
+                
+                // إرسال طلب AJAX
+                fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.text();
+                })
+                .then(html => {
+                    // استخراج المحتوى من الصفحة المُحملة
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newContent = doc.querySelector('.main-content, #main-content');
+                    
+                    if (newContent) {
+                        // إزالة loading state
+                        this.classList.remove('loading');
+                        loadingDiv.remove();
+                        
+                        // تحديث المحتوى
+                        mainContent.innerHTML = newContent.innerHTML;
+                        mainContent.style.opacity = '1';
+                        
+                        // تحديث URL في شريط العناوين
+                        history.pushState({url: url}, '', url);
+                        
+                        // تنفيذ أي سكريبت جديد في المحتوى
+                        const scripts = mainContent.querySelectorAll('script');
+                        scripts.forEach(script => {
+                            if (script.src) {
+                                // للسكريبت الخارجي
+                                const newScript = document.createElement('script');
+                                newScript.src = script.src;
+                                document.head.appendChild(newScript);
+                            } else {
+                                // للسكريبت المضمن
+                                const newScript = document.createElement('script');
+                                newScript.textContent = script.textContent;
+                                document.body.appendChild(newScript);
+                            }
+                        });
+                        
+                        // تحديث title الصفحة
+                        const newTitle = doc.querySelector('title');
+                        if (newTitle) {
+                            document.title = newTitle.textContent;
+                        }
+                        
+                        // إعادة تهيئة Bootstrap components إذا لزم الأمر
+                        if (typeof bootstrap !== 'undefined') {
+                            // إعادة تهيئة tooltips و popovers
+                            const tooltipTriggerList = [].slice.call(mainContent.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                                return new bootstrap.Tooltip(tooltipTriggerEl);
+                            });
+                        }
+                    } else {
+                        throw new Error('المحتوى غير موجود في الاستجابة');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading page:', error);
+                    // في حالة الخطأ، إزالة loading وإعادة توجيه عادي
+                    this.classList.remove('loading');
+                    if (loadingDiv.parentNode) {
+                        loadingDiv.remove();
+                    }
+                    mainContent.style.opacity = '1';
+                    
+                    // إعادة توجيه عادي كحل بديل
+                    window.location.href = url;
+                });
+                
+                // تحديث الرابط النشط باستخدام الوظيفة المحسنة
+                setActiveSidebarItem();
+            });
+        });
+        
+        // معالجة أزرار المتصفح (Back/Forward)
+        window.addEventListener('popstate', function(e) {
+            if (e.state && e.state.url) {
+                // تحميل الصفحة المحفوظة في التاريخ
+                const url = e.state.url;
+                const mainContent = document.getElementById('main-content');
+                
+                fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newContent = doc.querySelector('.main-content, #main-content');
+                    
+                    if (newContent) {
+                        mainContent.innerHTML = newContent.innerHTML;
+                        
+                        // تحديث title
+                        const newTitle = doc.querySelector('title');
+                        if (newTitle) {
+                            document.title = newTitle.textContent;
+                        }
+                        
+                        // تحديث الرابط النشط في الشريط الجانبي
+                        setActiveSidebarItem();
+                    }
+                })
+                .catch(() => {
+                    window.location.reload();
+                });
+            } else {
+                // إذا لم يكن هناك state محفوظ، إعادة تحميل الصفحة
+                window.location.reload();
+            }
+        });
+        
+        // معالجة فتح/إغلاق القوائم المنسدلة (إغلاق القوائم الأخرى عند فتح قائمة جديدة)
+        const collapseToggleLinks = document.querySelectorAll('.sidebar a[data-bs-toggle="collapse"]');
+        collapseToggleLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                const targetCollapse = document.querySelector(this.getAttribute('href'));
+                const isCurrentlyCollapsed = !targetCollapse.classList.contains('show');
+                
+                if (isCurrentlyCollapsed) {
+                    // إذا كانت القائمة الحالية مغلقة وسيتم فتحها، أغلق جميع القوائم الأخرى
+                    const allCollapses = document.querySelectorAll('.sidebar .collapse.show');
+                    allCollapses.forEach(collapse => {
+                        if (collapse !== targetCollapse) {
+                            const bsCollapse = bootstrap.Collapse.getInstance(collapse);
+                            if (bsCollapse) {
+                                bsCollapse.hide();
+                            } else {
+                                const newBsCollapse = new bootstrap.Collapse(collapse, {show: false});
+                                newBsCollapse.hide();
+                            }
+                        }
+                    });
+                }
+            });
+        });
+        
+        // حفظ حالة القوائم المنسدلة
+        const collapseElements = document.querySelectorAll('.sidebar .collapse');
+        collapseElements.forEach(collapse => {
+            collapse.addEventListener('shown.bs.collapse', function() {
+                localStorage.setItem('sidebar_' + this.id, 'open');
+            });
+            
+            collapse.addEventListener('hidden.bs.collapse', function() {
+                localStorage.setItem('sidebar_' + this.id, 'closed');
+            });
+            
+            // استعادة حالة القوائم عند تحميل الصفحة
+            const savedState = localStorage.getItem('sidebar_' + collapse.id);
+            if (savedState === 'open') {
+                const bsCollapse = new bootstrap.Collapse(collapse, {show: true});
+            }
+        });
+    });
+    
+    // دالة الطباعة المحسنة
+    function printPage() {
+        // إضافة رأس الطباعة
+        addPrintHeader();
+        
+        // تحسين الجداول للطباعة
+        optimizeTablesForPrint();
+        
+        // الطباعة
+        window.print();
+        
+        // إزالة رأس الطباعة بعد الطباعة
+        setTimeout(() => {
+            removePrintHeader();
+            restoreTablesAfterPrint();
+        }, 1000);
+    }
+    
+    function addPrintHeader() {
+        // التحقق من وجود رأس طباعة مسبق
+        const existingHeader = document.querySelector('.print-header-added');
+        if (existingHeader) {
+            existingHeader.remove();
+        }
+        
+        // إنشاء رأس الطباعة
+        const printHeader = document.createElement('div');
+        printHeader.className = 'print-header-added';
+        printHeader.style.display = 'none';
+        
+        const currentDate = new Date();
+        const dateStr = currentDate.toLocaleDateString('ar-SA', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        const pageTitle = document.querySelector('h1, h2, h3, h4, .card-title, .page-title')?.textContent?.trim() || 'التقرير';
+        
+        printHeader.innerHTML = `
+            <div class="print-company-info">
+                Finspilot - نظام المحاسبة المتكامل
+            </div>
+            <div class="print-header">
+                ${pageTitle}
+            </div>
+            <div class="print-date">
+                تاريخ الطباعة: ${dateStr}
+            </div>
+            <style>
+                @media print {
+                    .print-header-added {
+                        display: block !important;
+                    }
+                }
+            </style>
+        `;
+        
+        // إدراج الرأس في بداية المحتوى الرئيسي
+        const mainContent = document.querySelector('.main-content, #main-content, .card-body, .container-fluid');
+        if (mainContent) {
+            mainContent.insertBefore(printHeader, mainContent.firstChild);
+        }
+    }
+    
+    function removePrintHeader() {
+        const printHeader = document.querySelector('.print-header-added');
+        if (printHeader) {
+            printHeader.remove();
+        }
+    }
+    
+    function optimizeTablesForPrint() {
+        const tables = document.querySelectorAll('.table');
+        tables.forEach(table => {
+            // حفظ العرض الأصلي
+            table.setAttribute('data-original-width', table.style.width);
+            
+            // إضافة فئات CSS للطباعة
+            table.classList.add('print-optimized');
+            
+            // تحسين عرض الأعمدة
+            const headers = table.querySelectorAll('thead th');
+            const rows = table.querySelectorAll('tbody tr');
+            
+            // إخفاء أعمدة الإجراءات
+            headers.forEach((header, index) => {
+                const headerText = header.textContent.toLowerCase();
+                if (headerText.includes('إجراءات') || headerText.includes('actions') || 
+                    headerText.includes('تحكم') || headerText.includes('عمليات') ||
+                    header.querySelector('.btn, button, a[href]')) {
+                    header.style.display = 'none';
+                    
+                    // إخفاء الخلايا المقابلة في كل صف
+                    rows.forEach(row => {
+                        const cell = row.children[index];
+                        if (cell) {
+                            cell.style.display = 'none';
+                        }
+                    });
+                }
+            });
+            
+            // إضافة فئات CSS للبيانات الرقمية
+            rows.forEach(row => {
+                Array.from(row.children).forEach(cell => {
+                    const text = cell.textContent.trim();
+                    
+                    // التحقق من البيانات الرقمية
+                    if (/^\d+([.,]\d+)*\s*(ريال|ر\.س|SAR|$)?$/.test(text)) {
+                        cell.classList.add('numeric-data');
+                    }
+                    
+                    // التحقق من التواريخ
+                    if (/\d{4}-\d{2}-\d{2}|\d{2}\/\d{2}\/\d{4}/.test(text)) {
+                        cell.classList.add('date-column');
+                    }
+                    
+                    // التحقق من الأرقام المرجعية
+                    if (/^[A-Z]{2,}-\d+$/.test(text)) {
+                        cell.classList.add('id-column');
+                    }
+                });
+            });
+        });
+    }
+    
+    function restoreTablesAfterPrint() {
+        const tables = document.querySelectorAll('.table.print-optimized');
+        tables.forEach(table => {
+            table.classList.remove('print-optimized');
+            
+            // استعادة العرض الأصلي
+            const originalWidth = table.getAttribute('data-original-width');
+            if (originalWidth) {
+                table.style.width = originalWidth;
+                table.removeAttribute('data-original-width');
+            }
+            
+            // إظهار الأعمدة المخفية
+            const hiddenElements = table.querySelectorAll('[style*="display: none"]');
+            hiddenElements.forEach(element => {
+                element.style.display = '';
+            });
+        });
+    }
+    
+    // إضافة معالج للطباعة بالكيبورد (Ctrl+P)
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.key === 'p') {
+            e.preventDefault();
+            printPage();
+        }
+    });
+    </script>
+    
+    <!-- Session Management JavaScript -->
+    {% if user.is_authenticated %}
+    {% load static %}
+    <script src="{% static 'core/js/session-manager.js' %}"></script>
+    {% endif %}
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

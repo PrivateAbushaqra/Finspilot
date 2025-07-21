@@ -1,0 +1,322 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title">{{ page_title }}</h3>
+                    <div>
+                        <a href="{% url 'receipts:receipt_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> {% trans "العودة للقائمة" %}
+                        </a>
+                        {% if not receipt.is_reversed %}
+                        <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editReceiptModal">
+                            <i class="fas fa-edit"></i> {% trans "تعديل" %}
+                        </button>
+                        {% if receipt.can_be_reversed %}
+                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#reverseReceiptModal">
+                            <i class="fas fa-undo"></i> {% trans "عكس السند" %}
+                        </button>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <!-- معلومات السند -->
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">{% trans "معلومات السند" %}</h5>
+                                    <table class="table table-borderless">
+                                        <tr>
+                                            <th width="30%">{% trans "رقم السند" %}:</th>
+                                            <td>{{ receipt.receipt_number }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans "التاريخ" %}:</th>
+                                            <td>{{ receipt.date|date:"Y-m-d" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans "العميل" %}:</th>
+                                            <td>{{ receipt.customer.name }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans "نوع الدفع" %}:</th>
+                                            <td>
+                                                <span class="badge bg-{% if receipt.payment_type == 'cash' %}success{% else %}info{% endif %}">
+                                                    {{ receipt.get_payment_type_display }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans "المبلغ" %}:</th>
+                                            <td class="text-success h5">{{ receipt.amount|floatformat:3 }}</td>
+                                        </tr>
+                                        
+                                        {% if receipt.payment_type == 'cash' %}
+                                        <tr>
+                                            <th>{% trans "الصندوق" %}:</th>
+                                            <td>{{ receipt.cashbox.name|default:"-" }}</td>
+                                        </tr>
+                                        {% endif %}
+                                        
+                                        {% if receipt.payment_type == 'check' %}
+                                        <tr>
+                                            <th>{% trans "رقم الشيك" %}:</th>
+                                            <td>{{ receipt.check_number }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans "تاريخ الشيك" %}:</th>
+                                            <td>{{ receipt.check_date|date:"Y-m-d" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans "تاريخ الاستحقاق" %}:</th>
+                                            <td>{{ receipt.check_due_date|date:"Y-m-d" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans "البنك" %}:</th>
+                                            <td>{{ receipt.bank_name }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans "حالة الشيك" %}:</th>
+                                            <td>
+                                                <span class="badge bg-{% if receipt.check_status == 'pending' %}warning{% elif receipt.check_status == 'collected' %}success{% else %}danger{% endif %}">
+                                                    {{ receipt.get_check_status_display }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        {% endif %}
+                                        
+                                        <tr>
+                                            <th>{% trans "الوصف" %}:</th>
+                                            <td>{{ receipt.description|default:"-" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans "ملاحظات" %}:</th>
+                                            <td>{{ receipt.notes|default:"-" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans "أنشئ بواسطة" %}:</th>
+                                            <td>{{ receipt.created_by.username }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans "تاريخ الإنشاء" %}:</th>
+                                            <td>{{ receipt.created_at|date:"Y-m-d H:i" }}</td>
+                                        </tr>
+                                        
+                                        {% if receipt.is_reversed %}
+                                        <tr>
+                                            <th>{% trans "عُكس بواسطة" %}:</th>
+                                            <td>{{ receipt.reversed_by.username }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans "تاريخ العكس" %}:</th>
+                                            <td>{{ receipt.reversed_at|date:"Y-m-d H:i" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans "سبب العكس" %}:</th>
+                                            <td>{{ receipt.reversal_reason }}</td>
+                                        </tr>
+                                        {% endif %}
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- ملخص السند -->
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">{% trans "ملخص السند" %}</h5>
+                                    <div class="text-center">
+                                        <div class="mb-3">
+                                            <i class="fas fa-receipt fa-3x {% if receipt.is_reversed %}text-danger{% else %}text-primary{% endif %}"></i>
+                                        </div>
+                                        <h4 class="{% if receipt.is_reversed %}text-danger{% else %}text-success{% endif %}">
+                                            {{ receipt.effective_amount|floatformat:3 }}
+                                        </h4>
+                                        <p class="text-muted">{{ receipt.date|date:"Y-m-d" }}</p>
+                                        
+                                        {% if receipt.is_reversed %}
+                                        <span class="badge bg-danger">{% trans "معكوس" %}</span>
+                                        {% elif receipt.payment_type == 'check' and receipt.check_status == 'pending' %}
+                                        <a href="{% url 'receipts:check_collect' receipt.id %}" class="btn btn-warning btn-sm">
+                                            <i class="fas fa-coins"></i> {% trans "تحصيل الشيك" %}
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- تحصيلات الشيك -->
+                    {% if receipt.payment_type == 'check' and collections %}
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">{% trans "تحصيلات الشيك" %}</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>{% trans "تاريخ التحصيل" %}</th>
+                                                    <th>{% trans "الحالة" %}</th>
+                                                    <th>{% trans "الصندوق" %}</th>
+                                                    <th>{% trans "ملاحظات" %}</th>
+                                                    <th>{% trans "أنشئ بواسطة" %}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for collection in collections %}
+                                                <tr>
+                                                    <td>{{ collection.collection_date|date:"Y-m-d" }}</td>
+                                                    <td>
+                                                        <span class="badge bg-{% if collection.status == 'collected' %}success{% else %}danger{% endif %}">
+                                                            {{ collection.get_status_display }}
+                                                        </span>
+                                                    </td>
+                                                    <td>{{ collection.cashbox.name|default:"-" }}</td>
+                                                    <td>{{ collection.notes|default:"-" }}</td>
+                                                    <td>{{ collection.created_by.username }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- حركات الحساب -->
+                    {% if account_movements %}
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">{% trans "حركات الحساب المرتبطة" %}</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>{% trans "التاريخ" %}</th>
+                                                    <th>{% trans "نوع الحركة" %}</th>
+                                                    <th>{% trans "المبلغ" %}</th>
+                                                    <th>{% trans "الوصف" %}</th>
+                                                    <th>{% trans "رقم المرجع" %}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for movement in account_movements %}
+                                                <tr>
+                                                    <td>{{ movement.date|date:"Y-m-d" }}</td>
+                                                    <td>{{ movement.get_movement_type_display }}</td>
+                                                    <td class="{% if movement.amount > 0 %}text-success{% else %}text-danger{% endif %}">
+                                                        {{ movement.amount|floatformat:3 }}
+                                                    </td>
+                                                    <td>{{ movement.description }}</td>
+                                                    <td>{{ movement.reference_number }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal تعديل السند -->
+{% if not receipt.is_reversed %}
+<div class="modal fade" id="editReceiptModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{% url 'receipts:receipt_edit' receipt.id %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">{% trans "تعديل السند" %}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">{% trans "الوصف" %}</label>
+                        <textarea name="description" class="form-control" rows="3">{{ receipt.description }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans "ملاحظات" %}</label>
+                        <textarea name="notes" class="form-control" rows="2">{{ receipt.notes }}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        {% trans "إلغاء" %}
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        {% trans "تحديث" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal عكس السند -->
+{% if receipt.can_be_reversed %}
+<div class="modal fade" id="reverseReceiptModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{% url 'receipts:receipt_reverse' receipt.id %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">{% trans "عكس السند" %}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        {% trans "تحذير: عكس السند سيؤثر على رصيد العميل والصندوق. هذا الإجراء لا يمكن التراجع عنه!" %}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans "سبب العكس" %} *</label>
+                        <textarea name="reason" class="form-control" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans "ملاحظات إضافية" %}</label>
+                        <textarea name="notes" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        {% trans "إلغاء" %}
+                    </button>
+                    <button type="submit" class="btn btn-danger">
+                        {% trans "عكس السند" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}

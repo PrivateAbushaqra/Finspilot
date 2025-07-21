@@ -1,0 +1,983 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load currency_tags %}
+
+{% block title %}التحويلات البنكية - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .transfers-container {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .transfers-header {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+        padding: 1.5rem;
+    }
+    
+    .transfer-card {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        margin-bottom: 1rem;
+    }
+    
+    .transfer-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .transfer-amount {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #28a745;
+    }
+    
+    .transfer-fees {
+        color: #dc3545;
+        font-size: 0.9rem;
+    }
+    
+    .transfer-date {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .btn-add {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-add:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .account-badge {
+        background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .transfer-arrow {
+        color: #28a745;
+        font-size: 1.5rem;
+    }
+    
+    .btn-group-actions {
+        display: flex;
+        gap: 0.25rem;
+        flex-wrap: wrap;
+    }
+    
+    .btn-action {
+        min-width: 90px;
+        font-size: 0.8rem;
+        padding: 0.5rem 0.75rem;
+        border-radius: 4px;
+        margin: 2px;
+    }
+    
+    @media (max-width: 768px) {
+        .btn-action span {
+            display: inline !important;
+        }
+        .btn-action {
+            min-width: 80px;
+            font-size: 0.75rem;
+        }
+    }
+    
+    /* Print Styles - تحسين الطباعة لنظام الجداول */
+    @media print {
+        .print-controls,
+        .btn,
+        .navbar,
+        .sidebar,
+        .breadcrumb,
+        .transfers-header .col-md-6:last-child,
+        .input-group,
+        .form-select,
+        .empty-state,
+        .btn-group-actions,
+        .no-print {
+            display: none !important;
+        }
+        
+        .container-fluid {
+            margin: 0 !important;
+            padding: 0 !important;
+            max-width: 100% !important;
+            width: 100% !important;
+        }
+        
+        body {
+            font-size: 8pt !important;
+            color: #000 !important;
+            line-height: 1.1 !important;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            color: #000 !important;
+            page-break-after: avoid;
+            text-align: center !important;
+            font-size: 12pt !important;
+            margin-bottom: 15px !important;
+        }
+        
+        /* إنشاء رأس الجدول */
+        #transfersList::before {
+            content: "رقم التحويل\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0 التاريخ\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0 من\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0 إلى\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0 المبلغ\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0 الرسوم\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0 النوع";
+            display: block;
+            background-color: #f8f9fa !important;
+            border: 2px solid #000 !important;
+            padding: 8px !important;
+            font-weight: bold !important;
+            text-align: center !important;
+            font-size: 9pt !important;
+            border-bottom: 2px solid #000 !important;
+        }
+        
+        /* تحويل كل تحويل إلى سطر جدول */
+        .transfer-card {
+            display: block !important;
+            border: 1px solid #000 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: white !important;
+            page-break-inside: avoid !important;
+            box-shadow: none !important;
+        }
+        
+        .transfer-card .card-body {
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        
+        .transfer-card .row {
+            display: table-row !important;
+            margin: 0 !important;
+            border-bottom: 1px solid #ddd !important;
+        }
+        
+        .transfer-card .col-md-3,
+        .transfer-card .col-md-2,
+        .transfer-card .col-md-1 {
+            display: table-cell !important;
+            border-right: 1px solid #ddd !important;
+            padding: 4px 2px !important;
+            vertical-align: middle !important;
+            font-size: 7pt !important;
+            width: auto !important;
+            float: none !important;
+        }
+        
+        /* إخفاء عمود الإجراءات */
+        .transfer-card .col-md-3:last-child,
+        .transfer-card .col-md-2:last-child {
+            display: none !important;
+        }
+        
+        /* تخصيص عرض الأعمدة */
+        .transfer-card .col-md-2:nth-child(1) { width: 15% !important; }  /* رقم التحويل */
+        .transfer-card .col-md-2:nth-child(2) { width: 12% !important; }  /* التاريخ */
+        .transfer-card .col-md-3:nth-child(3) { width: 25% !important; }  /* من */
+        .transfer-card .col-md-3:nth-child(4) { width: 25% !important; }  /* إلى */
+        .transfer-card .col-md-2:nth-child(5) { width: 13% !important; }  /* المبلغ */
+        .transfer-card .col-md-1:nth-child(6) { width: 10% !important; }  /* الرسوم أو النوع */
+        
+        /* تنسيق النصوص */
+        .transfer-card h6 {
+            font-size: 7pt !important;
+            margin: 0 !important;
+            font-weight: bold !important;
+        }
+        
+        .transfer-card small {
+            font-size: 6pt !important;
+            display: block !important;
+        }
+        
+        .transfer-card .fw-bold {
+            font-size: 7pt !important;
+            font-weight: bold !important;
+        }
+        
+        .transfer-amount {
+            color: #000 !important;
+            font-size: 7pt !important;
+            font-weight: bold !important;
+        }
+        
+        .transfer-fees {
+            color: #000 !important;
+            font-size: 6pt !important;
+        }
+        
+        .transfer-date {
+            color: #000 !important;
+            font-size: 6pt !important;
+        }
+        
+        .badge {
+            color: black !important;
+            border: 1px solid black !important;
+            background-color: white !important;
+            font-size: 6pt !important;
+            padding: 1px 3px !important;
+        }
+        
+        .text-primary, .text-success, .text-danger, .text-warning, .text-info {
+            color: #000 !important;
+        }
+        
+        /* إعدادات الصفحة للطباعة العرضية */
+        @page {
+            size: A4 landscape !important;
+            margin: 0.5cm !important;
+        }
+        
+        /* إخفاء العناصر الفرعية غير المطلوبة */
+        .transfer-arrow {
+            display: none !important;
+        }
+        
+        /* تحسين عرض بيانات الحسابات */
+        .account-info {
+            font-size: 6pt !important;
+            line-height: 1.0 !important;
+        }
+        
+        /* منع قطع الصفوف */
+        .transfer-card {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+        }
+    }
+        
+        .page-break {
+            page-break-before: always;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0 text-gray-800">
+                        <i class="fas fa-exchange-alt text-info me-2"></i>
+                        التحويلات البنكية
+                    </h1>
+                    <nav aria-label="breadcrumb" class="mt-2">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">الرئيسية</a></li>
+                            <li class="breadcrumb-item active">التحويلات البنكية</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-primary" onclick="printPage()">
+                            <i class="fas fa-print me-2"></i>
+                            طباعة التقرير الكامل
+                        </button>
+                        <a href="{% url 'banks:transfer_add' %}" class="btn btn-add text-white">
+                            <i class="fas fa-plus me-1"></i>
+                            إضافة تحويل جديد
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Transfers Container -->
+            <div class="transfers-container">
+                <div class="transfers-header">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h4 class="mb-0">
+                                <i class="fas fa-list me-2"></i>
+                                قائمة التحويلات البنكية
+                            </h4>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <div class="d-flex justify-content-end align-items-center">
+                                <span class="me-3">
+                                    <i class="fas fa-chart-line me-1"></i>
+                                    إجمالي التحويلات: <strong>{{ total_transfers|default:0 }}</strong>
+                                </span>
+                                <div class="btn-group">
+                                    <a href="{% url 'banks:transfer_add' %}" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-university me-1"></i>
+                                        تحويل بين البنوك
+                                    </a>
+                                    <a href="{% url 'banks:bank_cashbox_transfer_add' %}" class="btn btn-success btn-sm">
+                                        <i class="fas fa-money-check me-1"></i>
+                                        تحويل بنك/صندوق
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-4">
+                    <!-- Search and Filter Bar -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" class="form-control" placeholder="البحث في التحويلات..." id="searchTransfers">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" id="filterAccount">
+                                <option value="">جميع الحسابات</option>
+                                <option value="1">الحساب الجاري الرئيسي</option>
+                                <option value="2">حساب التوفير</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <span class="input-group-text">من</span>
+                                <input type="date" class="form-control" id="dateFrom">
+                                <span class="input-group-text">إلى</span>
+                                <input type="date" class="form-control" id="dateTo">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-outline-primary me-2" onclick="filterTransfers()">
+                                <i class="fas fa-filter me-1"></i>
+                                تصفية
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="resetFilters()">
+                                <i class="fas fa-undo me-1"></i>
+                                إعادة تعيين
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Transfers List -->
+                    <div id="transfersList">
+                        {% if bank_transfers or bank_cashbox_transfers %}
+                            <!-- Bank to Bank Transfers -->
+                            {% for transfer in bank_transfers %}
+                                <div class="transfer-card">
+                                    <div class="card-body">
+                                        <div class="row align-items-center">
+                                            <div class="col-md-2">
+                                                <div class="fw-bold">{{ transfer.transfer_number }}</div>
+                                                <div class="transfer-date">{{ transfer.date|date:"j/n/Y" }}</div>
+                                                <small class="badge bg-primary">تحويل بنكي</small>
+                                            </div>
+                                            
+                                            <div class="col-md-3">
+                                                <span class="account-badge">{{ transfer.from_account.name }}</span>
+                                                <small class="d-block text-muted">{{ transfer.from_account.bank_name }}</small>
+                                            </div>
+                                            
+                                            <div class="col-md-1 text-center">
+                                                <i class="fas fa-arrow-left transfer-arrow"></i>
+                                            </div>
+                                            
+                                            <div class="col-md-3">
+                                                <span class="account-badge">{{ transfer.to_account.name }}</span>
+                                                <small class="d-block text-muted">{{ transfer.to_account.bank_name }}</small>
+                                            </div>
+                                            
+                                            <div class="col-md-2 text-center">
+                                                <div class="transfer-amount">{{ transfer.amount|floatformat:3 }}</div>
+                                                {% if transfer.fees > 0 %}
+                                                    <div class="transfer-fees">رسوم: {{ transfer.fees|floatformat:3 }}</div>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            <div class="col-md-1 text-end">
+                                                <div class="btn-group-actions" role="group">
+                                                    <button class="btn btn-outline-info btn-action" title="طباعة" onclick="printTransferDetail('{{ transfer.transfer_number }}', 'bank')">
+                                                        <i class="fas fa-print me-1"></i>
+                                                        <span>طباعة</span>
+                                                    </button>
+                                                    <a href="{% url 'banks:transfer_detail' transfer.id %}" class="btn btn-outline-primary btn-action" title="عرض">
+                                                        <i class="fas fa-eye me-1"></i>
+                                                        <span>عرض</span>
+                                                    </a>
+                                                    <a href="{% url 'banks:transfer_edit' transfer.id %}" class="btn btn-outline-warning btn-action" title="تعديل">
+                                                        <i class="fas fa-edit me-1"></i>
+                                                        <span>تعديل</span>
+                                                    </a>
+                                                    <button class="btn btn-outline-danger btn-action" title="حذف" onclick="confirmDeleteTransfer('{{ transfer.id }}', '{{ transfer.transfer_number }}', 'bank')">
+                                                        <i class="fas fa-trash me-1"></i>
+                                                        <span>حذف</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        {% if transfer.description %}
+                                            <div class="row mt-2">
+                                                <div class="col-12">
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-comment me-1"></i>
+                                                        {{ transfer.description }}
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                            
+                            <!-- Bank to Cashbox / Cashbox to Bank Transfers -->
+                            {% for transfer in bank_cashbox_transfers %}
+                                <div class="transfer-card">
+                                    <div class="card-body">
+                                        <div class="row align-items-center">
+                                            <div class="col-md-2">
+                                                <div class="fw-bold">{{ transfer.transfer_number }}</div>
+                                                <div class="transfer-date">{{ transfer.date|date:"j/n/Y" }}</div>
+                                                <small class="badge {% if transfer.transfer_type == 'bank_to_cashbox' %}bg-success{% else %}bg-warning{% endif %}">
+                                                    {% if transfer.transfer_type == 'bank_to_cashbox' %}بنك → صندوق{% else %}صندوق → بنك{% endif %}
+                                                </small>
+                                            </div>
+                                            
+                                            <div class="col-md-3">
+                                                {% if transfer.transfer_type == 'bank_to_cashbox' %}
+                                                    <span class="account-badge">{{ transfer.from_bank.name }}</span>
+                                                    <small class="d-block text-muted">{{ transfer.from_bank.bank_name }}</small>
+                                                {% else %}
+                                                    <span class="account-badge">{{ transfer.from_cashbox.name }}</span>
+                                                    <small class="d-block text-muted">صندوق نقدي</small>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            <div class="col-md-1 text-center">
+                                                <i class="fas fa-arrow-left transfer-arrow"></i>
+                                            </div>
+                                            
+                                            <div class="col-md-3">
+                                                {% if transfer.transfer_type == 'bank_to_cashbox' %}
+                                                    <span class="account-badge">{{ transfer.to_cashbox.name }}</span>
+                                                    <small class="d-block text-muted">صندوق نقدي</small>
+                                                {% else %}
+                                                    <span class="account-badge">{{ transfer.to_bank.name }}</span>
+                                                    <small class="d-block text-muted">{{ transfer.to_bank.bank_name }}</small>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            <div class="col-md-2 text-center">
+                                                <div class="transfer-amount">{{ transfer.amount|floatformat:3 }}</div>
+                                                {% if transfer.fees > 0 %}
+                                                    <div class="transfer-fees">رسوم: {{ transfer.fees|floatformat:3 }}</div>
+                                                {% endif %}
+                                                <small class="text-info d-block">
+                                                    <i class="fas fa-money-check me-1"></i>
+                                                    شيك بنكي
+                                                </small>
+                                            </div>
+                                            
+                                            <div class="col-md-1 text-end">
+                                                <div class="btn-group-actions" role="group">
+                                                    <button class="btn btn-outline-info btn-action" title="طباعة" onclick="printTransferDetail('{{ transfer.transfer_number }}', 'cashbox')">
+                                                        <i class="fas fa-print me-1"></i>
+                                                        <span>طباعة</span>
+                                                    </button>
+                                                    <a href="{% url 'banks:cashbox_transfer_detail' transfer.id %}" class="btn btn-outline-primary btn-action" title="عرض">
+                                                        <i class="fas fa-eye me-1"></i>
+                                                        <span>عرض</span>
+                                                    </a>
+                                                    <a href="{% url 'banks:cashbox_transfer_edit' transfer.id %}" class="btn btn-outline-warning btn-action" title="تعديل">
+                                                        <i class="fas fa-edit me-1"></i>
+                                                        <span>تعديل</span>
+                                                    </a>
+                                                    <button class="btn btn-outline-danger btn-action" title="حذف" onclick="confirmDeleteTransfer('{{ transfer.id }}', '{{ transfer.transfer_number }}', 'cashbox')">
+                                                        <i class="fas fa-trash me-1"></i>
+                                                        <span>حذف</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        {% if transfer.description %}
+                                            <div class="row mt-2">
+                                                <div class="col-12">
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-comment me-1"></i>
+                                                        {{ transfer.description }}
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <!-- Empty State -->
+                            <div class="empty-state">
+                                <i class="fas fa-exchange-alt"></i>
+                                <h5>لا توجد تحويلات بنكية بعد</h5>
+                                <p class="mb-3">ابدأ بإضافة تحويل بنكي جديد بين حساباتك أو بين البنوك والصناديق</p>
+                                <div class="d-flex justify-content-center gap-2">
+                                    <a href="{% url 'banks:transfer_add' %}" class="btn btn-add text-white">
+                                        <i class="fas fa-university me-1"></i>
+                                        تحويل بين البنوك
+                                    </a>
+                                    <a href="{% url 'banks:bank_cashbox_transfer_add' %}" class="btn btn-success">
+                                        <i class="fas fa-money-check me-1"></i>
+                                        تحويل بنك/صندوق
+                                    </a>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Summary Cards -->
+            <div class="row mt-4">
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0">إجمالي التحويلات</h6>
+                                    <h3 class="mb-0">{{ total_transfers|default:0 }}</h3>
+                                </div>
+                                <div class="ms-3">
+                                    <i class="fas fa-exchange-alt fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0">إجمالي المبالغ</h6>
+                                    <h3 class="mb-0">{{ total_amounts|default:0|floatformat:3 }}</h3>
+                                    <small>{% get_currency_symbol %}</small>
+                                </div>
+                                <div class="ms-3">
+                                    <i class="fas fa-money-bill-wave fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0">إجمالي الرسوم</h6>
+                                    <h3 class="mb-0">{{ total_fees|default:0|floatformat:3 }}</h3>
+                                    <small>{% get_currency_symbol %}</small>
+                                </div>
+                                <div class="ms-3">
+                                    <i class="fas fa-receipt fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0">هذا الشهر</h6>
+                                    <h3 class="mb-0">{{ this_month_transfers|default:0 }}</h3>
+                                </div>
+                                <div class="ms-3">
+                                    <i class="fas fa-calendar-alt fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default date range (current month)
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    
+    document.getElementById('dateFrom').value = firstDay.toISOString().split('T')[0];
+    document.getElementById('dateTo').value = lastDay.toISOString().split('T')[0];
+});
+
+function filterTransfers() {
+    // This will be implemented when we have actual data
+    console.log('Filtering transfers...');
+    
+    const searchTerm = document.getElementById('searchTransfers').value;
+    const selectedAccount = document.getElementById('filterAccount').value;
+    const dateFrom = document.getElementById('dateFrom').value;
+    const dateTo = document.getElementById('dateTo').value;
+    
+    // Show loading state
+    const transfersList = document.getElementById('transfersList');
+    transfersList.innerHTML = '<div class="text-center p-4"><i class="fas fa-spinner fa-spin fa-2x"></i><br>جاري البحث...</div>';
+    
+    // Simulate API call
+    setTimeout(() => {
+        transfersList.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-search"></i>
+                <h5>لا توجد نتائج للبحث</h5>
+                <p class="mb-3">جرب تغيير معايير البحث</p>
+            </div>
+        `;
+    }, 1000);
+}
+
+function resetFilters() {
+    document.getElementById('searchTransfers').value = '';
+    document.getElementById('filterAccount').selectedIndex = 0;
+    
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    
+    document.getElementById('dateFrom').value = firstDay.toISOString().split('T')[0];
+    document.getElementById('dateTo').value = lastDay.toISOString().split('T')[0];
+    
+    filterTransfers();
+}
+
+// Delete confirmation
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.btn-outline-danger')) {
+        if (!confirm('هل أنت متأكد من حذف هذا التحويل؟\n\nسيتم إلغاء التحويل وتعديل أرصدة الحسابات المتأثرة.')) {
+            e.preventDefault();
+        }
+    }
+});
+
+// Print Function
+window.printTransferReport = function() {
+    console.log('بدء طباعة تقرير التحويلات البنكية...');
+    
+    let transferHTML = `
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <h1>تقرير التحويلات البنكية</h1>
+            <p>تاريخ التقرير: ${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}</p>
+        </div>
+        <table class="print-table">
+            <thead>
+                <tr>
+                    <th>رقم التحويل</th>
+                    <th>التاريخ</th>
+                    <th>من الحساب</th>
+                    <th>إلى الحساب</th>
+                    <th>المبلغ</th>
+                    <th>الرسوم</th>
+                    <th>الوصف</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    // Get transfer data from the page
+    const transferCards = document.querySelectorAll('.transfer-card:not(.d-none)');
+    console.log('عدد بطاقات التحويلات الموجودة:', transferCards.length);
+    
+    if (transferCards.length === 0) {
+        transferHTML += `
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 20px;">لا توجد تحويلات للطباعة</td>
+            </tr>
+        `;
+    } else {
+        transferCards.forEach((card) => {
+            try {
+                const transferNumber = card.querySelector('.fw-bold')?.textContent.trim() || 'غير محدد';
+                const transferDate = card.querySelector('.transfer-date')?.textContent.trim() || 'غير محدد';
+                const fromAccount = card.querySelectorAll('.account-badge')[0]?.textContent.trim() || 'غير محدد';
+                const toAccount = card.querySelectorAll('.account-badge')[1]?.textContent.trim() || 'غير محدد';
+                const amount = card.querySelector('.transfer-amount')?.textContent.trim() || '0';
+                const fees = card.querySelector('.transfer-fees')?.textContent.replace('رسوم: ', '').trim() || '0';
+                const description = card.querySelector('.text-muted')?.textContent.trim() || 'لا يوجد وصف';
+                
+                console.log('بيانات التحويل:', {transferNumber, transferDate, fromAccount, toAccount, amount, fees, description});
+                
+                transferHTML += `
+                    <tr>
+                        <td>${transferNumber}</td>
+                        <td>${transferDate}</td>
+                        <td>${fromAccount}</td>
+                        <td>${toAccount}</td>
+                        <td>${amount}</td>
+                        <td>${fees}</td>
+                        <td>${description}</td>
+                    </tr>
+                `;
+            } catch (error) {
+                console.warn('Error processing transfer card:', error);
+            }
+        });
+    }
+    
+    transferHTML += `
+            </tbody>
+        </table>
+    `;
+    
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>تقرير التحويلات البنكية</title>
+                <meta charset="UTF-8">
+                <style>
+                    body { font-family: Arial, sans-serif; direction: rtl; }
+                    .print-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                    .print-table th, .print-table td { border: 1px solid #000; padding: 8px; text-align: right; }
+                    .print-table th { background-color: #f5f5f5; font-weight: bold; }
+                    h1 { text-align: center; margin-bottom: 20px; }
+                    p { text-align: center; margin-bottom: 20px; }
+                </style>
+            </head>
+            <body>
+                ${transferHTML}
+            </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
+}
+
+// Print single transfer detail function
+function printTransferDetail(transferNumber, transferType) {
+    console.log(`طباعة تفاصيل التحويل: ${transferNumber} من نوع: ${transferType}`);
+    
+    // Find the transfer card
+    const transferCards = document.querySelectorAll('.transfer-card');
+    let transferCard = null;
+    
+    for (let card of transferCards) {
+        const cardNumber = card.querySelector('.fw-bold')?.textContent.trim();
+        if (cardNumber === transferNumber) {
+            transferCard = card;
+            break;
+        }
+    }
+    
+    if (!transferCard) {
+        alert('لم يتم العثور على بيانات التحويل للطباعة');
+        return;
+    }
+    
+    try {
+        const transferDate = transferCard.querySelector('.transfer-date')?.textContent.trim() || 'غير محدد';
+        const accountBadges = transferCard.querySelectorAll('.account-badge');
+        const fromAccount = accountBadges[0]?.textContent.trim() || 'غير محدد';
+        const toAccount = accountBadges[1]?.textContent.trim() || 'غير محدد';
+        const amount = transferCard.querySelector('.transfer-amount')?.textContent.trim() || '0';
+        const feesElement = transferCard.querySelector('.transfer-fees');
+        const fees = feesElement ? feesElement.textContent.replace('رسوم: ', '').trim() : '0';
+        
+        // البحث عن الوصف في عنصر التعليق
+        const commentElement = transferCard.querySelector('.text-muted');
+        let description = 'لا يوجد وصف';
+        if (commentElement) {
+            const commentText = commentElement.textContent.trim();
+            // إزالة النص الذي يبدأ بأيقونة التعليق
+            description = commentText.replace(/^\s*.*?:\s*/, '').trim() || 'لا يوجد وصف';
+        }
+        
+        const badge = transferCard.querySelector('.badge')?.textContent.trim() || '';
+        
+        const transferHTML = `
+            <div style="text-align: center; margin-bottom: 2rem; border-bottom: 2px solid #000; padding-bottom: 1rem;">
+                <h1>سند تحويل</h1>
+                <h2>رقم التحويل: ${transferNumber}</h2>
+                <p>التاريخ: ${transferDate}</p>
+                <p>نوع التحويل: ${badge}</p>
+            </div>
+            
+            <div style="margin-bottom: 2rem;">
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 1rem;">
+                    <tr>
+                        <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">من الحساب:</td>
+                        <td style="border: 1px solid #000; padding: 10px;">${fromAccount}</td>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">إلى الحساب:</td>
+                        <td style="border: 1px solid #000; padding: 10px;">${toAccount}</td>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">مبلغ التحويل:</td>
+                        <td style="border: 1px solid #000; padding: 10px; font-size: 1.2rem; color: #28a745;">${amount}</td>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">الرسوم:</td>
+                        <td style="border: 1px solid #000; padding: 10px; color: #dc3545;">${fees}</td>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">البيان:</td>
+                        <td style="border: 1px solid #000; padding: 10px;">${description}</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <div style="margin-top: 3rem; display: flex; justify-content: space-between;">
+                <div style="text-align: center; border-top: 1px solid #000; padding-top: 10px; width: 200px;">
+                    <p>توقيع المحاسب</p>
+                </div>
+                <div style="text-align: center; border-top: 1px solid #000; padding-top: 10px; width: 200px;">
+                    <p>توقيع المدير</p>
+                </div>
+            </div>
+        `;
+        
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>سند تحويل - ${transferNumber}</title>
+                    <meta charset="UTF-8">
+                    <style>
+                        body { 
+                            font-family: Arial, sans-serif; 
+                            direction: rtl; 
+                            margin: 20px;
+                            font-size: 14px;
+                        }
+                        h1, h2 { text-align: center; margin-bottom: 10px; }
+                        table { width: 100%; border-collapse: collapse; }
+                        td { border: 1px solid #000; padding: 8px; text-align: right; }
+                        .signature-area { margin-top: 50px; }
+                        @media print {
+                            body { margin: 0; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${transferHTML}
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus();
+        
+        // إضافة تأخير قصير قبل الطباعة للتأكد من تحميل المحتوى
+        setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+        }, 500);
+        
+    } catch (error) {
+        console.error('خطأ في طباعة التحويل:', error);
+        alert('حدث خطأ أثناء إعداد الطباعة');
+    }
+}
+
+// Delete confirmation function
+function confirmDeleteTransfer(transferId, transferNumber, transferType) {
+    if (confirm(`هل أنت متأكد من حذف التحويل رقم "${transferNumber}"؟\n\nتحذير: هذا الإجراء لا يمكن التراجع عنه وسيؤثر على الأرصدة!`)) {
+        deleteTransfer(transferId, transferType);
+    }
+}
+
+// Delete transfer function
+function deleteTransfer(transferId, transferType) {
+    // Get CSRF token from the meta tag or hidden input
+    let csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+    if (!csrfToken) {
+        csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    }
+    if (!csrfToken) {
+        csrfToken = '{{ csrf_token }}';
+    }
+    
+    let deleteUrl;
+    if (transferType === 'bank') {
+        deleteUrl = `{% url 'banks:transfer_delete' 0 %}`.replace('0', transferId);
+    } else if (transferType === 'cashbox') {
+        deleteUrl = `{% url 'banks:cashbox_transfer_delete' 0 %}`.replace('0', transferId);
+    }
+    
+    // Show loading state
+    const loadingElement = document.createElement('div');
+    loadingElement.innerHTML = `
+        <div class="d-flex justify-content-center align-items-center p-4">
+            <div class="spinner-border text-danger me-2" role="status">
+                <span class="visually-hidden">جاري الحذف...</span>
+            </div>
+            <span>جاري حذف التحويل...</span>
+        </div>
+    `;
+    document.getElementById('transfersList').appendChild(loadingElement);
+    
+    fetch(deleteUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            // Reload the page to reflect changes
+            window.location.reload();
+        } else {
+            throw new Error('فشل في حذف التحويل');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ أثناء حذف التحويل. يرجى المحاولة مرة أخرى.');
+        loadingElement.remove();
+    });
+}
+</script>
+
+<!-- CSRF Token for AJAX requests -->
+<form style="display: none;">
+    {% csrf_token %}
+</form>
+{% endblock %}

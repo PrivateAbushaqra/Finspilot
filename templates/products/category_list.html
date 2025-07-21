@@ -1,0 +1,451 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}تصنيفات المنتجات - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .categories-container {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .categories-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+    }
+    
+    .category-card {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        margin-bottom: 1rem;
+    }
+    
+    .category-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-add {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-add:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    /* CSS خاص للطباعة - تحويل الكروت إلى جدول */
+    @media print {
+        .container-fluid {
+            max-width: none !important;
+            width: 100% !important;
+        }
+        
+        /* إخفاء العناصر غير المطلوبة للطباعة */
+        .breadcrumb, .btn-add, .search-section, .no-print,
+        .btn-group, .alert, .pagination, .categories-header .btn,
+        .filter-controls {
+            display: none !important;
+        }
+        
+        /* إخفاء صفوف الإحصائيات فقط */
+        .card.bg-primary, .card.bg-success, .card.bg-info, .card.bg-warning {
+            display: none !important;
+        }
+        
+        /* إظهار المحتوى الأساسي */
+        .categories-container {
+            display: block !important;
+        }
+        
+        /* إنشاء رأس الجدول */
+        #categoriesList::before {
+            content: "اسم التصنيف\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0 النوع\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0 الوصف\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0 الحالة";
+            display: block;
+            background-color: #f8f9fa !important;
+            border: 2px solid #000 !important;
+            padding: 8px !important;
+            font-weight: bold !important;
+            text-align: center !important;
+            font-size: 10pt !important;
+            border-bottom: 2px solid #000 !important;
+        }
+        
+        /* تحويل كل فئة إلى سطر جدول */
+        .category-card {
+            display: block !important;
+            border: 1px solid #000 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: white !important;
+            page-break-inside: avoid !important;
+            box-shadow: none !important;
+        }
+        
+        .category-card .card-body {
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        
+        .category-card .row {
+            display: table-row !important;
+            margin: 0 !important;
+            border-bottom: 1px solid #ddd !important;
+        }
+        
+        .category-card .col-md-4,
+        .category-card .col-md-2 {
+            display: table-cell !important;
+            border-right: 1px solid #ddd !important;
+            padding: 6px 4px !important;
+            vertical-align: middle !important;
+            font-size: 8pt !important;
+            width: auto !important;
+            float: none !important;
+        }
+        
+        /* تخصيص عرض الأعمدة */
+        .category-card .col-md-4:first-child {
+            width: 30% !important;
+        }
+        
+        .category-card .col-md-4:nth-child(2) {
+            width: 45% !important;
+        }
+        
+        .category-card .col-md-2:nth-child(3) {
+            width: 15% !important;
+        }
+        
+        .category-card .col-md-2:last-child {
+            display: none !important; /* إخفاء عمود الإجراءات */
+        }
+        
+        /* تنسيق النصوص */
+        .category-card h6 {
+            font-size: 8pt !important;
+            margin: 0 !important;
+            font-weight: bold !important;
+        }
+        
+        .category-card small {
+            font-size: 7pt !important;
+            display: block !important;
+        }
+        
+        .category-card .fw-bold {
+            font-size: 8pt !important;
+            font-weight: bold !important;
+        }
+        
+        .badge {
+            color: black !important;
+            border: 1px solid black !important;
+            background-color: white !important;
+            font-size: 7pt !important;
+            padding: 2px 4px !important;
+        }
+        
+        .text-muted {
+            color: #666 !important;
+        }
+        
+        /* إعدادات الصفحة للطباعة العرضية */
+        @page {
+            size: A4 landscape !important;
+            margin: 0.5cm !important;
+        }
+        
+        body {
+            font-size: 8pt !important;
+            line-height: 1.1 !important;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            font-size: 12pt !important;
+            text-align: center !important;
+            margin-bottom: 15px !important;
+        }
+        
+        .categories-header {
+            background: white !important;
+            color: black !important;
+            border: 2px solid #000 !important;
+            text-align: center !important;
+            display: block !important;
+        }
+        
+        .categories-header h5 {
+            color: black !important;
+            font-size: 12pt !important;
+        }
+        
+        /* منع قطع الصفوف */
+        .category-card {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+        }
+        
+        /* إظهار حالة فارغة إذا لم توجد فئات */
+        .empty-state {
+            display: block !important;
+            text-align: center !important;
+            padding: 20px !important;
+            font-size: 10pt !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0 text-gray-800">
+                        <i class="fas fa-tags text-primary me-2"></i>
+                        تصنيفات المنتجات
+                    </h1>
+                    <p class="mb-0 text-muted">إدارة وتنظيم تصنيفات المنتجات</p>
+                </div>
+                <div>
+                    <button type="button" onclick="printPage()" class="btn btn-warning btn-sm me-2">
+                        <i class="mdi mdi-printer me-1"></i>
+                        طباعة التقرير الكامل
+                    </button>
+                    <a href="{% url 'products:category_add' %}" class="btn btn-add text-white">
+                        <i class="fas fa-plus me-2"></i>
+                        إضافة تصنيف جديد
+                    </a>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0">إجمالي التصنيفات</h6>
+                                    <h3 class="mb-0">{{ total_categories|default:0 }}</h3>
+                                    <small>تصنيف</small>
+                                </div>
+                                <div class="ms-3">
+                                    <i class="fas fa-tags fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0">التصنيفات النشطة</h6>
+                                    <h3 class="mb-0">{{ active_categories|default:0 }}</h3>
+                                    <small>تصنيف نشط</small>
+                                </div>
+                                <div class="ms-3">
+                                    <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0">المنتجات المرتبطة</h6>
+                                    <h3 class="mb-0">0</h3>
+                                    <small>منتج</small>
+                                </div>
+                                <div class="ms-3">
+                                    <i class="fas fa-box fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0">تصنيفات فرعية</h6>
+                                    <h3 class="mb-0">0</h3>
+                                    <small>تصنيف فرعي</small>
+                                </div>
+                                <div class="ms-3">
+                                    <i class="fas fa-sitemap fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search and Filter -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" class="form-control" id="searchCategories" 
+                                       placeholder="البحث في التصنيفات...">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="filterStatus">
+                                <option value="">جميع الحالات</option>
+                                <option value="active">نشط</option>
+                                <option value="inactive">غير نشط</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="filterType">
+                                <option value="">جميع الأنواع</option>
+                                <option value="main">رئيسي</option>
+                                <option value="sub">فرعي</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Categories List -->
+            <div class="categories-container">
+                <div class="categories-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list me-2"></i>
+                            قائمة التصنيفات
+                        </h5>
+                        <button onclick="printPage()" class="btn btn-warning btn-sm me-2">
+                            <i class="mdi mdi-printer me-1"></i>
+                            طباعة التقرير الكامل
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="p-3" id="categoriesList">
+                    {% if categories %}
+                        {% for category in categories %}
+                        <div class="category-card">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-4">
+                                        <h6 class="mb-1 fw-bold">{{ category.name }}</h6>
+                                        {% if category.parent %}
+                                            <small class="text-muted">فرعي من: {{ category.parent.name }}</small>
+                                        {% else %}
+                                            <small class="text-muted">تصنيف رئيسي</small>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-4">
+                                        <small class="text-muted">الوصف:</small>
+                                        <div>{{ category.description|default:"لا يوجد وصف"|truncatewords:10 }}</div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <span class="badge {% if category.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                                            {% if category.is_active %}نشط{% else %}غير نشط{% endif %}
+                                        </span>
+                                    </div>
+                                    <div class="col-md-2 text-end">
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'products:category_edit' category.pk %}" class="btn btn-outline-warning" title="تعديل">
+                                                <i class="fas fa-edit me-1"></i>
+                                                <span>تعديل</span>
+                                            </a>
+                                            <a href="{% url 'products:category_delete' category.pk %}" 
+                                               class="btn btn-outline-danger" 
+                                               title="حذف"
+                                               onclick="return confirm('هل أنت متأكد من حذف التصنيف {{ category.name }}؟')">
+                                                <i class="fas fa-trash me-1"></i>
+                                                <span>حذف</span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <!-- Empty State -->
+                        <div class="empty-state">
+                            <i class="fas fa-tags"></i>
+                            <h4>لا توجد تصنيفات</h4>
+                            <p>لم يتم إنشاء أي تصنيفات بعد. انقر على "إضافة تصنيف جديد" لبدء إنشاء التصنيفات.</p>
+                            <a href="{% url 'products:category_add' %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>
+                                إضافة تصنيف جديد
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<!-- تم استبدال الـ modal بصفحة تأكيد منفصلة -->
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Search functionality
+    const searchInput = document.getElementById('searchCategories');
+    const filterStatus = document.getElementById('filterStatus');
+    const filterType = document.getElementById('filterType');
+    
+    function filterCategories() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const statusFilter = filterStatus.value;
+        const typeFilter = filterType.value;
+        
+        // Filter logic will be implemented when categories data is available
+        console.log('Filtering categories:', { searchTerm, statusFilter, typeFilter });
+    }
+    
+    searchInput.addEventListener('input', filterCategories);
+    filterStatus.addEventListener('change', filterCategories);
+    filterType.addEventListener('change', filterCategories);
+    
+    // Delete confirmation is now handled by onclick confirm in the template
+});
+</script>
+{% endblock %}

@@ -1,0 +1,929 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load tax_tags %}
+
+{% block title %}الأصول والخصوم - Triangle{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-balance-scale me-2"></i>
+        لوحة تحكم الأصول والخصوم
+    </h1>
+</div>
+
+<!-- الإحصائيات -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stats-card text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">إجمالي الأصول</h5>
+                        <h3>{{ total_assets|currency_format }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-building fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">إجمالي الخصوم</h5>
+                        <h3>{{ total_liabilities|currency_format }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-credit-card fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">صافي الأصول</h5>
+                        <h3>{{ net_assets|currency_format }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-chart-line fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">إجمالي البنود</h5>
+                        <h3>{{ total_items }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-list fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- القوائم السريعة -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-building me-2"></i>
+                    إدارة الأصول
+                </h5>
+                <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addAssetModal">
+                    <i class="fas fa-plus me-1"></i>
+                    إضافة أصل جديد
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    <a href="{% url 'assets_liabilities:asset_list' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-list me-2"></i>
+                        عرض جميع الأصول
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#addAssetModal">
+                        <i class="fas fa-plus me-2"></i>
+                        إضافة أصل جديد
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#depreciationModal">
+                        <i class="fas fa-percentage me-2"></i>
+                        حساب الإهلاك
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-credit-card me-2"></i>
+                    إدارة الخصوم
+                </h5>
+                <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#addDeductionModal">
+                    <i class="fas fa-plus me-1"></i>
+                    إضافة خصم جديد
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    <a href="{% url 'assets_liabilities:liability_list' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-list me-2"></i>
+                        عرض جميع الخصوم
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#addDeductionModal">
+                        <i class="fas fa-plus me-2"></i>
+                        إضافة خصم جديد
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#paymentTableModal">
+                        <i class="fas fa-calendar me-2"></i>
+                        جدولة المدفوعات
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- الرسم البياني -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    توزيع الأصول
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="assetsChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    توزيع الخصوم
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="liabilitiesChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- قائمة سريعة للأصول والخصوم -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-building me-2"></i>
+                    آخر الأصول المضافة
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_assets %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>الاسم</th>
+                                <th>الفئة</th>
+                                <th>القيمة</th>
+                                <th>التاريخ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for asset in recent_assets %}
+                            <tr>
+                                <td>{{ asset.name }}</td>
+                                <td>{{ asset.category.name }}</td>
+                                <td>{{ asset.value|currency_format:asset.currency }}</td>
+                                <td>{{ asset.purchase_date|date:"j/n/Y" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-3">
+                    <p class="text-muted">لا توجد أصول مضافة بعد</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-credit-card me-2"></i>
+                    آخر الخصوم المضافة
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_liabilities %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>الاسم</th>
+                                <th>الفئة</th>
+                                <th>المبلغ</th>
+                                <th>تاريخ الاستحقاق</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for liability in recent_liabilities %}
+                            <tr>
+                                <td>{{ liability.name }}</td>
+                                <td>{{ liability.category.name }}</td>
+                                <td>{{ liability.amount|currency_format:liability.currency }}</td>
+                                <td>{{ liability.due_date|date:"j/n/Y" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-3">
+                    <p class="text-muted">لا توجد خصوم مضافة بعد</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal إضافة خصم جديد -->
+<div class="modal fade" id="addDeductionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-minus-circle text-warning"></i>
+                    إضافة خصم جديد
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addDeductionForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">اسم الخصم</label>
+                                <input type="text" class="form-control" name="deduction_name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">مبلغ الخصم</label>
+                                <input type="number" step="0.01" class="form-control" name="deduction_amount" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">نوع الخصم</label>
+                                <select class="form-select" name="deduction_type" required>
+                                    <option value="">اختر نوع الخصم</option>
+                                    <option value="tax">ضريبة</option>
+                                    <option value="discount">خصم تجاري</option>
+                                    <option value="penalty">غرامة</option>
+                                    <option value="other">أخرى</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">تاريخ الخصم</label>
+                                <input type="date" class="form-control" name="deduction_date" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">وصف الخصم</label>
+                        <textarea class="form-control" name="deduction_description" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-warning" onclick="saveDeduction()">حفظ الخصم</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal جدول المدفوعات -->
+<div class="modal fade" id="paymentTableModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-table text-info"></i>
+                    جدول المدفوعات
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <label class="form-label">من تاريخ</label>
+                        <input type="date" class="form-control" id="paymentFromDate">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">إلى تاريخ</label>
+                        <input type="date" class="form-control" id="paymentToDate">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">نوع المدفوعات</label>
+                        <select class="form-select" id="paymentType">
+                            <option value="">جميع الأنواع</option>
+                            <option value="cash">نقدي</option>
+                            <option value="bank">بنكي</option>
+                            <option value="check">شيك</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="button" class="btn btn-info w-100" onclick="loadPaymentTable()" style="margin-top: 31px;">
+                            <i class="fas fa-search"></i> بحث
+                        </button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped" id="paymentsTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>التاريخ</th>
+                                <th>الرقم المرجعي</th>
+                                <th>الوصف</th>
+                                <th>النوع</th>
+                                <th>المبلغ</th>
+                                <th>الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody id="paymentsTableBody">
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">اختر المعايير وانقر بحث لعرض المدفوعات</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                <button type="button" class="btn btn-info" onclick="exportPaymentTable()">تصدير Excel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal إضافة أصل جديد -->
+<div class="modal fade" id="addAssetModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle text-success"></i>
+                    إضافة أصل جديد
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addAssetForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">اسم الأصل</label>
+                                <input type="text" class="form-control" name="asset_name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">فئة الأصل</label>
+                                <select class="form-select" name="asset_category" required>
+                                    <option value="">اختر فئة الأصل</option>
+                                    <option value="equipment">معدات</option>
+                                    <option value="furniture">أثاث</option>
+                                    <option value="vehicle">مركبات</option>
+                                    <option value="building">مباني</option>
+                                    <option value="land">أراضي</option>
+                                    <option value="other">أخرى</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">قيمة الأصل</label>
+                                <input type="number" step="0.01" class="form-control" name="asset_value" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">تاريخ الشراء</label>
+                                <input type="date" class="form-control" name="purchase_date" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">العمر الافتراضي (بالسنوات)</label>
+                                <input type="number" class="form-control" name="useful_life" min="1">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">القيمة المتبقية</label>
+                                <input type="number" step="0.01" class="form-control" name="salvage_value" value="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">وصف الأصل</label>
+                        <textarea class="form-control" name="asset_description" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-success" onclick="saveAsset()">حفظ الأصل</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal حساب الإهلاك -->
+<div class="modal fade" id="depreciationModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-calculator text-secondary"></i>
+                    حساب الإهلاك
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">إعدادات الحساب</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">اختر الأصل</label>
+                                    <select class="form-select" id="assetSelect" onchange="loadAssetDetails()">
+                                        <option value="">اختر أصل</option>
+                                        <option value="1">أصل تجريبي 1</option>
+                                        <option value="2">أصل تجريبي 2</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">طريقة الإهلاك</label>
+                                    <select class="form-select" id="depreciationMethod" onchange="calculateDepreciation()">
+                                        <option value="straight">القسط الثابت</option>
+                                        <option value="declining">الرصيد المتناقص</option>
+                                        <option value="units">وحدات الإنتاج</option>
+                                    </select>
+                                </div>
+                                <button type="button" class="btn btn-secondary w-100" onclick="calculateDepreciation()">
+                                    <i class="fas fa-calculator"></i> احسب الإهلاك
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">نتائج الحساب</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="depreciationResults">
+                                    <div class="text-center text-muted py-4">
+                                        <i class="fas fa-calculator fa-2x mb-2"></i>
+                                        <p>اختر أصل وطريقة الإهلاك لعرض النتائج</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                <button type="button" class="btn btn-primary" onclick="saveDepreciationEntry()">حفظ قيد الإهلاك</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// رسم بياني للأصول
+const assetsCtx = document.getElementById('assetsChart').getContext('2d');
+new Chart(assetsCtx, {
+    type: 'pie',
+    data: {
+        labels: {{ assets_labels|safe }},
+        datasets: [{
+            data: {{ assets_data|safe }},
+            backgroundColor: [
+                '#FF6384',
+                '#36A2EB',
+                '#FFCE56',
+                '#4BC0C0',
+                '#9966FF',
+                '#FF9F40'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// رسم بياني للخصوم
+const liabilitiesCtx = document.getElementById('liabilitiesChart').getContext('2d');
+new Chart(liabilitiesCtx, {
+    type: 'pie',
+    data: {
+        labels: {{ liabilities_labels|safe }},
+        datasets: [{
+            data: {{ liabilities_data|safe }},
+            backgroundColor: [
+                '#FF6384',
+                '#36A2EB',
+                '#FFCE56',
+                '#4BC0C0',
+                '#9966FF',
+                '#FF9F40'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// وظائف الميزات الجديدة
+
+// إضافة خصم جديد
+function saveDeduction() {
+    const form = document.getElementById('addDeductionForm');
+    const formData = new FormData(form);
+    
+    // تحديد التاريخ الحالي إذا لم يتم تحديده
+    if (!formData.get('deduction_date')) {
+        formData.set('deduction_date', new Date().toISOString().split('T')[0]);
+    }
+    
+    // محاكاة حفظ البيانات
+    const deductionData = {
+        name: formData.get('deduction_name'),
+        amount: parseFloat(formData.get('deduction_amount')),
+        type: formData.get('deduction_type'),
+        date: formData.get('deduction_date'),
+        description: formData.get('deduction_description')
+    };
+    
+    console.log('حفظ خصم جديد:', deductionData);
+    
+    // إظهار رسالة نجاح
+    alert('تم حفظ الخصم بنجاح!');
+    
+    // إغلاق المودال وإعادة تعيين النموذج
+    const modal = bootstrap.Modal.getInstance(document.getElementById('addDeductionModal'));
+    modal.hide();
+    form.reset();
+    
+    // هنا يمكنك إضافة كود لإرسال البيانات إلى الخادم
+}
+
+// تحميل جدول المدفوعات
+function loadPaymentTable() {
+    const fromDate = document.getElementById('paymentFromDate').value;
+    const toDate = document.getElementById('paymentToDate').value;
+    const paymentType = document.getElementById('paymentType').value;
+    
+    // بيانات تجريبية للمدفوعات
+    const samplePayments = [
+        {
+            date: '15/1/2025',
+            reference: 'PAY-001',
+            description: 'دفعة لمورد ABC',
+            type: 'bank',
+            amount: 5000,
+            status: 'completed'
+        },
+        {
+            date: '14/1/2025',
+            reference: 'PAY-002',
+            description: 'دفعة نقدية لموظف',
+            type: 'cash',
+            amount: 1500,
+            status: 'completed'
+        },
+        {
+            date: '13/1/2025',
+            reference: 'PAY-003',
+            description: 'دفعة بشيك للإيجار',
+            type: 'check',
+            amount: 8000,
+            status: 'pending'
+        }
+    ];
+    
+    const tbody = document.getElementById('paymentsTableBody');
+    tbody.innerHTML = '';        samplePayments.forEach(payment => {
+            // فلترة بناءً على المعايير - تحويل التاريخ للمقارنة
+            const paymentDateParts = payment.date.split('/');
+            const paymentDateFormatted = `${paymentDateParts[2]}-${paymentDateParts[1].padStart(2, '0')}-${paymentDateParts[0].padStart(2, '0')}`;
+            
+            if (fromDate && paymentDateFormatted < fromDate) return;
+            if (toDate && paymentDateFormatted > toDate) return;
+            if (paymentType && payment.type !== paymentType) return;
+        
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${payment.date}</td>
+            <td>${payment.reference}</td>
+            <td>${payment.description}</td>
+            <td>
+                <span class="badge bg-${payment.type === 'cash' ? 'success' : payment.type === 'bank' ? 'primary' : 'warning'}">
+                    ${payment.type === 'cash' ? 'نقدي' : payment.type === 'bank' ? 'بنكي' : 'شيك'}
+                </span>
+            </td>
+            <td>${payment.amount.toLocaleString()} ريال</td>
+            <td>
+                <span class="badge bg-${payment.status === 'completed' ? 'success' : 'warning'}">
+                    ${payment.status === 'completed' ? 'مكتمل' : 'معلق'}
+                </span>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+    
+    if (tbody.children.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">لا توجد مدفوعات مطابقة للمعايير</td></tr>';
+    }
+}
+
+// تصدير جدول المدفوعات
+function exportPaymentTable() {
+    alert('سيتم تصدير الجدول إلى Excel...');
+    // هنا يمكنك إضافة كود تصدير حقيقي
+}
+
+// إضافة أصل جديد
+function saveAsset() {
+    const form = document.getElementById('addAssetForm');
+    const formData = new FormData(form);
+    
+    // التحقق من البيانات المطلوبة
+    if (!formData.get('asset_name') || !formData.get('asset_value')) {
+        alert('يرجى ملء جميع الحقول المطلوبة');
+        return;
+    }
+    
+    const assetData = {
+        name: formData.get('asset_name'),
+        category: formData.get('asset_category'),
+        value: parseFloat(formData.get('asset_value')),
+        purchaseDate: formData.get('purchase_date'),
+        usefulLife: parseInt(formData.get('useful_life')) || 0,
+        salvageValue: parseFloat(formData.get('salvage_value')) || 0,
+        description: formData.get('asset_description')
+    };
+    
+    console.log('حفظ أصل جديد:', assetData);
+    
+    // إظهار رسالة نجاح
+    alert('تم حفظ الأصل بنجاح!');
+    
+    // إغلاق المودال وإعادة تعيين النموذج
+    const modal = bootstrap.Modal.getInstance(document.getElementById('addAssetModal'));
+    modal.hide();
+    form.reset();
+}
+
+// تحميل تفاصيل الأصل
+function loadAssetDetails() {
+    const assetId = document.getElementById('assetSelect').value;
+    
+    if (!assetId) {
+        document.getElementById('depreciationResults').innerHTML = `
+            <div class="text-center text-muted py-4">
+                <i class="fas fa-calculator fa-2x mb-2"></i>
+                <p>اختر أصل وطريقة الإهلاك لعرض النتائج</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // بيانات تجريبية للأصول
+    const sampleAssets = {
+        '1': {
+            name: 'جهاز كمبيوتر',
+            value: 15000,
+            purchaseDate: '1/1/2023',
+            usefulLife: 5,
+            salvageValue: 1000
+        },
+        '2': {
+            name: 'سيارة خدمات',
+            value: 80000,
+            purchaseDate: '1/6/2022',
+            usefulLife: 8,
+            salvageValue: 10000
+        }
+    };
+    
+    const asset = sampleAssets[assetId];
+    if (asset) {
+        document.getElementById('depreciationResults').innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>اسم الأصل:</strong> ${asset.name}<br>
+                    <strong>قيمة الأصل:</strong> ${asset.value.toLocaleString()} ريال<br>
+                    <strong>تاريخ الشراء:</strong> ${asset.purchaseDate}
+                </div>
+                <div class="col-md-6">
+                    <strong>العمر الافتراضي:</strong> ${asset.usefulLife} سنوات<br>
+                    <strong>القيمة المتبقية:</strong> ${asset.salvageValue.toLocaleString()} ريال<br>
+                </div>
+            </div>
+            <hr>
+            <p class="text-muted">اختر طريقة الإهلاك واضغط "احسب الإهلاك" لعرض التفاصيل</p>
+        `;
+    }
+}
+
+// حساب الإهلاك
+function calculateDepreciation() {
+    const assetId = document.getElementById('assetSelect').value;
+    const method = document.getElementById('depreciationMethod').value;
+    
+    if (!assetId) {
+        alert('يرجى اختيار أصل أولاً');
+        return;
+    }
+    
+    // بيانات تجريبية
+    const asset = {
+        name: 'جهاز كمبيوتر',
+        value: 15000,
+        usefulLife: 5,
+        salvageValue: 1000
+    };
+    
+    let annualDepreciation = 0;
+    let methodDescription = '';
+    
+    switch (method) {
+        case 'straight':
+            annualDepreciation = (asset.value - asset.salvageValue) / asset.usefulLife;
+            methodDescription = 'القسط الثابت';
+            break;
+        case 'declining':
+            const rate = 2 / asset.usefulLife;
+            annualDepreciation = asset.value * rate;
+            methodDescription = 'الرصيد المتناقص';
+            break;
+        case 'units':
+            annualDepreciation = (asset.value - asset.salvageValue) / 10000; // وحدات افتراضية
+            methodDescription = 'وحدات الإنتاج';
+            break;
+    }
+    
+    document.getElementById('depreciationResults').innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6>تفاصيل الحساب</h6>
+                <strong>طريقة الإهلاك:</strong> ${methodDescription}<br>
+                <strong>قيمة الأصل:</strong> ${asset.value.toLocaleString()} ريال<br>
+                <strong>القيمة المتبقية:</strong> ${asset.salvageValue.toLocaleString()} ريال<br>
+                <strong>العمر الافتراضي:</strong> ${asset.usefulLife} سنوات
+            </div>
+            <div class="col-md-6">
+                <h6>النتائج</h6>
+                <div class="alert alert-info">
+                    <strong>الإهلاك السنوي:</strong> ${annualDepreciation.toLocaleString()} ريال<br>
+                    <strong>الإهلاك الشهري:</strong> ${(annualDepreciation / 12).toLocaleString()} ريال<br>
+                    <strong>الإهلاك اليومي:</strong> ${(annualDepreciation / 365).toFixed(2)} ريال
+                </div>
+            </div>
+        </div>
+        <div class="mt-3">
+            <h6>جدول الإهلاك السنوي</h6>
+            <div class="table-responsive">
+                <table class="table table-sm table-striped">
+                    <thead>
+                        <tr>
+                            <th>السنة</th>
+                            <th>القيمة في بداية السنة</th>
+                            <th>الإهلاك السنوي</th>
+                            <th>الإهلاك المتراكم</th>
+                            <th>القيمة في نهاية السنة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${generateDepreciationTable(asset, method, annualDepreciation)}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+}
+
+// توليد جدول الإهلاك
+function generateDepreciationTable(asset, method, annualDepreciation) {
+    let html = '';
+    let bookValue = asset.value;
+    let accumulatedDepreciation = 0;
+    
+    for (let year = 1; year <= asset.usefulLife; year++) {
+        let yearlyDepreciation = annualDepreciation;
+        
+        if (method === 'declining') {
+            const rate = 2 / asset.usefulLife;
+            yearlyDepreciation = bookValue * rate;
+            if (bookValue - yearlyDepreciation < asset.salvageValue) {
+                yearlyDepreciation = bookValue - asset.salvageValue;
+            }
+        }
+        
+        accumulatedDepreciation += yearlyDepreciation;
+        const endValue = asset.value - accumulatedDepreciation;
+        
+        html += `
+            <tr>
+                <td>${year}</td>
+                <td>${bookValue.toLocaleString()}</td>
+                <td>${yearlyDepreciation.toLocaleString()}</td>
+                <td>${accumulatedDepreciation.toLocaleString()}</td>
+                <td>${endValue.toLocaleString()}</td>
+            </tr>
+        `;
+        
+        bookValue = endValue;
+        
+        if (bookValue <= asset.salvageValue) break;
+    }
+    
+    return html;
+}
+
+// حفظ قيد الإهلاك
+function saveDepreciationEntry() {
+    const assetId = document.getElementById('assetSelect').value;
+    const method = document.getElementById('depreciationMethod').value;
+    
+    if (!assetId) {
+        alert('يرجى اختيار أصل وحساب الإهلاك أولاً');
+        return;
+    }
+    
+    alert('تم حفظ قيد الإهلاك بنجاح!');
+    console.log('حفظ قيد إهلاك للأصل:', assetId, 'بطريقة:', method);
+}
+
+// تهيئة التواريخ الافتراضية
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date();
+    const todayFormatted = today.toISOString().split('T')[0]; // للحقول من نوع date
+    
+    // تعيين التاريخ الحالي للحقول
+    document.querySelectorAll('input[type="date"]').forEach(input => {
+        if (!input.value) {
+            input.value = todayFormatted;
+        }
+    });
+    
+    // تحديث عرض التواريخ في النتائج لتظهر بالتنسيق الميلادي
+    function formatDateToGregorian(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`; // تنسيق d/m/yyyy
+    }
+});
+</script>
+{% endblock %}

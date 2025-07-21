@@ -1,0 +1,679 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load currency_tags %}
+
+{% block title %}قائمة المنتجات - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .products-container {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .products-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+    }
+    
+    .product-card {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        margin-bottom: 1rem;
+    }
+    
+    .product-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-add {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-add:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .product-image {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+    
+    .stock-status {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    .stock-in {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .stock-low {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    
+    .stock-out {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+    /* CSS للطباعة */
+    @media print {
+        /* إخفاء عناصر غير مطلوبة في الطباعة */
+        .btn, .form-control, .form-select, .input-group, 
+        .navbar, .sidebar, .footer, nav, .breadcrumb, 
+        .d-flex.justify-content-between.align-items-center.mb-4,
+        .row.mb-4, .card.mb-4 {
+            display: none !important;
+        }
+        
+        /* إعدادات الصفحة للطباعة العرضية */
+        @page {
+            size: A4 landscape !important;
+            margin: 0.5cm !important;
+        }
+        
+        body {
+            font-size: 9pt !important;
+            line-height: 1.2 !important;
+            background: white !important;
+            color: black !important;
+        }
+        
+        /* حاوية المنتجات */
+        .products-container {
+            background: white !important;
+            box-shadow: none !important;
+            border: none !important;
+            border-radius: 0 !important;
+        }
+        
+        /* عنوان الصفحة */
+        .products-header {
+            background: white !important;
+            color: black !important;
+            border: 2px solid #000 !important;
+            text-align: center !important;
+            margin-bottom: 10px !important;
+            padding: 10px !important;
+            border-radius: 0 !important;
+        }
+        
+        .products-header h5 {
+            color: black !important;
+            font-size: 16pt !important;
+            margin: 0 !important;
+        }
+        
+        /* إخفاء كروت المنتجات في الطباعة */
+        .product-card {
+            display: none !important;
+        }
+        
+        /* إظهار جدول الطباعة */
+        .print-only-table {
+            display: table !important;
+            width: 100% !important;
+            border-collapse: collapse !important;
+            border: 2px solid #000 !important;
+            margin: 0 !important;
+        }
+        
+        .print-only-table th,
+        .print-only-table td {
+            border: 1px solid #000 !important;
+            padding: 5px !important;
+            text-align: center !important;
+            font-size: 8pt !important;
+        }
+        
+        .print-only-table th {
+            background: #f8f9fa !important;
+            font-weight: bold !important;
+            font-size: 9pt !important;
+        }
+        
+        .print-only-table tr:nth-child(even) {
+            background: #f9f9f9 !important;
+        }
+        
+        /* تخصيص عرض الأعمدة */
+        .print-only-table th:nth-child(1),
+        .print-only-table td:nth-child(1) {
+            width: 12% !important; /* الكود */
+        }
+        
+        .print-only-table th:nth-child(2),
+        .print-only-table td:nth-child(2) {
+            width: 25% !important; /* اسم المنتج */
+            text-align: right !important;
+        }
+        
+        .print-only-table th:nth-child(3),
+        .print-only-table td:nth-child(3) {
+            width: 15% !important; /* التصنيف */
+        }
+        
+        .print-only-table th:nth-child(4),
+        .print-only-table td:nth-child(4) {
+            width: 15% !important; /* سعر البيع */
+        }
+        
+        .print-only-table th:nth-child(5),
+        .print-only-table td:nth-child(5) {
+            width: 15% !important; /* السعر مع الضريبة */
+        }
+        
+        .print-only-table th:nth-child(6),
+        .print-only-table td:nth-child(6) {
+            width: 10% !important; /* المخزون */
+        }
+        
+        .print-only-table th:nth-child(7),
+        .print-only-table td:nth-child(7) {
+            width: 8% !important; /* الحالة */
+        }
+        
+        /* منع قطع الصفوف */
+        .print-only-table tr {
+            page-break-inside: avoid !important;
+        }
+        
+        /* إخفاء الحالة الفارغة */
+        .empty-state {
+            display: none !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0 text-gray-800">
+                        <i class="fas fa-box text-primary me-2"></i>
+                        قائمة المنتجات
+                    </h1>
+                    <p class="mb-0 text-muted">إدارة وتنظيم المنتجات</p>
+                </div>
+                <div>
+                    <a href="{% url 'products:product_add' %}" class="btn btn-add text-white">
+                        <i class="fas fa-plus me-2"></i>
+                        إضافة منتج جديد
+                    </a>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0">إجمالي المنتجات</h6>
+                                    <h3 class="mb-0">{{ total_products|default:0 }}</h3>
+                                    <small>منتج</small>
+                                </div>
+                                <div class="ms-3">
+                                    <i class="fas fa-box fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0">متوفر في المخزن</h6>
+                                    <h3 class="mb-0">{{ active_products|default:0 }}</h3>
+                                    <small>منتج</small>
+                                </div>
+                                <div class="ms-3">
+                                    <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0">مخزون منخفض</h6>
+                                    <h3 class="mb-0">0</h3>
+                                    <small>منتج</small>
+                                </div>
+                                <div class="ms-3">
+                                    <i class="fas fa-exclamation-triangle fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="card bg-danger text-white">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0">نفد من المخزن</h6>
+                                    <h3 class="mb-0">0</h3>
+                                    <small>منتج</small>
+                                </div>
+                                <div class="ms-3">
+                                    <i class="fas fa-times-circle fa-2x opacity-75"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search and Filter -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="get" action="">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-search"></i>
+                                    </span>
+                                    <input type="text" class="form-control" name="search" 
+                                           value="{{ search_query|default:'' }}"
+                                           placeholder="البحث بالاسم، الكود، الباركود، أو الرقم التسلسلي...">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select" name="category">
+                                    <option value="">جميع التصنيفات</option>
+                                    {% for category in categories %}
+                                        <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:"s" %}selected{% endif %}>
+                                            {{ category.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search me-1"></i>
+                                    بحث
+                                </button>
+                            </div>
+                            <div class="col-md-2">
+                                <a href="{% url 'products:product_list' %}" class="btn btn-secondary">
+                                    <i class="fas fa-times me-1"></i>
+                                    مسح
+                                </a>
+                            </div>
+                            <div class="col-md-1 text-end">
+                                <a href="{% url 'products:product_add' %}" class="btn btn-add">
+                                    <i class="fas fa-plus me-2"></i>
+                                    إضافة منتج
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" id="filterStatus">
+                                <option value="">جميع الحالات</option>
+                                <option value="active">نشط</option>
+                                <option value="inactive">غير نشط</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" id="filterStock">
+                                <option value="">حالة المخزن</option>
+                                <option value="in_stock">متوفر</option>
+                                <option value="low_stock">منخفض</option>
+                                <option value="out_of_stock">نفد</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-select" id="sortBy">
+                                <option value="name">ترتيب بالاسم</option>
+                                <option value="price">ترتيب بالسعر</option>
+                                <option value="stock">ترتيب بالمخزون</option>
+                                <option value="created">ترتيب بالتاريخ</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products List -->
+            <div class="products-container">
+                <div class="products-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list me-2"></i>
+                            قائمة المنتجات
+                        </h5>
+                        <button type="button" onclick="printPage()" class="btn btn-warning btn-sm">
+                            <i class="fas fa-print me-1"></i>
+                            طباعة التقرير الكامل
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="p-3" id="productsList">
+                    <!-- جدول خاص بالطباعة فقط -->
+                    <table class="print-only-table" style="display: none;">
+                        <thead>
+                            <tr>
+                                <th>الكود</th>
+                                <th>اسم المنتج</th>
+                                <th>التصنيف</th>
+                                <th>سعر البيع</th>
+                                <th>السعر مع الضريبة</th>
+                                <th>المخزون</th>
+                                <th>الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in products %}
+                            <tr>
+                                <td>{{ product.code }}</td>
+                                <td>{{ product.name }}</td>
+                                <td>{{ product.category.name }}</td>
+                                <td>{{ product.sale_price|currency_format }}</td>
+                                <td>{{ product.get_price_with_tax|currency_format }}</td>
+                                <td>{{ product.current_stock|floatformat:0 }}</td>
+                                <td>{% if product.is_active %}نشط{% else %}غير نشط{% endif %}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    
+                    {% if products %}
+                        {% for product in products %}
+                        <div class="product-card">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-1">
+                                        <!-- صورة المنتج (افتراضية) -->
+                                        <div class="product-image bg-light d-flex align-items-center justify-content-center">
+                                            <i class="fas fa-box text-muted"></i>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <h6 class="mb-1 fw-bold">{{ product.name }}</h6>
+                                        <small class="text-muted">{{ product.code }}</small>
+                                        <div class="small text-muted">{{ product.category.name }}</div>
+                                        {% if product.serial_number %}
+                                            <div class="small text-info">
+                                                <i class="fas fa-hashtag me-1"></i>
+                                                {{ product.serial_number }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-2">
+                                        <small class="text-muted">سعر البيع:</small>
+                                        <div class="fw-bold text-success">{{ product.sale_price|currency_format }}</div>
+                                        {% if product.tax_rate > 0 %}
+                                            <small class="text-muted">
+                                                <i class="fas fa-percentage me-1"></i>
+                                                ضريبة {{ product.tax_rate }}%
+                                            </small>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-2">
+                                        <small class="text-muted">السعر شامل الضريبة:</small>
+                                        <div class="fw-bold text-primary">{{ product.get_price_with_tax|currency_format }}</div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <small class="text-muted">المخزون:</small>
+                                        <div class="fw-bold">
+                                            {{ product.current_stock|floatformat:0 }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <span class="badge {% if product.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                                            {% if product.is_active %}نشط{% else %}غير نشط{% endif %}
+                                        </span>
+                                    </div>
+                                    <div class="col-md-2 text-end">
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'products:product_detail' product.pk %}" class="btn btn-outline-primary" title="عرض التفاصيل">
+                                                <i class="fas fa-eye me-1"></i>
+                                                <span>عرض التفاصيل</span>
+                                            </a>
+                                            <a href="{% url 'products:product_edit' product.pk %}" class="btn btn-outline-warning" title="تعديل">
+                                                <i class="fas fa-edit me-1"></i>
+                                                <span>تعديل</span>
+                                            </a>
+                                            <button class="btn btn-outline-danger delete-product" 
+                                                    data-product-name="{{ product.name }}" 
+                                                    data-product-id="{{ product.pk }}" 
+                                                    title="حذف">
+                                                <i class="fas fa-trash me-1"></i>
+                                                حذف
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% if product.description %}
+                                <div class="row mt-2">
+                                    <div class="col-12">
+                                        <small class="text-muted">{{ product.description|truncatewords:15 }}</small>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <!-- Empty State -->
+                        <div class="empty-state">
+                            <i class="fas fa-box"></i>
+                            <h4>لا توجد منتجات</h4>
+                            <p>لم يتم إنشاء أي منتجات بعد. انقر على "إضافة منتج جديد" لبدء إنشاء المنتجات.</p>
+                            <a href="{% url 'products:product_add' %}" class="btn btn-primary">
+                                <i class="fas fa-plus me-2"></i>
+                                إضافة منتج جديد
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تأكيد الحذف</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>هل أنت متأكد من حذف المنتج "<span id="productName"></span>"؟</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    تحذير: هذا الإجراء لا يمكن التراجع عنه!
+                </div>
+                <div id="deleteError" class="alert alert-danger d-none">
+                    <i class="fas fa-times-circle me-2"></i>
+                    <span id="deleteErrorMessage"></span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <form id="deleteForm" method="post" action="" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger" id="confirmDeleteBtn">
+                        <i class="fas fa-trash me-1"></i>
+                        <span class="btn-text">حذف المنتج</span>
+                        <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Search and filter functionality - إضافة فحص وجود العناصر
+    const searchInput = document.querySelector('input[name="search"]');
+    const filterCategory = document.querySelector('select[name="category"]');
+    const filterStatus = document.getElementById('filterStatus');
+    const filterStock = document.getElementById('filterStock');
+    const sortBy = document.getElementById('sortBy');
+    
+    function filterProducts() {
+        if (!searchInput) return;
+        
+        const searchTerm = searchInput.value.toLowerCase();
+        const categoryFilter = filterCategory ? filterCategory.value : '';
+        const statusFilter = filterStatus ? filterStatus.value : '';
+        const stockFilter = filterStock ? filterStock.value : '';
+        const sortOrder = sortBy ? sortBy.value : '';
+        
+        // Filter logic will be implemented when products data is available
+        console.log('Filtering products:', { 
+            searchTerm, 
+            categoryFilter, 
+            statusFilter, 
+            stockFilter, 
+            sortOrder 
+        });
+    }
+    
+    if (searchInput) searchInput.addEventListener('input', filterProducts);
+    if (filterCategory) filterCategory.addEventListener('change', filterProducts);
+    if (filterStatus) filterStatus.addEventListener('change', filterProducts);
+    if (filterStock) filterStock.addEventListener('change', filterProducts);
+    if (sortBy) sortBy.addEventListener('change', filterProducts);
+    
+    // Delete confirmation - معالجة محسنة
+    document.addEventListener('click', function(e) {
+        // البحث عن زر الحذف (الزر نفسه أو عنصر داخله)
+        let deleteButton = null;
+        
+        if (e.target.classList.contains('delete-product')) {
+            deleteButton = e.target;
+        } else if (e.target.closest('.delete-product')) {
+            deleteButton = e.target.closest('.delete-product');
+        }
+        
+        if (deleteButton) {
+            e.preventDefault(); // منع الإجراء الافتراضي
+            
+            const productName = deleteButton.getAttribute('data-product-name');
+            const productId = deleteButton.getAttribute('data-product-id');
+            
+            // التحقق من وجود البيانات
+            if (!productName || !productId) {
+                console.error('بيانات المنتج غير متوفرة:', { productName, productId });
+                alert('خطأ: لا يمكن تحديد المنتج المراد حذفه');
+                return;
+            }
+            
+            // تحديث النص في النافذة المنبثقة
+            const productNameElement = document.getElementById('productName');
+            if (productNameElement) {
+                productNameElement.textContent = productName;
+            }
+            
+            // بناء URL الحذف
+            const baseUrl = "{% url 'products:product_delete' 999999 %}";
+            const deleteUrl = baseUrl.replace('999999', productId);
+            
+            // تحديث action في النموذج
+            const deleteForm = document.getElementById('deleteForm');
+            if (deleteForm) {
+                deleteForm.action = deleteUrl;
+                console.log('تم تحديد URL الحذف:', deleteUrl);
+                
+                // إعادة تعيين حالة الزر
+                const confirmBtn = document.getElementById('confirmDeleteBtn');
+                const btnText = confirmBtn?.querySelector('.btn-text');
+                const spinner = confirmBtn?.querySelector('.spinner-border');
+                
+                if (confirmBtn) {
+                    confirmBtn.disabled = false;
+                    if (btnText) btnText.textContent = 'حذف المنتج';
+                    if (spinner) spinner.classList.add('d-none');
+                }
+                
+                // فتح النافذة المنبثقة
+                const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+                deleteModal.show();
+            } else {
+                console.error('نموذج الحذف غير موجود');
+                alert('خطأ: نموذج الحذف غير متاح');
+            }
+        }
+    });
+    
+    // معالجة إرسال نموذج الحذف
+    const deleteForm = document.getElementById('deleteForm');
+    if (deleteForm) {
+        deleteForm.addEventListener('submit', function(e) {
+            // لا نمنع الإرسال، فقط نتأكد من وجود action صحيح
+            if (!deleteForm.action || deleteForm.action.endsWith('/products/')) {
+                e.preventDefault();
+                alert('خطأ: لم يتم تحديد URL الحذف بشكل صحيح');
+                return false;
+            }
+            
+            const confirmBtn = document.getElementById('confirmDeleteBtn');
+            const btnText = confirmBtn.querySelector('.btn-text');
+            const spinner = confirmBtn.querySelector('.spinner-border');
+            
+            // تعطيل الزر وإظهار التحميل
+            confirmBtn.disabled = true;
+            if (btnText) btnText.textContent = 'جاري الحذف...';
+            if (spinner) spinner.classList.remove('d-none');
+        });
+    }
+});
+</script>
+{% endblock %}

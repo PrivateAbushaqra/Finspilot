@@ -1,0 +1,351 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}تفاصيل المنتج في المخزون - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .product-detail-container {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .product-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+    }
+    
+    .stock-level {
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-align: center;
+    }
+    
+    .stock-good {
+        background-color: #d4edda;
+        color: #155724;
+        border: 2px solid #c3e6cb;
+    }
+    
+    .stock-low {
+        background-color: #fff3cd;
+        color: #856404;
+        border: 2px solid #ffeaa7;
+    }
+    
+    .stock-critical {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 2px solid #f5c6cb;
+    }
+    
+    .stock-out {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 2px solid #f5c6cb;
+    }
+    
+    .stat-card {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .movement-item {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .movement-item:hover {
+        background-color: #f8f9fa;
+        border-color: #007bff;
+    }
+    
+    .movement-type-in {
+        border-right: 4px solid #28a745;
+    }
+    
+    .movement-type-out {
+        border-right: 4px solid #dc3545;
+    }
+    
+    .movement-type-transfer {
+        border-right: 4px solid #17a2b8;
+    }
+    
+    .warehouse-stock {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            {% if error %}
+            <!-- Error State -->
+            <div class="alert alert-danger text-center">
+                <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                <h4>خطأ</h4>
+                <p>{{ error }}</p>
+                <a href="{% url 'inventory:list' %}" class="btn btn-primary">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    العودة للمخزون
+                </a>
+            </div>
+            {% else %}
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0 text-gray-800">
+                        <i class="fas fa-box text-primary me-2"></i>
+                        تفاصيل المنتج في المخزون
+                    </h1>
+                    <p class="mb-0 text-muted">{{ product.name }}</p>
+                </div>
+                <div>
+                    <a href="{% url 'inventory:list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        العودة للمخزون
+                    </a>
+                    <a href="{% url 'products:product_detail' product.pk %}" class="btn btn-outline-primary">
+                        <i class="fas fa-info-circle me-2"></i>
+                        تفاصيل المنتج
+                    </a>
+                </div>
+            </div>
+
+            <!-- Product Info Card -->
+            <div class="product-detail-container mb-4">
+                <div class="product-header">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="mb-2">{{ product.name }}</h2>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>كود المنتج:</strong> {{ product.code }}</p>
+                                    <p class="mb-1"><strong>التصنيف:</strong> {{ product.category.name|default:"غير محدد" }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>سعر البيع:</strong> {{ product.sale_price|floatformat:3 }} د.أ</p>
+                                    <p class="mb-1"><strong>الحد الأدنى:</strong> {{ product.minimum_quantity|floatformat:0 }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="stock-level {{ stock_level_class }}">
+                                <i class="fas fa-warehouse me-2"></i>
+                                {{ stock_level_text }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <i class="fas fa-boxes text-primary fa-2x mb-2"></i>
+                        <h3 class="mb-1">{{ current_stock|floatformat:0 }}</h3>
+                        <small class="text-muted">المخزون الحالي</small>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <i class="fas fa-arrow-down text-success fa-2x mb-2"></i>
+                        <h3 class="mb-1">{{ total_in|floatformat:0 }}</h3>
+                        <small class="text-muted">إجمالي الوارد</small>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <i class="fas fa-arrow-up text-danger fa-2x mb-2"></i>
+                        <h3 class="mb-1">{{ total_out|floatformat:0 }}</h3>
+                        <small class="text-muted">إجمالي الصادر</small>
+                    </div>
+                </div>
+                
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <i class="fas fa-dollar-sign text-info fa-2x mb-2"></i>
+                        <h3 class="mb-1">{{ current_value|floatformat:2 }}</h3>
+                        <small class="text-muted">القيمة الحالية د.أ</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Recent Movements -->
+                <div class="col-lg-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-history me-2"></i>
+                                آخر الحركات
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if recent_movements %}
+                                {% for movement in recent_movements %}
+                                <div class="movement-item movement-type-{{ movement.movement_type }}">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-2">
+                                            {% if movement.movement_type == 'in' %}
+                                                <i class="fas fa-arrow-down text-success fa-lg"></i>
+                                                <span class="text-success fw-bold">وارد</span>
+                                            {% elif movement.movement_type == 'out' %}
+                                                <i class="fas fa-arrow-up text-danger fa-lg"></i>
+                                                <span class="text-danger fw-bold">صادر</span>
+                                            {% else %}
+                                                <i class="fas fa-exchange-alt text-info fa-lg"></i>
+                                                <span class="text-info fw-bold">تحويل</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-md-2">
+                                            <strong>{{ movement.quantity|floatformat:0 }}</strong>
+                                            <small class="text-muted d-block">قطعة</small>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <strong>{{ movement.warehouse.name|default:"غير محدد" }}</strong>
+                                            <small class="text-muted d-block">المستودع</small>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <strong>{{ movement.created_at|date:"Y-m-d" }}</strong>
+                                            <small class="text-muted d-block">{{ movement.created_at|date:"H:i" }}</small>
+                                        </div>
+                                        <div class="col-md-2 text-end">
+                                            {% if movement.total_cost %}
+                                                <strong>{{ movement.total_cost|floatformat:2 }}</strong>
+                                                <small class="text-muted d-block">د.أ</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    {% if movement.notes %}
+                                    <div class="row mt-2">
+                                        <div class="col-12">
+                                            <small class="text-muted">
+                                                <i class="fas fa-comment me-1"></i>
+                                                {{ movement.notes }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                                
+                                <div class="text-center mt-3">
+                                    <a href="{% url 'inventory:movement_list' %}?product={{ product.id }}" class="btn btn-outline-primary">
+                                        <i class="fas fa-list me-2"></i>
+                                        عرض جميع الحركات
+                                    </a>
+                                </div>
+                            {% else %}
+                                <div class="text-center text-muted py-4">
+                                    <i class="fas fa-history fa-3x mb-3"></i>
+                                    <h5>لا توجد حركات</h5>
+                                    <p>لم يتم تسجيل أي حركات لهذا المنتج بعد</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Warehouse Distribution -->
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-warehouse me-2"></i>
+                                توزيع المستودعات
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if warehouses_with_stock %}
+                                {% for warehouse_data in warehouses_with_stock %}
+                                <div class="warehouse-stock">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ warehouse_data.warehouse.name }}</h6>
+                                            <small class="text-muted">{{ warehouse_data.warehouse.location|default:"" }}</small>
+                                        </div>
+                                        <div class="text-end">
+                                            <h5 class="mb-0 text-primary">{{ warehouse_data.quantity|floatformat:0 }}</h5>
+                                            <small class="text-muted">قطعة</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="text-center text-muted py-4">
+                                    <i class="fas fa-warehouse fa-3x mb-3"></i>
+                                    <h6>لا يوجد مخزون</h6>
+                                    <p>لا يوجد مخزون لهذا المنتج في أي مستودع</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-bolt me-2"></i>
+                                عمليات سريعة
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'products:product_edit' product.pk %}" class="btn btn-outline-warning">
+                                    <i class="fas fa-edit me-2"></i>
+                                    تعديل المنتج
+                                </a>
+                                <a href="{% url 'inventory:movement_list' %}?product={{ product.id }}" class="btn btn-outline-info">
+                                    <i class="fas fa-list me-2"></i>
+                                    عرض الحركات
+                                </a>
+                                <button class="btn btn-outline-success" onclick="window.print()">
+                                    <i class="fas fa-print me-2"></i>
+                                    طباعة التقرير
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add any interactive functionality here if needed
+});
+</script>
+{% endblock %}

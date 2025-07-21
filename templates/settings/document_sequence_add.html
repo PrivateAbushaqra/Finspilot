@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Add New Document Sequence" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">{% trans "Add New Document Sequence" %}</h3>
+                    <div class="card-tools">
+                        <a href="{% url 'settings:document_sequences' %}" class="btn btn-sm btn-secondary">
+                            <i class="fas fa-arrow-left"></i> {% trans "Back to Document Sequences" %}
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="document_type">{% trans "Document Type" %}</label>
+                                    <select class="form-control" id="document_type" name="document_type" required>
+                                        <option value="">{% trans "Choose document type..." %}</option>
+                                        {% for type_code, type_name in document_types %}
+                                            <option value="{{ type_code }}">{{ type_name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <small class="form-text text-muted">
+                                        {% trans "Select the type of document for this sequence" %}
+                                    </small>
+                                </div>
+                                
+                                <div class="form-group mb-3">
+                                    <label for="prefix">{% trans "Prefix" %}</label>
+                                    <input type="text" class="form-control" id="prefix" name="prefix" 
+                                           placeholder="{% trans 'Enter prefix (e.g., SALES-)' %}" required>
+                                    <small class="form-text text-muted">
+                                        {% trans "Prefix that will appear before the number (e.g., SALES-, PURCH-)" %}
+                                    </small>
+                                </div>
+                                
+                                <div class="form-group mb-3">
+                                    <label for="starting_number">{% trans "Starting Number" %}</label>
+                                    <input type="number" class="form-control" id="starting_number" name="starting_number" 
+                                           value="1" min="1" required>
+                                    <small class="form-text text-muted">
+                                        {% trans "The first number to use for this sequence" %}
+                                    </small>
+                                </div>
+                                
+                                <div class="form-group mb-3">
+                                    <label for="digits">{% trans "Number of Digits" %}</label>
+                                    <select class="form-control" id="digits" name="digits">
+                                        <option value="3">3 (001, 002, 003...)</option>
+                                        <option value="4">4 (0001, 0002, 0003...)</option>
+                                        <option value="5">5 (00001, 00002, 00003...)</option>
+                                        <option value="6" selected>6 (000001, 000002, 000003...)</option>
+                                        <option value="7">7 (0000001, 0000002, 0000003...)</option>
+                                        <option value="8">8 (00000001, 00000002, 00000003...)</option>
+                                    </select>
+                                    <small class="form-text text-muted">
+                                        {% trans "Number of digits for the sequence number" %}
+                                    </small>
+                                </div>
+                                
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i>
+                                    <strong>{% trans "Preview:" %}</strong>
+                                    <span id="number_preview">SALES-000001</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <h5>{% trans "Common Document Types" %}</h5>
+                                <p class="text-muted">{% trans "Click on any of these to quickly fill the form:" %}</p>
+                                <div class="row">
+                                    <div class="col-md-3 mb-2">
+                                        <button type="button" class="btn btn-outline-primary btn-block" onclick="fillForm('Credit Note', 'CN-', 1000)">
+                                            {% trans "Credit Note" %}
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <button type="button" class="btn btn-outline-primary btn-block" onclick="fillForm('Debit Note', 'DN-', 1000)">
+                                            {% trans "Debit Note" %}
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <button type="button" class="btn btn-outline-primary btn-block" onclick="fillForm('Payment Voucher', 'PV-', 1000)">
+                                            {% trans "Payment Voucher" %}
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <button type="button" class="btn btn-outline-primary btn-block" onclick="fillForm('Delivery Note', 'DEL-', 1000)">
+                                            {% trans "Delivery Note" %}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-plus"></i> {% trans "Add Sequence" %}
+                            </button>
+                            <a href="{% url 'settings:document_sequences' %}" class="btn btn-secondary ml-2">
+                                {% trans "Cancel" %}
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updatePreview() {
+    const prefix = document.getElementById('prefix').value || 'PREFIX-';
+    const startingNumber = parseInt(document.getElementById('starting_number').value) || 1;
+    const digits = parseInt(document.getElementById('digits').value) || 6;
+    
+    // تنسيق الرقم بعدد الخانات المطلوب
+    const formattedNumber = startingNumber.toString().padStart(digits, '0');
+    document.getElementById('number_preview').textContent = prefix + formattedNumber;
+}
+
+function fillTemplate(documentType, prefix, startingNumber) {
+    document.getElementById('document_type').value = documentType;
+    document.getElementById('prefix').value = prefix;
+    document.getElementById('starting_number').value = startingNumber;
+    updatePreview();
+}
+
+// ربط الأحداث
+document.getElementById('prefix').addEventListener('input', updatePreview);
+document.getElementById('starting_number').addEventListener('input', updatePreview);
+document.getElementById('digits').addEventListener('change', updatePreview);
+document.getElementById('document_type').addEventListener('change', function() {
+    // اقتراح بادئة بناءً على نوع المستند المختار
+    const documentType = this.value;
+    const prefixField = document.getElementById('prefix');
+    
+    if (!prefixField.value) { // فقط إذا كان الحقل فارغ
+        const suggestions = {
+            'sales_invoice': 'SALES-',
+            'sales_return': 'SRET-',
+            'purchase_invoice': 'PURCH-',
+            'purchase_return': 'PRET-',
+            'bank_transfer': 'BT-',
+            'bank_cash_transfer': 'BCT-',
+            'journal_entry': 'JE-',
+            'warehouse_transfer': 'WT-',
+            'receipt_voucher': 'RCV-',
+            'payment_voucher': 'PAY-'
+        };
+        
+        if (suggestions[documentType]) {
+            prefixField.value = suggestions[documentType];
+            updatePreview();
+        }
+    }
+});
+
+// تحديث المعاينة عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', updatePreview);
+</script>
+{% endblock %}

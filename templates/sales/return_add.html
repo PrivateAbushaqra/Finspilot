@@ -1,0 +1,554 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load currency_tags %}
+
+{% block title %}إضافة مرتجع مبيعات - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .form-header {
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .form-section {
+        background: #f8f9fa;
+        border-radius: 6px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid #dc3545;
+    }
+    
+    .return-item-row {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .summary-section {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+    }
+    
+    .required-field {
+        color: #dc3545;
+    }
+    
+    .invoice-search {
+        position: relative;
+    }
+    
+    .search-results {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #ddd;
+        border-top: none;
+        max-height: 200px;
+        overflow-y: auto;
+        z-index: 1000;
+        display: none;
+    }
+    
+    .search-result-item {
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .search-result-item:hover {
+        background: #f8f9fa;
+    }
+    
+    .invoice-details {
+        background: #e7f3ff;
+        border: 1px solid #b8daff;
+        border-radius: 6px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">
+                <i class="fas fa-undo text-danger me-2"></i>
+                إضافة مرتجع مبيعات
+            </h2>
+            <p class="text-muted mb-0">إنشاء مرتجع مبيعات جديد</p>
+        </div>
+        <div>
+            <a href="{% url 'sales:return_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>
+                العودة للقائمة
+            </a>
+        </div>
+    </div>
+
+    <!-- Form Container -->
+    <div class="form-container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        <div class="form-header">
+            <h3>
+                <i class="fas fa-undo text-danger me-2"></i>
+                بيانات مرتجع المبيعات
+            </h3>
+            <p class="text-muted mb-0">يرجى ملء جميع الحقول المطلوبة</p>
+        </div>
+        
+        <form method="post" id="salesReturnForm">
+            {% csrf_token %}
+            
+            <!-- Return Information Section -->
+            <div class="form-section">
+                <h5>
+                    <i class="fas fa-info-circle me-1"></i>
+                    معلومات المرتجع
+                </h5>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_return_number" class="form-label">
+                                رقم المرتجع <span class="required-field">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="id_return_number" name="return_number" 
+                                   value="{{ next_return_number }}" 
+                                   {% if not can_edit_return_number %}readonly{% endif %}
+                                   placeholder="الرقم المتوقع: {{ next_return_number }}" required>
+                            {% if not can_edit_return_number %}
+                                <small class="form-text text-muted">سيتم توليد الرقم تلقائياً</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_return_date" class="form-label">
+                                تاريخ المرتجع <span class="required-field">*</span>
+                            </label>
+                            <input type="date" class="form-control" id="id_return_date" name="date" 
+                                   {% if not can_edit_date %}readonly{% endif %}
+                                   required>
+                            {% if not can_edit_date %}
+                                <small class="form-text text-muted">ليس لديك صلاحية تعديل التاريخ</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="mb-3">
+                            <label for="id_original_invoice" class="form-label">
+                                الفاتورة الأصلية <span class="required-field">*</span>
+                            </label>
+                            <div class="invoice-search">
+                                <input type="text" class="form-control" id="id_original_invoice_search" 
+                                       placeholder="ابحث عن الفاتورة برقمها أو اسم العميل..." autocomplete="off" required>
+                                <input type="hidden" id="id_original_invoice" name="original_invoice">
+                                <div class="search-results" id="invoiceSearchResults"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Invoice Details (will be populated when invoice is selected) -->
+                        <div class="invoice-details" id="invoiceDetails" style="display: none;">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>رقم الفاتورة:</strong> <span id="selectedInvoiceNumber"></span><br>
+                                    <strong>العميل:</strong> <span id="selectedCustomer"></span><br>
+                                    <strong>تاريخ الفاتورة:</strong> <span id="selectedInvoiceDate"></span>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>المبلغ الإجمالي:</strong> <span id="selectedInvoiceTotal"></span><br>
+                                    <strong>الحالة:</strong> <span id="selectedInvoiceStatus"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Return Items Section -->
+            <div class="form-section">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5>
+                        <i class="fas fa-box me-1"></i>
+                        المنتجات المرتجعة
+                    </h5>
+                </div>
+                
+                <div id="returnItemsContainer">
+                    <!-- Return items will be loaded here when invoice is selected -->
+                    <div class="text-center text-muted py-4" id="noInvoiceMessage">
+                        <i class="fas fa-search fa-2x mb-2"></i>
+                        <p>اختر الفاتورة الأصلية أولاً لعرض المنتجات المتاحة للإرجاع</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Return Reason Section -->
+            <div class="form-section">
+                <h5>
+                    <i class="fas fa-comment me-1"></i>
+                    تفاصيل المرتجع
+                </h5>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_return_reason" class="form-label">
+                                سبب الإرجاع <span class="required-field">*</span>
+                            </label>
+                            <select class="form-select" id="id_return_reason" name="return_reason" required>
+                                <option value="">اختر سبب الإرجاع</option>
+                                <option value="defective">منتج معيب</option>
+                                <option value="wrong_item">منتج خاطئ</option>
+                                <option value="customer_request">طلب العميل</option>
+                                <option value="damaged">منتج تالف</option>
+                                <option value="other">أخرى</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_refund_method" class="form-label">طريقة الاسترداد</label>
+                            <select class="form-select" id="id_refund_method" name="refund_method">
+                                <option value="cash">نقدي</option>
+                                <option value="bank_transfer">تحويل بنكي</option>
+                                <option value="credit_note">إشعار دائن</option>
+                                <option value="exchange">استبدال</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="id_notes" class="form-label">ملاحظات</label>
+                    <textarea class="form-control" id="id_notes" name="notes" rows="3" 
+                              placeholder="أي ملاحظات إضافية حول المرتجع..."></textarea>
+                </div>
+            </div>
+
+            <!-- Return Summary -->
+            <div class="summary-section" id="returnSummary" style="display: none;">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h5 class="mb-3">ملخص المرتجع</h5>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="summary-details">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>إجمالي المرتجع:</span>
+                                <strong id="totalReturnDisplay">0.00 {% get_currency_symbol %}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>رسوم الإرجاع:</span>
+                                <strong id="returnFeesDisplay">0.00 {% get_currency_symbol %}</strong>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between mb-0">
+                                <span class="h5">صافي الاسترداد:</span>
+                                <strong class="h5 text-warning" id="netRefundDisplay">0.00 {% get_currency_symbol %}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="d-flex gap-3">
+                        <button type="submit" name="action" value="save" class="btn btn-danger btn-lg">
+                            <i class="fas fa-save me-2"></i>
+                            حفظ المرتجع
+                        </button>
+                        <button type="submit" name="action" value="save_and_process" class="btn btn-warning btn-lg">
+                            <i class="fas fa-check me-2"></i>
+                            حفظ ومعالجة
+                        </button>
+                        <a href="{% url 'sales:return_list' %}" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-times me-2"></i>
+                            إلغاء
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let availableInvoices = [];
+let selectedInvoice = null;
+
+// Load available invoices
+document.addEventListener('DOMContentLoaded', function() {
+    // تعيين التاريخ الحالي
+    const today = new Date().toISOString().split('T')[0];
+    const dateField = document.getElementById('id_return_date');
+    if (dateField && !dateField.value) {
+        dateField.value = today;
+    }
+    
+    // This would typically be loaded via AJAX from the server
+    availableInvoices = [
+        {
+            id: 1, 
+            invoice_number: 'INV-001', 
+            customer: 'عميل تجريبي 1', 
+            date: '2025-01-01',
+            total: 1000.00,
+            status: 'paid',
+            items: [
+                {product_id: 1, product_name: 'منتج 1', quantity: 2, price: 100.00, total: 200.00},
+                {product_id: 2, product_name: 'منتج 2', quantity: 1, price: 800.00, total: 800.00}
+            ]
+        },
+        {
+            id: 2, 
+            invoice_number: 'INV-002', 
+            customer: 'عميل تجريبي 2', 
+            date: '2025-01-02',
+            total: 1500.00,
+            status: 'paid',
+            items: [
+                {product_id: 3, product_name: 'منتج 3', quantity: 3, price: 500.00, total: 1500.00}
+            ]
+        }
+    ];
+    
+    // Set default date
+    document.getElementById('id_return_date').value = new Date().toISOString().split('T')[0];
+});
+
+// Invoice search functionality
+document.getElementById('id_original_invoice_search').addEventListener('input', function() {
+    performInvoiceSearch(this.value);
+});
+
+function performInvoiceSearch(searchTerm) {
+    const resultsContainer = document.getElementById('invoiceSearchResults');
+    
+    if (searchTerm.length < 2) {
+        resultsContainer.style.display = 'none';
+        return;
+    }
+    
+    const filteredInvoices = availableInvoices.filter(invoice => 
+        invoice.invoice_number.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        invoice.customer.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    resultsContainer.innerHTML = '';
+    
+    if (filteredInvoices.length > 0) {
+        filteredInvoices.forEach(invoice => {
+            const item = document.createElement('div');
+            item.className = 'search-result-item';
+            item.innerHTML = `
+                <strong>${invoice.invoice_number}</strong> - ${invoice.customer}<br>
+                <small class="text-muted">${invoice.date} - ${invoice.total.toFixed(2)} {% get_currency_symbol %}</small>
+            `;
+            item.addEventListener('click', () => selectInvoice(invoice));
+            resultsContainer.appendChild(item);
+        });
+        resultsContainer.style.display = 'block';
+    } else {
+        resultsContainer.innerHTML = '<div class="search-result-item text-muted">لا توجد فواتير مطابقة</div>';
+        resultsContainer.style.display = 'block';
+    }
+}
+
+function selectInvoice(invoice) {
+    selectedInvoice = invoice;
+    
+    // Update form fields
+    document.getElementById('id_original_invoice_search').value = invoice.invoice_number + ' - ' + invoice.customer;
+    document.getElementById('id_original_invoice').value = invoice.id;
+    document.getElementById('invoiceSearchResults').style.display = 'none';
+    
+    // Show invoice details
+    document.getElementById('selectedInvoiceNumber').textContent = invoice.invoice_number;
+    document.getElementById('selectedCustomer').textContent = invoice.customer;
+    document.getElementById('selectedInvoiceDate').textContent = invoice.date;
+    document.getElementById('selectedInvoiceTotal').textContent = invoice.total.toFixed(2) + ' {% get_currency_symbol %}';
+    document.getElementById('selectedInvoiceStatus').textContent = getStatusText(invoice.status);
+    document.getElementById('invoiceDetails').style.display = 'block';
+    
+    // Load return items
+    loadReturnItems(invoice);
+}
+
+function getStatusText(status) {
+    const statusMap = {
+        'paid': 'مدفوعة',
+        'pending': 'معلقة',
+        'draft': 'مسودة',
+        'cancelled': 'ملغاة'
+    };
+    return statusMap[status] || status;
+}
+
+function loadReturnItems(invoice) {
+    const container = document.getElementById('returnItemsContainer');
+    document.getElementById('noInvoiceMessage').style.display = 'none';
+    
+    container.innerHTML = '';
+    
+    invoice.items.forEach((item, index) => {
+        const itemRow = document.createElement('div');
+        itemRow.className = 'return-item-row';
+        itemRow.innerHTML = `
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <strong>${item.product_name}</strong><br>
+                    <small class="text-muted">السعر: ${item.price.toFixed(2)} {% get_currency_symbol %}</small>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">الكمية الأصلية</label>
+                    <input type="text" class="form-control" value="${item.quantity}" readonly>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">كمية الإرجاع</label>
+                    <input type="number" class="form-control return-quantity" 
+                           name="return_quantities[${item.product_id}]" 
+                           min="0" max="${item.quantity}" value="0"
+                           data-price="${item.price}" data-product-id="${item.product_id}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">المبلغ المرتجع</label>
+                    <input type="text" class="form-control return-amount" readonly value="0.00">
+                </div>
+                <div class="col-md-2">
+                    <div class="form-check">
+                        <input class="form-check-input return-checkbox" type="checkbox" 
+                               id="return_${item.product_id}" data-product-id="${item.product_id}">
+                        <label class="form-check-label" for="return_${item.product_id}">
+                            إرجاع
+                        </label>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        container.appendChild(itemRow);
+    });
+    
+    // Attach event listeners
+    attachReturnItemListeners();
+    
+    // Show return summary
+    document.getElementById('returnSummary').style.display = 'block';
+}
+
+function attachReturnItemListeners() {
+    document.querySelectorAll('.return-quantity').forEach(input => {
+        input.addEventListener('input', calculateReturnTotals);
+    });
+    
+    document.querySelectorAll('.return-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const row = this.closest('.return-item-row');
+            const quantityInput = row.querySelector('.return-quantity');
+            
+            if (this.checked) {
+                quantityInput.disabled = false;
+                quantityInput.value = quantityInput.max; // Set to maximum available
+            } else {
+                quantityInput.disabled = true;
+                quantityInput.value = 0;
+            }
+            
+            calculateReturnTotals();
+        });
+    });
+}
+
+function calculateReturnTotals() {
+    let totalReturn = 0;
+    
+    document.querySelectorAll('.return-quantity').forEach(input => {
+        const quantity = parseFloat(input.value) || 0;
+        const price = parseFloat(input.dataset.price) || 0;
+        const amount = quantity * price;
+        
+        // Update individual return amount
+        const amountInput = input.closest('.return-item-row').querySelector('.return-amount');
+        amountInput.value = amount.toFixed(2);
+        
+        totalReturn += amount;
+    });
+    
+    const returnFees = 0; // يمكن تخصيصها حسب سياسة الشركة
+    const netRefund = totalReturn - returnFees;
+    
+    // Update summary
+    document.getElementById('totalReturnDisplay').textContent = totalReturn.toFixed(2) + ' {% get_currency_symbol %}';
+    document.getElementById('returnFeesDisplay').textContent = returnFees.toFixed(2) + ' {% get_currency_symbol %}';
+    document.getElementById('netRefundDisplay').textContent = netRefund.toFixed(2) + ' {% get_currency_symbol %}';
+}
+
+// Hide search results when clicking outside
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.invoice-search')) {
+        document.getElementById('invoiceSearchResults').style.display = 'none';
+    }
+});
+
+// Form validation
+document.getElementById('salesReturnForm').addEventListener('submit', function(e) {
+    if (!selectedInvoice) {
+        e.preventDefault();
+        alert('يجب اختيار الفاتورة الأصلية');
+        return;
+    }
+    
+    const returnQuantities = document.querySelectorAll('.return-quantity');
+    let hasValidReturns = false;
+    
+    returnQuantities.forEach(input => {
+        if (parseFloat(input.value) > 0) {
+            hasValidReturns = true;
+        }
+    });
+    
+    if (!hasValidReturns) {
+        e.preventDefault();
+        alert('يجب تحديد كمية إرجاع لمنتج واحد على الأقل');
+    }
+});
+</script>
+{% endblock %}

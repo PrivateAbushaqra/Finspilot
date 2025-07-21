@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load tax_tags %}
+
+{% block title %}الإيرادات والمصروفات - Finspilot{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-chart-line me-2"></i>
+        لوحة تحكم الإيرادات والمصروفات
+    </h1>
+</div>
+
+<!-- الإحصائيات -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stats-card text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">إجمالي الإيرادات</h5>
+                        <h3>{{ total_revenues|currency_format }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-arrow-up fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">إجمالي المصروفات</h5>
+                        <h3>{{ total_expenses|currency_format }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-arrow-down fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">صافي الربح</h5>
+                        <h3>{{ net_profit|currency_format }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-chart-bar fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h5 class="card-title">عدد القيود</h5>
+                        <h3>{{ entries_count }}</h3>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-list fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- القوائم السريعة -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-tags me-2"></i>
+                    إدارة الفئات
+                </h5>
+                <a href="{% url 'revenues_expenses:category_create' %}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus me-1"></i>
+                    إضافة فئة جديدة
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    <a href="{% url 'revenues_expenses:category_list' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-list me-2"></i>
+                        عرض جميع الفئات
+                    </a>
+                    <a href="{% url 'revenues_expenses:category_create' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-plus me-2"></i>
+                        إضافة فئة جديدة
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-file-invoice me-2"></i>
+                    إدارة القيود
+                </h5>
+                <a href="{% url 'revenues_expenses:entry_create' %}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus me-1"></i>
+                    إضافة قيد جديد
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    <a href="{% url 'revenues_expenses:entry_list' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-list me-2"></i>
+                        عرض جميع القيود
+                    </a>
+                    <a href="{% url 'revenues_expenses:entry_create' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-plus me-2"></i>
+                        إضافة قيد جديد
+                    </a>
+                    <a href="{% url 'revenues_expenses:recurring_list' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-redo me-2"></i>
+                        الإيرادات والمصروفات المتكررة
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- آخر القيود -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-clock me-2"></i>
+                    آخر القيود المضافة
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_entries %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>التاريخ</th>
+                                <th>النوع</th>
+                                <th>الفئة</th>
+                                <th>المبلغ</th>
+                                <th>الوصف</th>
+                                <th>الحالة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in recent_entries %}
+                            <tr>
+                                <td>{{ entry.date|date:"Y-m-d" }}</td>
+                                <td>
+                                    {% if entry.type == 'revenue' %}
+                                        <span class="badge bg-success">إيراد</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">مصروف</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ entry.category.name }}</td>
+                                <td>{{ entry.amount|currency_format:entry.currency }}</td>
+                                <td>{{ entry.description|truncatechars:50 }}</td>
+                                <td>
+                                    {% if entry.is_approved %}
+                                        <span class="badge bg-success">معتمد</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">في الانتظار</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'revenues_expenses:entry_detail' entry.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">لا توجد قيود مضافة بعد</p>
+                    <a href="{% url 'revenues_expenses:entry_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>
+                        إضافة أول قيد
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,387 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "إنشاء قيد محاسبي جديد" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                <h1 class="h3 mb-0 text-gray-800">{% trans "إنشاء قيد محاسبي جديد" %}</h1>
+                <a href="{% url 'journal:entry_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-right me-2"></i>{% trans "العودة للقائمة" %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" id="journalEntryForm">
+        {% csrf_token %}
+        
+        <!-- معلومات القيد الأساسية -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-header">
+                        <h6 class="m-0 font-weight-bold text-primary">{% trans "معلومات القيد الأساسية" %}</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.entry_date.id_for_label }}" class="form-label">
+                                        {{ form.entry_date.label }}
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.entry_date }}
+                                    {% if form.entry_date.errors %}
+                                        <div class="text-danger">{{ form.entry_date.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.reference_type.id_for_label }}" class="form-label">
+                                        {{ form.reference_type.label }}
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.reference_type }}
+                                    {% if form.reference_type.errors %}
+                                        <div class="text-danger">{{ form.reference_type.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="{{ form.description.id_for_label }}" class="form-label">
+                                        {{ form.description.label }}
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.description }}
+                                    {% if form.description.errors %}
+                                        <div class="text-danger">{{ form.description.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- بنود القيد -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="m-0 font-weight-bold text-primary">{% trans "بنود القيد المحاسبي" %}</h6>
+                        <button type="button" class="btn btn-sm btn-success" onclick="addJournalLine()">
+                            <i class="fas fa-plus me-1"></i>{% trans "إضافة بند" %}
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="journalLinesTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 30%">{% trans "الحساب" %}</th>
+                                        <th style="width: 25%">{% trans "تفاصيل البند" %}</th>
+                                        <th style="width: 15%">{% trans "مدين" %}</th>
+                                        <th style="width: 15%">{% trans "دائن" %}</th>
+                                        <th style="width: 10%">{% trans "العمليات" %}</th>
+                                        <th style="width: 5%">{% trans "حذف" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="journalLinesBody">
+                                    {{ formset.management_form }}
+                                    {% for form in formset %}
+                                        <tr class="journal-line-row" data-form-prefix="{{ form.prefix }}">
+                                            <td>
+                                                {{ form.account }}
+                                                {% if form.account.errors %}
+                                                    <div class="text-danger small">{{ form.account.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.line_description }}
+                                                {% if form.line_description.errors %}
+                                                    <div class="text-danger small">{{ form.line_description.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.debit }}
+                                                {% if form.debit.errors %}
+                                                    <div class="text-danger small">{{ form.debit.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.credit }}
+                                                {% if form.credit.errors %}
+                                                    <div class="text-danger small">{{ form.credit.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-center">
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" 
+                                                        onclick="clearLine(this)" title="{% trans 'مسح البند' %}">
+                                                    <i class="fas fa-eraser"></i>
+                                                </button>
+                                            </td>
+                                            <td class="text-center">
+                                                {{ form.DELETE }}
+                                                <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                        onclick="deleteLine(this)" title="{% trans 'حذف البند' %}">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot class="table-dark">
+                                    <tr>
+                                        <td colspan="2" class="text-center fw-bold">{% trans "الإجمالي" %}</td>
+                                        <td class="text-center fw-bold">
+                                            <span id="totalDebit">0.000</span>
+                                        </td>
+                                        <td class="text-center fw-bold">
+                                            <span id="totalCredit">0.000</span>
+                                        </td>
+                                        <td colspan="2" class="text-center">
+                                            <span id="balanceStatus" class="badge">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>{% trans "غير متوازن" %}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        
+                        <!-- رسائل التحذير -->
+                        <div id="balanceAlert" class="alert alert-warning d-none mt-3">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            {% trans "تحذير: مجموع المدين لا يساوي مجموع الدائن. يجب أن تكون متساوية لحفظ القيد." %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- أزرار العمليات -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                                    <i class="fas fa-undo me-2"></i>{% trans "إعادة تعيين" %}
+                                </button>
+                            </div>
+                            <div>
+                                <a href="{% url 'journal:entry_list' %}" class="btn btn-outline-secondary me-2">
+                                    {% trans "إلغاء" %}
+                                </a>
+                                <button type="submit" class="btn btn-primary" id="saveButton">
+                                    <i class="fas fa-save me-2"></i>{% trans "حفظ القيد" %}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- قالب صف جديد للقيود -->
+<div id="emptyLineTemplate" style="display: none;">
+    <tr class="journal-line-row" data-form-prefix="__prefix__">
+        <td>
+            <select name="__prefix__-account" class="form-control" id="id___prefix__-account">
+                <option value="">{% trans "اختر الحساب" %}</option>
+                {% for account in accounts %}
+                    <option value="{{ account.pk }}">{{ account.code }} - {{ account.name }}</option>
+                {% endfor %}
+            </select>
+        </td>
+        <td>
+            <input type="text" name="__prefix__-line_description" class="form-control" id="id___prefix__-line_description">
+        </td>
+        <td>
+            <input type="number" name="__prefix__-debit" step="0.001" min="0" class="form-control debit-input" id="id___prefix__-debit">
+        </td>
+        <td>
+            <input type="number" name="__prefix__-credit" step="0.001" min="0" class="form-control credit-input" id="id___prefix__-credit">
+        </td>
+        <td class="text-center">
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearLine(this)" title="{% trans 'مسح البند' %}">
+                <i class="fas fa-eraser"></i>
+            </button>
+        </td>
+        <td class="text-center">
+            <input type="hidden" name="__prefix__-DELETE" id="id___prefix__-DELETE">
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteLine(this)" title="{% trans 'حذف البند' %}">
+                <i class="fas fa-trash"></i>
+            </button>
+        </td>
+    </tr>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let lineCount = {{ formset.total_form_count }};
+
+// إضافة بند جديد
+function addJournalLine() {
+    const template = document.getElementById('emptyLineTemplate').innerHTML;
+    const newLine = template.replace(/__prefix__/g, lineCount);
+    
+    document.getElementById('journalLinesBody').insertAdjacentHTML('beforeend', newLine);
+    
+    // تحديث عدد النماذج
+    lineCount++;
+    updateFormCount();
+    
+    // إضافة مستمعي الأحداث للحقول الجديدة
+    attachEventListeners();
+    calculateTotals();
+}
+
+// حذف بند
+function deleteLine(button) {
+    const row = button.closest('tr');
+    const deleteInput = row.querySelector('input[name$="-DELETE"]');
+    
+    if (deleteInput) {
+        deleteInput.value = 'on';
+        row.style.display = 'none';
+    } else {
+        row.remove();
+        lineCount--;
+        updateFormCount();
+    }
+    
+    calculateTotals();
+}
+
+// مسح بند
+function clearLine(button) {
+    const row = button.closest('tr');
+    row.querySelector('select[name$="-account"]').value = '';
+    row.querySelector('input[name$="-line_description"]').value = '';
+    row.querySelector('input[name$="-debit"]').value = '';
+    row.querySelector('input[name$="-credit"]').value = '';
+    calculateTotals();
+}
+
+// تحديث عدد النماذج
+function updateFormCount() {
+    document.querySelector('input[name="form-TOTAL_FORMS"]').value = lineCount;
+}
+
+// حساب المجاميع
+function calculateTotals() {
+    let totalDebit = 0;
+    let totalCredit = 0;
+    
+    document.querySelectorAll('.debit-input').forEach(input => {
+        const value = parseFloat(input.value) || 0;
+        totalDebit += value;
+    });
+    
+    document.querySelectorAll('.credit-input').forEach(input => {
+        const value = parseFloat(input.value) || 0;
+        totalCredit += value;
+    });
+    
+    // تحديث العرض
+    document.getElementById('totalDebit').textContent = totalDebit.toFixed(3);
+    document.getElementById('totalCredit').textContent = totalCredit.toFixed(3);
+    
+    // تحديث حالة التوازن
+    const balanceStatus = document.getElementById('balanceStatus');
+    const balanceAlert = document.getElementById('balanceAlert');
+    const saveButton = document.getElementById('saveButton');
+    
+    if (Math.abs(totalDebit - totalCredit) < 0.001 && totalDebit > 0) {
+        balanceStatus.className = 'badge bg-success';
+        balanceStatus.innerHTML = '<i class="fas fa-check me-1"></i>متوازن';
+        balanceAlert.classList.add('d-none');
+        saveButton.disabled = false;
+    } else {
+        balanceStatus.className = 'badge bg-danger';
+        balanceStatus.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>غير متوازن';
+        balanceAlert.classList.remove('d-none');
+        saveButton.disabled = true;
+    }
+}
+
+// إضافة مستمعي الأحداث
+function attachEventListeners() {
+    document.querySelectorAll('.debit-input, .credit-input').forEach(input => {
+        input.addEventListener('input', function() {
+            // منع إدخال مدين ودائن في نفس الصف
+            const row = this.closest('tr');
+            const debitInput = row.querySelector('.debit-input');
+            const creditInput = row.querySelector('.credit-input');
+            
+            if (this.classList.contains('debit-input') && this.value > 0) {
+                creditInput.value = '';
+            } else if (this.classList.contains('credit-input') && this.value > 0) {
+                debitInput.value = '';
+            }
+            
+            calculateTotals();
+        });
+    });
+}
+
+// إعادة تعيين النموذج
+function resetForm() {
+    if (confirm('هل أنت متأكد من إعادة تعيين النموذج؟ سيتم فقدان جميع البيانات المدخلة.')) {
+        document.getElementById('journalEntryForm').reset();
+        calculateTotals();
+    }
+}
+
+// التحقق من صحة النموذج قبل الإرسال
+document.getElementById('journalEntryForm').addEventListener('submit', function(e) {
+    const totalDebit = parseFloat(document.getElementById('totalDebit').textContent);
+    const totalCredit = parseFloat(document.getElementById('totalCredit').textContent);
+    
+    if (Math.abs(totalDebit - totalCredit) > 0.001) {
+        e.preventDefault();
+        alert('يجب أن يكون مجموع المدين مساوياً لمجموع الدائن');
+        return false;
+    }
+    
+    if (totalDebit === 0) {
+        e.preventDefault();
+        alert('يجب إدخال بنود للقيد المحاسبي');
+        return false;
+    }
+    
+    // تحديث المبلغ الإجمالي
+    const totalAmountInput = document.querySelector('input[name="total_amount"]');
+    if (totalAmountInput) {
+        totalAmountInput.value = totalDebit.toFixed(3);
+    }
+});
+
+// تحميل الصفحة
+document.addEventListener('DOMContentLoaded', function() {
+    attachEventListeners();
+    calculateTotals();
+    
+    // تعيين التاريخ الحالي كافتراضي
+    const dateInput = document.querySelector('input[name="entry_date"]');
+    if (dateInput && !dateInput.value) {
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}حذف التصنيف - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-trash me-2"></i>
+                        تأكيد حذف التصنيف
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>تحذير:</strong> هذا الإجراء لا يمكن التراجع عنه!
+                    </div>
+                    
+                    <p>هل أنت متأكد من حذف التصنيف التالي؟</p>
+                    
+                    <div class="bg-light p-3 rounded mb-3">
+                        <h6><strong>اسم التصنيف:</strong> {{ category.name }}</h6>
+                        <p class="mb-1"><strong>عدد المنتجات المرتبطة:</strong> {{ products_count|default:0 }}</p>
+                        <p class="mb-0"><strong>عدد التصنيفات الفرعية:</strong> {{ subcategories_count|default:0 }}</p>
+                    </div>
+                    
+                    {% if products_count > 0 or subcategories_count > 0 %}
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>تحذير:</strong> 
+                        {% if products_count > 0 and subcategories_count > 0 %}
+                            لا يمكن حذف هذا التصنيف لوجود {{ products_count }} منتج و {{ subcategories_count }} تصنيف فرعي مرتبط به!
+                        {% elif products_count > 0 %}
+                            لا يمكن حذف هذا التصنيف لوجود {{ products_count }} منتج مرتبط به!
+                        {% elif subcategories_count > 0 %}
+                            لا يمكن حذف هذا التصنيف لوجود {{ subcategories_count }} تصنيف فرعي!
+                        {% endif %}
+                        <br>يجب حذف أو نقل المرتبطات أولاً.
+                    </div>
+                    {% endif %}
+                    
+                    <form method="post" class="d-flex justify-content-end gap-2">
+                        {% csrf_token %}
+                        <a href="{% url 'products:category_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>
+                            {% if products_count > 0 or subcategories_count > 0 %}عودة{% else %}إلغاء{% endif %}
+                        </a>
+                        {% if products_count == 0 and subcategories_count == 0 %}
+                        <button type="submit" class="btn btn-danger" 
+                                onclick="return confirm('هل أنت متأكد من حذف التصنيف {{ category.name }}؟')">
+                            <i class="fas fa-trash me-2"></i>
+                            حذف التصنيف
+                        </button>
+                        {% else %}
+                        <button type="button" class="btn btn-danger" disabled>
+                            <i class="fas fa-ban me-2"></i>
+                            لا يمكن الحذف
+                        </button>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

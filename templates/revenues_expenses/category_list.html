@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}فئات الإيرادات والمصروفات - Triangle{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-tags me-2"></i>
+        فئات الإيرادات والمصروفات
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'revenues_expenses:category_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i>
+            إضافة فئة جديدة
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if categories %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>اسم الفئة</th>
+                        <th>النوع</th>
+                        <th>الوصف</th>
+                        <th>تاريخ الإنشاء</th>
+                        <th>الحالة</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for category in categories %}
+                    <tr>
+                        <td>{{ category.name }}</td>
+                        <td>
+                            {% if category.type == 'revenue' %}
+                                <span class="badge bg-success">إيراد</span>
+                            {% else %}
+                                <span class="badge bg-danger">مصروف</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ category.description|default:"لا يوجد وصف" }}</td>
+                        <td>{{ category.created_at|date:"Y-m-d H:i" }}</td>
+                        <td>
+                            {% if category.is_active %}
+                                <span class="badge bg-success">نشط</span>
+                            {% else %}
+                                <span class="badge bg-secondary">غير نشط</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" title="تعديل">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                {% if category.is_active %}
+                                    <button class="btn btn-outline-warning" title="إلغاء التفعيل">
+                                        <i class="fas fa-ban"></i>
+                                    </button>
+                                {% else %}
+                                    <button class="btn btn-outline-success" title="تفعيل">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-tags fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">لا توجد فئات</h4>
+            <p class="text-muted">لم يتم إنشاء أي فئات للإيرادات والمصروفات بعد</p>
+            <a href="{% url 'revenues_expenses:category_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>
+                إضافة أول فئة
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

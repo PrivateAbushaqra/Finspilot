@@ -1,0 +1,533 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans 'إضافة مستخدم' %} - Finspilot{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-10 offset-md-1">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-user-plus me-2"></i>
+                        {% trans 'إضافة مستخدم جديد' %}
+                    </h3>
+                </div>
+                <div class="card-body">
+                    {% if creation_tips %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>{% trans 'نصائح مهمة:' %}</strong>
+                        <ul class="mb-0 mt-2">
+                            {% for tip in creation_tips %}
+                            <li>{{ tip }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- معلومات أساسية -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2 mb-3">
+                                    <i class="fas fa-user me-2"></i>
+                                    {% trans 'المعلومات الأساسية' %}
+                                </h5>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.username.id_for_label }}" class="form-label">
+                                    {{ form.username.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.username }}
+                                {% if form.username.errors %}
+                                    <div class="text-danger small">{{ form.username.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">{% trans 'اسم فريد للدخول للنظام' %}</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.email.id_for_label }}" class="form-label">
+                                    {{ form.email.label }}
+                                </label>
+                                {{ form.email }}
+                                {% if form.email.errors %}
+                                    <div class="text-danger small">{{ form.email.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">{% trans 'للتواصل والتنبيهات' %}</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                                    {{ form.first_name.label }}
+                                </label>
+                                {{ form.first_name }}
+                                {% if form.first_name.errors %}
+                                    <div class="text-danger small">{{ form.first_name.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                                    {{ form.last_name.label }}
+                                </label>
+                                {{ form.last_name }}
+                                {% if form.last_name.errors %}
+                                    <div class="text-danger small">{{ form.last_name.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.phone.id_for_label }}" class="form-label">
+                                    {{ form.phone.label }}
+                                </label>
+                                {{ form.phone }}
+                                {% if form.phone.errors %}
+                                    <div class="text-danger small">{{ form.phone.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.department.id_for_label }}" class="form-label">
+                                    {{ form.department.label }}
+                                </label>
+                                {{ form.department }}
+                                {% if form.department.errors %}
+                                    <div class="text-danger small">{{ form.department.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- كلمة المرور -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2 mb-3">
+                                    <i class="fas fa-key me-2"></i>
+                                    {% trans 'كلمة المرور' %}
+                                </h5>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.password1.id_for_label }}" class="form-label">
+                                    {{ form.password1.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.password1 }}
+                                {% if form.password1.errors %}
+                                    <div class="text-danger small">{{ form.password1.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">{{ form.password1.help_text }}</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.password2.id_for_label }}" class="form-label">
+                                    {{ form.password2.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.password2 }}
+                                {% if form.password2.errors %}
+                                    <div class="text-danger small">{{ form.password2.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">{{ form.password2.help_text }}</div>
+                            </div>
+                        </div>
+
+                        <!-- إعدادات الحساب -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2 mb-3">
+                                    <i class="fas fa-cogs me-2"></i>
+                                    {% trans 'إعدادات الحساب' %}
+                                </h5>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.user_type.id_for_label }}" class="form-label">
+                                    {{ form.user_type.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.user_type }}
+                                {% if form.user_type.errors %}
+                                    <div class="text-danger small">{{ form.user_type.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">{% trans 'يحدد مستوى الصلاحيات' %}</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check form-switch">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                        {{ form.is_active.label }}
+                                    </label>
+                                </div>
+                                {% if form.is_active.errors %}
+                                    <div class="text-danger small">{{ form.is_active.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">{% trans 'يمكن إلغاء التفعيل لاحقاً' %}</div>
+                            </div>
+                        </div>
+
+                        <!-- صلاحيات الوصول -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2 mb-3">
+                                    <i class="fas fa-shield-alt me-2"></i>
+                                    {% trans 'صلاحيات الوصول' %}
+                                </h5>
+                                <p class="text-muted">{% trans 'حدد الأقسام التي يمكن للمستخدم الوصول إليها' %}</p>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    {{ form.can_access_sales }}
+                                    <label class="form-check-label" for="{{ form.can_access_sales.id_for_label }}">
+                                        {{ form.can_access_sales.label }}
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check mb-2">
+                                    {{ form.can_access_purchases }}
+                                    <label class="form-check-label" for="{{ form.can_access_purchases.id_for_label }}">
+                                        {{ form.can_access_purchases.label }}
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check mb-2">
+                                    {{ form.can_access_inventory }}
+                                    <label class="form-check-label" for="{{ form.can_access_inventory.id_for_label }}">
+                                        {{ form.can_access_inventory.label }}
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check mb-2">
+                                    {{ form.can_access_banks }}
+                                    <label class="form-check-label" for="{{ form.can_access_banks.id_for_label }}">
+                                        {{ form.can_access_banks.label }}
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check mb-2">
+                                    {{ form.can_access_reports }}
+                                    <label class="form-check-label" for="{{ form.can_access_reports.id_for_label }}">
+                                        {{ form.can_access_reports.label }}
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    {{ form.can_delete_invoices }}
+                                    <label class="form-check-label" for="{{ form.can_delete_invoices.id_for_label }}">
+                                        {{ form.can_delete_invoices.label }}
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check mb-2">
+                                    {{ form.can_edit_dates }}
+                                    <label class="form-check-label" for="{{ form.can_edit_dates.id_for_label }}">
+                                        {{ form.can_edit_dates.label }}
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check mb-2">
+                                    {{ form.can_edit_invoice_numbers }}
+                                    <label class="form-check-label" for="{{ form.can_edit_invoice_numbers.id_for_label }}">
+                                        {{ form.can_edit_invoice_numbers.label }}
+                                    </label>
+                                </div>
+                                
+                                <div class="form-check mb-2">
+                                    {{ form.can_see_low_stock_alerts }}
+                                    <label class="form-check-label" for="{{ form.can_see_low_stock_alerts.id_for_label }}">
+                                        {{ form.can_see_low_stock_alerts.label }}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- المجموعات -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2 mb-3">
+                                    <i class="fas fa-users me-2"></i>
+                                    {% trans 'المجموعات والأدوار' %}
+                                </h5>
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="card border-info">
+                                    <div class="card-header bg-info text-white">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-layer-group me-2"></i>
+                                            {% trans 'عضوية المجموعات' %}
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        {% if form.groups.field.queryset %}
+                                            <div class="row">
+                                                {% for group in form.groups.field.queryset %}
+                                                    <div class="col-md-4 mb-3">
+                                                        <div class="form-check">
+                                                            <input type="checkbox" 
+                                                                   class="form-check-input group-checkbox" 
+                                                                   name="groups" 
+                                                                   value="{{ group.pk }}" 
+                                                                   id="group_{{ group.pk }}">
+                                                            <label class="form-check-label" for="group_{{ group.pk }}">
+                                                                <strong>{{ group.name }}</strong>
+                                                                <br>
+                                                                <small class="text-muted">
+                                                                    <i class="fas fa-users"></i> {{ group.user_set.count }} مستخدم
+                                                                    <i class="fas fa-key ms-2"></i> {{ group.permissions.count }} صلاحية
+                                                                </small>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            <div class="text-center py-3">
+                                                <i class="fas fa-layer-group fa-2x text-muted mb-2"></i>
+                                                <p class="text-muted mb-0">{% trans 'لا توجد مجموعات متاحة' %}</p>
+                                                <a href="{% url 'users:group_add' %}" class="btn btn-primary btn-sm mt-2">
+                                                    <i class="fas fa-plus me-1"></i>
+                                                    {% trans 'إنشاء مجموعة' %}
+                                                </a>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        <div class="alert alert-info mt-3">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            <strong>{% trans 'ملاحظة:' %}</strong>
+                                            {% trans 'المستخدم سيحصل على جميع صلاحيات المجموعات المحددة' %}
+                                        </div>
+                                        
+                                        <!-- اختصارات سريعة -->
+                                        <div class="mt-3">
+                                            <h6>{% trans 'اختصارات سريعة:' %}</h6>
+                                            <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="selectGroupsByUserType()">
+                                                {% trans 'تحديد تلقائي حسب نوع المستخدم' %}
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearAllGroups()">
+                                                {% trans 'إلغاء تحديد الكل' %}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- إعدادات إضافية -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2 mb-3">
+                                    <i class="fas fa-sliders-h me-2"></i>
+                                    {% trans 'إعدادات خاصة' %}
+                                </h5>
+                                <p class="text-muted">{% trans 'قيود خاصة على نوع المعاملات' %}</p>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    {{ form.cash_only }}
+                                    <label class="form-check-label" for="{{ form.cash_only.id_for_label }}">
+                                        {{ form.cash_only.label }}
+                                    </label>
+                                </div>
+                                <div class="form-text">{% trans 'المستخدم يتعامل مع المعاملات النقدية فقط' %}</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    {{ form.credit_only }}
+                                    <label class="form-check-label" for="{{ form.credit_only.id_for_label }}">
+                                        {{ form.credit_only.label }}
+                                    </label>
+                                </div>
+                                <div class="form-text">{% trans 'المستخدم يتعامل مع الذمم فقط' %}</div>
+                            </div>
+                        </div>
+
+                        <!-- أزرار التحكم -->
+                        <hr>
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'users:user_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>
+                                {% trans 'إلغاء' %}
+                            </a>
+                            
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-user-plus me-2"></i>
+                                {% trans 'إنشاء المستخدم' %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // منطق خاص بالصلاحيات
+    const userTypeSelect = document.getElementById('{{ form.user_type.id_for_label }}');
+    const permissionCheckboxes = document.querySelectorAll('input[type="checkbox"][name^="can_"]');
+    
+    function updatePermissions() {
+        const userType = userTypeSelect.value;
+        
+        if (userType === 'superadmin' || userType === 'admin') {
+            // تفعيل جميع الصلاحيات للمديرين
+            permissionCheckboxes.forEach(checkbox => {
+                checkbox.checked = true;
+            });
+        }
+    }
+    
+    // تحديث الصلاحيات عند تغيير نوع المستخدم
+    if (userTypeSelect) {
+        userTypeSelect.addEventListener('change', updatePermissions);
+    }
+    
+    // منع تفعيل كاش فقط وذمم فقط معاً
+    const cashOnlyCheckbox = document.getElementById('{{ form.cash_only.id_for_label }}');
+    const creditOnlyCheckbox = document.getElementById('{{ form.credit_only.id_for_label }}');
+    
+    if (cashOnlyCheckbox && creditOnlyCheckbox) {
+        cashOnlyCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                creditOnlyCheckbox.checked = false;
+            }
+        });
+        
+        creditOnlyCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                cashOnlyCheckbox.checked = false;
+            }
+        });
+    }
+    
+    // التحقق من تطابق كلمات المرور
+    const password1Input = document.getElementById('{{ form.password1.id_for_label }}');
+    const password2Input = document.getElementById('{{ form.password2.id_for_label }}');
+    
+    function checkPasswordMatch() {
+        if (password1Input.value && password2Input.value) {
+            if (password1Input.value === password2Input.value) {
+                password2Input.setCustomValidity('');
+                password2Input.classList.remove('is-invalid');
+                password2Input.classList.add('is-valid');
+            } else {
+                password2Input.setCustomValidity('كلمتا المرور غير متطابقتين');
+                password2Input.classList.remove('is-valid');
+                password2Input.classList.add('is-invalid');
+            }
+        }
+    }
+    
+    if (password1Input && password2Input) {
+        password1Input.addEventListener('input', checkPasswordMatch);
+        password2Input.addEventListener('input', checkPasswordMatch);
+    }
+    
+    // إظهار قوة كلمة المرور
+    if (password1Input) {
+        password1Input.addEventListener('input', function() {
+            const password = this.value;
+            let strength = 0;
+            
+            if (password.length >= 8) strength++;
+            if (/[a-z]/.test(password)) strength++;
+            if (/[A-Z]/.test(password)) strength++;
+            if (/[0-9]/.test(password)) strength++;
+            if (/[^A-Za-z0-9]/.test(password)) strength++;
+            
+            let strengthText = '';
+            let strengthClass = '';
+            
+            switch(strength) {
+                case 0:
+                case 1:
+                    strengthText = 'ضعيفة جداً';
+                    strengthClass = 'text-danger';
+                    break;
+                case 2:
+                    strengthText = 'ضعيفة';
+                    strengthClass = 'text-warning';
+                    break;
+                case 3:
+                    strengthText = 'متوسطة';
+                    strengthClass = 'text-info';
+                    break;
+                case 4:
+                    strengthText = 'قوية';
+                    strengthClass = 'text-success';
+                    break;
+                case 5:
+                    strengthText = 'قوية جداً';
+                    strengthClass = 'text-success fw-bold';
+                    break;
+            }
+            
+            // إنشاء أو تحديث عنصر قوة كلمة المرور
+            let strengthIndicator = document.getElementById('password-strength');
+            if (!strengthIndicator) {
+                strengthIndicator = document.createElement('div');
+                strengthIndicator.id = 'password-strength';
+                strengthIndicator.className = 'form-text';
+                password1Input.parentNode.appendChild(strengthIndicator);
+            }
+            
+            strengthIndicator.innerHTML = `<span class="${strengthClass}">قوة كلمة المرور: ${strengthText}</span>`;
+        });
+    }
+});
+
+// وظائف إدارة المجموعات
+function selectGroupsByUserType() {
+    const userTypeSelect = document.getElementById('{{ form.user_type.id_for_label }}');
+    const groupCheckboxes = document.querySelectorAll('.group-checkbox');
+    
+    // إلغاء تحديد جميع المجموعات أولاً
+    groupCheckboxes.forEach(checkbox => checkbox.checked = false);
+    
+    const userType = userTypeSelect.value;
+    
+    // تحديد المجموعات حسب نوع المستخدم
+    switch(userType) {
+        case 'superadmin':
+        case 'admin':
+            // المدراء يحصلون على مجموعة المدراء
+            selectGroupByName('المدراء');
+            break;
+        case 'accountant':
+            // المحاسبون يحصلون على مجموعة المحاسبين
+            selectGroupByName('المحاسبين');
+            break;
+        case 'user':
+            // المستخدمون العاديون يحصلون على مجموعة المستخدمين العاديين
+            selectGroupByName('المستخدمين العاديين');
+            break;
+    }
+}
+
+function selectGroupByName(groupName) {
+    const groupCheckboxes = document.querySelectorAll('.group-checkbox');
+    groupCheckboxes.forEach(checkbox => {
+        const label = checkbox.nextElementSibling;
+        if (label && label.textContent.includes(groupName)) {
+            checkbox.checked = true;
+        }
+    });
+}
+
+function clearAllGroups() {
+    const groupCheckboxes = document.querySelectorAll('.group-checkbox');
+    groupCheckboxes.forEach(checkbox => checkbox.checked = false);
+}
+</script>
+{% endblock %}

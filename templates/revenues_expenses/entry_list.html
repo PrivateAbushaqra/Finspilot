@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load tax_tags %}
+
+{% block title %}قيود الإيرادات والمصروفات - Finspilot{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-file-invoice me-2"></i>
+        قيود الإيرادات والمصروفات
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'revenues_expenses:entry_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i>
+            إضافة قيد جديد
+        </a>
+    </div>
+</div>
+
+<!-- فلاتر البحث -->
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="type" class="form-label">النوع</label>
+                <select class="form-select" id="type" name="type">
+                    <option value="">جميع الأنواع</option>
+                    <option value="revenue" {% if request.GET.type == 'revenue' %}selected{% endif %}>الإيرادات</option>
+                    <option value="expense" {% if request.GET.type == 'expense' %}selected{% endif %}>المصروفات</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="category" class="form-label">الفئة</label>
+                <select class="form-select" id="category" name="category">
+                    <option value="">جميع الفئات</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:"s" %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="date_from" class="form-label">من تاريخ</label>
+                <input type="date" class="form-control" id="date_from" name="date_from" value="{{ request.GET.date_from }}">
+            </div>
+            <div class="col-md-2">
+                <label for="date_to" class="form-label">إلى تاريخ</label>
+                <input type="date" class="form-control" id="date_to" name="date_to" value="{{ request.GET.date_to }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-grid">
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="fas fa-search me-1"></i>
+                        بحث
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if entries %}
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>رقم القيد</th>
+                        <th>التاريخ</th>
+                        <th>النوع</th>
+                        <th>الفئة</th>
+                        <th>المبلغ</th>
+                        <th>الوصف</th>
+                        <th>الحالة</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in entries %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'revenues_expenses:entry_detail' entry.id %}" class="text-decoration-none">
+                                #{{ entry.id }}
+                            </a>
+                        </td>
+                        <td>{{ entry.date|date:"Y-m-d" }}</td>
+                        <td>
+                            {% if entry.type == 'revenue' %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-arrow-up me-1"></i>
+                                    إيراد
+                                </span>
+                            {% else %}
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-arrow-down me-1"></i>
+                                    مصروف
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>{{ entry.category.name }}</td>
+                        <td class="text-end">
+                            <strong>{{ entry.amount|currency_format:entry.currency }}</strong>
+                        </td>
+                        <td>{{ entry.description|truncatechars:50 }}</td>
+                        <td>
+                            {% if entry.is_approved %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check me-1"></i>
+                                    معتمد
+                                </span>
+                            {% else %}
+                                <span class="badge bg-warning">
+                                    <i class="fas fa-clock me-1"></i>
+                                    في الانتظار
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'revenues_expenses:entry_detail' entry.id %}" class="btn btn-outline-primary" title="عرض التفاصيل">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if not entry.is_approved %}
+                                <a href="{% url 'revenues_expenses:entry_approve' entry.id %}" class="btn btn-outline-success" title="اعتماد القيد">
+                                    <i class="fas fa-check"></i>
+                                </a>
+                                {% endif %}
+                                <button class="btn btn-outline-secondary" title="تعديل">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- pagination -->
+        {% if page_obj.has_other_pages %}
+        <nav aria-label="Page navigation" class="mt-3">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">السابق</a>
+                    </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">التالي</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-file-invoice fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">لا توجد قيود</h4>
+            <p class="text-muted">لم يتم إنشاء أي قيود للإيرادات والمصروفات بعد</p>
+            <a href="{% url 'revenues_expenses:entry_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>
+                إضافة أول قيد
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

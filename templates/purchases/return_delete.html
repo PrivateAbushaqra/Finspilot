@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+{% load currency_tags %}
+
+{% block title %}حذف مردود المشتريات - {{ return_invoice.return_number }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-trash me-2"></i>
+                        حذف مردود المشتريات
+                    </h3>
+                </div>
+
+                <div class="card-body">
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>تحذير:</strong> هل أنت متأكد من حذف مردود المشتريات التالي؟ لا يمكن التراجع عن هذا الإجراء.
+                    </div>
+
+                    <!-- Return Information -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">معلومات المردود</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row mb-2">
+                                        <div class="col-5"><strong>رقم المردود:</strong></div>
+                                        <div class="col-7">{{ return_invoice.return_number }}</div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-5"><strong>تاريخ المردود:</strong></div>
+                                        <div class="col-7">{{ return_invoice.date }}</div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-5"><strong>نوع المردود:</strong></div>
+                                        <div class="col-7">
+                                            {% if return_invoice.return_type == 'full' %}
+                                                <span class="badge bg-danger">مردود كامل</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">مردود جزئي</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-5"><strong>سبب المردود:</strong></div>
+                                        <div class="col-7">
+                                            {% if return_invoice.return_reason == 'defective' %}منتج معيب
+                                            {% elif return_invoice.return_reason == 'wrong_item' %}صنف خاطئ
+                                            {% elif return_invoice.return_reason == 'excess' %}فائض عن الحاجة
+                                            {% elif return_invoice.return_reason == 'expired' %}منتهي الصلاحية
+                                            {% elif return_invoice.return_reason == 'damaged' %}تالف أثناء النقل
+                                            {% else %}أخرى
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">معلومات الفاتورة الأصلية</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row mb-2">
+                                        <div class="col-5"><strong>رقم الفاتورة:</strong></div>
+                                        <div class="col-7">{{ return_invoice.original_invoice.supplier_invoice_number }}</div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-5"><strong>المورد:</strong></div>
+                                        <div class="col-7">{{ return_invoice.supplier.name }}</div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-5"><strong>إجمالي المردود:</strong></div>
+                                        <div class="col-7 fw-bold text-danger">{{ return_invoice.total_amount|currency_format }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Return Items -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">عناصر المردود التي سيتم حذفها</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-striped mb-0">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>المنتج</th>
+                                            <th>الكمية المرتجعة</th>
+                                            <th>سعر الوحدة</th>
+                                            <th>الإجمالي</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in return_invoice.items.all %}
+                                        <tr>
+                                            <td>{{ item.product.name }}</td>
+                                            <td class="text-danger fw-bold">{{ item.returned_quantity }}</td>
+                                            <td>{{ item.unit_price|currency_format }}</td>
+                                            <td>{{ item.total_amount|currency_format }}</td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted py-4">
+                                                لا توجد عناصر في هذا المردود
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Warning about consequences -->
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-exclamation-triangle me-2"></i>نتائج الحذف:</h6>
+                        <ul class="mb-0">
+                            <li>سيتم حذف جميع عناصر المردود</li>
+                            <li>سيتم حذف حركات المخزون المرتبطة بهذا المردود</li>
+                            <li>ستعود الكميات إلى المخزون كما لو لم يتم إرجاعها</li>
+                            <li>لن يمكن استرداد هذه البيانات بعد الحذف</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="card-footer">
+                    <form method="post" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger" 
+                                onclick="return confirm('هل أنت متأكد من حذف هذا المردود؟ لا يمكن التراجع عن هذا الإجراء.')">
+                            <i class="fas fa-trash me-2"></i>
+                            نعم، احذف المردود
+                        </button>
+                    </form>
+                    
+                    <a href="{% url 'purchases:return_detail' return_invoice.pk %}" class="btn btn-secondary">
+                        <i class="fas fa-times me-2"></i>
+                        إلغاء
+                    </a>
+                    
+                    <a href="{% url 'purchases:return_list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-list me-2"></i>
+                        العودة إلى القائمة
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}إدارة العملات{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">إدارة العملات</h3>
+                    <div class="card-tools">
+                        <a href="{% url 'settings:currency_add' %}" class="btn btn-sm btn-success">
+                            <i class="fas fa-plus"></i> إضافة عملة
+                        </a>
+                        <a href="{% url 'settings:index' %}" class="btn btn-sm btn-secondary">
+                            <i class="fas fa-arrow-left"></i> العودة للإعدادات
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if currencies %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>رمز العملة</th>
+                                        <th>الاسم</th>
+                                        <th>الرمز</th>
+                                        <th>سعر الصرف</th>
+                                        <th>الحالة</th>
+                                        <th>العملة الأساسية</th>
+                                        <th>الإجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for currency in currencies %}
+                                    <tr {% if currency.is_base_currency %}class="table-success"{% endif %}>
+                                        <td>
+                                            <strong>{{ currency.code }}</strong>
+                                        </td>
+                                        <td>{{ currency.name }}</td>
+                                        <td>
+                                            {% if currency.symbol %}
+                                                <span class="badge badge-info">{{ currency.symbol }}</span>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if currency.is_base_currency %}
+                                                <span class="badge badge-success">1.0000</span>
+                                            {% else %}
+                                                {{ currency.exchange_rate }}
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if currency.is_active %}
+                                                <span class="badge badge-success">نشط</span>
+                                            {% else %}
+                                                <span class="badge badge-secondary">غير نشط</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if currency.is_base_currency %}
+                                                <span class="badge badge-primary">
+                                                    <i class="fas fa-star"></i> العملة الأساسية
+                                                </span>
+                                            {% else %}
+                                                <form method="post" action="{% url 'settings:set_base_currency' currency.id %}" 
+                                                      style="display: inline-block;" 
+                                                      onsubmit="return confirm('هل أنت متأكد من تعيين هذه العملة كعملة أساسية؟')">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-star"></i> تعيين كأساسية
+                                                    </button>
+                                                </form>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{% url 'settings:currency_edit' currency.id %}" 
+                                                   class="btn btn-sm btn-warning">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                {% if not currency.is_base_currency %}
+                                                    <form method="post" action="{% url 'settings:currency_delete' currency.id %}" 
+                                                          style="display: inline-block;"
+                                                          onsubmit="return confirm('هل أنت متأكد من حذف هذه العملة؟')">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-sm btn-danger">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </form>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            لا توجد عملات. أضف العملة الأولى للبدء.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- معلومات مفيدة -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">معلومات العملة</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fas fa-star text-primary"></i>
+                            العملة الأساسية: 
+                            {% if base_currency %}
+                                <strong>{{ base_currency.code }} - {{ base_currency.name }}</strong>
+                            {% else %}
+                                <span class="text-muted">غير محددة</span>
+                            {% endif %}
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-list text-info"></i>
+                            إجمالي العملات: <strong>{{ currencies|length }}</strong>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success"></i>
+                            العملات النشطة: 
+                            <strong>{{ currencies|length }}</strong>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">نصائح</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fas fa-lightbulb text-warning"></i>
+                            العملة الأساسية تُستخدم كمرجع لجميع أسعار الصرف.
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-info-circle text-info"></i>
+                            أسعار الصرف تُحدث تلقائياً عند تعيين عملة أساسية جديدة.
+                        </li>
+                        <li>
+                            <i class="fas fa-shield-alt text-success"></i>
+                            لا يمكن حذف العملة الأساسية.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

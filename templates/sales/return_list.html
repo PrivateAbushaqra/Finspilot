@@ -1,0 +1,328 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load currency_tags %}
+
+{% block title %}مردود المبيعات - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .return-card {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        margin-bottom: 1rem;
+    }
+    
+    .return-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+    
+    .filters-section {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .stats-card {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">
+                <i class="fas fa-undo-alt text-success me-2"></i>
+                مردود المبيعات
+            </h2>
+            <p class="text-muted mb-0">إدارة جميع مردودات المبيعات</p>
+        </div>
+        <div>
+            <a href="{% url 'sales:return_add' %}" class="btn btn-success">
+                <i class="fas fa-plus me-1"></i>
+                مردود جديد
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">إجمالي المردودات</h6>
+                            <h3 class="mb-0">{{ total_returns|default:0 }}</h3>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-undo-alt fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">إجمالي قيمة المردودات</h6>
+                            <h3 class="mb-0">{{ total_returns_amount|currency_format|default:"0.00" }}</h3>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-money-bill-wave fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">مردودات هذا الشهر</h6>
+                            <h3 class="mb-0">{{ monthly_returns|default:0 }}</h3>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-calendar-alt fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">مردودات اليوم</h6>
+                            <h3 class="mb-0">{{ daily_returns|default:0 }}</h3>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-clock fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filters-section">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="search" class="form-label">البحث</label>
+                <input type="text" class="form-control" id="search" name="search" 
+                       value="{{ request.GET.search }}" placeholder="رقم المردود أو اسم العميل">
+            </div>
+            
+            <div class="col-md-2">
+                <label for="date_from" class="form-label">من تاريخ</label>
+                <input type="date" class="form-control" id="date_from" name="date_from" 
+                       value="{{ request.GET.date_from }}">
+            </div>
+            
+            <div class="col-md-2">
+                <label for="date_to" class="form-label">إلى تاريخ</label>
+                <input type="date" class="form-control" id="date_to" name="date_to" 
+                       value="{{ request.GET.date_to }}">
+            </div>
+            
+            <div class="col-md-3">
+                <label for="customer" class="form-label">العميل</label>
+                <select class="form-select" id="customer" name="customer">
+                    <option value="">جميع العملاء</option>
+                    {% for customer in customers %}
+                        <option value="{{ customer.id }}" 
+                                {% if request.GET.customer == customer.id|stringformat:"s" %}selected{% endif %}>
+                            {{ customer.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i>
+                        بحث
+                    </button>
+                    <a href="{% url 'sales:return_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times"></i>
+                        إعادة تعيين
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Returns List -->
+    <div class="row">
+        <div class="col-12">
+            {% if returns %}
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list me-2"></i>
+                            قائمة مردود المبيعات
+                            <span class="badge bg-primary ms-2">{{ returns|length }}</span>
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>رقم المردود</th>
+                                        <th>التاريخ</th>
+                                        <th>العميل</th>
+                                        <th>الفاتورة الأصلية</th>
+                                        <th>المبلغ الإجمالي</th>
+                                        <th>أنشئ بواسطة</th>
+                                        <th>الإجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for return in returns %}
+                                    <tr>
+                                        <td>
+                                            <strong class="text-primary">{{ return.return_number }}</strong>
+                                        </td>
+                                        <td>{{ return.date }}</td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-user text-muted me-2"></i>
+                                                {{ return.customer.name }}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'sales:invoice_detail' return.original_invoice.pk %}" 
+                                               class="text-decoration-none">
+                                                <i class="fas fa-file-invoice text-primary me-1"></i>
+                                                {{ return.original_invoice.invoice_number }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <strong class="text-success">{{ return.total_amount|currency_format }}</strong>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">
+                                                {{ return.created_by.get_full_name|default:return.created_by.username }}
+                                            </small>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{% url 'sales:return_detail' return.pk %}" 
+                                                   class="btn btn-sm btn-outline-primary" 
+                                                   title="عرض التفاصيل">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{% url 'sales:return_edit' return.pk %}" 
+                                                   class="btn btn-sm btn-outline-warning" 
+                                                   title="تعديل">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="{% url 'sales:return_delete' return.pk %}" 
+                                                   class="btn btn-sm btn-outline-danger" 
+                                                   title="حذف">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                {% if is_paginated %}
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.customer %}&customer={{ request.GET.customer }}{% endif %}">الأولى</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.customer %}&customer={{ request.GET.customer }}{% endif %}">السابقة</a>
+                            </li>
+                        {% endif %}
+
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_obj.number }} من {{ page_obj.paginator.num_pages }}</span>
+                        </li>
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.customer %}&customer={{ request.GET.customer }}{% endif %}">التالية</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.customer %}&customer={{ request.GET.customer }}{% endif %}">الأخيرة</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            {% else %}
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-undo-alt fa-3x text-muted mb-3"></i>
+                        <h4 class="text-muted">لا توجد مردودات مبيعات</h4>
+                        <p class="text-muted mb-3">لم يتم العثور على أي مردودات مبيعات</p>
+                        <a href="{% url 'sales:return_add' %}" class="btn btn-success">
+                            <i class="fas fa-plus me-1"></i>
+                            إضافة مردود جديد
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Search functionality
+    $('#search').on('keyup', function() {
+        var searchTerm = $(this).val();
+        if (searchTerm.length > 2 || searchTerm.length === 0) {
+            // Auto-submit form after 500ms delay
+            clearTimeout(window.searchTimeout);
+            window.searchTimeout = setTimeout(function() {
+                $('#search').closest('form').submit();
+            }, 500);
+        }
+    });
+
+    // Date range validation
+    $('#date_from, #date_to').on('change', function() {
+        var dateFrom = $('#date_from').val();
+        var dateTo = $('#date_to').val();
+        
+        if (dateFrom && dateTo && dateFrom > dateTo) {
+            alert('تاريخ البداية يجب أن يكون أقل من تاريخ النهاية');
+            $(this).val('');
+        }
+    });
+});
+</script>
+{% endblock %}
