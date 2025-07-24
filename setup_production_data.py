@@ -13,7 +13,8 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'finspilot.settings')
 django.setup()
 
 from django.contrib.auth import get_user_model
-from settings.models import Currency, CompanySettings
+from settings.models import Currency
+from core.models import CompanySettings
 from journal.models import Account
 from django.contrib.auth.models import Group, Permission
 

@@ -18,16 +18,16 @@ echo ✓ Python مثبت
 
 echo.
 echo [2/6] إنشاء البيئة الافتراضية...
-if exist finspilot_env (
+if exist .venv (
     echo ✓ البيئة الافتراضية موجودة مسبقاً
 ) else (
-    python -m venv finspilot_env
+    python -m venv .venv
     echo ✓ تم إنشاء البيئة الافتراضية
 )
 
 echo.
 echo [3/6] تفعيل البيئة الافتراضية...
-call finspilot_env\Scripts\activate
+call .venv\Scripts\activate
 echo ✓ تم تفعيل البيئة الافتراضية
 
 echo.

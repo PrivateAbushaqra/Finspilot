@@ -1,4 +1,4 @@
-// Triangle Accounting System JavaScript
+// FinsPilot Accounting System JavaScript
 
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize tooltips
@@ -226,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Global utility functions
-window.Triangle = {
+window.FinsPilot = {
     formatNumber: function(num) {
         return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     },

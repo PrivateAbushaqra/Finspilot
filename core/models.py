@@ -7,7 +7,7 @@ User = get_user_model()
 
 class CompanySettings(models.Model):
     """إعدادات الشركة"""
-    company_name = models.CharField(_('اسم الشركة'), max_length=200, default='Triangle')
+    company_name = models.CharField(_('اسم الشركة'), max_length=200, default='FinsPilot')
     logo = models.ImageField(_('شعار الشركة'), upload_to='company/', blank=True, null=True)
     currency = models.CharField(_('العملة'), max_length=10, default='JOD')
     address = models.TextField(_('العنوان'), blank=True)
@@ -149,6 +149,9 @@ class AuditLog(models.Model):
         ('update', _('تحديث')),
         ('delete', _('حذف')),
         ('view', _('عرض')),
+        ('export', _('تصدير')),
+        ('import', _('استيراد')),
+        ('reset', _('إعادة تعيين')),
     ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_('المستخدم'))

@@ -6,7 +6,7 @@ echo.
 
 echo تشغيل النظام...
 
-if not exist finspilot_env (
+if not exist .venv (
     echo خطأ: البيئة الافتراضية غير موجودة
     echo يرجى تشغيل setup.bat أولاً
     pause
@@ -14,7 +14,7 @@ if not exist finspilot_env (
 )
 
 echo تفعيل البيئة الافتراضية...
-call finspilot_env\Scripts\activate
+call .venv\Scripts\activate
 
 echo.
 echo تشغيل خادم Django...

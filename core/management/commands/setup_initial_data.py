@@ -103,8 +103,8 @@ class Command(BaseCommand):
     def create_company_settings(self):
         """إنشاء إعدادات الشركة"""
         settings = CompanySettings.get_settings()
-        if not settings.company_name or settings.company_name == 'Triangle':
-            settings.company_name = 'Triangle'
+        if not settings.company_name or settings.company_name == 'FinsPilot':
+            settings.company_name = 'FinsPilot'
             settings.currency = 'JOD'
             settings.save()
             self.stdout.write('تم إنشاء إعدادات الشركة')

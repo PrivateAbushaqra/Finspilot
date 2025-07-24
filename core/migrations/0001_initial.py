@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
             name='CompanySettings',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('company_name', models.CharField(default='Triangle', max_length=200, verbose_name='اسم الشركة')),
+                ('company_name', models.CharField(default='FinsPilot', max_length=200, verbose_name='اسم الشركة')),
                 ('logo', models.ImageField(blank=True, null=True, upload_to='company/', verbose_name='شعار الشركة')),
                 ('currency', models.CharField(default='JOD', max_length=10, verbose_name='العملة')),
                 ('address', models.TextField(blank=True, verbose_name='العنوان')),
