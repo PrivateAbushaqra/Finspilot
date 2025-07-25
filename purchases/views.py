@@ -5,6 +5,7 @@ from django.db.models import Sum, Count, Q
 from django.utils import timezone
 from django.urls import reverse_lazy
 from django.contrib import messages
+from django.views.decorators.csrf import csrf_exempt
 from datetime import datetime, timedelta
 from decimal import Decimal, ROUND_HALF_UP
 from .models import PurchaseInvoice, PurchaseInvoiceItem, PurchaseReturn, PurchaseReturnItem, PurchaseReturn, PurchaseReturnItem
@@ -882,11 +883,16 @@ class PurchaseReturnDeleteView(LoginRequiredMixin, DeleteView):
 from django.http import JsonResponse
 from .models import PurchaseReturn, PurchaseReturnItem
 
+@csrf_exempt
 def get_invoice_items(request, invoice_id):
     """جلب عناصر الفاتورة عبر AJAX"""
     try:
+        print(f"طلب جلب عناصر الفاتورة رقم: {invoice_id}")
+        
         invoice = PurchaseInvoice.objects.get(id=invoice_id)
         items = invoice.items.select_related('product').all()
+        
+        print(f"تم العثور على {items.count()} عنصر في الفاتورة")
         
         items_data = []
         for item in items:
@@ -896,6 +902,8 @@ def get_invoice_items(request, invoice_id):
             ).aggregate(total=Sum('returned_quantity'))['total'] or 0
             
             remaining_quantity = item.quantity - total_returned
+            
+            print(f"المنتج {item.product.name}: الكمية الأصلية={item.quantity}, المرتجع={total_returned}, المتبقي={remaining_quantity}")
             
             if remaining_quantity > 0:  # Only show items that can still be returned
                 items_data.append({
@@ -910,19 +918,24 @@ def get_invoice_items(request, invoice_id):
                     'tax_rate': float(item.tax_rate),
                 })
         
+        print(f"عدد العناصر المتاحة للإرجاع: {len(items_data)}")
+        
         return JsonResponse({
             'success': True,
             'items': items_data,
             'invoice_number': invoice.supplier_invoice_number,
             'supplier_name': invoice.supplier.name,
+            'invoice_date': invoice.date.strftime('%Y-%m-%d'),
         })
         
     except PurchaseInvoice.DoesNotExist:
+        print(f"الفاتورة رقم {invoice_id} غير موجودة")
         return JsonResponse({
             'success': False,
             'message': 'الفاتورة غير موجودة'
         })
     except Exception as e:
+        print(f"خطأ في جلب عناصر الفاتورة: {str(e)}")
         return JsonResponse({
             'success': False,
             'message': f'حدث خطأ: {str(e)}'

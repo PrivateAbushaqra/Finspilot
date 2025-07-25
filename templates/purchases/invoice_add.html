@@ -332,75 +332,100 @@ let productRowCount = 0;
 let currentRow = null;
 
 document.addEventListener('DOMContentLoaded', function() {
+    // التأكد من تحميل Bootstrap
+    if (typeof bootstrap === 'undefined') {
+        console.error('Bootstrap غير متاح');
+        alert('خطأ: مكتبة Bootstrap غير محملة. يرجى إعادة تحميل الصفحة.');
+        return;
+    }
+    
     // تعيين التاريخ الحالي
-    document.querySelector('input[name="date"]').value = new Date().toISOString().split('T')[0];
+    const dateInput = document.querySelector('input[name="date"]');
+    if (dateInput) {
+        dateInput.value = new Date().toISOString().split('T')[0];
+    }
     
     // إضافة صف منتج أولي
     addProductRow();
+    
+    console.log('تم تحميل صفحة إضافة فاتورة المشتريات');
 });
 
 function addProductRow() {
-    productRowCount++;
-    const tbody = document.getElementById('productsTableBody');
-    
-    const row = document.createElement('tr');
-    row.id = `productRow${productRowCount}`;
-    
-    const isSuperuser = {{ user.is_superuser|yesno:"true,false" }};
-    
-    let taxCells = '';
-    if (isSuperuser) {
-        taxCells = `
+    try {
+        productRowCount++;
+        const tbody = document.getElementById('productsTableBody');
+        
+        if (!tbody) {
+            console.error('لم يتم العثور على جدول المنتجات');
+            return;
+        }
+        
+        const row = document.createElement('tr');
+        row.id = `productRow${productRowCount}`;
+        
+        const isSuperuser = {{ user.is_superuser|yesno:"true,false" }};
+        
+        let taxCells = '';
+        if (isSuperuser) {
+            taxCells = `
+                <td>
+                    <input type="number" class="form-control" name="tax_rate[]" id="taxRate${productRowCount}" 
+                           min="0" step="0.01" placeholder="0.00" readonly>
+                </td>`;
+        }
+        
+        let taxAmountCells = '';
+        if (isSuperuser) {
+            taxAmountCells = `
+                <td>
+                    <input type="text" class="form-control" id="rowTax${productRowCount}" readonly placeholder="0.00">
+                </td>`;
+        }
+        
+        row.innerHTML = `
             <td>
-                <input type="number" class="form-control" name="tax_rate[]" id="taxRate${productRowCount}" 
-                       min="0" step="0.01" placeholder="0.00" readonly>
-            </td>`;
-    }
-    
-    let taxAmountCells = '';
-    if (isSuperuser) {
-        taxAmountCells = `
+                <input type="hidden" name="product_id[]" id="productId${productRowCount}">
+                <input type="hidden" name="row_tax[]" id="hiddenRowTax${productRowCount}">
+                <input type="hidden" name="tax_rate_hidden[]" id="hiddenTaxRate${productRowCount}">
+                <div class="d-flex align-items-center">
+                    <input type="text" class="form-control me-2" id="productCode${productRowCount}" placeholder="رقم المنتج..." readonly>
+                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="openProductModal(${productRowCount})" title="اختيار منتج">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </td>
             <td>
-                <input type="text" class="form-control" id="rowTax${productRowCount}" readonly placeholder="0.00">
-            </td>`;
-    }
-    
-    row.innerHTML = `
-        <td>
-            <input type="hidden" name="product_id[]" id="productId${productRowCount}">
-            <input type="hidden" name="row_tax[]" id="hiddenRowTax${productRowCount}">
-            <input type="hidden" name="tax_rate_hidden[]" id="hiddenTaxRate${productRowCount}">
-            <div class="d-flex align-items-center">
-                <input type="text" class="form-control me-2" id="productCode${productRowCount}" placeholder="رقم المنتج..." readonly>
-                <button type="button" class="btn btn-outline-primary btn-sm" onclick="openProductModal(${productRowCount})">
-                    <i class="fas fa-search"></i>
+                <input type="text" class="form-control" id="productName${productRowCount}" placeholder="اسم المنتج..." readonly>
+            </td>
+            <td>
+                <input type="number" class="form-control" name="quantity[]" id="quantity${productRowCount}" 
+                       min="0" step="0.001" placeholder="0" onchange="calculateRowTotal(${productRowCount})">
+            </td>
+            <td>
+                <input type="number" class="form-control" name="unit_price[]" id="unitPrice${productRowCount}" 
+                       min="0" step="0.001" placeholder="0.00" onchange="calculateRowTotal(${productRowCount})">
+            </td>
+            ${taxCells}
+            <td>
+                <input type="text" class="form-control" id="rowTotal${productRowCount}" readonly placeholder="0.00">
+            </td>
+            ${taxAmountCells}
+            <td class="text-center">
+                <button type="button" class="btn btn-remove-product text-white" onclick="removeProductRow(${productRowCount})" title="حذف المنتج">
+                    <i class="fas fa-times"></i>
                 </button>
-            </div>
-        </td>
-        <td>
-            <input type="text" class="form-control" id="productName${productRowCount}" placeholder="اسم المنتج..." readonly>
-        </td>
-        <td>
-            <input type="number" class="form-control" name="quantity[]" id="quantity${productRowCount}" 
-                   min="0" step="0.001" placeholder="0" onchange="calculateRowTotal(${productRowCount})">
-        </td>
-        <td>
-            <input type="number" class="form-control" name="unit_price[]" id="unitPrice${productRowCount}" 
-                   min="0" step="0.001" placeholder="0.00" onchange="calculateRowTotal(${productRowCount})">
-        </td>
-        ${taxCells}
-        <td>
-            <input type="text" class="form-control" id="rowTotal${productRowCount}" readonly placeholder="0.00">
-        </td>
-        ${taxAmountCells}
-        <td class="text-center">
-            <button type="button" class="btn btn-remove-product text-white" onclick="removeProductRow(${productRowCount})" title="حذف">
-                <i class="fas fa-times"></i>
-            </button>
-        </td>
-    `;
-    
-    tbody.appendChild(row);
+            </td>
+        `;
+        
+        tbody.appendChild(row);
+        
+        console.log(`تم إضافة صف منتج جديد: productRow${productRowCount}`);
+        
+    } catch (error) {
+        console.error('خطأ في إضافة صف منتج:', error);
+        alert('حدث خطأ في إضافة صف منتج جديد');
+    }
 }
 
 function removeProductRow(rowId) {
@@ -413,33 +438,81 @@ function removeProductRow(rowId) {
 
 function openProductModal(rowId) {
     currentRow = rowId;
-    const modal = new bootstrap.Modal(document.getElementById('productModal'));
-    modal.show();
+    
+    // التأكد من وجود المودال
+    const modalElement = document.getElementById('productModal');
+    if (!modalElement) {
+        console.error('لم يتم العثور على مودال المنتجات');
+        alert('خطأ: لم يتم العثور على نافذة اختيار المنتجات');
+        return;
+    }
+    
+    try {
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    } catch (error) {
+        console.error('خطأ في فتح مودال المنتجات:', error);
+        alert('خطأ في فتح نافذة اختيار المنتجات');
+    }
 }
 
 function selectProduct(productId, productCode, productName, lastPurchasePrice, taxRate) {
-    if (currentRow) {
-        document.getElementById(`productId${currentRow}`).value = productId;
-        document.getElementById(`productCode${currentRow}`).value = productCode;
-        document.getElementById(`productName${currentRow}`).value = productName;
+    if (!currentRow) {
+        console.error('لم يتم تحديد الصف الحالي');
+        return;
+    }
+    
+    try {
+        const productIdInput = document.getElementById(`productId${currentRow}`);
+        const productCodeInput = document.getElementById(`productCode${currentRow}`);
+        const productNameInput = document.getElementById(`productName${currentRow}`);
+        const unitPriceInput = document.getElementById(`unitPrice${currentRow}`);
+        const taxRateInput = document.getElementById(`taxRate${currentRow}`);
+        const hiddenTaxRateInput = document.getElementById(`hiddenTaxRate${currentRow}`);
         
-        // تحديث معدل الضريبة في الحقل المرئي (إذا كان موجوداً) والمخفي
-        const taxRateElement = document.getElementById(`taxRate${currentRow}`);
-        if (taxRateElement) {
-            taxRateElement.value = taxRate;
+        if (!productIdInput || !productCodeInput || !productNameInput) {
+            console.error('لم يتم العثور على حقول المنتج في الصف', currentRow);
+            return;
         }
-        document.getElementById(`hiddenTaxRate${currentRow}`).value = taxRate;
         
-        // تعبئة آخر سعر شراء كقيمة اقتراحية (المستخدم يمكنه تعديلها)
-        if (lastPurchasePrice > 0) {
-            document.getElementById(`unitPrice${currentRow}`).value = lastPurchasePrice;
+        // تعبئة بيانات المنتج
+        productIdInput.value = productId;
+        productCodeInput.value = productCode;
+        productNameInput.value = productName;
+        
+        // تحديث معدل الضريبة
+        if (taxRateInput) {
+            taxRateInput.value = taxRate || 0;
+        }
+        if (hiddenTaxRateInput) {
+            hiddenTaxRateInput.value = taxRate || 0;
+        }
+        
+        // تعبئة آخر سعر شراء كقيمة اقتراحية
+        if (lastPurchasePrice && parseFloat(lastPurchasePrice) > 0 && unitPriceInput) {
+            unitPriceInput.value = parseFloat(lastPurchasePrice).toFixed(3);
             // حساب المجموع إذا كانت الكمية موجودة
             calculateRowTotal(currentRow);
         }
         
-        // إغلاق الـ modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('productModal'));
-        modal.hide();
+        // إغلاق المودال
+        const modalElement = document.getElementById('productModal');
+        if (modalElement) {
+            const modal = bootstrap.Modal.getInstance(modalElement);
+            if (modal) {
+                modal.hide();
+            }
+        }
+        
+        // التركيز على حقل الكمية
+        const quantityInput = document.getElementById(`quantity${currentRow}`);
+        if (quantityInput) {
+            quantityInput.focus();
+        }
+        
+    } catch (error) {
+        console.error('خطأ في اختيار المنتج:', error);
+        alert('حدث خطأ في اختيار المنتج');
     }
 }
 

@@ -17,10 +17,11 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-me')
 DEBUG = config('DEBUG', default=True, cast=bool)
 
 # إعدادات الاستضافة
-RENDER = config('RENDER', default=False, cast=bool)
+#RENDER = config('RENDER', default=False, cast=bool)
+IS_RENDER = config('RENDER', default=False, cast=bool)
 
-if RENDER:
-    ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='').split(',')
+if IS_RENDER:
+    ALLOWED_HOSTS = ['*']
 else:
     ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,0.0.0.0,testserver').split(',')
 
@@ -99,17 +100,19 @@ TEMPLATES = [
 WSGI_APPLICATION = 'finspilot.wsgi.application'
 
 # Database configuration
-if RENDER:
-    # استخدام PostgreSQL في الإنتاج (Render)
+if IS_RENDER:
     DATABASES = {
-        'default': dj_database_url.config(
-            default=config('DATABASE_URL'),
-            conn_max_age=600,
-            conn_health_checks=True,
-        )
+        'default': {
+            'ENGINE': config('DB_ENGINE', default='django.db.backends.postgresql'),
+            'NAME': config('DB_NAME'),
+            'USER': config('DB_USER'),
+            'PASSWORD': config('DB_PASSWORD'),
+            'HOST': config('DB_HOST'),
+            'PORT': config('DB_PORT', cast=int),
+        }
     }
 else:
-    # استخدام SQLite في التطوير
+    # استخدام SQLite في البيئة المحلية
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -154,9 +157,10 @@ STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 
-if RENDER:
+if IS_RENDER:
     # إعدادات الملفات الثابتة للإنتاج على Render
-    STATIC_ROOT = BASE_DIR / 'staticfiles'
+    # STATIC_ROOT = BASE_DIR / 'staticfiles'
+    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 else:
     # إعدادات التطوير
@@ -210,7 +214,7 @@ THOUSAND_SEPARATOR = ','
 DECIMAL_SEPARATOR = '.'
 
 # إعدادات الأمان للإنتاج
-if RENDER:
+if IS_RENDER:
     # إعدادات HTTPS للإنتاج
     SECURE_SSL_REDIRECT = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

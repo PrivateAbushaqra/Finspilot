@@ -59,6 +59,9 @@
                                         {% endfor %}
                                     </select>
                                 </div>
+                                
+                                <!-- معلومات الفاتورة المختارة -->
+                                <div id="invoiceInfo"></div>
 
                                 <div class="mb-3">
                                     <label class="form-label">سبب المردود <span class="text-danger">*</span></label>
@@ -168,9 +171,13 @@ document.addEventListener('DOMContentLoaded', function() {
     originalInvoiceSelect.addEventListener('change', function() {
         const invoiceId = this.value;
         
+        console.log('تم اختيار الفاتورة:', invoiceId);
+        
         if (invoiceId) {
             loadInvoiceItems(invoiceId);
         } else {
+            console.log('تم إلغاء اختيار الفاتورة');
+            document.getElementById('invoiceInfo').innerHTML = '';
             invoiceItemsSection.style.display = 'none';
             totalsSection.style.display = 'none';
             saveButton.disabled = true;
@@ -178,47 +185,97 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     function loadInvoiceItems(invoiceId) {
-        fetch(`/purchases/ajax/get-invoice-items/${invoiceId}/`)
-            .then(response => response.json())
+        console.log('بدء تحميل عناصر الفاتورة ID:', invoiceId);
+        
+        // إظهار مؤشر التحميل
+        const loadingMessage = document.createElement('div');
+        loadingMessage.className = 'text-center text-muted py-3';
+        loadingMessage.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جاري تحميل عناصر الفاتورة...';
+        itemsTableBody.innerHTML = '';
+        itemsTableBody.appendChild(loadingMessage);
+        
+        // بناء URL الصحيح
+        const url = `/en/purchases/ajax/get-invoice-items/${invoiceId}/`;
+        console.log('URL المستخدم:', url);
+        
+        fetch(url)
+            .then(response => {
+                console.log('استجابة الخادم:', response.status, response.statusText);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
+                console.log('البيانات المستلمة:', data);
                 if (data.success) {
                     displayInvoiceItems(data.items);
+                    
+                    // عرض معلومات الفاتورة
+                    document.getElementById('invoiceInfo').innerHTML = `
+                        <div class="alert alert-info">
+                            <strong>فاتورة رقم:</strong> ${data.invoice_number}<br>
+                            <strong>المورد:</strong> ${data.supplier_name}
+                        </div>
+                    `;
+                    
                     invoiceItemsSection.style.display = 'block';
                     totalsSection.style.display = 'block';
                     saveButton.disabled = false;
                 } else {
+                    console.error('خطأ من الخادم:', data.message);
                     alert('خطأ: ' + data.message);
+                    invoiceItemsSection.style.display = 'none';
+                    totalsSection.style.display = 'none';
+                    saveButton.disabled = true;
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
-                alert('حدث خطأ أثناء تحميل عناصر الفاتورة');
+                console.error('خطأ في fetch:', error);
+                alert('حدث خطأ أثناء تحميل عناصر الفاتورة. يرجى المحاولة مرة أخرى.');
+                invoiceItemsSection.style.display = 'none';
+                totalsSection.style.display = 'none';
+                saveButton.disabled = true;
             });
     }
     
     function displayInvoiceItems(items) {
         itemsTableBody.innerHTML = '';
         
-        items.forEach(item => {
+        if (items.length === 0) {
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td>${item.product_code}</td>
-                <td>${item.product_name}</td>
-                <td>${item.original_quantity}</td>
-                <td>${item.returned_quantity}</td>
-                <td>${item.remaining_quantity}</td>
+                <td colspan="9" class="text-center text-muted py-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    لا توجد عناصر متاحة للإرجاع في هذه الفاتورة
+                </td>
+            `;
+            itemsTableBody.appendChild(row);
+            return;
+        }
+        
+        items.forEach((item, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><small>${item.product_code}</small></td>
+                <td><strong>${item.product_name}</strong></td>
+                <td class="text-center">${parseFloat(item.original_quantity).toFixed(3)}</td>
+                <td class="text-center">${parseFloat(item.returned_quantity).toFixed(3)}</td>
+                <td class="text-center"><span class="badge bg-success">${parseFloat(item.remaining_quantity).toFixed(3)}</span></td>
                 <td>
                     <input type="number" class="form-control returned-qty" 
                            data-item-id="${item.id}"
                            data-unit-price="${item.unit_price}"
                            data-tax-rate="${item.tax_rate}"
                            min="0" max="${item.remaining_quantity}" 
-                           step="0.001" value="0">
+                           step="0.001" value="0" 
+                           placeholder="0.000">
                     <input type="hidden" name="item_id[]" value="${item.id}">
+                    <input type="hidden" name="returned_quantity[]" class="returned-quantity-hidden" value="0">
                 </td>
-                <td>${parseFloat(item.unit_price).toFixed(3)}</td>
-                <td>${parseFloat(item.tax_rate).toFixed(2)}%</td>
-                <td class="item-total">0.00</td>
+                <td class="text-end">${parseFloat(item.unit_price).toFixed(3)}</td>
+                <td class="text-center">${parseFloat(item.tax_rate).toFixed(2)}%</td>
+                <td class="item-total text-end fw-bold">0.00</td>
             `;
             
             itemsTableBody.appendChild(row);
@@ -227,13 +284,19 @@ document.addEventListener('DOMContentLoaded', function() {
         // Add event listeners to quantity inputs
         document.querySelectorAll('.returned-qty').forEach(input => {
             input.addEventListener('input', function() {
+                // Update hidden input
+                const hiddenInput = this.parentElement.querySelector('.returned-quantity-hidden');
+                if (hiddenInput) {
+                    hiddenInput.value = this.value;
+                }
+                
                 updateItemTotal(this);
                 updateGrandTotals();
-                updateReturnedQuantities();
             });
         });
         
         updateGrandTotals();
+        console.log(`تم عرض ${items.length} عنصر من الفاتورة`);
     }
     
     function updateItemTotal(input) {

@@ -179,38 +179,50 @@ class CategoryDeleteView(LoginRequiredMixin, View):
         return redirect('products:category_list')
 
 # Product Views
-class ProductListView(LoginRequiredMixin, TemplateView):
+class ProductListView(LoginRequiredMixin, ListView):
+    model = Product
     template_name = 'products/product_list.html'
+    context_object_name = 'products'
+    paginate_by = 20
     
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+    def get_queryset(self):
+        queryset = Product.objects.all().select_related('category').order_by('-created_at')
         
         # الحصول على معاملات البحث
         search_query = self.request.GET.get('search', '')
         category_filter = self.request.GET.get('category', '')
         
-        # البدء بجميع المنتجات
-        products = Product.objects.all()
-        
         # تطبيق البحث
         if search_query:
-            products = products.filter(
+            queryset = queryset.filter(
                 Q(name__icontains=search_query) |
                 Q(code__icontains=search_query) |
                 Q(barcode__icontains=search_query) |
-                Q(serial_number__icontains=search_query)  # إضافة البحث بالرقم التسلسلي
+                Q(serial_number__icontains=search_query)
             )
         
         # تطبيق فلتر التصنيف
         if category_filter:
-            products = products.filter(category_id=category_filter)
+            queryset = queryset.filter(category_id=category_filter)
         
-        context['products'] = products
-        context['total_products'] = products.count()
-        context['active_products'] = products.filter(is_active=True).count()
-        context['categories'] = Category.objects.filter(is_active=True)
-        context['search_query'] = search_query
-        context['selected_category'] = category_filter
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # إضافة إحصائيات
+        all_products = Product.objects.all()
+        context['total_products'] = all_products.count()
+        context['active_products'] = all_products.filter(is_active=True).count()
+        context['inactive_products'] = all_products.filter(is_active=False).count()
+        
+        # إضافة التصنيفات للفلترة
+        context['categories'] = Category.objects.filter(is_active=True).order_by('name')
+        
+        # إضافة معاملات البحث
+        context['search_query'] = self.request.GET.get('search', '')
+        context['selected_category'] = self.request.GET.get('category', '')
+        
         return context
 
 class ProductCreateView(LoginRequiredMixin, View):

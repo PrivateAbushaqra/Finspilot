@@ -182,8 +182,15 @@ class WarehouseListView(LoginRequiredMixin, ListView):
         
         return context
 
-class WarehouseCreateView(LoginRequiredMixin, TemplateView):
+class WarehouseCreateView(LoginRequiredMixin, CreateView):
+    model = Warehouse
     template_name = 'inventory/warehouse_add.html'
+    fields = ['name', 'code', 'address', 'parent', 'manager', 'is_active']
+    success_url = reverse_lazy('inventory:warehouse_list')
+    
+    def form_valid(self, form):
+        messages.success(self.request, 'تم إنشاء المستودع بنجاح')
+        return super().form_valid(form)
 
 class WarehouseDeleteView(LoginRequiredMixin, View):
     template_name = 'inventory/warehouse_delete.html'
