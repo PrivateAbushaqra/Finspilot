@@ -23,7 +23,7 @@ IS_RENDER = config('RENDER', default=False, cast=bool)
 if IS_RENDER:
     ALLOWED_HOSTS = ['*']
 else:
-    ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,0.0.0.0,testserver').split(',')
+    ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,0.0.0.0,finspilot-46c6944cb4a3.herokuapp.com').split(',')
 
 # Application definition
 INSTALLED_APPS = [
