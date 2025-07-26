@@ -17,10 +17,10 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-me')
 DEBUG = config('DEBUG', default=True, cast=bool)
 
 # إعدادات الاستضافة
-#RENDER = config('RENDER', default=False, cast=bool)
-IS_RENDER = config('RENDER', default=False, cast=bool)
+# نفترض أنك تضيف متغير بيئة ON_HEROKU على Heroku ليكون True
+ON_HEROKU = config('ON_HEROKU', default=False, cast=bool)
 
-if IS_RENDER:
+if ON_HEROKU:
     ALLOWED_HOSTS = ['*']
 else:
     ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,0.0.0.0,finspilot-46c6944cb4a3.herokuapp.com').split(',')
@@ -100,25 +100,24 @@ TEMPLATES = [
 WSGI_APPLICATION = 'finspilot.wsgi.application'
 
 # Database configuration
-if IS_RENDER:
+
+
+if ON_HEROKU:
     DATABASES = {
-        'default': {
-            'ENGINE': config('DB_ENGINE', default='django.db.backends.postgresql'),
-            'NAME': config('DB_NAME'),
-            'USER': config('DB_USER'),
-            'PASSWORD': config('DB_PASSWORD'),
-            'HOST': config('DB_HOST'),
-            'PORT': config('DB_PORT', cast=int),
-        }
+        'default': dj_database_url.config(
+            default=config('DATABASE_URL'),
+            conn_max_age=600,
+            ssl_require=True,
+        )
     }
 else:
-    # استخدام SQLite في البيئة المحلية
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -157,14 +156,12 @@ STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 
-if IS_RENDER:
-    # إعدادات الملفات الثابتة للإنتاج على Render
-    # STATIC_ROOT = BASE_DIR / 'staticfiles'
+if ON_HEROKU:
     STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 else:
-    # إعدادات التطوير
     STATIC_ROOT = BASE_DIR / 'staticfiles'
+
 
 # Media files
 MEDIA_URL = '/media/'
@@ -185,13 +182,16 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 20
 }
 
-# CORS settings
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8000",
-    "http://127.0.0.1:8000",
-    "http://192.168.2.103",
-    "http://192.168.1.110",
-]
+if ON_HEROKU:
+    CORS_ALLOW_CREDENTIALS = True
+    CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS', default='').split(',')
+else:
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:8000",
+        "http://127.0.0.1:8000",
+        "http://192.168.2.103",
+        "http://192.168.1.110",
+    ]
 
 # Login URLs
 LOGIN_URL = '/accounts/login/'
@@ -214,17 +214,16 @@ THOUSAND_SEPARATOR = ','
 DECIMAL_SEPARATOR = '.'
 
 # إعدادات الأمان للإنتاج
-if IS_RENDER:
-    # إعدادات HTTPS للإنتاج
+if ON_HEROKU:
     SECURE_SSL_REDIRECT = True
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
     SECURE_HSTS_SECONDS = 86400
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
     SECURE_BROWSER_XSS_FILTER = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
     
     # إعدادات CORS للإنتاج
     CORS_ALLOW_CREDENTIALS = True
