@@ -564,6 +564,14 @@
                             </a>
                         </li>
                         
+                        <!-- البحث الشامل -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'search:search' %}">
+                                <i class="fas fa-search me-2"></i>
+                                البحث الشامل
+                            </a>
+                        </li>
+                        
                         <!-- Bank Accounts -->
                         {% if user.has_banks_permission %}
                         <li class="nav-item">

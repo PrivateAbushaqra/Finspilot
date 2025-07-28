@@ -498,3 +498,20 @@ class JournalService:
         for account in Account.objects.filter(is_active=True):
             account.balance = account.get_balance()
             account.save(update_fields=['balance'])
+    
+    @staticmethod
+    def delete_journal_entry_by_reference(reference_type, reference_id):
+        """
+        حذف القيد المحاسبي حسب نوع العملية ورقمها
+        
+        Args:
+            reference_type: نوع العملية
+            reference_id: رقم العملية المرتبطة
+        """
+        with transaction.atomic():
+            entries = JournalEntry.objects.filter(
+                reference_type=reference_type,
+                reference_id=reference_id
+            )
+            for entry in entries:
+                entry.delete()

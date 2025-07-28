@@ -15,6 +15,7 @@ class CustomerSupplier(models.Model):
     email = models.EmailField(_('البريد الإلكتروني'), blank=True)
     phone = models.CharField(_('الهاتف'), max_length=50, blank=True)
     address = models.TextField(_('العنوان'), blank=True)
+    city = models.CharField(_('المدينة'), max_length=100, blank=False)
     tax_number = models.CharField(_('الرقم الضريبي'), max_length=50, blank=True)
     credit_limit = models.DecimalField(_('حد الائتمان'), max_digits=15, decimal_places=3, default=0)
     balance = models.DecimalField(_('الرصيد'), max_digits=15, decimal_places=3, default=0)

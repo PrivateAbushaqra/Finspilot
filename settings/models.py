@@ -127,7 +127,15 @@ class CompanySettings(models.Model):
         return self.company_name
 
     def save(self, *args, **kwargs):
-        # إذا لم توجد إعدادات شركة أخرى، قم بإنشاء واحدة فقط
+        # منع إنشاء إعدادات شركة متعددة - السماح فقط بإعداد واحد
         if not self.pk and CompanySettings.objects.exists():
-            return
+            return  # منع إنشاء record جديد إذا كان هناك record موجود
+        
+        # التحقق من صحة قيم الجلسة
+        if self.session_timeout_minutes is not None:
+            if self.session_timeout_minutes < 5:
+                self.session_timeout_minutes = 5
+            elif self.session_timeout_minutes > 1440:
+                self.session_timeout_minutes = 1440
+                
         super().save(*args, **kwargs)

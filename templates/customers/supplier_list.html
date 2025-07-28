@@ -369,48 +369,101 @@
             <div class="modal-body">
                 <form id="supplierForm">
                     {% csrf_token %}
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="supplierName" class="form-label">اسم المورد *</label>
-                            <input type="text" class="form-control" id="supplierName" name="name" required>
+                    
+                    <!-- المعلومات الأساسية -->
+                    <div class="mb-4">
+                        <h6 class="text-primary border-bottom pb-2 mb-3">
+                            <i class="fas fa-user me-2"></i>المعلومات الأساسية
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">اسم المورد *</label>
+                                    <input type="text" class="form-control" name="name" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">رقم الهاتف</label>
+                                    <input type="text" class="form-control" name="phone">
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="supplierPhone" class="form-label">رقم الهاتف</label>
-                            <input type="tel" class="form-control" id="supplierPhone" name="phone">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">البريد الإلكتروني</label>
+                                    <input type="email" class="form-control" name="email">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">الرقم الضريبي</label>
+                                    <input type="text" class="form-control" name="tax_number">
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="supplierEmail" class="form-label">البريد الإلكتروني</label>
-                            <input type="email" class="form-control" id="supplierEmail" name="email">
+                        <div class="mb-3">
+                            <label class="form-label">العنوان</label>
+                            <textarea class="form-control" name="address" rows="2"></textarea>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="supplierTax" class="form-label">الرقم الضريبي</label>
-                            <input type="text" class="form-control" id="supplierTax" name="tax_number">
+                        <div class="mb-3">
+                            <label class="form-label">المدينة <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="city" required>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="supplierCredit" class="form-label">حد الائتمان</label>
-                            <input type="number" class="form-control" id="supplierCredit" name="credit_limit" value="0" step="0.001">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="supplierBalance" class="form-label">الرصيد الابتدائي</label>
-                            <input type="number" class="form-control" id="supplierBalance" name="balance" value="0" step="0.001">
-                        </div>
-                        <div class="col-12 mb-3">
-                            <label for="supplierAddress" class="form-label">العنوان</label>
-                            <textarea class="form-control" id="supplierAddress" name="address" rows="3"></textarea>
-                        </div>
-                        <div class="col-12 mb-3">
-                            <label for="supplierNotes" class="form-label">ملاحظات</label>
-                            <textarea class="form-control" id="supplierNotes" name="notes" rows="2"></textarea>
-                        </div>
-                        <div class="col-12">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="supplierActive" name="is_active" checked>
-                                <label class="form-check-label" for="supplierActive">
-                                    مورد نشط
-                                </label>
+                    </div>
+                    
+                    <!-- المعلومات المالية -->
+                    <div class="mb-4">
+                        <h6 class="text-success border-bottom pb-2 mb-3">
+                            <i class="fas fa-money-bill-wave me-2"></i>المعلومات المالية
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">حد الائتمان</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" name="credit_limit" 
+                                               value="0" step="0.001" min="0">
+                                        <span class="input-group-text">{% get_currency_symbol %}</span>
+                                    </div>
+                                    <div class="form-text">أقصى مبلغ يمكن للمورد أن يكون مديناً به</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">الرصيد الابتدائي</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" name="balance" 
+                                               value="0" step="0.001">
+                                        <span class="input-group-text">{% get_currency_symbol %}</span>
+                                    </div>
+                                    <div class="form-text">الرصيد الحالي (موجب: له، سالب: عليه)</div>
+                                </div>
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- معلومات إضافية -->
+                    <div class="mb-3">
+                        <h6 class="text-info border-bottom pb-2 mb-3">
+                            <i class="fas fa-sticky-note me-2"></i>معلومات إضافية
+                        </h6>
+                        <div class="mb-3">
+                            <label class="form-label">ملاحظات</label>
+                            <textarea class="form-control" name="notes" rows="2"></textarea>
+                            <div class="form-text">أي ملاحظات أو معلومات إضافية</div>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="is_active" id="supplierIsActive" checked>
+                            <label class="form-check-label" for="supplierIsActive">
+                                مورد نشط
+                            </label>
+                            <div class="form-text">إلغاء التفعيل يخفي المورد من القوائم</div>
+                        </div>
+                    </div>
+                    
+                    <input type="hidden" name="type" value="supplier">
                 </form>
             </div>
             <div class="modal-footer">
@@ -449,21 +502,49 @@
 
     // Save supplier function
     function saveSupplier() {
+        console.log('بدء حفظ المورد الجديد');
         const form = document.getElementById('supplierForm');
         const formData = new FormData(form);
         
-        // Here you would normally send the data to the server
-        console.log('Supplier data:', Object.fromEntries(formData));
+        // إضافة CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        formData.append('csrfmiddlewaretoken', csrfToken);
         
-        // For now, just show a success message and close modal
-        alert('سيتم تطبيق حفظ المورد عند ربط النموذج بالخادم');
+        console.log('إرسال البيانات إلى الخادم...');
         
-        // Close modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('addSupplierModal'));
-        modal.hide();
-        
-        // Reset form
-        form.reset();
+        fetch('{% url "customers:ajax_add_supplier" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(response => {
+            console.log('استجابة من الخادم:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('البيانات المستلمة:', data);
+            if (data.success) {
+                // إغلاق النافذة وإعادة تعيين النموذج
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addSupplierModal'));
+                modal.hide();
+                form.reset();
+                
+                alert('تم إنشاء المورد بنجاح!');
+                console.log('تم حفظ المورد بنجاح');
+                
+                // إعادة تحميل الصفحة لعرض المورد الجديد
+                location.reload();
+            } else {
+                console.error('خطأ من الخادم:', data.message);
+                alert('خطأ: ' + (data.message || 'حدث خطأ أثناء إنشاء المورد'));
+            }
+        })
+        .catch(error => {
+            console.error('خطأ في الشبكة:', error);
+            alert('حدث خطأ أثناء إنشاء المورد. يرجى المحاولة مرة أخرى.');
+        });
     }
 
     // Auto-focus on search input when page loads

@@ -30,6 +30,7 @@ urlpatterns += i18n_patterns(
     path('reports/', include('reports.urls')),
     path('users/', include('users.urls')),
     path('settings/', include('settings.urls')),
+    path('search/', include('search.urls')),  # البحث الشامل
     # التطبيقات الجديدة
     path('revenues-expenses/', include('revenues_expenses.urls')),
     path('assets-liabilities/', include('assets_liabilities.urls')),

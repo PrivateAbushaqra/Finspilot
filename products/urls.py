@@ -17,4 +17,6 @@ urlpatterns = [
     path('edit/<int:pk>/', views.ProductUpdateView.as_view(), name='product_edit'),
     path('delete/<int:pk>/', views.ProductDeleteView.as_view(), name='product_delete'),
     path('api/search/', views.product_search_api, name='product_search_api'),
+    path('api/category/add/', views.category_add_ajax, name='category_add_ajax'),
+    path('api/product/add/', views.product_add_ajax, name='product_add_ajax'),
 ]

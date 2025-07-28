@@ -7,6 +7,7 @@ from django.http import JsonResponse
 from django.db.models import Q, Sum, Count
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction
 from .models import CustomerSupplier
 from django.core.paginator import Paginator
@@ -158,6 +159,7 @@ class CustomerSupplierCreateView(LoginRequiredMixin, View):
             email = request.POST.get('email', '').strip()
             phone = request.POST.get('phone', '').strip()
             address = request.POST.get('address', '').strip()
+            city = request.POST.get('city', '').strip()
             tax_number = request.POST.get('tax_number', '').strip()
             credit_limit = request.POST.get('credit_limit', '0')
             balance = request.POST.get('balance', '0')
@@ -167,6 +169,10 @@ class CustomerSupplierCreateView(LoginRequiredMixin, View):
             # التحقق من البيانات المطلوبة
             if not name:
                 messages.error(request, 'اسم العميل/المورد مطلوب!')
+                return render(request, self.template_name)
+            
+            if not city:
+                messages.error(request, 'المدينة مطلوبة!')
                 return render(request, self.template_name)
             
             # التحقق من عدم وجود اسم مكرر
@@ -189,6 +195,7 @@ class CustomerSupplierCreateView(LoginRequiredMixin, View):
                 email=email,
                 phone=phone,
                 address=address,
+                city=city,
                 tax_number=tax_number,
                 credit_limit=credit_limit,
                 balance=balance,
@@ -252,6 +259,7 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
             email = request.POST.get('email', '').strip()
             phone = request.POST.get('phone', '').strip()
             address = request.POST.get('address', '').strip()
+            city = request.POST.get('city', '').strip()
             tax_number = request.POST.get('tax_number', '').strip()
             credit_limit = request.POST.get('credit_limit', '0')
             balance = request.POST.get('balance', '0')
@@ -261,6 +269,10 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
             # التحقق من البيانات المطلوبة
             if not name:
                 messages.error(request, 'اسم العميل/المورد مطلوب!')
+                return redirect('customers:edit', pk=pk)
+            
+            if not city:
+                messages.error(request, 'المدينة مطلوبة!')
                 return redirect('customers:edit', pk=pk)
             
             # التحقق من عدم وجود اسم مكرر (باستثناء نفس الحساب)
@@ -281,6 +293,7 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
             customer_supplier.email = email
             customer_supplier.phone = phone
             customer_supplier.address = address
+            customer_supplier.city = city
             customer_supplier.tax_number = tax_number
             customer_supplier.credit_limit = credit_limit
             customer_supplier.balance = balance
@@ -457,9 +470,7 @@ class CustomerSupplierTransactionsView(LoginRequiredMixin, TemplateView):
         return context
 
 # API للحصول على بيانات العميل/المورد عبر AJAX
-def get_customer_supplier_ajax(request):
-    customer_id = request.GET.get('customer_id')
-    
+def get_customer_supplier_ajax(request, customer_id):
     if not customer_id:
         return JsonResponse({'error': 'معرف العميل/المورد مطلوب'}, status=400)
     
@@ -477,6 +488,7 @@ def get_customer_supplier_ajax(request):
             'tax_number': customer_supplier.tax_number,
             'credit_limit': float(customer_supplier.credit_limit),
             'balance': float(customer_supplier.balance),
+            'current_balance': float(customer_supplier.current_balance),
             'is_active': customer_supplier.is_active,
             'notes': customer_supplier.notes,
             'created_at': customer_supplier.created_at.strftime('%Y-%m-%d'),
@@ -557,3 +569,193 @@ def delete_transaction(request, customer_pk, transaction_id):
             'success': False,
             'error': f'خطأ في حذف الحركة: {str(e)}'
         }, status=500)
+
+
+@login_required
+@csrf_exempt  
+def ajax_add_supplier(request):
+    """إضافة مورد جديد عبر AJAX"""
+    if request.method != 'POST':
+        return JsonResponse({
+            'success': False,
+            'message': 'طريقة الطلب غير صحيحة'
+        })
+    
+    try:
+        with transaction.atomic():
+            # استلام البيانات
+            name = request.POST.get('name', '').strip()
+            phone = request.POST.get('phone', '').strip()
+            email = request.POST.get('email', '').strip()
+            tax_number = request.POST.get('tax_number', '').strip()
+            address = request.POST.get('address', '').strip()
+            city = request.POST.get('city', '').strip()
+            notes = request.POST.get('notes', '').strip()
+            supplier_type = request.POST.get('type', 'supplier')
+            
+            # المعلومات المالية
+            credit_limit = request.POST.get('credit_limit', 0)
+            balance = request.POST.get('balance', 0)
+            
+            # معلومات إضافية
+            is_active = request.POST.get('is_active') == 'on'
+            
+            # تحويل القيم المالية
+            try:
+                credit_limit = float(credit_limit) if credit_limit else 0
+                balance = float(balance) if balance else 0
+            except ValueError:
+                credit_limit = 0
+                balance = 0
+            
+            print(f"محاولة إنشاء مورد جديد: {name}")  # للتتبع
+            
+            # التحقق من البيانات المطلوبة
+            if not name:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'اسم المورد مطلوب'
+                })
+            
+            if not city:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'المدينة مطلوبة'
+                })
+            
+            # التحقق من عدم تكرار الاسم
+            if CustomerSupplier.objects.filter(name=name).exists():
+                return JsonResponse({
+                    'success': False,
+                    'message': 'مورد بهذا الاسم موجود بالفعل'
+                })
+            
+            # إنشاء المورد الجديد
+            supplier = CustomerSupplier.objects.create(
+                name=name,
+                phone=phone,
+                email=email,
+                tax_number=tax_number,
+                address=address,
+                city=city,
+                notes=notes,
+                type=supplier_type,
+                credit_limit=credit_limit,
+                balance=balance,
+                is_active=is_active
+            )
+            
+            print(f"تم إنشاء المورد: {supplier.name} بـ ID: {supplier.id}")
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'تم إنشاء المورد بنجاح',
+                'supplier': {
+                    'id': supplier.id,
+                    'name': supplier.name,
+                    'phone': supplier.phone,
+                    'email': supplier.email
+                }
+            })
+            
+    except Exception as e:
+        print(f"خطأ في إنشاء المورد: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'message': f'حدث خطأ أثناء إنشاء المورد: {str(e)}'
+        })
+
+
+@login_required
+@csrf_exempt  
+def ajax_add_customer(request):
+    """إضافة عميل جديد عبر AJAX"""
+    if request.method != 'POST':
+        return JsonResponse({
+            'success': False,
+            'message': 'طريقة الطلب غير صحيحة'
+        })
+    
+    try:
+        with transaction.atomic():
+            # استلام البيانات
+            name = request.POST.get('name', '').strip()
+            phone = request.POST.get('phone', '').strip()
+            email = request.POST.get('email', '').strip()
+            tax_number = request.POST.get('tax_number', '').strip()
+            address = request.POST.get('address', '').strip()
+            city = request.POST.get('city', '').strip()
+            notes = request.POST.get('notes', '').strip()
+            customer_type = request.POST.get('type', 'customer')
+            
+            # المعلومات المالية
+            credit_limit = request.POST.get('credit_limit', 0)
+            balance = request.POST.get('balance', 0)
+            
+            # معلومات إضافية
+            is_active = request.POST.get('is_active') == 'on'
+            
+            # تحويل القيم المالية
+            try:
+                credit_limit = float(credit_limit) if credit_limit else 0
+                balance = float(balance) if balance else 0
+            except ValueError:
+                credit_limit = 0
+                balance = 0
+            
+            print(f"محاولة إنشاء عميل جديد: {name}")  # للتتبع
+            
+            # التحقق من البيانات المطلوبة
+            if not name:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'اسم العميل مطلوب'
+                })
+            
+            if not city:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'المدينة مطلوبة'
+                })
+            
+            # التحقق من عدم تكرار الاسم
+            if CustomerSupplier.objects.filter(name=name).exists():
+                return JsonResponse({
+                    'success': False,
+                    'message': 'عميل بهذا الاسم موجود بالفعل'
+                })
+            
+            # إنشاء العميل الجديد
+            customer = CustomerSupplier.objects.create(
+                name=name,
+                phone=phone,
+                email=email,
+                tax_number=tax_number,
+                address=address,
+                city=city,
+                notes=notes,
+                type=customer_type,
+                credit_limit=credit_limit,
+                balance=balance,
+                is_active=is_active
+            )
+            
+            print(f"تم إنشاء العميل: {customer.name} بـ ID: {customer.id}")
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'تم إنشاء العميل بنجاح',
+                'customer': {
+                    'id': customer.id,
+                    'name': customer.name,
+                    'phone': customer.phone,
+                    'email': customer.email
+                }
+            })
+            
+    except Exception as e:
+        print(f"خطأ في إنشاء العميل: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'message': f'حدث خطأ أثناء إنشاء العميل: {str(e)}'
+        })

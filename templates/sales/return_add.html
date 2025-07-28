@@ -333,8 +333,8 @@ document.addEventListener('DOMContentLoaded', function() {
             total: 1000.00,
             status: 'paid',
             items: [
-                {product_id: 1, product_name: 'منتج 1', quantity: 2, price: 100.00, total: 200.00},
-                {product_id: 2, product_name: 'منتج 2', quantity: 1, price: 800.00, total: 800.00}
+                {product_id: 1, product_name: 'منتج 1', quantity: 2, price: 100.00, total: 200.00, tax_rate: 15},
+                {product_id: 2, product_name: 'منتج 2', quantity: 1, price: 800.00, total: 800.00, tax_rate: 15}
             ]
         },
         {
@@ -345,7 +345,7 @@ document.addEventListener('DOMContentLoaded', function() {
             total: 1500.00,
             status: 'paid',
             items: [
-                {product_id: 3, product_name: 'منتج 3', quantity: 3, price: 500.00, total: 1500.00}
+                {product_id: 3, product_name: 'منتج 3', quantity: 3, price: 500.00, total: 1500.00, tax_rate: 15}
             ]
         }
     ];
@@ -433,9 +433,8 @@ function loadReturnItems(invoice) {
         itemRow.className = 'return-item-row';
         itemRow.innerHTML = `
             <div class="row align-items-center">
-                <div class="col-md-4">
-                    <strong>${item.product_name}</strong><br>
-                    <small class="text-muted">السعر: ${item.price.toFixed(2)} {% get_currency_symbol %}</small>
+                <div class="col-md-3">
+                    <strong>${item.product_name}</strong>
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">الكمية الأصلية</label>
@@ -446,13 +445,20 @@ function loadReturnItems(invoice) {
                     <input type="number" class="form-control return-quantity" 
                            name="return_quantities[${item.product_id}]" 
                            min="0" max="${item.quantity}" value="0"
-                           data-price="${item.price}" data-product-id="${item.product_id}">
+                           data-product-id="${item.product_id}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">سعر الوحدة</label>
+                    <input type="number" class="form-control return-price" 
+                           name="return_prices[${item.product_id}]" 
+                           value="${item.price}" step="0.01" min="0"
+                           data-product-id="${item.product_id}">
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">المبلغ المرتجع</label>
                     <input type="text" class="form-control return-amount" readonly value="0.00">
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-1">
                     <div class="form-check">
                         <input class="form-check-input return-checkbox" type="checkbox" 
                                id="return_${item.product_id}" data-product-id="${item.product_id}">
@@ -470,12 +476,19 @@ function loadReturnItems(invoice) {
     // Attach event listeners
     attachReturnItemListeners();
     
+    // Calculate initial totals
+    calculateReturnTotals();
+    
     // Show return summary
     document.getElementById('returnSummary').style.display = 'block';
 }
 
 function attachReturnItemListeners() {
     document.querySelectorAll('.return-quantity').forEach(input => {
+        input.addEventListener('input', calculateReturnTotals);
+    });
+    
+    document.querySelectorAll('.return-price').forEach(input => {
         input.addEventListener('input', calculateReturnTotals);
     });
     
@@ -499,21 +512,39 @@ function attachReturnItemListeners() {
 
 function calculateReturnTotals() {
     let totalReturn = 0;
+    let totalTax = 0;
     
     document.querySelectorAll('.return-quantity').forEach(input => {
         const quantity = parseFloat(input.value) || 0;
-        const price = parseFloat(input.dataset.price) || 0;
-        const amount = quantity * price;
+        const row = input.closest('.return-item-row');
+        const priceInput = row.querySelector('.return-price');
+        const price = parseFloat(priceInput.value) || 0;
+        const productId = input.dataset.productId;
+        
+        // البحث عن معدل الضريبة من البيانات التجريبية
+        let taxRate = 0;
+        if (selectedInvoice && selectedInvoice.items) {
+            const item = selectedInvoice.items.find(item => item.product_id == productId);
+            if (item && item.tax_rate) {
+                taxRate = item.tax_rate;
+            }
+        }
+        
+        const subtotal = quantity * price;
+        const taxAmount = subtotal * (taxRate / 100);
+        const total = subtotal + taxAmount;
         
         // Update individual return amount
-        const amountInput = input.closest('.return-item-row').querySelector('.return-amount');
-        amountInput.value = amount.toFixed(2);
+        const amountInput = row.querySelector('.return-amount');
+        amountInput.value = total.toFixed(2);
         
-        totalReturn += amount;
+        totalReturn += subtotal;
+        totalTax += taxAmount;
     });
     
     const returnFees = 0; // يمكن تخصيصها حسب سياسة الشركة
-    const netRefund = totalReturn - returnFees;
+    const grandTotal = totalReturn + totalTax;
+    const netRefund = grandTotal - returnFees;
     
     // Update summary
     document.getElementById('totalReturnDisplay').textContent = totalReturn.toFixed(2) + ' {% get_currency_symbol %}';

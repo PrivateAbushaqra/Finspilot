@@ -17,4 +17,7 @@ urlpatterns = [
     path('currencies/edit/<int:currency_id>/', views.CurrencyEditView.as_view(), name='currency_edit'),
     path('currencies/delete/<int:currency_id>/', views.CurrencyDeleteView.as_view(), name='currency_delete'),
     path('currencies/set-base/<int:currency_id>/', views.SetBaseCurrencyView.as_view(), name='set_base_currency'),
+    
+    # API endpoints
+    path('api/currency/', views.get_company_currency_ajax, name='company_currency_ajax'),
 ]

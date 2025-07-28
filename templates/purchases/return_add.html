@@ -265,7 +265,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 <td>
                     <input type="number" class="form-control returned-qty" 
                            data-item-id="${item.id}"
-                           data-unit-price="${item.unit_price}"
                            data-tax-rate="${item.tax_rate}"
                            min="0" max="${item.remaining_quantity}" 
                            step="0.001" value="0" 
@@ -273,7 +272,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     <input type="hidden" name="item_id[]" value="${item.id}">
                     <input type="hidden" name="returned_quantity[]" class="returned-quantity-hidden" value="0">
                 </td>
-                <td class="text-end">${parseFloat(item.unit_price).toFixed(3)}</td>
+                <td>
+                    <input type="number" class="form-control unit-price-input" 
+                           data-item-id="${item.id}"
+                           value="${item.unit_price}" 
+                           step="0.001" min="0" 
+                           placeholder="0.000">
+                    <input type="hidden" name="unit_price[]" class="unit-price-hidden" value="${item.unit_price}">
+                </td>
                 <td class="text-center">${parseFloat(item.tax_rate).toFixed(2)}%</td>
                 <td class="item-total text-end fw-bold">0.00</td>
             `;
@@ -295,20 +301,39 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
         
-        updateGrandTotals();
-        console.log(`تم عرض ${items.length} عنصر من الفاتورة`);
+        // Add event listeners to unit price inputs
+        document.querySelectorAll('.unit-price-input').forEach(input => {
+            input.addEventListener('input', function() {
+                // Update hidden input
+                const hiddenInput = this.parentElement.querySelector('.unit-price-hidden');
+                if (hiddenInput) {
+                    hiddenInput.value = this.value;
+                }
+                
+                updateItemTotal(this);
+                updateGrandTotals();
+            });
+        });
+        
+        // تأخير صغير للتأكد من إضافة جميع العناصر إلى DOM
+        setTimeout(() => {
+            updateGrandTotals();
+        }, 100);
     }
     
     function updateItemTotal(input) {
-        const quantity = parseFloat(input.value) || 0;
-        const unitPrice = parseFloat(input.dataset.unitPrice);
-        const taxRate = parseFloat(input.dataset.taxRate);
+        const row = input.closest('tr');
+        const quantity = parseFloat(row.querySelector('.returned-qty').value) || 0;
+        const unitPrice = parseFloat(row.querySelector('.unit-price-input').value) || 0;
+        const taxRateElement = row.querySelector('td:nth-child(8)'); // Tax rate column
+        const taxRateText = taxRateElement ? taxRateElement.textContent : '0%';
+        const taxRate = parseFloat(taxRateText.replace('%', '')) || 0;
         
         const subtotal = quantity * unitPrice;
         const taxAmount = subtotal * (taxRate / 100);
         const total = subtotal + taxAmount;
         
-        const totalCell = input.closest('tr').querySelector('.item-total');
+        const totalCell = row.querySelector('.item-total');
         totalCell.textContent = total.toFixed(3);
     }
     
@@ -316,25 +341,37 @@ document.addEventListener('DOMContentLoaded', function() {
         let grandSubtotal = 0;
         let grandTax = 0;
         
-        document.querySelectorAll('.returned-qty').forEach(input => {
-            const quantity = parseFloat(input.value) || 0;
-            const unitPrice = parseFloat(input.dataset.unitPrice);
-            const taxRate = parseFloat(input.dataset.taxRate);
+        document.querySelectorAll('tbody tr').forEach(row => {
+            const quantityInput = row.querySelector('.returned-qty');
+            const priceInput = row.querySelector('.unit-price-input');
+            const taxRateElement = row.querySelector('td:nth-child(8)'); // Tax rate column
             
-            if (quantity > 0) {
-                const subtotal = quantity * unitPrice;
-                const taxAmount = subtotal * (taxRate / 100);
+            if (quantityInput && priceInput) {
+                const quantity = parseFloat(quantityInput.value) || 0;
+                const unitPrice = parseFloat(priceInput.value) || 0;
+                const taxRateText = taxRateElement ? taxRateElement.textContent : '0%';
+                const taxRate = parseFloat(taxRateText.replace('%', '')) || 0;
                 
-                grandSubtotal += subtotal;
-                grandTax += taxAmount;
+                if (quantity > 0) {
+                    const subtotal = quantity * unitPrice;
+                    const taxAmount = subtotal * (taxRate / 100);
+                    
+                    grandSubtotal += subtotal;
+                    grandTax += taxAmount;
+                }
             }
         });
         
         const grandTotal = grandSubtotal + grandTax;
         
-        document.getElementById('subtotalDisplay').textContent = grandSubtotal.toFixed(3);
-        document.getElementById('taxDisplay').textContent = grandTax.toFixed(3);
-        document.getElementById('totalDisplay').textContent = grandTotal.toFixed(3);
+        // التحقق من وجود العناصر في DOM
+        const subtotalEl = document.getElementById('subtotalDisplay');
+        const taxEl = document.getElementById('taxDisplay');
+        const totalEl = document.getElementById('totalDisplay');
+        
+        if (subtotalEl) subtotalEl.textContent = grandSubtotal.toFixed(3);
+        if (taxEl) taxEl.textContent = grandTax.toFixed(3);
+        if (totalEl) totalEl.textContent = grandTotal.toFixed(3);
     }
     
     function updateReturnedQuantities() {

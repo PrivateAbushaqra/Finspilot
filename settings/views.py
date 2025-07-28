@@ -50,14 +50,15 @@ class CompanySettingsView(LoginRequiredMixin, TemplateView):
     def post(self, request, *args, **kwargs):
         try:
             with transaction.atomic():
-                # الحصول على أو إنشاء إعدادات الشركة
-                company_settings, created = CompanySettings.objects.get_or_create(
-                    pk=1,
-                    defaults={
-                        'company_name': 'Finspilot Accounting Software',
-                        'base_currency': Currency.get_base_currency() or Currency.objects.first()
-                    }
-                )
+                # الحصول على إعدادات الشركة (أو إنشاؤها إذا لم تكن موجودة)
+                try:
+                    company_settings = CompanySettings.objects.get(pk=1)
+                except CompanySettings.DoesNotExist:
+                    company_settings = CompanySettings.objects.create(
+                        pk=1,
+                        company_name='Finspilot Accounting Software',
+                        base_currency=Currency.get_base_currency() or Currency.objects.first()
+                    )
                 
                 # تحديث بيانات الشركة
                 company_settings.company_name = request.POST.get('company_name', '')
@@ -87,17 +88,19 @@ class CompanySettingsView(LoginRequiredMixin, TemplateView):
                 
                 # إعدادات الجلسة والأمان (فقط للـ superuser)
                 if request.user.is_superuser:
-                    # مدة انتهاء الجلسة
-                    timeout_minutes = request.POST.get('session_timeout_minutes', '30')
-                    try:
-                        timeout_minutes = int(timeout_minutes)
-                        if timeout_minutes < 5:
-                            timeout_minutes = 5  # الحد الأدنى 5 دقائق
-                        elif timeout_minutes > 1440:  # 24 ساعة
-                            timeout_minutes = 1440  # الحد الأقصى 24 ساعة
-                        company_settings.session_timeout_minutes = timeout_minutes
-                    except (ValueError, TypeError):
-                        company_settings.session_timeout_minutes = 30  # القيمة الافتراضية
+                    # تحديث إعدادات الجلسة
+                    session_timeout = request.POST.get('session_timeout_minutes')
+                    if session_timeout:
+                        try:
+                            timeout_value = int(session_timeout)
+                            if 5 <= timeout_value <= 1440:  # التحقق من النطاق المسموح
+                                company_settings.session_timeout_minutes = timeout_value
+                        except (ValueError, TypeError):
+                            pass
+                    
+                    # تحديث checkbox settings
+                    company_settings.enable_session_timeout = 'enable_session_timeout' in request.POST
+                    company_settings.logout_on_browser_close = 'logout_on_browser_close' in request.POST
                     
                     company_settings.enable_session_timeout = 'enable_session_timeout' in request.POST
                     company_settings.logout_on_browser_close = 'logout_on_browser_close' in request.POST
@@ -106,8 +109,8 @@ class CompanySettingsView(LoginRequiredMixin, TemplateView):
                 if 'logo' in request.FILES:
                     company_settings.logo = request.FILES['logo']
                 
+                # حفظ الإعدادات
                 company_settings.save()
-                
                 messages.success(request, 'تم حفظ إعدادات الشركة بنجاح!')
                 
         except Exception as e:
@@ -567,3 +570,28 @@ class DocumentSequenceDeleteView(LoginRequiredMixin, View):
             messages.error(request, f'حدث خطأ أثناء حذف التسلسل: {str(e)}')
         
         return redirect('settings:document_sequences')
+
+
+def get_company_currency_ajax(request):
+    """API للحصول على معلومات العملة الأساسية للشركة"""
+    try:
+        company_settings = CompanySettings.objects.first()
+        
+        if not company_settings or not company_settings.base_currency:
+            return JsonResponse({
+                'error': 'إعدادات الشركة أو العملة الأساسية غير موجودة'
+            }, status=404)
+        
+        currency = company_settings.base_currency
+        
+        data = {
+            'code': currency.code,
+            'name': currency.name,
+            'symbol': currency.symbol,
+            'show_symbol': company_settings.show_currency_symbol,
+        }
+        
+        return JsonResponse(data)
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

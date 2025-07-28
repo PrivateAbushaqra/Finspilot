@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'purchases',
     'sales',
     'inventory',
+    'search',
     'banks',
     'cashboxes',
     'journal',
@@ -63,6 +64,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',  # لخدمة الملفات الثابتة في الإنتاج
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',

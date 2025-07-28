@@ -142,28 +142,33 @@
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="name" class="form-label">الاسم الكامل *</label>
-                            <input type="text" class="form-control" id="name" name="name" value="عميل تجريبي" required>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ customer_supplier.name }}" required>
                             <div class="form-text">اسم العميل أو المورد كما سيظهر في الفواتير</div>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="phone" class="form-label">رقم الهاتف</label>
-                            <input type="tel" class="form-control" id="phone" name="phone" value="+966501234567">
+                            <input type="tel" class="form-control" id="phone" name="phone" value="{{ customer_supplier.phone }}">
                             <div class="form-text">رقم الهاتف الأساسي للتواصل</div>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="email" class="form-label">البريد الإلكتروني</label>
-                            <input type="email" class="form-control" id="email" name="email" value="customer@example.com">
+                            <input type="email" class="form-control" id="email" name="email" value="{{ customer_supplier.email }}">
                             <div class="form-text">البريد الإلكتروني لإرسال الفواتير والتقارير</div>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="tax_number" class="form-label">الرقم الضريبي</label>
-                            <input type="text" class="form-control" id="tax_number" name="tax_number" value="123456789">
+                            <input type="text" class="form-control" id="tax_number" name="tax_number" value="{{ customer_supplier.tax_number }}">
                             <div class="form-text">الرقم الضريبي المسجل للشركة أو الفرد</div>
                         </div>
                         <div class="col-12 mb-3">
                             <label for="address" class="form-label">العنوان</label>
-                            <textarea class="form-control" id="address" name="address" rows="3">الرياض، المملكة العربية السعودية</textarea>
+                            <textarea class="form-control" id="address" name="address" rows="3">{{ customer_supplier.address }}</textarea>
                             <div class="form-text">العنوان الكامل للعميل أو المورد</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="city" class="form-label">المدينة <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="city" name="city" value="{{ customer_supplier.city }}" required>
+                            <div class="form-text">المدينة التي يقع فيها العميل أو المورد</div>
                         </div>
                     </div>
                 </div>
@@ -223,7 +228,7 @@
                     <div class="row">
                         <div class="col-12 mb-3">
                             <label for="notes" class="form-label">ملاحظات</label>
-                            <textarea class="form-control" id="notes" name="notes" rows="3">عميل مميز، يسدد في الوقت المحدد</textarea>
+                            <textarea class="form-control" id="notes" name="notes" rows="3">{{ customer_supplier.notes }}</textarea>
                             <div class="form-text">أي ملاحظات أو معلومات إضافية</div>
                         </div>
                         <div class="col-12">

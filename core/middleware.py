@@ -237,6 +237,7 @@ class SessionTimeoutMiddleware:
             '/media/',
             '/static/',
             '/api/extend-session/',
+            '/settings/company/',  # إضافة صفحة إعدادات الشركة
         ]
         
         # التحقق من أن المستخدم مسجل دخوله

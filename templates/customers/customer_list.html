@@ -396,48 +396,101 @@
             <div class="modal-body">
                 <form id="customerForm">
                     {% csrf_token %}
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="customerName" class="form-label">اسم العميل *</label>
-                            <input type="text" class="form-control" id="customerName" name="name" required>
+                    
+                    <!-- المعلومات الأساسية -->
+                    <div class="mb-4">
+                        <h6 class="text-primary border-bottom pb-2 mb-3">
+                            <i class="fas fa-user me-2"></i>المعلومات الأساسية
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">اسم العميل *</label>
+                                    <input type="text" class="form-control" name="name" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">رقم الهاتف</label>
+                                    <input type="text" class="form-control" name="phone">
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="customerPhone" class="form-label">رقم الهاتف</label>
-                            <input type="tel" class="form-control" id="customerPhone" name="phone">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">البريد الإلكتروني</label>
+                                    <input type="email" class="form-control" name="email">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">الرقم الضريبي</label>
+                                    <input type="text" class="form-control" name="tax_number">
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="customerEmail" class="form-label">البريد الإلكتروني</label>
-                            <input type="email" class="form-control" id="customerEmail" name="email">
+                        <div class="mb-3">
+                            <label class="form-label">العنوان</label>
+                            <textarea class="form-control" name="address" rows="2"></textarea>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="customerTax" class="form-label">الرقم الضريبي</label>
-                            <input type="text" class="form-control" id="customerTax" name="tax_number">
+                        <div class="mb-3">
+                            <label class="form-label">المدينة <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="city" required>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="customerCredit" class="form-label">حد الائتمان</label>
-                            <input type="number" class="form-control" id="customerCredit" name="credit_limit" value="0" step="0.001">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="customerBalance" class="form-label">الرصيد الابتدائي</label>
-                            <input type="number" class="form-control" id="customerBalance" name="balance" value="0" step="0.001">
-                        </div>
-                        <div class="col-12 mb-3">
-                            <label for="customerAddress" class="form-label">العنوان</label>
-                            <textarea class="form-control" id="customerAddress" name="address" rows="3"></textarea>
-                        </div>
-                        <div class="col-12 mb-3">
-                            <label for="customerNotes" class="form-label">ملاحظات</label>
-                            <textarea class="form-control" id="customerNotes" name="notes" rows="2"></textarea>
-                        </div>
-                        <div class="col-12">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="customerActive" name="is_active" checked>
-                                <label class="form-check-label" for="customerActive">
-                                    عميل نشط
-                                </label>
+                    </div>
+                    
+                    <!-- المعلومات المالية -->
+                    <div class="mb-4">
+                        <h6 class="text-success border-bottom pb-2 mb-3">
+                            <i class="fas fa-money-bill-wave me-2"></i>المعلومات المالية
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">حد الائتمان</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" name="credit_limit" 
+                                               value="0" step="0.001" min="0">
+                                        <span class="input-group-text">{% get_currency_symbol %}</span>
+                                    </div>
+                                    <div class="form-text">أقصى مبلغ يمكن للعميل أن يكون مديناً به</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">الرصيد الابتدائي</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" name="balance" 
+                                               value="0" step="0.001">
+                                        <span class="input-group-text">{% get_currency_symbol %}</span>
+                                    </div>
+                                    <div class="form-text">الرصيد الحالي (موجب: له، سالب: عليه)</div>
+                                </div>
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- معلومات إضافية -->
+                    <div class="mb-3">
+                        <h6 class="text-info border-bottom pb-2 mb-3">
+                            <i class="fas fa-sticky-note me-2"></i>معلومات إضافية
+                        </h6>
+                        <div class="mb-3">
+                            <label class="form-label">ملاحظات</label>
+                            <textarea class="form-control" name="notes" rows="2"></textarea>
+                            <div class="form-text">أي ملاحظات أو معلومات إضافية</div>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="is_active" id="customerIsActive" checked>
+                            <label class="form-check-label" for="customerIsActive">
+                                عميل نشط
+                            </label>
+                            <div class="form-text">إلغاء التفعيل يخفي العميل من القوائم</div>
+                        </div>
+                    </div>
+                    
+                    <input type="hidden" name="type" value="customer">
                 </form>
             </div>
             <div class="modal-footer">
@@ -476,37 +529,48 @@
 
     // Save customer function
     function saveCustomer() {
+        console.log('بدء حفظ العميل الجديد');
         const form = document.getElementById('customerForm');
         const formData = new FormData(form);
         
-        // Add customer type
-        formData.set('type', 'customer');
+        // إضافة CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        formData.append('csrfmiddlewaretoken', csrfToken);
         
-        // Send to server
-        fetch('{% url "customers:add" %}', {
+        console.log('إرسال البيانات إلى الخادم...');
+        
+        fetch('{% url "customers:ajax_add_customer" %}', {
             method: 'POST',
             body: formData,
             headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                'X-CSRFToken': csrfToken
             }
         })
         .then(response => {
-            if (response.redirected) {
-                // Success - redirect happened
-                window.location.href = response.url;
-            } else {
-                return response.text();
-            }
+            console.log('استجابة من الخادم:', response.status);
+            return response.json();
         })
-        .then(html => {
-            if (html) {
-                // Error occurred, show the form again with errors
-                document.body.innerHTML = html;
+        .then(data => {
+            console.log('البيانات المستلمة:', data);
+            if (data.success) {
+                // إغلاق النافذة وإعادة تعيين النموذج
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addCustomerModal'));
+                modal.hide();
+                form.reset();
+                
+                alert('تم إنشاء العميل بنجاح!');
+                console.log('تم حفظ العميل بنجاح');
+                
+                // إعادة تحميل الصفحة لعرض العميل الجديد
+                location.reload();
+            } else {
+                console.error('خطأ من الخادم:', data.message);
+                alert('خطأ: ' + (data.message || 'حدث خطأ أثناء إنشاء العميل'));
             }
         })
         .catch(error => {
-            console.error('Error:', error);
-            alert('حدث خطأ أثناء حفظ العميل');
+            console.error('خطأ في الشبكة:', error);
+            alert('حدث خطأ أثناء إنشاء العميل. يرجى المحاولة مرة أخرى.');
         });
     }
 

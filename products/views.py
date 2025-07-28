@@ -586,3 +586,227 @@ class ProductDetailView(LoginRequiredMixin, TemplateView):
 
 def product_search_api(request):
     return JsonResponse({'products': []})
+
+def category_add_ajax(request):
+    """API endpoint لإضافة فئة جديدة عبر AJAX"""
+    if request.method == 'POST':
+        try:
+            # استلام البيانات من النموذج
+            name = request.POST.get('name', '').strip()
+            name_en = request.POST.get('name_en', '').strip()
+            code = request.POST.get('code', '').strip()
+            parent_id = request.POST.get('parent', '')
+            description = request.POST.get('description', '').strip()
+            sort_order = request.POST.get('sort_order', '0')
+            is_active = request.POST.get('is_active') == 'on'
+            
+            # التحقق من صحة البيانات
+            if not name:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'اسم التصنيف مطلوب!'
+                })
+            
+            # التحقق من عدم تكرار الرمز
+            if code and Category.objects.filter(name=code).exists():
+                return JsonResponse({
+                    'success': False,
+                    'error': 'رمز التصنيف موجود مسبقاً!'
+                })
+                
+            # معالجة التصنيف الأب
+            parent = None
+            if parent_id:
+                try:
+                    parent = Category.objects.get(id=parent_id)
+                except Category.DoesNotExist:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'التصنيف الأب المحدد غير موجود!'
+                    })
+            
+            # إنشاء التصنيف الجديد
+            category = Category.objects.create(
+                name=name,
+                name_en=name_en,
+                code=code,
+                parent=parent,
+                description=description,
+                sort_order=int(sort_order) if sort_order else 0,
+                is_active=is_active
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'تم إنشاء التصنيف "{category.name}" بنجاح!',
+                'category': {
+                    'id': category.id,
+                    'name': category.name,
+                    'name_en': category.name_en,
+                    'code': category.code,
+                    'parent_name': category.parent.name if category.parent else None,
+                    'is_active': category.is_active
+                }
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'حدث خطأ أثناء إنشاء التصنيف: {str(e)}'
+            })
+    
+    else:
+        # إرسال قائمة الفئات الأساسية للاختيار كأب
+        categories = Category.objects.filter(parent__isnull=True).values('id', 'name')
+        return JsonResponse({
+            'categories': list(categories)
+        })
+
+def product_add_ajax(request):
+    """API endpoint لإضافة منتج جديد عبر AJAX"""
+    if request.method == 'POST':
+        try:
+            # استلام البيانات من النموذج
+            name = request.POST.get('name', '').strip()
+            name_en = request.POST.get('name_en', '').strip()
+            sku = request.POST.get('sku', '').strip()
+            barcode = request.POST.get('barcode', '').strip()
+            serial_number = request.POST.get('serial_number', '').strip()
+            category_id = request.POST.get('category', '')
+            unit = request.POST.get('unit', 'piece')
+            cost_price = request.POST.get('cost_price', '0')
+            selling_price = request.POST.get('selling_price', '0')
+            wholesale_price = request.POST.get('wholesale_price', '0')
+            tax_rate = request.POST.get('tax_rate', '0')
+            current_stock = request.POST.get('current_stock', '0')
+            min_stock = request.POST.get('min_stock', '0')
+            max_stock = request.POST.get('max_stock', '0')
+            description = request.POST.get('description', '').strip()
+            is_active = request.POST.get('is_active') == 'on'
+            track_stock = request.POST.get('track_stock') == 'on'
+            
+            # التحقق من صحة البيانات
+            if not name:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'اسم المنتج مطلوب!'
+                })
+            
+            if not selling_price or float(selling_price) <= 0:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'سعر البيع مطلوب ويجب أن يكون أكبر من صفر!'
+                })
+            
+            # التحقق من التصنيف
+            category = None
+            if category_id:
+                try:
+                    category = Category.objects.get(id=category_id)
+                except Category.DoesNotExist:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'التصنيف المحدد غير موجود!'
+                    })
+            
+            # التحقق من عدم تكرار رمز المنتج
+            if sku and Product.objects.filter(code=sku).exists():
+                return JsonResponse({
+                    'success': False,
+                    'error': 'رمز المنتج موجود مسبقاً!'
+                })
+            
+            # التحقق من عدم تكرار الباركود
+            if barcode and Product.objects.filter(barcode=barcode).exists():
+                return JsonResponse({
+                    'success': False,
+                    'error': 'الباركود موجود مسبقاً!'
+                })
+            
+            # التحقق من عدم تكرار الرقم التسلسلي
+            if serial_number and Product.objects.filter(serial_number=serial_number).exists():
+                return JsonResponse({
+                    'success': False,
+                    'error': 'الرقم التسلسلي موجود مسبقاً!'
+                })
+            
+            # إنشاء رمز تلقائي إذا لم يُدخل
+            if not sku:
+                last_product = Product.objects.order_by('-id').first()
+                if last_product:
+                    last_number = int(last_product.code.split('-')[-1]) if '-' in last_product.code else 0
+                    sku = f"PROD-{last_number + 1:04d}"
+                else:
+                    sku = "PROD-0001"
+            
+            # تحويل الأسعار إلى أرقام
+            try:
+                cost_price = float(cost_price) if cost_price else 0
+                selling_price = float(selling_price)
+                wholesale_price = float(wholesale_price) if wholesale_price else 0
+                tax_rate = float(tax_rate) if tax_rate else 0
+                
+                # التحقق من صحة نسبة الضريبة
+                if tax_rate < 0 or tax_rate > 100:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'نسبة الضريبة يجب أن تكون بين 0 و 100!'
+                    })
+                    
+            except ValueError:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'يرجى إدخال أسعار ونسبة ضريبة صحيحة!'
+                })
+            
+            # إنشاء المنتج
+            product = Product.objects.create(
+                code=sku,
+                name=name,
+                name_en=name_en,
+                barcode=barcode,
+                serial_number=serial_number,
+                category=category,
+                description=description,
+                minimum_quantity=float(min_stock) if min_stock else 0,
+                sale_price=selling_price,
+                wholesale_price=wholesale_price,
+                tax_rate=tax_rate,
+                is_active=is_active
+            )
+            
+            # رسالة نجاح مع تفاصيل الضريبة
+            success_message = f'تم إنشاء المنتج "{product.name}" بنجاح!'
+            if tax_rate > 0:
+                from decimal import Decimal
+                selling_price_decimal = Decimal(str(selling_price))
+                tax_rate_decimal = Decimal(str(tax_rate))
+                tax_amount = selling_price_decimal * (tax_rate_decimal / Decimal('100'))
+                price_with_tax = selling_price_decimal + tax_amount
+                success_message += f' (سعر البيع: {selling_price:.3f}، الضريبة: {tax_rate}%، السعر شامل الضريبة: {price_with_tax:.3f})'
+            
+            return JsonResponse({
+                'success': True,
+                'message': success_message,
+                'product': {
+                    'id': product.id,
+                    'name': product.name,
+                    'code': product.code,
+                    'sale_price': float(product.sale_price),
+                    'category_name': product.category.name if product.category else None,
+                    'is_active': product.is_active
+                }
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'حدث خطأ أثناء إنشاء المنتج: {str(e)}'
+            })
+    
+    else:
+        # إرسال قائمة الفئات للاختيار
+        categories = Category.objects.filter(is_active=True).values('id', 'name')
+        return JsonResponse({
+            'categories': list(categories)
+        })
