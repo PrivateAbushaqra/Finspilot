@@ -96,6 +96,39 @@
         padding: 1rem;
         margin-bottom: 0.5rem;
     }
+    
+    .table-responsive {
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .table-striped tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .table th {
+        border-top: none;
+        white-space: nowrap;
+        font-weight: 600;
+    }
+    
+    .table td {
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+    
+    .movement-type-in {
+        border-left: 4px solid #28a745;
+    }
+    
+    .movement-type-out {
+        border-left: 4px solid #dc3545;
+    }
+    
+    .movement-type-transfer {
+        border-left: 4px solid #17a2b8;
+    }
 </style>
 {% endblock %}
 
@@ -198,84 +231,10 @@
                 </div>
             </div>
 
-            <div class="row">
-                <!-- Recent Movements -->
-                <div class="col-lg-8">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="mb-0">
-                                <i class="fas fa-history me-2"></i>
-                                آخر الحركات
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            {% if recent_movements %}
-                                {% for movement in recent_movements %}
-                                <div class="movement-item movement-type-{{ movement.movement_type }}">
-                                    <div class="row align-items-center">
-                                        <div class="col-md-2">
-                                            {% if movement.movement_type == 'in' %}
-                                                <i class="fas fa-arrow-down text-success fa-lg"></i>
-                                                <span class="text-success fw-bold">وارد</span>
-                                            {% elif movement.movement_type == 'out' %}
-                                                <i class="fas fa-arrow-up text-danger fa-lg"></i>
-                                                <span class="text-danger fw-bold">صادر</span>
-                                            {% else %}
-                                                <i class="fas fa-exchange-alt text-info fa-lg"></i>
-                                                <span class="text-info fw-bold">تحويل</span>
-                                            {% endif %}
-                                        </div>
-                                        <div class="col-md-2">
-                                            <strong>{{ movement.quantity|floatformat:0 }}</strong>
-                                            <small class="text-muted d-block">قطعة</small>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <strong>{{ movement.warehouse.name|default:"غير محدد" }}</strong>
-                                            <small class="text-muted d-block">المستودع</small>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <strong>{{ movement.created_at|date:"Y-m-d" }}</strong>
-                                            <small class="text-muted d-block">{{ movement.created_at|date:"H:i" }}</small>
-                                        </div>
-                                        <div class="col-md-2 text-end">
-                                            {% if movement.total_cost %}
-                                                <strong>{{ movement.total_cost|floatformat:2 }}</strong>
-                                                <small class="text-muted d-block">د.أ</small>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    {% if movement.notes %}
-                                    <div class="row mt-2">
-                                        <div class="col-12">
-                                            <small class="text-muted">
-                                                <i class="fas fa-comment me-1"></i>
-                                                {{ movement.notes }}
-                                            </small>
-                                        </div>
-                                    </div>
-                                    {% endif %}
-                                </div>
-                                {% endfor %}
-                                
-                                <div class="text-center mt-3">
-                                    <a href="{% url 'inventory:movement_list' %}?product={{ product.id }}" class="btn btn-outline-primary">
-                                        <i class="fas fa-list me-2"></i>
-                                        عرض جميع الحركات
-                                    </a>
-                                </div>
-                            {% else %}
-                                <div class="text-center text-muted py-4">
-                                    <i class="fas fa-history fa-3x mb-3"></i>
-                                    <h5>لا توجد حركات</h5>
-                                    <p>لم يتم تسجيل أي حركات لهذا المنتج بعد</p>
-                                </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-
+            <!-- Warehouse Distribution and Quick Actions Row -->
+            <div class="row mb-4">
                 <!-- Warehouse Distribution -->
-                <div class="col-lg-4">
+                <div class="col-lg-6">
                     <div class="card">
                         <div class="card-header">
                             <h5 class="mb-0">
@@ -308,9 +267,11 @@
                             {% endif %}
                         </div>
                     </div>
+                </div>
 
-                    <!-- Quick Actions -->
-                    <div class="card mt-3">
+                <!-- Quick Actions -->
+                <div class="col-lg-6">
+                    <div class="card">
                         <div class="card-header">
                             <h5 class="mb-0">
                                 <i class="fas fa-bolt me-2"></i>
@@ -332,6 +293,101 @@
                                     طباعة التقرير
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Movements - Full Width -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-history me-2"></i>
+                                آخر الحركات
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if recent_movements %}
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>النوع</th>
+                                                <th>الكمية</th>
+                                                <th>المستودع</th>
+                                                <th>التاريخ</th>
+                                                <th>الوقت</th>
+                                                <th>التكلفة</th>
+                                                <th>الملاحظات</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for movement in recent_movements %}
+                                            <tr class="movement-type-{{ movement.movement_type }}">
+                                                <td>
+                                                    {% if movement.movement_type == 'in' %}
+                                                        <i class="fas fa-arrow-down text-success me-1"></i>
+                                                        <span class="text-success fw-bold">وارد</span>
+                                                    {% elif movement.movement_type == 'out' %}
+                                                        <i class="fas fa-arrow-up text-danger me-1"></i>
+                                                        <span class="text-danger fw-bold">صادر</span>
+                                                    {% else %}
+                                                        <i class="fas fa-exchange-alt text-info me-1"></i>
+                                                        <span class="text-info fw-bold">تحويل</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <strong>{{ movement.quantity|floatformat:0 }}</strong>
+                                                    <small class="text-muted">قطعة</small>
+                                                </td>
+                                                <td>
+                                                    <strong>{{ movement.warehouse.name|default:"غير محدد" }}</strong>
+                                                </td>
+                                                <td>
+                                                    <strong>{{ movement.created_at|date:"Y-m-d" }}</strong>
+                                                </td>
+                                                <td>
+                                                    <span class="text-muted">{{ movement.created_at|date:"H:i" }}</span>
+                                                </td>
+                                                <td>
+                                                    {% if movement.total_cost %}
+                                                        <strong>{{ movement.total_cost|floatformat:2 }}</strong>
+                                                        <small class="text-muted">د.أ</small>
+                                                    {% else %}
+                                                        <span class="text-muted">-</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% if movement.notes %}
+                                                        <small class="text-muted">
+                                                            <i class="fas fa-comment me-1"></i>
+                                                            {{ movement.notes|truncatechars:50 }}
+                                                        </small>
+                                                    {% else %}
+                                                        <span class="text-muted">-</span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <div class="text-center mt-3">
+                                    <a href="{% url 'inventory:movement_list' %}?product={{ product.id }}" class="btn btn-outline-primary">
+                                        <i class="fas fa-list me-2"></i>
+                                        عرض جميع الحركات
+                                    </a>
+                                </div>
+                            {% else %}
+                                <div class="text-center text-muted py-4">
+                                    <i class="fas fa-history fa-3x mb-3"></i>
+                                    <h5>لا توجد حركات</h5>
+                                    <p>لم يتم تسجيل أي حركات لهذا المنتج بعد</p>
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
