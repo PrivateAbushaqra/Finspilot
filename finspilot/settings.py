@@ -16,6 +16,9 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-me')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
+#Add Admin
+ADMINS = [('FINSADMIN', 'shaqraabd@gmail.com')]
+
 # إعدادات الاستضافة
 # نفترض أنك تضيف متغير بيئة ON_HEROKU على Heroku ليكون True
 ON_HEROKU = config('ON_HEROKU', default=False, cast=bool)
@@ -233,3 +236,13 @@ if ON_HEROKU:
 else:
     # إعدادات التطوير
     SECURE_SSL_REDIRECT = False
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+
+EMAIL_HOST_USER = config('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
+
