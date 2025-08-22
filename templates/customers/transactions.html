@@ -1,0 +1,507 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load currency_tags %}
+
+{% block title %}معام{% trans "No" %}ت ال{% trans "Customer" %}/ال{% trans "Supplier" %} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .transactions-container {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .transactions-header {
+        background: linear-gradient(135deg, #6610f2 0%, #6f42c1 100%);
+        color: white;
+        padding: 1.5rem;
+    }
+    
+    .customer-summary {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .transaction-card {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .transaction-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .transaction-header {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .transaction-body {
+        padding: 1rem;
+    }
+    
+    .transaction-type {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    .type-invoice {
+        background-color: #cce5ff;
+        color: #004085;
+    }
+    
+    .type-payment {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .type-adjustment {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    
+    .amount-positive {
+        color: #28a745;
+        font-weight: bold;
+    }
+    
+    .amount-negative {
+        color: #dc3545;
+        font-weight: bold;
+    }
+    
+    .stats-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .filter-section {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="transactions-container mb-4">
+        <div class="transactions-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">
+                    <i class="fas fa-receipt me-2"></i>
+                    معام{% trans "No" %}ت ال{% trans "Customer" %}/ال{% trans "Supplier" %}
+                </h2>
+                <div class="btn-group">
+                    <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#addTransactionModal">
+                        <i class="fas fa-plus me-2"></i>
+                        {% trans "Add Transaction" %}
+                    </button>
+                    <a href="{% url 'customers:list' %}" class="btn btn-outline-light">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        العودة لل{% trans "List" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Summary -->
+    <div class="customer-summary">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h5 class="mb-2">
+                    <i class="fas fa-user me-2 text-primary"></i>
+                    {{ customer_supplier.name }}
+                </h5>
+                <p class="text-muted mb-0">
+                    {% if customer_supplier.phone %}
+                        <i class="fas fa-phone me-2"></i>{{ customer_supplier.phone }}
+                    {% endif %}
+                    {% if customer_supplier.email %}
+                        {% if customer_supplier.phone %} | {% endif %}
+                        <i class="fas fa-envelope me-2"></i>{{ customer_supplier.email }}
+                    {% endif %}
+                    {% if not customer_supplier.phone and not customer_supplier.email %}
+                        <i class="fas fa-info-circle me-2"></i>لا توجد {% trans "Information" %} اتصال
+                    {% endif %}
+                </p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <h6 class="text-muted mb-1">{% trans "Balance" %} الحالي</h6>
+                <h3 class="{% if customer_supplier.current_balance > 0 %}text-success{% elif customer_supplier.current_balance < 0 %}text-danger{% else %}text-muted{% endif %} mb-0">{{ customer_supplier.current_balance|currency_format }}</h3>
+                <small class="text-muted">آخر تحديث: {{ customer_supplier.updated_at|date:"Y-m-d" }}</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <h4 class="text-primary">{{ total_transactions }}</h4>
+                    <p class="text-muted mb-0">إجمالي {% trans "Transactions" %}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <h4 class="text-danger">{{ total_debit|floatformat:3 }}</h4>
+                    <p class="text-muted mb-0">إجمالي المبالغ ال{% trans "Debit" %}ة</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <h4 class="text-success">{{ total_credit|floatformat:3 }}</h4>
+                    <p class="text-muted mb-0">إجمالي المبالغ ال{% trans "Credit" %}ة</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <h4 class="{% if closing_balance > 0 %}text-success{% elif closing_balance < 0 %}text-danger{% else %}text-muted{% endif %}">{{ closing_balance|floatformat:3 }}</h4>
+                    <p class="text-muted mb-0">{% trans "Balance" %} الختامي</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="filter-section">
+        <h6 class="mb-3">
+            <i class="fas fa-filter me-2"></i>
+            {% trans "Filter" %} {% trans "Transactions" %}
+        </h6>
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="transaction_type" class="form-label">{% trans "Transaction Type" %}:</label>
+                <select class="form-select" id="transaction_type" name="transaction_type">
+                    <option value="">جميع {% trans "Transactions" %}</option>
+                    <option value="sales_invoice">فواتير مبيعات</option>
+                    <option value="purchase_invoice">فواتير مشتريات</option>
+                    <option value="sales_return">مردود مبيعات</option>
+                    <option value="purchase_return">مردود مشتريات</option>
+                    <option value="payment">مدفوعات</option>
+                    <option value="adjustment">تسويات</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="date_from" class="form-label">{% trans "From Date" %}:</label>
+                <input type="date" class="form-control" id="date_from" name="date_from" value="{{ date_from }}">
+            </div>
+            <div class="col-md-3">
+                <label for="date_to" class="form-label">{% trans "To Date" %}:</label>
+                <input type="date" class="form-control" id="date_to" name="date_to" value="{{ date_to }}">
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2">
+                    <i class="fas fa-search me-1"></i>
+                    بحث
+                </button>
+                <a href="{% url 'customers:transactions' customer_supplier.pk %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-undo me-1"></i>
+                    إعادة تعيين
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Transactions List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-list me-2"></i>
+                        {% trans "List" %} {% trans "Transactions" %} ({{ total_transactions }} معاملة)
+                    </h6>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-success" onclick="exportTransactions()">
+                            <i class="fas fa-file-excel me-1"></i>
+                            {% trans "Export" %}
+                        </button>
+                        <button class="btn btn-outline-primary" onclick="printTransactions()">
+                            <i class="fas fa-print me-1"></i>
+                            {% trans "Print" %}
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- {% trans "View" %} {% trans "Transactions" %} الحقيقية فقط -->
+                    {% if transactions %}
+                        {% for transaction in transactions %}
+                        <div class="transaction-card">
+                            <div class="transaction-header">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="badge bg-{% if transaction.direction == 'debit' %}danger{% else %}success{% endif %} me-2">
+                                            {{ transaction.get_transaction_type_display }}
+                                        </span>
+                                        <span class="badge bg-secondary">{{ transaction.transaction_number }}</span>
+                                    </div>
+                                    <div class="text-muted">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        {{ transaction.date|date:"Y-m-d" }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="transaction-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-6">
+                                        <h6 class="mb-1">{{ transaction.description }}</h6>
+                                        {% if transaction.notes %}
+                                        <p class="text-muted mb-0">
+                                            <i class="fas fa-sticky-note me-1"></i>
+                                            {{ transaction.notes }}
+                                        </p>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-2 text-center">
+                                        <h6 class="text-muted mb-1">
+                                            {% if transaction.direction == 'debit' %}{% trans "Debit" %}{% else %}{% trans "Credit" %}{% endif %}
+                                        </h6>
+                                        <h5 class="{% if transaction.direction == 'debit' %}text-danger{% else %}text-success{% endif %} mb-0">
+                                            {{ transaction.amount|floatformat:3 }}
+                                        </h5>
+                                    </div>
+                                    <div class="col-md-2 text-center">
+                                        <h6 class="text-muted mb-1">{% trans "Balance" %} الجاري</h6>
+                                        <h5 class="{% if transaction.balance_after > 0 %}text-success{% elif transaction.balance_after < 0 %}text-danger{% else %}text-muted{% endif %} mb-0">
+                                            {{ transaction.balance_after|floatformat:3 }}
+                                        </h5>
+                                    </div>
+                                    <div class="col-md-2 text-center">
+                                        <small class="text-muted">
+                                            {% if transaction.reference_type and transaction.reference_id %}
+                                                <i class="fas fa-link me-1"></i>
+                                                {{ transaction.reference_type }} #{{ transaction.reference_id }}
+                                            {% endif %}
+                                        </small>
+                                        {% if user.is_superuser %}
+                                        <div class="mt-2">
+                                            <button class="btn btn-sm btn-outline-danger" 
+                                                    onclick="confirmDeleteTransaction({{ transaction.id }}, '{{ transaction.transaction_number|escapejs }}')"
+                                                    title="{% trans "Delete" %} الحركة">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <!-- {% trans "View" %} رسالة عند عدم وجود معام{% trans "No" %}ت -->
+                        <div class="text-center py-5">
+                            {% if error_message %}
+                                <div class="alert alert-warning" role="alert">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    {{ error_message }}
+                                </div>
+                            {% endif %}
+                            <div class="mb-4">
+                                <i class="fas fa-receipt fa-5x text-muted"></i>
+                            </div>
+                            <h5 class="text-muted">لا توجد معام{% trans "No" %}ت لهذا ال{% trans "Customer" %}/ال{% trans "Supplier" %}</h5>
+                            <p class="text-muted">سيتم {% trans "View" %} {% trans "Transactions" %} هنا عند {% trans "Add" %} فواتير أو مدفوعات لهذا الحساب</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if transactions and total_transactions > 0 %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <nav aria-label="صفحات {% trans "Transactions" %}">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item disabled">
+                        <span class="page-link">{% trans "Previous" %}</span>
+                    </li>
+                    <li class="page-item active">
+                        <span class="page-link">1</span>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">2</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">{% trans "Next" %}</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Add Transaction Modal -->
+<div class="modal fade" id="addTransactionModal" tabindex="-1" aria-labelledby="addTransactionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="addTransactionModalLabel">
+                    <i class="fas fa-plus me-2"></i>
+                    {% trans "Add Transaction" %} {% trans "New" %}ة
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="إغ{% trans "No" %}ق"></button>
+            </div>
+            <div class="modal-body">
+                <form id="transactionForm">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="transactionType" class="form-label">{% trans "Transaction Type" %} *</label>
+                            <select class="form-select" id="transactionType" name="type" required>
+                                <option value="">اختر {% trans "Transaction Type" %}</option>
+                                <option value="payment">{% trans "Payment" %}ة</option>
+                                <option value="adjustment">تسوية</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="transactionAmount" class="form-label">{% trans "Amount" %} *</label>
+                            <input type="number" class="form-control" id="transactionAmount" name="amount" 
+                                   step="0.001" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="transactionDate" class="form-label">{% trans "Date" %} *</label>
+                            <input type="date" class="form-control" id="transactionDate" name="date" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="transactionReference" class="form-label">رقم المرجع</label>
+                            <input type="text" class="form-control" id="transactionReference" name="reference">
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label for="transactionNotes" class="form-label">ملاحظات</label>
+                            <textarea class="form-control" id="transactionNotes" name="notes" rows="3"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" onclick="saveTransaction()">
+                    <i class="fas fa-save me-2"></i>
+                    {% trans "Save" %} المعاملة
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Save transaction function
+    function saveTransaction() {
+        const form = document.getElementById('transactionForm');
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData);
+        
+        // Validate required fields
+        if (!data.type || !data.amount || !data.date) {
+            alert('يرجى ملء جميع الحقول المطلوبة');
+            return;
+        }
+        
+        console.log('Transaction data:', data);
+        alert('سيتم {% trans "Save" %} المعاملة عند ربط النموذج بالخادم');
+        
+        // Close modal and reset form
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addTransactionModal'));
+        modal.hide();
+        form.reset();
+    }
+
+    // Export transactions
+    function exportTransactions() {
+        alert('سيتم {% trans "Export" %} {% trans "Transactions" %} إلى ملف Excel');
+        console.log('Exporting transactions...');
+    }
+
+    // Print transactions
+    function printTransactions() {
+        window.print();
+    }
+
+    // Set today's date as default
+    document.addEventListener('DOMContentLoaded', function() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('transactionDate').value = today;
+    });
+
+    // Auto-format amounts
+    document.getElementById('transactionAmount').addEventListener('blur', function() {
+        if (this.value) {
+            this.value = parseFloat(this.value).toFixed(3);
+        }
+    });
+
+    // Delete transaction functions
+    function confirmDeleteTransaction(transactionId, transactionNumber) {
+        if (confirm(`هل أنت متأكد من {% trans "Delete" %} الحركة "${transactionNumber}"؟\n\n{% trans "Warning" %}: سيتم {% trans "Delete" %} الحركة نهائياً ولا يمكن التراجع عن هذا الإجراء.`)) {
+            deleteTransaction(transactionId);
+        }
+    }
+
+    function deleteTransaction(transactionId) {
+        // إظهار مؤشر التحميل
+        const deleteBtn = document.querySelector(`button[onclick*="${transactionId}"]`);
+        const originalContent = deleteBtn.innerHTML;
+        deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        deleteBtn.disabled = true;
+
+        // إرسال طلب الحذف
+        fetch(`{% url 'customers:delete_transaction' customer_supplier.pk 0 %}`.replace('0', transactionId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // إعادة تحميل الصفحة لتحديث ال{% trans "List" %}
+                window.location.reload();
+            } else {
+                alert('{% trans "Error" %} في {% trans "Delete" %} الحركة: ' + (data.error || '{% trans "Error" %} غير معروف'));
+                // استعادة الزر
+                deleteBtn.innerHTML = originalContent;
+                deleteBtn.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('{% trans "Error" %} في ا{% trans "No" %}تصال بالخادم');
+            // استعادة الزر
+            deleteBtn.innerHTML = originalContent;
+            deleteBtn.disabled = false;
+        });
+    }
+</script>
+{% endblock %}

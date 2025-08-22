@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load humanize %}
+
+{% block title %}{% trans "List الحسابات" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                <h1 class="h3 mb-0 text-gray-800">{% trans "List الحسابات" %}</h1>
+                <a href="{% url 'journal:account_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> {% trans "حساب New" %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ف{% trans "No" %}تر {% trans "Search" %} -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <form method="get" class="row">
+                <div class="col-md-4">
+                    <input type="text" name="search" class="form-control" 
+                           placeholder="{% trans "Search في الحسابات..." %}" 
+                           value="{{ search_query }}">
+                </div>
+                <div class="col-md-3">
+                    <select name="type" class="form-control">
+                        <option value="">{% trans "جميع الأنواع" %}</option>
+                        {% for type_code, type_name in account_types %}
+                            <option value="{{ type_code }}" {% if current_type == type_code %}selected{% endif %}>
+                                {{ type_name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> {% trans "بحث" %}
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'journal:account_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-refresh"></i> {% trans "إعادة تعيين" %}
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- {% trans "Table" %} الحسابات -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            {% if page_obj %}
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>{% trans "كود الحساب" %}</th>
+                                <th>{% trans "اسم الحساب" %}</th>
+                                <th>{% trans "Type" %}</th>
+                                <th>{% trans "الحساب الرئيسي" %}</th>
+                                <th>{% trans "الBalance" %}</th>
+                                <th>{% trans "Status" %}</th>
+                                <th>{% trans "الإجراءات" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for account in page_obj %}
+                            <tr>
+                                <td><strong>{{ account.code }}</strong></td>
+                                <td>
+                                    <a href="{% url 'journal:account_detail' account.pk %}">
+                                        {{ account.name }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge badge-info">{{ account.get_account_type_display }}</span>
+                                </td>
+                                <td>
+                                    {% if account.parent %}
+                                        {{ account.parent.name }}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-right">
+                                    <strong>{{ account.get_balance|floatformat:3|intcomma }}</strong>
+                                </td>
+                                <td>
+                                    {% if account.is_active %}
+                                        <span class="badge badge-success">{% trans "Active" %}</span>
+                                    {% else %}
+                                        <span class="badge badge-secondary">{% trans "غير Active" %}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'journal:account_detail' account.pk %}" 
+                                           class="btn btn-sm btn-info" title="{% trans "Details" %}">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'journal:account_edit' account.pk %}" 
+                                           class="btn btn-sm btn-warning" title="{% trans "Edit" %}">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        {% if user.is_superuser or perms.users.can_delete_accounts %}
+                                        <button type="button" class="btn btn-sm btn-danger" 
+                                                title="{% trans "حذف" %}"
+                                                onclick="confirmDelete('{{ account.name }}', '{% url 'journal:account_delete' account.pk %}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                <nav aria-label="{% trans 'ترقيم الصفحات' %}">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&type={{ current_type }}">
+                                    {% trans "Previous" %}
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}&search={{ search_query }}&type={{ current_type }}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&type={{ current_type }}">
+                                    {% trans "Next" %}
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            {% else %}
+                <div class="text-center text-muted py-5">
+                    <i class="fas fa-list fa-3x mb-3"></i>
+                    <h5>{% trans "لا توجد حسابات" %}</h5>
+                    <p>{% trans "لم يتم العثور على حسابات تطابق معايير Search" %}</p>
+                    <a href="{% url 'journal:account_create' %}" class="btn btn-primary">
+                        {% trans "إنشاء حساب New" %}
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">{% trans "تأكيد الحذف" %}</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>{% trans "هل أنت متأكد من رغبتك في حذف الحساب" %} <strong id="accountName"></strong>؟</p>
+                <p class="text-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    {% trans "تحذير: هذا الإجراء لا يمكن التراجع عنه." %}
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    {% trans "إلغاء" %}
+                </button>
+                <form id="deleteForm" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> {% trans "حذف" %}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete(accountName, deleteUrl) {
+    document.getElementById('accountName').textContent = accountName;
+    document.getElementById('deleteForm').action = deleteUrl;
+    $('#deleteModal').modal('show');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,329 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load currency_tags %}
+
+{% block title %}{% trans "Delete" %} {% trans "Customer" %}/{% trans "Supplier" %} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .delete-container {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .delete-header {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        padding: 1.5rem;
+    }
+    
+    .warning-section {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .customer-info {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #f8f9fa;
+    }
+    
+    .info-item:last-child {
+        border-bottom: none;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .info-value {
+        color: #6c757d;
+    }
+    
+    .related-data {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .danger-zone {
+        background: #f8d7da;
+        border: 2px solid #dc3545;
+        border-radius: 8px;
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .confirmation-input {
+        max-width: 400px;
+        margin: 1rem auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="delete-container mb-4">
+        <div class="delete-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    {% trans "Delete" %} حساب ال{% trans "Customer" %}/ال{% trans "Supplier" %}
+                </h2>
+                <a href="{% url 'customers:list' %}" class="btn btn-outline-light">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    العودة لل{% trans "List" %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Warning Section -->
+    <div class="warning-section">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-exclamation-triangle text-danger me-3 fa-3x"></i>
+            <div>
+                <h4 class="text-danger mb-2">{% trans "Warning" %}: عملية {% trans "Delete" %} نهائية</h4>
+                <p class="mb-0">
+                    هذا الإجراء سي{% trans "Delete" %} الحساب وجميع البيانات المرتبطة به نهائياً ولا يمكن التراجع عنه.
+                    يرجى التأكد من رغبتك في المتابعة قبل {% trans "Confirmation" %} الحذف.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- Customer Information -->
+            <div class="customer-info">
+                <h5 class="mb-3">
+                    <i class="fas fa-user me-2"></i>
+                    بيانات الحساب المراد {% trans "Delete" %}ه
+                </h5>
+                <div class="info-item">
+                    <span class="info-label">اسم:</span>
+                    <span class="info-value">{{ customer_supplier.name }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">{% trans "Type" %}:</span>
+                    <span class="info-value">
+                        <span class="badge {% if customer_supplier.type == 'customer' %}bg-primary{% elif customer_supplier.type == 'supplier' %}bg-warning{% else %}bg-info{% endif %}">
+                            {{ customer_supplier.get_type_display }}
+                        </span>
+                    </span>
+                </div>
+                {% if customer_supplier.address %}
+                <div class="info-item">
+                    <span class="info-label">{% trans "Address" %}:</span>
+                    <span class="info-value">{{ customer_supplier.address }}</span>
+                </div>
+                {% endif %}
+                {% if customer_supplier.tax_number %}
+                <div class="info-item">
+                    <span class="info-label">{% trans "Number" %} الضريبي:</span>
+                    <span class="info-value">{{ customer_supplier.tax_number }}</span>
+                </div>
+                {% endif %}
+                {% if customer_supplier.credit_limit > 0 %}
+                <div class="info-item">
+                    <span class="info-label">حد ا{% trans "No" %}ئتمان:</span>
+                    <span class="info-value">{{ customer_supplier.credit_limit|currency_format }}</span>
+                </div>
+                {% endif %}
+                {% if customer_supplier.notes %}
+                <div class="info-item">
+                    <span class="info-label">الملاحظات:</span>
+                    <span class="info-value">{{ customer_supplier.notes|truncatewords:10 }}</span>
+                </div>
+                {% endif %}
+                <div class="info-item">
+                    <span class="info-label">{% trans "Phone" %}:</span>
+                    <span class="info-value">{{ customer_supplier.phone|default:"غير محدد" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">{% trans "Email" %}:</span>
+                    <span class="info-value">{{ customer_supplier.email|default:"غير محدد" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">{% trans "Balance" %} الحالي:</span>
+                    <span class="info-value {% if customer_supplier.balance > 0 %}text-success{% elif customer_supplier.balance < 0 %}text-danger{% endif %}">
+                        {{ customer_supplier.balance|currency_format }}
+                    </span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">تاريخ الإنشاء:</span>
+                    <span class="info-value">{{ customer_supplier.created_at|date:"Y-m-d" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">{% trans "Status" %}:</span>
+                    <span class="info-value">
+                        <span class="badge {% if customer_supplier.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                            {% if customer_supplier.is_active %}{% trans "Active" %}{% else %}غير {% trans "Active" %}{% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Related Data Warning -->
+            {% if related_data %}
+            <div class="related-data">
+                <h5 class="text-warning mb-3">
+                    <i class="fas fa-link me-2"></i>
+                    البيانات المرتبطة التي ست{% trans "Delete" %}
+                </h5>
+                <div class="row text-center">
+                    <div class="col-md-4 mb-3">
+                        <div class="p-3">
+                            <i class="fas fa-receipt fa-2x text-primary mb-2"></i>
+                            <h6>الفواتير</h6>
+                            <p class="text-muted mb-0">{{ related_data.invoices }} {% trans "Invoice" %}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="p-3">
+                            <i class="fas fa-money-bill fa-2x text-success mb-2"></i>
+                            <h6>المدفوعات</h6>
+                            <p class="text-muted mb-0">{{ related_data.payments }} مدفوعة</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="p-3">
+                            <i class="fas fa-chart-line fa-2x text-info mb-2"></i>
+                            <h6>{% trans "Transactions" %}</h6>
+                            <p class="text-muted mb-0">{{ related_data.transactions }} معاملة</p>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if related_data.invoices > 0 or related_data.payments > 0 or related_data.transactions > 0 %}
+                <div class="alert alert-warning mt-3 mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>ملاحظة:</strong> جميع هذه البيانات ست{% trans "Delete" %} نهائياً مع {% trans "Delete" %} الحساب.
+                </div>
+                {% else %}
+                <div class="alert alert-info mt-3 mb-0">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong>لا توجد بيانات مرتبطة:</strong> يمكن {% trans "Delete" %} هذا الحساب بأمان.
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Danger Zone -->
+            <div class="danger-zone">
+                <h4 class="text-danger mb-3">
+                    <i class="fas fa-skull-crossbones me-2"></i>
+                    منطقة الخطر
+                </h4>
+                <p class="text-danger mb-4">
+                    ل{% trans "Confirmation" %} الحذف، اكتب <strong>"DELETE"</strong> في الحقل أدناه:
+                </p>
+                
+                <form id="deleteForm" method="post">
+                    {% csrf_token %}
+                    <div class="confirmation-input">
+                        <input type="text" 
+                               class="form-control text-center" 
+                               id="confirmText" 
+                               name="confirm_delete"
+                               placeholder="اكتب DELETE لل{% trans "Confirmation" %}"
+                               autocomplete="off"
+                               required>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <a href="{% url 'customers:list' %}" class="btn btn-secondary me-3">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            إلغاء والعودة
+                        </a>
+                        <button type="submit" class="btn btn-danger" id="deleteButton" disabled>
+                            <i class="fas fa-trash me-2"></i>
+                            {% trans "Delete" %} الحساب نهائياً
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="mt-4">
+                    <small class="text-muted">
+                        <i class="fas fa-shield-alt me-1"></i>
+                        هذا الإجراء محمي ولا يمكن التراجع عنه
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Enable delete button only when correct text is entered
+    document.getElementById('confirmText').addEventListener('input', function() {
+        const deleteButton = document.getElementById('deleteButton');
+        const confirmText = this.value.trim();
+        
+        if (confirmText === 'DELETE') {
+            deleteButton.disabled = false;
+            deleteButton.classList.remove('btn-danger');
+            deleteButton.classList.add('btn-outline-danger');
+        } else {
+            deleteButton.disabled = true;
+            deleteButton.classList.remove('btn-outline-danger');
+            deleteButton.classList.add('btn-danger');
+        }
+    });
+
+    // Handle form submission
+    document.getElementById('deleteForm').addEventListener('submit', function(e) {
+        const confirmText = document.getElementById('confirmText').value.trim();
+        
+        if (confirmText !== 'DELETE') {
+            e.preventDefault();
+            alert('يجب كتابة "DELETE" بالضبط لل{% trans "Confirmation" %}');
+            return;
+        }
+        
+        // Final confirmation
+        if (!confirm('هل أنت متأكد تماماً من {% trans "Delete" %} هذا الحساب؟\n\nهذا الإجراء لا يمكن التراجع عنه!')) {
+            e.preventDefault();
+            return;
+        }
+        
+        // Allow form submission to proceed
+        // Form will be submitted to the server for actual deletion
+        console.log('Account deletion confirmed - submitting form');
+    });
+
+    // Auto-focus on confirmation input
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('confirmText').focus();
+    });
+
+    // Add warning when user tries to leave the page
+    window.addEventListener('beforeunload', function(e) {
+        const confirmText = document.getElementById('confirmText').value.trim();
+        if (confirmText.length > 0 && confirmText !== 'DELETE') {
+            e.preventDefault();
+            e.returnValue = '';
+        }
+    });
+</script>
+{% endblock %}

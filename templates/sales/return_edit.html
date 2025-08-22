@@ -1,0 +1,271 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load currency_tags %}
+
+{% block title %}{% trans "Edit" %} مردود المبيعات - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        padding: 2rem;
+    }
+    
+    .return-header {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 8px 8px 0 0;
+        margin: -2rem -2rem 2rem -2rem;
+    }
+    
+    .return-items {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .item-row {
+        border-bottom: 1px solid #f0f0f0;
+        padding: 0.5rem 0;
+    }
+    
+    .item-row:last-child {
+        border-bottom: none;
+    }
+    
+    .totals-section {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-top: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">
+                <i class="fas fa-edit text-warning me-2"></i>
+                {% trans "Edit" %} مردود المبيعات
+            </h2>
+            <p class="text-muted mb-0">{% trans "Edit" %} بيانات مردود المبيعات رقم {{ object.return_number }}</p>
+        </div>
+        <div>
+            <a href="{% url 'sales:return_list' %}" class="btn btn-secondary me-2">
+                <i class="fas fa-arrow-right me-1"></i>
+                العودة لل{% trans "List" %}
+            </a>
+            <a href="{% url 'sales:return_detail' object.pk %}" class="btn btn-info">
+                <i class="fas fa-eye me-1"></i>
+                {% trans "View" %} ال{% trans "Details" %}
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="form-container">
+                <div class="return-header">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h4 class="mb-0">
+                                <i class="fas fa-undo-alt me-2"></i>
+                                {% trans "Edit" %} مردود المبيعات
+                            </h4>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <h5 class="mb-0">رقم المردود: {{ object.return_number }}</h5>
+                        </div>
+                    </div>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <!-- Basic Return Information -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.return_number.id_for_label }}" class="form-label">
+                                    <i class="fas fa-hashtag text-primary me-1"></i>
+                                    رقم المردود
+                                </label>
+                                {{ form.return_number }}
+                                {% if form.return_number.errors %}
+                                    <div class="text-danger mt-1">
+                                        {{ form.return_number.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.date.id_for_label }}" class="form-label">
+                                    <i class="fas fa-calendar text-primary me-1"></i>
+                                    {% trans "Date" %}
+                                </label>
+                                {{ form.date }}
+                                {% if form.date.errors %}
+                                    <div class="text-danger mt-1">
+                                        {{ form.date.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.original_invoice.id_for_label }}" class="form-label">
+                                    <i class="fas fa-file-invoice text-primary me-1"></i>
+                                    ال{% trans "Invoice" %} الأصلية
+                                </label>
+                                {{ form.original_invoice }}
+                                {% if form.original_invoice.errors %}
+                                    <div class="text-danger mt-1">
+                                        {{ form.original_invoice.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.customer.id_for_label }}" class="form-label">
+                                    <i class="fas fa-user text-primary me-1"></i>
+                                    {% trans "Customer" %}
+                                </label>
+                                {{ form.customer }}
+                                {% if form.customer.errors %}
+                                    <div class="text-danger mt-1">
+                                        {{ form.customer.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                    <i class="fas fa-sticky-note text-primary me-1"></i>
+                                    {% trans "Notes" %}
+                                </label>
+                                {{ form.notes }}
+                                {% if form.notes.errors %}
+                                    <div class="text-danger mt-1">
+                                        {{ form.notes.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Return Items Display -->
+                    {% if object.items.exists %}
+                    <div class="return-items">
+                        <h5 class="mb-3">
+                            <i class="fas fa-list text-primary me-2"></i>
+                            عناصر المردود
+                        </h5>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>المنتج</th>
+                                        <th>{% trans "Quantity" %}</th>
+                                        <th>{% trans "Unit Price" %}</th>
+                                        <th>نسبة الضريبة</th>
+                                        <th>مبلغ الضريبة</th>
+                                        <th>الإجمالي</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in object.items.all %}
+                                    <tr>
+                                        <td>{{ item.product.name }}</td>
+                                        <td>{{ item.quantity }}</td>
+                                        <td>{{ item.unit_price|currency_format }}</td>
+                                        <td>{{ item.tax_rate }}%</td>
+                                        <td>{{ item.tax_amount|currency_format }}</td>
+                                        <td><strong>{{ item.total_amount|currency_format }}</strong></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Totals -->
+                        <div class="totals-section">
+                            <div class="row">
+                                <div class="col-md-6"></div>
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>{% trans "Total" %} الفرعي:</span>
+                                        <strong>{{ object.subtotal|currency_format }}</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>مبلغ الضريبة:</span>
+                                        <strong>{{ object.tax_amount|currency_format }}</strong>
+                                    </div>
+                                    <hr>
+                                    <div class="d-flex justify-content-between">
+                                        <span class="h5">{% trans "Total" %} الإجمالي:</span>
+                                        <strong class="h5 text-success">{{ object.total_amount|currency_format }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-end mt-4">
+                        <a href="{% url 'sales:return_detail' object.pk %}" class="btn btn-secondary me-2">
+                            <i class="fas fa-times me-1"></i>
+                            إلغاء
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save me-1"></i>
+                            {% trans "Save" %} التغييرات
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Add form classes
+    $('input[type="text"], input[type="number"], input[type="date"], select, textarea').addClass('form-control');
+    
+    // Date input styling
+    $('input[type="date"]').addClass('form-control');
+    
+    // Auto-populate customer when original invoice is selected
+    $('#{{ form.original_invoice.id_for_label }}').on('change', function() {
+        var invoiceId = $(this).val();
+        if (invoiceId) {
+            // You would typically make an AJAX call here to get the customer
+            // For now, just show that the functionality exists
+            console.log('Selected invoice ID:', invoiceId);
+        }
+    });
+});
+</script>
+{% endblock %}

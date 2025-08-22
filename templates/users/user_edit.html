@@ -1,0 +1,381 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+
+{% block title %}{% trans "Edit User" %} - Finspilot{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-10 offset-md-1">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-user-edit me-2"></i>
+                        {% trans "Edit User" %}: {{ user_to_edit.username }}
+                    </h3>
+                </div>
+                <div class="card-body">
+                    {% if edit_warnings %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>{% trans "ملاحظة:" %}</strong>
+                        <ul class="mb-0 mt-2">
+                            {% for warning in edit_warnings %}
+                            <li>{{ warning }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- {% trans "Information" %} أساسية -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2 mb-3">
+                                    <i class="fas fa-user me-2"></i>
+                                    {% trans "الInformation الأساسية" %}
+                                </h5>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.username.id_for_label }}" class="form-label">
+                                    {{ form.username.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.username }}
+                                {% if form.username.errors %}
+                                    <div class="text-danger small">{{ form.username.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.email.id_for_label }}" class="form-label">
+                                    {{ form.email.label }}
+                                </label>
+                                {{ form.email }}
+                                {% if form.email.errors %}
+                                    <div class="text-danger small">{{ form.email.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                                    {{ form.first_name.label }}
+                                </label>
+                                {{ form.first_name }}
+                                {% if form.first_name.errors %}
+                                    <div class="text-danger small">{{ form.first_name.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                                    {{ form.last_name.label }}
+                                </label>
+                                {{ form.last_name }}
+                                {% if form.last_name.errors %}
+                                    <div class="text-danger small">{{ form.last_name.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.phone.id_for_label }}" class="form-label">
+                                    {{ form.phone.label }}
+                                </label>
+                                {{ form.phone }}
+                                {% if form.phone.errors %}
+                                    <div class="text-danger small">{{ form.phone.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.department.id_for_label }}" class="form-label">
+                                    {{ form.department.label }}
+                                </label>
+                                {{ form.department }}
+                                {% if form.department.errors %}
+                                    <div class="text-danger small">{{ form.department.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- {% trans "Settings" %} الحساب -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2 mb-3">
+                                    <i class="fas fa-cogs me-2"></i>
+                                    {% trans "Settings الحساب" %}
+                                </h5>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.user_type.id_for_label }}" class="form-label">
+                                    {{ form.user_type.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.user_type }}
+                                {% if form.user_type.errors %}
+                                    <div class="text-danger small">{{ form.user_type.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3" id="pos-warehouse-field" style="display: none;">
+                                <label for="{{ form.pos_warehouse.id_for_label }}" class="form-label">
+                                    {{ form.pos_warehouse.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.pos_warehouse }}
+                                {% if form.pos_warehouse.errors %}
+                                    <div class="text-danger small">{{ form.pos_warehouse.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">{% trans 'المستودع الذي ستصدر منه فواتير نقطة البيع' %}</div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3" id="active-field">
+                                <div class="form-check form-switch">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                        {{ form.is_active.label }}
+                                    </label>
+                                </div>
+                                {% if form.is_active.errors %}
+                                    <div class="text-danger small">{{ form.is_active.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- مجموعات -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2 mb-3">
+                                    <i class="fas fa-users me-2"></i>
+                                    {% trans "المجموعات والأدوار" %}
+                                </h5>
+                            </div>
+                            
+                            <div class="col-12">
+                                <div class="card border-info">
+                                    <div class="card-header bg-info text-white">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-layer-group me-2"></i>
+                                            {% trans "عضوية المجموعات" %}
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        {% if form.groups.field.queryset %}
+                                            <div class="row">
+                                                {% for group in form.groups.field.queryset %}
+                                                    <div class="col-md-4 mb-3">
+                                                        <div class="form-check">
+                                                            <input type="checkbox" 
+                                                                   class="form-check-input" 
+                                                                   name="groups" 
+                                                                   value="{{ group.pk }}" 
+                                                                   id="group_{{ group.pk }}"
+                                                                   {% if group in object.groups.all %}checked{% endif %}>
+                                                            <label class="form-check-label" for="group_{{ group.pk }}">
+                                                                <strong>{{ group.name }}</strong>
+                                                                <br>
+                                                                <small class="text-muted">
+                                                                    <i class="fas fa-users"></i> {{ group.user_set.count }} مستخدم
+                                                                    <i class="fas fa-key ms-2"></i> {{ group.permissions.count }} صلاحية
+                                                                </small>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            <div class="text-center py-3">
+                                                <i class="fas fa-layer-group fa-2x text-muted mb-2"></i>
+                                                <p class="text-muted mb-0">{% trans "لا توجد مجموعات متاحة" %}</p>
+                                                <a href="{% url 'users:group_add' %}" class="btn btn-primary btn-sm mt-2">
+                                                    <i class="fas fa-plus me-1"></i>
+                                                    {% trans 'إنشاء مجموعة' %}
+                                                </a>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        <div class="alert alert-info mt-3">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            <strong>{% trans "ملاحظة:" %}</strong>
+                                            {% trans "المستخدم سيحصل على جميع صلاحيات المجموعات المحددة" %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- {% trans "Settings" %} إضافية -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2 mb-3">
+                                    <i class="fas fa-sliders-h me-2"></i>
+                                    {% trans "Settings إضافية" %}
+                                </h5>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    {{ form.cash_only }}
+                                    <label class="form-check-label" for="{{ form.cash_only.id_for_label }}">
+                                        {{ form.cash_only.label }}
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    {{ form.credit_only }}
+                                    <label class="form-check-label" for="{{ form.credit_only.id_for_label }}">
+                                        {{ form.credit_only.label }}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- {% trans "Information" %} إضافية -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2 mb-3">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    {% trans "Information إضافية" %}
+                                </h5>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <p><strong>{% trans 'تاريخ الإنشاء:' %}</strong><br>
+                                {{ user_to_edit.created_at|date:"Y-m-d H:i" }}</p>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <p><strong>{% trans "آخر تحديث:" %}</strong><br>
+                                {{ user_to_edit.updated_at|date:"Y-m-d H:i" }}</p>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <p><strong>{% trans 'آخر دخول:' %}</strong><br>
+                                {% if user_to_edit.last_login %}
+                                    {{ user_to_edit.last_login|date:"Y-m-d H:i" }}
+                                {% else %}
+                                    <span class="text-muted">{% trans 'لم يسجل دخول مطلقاً' %}</span>
+                                {% endif %}</p>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <p><strong>{% trans 'تغيير كلمة المرور:' %}</strong><br>
+                                <a href="{% url 'admin:auth_user_password_change' user_to_edit.id %}" class="btn btn-sm btn-outline-warning" target="_blank">
+                                    <i class="fas fa-key me-2"></i>
+                                    {% trans 'تغيير كلمة المرور' %}
+                                </a></p>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'users:user_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>
+                                إلغاء
+                            </a>
+                            
+                            {% if can_edit %}
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>
+                                {% trans "Save التغييرات" %}
+                            </button>
+                            {% else %}
+                            <button type="button" class="btn btn-primary" disabled>
+                                <i class="fas fa-ban me-2"></i>
+                                {% trans "لا يمكن الEdit" %}
+                            </button>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // منطق خاص بالصلاحيات
+    const userTypeSelect = document.getElementById('{{ form.user_type.id_for_label }}');
+    const permissionCheckboxes = document.querySelectorAll('input[type="checkbox"][name^="can_"]');
+    
+    function updatePermissions() {
+        const userType = userTypeSelect.value;
+        
+        if (userType === 'superadmin' || userType === 'admin') {
+            // تفعيل جميع الصلاحيات للمديرين
+            permissionCheckboxes.forEach(checkbox => {
+                checkbox.checked = true;
+            });
+        }
+    }
+    
+    // تحديث الصلاحيات عند تغيير نوع المستخدم
+    if (userTypeSelect) {
+        userTypeSelect.addEventListener('change', function() {
+            updatePermissions();
+            togglePOSWarehouseField();
+        });
+        
+        // تشغيل التحقق عند تحميل الصفحة
+        togglePOSWarehouseField();
+    }
+    
+    // منع تفعيل كاش فقط وذمم فقط معاً
+    const cashOnlyCheckbox = document.getElementById('{{ form.cash_only.id_for_label }}');
+    const creditOnlyCheckbox = document.getElementById('{{ form.credit_only.id_for_label }}');
+    
+    if (cashOnlyCheckbox && creditOnlyCheckbox) {
+        cashOnlyCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                creditOnlyCheckbox.checked = false;
+            }
+        });
+        
+        creditOnlyCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                cashOnlyCheckbox.checked = false;
+            }
+        });
+    }
+});
+
+// إظهار/{% trans "Hide" %} حقل المستودع حسب نوع المستخدم
+function togglePOSWarehouseField() {
+    const userTypeSelect = document.getElementById('{{ form.user_type.id_for_label }}');
+    const posWarehouseField = document.getElementById('pos-warehouse-field');
+    const activeField = document.getElementById('active-field');
+    
+    if (userTypeSelect && posWarehouseField) {
+        if (userTypeSelect.value === 'pos_user') {
+            posWarehouseField.style.display = 'block';
+            // جعل الحقل مطلوب
+            const warehouseSelect = posWarehouseField.querySelector('select');
+            if (warehouseSelect) {
+                warehouseSelect.setAttribute('required', 'required');
+            }
+            // نقل حقل "{% trans "Active" %}" للصف {% trans "Next" %}
+            if (activeField) {
+                activeField.className = 'col-md-12 mb-3';
+            }
+        } else {
+            posWarehouseField.style.display = 'none';
+            // إزالة الـ required
+            const warehouseSelect = posWarehouseField.querySelector('select');
+            if (warehouseSelect) {
+                warehouseSelect.removeAttribute('required');
+            }
+            // إعادة حقل "{% trans "Active" %}" لحجمه الأصلي
+            if (activeField) {
+                activeField.className = 'col-md-6 mb-3';
+            }
+        }
+    }
+}
+</script>
+{% endblock %}
+{% endblock %}

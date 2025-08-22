@@ -1,0 +1,306 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "الإشعارات" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+.notification-item {
+    border-left: 4px solid #007bff;
+    transition: all 0.3s ease;
+}
+
+.notification-item.unread {
+    background-color: #f8f9fa;
+    border-left-color: #28a745;
+}
+
+.notification-item.system_alert {
+    border-left-color: #dc3545;
+}
+
+.notification-item.low_stock {
+    border-left-color: #ffc107;
+}
+
+.notification-item.user_action {
+    border-left-color: #17a2b8;
+}
+
+.notification-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.notification-title {
+    font-weight: bold;
+    margin: 0;
+}
+
+.notification-time {
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+.notification-type-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.read-btn {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.notification-item:hover .read-btn {
+    opacity: 1;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-bell text-primary"></i>
+                        {% trans "الإشعارات" %}
+                    </h1>
+                    <small class="text-muted">{% trans "إدارة إشعارات النظام" %}</small>
+                </div>
+                <div>
+                    {% if notifications %}
+                    <button class="btn btn-outline-primary" id="markAllRead">
+                        <i class="fas fa-check-double"></i>
+                        {% trans "وضع ع{% trans "No" %}مة قراءة على {% trans "All" %}" %}
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>{{ notifications|length }}</h4>
+                            <small>{% trans "إجمالي الإشعارات" %}</small>
+                        </div>
+                        <i class="fas fa-bell fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>{{ notifications|length }}</h4>
+                            <small>{% trans "غير المقروءة" %}</small>
+                        </div>
+                        <i class="fas fa-envelope fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>0</h4>
+                            <small>{% trans "Alertات هامة" %}</small>
+                        </div>
+                        <i class="fas fa-exclamation-triangle fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>0</h4>
+                            <small>{% trans "إشعارات Today" %}</small>
+                        </div>
+                        <i class="fas fa-calendar-day fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list"></i>
+                        {% trans "List الإشعارات" %}
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if notifications %}
+                        <div class="list-group list-group-flush">
+                            {% for notification in notifications %}
+                            <div class="list-group-item notification-item {% if not notification.is_read %}unread{% endif %} {{ notification.notification_type }}" 
+                                 data-notification-id="{{ notification.id }}">
+                                <div class="notification-header">
+                                    <div class="d-flex align-items-center">
+                                        <h6 class="notification-title">{{ notification.title }}</h6>
+                                        {% if not notification.is_read %}
+                                        <span class="badge bg-success ms-2">{% trans "New" %}</span>
+                                        {% endif %}
+                                        <span class="badge notification-type-badge ms-2
+                                            {% if notification.notification_type == 'system_alert' %}bg-danger
+                                            {% elif notification.notification_type == 'low_stock' %}bg-warning
+                                            {% elif notification.notification_type == 'user_action' %}bg-info
+                                            {% else %}bg-primary{% endif %}">
+                                            {{ notification.get_notification_type_display }}
+                                        </span>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <small class="notification-time me-2">
+                                            <i class="fas fa-clock"></i>
+                                            {{ notification.created_at|date:"Y-m-d H:i" }}
+                                        </small>
+                                        {% if not notification.is_read %}
+                                        <button class="btn btn-sm btn-outline-success read-btn" 
+                                                onclick="markAsRead({{ notification.id }})"
+                                                title="{% trans "وضع علامة قراءة" %}">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <p class="mb-1 text-muted">{{ notification.message }}</p>
+                                {% if notification.user %}
+                                <small class="text-muted">
+                                    <i class="fas fa-user"></i>
+                                    {{ notification.user.get_full_name|default:notification.user.username }}
+                                </small>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">{% trans "لا توجد إشعارات" %}</h5>
+                            <p class="text-muted">{% trans "ستظهر هنا الإشعارات عند إنشائها" %}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="row mt-3">
+        <div class="col-12">
+            <nav aria-label="{% trans 'تصفح الإشعارات' %}">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1">{% trans "Firstى" %}</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}">{% trans "Previous" %}</a>
+                        </li>
+                    {% endif %}
+
+                    <li class="page-item active">
+                        <span class="page-link">
+                            {% trans "صفحة" %} {{ page_obj.number }} {% trans "من" %} {{ page_obj.paginator.num_pages }}
+                        </span>
+                    </li>
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}">{% trans "Next" %}</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">{% trans "Lastة" %}</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Mark single notification as read
+function markAsRead(notificationId) {
+    fetch(`/ar/notifications/${notificationId}/mark-read/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const notificationElement = document.querySelector(`[data-notification-id="${notificationId}"]`);
+            notificationElement.classList.remove('unread');
+            notificationElement.querySelector('.badge.bg-success')?.remove();
+            notificationElement.querySelector('.read-btn')?.remove();
+            
+            // تحديث العداد
+            updateNotificationCounts();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('{% trans "حدث {% trans "Error" %} أثناء وضع ع{% trans "No" %}مة القراءة" %}');
+    });
+}
+
+// وضع ع{% trans "No" %}مة قراءة على جميع الإشعارات
+document.getElementById('markAllRead')?.addEventListener('click', function() {
+    if (confirm('{% trans "هل أنت متأكد من وضع علامة قراءة على جميع الإشعارات؟" %}')) {
+        fetch('/ar/notifications/mark-all-read/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('{% trans "حدث {% trans "Error" %} أثناء وضع ع{% trans "No" %}مة القراءة" %}');
+        });
+    }
+});
+
+// تحديث عدادات الإشعارات
+function updateNotificationCounts() {
+    const unreadCount = document.querySelectorAll('.notification-item.unread').length;
+    // يمكن تحديث العدادات هنا
+}
+</script>
+{% endblock %}

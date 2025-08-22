@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Settings" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">{% trans "System Settings" %}</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card border-primary">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-building fa-3x text-primary mb-3"></i>
+                                    <h5 class="card-title">{% trans "Company Settings" %}</h5>
+                                    <p class="card-text">{% trans "Manage company information and preferences" %}</p>
+                                    <a href="{% url 'settings:company' %}" class="btn btn-primary">
+                                        {% trans "Configure" %}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card border-success">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-list-ol fa-3x text-success mb-3"></i>
+                                    <h5 class="card-title">{% trans "Document Sequences" %}</h5>
+                                    <p class="card-text">{% trans "Configure document numbering sequences" %}</p>
+                                    <a href="{% url 'settings:document_sequences' %}" class="btn btn-success">
+                                        {% trans "Configure" %}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card border-warning">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-coins fa-3x text-warning mb-3"></i>
+                                    <h5 class="card-title">إدارة العم{% trans "No" %}ت</h5>
+                                    <p class="card-text">إدارة العم{% trans "No" %}ت وأسعار الصرف و{% trans "Select" %} العملة الأساسية</p>
+                                    <a href="{% url 'settings:currency_list' %}" class="btn btn-warning">
+                                        إدارة العم{% trans "No" %}ت
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- إدارة النظام - للسوبر أدمين فقط -->
+                        {% if user.user_type == 'superadmin' %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card border-danger">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-crown fa-3x text-danger mb-3"></i>
+                                    <h5 class="card-title">
+                                        إدارة النظام
+                                        <span class="badge bg-danger ms-1">متقدم</span>
+                                    </h5>
+                                    <p class="card-text">{% trans "Settings" %} النظام المتقدمة وتخصيص الواجهة والألوان</p>
+                                    <a href="{% url 'settings:superadmin_management' %}" class="btn btn-danger">
+                                        <i class="fas fa-tools me-1"></i>
+                                        إدارة متقدمة
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card border-info">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-users fa-3x text-info mb-3"></i>
+                                    <h5 class="card-title">{% trans "User Management" %}</h5>
+                                    <p class="card-text">{% trans "Manage user accounts and permissions" %}</p>
+                                    <a href="{% url 'admin:users_user_changelist' %}" class="btn btn-info">
+                                        {% trans "Manage Users" %}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card border-warning">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-cog fa-3x text-warning mb-3"></i>
+                                    <h5 class="card-title">{% trans "System Configuration" %}</h5>
+                                    <p class="card-text">{% trans "Advanced system settings and configuration" %}</p>
+                                    <a href="{% url 'admin:index' %}" class="btn btn-warning">
+                                        {% trans "Admin Panel" %}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card border-danger">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-database fa-3x text-danger mb-3"></i>
+                                    <h5 class="card-title">{% trans "Backup & Restore" %}</h5>
+                                    <p class="card-text">{% trans "Backup and restore system data" %}</p>
+                                    <button class="btn btn-danger" disabled>
+                                        {% trans "Backup" %} ({% trans "Coming Soon" %})
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card border-secondary">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-chart-bar fa-3x text-secondary mb-3"></i>
+                                    <h5 class="card-title">{% trans "Reports Configuration" %}</h5>
+                                    <p class="card-text">{% trans "Configure reporting settings and templates" %}</p>
+                                    <button class="btn btn-secondary" disabled>
+                                        {% trans "Configure" %} ({% trans "Coming Soon" %})
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        transition: transform 0.2s;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .fa-3x {
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}

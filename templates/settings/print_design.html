@@ -1,0 +1,529 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "تصميم صفحات الطباعة" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .design-container {
+        display: flex;
+        gap: 20px;
+        height: calc(100vh - 200px);
+    }
+    
+    .documents-panel {
+        width: 300px;
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        overflow-y: auto;
+    }
+    
+    .design-workspace {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .design-tools {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 15px;
+    }
+    
+    .document-preview {
+        border: 2px solid #007bff;
+        border-radius: 8px;
+        background: white;
+        padding: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        position: relative;
+        min-height: 600px;
+        overflow: hidden;
+    }
+    
+    .paper-a4 {
+        width: 210mm;
+        max-width: 100%;
+        min-height: 297mm;
+    }
+    
+    .paper-a4.landscape {
+        width: 297mm;
+        max-width: 100%;
+        min-height: 210mm;
+    }
+    
+    .paper-a5 {
+        width: 148mm;
+        max-width: 100%;
+        min-height: 210mm;
+    }
+    
+    .paper-a5.landscape {
+        width: 210mm;
+        max-width: 100%;
+        min-height: 148mm;
+    }
+    
+    .preview-header {
+        min-height: 100px;
+        border-bottom: 2px solid #dee2e6;
+        margin-bottom: 20px;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        align-items: center;
+        gap: 10px;
+        position: relative;
+    }
+    
+    .preview-content {
+        min-height: 400px;
+        padding: 20px 0;
+        border-bottom: 2px solid #dee2e6;
+        position: relative;
+    }
+    
+    .preview-footer {
+        min-height: 80px;
+        margin-top: 20px;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        align-items: center;
+        gap: 10px;
+        position: relative;
+    }
+    
+    .draggable-element {
+        border: 2px dashed #007bff;
+        border-radius: 4px;
+        padding: 10px;
+        margin: 5px;
+        background: rgba(0,123,255,0.05);
+        cursor: move;
+        position: relative;
+        min-height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        user-select: none;
+    }
+    
+    .draggable-element:hover {
+        background: rgba(0,123,255,0.1);
+        border-color: #0056b3;
+    }
+    
+    .draggable-element.selected {
+        background: rgba(0,123,255,0.2);
+        border-color: #0056b3;
+        border-style: solid;
+    }
+    
+    .element-controls {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        display: none;
+        gap: 2px;
+        z-index: 10;
+    }
+    
+    .draggable-element.selected .element-controls {
+        display: flex;
+    }
+    
+    .control-btn {
+        width: 22px;
+        height: 22px;
+        border: none;
+        border-radius: 3px;
+        font-size: 11px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    
+    .resize-handle {
+        position: absolute;
+        bottom: -2px;
+        right: -2px;
+        width: 15px;
+        height: 15px;
+        background: #007bff;
+        cursor: se-resize;
+        border-radius: 3px 0 0 0;
+        display: none;
+    }
+    
+    .draggable-element.selected .resize-handle {
+        display: block;
+    }
+    
+    .element-palette {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 15px;
+    }
+    
+    .palette-item {
+        padding: 8px 12px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        transition: all 0.3s ease;
+    }
+    
+    .palette-item:hover {
+        background: #0056b3;
+        transform: translateY(-1px);
+    }
+    
+    .properties-panel {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 15px;
+        margin-top: 15px;
+        display: none;
+    }
+    
+    .properties-panel.active {
+        display: block;
+    }
+    
+    .document-list-item {
+        padding: 10px;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .document-list-item:hover {
+        background: #e7f3ff;
+        border-color: #007bff;
+    }
+    
+    .document-list-item.active {
+        background: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+    
+    .drop-zone {
+        min-height: 50px;
+        border: 2px dashed #ccc;
+        border-radius: 4px;
+        padding: 10px;
+        text-align: center;
+        color: #666;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+    
+    .drop-zone.drag-over {
+        border-color: #007bff;
+        background: rgba(0,123,255,0.1);
+        color: #007bff;
+    }
+    
+    .sample-content {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 4px;
+        margin: 10px 0;
+        border: 1px solid #e9ecef;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-header mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h3 mb-0">
+                            <i class="fas fa-paint-brush me-2 text-primary"></i>
+                            {% trans "تصميم صفحات الطباعة" %}
+                        </h1>
+                        <p class="text-muted mt-1">{% trans "تصميم وتخصيص صفحات الطباعة للمستندات" %}</p>
+                    </div>
+                    <div>
+                        <button class="btn btn-success me-2" onclick="saveCurrentDesign()" id="saveDesignBtn">
+                            <i class="fas fa-save me-2"></i>
+                            {% trans "حفظ التصميم" %}
+                        </button>
+                        <button class="btn btn-primary" onclick="addNewDocument()" id="addDocumentBtn">
+                            <i class="fas fa-plus me-2"></i>
+                            {% trans "إضافة مستند جديد" %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="design-container">
+                <!-- قائمة المستندات -->
+                <div class="documents-panel">
+                    <h6 class="mb-3">
+                        <i class="fas fa-list me-2"></i>
+                        {% trans "قائمة المستندات" %}
+                    </h6>
+                    
+                    <div id="documentsList">
+                        {% for setting in print_settings %}
+                        <div class="document-list-item" onclick="loadDocument('{{ setting.document_type }}')" data-document-type="{{ setting.document_type }}">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-bold">{{ setting.document_name_ar }}</div>
+                                    <small class="text-muted">{{ setting.document_name_en }}</small>
+                                </div>
+                                <div>
+                                    <span class="badge bg-info">{{ setting.paper_size }}</span>
+                                    <button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteDocument(event, {{ setting.id }}, '{{ setting.document_name_ar|escapejs }}')">
+                                        <i class="fas fa-trash fa-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        
+                        <!-- المستندات المتاحة للإضافة -->
+                        {% for doc_type in document_types %}
+                        {% if not doc_type.key in existing_documents %}
+                        <div class="document-list-item" onclick="createNewDocument('{{ doc_type.key }}', '{{ doc_type.name_ar }}', '{{ doc_type.name_en }}')" style="border-style: dashed; opacity: 0.7;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-bold">{{ doc_type.name_ar }}</div>
+                                    <small class="text-muted">{{ doc_type.name_en }}</small>
+                                </div>
+                                <div>
+                                    <i class="fas fa-plus text-success"></i>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- مساحة التصميم -->
+                <div class="design-workspace">
+                    <!-- أدوات التصميم -->
+                    <div class="design-tools">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="mb-3">{% trans "أدوات التصميم" %}</h6>
+                                <div class="element-palette">
+                                    <button class="palette-item" onclick="addElement('company_name')">
+                                        <i class="fas fa-building me-1"></i>
+                                        {% trans "اسم الشركة" %}
+                                    </button>
+                                    <button class="palette-item" onclick="addElement('logo')">
+                                        <i class="fas fa-image me-1"></i>
+                                        {% trans "الشعار" %}
+                                    </button>
+                                    <button class="palette-item" onclick="addElement('date')">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        {% trans "التاريخ" %}
+                                    </button>
+                                    <button class="palette-item" onclick="addElement('page_number')">
+                                        <i class="fas fa-hashtag me-1"></i>
+                                        {% trans "رقم الصفحة" %}
+                                    </button>
+                                    <button class="palette-item" onclick="addElement('custom_text')">
+                                        <i class="fas fa-text-width me-1"></i>
+                                        {% trans "نص مخصص" %}
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="mb-3">{% trans "إعدادات الورقة" %}</h6>
+                                <div class="row">
+                                    <div class="col-12 mb-3">
+                                        <label class="form-label">{% trans "حجم الورقة" %}</label>
+                                        <div class="d-flex gap-2">
+                                            <button class="btn btn-outline-primary" onclick="setPaperSize('A4')" id="a4Btn">A4</button>
+                                            <button class="btn btn-outline-primary" onclick="setPaperSize('A5')" id="a5Btn">A5</button>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label">{% trans "اتجاه الورقة" %}</label>
+                                        <div class="d-flex gap-2">
+                                            <button class="btn btn-outline-success" onclick="setPaperOrientation('portrait')" id="portraitBtn">
+                                                <i class="fas fa-mobile-alt me-1"></i>
+                                                {% trans "طولي" %}
+                                            </button>
+                                            <button class="btn btn-outline-success" onclick="setPaperOrientation('landscape')" id="landscapeBtn">
+                                                <i class="fas fa-tablet-alt me-1"></i>
+                                                {% trans "عرضي" %}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- معاينة المستند -->
+                    <div class="document-preview paper-a4" id="documentPreview">
+                        <div class="text-center text-muted p-4" id="noDocumentMessage">
+                            <i class="fas fa-file-alt fa-3x mb-3"></i>
+                            <h5>{% trans "اختر مستند لتصميمه" %}</h5>
+                            <p>{% trans "اختر مستند من القائمة الجانبية أو أضف مستند جديد" %}</p>
+                        </div>
+                        
+                        <!-- رأس المستند -->
+                        <div class="preview-header drop-zone" data-section="header" id="headerSection" style="display: none;">
+                            <div class="drop-zone" data-position="left" id="headerLeft">
+                                <span class="text-muted">{% trans "يسار الرأس" %}</span>
+                            </div>
+                            <div class="drop-zone" data-position="center" id="headerCenter">
+                                <span class="text-muted">{% trans "وسط الرأس" %}</span>
+                            </div>
+                            <div class="drop-zone" data-position="right" id="headerRight">
+                                <span class="text-muted">{% trans "يمين الرأس" %}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- محتوى المستند -->
+                        <div class="preview-content" id="contentSection" style="display: none;">
+                            <div class="sample-content">
+                                <h5>{% trans "محتوى المستند" %}</h5>
+                                <p>{% trans "هذا المحتوى يمثل بيانات المستند الفعلية مثل الفواتير والإيصالات" %}</p>
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>{% trans "الصنف" %}</th>
+                                            <th>{% trans "الكمية" %}</th>
+                                            <th>{% trans "السعر" %}</th>
+                                            <th>{% trans "المجموع" %}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>{% trans "منتج تجريبي" %}</td>
+                                            <td>2</td>
+                                            <td>100.00</td>
+                                            <td>200.00</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- تذييل المستند -->
+                        <div class="preview-footer drop-zone" data-section="footer" id="footerSection" style="display: none;">
+                            <div class="drop-zone" data-position="left" id="footerLeft">
+                                <span class="text-muted">{% trans "يسار التذييل" %}</span>
+                            </div>
+                            <div class="drop-zone" data-position="center" id="footerCenter">
+                                <span class="text-muted">{% trans "وسط التذييل" %}</span>
+                            </div>
+                            <div class="drop-zone" data-position="right" id="footerRight">
+                                <span class="text-muted">{% trans "يمين التذييل" %}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- لوحة خصائص العنصر المحدد -->
+            <div class="properties-panel" id="propertiesPanel">
+                <h6>{% trans "خصائص العنصر" %}</h6>
+                <div id="elementProperties">
+                    <p class="text-muted">{% trans "اختر عنصر لتعديل خصائصه" %}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal لإضافة مستند جديد -->
+<div class="modal fade" id="addDocumentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>
+                    {% trans "إضافة مستند جديد" %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newDocumentForm">
+                    <div class="mb-3">
+                        <label class="form-label">{% trans "نوع المستند" %}</label>
+                        <select class="form-select" id="newDocumentType" required>
+                            <option value="">{% trans "اختر نوع المستند" %}</option>
+                            {% for doc_type in document_types %}
+                            <option value="{{ doc_type.key }}">{{ doc_type.name_ar }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans "اسم المستند بالعربية" %}</label>
+                        <input type="text" class="form-control" id="newDocumentNameAr" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans "اسم المستند بالإنجليزية" %}</label>
+                        <input type="text" class="form-control" id="newDocumentNameEn" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans "حجم الورقة" %}</label>
+                        <select class="form-select" id="newPaperSize">
+                            <option value="A4">A4</option>
+                            <option value="A5">A5</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "إلغاء" %}</button>
+                <button type="button" class="btn btn-primary" onclick="createDocument()">{% trans "إنشاء" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal لتعديل العنصر -->
+<div class="modal fade" id="editElementModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{% trans "تعديل العنصر" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="elementEditForm">
+                    <!-- سيتم ملؤه بـ JavaScript -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "إلغاء" %}</button>
+                <button type="button" class="btn btn-primary" onclick="saveElementChanges()">{% trans "حفظ" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/print_design.js' %}"></script>
+{% endblock %}

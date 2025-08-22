@@ -1,0 +1,1214 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "إدارة تصميم الطباعة" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .settings-card {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    .settings-card .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+        padding: 15px 20px;
+    }
+    .settings-card .card-body {
+        padding: 20px;
+    }
+    .document-item {
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+    }
+    .document-item:hover {
+        border-color: #007bff;
+        box-shadow: 0 2px 4px rgba(0,123,255,0.1);
+    }
+    .document-header {
+        background-color: #f8f9fa;
+        padding: 15px 20px;
+        border-bottom: 1px solid #e9ecef;
+        cursor: pointer;
+    }
+    .document-content {
+        padding: 20px;
+        display: none;
+    }
+    .document-content.active {
+        display: block;
+    }
+    .form-section {
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        padding: 20px;
+        margin-bottom: 20px;
+        background-color: #fdfdfe;
+    }
+    .form-section-title {
+        font-weight: bold;
+        color: #495057;
+        margin-bottom: 15px;
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 8px;
+    }
+    .logo-preview {
+        max-width: 150px;
+        max-height: 100px;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 5px;
+        background-color: #fff;
+    }
+    .paper-size-preview {
+        border: 2px solid #dee2e6;
+        border-radius: 4px;
+        padding: 10px;
+        margin: 10px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .paper-size-preview.selected {
+        border-color: #007bff;
+        background-color: #e7f3ff;
+    }
+    .paper-size-preview:hover {
+        border-color: #007bff;
+    }
+    .position-selector {
+        display: flex;
+        justify-content: space-between;
+        margin: 10px 0;
+    }
+    .position-option {
+        flex: 1;
+        margin: 0 5px;
+        padding: 8px 12px;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .position-option.selected {
+        background-color: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+    .content-section {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+    
+    /* تصميم معاينة المستند */
+    .document-preview {
+        border: 2px solid #007bff;
+        border-radius: 8px;
+        background: white;
+        padding: 20px;
+        margin: 20px 0;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        position: relative;
+        min-height: 500px;
+    }
+    
+    .preview-header {
+        min-height: 80px;
+        border-bottom: 1px solid #dee2e6;
+        margin-bottom: 20px;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .preview-content {
+        min-height: 300px;
+        padding: 20px 0;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .preview-footer {
+        min-height: 60px;
+        margin-top: 20px;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    /* العناصر القابلة للسحب */
+    .draggable-element {
+        border: 2px dashed #007bff;
+        border-radius: 4px;
+        padding: 10px;
+        margin: 5px;
+        background: rgba(0,123,255,0.05);
+        cursor: move;
+        position: relative;
+        min-height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+    
+    .draggable-element:hover {
+        background: rgba(0,123,255,0.1);
+        border-color: #0056b3;
+    }
+    
+    .draggable-element.selected {
+        background: rgba(0,123,255,0.2);
+        border-color: #0056b3;
+        border-style: solid;
+    }
+    
+    .element-controls {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        display: none;
+        gap: 2px;
+    }
+    
+    .draggable-element.selected .element-controls {
+        display: flex;
+    }
+    
+    .control-btn {
+        width: 20px;
+        height: 20px;
+        border: none;
+        border-radius: 3px;
+        font-size: 10px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .resize-handle {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 15px;
+        height: 15px;
+        background: #007bff;
+        cursor: se-resize;
+        border-radius: 3px 0 0 0;
+    }
+    
+    .paper-a4 {
+        width: 210mm;
+        max-width: 100%;
+        aspect-ratio: 210/297;
+    }
+    
+    .paper-a5 {
+        width: 148mm;
+        max-width: 100%;
+        aspect-ratio: 148/210;
+    }
+    
+    /* أدوات التحكم */
+    .design-tools {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .element-palette {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 15px;
+    }
+    
+    .palette-item {
+        padding: 8px 12px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        transition: all 0.3s ease;
+    }
+    
+    .palette-item:hover {
+        background: #0056b3;
+        transform: translateY(-1px);
+    }
+    
+    .properties-panel {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 15px;
+        margin-top: 15px;
+        display: none;
+    }
+    
+    .properties-panel.active {
+        display: block;
+    }
+    
+    @media (max-width: 768px) {
+        .content-section {
+            grid-template-columns: 1fr;
+        }
+        .document-preview {
+            padding: 10px;
+        }
+        .preview-header, .preview-footer {
+            grid-template-columns: 1fr;
+            gap: 5px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="h3 mb-0">
+                            <i class="fas fa-paint-brush me-2 text-primary"></i>
+                            {% trans "تصميم صفحات الطباعة" %}
+                        </h1>
+                        <p class="text-muted mt-1">{% trans "تصميم وتخصيص صفحات الطباعة للمستندات" %}</p>
+                    </div>
+                    <div>
+                        <button class="btn btn-primary" onclick="addNewDocument()" id="addDocumentBtn">
+                            <i class="fas fa-plus me-2"></i>
+                            {% trans "إضافة مستند جديد" %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- معلومات الشعار الحالي -->
+            {% if general_settings.logo %}
+            <div class="settings-card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-image me-2 text-info"></i>
+                        {% trans "شعار النظام الحالي" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-2">
+                            <img src="{{ general_settings.logo.url }}" alt="{% trans 'شعار النظام' %}" class="logo-preview">
+                        </div>
+                        <div class="col-md-10">
+                            <p class="mb-1"><strong>{% trans "ملاحظة:" %}</strong> {% trans "هذا هو الشعار الذي سيتم استخدامه في المستندات المطبوعة" %}</p>
+                            <p class="text-muted mb-0">
+                                {% trans "يمكن تغيير الشعار من" %} 
+                                <a href="{% url 'settings:superadmin_management' %}" class="text-decoration-none">
+                                    {% trans "إعدادات السوبر أدمين" %}
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- قائمة المستندات -->
+            <div class="settings-card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-alt me-2 text-success"></i>
+                        {% trans "إعدادات طباعة المستندات" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if print_settings %}
+                        <!-- المستندات المكونة -->
+                        {% for setting in print_settings %}
+                        <div class="document-item" data-document-type="{{ setting.document_type }}">
+                            <div class="document-header" onclick="toggleDocument('{{ setting.document_type }}')">
+                                <div class="row align-items-center">
+                                    <div class="col-md-6">
+                                        <h6 class="mb-1">
+                                            <i class="fas fa-file-alt me-2 text-primary"></i>
+                                            {{ setting.document_name_ar }}
+                                        </h6>
+                                        <small class="text-muted">{{ setting.document_name_en }}</small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <span class="badge bg-info">{{ setting.paper_size }}</span>
+                                        {% if setting.show_logo %}
+                                            <span class="badge bg-success ms-1">
+                                                <i class="fas fa-image me-1"></i>{% trans "شعار" %}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-3 text-end">
+                                        <button class="btn btn-sm btn-outline-danger" onclick="deleteDocument({{ setting.id }}, '{{ setting.document_name_ar|escapejs }}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                        <i class="fas fa-chevron-down ms-2"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="document-content" id="content-{{ setting.document_type }}">
+                                {% include 'settings/partials/document_form.html' with setting=setting %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">{% trans "No saved print settings found" %}</h5>
+                            <p class="text-muted">{% trans "Start by adding print settings for your first document" %}</p>
+                            <button class="btn btn-primary" onclick="addNewDocument()" id="addDocumentBtn2">
+                                <i class="fas fa-plus me-2"></i>
+                                {% trans "Add Document" %}
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal لإضافة مستند جديد -->
+<div class="modal fade" id="addDocumentModal" tabindex="-1" aria-labelledby="addDocumentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addDocumentModalLabel">
+                    <i class="fas fa-plus me-2"></i>
+                    {% trans "Add New Document Print Settings" %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-section">
+                    <div class="form-section-title">{% trans "Basic Information" %}</div>
+                    <form id="newDocumentForm" method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="save_settings">
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label class="form-label">{% trans "Document Type" %}</label>
+                                <select name="document_type" class="form-select" required>
+                                    <option value="">{% trans "Select Document Type" %}</option>
+                                    {% for doc_type in document_types %}
+                                    <option value="{{ doc_type.key }}">
+                                        {% get_current_language as LANGUAGE_CODE %}
+                                        {% if LANGUAGE_CODE == 'ar' %}
+                                            {{ doc_type.name_ar }}
+                                        {% else %}
+                                            {{ doc_type.name_en }}
+                                        {% endif %}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">{% trans "Document Name (Arabic)" %}</label>
+                                <input type="text" name="document_name_ar" class="form-control" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">{% trans "Document Name (English)" %}</label>
+                                <input type="text" name="document_name_en" class="form-control" required>
+                            </div>
+                        </div>
+                        
+                        <div id="documentSettings">
+                            {% include 'settings/partials/document_form.html' with setting=None %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    {% trans "Cancel" %}
+                </button>
+                <button type="button" class="btn btn-info me-2" onclick="previewDocument()">
+                    <i class="fas fa-eye me-2"></i>
+                    {% trans "Preview Document" %}
+                </button>
+                <button type="submit" form="newDocumentForm" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>
+                    {% trans "Save Settings" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal للحذف -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title text-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    {% trans "تأكيد الحذف" %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>{% trans "هل أنت متأكد من حذف إعدادات الطباعة لـ" %} <strong id="documentToDelete"></strong>؟</p>
+                <p class="text-muted">{% trans "لا يمكن التراجع عن هذا الإجراء" %}</p>
+            </div>
+            <div class="modal-footer">
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete_settings">
+                    <input type="hidden" name="document_id" id="documentIdToDelete">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        {% trans "إلغاء" %}
+                    </button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>
+                        {% trans "حذف" %}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleDocument(documentType) {
+    const content = document.getElementById('content-' + documentType);
+    const icon = content.previousElementSibling.querySelector('.fa-chevron-down');
+    
+    if (content.classList.contains('active')) {
+        content.classList.remove('active');
+        icon.classList.remove('fa-chevron-up');
+        icon.classList.add('fa-chevron-down');
+    } else {
+        // إغلاق جميع المستندات الأخرى
+        document.querySelectorAll('.document-content.active').forEach(el => {
+            el.classList.remove('active');
+        });
+        document.querySelectorAll('.fa-chevron-up').forEach(el => {
+            el.classList.remove('fa-chevron-up');
+            el.classList.add('fa-chevron-down');
+        });
+        
+        // فتح المستند المحدد
+        content.classList.add('active');
+        icon.classList.remove('fa-chevron-down');
+        icon.classList.add('fa-chevron-up');
+    }
+}
+
+function addNewDocument() {
+    console.log('addNewDocument called');
+    
+    try {
+        const modalElement = document.getElementById('addDocumentModal');
+        console.log('Modal element found:', modalElement);
+        
+        if (modalElement) {
+            // التأكد من تحميل Bootstrap
+            if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                console.log('Creating Bootstrap Modal...');
+                
+                // إزالة أي backdrop قديم
+                document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+                    backdrop.remove();
+                });
+                
+                const modal = new bootstrap.Modal(modalElement, {
+                    keyboard: true,
+                    backdrop: true,
+                    focus: true
+                });
+                
+                // إضافة event listener لتنظيف الـ backdrop عند الإغلاق
+                modalElement.addEventListener('hidden.bs.modal', function () {
+                    console.log('Modal hidden - cleaning up');
+                    document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+                        backdrop.remove();
+                    });
+                    document.body.classList.remove('modal-open');
+                    document.body.style.overflow = '';
+                    document.body.style.paddingRight = '';
+                }, { once: true });
+                
+                console.log('Bootstrap Modal created:', modal);
+                modal.show();
+                console.log('Modal.show() called');
+            } else {
+                console.error('Bootstrap not loaded or Modal not available');
+                alert('Error: Bootstrap not loaded. Please refresh the page.');
+            }
+        } else {
+            console.error('Modal element not found');
+        }
+    } catch (error) {
+        console.error('Error in addNewDocument:', error);
+    }
+}
+
+function previewDocument() {
+    console.log('Preview Document clicked');
+    
+    try {
+        // جمع بيانات النموذج الأساسية
+        const documentType = document.querySelector('select[name="document_type"]')?.value || '';
+        const documentNameAr = document.querySelector('input[name="document_name_ar"]')?.value || '';
+        const documentNameEn = document.querySelector('input[name="document_name_en"]')?.value || '';
+        
+        // إذا كانت البيانات محفوظة مسبقاً، استخدمها للمعاينة
+        if (!documentType && !documentNameAr && !documentNameEn) {
+            // البحث عن البيانات المحفوظة في الصفحة
+            const savedDocuments = document.querySelectorAll('.document-item');
+            if (savedDocuments.length > 0) {
+                // استخدام أول مستند محفوظ للمعاينة
+                const firstDoc = savedDocuments[0];
+                const docHeader = firstDoc.querySelector('.document-header');
+                if (docHeader) {
+                    docHeader.click(); // تفعيل المستند لتحميل بياناته
+                    setTimeout(() => previewDocument(), 500); // إعادة المحاولة بعد تحميل البيانات
+                    return;
+                }
+            } else {
+                alert('{% trans "يرجى إنشاء أو تحديد مستند أولاً" %}');
+                return;
+            }
+        }
+        
+        if (!documentType || !documentNameAr || !documentNameEn) {
+            alert('{% trans "يرجى ملء البيانات الأساسية للمستند" %}');
+            return;
+        }
+        
+        // جمع إعدادات الطباعة من النموذج الفعلي
+        const paperSize = document.querySelector('input[name="paper_size"]')?.value || 'A4';
+        
+        // إعدادات الهوامش
+        const topMargin = document.querySelector('input[name="top_margin"]')?.value || '20';
+        const bottomMargin = document.querySelector('input[name="bottom_margin"]')?.value || '20';
+        const rightMargin = document.querySelector('input[name="right_margin"]')?.value || '15';
+        const leftMargin = document.querySelector('input[name="left_margin"]')?.value || '15';
+        
+        // إعدادات الشعار
+        const showLogo = document.querySelector('input[name="show_logo"]')?.checked || false;
+        const logoPosition = document.querySelector('input[name="logo_position"]')?.value || 'center';
+        const logoWidth = document.querySelector('input[name="logo_width"]')?.value || '40';
+        const logoHeight = document.querySelector('input[name="logo_height"]')?.value || '30';
+        
+        // إعدادات الرأس
+        const showHeader = document.querySelector('input[name="show_header"]')?.checked || false;
+        const headerLeftContent = document.querySelector('textarea[name="header_left_content"]')?.value || '';
+        const headerCenterContent = document.querySelector('textarea[name="header_center_content"]')?.value || '';
+        const headerRightContent = document.querySelector('textarea[name="header_right_content"]')?.value || '';
+        
+        // إعدادات التذييل
+        const showFooter = document.querySelector('input[name="show_footer"]')?.checked || false;
+        const footerLeftContent = document.querySelector('textarea[name="footer_left_content"]')?.value || '';
+        const footerCenterContent = document.querySelector('textarea[name="footer_center_content"]')?.value || '';
+        const footerRightContent = document.querySelector('textarea[name="footer_right_content"]')?.value || '';
+        
+        // إعدادات إضافية
+        const showCompanyInfo = document.querySelector('input[name="show_company_info"]')?.checked || false;
+        const showDateTime = document.querySelector('input[name="show_date_time"]')?.checked || false;
+        
+        console.log('Form data collected:', {
+            documentType, documentNameAr, documentNameEn,
+            paperSize, topMargin, bottomMargin, rightMargin, leftMargin,
+            showLogo, logoPosition, logoWidth, logoHeight,
+            showHeader, headerLeftContent, headerCenterContent, headerRightContent,
+            showFooter, footerLeftContent, footerCenterContent, footerRightContent,
+            showCompanyInfo, showDateTime
+        });
+        
+        // الحصول على نوع المستند بالاسم الصحيح
+        const documentTypeSelect = document.querySelector('select[name="document_type"]');
+        let documentTypeDisplayName = documentType;
+        if (documentTypeSelect) {
+            const selectedOption = documentTypeSelect.querySelector(`option[value="${documentType}"]`);
+            if (selectedOption) {
+                documentTypeDisplayName = selectedOption.textContent.trim();
+            }
+        }
+        
+        // تحديد أبعاد الورق - نفترض عمودي لأن الاتجاه ليس في النموذج
+        let pageWidth = '210mm', pageHeight = '297mm'; // A4 Portrait
+        if (paperSize === 'A5') {
+            pageWidth = '148mm';
+            pageHeight = '210mm';
+        }
+        
+        // إنشاء نافذة معاينة المستند
+        const previewWindow = window.open('', 'preview', 'width=1000,height=800,scrollbars=yes');
+        previewWindow.document.write(`
+            <!DOCTYPE html>
+            <html dir="{% if LANGUAGE_CODE == 'ar' %}rtl{% else %}ltr{% endif %}">
+            <head>
+                <meta charset="UTF-8">
+                <title>{% trans "Document Preview" %} - ${documentNameAr}</title>
+                <style>
+                    * {
+                        margin: 0;
+                        padding: 0;
+                        box-sizing: border-box;
+                    }
+                    
+                    body {
+                        font-family: 'Arial', sans-serif;
+                        background: #f5f5f5;
+                        padding: 20px;
+                        direction: {% if LANGUAGE_CODE == 'ar' %}rtl{% else %}ltr{% endif %};
+                        font-size: 14px;
+                    }
+                    
+                    .preview-container {
+                        max-width: 1000px;
+                        margin: 0 auto;
+                        background: white;
+                        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+                        border-radius: 8px;
+                        overflow: hidden;
+                    }
+                    
+                    .document-page {
+                        width: ${pageWidth};
+                        min-height: ${pageHeight};
+                        margin: 0 auto;
+                        background: white;
+                        position: relative;
+                        padding: ${topMargin}mm ${rightMargin}mm ${bottomMargin}mm ${leftMargin}mm;
+                        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                        font-size: 14px;
+                        line-height: 1.6;
+                    }
+                    
+                    .document-header {
+                        display: ${showHeader ? 'block' : 'none'};
+                        border-bottom: 2px solid #333;
+                        padding-bottom: 15px;
+                        margin-bottom: 30px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                    }
+                    
+                    .header-left, .header-center, .header-right {
+                        flex: 1;
+                        padding: 0 10px;
+                    }
+                    
+                    .header-left {
+                        text-align: {% if LANGUAGE_CODE == 'ar' %}right{% else %}left{% endif %};
+                    }
+                    
+                    .header-center {
+                        text-align: center;
+                    }
+                    
+                    .header-right {
+                        text-align: {% if LANGUAGE_CODE == 'ar' %}left{% else %}right{% endif %};
+                    }
+                    
+                    .company-logo {
+                        width: ${logoWidth}mm;
+                        height: ${logoHeight}mm;
+                        margin: ${logoPosition === 'left' ? '0 auto 0 0' : logoPosition === 'right' ? '0 0 0 auto' : '0 auto'};
+                        display: ${showLogo ? 'block' : 'none'};
+                        background: #f0f0f0;
+                        border: 2px dashed #ccc;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: #999;
+                        font-size: 12px;
+                        margin-bottom: 15px;
+                    }
+                    
+                    .document-title {
+                        text-align: center;
+                        margin: 30px 0;
+                        padding: 20px;
+                        background: #f8f9fa;
+                        border-radius: 8px;
+                        border: 2px solid #007bff;
+                    }
+                    
+                    .document-title h1 {
+                        font-size: 28px;
+                        color: #007bff;
+                        margin-bottom: 10px;
+                        font-weight: bold;
+                    }
+                    
+                    .document-title h2 {
+                        font-size: 20px;
+                        color: #6c757d;
+                        font-weight: normal;
+                    }
+                    
+                    .document-content {
+                        flex: 1;
+                        padding: 30px 0;
+                    }
+                    
+                    .content-section {
+                        margin-bottom: 25px;
+                        padding: 20px;
+                        border: 1px solid #dee2e6;
+                        border-radius: 6px;
+                        background: #fafafa;
+                    }
+                    
+                    .section-title {
+                        font-size: 18px;
+                        font-weight: bold;
+                        color: #333;
+                        margin-bottom: 15px;
+                        border-bottom: 1px solid #dee2e6;
+                        padding-bottom: 8px;
+                    }
+                    
+                    .info-row {
+                        display: flex;
+                        justify-content: space-between;
+                        margin-bottom: 10px;
+                        padding: 8px 0;
+                    }
+                    
+                    .info-label {
+                        font-weight: bold;
+                        color: #495057;
+                        min-width: 150px;
+                    }
+                    
+                    .info-value {
+                        color: #212529;
+                        flex: 1;
+                        text-align: {% if LANGUAGE_CODE == 'ar' %}left{% else %}right{% endif %};
+                    }
+                    
+                    .document-footer {
+                        display: ${showFooter ? 'flex' : 'none'};
+                        border-top: 2px solid #333;
+                        padding-top: 15px;
+                        text-align: center;
+                        color: #666;
+                        font-size: 12px;
+                        position: absolute;
+                        bottom: ${bottomMargin}mm;
+                        left: ${leftMargin}mm;
+                        right: ${rightMargin}mm;
+                        justify-content: space-between;
+                        align-items: center;
+                    }
+                    
+                    .footer-left, .footer-center, .footer-right {
+                        flex: 1;
+                        padding: 0 10px;
+                    }
+                    
+                    .footer-left {
+                        text-align: {% if LANGUAGE_CODE == 'ar' %}right{% else %}left{% endif %};
+                    }
+                    
+                    .footer-center {
+                        text-align: center;
+                    }
+                    
+                    .footer-right {
+                        text-align: {% if LANGUAGE_CODE == 'ar' %}left{% else %}right{% endif %};
+                    }
+                    
+                    .print-controls {
+                        position: fixed;
+                        top: 20px;
+                        right: 20px;
+                        z-index: 1000;
+                        background: white;
+                        padding: 15px;
+                        border-radius: 8px;
+                        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                    }
+                    
+                    .btn {
+                        padding: 10px 20px;
+                        margin: 0 5px;
+                        border: none;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        font-size: 14px;
+                        font-weight: 500;
+                        transition: all 0.3s;
+                    }
+                    
+                    .btn-primary {
+                        background: #007bff;
+                        color: white;
+                    }
+                    
+                    .btn-secondary {
+                        background: #6c757d;
+                        color: white;
+                    }
+                    
+                    .btn:hover {
+                        opacity: 0.8;
+                        transform: translateY(-1px);
+                    }
+                    
+                    @media print {
+                        body {
+                            background: white;
+                            padding: 0;
+                        }
+                        
+                        .print-controls {
+                            display: none !important;
+                        }
+                        
+                        .preview-container {
+                            box-shadow: none;
+                            border-radius: 0;
+                        }
+                        
+                        .document-page {
+                            box-shadow: none;
+                            margin: 0;
+                        }
+                    }
+                    
+                    .sample-table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin: 20px 0;
+                    }
+                    
+                    .sample-table th,
+                    .sample-table td {
+                        border: 1px solid #dee2e6;
+                        padding: 12px;
+                        text-align: {% if LANGUAGE_CODE == 'ar' %}right{% else %}left{% endif %};
+                    }
+                    
+                    .sample-table th {
+                        background: #f8f9fa;
+                        font-weight: bold;
+                        color: #495057;
+                    }
+                    
+                    .sample-table tr:nth-child(even) {
+                        background: #f9f9f9;
+                    }
+                    
+                    .company-info {
+                        display: ${showCompanyInfo ? 'block' : 'none'};
+                        background: #e9ecef;
+                        padding: 15px;
+                        border-radius: 5px;
+                        margin-bottom: 20px;
+                    }
+                    
+                    .datetime-info {
+                        display: ${showDateTime ? 'block' : 'none'};
+                        text-align: center;
+                        color: #666;
+                        font-size: 12px;
+                        margin-top: 20px;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="print-controls">
+                    <button class="btn btn-primary" onclick="window.print()">
+                        🖨️ {% trans "Print Preview" %}
+                    </button>
+                    <button class="btn btn-secondary" onclick="window.close()">
+                        ❌ {% trans "Close" %}
+                    </button>
+                </div>
+                
+                <div class="preview-container">
+                    <div class="document-page">
+                        <div class="company-logo">
+                            {% trans "Company Logo" %}<br>${logoWidth}×${logoHeight}mm
+                        </div>
+                        
+                        <div class="document-header">
+                            <div class="header-left">${headerLeftContent || '{% trans "Header Left" %}'}</div>
+                            <div class="header-center">${headerCenterContent || '{% trans "Header Center" %}'}</div>
+                            <div class="header-right">${headerRightContent || '{% trans "Header Right" %}'}</div>
+                        </div>
+                        
+                        <div class="document-title">
+                            <h1>${documentNameAr}</h1>
+                            <h2>${documentNameEn}</h2>
+                        </div>
+                        
+                        <div class="company-info">
+                            <h4>{% trans "Company Information" %}</h4>
+                            <p>{% trans "Company Name" %}: ${headerLeftContent || '{% trans "Sample Company" %}'}</p>
+                            <p>{% trans "Document Type" %}: ${documentTypeDisplayName}</p>
+                        </div>
+                        
+                        <div class="document-content">
+                            <div class="content-section">
+                                <div class="section-title">{% trans "Document Information" %}</div>
+                                <div class="info-row">
+                                    <span class="info-label">{% trans "Document Type" %}:</span>
+                                    <span class="info-value">${documentTypeDisplayName}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">{% trans "Document Date" %}:</span>
+                                    <span class="info-value">${new Date().toLocaleDateString('{% if LANGUAGE_CODE == "ar" %}ar-SA{% else %}en-US{% endif %}')}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">{% trans "Document Number" %}:</span>
+                                    <span class="info-value">#DOC-001</span>
+                                </div>
+                            </div>
+                            
+                            <div class="content-section">
+                                <div class="section-title">{% trans "Sample Content" %}</div>
+                                <table class="sample-table">
+                                    <thead>
+                                        <tr>
+                                            <th>{% trans "Item" %}</th>
+                                            <th>{% trans "Description" %}</th>
+                                            <th>{% trans "Quantity" %}</th>
+                                            <th>{% trans "Amount" %}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>1</td>
+                                            <td>{% trans "Sample Item 1" %}</td>
+                                            <td>2</td>
+                                            <td>100.00</td>
+                                        </tr>
+                                        <tr>
+                                            <td>2</td>
+                                            <td>{% trans "Sample Item 2" %}</td>
+                                            <td>1</td>
+                                            <td>50.00</td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="3" style="text-align: {% if LANGUAGE_CODE == 'ar' %}left{% else %}right{% endif %}; font-weight: bold;">{% trans "Total" %}:</td>
+                                            <td style="font-weight: bold;">150.00</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="content-section">
+                                <div class="section-title">{% trans "Applied Settings" %}</div>
+                                <div class="info-row">
+                                    <span class="info-label">{% trans "Paper Size" %}:</span>
+                                    <span class="info-value">${paperSize}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">{% trans "Margins" %} (mm):</span>
+                                    <span class="info-value">T:${topMargin} R:${rightMargin} B:${bottomMargin} L:${leftMargin}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">{% trans "Show Header" %}:</span>
+                                    <span class="info-value">${showHeader ? '{% trans "Yes" %}' : '{% trans "No" %}'}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">{% trans "Show Footer" %}:</span>
+                                    <span class="info-value">${showFooter ? '{% trans "Yes" %}' : '{% trans "No" %}'}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">{% trans "Show Logo" %}:</span>
+                                    <span class="info-value">${showLogo ? '{% trans "Yes" %}' : '{% trans "No" %}'} (${logoPosition})</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">{% trans "Company Info" %}:</span>
+                                    <span class="info-value">${showCompanyInfo ? '{% trans "Yes" %}' : '{% trans "No" %}'}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="info-label">{% trans "Date/Time" %}:</span>
+                                    <span class="info-value">${showDateTime ? '{% trans "Yes" %}' : '{% trans "No" %}'}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="datetime-info">
+                            {% trans "Generated on" %} ${new Date().toLocaleString('{% if LANGUAGE_CODE == "ar" %}ar-SA{% else %}en-US{% endif %}')}
+                        </div>
+                        
+                        <div class="document-footer">
+                            <div class="footer-left">${footerLeftContent || '{% trans "Footer Left" %}'}</div>
+                            <div class="footer-center">${footerCenterContent || '{% trans "Footer Center" %}'}</div>
+                            <div class="footer-right">${footerRightContent || '{% trans "Footer Right" %}'}</div>
+                        </div>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `);
+        previewWindow.document.close();
+        
+    } catch (error) {
+        console.error('Error in previewDocument:', error);
+        alert('{% trans "Error occurred while generating preview" %}');
+    }
+}
+
+function deleteDocument(documentId, documentName) {
+    document.getElementById('documentToDelete').textContent = documentName;
+    document.getElementById('documentIdToDelete').value = documentId;
+    
+    try {
+        const modalElement = document.getElementById('deleteModal');
+        if (modalElement && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            // إزالة أي backdrop قديم
+            document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+                backdrop.remove();
+            });
+            
+            const modal = new bootstrap.Modal(modalElement);
+            
+            // إضافة event listener لتنظيف الـ backdrop عند الإغلاق
+            modalElement.addEventListener('hidden.bs.modal', function () {
+                console.log('Delete Modal hidden - cleaning up');
+                document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+                    backdrop.remove();
+                });
+                document.body.classList.remove('modal-open');
+                document.body.style.overflow = '';
+                document.body.style.paddingRight = '';
+            }, { once: true });
+            
+            modal.show();
+        }
+    } catch (error) {
+        console.error('Error in deleteDocument:', error);
+    }
+}
+
+function selectPaperSize(size, element) {
+    // إزالة التحديد السابق
+    document.querySelectorAll('.paper-size-preview').forEach(el => {
+        el.classList.remove('selected');
+    });
+    
+    // إضافة التحديد الجديد
+    element.classList.add('selected');
+    
+    // تحديث القيمة في النموذج
+    const form = element.closest('form');
+    if (form) {
+        const input = form.querySelector('input[name="paper_size"]');
+        if (input) input.value = size;
+    }
+}
+
+function selectLogoPosition(position, element) {
+    // إزالة التحديد السابق
+    element.parentElement.querySelectorAll('.position-option').forEach(el => {
+        el.classList.remove('selected');
+    });
+    
+    // إضافة التحديد الجديد
+    element.classList.add('selected');
+    
+    // تحديث القيمة في النموذج
+    const form = element.closest('form');
+    if (form) {
+        const input = form.querySelector('input[name="logo_position"]');
+        if (input) input.value = position;
+    }
+}
+
+// تحديث اسم المستند تلقائياً عند اختيار النوع
+document.addEventListener('DOMContentLoaded', function() {
+    // انتظار قصير للتأكد من تحميل Bootstrap
+    setTimeout(function() {
+        console.log('Initializing document buttons...');
+        
+        // إضافة event listener للأزرار كبديل
+        const addBtn = document.getElementById('addDocumentBtn');
+        const addBtn2 = document.getElementById('addDocumentBtn2');
+        
+        console.log('Button 1 found:', addBtn);
+        console.log('Button 2 found:', addBtn2);
+        
+        if (addBtn) {
+            addBtn.addEventListener('click', function(e) {
+                console.log('Button 1 clicked');
+                e.preventDefault();
+                addNewDocument();
+            });
+        }
+        
+        if (addBtn2) {
+            addBtn2.addEventListener('click', function(e) {
+                console.log('Button 2 clicked');
+                e.preventDefault();
+                addNewDocument();
+            });
+        }
+        
+        // إضافة event listeners لتنظيف الـ modals عند الإغلاق
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(function(modal) {
+            modal.addEventListener('hidden.bs.modal', function() {
+                console.log('Modal hidden - global cleanup');
+                // إزالة جميع backdrop عناصر
+                document.querySelectorAll('.modal-backdrop').forEach(backdrop => {
+                    backdrop.remove();
+                });
+                // إزالة modal-open class من body
+                document.body.classList.remove('modal-open');
+                document.body.style.overflow = '';
+                document.body.style.paddingRight = '';
+            });
+        });
+        
+    }, 500);
+    
+    // استخدام البيانات من الخادم بدلاً من الترجمات الثابتة
+    const documentTypesData = {};
+    
+    {% for doc_type in document_types %}
+    documentTypesData['{{ doc_type.key }}'] = {
+        'ar': '{{ doc_type.name_ar|escapejs }}',
+        'en': '{{ doc_type.name_en|escapejs }}'
+    };
+    {% endfor %}
+    
+    const typeSelect = document.querySelector('select[name="document_type"]');
+    if (typeSelect) {
+        typeSelect.addEventListener('change', function() {
+            const selectedType = this.value;
+            if (documentTypesData[selectedType]) {
+                const arInput = document.querySelector('input[name="document_name_ar"]');
+                const enInput = document.querySelector('input[name="document_name_en"]');
+                
+                if (arInput) arInput.value = documentTypesData[selectedType]['ar'];
+                if (enInput) enInput.value = documentTypesData[selectedType]['en'];
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

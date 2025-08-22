@@ -1,0 +1,287 @@
+/* تحسينات خاصة للجداول المستجيبة */
+
+/* تحسينات عامة للجداول */
+.table-responsive {
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    background: white;
+    overflow-x: auto;
+}
+
+.table {
+    margin-bottom: 0;
+}
+
+.table th {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+    color: #495057;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.table td {
+    vertical-align: middle;
+    padding: 0.75rem;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f5f5f5;
+    transform: scale(1.01);
+    transition: all 0.2s ease;
+}
+
+/* تحسينات للأجهزة المحمولة */
+@media (max-width: 768px) {
+    .table-responsive {
+        border: none;
+        box-shadow: none;
+        background: transparent;
+    }
+    
+    .table {
+        font-size: 0.85rem;
+    }
+    
+    .table th,
+    .table td {
+        padding: 0.5rem 0.25rem;
+        vertical-align: middle;
+    }
+    
+    .table th {
+        font-size: 0.8rem;
+        white-space: nowrap;
+    }
+    
+    /* إخفاء الأعمدة غير المهمة على الشاشات الصغيرة */
+    .table .d-none-mobile {
+        display: none !important;
+    }
+    
+    /* تحسين أزرار الإجراءات */
+    .btn-group-sm > .btn,
+    .btn-sm {
+        padding: 0.25rem 0.4rem;
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .table {
+        font-size: 0.75rem;
+    }
+    
+    .table th,
+    .table td {
+        padding: 0.375rem 0.2rem;
+    }
+    
+    .table th {
+        font-size: 0.7rem;
+    }
+    
+    /* جداول مكدسة للشاشات الصغيرة جداً */
+    .table-stack-mobile {
+        display: none;
+    }
+    
+    .mobile-cards {
+        display: block;
+    }
+    
+    .mobile-card {
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .mobile-card-header {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #eee;
+        color: #495057;
+    }
+    
+    .mobile-card-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.25rem;
+        padding: 0.25rem 0;
+    }
+    
+    .mobile-card-label {
+        font-weight: 500;
+        color: #6c757d;
+        font-size: 0.8rem;
+    }
+    
+    .mobile-card-value {
+        font-size: 0.85rem;
+        color: #495057;
+    }
+    
+    .mobile-card-actions {
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid #eee;
+        text-align: right;
+    }
+}
+
+/* تحسينات إضافية للجداول الكبيرة */
+.table-lg th,
+.table-lg td {
+    padding: 1rem;
+}
+
+@media (max-width: 768px) {
+    .table-lg th,
+    .table-lg td {
+        padding: 0.75rem 0.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .table-lg th,
+    .table-lg td {
+        padding: 0.5rem 0.25rem;
+    }
+}
+
+/* تحسينات للجداول ذات البيانات الرقمية */
+.table-numeric th,
+.table-numeric td {
+    text-align: center;
+}
+
+.table-numeric .text-start {
+    text-align: start !important;
+}
+
+.table-numeric .text-end {
+    text-align: end !important;
+}
+
+/* تحسينات للحالات والتسميات */
+.badge {
+    font-size: 0.75rem;
+    padding: 0.35em 0.65em;
+}
+
+@media (max-width: 576px) {
+    .badge {
+        font-size: 0.65rem;
+        padding: 0.25em 0.5em;
+    }
+}
+
+/* تحسينات للأيقونات في الجداول */
+.table .fa,
+.table .fas,
+.table .far,
+.table .fab {
+    font-size: 0.9rem;
+}
+
+@media (max-width: 576px) {
+    .table .fa,
+    .table .fas,
+    .table .far,
+    .table .fab {
+        font-size: 0.8rem;
+    }
+}
+
+/* تحسينات للتصفح والترقيم */
+.pagination {
+    margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+    .pagination {
+        font-size: 0.875rem;
+    }
+    
+    .pagination .page-link {
+        padding: 0.375rem 0.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .pagination {
+        font-size: 0.8rem;
+    }
+    
+    .pagination .page-link {
+        padding: 0.25rem 0.4rem;
+    }
+    
+    /* إخفاء بعض أرقام الصفحات على الشاشات الصغيرة */
+    .pagination .page-item:not(.active):not(.disabled) {
+        display: none;
+    }
+    
+    .pagination .page-item.active,
+    .pagination .page-item.disabled,
+    .pagination .page-item:first-child,
+    .pagination .page-item:last-child,
+    .pagination .page-item:nth-child(2),
+    .pagination .page-item:nth-last-child(2) {
+        display: block;
+    }
+}
+
+/* تحسينات لعرض البيانات المالية */
+.currency {
+    font-family: 'Courier New', monospace;
+    font-weight: 500;
+}
+
+.currency.positive {
+    color: #28a745;
+}
+
+.currency.negative {
+    color: #dc3545;
+}
+
+.currency.zero {
+    color: #6c757d;
+}
+
+/* تحسينات للطباعة */
+@media print {
+    .table-responsive {
+        overflow: visible !important;
+    }
+    
+    .table {
+        border-collapse: collapse !important;
+    }
+    
+    .table th,
+    .table td {
+        border: 1px solid #000 !important;
+        padding: 8px !important;
+        font-size: 10pt !important;
+    }
+    
+    .table th {
+        background-color: #f0f0f0 !important;
+        font-weight: bold !important;
+    }
+    
+    .mobile-cards {
+        display: none !important;
+    }
+    
+    .table-stack-mobile {
+        display: table !important;
+    }
+}

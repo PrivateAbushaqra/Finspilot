@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load currency_tags %}
+
+
+{% block title %}{% trans "Sales Invoice Details" %} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">
+                <i class="fas fa-file-invoice-dollar text-primary me-2"></i>
+                {% trans "Sales Invoice Details" %}
+            </h2>
+            <p class="text-muted mb-0">{% trans "Invoice Number" %}: {{ invoice.invoice_number }}</p>
+        </div>
+        <div>
+            <a href="{% url 'sales:invoice_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>
+                {% trans "Back to List" %}
+            </a>
+        </div>
+    </div>
+
+    <!-- Invoice Details Card -->
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">{% trans "Invoice Data" %}</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>{% trans "Invoice Information" %}</h6>
+                    <table class="table table-sm">
+                        <tr>
+                            <td><strong>{% trans "Invoice Number" %}:</strong></td>
+                            <td>{{ invoice.invoice_number }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>{% trans "Invoice Date" %}:</strong></td>
+                            <td>{{ invoice.date|date:"Y-m-d" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>نوع ال{% trans "Payment" %}:</strong></td>
+                            <td>
+                                {% if invoice.payment_type == 'cash' %}
+                                    <span class="badge bg-success">نقدي</span>
+                                {% elif invoice.payment_type == 'credit' %}
+                                    <span class="badge bg-warning">ذمم</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ invoice.get_payment_type_display }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>تاريخ الإنشاء:</strong></td>
+                            <td>{{ invoice.created_at|date:"Y-m-d H:i" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>أنشئ بواسطة:</strong></td>
+                            <td>{{ invoice.created_by.get_full_name|default:invoice.created_by.username }}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h6>بيانات العميل</h6>
+                    <table class="table table-sm">
+                        <tr>
+                            <td><strong>اسم العميل:</strong></td>
+                            <td>{{ invoice.customer.name }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>رقم العميل:</strong></td>
+                            <td>{{ invoice.customer.code|default:"غير محدد" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>{% trans "Phone" %}:</strong></td>
+                            <td>{{ invoice.customer.phone|default:"غير محدد" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>البريد الإلكتروني:</strong></td>
+                            <td>{{ invoice.customer.email|default:"غير محدد" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>{% trans "Address" %}:</strong></td>
+                            <td>{{ invoice.customer.address|default:"غير محدد" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoice Items -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">منتجات ال{% trans "Invoice" %}</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>رقم المنتج</th>
+                            <th>المنتج</th>
+                            <th class="text-center">{% trans "Quantity" %}</th>
+                            <th class="text-end">سعر الوحدة</th>
+                            <th class="text-center">نسبة الضريبة</th>
+                            <th class="text-end">قيمة الضريبة</th>
+                            <th class="text-end">الإجمالي</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in invoice.items.all %}
+                        <tr>
+                            <td>
+                                <strong>{{ item.product.code }}</strong>
+                            </td>
+                            <td>
+                                <strong>{{ item.product.name }}</strong><br>
+                                <small class="text-muted">{{ item.product.category.name|default:"غير مصنف" }}</small>
+                            </td>
+                            <td class="text-center">{{ item.quantity|floatformat:3 }}</td>
+                            <td class="text-end">{{ item.unit_price|floatformat:2 }} {% get_currency_symbol %}</td>
+                            <td class="text-center">{{ item.tax_rate|floatformat:2 }}%</td>
+                            <td class="text-end">{{ item.tax_amount|floatformat:2 }} {% get_currency_symbol %}</td>
+                            <td class="text-end">{{ item.total_amount|floatformat:2 }} {% get_currency_symbol %}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">لا توجد منتجات في هذه ال{% trans "Invoice" %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoice Totals -->
+    <div class="card mt-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6>ملاحظات:</h6>
+                    <p>{{ invoice.notes|default:"لا توجد ملاحظات"|linebreaks }}</p>
+                </div>
+                <div class="col-md-6">
+                    <table class="table table-sm">
+                        <tr>
+                            <td><strong>{% trans "Total" %} الفرعي:</strong></td>
+                            <td class="text-end">{{ invoice.subtotal|floatformat:2 }} {% get_currency_symbol %}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>الخصم:</strong></td>
+                            <td class="text-end">{{ invoice.discount_amount|floatformat:2 }} {% get_currency_symbol %}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>الضريبة:</strong></td>
+                            <td class="text-end">{{ invoice.tax_amount|floatformat:2 }} {% get_currency_symbol %}</td>
+                        </tr>
+                        <tr class="table-active">
+                            <td><strong>الإجمالي النهائي:</strong></td>
+                            <td class="text-end"><strong>{{ invoice.total_amount|floatformat:2 }} {% get_currency_symbol %}</strong></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="d-flex gap-3">
+                <a href="{% url 'sales:invoice_edit' invoice.pk %}" class="btn btn-primary">
+                    <i class="fas fa-edit me-2"></i>
+                    {% trans "Edit" %} ال{% trans "Invoice" %}
+                </a>
+                <button class="btn btn-success" onclick="window.print()">
+                    <i class="fas fa-print me-2"></i>
+                    {% trans "Print" %}
+                </button>
+                <a href="{% url 'sales:invoice_delete' invoice.pk %}" class="btn btn-danger"
+                   onclick="return confirm('هل أنت متأكد من {% trans "Delete" %} هذه ال{% trans "Invoice" %}؟')">
+                    <i class="fas fa-trash me-2"></i>
+                    {% trans "Delete" %}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Document Creator Information -->
+{% include 'partials/document_creator_info.html' with document=invoice %}
+
+{% endblock %}

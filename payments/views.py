@@ -1,0 +1,348 @@
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.db import transaction
+from django.utils.translation import gettext_lazy as _
+from django.utils import timezone as django_timezone
+from django.http import JsonResponse
+from django.core.paginator import Paginator
+from django.db.models import Q, Sum
+from django.urls import reverse
+
+from .models import PaymentVoucher  # , PaymentVoucherItem
+from .forms import PaymentVoucherForm  # , PaymentVoucherItemFormSet
+from cashboxes.models import Cashbox, CashboxTransaction
+from banks.models import BankAccount
+from settings.models import CompanySettings
+from customers.models import CustomerSupplier
+from settings.models import CompanySettings
+from journal.services import JournalService
+
+
+def create_payment_journal_entry(voucher, user):
+    """Create journal entry for payment voucher"""
+    try:
+        # Create journal entry using JournalService
+        JournalService.create_payment_voucher_entry(voucher, user)
+    except Exception as e:
+        print(f"Error creating journal entry for payment voucher: {e}")
+        # Don't stop the operation if journal entry creation fails
+        pass
+
+
+def get_currency_symbol():
+    """Get currency symbol from company settings"""
+    from settings.models import CompanySettings, Currency
+    
+    company_settings = CompanySettings.objects.first()
+    if company_settings and company_settings.base_currency:
+        currency = company_settings.base_currency
+        if company_settings.show_currency_symbol and currency.symbol:
+            return currency.symbol
+        return currency.code
+    
+    # Search for base currency in system
+    currency = Currency.get_base_currency()
+    if currency:
+        return currency.symbol if currency.symbol else currency.code
+    
+    # If no currency found, return empty string
+    return ""
+
+
+@login_required
+def payment_voucher_list(request):
+    """Payment vouchers list"""
+    vouchers = PaymentVoucher.objects.filter(is_active=True).select_related(
+        'supplier', 'cashbox', 'bank', 'created_by'
+    )
+    
+    # Filtering
+    search = request.GET.get('search')
+    if search:
+        vouchers = vouchers.filter(
+            Q(voucher_number__icontains=search) |
+            Q(supplier__name__icontains=search) |
+            Q(beneficiary_name__icontains=search) |
+            Q(description__icontains=search)
+        )
+    
+    payment_type = request.GET.get('payment_type')
+    if payment_type:
+        vouchers = vouchers.filter(payment_type=payment_type)
+    
+    voucher_type = request.GET.get('voucher_type')
+    if voucher_type:
+        vouchers = vouchers.filter(voucher_type=voucher_type)
+    
+    # Date filtering
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+    if date_from:
+        vouchers = vouchers.filter(date__gte=date_from)
+    if date_to:
+        vouchers = vouchers.filter(date__lte=date_to)
+    
+    # Pagination
+    paginator = Paginator(vouchers, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Statistics
+    total_amount = vouchers.aggregate(Sum('amount'))['amount__sum'] or 0
+    voucher_count = vouchers.count()
+    average_amount = total_amount / voucher_count if voucher_count > 0 else 0
+    
+    currency_symbol = get_currency_symbol()
+    
+    context = {
+        'page_obj': page_obj,
+        'total_amount': total_amount,
+        'average_amount': average_amount,
+        'currency_symbol': currency_symbol,
+        'search': search,
+        'payment_type': payment_type,
+        'voucher_type': voucher_type,
+        'date_from': date_from,
+        'date_to': date_to,
+    }
+    return render(request, 'payments/voucher_list.html', context)
+
+
+@login_required
+def payment_voucher_create(request):
+    """Create new payment voucher"""
+    if request.method == 'POST':
+        form = PaymentVoucherForm(request.POST)
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    voucher = form.save(commit=False)
+                    voucher.created_by = request.user
+                    voucher.save()
+                    
+                    # Create cash box or bank transaction
+                    create_payment_transaction(voucher)
+                    
+                    # Create journal entry
+                    create_payment_journal_entry(voucher, request.user)
+                    
+                    messages.success(request, _('Payment voucher created successfully'))
+                    return redirect('payments:voucher_detail', pk=voucher.pk)
+            except Exception as e:
+                messages.error(request, f'{_("Error creating payment voucher")}: {str(e)}')
+    else:
+        form = PaymentVoucherForm()
+    
+    currency_symbol = get_currency_symbol()
+    
+    context = {
+        'form': form,
+        'title': _('Create New Payment Voucher'),
+        'currency_symbol': currency_symbol,
+    }
+    return render(request, 'payments/voucher_form.html', context)
+
+
+@login_required
+def payment_voucher_detail(request, pk):
+    """Payment voucher details"""
+    voucher = get_object_or_404(PaymentVoucher, pk=pk)
+    
+    currency_symbol = get_currency_symbol()
+    
+    context = {
+        'voucher': voucher,
+        'currency_symbol': currency_symbol,
+    }
+    return render(request, 'payments/voucher_detail.html', context)
+
+
+@login_required
+def payment_voucher_edit(request, pk):
+    """Edit payment voucher"""
+    voucher = get_object_or_404(PaymentVoucher, pk=pk)
+    
+    if voucher.is_reversed:
+        messages.error(request, _('Cannot edit a reversed payment voucher'))
+        return redirect('payments:voucher_detail', pk=voucher.pk)
+    
+    if request.method == 'POST':
+        form = PaymentVoucherForm(request.POST, instance=voucher)
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    # Delete old transaction
+                    reverse_payment_transaction(voucher)
+                    
+                    # Save changes
+                    voucher = form.save()
+                    
+                    # Create new transaction
+                    create_payment_transaction(voucher)
+                    
+                    messages.success(request, _('Payment voucher updated successfully'))
+                    return redirect('payments:voucher_detail', pk=voucher.pk)
+            except Exception as e:
+                messages.error(request, f'Error updating payment voucher: {str(e)}')
+    else:
+        form = PaymentVoucherForm(instance=voucher)
+    
+    currency_symbol = get_currency_symbol()
+    
+    context = {
+        'form': form,
+        'voucher': voucher,
+        'title': _('Edit Payment Voucher'),
+        'currency_symbol': currency_symbol,
+    }
+    return render(request, 'payments/voucher_form.html', context)
+
+
+@login_required
+def payment_voucher_reverse(request, pk):
+    """Reverse payment voucher"""
+    voucher = get_object_or_404(PaymentVoucher, pk=pk)
+    
+    if not voucher.can_be_reversed:
+        messages.error(request, _('This voucher cannot be reversed'))
+        return redirect('payments:voucher_detail', pk=voucher.pk)
+    
+    if request.method == 'POST':
+        reason = request.POST.get('reason', '')
+        if not reason:
+            messages.error(request, _('Reversal reason is required'))
+            return redirect('payments:voucher_detail', pk=voucher.pk)
+        
+        try:
+            with transaction.atomic():
+                # Reverse financial transaction
+                reverse_payment_transaction(voucher)
+                
+                # Update voucher status
+                voucher.is_reversed = True
+                voucher.reversed_by = request.user
+                voucher.reversed_at = django_timezone.now()
+                voucher.reversal_reason = reason
+                voucher.save()
+                
+                messages.success(request, _('Payment voucher reversed successfully'))
+        except Exception as e:
+            messages.error(request, f'Error reversing payment voucher: {str(e)}')
+    
+    return redirect('payments:voucher_detail', pk=voucher.pk)
+
+
+def create_payment_transaction(voucher):
+    """Create financial transaction for payment voucher"""
+    if voucher.payment_type == 'cash' and voucher.cashbox:
+        # Cashbox transaction (payment)
+        CashboxTransaction.objects.create(
+            cashbox=voucher.cashbox,
+            transaction_type='withdrawal',
+            amount=voucher.amount,
+            description=f'Payment voucher {voucher.voucher_number} - {voucher.beneficiary_display}',
+            date=voucher.date,
+            created_by=voucher.created_by
+        )
+    
+    elif voucher.payment_type == 'bank_transfer' and voucher.bank:
+        # Bank transaction (payment) - using direct import to avoid circular problems
+        from banks.models import BankTransaction
+        BankTransaction.objects.create(
+            bank=voucher.bank,
+            transaction_type='withdrawal',
+            amount=voucher.amount,
+            description=f'Payment voucher {voucher.voucher_number} - {voucher.beneficiary_display}',
+            reference_number=voucher.bank_reference or voucher.voucher_number,
+            date=voucher.date,
+            created_by=voucher.created_by
+        )
+
+
+def reverse_payment_transaction(voucher):
+    """Reverse financial transaction for payment voucher"""
+    if voucher.payment_type == 'cash' and voucher.cashbox:
+        # Find and reverse cash box transaction
+        # Search for transaction using description since CashboxTransaction doesn't have reference_number
+        transactions = CashboxTransaction.objects.filter(
+            cashbox=voucher.cashbox,
+            description__contains=voucher.voucher_number,
+            transaction_type='withdrawal'
+        )
+        for transaction in transactions:
+            CashboxTransaction.objects.create(
+                cashbox=transaction.cashbox,
+                transaction_type='deposit',
+                amount=transaction.amount,
+                description=f'Reverse {transaction.description}',
+                date=django_timezone.now().date(),
+                created_by=voucher.reversed_by or voucher.created_by
+            )
+    
+    elif voucher.payment_type == 'bank_transfer' and voucher.bank:
+        # Find and reverse bank transaction - using direct import
+        from banks.models import BankTransaction
+        transactions = BankTransaction.objects.filter(
+            bank=voucher.bank,
+            reference_number__in=[voucher.bank_reference, voucher.voucher_number],
+            transaction_type='withdrawal'
+        )
+        for transaction in transactions:
+            BankTransaction.objects.create(
+                bank=transaction.bank,
+                transaction_type='deposit',
+                amount=transaction.amount,
+                description=f'Reverse {transaction.description}',
+                reference_number=f'REV-{transaction.reference_number}',
+                date=django_timezone.now().date(),
+                created_by=voucher.reversed_by or voucher.created_by
+            )
+
+
+@login_required
+def get_supplier_data(request):
+    """Get supplier data via AJAX"""
+    supplier_id = request.GET.get('supplier_id')
+    if supplier_id:
+        try:
+            supplier = CustomerSupplier.objects.get(id=supplier_id, type__in=['supplier', 'both'])
+            data = {
+                'name': supplier.name,
+                'phone': supplier.phone,
+                'address': supplier.address,
+            }
+            return JsonResponse(data)
+        except CustomerSupplier.DoesNotExist:
+            pass
+    
+    return JsonResponse({'error': 'Supplier not found'}, status=404)
+
+
+@login_required
+def payment_voucher_delete(request, pk):
+    """Delete payment voucher - limited to Super Admin and Admin only"""
+    # Check permissions
+    if not (request.user.is_superuser or request.user.is_staff):
+        messages.error(request, _('You do not have permission to delete payment vouchers'))
+        return redirect('payments:voucher_list')
+    
+    voucher = get_object_or_404(PaymentVoucher, pk=pk)
+    
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                # Reverse financial transaction if not already reversed
+                if not voucher.is_reversed:
+                    reverse_payment_transaction(voucher)
+                
+                # Deactivate voucher instead of actual deletion
+                voucher.is_active = False
+                voucher.save()
+                
+                messages.success(request, _('Payment voucher deleted successfully'))
+                return redirect('payments:voucher_list')
+        except Exception as e:
+            messages.error(request, f'Error deleting payment voucher: {str(e)}')
+    
+    return redirect('payments:voucher_detail', pk=voucher.pk)

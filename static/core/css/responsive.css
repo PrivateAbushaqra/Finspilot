@@ -1,0 +1,357 @@
+/* تحسينات الاستجابة لنظام FinsPilot */
+/* Responsive Enhancements for FinsPilot System */
+
+/* Base Responsive Settings */
+@media (max-width: 576px) {
+    /* الهواتف الذكية - Smartphones */
+    
+    /* تحسين العناوين */
+    .h1, .h2, .h3, .h4, .h5, .h6,
+    h1, h2, h3, h4, h5, h6 {
+        font-size: 1.2rem !important;
+        line-height: 1.3;
+        margin-bottom: 0.75rem;
+    }
+    
+    /* تحسين البطاقات */
+    .card {
+        margin-bottom: 1rem;
+        border-radius: 0.5rem;
+    }
+    
+    .card-body {
+        padding: 0.75rem;
+    }
+    
+    /* تحسين الأزرار */
+    .btn {
+        font-size: 0.875rem;
+        padding: 0.5rem 0.75rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .btn-group {
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+    
+    /* تحسين الجداول */
+    .table-responsive {
+        font-size: 0.8rem;
+    }
+    
+    .table th,
+    .table td {
+        padding: 0.25rem 0.1rem;
+        font-size: 0.75rem;
+        white-space: nowrap;
+    }
+    
+    /* إخفاء أعمدة غير مهمة على الهواتف */
+    .d-none-mobile {
+        display: none !important;
+    }
+    
+    /* تحسين النماذج */
+    .form-control,
+    .form-select {
+        font-size: 0.9rem;
+        padding: 0.5rem;
+    }
+    
+    /* تحسين الشريط الجانبي */
+    .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+    
+    .sidebar.show {
+        transform: translateX(0);
+    }
+    
+    /* تحسين الإحصائيات */
+    .stats-card {
+        padding: 0.75rem !important;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stats-card h4 {
+        font-size: 1.1rem;
+    }
+    
+    .stats-card h6 {
+        font-size: 0.8rem;
+    }
+}
+
+@media (min-width: 577px) and (max-width: 768px) {
+    /* الأجهزة اللوحية الصغيرة - Small Tablets */
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .table th,
+    .table td {
+        padding: 0.4rem 0.2rem;
+        font-size: 0.85rem;
+    }
+    
+    .btn {
+        font-size: 0.9rem;
+        padding: 0.6rem 1rem;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 992px) {
+    /* الأجهزة اللوحية المتوسطة - Medium Tablets */
+    
+    .table th,
+    .table td {
+        padding: 0.5rem 0.25rem;
+        font-size: 0.9rem;
+    }
+}
+
+@media (min-width: 993px) and (max-width: 1200px) {
+    /* أجهزة الكمبيوتر المحمولة - Laptops */
+    
+    .container-fluid {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}
+
+/* تحسينات إضافية للاستجابة */
+
+/* تحسين القوائم المنسدلة */
+@media (max-width: 768px) {
+    .dropdown-menu {
+        position: static !important;
+        transform: none !important;
+        box-shadow: none;
+        border: none;
+        background: transparent;
+    }
+    
+    .dropdown-item {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+}
+
+/* تحسين الأزرار العائمة */
+.btn-floating {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    border-radius: 50%;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+@media (max-width: 576px) {
+    .btn-floating {
+        bottom: 15px;
+        right: 15px;
+        width: 48px;
+        height: 48px;
+    }
+}
+
+/* تحسين النوافذ المنبثقة */
+@media (max-width: 576px) {
+    .modal-dialog {
+        margin: 0.5rem;
+        max-width: calc(100% - 1rem);
+    }
+    
+    .modal-header {
+        padding: 0.75rem;
+    }
+    
+    .modal-body {
+        padding: 0.75rem;
+    }
+    
+    .modal-footer {
+        padding: 0.5rem 0.75rem;
+    }
+}
+
+/* تحسين الرسوم البيانية */
+@media (max-width: 768px) {
+    .chart-container {
+        position: relative;
+        height: 250px;
+        width: 100%;
+    }
+    
+    canvas {
+        max-width: 100%;
+        height: auto !important;
+    }
+}
+
+/* تحسين التنقل */
+@media (max-width: 992px) {
+    .navbar-brand {
+        font-size: 1rem;
+    }
+    
+    .navbar-nav .nav-link {
+        padding: 0.5rem 0.75rem;
+    }
+}
+
+/* تحسين البحث والفلاتر */
+@media (max-width: 768px) {
+    .search-filters {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .search-filters .form-control {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .filters-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .filters-row > div {
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* تحسين الإشعارات */
+@media (max-width: 576px) {
+    .notification-item {
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .notification-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+    
+    .notification-time {
+        font-size: 0.75rem;
+    }
+}
+
+/* تحسين التقارير */
+@media (max-width: 768px) {
+    .report-filters {
+        flex-direction: column;
+    }
+    
+    .report-filters .col-md-3,
+    .report-filters .col-md-4,
+    .report-filters .col-md-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* تحسين نقطة البيع */
+@media (max-width: 992px) {
+    .pos-container {
+        flex-direction: column;
+    }
+    
+    .pos-products {
+        margin-bottom: 1rem;
+    }
+    
+    .pos-cart {
+        position: sticky;
+        bottom: 0;
+        background: white;
+        z-index: 100;
+        border-top: 2px solid #dee2e6;
+        padding-top: 1rem;
+    }
+}
+
+/* تحسين لوحة القيادة */
+@media (max-width: 768px) {
+    .dashboard-stats {
+        flex-direction: column;
+    }
+    
+    .stat-card {
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+    
+    .quick-actions {
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+}
+
+/* تحسين الطباعة للأجهزة المحمولة */
+@media print {
+    @page {
+        margin: 0.5cm;
+        size: A4;
+    }
+    
+    .table {
+        font-size: 8pt;
+    }
+    
+    .table th,
+    .table td {
+        padding: 1px !important;
+        font-size: 7pt;
+    }
+}
+
+/* تحسينات إضافية للأداء */
+
+/* تحسين السحب والإفلات */
+@media (pointer: coarse) {
+    .draggable-item {
+        min-height: 44px; /* حد أدنى للمس */
+        padding: 0.75rem;
+    }
+}
+
+/* تحسين التمرير */
+.mobile-scroll {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+}
+
+/* تحسين التركيز للوحة المفاتيح */
+@media (prefers-reduced-motion: no-preference) {
+    .focus-visible {
+        transition: all 0.2s ease;
+    }
+}
+
+/* تحسين الألوان للوضع المظلم */
+@media (prefers-color-scheme: dark) {
+    .card {
+        background-color: #2d3748;
+        border-color: #4a5568;
+    }
+    
+    .table {
+        --bs-table-bg: #2d3748;
+        --bs-table-border-color: #4a5568;
+    }
+}

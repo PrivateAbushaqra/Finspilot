@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% load currency_tags %}
+
+
+
+{% block title %}{% trans "Edit Purchase Return" %} - {{ object.return_number }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-edit me-2"></i>
+                        {% trans "Edit" %} مردود المشتريات - {{ object.return_number }}
+                    </h3>
+                    <a href="{% url 'purchases:return_detail' object.pk %}" class="btn btn-outline-secondary float-end">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        العودة إلى ال{% trans "Details" %}
+                    </a>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Return Information -->
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">رقم المردود <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="return_number" 
+                                           value="{{ object.return_number }}" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">تاريخ المردود <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" name="date" 
+                                           value="{{ object.date|date:'Y-m-d' }}" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">نوع المردود <span class="text-danger">*</span></label>
+                                    <select class="form-control" name="return_type" required>
+                                        <option value="partial" {% if object.return_type == 'partial' %}selected{% endif %}>مردود {% trans "Partial" %}</option>
+                                        <option value="full" {% if object.return_type == 'full' %}selected{% endif %}>مردود الكامل</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">ال{% trans "Invoice" %} الأصلية</label>
+                                    <input type="text" class="form-control" 
+                                           value="{{ object.original_invoice.supplier_invoice_number }} - {{ object.original_invoice.supplier.name }}" 
+                                           readonly>
+                                    <small class="text-muted">لا يمكن تغيير ال{% trans "Invoice" %} الأصلية بعد الإنشاء</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">سبب المردود <span class="text-danger">*</span></label>
+                                    <select class="form-control" name="return_reason" required>
+                                        <option value="defective" {% if object.return_reason == 'defective' %}selected{% endif %}>منتج {% trans "Defective" %}</option>
+                                        <option value="wrong_item" {% if object.return_reason == 'wrong_item' %}selected{% endif %}>صنف خاطئ</option>
+                                        <option value="excess" {% if object.return_reason == 'excess' %}selected{% endif %}>فائض عن الحاجة</option>
+                                        <option value="expired" {% if object.return_reason == 'expired' %}selected{% endif %}>{% trans "Expired" %}</option>
+                                        <option value="damaged" {% if object.return_reason == 'damaged' %}selected{% endif %}>{% trans "Damaged" %} أثناء النقل</option>
+                                        <option value="other" {% if object.return_reason == 'other' %}selected{% endif %}>أخرى</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">{% trans "Notes" %}</label>
+                                    <textarea class="form-control" name="notes" rows="3" 
+                                              placeholder="أدخل أي {% trans "Notes" %} إضافية...">{{ object.notes }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Current Return Items -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <h5 class="mb-3">عناصر المردود الحالية</h5>
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <strong>{% trans "Alert" %}:</strong> لا يمكن {% trans "Edit" %} عناصر المردود أو كمياتها بعد الإنشاء لضمان س{% trans "No" %}مة المخزون. 
+                                    يمكن فقط {% trans "Edit" %} ال{% trans "Information" %} الأساسية للمردود.
+                                </div>
+                                
+                                <div class="table-responsive">
+                                    <table class="table table-bordered">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>رقم المنتج</th>
+                                                <th>اسم المنتج</th>
+                                                <th>{% trans "Quantity" %} الأصلية</th>
+                                                <th>{% trans "Quantity" %} المرتجعة</th>
+                                                <th>{% trans "Unit Price" %}</th>
+                                                <th>نسبة الضريبة</th>
+                                                <th>الإجمالي</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for item in items %}
+                                            <tr>
+                                                <td>{{ item.product.code }}</td>
+                                                <td>{{ item.product.name }}</td>
+                                                <td>{{ item.original_item.quantity }}</td>
+                                                <td class="fw-bold text-danger">{{ item.returned_quantity }}</td>
+                                                <td>{{ item.unit_price|currency_format }}</td>
+                                                <td>{{ item.tax_rate }}%</td>
+                                                <td>{{ item.total_amount|currency_format }}</td>
+                                            </tr>
+                                            {% empty %}
+                                            <tr>
+                                                <td colspan="7" class="text-center text-muted py-4">
+                                                    لا توجد عناصر في هذا المردود
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Totals Display -->
+                        <div class="row mt-4">
+                            <div class="col-md-8"></div>
+                            <div class="col-md-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>{% trans "Total" %} الفرعي:</span>
+                                            <span>{{ object.subtotal|currency_format }}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>الضريبة:</span>
+                                            <span>{{ object.tax_amount|currency_format }}</span>
+                                        </div>
+                                        <hr>
+                                        <div class="d-flex justify-content-between fw-bold fs-5">
+                                            <span>الإجمالي:</span>
+                                            <span class="text-danger">{{ object.total_amount|currency_format }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        <div class="row">
+                            <div class="col-12 text-end">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-save me-2"></i>
+                                    {% trans "Save" %} التعديلات
+                                </button>
+                                <a href="{% url 'purchases:return_detail' object.pk %}" class="btn btn-secondary">
+                                    <i class="fas fa-times me-2"></i>
+                                    إلغاء
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

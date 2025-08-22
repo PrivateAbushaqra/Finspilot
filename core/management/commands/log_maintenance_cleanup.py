@@ -1,0 +1,40 @@
+from django.core.management.base import BaseCommand
+from django.contrib.auth import get_user_model
+from core.models import AuditLog
+
+
+class Command(BaseCommand):
+    help = 'Logs an audit entry indicating that maintenance cleanup was performed (removing test/temp files).'
+
+    def add_arguments(self, parser):
+        parser.add_argument('--username', type=str, help='Username to attribute the action to', required=False)
+        parser.add_argument('--details', type=str, help='Optional details about removed items', required=False)
+
+    def handle(self, *args, **options):
+        User = get_user_model()
+        user = None
+
+        username = options.get('username')
+        if username:
+            try:
+                user = User.objects.get(username=username)
+            except User.DoesNotExist:
+                self.stdout.write(self.style.WARNING(f'User "{username}" not found; falling back to first superuser if any.'))
+
+        if not user:
+            user = User.objects.filter(is_superuser=True).first()
+
+        if not user:
+            self.stdout.write(self.style.ERROR('No suitable user found to attribute audit log.'))
+            return
+
+        details = options.get('details') or 'Removed experimental/test files and temporary artifacts.'
+
+        AuditLog.objects.create(
+            user=user,
+            action_type='update',
+            content_type='maintenance.cleanup',
+            description=f'صيانة النظام: تنظيف الملفات التجريبية/الاختبارية. التفاصيل: {details}'
+        )
+
+        self.stdout.write(self.style.SUCCESS('تم تسجيل حدث صيانة وتنظيف الملفات التجريبية في سجل الأنشطة'))

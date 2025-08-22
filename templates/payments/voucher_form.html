@@ -1,0 +1,308 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Remove old CSS for payment-method-section */
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <h4 class="page-title">{{ title }}</h4>
+                <div class="page-title-right">
+                    <a href="{% url 'payments:voucher_list' %}" class="btn btn-secondary">
+                        <i class="mdi mdi-arrow-left"></i> {% trans "Back to List" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post" id="voucher-form">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <!-- Basic Information -->
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">{{ form.voucher_number.label_tag }} <span class="text-danger">*</span></label>
+                                    {{ form.voucher_number }}
+                                    {% if form.voucher_number.errors %}
+                                        <div class="text-danger">{{ form.voucher_number.errors }}</div>
+                                    {% endif %}
+                                    <div class="form-text">{% trans "Enter voucher number manually (e.g., PAY-2025-001)" %}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">{{ form.date.label_tag }}</label>
+                                    {{ form.date }}
+                                    {% if form.date.errors %}
+                                        <div class="text-danger">{{ form.date.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">{{ form.voucher_type.label_tag }}</label>
+                                    {{ form.voucher_type }}
+                                    {% if form.voucher_type.errors %}
+                                        <div class="text-danger">{{ form.voucher_type.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">{{ form.payment_type.label_tag }}</label>
+                                    {{ form.payment_type }}
+                                    {% if form.payment_type.errors %}
+                                        <div class="text-danger">{{ form.payment_type.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">{{ form.amount.label_tag }} ({{ currency_symbol }})</label>
+                                    <div class="input-group">
+                                        {{ form.amount }}
+                                        <span class="input-group-text">{{ currency_symbol }}</span>
+                                    </div>
+                                    {% if form.amount.errors %}
+                                        <div class="text-danger">{{ form.amount.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Beneficiary -->
+                            <div class="col-md-6" id="supplier-section">
+                                <div class="mb-3">
+                                    <label class="form-label">{{ form.supplier.label_tag }}</label>
+                                    {{ form.supplier }}
+                                    {% if form.supplier.errors %}
+                                        <div class="text-danger">{{ form.supplier.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">{{ form.beneficiary_name.label_tag }}</label>
+                                    {{ form.beneficiary_name }}
+                                    <small class="form-text text-muted">{% trans "If the beneficiary is not a registered supplier" %}</small>
+                                    {% if form.beneficiary_name.errors %}
+                                        <div class="text-danger">{{ form.beneficiary_name.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Description and Notes -->
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">{{ form.description.label_tag }}</label>
+                                    {{ form.description }}
+                                    {% if form.description.errors %}
+                                        <div class="text-danger">{{ form.description.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">{{ form.notes.label_tag }}</label>
+                                    {{ form.notes }}
+                                    {% if form.notes.errors %}
+                                        <div class="text-danger">{{ form.notes.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Payment Method Sections -->
+                        
+                        <!-- Cash Payment -->
+                        <div id="cash-section" class="payment-method-section" style="display: none;">
+                            <h5 class="text-primary mb-3">{% trans "Cash Payment Details" %}</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">{{ form.cashbox.label_tag }} <span class="text-danger">*</span></label>
+                                        {{ form.cashbox }}
+                                        {% if form.cashbox.errors %}
+                                            <div class="text-danger">{{ form.cashbox.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Bank Transfer -->
+                        <div id="bank-section" class="payment-method-section" style="display: none;">
+                            <h5 class="text-primary mb-3">{% trans "Bank Transfer Details" %}</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">{{ form.bank.label_tag }} <span class="text-danger">*</span></label>
+                                        {{ form.bank }}
+                                        {% if form.bank.errors %}
+                                            <div class="text-danger">{{ form.bank.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">{{ form.bank_reference.label_tag }}</label>
+                                        {{ form.bank_reference }}
+                                        {% if form.bank_reference.errors %}
+                                            <div class="text-danger">{{ form.bank_reference.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Check -->
+                        <div id="check-section" class="payment-method-section" style="display: none;">
+                            <h5 class="text-primary mb-3">{% trans "Check Details" %}</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">{{ form.check_number.label_tag }} <span class="text-danger">*</span></label>
+                                        {{ form.check_number }}
+                                        {% if form.check_number.errors %}
+                                            <div class="text-danger">{{ form.check_number.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">{{ form.check_bank_name.label_tag }} <span class="text-danger">*</span></label>
+                                        {{ form.check_bank_name }}
+                                        {% if form.check_bank_name.errors %}
+                                            <div class="text-danger">{{ form.check_bank_name.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">{{ form.check_date.label_tag }} <span class="text-danger">*</span></label>
+                                        {{ form.check_date }}
+                                        {% if form.check_date.errors %}
+                                            <div class="text-danger">{{ form.check_date.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">{{ form.check_due_date.label_tag }} <span class="text-danger">*</span></label>
+                                        {{ form.check_due_date }}
+                                        {% if form.check_due_date.errors %}
+                                            <div class="text-danger">{{ form.check_due_date.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- General Errors -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Save Buttons -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="text-end">
+                                    <a href="{% url 'payments:voucher_list' %}" class="btn btn-secondary me-2">
+                                        {% trans "Cancel" %}
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="mdi mdi-content-save"></i> {% trans "Save" %}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Show/Hide payment method sections
+    function togglePaymentSections() {
+        const paymentType = $('#id_payment_type').val();
+        console.log('Selected payment type:', paymentType);
+        
+        // Hide all sections
+        $('.payment-method-section').hide();
+        
+        // Show appropriate section
+        if (paymentType === 'cash') {
+            $('#cash-section').show();
+        } else if (paymentType === 'bank_transfer') {
+            $('#bank-section').show();
+        } else if (paymentType === 'check') {
+            $('#check-section').show();
+        }
+    }
+    
+    // Show/Hide supplier section
+    function toggleSupplierSection() {
+        const voucherType = $('#id_voucher_type').val();
+        if (voucherType === 'supplier') {
+            $('#supplier-section').show();
+        } else {
+            $('#supplier-section').hide();
+            $('#id_supplier').val('');
+        }
+    }
+    
+    // Apply changes when page loads
+    togglePaymentSections();
+    toggleSupplierSection();
+    
+    // Apply changes when payment type changes
+    $('#id_payment_type').change(togglePaymentSections);
+    
+    // Apply changes when voucher type changes
+    $('#id_voucher_type').change(toggleSupplierSection);
+    
+    // Update beneficiary name when selecting supplier
+    $('#id_supplier').change(function() {
+        const supplierId = $(this).val();
+        if (supplierId) {
+            $.get('{% url "payments:get_supplier_data" %}', {supplier_id: supplierId})
+                .done(function(data) {
+                    $('#id_beneficiary_name').val(data.name);
+                })
+                .fail(function() {
+                    console.log('{% trans "Failed to load supplier data" %}');
+                });
+        }
+    });
+});
+</script>
+{% endblock %}

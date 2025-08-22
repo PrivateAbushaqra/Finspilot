@@ -1,0 +1,409 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load currency_tags %}
+
+{% block title %}{% trans "Profit and Loss Report" %} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profit-loss-container {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .report-header {
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .profit-loss-table {
+        font-size: 0.9rem;
+    }
+    
+    .profit-loss-table th {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        padding: 12px 15px;
+        text-align: center;
+        font-weight: 600;
+    }
+    
+    .profit-loss-table td {
+        border: 1px solid #dee2e6;
+        padding: 10px 15px;
+        text-align: right;
+    }
+    
+    .profit-loss-table .category-header {
+        background-color: #e3f2fd;
+        font-weight: bold;
+        text-align: right;
+    }
+    
+    .profit-loss-table .subcategory {
+        padding-right: 30px;
+    }
+    
+    .profit-loss-table .total-row {
+        background-color: #f5f5f5;
+        font-weight: bold;
+        border-top: 2px solid #dee2e6;
+    }
+    
+    .profit-loss-table .final-total {
+        background-color: #e8f5e8;
+        font-weight: bold;
+        font-size: 1.1em;
+        border: 2px solid #28a745;
+    }
+    
+    .profit-loss-table .loss-total {
+        background-color: #ffe6e6;
+        color: #dc3545;
+    }
+    
+    .summary-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .summary-item {
+        text-align: center;
+        padding: 1rem;
+    }
+    
+    .summary-item h5 {
+        margin-bottom: 0.5rem;
+        opacity: 0.9;
+    }
+    
+    .summary-item h3 {
+        margin-bottom: 0.25rem;
+        font-weight: bold;
+    }
+    
+    .summary-item small {
+        opacity: 0.8;
+    }
+    
+    .filter-section {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .positive-amount {
+        color: #28a745;
+        font-weight: 600;
+    }
+    
+    .negative-amount {
+        color: #dc3545;
+        font-weight: 600;
+    }
+    
+    .neutral-amount {
+        color: #6c757d;
+    }
+    
+    @media print {
+        .btn, .filter-section {
+            display: none !important;
+        }
+        
+        .profit-loss-container {
+            box-shadow: none;
+            border: 1px solid #ddd;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="profit-loss-container">
+        
+        <!-- Header Section -->
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+            <h1 class="h2">
+                <i class="fas fa-chart-line me-2"></i>
+                {% trans "Profit and Loss Report" %}
+            </h1>
+            <div class="btn-toolbar mb-2 mb-md-0">
+                <div class="btn-group me-2">
+                    <button type="button" class="btn btn-outline-primary" onclick="window.print()">
+                        <i class="fas fa-print me-1"></i>
+                        {% trans "Print" %}
+                    </button>
+                    <button type="button" class="btn btn-outline-success" onclick="exportToExcel()">
+                        <i class="fas fa-file-excel me-1"></i>
+                        {% trans "Excel" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Section -->
+        <div class="summary-card">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="summary-item">
+                        <h5>{% trans "Total Revenues" %}</h5>
+                        <h3>{{ total_revenues|floatformat:3 }} {% get_currency_symbol %}</h3>
+                        <small>{% trans "From" %} {{ start_date }} {% trans "to" %} {{ end_date }}</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="summary-item">
+                        <h5>{% trans "Total Costs" %}</h5>
+                        <h3>{{ total_costs|floatformat:3 }} {% get_currency_symbol %}</h3>
+                        <small>{% trans "Cost of Goods Sold" %}</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="summary-item">
+                        <h5>{% trans "Gross Profit" %}</h5>
+                        <h3 class="{% if gross_profit >= 0 %}text-success{% else %}text-warning{% endif %}">
+                            {{ gross_profit|floatformat:3 }} {% get_currency_symbol %}
+                        </h3>
+                        <small>{{ gross_profit_margin|floatformat:1 }}% {% trans "Profit Margin" %}</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="summary-item">
+                        <h5>{% trans "Net Profit/Loss" %}</h5>
+                        <h3 class="{% if net_profit >= 0 %}text-success{% else %}text-warning{% endif %}">
+                            {{ net_profit|floatformat:3 }} {% get_currency_symbol %}
+                        </h3>
+                        <small>{{ net_profit_margin|floatformat:1 }}% {% trans "Net Margin" %}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <div class="row">
+                <div class="col-md-3">
+                    <label for="dateFromFilter" class="form-label">{% trans "From Date" %}</label>
+                    <input type="date" class="form-control" id="dateFromFilter" value="{{ start_date }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="dateToFilter" class="form-label">{% trans "To Date" %}</label>
+                    <input type="date" class="form-control" id="dateToFilter" value="{{ end_date }}">
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="button" class="btn btn-primary" onclick="updateReport()">
+                        <i class="fas fa-filter me-1"></i>
+                        {% trans "Update Report" %}
+                    </button>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="button" class="btn btn-info" onclick="resetFilters()">
+                        <i class="fas fa-undo me-1"></i>
+                        {% trans "Reset" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profit & Loss Statement Table -->
+        <div class="table-responsive">
+            <table class="table profit-loss-table" id="profitLossTable">
+                <thead>
+                    <tr>
+                        <th style="width: 60%;">{% trans "Statement" %}</th>
+                        <th style="width: 40%;">{% trans "Amount" %} ({% get_currency_symbol %})</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Revenues -->
+                    <tr class="category-header">
+                        <td><strong>{% trans "Revenues" %}</strong></td>
+                        <td></td>
+                    </tr>
+                    {% for revenue_type, amount in revenues.items %}
+                    <tr>
+                        <td class="subcategory">{{ revenue_type }}</td>
+                        <td class="text-end {% if amount >= 0 %}positive-amount{% else %}negative-amount{% endif %}">
+                            {{ amount|floatformat:3 }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="total-row">
+                        <td><strong>{% trans "Total Revenues" %}</strong></td>
+                        <td class="text-end positive-amount">
+                            <strong>{{ total_revenues|floatformat:3 }}</strong>
+                        </td>
+                    </tr>
+
+                    <!-- Cost of Goods Sold -->
+                    <tr class="category-header">
+                        <td><strong>{% trans "Cost of Goods Sold" %}</strong></td>
+                        <td></td>
+                    </tr>
+                    {% for cost_type, amount in costs.items %}
+                    <tr>
+                        <td class="subcategory">{{ cost_type }}</td>
+                        <td class="text-end {% if amount >= 0 %}negative-amount{% else %}positive-amount{% endif %}">
+                            {{ amount|floatformat:3 }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="total-row">
+                        <td><strong>{% trans "Total Cost of Goods Sold" %}</strong></td>
+                        <td class="text-end negative-amount">
+                            <strong>{{ total_costs|floatformat:3 }}</strong>
+                        </td>
+                    </tr>
+
+                    <!-- Gross Profit -->
+                    <tr class="{% if gross_profit >= 0 %}final-total{% else %}final-total loss-total{% endif %}">
+                        <td><strong>{% trans "Gross Profit" %}</strong></td>
+                        <td class="text-end">
+                            <strong>{{ gross_profit|floatformat:3 }}</strong>
+                        </td>
+                    </tr>
+
+                    <!-- Operating Expenses -->
+                    <tr class="category-header">
+                        <td><strong>{% trans "Operating Expenses" %}</strong></td>
+                        <td></td>
+                    </tr>
+                    {% for expense_type, amount in operating_expenses.items %}
+                    <tr>
+                        <td class="subcategory">{{ expense_type }}</td>
+                        <td class="text-end {% if amount > 0 %}negative-amount{% else %}neutral-amount{% endif %}">
+                            {{ amount|floatformat:3 }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    <tr class="total-row">
+                        <td><strong>{% trans "Total Operating Expenses" %}</strong></td>
+                        <td class="text-end negative-amount">
+                            <strong>{{ total_operating_expenses|floatformat:3 }}</strong>
+                        </td>
+                    </tr>
+
+                    <!-- Net Profit/Loss -->
+                    <tr class="{% if net_profit >= 0 %}final-total{% else %}final-total loss-total{% endif %}">
+                        <td><strong>{% trans "Net" %} {% if net_profit >= 0 %}{% trans "Profit" %}{% else %}{% trans "Loss" %}{% endif %}</strong></td>
+                        <td class="text-end">
+                            <strong>{{ net_profit|floatformat:3 }}</strong>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Analysis Section -->
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-pie me-2"></i>
+                            {% trans "Margin Analysis" %}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="text-center">
+                                    <h6>{% trans "Gross Profit Margin" %}</h6>
+                                    <h4 class="{% if gross_profit_margin >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                        {{ gross_profit_margin|floatformat:1 }}%
+                                    </h4>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center">
+                                    <h6>{% trans "Net Profit Margin" %}</h6>
+                                    <h4 class="{% if net_profit_margin >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                        {{ net_profit_margin|floatformat:1 }}%
+                                    </h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            {% trans "Additional Information" %}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>{% trans "Report Period" %}:</strong> {% trans "from" %} {{ start_date }} {% trans "to" %} {{ end_date }}</p>
+                        <p><strong>{% trans "Number of Days" %}:</strong> {{ days_count }} {% trans "day" %}</p>
+                        <p><strong>{% trans "Report Type" %}:</strong> {% trans "Comprehensive Profit and Loss" %}</p>
+                        <p><strong>{% trans "Currency" %}:</strong> {% get_currency_symbol %}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+function updateReport() {
+    const dateFrom = document.getElementById('dateFromFilter').value;
+    const dateTo = document.getElementById('dateToFilter').value;
+    
+    if (dateFrom && dateTo) {
+        const url = new URL(window.location);
+        url.searchParams.set('start_date', dateFrom);
+        url.searchParams.set('end_date', dateTo);
+        window.location.href = url.toString();
+    } else {
+        alert('{% trans "Please select dates or click reset" %}');
+    }
+}
+
+function resetFilters() {
+    document.getElementById('dateFromFilter').value = '';
+    document.getElementById('dateToFilter').value = '';
+    window.location.href = window.location.pathname;
+}
+
+function exportToExcel() {
+    // Export table to Excel (can be improved later)
+    const table = document.getElementById('profitLossTable');
+    const tableHtml = table.outerHTML.replace(/ /g, '%20');
+    
+    const a = document.createElement('a');
+    a.href = 'data:application/vnd.ms-excel,' + tableHtml;
+    a.download = 'profit_loss_report.xls';
+    a.click();
+}
+
+// Add visual effects
+document.addEventListener('DOMContentLoaded', function() {
+    // Highlight positive and negative numbers
+    const amounts = document.querySelectorAll('.profit-loss-table td:last-child');
+    amounts.forEach(function(cell) {
+        const value = parseFloat(cell.textContent.replace(/[^\d.-]/g, ''));
+        if (!isNaN(value)) {
+            if (value > 0 && !cell.classList.contains('negative-amount')) {
+                cell.classList.add('positive-amount');
+            } else if (value < 0) {
+                cell.classList.add('negative-amount');
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

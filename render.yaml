@@ -1,0 +1,42 @@
+services:
+  - type: web
+    name: finspilot
+    env: python
+    buildCommand: "python -m pip install --upgrade pip && pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate --noinput"
+    startCommand: gunicorn finspilot.wsgi:application
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: finspilot.settings
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: False
+      - key: ALLOWED_HOSTS
+        value: finspilot.onrender.com
+      # تزويد متغيرات قاعدة البيانات بصيغة PG_* المتوافقة مع settings
+      - key: PG_NAME
+        fromDatabase:
+          name: finspilot-db
+          property: database
+      - key: PG_USER
+        fromDatabase:
+          name: finspilot-db
+          property: user
+      - key: PG_PASSWORD
+        fromDatabase:
+          name: finspilot-db
+          property: password
+      - key: PG_HOST
+        fromDatabase:
+          name: finspilot-db
+          property: host
+      - key: PG_PORT
+        fromDatabase:
+          name: finspilot-db
+          property: port
+      - key: RENDER
+        value: True
+databases:
+  - name: finspilot-db
+    databaseName: finspilot
+    user: admin

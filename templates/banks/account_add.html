@@ -1,0 +1,329 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load django_bootstrap5 %}
+{% load currency_tags %}
+
+
+{% block title %}{% trans "Add Bank Account" %} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+        margin-top: 1rem;
+    }
+    
+    .form-header {
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .form-header h2 {
+        color: #495057;
+        margin: 0;
+    }
+    
+    .form-header .text-muted {
+        margin-top: 0.5rem;
+    }
+    
+    .form-section {
+        margin-bottom: 2rem;
+    }
+    
+    .form-section h5 {
+        color: #6c757d;
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .btn-save {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 25px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+    }
+    
+    .btn-cancel {
+        background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 25px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-cancel:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
+    }
+    
+    .required-field {
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0 text-gray-800">
+                        <i class="fas fa-university text-primary me-2"></i>
+                        {% trans "Add New Bank Account" %}
+                    </h1>
+                    <nav aria-label="breadcrumb" class="mt-2">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">{% trans "Dashboard" %}</a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'banks:account_list' %}">{% trans "Bank Accounts" %}</a></li>
+                            <li class="breadcrumb-item active">{% trans "Add New Account" %}</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div>
+                    <a href="{% url 'banks:account_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-right me-1"></i>
+                        {% trans "Back to List" %}
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Form Container -->
+            <div class="form-container">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                <div class="form-header">
+                    <h2>
+                        <i class="fas fa-plus-circle text-success me-2"></i>
+                        {% trans "Bank Account Information" %}
+                    </h2>
+                    <p class="text-muted mb-0">{% trans "Please fill all required fields to add a new bank account" %}</p>
+                </div>
+                
+                <form method="post" id="bankAccountForm">
+                    {% csrf_token %}
+                    
+                    <!-- Basic Information Section -->
+                    <div class="form-section">
+                        <h5>
+                            <i class="fas fa-info-circle me-1"></i>
+                            {% trans "Basic Information" %}
+                        </h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_name" class="form-label">
+                                        {% trans "Account Name" %} <span class="required-field">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="id_name" name="name" required>
+                                    <div class="form-text">{% trans "Enter a descriptive name for the bank account" %}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_bank_name" class="form-label">
+                                        {% trans "Bank Name" %} <span class="required-field">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="id_bank_name" name="bank_name" required>
+                                    <div class="form-text">{% trans "Official bank name" %}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Account Details Section -->
+                    <div class="form-section">
+                        <h5>
+                            <i class="fas fa-credit-card me-1"></i>
+                            {% trans "Account Details" %}
+                        </h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_account_number" class="form-label">
+                                        {% trans "Account Number" %} <span class="required-field">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="id_account_number" name="account_number" required>
+                                    <div class="form-text">{% trans "Bank account number" %}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_iban" class="form-label">IBAN</label>
+                                    <input type="text" class="form-control" id="id_iban" name="iban" placeholder="JO94CBJO0010000000000131000302">
+                                    <div class="form-text">{% trans "International Bank Account Number (optional)" %}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_swift_code" class="form-label">{% trans "SWIFT Code" %}</label>
+                                    <input type="text" class="form-control" id="id_swift_code" name="swift_code" placeholder="CBJOJOAX">
+                                    <div class="form-text">{% trans "International bank code (optional)" %}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_currency" class="form-label">{% trans "Currency" %}</label>
+                                    <select class="form-select" id="id_currency" name="currency">
+                                        {% get_active_currencies as currencies %}
+                                        {% for currency in currencies %}
+                                            <option value="{{ currency.code }}" {% if currency.is_base_currency %}selected{% endif %}>
+                                                {% trans currency.name %} ({{ currency.code }})
+                                                {% if currency.is_base_currency %} - {% trans "Base Currency" %}{% endif %}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="form-text">{% trans "Base currency is defined in company settings" %}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Financial Information Section -->
+                    <div class="form-section">
+                        <h5>
+                            <i class="fas fa-coins me-1"></i>
+                            {% trans "Financial Information" %}
+                        </h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_balance" class="form-label">{% trans "Current Balance" %}</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="id_balance" name="balance" step="0.001" value="0.000">
+                                        <span class="input-group-text">JOD</span>
+                                    </div>
+                                    <div class="form-text">{% trans "Current account balance" %}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_is_active" class="form-label">{% trans "Account Status" %}</label>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="id_is_active" name="is_active" checked>
+                                        <label class="form-check-label" for="id_is_active">
+                                            {% trans "Account Active" %}
+                                        </label>
+                                    </div>
+                                    <div class="form-text">{% trans "Determines whether the account is active or not" %}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Notes Section -->
+                    <div class="form-section">
+                        <h5>
+                            <i class="fas fa-sticky-note me-1"></i>
+                            {% trans "Additional Notes" %}
+                        </h5>
+                        
+                        <div class="mb-3">
+                            <label for="id_notes" class="form-label">{% trans "Notes" %}</label>
+                            <textarea class="form-control" id="id_notes" name="notes" rows="3" 
+                                    placeholder="{% trans 'Any additional notes about the bank account' %}"></textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-between align-items-center pt-3">
+                        <div class="text-muted">
+                            <small><span class="required-field">*</span> {% trans "Required fields" %}</small>
+                        </div>
+                        <div>
+                            <a href="{% url 'banks:account_list' %}" class="btn btn-cancel me-2">
+                                <i class="fas fa-times me-1"></i>
+                                إلغاء
+                            </a>
+                            <button type="submit" class="btn btn-save">
+                                <i class="fas fa-save me-1"></i>
+                                {% trans "Save Account" %}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const form = document.getElementById('bankAccountForm');
+    const currencySelect = document.getElementById('id_currency');
+    const balanceGroup = document.querySelector('.input-group-text');
+    
+    // Update currency display when currency changes
+    currencySelect.addEventListener('change', function() {
+        balanceGroup.textContent = this.value;
+    });
+    
+    // Form submission handling
+    form.addEventListener('submit', function(e) {
+        const requiredFields = form.querySelectorAll('[required]');
+        let isValid = true;
+        
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                isValid = false;
+                field.classList.add('is-invalid');
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('{% trans "Please fill all required fields" %}');
+        }
+    });
+    
+    // Real-time validation
+    const inputs = form.querySelectorAll('input[required], select[required]');
+    inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            if (this.value.trim()) {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            } else {
+                this.classList.add('is-invalid');
+                this.classList.remove('is-valid');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

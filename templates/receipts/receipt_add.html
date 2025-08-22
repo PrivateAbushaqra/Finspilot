@@ -1,0 +1,273 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title">{{ page_title }}</h3>
+                    <a href="{% url 'receipts:receipt_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> {% trans "Back to List" %}
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Basic Information -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="card-title">{% trans "Voucher Information" %}</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">{% trans "Voucher Number" %} *</label>
+                                            <input type="text" name="receipt_number" class="form-control" required>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">{% trans "Customer" %} *</label>
+                                            <select name="customer" class="form-select" required id="customerSelect">
+                                                <option value="">{% trans "Select Customer" %}</option>
+                                                {% for customer in customers %}
+                                                <option value="{{ customer.id }}">{{ customer.name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">{% trans "Current Customer Balance" %}</label>
+                                            <div class="form-control-plaintext fw-bold" id="customerBalance">-</div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">{% trans "Payment Type" %} *</label>
+                                            <select name="payment_type" class="form-select" required id="paymentTypeSelect">
+                                                <option value="">{% trans "Select Payment Type" %}</option>
+                                                <option value="cash">{% trans "Cash" %}</option>
+                                                <option value="check">{% trans "Check" %}</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">{% trans "Amount" %} *</label>
+                                            <input type="number" name="amount" class="form-control" step="0.001" required>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">{% trans "Date" %} *</label>
+                                            <input type="date" name="date" class="form-control" value="{{ today|date:'Y-m-d' }}" required>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <!-- For Cash Payment -->
+                                <div class="card d-none" id="cashPaymentCard">
+                                    <div class="card-header">
+                                        <h5 class="card-title">{% trans "Cash Payment Details" %}</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">{% trans "Cash Box" %} *</label>
+                                            <select name="cashbox" class="form-select">
+                                                <option value="">{% trans "Select Cash Box" %}</option>
+                                                {% for cashbox in cashboxes %}
+                                                <option value="{{ cashbox.id }}">{{ cashbox.name }} ({{ cashbox.balance|floatformat:3 }})</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Check Payment Details -->
+                                <div class="card d-none" id="checkPaymentCard">
+                                    <div class="card-header">
+                                        <h5 class="card-title">{% trans "Check Details" %}</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">{% trans "Check Number" %} *</label>
+                                            <input type="text" name="check_number" class="form-control">
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">{% trans "Check Date" %} *</label>
+                                            <input type="date" name="check_date" class="form-control">
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">{% trans "Due Date" %} *</label>
+                                            <input type="date" name="check_due_date" class="form-control">
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">{% trans "Bank Name" %} *</label>
+                                            <input type="text" name="bank_name" class="form-control">
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">{% trans "Cash Box" %} *</label>
+                                            <select name="check_cashbox" class="form-select">
+                                                <option value="">{% trans "Select Cash Box" %}</option>
+                                                {% for cashbox in cashboxes %}
+                                                <option value="{{ cashbox.id }}">{{ cashbox.name }} ({{ cashbox.balance|floatformat:3 }})</option>
+                                                {% endfor %}
+                                            </select>
+                                            <small class="form-text text-muted">{% trans "The cash box where the check will be deposited upon collection" %}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- {% trans "Information" %} إضافية -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="card-title">{% trans "Additional Information" %}</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">{% trans "Description" %}</label>
+                                            <textarea name="description" class="form-control" rows="3"></textarea>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">{% trans "Notes" %}</label>
+                                            <textarea name="notes" class="form-control" rows="2"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-end">
+                                    <a href="{% url 'receipts:receipt_list' %}" class="btn btn-secondary me-2">
+                                        {% trans "Cancel" %}
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> {% trans "Save Voucher" %}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Receipt form DOM loaded, initializing...');
+    
+    const paymentTypeSelect = document.getElementById('paymentTypeSelect');
+    const cashPaymentCard = document.getElementById('cashPaymentCard');
+    const checkPaymentCard = document.getElementById('checkPaymentCard');
+    const customerSelect = document.getElementById('customerSelect');
+    const customerBalance = document.getElementById('customerBalance');
+    
+    console.log('Elements found:', {
+        paymentTypeSelect: !!paymentTypeSelect,
+        cashPaymentCard: !!cashPaymentCard,
+        checkPaymentCard: !!checkPaymentCard,
+        customerSelect: !!customerSelect,
+        customerBalance: !!customerBalance
+    });
+    
+    if (!paymentTypeSelect) {
+        console.error('paymentTypeSelect not found!');
+        return;
+    }
+    
+    if (!cashPaymentCard) {
+        console.error('cashPaymentCard not found!');
+        return;
+    }
+    
+    if (!checkPaymentCard) {
+        console.error('checkPaymentCard not found!');
+        return;
+    }
+    
+    // Payment type change
+    paymentTypeSelect.addEventListener('change', function() {
+        console.log('Payment type changed to:', this.value);
+        
+        cashPaymentCard.classList.add('d-none');
+        checkPaymentCard.classList.add('d-none');
+        
+        if (this.value === 'cash') {
+            console.log('Showing cash payment card');
+            cashPaymentCard.classList.remove('d-none');
+            // Make cashbox required
+            const cashboxSelect = cashPaymentCard.querySelector('select[name="cashbox"]');
+            if (cashboxSelect) cashboxSelect.required = true;
+            // Cancel check requirements
+            checkPaymentCard.querySelectorAll('input').forEach(input => input.required = false);
+        } else if (this.value === 'check') {
+            console.log('Showing check payment card');
+            checkPaymentCard.classList.remove('d-none');
+            // Make check fields required
+            checkPaymentCard.querySelectorAll('input').forEach(input => {
+                if (input.name !== 'notes') input.required = true;
+            });
+            checkPaymentCard.querySelectorAll('select').forEach(select => select.required = true);
+            // Cancel cashbox requirements
+            const cashboxSelect = cashPaymentCard.querySelector('select[name="cashbox"]');
+            if (cashboxSelect) cashboxSelect.required = false;
+        }
+    });
+    
+    console.log('Payment type event listener attached');
+    
+    // Customer change - get balance
+    if (customerSelect) {
+        customerSelect.addEventListener('change', function() {
+            if (this.value) {
+                fetch(`/en/receipts/api/customer/${this.value}/balance/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            customerBalance.textContent = '{% trans "Error fetching balance" %}';
+                            customerBalance.className = 'form-control-plaintext text-danger';
+                        } else {
+                            const balance = parseFloat(data.balance);
+                            customerBalance.textContent = balance.toLocaleString('en', {minimumFractionDigits: 3});
+                            customerBalance.className = `form-control-plaintext fw-bold ${balance > 0 ? 'text-danger' : balance < 0 ? 'text-success' : 'text-muted'}`;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching customer balance:', error);
+                        customerBalance.textContent = '{% trans "Connection error" %}';
+                        customerBalance.className = 'form-control-plaintext text-danger';
+                    });
+            } else {
+                customerBalance.textContent = '-';
+                customerBalance.className = 'form-control-plaintext fw-bold';
+            }
+        });
+        
+        console.log('Customer balance event listener attached');
+    }
+    
+    console.log('All event listeners initialized successfully');
+});
+</script>
+{% endblock %}

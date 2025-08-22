@@ -1,0 +1,375 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load currency_tags %}
+{% load tax_tags %}
+
+{% block title %}{% trans "Tax Report" %} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .tax-report-container {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .report-header {
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .tax-table {
+        font-size: 0.9rem;
+    }
+    
+    .tax-table th {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        padding: 12px 8px;
+        text-align: center;
+        font-weight: 600;
+    }
+    
+    .tax-table td {
+        border: 1px solid #dee2e6;
+        padding: 8px;
+        text-align: center;
+        vertical-align: middle;
+    }
+    
+    .positive-tax {
+        color: #28a745;
+        font-weight: 600;
+    }
+    
+    .tax-table tfoot td {
+        border: 2px solid #dee2e6;
+        padding: 12px 8px;
+        text-align: center;
+        vertical-align: middle;
+        background-color: #f8f9fa;
+        font-weight: bold;
+    }
+    
+    .totals-row {
+        background-color: #e9ecef !important;
+        border-top: 3px solid #007bff;
+    }
+    
+    .negative-tax {
+        color: #dc3545;
+        font-weight: 600;
+    }
+    
+    .summary-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .summary-item {
+        text-align: center;
+        padding: 1rem;
+    }
+    
+    .document-type-badge {
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .badge-sales {
+        background-color: #28a745;
+        color: white;
+    }
+    
+    .badge-purchase {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .badge-sales-return {
+        background-color: #ffc107;
+        color: #212529;
+    }
+    
+    .badge-purchase-return {
+        background-color: #17a2b8;
+        color: white;
+    }
+    
+    .filter-section {
+        background: #f8f9fa;
+        border-radius: 6px;
+        padding: 1rem;
+        margin-bottom: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-receipt me-2"></i>
+        {% trans "Tax Report" %}
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <button type="button" class="btn btn-outline-primary" onclick="window.print()">
+                <i class="fas fa-print me-1"></i>
+                {% trans "Print" %}
+            </button>
+            <button type="button" class="btn btn-outline-success" onclick="exportToExcel()">
+                <i class="fas fa-file-excel me-1"></i>
+                {% trans "Excel" %}
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Section -->
+<div class="summary-card">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="summary-item">
+                <h5>{% trans "Total Positive Taxes" %}</h5>
+                <h3>{{ total_positive|floatformat:3 }} {% get_currency_symbol %}</h3>
+                <small>({% trans "Sales invoices + Purchase returns" %})</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="summary-item">
+                <h5>{% trans "Total Negative Taxes" %}</h5>
+                <h3>{{ total_negative|floatformat:3 }} {% get_currency_symbol %}</h3>
+                <small>({% trans "Purchase invoices + Sales returns" %})</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="summary-item">
+                <h5>{% trans "Net Tax" %}</h5>
+                <h3 class="{% if net_tax >= 0 %}text-success{% else %}text-warning{% endif %}">
+                    {{ net_tax|floatformat:3 }} {% get_currency_symbol %}
+                </h3>
+                <small>{% trans "Amount Due/Refundable" %}</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="summary-item">
+                <h5>{% trans "Number of Documents" %}</h5>
+                <h3>{{ tax_data|length }}</h3>
+                <small>{% trans "Total Documents" %}</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Section -->
+<div class="filter-section">
+    <div class="row">
+        <div class="col-md-3">
+            <label for="documentTypeFilter" class="form-label">{% trans "Document Type" %}</label>
+            <select class="form-select" id="documentTypeFilter" onchange="filterTable()">
+                <option value="">{% trans "All Documents" %}</option>
+                <option value="Sales Invoice">{% trans "Sales Invoices" %}</option>
+                <option value="Purchase Invoice">{% trans "Purchase Invoices" %}</option>
+                <option value="Sales Return">{% trans "Sales Returns" %}</option>
+                <option value="Purchase Return">{% trans "Purchase Returns" %}</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="dateFromFilter" class="form-label">{% trans "From Date" %}</label>
+            <input type="date" class="form-control" id="dateFromFilter" onchange="filterTable()">
+        </div>
+        <div class="col-md-3">
+            <label for="dateToFilter" class="form-label">{% trans "To Date" %}</label>
+            <input type="date" class="form-control" id="dateToFilter" onchange="filterTable()">
+        </div>
+        <div class="col-md-3">
+            <label for="searchFilter" class="form-label">{% trans "Search" %}</label>
+            <input type="text" class="form-control" id="searchFilter" placeholder="{% trans "Document number or customer/supplier name" %}" onkeyup="filterTable()">
+        </div>
+    </div>
+</div>
+
+<!-- Tax Report Table -->
+<div class="tax-report-container">
+    <div class="table-responsive">
+        <table class="table tax-table" id="taxReportTable">
+            <thead>
+                <tr>
+                    <th style="width: 120px;">{% trans "Document Number" %}</th>
+                    <th style="width: 120px;">{% trans "Document Type" %}</th>
+                    <th style="width: 150px;">{% trans "Customer/Supplier" %}</th>
+                    <th style="width: 100px;">{% trans "Date" %}</th>
+                    <th style="width: 120px;">{% trans "Amount Before Tax" %}</th>
+                    {% for rate in all_tax_rates %}
+                        <th style="width: 80px;">{% trans "Tax" %} {{ rate }}%</th>
+                    {% endfor %}
+                    <th style="width: 100px;">{% trans "Total Tax" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in tax_data %}
+                <tr class="tax-row" 
+                    data-document-type="{{ item.document_type }}"
+                    data-date="{{ item.date|date:'Y-m-d' }}"
+                    data-search="{{ item.document_number|lower }} {{ item.customer_supplier|lower }}">
+                    
+                    <td><strong>{{ item.document_number }}</strong></td>
+                    
+                    <td>
+                        <span class="document-type-badge 
+                            {% if item.document_type == 'Sales Invoice' %}badge-sales
+                            {% elif item.document_type == 'Purchase Invoice' %}badge-purchase
+                            {% elif item.document_type == 'Sales Return' %}badge-sales-return
+                            {% elif item.document_type == 'Purchase Return' %}badge-purchase-return
+                            {% endif %}">
+                            {{ item.document_type }}
+                        </span>
+                    </td>
+                    
+                    <td>{{ item.customer_supplier }}</td>
+                    
+                    <td>{{ item.date|date:"Y-m-d" }}</td>
+                    
+                    <td class="text-end">
+                        <strong>{{ item.amount_before_tax|floatformat:3 }} {% get_currency_symbol %}</strong>
+                    </td>
+                    
+                    {% for rate in all_tax_rates %}
+                        <td>
+                            {% if rate in item.tax_breakdown %}
+                                <span class="{% if item.is_positive %}positive-tax{% else %}negative-tax{% endif %}">
+                                    {% if item.is_positive %}
+                                        {{ item.tax_breakdown|lookup:rate|floatformat:3 }}
+                                    {% else %}
+                                        -{{ item.tax_breakdown|lookup:rate|floatformat:3 }}
+                                    {% endif %}
+                                </span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                    
+                    <td>
+                        <strong class="{% if item.is_positive %}positive-tax{% else %}negative-tax{% endif %}">
+                            {{ item.total_tax|floatformat:3 }} {% get_currency_symbol %}
+                        </strong>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="{{ all_tax_rates|length|add:6 }}" class="text-center text-muted">
+                        {% trans "No documents with taxes found" %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            {% if tax_data %}
+            <tfoot>
+                <tr style="background-color: #f8f9fa; font-weight: bold; border-top: 2px solid #dee2e6;">
+                    <td colspan="4" class="text-center" style="font-weight: bold; font-size: 1.1rem;">
+                        <strong>{% trans "Totals" %}</strong>
+                    </td>
+                    <td class="text-end">
+                        <strong style="font-size: 1.1rem;">
+                            {{ total_amount_before_tax|floatformat:3 }} {% get_currency_symbol %}
+                        </strong>
+                    </td>
+                    {% for rate in all_tax_rates %}
+                        <td class="text-center">
+                            <strong class="{% if column_totals|lookup:rate >= 0 %}positive-tax{% else %}negative-tax{% endif %}">
+                                {{ column_totals|lookup:rate|floatformat:3 }}
+                            </strong>
+                        </td>
+                    {% endfor %}
+                    <td class="text-center">
+                        <strong class="{% if grand_total_tax >= 0 %}positive-tax{% else %}negative-tax{% endif %}" style="font-size: 1.1rem;">
+                            {{ grand_total_tax|floatformat:3 }} {% get_currency_symbol %}
+                        </strong>
+                    </td>
+                </tr>
+            </tfoot>
+            {% endif %}
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function filterTable() {
+    const documentTypeFilter = document.getElementById('documentTypeFilter').value;
+    const dateFromFilter = document.getElementById('dateFromFilter').value;
+    const dateToFilter = document.getElementById('dateToFilter').value;
+    const searchFilter = document.getElementById('searchFilter').value.toLowerCase();
+    
+    const rows = document.querySelectorAll('.tax-row');
+    const totalCells = document.querySelectorAll('tfoot td');
+    
+    // Reset totals
+    const columnTotals = {};
+    let grandTotal = 0;
+    
+    rows.forEach(row => {
+        let show = true;
+        
+        // Filter document type
+        if (documentTypeFilter && row.getAttribute('data-document-type') !== documentTypeFilter) {
+            show = false;
+        }
+        
+        // Filter date from
+        if (dateFromFilter && row.getAttribute('data-date') < dateFromFilter) {
+            show = false;
+        }
+        
+        // Filter date to
+        if (dateToFilter && row.getAttribute('data-date') > dateToFilter) {
+            show = false;
+        }
+        
+        // Filter search
+        if (searchFilter && !row.getAttribute('data-search').includes(searchFilter)) {
+            show = false;
+        }
+        
+        row.style.display = show ? '' : 'none';
+        
+        // Calculate totals for visible rows only
+        if (show) {
+            // Logic for calculating totals for filtered rows can be added here
+            // Will be developed in the future if needed
+        }
+    });
+}
+
+function exportToExcel() {
+    // Export table to Excel (can be improved later)
+    const table = document.getElementById('taxReportTable');
+    const tableHtml = table.outerHTML.replace(/ /g, '%20');
+    
+    const a = document.createElement('a');
+    a.href = 'data:application/vnd.ms-excel,' + tableHtml;
+    a.download = 'Tax_Report_' + new Date().toISOString().slice(0, 10) + '.xls';
+    a.click();
+}
+
+// Set default dates for beginning of month and end of today
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    
+    document.getElementById('dateFromFilter').value = firstDay.toISOString().slice(0, 10);
+    document.getElementById('dateToFilter').value = today.toISOString().slice(0, 10);
+});
+</script>
+{% endblock %}

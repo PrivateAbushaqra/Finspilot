@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+
+{% block title %}{% trans "Login" %} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .login-container {
+        max-width: 400px;
+        width: 100%;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+    }
+    
+    .login-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .login-body {
+        padding: 2rem;
+    }
+    
+    .form-control {
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        padding: 0.75rem;
+    }
+    
+    .btn-login {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 2rem;
+        color: white;
+        width: 100%;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-login:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+    
+    .alert {
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+    
+    .form-group {
+        margin-bottom: 1rem;
+    }
+    
+    .login-logo {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-header">
+        <div class="login-logo">
+            <i class="fas fa-calculator"></i>
+        </div>
+        <h2 class="mb-0">نظام فينسبايلوت ال{% trans "Accountant" %}ي</h2>
+        <p class="mb-0 mt-2">مرحباً بك، يرجى {% trans "Login" %}</p>
+    </div>
+    
+    <div class="login-body">
+        {% if form.errors %}
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                بيانات {% trans "Login" %} غير صحيحة. {% trans "Please try again" %}.
+            </div>
+        {% endif %}
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="{{ form.username.id_for_label }}" class="form-label">
+                    <i class="fas fa-user me-2"></i>
+                    {% trans "Username" %}
+                </label>
+                <input type="text" 
+                       class="form-control" 
+                       id="{{ form.username.id_for_label }}" 
+                       name="{{ form.username.name }}" 
+                       value="{{ form.username.value|default:'' }}"
+                       required>
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.password.id_for_label }}" class="form-label">
+                    <i class="fas fa-lock me-2"></i>
+                    {% trans "Password" %}
+                </label>
+                <input type="password" 
+                       class="form-control" 
+                       id="{{ form.password.id_for_label }}" 
+                       name="{{ form.password.name }}" 
+                       required>
+            </div>
+            
+            <div class="d-grid">
+                <button type="submit" class="btn btn-login">
+                    <i class="fas fa-sign-in-alt me-2"></i>
+                    {% trans "Login" %}
+                </button>
+            </div>
+            
+            {% if next %}
+                <input type="hidden" name="next" value="{{ next }}" />
+            {% endif %}
+        </form>
+        
+        <div class="text-center mt-3">
+            <small class="text-muted">
+                نظام {% trans "Accounts Management" %} المتالكامل
+            </small>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // التركيز على حقل {% trans "Username" %}
+    document.getElementById('{{ form.username.id_for_label }}').focus();
+});
+</script>
+{% endblock %}

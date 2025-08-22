@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title">{{ page_title }}</h3>
+                    <a href="{% url 'cashboxes:transfer_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> {% trans "العودة للList" %}
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">{% trans "{% trans "Information" %} ال{% trans "Transfer" %}" %}</h5>
+                                    <table class="table table-borderless">
+                                        <tr>
+                                            <th width="30%">{% trans "رقم الTransfer" %}:</th>
+                                            <td>{{ transfer.transfer_number }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans "Date" %}:</th>
+                                            <td>{{ transfer.date|date:"Y-m-d" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans "نوع الTransfer" %}:</th>
+                                            <td>
+                                                <span class="badge bg-{% if transfer.transfer_type == 'cashbox_to_cashbox' %}info{% elif transfer.transfer_type == 'cashbox_to_bank' %}warning{% else %}success{% endif %}">
+                                                    {{ transfer.get_transfer_type_display }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans "من" %}:</th>
+                                            <td>
+                                                {% if transfer.from_cashbox %}
+                                                    <i class="fas fa-box text-info"></i> {{ transfer.from_cashbox.name }}
+                                                {% elif transfer.from_bank %}
+                                                    <i class="fas fa-university text-primary"></i> {{ transfer.from_bank.name }}
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans "إلى" %}:</th>
+                                            <td>
+                                                {% if transfer.to_cashbox %}
+                                                    <i class="fas fa-box text-info"></i> {{ transfer.to_cashbox.name }}
+                                                {% elif transfer.to_bank %}
+                                                    <i class="fas fa-university text-primary"></i> {{ transfer.to_bank.name }}
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans "Amount" %}:</th>
+                                            <td class="text-success h5">{{ transfer.amount|floatformat:3 }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans "الرسوم" %}:</th>
+                                            <td>{{ transfer.fees|floatformat:3 }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans "سعر الصرف" %}:</th>
+                                            <td>{{ transfer.exchange_rate|floatformat:4 }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans "Description" %}:</th>
+                                            <td>{{ transfer.description|default:"-" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans "أنشئ بواسطة" %}:</th>
+                                            <td>{{ transfer.created_by.username }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans "تاريخ الإنشاء" %}:</th>
+                                            <td>{{ transfer.created_at|date:"Y-m-d H:i" }}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">{% trans "{% trans "Summary" %} ال{% trans "Transfer" %}" %}</h5>
+                                    <div class="text-center">
+                                        <div class="mb-3">
+                                            <i class="fas fa-exchange-alt fa-3x text-primary"></i>
+                                        </div>
+                                        <h4 class="text-success">{{ transfer.amount|floatformat:3 }}</h4>
+                                        {% if transfer.fees > 0 %}
+                                        <p class="text-muted">{% trans "رسوم" %}: {{ transfer.fees|floatformat:3 }}</p>
+                                        {% endif %}
+                                        <p class="text-muted">{{ transfer.date|date:"Y-m-d" }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">{% trans "الحركات المرتبطة" %}</h5>
+                                </div>
+                                <div class="card-body">
+                                    {% if related_transactions %}
+                                        <div class="table-responsive">
+                                            <table class="table table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th>{% trans "الصندوق" %}</th>
+                                                        <th>{% trans "نوع الحركة" %}</th>
+                                                        <th>{% trans "Amount" %}</th>
+                                                        <th>{% trans "Description" %}</th>
+                                                        <th>{% trans "Date" %}</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for transaction in related_transactions %}
+                                                    <tr>
+                                                        <td>
+                                                            <a href="{% url 'cashboxes:cashbox_detail' transaction.cashbox.id %}" class="text-decoration-none">
+                                                                {{ transaction.cashbox.name }}
+                                                            </a>
+                                                        </td>
+                                                        <td>
+                                                            <span class="badge bg-{% if transaction.transaction_type == 'transfer_in' %}success{% else %}danger{% endif %}">
+                                                                {{ transaction.get_transaction_type_display }}
+                                                            </span>
+                                                        </td>
+                                                        <td class="{% if transaction.amount > 0 %}text-success{% else %}text-danger{% endif %}">
+                                                            {{ transaction.amount|floatformat:3 }}
+                                                        </td>
+                                                        <td>{{ transaction.description }}</td>
+                                                        <td>{{ transaction.date|date:"Y-m-d" }}</td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    {% else %}
+                                        <div class="text-center">
+                                            <p class="mb-0">{% trans "لا توجد حركات مرتبطة" %}</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Document Creator Information -->
+{% include 'partials/document_creator_info.html' with document=transfer %}
+
+{% endblock %}

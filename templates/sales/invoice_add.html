@@ -1,0 +1,1199 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load currency_tags %}
+
+
+
+{% block title %}{% trans "Add Sales Invoice" %} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<!-- Critical CSS - Load First -->
+<style>
+    /* Critical styles loaded immediately */
+    .form-container {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .form-header {
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .form-section {
+        background: #f8f9fa;
+        border-radius: 6px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid #007bff;
+    }
+    
+    .product-row {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .summary-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+    }
+    
+    /* CRITICAL: Add Product Button Styles - Load Immediately */
+    .btn-add-product {
+        background: linear-gradient(45deg, #28a745, #20c997) !important;
+        border: none !important;
+        color: white !important;
+        transition: all 0.3s ease !important;
+        cursor: pointer !important;
+        position: relative !important;
+        overflow: hidden !important;
+        padding: 0.375rem 1rem !important;
+        border-radius: 0.375rem !important;
+        font-weight: 500 !important;
+        text-decoration: none !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        min-height: 38px !important;
+        box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2) !important;
+    }
+    
+    .btn-add-product:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3) !important;
+        background: linear-gradient(45deg, #218838, #1bac7a) !important;
+        color: white !important;
+    }
+    
+    .btn-add-product:active {
+        transform: translateY(0) !important;
+        background: linear-gradient(45deg, #1e7e34, #179f6f) !important;
+    }
+    
+    .btn-add-product:focus {
+        outline: 2px solid #20c997 !important;
+        outline-offset: 2px !important;
+        box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2) !important;
+        color: white !important;
+    }
+    
+    /* Ensure button is always visible and styled */
+    .btn-add-product, .btn-add-product:visited {
+        background: linear-gradient(45deg, #28a745, #20c997) !important;
+        color: white !important;
+    }
+    
+    .required-field {
+        color: #dc3545;
+    }
+    
+    .product-code-input {
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+    }
+    
+    .products-table {
+        min-height: 200px;
+    }
+    
+    .btn-remove-product {
+        background: #dc3545;
+        border: none;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+    
+    .btn-remove-product:hover {
+        background: #c82333;
+        color: white;
+    }
+    
+    #productsTable th {
+        background-color: #343a40;
+        color: white;
+        font-weight: 600;
+        text-align: center;
+        vertical-align: middle;
+    }
+    
+    #productsTable td {
+        vertical-align: middle;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">
+                <i class="fas fa-plus-circle text-success me-2"></i>
+                {% trans "Add Sales Invoice" %}
+            </h2>
+            <p class="text-muted mb-0">{% trans "Create a new sales invoice" %}</p>
+        </div>
+        <div>
+            <a href="{% url 'sales:invoice_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>
+                {% trans "Back to List" %}
+            </a>
+        </div>
+    </div>
+
+    <!-- Form Container -->
+    <div class="form-container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        <div class="form-header">
+            <h3>
+                <i class="fas fa-file-invoice-dollar text-primary me-2"></i>
+                {% trans "Sales Invoice Information" %}
+            </h3>
+            <p class="text-muted mb-0">{% trans "Please fill all required fields" %}</p>
+        </div>
+        
+        <form method="post" id="salesInvoiceForm">
+            {% csrf_token %}
+            
+            <!-- Invoice Information Section -->
+            <div class="form-section">
+                <h5>
+                    <i class="fas fa-info-circle me-1"></i>
+                    {% trans "Invoice Information" %}
+                </h5>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_invoice_number" class="form-label">
+                                {% trans "Invoice Number" %} <span class="required-field">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-hashtag"></i>
+                                </span>
+                                {% if can_edit_invoice_number %}
+                                    <input type="text" class="form-control" id="id_invoice_number" name="invoice_number"
+                                           value="{{ next_invoice_number }}" 
+                                           title="{% trans 'You can edit the invoice number or leave the field for automatic generation' %}">
+                                {% else %}
+                                    <input type="text" class="form-control bg-light" 
+                                           value="{{ next_invoice_number }}" 
+                                           readonly
+                                           title="{% trans 'Invoice number will be automatically generated from the document numbering system' %}">
+                                {% endif %}
+                            </div>
+                            <small class="form-text text-muted">
+                                {% if can_edit_invoice_number %}
+                                    {% trans "You can edit the invoice number or leave the field for automatic generation" %}
+                                {% else %}
+                                    {% trans "Invoice number will be automatically created when saved (you do not have permission to edit the number)" %}
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_date" class="form-label">
+                                {% trans "Invoice Date" %} <span class="required-field">*</span>
+                            </label>
+                            {% if can_edit_date %}
+                                <input type="date" class="form-control" id="id_date" name="date" 
+                                       value="{{ today_date }}" required
+                                       title="{% trans 'You can edit the invoice date' %}">
+                                <small class="form-text text-muted">
+                                    {% trans "You can edit the invoice date as needed" %}
+                                </small>
+                            {% else %}
+                                <input type="date" class="form-control bg-light" id="id_date" name="date" 
+                                       value="{{ today_date }}" readonly
+                                       title="{% trans 'Today date (you do not have permission to edit date)' %}">
+                                <small class="form-text text-muted">
+                                    {% trans "Invoice date is fixed to today's date (you do not have permission to edit date)" %}
+                                </small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_customer" class="form-label">
+                                {% trans "Customer" %} <span class="required-field">*</span>
+                                <button type="button" class="btn btn-sm btn-outline-success ms-2" onclick="openNewCustomerModal()" title="{% trans 'Create new customer' %}">
+                                    <i class="fas fa-user-plus me-1"></i> {% trans "New" %}
+                                </button>
+                            </label>
+                            <select class="form-select" id="id_customer" name="customer" required>
+                                <option value="">{% trans "Select Customer" %}</option>
+                                {% for customer in customers %}
+                                    <option value="{{ customer.id }}">{{ customer.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <div id="customer-balance-info" class="mt-2" style="display: none;">
+                                <small class="text-info">
+                                    <i class="fas fa-wallet me-1"></i>
+                                    {% trans "Customer Balance" %}: <span id="customer-balance-amount" class="fw-bold"></span>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_payment_type" class="form-label">
+                                {% trans "Payment Method" %} <span class="required-field">*</span>
+                            </label>
+                            <select class="form-select" id="id_payment_type" name="payment_type" required>
+                                <option value="">اختر طريقة ال{% trans "Payment" %}</option>
+                                <option value="cash">نقدي</option>
+                                <option value="credit">ذمم (آجل)</option>
+                                <option value="bank_transfer">{% trans "Transfer" %} بنكي</option>
+                                <option value="check">شيك</option>
+                                <option value="installment">تقسيط</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Products Section -->
+            <div class="form-section">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5>
+                        <i class="fas fa-box me-1"></i>
+                        المنتجات
+                    </h5>
+                    <button type="button" class="btn btn-add-product" id="addProductBtn" 
+                            title="انقر هنا ل{% trans "Add" %} منتج {% trans "New" %}" data-action="add-product">
+                        <i class="fas fa-plus me-1"></i>
+                        {% trans "Add" %} منتج
+                    </button>
+                </div>
+                
+                <div class="table-responsive products-table">
+                    <table class="table table-bordered" id="productsTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th width="15%">رقم المنتج</th>
+                                <th width="20%">المنتج</th>
+                                <th width="10%">{% trans "Quantity" %} المتوفرة</th>
+                                <th width="10%">{% trans "Quantity" %}</th>
+                                <th width="12%">{% trans "Price" %}</th>
+                                <th width="8%">ضريبة %</th>
+                                <th width="12%">قيمة الضريبة</th>
+                                <th width="12%">الإجمالي</th>
+                                <th width="6%">{% trans "Delete" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTableBody">
+                            <!-- سيتم {% trans "Add" %} الصفوف هنا بـ JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Additional Information Section -->
+            <div class="form-section">
+                <h5>
+                    <i class="fas fa-info-circle me-1"></i>
+                    {% trans "Information" %} إضافية
+                </h5>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_discount" class="form-label">الخصم</label>
+                            <input type="number" class="form-control" id="id_discount" name="discount" 
+                                   min="0" step="0.01" value="0">
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <!-- مساحة {% trans "Empty" %}ة للتوازن -->
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="id_notes" class="form-label">ملاحظات</label>
+                    <textarea class="form-control" id="id_notes" name="notes" rows="3" 
+                              placeholder="أي ملاحظات إضافية..."></textarea>
+                </div>
+            </div>
+
+            <!-- Invoice Summary -->
+            <div class="summary-section">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h5 class="mb-3">{% trans "Summary" %} ال{% trans "Invoice" %}</h5>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="summary-details">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>{% trans "Total" %} الفرعي:</span>
+                                <strong id="subtotalDisplay">0.00 {% get_currency_symbol %}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>الخصم:</span>
+                                <strong id="discountDisplay">0.00 {% get_currency_symbol %}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>الضريبة:</span>
+                                <strong id="taxDisplay">0.00 {% get_currency_symbol %}</strong>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between mb-0">
+                                <span class="h5">الإجمالي النهائي:</span>
+                                <strong class="h5 text-warning" id="totalDisplay">0.00 {% get_currency_symbol %}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="d-flex gap-3">
+                        <button type="submit" name="action" value="save" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save me-2"></i>
+                            {% trans "Save" %} ال{% trans "Invoice" %}
+                        </button>
+                        <button type="submit" name="action" value="save_and_send" class="btn btn-success btn-lg">
+                            <i class="fas fa-paper-plane me-2"></i>
+                            {% trans "Save" %} وإرسال
+                        </button>
+                        <a href="{% url 'sales:invoice_list' %}" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-times me-2"></i>
+                            إلغاء
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Product Selection Modal -->
+<div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="productModalLabel">
+                    <i class="fas fa-search me-2"></i>
+                    اختيار منتج
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <input type="text" class="form-control" id="productSearch" placeholder="ابحث عن منتج ب{% trans "Code" %} أو اسم...">
+                </div>
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>رقم المنتج</th>
+                                <th>اسم المنتج</th>
+                                <th>{% trans "Description" %}</th>
+                                <th>{% trans "Quantity" %} المتوفرة</th>
+                                <th>سعر البيع</th>
+                                <th>نسبة الضريبة</th>
+                                <th>اختيار</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productList">
+                            {% for product in products %}
+                            <tr>
+                                <td>{{ product.code }}</td>
+                                <td>{{ product.name }}</td>
+                                <td>{{ product.description|truncatechars:50|default:"{% trans 'No description available' %}" }}</td>
+                                <td class="text-center">
+                                    <span class="badge bg-{% if product.current_stock > 0 %}success{% else %}danger{% endif %}">
+                                        {{ product.current_stock|floatformat:3 }}
+                                    </span>
+                                </td>
+                                <td>{{ product.sale_price|floatformat:2 }}</td>
+                                <td>{{ product.tax_rate|floatformat:2 }}%</td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-primary" 
+                                            onclick="selectProduct('{{ product.id }}', '{{ product.code }}', '{{ product.name }}', '{{ product.sale_price }}', '{{ product.tax_rate }}', '{{ product.current_stock }}')">
+                                        {% trans "Select" %}
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let productRowCounter = 0;
+let currentRow = null;
+let buttonClickCount = 0; // لتتبع عدد النقرات على الزر
+let isPageReady = false;
+
+// Enhanced Page Load Management
+function ensurePageReady() {
+    console.log('🔄 Ensuring page readiness...');
+    
+    // Force apply critical styles
+    const addBtn = document.getElementById('addProductBtn');
+    if (addBtn) {
+        // Force apply button styles immediately
+        addBtn.style.cssText = `
+            background: linear-gradient(45deg, #28a745, #20c997) !important;
+            border: none !important;
+            color: white !important;
+            padding: 0.375rem 1rem !important;
+            border-radius: 0.375rem !important;
+            font-weight: 500 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            min-height: 38px !important;
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2) !important;
+            cursor: pointer !important;
+            text-decoration: none !important;
+            transition: all 0.3s ease !important;
+        `;
+        console.log('✅ Button styles applied directly');
+    }
+    
+    isPageReady = true;
+}
+
+// Multiple initialization strategies
+function initializePage() {
+    console.log('🚀 Initializing invoice page...');
+    
+    // Strategy 1: Immediate initialization
+    ensurePageReady();
+    
+    // Strategy 2: Add first product row
+    setTimeout(() => {
+        if (document.getElementById('productsTableBody')) {
+            addProductRow();
+        }
+    }, 100);
+    
+    // Strategy 3: Setup button event listeners
+    setupAddProductButton();
+}
+
+// Enhanced button setup with multiple fallbacks
+function setupAddProductButton() {
+    console.log('🎯 Setting up add product button...');
+    
+    const addBtn = document.getElementById('addProductBtn');
+    if (!addBtn) {
+        console.error('❌ Add product button not found!');
+        // Retry after a short delay
+        setTimeout(setupAddProductButton, 500);
+        return;
+    }
+    
+    // Remove any existing listeners
+    const newBtn = addBtn.cloneNode(true);
+    addBtn.parentNode.replaceChild(newBtn, addBtn);
+    
+    // Add new event listener
+    newBtn.addEventListener('click', function(e) {
+        buttonClickCount++;
+        console.log(`🖱️ Button click #${buttonClickCount}`);
+        
+        e.preventDefault();
+        e.stopPropagation();
+        
+        try {
+            addProductRow();
+            console.log('✅ Product row added successfully');
+        } catch (error) {
+            console.error('❌ Error adding product row:', error);
+            alert('حدث خطأ أثناء إضافة المنتج. يرجى المحاولة مرة أخرى.');
+        }
+    });
+    
+    // Ensure button styling
+    newBtn.style.cssText = `
+        background: linear-gradient(45deg, #28a745, #20c997) !important;
+        border: none !important;
+        color: white !important;
+        padding: 0.375rem 1rem !important;
+        border-radius: 0.375rem !important;
+        font-weight: 500 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        min-height: 38px !important;
+        box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2) !important;
+        cursor: pointer !important;
+        text-decoration: none !important;
+        transition: all 0.3s ease !important;
+    `;
+    
+    console.log('✅ Add product button setup complete');
+}
+
+// Primary DOM Content Loaded handler
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📄 DOM Content Loaded');
+    initializePage();
+});
+
+// Fallback: Window load handler
+window.addEventListener('load', function() {
+    console.log('🖼️ Window fully loaded');
+    if (!isPageReady) {
+        initializePage();
+    }
+});
+
+// Additional fallback with timeout
+setTimeout(function() {
+    console.log('⏰ Timeout fallback triggered');
+    if (!isPageReady) {
+        console.log('⚠️ Page not ready, forcing initialization...');
+        initializePage();
+    }
+}, 1000);
+
+// Enhanced addProductRow function
+
+function addProductRow() {
+    console.log('بدء تنفيذ addProductRow...');
+    
+    try {
+        productRowCounter++;
+        console.log('عداد الصفوف:', productRowCounter);
+        
+        const tbody = document.getElementById('productsTableBody');
+        if (!tbody) {
+            console.error('لم يتم العثور على {% trans "Table" %} المنتجات');
+            alert('{% trans "Error" %}: لم يتم العثور على {% trans "Table" %} المنتجات');
+            return;
+        }
+        
+        console.log('تم العثور على ال{% trans "Table" %}، إنشاء صف {% trans "New" %}...');
+        
+        const row = document.createElement('tr');
+        row.id = `productRow${productRowCounter}`;
+        row.innerHTML = `
+        <td>
+            <input type="hidden" name="products[]" class="product-id-input">
+            <input type="hidden" name="tax_rates[]" class="tax-rate-hidden-input">
+            <input type="hidden" name="tax_amounts[]" class="tax-amount-hidden-input">
+            <div class="d-flex align-items-center">
+                <input type="text" class="form-control me-2 product-code-input" 
+                       placeholder="رقم المنتج..." readonly>
+                <button type="button" class="btn btn-outline-primary btn-sm" onclick="openProductModal(${productRowCounter})">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </td>
+        <td>
+            <input type="text" class="form-control product-name-input" 
+                   placeholder="اسم المنتج..." readonly>
+        </td>
+        <td>
+            <input type="text" class="form-control text-center available-quantity-input" 
+                   placeholder="0.000" readonly style="background-color: #e9ecef;">
+        </td>
+        <td>
+            <input type="number" class="form-control quantity-input" 
+                   name="quantities[]" min="1" value="1" step="1">
+        </td>
+        <td>
+            <input type="number" class="form-control price-input" 
+                   name="prices[]" min="0" step="0.01">
+        </td>
+        <td>
+            <input type="number" class="form-control tax-rate-input" 
+                   min="0" max="100" step="0.01" value="0">
+        </td>
+        <td>
+            <input type="text" class="form-control tax-amount-input" readonly>
+        </td>
+        <td>
+            <input type="text" class="form-control total-input" readonly>
+        </td>
+        <td class="text-center">
+            <button type="button" class="btn btn-remove-product" onclick="removeProductRow(${productRowCounter})" title="{% trans "Delete" %}">
+                <i class="fas fa-times"></i>
+            </button>
+        </td>
+    `;
+    
+    console.log('تم إنشاء محتوى الصف، إضافته لل{% trans "Table" %}...');
+    tbody.appendChild(row);
+    console.log('تم {% trans "Add" %} الصف لل{% trans "Table" %} بنجاح');
+    
+    // Attach event listeners to the new row
+    console.log('ربط الأحداث بالصف ال{% trans "New" %}...');
+    attachRowEventListeners(row);
+    console.log('تم إكمال addProductRow بنجاح');
+    
+    } catch (error) {
+        console.error('{% trans "Error" %} في addProductRow:', error);
+        alert('حدث {% trans "Error" %} أثناء {% trans "Add" %} صف المنتج: ' + error.message);
+        // استرجاع العداد في حالة ال{% trans "Error" %}
+        if (productRowCounter > 0) {
+            productRowCounter--;
+        }
+    }
+}
+
+function removeProductRow(rowId) {
+    const row = document.getElementById(`productRow${rowId}`);
+    if (row) {
+        // Check if this is the last row
+        const allRows = document.querySelectorAll('#productsTableBody tr');
+        if (allRows.length <= 1) {
+            alert('يجب أن تحتوي ال{% trans "Invoice" %} على منتج واحد على الأقل');
+            return;
+        }
+        
+        row.remove();
+        calculateGrandTotal();
+    }
+}
+
+function openProductModal(rowId) {
+    currentRow = rowId;
+    const modal = new bootstrap.Modal(document.getElementById('productModal'));
+    modal.show();
+}
+
+function selectProduct(productId, productCode, productName, salePrice, taxRate, availableQuantity) {
+    if (currentRow) {
+        const row = document.getElementById(`productRow${currentRow}`);
+        const productIdInput = row.querySelector('.product-id-input');
+        const codeInput = row.querySelector('.product-code-input');
+        const nameInput = row.querySelector('.product-name-input');
+        const availableQuantityInput = row.querySelector('.available-quantity-input');
+        const priceInput = row.querySelector('.price-input');
+        const taxRateInput = row.querySelector('.tax-rate-input');
+        
+        // Fill the product information
+        productIdInput.value = productId;
+        codeInput.value = productCode;
+        nameInput.value = productName;
+        if (availableQuantityInput) {
+            availableQuantityInput.value = parseFloat(availableQuantity || 0).toFixed(3);
+        }
+        priceInput.value = parseFloat(salePrice).toFixed(2);
+        taxRateInput.value = parseFloat(taxRate);
+        
+        // Close the modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('productModal'));
+        modal.hide();
+        
+        // Calculate totals
+        calculateRowTotal(row);
+        calculateGrandTotal();
+    }
+}
+
+function attachRowEventListeners(row) {
+    const quantityInput = row.querySelector('.quantity-input');
+    const priceInput = row.querySelector('.price-input');
+    const taxRateInput = row.querySelector('.tax-rate-input');
+    
+    // Calculate totals on quantity/price/tax rate change
+    quantityInput.addEventListener('input', function() {
+        calculateRowTotal(row);
+        calculateGrandTotal();
+    });
+    
+    priceInput.addEventListener('input', function() {
+        calculateRowTotal(row);
+        calculateGrandTotal();
+    });
+    
+    taxRateInput.addEventListener('input', function() {
+        calculateRowTotal(row);
+        calculateGrandTotal();
+    });
+}
+
+function calculateRowTotal(row) {
+    const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
+    const price = parseFloat(row.querySelector('.price-input').value) || 0;
+    const taxRate = parseFloat(row.querySelector('.tax-rate-input').value) || 0;
+    
+    // حساب {% trans "Total" %} الفرعي (قبل الضريبة)
+    const subtotal = quantity * price;
+    
+    // حساب مبلغ الضريبة
+    const taxAmount = subtotal * (taxRate / 100);
+    
+    // حساب الإجمالي (مع الضريبة)
+    const total = subtotal + taxAmount;
+    
+    // {% trans "View" %} النتائج
+    row.querySelector('.tax-amount-input').value = taxAmount.toFixed(2);
+    row.querySelector('.total-input').value = total.toFixed(2);
+    
+    // تحديث الحقول ال{% trans "Hidden" %}ة
+    row.querySelector('.tax-rate-hidden-input').value = taxRate;
+    row.querySelector('.tax-amount-hidden-input').value = taxAmount.toFixed(2);
+}
+
+function calculateGrandTotal() {
+    let subtotal = 0;
+    let totalTax = 0;
+    
+    // جمع المجاميع من جميع الصفوف
+    document.querySelectorAll('#productsTableBody tr').forEach(row => {
+        const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
+        const price = parseFloat(row.querySelector('.price-input').value) || 0;
+        const taxAmount = parseFloat(row.querySelector('.tax-amount-input').value) || 0;
+        
+        // {% trans "Add" %} إلى {% trans "Total" %} الفرعي (قبل الضريبة)
+        subtotal += quantity * price;
+        
+        // {% trans "Add" %} إلى إجمالي الضريبة
+        totalTax += taxAmount;
+    });
+    
+    const discount = parseFloat(document.getElementById('id_discount').value) || 0;
+    const total = subtotal + totalTax - discount;
+    
+    // Update display
+    document.getElementById('subtotalDisplay').textContent = subtotal.toFixed(2) + ' {% get_currency_symbol %}';
+    document.getElementById('discountDisplay').textContent = discount.toFixed(2) + ' {% get_currency_symbol %}';
+    document.getElementById('taxDisplay').textContent = totalTax.toFixed(2) + ' {% get_currency_symbol %}';
+    document.getElementById('totalDisplay').textContent = total.toFixed(2) + ' {% get_currency_symbol %}';
+}
+
+// Search in products modal
+document.getElementById('productSearch').addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+    const rows = document.querySelectorAll('#productList tr');
+    
+    rows.forEach(row => {
+        const productCode = row.cells[0].textContent.toLowerCase();
+        const productName = row.cells[1].textContent.toLowerCase();
+        const productDescription = row.cells[2].textContent.toLowerCase();
+        
+        if (productCode.includes(searchTerm) || productName.includes(searchTerm) || 
+            productDescription.includes(searchTerm)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+});
+
+// Calculate totals when discount changes
+document.getElementById('id_discount').addEventListener('input', calculateGrandTotal);
+
+// Form validation
+document.getElementById('salesInvoiceForm').addEventListener('submit', function(e) {
+    const productRows = document.querySelectorAll('#productsTableBody tr');
+    let hasValidProducts = false;
+    
+    // التحقق من وجود منتجات صالحة
+    productRows.forEach(row => {
+        const productId = row.querySelector('.product-id-input').value;
+        const quantity = row.querySelector('.quantity-input').value;
+        const price = row.querySelector('.price-input').value;
+        
+        if (productId && quantity && price && parseFloat(quantity) > 0 && parseFloat(price) >= 0) {
+            hasValidProducts = true;
+        }
+    });
+    
+    if (!hasValidProducts) {
+        e.preventDefault();
+        alert('يجب {% trans "Add" %} منتج واحد على الأقل مع كمية وسعر صحيحين');
+        return;
+    }
+    
+    // التحقق من العميل
+    const customer = document.getElementById('id_customer').value;
+    if (!customer) {
+        e.preventDefault();
+        alert('يرجى اختيار العميل');
+        return;
+    }
+    
+    // التحقق من نوع ال{% trans "Payment" %}
+    const paymentType = document.getElementById('id_payment_type').value;
+    if (!paymentType) {
+        e.preventDefault();
+        alert('يرجى اختيار نوع ال{% trans "Payment" %}');
+        return;
+    }
+    
+    // التحقق {% trans "From Date" %} ال{% trans "Invoice" %}
+    const invoiceDate = document.getElementById('id_date').value;
+    if (!invoiceDate) {
+        e.preventDefault();
+        alert('يرجى {% trans "Select" %} تاريخ ال{% trans "Invoice" %}');
+        return;
+    }
+});
+
+// دوال إدارة نافذة العميل ال{% trans "New" %}
+function openNewCustomerModal() {
+    console.log('{% trans "Open" %} نافذة العميل ال{% trans "New" %}');
+    const modal = document.getElementById('newCustomerModal');
+    const bootstrapModal = new bootstrap.Modal(modal);
+    bootstrapModal.show();
+}
+
+function saveNewCustomer() {
+    console.log('بدء {% trans "Save" %} العميل ال{% trans "New" %}');
+    const form = document.getElementById('newCustomerForm');
+    const formData = new FormData(form);
+    
+    // {% trans "Add" %} CSRF token
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    formData.append('csrfmiddlewaretoken', csrfToken);
+    
+    console.log('إرسال البيانات إلى الخادم...');
+    
+    fetch('{% url "customers:ajax_add_customer" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(response => {
+        console.log('استجابة من الخادم:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('البيانات المستلمة:', data);
+        if (data.success) {
+            // {% trans "Add" %} العميل ال{% trans "New" %} إلى ال{% trans "List" %}
+            const customerSelect = document.getElementById('id_customer');
+            const newOption = new Option(data.customer.name, data.customer.id, true, true);
+            customerSelect.add(newOption);
+            customerSelect.value = data.customer.id;
+            
+            // إغ{% trans "No" %}ق النافذة وإعادة تعيين النموذج
+            const modal = bootstrap.Modal.getInstance(document.getElementById('newCustomerModal'));
+            modal.hide();
+            form.reset();
+            
+            alert('تم إنشاء العميل بنجاح!');
+            console.log('تم {% trans "Save" %} العميل بنجاح');
+        } else {
+            console.error('{% trans "Error" %} من الخادم:', data.message);
+            alert('{% trans "Error" %}: ' + (data.message || 'حدث {% trans "Error" %} أثناء إنشاء العميل'));
+        }
+    })
+    .catch(error => {
+        console.error('{% trans "Error" %} في الشبكة:', error);
+        alert('حدث {% trans "Error" %} أثناء إنشاء العميل. {% trans "Please try again" %}.');
+        });
+    }
+
+// وظيفة لتحديث {% trans "Balance" %} العميل
+function updateCustomerBalance() {
+    const customerSelect = document.getElementById('id_customer');
+    const balanceInfo = document.getElementById('customer-balance-info');
+    const balanceAmount = document.getElementById('customer-balance-amount');
+    
+    if (!customerSelect.value) {
+        balanceInfo.style.display = 'none';
+        return;
+    }
+    
+    // استدعاء API للحصول على {% trans "Information" %} العميل
+    const apiUrl = `/customers/api/customer/${customerSelect.value}/`;
+    
+    fetch(apiUrl)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error('{% trans "Error" %} في الحصول على بيانات العميل:', data.error);
+                balanceInfo.style.display = 'none';
+                return;
+            }
+            
+            // الحصول على {% trans "Information" %} العملة من الشركة
+            fetch('/settings/api/currency/')
+                .then(currResponse => currResponse.json())
+                .then(currencyData => {
+                    // {% trans "View" %} ال{% trans "Balance" %} الحالي
+                    const balance = parseFloat(data.current_balance);
+                    const balanceText = balance.toLocaleString('ar-SA', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+                    
+                    // استخدام العملة من {% trans "Settings" %} الشركة
+                    let currencyText = '';
+                    if (currencyData.show_symbol && currencyData.symbol) {
+                        currencyText = currencyData.symbol;
+                    } else {
+                        currencyText = currencyData.code || 'ر.س';
+                    }
+                    
+                    balanceAmount.textContent = balanceText + ' ' + currencyText;
+                    
+                    // تغيير لون النص حسب ال{% trans "Balance" %}
+                    if (balance > 0) {
+                        balanceAmount.className = 'fw-bold text-success';
+                    } else if (balance < 0) {
+                        balanceAmount.className = 'fw-bold text-danger';
+                    } else {
+                        balanceAmount.className = 'fw-bold text-muted';
+                    }
+                    
+                    balanceInfo.style.display = 'block';
+                })
+                .catch(currError => {
+                    console.error('{% trans "Error" %} في الحصول على بيانات العملة:', currError);
+                    // في حالة {% trans "Failed" %} الحصول على العملة، استخدم العملة ا{% trans "No" %}فتراضية
+                    const balance = parseFloat(data.current_balance);
+                    const balanceText = balance.toLocaleString('ar-SA', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+                    
+                    balanceAmount.textContent = balanceText + ' ر.س';
+                    
+                    if (balance > 0) {
+                        balanceAmount.className = 'fw-bold text-success';
+                    } else if (balance < 0) {
+                        balanceAmount.className = 'fw-bold text-danger';
+                    } else {
+                        balanceAmount.className = 'fw-bold text-muted';
+                    }
+                    
+                    balanceInfo.style.display = 'block';
+                });
+        })
+        .catch(error => {
+            console.error('{% trans "Error" %} في الشبكة:', error);
+            balanceInfo.style.display = 'none';
+        });
+}
+
+// ربط الحدث بتغيير العميل
+document.getElementById('id_customer').addEventListener('change', updateCustomerBalance);
+</script>
+
+<!-- نافذة إنشاء عميل {% trans "New" %} -->
+<div class="modal fade" id="newCustomerModal" tabindex="-1" aria-labelledby="newCustomerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newCustomerModalLabel">
+                    <i class="fas fa-plus me-2"></i>إنشاء عميل {% trans "New" %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newCustomerForm">
+                    {% csrf_token %}
+                    
+                    <!-- ال{% trans "Information" %} الأساسية -->
+                    <div class="mb-4">
+                        <h6 class="text-primary border-bottom pb-2 mb-3">
+                            <i class="fas fa-user me-2"></i>ال{% trans "Information" %} الأساسية
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">اسم العميل *</label>
+                                    <input type="text" class="form-control" name="name" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">رقم {% trans "Phone" %}</label>
+                                    <input type="text" class="form-control" name="phone">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">البريد الإلكتروني</label>
+                                    <input type="email" class="form-control" name="email">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">{% trans "Number" %} الضريبي</label>
+                                    <input type="text" class="form-control" name="tax_number">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{% trans "Address" %}</label>
+                            <textarea class="form-control" name="address" rows="2"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{% trans "City" %} <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="city" required>
+                        </div>
+                    </div>
+                    
+                    <!-- ال{% trans "Information" %} المالية -->
+                    <div class="mb-4">
+                        <h6 class="text-success border-bottom pb-2 mb-3">
+                            <i class="fas fa-money-bill-wave me-2"></i>ال{% trans "Information" %} المالية
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">حد ا{% trans "No" %}ئتمان</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" name="credit_limit" 
+                                               value="0" step="0.001" min="0">
+                                        <span class="input-group-text">{% get_currency_symbol %}</span>
+                                    </div>
+                                    <div class="form-text">أقصى مبلغ يمكن للعميل أن يكون {% trans "Debit" %}اً به</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">ال{% trans "Balance" %} ا{% trans "No" %}بتدائي</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" name="balance" 
+                                               value="0" step="0.001">
+                                        <span class="input-group-text">{% get_currency_symbol %}</span>
+                                    </div>
+                                    <div class="form-text">ال{% trans "Balance" %} الحالي (موجب: له، سالب: عليه)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- {% trans "Information" %} إضافية -->
+                    <div class="mb-3">
+                        <h6 class="text-info border-bottom pb-2 mb-3">
+                            <i class="fas fa-sticky-note me-2"></i>{% trans "Information" %} إضافية
+                        </h6>
+                        <div class="mb-3">
+                            <label class="form-label">ملاحظات</label>
+                            <textarea class="form-control" name="notes" rows="2"></textarea>
+                            <div class="form-text">أي ملاحظات أو {% trans "Information" %} إضافية</div>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="is_active" id="customerIsActive" checked>
+                            <label class="form-check-label" for="customerIsActive">
+                                عميل {% trans "Active" %}
+                            </label>
+                            <div class="form-text">إلغاء التفعيل يخفي العميل من القوائم</div>
+                        </div>
+                    </div>
+                    
+                    <input type="hidden" name="type" value="customer">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-success" onclick="saveNewCustomer()">
+                    <i class="fas fa-save me-2"></i>{% trans "Save" %} العميل
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Critical JavaScript - Load After Content -->
+<script>
+// Final styling enforcement - runs after everything else
+function enforceButtonStyling() {
+    const addBtn = document.getElementById('addProductBtn');
+    if (addBtn) {
+        // Force styling with maximum priority
+        const criticalStyles = {
+            'background': 'linear-gradient(45deg, #28a745, #20c997)',
+            'border': 'none',
+            'color': 'white',
+            'padding': '0.375rem 1rem',
+            'border-radius': '0.375rem',
+            'font-weight': '500',
+            'display': 'inline-flex',
+            'align-items': 'center',
+            'justify-content': 'center',
+            'min-height': '38px',
+            'box-shadow': '0 2px 8px rgba(40, 167, 69, 0.2)',
+            'cursor': 'pointer',
+            'text-decoration': 'none',
+            'transition': 'all 0.3s ease'
+        };
+        
+        // Apply each style with !important
+        Object.entries(criticalStyles).forEach(([property, value]) => {
+            addBtn.style.setProperty(property, value, 'important');
+        });
+        
+        console.log('🎨 Final button styling enforced');
+    }
+}
+
+// Run styling enforcement multiple times
+document.addEventListener('DOMContentLoaded', function() {
+    enforceButtonStyling();
+    setTimeout(enforceButtonStyling, 100);
+    setTimeout(enforceButtonStyling, 500);
+    setTimeout(enforceButtonStyling, 1000);
+    setTimeout(enforceButtonStyling, 2000);
+});
+
+// Also enforce on window load
+window.addEventListener('load', function() {
+    setTimeout(enforceButtonStyling, 100);
+    setTimeout(enforceButtonStyling, 500);
+});
+
+// Continuous monitoring for styling
+setInterval(function() {
+    const addBtn = document.getElementById('addProductBtn');
+    if (addBtn) {
+        const computedStyle = window.getComputedStyle(addBtn);
+        const bgColor = computedStyle.backgroundColor;
+        
+        // Check if button lost its green styling
+        if (!bgColor.includes('rgb(40, 167, 69)') && !bgColor.includes('rgb(32, 201, 151)')) {
+            console.log('🔧 Re-applying button styling...');
+            enforceButtonStyling();
+        }
+    }
+}, 2000);
+
+console.log('🚀 Critical JavaScript loaded and monitoring started');
+</script>
+
+{% endblock %}

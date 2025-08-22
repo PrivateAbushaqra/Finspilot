@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block page_title %}كشف حساب - {{ customer.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-1">كشف حساب</h1>
+                    <h2 class="h4 text-muted mb-0">{{ customer.name }}</h2>
+                    <p class="text-muted mb-0">
+                        {% if customer.type == 'customer' %}
+                            عميل
+                        {% elif customer.type == 'supplier' %}
+                            مورد
+                        {% else %}
+                            عميل ومورد
+                        {% endif %}
+                        | {% trans "Number" %}: {{ customer.id }}
+                    </p>
+                </div>
+                <div class="text-left">
+                    <a href="{% url 'customers:customer_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-right me-2"></i>العودة لل{% trans "List" %}
+                    </a>
+                    <button class="btn btn-primary" onclick="window.print()">
+                        <i class="fas fa-print me-2"></i>{% trans "Print" %}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="date_from" class="form-label">{% trans "From Date" %}</label>
+                            <input type="date" class="form-control" id="date_from" name="date_from" 
+                                   value="{{ date_from|date:'Y-m-d' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="date_to" class="form-label">{% trans "To Date" %}</label>
+                            <input type="date" class="form-control" id="date_to" name="date_to" 
+                                   value="{{ date_to|date:'Y-m-d' }}">
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-filter me-2"></i>فلترة
+                            </button>
+                            <a href="{% url 'accounts:customer_statement' customer.id %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-2"></i>إلغاء الفلتر
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-center h-100">
+                        <div class="card-body">
+                            <h5 class="card-title text-danger">إجمالي ال{% trans "Debit" %}</h5>
+                            <h3 class="text-danger">{{ total_debit|floatformat:3 }}</h3>
+                            <small class="text-muted">{% if base_currency %}{{ base_currency.symbol }}{% else %}ريال{% endif %}</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center h-100">
+                        <div class="card-body">
+                            <h5 class="card-title text-success">إجمالي ال{% trans "Credit" %}</h5>
+                            <h3 class="text-success">{{ total_credit|floatformat:3 }}</h3>
+                            <small class="text-muted">{% if base_currency %}{{ base_currency.symbol }}{% else %}ريال{% endif %}</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">ال{% trans "Balance" %} الحالي</h5>
+                            <h3 class="{% if current_balance > 0 %}text-danger{% elif current_balance < 0 %}text-success{% else %}text-dark{% endif %}">
+                                {{ current_balance|floatformat:3 }}
+                            </h3>
+                            <small class="text-muted">{% if base_currency %}{{ base_currency.symbol }}{% else %}ريال{% endif %}</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">عدد المعام{% trans "No" %}ت</h5>
+                            <h3 class="text-info">{{ transactions.count }}</h3>
+                            <small class="text-muted">معاملة</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transactions Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list me-2"></i>حركات الحساب
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if transactions %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>{% trans "Date" %}</th>
+                                        <th>رقم الحركة</th>
+                                        <th>نوع المعاملة</th>
+                                        <th>{% trans "Description" %}</th>
+                                        <th class="text-center">{% trans "Debit" %}</th>
+                                        <th class="text-center">{% trans "Credit" %}</th>
+                                        <th class="text-center">ال{% trans "Balance" %}</th>
+                                        <th class="text-center">المرجع</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for transaction in transactions %}
+                                    <tr>
+                                        <td>{{ transaction.date|date:"Y/m/d" }}</td>
+                                        <td>
+                                            <small class="text-muted">{{ transaction.transaction_number }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge 
+                                                {% if transaction.transaction_type == 'sales_invoice' %}bg-primary
+                                                {% elif transaction.transaction_type == 'purchase_invoice' %}bg-success
+                                                {% elif transaction.transaction_type == 'sales_return' %}bg-warning
+                                                {% elif transaction.transaction_type == 'purchase_return' %}bg-info
+                                                {% elif transaction.transaction_type == 'payment' %}bg-secondary
+                                                {% else %}bg-dark{% endif %}">
+                                                {{ transaction.get_transaction_type_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div>{{ transaction.description }}</div>
+                                            {% if transaction.notes %}
+                                                <small class="text-muted">{{ transaction.notes }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            {% if transaction.direction == 'debit' %}
+                                                <span class="text-danger fw-bold">{{ transaction.amount|floatformat:3 }}</span>
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            {% if transaction.direction == 'credit' %}
+                                                <span class="text-success fw-bold">{{ transaction.amount|floatformat:3 }}</span>
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="fw-bold 
+                                                {% if transaction.balance_after > 0 %}text-danger
+                                                {% elif transaction.balance_after < 0 %}text-success
+                                                {% else %}text-dark{% endif %}">
+                                                {{ transaction.balance_after|floatformat:3 }}
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            {% if transaction.reference_type and transaction.reference_id %}
+                                                <small class="text-muted">
+                                                    {{ transaction.get_reference_type_display }}<br>
+                                                    #{{ transaction.reference_id }}
+                                                </small>
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">لا توجد معام{% trans "No" %}ت</h5>
+                            <p class="text-muted">لم يتم العثور على أي معام{% trans "No" %}ت مالية لهذا العميل</p>
+                            
+                            <!-- زر إنشاء المعام{% trans "No" %}ت للفواتير الموجودة -->
+                            <button class="btn btn-primary" onclick="createTransactionsForExistingInvoices()">
+                                <i class="fas fa-plus me-2"></i>إنشاء معام{% trans "No" %}ت للفواتير الموجودة
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Print Styles -->
+<style>
+@media print {
+    .btn, .card-header, .navbar, .sidebar {
+        display: none !important;
+    }
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    .container-fluid {
+        padding: 0 !important;
+    }
+}
+</style>
+
+<script>
+function createTransactionsForExistingInvoices() {
+    if (confirm('هل تريد إنشاء معام{% trans "No" %}ت حسابية لجميع الفواتير الموجودة؟')) {
+        fetch('{% url "accounts:create_transactions" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('حدث {% trans "Error" %}: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('حدث {% trans "Error" %} في ا{% trans "No" %}تصال');
+        });
+    }
+}
+</script>
+{% endblock %}

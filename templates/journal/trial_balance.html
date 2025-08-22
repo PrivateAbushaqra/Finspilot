@@ -1,0 +1,342 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load humanize %}
+{% load currency_tags %}
+
+{% block title %}{% trans "ميزان المراجعة" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .trial-balance-container {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .trial-balance-header {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+        padding: 1.5rem;
+    }
+    
+    .balance-table {
+        font-size: 0.9rem;
+    }
+    
+    .balance-table th {
+        background-color: #f8f9fa;
+        border-top: none;
+        font-weight: 600;
+        text-align: center;
+        vertical-align: middle;
+    }
+    
+    .balance-table td {
+        vertical-align: middle;
+        text-align: center;
+    }
+    
+    .account-code {
+        font-weight: bold;
+        color: #495057;
+    }
+    
+    .account-name {
+        text-align: right;
+        font-weight: 500;
+    }
+    
+    .debit-amount {
+        color: #28a745;
+        font-weight: 500;
+    }
+    
+    .credit-amount {
+        color: #dc3545;
+        font-weight: 500;
+    }
+    
+    .total-row {
+        background-color: #e9ecef;
+        font-weight: bold;
+        border-top: 2px solid #dee2e6;
+    }
+    
+    .filter-form {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        
+        .trial-balance-container {
+            box-shadow: none !important;
+            border: 1px solid #000 !important;
+        }
+        
+        .trial-balance-header {
+            background: none !important;
+            color: #000 !important;
+            border-bottom: 2px solid #000 !important;
+        }
+        
+        .balance-table th,
+        .balance-table td {
+            border: 1px solid #000 !important;
+            padding: 8px !important;
+        }
+        
+        body {
+            font-size: 12px !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+                <div>
+                    <h1 class="h3 mb-0 text-gray-800">
+                        <i class="fas fa-balance-scale text-info me-2"></i>
+                        ميزان المراجعة
+                    </h1>
+                    <nav aria-label="breadcrumb" class="mt-2">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">{% trans "Dashboard" %}</a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'journal:dashboard' %}">القيود المحاسبية</a></li>
+                            <li class="breadcrumb-item active">ميزان المراجعة</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-outline-primary" onclick="window.print()">
+                        <i class="fas fa-print me-2"></i>
+                        {% trans "Print" %} ال{% trans "Report" %}
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Filter Form -->
+            <div class="filter-form no-print">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="{{ form.date_from.id_for_label }}" class="form-label">{{ form.date_from.label }}</label>
+                        {{ form.date_from }}
+                    </div>
+                    <div class="col-md-3">
+                        <label for="{{ form.date_to.id_for_label }}" class="form-label">{{ form.date_to.label }}</label>
+                        {{ form.date_to }}
+                    </div>
+                    <div class="col-md-3">
+                        <label for="{{ form.account_type.id_for_label }}" class="form-label">{{ form.account_type.label }}</label>
+                        {{ form.account_type }}
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="fas fa-search me-1"></i>
+                            {% trans "View" %} ال{% trans "Report" %}
+                        </button>
+                        <a href="{% url 'journal:trial_balance' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-undo me-1"></i>
+                            إعادة تعيين
+                        </a>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Trial Balance Container -->
+            <div class="trial-balance-container">
+                <div class="trial-balance-header">
+                    <div class="text-center">
+                        <h4 class="mb-0">
+                            <i class="fas fa-balance-scale me-2"></i>
+                            ميزان المراجعة
+                        </h4>
+                        {% if form.cleaned_data.date_from and form.cleaned_data.date_to %}
+                            <p class="mb-0 mt-2">
+                                من {{ form.cleaned_data.date_from|date:"j/n/Y" }} إلى {{ form.cleaned_data.date_to|date:"j/n/Y" }}
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="p-4">
+                    {% if accounts_data %}
+                        <div class="table-responsive">
+                            <table class="table balance-table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th width="15%">كود الحساب</th>
+                                        <th width="35%">اسم الحساب</th>
+                                        <th width="15%">نوع الحساب</th>
+                                        <th width="15%">ال{% trans "Debit" %}</th>
+                                        <th width="15%">ال{% trans "Credit" %}</th>
+                                        <th width="5%">ال{% trans "Balance" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for account_data in accounts_data %}
+                                        <tr>
+                                            <td class="account-code">{{ account_data.account.code }}</td>
+                                            <td class="account-name">{{ account_data.account.name }}</td>
+                                            <td>
+                                                <span class="badge bg-secondary">
+                                                    {{ account_data.account.get_account_type_display }}
+                                                </span>
+                                            </td>
+                                            <td class="debit-amount">
+                                                {% if account_data.debit_balance > 0 %}
+                                                    {{ account_data.debit_balance|floatformat:3|intcomma }} {% get_currency_symbol %}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                            <td class="credit-amount">
+                                                {% if account_data.credit_balance > 0 %}
+                                                    {{ account_data.credit_balance|floatformat:3|intcomma }} {% get_currency_symbol %}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if account_data.balance > 0 %}
+                                                    <span class="text-success">{% trans "Debit" %}</span>
+                                                {% elif account_data.balance < 0 %}
+                                                    <span class="text-danger">{% trans "Credit" %}</span>
+                                                {% else %}
+                                                    <span class="text-muted">متوازن</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr class="total-row">
+                                        <td colspan="3" class="text-end">
+                                            <strong>الإجماليات:</strong>
+                                        </td>
+                                        <td class="debit-amount">
+                                            <strong>{{ totals.debit|floatformat:3|intcomma }} {% get_currency_symbol %}</strong>
+                                        </td>
+                                        <td class="credit-amount">
+                                            <strong>{{ totals.credit|floatformat:3|intcomma }} {% get_currency_symbol %}</strong>
+                                        </td>
+                                        <td>
+                                            {% if totals.debit == totals.credit %}
+                                                <span class="badge bg-success">متوازن</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">غير متوازن</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        
+                        <!-- Summary Cards -->
+                        <div class="row mt-4 no-print">
+                            <div class="col-md-4">
+                                <div class="card bg-success text-white">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title">إجمالي ال{% trans "Debit" %}</h5>
+                                        <h3 class="mb-0">{{ totals.debit|floatformat:3|intcomma }} {% get_currency_symbol %}</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card bg-danger text-white">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title">إجمالي ال{% trans "Credit" %}</h5>
+                                        <h3 class="mb-0">{{ totals.credit|floatformat:3|intcomma }} {% get_currency_symbol %}</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card {% if totals.debit == totals.credit %}bg-primary{% else %}bg-warning{% endif %} text-white">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title">حالة الميزان</h5>
+                                        <h4 class="mb-0">
+                                            {% if totals.debit == totals.credit %}
+                                                <i class="fas fa-check-circle me-1"></i>
+                                                متوازن
+                                            {% else %}
+                                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                                غير متوازن
+                                            {% endif %}
+                                        </h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-balance-scale fa-3x text-gray-300 mb-3"></i>
+                            <h5 class="text-gray-600">لا توجد بيانات ل{% trans "View" %}ها</h5>
+                            <p class="text-gray-500">
+                                {% if not form.cleaned_data.date_from or not form.cleaned_data.date_to %}
+                                    يرجى {% trans "Select" %} الفترة الزمنية ل{% trans "View" %} ميزان المراجعة
+                                {% else %}
+                                    لا توجد حسابات تحتوي على حركات في الفترة المحددة
+                                {% endif %}
+                            </p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// {% trans "Select" %} {% trans "Date" %} ا{% trans "No" %}فتراضي للشهر الحالي عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', function() {
+    const dateFromInput = document.getElementById('{{ form.date_from.id_for_label }}');
+    const dateToInput = document.getElementById('{{ form.date_to.id_for_label }}');
+    
+    // إذا لم تكن هناك قيم محددة، استخدم الشهر الحالي
+    if (!dateFromInput.value || !dateToInput.value) {
+        const today = new Date();
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        
+        if (!dateFromInput.value) {
+            dateFromInput.value = firstDay.toISOString().split('T')[0];
+        }
+        if (!dateToInput.value) {
+            dateToInput.value = lastDay.toISOString().split('T')[0];
+        }
+    }
+});
+
+// التحقق من صحة التواريخ
+function validateDates() {
+    const dateFrom = document.getElementById('{{ form.date_from.id_for_label }}').value;
+    const dateTo = document.getElementById('{{ form.date_to.id_for_label }}').value;
+    
+    if (dateFrom && dateTo && dateFrom > dateTo) {
+        alert('تاريخ البداية يجب أن يكون أقل من أو يساوي تاريخ النهاية');
+        return false;
+    }
+    return true;
+}
+
+// {% trans "Add" %} validation للنموذج
+document.querySelector('form').addEventListener('submit', function(e) {
+    if (!validateDates()) {
+        e.preventDefault();
+    }
+});
+</script>
+{% endblock %}

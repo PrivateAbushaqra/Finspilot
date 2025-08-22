@@ -1,0 +1,460 @@
+{% load i18n %}
+
+<form method="post" {% if setting %}action="{% url 'settings:document_print_settings' %}"{% endif %}>
+    {% csrf_token %}
+    <input type="hidden" name="action" value="save_settings">
+    {% if setting %}
+    <input type="hidden" name="document_id" value="{{ setting.id }}">
+    {% endif %}
+    
+    <!-- إعدادات الورق -->
+    <div class="form-section">
+        <div class="form-section-title">{% trans "Paper Settings" %}</div>
+        
+        <div class="row mb-3">
+            <div class="col-12">
+                <label class="form-label">{% trans "Paper Size" %}</label>
+                <input type="hidden" name="paper_size" value="{{ setting.paper_size|default:'A4' }}">
+                
+                <div class="d-flex justify-content-center">
+                    <div class="paper-size-preview {% if setting.paper_size == 'A4' or not setting %}selected{% endif %}" 
+                         onclick="selectPaperSize('A4', this)">
+                        <div style="width: 60px; height: 80px; border: 2px solid #007bff; margin: 0 auto 10px;"></div>
+                        <strong>A4</strong><br>
+                        <small class="text-muted">210 × 297 mm</small>
+                    </div>
+                    <div class="paper-size-preview {% if setting.paper_size == 'A5' %}selected{% endif %}" 
+                         onclick="selectPaperSize('A5', this)">
+                        <div style="width: 50px; height: 70px; border: 2px solid #007bff; margin: 0 auto 10px;"></div>
+                        <strong>A5</strong><br>
+                        <small class="text-muted">148 × 210 mm</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-3">
+                <label class="form-label">{% trans "Top Margin (mm)" %}</label>
+                <input type="number" name="top_margin" class="form-control" 
+                       value="20" min="0" max="50">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">{% trans "Bottom Margin (mm)" %}</label>
+                <input type="number" name="bottom_margin" class="form-control" 
+                       value="20" min="0" max="50">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">{% trans "Right Margin (mm)" %}</label>
+                <input type="number" name="right_margin" class="form-control" 
+                       value="15" min="0" max="50">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">{% trans "Left Margin (mm)" %}</label>
+                <input type="number" name="left_margin" class="form-control" 
+                       value="15" min="0" max="50">
+            </div>
+        </div>
+    </div>
+
+    <!-- إعدادات الشعار -->
+    <div class="form-section">
+        <div class="form-section-title">{% trans "Logo Settings" %}</div>
+        
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="show_logo" id="showLogo"
+                           {% if setting.show_logo or not setting %}checked{% endif %}>
+                    <label class="form-check-label" for="showLogo">
+                        {% trans "Show Logo in Document" %}
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row" id="logoSettings">
+            <div class="col-md-6">
+                <label class="form-label">{% trans "Logo Position" %}</label>
+                <input type="hidden" name="logo_position" value="{{ setting.logo_position|default:'center' }}">
+                
+                <div class="position-selector">
+                    <div class="position-option {% if setting.logo_position == 'left' or not setting and not setting.logo_position %}selected{% endif %}"
+                         onclick="selectLogoPosition('left', this)">
+                        <i class="fas fa-arrow-left"></i><br>
+                        {% trans "Left" %}
+                    </div>
+                    <div class="position-option {% if setting.logo_position == 'center' or setting.logo_position|default:'center' == 'center' %}selected{% endif %}"
+                         onclick="selectLogoPosition('center', this)">
+                        <i class="fas fa-arrows-alt-h"></i><br>
+                        {% trans "Center" %}
+                    </div>
+                    <div class="position-option {% if setting.logo_position == 'right' %}selected{% endif %}"
+                         onclick="selectLogoPosition('right', this)">
+                        <i class="fas fa-arrow-right"></i><br>
+                        {% trans "Right" %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">{% trans "Logo Width (mm)" %}</label>
+                <input type="number" name="logo_width" class="form-control" 
+                       value="40" min="20" max="100">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">{% trans "Logo Height (mm)" %}</label>
+                <input type="number" name="logo_height" class="form-control" 
+                       value="30" min="20" max="80">
+            </div>
+        </div>
+    </div>
+
+    <!-- إعدادات الرأس -->
+    <div class="form-section">
+        <div class="form-section-title">{% trans "Header Settings" %}</div>
+        
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="show_header" id="showHeader"
+                           {% if setting.show_header or not setting %}checked{% endif %}>
+                    <label class="form-check-label" for="showHeader">
+                        {% trans "Show Page Header" %}
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="content-section" id="headerContent">
+            <div>
+                <label class="form-label">{% trans "Left Content" %}</label>
+                <textarea name="header_left_content" class="form-control" rows="3" 
+                          placeholder="{% trans 'Example: Company Name' %}">{{ setting.header_left_content|default:'' }}</textarea>
+            </div>
+            <div>
+                <label class="form-label">{% trans "Center Content" %}</label>
+                <textarea name="header_center_content" class="form-control" rows="3" 
+                          placeholder="{% trans 'Example: Document Title' %}">{{ setting.header_center_content|default:'' }}</textarea>
+            </div>
+            <div>
+                <label class="form-label">{% trans "Right Content" %}</label>
+                <textarea name="header_right_content" class="form-control" rows="3" 
+                          placeholder="{% trans 'Example: Date and Time' %}">{{ setting.header_right_content|default:'' }}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- إعدادات التذييل -->
+    <div class="form-section">
+        <div class="form-section-title">{% trans "Footer Settings" %}</div>
+        
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="show_footer" id="showFooter"
+                           {% if setting.show_footer or not setting %}checked{% endif %}>
+                    <label class="form-check-label" for="showFooter">
+                        {% trans "Show Page Footer" %}
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="content-section" id="footerContent">
+            <div>
+                <label class="form-label">{% trans "Left Content" %}</label>
+                <textarea name="footer_left_content" class="form-control" rows="3" 
+                          placeholder="{% trans 'Example: Page Number' %}">{{ setting.footer_left_content|default:'' }}</textarea>
+            </div>
+            <div>
+                <label class="form-label">{% trans "Center Content" %}</label>
+                <textarea name="footer_center_content" class="form-control" rows="3" 
+                          placeholder="{% trans 'Example: Additional Information' %}">{{ setting.footer_center_content|default:'' }}</textarea>
+            </div>
+            <div>
+                <label class="form-label">{% trans "Right Content" %}</label>
+                <textarea name="footer_right_content" class="form-control" rows="3" 
+                          placeholder="{% trans 'Example: Contact Information' %}">{{ setting.footer_right_content|default:'' }}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- أزرار التحكم -->
+    <div class="form-section">
+        <div class="form-section-title">{% trans "Additional Settings" %}</div>
+        
+        <div class="row">
+            <div class="col-md-4">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="show_company_info" id="showCompanyInfo"
+                           {% if setting.show_company_info or not setting %}checked{% endif %}>
+                    <label class="form-check-label" for="showCompanyInfo">
+                        {% trans "Show Company Information" %}
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="show_date_time" id="showDateTime"
+                           {% if setting.show_date_time or not setting %}checked{% endif %}>
+                    <label class="form-check-label" for="showDateTime">
+                        {% trans "Show Date and Time" %}
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="show_page_numbers" id="showPageNumbers"
+                           {% if setting.show_page_numbers or not setting %}checked{% endif %}>
+                    <label class="form-check-label" for="showPageNumbers">
+                        {% trans "Show Page Numbers" %}
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- أزرار التحكم -->
+    <div class="d-flex justify-content-between">
+        <div>
+            <button type="button" class="btn btn-info" onclick="previewDocument()">
+                <i class="fas fa-eye me-2"></i>
+                {% trans "Preview Document" %}
+            </button>
+        </div>
+        <div>
+            <button type="button" class="btn btn-secondary me-2" onclick="resetForm(this)">
+                <i class="fas fa-undo me-2"></i>
+                {% trans "Reset" %}
+            </button>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-2"></i>
+                {% trans "Save Settings" %}
+            </button>
+        </div>
+    </div>
+</form>
+
+<script>
+// إظهار/إخفاء إعدادات الشعار
+document.getElementById('showLogo').addEventListener('change', function() {
+    const logoSettings = document.getElementById('logoSettings');
+    if (this.checked) {
+        logoSettings.style.display = 'block';
+    } else {
+        logoSettings.style.display = 'none';
+    }
+});
+
+// إظهار/إخفاء إعدادات الرأس
+document.getElementById('showHeader').addEventListener('change', function() {
+    const headerContent = document.getElementById('headerContent');
+    if (this.checked) {
+        headerContent.style.display = 'grid';
+    } else {
+        headerContent.style.display = 'none';
+    }
+});
+
+// إظهار/إخفاء إعدادات التذييل
+document.getElementById('showFooter').addEventListener('change', function() {
+    const footerContent = document.getElementById('footerContent');
+    if (this.checked) {
+        footerContent.style.display = 'grid';
+    } else {
+        footerContent.style.display = 'none';
+    }
+});
+
+// إعادة تعيين النموذج
+function resetForm(button) {
+    const form = button.closest('form');
+    const defaultValues = {
+        paper_size: 'A4',
+        top_margin: '20',
+        bottom_margin: '20',
+        right_margin: '15',
+        left_margin: '15',
+        logo_position: 'top_right',
+        logo_width: '40',
+        logo_height: '30'
+    };
+    
+    // إعادة تعيين القيم الافتراضية
+    for (let [name, value] of Object.entries(defaultValues)) {
+        const input = form.querySelector(`[name="${name}"]`);
+        if (input) input.value = value;
+    }
+    
+    // إعادة تعيين خانات الاختيار
+    form.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = true);
+    
+    // إعادة تعيين المحتوى النصي
+    form.querySelectorAll('textarea').forEach(ta => ta.value = '');
+    
+    // إعادة تعيين اختيار حجم الورق
+    form.querySelectorAll('.paper-size-preview').forEach(el => el.classList.remove('selected'));
+    form.querySelector('.paper-size-preview').classList.add('selected');
+    
+    // إعادة تعيين موضع الشعار
+    form.querySelectorAll('.position-option').forEach(el => el.classList.remove('selected'));
+    form.querySelectorAll('.position-option')[2].classList.add('selected'); // top_right
+}
+
+// معاينة المستند
+function previewDocument() {
+    // استدعاء وظيفة المعاينة الرئيسية من الصفحة الأم
+    if (window.parent && window.parent.previewDocumentMain) {
+        window.parent.previewDocumentMain();
+    } else {
+        // البحث عن النموذج الحالي
+        const currentForm = document.querySelector('form');
+        if (!currentForm) {
+            alert('{% trans "يرجى تحديد مستند للمعاينة" %}');
+            return;
+        }
+        
+        // جمع البيانات من النموذج الحالي
+        const documentType = currentForm.querySelector('input[name="document_type"]')?.value ||
+                            currentForm.querySelector('select[name="document_type"]')?.value || '';
+        const documentNameAr = currentForm.querySelector('input[name="document_name_ar"]')?.value || '';
+        const documentNameEn = currentForm.querySelector('input[name="document_name_en"]')?.value || '';
+        
+        console.log('Collected form values:', { documentType, documentNameAr, documentNameEn });
+        
+        if (!documentType || !documentNameAr || !documentNameEn) {
+            alert('{% trans "يرجى ملء البيانات الأساسية للمستند" %}');
+            return;
+        }
+        
+        // جمع باقي البيانات
+        const paperSize = currentForm.querySelector('input[name="paper_size"]:checked')?.value || 'A4';
+        const topMargin = currentForm.querySelector('input[name="top_margin"]')?.value || '20';
+        const bottomMargin = currentForm.querySelector('input[name="bottom_margin"]')?.value || '20';
+        const rightMargin = currentForm.querySelector('input[name="right_margin"]')?.value || '15';
+        const leftMargin = currentForm.querySelector('input[name="left_margin"]')?.value || '15';
+        
+        // إعدادات الشعار
+        const showLogo = currentForm.querySelector('input[name="show_logo"]')?.checked || false;
+        const logoPosition = currentForm.querySelector('input[name="logo_position"]:checked')?.value || 'center';
+        const logoWidth = currentForm.querySelector('input[name="logo_width"]')?.value || '40';
+        const logoHeight = currentForm.querySelector('input[name="logo_height"]')?.value || '30';
+        
+        // إعدادات الرأس
+        const showHeader = currentForm.querySelector('input[name="show_header"]')?.checked || false;
+        const headerLeftContent = currentForm.querySelector('textarea[name="header_left_content"]')?.value || '';
+        const headerCenterContent = currentForm.querySelector('textarea[name="header_center_content"]')?.value || '';
+        const headerRightContent = currentForm.querySelector('textarea[name="header_right_content"]')?.value || '';
+        
+        // إعدادات التذييل
+        const showFooter = currentForm.querySelector('input[name="show_footer"]')?.checked || false;
+        const footerLeftContent = currentForm.querySelector('textarea[name="footer_left_content"]')?.value || '';
+        const footerCenterContent = currentForm.querySelector('textarea[name="footer_center_content"]')?.value || '';
+        const footerRightContent = currentForm.querySelector('textarea[name="footer_right_content"]')?.value || '';
+        
+        // تحديد أبعاد الورق
+        let pageWidth = '210mm', pageHeight = '297mm'; // A4 Portrait
+        if (paperSize === 'A5') {
+            pageWidth = '148mm';
+            pageHeight = '210mm';
+        }
+        
+        // إنشاء معاينة المستند
+        const previewWindow = window.open('', 'preview', 'width=1000,height=800,scrollbars=yes');
+        previewWindow.document.write(`
+            <!DOCTYPE html>
+            <html dir="rtl">
+            <head>
+                <meta charset="UTF-8">
+                <title>{% trans "معاينة المستند" %} - ${documentNameAr}</title>
+                <style>
+                    body {
+                        font-family: 'Arial', sans-serif;
+                        margin: 0;
+                        padding: 20px;
+                        background: #f5f5f5;
+                        direction: rtl;
+                    }
+                    .document-page {
+                        width: ${pageWidth};
+                        min-height: ${pageHeight};
+                        margin: 0 auto;
+                        background: white;
+                        padding: ${topMargin}mm ${rightMargin}mm ${bottomMargin}mm ${leftMargin}mm;
+                        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                        position: relative;
+                    }
+                    .header { text-align: center; margin-bottom: 20px; }
+                    .footer { 
+                        text-align: center; 
+                        margin-top: 20px; 
+                        position: absolute; 
+                        bottom: ${bottomMargin}mm; 
+                        left: ${leftMargin}mm; 
+                        right: ${rightMargin}mm; 
+                    }
+                    .logo { width: ${logoWidth}mm; height: ${logoHeight}mm; }
+                </style>
+            </head>
+            <body>
+                <div class="document-page">
+                    ${showHeader ? `
+                        <div class="header">
+                            <div style="display: flex; justify-content: space-between;">
+                                <div style="flex: 1;">${headerRightContent}</div>
+                                <div style="flex: 1; text-align: center;">${headerCenterContent}</div>
+                                <div style="flex: 1; text-align: left;">${headerLeftContent}</div>
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    ${showLogo ? `
+                        <div style="text-align: ${logoPosition}; margin: 20px 0;">
+                            <img src="/static/images/logo.png" alt="Logo" class="logo" style="max-width: ${logoWidth}mm; max-height: ${logoHeight}mm;">
+                        </div>
+                    ` : ''}
+                    
+                    <div style="text-align: center; margin: 30px 0;">
+                        <h2>${documentNameAr}</h2>
+                        <p style="color: #666;">${documentNameEn}</p>
+                        <p><strong>{% trans "نوع المستند" %}:</strong> ${documentType}</p>
+                        <p><strong>{% trans "حجم الورق" %}:</strong> ${paperSize}</p>
+                    </div>
+                    
+                    <div style="margin: 40px 0; padding: 20px; border: 1px dashed #ccc;">
+                        <p style="text-align: center; color: #999;">
+                            {% trans "محتوى المستند سيظهر هنا" %}
+                        </p>
+                    </div>
+                    
+                    ${showFooter ? `
+                        <div class="footer">
+                            <div style="display: flex; justify-content: space-between;">
+                                <div style="flex: 1;">${footerRightContent}</div>
+                                <div style="flex: 1; text-align: center;">${footerCenterContent}</div>
+                                <div style="flex: 1; text-align: left;">${footerLeftContent}</div>
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+            </body>
+            </html>
+        `);
+        previewWindow.document.close();
+    }
+}
+
+// تهيئة الإعدادات عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', function() {
+    // تفعيل/إلغاء تفعيل الأقسام حسب حالة خانات الاختيار
+    if (!document.getElementById('showLogo').checked) {
+        document.getElementById('logoSettings').style.display = 'none';
+    }
+    if (!document.getElementById('showHeader').checked) {
+        document.getElementById('headerContent').style.display = 'none';
+    }
+    if (!document.getElementById('showFooter').checked) {
+        document.getElementById('footerContent').style.display = 'none';
+    }
+});
+</script>

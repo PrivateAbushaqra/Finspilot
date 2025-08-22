@@ -1,0 +1,508 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load currency_tags %}
+
+
+
+{% block title %}{% trans "Purchase Invoice Details" %} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .invoice-detail {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .invoice-header {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+        padding: 1.5rem;
+    }
+    
+    .info-card {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
+        font-weight: bold;
+    }
+    
+    .payment-cash {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .payment-credit {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    /* CSS لل{% trans "Print" %} - تصميم {% trans "Invoice" %} احترافية */
+    @media print {
+        /* {% trans "Hide" %} عناصر غير مطلوبة */
+        .btn, .btn-group, .navbar, .sidebar, .breadcrumb,
+        .d-flex.justify-content-between.align-items-center.mb-4 {
+            display: none !important;
+        }
+        
+        /* {% trans "Settings" %} الصفحة */
+        @page {
+            size: A4 portrait !important;
+            margin: 0.8cm !important;
+        }
+        
+        body {
+            font-size: 10pt !important;
+            line-height: 1.2 !important;
+            background: white !important;
+            color: black !important;
+        }
+        
+        /* إزالة الحاويات والتقريب */
+        .container-fluid {
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        
+        .invoice-detail {
+            box-shadow: none !important;
+            border-radius: 0 !important;
+            border: 2px solid #000 !important;
+            height: fit-content !important;
+        }
+        
+        /* رأس ال{% trans "Invoice" %} مضغوط */
+        .invoice-header {
+            background: white !important;
+            color: black !important;
+            border-bottom: 2px solid #000 !important;
+            text-align: center !important;
+            padding: 8px !important;
+        }
+        
+        .invoice-header h5 {
+            font-size: 16pt !important;
+            font-weight: bold !important;
+            margin: 0 !important;
+            color: black !important;
+        }
+        
+        /* رأس الشركة مضغوط */
+        .invoice-header::before {
+            content: "شركة المثلث للبرمجيات - نظام إدارة المحاسبة والمخازن\A ────────────────────────────────";
+            display: block !important;
+            font-size: 12pt !important;
+            font-weight: bold !important;
+            margin-bottom: 5px !important;
+            white-space: pre-line !important;
+            text-align: center !important;
+        }
+        
+        /* تقليل المسافات بين الأقسام */
+        .row.mb-4 {
+            margin-bottom: 0.5rem !important;
+        }
+        
+        .mb-4 {
+            margin-bottom: 0.5rem !important;
+        }
+        
+        .p-4 {
+            padding: 10px !important;
+        }
+        
+        /* {% trans "Information" %} ال{% trans "Invoice" %} والمورد مضغوطة */
+        .info-card {
+            background: white !important;
+            border: 1px solid #000 !important;
+            border-radius: 0 !important;
+            margin-bottom: 5px !important;
+            page-break-inside: avoid !important;
+            padding: 5px !important;
+        }
+        
+        .info-card h6 {
+            background: #f0f0f0 !important;
+            padding: 4px !important;
+            margin: -5px -5px 5px -5px !important;
+            border-bottom: 1px solid #000 !important;
+            font-size: 11pt !important;
+            font-weight: bold !important;
+        }
+        
+        .info-card .table td {
+            padding: 2px 5px !important;
+            border: none !important;
+            font-size: 9pt !important;
+            line-height: 1.1 !important;
+        }
+        
+        .info-card .table td:first-child {
+            font-weight: bold !important;
+            width: 35% !important;
+        }
+        
+        /* {% trans "Table" %} المنتجات مضغوط */
+        .table-responsive {
+            overflow: visible !important;
+        }
+        
+        .table {
+            border-collapse: collapse !important;
+            width: 100% !important;
+            margin-bottom: 8px !important;
+        }
+        
+        .table th,
+        .table td {
+            border: 1px solid #000 !important;
+            padding: 4px !important;
+            text-align: center !important;
+            font-size: 9pt !important;
+            line-height: 1.1 !important;
+        }
+        
+        .table th {
+            background: #f0f0f0 !important;
+            font-weight: bold !important;
+            font-size: 10pt !important;
+            padding: 5px 4px !important;
+        }
+        
+        .table td:nth-child(2) {
+            text-align: right !important; /* اسم المنتج */
+        }
+        
+        /* {% trans "Summary" %} المبالغ مضغوط */
+        .card {
+            border: 2px solid #000 !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+        }
+        
+        .card-body {
+            padding: 8px !important;
+        }
+        
+        .card-title {
+            background: #f0f0f0 !important;
+            padding: 4px !important;
+            margin: -8px -8px 8px -8px !important;
+            border-bottom: 1px solid #000 !important;
+            font-size: 11pt !important;
+            font-weight: bold !important;
+        }
+        
+        .card-body .d-flex {
+            margin-bottom: 3px !important;
+            font-size: 10pt !important;
+        }
+        
+        .card-body .d-flex:last-child {
+            font-size: 12pt !important;
+            font-weight: bold !important;
+            border-top: 2px solid #000 !important;
+            padding-top: 5px !important;
+            margin-top: 5px !important;
+        }
+        
+        /* {% trans "Hide" %} التواريخ الإضافية */
+        .row.mt-4 {
+            display: none !important;
+        }
+        
+        /* تذييل مضغوط */
+        .invoice-detail::after {
+            content: "────────────────────────────────\A شكراً لك {% trans "No" %}ختيار خدماتنا - ل{% trans "No" %}ستفسارات: support@triangle-soft.com";
+            display: block !important;
+            text-align: center !important;
+            margin-top: 10px !important;
+            padding: 8px !important;
+            border-top: 2px solid #000 !important;
+            font-size: 9pt !important;
+            white-space: pre-line !important;
+        }
+        
+        /* تحسين {% trans "View" %} البيانات */
+        .status-badge {
+            color: black !important;
+            background: white !important;
+            border: 1px solid #000 !important;
+            padding: 2px 5px !important;
+            border-radius: 0 !important;
+            font-size: 9pt !important;
+        }
+        
+        /* منع قطع الصفحات */
+        .invoice-detail {
+            page-break-inside: avoid !important;
+        }
+        
+        .info-card {
+            page-break-inside: avoid !important;
+        }
+        
+        .table {
+            page-break-inside: avoid !important;
+        }
+        
+        .card {
+            page-break-inside: avoid !important;
+        }
+        
+        .table tbody tr {
+            page-break-inside: avoid !important;
+        }
+        
+        /* {% trans "Hide" %} ا{% trans "No" %}يقونات في ال{% trans "Print" %} */
+        .fas {
+            display: none !important;
+        }
+        
+        /* تقليل المسافات الإضافية */
+        .col-md-6 {
+            margin-bottom: 5px !important;
+        }
+        
+        /* ضغط المحتوى ليناسب صفحة واحدة */
+        .invoice-detail {
+            transform: scale(0.95) !important;
+            transform-origin: top center !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    {% if error %}
+    <div class="alert alert-danger">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        {{ error }}
+    </div>
+    <div class="text-center">
+        <a href="{% url 'purchases:invoice_list' %}" class="btn btn-primary">
+            <i class="fas fa-arrow-right me-2"></i>
+            العودة لل{% trans "List" %}
+        </a>
+    </div>
+    {% else %}
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-file-invoice me-2"></i>
+                    {% trans "Details" %} {% trans "Invoice" %} المشتريات رقم {{ invoice.invoice_number }}
+                </h2>
+                <div class="btn-group">
+                    <a href="{% url 'purchases:invoice_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-right me-2"></i>
+                        العودة لل{% trans "List" %}
+                    </a>
+                    <a href="{% url 'purchases:invoice_edit' invoice.pk %}" class="btn btn-outline-warning">
+                        <i class="fas fa-edit me-2"></i>
+                        {% trans "Edit" %}
+                    </a>
+                    <button class="btn btn-outline-primary" onclick="window.print()">
+                        <i class="fas fa-print me-2"></i>
+                        {% trans "Print" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="invoice-detail">
+                <div class="invoice-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-receipt me-2"></i>
+                        {% trans "Invoice" %} مشتريات رقم {{ invoice.invoice_number }}
+                    </h5>
+                </div>
+                
+                <div class="p-4">
+                    <!-- {% trans "Information" %} ال{% trans "Invoice" %} -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="info-card">
+                                <h6 class="mb-3"><i class="fas fa-info-circle me-2"></i> {% trans "Information" %} ال{% trans "Invoice" %}</h6>
+                                <table class="table table-borderless mb-0">
+                                    <tr>
+                                        <td><strong>رقم ال{% trans "Invoice" %}:</strong></td>
+                                        <td>{{ invoice.invoice_number }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>رقم {% trans "Invoice" %} المورد:</strong></td>
+                                        <td>{{ invoice.supplier_invoice_number }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>{% trans "Date" %}:</strong></td>
+                                        <td>{{ invoice.date|date:"Y/m/d" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>نوع ال{% trans "Payment" %}:</strong></td>
+                                        <td>
+                                            <span class="status-badge {% if invoice.payment_type == 'cash' %}payment-cash{% else %}payment-credit{% endif %}">
+                                                {% if invoice.payment_type == 'cash' %}كاش{% else %}ذمم{% endif %}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>المستودع:</strong></td>
+                                        <td>
+                                            {% if invoice.warehouse %}
+                                                <i class="fas fa-warehouse me-1 text-info"></i>
+                                                {{ invoice.warehouse.name }}
+                                                {% if invoice.warehouse.code %}
+                                                    <small class="text-muted">({{ invoice.warehouse.code }})</small>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="text-muted">
+                                                    <i class="fas fa-warehouse me-1"></i>
+                                                    المستودع ا{% trans "No" %}فتراضي
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="info-card">
+                                <h6 class="mb-3"><i class="fas fa-truck me-2"></i> {% trans "Information" %} المورد</h6>
+                                <table class="table table-borderless mb-0">
+                                    <tr>
+                                        <td><strong>اسم المورد:</strong></td>
+                                        <td>{{ invoice.supplier.name }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>{% trans "Phone" %}:</strong></td>
+                                        <td>{{ invoice.supplier.phone|default:"غير محدد" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>{% trans "Address" %}:</strong></td>
+                                        <td>{{ invoice.supplier.address|default:"غير محدد" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>أنشئت بواسطة:</strong></td>
+                                        <td>{{ invoice.created_by.get_full_name|default:invoice.created_by.username }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- {% trans "Table" %} المنتجات -->
+                    <div class="mb-4">
+                        <h6 class="mb-3"><i class="fas fa-box me-2"></i> منتجات ال{% trans "Invoice" %} ({{ items_count }} منتج)</h6>
+                        
+                        {% if invoice_items %}
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>اسم المنتج</th>
+                                        <th>رمز المنتج</th>
+                                        <th>{% trans "Quantity" %}</th>
+                                        <th>سعر الوحدة</th>
+                                        <th>{% trans "Total" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in invoice_items %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>{{ item.product.name|default:"منتج محذوف" }}</td>
+                                        <td>{{ item.product.code|default:"--" }}</td>
+                                        <td>{{ item.quantity|floatformat:0 }}</td>
+                                        <td>{{ item.unit_price|currency_format }}</td>
+                                        <td><strong>{{ item.subtotal|currency_format }}</strong></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            لا توجد منتجات في هذه ال{% trans "Invoice" %}.
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- {% trans "Summary" %} المبالغ -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            {% if invoice.notes %}
+                            <div class="info-card">
+                                <h6 class="mb-3"><i class="fas fa-sticky-note me-2"></i> ملاحظات</h6>
+                                <p class="mb-0">{{ invoice.notes }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title"><i class="fas fa-calculator me-2"></i> {% trans "Summary" %} المبالغ</h6>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>{% trans "Total" %} الفرعي:</span>
+                                        <strong>{{ invoice.subtotal|currency_format }}</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>الضريبة:</span>
+                                        <strong>{{ invoice.tax_amount|currency_format }}</strong>
+                                    </div>
+                                    <hr>
+                                    <div class="d-flex justify-content-between">
+                                        <strong>{% trans "Total" %} الإجمالي:</strong>
+                                        <strong class="text-success fs-5">{{ invoice.total_amount|currency_format }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- {% trans "Information" %} إضافية -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="info-card">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock me-1"></i>
+                                            تاريخ الإنشاء: {{ invoice.created_at|date:"Y/m/d H:i" }}
+                                        </small>
+                                    </div>
+                                    <div class="col-md-6 text-end">
+                                        <small class="text-muted">
+                                            <i class="fas fa-edit me-1"></i>
+                                            آخر تحديث: {{ invoice.updated_at|date:"Y/m/d H:i" }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Document Creator Information -->
+{% include 'partials/document_creator_info.html' with document=invoice %}
+
+{% endblock %}

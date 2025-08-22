@@ -1,0 +1,445 @@
+{% extends "base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "النسخ الاحتياطي والاستعادة" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+.backup-card {
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+.backup-btn {
+    min-height: 120px;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+.backup-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+.progress-section {
+    display: none;
+    margin-top: 20px;
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 15px;
+    border: 2px solid #007bff;
+}
+.progress {
+    height: 25px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+}
+.table-progress {
+    margin-bottom: 10px;
+    padding: 10px;
+    background: white;
+    border-radius: 8px;
+    border-left: 4px solid #28a745;
+}
+.table-progress.processing {
+    border-left-color: #ffc107;
+    animation: pulse 1s infinite;
+}
+.table-progress.completed {
+    border-left-color: #28a745;
+}
+.table-progress.pending {
+    border-left-color: #6c757d;
+}
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+.status-icon {
+    font-size: 18px;
+    margin-right: 10px;
+}
+.backup-stats {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+.stat-item {
+    text-align: center;
+    padding: 10px;
+    background: white;
+    border-radius: 8px;
+    min-width: 100px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card backup-card border-info">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-database me-2"></i>
+                        {% trans "إدارة النسخ الاحتياطية" %}
+                        <span class="badge bg-light text-dark ms-2">
+                            النسخ المتوفرة: <span id="backupCount">{{ backups|length }}</span>
+                        </span>
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- شاشة التقدم -->
+                    <div id="progressSection" class="progress-section">
+                        <h5 class="mb-3">
+                            <i class="fas fa-sync-alt fa-spin me-2"></i>
+                            جاري إنشاء النسخة الاحتياطية...
+                        </h5>
+                        
+                        <!-- الإحصائيات العامة -->
+                        <div class="backup-stats">
+                            <div class="stat-item">
+                                <strong id="processedTables">0</strong><br>
+                                <small>جداول منتهية</small>
+                            </div>
+                            <div class="stat-item">
+                                <strong id="totalTables">0</strong><br>
+                                <small>إجمالي الجداول</small>
+                            </div>
+                            <div class="stat-item">
+                                <strong id="processedRecords">0</strong><br>
+                                <small>السجلات المنتهية</small>
+                            </div>
+                            <div class="stat-item">
+                                <strong id="totalRecords">0</strong><br>
+                                <small>إجمالي السجلات</small>
+                            </div>
+                        </div>
+
+                        <!-- شريط التقدم العام -->
+                        <div class="progress mb-3">
+                            <div id="overallProgress" class="progress-bar bg-success" style="width: 0%">
+                                <span id="overallPercentage">0%</span>
+                            </div>
+                        </div>
+                        
+                        <!-- معلومات الجدول الحالي -->
+                        <div class="mb-3">
+                            <strong>الجدول الحالي: </strong>
+                            <span id="currentTableName" class="text-primary">...</span>
+                        </div>
+                        
+                        <!-- قائمة الجداول مع التقدم -->
+                        <div id="tablesProgressList" style="max-height: 400px; overflow-y: auto;">
+                            <!-- سيتم ملء هذا القسم بـ JavaScript -->
+                        </div>
+                        
+                        <!-- زر الإلغاء -->
+                        <div class="text-center mt-3">
+                            <button type="button" class="btn btn-danger" onclick="window.location.reload()">
+                                <i class="fas fa-times me-2"></i>
+                                إلغاء وإعادة تحميل الصفحة
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- إنشاء النسخ الاحتياطية -->
+                    <div id="backupButtons" class="row mb-4">
+                        <div class="col-md-6 mb-3">
+                            <button type="button" onclick="createBackup('json')" class="btn btn-success backup-btn w-100 d-flex flex-column align-items-center justify-content-center p-4" id="jsonBackupBtn">
+                                <i class="fas fa-file-code fa-3x mb-3"></i>
+                                <h5 class="mb-2">إنشاء نسخة احتياطية JSON</h5>
+                                <small class="text-muted">تنسيق JSON للاستخدام العام</small>
+                            </button>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <button type="button" onclick="createBackup('xlsx')" class="btn btn-primary backup-btn w-100 d-flex flex-column align-items-center justify-content-center p-4" id="xlsxBackupBtn">
+                                <i class="fas fa-file-excel fa-3x mb-3"></i>
+                                <h5 class="mb-2">إنشاء نسخة احتياطية XLSX</h5>
+                                <small class="text-muted">ملف Excel لسهولة التعامل</small>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- قائمة النسخ الاحتياطية الموجودة -->
+                    <div class="mt-4">
+                        <h5>
+                            <i class="fas fa-list me-2"></i>
+                            النسخ الاحتياطية المتوفرة
+                        </h5>
+                        
+                        {% if backups %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>اسم الملف</th>
+                                        <th>الحجم</th>
+                                        <th>تاريخ الإنشاء</th>
+                                        <th>النوع</th>
+                                        <th>الإجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for backup in backups %}
+                                    <tr>
+                                        <td>{{ backup.filename }}</td>
+                                        <td>{{ backup.size }}</td>
+                                        <td>{{ backup.created_at|date:"Y-m-d H:i:s" }}</td>
+                                        <td>
+                                            {% if backup.type == 'JSON' %}
+                                                <span class="badge bg-success">JSON</span>
+                                            {% elif backup.type == 'XLSX' %}
+                                                <span class="badge bg-primary">XLSX</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">غير معروف</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'backup:download_backup' backup.filename %}" 
+                                               class="btn btn-sm btn-success me-2">
+                                                <i class="fas fa-download"></i> تحميل
+                                            </a>
+                                            <form method="post" action="{% url 'backup:delete_backup' backup.filename %}" 
+                                                  style="display: inline;" 
+                                                  onsubmit="return confirm('هل أنت متأكد من حذف النسخة الاحتياطية {{ backup.filename }}؟')">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-sm btn-danger">
+                                                    <i class="fas fa-trash"></i> حذف
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            لا توجد نسخ احتياطية متوفرة حالياً. قم بإنشاء نسخة احتياطية جديدة.
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- استعادة النسخة الاحتياطية -->
+                    {% if is_superuser %}
+                    <div class="mt-5">
+                        <div class="card border-warning">
+                            <div class="card-header bg-warning text-dark">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-upload me-2"></i>
+                                    استعادة النسخة الاحتياطية
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-danger">
+                                    <strong>تحذير:</strong> عملية الاستعادة ستستبدل جميع البيانات الحالية. تأكد من إنشاء نسخة احتياطية قبل المتابعة.
+                                </div>
+                                
+                                <form method="post" enctype="multipart/form-data" action="{% url 'backup:restore_backup' %}">
+                                    {% csrf_token %}
+                                    <div class="mb-3">
+                                        <label for="backup_file" class="form-label">اختر ملف النسخة الاحتياطية</label>
+                                        <input type="file" class="form-control" id="backup_file" name="backup_file" 
+                                               accept=".json,.xlsx" required>
+                                    </div>
+                                    
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" value="true" 
+                                               id="clear_data" name="clear_data">
+                                        <label class="form-check-label" for="clear_data">
+                                            مسح البيانات الموجودة قبل الاستعادة
+                                        </label>
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-warning" 
+                                            onclick="return confirm('هل أنت متأكد من استعادة هذه النسخة الاحتياطية؟ سيتم استبدال البيانات الحالية!')">
+                                        <i class="fas fa-upload me-2"></i>
+                                        استعادة النسخة الاحتياطية
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let progressInterval;
+let isBackupRunning = false;
+
+// إنشاء نسخة احتياطية مع مراقبة التقدم
+function createBackup(format) {
+    if (isBackupRunning) {
+        alert('يتم بالفعل إنشاء نسخة احتياطية. يرجى الانتظار.');
+        return;
+    }
+    
+    isBackupRunning = true;
+    
+    // إخفاء الأزرار وإظهار شاشة التقدم
+    document.getElementById('backupButtons').style.display = 'none';
+    document.getElementById('progressSection').style.display = 'block';
+    
+    // بدء إنشاء النسخة الاحتياطية
+    fetch('{% url "backup:create_backup" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `format=${format}`
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('فشل في بدء إنشاء النسخة الاحتياطية');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // بدء مراقبة التقدم
+            startProgressMonitoring();
+        } else {
+            throw new Error(data.error || 'خطأ غير معروف');
+        }
+    })
+    .catch(error => {
+        console.error('خطأ في إنشاء النسخة الاحتياطية:', error);
+        alert('❌ فشل في بدء إنشاء النسخة الاحتياطية: ' + error.message);
+        resetProgressView();
+    });
+}
+
+// مراقبة تقدم النسخة الاحتياطية
+function startProgressMonitoring() {
+    progressInterval = setInterval(function() {
+        fetch('{% url "backup:backup_progress" %}')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.progress) {
+                updateProgressDisplay(data.progress);
+                
+                if (!data.progress.is_running) {
+                    clearInterval(progressInterval);
+                    if (data.progress.status === 'completed') {
+                        setTimeout(function() {
+                            alert('✅ تم إنشاء النسخة الاحتياطية بنجاح!');
+                            window.location.reload();
+                        }, 2000);
+                    } else if (data.progress.error) {
+                        alert('❌ حدث خطأ: ' + data.progress.error);
+                        resetProgressView();
+                    }
+                }
+            }
+        })
+        .catch(error => {
+            console.error('خطأ في مراقبة التقدم:', error);
+        });
+    }, 1000); // تحديث كل ثانية
+}
+
+// تحديث عرض التقدم
+function updateProgressDisplay(progress) {
+    // تحديث الإحصائيات العامة
+    document.getElementById('processedTables').textContent = progress.processed_tables || 0;
+    document.getElementById('totalTables').textContent = progress.total_tables || 0;
+    document.getElementById('processedRecords').textContent = progress.processed_records || 0;
+    document.getElementById('totalRecords').textContent = progress.total_records || 0;
+    
+    // تحديث شريط التقدم العام
+    const percentage = progress.percentage || 0;
+    const progressBar = document.getElementById('overallProgress');
+    progressBar.style.width = percentage + '%';
+    document.getElementById('overallPercentage').textContent = Math.round(percentage) + '%';
+    
+    // تحديث اسم الجدول الحالي
+    document.getElementById('currentTableName').textContent = progress.current_table || '...';
+    
+    // تحديث قائمة الجداول
+    updateTablesProgressList(progress.tables_status || []);
+}
+
+// تحديث قائمة الجداول مع التقدم
+function updateTablesProgressList(tablesStatus) {
+    const container = document.getElementById('tablesProgressList');
+    container.innerHTML = '';
+    
+    tablesStatus.forEach(function(table, index) {
+        const div = document.createElement('div');
+        div.className = 'table-progress ' + (table.status || 'pending');
+        
+        let statusIcon = '⏳';
+        let statusText = 'في الانتظار';
+        let progressWidth = 0;
+        
+        if (table.status === 'processing') {
+            statusIcon = '🔄';
+            statusText = 'جاري المعالجة';
+            progressWidth = table.progress || 0;
+        } else if (table.status === 'completed') {
+            statusIcon = '✅';
+            statusText = 'مكتمل';
+            progressWidth = 100;
+        } else if (table.status === 'error') {
+            statusIcon = '❌';
+            statusText = 'خطأ';
+            progressWidth = 0;
+        }
+        
+        div.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <span class="status-icon">${statusIcon}</span>
+                    <strong>${table.display_name}</strong>
+                    <small class="text-muted ms-2">(${table.record_count} سجل)</small>
+                </div>
+                <div style="min-width: 100px; text-align: right;">
+                    <small>${statusText}</small>
+                </div>
+            </div>
+            <div class="progress mt-2" style="height: 6px;">
+                <div class="progress-bar bg-info" style="width: ${progressWidth}%"></div>
+            </div>
+        `;
+        
+        container.appendChild(div);
+    });
+}
+
+// إعادة تعيين عرض التقدم
+function resetProgressView() {
+    isBackupRunning = false;
+    if (progressInterval) {
+        clearInterval(progressInterval);
+    }
+    document.getElementById('progressSection').style.display = 'none';
+    document.getElementById('backupButtons').style.display = 'block';
+}
+
+// عرض رسائل النجاح أو الخطأ
+{% if messages %}
+    {% for message in messages %}
+        {% if message.level_tag == 'success' %}
+            setTimeout(function() {
+                alert('✅ {{ message }}');
+            }, 500);
+        {% elif message.level_tag == 'error' %}
+            setTimeout(function() {
+                alert('❌ {{ message }}');
+            }, 500);
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+console.log('✅ تم تحميل صفحة النسخ الاحتياطي مع نظام التقدم المحسن');
+</script>
+{% endblock %}

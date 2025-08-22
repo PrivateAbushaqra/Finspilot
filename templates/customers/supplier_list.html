@@ -1,0 +1,558 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load currency_tags %}
+
+{% block title %}{% trans "List" %} ال{% trans "Supplier" %}ين - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .supplier-container {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .supplier-header {
+        background: linear-gradient(135deg, #6f42c1 0%, #e83e8c 100%);
+        color: white;
+        padding: 1.5rem;
+    }
+    
+    .supplier-card {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        margin-bottom: 1rem;
+        cursor: pointer;
+    }
+    
+    .supplier-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .supplier-type-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    .type-supplier {
+        background-color: #cce5ff;
+        color: #004085;
+    }
+    
+    .type-both {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    
+    .balance-positive {
+        color: #28a745;
+        font-weight: bold;
+    }
+    
+    .balance-negative {
+        color: #dc3545;
+        font-weight: bold;
+    }
+    
+    .balance-zero {
+        color: #6c757d;
+    }
+    
+    .stats-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="supplier-container mb-4">
+        <div class="supplier-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">
+                    <i class="fas fa-truck me-2"></i>
+                    {% trans "List" %} ال{% trans "Supplier" %}ين
+                </h2>
+                <div class="btn-group">
+                    <button type="button" onclick="printPage()" class="btn btn-info btn-sm me-2">
+                        <i class="fas fa-print me-1"></i>
+                        {% trans "Print Full Report" %}
+                    </button>
+                    <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#addSupplierModal">
+                        <i class="fas fa-plus me-2"></i>
+                        {% trans "Add" %} {% trans "Supplier" %} {% trans "New" %}
+                    </button>
+                    <a href="{% url 'customers:list' %}" class="btn btn-outline-light">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        العودة لل{% trans "List" %} {% trans "Dashboard" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stats-card text-center">
+                <h3 class="text-purple">{{ total_suppliers }}</h3>
+                <p class="text-muted mb-0">إجمالي ال{% trans "Supplier" %}ين</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card text-center">
+                <h3 class="text-primary">{{ active_suppliers }}</h3>
+                <p class="text-muted mb-0">ال{% trans "Supplier" %}ون ال{% trans "Active" %}ون</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card text-center">
+                <h3 class="text-warning">{{ total_debt|floatformat:3 }}</h3>
+                <p class="text-muted mb-0">إجمالي المديونية</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card text-center">
+                <h3 class="text-info">{{ average_balance|floatformat:3 }}</h3>
+                <p class="text-muted mb-0">متوسط {% trans "Balance" %}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-filter me-2"></i>
+                        {% trans "Filter" %} ال{% trans "Supplier" %}ين
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="search" class="form-label">{% trans "Search" %}:</label>
+                            <input type="text" class="form-control" id="search" name="search" 
+                                   placeholder="اسم ال{% trans "Supplier" %} أو {% trans "Phone" %}..." 
+                                   value="{{ request.GET.search }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="status" class="form-label">{% trans "Status" %}:</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="">جميع ال{% trans "Supplier" %}ين</option>
+                                <option value="active">ال{% trans "Active" %}ون</option>
+                                <option value="inactive">غير ال{% trans "Active" %}ين</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="balance" class="form-label">{% trans "Balance" %}:</label>
+                            <select class="form-select" id="balance" name="balance">
+                                <option value="">جميع الأرصدة</option>
+                                <option value="positive">{% trans "Balance" %} موجب</option>
+                                <option value="negative">{% trans "Balance" %} سالب</option>
+                                <option value="zero">{% trans "Balance" %} صفر</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-search me-1"></i>
+                                بحث
+                            </button>
+                            <a href="{% url 'customers:supplier_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-undo me-1"></i>
+                                إعادة تعيين
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Suppliers List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-list me-2"></i>
+                        {% trans "List" %} ال{% trans "Supplier" %}ين ({{ total_suppliers }} {% trans "Supplier" %})
+                    </h6>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-primary active" data-view="card">
+                            <i class="fas fa-th-large"></i>
+                        </button>
+                        <button class="btn btn-outline-primary" data-view="table">
+                            <i class="fas fa-table"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if suppliers %}
+                    <!-- Suppliers Cards View -->
+                    <div id="suppliers-container" class="row">
+                        {% for supplier in suppliers %}
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="supplier-card p-3">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <h6 class="card-title mb-0">{{ supplier.name }}</h6>
+                                    <span class="supplier-type-badge type-{{ supplier.type }}">
+                                        {{ supplier.get_type_display }}
+                                    </span>
+                                </div>
+                                
+                                <div class="mb-2">
+                                    <small class="text-muted">{% trans "Phone" %}:</small>
+                                    <span>{{ supplier.phone|default:"غير محدد" }}</span>
+                                </div>
+                                
+                                <div class="mb-2">
+                                    <small class="text-muted">البريد:</small>
+                                    <span>{{ supplier.email|default:"غير محدد" }}</span>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <small class="text-muted">{% trans "Balance" %}:</small>
+                                    <span class="{% if supplier.current_balance > 0 %}text-success{% elif supplier.current_balance < 0 %}text-danger{% else %}text-muted{% endif %}">
+                                        {{ supplier.current_balance|currency_format }}
+                                    </span>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="badge {% if supplier.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                                        {% if supplier.is_active %}{% trans "Active" %}{% else %}غير {% trans "Active" %}{% endif %}
+                                    </span>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'customers:edit' supplier.pk %}" class="btn btn-outline-warning" title="{% trans "Edit" %}">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'customers:transactions' supplier.pk %}" class="btn btn-outline-info" title="كشف الحساب">
+                                            <i class="fas fa-receipt"></i>
+                                        </a>
+                                        <a href="{% url 'customers:delete' supplier.pk %}" class="btn btn-outline-danger" title="{% trans "Delete" %}">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Suppliers Table View -->
+                    <div id="suppliers-table" class="table-responsive" style="display: none;">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>اسم</th>
+                                    <th>{% trans "Type" %}</th>
+                                    <th>{% trans "Phone" %}</th>
+                                    <th>{% trans "Email" %}</th>
+                                    <th>{% trans "Balance" %}</th>
+                                    <th>{% trans "Status" %}</th>
+                                    <th>{% trans "Actions" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for supplier in suppliers %}
+                                <tr>
+                                    <td><strong>{{ supplier.name }}</strong></td>
+                                    <td>
+                                        <span class="supplier-type-badge type-{{ supplier.type }}">
+                                            {{ supplier.get_type_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ supplier.phone|default:"غير محدد" }}</td>
+                                    <td>{{ supplier.email|default:"غير محدد" }}</td>
+                                    <td class="{% if supplier.current_balance > 0 %}text-success{% elif supplier.current_balance < 0 %}text-danger{% endif %}">
+                                        {{ supplier.current_balance|currency_format }}
+                                    </td>
+                                    <td>
+                                        <span class="badge {% if supplier.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                                            {% if supplier.is_active %}{% trans "Active" %}{% else %}غير {% trans "Active" %}{% endif %}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'customers:edit' supplier.pk %}" class="btn btn-outline-warning" title="{% trans "Edit" %}">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'customers:transactions' supplier.pk %}" class="btn btn-outline-info" title="كشف الحساب">
+                                                <i class="fas fa-receipt"></i>
+                                            </a>
+                                            <a href="{% url 'customers:delete' supplier.pk %}" class="btn btn-outline-danger" title="{% trans "Delete" %}">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <!-- No suppliers message -->
+                    <div class="text-center py-5">
+                        <div class="mb-4">
+                            <i class="fas fa-truck fa-5x text-muted"></i>
+                        </div>
+                        <h5 class="text-muted">لا توجد {% trans "Supplier" %}ين حالياً</h5>
+                        <p class="text-muted">يمكنك {% trans "Add" %} {% trans "Supplier" %} {% trans "New" %} من خ{% trans "No" %}ل الضغط على زر "{% trans "Add" %} {% trans "Supplier" %} {% trans "New" %}"</p>
+                        <a href="{% url 'customers:add' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>
+                            {% trans "Add" %} أول {% trans "Supplier" %}
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <nav aria-label="صفحات ال{% trans "Supplier" %}ين">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.balance %}&balance={{ request.GET.balance }}{% endif %}">{% trans "First" %}ى</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.balance %}&balance={{ request.GET.balance }}{% endif %}">{% trans "Previous" %}ة</a>
+                        </li>
+                    {% endif %}
+                    
+                    <li class="page-item active">
+                        <span class="page-link">
+                            صفحة {{ page_obj.number }} من {{ page_obj.paginator.num_pages }}
+                        </span>
+                    </li>
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.balance %}&balance={{ request.GET.balance }}{% endif %}">{% trans "Next" %}ة</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.balance %}&balance={{ request.GET.balance }}{% endif %}">{% trans "Last" %}ة</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Add Supplier Modal -->
+<div class="modal fade" id="addSupplierModal" tabindex="-1" aria-labelledby="addSupplierModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="addSupplierModalLabel">
+                    <i class="fas fa-truck me-2"></i>
+                    {% trans "Add" %} {% trans "Supplier" %} {% trans "New" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="إغ{% trans "No" %}ق"></button>
+            </div>
+            <div class="modal-body">
+                <form id="supplierForm">
+                    {% csrf_token %}
+                    
+                    <!-- ال{% trans "Information" %} الأساسية -->
+                    <div class="mb-4">
+                        <h6 class="text-primary border-bottom pb-2 mb-3">
+                            <i class="fas fa-user me-2"></i>ال{% trans "Information" %} الأساسية
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">اسم ال{% trans "Supplier" %} *</label>
+                                    <input type="text" class="form-control" name="name" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">{% trans "Phone Number" %}</label>
+                                    <input type="text" class="form-control" name="phone">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">{% trans "Email" %}</label>
+                                    <input type="email" class="form-control" name="email">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">{% trans "Number" %} الضريبي</label>
+                                    <input type="text" class="form-control" name="tax_number">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">{% trans "Address" %}</label>
+                            <textarea class="form-control" name="address" rows="2"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">ال{% trans "Debit" %}ة <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="city" required>
+                        </div>
+                    </div>
+                    
+                    <!-- ال{% trans "Information" %} المالية -->
+                    <div class="mb-4">
+                        <h6 class="text-success border-bottom pb-2 mb-3">
+                            <i class="fas fa-money-bill-wave me-2"></i>ال{% trans "Information" %} المالية
+                        </h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">حد ا{% trans "No" %}ئتمان</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" name="credit_limit" 
+                                               value="0" step="0.001" min="0">
+                                        <span class="input-group-text">{% get_currency_symbol %}</span>
+                                    </div>
+                                    <div class="form-text">أقصى مبلغ يمكن لل{% trans "Supplier" %} أن يكون {% trans "Debit" %}اً به</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">{% trans "Balance" %} ا{% trans "No" %}بتدائي</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" name="balance" 
+                                               value="0" step="0.001">
+                                        <span class="input-group-text">{% get_currency_symbol %}</span>
+                                    </div>
+                                    <div class="form-text">{% trans "Balance" %} الحالي (موجب: له، سالب: عليه)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- {% trans "Information" %} إضافية -->
+                    <div class="mb-3">
+                        <h6 class="text-info border-bottom pb-2 mb-3">
+                            <i class="fas fa-sticky-note me-2"></i>{% trans "Information" %} إضافية
+                        </h6>
+                        <div class="mb-3">
+                            <label class="form-label">ملاحظات</label>
+                            <textarea class="form-control" name="notes" rows="2"></textarea>
+                            <div class="form-text">أي ملاحظات أو {% trans "Information" %} إضافية</div>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="is_active" id="supplierIsActive" checked>
+                            <label class="form-check-label" for="supplierIsActive">
+                                {% trans "Supplier" %} {% trans "Active" %}
+                            </label>
+                            <div class="form-text">إلغاء التفعيل يخفي ال{% trans "Supplier" %} من القوائم</div>
+                        </div>
+                    </div>
+                    
+                    <input type="hidden" name="type" value="supplier">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" onclick="saveSupplier()">
+                    <i class="fas fa-save me-2"></i>
+                    {% trans "Save" %} ال{% trans "Supplier" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // View toggle functionality
+    document.querySelectorAll('[data-view]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const view = this.dataset.view;
+            
+            // Update active button
+            document.querySelectorAll('[data-view]').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Toggle views
+            if (view === 'card') {
+                document.getElementById('suppliers-container').style.display = 'block';
+                document.getElementById('suppliers-table').style.display = 'none';
+            } else {
+                document.getElementById('suppliers-container').style.display = 'none';
+                document.getElementById('suppliers-table').style.display = 'block';
+            }
+        });
+    });
+
+    // Save supplier function
+    function saveSupplier() {
+        console.log('بدء {% trans "Save" %} ال{% trans "Supplier" %} ال{% trans "New" %}');
+        const form = document.getElementById('supplierForm');
+        const formData = new FormData(form);
+        
+        // {% trans "Add" %} CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        formData.append('csrfmiddlewaretoken', csrfToken);
+        
+        console.log('إرسال البيانات إلى الخادم...');
+        
+        fetch('{% url "customers:ajax_add_supplier" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(response => {
+            console.log('استجابة من الخادم:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('البيانات المستلمة:', data);
+            if (data.success) {
+                // إغ{% trans "No" %}ق النافذة وإعادة تعيين النموذج
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addSupplierModal'));
+                modal.hide();
+                form.reset();
+                
+                alert('تم إنشاء ال{% trans "Supplier" %} بنجاح!');
+                console.log('تم {% trans "Save" %} ال{% trans "Supplier" %} بنجاح');
+                
+                // إعادة تحميل الصفحة ل{% trans "View" %} ال{% trans "Supplier" %} ال{% trans "New" %}
+                location.reload();
+            } else {
+                console.error('{% trans "Error" %} من الخادم:', data.message);
+                alert('{% trans "Error" %}: ' + (data.message || 'حدث {% trans "Error" %} أثناء إنشاء ال{% trans "Supplier" %}'));
+            }
+        })
+        .catch(error => {
+            console.error('{% trans "Error" %} في الشبكة:', error);
+            alert('حدث {% trans "Error" %} أثناء إنشاء ال{% trans "Supplier" %}. {% trans "Please try again" %}.');
+        });
+    }
+
+    // Auto-focus on search input when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('search');
+        if (searchInput && !searchInput.value) {
+            setTimeout(() => searchInput.focus(), 100);
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,114 @@
+{% load i18n %}
+
+<!-- مكون {% trans "Information" %} منشئ المستند -->
+<div class="document-creator-info mt-4 pt-3 border-top">
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 bg-light">
+                <div class="card-body py-2">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <small class="text-muted d-flex align-items-center">
+                                <i class="fas fa-user-tie me-2 text-primary"></i>
+                                <strong>{% trans 'أنشئ بواسطة:' %}</strong>
+                                <span class="ms-2">
+                                    {% if document.created_by.get_full_name %}
+                                        {{ document.created_by.get_full_name }}
+                                        <span class="text-muted">({{ document.created_by.username }})</span>
+                                    {% else %}
+                                        {{ document.created_by.username }}
+                                    {% endif %}
+                                </span>
+                            </small>
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <small class="text-muted d-flex align-items-center justify-content-md-end">
+                                <i class="fas fa-calendar-alt me-2 text-success"></i>
+                                <strong>{% trans 'تاريخ الإنشاء:' %}</strong>
+                                <span class="ms-2">{{ document.created_at|date:"Y/m/d H:i" }}</span>
+                            </small>
+                        </div>
+                    </div>
+                    
+                    {% if document.updated_at and document.updated_at != document.created_at %}
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <hr class="my-2">
+                            <small class="text-muted d-flex align-items-center">
+                                <i class="fas fa-edit me-2 text-warning"></i>
+                                <strong>{% trans "آخر Update:" %}</strong>
+                                <span class="ms-2">{{ document.updated_at|date:"Y/m/d H:i" }}</span>
+                            </small>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.document-creator-info {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 2px solid #e9ecef;
+}
+
+.document-creator-info .card {
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.document-creator-info .fas {
+    width: 16px;
+    text-align: center;
+}
+
+.document-creator-info small {
+    font-size: 0.875rem;
+}
+
+/* تحسينات للأجهزة المحمولة */
+@media (max-width: 768px) {
+    .document-creator-info .col-md-6 {
+        margin-bottom: 0.5rem;
+    }
+    
+    .document-creator-info .d-flex {
+        flex-wrap: wrap;
+    }
+    
+    .document-creator-info .justify-content-md-end {
+        justify-content: flex-start !important;
+    }
+}
+
+/* {% trans "Print" %} */
+@media print {
+    .document-creator-info {
+        border-top: 1px solid #000;
+        margin-top: 1rem;
+        padding-top: 0.5rem;
+    }
+    
+    .document-creator-info .card {
+        background: white !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    .document-creator-info .card-body {
+        padding: 0.5rem !important;
+    }
+    
+    .document-creator-info small {
+        font-size: 10pt !important;
+        color: #000 !important;
+    }
+    
+    .document-creator-info .fas {
+        display: none;
+    }
+}
+</style>

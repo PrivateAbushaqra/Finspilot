@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load l10n %}
+
+{% block title %}{% trans "Edit Document Sequence" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">{% trans "Edit Document Sequence" %}</h3>
+                    <div class="card-tools">
+                        <a href="{% url 'settings:document_sequences' %}" class="btn btn-sm btn-secondary">
+                            <i class="fas fa-arrow-left"></i> {% trans "Back to Document Sequences" %}
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label for="document_type">{% trans "Document Type" %}</label>
+                                    <select class="form-control" id="document_type" name="document_type" required>
+                                        {% for type_code, type_name in document_types %}
+                                            <option value="{{ type_code }}" {% if sequence.document_type == type_code %}selected{% endif %}>
+                                                {{ type_name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <small class="form-text text-muted">
+                                        {% trans "Select the type of document for this sequence" %}
+                                    </small>
+                                </div>
+                                
+                                <div class="form-group mb-3">
+                                    <label for="prefix">{% trans "Prefix" %}</label>
+                                    <input type="text" class="form-control" id="prefix" name="prefix" 
+                                           value="{{ sequence.prefix }}" 
+                                           placeholder="{% trans 'Enter prefix (e.g., SALES-)' %}" required>
+                                    <small class="form-text text-muted">
+                                        {% trans "Prefix that will appear before the number (e.g., SALES-, PURCH-)" %}
+                                    </small>
+                                </div>
+                                
+                                <div class="form-group mb-3">
+                                    <label for="current_number">{% trans "Current Number" %}</label>
+                                    <input type="number" class="form-control" id="current_number" name="current_number" 
+                                           value="{{ sequence.current_number }}" 
+                                           min="1" required>
+                                    <small class="form-text text-muted">
+                                        {% trans "The last used number. Next document will use the number after this." %}
+                                    </small>
+                                </div>
+                                
+                                <div class="form-group mb-3">
+                                    <label for="digits">{% trans "Number of Digits" %}</label>
+                                    <select class="form-control" id="digits" name="digits">
+                                        <option value="3" {% if sequence.digits == 3 %}selected{% endif %}>3 (001, 002, 003...)</option>
+                                        <option value="4" {% if sequence.digits == 4 %}selected{% endif %}>4 (0001, 0002, 0003...)</option>
+                                        <option value="5" {% if sequence.digits == 5 %}selected{% endif %}>5 (00001, 00002, 00003...)</option>
+                                        <option value="6" {% if sequence.digits == 6 %}selected{% endif %}>6 (000001, 000002, 000003...)</option>
+                                        <option value="7" {% if sequence.digits == 7 %}selected{% endif %}>7 (0000001, 0000002, 0000003...)</option>
+                                        <option value="8" {% if sequence.digits == 8 %}selected{% endif %}>8 (00000001, 00000002, 00000003...)</option>
+                                    </select>
+                                    <small class="form-text text-muted">
+                                        {% trans "Number of digits for the sequence number" %}
+                                    </small>
+                                </div>
+                                
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i>
+                                    <strong>{% trans "Preview:" %}</strong>
+                                    <span id="number_preview">{{ sequence.get_formatted_number }}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-header">
+                                        <h5>{% trans "Sequence Settings" %}</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-group mb-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="auto_increment" name="auto_increment" checked>
+                                                <label class="form-check-label" for="auto_increment">
+                                                    {% trans "Auto increment" %}
+                                                </label>
+                                            </div>
+                                            <small class="form-text text-muted">
+                                                {% trans "Automatically increase the number for each new document" %}
+                                            </small>
+                                        </div>
+                                        
+                                        <div class="form-group mb-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="reset_yearly" name="reset_yearly">
+                                                <label class="form-check-label" for="reset_yearly">
+                                                    {% trans "Reset yearly" %}
+                                                </label>
+                                            </div>
+                                            <small class="form-text text-muted">
+                                                {% trans "Reset numbering to 1 at the beginning of each year" %}
+                                            </small>
+                                        </div>
+                                        
+                                        <div class="form-group mb-3">
+                                            <label for="number_length">{% trans "Minimum Number Length" %}</label>
+                                            <select class="form-control" id="number_length" name="number_length">
+                                                <option value="1">1 (1, 2, 3...)</option>
+                                                <option value="2">2 (01, 02, 03...)</option>
+                                                <option value="3">3 (001, 002, 003...)</option>
+                                                <option value="4" selected>4 (0001, 0002, 0003...)</option>
+                                                <option value="5">5 (00001, 00002, 00003...)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> {% trans "Save Changes" %}
+                            </button>
+                            <a href="{% url 'settings:document_sequences' %}" class="btn btn-secondary ml-2">
+                                إلغاء
+                            </a>
+                            <button type="button" class="btn btn-warning ml-2" onclick="resetSequence()">
+                                <i class="fas fa-undo"></i> {% trans "Reset to 1" %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updatePreview() {
+    const prefix = document.getElementById('prefix').value;
+    const currentNumber = parseInt(document.getElementById('current_number').value) || 0;
+    const nextNumber = currentNumber + 1;
+    // {% trans "View" %} {% trans "Number" %} بدون فواصل
+    document.getElementById('next_preview').textContent = prefix + nextNumber.toString();
+}
+
+function resetSequence() {
+    if (confirm('{% trans "Are you sure you want to reset the sequence to 1? This action cannot be undone." %}')) {
+        document.getElementById('current_number').value = 0;
+        updatePreview();
+    }
+}
+
+document.getElementById('prefix').addEventListener('input', updatePreview);
+document.getElementById('current_number').addEventListener('input', updatePreview);
+
+// Initialize preview on page load
+document.addEventListener('DOMContentLoaded', updatePreview);
+</script>
+{% endblock %}

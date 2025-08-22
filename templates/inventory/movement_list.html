@@ -1,0 +1,567 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Inventory Movements" %} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .movement-container {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .movement-header {
+        background: linear-gradient(135deg, #fd7e14 0%, #e83e8c 100%);
+        color: white;
+        padding: 1.5rem;
+    }
+    
+    .movement-card {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        margin-bottom: 1rem;
+        cursor: pointer;
+    }
+    
+    .movement-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .movement-type-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    .type-in {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .type-out {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    
+    .type-transfer {
+        background-color: #cce5ff;
+        color: #0d47a1;
+    }
+    
+    .type-adjustment {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    
+    .movement-icon {
+        font-size: 1.5rem;
+        margin-right: 0.5rem;
+    }
+    
+    .stats-card {
+        transition: transform 0.3s ease;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-3px);
+    }
+    
+    .filter-section {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    /* Print Styles */
+    @media print {
+        .print-controls,
+        .btn,
+        .navbar,
+        .sidebar,
+        nav,
+        .filter-section {
+            display: none !important;
+        }
+        
+        .container-fluid {
+            margin: 0 !important;
+            padding: 0 !important;
+            max-width: 100% !important;
+        }
+        
+        .card {
+            border: 1px solid #000 !important;
+            box-shadow: none !important;
+            margin-bottom: 1rem !important;
+        }
+        
+        body {
+            font-size: 12px !important;
+            color: #000 !important;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            color: #000 !important;
+        }
+        
+        .print-table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+        }
+        
+        .print-table th,
+        .print-table td {
+            border: 1px solid #000 !important;
+            padding: 8px !important;
+            text-align: right !important;
+        }
+        
+        .print-table th {
+            background-color: #f5f5f5 !important;
+            font-weight: bold !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Header Section -->
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-exchange-alt me-2"></i>
+                    {% trans "Inventory Movements" %}
+                </h2>
+                <div class="btn-group print-controls">
+                    <button type="button" class="btn btn-outline-primary" onclick="printMovementReport()">
+                        <i class="fas fa-print me-2"></i>
+                        {% trans "Print Movement Report" %}
+                    </button>
+                    {% if request.user.user_type == 'superadmin' or request.user.is_superuser %}
+                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addMovementModal">
+                        <i class="fas fa-plus me-2"></i>
+                        {% trans "Add New Movement" %}
+                    </button>
+                    <a href="{% url 'inventory:movement_bulk_delete' %}" class="btn btn-danger">
+                        <i class="fas fa-trash-alt me-2"></i>
+                        {% trans "Delete All Movements" %}
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'inventory:list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        {% trans "Back to Inventory" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="filter-section">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="movement_type" class="form-label">{% trans "Movement Type" %}:</label>
+                        <select class="form-select" id="movement_type" name="movement_type">
+                            <option value="">{% trans "All Movements" %}</option>
+                            <option value="in">{% trans "Inbound" %}</option>
+                            <option value="out">{% trans "Outbound" %}</option>
+                            <option value="transfer">{% trans "Transfer" %}</option>
+                            <option value="adjustment">{% trans "Adjustment" %}</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="date_from" class="form-label">{% trans "From Date" %}:</label>
+                        <input type="date" class="form-control" id="date_from" name="date_from">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="date_to" class="form-label">{% trans "To Date" %}:</label>
+                        <input type="date" class="form-control" id="date_to" name="date_to">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="warehouse" class="form-label">{% trans "Warehouse" %}:</label>
+                        <select class="form-select" id="warehouse" name="warehouse">
+                            <option value="">{% trans "All Warehouses" %}</option>
+                            {% for warehouse in warehouses %}
+                            <option value="{{ warehouse.id }}">{{ warehouse.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-filter me-2"></i>
+                            {% trans "Apply Filter" %}
+                        </button>
+                        <a href="{% url 'inventory:movement_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>
+                            {% trans "Clear Filter" %}
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stats-card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">{% trans "Total Inbound" %}</h6>
+                            <h3 class="mb-0">{{ total_in|default:0|floatformat:0 }}</h3>
+                            <small>{% trans "Unit" %}</small>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-arrow-down fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stats-card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">{% trans "Total Outbound" %}</h6>
+                            <h3 class="mb-0">{{ total_out|default:0|floatformat:0 }}</h3>
+                            <small>{% trans "Unit" %}</small>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-arrow-up fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stats-card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">{% trans "Transfers" %}</h6>
+                            <h3 class="mb-0">{{ total_transfers|default:0 }}</h3>
+                            <small>{% trans "Movement" %}</small>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-exchange-alt fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stats-card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">{% trans "Today's Movements" %}</h6>
+                            <h3 class="mb-0">{{ today_movements|default:0 }}</h3>
+                            <small>{% trans "Movement" %}</small>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-calendar-day fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Movements List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="movement-container">
+                <div class="movement-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>
+                        {% trans "Inventory Movement List" %}
+                    </h5>
+                </div>
+                
+                <div class="p-3">
+                    {% if movements %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>{% trans "Type" %}</th>
+                                    <th>{% trans "Quantity" %}</th>
+                                    <th>{% trans "Warehouse" %}</th>
+                                    <th>{% trans "Date" %}</th>
+                                    <th>{% trans "Time" %}</th>
+                                    <th>{% trans "Unit Price" %}</th>
+                                    <th>{% trans "Total Cost" %}</th>
+                                    <th>{% trans "Notes" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for movement in movements %}
+                                <tr class="movement-type-{{ movement.movement_type }}">
+                                    <td>
+                                        {% if movement.movement_type == 'in' %}
+                                            <i class="fas fa-arrow-down text-success me-1"></i>
+                                            <span class="text-success fw-bold">{% trans "Inbound" %}</span>
+                                        {% elif movement.movement_type == 'out' %}
+                                            <i class="fas fa-arrow-up text-danger me-1"></i>
+                                            <span class="text-danger fw-bold">{% trans "Outbound" %}</span>
+                                        {% elif movement.movement_type == 'transfer' %}
+                                            <i class="fas fa-exchange-alt text-info me-1"></i>
+                                            <span class="text-info fw-bold">{% trans "Transfer" %}</span>
+                                        {% else %}
+                                            <i class="fas fa-tools text-warning me-1"></i>
+                                            <span class="text-warning fw-bold">{% trans "Adjustment" %}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <strong>{{ movement.quantity|floatformat:0 }}</strong>
+                                        <small class="text-muted">{% trans "Unit" %}</small>
+                                    </td>
+                                    <td>
+                                        <strong>{{ movement.warehouse.name|default:"غير محدد" }}</strong>
+                                    </td>
+                                    <td>
+                                        <strong>{{ movement.created_at|date:"Y-m-d" }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted">{{ movement.created_at|date:"H:i" }}</span>
+                                    </td>
+                                    <td>
+                                        {% if movement.unit_cost %}
+                                            <strong>{{ movement.unit_cost|floatformat:3 }}</strong>
+                                            <small class="text-muted">د.أ</small>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if movement.total_cost %}
+                                            <strong>{{ movement.total_cost|floatformat:2 }}</strong>
+                                            <small class="text-muted">د.أ</small>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if movement.notes %}
+                                            <small class="text-muted">
+                                                <i class="fas fa-comment me-1"></i>
+                                                {{ movement.notes|truncatechars:50 }}
+                                            </small>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Pagination -->
+                    {% if is_paginated %}
+                    <div class="d-flex justify-content-center mt-4">
+                        <nav aria-label="{% trans 'Page Navigation' %}">
+                            <ul class="pagination">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">{% trans "Previous" %}</a>
+                                    </li>
+                                {% endif %}
+                                {% for num in page_obj.paginator.page_range %}
+                                    {% if page_obj.number == num %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ num }}</span>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">{% trans "Next" %}</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <!-- Empty State -->
+                    <div class="text-center py-5">
+                        <i class="fas fa-exchange-alt fa-4x text-muted mb-3"></i>
+                        <h4>{% trans "No Inventory Movements" %}</h4>
+                        <p class="text-muted">{% trans "No inventory movements have been recorded yet." %}</p>
+                        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addMovementModal">
+                            <i class="fas fa-plus me-2"></i>
+                            {% trans "Add New Movement" %}
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Movement Modal -->
+<div class="modal fade" id="addMovementModal" tabindex="-1" aria-labelledby="addMovementModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addMovementModalLabel">{% trans "Add New Inventory Movement" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+            </div>
+            <form>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="product" class="form-label">{% trans "Product" %}:</label>
+                            <select class="form-select" id="product" name="product" required>
+                                <option value="">{% trans "Select Product" %}</option>
+                                <!-- سيتم ملء هذا من قاعدة البيانات -->
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="warehouse" class="form-label">{% trans "Warehouse" %}:</label>
+                            <select class="form-select" id="warehouse" name="warehouse" required>
+                                <option value="">{% trans "Select Warehouse" %}</option>
+                                <!-- سيتم ملء هذا من قاعدة البيانات -->
+                            </select>
+                        </div>
+                        <div class="col-md-6 mt-3">
+                            <label for="movement_type" class="form-label">{% trans "Movement Type" %}:</label>
+                            <select class="form-select" id="movement_type" name="movement_type" required>
+                                <option value="">{% trans "Select Movement Type" %}</option>
+                                <option value="in">{% trans "Inbound" %}</option>
+                                <option value="out">{% trans "Outbound" %}</option>
+                                <option value="transfer">{% trans "Transfer" %}</option>
+                                <option value="adjustment">{% trans "Adjustment" %}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mt-3">
+                            <label for="quantity" class="form-label">{% trans "Quantity" %}:</label>
+                            <input type="number" class="form-control" id="quantity" name="quantity" step="0.001" required>
+                        </div>
+                        <div class="col-md-6 mt-3">
+                            <label for="unit_cost" class="form-label">{% trans "Unit Cost" %}:</label>
+                            <input type="number" class="form-control" id="unit_cost" name="unit_cost" step="0.01" required>
+                        </div>
+                        <div class="col-md-6 mt-3">
+                            <label for="date" class="form-label">{% trans "Date" %}:</label>
+                            <input type="date" class="form-control" id="date" name="date" required>
+                        </div>
+                        <div class="col-12 mt-3">
+                            <label for="notes" class="form-label">{% trans "Notes" %}:</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save me-2"></i>
+                        {% trans "Save Movement" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit filter form on change
+    document.querySelectorAll('.filter-section select, .filter-section input[type="date"]').forEach(element => {
+        element.addEventListener('change', function() {
+            // Auto-submit functionality can be added here if needed
+        });
+    });
+    
+    // Set today's date as default
+    const dateInput = document.getElementById('date');
+    if (dateInput) {
+        dateInput.valueAsDate = new Date();
+    }
+});
+
+function printMovementReport() {
+    let movementHTML = `
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <h1>{% trans "Inventory Movement Report" %}</h1>
+            <p>{% trans "Report Date" %}: ${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}</p>
+        </div>
+        <table class="print-table">
+            <thead>
+                <tr>
+                    <th>{% trans "Movement Number" %}</th>
+                    <th>{% trans "Date" %}</th>
+                    <th>{% trans "Product" %}</th>
+                    <th>{% trans "Warehouse" %}</th>
+                    <th>{% trans "Movement Type" %}</th>
+                    <th>{% trans "Quantity" %}</th>
+                    <th>{% trans "Total Cost" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    // Get movement data from the page
+    document.querySelectorAll('.movement-card').forEach((card) => {
+        const movementNumber = card.querySelector('.fw-bold').textContent;
+        const date = card.querySelector('.text-muted').textContent;
+        const product = card.querySelectorAll('.fw-bold')[1].textContent;
+        const warehouse = card.querySelector('div:contains("المستودع:")').nextElementSibling.textContent;
+        const type = card.querySelector('.movement-type-badge').textContent;
+        const quantity = card.querySelectorAll('.fw-bold')[2].textContent;
+        const cost = card.querySelector('.text-success').textContent;
+        
+        movementHTML += `
+            <tr>
+                <td>${movementNumber}</td>
+                <td>${date}</td>
+                <td>${product}</td>
+                <td>${warehouse}</td>
+                <td>${type}</td>
+                <td>${quantity}</td>
+                <td>${cost}</td>
+            </tr>
+        `;
+    });
+    
+    movementHTML += `
+            </tbody>
+        </table>
+    `;
+    
+    // Create print div
+    const printDiv = document.createElement('div');
+    printDiv.style.display = 'none';
+    printDiv.innerHTML = movementHTML;
+    document.body.appendChild(printDiv);
+    
+    // Print
+    window.print();
+    
+    // Clean up
+    document.body.removeChild(printDiv);
+}
+</script>
+{% endblock %}

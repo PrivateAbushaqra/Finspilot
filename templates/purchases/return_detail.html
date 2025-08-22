@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+{% load currency_tags %}
+
+
+
+{% block title %}{% trans "Purchase Return Details" %} - {{ return_invoice.return_number }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-undo me-2"></i>
+                        {% trans "Details" %} مردود المشتريات
+                    </h3>
+                    <div>
+                        <a href="{% url 'purchases:return_edit' return_invoice.pk %}" class="btn btn-outline-primary">
+                            <i class="fas fa-edit me-2"></i>
+                            {% trans "Edit" %}
+                        </a>
+                        <a href="{% url 'purchases:return_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            العودة
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <!-- Return Information -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">{% trans "Information" %} المردود</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row mb-2">
+                                        <div class="col-5"><strong>رقم المردود:</strong></div>
+                                        <div class="col-7">{{ return_invoice.return_number }}</div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-5"><strong>تاريخ المردود:</strong></div>
+                                        <div class="col-7">{{ return_invoice.date }}</div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-5"><strong>نوع المردود:</strong></div>
+                                        <div class="col-7">
+                                            {% if return_invoice.return_type == 'full' %}
+                                                <span class="badge bg-danger">مردود الكامل</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">مردود {% trans "Partial" %}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-5"><strong>سبب المردود:</strong></div>
+                                        <div class="col-7">
+                                            {% if return_invoice.return_reason == 'defective' %}منتج معيب
+                                            {% elif return_invoice.return_reason == 'wrong_item' %}صنف خاطئ
+                                            {% elif return_invoice.return_reason == 'excess' %}فائض عن الحاجة
+                                            {% elif return_invoice.return_reason == 'expired' %}منتهي الصلاحية
+                                            {% elif return_invoice.return_reason == 'damaged' %}تالف أثناء النقل
+                                            {% else %}أخرى
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-5"><strong>أنشئ بواسطة:</strong></div>
+                                        <div class="col-7">{{ return_invoice.created_by.get_full_name|default:return_invoice.created_by.username }}</div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-5"><strong>تاريخ الإنشاء:</strong></div>
+                                        <div class="col-7">{{ return_invoice.created_at|date:"Y-m-d H:i" }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">{% trans "Information" %} ال{% trans "Invoice" %} الأصلية</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row mb-2">
+                                        <div class="col-5"><strong>رقم ال{% trans "Invoice" %}:</strong></div>
+                                        <div class="col-7">
+                                            <a href="{% url 'purchases:invoice_detail' return_invoice.original_invoice.pk %}" 
+                                               class="text-decoration-none">
+                                                {{ return_invoice.original_invoice.supplier_invoice_number }}
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-5"><strong>المورد:</strong></div>
+                                        <div class="col-7">{{ return_invoice.supplier.name }}</div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-5"><strong>تاريخ ال{% trans "Invoice" %}:</strong></div>
+                                        <div class="col-7">{{ return_invoice.original_invoice.date }}</div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-5"><strong>إجمالي ال{% trans "Invoice" %}:</strong></div>
+                                        <div class="col-7">{{ return_invoice.original_invoice.total_amount|currency_format }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notes -->
+                    {% if return_invoice.notes %}
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">ملاحظات</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p class="mb-0">{{ return_invoice.notes|linebreaks }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Return Items -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">عناصر المردود</h5>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped mb-0">
+                                            <thead class="table-dark">
+                                                <tr>
+                                                    <th>رقم المنتج</th>
+                                                    <th>اسم المنتج</th>
+                                                    <th>{% trans "Quantity" %} الأصلية</th>
+                                                    <th>{% trans "Quantity" %} المرتجعة</th>
+                                                    <th>سعر الوحدة</th>
+                                                    <th>{% trans "Total" %} (بدون ضريبة)</th>
+                                                    <th>نسبة الضريبة</th>
+                                                    <th>مبلغ الضريبة</th>
+                                                    <th>الإجمالي</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for item in items %}
+                                                <tr>
+                                                    <td>{{ item.product.code }}</td>
+                                                    <td>{{ item.product.name }}</td>
+                                                    <td>{{ item.original_item.quantity }}</td>
+                                                    <td class="fw-bold text-danger">{{ item.returned_quantity }}</td>
+                                                    <td>{{ item.unit_price|currency_format }}</td>
+                                                    <td>{{ item.subtotal|currency_format }}</td>
+                                                    <td>{{ item.tax_rate }}%</td>
+                                                    <td>{{ item.tax_amount|currency_format }}</td>
+                                                    <td class="fw-bold">{{ item.total_amount|currency_format }}</td>
+                                                </tr>
+                                                {% empty %}
+                                                <tr>
+                                                    <td colspan="9" class="text-center text-muted py-4">
+                                                        لا توجد عناصر في هذا المردود
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Totals -->
+                    <div class="row mt-4">
+                        <div class="col-md-8"></div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>{% trans "Total" %} الفرعي:</span>
+                                        <span>{{ return_invoice.subtotal|currency_format }}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>الضريبة:</span>
+                                        <span>{{ return_invoice.tax_amount|currency_format }}</span>
+                                    </div>
+                                    <hr>
+                                    <div class="d-flex justify-content-between fw-bold fs-5">
+                                        <span>الإجمالي:</span>
+                                        <span class="text-danger">{{ return_invoice.total_amount|currency_format }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-footer">
+                    <div class="row">
+                        <div class="col-12 text-end">
+                            <button onclick="window.print()" class="btn btn-outline-info">
+                                <i class="fas fa-print me-2"></i>
+                                {% trans "Print" %}
+                            </button>
+                            <a href="{% url 'purchases:return_edit' return_invoice.pk %}" class="btn btn-primary">
+                                <i class="fas fa-edit me-2"></i>
+                                {% trans "Edit" %} المردود
+                            </a>
+                            <a href="{% url 'purchases:return_delete' return_invoice.pk %}" class="btn btn-danger">
+                                <i class="fas fa-trash me-2"></i>
+                                {% trans "Delete" %} المردود
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Document Creator Information -->
+{% include 'partials/document_creator_info.html' with document=return_invoice %}
+
+<style>
+@media print {
+    .card-header .btn,
+    .card-footer,
+    .sidebar,
+    .navbar {
+        display: none !important;
+    }
+    
+    .container-fluid {
+        margin: 0;
+        padding: 0;
+        max-width: none;
+    }
+    
+    .card {
+        border: none;
+        box-shadow: none;
+    }
+}
+</style>
+{% endblock %}

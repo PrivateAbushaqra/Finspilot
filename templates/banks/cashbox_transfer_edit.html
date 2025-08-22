@@ -1,0 +1,509 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load currency_tags %}
+{% load l10n %}
+
+{% block title %}{% trans "Edit" %} ال{% trans "Transfer" %} {{ transfer.transfer_number }} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .transfer-form-container {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .transfer-header {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 1.5rem;
+    }
+    
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #28a745;
+        box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+    }
+    
+    .btn-save {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+    }
+    
+    .account-info {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 0.5rem;
+    }
+    
+    .balance-warning {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        color: #856404;
+        padding: 0.75rem;
+        border-radius: 5px;
+        margin-top: 1rem;
+    }
+    
+    .required-field::after {
+        content: " *";
+        color: #dc3545;
+    }
+    
+    .check-section {
+        background: #e7f3ff;
+        border: 1px solid #b8daff;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0 text-gray-800">
+                        <i class="fas fa-edit text-success me-2"></i>
+                        {% trans "Edit" %} ال{% trans "Transfer" %} {{ transfer.transfer_number }}
+                    </h1>
+                    <nav aria-label="breadcrumb" class="mt-2">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">{% trans "Dashboard" %}</a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'banks:transfer_list' %}">التحوي{% trans "No" %}ت</a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'banks:cashbox_transfer_detail' transfer.id %}">{{ transfer.transfer_number }}</a></li>
+                            <li class="breadcrumb-item active">{% trans "Edit" %}</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div>
+                    <a href="{% url 'banks:cashbox_transfer_detail' transfer.id %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-right me-2"></i>
+                        إلغاء التعديل
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Transfer Edit Form -->
+            <div class="transfer-form-container">
+                <div class="transfer-header">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h4 class="mb-0">
+                                <i class="fas fa-edit me-2"></i>
+                                {% trans "Edit" %} بيانات ال{% trans "Transfer" %} بين البنك والصندوق
+                            </h4>
+                            <p class="mb-0 mt-2 opacity-75">
+                                <i class="fas fa-info-circle me-1"></i>
+                                يرجى مراجعة جميع البيانات قبل ال{% trans "Save" %}
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <span class="badge {% if transfer.transfer_type == 'bank_to_cashbox' %}bg-success{% else %}bg-warning{% endif %} fs-6 p-2">
+                                <i class="fas fa-exchange-alt me-1"></i>
+                                {% if transfer.transfer_type == 'bank_to_cashbox' %}بنك → صندوق{% else %}صندوق → بنك{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-4">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post" id="transferEditForm">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <!-- {% trans "Date" %} -->
+                            <div class="col-md-6 mb-3">
+                                <label for="date" class="form-label required-field">تاريخ ال{% trans "Transfer" %}</label>
+                                <input type="date" class="form-control" id="date" name="date" 
+                                       value="{{ transfer.date|date:'Y-m-d' }}" required>
+                            </div>
+                            
+                            <!-- رقم ال{% trans "Transfer" %} (لل{% trans "View" %} فقط) -->
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">رقم ال{% trans "Transfer" %}</label>
+                                <input type="text" class="form-control" value="{{ transfer.transfer_number }}" readonly>
+                            </div>
+                        </div>
+                        
+                        <!-- نوع ال{% trans "Transfer" %} -->
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="transfer_type" class="form-label required-field">نوع ال{% trans "Transfer" %}</label>
+                                <select class="form-select" id="transfer_type" name="transfer_type" required onchange="updateTransferType()">
+                                    <option value="bank_to_cashbox" {% if transfer.transfer_type == 'bank_to_cashbox' %}selected{% endif %}>
+                                        من البنك إلى الصندوق
+                                    </option>
+                                    <option value="cashbox_to_bank" {% if transfer.transfer_type == 'cashbox_to_bank' %}selected{% endif %}>
+                                        من الصندوق إلى البنك
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <!-- البنك -->
+                            <div class="col-md-6 mb-3">
+                                <label for="bank" class="form-label required-field">البنك</label>
+                                <select class="form-select" id="bank" name="bank" required onchange="updateBankInfo()">
+                                    <option value="">اختر البنك...</option>
+                                    {% for bank in banks %}
+                                        <option value="{{ bank.id }}" 
+                                                data-balance="{{ bank.balance|default_if_none:0|unlocalize }}"
+                                                data-currency="{{ bank.currency }}"
+                                                data-bank-name="{{ bank.bank_name }}"
+                                                {% if transfer.transfer_type == 'bank_to_cashbox' and bank.id == transfer.from_bank.id %}selected{% endif %}
+                                                {% if transfer.transfer_type == 'cashbox_to_bank' and bank.id == transfer.to_bank.id %}selected{% endif %}>
+                                            {{ bank.name }} - {{ bank.bank_name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <div id="bankInfo" class="account-info">
+                                    {% if transfer.transfer_type == 'bank_to_cashbox' %}
+                                        <small class="text-muted">
+                                            <i class="fas fa-university me-1"></i>
+                                            {{ transfer.from_bank.bank_name }}
+                                            <br>
+                                            <i class="fas fa-wallet me-1"></i>
+                                            ال{% trans "Balance" %} الحالي: <span class="fw-bold">{{ transfer.from_bank.balance|floatformat:3 }} {{ transfer.from_bank.currency }}</span>
+                                        </small>
+                                    {% else %}
+                                        <small class="text-muted">
+                                            <i class="fas fa-university me-1"></i>
+                                            {{ transfer.to_bank.bank_name }}
+                                            <br>
+                                            <i class="fas fa-wallet me-1"></i>
+                                            ال{% trans "Balance" %} الحالي: <span class="fw-bold">{{ transfer.to_bank.balance|floatformat:3 }} {{ transfer.to_bank.currency }}</span>
+                                        </small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- الصندوق -->
+                            <div class="col-md-6 mb-3">
+                                <label for="cashbox" class="form-label required-field">الصندوق</label>
+                                <select class="form-select" id="cashbox" name="cashbox" required onchange="updateCashboxInfo()">
+                                    <option value="">اختر الصندوق...</option>
+                                    {% for cashbox in cashboxes %}
+                                        <option value="{{ cashbox.id }}" 
+                                                data-balance="{{ cashbox.balance|default_if_none:0|unlocalize }}"
+                                                data-currency="{{ cashbox.currency }}"
+                                                {% if transfer.transfer_type == 'bank_to_cashbox' and cashbox.id == transfer.to_cashbox.id %}selected{% endif %}
+                                                {% if transfer.transfer_type == 'cashbox_to_bank' and cashbox.id == transfer.from_cashbox.id %}selected{% endif %}>
+                                            {{ cashbox.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <div id="cashboxInfo" class="account-info">
+                                    {% if transfer.transfer_type == 'bank_to_cashbox' %}
+                                        <small class="text-muted">
+                                            <i class="fas fa-cash-register me-1"></i>
+                                            صندوق نقدي
+                                            <br>
+                                            <i class="fas fa-wallet me-1"></i>
+                                            ال{% trans "Balance" %} الحالي: <span class="fw-bold">{{ transfer.to_cashbox.balance|floatformat:3 }} {% get_currency_symbol %}</span>
+                                        </small>
+                                    {% else %}
+                                        <small class="text-muted">
+                                            <i class="fas fa-cash-register me-1"></i>
+                                            صندوق نقدي
+                                            <br>
+                                            <i class="fas fa-wallet me-1"></i>
+                                            ال{% trans "Balance" %} الحالي: <span class="fw-bold">{{ transfer.from_cashbox.balance|floatformat:3 }} {% get_currency_symbol %}</span>
+                                        </small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <!-- مبلغ ال{% trans "Transfer" %} -->
+                            <div class="col-md-4 mb-3">
+                                <label for="amount" class="form-label required-field">مبلغ ال{% trans "Transfer" %}</label>
+                                <input type="number" class="form-control" id="amount" name="amount" 
+                                       step="0.001" min="0.001" value="{{ transfer.amount }}" 
+                                       required onchange="calculateTotal()">
+                            </div>
+                            
+                            <!-- الرسوم -->
+                            <div class="col-md-4 mb-3">
+                                <label for="fees" class="form-label">الرسوم</label>
+                                <input type="number" class="form-control" id="fees" name="fees" 
+                                       step="0.001" min="0" value="{{ transfer.fees|default:0 }}" 
+                                       onchange="calculateTotal()">
+                            </div>
+                            
+                            <!-- سعر الصرف -->
+                            <div class="col-md-4 mb-3">
+                                <label for="exchange_rate" class="form-label">سعر الصرف</label>
+                                <input type="number" class="form-control" id="exchange_rate" name="exchange_rate" 
+                                       step="0.0001" min="0.0001" value="{{ transfer.exchange_rate|default:1 }}">
+                            </div>
+                        </div>
+                        
+                        <!-- بيانات الشيك البنكي -->
+                        <div class="check-section">
+                            <h6 class="mb-3">
+                                <i class="fas fa-money-check text-primary me-2"></i>
+                                بيانات الشيك البنكي
+                            </h6>
+                            
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="check_number" class="form-label required-field">رقم الشيك</label>
+                                    <input type="text" class="form-control" id="check_number" name="check_number" 
+                                           value="{{ transfer.check_number }}" required>
+                                </div>
+                                
+                                <div class="col-md-4 mb-3">
+                                    <label for="check_date" class="form-label required-field">تاريخ الشيك</label>
+                                    <input type="date" class="form-control" id="check_date" name="check_date" 
+                                           value="{{ transfer.check_date|date:'Y-m-d' }}" required>
+                                </div>
+                                
+                                <div class="col-md-4 mb-3">
+                                    <label for="check_bank_name" class="form-label required-field">اسم البنك</label>
+                                    <input type="text" class="form-control" id="check_bank_name" name="check_bank_name" 
+                                           value="{{ transfer.check_bank_name }}" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- إجمالي {% trans "Amount" %} -->
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <div class="balance-warning" id="totalAmount">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span><i class="fas fa-calculator me-2"></i>إجمالي {% trans "Amount" %} المطلوب:</span>
+                                        <strong id="totalAmountValue">{{ transfer.amount|add:transfer.fees|floatformat:3 }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- البيان -->
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label for="description" class="form-label">البيان</label>
+                                <textarea class="form-control" id="description" name="description" 
+                                          rows="3" placeholder="وصف اختياري لل{% trans "Transfer" %}...">{{ transfer.description }}</textarea>
+                            </div>
+                        </div>
+                        
+                        <!-- أزرار العمل -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-end gap-2">
+                                    <a href="{% url 'banks:cashbox_transfer_detail' transfer.id %}" class="btn btn-secondary">
+                                        <i class="fas fa-times me-2"></i>
+                                        إلغاء
+                                    </a>
+                                    <button type="submit" class="btn btn-save text-white">
+                                        <i class="fas fa-save me-2"></i>
+                                        {% trans "Save" %} التعديلات
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateTransferType() {
+    // إعادة {% trans "Select" %} البيانات بناءً على نوع ال{% trans "Transfer" %}
+    updateBankInfo();
+    updateCashboxInfo();
+    calculateTotal();
+}
+
+function updateBankInfo() {
+    const bankSelect = document.getElementById('bank');
+    const bankInfoDiv = document.getElementById('bankInfo');
+    
+    if (bankSelect.value) {
+        const option = bankSelect.options[bankSelect.selectedIndex];
+        const balance = option.dataset.balance;
+        const currency = option.dataset.currency;
+        const bankName = option.dataset.bankName;
+        
+        let formattedBalance = '0.000';
+        if (balance && balance !== 'None' && balance !== 'null' && !isNaN(parseFloat(balance))) {
+            formattedBalance = parseFloat(balance).toFixed(3);
+        }
+        
+        bankInfoDiv.innerHTML = `
+            <small class="text-muted">
+                <i class="fas fa-university me-1"></i>
+                ${bankName}
+                <br>
+                <i class="fas fa-wallet me-1"></i>
+                ال{% trans "Balance" %} الحالي: <span class="fw-bold">${formattedBalance} ${currency || 'JOD'}</span>
+            </small>
+        `;
+        bankInfoDiv.style.display = 'block';
+    } else {
+        bankInfoDiv.style.display = 'none';
+    }
+    
+    calculateTotal();
+}
+
+function updateCashboxInfo() {
+    const cashboxSelect = document.getElementById('cashbox');
+    const cashboxInfoDiv = document.getElementById('cashboxInfo');
+    
+    if (cashboxSelect.value) {
+        const option = cashboxSelect.options[cashboxSelect.selectedIndex];
+        const balance = option.dataset.balance;
+        const currency = option.dataset.currency;
+        
+        let formattedBalance = '0.000';
+        if (balance && balance !== 'None' && balance !== 'null' && !isNaN(parseFloat(balance))) {
+            formattedBalance = parseFloat(balance).toFixed(3);
+        }
+        
+        cashboxInfoDiv.innerHTML = `
+            <small class="text-muted">
+                <i class="fas fa-cash-register me-1"></i>
+                صندوق نقدي
+                <br>
+                <i class="fas fa-wallet me-1"></i>
+                ال{% trans "Balance" %} الحالي: <span class="fw-bold">${formattedBalance} ${currency || 'JOD'}</span>
+            </small>
+        `;
+        cashboxInfoDiv.style.display = 'block';
+    } else {
+        cashboxInfoDiv.style.display = 'none';
+    }
+    
+    calculateTotal();
+}
+
+function calculateTotal() {
+    const amount = parseFloat(document.getElementById('amount').value) || 0;
+    const fees = parseFloat(document.getElementById('fees').value) || 0;
+    const total = amount + fees;
+    
+    document.getElementById('totalAmountValue').textContent = total.toFixed(3);
+    
+    // التحقق من كفاية ال{% trans "Balance" %}
+    const transferType = document.getElementById('transfer_type').value;
+    const totalDiv = document.getElementById('totalAmount');
+    
+    let sourceBalance = 0;
+    let sourceSelect, sourceOption;
+    
+    if (transferType === 'bank_to_cashbox') {
+        sourceSelect = document.getElementById('bank');
+    } else {
+        sourceSelect = document.getElementById('cashbox');
+    }
+    
+    if (sourceSelect && sourceSelect.value) {
+        sourceOption = sourceSelect.options[sourceSelect.selectedIndex];
+        sourceBalance = parseFloat(sourceOption.dataset.balance);
+        
+        if (total > sourceBalance) {
+            totalDiv.className = 'alert alert-danger';
+            totalDiv.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-exclamation-triangle me-2"></i>{% trans "Warning" %}: {% trans "Amount" %} المطلوب أكبر من ال{% trans "Balance" %} ال{% trans "Available" %}!</span>
+                    <strong>${total.toFixed(3)}</strong>
+                </div>
+            `;
+        } else {
+            totalDiv.className = 'balance-warning';
+            totalDiv.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-calculator me-2"></i>إجمالي {% trans "Amount" %} المطلوب:</span>
+                    <strong>${total.toFixed(3)}</strong>
+                </div>
+            `;
+        }
+    }
+}
+
+// التحقق من صحة البيانات عند الإرسال
+document.getElementById('transferEditForm').addEventListener('submit', function(e) {
+    const bankId = document.getElementById('bank').value;
+    const cashboxId = document.getElementById('cashbox').value;
+    const transferType = document.getElementById('transfer_type').value;
+    
+    if (!bankId || !cashboxId) {
+        e.preventDefault();
+        alert('يجب اختيار البنك والصندوق!');
+        return false;
+    }
+    
+    // التحقق من كفاية ال{% trans "Balance" %}
+    const amount = parseFloat(document.getElementById('amount').value) || 0;
+    const fees = parseFloat(document.getElementById('fees').value) || 0;
+    const total = amount + fees;
+    
+    let sourceSelect;
+    if (transferType === 'bank_to_cashbox') {
+        sourceSelect = document.getElementById('bank');
+    } else {
+        sourceSelect = document.getElementById('cashbox');
+    }
+    
+    if (sourceSelect && sourceSelect.value) {
+        const option = sourceSelect.options[sourceSelect.selectedIndex];
+        const balance = parseFloat(option.dataset.balance);
+        
+        if (total > balance) {
+            e.preventDefault();
+            alert('ال{% trans "Balance" %} غير كافي في المصدر!');
+            return false;
+        }
+    }
+    
+    // التحقق من بيانات الشيك
+    const checkNumber = document.getElementById('check_number').value.trim();
+    const checkDate = document.getElementById('check_date').value;
+    const checkBankName = document.getElementById('check_bank_name').value.trim();
+    
+    if (!checkNumber || !checkDate || !checkBankName) {
+        e.preventDefault();
+        alert('يجب إدخال بيانات الشيك البنكي الكاملة!');
+        return false;
+    }
+});
+
+// تهيئة البيانات عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', function() {
+    updateBankInfo();
+    updateCashboxInfo();
+    calculateTotal();
+});
+</script>
+{% endblock %}

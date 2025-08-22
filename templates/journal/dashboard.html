@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load humanize %}
+
+{% block title %}{% trans "القيود المحاسبية" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                <h1 class="h3 mb-0 text-gray-800">{% trans "لوحة تحكم القيود المحاسبية" %}</h1>
+            </div>
+        </div>
+    </div>
+
+    <!-- {% trans "Statistics" %} سريعة -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                {% trans "إجمالي القيود" %}
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_entries|intcomma }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-book fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                {% trans "عدد الحسابات" %}
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_accounts|intcomma }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-list fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                {% trans "الأصول" %}
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ account_types_count.asset|intcomma }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-building fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                {% trans "المطلوبات" %}
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ account_types_count.liability|intcomma }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-credit-card fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- روابط سريعة -->
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">{% trans "إجراءات سريعة" %}</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <a href="{% url 'journal:entry_create' %}" class="btn btn-primary btn-block">
+                                <i class="fas fa-plus"></i> {% trans "قيد New" %}
+                            </a>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <a href="{% url 'journal:account_create' %}" class="btn btn-success btn-block">
+                                <i class="fas fa-plus"></i> {% trans "حساب New" %}
+                            </a>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <a href="{% url 'journal:entry_list' %}" class="btn btn-info btn-block">
+                                <i class="fas fa-list"></i> {% trans "القيود" %}
+                            </a>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <a href="{% url 'journal:account_list' %}" class="btn btn-warning btn-block">
+                                <i class="fas fa-list"></i> {% trans "الحسابات" %}
+                            </a>
+                        </div>
+                        <div class="col-12">
+                            <a href="{% url 'journal:trial_balance' %}" class="btn btn-secondary btn-block">
+                                <i class="fas fa-balance-scale"></i> {% trans "ميزان المراجعة" %}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">{% trans "آخر القيود" %}</h6>
+                </div>
+                <div class="card-body">
+                    {% if recent_entries %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>{% trans "رقم القيد" %}</th>
+                                        <th>{% trans "Date" %}</th>
+                                        <th>{% trans "Amount" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for entry_data in recent_entries %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'journal:entry_detail' entry_data.entry.pk %}">
+                                                {{ entry_data.entry.entry_number }}
+                                            </a>
+                                        </td>
+                                        <td>{{ entry_data.entry.entry_date }}</td>
+                                        <td>{{ entry_data.entry.total_amount|floatformat:3|intcomma }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="text-center mt-3">
+                            <a href="{% url 'journal:entry_list' %}" class="btn btn-sm btn-outline-primary">
+                                {% trans "View جميع القيود" %}
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="text-center text-muted">
+                            <i class="fas fa-book fa-3x mb-3"></i>
+                            <p>{% trans "لا توجد قيود محاسبية حتى الآن" %}</p>
+                            <a href="{% url 'journal:entry_create' %}" class="btn btn-primary">
+                                {% trans "إنشاء أول قيد" %}
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

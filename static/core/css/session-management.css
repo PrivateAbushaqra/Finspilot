@@ -1,0 +1,209 @@
+/* Session Management CSS Enhancements */
+
+/* نافذة تحذير انتهاء الجلسة */
+.session-warning-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.session-warning-backdrop {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.session-warning-dialog {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideIn 0.3s ease-out;
+    border: 2px solid #ffc107;
+}
+
+.session-warning-header {
+    padding: 25px 20px 15px 20px;
+    text-align: center;
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    border-radius: 10px 10px 0 0;
+    border-bottom: 1px solid #ffc107;
+}
+
+.session-warning-header i {
+    font-size: 3em;
+    margin-bottom: 15px;
+    color: #e67e22;
+    animation: pulse 2s infinite;
+}
+
+.session-warning-header h4 {
+    margin: 0;
+    color: #d35400;
+    font-weight: 600;
+    font-size: 1.3em;
+}
+
+.session-warning-body {
+    padding: 25px;
+    text-align: center;
+    line-height: 1.6;
+}
+
+.session-warning-body p {
+    margin-bottom: 15px;
+    color: #2c3e50;
+    font-size: 1.05em;
+}
+
+.session-warning-body p:first-child {
+    font-weight: 600;
+    color: #e67e22;
+}
+
+.session-warning-footer {
+    padding: 0 25px 25px 25px;
+    text-align: center;
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.session-warning-footer .btn {
+    min-width: 140px;
+    padding: 12px 20px;
+    font-size: 1rem;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.session-warning-footer .btn-primary {
+    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+}
+
+.session-warning-footer .btn-primary:hover {
+    background: linear-gradient(135deg, #2980b9 0%, #21618c 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+}
+
+.session-warning-footer .btn-secondary {
+    background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(149, 165, 166, 0.3);
+}
+
+.session-warning-footer .btn-secondary:hover {
+    background: linear-gradient(135deg, #7f8c8d 0%, #6c7b7d 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(149, 165, 166, 0.4);
+}
+
+/* إعدادات الأمان في صفحة إعدادات الشركة */
+.security-settings-card {
+    border: 2px solid #f39c12 !important;
+    box-shadow: 0 4px 15px rgba(243, 156, 18, 0.1) !important;
+}
+
+.security-settings-card .card-header {
+    background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%) !important;
+    color: white !important;
+    border-bottom: 1px solid #d68910 !important;
+}
+
+.security-settings-card .card-header h5 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.security-settings-card .card-header small {
+    opacity: 0.9;
+    font-style: italic;
+}
+
+.security-settings-card .alert-info {
+    background: linear-gradient(135deg, #e8f4fd 0%, #d1ecf1 100%);
+    border: 1px solid #bee5eb;
+    color: #0c5460;
+}
+
+/* رسوم متحركة */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* التوافق مع الشاشات الصغيرة */
+@media (max-width: 600px) {
+    .session-warning-dialog {
+        margin: 20px;
+        width: calc(100% - 40px);
+    }
+    
+    .session-warning-footer {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .session-warning-footer .btn {
+        width: 100%;
+        max-width: 300px;
+    }
+}
+
+/* للطباعة - إخفاء نافذة التحذير */
+@media print {
+    .session-warning-modal {
+        display: none !important;
+    }
+}

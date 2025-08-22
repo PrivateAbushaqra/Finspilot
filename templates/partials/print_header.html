@@ -1,0 +1,119 @@
+{% load i18n static %}
+{% load custom_tags %}
+<!-- تصميم رأس الطباعة للشركة -->
+<div class="print-header" style="display: none;">
+    <div class="company-header" style="text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 15px;">
+        <!-- شعار الشركة للطباعة -->
+        {% if settings_company.logo %}
+        <div class="company-logo-print" style="margin-bottom: 10px;">
+            <img src="{{ settings_company.logo.url }}" alt="{% trans 'Company Logo' %}" 
+                 style="max-height: 80px; max-width: 200px; height: auto; width: auto;">
+        </div>
+        {% endif %}
+        
+        <!-- معلومات الشركة -->
+        <div class="company-info" style="margin-top: 10px;">
+            <h2 style="margin: 5px 0; font-size: 24px; font-weight: bold; color: #333;">
+                {{ settings_company.company_name|default:"FinsPilot" }}
+            </h2>
+            {% if settings_company.company_name_en %}
+            <h3 style="margin: 5px 0; font-size: 18px; color: #666;">
+                {{ settings_company.company_name_en }}
+            </h3>
+            {% endif %}
+            
+            <div class="company-details" style="font-size: 12px; color: #555; margin-top: 10px;">
+                {% if settings_company.address %}
+                <div>{% trans "Address" %}: {{ settings_company.address }}</div>
+                {% endif %}
+                
+                <div style="display: flex; justify-content: center; gap: 20px; margin-top: 5px;">
+                    {% if settings_company.phone %}
+                    <span>{% trans "Phone" %}: {{ settings_company.phone }}</span>
+                    {% endif %}
+                    {% if settings_company.email %}
+                    <span>{% trans "Email" %}: {{ settings_company.email }}</span>
+                    {% endif %}
+                </div>
+                
+                <div style="display: flex; justify-content: center; gap: 20px; margin-top: 5px;">
+                    {% if settings_company.tax_number %}
+                    <span>{% trans "Tax Number" %}: {{ settings_company.tax_number }}</span>
+                    {% endif %}
+                    {% if settings_company.commercial_registration %}
+                    <span>{% trans "Commercial Registration" %}: {{ settings_company.commercial_registration }}</span>
+                    {% endif %}
+                </div>
+                
+                {% if settings_company.website %}
+                <div style="margin-top: 5px;">{% trans "Website" %}: {{ settings_company.website }}</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    .print-header {
+        display: block !important;
+        page-break-inside: avoid;
+    }
+    
+    .company-header {
+        text-align: center !important;
+        margin-bottom: 20px !important;
+        border-bottom: 2px solid #333 !important;
+        padding-bottom: 15px !important;
+    }
+    
+    .company-logo-print img {
+        max-height: 80px !important;
+        max-width: 200px !important;
+        height: auto !important;
+        width: auto !important;
+        margin-bottom: 10px !important;
+    }
+    
+    .company-info h2 {
+        margin: 5px 0 !important;
+        font-size: 24px !important;
+        font-weight: bold !important;
+        color: #333 !important;
+    }
+    
+    .company-info h3 {
+        margin: 5px 0 !important;
+        font-size: 18px !important;
+        color: #666 !important;
+    }
+    
+    .company-details {
+        font-size: 12px !important;
+        color: #555 !important;
+        margin-top: 10px !important;
+    }
+    
+    .company-details div {
+        margin-bottom: 3px !important;
+    }
+    
+    /* إخفاء عناصر الواجهة غير المطلوبة في الطباعة */
+    .navbar, .sidebar, .footer, .btn, .pagination, 
+    .card-header .btn, .d-print-none {
+        display: none !important;
+    }
+    
+    /* تحسين عرض المحتوى في الطباعة */
+    .container-fluid {
+        margin: 0 !important;
+        padding: 0 !important;
+        max-width: none !important;
+    }
+    
+    .main-content {
+        margin: 0 !important;
+        padding: 20px !important;
+    }
+}
+</style>

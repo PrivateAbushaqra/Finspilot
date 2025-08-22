@@ -1,0 +1,1175 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Backup & Restore" %} - Finspilot{% endblock %}
+
+{% block extra_css %}
+<style>
+.btn {
+    transition: all 0.2s ease;
+    cursor: pointer !important;
+}
+.btn:hover {
+    transform: translateY(-1px);
+}
+.btn:disabled {
+    pointer-events: none;
+}
+
+.restore-btn, .delete-btn, #createBackupBtn {
+    cursor: pointer !important;
+    user-select: none;
+    position: relative;
+}
+
+.restore-btn:hover, .delete-btn:hover, #createBackupBtn:hover {
+    opacity: 0.9;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.btn[data-loading="true"] {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.btn:active {
+    transform: translateY(1px);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.btn-sm {
+    min-width: 40px;
+    min-height: 32px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">
+                        <i class="fas fa-database me-2"></i>
+                        {% trans "Backup & Restore System" %}
+                    </h3>
+                    <div class="text-end small">
+                        <div>{% trans "Total Backups" %}: <strong id="backupCount">{{ backups|length }}</strong></div>
+                        {% if latest_backup %}
+                        <div>{% trans "Latest Backup" %}: <strong>{{ latest_backup.created_at|date:"Y-m-d H:i" }}</strong></div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- إنشاء نسخة احتياطية -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card border-success">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-plus-circle me-2"></i>
+                                        {% trans "Create New Backup" %}
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <!-- نماذج منفصلة لكل تنسيق -->
+                                    <div class="alert alert-info mb-3">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        <strong>{% trans "Choose backup format" %}:</strong>
+                                        {% trans "Click once on your preferred format. Each backup creates one file." %}
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <button type="button" class="btn btn-success w-100 backup-btn" data-format="json">
+                                                <i class="fas fa-download me-2"></i>
+                                                {% trans "JSON Backup" %}
+                                                <small class="d-block mt-1">{% trans "Complete database backup" %}</small>
+                                            </button>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <button type="button" class="btn btn-primary w-100 backup-btn" data-format="xlsx">
+                                                <i class="fas fa-file-excel me-2"></i>
+                                                {% trans "Excel Backup" %}
+                                                <small class="d-block mt-1">{% trans "For data analysis" %}</small>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="row mt-2">
+                                        <div class="col-12">
+                                            <button type="button" class="btn btn-outline-secondary btn-sm w-100" id="clearCacheBtn">
+                                                <i class="fas fa-broom me-2"></i>
+                                                {% trans "Clear Cache" %}
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="text-muted small mt-2">
+                                        <i class="fas fa-info-circle"></i>
+                                        {% trans "JSON format for complete system backup, XLSX for data analysis" %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card border-warning">
+                                <div class="card-header bg-warning text-dark">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-upload me-2"></i>
+                                        {% trans "Restore Backup" %}
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <form id="restoreUploadForm" method="post" enctype="multipart/form-data" action="{% url 'backup:restore_backup' %}">
+                                        {% csrf_token %}
+                                        <div class="mb-3">
+                                            <label class="form-label">{% trans "Select backup file" %}</label>
+                                            <input type="file" name="backup_file" class="form-control" accept=".json,.xlsx" required>
+                                        </div>
+                                        <div class="form-check mb-3">
+                                            <input type="checkbox" name="clear_data" class="form-check-input" id="clearData">
+                                            <label class="form-check-label text-danger" for="clearData">
+                                                <i class="fas fa-exclamation-triangle"></i>
+                                                {% trans "Clear existing data before restore" %}
+                                            </label>
+                                        </div>
+                                        <button type="submit" class="btn btn-warning w-100" onclick="return confirm('هل أنت متأكد من استعادة هذه النسخة الاحتياطية؟ لا يمكن التراجع عن هذا الإجراء.')">
+                                            <i class="fas fa-undo me-2"></i>
+                                            {% trans "Restore Backup" %}
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- تفاصيل الجداول والتقدم -->
+                    <div class="card mb-4" id="tablesInfoCard" style="display: none;">
+                        <div class="card-header bg-secondary text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-table me-2"></i>
+                                معلومات الجداول وتتبع التقدم
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- معلومات عامة -->
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <div class="alert alert-info text-center">
+                                        <strong>إجمالي الجداول</strong><br>
+                                        <span id="totalTables" class="h4">0</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="alert alert-info text-center">
+                                        <strong>إجمالي السجلات</strong><br>
+                                        <span id="totalRecords" class="h4">0</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="alert alert-success text-center">
+                                        <strong>الوقت المتبقي</strong><br>
+                                        <span id="estimatedTime" class="h4">حساب...</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- شريط التقدم العام -->
+                            <div class="progress mb-3" style="height: 30px;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                     id="overallProgress" role="progressbar" style="width: 0%;" 
+                                     aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                    <span id="progressText">0%</span>
+                                </div>
+                            </div>
+
+                            <!-- حالة العملية الحالية -->
+                            <div class="alert alert-primary" id="currentStatus">
+                                <strong>الحالة:</strong> <span id="currentTableText">جاري التحضير...</span>
+                            </div>
+
+                            <!-- قائمة الجداول مع التقدم -->
+                            <div class="row">
+                                <div class="col-12">
+                                    <h6 class="text-muted">تفاصيل الجداول:</h6>
+                                    <div id="tablesProgress" style="max-height: 400px; overflow-y: auto;">
+                                        <!-- سيتم ملء هذا القسم بواسطة JavaScript -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- قائمة النسخ الاحتياطية الموجودة -->
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-history me-2"></i>
+                                {% trans "Existing Backups" %}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="backups-container">
+                            {% if backups %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover" id="backups-table">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>{% trans "Filename" %}</th>
+                                                <th>{% trans "Size" %}</th>
+                                                <th>{% trans "Created" %}</th>
+                                                <th>{% trans "Type" %}</th>
+                                                <th class="text-center">{% trans "Actions" %}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="backups-tbody">
+                                            {% for backup in backups %}
+                                                <tr>
+                                                    <td>
+                                                        <i class="fas fa-file-archive text-primary me-2"></i>
+                                                        <strong>{{ backup.filename }}</strong>
+                                                    </td>
+                                                    <td>
+                                                        {% if backup.size_formatted %}
+                                                            {{ backup.size_formatted }}
+                                                        {% else %}
+                                                            <span class="text-muted">{% trans "Unknown" %}</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        <small class="text-muted">
+                                                            {{ backup.created_at|date:"Y-m-d H:i:s" }}
+                                                        </small>
+                                                    </td>
+                                                    <td>
+                                                        {% if backup.filename|slice:"-5:" == ".json" %}
+                                                            <span class="badge bg-success">JSON</span>
+                                                        {% elif backup.filename|slice:"-5:" == ".xlsx" %}
+                                                            <span class="badge bg-primary">XLSX</span>
+                                                        {% else %}
+                                                            <span class="badge bg-secondary">{% trans "Unknown" %}</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td class="text-center">
+                                                        <div class="btn-group" role="group">
+                                                            <!-- تحميل -->
+                                                            <a href="{% url 'backup:download_backup' backup.filename %}" 
+                                                               class="btn btn-sm btn-outline-primary" 
+                                                               title="{% trans 'Download' %}">
+                                                                <i class="fas fa-download"></i>
+                                                            </a>
+                                                            
+                                                            <!-- استعادة -->
+                                                            <button type="button" 
+                                                                    class="btn btn-sm btn-outline-warning restore-btn" 
+                                                                    data-filename="{{ backup.filename }}" 
+                                                                    title="{% trans 'Restore' %}">
+                                                                <i class="fas fa-undo"></i>
+                                                            </button>
+                                                            
+                                                            <!-- حذف -->
+                                                            {% if perms.backup.delete_backup %}
+                                                                <button type="button" 
+                                                                        class="btn btn-sm btn-outline-danger delete-btn" 
+                                                                        data-filename="{{ backup.filename }}" 
+                                                                        onclick="handleDeleteClick(this)"
+                                                                        title="{% trans 'Delete' %}">
+                                                                    <i class="fas fa-trash"></i>
+                                                                </button>
+                                                            {% endif %}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center text-muted py-5" id="no-backups-message">
+                                    <i class="fas fa-folder-open fa-3x mb-3"></i>
+                                    <h5>{% trans "No backups found" %}</h5>
+                                    <p>{% trans "Create your first backup using the form above" %}</p>
+                                </div>
+                            {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- مودال تأكيد الاستعادة -->
+<div class="modal fade" id="restoreModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">
+                    <i class="fas fa-undo me-2"></i>
+                    {% trans "Restore Backup" %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>{% trans "Are you sure you want to restore this backup?" %}</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>{% trans "Warning:" %}</strong>
+                    {% trans "This action will replace existing data and cannot be undone!" %}
+                </div>
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="modalClearExisting">
+                    <label class="form-check-label text-danger" for="modalClearExisting">
+                        {% trans "Clear existing data before restore" %}
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    {% trans "Cancel" %}
+                </button>
+                <button type="button" class="btn btn-warning" id="confirmRestore">
+                    <i class="fas fa-undo me-2"></i>
+                    {% trans "Restore" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+console.log('🔧 تحميل نظام النسخ الاحتياطي');
+
+// دالة لجلب وتحديث قائمة النسخ الاحتياطية
+function refreshBackupsList() {
+    fetch('{% url "backup:list_backups" %}')
+    .then(function(response) {
+        if (!response.ok) {
+            throw new Error('HTTP ' + response.status);
+        }
+        // التحقق من نوع المحتوى
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('استجابة غير متوقعة');
+        }
+        return response.json();
+    })
+    .then(function(data) {
+        if (data.success) {
+            updateBackupsTable(data.backups);
+            updateBackupCount(data.total);
+        } else {
+            console.error('خطأ في جلب قائمة النسخ:', data.error);
+        }
+    })
+    .catch(function(error) {
+        console.error('خطأ في تحديث القائمة:', error);
+        // عدم إظهار رسالة خطأ للمستخدم هنا حتى لا نزعجه
+    });
+}
+
+// دالة لتحديث جدول النسخ الاحتياطية
+function updateBackupsTable(backups) {
+    var container = document.getElementById('backups-container');
+    var tbody = document.getElementById('backups-tbody');
+    
+    if (backups.length === 0) {
+        container.innerHTML = `
+            <div class="text-center text-muted py-5" id="no-backups-message">
+                <i class="fas fa-folder-open fa-3x mb-3"></i>
+                <h5>{% trans "No backups found" %}</h5>
+                <p>{% trans "Create your first backup using the form above" %}</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // إنشاء الجدول إذا لم يكن موجود
+    if (!tbody) {
+        container.innerHTML = `
+            <div class="table-responsive">
+                <table class="table table-hover" id="backups-table">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>{% trans "Filename" %}</th>
+                            <th>{% trans "Size" %}</th>
+                            <th>{% trans "Created" %}</th>
+                            <th>{% trans "Type" %}</th>
+                            <th class="text-center">{% trans "Actions" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="backups-tbody">
+                    </tbody>
+                </table>
+            </div>
+        `;
+        tbody = document.getElementById('backups-tbody');
+    }
+    
+    // تحديث محتوى الجدول
+    tbody.innerHTML = backups.map(function(backup) {
+        var typeClass = backup.type === 'JSON' ? 'success' : 'primary';
+        var typeIcon = backup.type === 'JSON' ? 'code' : 'file-excel';
+        
+        return `
+            <tr>
+                <td>
+                    <i class="fas fa-file-archive text-primary me-2"></i>
+                    <strong>${backup.filename}</strong>
+                </td>
+                <td>${backup.size_formatted}</td>
+                <td>
+                    <small class="text-muted">${backup.created_at}</small>
+                </td>
+                <td>
+                    <span class="badge bg-${typeClass}">${backup.type}</span>
+                </td>
+                <td class="text-center">
+                    <div class="btn-group" role="group">
+                        <a href="${backup.download_url}" 
+                           class="btn btn-sm btn-outline-primary" 
+                           title="{% trans 'Download' %}">
+                            <i class="fas fa-download"></i>
+                        </a>
+                        <button type="button" 
+                                class="btn btn-sm btn-outline-warning restore-btn" 
+                                data-filename="${backup.filename}" 
+                                title="{% trans 'Restore' %}">
+                            <i class="fas fa-undo"></i>
+                        </button>
+                        <button type="button" 
+                                class="btn btn-sm btn-outline-danger delete-btn" 
+                                data-filename="${backup.filename}" 
+                                onclick="handleDeleteClick(this)"
+                                title="{% trans 'Delete' %}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }).join('');
+    
+    // إعادة تفعيل معالجات أزرار الاستعادة
+    initializeRestoreButtons();
+}
+
+// دالة لتحديث عداد النسخ
+function updateBackupCount(count) {
+    var countElement = document.getElementById('backupCount');
+    if (countElement) {
+        countElement.textContent = count;
+    }
+}
+
+// دالة إنشاء نسخة احتياطية بـ AJAX
+// متغيرات عامة
+var backupInterval = null;
+var restoreInterval = null;
+var tablesInfo = [];
+
+// دالة لجلب معلومات الجداول
+function loadTablesInfo() {
+    fetch('{% url "backup:backup_tables" %}', {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('HTTP ' + response.status);
+        }
+        // التحقق من أن الاستجابة JSON وليس HTML
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('استجابة غير متوقعة - قد تحتاج لتسجيل الدخول');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            tablesInfo = data.tables;
+            updateTablesDisplay(data);
+        } else {
+            throw new Error(data.error || 'خطأ في جلب معلومات الجداول');
+        }
+    })
+    .catch(error => {
+        console.error('خطأ في جلب معلومات الجداول:', error);
+        alert('خطأ: ' + error.message + '\nيرجى تسجيل الدخول مرة أخرى');
+        // إخفاء قسم معلومات الجداول في حالة الخطأ
+        document.getElementById('tablesInfoCard').style.display = 'none';
+    });
+}
+
+// دالة لعرض معلومات الجداول
+function updateTablesDisplay(data) {
+    document.getElementById('totalTables').textContent = data.total_tables;
+    document.getElementById('totalRecords').textContent = data.total_records.toLocaleString();
+    
+    var tablesContainer = document.getElementById('tablesProgress');
+    var html = '';
+    
+    data.tables.forEach(function(table, index) {
+        html += `
+            <div class="card mb-2" id="table-${index}">
+                <div class="card-body p-2">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <strong>${table.display_name}</strong>
+                            <br><small class="text-muted">${table.app_name}.${table.model_name}</small>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <span class="badge bg-info">${table.record_count} سجل</span>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar" id="progress-${index}" 
+                                     style="width: 0%;" aria-valuenow="0" 
+                                     aria-valuemin="0" aria-valuemax="100">
+                                    0%
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 text-center">
+                            <span class="badge bg-secondary" id="status-${index}">منتظر</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    tablesContainer.innerHTML = html;
+}
+
+// دالة لتحديث تقدم الجداول
+function updateTablesProgress(progressData) {
+    if (progressData.tables_status && Array.isArray(progressData.tables_status)) {
+        progressData.tables_status.forEach(function(table, index) {
+            var progressBar = document.getElementById('progress-' + index);
+            var statusBadge = document.getElementById('status-' + index);
+            
+            if (progressBar && statusBadge) {
+                var progress = table.progress || 0;
+                progressBar.style.width = progress + '%';
+                progressBar.textContent = progress + '%';
+                progressBar.setAttribute('aria-valuenow', progress);
+                
+                // تحديث شريط التقدم حسب الحالة
+                if (table.status === 'processing') {
+                    progressBar.className = 'progress-bar progress-bar-striped progress-bar-animated bg-primary';
+                    statusBadge.className = 'badge bg-primary';
+                    statusBadge.textContent = 'معالجة...';
+                } else if (table.status === 'completed') {
+                    progressBar.className = 'progress-bar bg-success';
+                    statusBadge.className = 'badge bg-success';
+                    statusBadge.textContent = 'مكتمل';
+                } else if (table.status === 'error') {
+                    progressBar.className = 'progress-bar bg-danger';
+                    statusBadge.className = 'badge bg-danger';
+                    statusBadge.textContent = 'خطأ';
+                } else {
+                    progressBar.className = 'progress-bar bg-secondary';
+                    statusBadge.className = 'badge bg-secondary';
+                    statusBadge.textContent = 'منتظر';
+                }
+            }
+        });
+    }
+}
+
+// بدء مراقبة تقدم الاستعادة
+function startRestoreProgressMonitoring() {
+    if (restoreInterval) {
+        clearInterval(restoreInterval);
+    }
+    // إظهار بطاقة التتبع وإعادة ضبطها
+    document.getElementById('tablesInfoCard').style.display = 'block';
+    // لا نعرف التوزيع قبل القراءة؛ سنعتمد على بيانات progress
+    restoreInterval = setInterval(function() {
+        fetch('{% url "backup:restore_progress" %}', {
+            method: 'GET',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            const ct = r.headers.get('content-type');
+            if (!ct || !ct.includes('application/json')) throw new Error('استجابة غير متوقعة');
+            return r.json();
+        })
+        .then(data => {
+            if (data.success && data.progress) {
+                const p = data.progress;
+                // عند أول مرة إن لم تكن الجداول مرسومة، ارسمها من tables_status
+                if (p.tables_status && Array.isArray(p.tables_status)) {
+                    const tables = p.tables_status.map(t => ({
+                        app_name: t.app_name,
+                        model_name: t.model_name,
+                        display_name: t.display_name || (t.app_name + '.' + t.model_name),
+                        record_count: t.record_count || 0,
+                        status: t.status || 'pending',
+                        progress: t.progress || 0
+                    }));
+                    updateTablesDisplay({ total_tables: tables.length, total_records: (p.total_records||0), tables });
+                }
+                updateBackupProgress(p);
+                if (!p.is_running) {
+                    clearInterval(restoreInterval);
+                    restoreInterval = null;
+                    if (p.status === 'completed') {
+                        setTimeout(() => alert('✅ تم إتمام الاستعادة بنجاح'), 500);
+                    } else if (p.status === 'error') {
+                        setTimeout(() => alert('❌ خطأ: ' + (p.error || 'حدث خطأ')), 500);
+                    }
+                }
+            }
+        })
+        .catch(err => {
+            console.warn('خطأ في مراقبة تقدم الاستعادة:', err);
+            clearInterval(restoreInterval);
+            restoreInterval = null;
+        });
+    }, 1000);
+}
+
+// فحص تلقائي عند تحميل الصفحة إذا كانت هناك عملية استعادة قيد التنفيذ
+function checkRestoreInProgress() {
+    fetch('{% url "backup:restore_progress" %}', {
+        method: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(r => {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const ct = r.headers.get('content-type');
+        if (!ct || !ct.includes('application/json')) throw new Error('استجابة غير متوقعة');
+        return r.json();
+    })
+    .then(data => {
+        if (data.success && data.progress && data.progress.is_running) {
+            // أرسم الجداول إن توفرت وأبدأ المراقبة
+            const p = data.progress;
+            if (p.tables_status && Array.isArray(p.tables_status)) {
+                const tables = p.tables_status.map(t => ({
+                    app_name: t.app_name,
+                    model_name: t.model_name,
+                    display_name: t.display_name || (t.app_name + '.' + t.model_name),
+                    record_count: t.record_count || 0,
+                    status: t.status || 'pending',
+                    progress: t.progress || 0
+                }));
+                // إظهار البطاقة ورسم الجداول
+                document.getElementById('tablesInfoCard').style.display = 'block';
+                updateTablesDisplay({ total_tables: tables.length, total_records: (p.total_records||0), tables });
+            }
+            startRestoreProgressMonitoring();
+        }
+    })
+    .catch(() => {});
+}
+
+// دالة لإعادة تفعيل جميع أزرار النسخة الاحتياطية
+function enableAllBackupButtons() {
+    var buttons = document.querySelectorAll('.backup-btn');
+    buttons.forEach(function(btn) {
+        btn.disabled = false;
+        btn.classList.remove('btn-secondary');
+        btn.classList.add(btn.dataset.format === 'json' ? 'btn-primary' : 'btn-success');
+        btn.innerHTML = btn.innerHTML.replace('جاري...', btn.dataset.format === 'json' ? 'JSON' : 'Excel');
+    });
+}
+
+function createBackup(format) {
+    var button = document.querySelector('.backup-btn[data-format="' + format + '"]');
+    if (!button) return;
+    
+    // منع النقر المتعدد
+    if (button.disabled) {
+        return;
+    }
+    
+    // تعطيل جميع أزرار النسخ الاحتياطي لمنع إنشاء ملفات متعددة
+    document.querySelectorAll('.backup-btn').forEach(btn => {
+        btn.disabled = true;
+        if (btn === button) {
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جاري الإنشاء...';
+        } else {
+            btn.innerHTML = '<i class="fas fa-ban me-2"></i>منتظر...';
+        }
+    });
+    
+    var originalContent = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جاري الإنشاء...';
+    
+    var csrf = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (!csrf) {
+        alert('خطأ: لم يتم العثور على رمز الأمان - يرجى إعادة تحميل الصفحة');
+        button.disabled = false;
+        button.innerHTML = originalContent;
+        return;
+    }
+    
+    // فحص سريع لتسجيل الدخول قبل البدء
+    fetch('{% url "backup:backup_tables" %}', {
+        method: 'HEAD',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('يجب تسجيل الدخول أولاً');
+        }
+        
+        // إظهار قسم معلومات الجداول
+        document.getElementById('tablesInfoCard').style.display = 'block';
+        loadTablesInfo();
+        
+        // إعادة تعيين التقدم
+        var overallProgress = document.getElementById('overallProgress');
+        var progressText = document.getElementById('progressText');
+        overallProgress.style.width = '0%';
+        overallProgress.setAttribute('aria-valuenow', 0);
+        progressText.textContent = '0%';
+        
+        // إرسال طلب إنشاء النسخة الاحتياطية
+        var formData = new FormData();
+        formData.append('csrfmiddlewaretoken', csrf.value);
+        formData.append('format', format);
+        
+        return fetch('{% url "backup:create_backup" %}', {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData
+        });
+    })
+    .then(function(response) {
+        if (!response.ok) {
+            throw new Error('HTTP ' + response.status);
+        }
+        return response.json();
+    })
+    .then(function(data) {
+        if (data.success) {
+            // بدء مراقبة التقدم
+            startProgressMonitoring();
+            
+            // تحديث القائمة كل ثانيتين حتى يظهر الملف الجديد
+            var checkInterval = setInterval(function() {
+                refreshBackupsList();
+            }, 2000);
+            
+            // توقف التحديث بعد دقيقة واحدة
+            setTimeout(function() {
+                clearInterval(checkInterval);
+            }, 60000);
+            
+        } else {
+            throw new Error(data.error || 'خطأ غير معروف');
+        }
+    })
+    .catch(function(error) {
+        alert('❌ خطأ: ' + error.message);
+        document.getElementById('tablesInfoCard').style.display = 'none';
+        // إعادة تفعيل جميع الأزرار في حالة الخطأ
+        enableAllBackupButtons();
+    })
+    .finally(function() {
+        button.disabled = false;
+        button.innerHTML = originalContent;
+    });
+}
+
+// دالة لمراقبة تقدم النسخ الاحتياطي
+function startProgressMonitoring() {
+    if (backupInterval) {
+        clearInterval(backupInterval);
+    }
+    
+    backupInterval = setInterval(function() {
+        fetch('{% url "backup:backup_progress" %}', {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('HTTP ' + response.status);
+            }
+            // التحقق من نوع المحتوى
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('استجابة غير متوقعة');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success && data.progress) {
+                updateBackupProgress(data.progress);
+                
+                // إذا انتهت العملية، أوقف المراقبة
+                if (!data.progress.is_running) {
+                    clearInterval(backupInterval);
+                    backupInterval = null;
+                    
+                    if (data.progress.status === 'completed') {
+                        setTimeout(() => {
+                            alert('✅ تم إنشاء النسخة الاحتياطية بنجاح!');
+                            refreshBackupsList();
+                            // إعادة تفعيل الأزرار بعد انتهاء العملية
+                            enableAllBackupButtons();
+                        }, 1000);
+                    } else if (data.progress.status === 'error') {
+                        alert('❌ خطأ: ' + (data.progress.error || 'حدث خطأ غير معروف'));
+                        // إعادة تفعيل الأزرار في حالة الخطأ
+                        enableAllBackupButtons();
+                    }
+                }
+            } else if (!data.success) {
+                throw new Error(data.error || 'خطأ في الحصول على التقدم');
+            }
+        })
+        .catch(error => {
+            console.error('خطأ في مراقبة التقدم:', error);
+            clearInterval(backupInterval);
+            backupInterval = null;
+            // إعادة تفعيل الأزرار في حالة الخطأ
+            enableAllBackupButtons();
+        });
+    }, 1000); // تحديث كل ثانية
+}
+
+// دالة لتحديث عرض التقدم
+function updateBackupProgress(progressData) {
+    // تحديث شريط التقدم العام
+    var overallProgress = document.getElementById('overallProgress');
+    var progressText = document.getElementById('progressText');
+    var percentage = progressData.percentage || 0;
+    
+    overallProgress.style.width = percentage + '%';
+    overallProgress.setAttribute('aria-valuenow', percentage);
+    progressText.textContent = percentage + '%';
+    
+    // تحديث النص الحالي
+    var currentTableText = document.getElementById('currentTableText');
+    if (progressData.current_table) {
+        currentTableText.textContent = progressData.current_table;
+    }
+    
+    // تحديث الوقت المتبقي
+    var estimatedTime = document.getElementById('estimatedTime');
+    if (progressData.estimated_time) {
+        estimatedTime.textContent = progressData.estimated_time;
+    }
+    
+    // تحديث عدد الجداول والسجلات المعالجة
+    if (progressData.processed_tables !== undefined) {
+        document.getElementById('totalTables').textContent = progressData.processed_tables + ' / ' + (progressData.total_tables || 0);
+    }
+    
+    if (progressData.processed_records !== undefined) {
+        document.getElementById('totalRecords').textContent = progressData.processed_records.toLocaleString() + ' / ' + ((progressData.total_records || 0)).toLocaleString();
+    }
+    
+    // تحديث تقدم الجداول الفردية
+    updateTablesProgress(progressData);
+    
+    // تحديث شريط التقدم حسب الحالة
+    if (progressData.status === 'completed') {
+        overallProgress.className = 'progress-bar bg-success';
+        currentTableText.textContent = 'تم إكمال النسخ الاحتياطي بنجاح!';
+    } else if (progressData.status === 'error') {
+        overallProgress.className = 'progress-bar bg-danger';
+        currentTableText.textContent = 'حدث خطأ أثناء النسخ الاحتياطي';
+    } else if (progressData.status === 'processing') {
+        overallProgress.className = 'progress-bar progress-bar-striped progress-bar-animated bg-primary';
+    }
+}
+
+// دالة الحذف الوحيدة
+function handleDeleteClick(button) {
+    console.log('🗑️ بدء عملية الحذف');
+    
+    var filename = button.getAttribute('data-filename');
+    if (!filename) {
+        alert('خطأ: لم يتم العثور على اسم الملف');
+        return;
+    }
+    
+    if (!confirm('هل تريد حذف النسخة الاحتياطية: ' + filename + '؟\n\n⚠️ هذا الإجراء لا يمكن التراجع عنه!')) {
+        return;
+    }
+    
+    var csrf = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (!csrf) {
+        alert('خطأ: لم يتم العثور على رمز الأمان');
+        return;
+    }
+    
+    // حفظ المحتوى الأصلي للزر
+    var originalContent = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    
+    // إنشاء URL الصحيح للحذف
+    var deleteUrl = '{% url "backup:delete_backup" "PLACEHOLDER" %}'.replace('PLACEHOLDER', filename);
+    
+    fetch(deleteUrl, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrf.value,
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        credentials: 'same-origin'
+    })
+    .then(function(response) {
+        if (!response.ok) {
+            throw new Error('HTTP ' + response.status);
+        }
+        
+        var contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('الاستجابة ليست JSON صالح');
+        }
+        
+        return response.json();
+    })
+    .then(function(data) {
+        if (data.success) {
+            alert('✅ تم حذف النسخة الاحتياطية بنجاح وتم تسجيل العملية في سجل الأنشطة!');
+            refreshBackupsList(); // تحديث القائمة مباشرة
+        } else {
+            throw new Error(data.error || 'خطأ غير معروف');
+        }
+    })
+    .catch(function(error) {
+        console.error('💥 خطأ:', error);
+        alert('❌ خطأ: ' + error.message);
+        
+        // إعادة تفعيل الزر
+        button.disabled = false;
+        button.innerHTML = originalContent;
+    });
+}
+
+// دالة لتفعيل أزرار الاستعادة
+function initializeRestoreButtons() {
+    var restoreButtons = document.querySelectorAll('.restore-btn');
+    restoreButtons.forEach(function(btn) {
+        // إزالة معالجات سابقة
+        btn.replaceWith(btn.cloneNode(true));
+    });
+    
+    // إضافة معالجات جديدة
+    document.querySelectorAll('.restore-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var filename = this.getAttribute('data-filename');
+            selectedFilename = filename;
+            var modal = new bootstrap.Modal(document.getElementById('restoreModal'));
+            modal.show();
+        });
+    });
+}
+
+// متغيرات عامة
+var selectedFilename = '';
+
+// تهيئة الصفحة عند التحميل
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 تهيئة صفحة النسخ الاحتياطي');
+    
+    // تفعيل أزرار إنشاء النسخ الاحتياطية
+    document.querySelectorAll('.backup-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var format = this.getAttribute('data-format');
+            createBackup(format);
+        });
+    });
+    
+    // تفعيل زر مسح الكاش
+    var clearCacheBtn = document.getElementById('clearCacheBtn');
+    if (clearCacheBtn) {
+        clearCacheBtn.addEventListener('click', function() {
+            clearBackupCache();
+        });
+    }
+    
+    // تفعيل أزرار الاستعادة الحالية
+    initializeRestoreButtons();
+    
+    // تأكيد الاستعادة
+    var confirmRestoreBtn = document.getElementById('confirmRestore');
+    if (confirmRestoreBtn) {
+        confirmRestoreBtn.addEventListener('click', function() {
+            if (!selectedFilename) return;
+            
+            var clearData = document.getElementById('modalClearExisting').checked;
+            // إرسال عبر AJAX لبدء الاستعادة بالخلفية
+            fetch('{% url "backup:restore_backup" %}', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({ filename: selectedFilename, clear_data: clearData ? 'true' : 'false' }).toString()
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    // أغلق المودال وابدأ مراقبة التقدم
+                    const modalEl = document.getElementById('restoreModal');
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    modal.hide();
+                    startRestoreProgressMonitoring();
+                } else {
+                    alert('❌ فشل بدء الاستعادة: ' + (data.error || 'غير معروف'));
+                }
+            })
+            .catch(err => {
+                alert('❌ خطأ في الاتصال: ' + err.message);
+            });
+        });
+    }
+    
+    // تحميل القائمة الأولي - مع فحص تسجيل الدخول
+    setTimeout(function() {
+        // تأخير بسيط للتأكد من تحميل الصفحة
+        checkAuthenticationAndLoadData();
+    // فحص إن كان هناك استعادة قيد التنفيذ وإظهار التقدم
+    checkRestoreInProgress();
+    }, 500);
+});
+
+// دالة للتحقق من تسجيل الدخول وتحميل البيانات
+function checkAuthenticationAndLoadData() {
+    // فحص سريع لتسجيل الدخول
+    fetch('{% url "backup:list_backups" %}', {
+        method: 'HEAD', // استخدام HEAD للفحص فقط دون تحميل البيانات
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            // المستخدم مسجل دخول - تحميل البيانات
+            refreshBackupsList();
+        } else if (response.status === 401 || response.status === 403) {
+            // المستخدم غير مسجل دخول
+            console.log('المستخدم غير مسجل دخول - تخطي تحميل البيانات');
+        } else {
+            console.warn('خطأ في فحص تسجيل الدخول:', response.status);
+        }
+    })
+    .catch(error => {
+        console.warn('خطأ في فحص تسجيل الدخول:', error);
+    });
+}
+
+// جعل الدالة متاحة عالمياً
+// دالة مسح الكاش
+function clearBackupCache() {
+    if (!confirm('هل تريد مسح كاش النسخ الاحتياطي؟\nسيؤدي هذا إلى إيقاف أي عملية نسخ احتياطي قيد التشغيل.')) {
+        return;
+    }
+    
+    var btn = document.getElementById('clearCacheBtn');
+    var originalText = btn.innerHTML;
+    
+    // تعديل زر التحميل
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جاري المسح...';
+    
+    fetch('{% url "backup:clear_backup_cache" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showMessage('تم مسح الكاش بنجاح', 'success');
+            
+            // إعادة تحميل الصفحة لعكس التغييرات
+            setTimeout(function() {
+                location.reload();
+            }, 1000);
+        } else {
+            showMessage('خطأ في مسح الكاش: ' + (data.error || 'خطأ غير معروف'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('خطأ في مسح الكاش:', error);
+        showMessage('خطأ في الاتصال بالخادم', 'error');
+    })
+    .finally(() => {
+        // إعادة تعيين الزر
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    });
+}
+
+window.handleDeleteClick = handleDeleteClick;
+
+// ربط الأحداث عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', function() {
+    // ربط أحداث أزرار النسخ الاحتياطي
+    document.querySelectorAll('.backup-btn').forEach(function(button) {
+        button.addEventListener('click', function() {
+            var format = this.getAttribute('data-format');
+            createBackup(format);
+        });
+    });
+    
+    // تحديث القائمة عند تحميل الصفحة
+    refreshBackupsList();
+
+    // اعتراض نموذج رفع ملف الاستعادة لتشغيل العملية بالخلفية وإظهار التقدم
+    var restoreForm = document.getElementById('restoreUploadForm');
+    if (restoreForm) {
+        restoreForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            var fileInput = restoreForm.querySelector('input[name="backup_file"]');
+            if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+                alert('يرجى اختيار ملف النسخة الاحتياطية');
+                return;
+            }
+            var formData = new FormData(restoreForm);
+            fetch(restoreForm.action, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                body: formData
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    // إظهار بطاقة التقدم والبدء بالمراقبة
+                    document.getElementById('tablesInfoCard').style.display = 'block';
+                    startRestoreProgressMonitoring();
+                } else {
+                    alert('❌ فشل بدء الاستعادة: ' + (data.error || 'غير معروف'));
+                }
+            })
+            .catch(err => {
+                alert('❌ خطأ في الاتصال: ' + err.message);
+            });
+        });
+    }
+});
+
+console.log('✅ تم تحميل نظام النسخ الاحتياطي بنجاح');
+</script>
+{% endblock %}

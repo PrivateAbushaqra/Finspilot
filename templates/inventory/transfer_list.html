@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}تحوي{% trans "No" %}ت المستودعات - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-exchange-alt me-2"></i>
+                    تحوي{% trans "No" %}ت المستودعات
+                </h2>
+                <div class="btn-group">
+                    <a href="{% url 'inventory:transfer_add' %}" class="btn btn-success">
+                        <i class="fas fa-plus me-2"></i>
+                        {% trans "Add" %} {% trans "Transfer" %} {% trans "New" %}
+                    </a>
+                    <a href="{% url 'inventory:list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        العودة للمخزون
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-center py-5">
+                        <i class="fas fa-exchange-alt fa-4x text-muted mb-3"></i>
+                        <h4>لا توجد تحوي{% trans "No" %}ت</h4>
+                        <p class="text-muted">لم يتم تسجيل أي تحوي{% trans "No" %}ت بين المستودعات بعد.</p>
+                        <a href="{% url 'inventory:transfer_add' %}" class="btn btn-success">
+                            <i class="fas fa-plus me-2"></i>
+                            {% trans "Add" %} {% trans "Transfer" %} {% trans "New" %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

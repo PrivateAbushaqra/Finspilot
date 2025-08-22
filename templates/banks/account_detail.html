@@ -1,0 +1,335 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load currency_tags %}
+
+
+{% block title %}{% trans "Bank Account Details" %} - {{ account.name }} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .account-detail-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+    }
+    
+    .account-header {
+        padding: 2rem;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+    }
+    
+    .balance-card {
+        background: rgba(255, 255, 255, 0.95);
+        color: #333;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin: 1rem;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .transaction-card {
+        background: white;
+        border-radius: 10px;
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+        margin-bottom: 1rem;
+    }
+    
+    .transaction-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stats-card {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        text-align: center;
+    }
+    
+    .stats-card.warning {
+        background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    }
+    
+    .stats-card.danger {
+        background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+    }
+    
+    .action-btn {
+        border-radius: 25px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .badge-status {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0 text-gray-800">
+                        <i class="fas fa-university text-primary me-2"></i>
+                        {% trans "Details" %} الحساب البنكي
+                    </h1>
+                    <nav aria-label="breadcrumb" class="mt-2">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">{% trans "Dashboard" %}</a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'banks:account_list' %}">الحسابات البنكية</a></li>
+                            <li class="breadcrumb-item active">{{ account.name }}</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div>
+                    <a href="{% url 'banks:account_transactions' account.pk %}" class="btn btn-info action-btn me-2">
+                        <i class="fas fa-list me-1"></i>
+                        إدارة الحركات
+                    </a>
+                    <a href="{% url 'banks:account_edit' account.pk %}" class="btn btn-warning action-btn me-2">
+                        <i class="fas fa-edit me-1"></i>
+                        {% trans "Edit" %}
+                    </a>
+                    <a href="{% url 'banks:transfer_add' %}" class="btn btn-success action-btn me-2">
+                        <i class="fas fa-exchange-alt me-1"></i>
+                        {% trans "Transfer" %}
+                    </a>
+                    <a href="{% url 'banks:account_list' %}" class="btn btn-secondary action-btn">
+                        <i class="fas fa-arrow-right me-1"></i>
+                        {% trans "Back" %}
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Account Detail Card -->
+            <div class="account-detail-card mb-4">
+                <div class="account-header">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="mb-3">
+                                <i class="fas fa-university me-2"></i>
+                                {{ account.name }}
+                            </h2>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-2">
+                                        <i class="fas fa-building me-2"></i>
+                                        <strong>البنك:</strong> {{ account.bank_name }}
+                                    </p>
+                                    <p class="mb-2">
+                                        <i class="fas fa-credit-card me-2"></i>
+                                        <strong>رقم الحساب:</strong> {{ account.account_number }}
+                                    </p>
+                                    {% if account.iban %}
+                                    <p class="mb-2">
+                                        <i class="fas fa-barcode me-2"></i>
+                                        <strong>IBAN:</strong> {{ account.iban }}
+                                    </p>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    {% if account.swift_code %}
+                                    <p class="mb-2">
+                                        <i class="fas fa-code me-2"></i>
+                                        <strong>رمز SWIFT:</strong> {{ account.swift_code }}
+                                    </p>
+                                    {% endif %}
+                                    <p class="mb-2">
+                                        <i class="fas fa-coins me-2"></i>
+                                        <strong>العملة:</strong> {{ account.currency }}
+                                    </p>
+                                    <p class="mb-2">
+                                        <i class="fas fa-toggle-{% if account.is_active %}on{% else %}off{% endif %} me-2"></i>
+                                        <strong>{% trans "Status" %}:</strong>
+                                        <span class="badge {% if account.is_active %}badge-status bg-success{% else %}badge-status bg-danger{% endif %}">
+                                            {% if account.is_active %}{% trans "Active" %}{% else %}غير {% trans "Active" %}{% endif %}
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="balance-card text-center">
+                                <h5 class="text-muted mb-2">ال{% trans "Balance" %} الحالي</h5>
+                                <h2 class="mb-0 {% if account.balance > 0 %}text-success{% elif account.balance < 0 %}text-danger{% else %}text-muted{% endif %}">
+                                    {{ account.balance|floatformat:3 }} {{ account.currency }}
+                                </h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Statistics -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <h4>{{ this_month_deposits|floatformat:3 }}</h4>
+                        <p class="mb-0">{% trans "Deposit" %}ات {% trans "This Month" %}</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card warning">
+                        <h4>{{ this_month_withdrawals|floatformat:3 }}</h4>
+                        <p class="mb-0">سحوبات {% trans "This Month" %}</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card danger">
+                        <h4>{{ transfers_from.count }}</h4>
+                        <p class="mb-0">تحوي{% trans "No" %}ت صادرة</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stats-card">
+                        <h4>{{ transfers_to.count }}</h4>
+                        <p class="mb-0">تحوي{% trans "No" %}ت واردة</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Transactions -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-list me-2"></i>
+                                الحركات {% trans "Last" %}ة
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if recent_transactions %}
+                                {% for transaction in recent_transactions %}
+                                <div class="transaction-card p-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">
+                                                {% if transaction.transaction_type == 'deposit' %}
+                                                    <i class="fas fa-arrow-down text-success me-1"></i>
+                                                    {% trans "Deposit" %}
+                                                {% else %}
+                                                    <i class="fas fa-arrow-up text-danger me-1"></i>
+                                                    {% trans "Withdrawal" %}
+                                                {% endif %}
+                                            </h6>
+                                            <p class="mb-1 text-muted">{{ transaction.description }}</p>
+                                            <small class="text-muted">{{ transaction.date }}</small>
+                                        </div>
+                                        <div class="text-end">
+                                            <h5 class="mb-0 {% if transaction.transaction_type == 'deposit' %}text-success{% else %}text-danger{% endif %}">
+                                                {% if transaction.transaction_type == 'deposit' %}+{% else %}-{% endif %}{{ transaction.amount|floatformat:3 }}
+                                            </h5>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">لا توجد حركات مالية</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-exchange-alt me-2"></i>
+                                التحوي{% trans "No" %}ت {% trans "Last" %}ة
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if transfers_from or transfers_to %}
+                                {% for transfer in transfers_from|slice:":5" %}
+                                <div class="transaction-card p-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">
+                                                <i class="fas fa-arrow-right text-danger me-1"></i>
+                                                {% trans "Transfer" %} صادر
+                                            </h6>
+                                            <p class="mb-1 text-muted">إلى: {{ transfer.to_account.name }}</p>
+                                            <small class="text-muted">{{ transfer.date }}</small>
+                                        </div>
+                                        <div class="text-end">
+                                            <h5 class="mb-0 text-danger">
+                                                -{{ transfer.amount|floatformat:3 }}
+                                            </h5>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                
+                                {% for transfer in transfers_to|slice:":5" %}
+                                <div class="transaction-card p-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">
+                                                <i class="fas fa-arrow-left text-success me-1"></i>
+                                                {% trans "Transfer" %} وارد
+                                            </h6>
+                                            <p class="mb-1 text-muted">من: {{ transfer.from_account.name }}</p>
+                                            <small class="text-muted">{{ transfer.date }}</small>
+                                        </div>
+                                        <div class="text-end">
+                                            <h5 class="mb-0 text-success">
+                                                +{{ transfer.amount|floatformat:3 }}
+                                            </h5>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-exchange-alt fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">لا توجد تحوي{% trans "No" %}ت</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            {% if account.notes %}
+            <!-- Notes -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-sticky-note me-2"></i>
+                                ملاحظات
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-0">{{ account.notes }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

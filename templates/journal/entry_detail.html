@@ -1,0 +1,274 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load humanize %}
+{% load currency_tags %}
+
+{% block title %}{% trans "Details القيد" %} - {{ entry.entry_number }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                <h1 class="h3 mb-0 text-gray-800">
+                    {% trans "Details القيد" %}: {{ entry.entry_number }}
+                </h1>
+                <div>
+                    <a href="{% url 'journal:entry_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-right me-2"></i>{% trans "العودة للList" %}
+                    </a>
+                    {% if entry.reference_type == 'manual' %}
+                    <a href="{% url 'journal:entry_delete' entry.pk %}" 
+                       class="btn btn-danger"
+                       onclick="return confirm('{% trans "هل أنت متأكد من Delete هذا القيد؟" %}')">
+                        <i class="fas fa-trash me-2"></i>{% trans "Delete القيد" %}
+                    </a>
+                    {% endif %}
+                    <button onclick="window.print()" class="btn btn-primary">
+                        <i class="fas fa-print me-2"></i>{% trans "Print" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- {% trans "Information" %} القيد الأساسية -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">{% trans "Information القيد" %}</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="fw-bold">{% trans "رقم القيد" %}:</td>
+                                    <td>{{ entry.entry_number }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">{% trans "تاريخ القيد" %}:</td>
+                                    <td>{{ entry.entry_date|date:"l, j F Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">{% trans "نوع العملية" %}:</td>
+                                    <td>
+                                        <span class="badge bg-info">{{ entry.get_reference_type_display }}</span>
+                                    </td>
+                                </tr>
+                                {% if entry.reference_id %}
+                                <tr>
+                                    <td class="fw-bold">{% trans "رقم العملية المرتبطة" %}:</td>
+                                    <td>{{ entry.reference_id }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="fw-bold">{% trans "إجمالي Amount" %}:</td>
+                                    <td class="text-success">
+                                        <strong>{{ entry.total_amount|floatformat:3|intcomma }} {% get_currency_symbol %}</strong>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">{% trans "أنشئ بواسطة" %}:</td>
+                                    <td>{{ entry.created_by.get_full_name|default:entry.created_by.username }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">{% trans "تاريخ الإنشاء" %}:</td>
+                                    <td>{{ entry.created_at|date:"j/n/Y H:i" }}</td>
+                                </tr>
+                                {% if entry.updated_at != entry.created_at %}
+                                <tr>
+                                    <td class="fw-bold">{% trans "آخر Update" %}:</td>
+                                    <td>{{ entry.updated_at|date:"j/n/Y H:i" }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
+                    {% if entry.description %}
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6 class="fw-bold">{% trans "وصف القيد" %}:</h6>
+                            <p class="text-muted">{{ entry.description }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- بنود القيد -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">{% trans "بنود القيد المحاسبي" %}</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>{% trans "الحساب" %}</th>
+                                    <th>{% trans "كود الحساب" %}</th>
+                                    <th class="text-center">{% trans "Debit" %}</th>
+                                    <th class="text-center">{% trans "Credit" %}</th>
+                                    <th>{% trans "الDetails" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for line in entry.lines.all %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'journal:account_detail' line.account.pk %}" class="text-decoration-none">
+                                            {{ line.account.name }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <code>{{ line.account.code }}</code>
+                                    </td>
+                                    <td class="text-center">
+                                        {% if line.debit > 0 %}
+                                            <span class="text-success fw-bold">
+                                                {{ line.debit|floatformat:3|intcomma }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if line.credit > 0 %}
+                                            <span class="text-danger fw-bold">
+                                                {{ line.credit|floatformat:3|intcomma }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if line.line_description %}
+                                            {{ line.line_description }}
+                                        {% else %}
+                                            <span class="text-muted">{% trans "لا توجد {% trans "Details" %}" %}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                <!-- إجمالي المبالغ -->
+                                <tr class="table-dark">
+                                    <td colspan="2" class="text-center fw-bold">{% trans "الإجمالي" %}</td>
+                                    <td class="text-center fw-bold text-success">
+                                        {{ total_debit|floatformat:3|intcomma }}
+                                    </td>
+                                    <td class="text-center fw-bold text-danger">
+                                        {{ total_credit|floatformat:3|intcomma }}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if total_debit == total_credit %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check me-1"></i>{% trans "متوازن" %}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-times me-1"></i>{% trans "غير متوازن" %}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- {% trans "Statistics" %} إضافية -->
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                {% trans "إجمالي الDebit" %}
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ total_debit|floatformat:3|intcomma }} {% get_currency_symbol %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-plus fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                {% trans "إجمالي الCredit" %}
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ total_credit|floatformat:3|intcomma }} {% get_currency_symbol %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-minus fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                {% trans "عدد البنود" %}
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ entry.lines.count }} {% trans "بند" %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-list fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    @media print {
+        .btn, .card-header, nav {
+            display: none !important;
+        }
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+        .card-body {
+            padding: 0 !important;
+        }
+    }
+</style>
+
+<!-- Document Creator Information -->
+{% include 'partials/document_creator_info.html' with document=entry %}
+
+{% endblock %}

@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+
+{% block title %}{% trans "Delete Group" %} - Finspilot{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-trash me-2"></i>
+                        {% trans "Delete Group" %}: {{ object.name }}
+                    </h3>
+                    <div>
+                        <a href="{% url 'users:group_list' %}" class="btn btn-outline-light btn-sm">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            {% trans "العودة للList" %}
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- {% trans "Warning" %} أساسي -->
+                    <div class="alert alert-danger">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                            <div>
+                                <h5 class="alert-heading mb-2">{% trans "Warning: عملية Delete نهائية" %}</h5>
+                                <p class="mb-0">
+                                    {% trans "هذه العملية لا يمكن التراجع عنها. سيتم {% trans "Delete" %} {% trans "Total" %}ة نهائياً من النظام." %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- {% trans "Information" %} {% trans "Total" %}ة -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card border-info">
+                                <div class="card-header bg-info text-white">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        {% trans "Information Totalة" %}
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-borderless mb-0">
+                                        <tr>
+                                            <td width="40%"><strong>{% trans "اسم Totalة" %}:</strong></td>
+                                            <td>{{ object.name }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>{% trans 'عدد المستخدمين' %}:</strong></td>
+                                            <td>
+                                                <span class="badge bg-info">{{ user_count }}</span>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>{% trans "عدد الصلاحيات" %}:</strong></td>
+                                            <td>
+                                                <span class="badge bg-success">{{ permission_count }}</span>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card border-warning">
+                                <div class="card-header bg-warning text-dark">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-exclamation-circle me-2"></i>
+                                        {% trans "تأثير الحذف" %}
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-unstyled mb-0">
+                                        <li class="mb-2">
+                                            <i class="fas fa-times text-danger me-2"></i>
+                                            {% trans "سيتم Delete Totalة نهائياً" %}
+                                        </li>
+                                        {% if user_count > 0 %}
+                                            <li class="mb-2">
+                                                <i class="fas fa-users text-warning me-2"></i>
+                                                {% trans "المستخدمون سيفقدون صلاحيات Totalة" %}
+                                            </li>
+                                        {% endif %}
+                                        <li class="mb-2">
+                                            <i class="fas fa-key text-info me-2"></i>
+                                            {% trans "ستُ{% trans "Delete" %} جميع صلاحيات {% trans "Total" %}ة" %}
+                                        </li>
+                                        <li class="mb-0">
+                                            <i class="fas fa-database text-secondary me-2"></i>
+                                            {% trans 'سيتم إزالة المراجع من قاعدة البيانات' %}
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- {% trans "List" %} المستخدمين المتأثرين -->
+                    {% if group_users %}
+                        <div class="card border-warning mb-4">
+                            <div class="card-header bg-warning text-dark">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-users me-2"></i>
+                                    {% trans 'المستخدمون المتأثرون' %} ({{ user_count }})
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    {% trans "هؤلاء المستخدمون سيفقدون صلاحيات هذه {% trans "Total" %}ة بعد {% trans "Delete" %}ها:" %}
+                                </div>
+                                <div class="row">
+                                    {% for user in group_users %}
+                                        <div class="col-md-6 mb-2">
+                                            <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                                                <div>
+                                                    <strong>{{ user.username }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">{{ user.email }}</small>
+                                                </div>
+                                                <div>
+                                                    {% if user.is_active %}
+                                                        <span class="badge bg-success">{% trans "Active" %}</span>
+                                                    {% else %}
+                                                        <span class="badge bg-danger">غير {% trans "Active" %}</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- نموذج الحذف -->
+                    <form method="post" id="deleteForm">
+                        {% csrf_token %}
+                        
+                        <!-- {% trans "Confirmation" %} الحذف -->
+                        <div class="card border-danger">
+                            <div class="card-header bg-danger text-white">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    {% trans "تأكيد الحذف" %}
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="confirmDelete" required>
+                                    <label class="form-check-label" for="confirmDelete">
+                                        <strong>
+                                            {% trans "أؤكد أنني أريد Delete Totalة" %} "{{ object.name }}" {% trans 'نهائياً' %}
+                                        </strong>
+                                    </label>
+                                </div>
+                                
+                                {% if user_count > 0 %}
+                                    <div class="form-check mt-2">
+                                        <input type="checkbox" class="form-check-input" id="confirmUsers" required>
+                                        <label class="form-check-label" for="confirmUsers">
+                                            {% trans 'أدرك أن' %} {{ user_count }} {% trans "مستخدم سيفقدون صلاحيات هذه Totalة" %}
+                                        </label>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- أزرار التحكم -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'users:group_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>
+                                {% trans "Cancel والعودة" %}
+                            </a>
+                            <div>
+                                <a href="{% url 'users:group_edit' object.pk %}" class="btn btn-warning me-2">
+                                    <i class="fas fa-edit me-2"></i>
+                                    {% trans "{% trans "Edit" %} بدلاً من الحذف" %}
+                                </a>
+                                <button type="submit" class="btn btn-danger" id="deleteBtn" disabled>
+                                    <i class="fas fa-trash me-2"></i>
+                                    {% trans "Delete Totalة نهائياً" %}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteBtn = document.getElementById('deleteBtn');
+    const confirmDelete = document.getElementById('confirmDelete');
+    const confirmUsers = document.getElementById('confirmUsers');
+    
+    function updateDeleteButton() {
+        let allChecked = confirmDelete.checked;
+        
+        // إذا كان هناك مستخدمون، يجب {% trans "Confirmation" %} ذلك أيضاً
+        if (confirmUsers) {
+            allChecked = allChecked && confirmUsers.checked;
+        }
+        
+        deleteBtn.disabled = !allChecked;
+        
+        if (allChecked) {
+            deleteBtn.classList.remove('btn-outline-danger');
+            deleteBtn.classList.add('btn-danger');
+        } else {
+            deleteBtn.classList.remove('btn-danger');
+            deleteBtn.classList.add('btn-outline-danger');
+        }
+    }
+    
+    confirmDelete.addEventListener('change', updateDeleteButton);
+    if (confirmUsers) {
+        confirmUsers.addEventListener('change', updateDeleteButton);
+    }
+    
+    // {% trans "Confirmation" %} إضافي قبل الحذف
+    document.getElementById('deleteForm').addEventListener('submit', function(e) {
+        const groupName = '{{ object.name|escapejs }}';
+        
+        let confirmMessage = 'هل أنت متأكد تماماً من {% trans "Delete" %} {% trans "Total" %}ة "' + groupName + '"؟';
+        
+        {% if user_count > 0 %}
+        confirmMessage += '\n\nسيفقد {{ user_count }} مستخدم صلاحيات هذه {% trans "Total" %}ة.';
+        {% endif %}
+        
+        confirmMessage += '\n\nهذا الإجراء لا يمكن التراجع عنه!';
+        
+        if (!confirm(confirmMessage)) {
+            e.preventDefault();
+            return false;
+        }
+        
+        // إظهار مؤشر التحميل
+        deleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>جاري الحذف...';
+        deleteBtn.disabled = true;
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load currency_tags %}
+
+
+
+{% block title %}{% trans "Purchase Returns Statement" %} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .statement-header {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .filter-card {
+        background: #f8f9fa;
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .statement-table {
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .table th {
+        background: #343a40;
+        color: white;
+        border: none;
+        font-weight: 600;
+        text-align: center;
+    }
+    
+    .table td {
+        vertical-align: middle;
+        text-align: center;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .credit-amount {
+        color: #28a745;
+        font-weight: bold;
+    }
+    
+    .balance-amount {
+        color: #007bff;
+        font-weight: bold;
+    }
+    
+    .summary-card {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+    }
+    
+    .no-data {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+    
+    @media (max-width: 768px) {
+        .table-responsive {
+            font-size: 0.9rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="statement-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="mb-2">
+                    <i class="fas fa-undo me-3"></i>
+                    كشف مردودات المشتريات
+                </h2>
+                <p class="mb-0 opacity-75">{% trans "View" %} تفصيلي لجميع مردودات المشتريات مع ال{% trans "Balance" %} التراكمي</p>
+            </div>
+            <div class="text-end">
+                <i class="fas fa-undo" style="font-size: 3rem; opacity: 0.3;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card filter-card">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="start_date" class="form-label">
+                                <i class="fas fa-calendar-alt me-2"></i>{% trans "From Date" %}
+                            </label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" 
+                                   value="{{ start_date|date:'Y-m-d' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="end_date" class="form-label">
+                                <i class="fas fa-calendar-alt me-2"></i>{% trans "To Date" %}
+                            </label>
+                            <input type="date" class="form-control" id="end_date" name="end_date" 
+                                   value="{{ end_date|date:'Y-m-d' }}">
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-search me-2"></i>{% trans "View" %}
+                            </button>
+                            <a href="{% url 'purchases:purchase_return_statement' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-refresh me-2"></i>إعادة تعيين
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statement Table -->
+    <div class="row">
+        <div class="col-12">
+            {% if statement_data %}
+            <div class="statement-table">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th width="15%">{% trans "Date" %}</th>
+                                <th width="20%">رقم المستند</th>
+                                <th width="25%">البيان</th>
+                                <th width="20%">{% trans "Credit" %}</th>
+                                <th width="20%">ال{% trans "Balance" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in statement_data %}
+                            <tr>
+                                <td>{{ item.date|date:'Y-m-d' }}</td>
+                                <td>
+                                    <a href="{% url 'purchases:return_detail' item.return_item.pk %}" 
+                                       class="text-primary text-decoration-none">
+                                        {{ item.document_number }}
+                                    </a>
+                                </td>
+                                <td>{{ item.description }}</td>
+                                <td class="credit-amount">
+                                    {{ item.credit|floatformat:3 }} {% get_currency_symbol %}
+                                </td>
+                                <td class="balance-amount">
+                                    {{ item.balance|floatformat:3 }} {% get_currency_symbol %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Summary -->
+            <div class="summary-card">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <h5 class="mb-1">عدد المردودات</h5>
+                        <h3 class="mb-0">{{ statement_data|length }}</h3>
+                    </div>
+                    <div class="col-md-4">
+                        <h5 class="mb-1">إجمالي {% trans "Amount" %}</h5>
+                        <h3 class="mb-0">{{ final_balance|floatformat:3 }} {% get_currency_symbol %}</h3>
+                    </div>
+                    <div class="col-md-4">
+                        <h5 class="mb-1">الفترة</h5>
+                        <h3 class="mb-0">{{ start_date|date:'d/m/Y' }} - {{ end_date|date:'d/m/Y' }}</h3>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="statement-table">
+                <div class="no-data">
+                    <i class="fas fa-undo fa-3x mb-3"></i>
+                    <h4>لا توجد مردودات مشتريات</h4>
+                    <p class="text-muted">لا توجد مردودات مشتريات في الفترة المحددة</p>
+                    <a href="{% url 'purchases:return_add' %}" class="btn btn-danger">
+                        <i class="fas fa-plus me-2"></i>{% trans "Add" %} مردود مشتريات
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Set default dates if not provided
+document.addEventListener('DOMContentLoaded', function() {
+    const startDate = document.getElementById('start_date');
+    const endDate = document.getElementById('end_date');
+    
+    if (!startDate.value) {
+        const today = new Date();
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        startDate.value = firstDay.toISOString().split('T')[0];
+    }
+    
+    if (!endDate.value) {
+        const today = new Date();
+        endDate.value = today.toISOString().split('T')[0];
+    }
+});
+
+// Auto-submit form on date change
+document.getElementById('start_date').addEventListener('change', function() {
+    this.form.submit();
+});
+
+document.getElementById('end_date').addEventListener('change', function() {
+    this.form.submit();
+});
+</script>
+{% endblock %}

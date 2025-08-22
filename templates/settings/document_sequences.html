@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load l10n %}
+
+
+{% block title %}{% trans "Document Sequences" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">{% trans "Document Sequences Configuration" %}</h3>
+                    <div class="card-tools">
+                        <a href="{% url 'settings:index' %}" class="btn btn-sm btn-secondary">
+                            <i class="fas fa-arrow-left"></i> {% trans "Back to Settings" %}
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <p class="text-muted">{% trans "Configure automatic numbering sequences for different document types." %}</p>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>{% trans "Document Type" %}</th>
+                                            <th>{% trans "Prefix" %}</th>
+                                            <th>{% trans "Current Number" %}</th>
+                                            <th>{% trans "Next Number" %}</th>
+                                            <th>{% trans "Actions" %}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for sequence in sequences %}
+                                        <tr>
+                                            <td>{{ sequence.get_document_type_display }}</td>
+                                            <td>{{ sequence.prefix }}</td>
+                                            <td>{{ sequence.current_number|unlocalize }}</td>
+                                            <td>{{ sequence.get_formatted_number }}</td>
+                                            <td>
+                                                <a href="{% url 'settings:document_sequence_edit' seq_id=sequence.id %}" class="btn btn-sm btn-primary">
+                                                    <i class="fas fa-edit"></i> {% trans "Edit" %}
+                                                </a>
+                                                <button type="button" class="btn btn-sm btn-danger ml-1" 
+                                                        onclick="confirmDelete({{ sequence.id }}, '{{ sequence.get_document_type_display }}')">
+                                                    <i class="fas fa-trash"></i> {% trans "Delete" %}
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted">
+                                                {% trans "No document sequences configured yet." %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="mt-4">
+                                <a href="{% url 'settings:document_sequence_add' %}" class="btn btn-success">
+                                    <i class="fas fa-plus"></i> {% trans "Add New Sequence" %}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// نموذج {% trans "Hidden" %} ل{% trans "Delete" %} التسلسل
+function createDeleteForm(seqId) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    const deleteUrl = '{% url "settings:document_sequence_delete" seq_id=0 %}'.replace('/0/', '/' + seqId + '/');
+    form.action = deleteUrl;
+    form.style.display = 'none';
+    
+    const csrfToken = document.createElement('input');
+    csrfToken.type = 'hidden';
+    csrfToken.name = 'csrfmiddlewaretoken';
+    csrfToken.value = '{{ csrf_token }}';
+    
+    form.appendChild(csrfToken);
+    document.body.appendChild(form);
+    
+    return form;
+}
+
+// {% trans "Confirmation" %} الحذف
+function confirmDelete(seqId, sequenceName) {
+    const message = '{% trans "Are you sure you want to delete the document sequence" %} "' + sequenceName + '"?\n{% trans "This action cannot be undone." %}';
+    
+    if (confirm(message)) {
+        const form = createDeleteForm(seqId);
+        form.submit();
+    }
+}
+</script>
+{% endblock %}

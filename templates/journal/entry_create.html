@@ -1,0 +1,381 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Create Journal Entry" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                <h1 class="h3 mb-0 text-gray-800">{% trans "Create Journal Entry" %}</h1>
+                <a href="{% url 'journal:entry_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-right me-2"></i>{% trans "Back to List" %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" id="journalEntryForm">
+        {% csrf_token %}
+        
+        <!-- Basic Entry Information -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">{% trans "Basic Entry Information" %}</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.entry_date.id_for_label }}" class="form-label">
+                                        {{ form.entry_date.label }}
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.entry_date }}
+                                    {% if form.entry_date.errors %}
+                                        <div class="text-danger">{{ form.entry_date.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.reference_type.id_for_label }}" class="form-label">
+                                        {{ form.reference_type.label }}
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.reference_type }}
+                                    {% if form.reference_type.errors %}
+                                        <div class="text-danger">{{ form.reference_type.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="{{ form.description.id_for_label }}" class="form-label">
+                                        {{ form.description.label }}
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.description }}
+                                    {% if form.description.errors %}
+                                        <div class="text-danger">{{ form.description.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Entry Items -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="m-0 font-weight-bold text-primary">{% trans "Journal Entry Items" %}</h6>
+                        <button type="button" class="btn btn-sm btn-success" onclick="addJournalLine()">
+                            <i class="fas fa-plus me-1"></i>{% trans "Add Item" %}
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="journalLinesTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 30%">{% trans "Account" %}</th>
+                                        <th style="width: 25%">{% trans "Item Details" %}</th>
+                                        <th style="width: 15%">{% trans "Debit" %}</th>
+                                        <th style="width: 15%">{% trans "Credit" %}</th>
+                                        <th style="width: 10%">{% trans "Actions" %}</th>
+                                        <th style="width: 5%">{% trans "Delete" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="journalLinesBody">
+                                    {{ formset.management_form }}
+                                    {% for form in formset %}
+                                        <tr class="journal-line-row" data-form-prefix="{{ form.prefix }}">
+                                            <td>
+                                                {{ form.account }}
+                                                {% if form.account.errors %}
+                                                    <div class="text-danger small">{{ form.account.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.description }}
+                                                {% if form.description.errors %}
+                                                    <div class="text-danger small">{{ form.description.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.debit }}
+                                                {% if form.debit.errors %}
+                                                    <div class="text-danger small">{{ form.debit.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {{ form.credit }}
+                                                {% if form.credit.errors %}
+                                                    <div class="text-danger small">{{ form.credit.errors.0 }}</div>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-center">
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" 
+                                                        onclick="clearLine(this)" title="{% trans 'Clear Item' %}">
+                                                    <i class="fas fa-eraser"></i>
+                                                </button>
+                                            </td>
+                                            <td class="text-center">
+                                                {{ form.DELETE }}
+                                                <button type="button" class="btn btn-sm btn-outline-danger" 
+                                                        onclick="deleteLine(this)" title="{% trans "Delete Item" %}">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot class="table-dark">
+                                    <tr>
+                                        <td colspan="2" class="text-center fw-bold">{% trans "Total" %}</td>
+                                        <td class="text-center fw-bold">
+                                            <span id="totalDebit">0.000</span>
+                                        </td>
+                                        <td class="text-center fw-bold">
+                                            <span id="totalCredit">0.000</span>
+                                        </td>
+                                        <td colspan="2" class="text-center">
+                                            <span id="balanceStatus" class="badge">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>{% trans "Unbalanced" %}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        
+                        <!-- Warning Messages -->
+                        <div id="balanceAlert" class="alert alert-warning d-none mt-3">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            {% trans "Warning: Debit total does not equal Credit total. They must be equal to save the entry." %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                                    <i class="fas fa-undo me-2"></i>{% trans "Reset" %}
+                                </button>
+                            </div>
+                            <div>
+                                <a href="{% url 'journal:entry_list' %}" class="btn btn-outline-secondary me-2">
+                                    {% trans "Cancel" %}
+                                </a>
+                                <button type="submit" class="btn btn-primary" id="saveButton">
+                                    <i class="fas fa-save me-2"></i>{% trans "Save Entry" %}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- New entry row template -->
+<div id="emptyLineTemplate" style="display: none;">
+    <tr class="journal-line-row" data-form-prefix="__prefix__">
+        <td>
+            <select name="__prefix__-account" class="form-control" id="id___prefix__-account">
+                <option value="">{% trans "Select Account" %}</option>
+                {% for account in accounts %}
+                    <option value="{{ account.pk }}">{{ account.code }} - {{ account.name }}</option>
+                {% endfor %}
+            </select>
+        </td>
+        <td>
+            <input type="text" name="__prefix__-description" class="form-control" id="id___prefix__-description">
+        </td>
+        <td>
+            <input type="number" name="__prefix__-debit" class="form-control" step="0.001" min="0" id="id___prefix__-debit">
+        </td>
+        <td>
+            <input type="number" name="__prefix__-credit" class="form-control" step="0.001" min="0" id="id___prefix__-credit">
+        </td>
+        <td class="text-center">
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearLine(this)" title="{% trans 'Clear Item' %}">
+                <i class="fas fa-eraser"></i>
+            </button>
+        </td>
+        <td class="text-center">
+            <input type="hidden" name="__prefix__-DELETE" id="id___prefix__-DELETE">
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteLine(this)" title="{% trans "Delete Item" %}">
+                <i class="fas fa-trash"></i>
+            </button>
+        </td>
+    </tr>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let lineCount = {{ formset.total_form_count }};
+
+// Add new journal line
+function addJournalLine() {
+    const template = document.getElementById('emptyLineTemplate').innerHTML;
+    const newLine = template.replace(/__prefix__/g, lineCount);
+    
+    document.getElementById('journalLinesBody').insertAdjacentHTML('beforeend', newLine);
+    
+    // Update form count
+    document.getElementById('id_form-TOTAL_FORMS').value = parseInt(document.getElementById('id_form-TOTAL_FORMS').value) + 1;
+    
+    // Add event listeners for new fields
+    addEventListeners();
+    lineCount++;
+}
+
+// Delete line item
+function deleteLine(button) {
+    const row = button.closest('tr');
+    const deleteInput = row.querySelector('input[name$="-DELETE"]');
+    if (deleteInput) {
+        deleteInput.value = 'on';
+        row.style.display = 'none';
+    } else {
+        row.remove();
+    }
+    calculateTotals();
+    
+    // Update form count
+    const totalForms = document.getElementById('id_form-TOTAL_FORMS');
+    totalForms.value = parseInt(totalForms.value) - 1;
+}
+
+// Clear line item
+function clearLine(button) {
+    const row = button.closest('tr');
+    const inputs = row.querySelectorAll('input, select');
+    inputs.forEach(input => {
+        if (input.type !== 'hidden' && !input.name.endsWith('-DELETE')) {
+            input.value = '';
+        }
+    });
+    calculateTotals();
+}
+
+// Calculate totals
+function calculateTotals() {
+    let totalDebit = 0;
+    let totalCredit = 0;
+    
+    document.querySelectorAll('input[name$="-debit"]').forEach(input => {
+        const value = parseFloat(input.value) || 0;
+        totalDebit += value;
+    });
+    
+    document.querySelectorAll('input[name$="-credit"]').forEach(input => {
+        const value = parseFloat(input.value) || 0;
+        totalCredit += value;
+    });
+    
+    // Update display
+    document.getElementById('totalDebit').textContent = totalDebit.toFixed(3);
+    document.getElementById('totalCredit').textContent = totalCredit.toFixed(3);
+    
+    // Update balance status
+    const balanceStatus = document.getElementById('balanceStatus');
+    const balanceAlert = document.getElementById('balanceAlert');
+    const saveButton = document.getElementById('saveButton');
+    
+    if (Math.abs(totalDebit - totalCredit) < 0.001 && totalDebit > 0) {
+        balanceStatus.className = 'badge bg-success';
+        balanceStatus.innerHTML = '<i class="fas fa-check me-1"></i>Balanced';
+        balanceAlert.classList.add('d-none');
+        saveButton.disabled = false;
+    } else {
+        balanceStatus.className = 'badge bg-danger';
+        balanceStatus.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>Unbalanced';
+        balanceAlert.classList.remove('d-none');
+        saveButton.disabled = true;
+    }
+}
+
+// Add event listeners
+function addEventListeners() {
+    document.querySelectorAll('input[name$="-debit"], input[name$="-credit"]').forEach(input => {
+        input.addEventListener('input', function() {
+            // Prevent entering both Debit and Credit in the same row
+            const row = this.closest('tr');
+            const debitInput = row.querySelector('input[name$="-debit"]');
+            const creditInput = row.querySelector('input[name$="-credit"]');
+            
+            if (this === debitInput && this.value) {
+                creditInput.value = '';
+            } else if (this === creditInput && this.value) {
+                debitInput.value = '';
+            }
+            
+            calculateTotals();
+        });
+    });
+}
+
+// Reset form
+function resetForm() {
+    if (confirm('Are you sure you want to reset the form? All entered data will be lost.')) {
+        document.getElementById('journalEntryForm').reset();
+        calculateTotals();
+    }
+}
+
+// Validate form before submission
+document.getElementById('journalEntryForm').addEventListener('submit', function(e) {
+    const totalDebit = parseFloat(document.getElementById('totalDebit').textContent);
+    const totalCredit = parseFloat(document.getElementById('totalCredit').textContent);
+    
+    if (Math.abs(totalDebit - totalCredit) > 0.001) {
+        e.preventDefault();
+        alert('Debit total must equal Credit total');
+        return false;
+    }
+    
+    if (totalDebit === 0) {
+        e.preventDefault();
+        alert('Journal entry items must be entered');
+        return false;
+    }
+    
+    // Update total amounts
+    calculateTotals();
+});
+
+// Page load
+document.addEventListener('DOMContentLoaded', function() {
+    addEventListeners();
+    
+    // Set current date as default
+    const dateInput = document.querySelector('input[name="entry_date"]');
+    if (dateInput && !dateInput.value) {
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.value = today;
+    }
+    
+    calculateTotals();
+});
+</script>
+{% endblock %}

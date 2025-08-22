@@ -1,0 +1,463 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+
+{% block title %}{% trans "Warehouse List" %} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .warehouse-container {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .warehouse-header {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 1.5rem;
+    }
+    
+    .warehouse-card {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        margin-bottom: 1rem;
+        cursor: pointer;
+    }
+    
+    .warehouse-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .table-responsive {
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .table-striped tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .table th {
+        border-top: none;
+        white-space: nowrap;
+        font-weight: 600;
+        vertical-align: middle;
+    }
+    
+    .table td {
+        vertical-align: middle;
+        white-space: nowrap;
+    }
+    
+    .btn-group-sm .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    .status-active {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .status-inactive {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    
+    .warehouse-icon {
+        font-size: 2rem;
+        opacity: 0.7;
+    }
+    
+    .stats-card {
+        transition: transform 0.3s ease;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-3px);
+    }
+    
+    /* Print Styles */
+    @media print {
+        .print-controls,
+        .btn,
+        .navbar,
+        .sidebar,
+        nav {
+            display: none !important;
+        }
+        
+        .container-fluid {
+            margin: 0 !important;
+            padding: 0 !important;
+            max-width: 100% !important;
+        }
+        
+        .card {
+            border: 1px solid #000 !important;
+            box-shadow: none !important;
+            margin-bottom: 1rem !important;
+        }
+        
+        body {
+            font-size: 12px !important;
+            color: #000 !important;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            color: #000 !important;
+        }
+        
+        .print-table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+        }
+        
+        .print-table th,
+        .print-table td {
+            border: 1px solid #000 !important;
+            padding: 8px !important;
+            text-align: right !important;
+        }
+        
+        .print-table th {
+            background-color: #f5f5f5 !important;
+            font-weight: bold !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Header Section -->
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-warehouse me-2"></i>
+                    إدارة المستودعات
+                </h2>
+                <div class="btn-group print-controls">
+                    <button type="button" class="btn btn-outline-primary" onclick="printWarehouseReport()">
+                        <i class="fas fa-print me-2"></i>
+                        {% trans "Print" %} {% trans "Report" %} المستودعات
+                    </button>
+                    <a href="{% url 'inventory:warehouse_add' %}" class="btn btn-success">
+                        <i class="fas fa-plus me-2"></i>
+                        {% trans "Add" %} مستودع {% trans "New" %}
+                    </a>
+                    <a href="{% url 'inventory:list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        العودة للمخزون
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stats-card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">إجمالي المستودعات</h6>
+                            <h3 class="mb-0">{{ total_warehouses|default:0 }}</h3>
+                            <small>مستودع</small>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-warehouse fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stats-card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">المستودعات ال{% trans "Active" %}ة</h6>
+                            <h3 class="mb-0">{{ active_warehouses|default:0 }}</h3>
+                            <small>مستودع</small>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stats-card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">المستودعات الفرعية</h6>
+                            <h3 class="mb-0">{{ sub_warehouses|default:0 }}</h3>
+                            <small>مستودع</small>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-sitemap fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stats-card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">حركات {% trans "This Month" %}</h6>
+                            <h3 class="mb-0">{{ month_movements|default:0 }}</h3>
+                            <small>حركة</small>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-exchange-alt fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Warehouses List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="warehouse-container">
+                <div class="warehouse-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>
+                        {% trans "List" %} المستودعات
+                    </h5>
+                </div>
+                
+                <div class="p-3">
+                    {% if warehouses %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th><i class="fas fa-warehouse me-2"></i>المستودع</th>
+                                        <th>الرمز</th>
+                                        <th>المستودع الأساسي</th>
+                                        <th>المدير</th>
+                                        <th>{% trans "Status" %}</th>
+                                        <th>{% trans "Address" %}</th>
+                                        <th class="text-center">الإجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for warehouse in warehouses %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-warehouse text-primary me-2"></i>
+                                                <div>
+                                                    <strong class="d-block">{{ warehouse.name }}</strong>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <code>{{ warehouse.code }}</code>
+                                        </td>
+                                        <td>{{ warehouse.parent.name|default:"رئيسي" }}</td>
+                                        <td>{{ warehouse.manager.get_full_name|default:"غير محدد" }}</td>
+                                        <td>
+                                            <span class="badge 
+                                                {% if warehouse.is_active %}bg-success
+                                                {% else %}bg-secondary{% endif %}">
+                                                {% if warehouse.is_active %}{% trans "Active" %}
+                                                {% else %}غير {% trans "Active" %}{% endif %}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if warehouse.address %}
+                                                <small class="text-muted">
+                                                    <i class="fas fa-map-marker-alt me-1"></i>
+                                                    {{ warehouse.address|truncatechars:30 }}
+                                                </small>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-primary" title="{% trans "View" %} ال{% trans "Details" %}" onclick="viewWarehouse({{ warehouse.id }})">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="btn btn-outline-warning" title="{% trans "Edit" %}" onclick="editWarehouse({{ warehouse.id }})">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-outline-danger" title="{% trans "Delete" %}" onclick="deleteWarehouse({{ warehouse.id }})">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                    {% else %}
+                        <!-- Empty State -->
+                        <div class="text-center py-5">
+                            <i class="fas fa-warehouse fa-4x text-muted mb-3"></i>
+                            <h4>لا توجد مستودعات</h4>
+                            <p class="text-muted">لم يتم إنشاء أي مستودعات بعد.</p>
+                            <a href="{% url 'inventory:warehouse_add' %}" class="btn btn-success">
+                                <i class="fas fa-plus me-2"></i>
+                                {% trans "Add" %} مستودع {% trans "New" %}
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add click handlers for warehouse cards
+    document.querySelectorAll('.warehouse-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            if (!e.target.closest('.btn')) {
+                // Navigate to warehouse details
+                console.log('Navigate to warehouse details');
+            }
+        });
+    });
+});
+
+window.viewWarehouse = function(warehouseId) {
+    // Navigate to warehouse detail view
+    window.location.href = `/ar/inventory/warehouses/${warehouseId}/`;
+}
+
+window.editWarehouse = function(warehouseId) {
+    // Navigate to warehouse edit view
+    window.location.href = `/ar/inventory/warehouses/edit/${warehouseId}/`;
+}
+
+window.deleteWarehouse = function(warehouseId) {
+    // Navigate to warehouse delete confirmation page
+    window.location.href = `/ar/inventory/warehouses/delete/${warehouseId}/`;
+}
+
+window.printWarehouseReport = function() {
+    console.log('بدء {% trans "Print" %} {% trans "Report" %} المستودعات...');
+    
+    let warehouseHTML = `
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <h1>{% trans "Report" %} المستودعات</h1>
+            <p>تاريخ ال{% trans "Report" %}: ${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}</p>
+        </div>
+        <table class="print-table">
+            <thead>
+                <tr>
+                    <th>رمز المستودع</th>
+                    <th>اسم المستودع</th>
+                    <th>المستودع الأساسي</th>
+                    <th>المدير</th>
+                    <th>{% trans "Status" %}</th>
+                    <th>{% trans "Address" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    // Get warehouse data from the table
+    const warehouseRows = document.querySelectorAll('tbody tr');
+    console.log('عدد صفوف المستودعات الموجودة:', warehouseRows.length);
+    if (warehouseRows.length === 0) {
+        warehouseHTML += `
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 20px;">لا توجد مستودعات لل{% trans "Print" %}</td>
+            </tr>
+        `;
+    } else {
+        warehouseRows.forEach((row) => {
+            try {
+                const cells = row.querySelectorAll('td');
+                if (cells.length >= 6) {
+                    const name = cells[0].querySelector('strong').textContent.trim();
+                    const code = cells[1].textContent.trim();
+                    const parent = cells[2].textContent.trim();
+                    const manager = cells[3].textContent.trim();
+                    const status = cells[4].textContent.trim();
+                    const address = cells[5].textContent.trim();
+                    
+                    console.log('بيانات المستودع:', {name, code, parent, manager, status, address});
+                    
+                    warehouseHTML += `
+                        <tr>
+                            <td>${code}</td>
+                            <td>${name}</td>
+                            <td>${parent}</td>
+                            <td>${manager}</td>
+                            <td>${status}</td>
+                            <td>${address}</td>
+                        </tr>
+                    `;
+                }
+            } catch (error) {
+                console.warn('Error processing warehouse row:', error);
+            }
+        });
+    }
+    
+    warehouseHTML += `
+            </tbody>
+        </table>
+    `;
+    
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>{% trans "Report المستودعات" %}</title>
+                <meta charset="UTF-8">
+                <style>
+                    body { font-family: Arial, sans-serif; direction: rtl; }
+                    .print-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                    .print-table th, .print-table td { border: 1px solid #000; padding: 8px; text-align: right; }
+                    .print-table th { background-color: #f5f5f5; font-weight: bold; }
+                    h1 { text-align: center; margin-bottom: 20px; }
+                    p { text-align: center; margin-bottom: 20px; }
+                </style>
+            </head>
+            <body>
+                ${warehouseHTML}
+            </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
+}
+</script>
+{% endblock %}
