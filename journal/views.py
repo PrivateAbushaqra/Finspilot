@@ -238,60 +238,62 @@ def journal_entry_list(request):
 def journal_entry_create(request):
     """إنشاء قيد محاسبي جديد"""
     if request.method == 'POST':
-        form = JournalEntryForm(request.POST)
-        if form.is_valid():
+        # ربط النماذج بالطلب دائماً للحفاظ على البيانات عند الأخطاء
+        temp_entry = JournalEntry(created_by=request.user)
+        form = JournalEntryForm(request.POST, instance=temp_entry)
+        formset = JournalLineFormSet(request.POST, instance=temp_entry)
+
+        if form.is_valid() and formset.is_valid():
+            # حفظ القيد أولاً بقيمة إجمالية مبدئية
             entry = form.save(commit=False)
             entry.created_by = request.user
-            # تعيين إجمالي مبدئي لتفادي أي قيود NOT NULL في قاعدة البيانات
-            # سيتم تحديث هذا الحقل بعد حفظ البنود وحساب الإجمالي الفعلي
             entry.total_amount = Decimal('0')
             entry.save()
-            
-            formset = JournalLineFormSet(request.POST, instance=entry)
-            if formset.is_valid():
-                formset.save()
-                
-                # التحقق من توازن القيد
-                try:
-                    entry.clean()
-                    # حساب إجمالي المبلغ
-                    total_debit = entry.lines.aggregate(total=Sum('debit'))['total'] or Decimal('0')
-                    entry.total_amount = total_debit
-                    entry.save()
 
-                    # تسجيل العملية في سجل الأنشطة
-                    try:
-                        from core.models import AuditLog
-                        AuditLog.objects.create(
-                            user=request.user,
-                            action_type='create',
-                            content_type='JournalEntry',
-                            object_id=entry.pk,
-                            description=f'تم إنشاء قيد محاسبي رقم {entry.entry_number} بإجمالي {entry.total_amount}'
-                        )
-                    except Exception:
-                        pass
-                    
-                    messages.success(request, _('تم إنشاء القيد بنجاح'))
-                    return redirect('journal:entry_detail', pk=entry.pk)
-                except Exception as e:
-                    messages.error(request, str(e))
-            else:
-                messages.error(request, _('يرجى التحقق من بيانات البنود'))
+            # ربط formset بالكيان المحفوظ ثم الحفظ
+            formset.instance = entry
+            formset.save()
+
+            # التحقق من توازن القيد وحساب الإجمالي
+            try:
+                entry.clean()
+                total_debit = entry.lines.aggregate(total=Sum('debit'))['total'] or Decimal('0')
+                entry.total_amount = total_debit
+                entry.save()
+
+                # تسجيل العملية في سجل الأنشطة
                 try:
                     from core.models import AuditLog
                     AuditLog.objects.create(
                         user=request.user,
-                        action_type='error',
+                        action_type='create',
                         content_type='JournalEntry',
-                        description='أخطاء في نموذج بنود القيد عند الإنشاء'
+                        object_id=entry.pk,
+                        description=f'تم إنشاء قيد محاسبي رقم {entry.entry_number} بإجمالي {entry.total_amount}'
                     )
                 except Exception:
                     pass
+
+                messages.success(request, _('تم إنشاء القيد بنجاح'))
+                return redirect('journal:entry_detail', pk=entry.pk)
+            except Exception as e:
+                messages.error(request, str(e))
+        else:
+            # تسجيل أخطاء التحقق إن وجدت
+            try:
+                from core.models import AuditLog
+                AuditLog.objects.create(
+                    user=request.user,
+                    action_type='error',
+                    content_type='JournalEntry',
+                    description='خطأ تحقق في نموذج القيد أو البنود عند الإنشاء'
+                )
+            except Exception:
+                pass
     else:
         form = JournalEntryForm()
-        entry = JournalEntry()
-        formset = JournalLineFormSet(instance=entry)
+        temp_entry = JournalEntry()
+        formset = JournalLineFormSet(instance=temp_entry)
     
     context = {
         'form': form,
