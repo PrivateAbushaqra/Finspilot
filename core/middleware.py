@@ -7,6 +7,7 @@ from django.utils import timezone
 from datetime import timedelta
 from django.http import JsonResponse
 import json
+from .utils import get_client_ip
 
 # متغير عام لحفظ معلومات المستخدم الحالي
 _current_user = threading.local()
@@ -303,7 +304,7 @@ class SessionSecurityMiddleware:
         if request.user.is_authenticated:
             # تسجيل معلومات المتصفح و IP
             request.session['user_agent'] = request.META.get('HTTP_USER_AGENT', '')
-            request.session['ip_address'] = self.get_client_ip(request)
+            request.session['ip_address'] = get_client_ip(request)
             
             # التحقق من تغيير IP أو المتصفح (اختياري - يمكن تفعيله لاحقاً)
             # stored_ip = request.session.get('stored_ip_address')
@@ -316,14 +317,7 @@ class SessionSecurityMiddleware:
         response = self.get_response(request)
         return response
     
-    def get_client_ip(self, request):
-        """الحصول على عنوان IP الحقيقي للعميل"""
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-        if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0]
-        else:
-            ip = request.META.get('REMOTE_ADDR')
-        return ip
+    # استخدام get_client_ip من core.utils بدلاً من نسخة محلية لتجنب التكرار
 
 
 def get_current_user():

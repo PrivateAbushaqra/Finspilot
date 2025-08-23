@@ -695,10 +695,13 @@ class SuperadminManagementView(LoginRequiredMixin, UserPassesTestMixin, Template
     template_name = 'settings/superadmin_management.html'
     
     def test_func(self):
-        """التحقق من أن المستخدم سوبر أدمين أو مدير فقط"""
-        return (self.request.user.user_type in ['superadmin', 'admin'] or 
-                self.request.user.is_superuser or 
-                self.request.user.has_company_settings_permission())
+        """السماح فقط لمن يملك إذن إدارة النظام صراحة أو سوبر يوزر"""
+        user = self.request.user
+        # السماح للسوبر يوزر دائماً
+        if user.is_superuser:
+            return True
+        # السماح فقط لمن لديه الإذن الصريح
+        return user.has_perm('users.can_access_system_management')
 
     def handle_no_permission(self):
         """في حالة عدم وجود صلاحية، إعادة توجيه للصفحة الرئيسية مع رسالة خطأ"""

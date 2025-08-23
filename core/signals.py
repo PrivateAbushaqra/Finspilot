@@ -5,16 +5,10 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.signals import user_logged_in, user_logged_out
 from .models import AuditLog
 from .middleware import get_current_user, get_current_request
+from .utils import get_client_ip
 
 
-def get_client_ip(request):
-    """الحصول على عنوان IP للمستخدم"""
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0]
-    else:
-        ip = request.META.get('REMOTE_ADDR')
-    return ip
+"""تم نقل دالة get_client_ip إلى core.utils.get_client_ip لتجنب التكرار."""
 
 
 def log_activity(user, action_type, obj, description, request=None):
