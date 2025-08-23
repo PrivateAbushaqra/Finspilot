@@ -948,7 +948,7 @@ class DocumentPrintSettingsView(LoginRequiredMixin, UserPassesTestMixin, Templat
         return redirect('settings:index')
     
     def get_context_data(self, **kwargs):
-        from .models import DocumentPrintSettings
+    from .models import DocumentPrintSettings, CompanySettings
         
         context = super().get_context_data(**kwargs)
         
