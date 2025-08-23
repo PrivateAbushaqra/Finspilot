@@ -12,6 +12,8 @@ class SessionManager {
         this.warningTimer = null;
         this.sessionTimer = null;
         this.warningShown = false;
+    this.isFormSubmitting = false;
+    this.isNavigatingInternally = false;
         
         this.init();
     }
@@ -28,6 +30,9 @@ class SessionManager {
         
         // إعداد معالجة طلبات AJAX
         this.setupAjaxErrorHandling();
+
+    // تعيين أعلام عند تقديم النماذج أو التنقل الداخلي
+    this.setupNavigationGuards();
     }
     
     loadSessionSettings() {
@@ -109,7 +114,9 @@ class SessionManager {
     setupBrowserCloseDetection() {
         if (this.logoutOnBrowserClose) {
             window.addEventListener('beforeunload', (e) => {
-                // إرسال طلب تسجيل خروج عند إغلاق المتصفح
+                // لا تُسجّل خروجاً عند إرسال نموذج أو تنقل داخلي طبيعي
+                if (this.isFormSubmitting || this.isNavigatingInternally) return;
+                // إرسال طلب تسجيل خروج عند إغلاق المتصفح/التبويب فعلياً
                 try {
                     const lang = (document.documentElement.getAttribute('lang') || 'ar').split('-')[0];
                     const url = `/${lang}/auth/logout/`;
@@ -126,6 +133,27 @@ class SessionManager {
                 }
             });
         }
+    }
+
+    setupNavigationGuards() {
+        // رصد إرسال النماذج
+        document.addEventListener('submit', (e) => {
+            this.isFormSubmitting = true;
+            // إعادة الضبط بعد فترة قصيرة في حال الإلغاء
+            setTimeout(() => { this.isFormSubmitting = false; }, 5000);
+        }, true);
+
+        // رصد النقر على الروابط للتنقل الداخلي
+        document.addEventListener('click', (e) => {
+            const a = e.target.closest('a');
+            if (a && a.href) {
+                const url = new URL(a.href, window.location.origin);
+                if (url.origin === window.location.origin) {
+                    this.isNavigatingInternally = true;
+                    setTimeout(() => { this.isNavigatingInternally = false; }, 3000);
+                }
+            }
+        }, true);
     }
     
     setupAjaxErrorHandling() {
