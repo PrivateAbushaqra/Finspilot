@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q, Sum
+from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 from django.http import JsonResponse
 from django.core.paginator import Paginator
@@ -243,23 +244,24 @@ def journal_entry_create(request):
         form = JournalEntryForm(request.POST, instance=temp_entry)
         formset = JournalLineFormSet(request.POST, instance=temp_entry)
 
-        if form.is_valid() and formset.is_valid():
-            # حفظ القيد أولاً بقيمة إجمالية مبدئية
-            entry = form.save(commit=False)
-            entry.created_by = request.user
-            entry.total_amount = Decimal('0')
-            entry.save()
+        try:
+            if form.is_valid() and formset.is_valid():
+                with transaction.atomic():
+                    # حفظ القيد أولاً بقيمة إجمالية مبدئية
+                    entry = form.save(commit=False)
+                    entry.created_by = request.user
+                    entry.total_amount = Decimal('0')
+                    entry.save()
 
-            # ربط formset بالكيان المحفوظ ثم الحفظ
-            formset.instance = entry
-            formset.save()
+                    # ربط formset بالكيان المحفوظ ثم الحفظ
+                    formset.instance = entry
+                    formset.save()
 
-            # التحقق من توازن القيد وحساب الإجمالي
-            try:
-                entry.clean()
-                total_debit = entry.lines.aggregate(total=Sum('debit'))['total'] or Decimal('0')
-                entry.total_amount = total_debit
-                entry.save()
+                    # التحقق من توازن القيد وحساب الإجمالي
+                    entry.clean()
+                    total_debit = entry.lines.aggregate(total=Sum('debit'))['total'] or Decimal('0')
+                    entry.total_amount = total_debit
+                    entry.save()
 
                 # تسجيل العملية في سجل الأنشطة
                 try:
@@ -276,20 +278,31 @@ def journal_entry_create(request):
 
                 messages.success(request, _('تم إنشاء القيد بنجاح'))
                 return redirect('journal:entry_detail', pk=entry.pk)
-            except Exception as e:
-                messages.error(request, str(e))
-        else:
-            # تسجيل أخطاء التحقق إن وجدت
+            else:
+                # تسجيل أخطاء التحقق إن وجدت
+                try:
+                    from core.models import AuditLog
+                    AuditLog.objects.create(
+                        user=request.user,
+                        action_type='error',
+                        content_type='JournalEntry',
+                        description='خطأ تحقق في نموذج القيد أو البنود عند الإنشاء'
+                    )
+                except Exception:
+                    pass
+        except Exception as e:
+            # أي خطأ غير متوقع في الإنتاج يجب ألا يؤدي إلى 500، بل يعرض الرسالة ويُسجّل
             try:
                 from core.models import AuditLog
                 AuditLog.objects.create(
                     user=request.user,
                     action_type='error',
                     content_type='JournalEntry',
-                    description='خطأ تحقق في نموذج القيد أو البنود عند الإنشاء'
+                    description=f'استثناء غير متوقع أثناء إنشاء القيد: {str(e)}'
                 )
             except Exception:
                 pass
+            messages.error(request, _('حدث خطأ غير متوقع أثناء إنشاء القيد. يرجى المحاولة مرة أخرى.'))
     else:
         form = JournalEntryForm()
         temp_entry = JournalEntry()
