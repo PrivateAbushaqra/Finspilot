@@ -316,6 +316,19 @@ def journal_entry_detail(request, pk):
         total_credit=Sum('credit')
     )
     
+    # سجل النشاط: عرض تفاصيل القيد
+    try:
+        from core.models import AuditLog
+        AuditLog.objects.create(
+            user=request.user,
+            action_type='view',
+            content_type='JournalEntry',
+            object_id=entry.pk,
+            description=f'عرض تفاصيل القيد رقم {entry.entry_number}'
+        )
+    except Exception:
+        pass
+
     context = {
         'entry': entry,
         'lines': lines,

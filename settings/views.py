@@ -948,7 +948,7 @@ class DocumentPrintSettingsView(LoginRequiredMixin, UserPassesTestMixin, Templat
         return redirect('settings:index')
     
     def get_context_data(self, **kwargs):
-    from .models import DocumentPrintSettings, CompanySettings
+        from .models import DocumentPrintSettings, CompanySettings
         
         context = super().get_context_data(**kwargs)
         
@@ -971,7 +971,6 @@ class DocumentPrintSettingsView(LoginRequiredMixin, UserPassesTestMixin, Templat
         context['document_types'] = document_types
         
         # الحصول على إعدادات النظام للشعار
-        from .models import CompanySettings
         try:
             general_settings = CompanySettings.objects.first()
         except CompanySettings.DoesNotExist:
