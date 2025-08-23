@@ -258,6 +258,19 @@ def journal_entry_create(request):
                     total_debit = entry.lines.aggregate(total=Sum('debit'))['total'] or Decimal('0')
                     entry.total_amount = total_debit
                     entry.save()
+
+                    # تسجيل العملية في سجل الأنشطة
+                    try:
+                        from core.models import AuditLog
+                        AuditLog.objects.create(
+                            user=request.user,
+                            action_type='create',
+                            content_type='JournalEntry',
+                            object_id=entry.pk,
+                            description=f'تم إنشاء قيد محاسبي رقم {entry.entry_number} بإجمالي {entry.total_amount}'
+                        )
+                    except Exception:
+                        pass
                     
                     messages.success(request, _('تم إنشاء القيد بنجاح'))
                     return redirect('journal:entry_detail', pk=entry.pk)
@@ -265,6 +278,16 @@ def journal_entry_create(request):
                     messages.error(request, str(e))
             else:
                 messages.error(request, _('يرجى التحقق من بيانات البنود'))
+                try:
+                    from core.models import AuditLog
+                    AuditLog.objects.create(
+                        user=request.user,
+                        action_type='error',
+                        content_type='JournalEntry',
+                        description='أخطاء في نموذج بنود القيد عند الإنشاء'
+                    )
+                except Exception:
+                    pass
     else:
         form = JournalEntryForm()
         entry = JournalEntry()

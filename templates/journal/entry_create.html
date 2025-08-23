@@ -106,9 +106,9 @@
                                                 {% endif %}
                                             </td>
                                             <td>
-                                                {{ form.description }}
-                                                {% if form.description.errors %}
-                                                    <div class="text-danger small">{{ form.description.errors.0 }}</div>
+                                                {{ form.line_description }}
+                                                {% if form.line_description.errors %}
+                                                    <div class="text-danger small">{{ form.line_description.errors.0 }}</div>
                                                 {% endif %}
                                             </td>
                                             <td>
@@ -197,9 +197,9 @@
 
 <!-- New entry row template -->
 <div id="emptyLineTemplate" style="display: none;">
-    <tr class="journal-line-row" data-form-prefix="__prefix__">
+    <tr class="journal-line-row" data-form-prefix="form-__prefix__">
         <td>
-            <select name="__prefix__-account" class="form-control" id="id___prefix__-account">
+            <select name="form-__prefix__-account" class="form-control" id="id_form-__prefix__-account">
                 <option value="">{% trans "Select Account" %}</option>
                 {% for account in accounts %}
                     <option value="{{ account.pk }}">{{ account.code }} - {{ account.name }}</option>
@@ -207,13 +207,13 @@
             </select>
         </td>
         <td>
-            <input type="text" name="__prefix__-description" class="form-control" id="id___prefix__-description">
+            <input type="text" name="form-__prefix__-line_description" class="form-control" id="id_form-__prefix__-line_description">
         </td>
         <td>
-            <input type="number" name="__prefix__-debit" class="form-control" step="0.001" min="0" id="id___prefix__-debit">
+            <input type="number" name="form-__prefix__-debit" class="form-control" step="0.001" min="0" id="id_form-__prefix__-debit">
         </td>
         <td>
-            <input type="number" name="__prefix__-credit" class="form-control" step="0.001" min="0" id="id___prefix__-credit">
+            <input type="number" name="form-__prefix__-credit" class="form-control" step="0.001" min="0" id="id_form-__prefix__-credit">
         </td>
         <td class="text-center">
             <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearLine(this)" title="{% trans 'Clear Item' %}">
@@ -221,7 +221,7 @@
             </button>
         </td>
         <td class="text-center">
-            <input type="hidden" name="__prefix__-DELETE" id="id___prefix__-DELETE">
+            <input type="hidden" name="form-__prefix__-DELETE" id="id_form-__prefix__-DELETE">
             <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteLine(this)" title="{% trans "Delete Item" %}">
                 <i class="fas fa-trash"></i>
             </button>
@@ -232,7 +232,7 @@
 
 {% block extra_js %}
 <script>
-let lineCount = {{ formset.total_form_count }};
+let lineCount = parseInt('{{ formset.total_form_count }}');
 
 // Add new journal line
 function addJournalLine() {
@@ -241,8 +241,9 @@ function addJournalLine() {
     
     document.getElementById('journalLinesBody').insertAdjacentHTML('beforeend', newLine);
     
-    // Update form count
-    document.getElementById('id_form-TOTAL_FORMS').value = parseInt(document.getElementById('id_form-TOTAL_FORMS').value) + 1;
+    // Update form count (management form uses prefix "form")
+    const totalFormsEl = document.getElementById('id_form-TOTAL_FORMS');
+    totalFormsEl.value = parseInt(totalFormsEl.value) + 1;
     
     // Add event listeners for new fields
     addEventListeners();
@@ -261,9 +262,7 @@ function deleteLine(button) {
     }
     calculateTotals();
     
-    // Update form count
-    const totalForms = document.getElementById('id_form-TOTAL_FORMS');
-    totalForms.value = parseInt(totalForms.value) - 1;
+    // لا تقلل العداد هنا لأننا نستخدم DELETE للحفاظ على الفهارس متسقة
 }
 
 // Clear line item
@@ -303,13 +302,13 @@ function calculateTotals() {
     const saveButton = document.getElementById('saveButton');
     
     if (Math.abs(totalDebit - totalCredit) < 0.001 && totalDebit > 0) {
-        balanceStatus.className = 'badge bg-success';
-        balanceStatus.innerHTML = '<i class="fas fa-check me-1"></i>Balanced';
+    balanceStatus.className = 'badge bg-success';
+    balanceStatus.innerHTML = '<i class="fas fa-check me-1"></i>{% trans "Balanced" %}';
         balanceAlert.classList.add('d-none');
         saveButton.disabled = false;
     } else {
-        balanceStatus.className = 'badge bg-danger';
-        balanceStatus.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>Unbalanced';
+    balanceStatus.className = 'badge bg-danger';
+    balanceStatus.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>{% trans "Unbalanced" %}';
         balanceAlert.classList.remove('d-none');
         saveButton.disabled = true;
     }
@@ -337,7 +336,7 @@ function addEventListeners() {
 
 // Reset form
 function resetForm() {
-    if (confirm('Are you sure you want to reset the form? All entered data will be lost.')) {
+    if (confirm('{% trans "Are you sure you want to reset the form? All entered data will be lost." %}')) {
         document.getElementById('journalEntryForm').reset();
         calculateTotals();
     }
@@ -350,13 +349,13 @@ document.getElementById('journalEntryForm').addEventListener('submit', function(
     
     if (Math.abs(totalDebit - totalCredit) > 0.001) {
         e.preventDefault();
-        alert('Debit total must equal Credit total');
+        alert('{% trans "Debit total must equal Credit total" %}');
         return false;
     }
     
     if (totalDebit === 0) {
         e.preventDefault();
-        alert('Journal entry items must be entered');
+        alert('{% trans "Journal entry items must be entered" %}');
         return false;
     }
     

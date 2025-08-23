@@ -110,7 +110,13 @@ class SessionManager {
         if (this.logoutOnBrowserClose) {
             window.addEventListener('beforeunload', (e) => {
                 // إرسال طلب تسجيل خروج عند إغلاق المتصفح
-                navigator.sendBeacon('/logout/', new FormData());
+                try {
+                    const lang = (document.documentElement.getAttribute('lang') || 'ar').split('-')[0];
+                    const url = `/${lang}/auth/logout/`;
+                    navigator.sendBeacon(url, new FormData());
+                } catch (err) {
+                    navigator.sendBeacon('/logout/', new FormData());
+                }
             });
             
             // معالجة إغلاق التبويب
