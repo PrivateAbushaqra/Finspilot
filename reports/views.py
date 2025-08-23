@@ -65,6 +65,8 @@ def customer_statement(request):
     if customer_id:
         selected_customer = customers.filter(pk=customer_id).first()
 
+    view_logged = False
+
     if selected_customer:
         # Opening balance = net of all transactions before start_date
         before_qs = AccountTransaction.objects.filter(
@@ -114,6 +116,7 @@ def customer_statement(request):
                 def __str__(self):
                     return str(_('Customer Statement'))
             log_view_activity(request, 'view', ReportObj(), desc)
+            view_logged = True
         except Exception:
             pass
 
@@ -188,5 +191,16 @@ def customer_statement(request):
         'totals_credit': totals_credit,
         'closing_balance': closing_balance,
     }
+
+    if not view_logged:
+        try:
+            class ReportObj:
+                id = 0
+                pk = 0
+                def __str__(self):
+                    return str(_('Customer Statement'))
+            log_view_activity(request, 'view', ReportObj(), str(_('Viewing customer statement page')))
+        except Exception:
+            pass
 
     return render(request, 'reports/customer_statement.html', context)
