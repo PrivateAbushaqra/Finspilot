@@ -260,7 +260,7 @@
                 page-break-inside: avoid;
             }
             
-            /* Advanced page number settings */
+            /* Advanced page number settings (default EN, overridden below for AR) */
             @page {
                 margin: 0.5cm;
                 size: A4 landscape;
@@ -479,6 +479,19 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+    {% if LANGUAGE_CODE == 'ar' %}
+    <style>
+    /* Arabic override for print page counters */
+    @page {
+        @bottom-center {
+            content: "الصفحة " counter(page) " من " counter(pages);
+        }
+        @top-center {
+            content: "تاريخ الطباعة: " attr(data-print-date);
+        }
+    }
+    </style>
+    {% endif %}
     <!-- Company Logo Background -->
     {% if company_settings.logo %}
     <img src="{{ company_settings.logo.url }}" class="company-logo" alt="{% trans 'Company Logo' %}">
@@ -903,6 +916,11 @@
                                     <li class="nav-item">
                                         <a class="nav-link" href="{% url 'core:profit_loss_report' %}">{% trans "Profit and Loss" %}</a>
                                     </li>
+                                    <li class="nav-item">
+                                        {% if user.user_type == 'superadmin' or user.user_type == 'admin' or user.is_superuser or perms.reports.can_view_customer_statement %}
+                                        <a class="nav-link" href="{% url 'reports:customer_statement' %}">{% trans "Customer Statement" %}</a>
+                                        {% endif %}
+                                    </li>
                                 </ul>
                             </div>
                         </li>
@@ -1316,17 +1334,18 @@
             minute: '2-digit'
         });
         
-        const pageTitle = document.querySelector('h1, h2, h3, h4, .card-title, .page-title')?.textContent?.trim() || 'Report';
+    const pageTitle = document.querySelector('h1, h2, h3, h4, .card-title, .page-title')?.textContent?.trim() || '{% trans "Report" %}';
         
+        const printDateLabel = document.documentElement.lang === 'ar' ? 'تاريخ الطباعة:' : 'Print Date:';
         printHeader.innerHTML = `
             <div class="print-company-info">
-                Finspilot - Integrated Accounting System
+                {% trans "Finspilot - Accounting System" %}
             </div>
             <div class="print-header">
                 ${pageTitle}
             </div>
             <div class="print-date">
-                Print Date: ${dateStr}
+                ${printDateLabel} ${dateStr}
             </div>
             <style>
                 @media print {

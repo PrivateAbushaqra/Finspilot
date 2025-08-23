@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Customer Statement" %} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0"><i class="fas fa-file-invoice-dollar me-2"></i>{% trans "Customer Statement" %}</h2>
+    {% if selected_customer %}
+    <div class="btn-group">
+      <a class="btn btn-outline-primary" href="?customer={{ selected_customer.pk }}&start_date={{ start_date }}&end_date={{ end_date }}&export=csv">
+        <i class="fas fa-file-csv me-1"></i>{% trans "Export CSV" %}
+      </a>
+      <a class="btn btn-outline-success" href="?customer={{ selected_customer.pk }}&start_date={{ start_date }}&end_date={{ end_date }}&export=xlsx">
+        <i class="fas fa-file-excel me-1"></i>{% trans "Export Excel" %}
+      </a>
+      <button class="btn btn-outline-secondary" onclick="window.print()">
+        <i class="fas fa-print me-1"></i>{% trans "Print" %}
+      </button>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="card shadow-sm mb-3">
+    <div class="card-body">
+      <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label">{% trans "Customer" %}</label>
+          <select class="form-select" name="customer" required>
+            <option value="">— {% trans "Select" %} —</option>
+            {% for c in customers %}
+            <option value="{{ c.pk }}" {% if selected_customer and c.pk == selected_customer.pk %}selected{% endif %}>{{ c.sequence_number }} — {{ c.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">{% trans "From" %}</label>
+          <input type="date" class="form-control" name="start_date" value="{{ start_date|date:'Y-m-d' }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">{% trans "To" %}</label>
+          <input type="date" class="form-control" name="end_date" value="{{ end_date|date:'Y-m-d' }}">
+        </div>
+        <div class="col-md-2">
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="fas fa-search me-1"></i>{% trans "View" %}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% if selected_customer %}
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <strong>{% trans "Customer" %}:</strong> {{ selected_customer.name }} ({{ selected_customer.sequence_number }})
+        </div>
+        <div class="col-md-6 text-md-end">
+          <strong>{% trans "Period" %}:</strong> {{ start_date }} — {{ end_date }}
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-striped table-bordered align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>{% trans "Date" %}</th>
+              <th>{% trans "Number" %}</th>
+              <th>{% trans "Type" %}</th>
+              <th>{% trans "Description" %}</th>
+              <th class="text-end">{% trans "Debit" %}</th>
+              <th class="text-end">{% trans "Credit" %}</th>
+              <th class="text-end">{% trans "Running Balance" %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{{ start_date }}</td>
+              <td>—</td>
+              <td colspan="3"><strong>{% trans "Opening Balance" %}</strong></td>
+              <td></td>
+              <td class="text-end"><strong>{{ opening_balance }}</strong></td>
+            </tr>
+            {% for r in statement_rows %}
+            <tr>
+              <td>{{ r.date }}</td>
+              <td>{{ r.number }}</td>
+              <td>{{ r.type }}</td>
+              <td>{{ r.description }}</td>
+              <td class="text-end">{{ r.debit }}</td>
+              <td class="text-end">{{ r.credit }}</td>
+              <td class="text-end">{{ r.running_balance }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7" class="text-center text-muted">{% trans "No data for this period" %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+          <tfoot class="table-light">
+            <tr>
+              <th colspan="4" class="text-end">{% trans "Totals" %}</th>
+              <th class="text-end">{{ totals_debit }}</th>
+              <th class="text-end">{{ totals_credit }}</th>
+              <th></th>
+            </tr>
+            <tr>
+              <th colspan="6" class="text-end">{% trans "Closing Balance" %}</th>
+              <th class="text-end">{{ closing_balance }}</th>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

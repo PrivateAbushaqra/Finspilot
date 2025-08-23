@@ -25,7 +25,6 @@ except ImportError:
     OPENPYXL_AVAILABLE = False
 
 from .models import SystemNotification, CompanySettings, AuditLog
-from .export_audit_log_excel import export_audit_log_to_excel
 # سيتم استيراد النماذج عند الحاجة لتجنب الاستيراد الدائري
 
 
@@ -818,7 +817,29 @@ def audit_log_export_excel(request):
             queryset = queryset.filter(timestamp__date__lte=date_to)
         except ValueError:
             pass
-    return export_audit_log_to_excel(queryset)
+    # استيراد متأخر لتفادي اعتماد xlsxwriter عند استيراد views
+    try:
+        from .export_audit_log_excel import export_audit_log_to_excel
+        return export_audit_log_to_excel(queryset)
+    except Exception as e:
+        # في حال عدم توفر المكتبة، إرجاع CSV بسيط كبديل حتى لا ينكسر النظام
+        import csv, io
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(['الوقت', 'المستخدم', 'نوع العملية', 'نوع المحتوى', 'الوصف', 'عنوان IP'])
+        for log in queryset:
+            writer.writerow([
+                log.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                getattr(log.user, 'username', ''),
+                getattr(log, 'action_type', ''),
+                getattr(log, 'content_type', ''),
+                getattr(log, 'description', ''),
+                getattr(log, 'ip_address', ''),
+            ])
+        from django.http import HttpResponse
+        response = HttpResponse(output.getvalue(), content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = 'attachment; filename=audit_log.csv'
+        return response
 
 from django.contrib.auth import logout as django_logout
 from django.utils.translation import get_language
