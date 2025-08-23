@@ -112,7 +112,7 @@ def customer_statement(request):
                 id = 0
                 pk = 0
                 def __str__(self):
-                    return 'Customer Statement'
+                    return str(_('Customer Statement'))
             log_view_activity(request, 'view', ReportObj(), desc)
         except Exception:
             pass
@@ -127,7 +127,7 @@ def customer_statement(request):
                     from openpyxl import Workbook
                     wb = Workbook()
                     ws = wb.active
-                    ws.title = 'Statement'
+                    ws.title = str(_('Statement'))
                     headers = [
                         _('Date'), _('Number'), _('Type'), _('Description'), _('Debit'), _('Credit'), _('Running Balance')
                     ]
@@ -147,7 +147,7 @@ def customer_statement(request):
                     response = HttpResponse(bio.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
                     response['Content-Disposition'] = f'attachment; filename={filename_base}.xlsx'
                     try:
-                        log_export_activity(request, 'Customer Statement', f'{filename_base}.xlsx', 'XLSX')
+                        log_export_activity(request, str(_('Customer Statement')), f'{filename_base}.xlsx', 'XLSX')
                     except Exception:
                         pass
                     return response
@@ -172,7 +172,7 @@ def customer_statement(request):
                 writer.writerow(['', '', _('Totals'), '', totals_debit, totals_credit, ''])
                 writer.writerow(['', '', _('Closing Balance'), '', '', '', closing_balance])
                 try:
-                    log_export_activity(request, 'Customer Statement', f'{filename_base}.csv', 'CSV')
+                    log_export_activity(request, str(_('Customer Statement')), f'{filename_base}.csv', 'CSV')
                 except Exception:
                     pass
                 return response
