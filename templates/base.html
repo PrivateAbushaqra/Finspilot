@@ -22,7 +22,7 @@
     <!-- Responsive CSS -->
     {% load static %}
     <link rel="stylesheet" href="{% static 'core/css/responsive.css' %}">
-    <link rel="stylesheet" href="{% static 'core/css/table-responsive.css' %}">>
+    <link rel="stylesheet" href="{% static 'core/css/table-responsive.css' %}">
     
     <!-- Session Management CSS -->
     {% if user.is_authenticated %}
@@ -1004,6 +1004,11 @@
     
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // تعطيل التنقل الجزئي (AJAX) افتراضياً لتفادي فقدان الأنماط والسكربتات
+        // فعِّله بوضع window.ENABLE_AJAX_NAV = true قبل هذا السكربت إن رغبت.
+        if (window.ENABLE_AJAX_NAV !== true) {
+            return;
+        }
         // Function to determine active page in sidebar
         function setActiveSidebarItem() {
             const currentUrl = window.location.pathname;
