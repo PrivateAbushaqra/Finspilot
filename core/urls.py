@@ -14,4 +14,6 @@ urlpatterns = [
     path('reports/profit-loss/', views.ProfitLossReportView.as_view(), name='profit_loss_report'),
     path('sync-balances/', views.sync_balances_view, name='sync_balances'),
     path('api/extend-session/', views.extend_session_api, name='extend_session_api'),
+    # Alias لمعالجة POST /logout/ القادم من sendBeacon لمنع 404
+    path('logout/', views.logout_alias, name='logout_alias'),
 ]

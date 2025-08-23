@@ -242,6 +242,9 @@ def journal_entry_create(request):
         if form.is_valid():
             entry = form.save(commit=False)
             entry.created_by = request.user
+            # تعيين إجمالي مبدئي لتفادي أي قيود NOT NULL في قاعدة البيانات
+            # سيتم تحديث هذا الحقل بعد حفظ البنود وحساب الإجمالي الفعلي
+            entry.total_amount = Decimal('0')
             entry.save()
             
             formset = JournalLineFormSet(request.POST, instance=entry)

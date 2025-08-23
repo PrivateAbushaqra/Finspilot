@@ -7,11 +7,14 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.conf.urls.i18n import i18n_patterns
 from django.views.i18n import set_language
+from core.views import logout_alias
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('core.api_urls')),
     path('i18n/', include('django.conf.urls.i18n')),
+    # Alias غير مترجم للتعامل مع /logout/ مباشرةً (مثلاً من sendBeacon)
+    path('logout/', logout_alias, name='logout'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 urlpatterns += i18n_patterns(

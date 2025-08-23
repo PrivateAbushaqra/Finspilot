@@ -25,6 +25,7 @@ except ImportError:
     OPENPYXL_AVAILABLE = False
 
 from .models import SystemNotification, CompanySettings, AuditLog
+from .export_audit_log_excel import export_audit_log_to_excel
 # سيتم استيراد النماذج عند الحاجة لتجنب الاستيراد الدائري
 
 
@@ -818,3 +819,30 @@ def audit_log_export_excel(request):
         except ValueError:
             pass
     return export_audit_log_to_excel(queryset)
+
+from django.contrib.auth import logout as django_logout
+from django.utils.translation import get_language
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+
+@csrf_exempt
+@require_http_methods(["POST", "GET"])  # دعم GET كتحسين إضافي
+def logout_alias(request):
+    """Alias للتعامل مع /logout/ القادمة من sendBeacon وإعادة التوجيه للمسار الصحيح.
+    يحترم i18n بإعادة التوجيه إلى /<lang>/auth/logout/.
+    """
+    try:
+        lang = get_language() or 'ar'
+    except Exception:
+        lang = 'ar'
+
+    # نفّذ logout فوراً (للطلبات POST القادمة من beacon قد لا تحتوي CSRF)
+    if request.user.is_authenticated:
+        try:
+            django_logout(request)
+        except Exception:
+            pass
+
+    # إعادة التوجيه لمسار الخروج الرسمي لضمان أي hooks/إشعارات موجودة هناك
+    redirect_url = f"/{lang}/auth/logout/"
+    return redirect(redirect_url)
