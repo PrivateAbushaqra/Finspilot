@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 
@@ -81,77 +81,85 @@ class DocumentSequence(models.Model):
         return f"{self.get_document_type_display()} - {self.prefix}"
 
     def get_next_number(self):
-        """الحصول على الرقم التالي مع التحقق من آخر رقم مُستخدم فعلياً"""
-        # للتحويلات بين الصناديق، تحقق من آخر رقم مُستخدم فعلياً
-        if self.document_type == 'cashbox_transfer':
-            from cashboxes.models import CashboxTransfer
-            
-            # البحث عن آخر تحويل بنفس البادئة
-            last_transfer = CashboxTransfer.objects.filter(
-                transfer_number__startswith=self.prefix
-            ).order_by('-transfer_number').first()
-            
-            if last_transfer:
-                try:
-                    # استخراج الرقم من آخر تحويل
-                    last_number_str = last_transfer.transfer_number[len(self.prefix):]
-                    last_number = int(last_number_str)
-                    
-                    # تحديد الرقم التالي
-                    next_number = last_number + 1
-                    
-                    # تحديث current_number إذا كان أقل من الرقم الفعلي
-                    if self.current_number <= last_number:
-                        self.current_number = next_number
-                    else:
-                        next_number = self.current_number
-                    
-                except (ValueError, IndexError):
-                    # في حالة فشل تحليل الرقم، استخدم current_number
-                    next_number = self.current_number
+        """الحصول على الرقم التالي مع قفل ذرّي ومزامنة مع آخر رقم مُستخدم فعلياً.
+
+        يعالج حالات التعارض والتوازي لضمان فريدة رقم المستند.
+        """
+        # نعيد قفل سجل التسلسل ذاته داخل معاملة ذرّية لتفادي السباقات
+        with transaction.atomic():
+            seq = type(self).objects.select_for_update().get(pk=self.pk)
+
+            def _sync_with_last_used(last_number: int | None) -> int:
+                """أعد اختيار الرقم التالي بناءً على آخر رقم مُستخدم والـ current_number."""
+                if last_number is not None and last_number >= seq.current_number:
+                    return last_number + 1
+                return seq.current_number
+
+            # للتحويلات بين الصناديق
+            if seq.document_type == 'cashbox_transfer':
+                from cashboxes.models import CashboxTransfer
+                last_transfer = (
+                    CashboxTransfer.objects
+                    .filter(transfer_number__startswith=seq.prefix)
+                    .order_by('-transfer_number')
+                    .first()
+                )
+                last_num = None
+                if last_transfer:
+                    try:
+                        last_num = int(str(last_transfer.transfer_number)[len(seq.prefix):])
+                    except Exception:
+                        last_num = None
+                next_number = _sync_with_last_used(last_num)
+
+            # مردود المبيعات
+            elif seq.document_type == 'sales_return':
+                from sales.models import SalesReturn
+                last_return = (
+                    SalesReturn.objects
+                    .filter(return_number__startswith=seq.prefix)
+                    .order_by('-return_number')
+                    .first()
+                )
+                last_num = None
+                if last_return:
+                    try:
+                        last_num = int(str(last_return.return_number)[len(seq.prefix):])
+                    except Exception:
+                        last_num = None
+                next_number = _sync_with_last_used(last_num)
+
+            # فواتير المبيعات (بما فيها POS عند استخدام نفس النموذج)
+            elif seq.document_type in ('sales_invoice', 'pos_invoice'):
+                from sales.models import SalesInvoice
+                existing_numbers = (
+                    SalesInvoice.objects
+                    .filter(invoice_number__startswith=seq.prefix)
+                    .values_list('invoice_number', flat=True)
+                )
+                last_num = None
+                max_found = -1
+                for inv in existing_numbers:
+                    tail = str(inv)[len(seq.prefix):]
+                    if tail.isdigit():
+                        try:
+                            num = int(tail)
+                            if num > max_found:
+                                max_found = num
+                        except Exception:
+                            continue
+                if max_found >= 0:
+                    last_num = max_found
+                next_number = _sync_with_last_used(last_num)
+
             else:
-                # لا توجد تحويلات، استخدم current_number
-                next_number = self.current_number
-        
-        # لمردود المبيعات، تحقق من آخر رقم مُستخدم فعلياً
-        elif self.document_type == 'sales_return':
-            from sales.models import SalesReturn
-            
-            # البحث عن آخر مردود بنفس البادئة
-            last_return = SalesReturn.objects.filter(
-                return_number__startswith=self.prefix
-            ).order_by('-return_number').first()
-            
-            if last_return:
-                try:
-                    # استخراج الرقم من آخر مردود
-                    last_number_str = last_return.return_number[len(self.prefix):]
-                    last_number = int(last_number_str)
-                    
-                    # تحديد الرقم التالي
-                    next_number = last_number + 1
-                    
-                    # تحديث current_number إذا كان أقل من الرقم الفعلي
-                    if self.current_number <= last_number:
-                        self.current_number = next_number
-                    else:
-                        next_number = self.current_number
-                    
-                except (ValueError, IndexError):
-                    # في حالة فشل تحليل الرقم، استخدم current_number
-                    next_number = self.current_number
-            else:
-                # لا توجد مرتجعات، استخدم current_number
-                next_number = self.current_number
-        
-        else:
-            # للأنواع الأخرى، استخدم الطريقة العادية
-            next_number = self.current_number
-        
-        number = str(next_number).zfill(self.digits)
-        self.current_number = next_number + 1
-        self.save()
-        return f"{self.prefix}{number}"
+                # الأنواع الأخرى: استخدم current_number كما هو
+                next_number = seq.current_number
+
+            number = str(next_number).zfill(seq.digits)
+            seq.current_number = next_number + 1
+            seq.save(update_fields=['current_number', 'updated_at'])
+            return f"{seq.prefix}{number}"
 
     def get_formatted_number(self, number=None):
         """تنسيق الرقم"""

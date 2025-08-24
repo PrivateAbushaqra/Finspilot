@@ -8,7 +8,7 @@ from django.http import HttpResponse, JsonResponse
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.db.models import Q, Sum, Count
-from django.db import transaction
+from django.db import transaction, IntegrityError
 from django.utils import timezone
 from decimal import Decimal, ROUND_HALF_UP
 from datetime import date, datetime
@@ -240,167 +240,200 @@ def sales_invoice_create(request):
     """إنشاء فاتورة مبيعات جديدة"""
     if request.method == 'POST':
         try:
-            with transaction.atomic():
-                # معالجة بيانات الفاتورة الأساسية
-                user = request.user
-                customer_id = request.POST.get('customer')
-                payment_type = request.POST.get('payment_type')
-                notes = request.POST.get('notes', '')
-                discount_amount = Decimal(request.POST.get('discount', '0'))
-                
-                # التحقق من صلاحية تعديل رقم الفاتورة
-                if 'invoice_number' in request.POST and request.POST.get('invoice_number'):
-                    if user.is_superuser or user.is_staff or user.has_perm('sales.change_salesinvoice_number'):
-                        invoice_number = request.POST.get('invoice_number')
-                    else:
-                        invoice_number = None
-                else:
-                    invoice_number = None
-                
-                # توليد رقم الفاتورة إذا لم يكن محدد
-                if not invoice_number:
-                    try:
-                        sequence = DocumentSequence.objects.get(document_type='sales_invoice')
-                        invoice_number = sequence.get_next_number()
-                    except DocumentSequence.DoesNotExist:
-                        last_invoice = SalesInvoice.objects.order_by('-id').first()
-                        if last_invoice:
-                            number = int(last_invoice.invoice_number.split('-')[-1]) + 1 if '-' in last_invoice.invoice_number else int(last_invoice.invoice_number) + 1
+            # سنحاول عدة مرات لتجنب تعارض الأرقام في حال السباق
+            max_attempts = 5
+            attempt = 0
+            while attempt < max_attempts:
+                attempt += 1
+                try:
+                    with transaction.atomic():
+                        # معالجة بيانات الفاتورة الأساسية
+                        user = request.user
+                        customer_id = request.POST.get('customer')
+                        payment_type = request.POST.get('payment_type')
+                        notes = request.POST.get('notes', '')
+                        discount_amount = Decimal(request.POST.get('discount', '0'))
+
+                        # التحقق من صلاحية تعديل رقم الفاتورة
+                        if 'invoice_number' in request.POST and request.POST.get('invoice_number'):
+                            if user.is_superuser or user.is_staff or user.has_perm('sales.change_salesinvoice_number'):
+                                invoice_number = request.POST.get('invoice_number')
+                            else:
+                                invoice_number = None
                         else:
-                            number = 1
-                        invoice_number = f"SALES-{number:06d}"
-                
-                # التحقق من صلاحية تعديل التاريخ
-                if user.is_superuser or user.is_staff or user.has_perm('sales.change_salesinvoice_date'):
-                    invoice_date = request.POST.get('date', date.today())
-                else:
-                    invoice_date = date.today()
-                
-                # التحقق من البيانات المطلوبة
-                if not customer_id or not payment_type:
-                    messages.error(request, 'يرجى تعبئة جميع الحقول المطلوبة')
-                    return redirect('sales:invoice_add')
-                
-                customer = get_object_or_404(CustomerSupplier, id=customer_id)
-                
-                # معالجة بيانات المنتجات
-                products = request.POST.getlist('products[]')
-                quantities = request.POST.getlist('quantities[]')
-                prices = request.POST.getlist('prices[]')
-                tax_rates = request.POST.getlist('tax_rates[]')
-                tax_amounts = request.POST.getlist('tax_amounts[]')
-                
-                # التحقق من وجود منتجات
-                if not products or not any(p for p in products if p):
-                    messages.error(request, 'يرجى إضافة منتج واحد على الأقل')
-                    return redirect('sales:invoice_add')
-                
-                # حساب المجاميع
-                subtotal = Decimal('0')
-                total_tax_amount = Decimal('0')
-                
-                # إنشاء الفاتورة
-                invoice = SalesInvoice.objects.create(
-                    invoice_number=invoice_number,
-                    date=invoice_date,
-                    customer=customer,
-                    payment_type=payment_type,
-                    discount_amount=discount_amount,
-                    notes=notes,
-                    created_by=user,
-                    subtotal=0,  # سيتم تحديثها لاحقاً
-                    tax_amount=0,  # سيتم تحديثها لاحقاً
-                    total_amount=0  # سيتم تحديثها لاحقاً
-                )
-                
-                # إضافة عناصر الفاتورة
-                for i, product_id in enumerate(products):
-                    if product_id and i < len(quantities) and i < len(prices):
-                        try:
-                            product = Product.objects.get(id=product_id)
-                            quantity = Decimal(quantities[i])
-                            unit_price = Decimal(prices[i])
-                            tax_rate = Decimal(tax_rates[i]) if i < len(tax_rates) and tax_rates[i] else Decimal('0')
-                            
-                            # حساب مبلغ الضريبة لهذا السطر
-                            line_subtotal = quantity * unit_price
-                            line_tax_amount = line_subtotal * (tax_rate / Decimal('100'))
-                            line_total = line_subtotal + line_tax_amount
-                            
-                            # إنشاء عنصر الفاتورة
-                            SalesInvoiceItem.objects.create(
-                                invoice=invoice,
-                                product=product,
-                                quantity=quantity,
-                                unit_price=unit_price,
-                                tax_rate=tax_rate,
-                                tax_amount=line_tax_amount.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP),
-                                total_amount=line_total.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
-                            )
-                            
-                            # إنشاء حركة مخزون صادرة للمبيعات
+                            invoice_number = None
+
+                        # توليد رقم الفاتورة إذا لم يكن محدد
+                        if not invoice_number:
                             try:
-                                from inventory.models import InventoryMovement, Warehouse
-                                import uuid
-                                
-                                # الحصول على المستودع الافتراضي
-                                default_warehouse = Warehouse.objects.filter(is_active=True).first()
-                                if not default_warehouse:
-                                    # إنشاء مستودع افتراضي إذا لم يكن موجوداً
-                                    default_warehouse = Warehouse.objects.create(
-                                        name='المستودع الرئيسي',
-                                        code='MAIN',
-                                        is_active=True
+                                sequence = DocumentSequence.objects.get(document_type='sales_invoice')
+                                invoice_number = sequence.get_next_number()
+                            except DocumentSequence.DoesNotExist:
+                                # توليد بديل إذا لم يوجد تسلسل
+                                last_invoice = SalesInvoice.objects.order_by('-id').first()
+                                if last_invoice:
+                                    number = int(last_invoice.invoice_number.split('-')[-1]) + 1 if '-' in last_invoice.invoice_number else int(last_invoice.invoice_number) + 1
+                                else:
+                                    number = 1
+                                invoice_number = f"SALES-{number:06d}"
+
+                        # التحقق من صلاحية تعديل التاريخ
+                        if user.is_superuser or user.is_staff or user.has_perm('sales.change_salesinvoice_date'):
+                            invoice_date = request.POST.get('date', date.today())
+                        else:
+                            invoice_date = date.today()
+
+                        # التحقق من البيانات المطلوبة
+                        if not customer_id or not payment_type:
+                            messages.error(request, _('يرجى تعبئة جميع الحقول المطلوبة'))
+                            return redirect('sales:invoice_add')
+
+                        customer = get_object_or_404(CustomerSupplier, id=customer_id)
+
+                        # معالجة بيانات المنتجات
+                        products = request.POST.getlist('products[]')
+                        quantities = request.POST.getlist('quantities[]')
+                        prices = request.POST.getlist('prices[]')
+                        tax_rates = request.POST.getlist('tax_rates[]')
+                        tax_amounts = request.POST.getlist('tax_amounts[]')
+
+                        # التحقق من وجود منتجات
+                        if not products or not any(p for p in products if p):
+                            messages.error(request, _('يرجى إضافة منتج واحد على الأقل'))
+                            return redirect('sales:invoice_add')
+
+                        # حساب المجاميع
+                        subtotal = Decimal('0')
+                        total_tax_amount = Decimal('0')
+
+                        # إنشاء الفاتورة
+                        invoice = SalesInvoice.objects.create(
+                            invoice_number=invoice_number,
+                            date=invoice_date,
+                            customer=customer,
+                            payment_type=payment_type,
+                            discount_amount=discount_amount,
+                            notes=notes,
+                            created_by=user,
+                            subtotal=0,  # سيتم تحديثها لاحقاً
+                            tax_amount=0,  # سيتم تحديثها لاحقاً
+                            total_amount=0  # سيتم تحديثها لاحقاً
+                        )
+
+                        # إضافة عناصر الفاتورة
+                        for i, product_id in enumerate(products):
+                            if product_id and i < len(quantities) and i < len(prices):
+                                try:
+                                    product = Product.objects.get(id=product_id)
+                                    quantity = Decimal(quantities[i])
+                                    unit_price = Decimal(prices[i])
+                                    tax_rate = Decimal(tax_rates[i]) if i < len(tax_rates) and tax_rates[i] else Decimal('0')
+
+                                    # حساب مبلغ الضريبة لهذا السطر
+                                    line_subtotal = quantity * unit_price
+                                    line_tax_amount = line_subtotal * (tax_rate / Decimal('100'))
+                                    line_total = line_subtotal + line_tax_amount
+
+                                    # إنشاء عنصر الفاتورة
+                                    SalesInvoiceItem.objects.create(
+                                        invoice=invoice,
+                                        product=product,
+                                        quantity=quantity,
+                                        unit_price=unit_price,
+                                        tax_rate=tax_rate,
+                                        tax_amount=line_tax_amount.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP),
+                                        total_amount=line_total.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
                                     )
-                                
-                                # توليد رقم الحركة
-                                movement_number = f"SALE-OUT-{uuid.uuid4().hex[:8].upper()}"
-                                
-                                InventoryMovement.objects.create(
-                                    movement_number=movement_number,
-                                    date=invoice_date,
-                                    product=product,
-                                    warehouse=default_warehouse,
-                                    movement_type='out',
-                                    reference_type='sales_invoice',
-                                    reference_id=invoice.id,
-                                    quantity=quantity,
-                                    unit_cost=unit_price,
-                                    notes=f'مبيعات - فاتورة رقم {invoice.invoice_number}',
-                                    created_by=user
-                                )
-                            except ImportError:
-                                # في حالة عدم وجود نموذج المخزون
-                                pass
-                            except Exception as inventory_error:
-                                # في حالة حدوث خطأ في المخزون، لا نوقف إنشاء الفاتورة
-                                print(f"خطأ في إنشاء حركة المخزون: {inventory_error}")
-                                pass
-                            
-                            # إضافة إلى المجاميع
-                            subtotal += line_subtotal
-                            total_tax_amount += line_tax_amount
-                            
-                        except (Product.DoesNotExist, ValueError, TypeError) as e:
+
+                                    # إنشاء حركة مخزون صادرة للمبيعات
+                                    try:
+                                        from inventory.models import InventoryMovement, Warehouse
+                                        import uuid
+
+                                        # الحصول على المستودع الافتراضي
+                                        default_warehouse = Warehouse.objects.filter(is_active=True).first()
+                                        if not default_warehouse:
+                                            # إنشاء مستودع افتراضي إذا لم يكن موجوداً
+                                            default_warehouse = Warehouse.objects.create(
+                                                name='المستودع الرئيسي',
+                                                code='MAIN',
+                                                is_active=True
+                                            )
+
+                                        # توليد رقم الحركة
+                                        movement_number = f"SALE-OUT-{uuid.uuid4().hex[:8].upper()}"
+
+                                        InventoryMovement.objects.create(
+                                            movement_number=movement_number,
+                                            date=invoice_date,
+                                            product=product,
+                                            warehouse=default_warehouse,
+                                            movement_type='out',
+                                            reference_type='sales_invoice',
+                                            reference_id=invoice.id,
+                                            quantity=quantity,
+                                            unit_cost=unit_price,
+                                            notes=f'مبيعات - فاتورة رقم {invoice.invoice_number}',
+                                            created_by=user
+                                        )
+                                    except ImportError:
+                                        # في حالة عدم وجود نموذج المخزون
+                                        pass
+                                    except Exception as inventory_error:
+                                        # في حالة حدوث خطأ في المخزون، لا نوقف إنشاء الفاتورة
+                                        print(f"خطأ في إنشاء حركة المخزون: {inventory_error}")
+                                        pass
+
+                                    # إضافة إلى المجاميع
+                                    subtotal += line_subtotal
+                                    total_tax_amount += line_tax_amount
+
+                                except (Product.DoesNotExist, ValueError, TypeError):
+                                    continue
+
+                        # تحديث مجاميع الفاتورة
+                        invoice.subtotal = subtotal.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+                        invoice.tax_amount = total_tax_amount.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+                        invoice.total_amount = (subtotal + total_tax_amount - discount_amount).quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+                        invoice.save()
+
+                        # إنشاء حركة حساب للعميل
+                        create_sales_invoice_account_transaction(invoice, request.user)
+
+                        # إنشاء القيد المحاسبي
+                        create_sales_invoice_journal_entry(invoice, request.user)
+
+                        # تسجيل نشاط صريح لإنشاء الفاتورة (بالإضافة للإشارات العامة)
+                        try:
+                            from core.signals import log_user_activity
+                            log_user_activity(
+                                request,
+                                'create',
+                                invoice,
+                                _('إنشاء فاتورة مبيعات رقم %(number)s') % {'number': invoice.invoice_number}
+                            )
+                        except Exception:
+                            pass
+
+                        messages.success(
+                            request,
+                            _('تم إنشاء فاتورة المبيعات رقم %(number)s بنجاح') % {'number': invoice.invoice_number}
+                        )
+                        return redirect('sales:invoice_detail', pk=invoice.pk)
+                except IntegrityError as ie:
+                    # على الأرجح تعارض في رقم الفاتورة، أعد المحاولة برقم جديد
+                    if 'invoice_number' in str(ie):
+                        if attempt < max_attempts:
                             continue
-                
-                # تحديث مجاميع الفاتورة
-                invoice.subtotal = subtotal.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
-                invoice.tax_amount = total_tax_amount.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
-                invoice.total_amount = (subtotal + total_tax_amount - discount_amount).quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
-                invoice.save()
-                
-                # إنشاء حركة حساب للعميل
-                create_sales_invoice_account_transaction(invoice, request.user)
-                
-                # إنشاء القيد المحاسبي
-                create_sales_invoice_journal_entry(invoice, request.user)
-                
-                messages.success(request, f'تم إنشاء فاتورة المبيعات رقم {invoice.invoice_number} بنجاح')
-                return redirect('sales:invoice_detail', pk=invoice.pk)
-                
+                        else:
+                            raise
+                    else:
+                        raise
+            # إذا وصلنا هنا ولم نرجع، نبلغ عن فشل عام
+            messages.error(request, _('تعذر إنشاء الفاتورة بعد محاولات متعددة، يرجى المحاولة لاحقاً'))
+            return redirect('sales:invoice_add')
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء حفظ الفاتورة: {str(e)}')
+            messages.error(request, _('حدث خطأ أثناء حفظ الفاتورة: %(error)s') % {'error': str(e)})
             return redirect('sales:invoice_add')
     
     # GET request - عرض نموذج إنشاء الفاتورة
