@@ -61,10 +61,10 @@
                             <tr>
                                 <th>{% trans "كود الحساب" %}</th>
                                 <th>{% trans "اسم الحساب" %}</th>
-                                <th>{% trans "Type" %}</th>
+                                <th>{% if LANGUAGE_CODE == 'ar' %}النوع{% else %}{% trans "Type" %}{% endif %}</th>
                                 <th>{% trans "الحساب الرئيسي" %}</th>
                                 <th>{% if LANGUAGE_CODE == 'ar' %}الرصيد{% else %}{% trans "Balance" %}{% endif %}</th>
-                                <th>{% trans "Status" %}</th>
+                                <th>{% if LANGUAGE_CODE == 'ar' %}الحالة{% else %}{% trans "Status" %}{% endif %}</th>
                                 <th>{% trans "الإجراءات" %}</th>
                             </tr>
                         </thead>
@@ -92,19 +92,19 @@
                                 </td>
                                 <td>
                                     {% if account.is_active %}
-                                        <span class="badge badge-success">{% trans "Active" %}</span>
+                                        <span class="badge badge-success">{% if LANGUAGE_CODE == 'ar' %}نشط{% else %}{% trans "Active" %}{% endif %}</span>
                                     {% else %}
-                                        <span class="badge badge-secondary">{% trans "Inactive" %}</span>
+                                        <span class="badge badge-secondary">{% if LANGUAGE_CODE == 'ar' %}غير نشط{% else %}{% trans "Inactive" %}{% endif %}</span>
                                     {% endif %}
                                 </td>
                                 <td>
                                     <div class="btn-group" role="group">
                                         <a href="{% url 'journal:account_detail' account.pk %}" 
-                                           class="btn btn-sm btn-info" title="{% trans "Details" %}">
+                                           class="btn btn-sm btn-info" title="{% if LANGUAGE_CODE == 'ar' %}تفاصيل{% else %}{% trans "Details" %}{% endif %}">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                         <a href="{% url 'journal:account_edit' account.pk %}" 
-                                           class="btn btn-sm btn-warning" title="{% trans "Edit" %}">
+                                           class="btn btn-sm btn-warning" title="{% if LANGUAGE_CODE == 'ar' %}تعديل{% else %}{% trans "Edit" %}{% endif %}">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                         {% if user.is_superuser or perms.users.can_delete_accounts %}
@@ -131,7 +131,7 @@
                         {% if page_obj.has_previous %}
                             <li class="page-item">
                                 <a class="page-link" href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&type={{ current_type }}">
-                                    {% trans "Previous" %}
+                                    {% if LANGUAGE_CODE == 'ar' %}السابق{% else %}{% trans "Previous" %}{% endif %}
                                 </a>
                             </li>
                         {% endif %}
@@ -151,7 +151,7 @@
                         {% if page_obj.has_next %}
                             <li class="page-item">
                                 <a class="page-link" href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&type={{ current_type }}">
-                                    {% trans "Next" %}
+                                    {% if LANGUAGE_CODE == 'ar' %}التالي{% else %}{% trans "Next" %}{% endif %}
                                 </a>
                             </li>
                         {% endif %}
