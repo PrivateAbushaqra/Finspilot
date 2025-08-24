@@ -101,9 +101,9 @@
             display: none !important;
         }
         
-        /* إنشاء رأس ال{% trans "Table" %} */
+        /* Create printable table header */
         #accountsList::before {
-            content: "اسم الحساب\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0 البنك\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0 رقم الحساب\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0 ال{% trans "Balance" %}\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0 {% trans "Status" %}";
+            content: "{% trans 'Account Name' %}\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0 {% trans 'Bank' %}\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0 {% trans 'Account Number' %}\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0 {% trans 'Balance' %}\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0 {% trans 'Status' %}";
             display: block;
             background-color: #f8f9fa !important;
             border: 2px solid #000 !important;
@@ -114,7 +114,7 @@
             border-bottom: 2px solid #000 !important;
         }
         
-        /* {% trans "Transfer" %} كل حساب إلى سطر {% trans "Table" %} */
+    /* Transfer each account card into a table-like row */
         .account-card {
             display: block !important;
             border: 1px solid #000 !important;
@@ -201,7 +201,7 @@
             color: black !important;
         }
         
-        /* {% trans "Settings" %} الصفحة لل{% trans "Print" %} ال{% trans "View" %}ية */
+    /* Page settings for print view */
         @page {
             size: A4 landscape !important;
             margin: 0.5cm !important;
@@ -406,7 +406,7 @@
                         <div class="card-body">
                             <div class="d-flex align-items-center">
                                 <div class="flex-grow-1">
-                                    <h6 class="mb-0">إجمالي الحسابات</h6>
+                                    <h6 class="mb-0">{% trans "Total Accounts" %}</h6>
                                     <h3 class="mb-0">{{ total_accounts }}</h3>
                                 </div>
                                 <div class="ms-3">
@@ -422,7 +422,7 @@
                         <div class="card-body">
                             <div class="d-flex align-items-center">
                                 <div class="flex-grow-1">
-                                    <h6 class="mb-0">الحسابات ال{% trans "Active" %}ة</h6>
+                                    <h6 class="mb-0">{% trans "Active Accounts" %}</h6>
                                     <h3 class="mb-0">{{ active_accounts }}</h3>
                                 </div>
                                 <div class="ms-3">
@@ -438,7 +438,7 @@
                         <div class="card-body">
                             <div class="d-flex align-items-center">
                                 <div class="flex-grow-1">
-                                    <h6 class="mb-0">إجمالي الأرصدة</h6>
+                                    <h6 class="mb-0">{% trans "Total Balances" %}</h6>
                                     {% for currency, balance in balances_by_currency.items %}
                                         <div class="mb-1">
                                             <h5 class="mb-0">{{ balance|floatformat:3 }}</h5>
@@ -462,7 +462,7 @@
                         <div class="card-body">
                             <div class="d-flex align-items-center">
                                 <div class="flex-grow-1">
-                                    <h6 class="mb-0">عدد العم{% trans "No" %}ت</h6>
+                                    <h6 class="mb-0">{% trans "Number of Currencies" %}</h6>
                                     <h3 class="mb-0">{{ currencies_count }}</h3>
                                 </div>
                                 <div class="ms-3">
@@ -486,14 +486,14 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>{% trans "Are you sure you want to delete the bank account" %} "<span id="deleteAccountName"></span>"؟</p>
+                <p>{% trans "Are you sure you want to delete the bank account" %} "<span id="deleteAccountName"></span>"?</p>
                 <div class="alert alert-warning">
                     <i class="fas fa-exclamation-triangle me-2"></i>
                     {% trans "Warning: This action cannot be undone!" %}
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
                 <form id="deleteForm" method="post" style="display: inline;">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-danger">
@@ -515,10 +515,10 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>{% trans "Are you sure you want to" %} <span id="toggleAction"></span> {% trans "the bank account" %} "<span id="toggleAccountName"></span>"؟</p>
+                <p>{% trans "Are you sure you want to" %} <span id="toggleAction"></span> {% trans "the bank account" %} "<span id="toggleAccountName"></span>"?</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
                 <form id="toggleStatusForm" method="post" style="display: inline;">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-primary" id="toggleStatusBtn">
