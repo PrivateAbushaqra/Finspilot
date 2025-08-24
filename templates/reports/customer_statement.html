@@ -28,12 +28,16 @@
       <form method="get" class="row g-3 align-items-end">
         <div class="col-md-4">
           <label class="form-label">{% trans "Customer" %}</label>
-          <select class="form-select" name="customer" required>
+          <div class="position-relative">
+          <select class="form-select" id="customerSelect" name="customer" required>
             <option value="">— {% trans "Select" %} —</option>
             {% for c in customers %}
             <option value="{{ c.pk }}" {% if selected_customer and c.pk == selected_customer.pk %}selected{% endif %}>{{ c.sequence_number }} — {{ c.name }}</option>
             {% endfor %}
           </select>
+          <div id="customerTyped" class="form-text text-muted" style="min-height:1.25rem"></div>
+          <div id="customerResults" class="list-group position-absolute w-100" style="z-index: 1000; max-height: 240px; overflow:auto; display:none;"></div>
+          </div>
         </div>
         <div class="col-md-3">
           <label class="form-label">{% trans "From" %}</label>
@@ -119,4 +123,94 @@
   </div>
   {% endif %}
 </div>
+<script>
+(function(){
+  const resultsBox = document.getElementById('customerResults');
+  const selectEl = document.getElementById('customerSelect');
+  const typedHint = document.getElementById('customerTyped');
+  if(!resultsBox || !selectEl) return;
+  const typedLabel = "{% trans 'Search query' %}";
+
+  let controller = null;
+  function search(q){
+    if(controller){ controller.abort(); }
+    controller = new AbortController();
+  const url = `{% url 'customers:search_customers' %}?q=${encodeURIComponent(q)}&limit=10`;
+    fetch(url, {signal: controller.signal, headers: {'X-Requested-With':'XMLHttpRequest'}})
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(data => {
+        resultsBox.innerHTML = '';
+        if(!data || !data.results || data.results.length === 0){
+          resultsBox.style.display = 'none';
+          return;
+        }
+        data.results.forEach(item => {
+          const a = document.createElement('a');
+          a.href = '#';
+          a.className = 'list-group-item list-group-item-action';
+          a.textContent = `${item.sequence_number || ''} — ${item.name}`;
+          a.addEventListener('click', (e)=>{
+            e.preventDefault();
+            input.value = item.name;
+            // حدّد الخيار المقابل في القائمة، وإن لم يوجد أضفه
+            let opt = selectEl.querySelector(`option[value="${item.id}"]`);
+            if(!opt){
+              opt = document.createElement('option');
+              opt.value = item.id;
+              opt.textContent = `${item.sequence_number || ''} — ${item.name}`;
+              selectEl.appendChild(opt);
+            }
+            selectEl.value = String(item.id);
+            resultsBox.style.display = 'none';
+          });
+          resultsBox.appendChild(a);
+        });
+        resultsBox.style.display = 'block';
+      })
+      .catch(()=>{ /* تجاهل الأخطاء البسيطة */ });
+  }
+
+  // دعم الكتابة مباشرة أثناء تركيز select
+  let typedBuffer = '';
+  let lastTypeTime = 0;
+  let debounceTimer = null;
+  selectEl.addEventListener('keydown', function(e){
+    const now = Date.now();
+    if(now - lastTypeTime > 800) { typedBuffer = ''; }
+    lastTypeTime = now;
+
+    if(e.key === 'Backspace') {
+      typedBuffer = typedBuffer.slice(0, -1);
+      e.preventDefault();
+    } else if(e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      typedBuffer += e.key;
+      e.preventDefault();
+    } else if(e.key === 'Escape') {
+      resultsBox.style.display = 'none';
+      typedBuffer = '';
+      if(typedHint){ typedHint.textContent = ''; }
+      return;
+    } else {
+      return; // حافظ على سلوك الأسهم وغيره
+    }
+
+    const q = typedBuffer.trim();
+    if(typedHint){ typedHint.textContent = q ? (typedLabel + ': ' + q) : ''; }
+    if(debounceTimer) clearTimeout(debounceTimer);
+    if(q.length < 1){ resultsBox.style.display = 'none'; return; }
+    debounceTimer = setTimeout(()=> search(q), 220);
+  });
+
+  document.addEventListener('click', function(e){
+    if(!resultsBox.contains(e.target) && e.target !== selectEl){
+      resultsBox.style.display = 'none';
+      // لا نفرض مسح ما كُتب إلا إذا كان خارج الحقل بالكامل
+      if(!selectEl.contains(e.target)){
+        typedBuffer = '';
+        if(typedHint){ typedHint.textContent = ''; }
+      }
+    }
+  });
+})();
+</script>
 {% endblock %}

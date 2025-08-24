@@ -11,6 +11,34 @@ from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction
 from .models import CustomerSupplier
 from django.core.paginator import Paginator
+from django.utils.translation import gettext as _
+from core.signals import log_view_activity
+
+@login_required
+@require_http_methods(["GET"])
+def search_customers_ajax(request):
+    """بحث آجاكس للعملاء حسب الاسم/الهاتف/الإيميل مع إرجاع نتائج مبسطة.
+    Query param: q, optional: limit (default 10)
+    """
+    q = (request.GET.get('q') or '').strip()
+    limit = int(request.GET.get('limit') or 10)
+    qs = CustomerSupplier.objects.filter(type__in=['customer', 'both'], is_active=True)
+    if q:
+        qs = qs.filter(
+            Q(name__icontains=q) | Q(phone__icontains=q) | Q(email__icontains=q)
+        )
+    results = list(qs.order_by('name')[: max(1, min(limit, 25))].values('id', 'sequence_number', 'name'))
+    try:
+        class Obj:
+            id = 0
+            pk = 0
+            def __str__(self):
+                return str(_('Customer search'))
+        if q:
+            log_view_activity(request, 'search', Obj(), _('Customer quick search: %(q)s') % {'q': q})
+    except Exception:
+        pass
+    return JsonResponse({'results': results})
 
 class CustomerSupplierListView(LoginRequiredMixin, TemplateView):
     template_name = 'customers/list.html'
