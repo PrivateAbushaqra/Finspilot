@@ -1,16 +1,17 @@
 {% extends 'base.html' %}
 {% load i18n %}
 
-{% block title %}{% trans "Create Journal Entry" %}{% endblock %}
+{% get_current_language as LANGUAGE_CODE %}
+{% block title %}{% if LANGUAGE_CODE == 'ar' %}إنشاء قيد محاسبي{% else %}{% trans "Create Journal Entry" %}{% endif %}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
             <div class="d-sm-flex align-items-center justify-content-between mb-4">
-                <h1 class="h3 mb-0 text-gray-800">{% trans "Create Journal Entry" %}</h1>
+                <h1 class="h3 mb-0 text-gray-800">{% if LANGUAGE_CODE == 'ar' %}إنشاء قيد محاسبي{% else %}{% trans "Create Journal Entry" %}{% endif %}</h1>
                 <a href="{% url 'journal:entry_list' %}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-right me-2"></i>{% trans "Back to List" %}
+                    <i class="fas fa-arrow-right me-2"></i>{% if LANGUAGE_CODE == 'ar' %}عودة إلى القائمة{% else %}{% trans "Back to List" %}{% endif %}
                 </a>
             </div>
         </div>
@@ -24,7 +25,7 @@
             <div class="col-12">
                 <div class="card shadow">
                     <div class="card-header py-3">
-                        <h6 class="m-0 font-weight-bold text-primary">{% trans "Basic Entry Information" %}</h6>
+                        <h6 class="m-0 font-weight-bold text-primary">{% if LANGUAGE_CODE == 'ar' %}معلومات القيد الأساسية{% else %}{% trans "Basic Entry Information" %}{% endif %}</h6>
                     </div>
                     <div class="card-body">
                         <div class="row">
@@ -77,9 +78,9 @@
             <div class="col-12">
                 <div class="card shadow">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <h6 class="m-0 font-weight-bold text-primary">{% trans "Journal Entry Items" %}</h6>
+                        <h6 class="m-0 font-weight-bold text-primary">{% if LANGUAGE_CODE == 'ar' %}بنود القيد المحاسبي{% else %}{% trans "Journal Entry Items" %}{% endif %}</h6>
                         <button type="button" class="btn btn-sm btn-success" onclick="addJournalLine()">
-                            <i class="fas fa-plus me-1"></i>{% trans "Add Item" %}
+                            <i class="fas fa-plus me-1"></i>{% if LANGUAGE_CODE == 'ar' %}إضافة بند{% else %}{% trans "Add Item" %}{% endif %}
                         </button>
                     </div>
                     <div class="card-body">
@@ -87,12 +88,12 @@
                             <table class="table table-bordered" id="journalLinesTable">
                                 <thead class="table-light">
                                     <tr>
-                                        <th style="width: 30%">{% trans "Account" %}</th>
-                                        <th style="width: 25%">{% trans "Item Details" %}</th>
-                                        <th style="width: 15%">{% trans "Debit" %}</th>
-                                        <th style="width: 15%">{% trans "Credit" %}</th>
-                                        <th style="width: 10%">{% trans "Actions" %}</th>
-                                        <th style="width: 5%">{% trans "Delete" %}</th>
+                                        <th style="width: 30%">{% if LANGUAGE_CODE == 'ar' %}الحساب{% else %}{% trans "Account" %}{% endif %}</th>
+                                        <th style="width: 25%">{% if LANGUAGE_CODE == 'ar' %}تفاصيل البند{% else %}{% trans "Item Details" %}{% endif %}</th>
+                                        <th style="width: 15%">{% if LANGUAGE_CODE == 'ar' %}مدين{% else %}{% trans "Debit" %}{% endif %}</th>
+                                        <th style="width: 15%">{% if LANGUAGE_CODE == 'ar' %}دائن{% else %}{% trans "Credit" %}{% endif %}</th>
+                                        <th style="width: 10%">{% if LANGUAGE_CODE == 'ar' %}إجراءات{% else %}{% trans "Actions" %}{% endif %}</th>
+                                        <th style="width: 5%">{% if LANGUAGE_CODE == 'ar' %}حذف{% else %}{% trans "Delete" %}{% endif %}</th>
                                     </tr>
                                 </thead>
                                 <tbody id="journalLinesBody">
@@ -124,15 +125,15 @@
                                                 {% endif %}
                                             </td>
                                             <td class="text-center">
-                                                <button type="button" class="btn btn-sm btn-outline-secondary" 
-                                                        onclick="clearLine(this)" title="{% trans 'Clear Item' %}">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" 
+                            onclick="clearLine(this)" title="{% if LANGUAGE_CODE == 'ar' %}مسح البند{% else %}{% trans 'Clear Item' %}{% endif %}">
                                                     <i class="fas fa-eraser"></i>
                                                 </button>
                                             </td>
                                             <td class="text-center">
                                                 {{ form.DELETE }}
-                                                <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                        onclick="deleteLine(this)" title="{% trans "Delete Item" %}">
+                        <button type="button" class="btn btn-sm btn-outline-danger" 
+                            onclick="deleteLine(this)" title="{% if LANGUAGE_CODE == 'ar' %}حذف البند{% else %}{% trans "Delete Item" %}{% endif %}">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </td>
@@ -141,7 +142,7 @@
                                 </tbody>
                                 <tfoot class="table-dark">
                                     <tr>
-                                        <td colspan="2" class="text-center fw-bold">{% trans "Total" %}</td>
+                                        <td colspan="2" class="text-center fw-bold">{% if LANGUAGE_CODE == 'ar' %}الإجمالي{% else %}{% trans "Total" %}{% endif %}</td>
                                         <td class="text-center fw-bold">
                                             <span id="totalDebit">0.000</span>
                                         </td>
@@ -150,7 +151,7 @@
                                         </td>
                                         <td colspan="2" class="text-center">
                                             <span id="balanceStatus" class="badge">
-                                                <i class="fas fa-exclamation-triangle me-1"></i>{% trans "Unbalanced" %}
+                                                <i class="fas fa-exclamation-triangle me-1"></i>{% if LANGUAGE_CODE == 'ar' %}غير متوازن{% else %}{% trans "Unbalanced" %}{% endif %}
                                             </span>
                                         </td>
                                     </tr>
@@ -161,7 +162,7 @@
                         <!-- Warning Messages -->
                         <div id="balanceAlert" class="alert alert-warning d-none mt-3">
                             <i class="fas fa-exclamation-triangle me-2"></i>
-                            {% trans "Warning: Debit total does not equal Credit total. They must be equal to save the entry." %}
+                            {% if LANGUAGE_CODE == 'ar' %}تحذير: مجموع المدين لا يساوي مجموع الدائن. يجب أن يكونا متساويين لحفظ القيد.{% else %}{% trans "Warning: Debit total does not equal Credit total. They must be equal to save the entry." %}{% endif %}
                         </div>
                     </div>
                 </div>
@@ -176,15 +177,15 @@
                         <div class="d-flex justify-content-between">
                             <div>
                                 <button type="button" class="btn btn-secondary" onclick="resetForm()">
-                                    <i class="fas fa-undo me-2"></i>{% trans "Reset" %}
+                                    <i class="fas fa-undo me-2"></i>{% if LANGUAGE_CODE == 'ar' %}إعادة تعيين{% else %}{% trans "Reset" %}{% endif %}
                                 </button>
                             </div>
                             <div>
                                 <a href="{% url 'journal:entry_list' %}" class="btn btn-outline-secondary me-2">
-                                    {% trans "Cancel" %}
+                                    {% if LANGUAGE_CODE == 'ar' %}إلغاء{% else %}{% trans "Cancel" %}{% endif %}
                                 </a>
                                 <button type="submit" class="btn btn-primary" id="saveButton">
-                                    <i class="fas fa-save me-2"></i>{% trans "Save Entry" %}
+                                    <i class="fas fa-save me-2"></i>{% if LANGUAGE_CODE == 'ar' %}حفظ القيد{% else %}{% trans "Save Entry" %}{% endif %}
                                 </button>
                             </div>
                         </div>
@@ -200,7 +201,7 @@
     <tr class="journal-line-row" data-form-prefix="form-__prefix__">
         <td>
             <select name="form-__prefix__-account" class="form-control" id="id_form-__prefix__-account">
-                <option value="">{% trans "Select Account" %}</option>
+                <option value="">{% if LANGUAGE_CODE == 'ar' %}اختر حساب{% else %}{% trans "Select Account" %}{% endif %}</option>
                 {% for account in accounts %}
                     <option value="{{ account.pk }}">{{ account.code }} - {{ account.name }}</option>
                 {% endfor %}
@@ -216,13 +217,13 @@
             <input type="number" name="form-__prefix__-credit" class="form-control" step="0.001" min="0" id="id_form-__prefix__-credit">
         </td>
         <td class="text-center">
-            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearLine(this)" title="{% trans 'Clear Item' %}">
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearLine(this)" title="{% if LANGUAGE_CODE == 'ar' %}مسح البند{% else %}{% trans 'Clear Item' %}{% endif %}">
                 <i class="fas fa-eraser"></i>
             </button>
         </td>
         <td class="text-center">
             <input type="hidden" name="form-__prefix__-DELETE" id="id_form-__prefix__-DELETE">
-            <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteLine(this)" title="{% trans "Delete Item" %}">
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteLine(this)" title="{% if LANGUAGE_CODE == 'ar' %}حذف البند{% else %}{% trans "Delete Item" %}{% endif %}">
                 <i class="fas fa-trash"></i>
             </button>
         </td>

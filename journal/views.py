@@ -14,6 +14,7 @@ from .forms import (AccountForm, JournalEntryForm, JournalLineFormSet,
                    JournalSearchForm, TrialBalanceForm)
 from .services import JournalService
 from core.signals import log_view_activity
+from core.signals import log_view_activity
 
 
 @login_required
@@ -249,6 +250,16 @@ def journal_entry_list(request):
 @login_required
 def journal_entry_create(request):
     """إنشاء قيد محاسبي جديد"""
+    # سجل النشاط: فتح صفحة إنشاء القيد
+    try:
+        class Obj:
+            id = 0
+            pk = 0
+            def __str__(self):
+                return str(_('Create Journal Entry'))
+        log_view_activity(request, 'view', Obj(), str(_('Viewing create journal entry page')))
+    except Exception:
+        pass
     if request.method == 'POST':
         # ربط النماذج بالطلب دائماً للحفاظ على البيانات عند الأخطاء
         temp_entry = JournalEntry(created_by=request.user)
