@@ -167,6 +167,82 @@ class DocumentSequence(models.Model):
             number = self.current_number
         return f"{self.prefix}{str(number).zfill(self.digits)}"
 
+    def _extract_tail_number(self, full_number: str):
+        """استخراج الجزء الرقمي بعد البادئة إن أمكن."""
+        try:
+            if not isinstance(full_number, str):
+                return None
+            if not full_number.startswith(self.prefix):
+                return None
+            tail = full_number[len(self.prefix):]
+            if tail.isdigit():
+                return int(tail)
+        except Exception:
+            return None
+        return None
+
+    def advance_to_at_least(self, absolute_tail_number: int):
+        """تقديم current_number بحيث يصبح على الأقل tail+1 بشكل ذرّي."""
+        with transaction.atomic():
+            seq = type(self).objects.select_for_update().get(pk=self.pk)
+            target = int(absolute_tail_number) + 1
+            if target > seq.current_number:
+                seq.current_number = target
+                seq.save(update_fields=['current_number', 'updated_at'])
+
+    def peek_next_number(self):
+        """معاينة الرقم التالي دون حفظ أو قفل: يحسب بالاعتماد على أعلى رقم مستخدم فعلياً وcurrent_number."""
+        last_num = None
+        try:
+            if self.document_type in ('sales_invoice', 'pos_invoice'):
+                from sales.models import SalesInvoice
+                existing_numbers = (
+                    SalesInvoice.objects
+                    .filter(invoice_number__startswith=self.prefix)
+                    .values_list('invoice_number', flat=True)
+                )
+                max_found = -1
+                for inv in existing_numbers:
+                    tail = str(inv)[len(self.prefix):]
+                    if tail.isdigit():
+                        try:
+                            num = int(tail)
+                            if num > max_found:
+                                max_found = num
+                        except Exception:
+                            continue
+                if max_found >= 0:
+                    last_num = max_found
+            elif self.document_type == 'sales_return':
+                from sales.models import SalesReturn
+                last = (
+                    SalesReturn.objects
+                    .filter(return_number__startswith=self.prefix)
+                    .order_by('-return_number')
+                    .first()
+                )
+                if last:
+                    n = str(last.return_number)[len(self.prefix):]
+                    last_num = int(n) if n.isdigit() else None
+            elif self.document_type == 'cashbox_transfer':
+                from cashboxes.models import CashboxTransfer
+                last = (
+                    CashboxTransfer.objects
+                    .filter(transfer_number__startswith=self.prefix)
+                    .order_by('-transfer_number')
+                    .first()
+                )
+                if last:
+                    n = str(last.transfer_number)[len(self.prefix):]
+                    last_num = int(n) if n.isdigit() else None
+        except Exception:
+            pass
+
+        candidate = self.current_number
+        if last_num is not None and last_num + 1 > candidate:
+            candidate = last_num + 1
+        return f"{self.prefix}{str(candidate).zfill(self.digits)}"
+
 
 class AuditLog(models.Model):
     """سجل المراجعة"""

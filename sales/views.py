@@ -243,6 +243,7 @@ def sales_invoice_create(request):
             # سنحاول عدة مرات لتجنب تعارض الأرقام في حال السباق
             max_attempts = 5
             attempt = 0
+            allow_manual = True
             while attempt < max_attempts:
                 attempt += 1
                 try:
@@ -255,11 +256,9 @@ def sales_invoice_create(request):
                         discount_amount = Decimal(request.POST.get('discount', '0'))
 
                         # التحقق من صلاحية تعديل رقم الفاتورة
-                        if 'invoice_number' in request.POST and request.POST.get('invoice_number'):
-                            if user.is_superuser or user.is_staff or user.has_perm('sales.change_salesinvoice_number'):
-                                invoice_number = request.POST.get('invoice_number')
-                            else:
-                                invoice_number = None
+                        manual_invoice = request.POST.get('invoice_number') if allow_manual else None
+                        if manual_invoice and (user.is_superuser or user.is_staff or user.has_perm('sales.change_salesinvoice_number')):
+                            invoice_number = manual_invoice
                         else:
                             invoice_number = None
 
@@ -397,6 +396,17 @@ def sales_invoice_create(request):
                         invoice.total_amount = (subtotal + total_tax_amount - discount_amount).quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
                         invoice.save()
 
+                        # إذا تم إدخال رقم يدوي يطابق البادئة، نقوم بدفع عداد التسلسل للأمام لتجنب التكرار لاحقاً
+                        try:
+                            if manual_invoice:
+                                seq = DocumentSequence.objects.get(document_type='sales_invoice')
+                                if manual_invoice.startswith(seq.prefix):
+                                    tail = manual_invoice[len(seq.prefix):]
+                                    if tail.isdigit():
+                                        seq.advance_to_at_least(int(tail))
+                        except Exception:
+                            pass
+
                         # إنشاء حركة حساب للعميل
                         create_sales_invoice_account_transaction(invoice, request.user)
 
@@ -423,12 +433,15 @@ def sales_invoice_create(request):
                 except IntegrityError as ie:
                     # على الأرجح تعارض في رقم الفاتورة، أعد المحاولة برقم جديد
                     if 'invoice_number' in str(ie):
+                        # عطّل الرقم اليدوي في المحاولة القادمة وأعد المحاولة
+                        allow_manual = False
                         if attempt < max_attempts:
                             continue
                         else:
                             raise
                     else:
                         raise
+
             # إذا وصلنا هنا ولم نرجع، نبلغ عن فشل عام
             messages.error(request, _('تعذر إنشاء الفاتورة بعد محاولات متعددة، يرجى المحاولة لاحقاً'))
             return redirect('sales:invoice_add')
@@ -466,7 +479,11 @@ def sales_invoice_create(request):
     # إضافة رقم الفاتورة المتوقع للعرض
     try:
         sequence = DocumentSequence.objects.get(document_type='sales_invoice')
-        context['next_invoice_number'] = sequence.get_formatted_number()
+        # استخدم معاينة الرقم التالي لتعكس أعلى رقم مستخدم فعلياً
+        if hasattr(sequence, 'peek_next_number'):
+            context['next_invoice_number'] = sequence.peek_next_number()
+        else:
+            context['next_invoice_number'] = sequence.get_formatted_number()
     except DocumentSequence.DoesNotExist:
         last_invoice = SalesInvoice.objects.order_by('-id').first()
         if last_invoice:
