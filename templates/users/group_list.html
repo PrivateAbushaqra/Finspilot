@@ -18,7 +18,7 @@
                     <div>
                         <a href="{% url 'users:group_add' %}" class="btn btn-primary">
                             <i class="fas fa-plus me-2"></i>
-                            {% trans "Add مجموعة" %}
+                            {% trans "إضافة مجموعة" %}
                         </a>
                         <a href="{% url 'users:user_list' %}" class="btn btn-secondary">
                             <i class="fas fa-users me-2"></i>
@@ -33,7 +33,7 @@
                                 <thead class="table-dark">
                                     <tr>
                                         <th width="5%">#</th>
-                                        <th width="25%">{% trans "اسم Totalة" %}</th>
+                                        <th width="25%">{% trans "اسم المجموعة" %}</th>
                                         <th width="15%">{% trans 'عدد المستخدمين' %}</th>
                                         <th width="15%">{% trans "عدد الصلاحيات" %}</th>
                                         <th width="25%">{% trans 'تاريخ الإنشاء' %}</th>
@@ -65,7 +65,7 @@
                                         <td>
                                             <small class="text-muted">
                                                 <i class="fas fa-calendar"></i> 
-                                                {% if group.date_joined %}{{ group.date_joined|date:"Y-m-d H:i" }}{% else %}غير محدد{% endif %}
+                                                {% if group.date_joined %}{{ group.date_joined|date:"Y-m-d H:i" }}{% else %}{% trans "غير محدد" %}{% endif %}
                                             </small>
                                         </td>
                                         <td>
@@ -76,10 +76,12 @@
                                                     <i class="fas fa-edit"></i>
                                                 </a>
                                                 {% if group.name|lower not in 'superadmin,admin,staff' %}
-                                                    <a href="{% url 'users:group_delete' group.pk %}" 
-                                                       class="btn btn-sm btn-outline-danger" 
-                                                       title="{% trans "Delete" %}"
-                                                       onclick="return confirm('هل أنت متأكد من حذف هذه المجموعة؟')">
+                                                                     {% trans 'هل أنت متأكد من حذف هذه المجموعة؟' as confirm_group_delete %}
+                                                                     <a href="{% url 'users:group_delete' group.pk %}" 
+                                                                         class="btn btn-sm btn-outline-danger" 
+                                                                         title="{% trans "Delete" %}"
+                                                                         data-confirm="{{ confirm_group_delete }}"
+                                                                         onclick="return confirm(this.dataset.confirm)">
                                                         <i class="fas fa-trash"></i>
                                                     </a>
                                                 {% else %}
@@ -140,7 +142,7 @@
                             <i class="fas fa-shield-alt fa-2x text-warning mb-2"></i>
                             <h5 class="card-title">{% trans 'الحماية' %}</h5>
                             <p class="card-text small">
-                                {% trans "مجموعات النظام محمية من الDelete للحفاظ على استقرار النظام" %}
+                                {% trans "مجموعات النظام محمية من الحذف للحفاظ على استقرار النظام" %}
                             </p>
                         </div>
                     </div>

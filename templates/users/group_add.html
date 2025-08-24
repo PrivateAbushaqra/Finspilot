@@ -17,7 +17,7 @@
                     <div>
                         <a href="{% url 'users:group_list' %}" class="btn btn-secondary">
                             <i class="fas fa-arrow-left me-2"></i>
-                            {% trans "العودة للList" %}
+                            {% trans "العودة للقائمة" %}
                         </a>
                     </div>
                 </div>
@@ -25,14 +25,14 @@
                     <form method="post" id="groupForm">
                         {% csrf_token %}
                         
-                        <!-- {% trans "Information" %} {% trans "Total" %}ة الأساسية -->
+                        <!-- معلومات المجموعة الأساسية -->
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <div class="card border-primary">
                                     <div class="card-header bg-primary text-white">
                                         <h5 class="mb-0">
                                             <i class="fas fa-info-circle me-2"></i>
-                                            {% trans "Information Totalة" %}
+                                            {% trans "معلومات المجموعة" %}
                                         </h5>
                                     </div>
                                     <div class="card-body">
@@ -162,15 +162,15 @@
                             </div>
                         </div>
                         
-                        <!-- أزرار ال{% trans "Save" %} -->
+                        <!-- أزرار الحفظ -->
                         <div class="d-flex justify-content-between mt-4">
                             <a href="{% url 'users:group_list' %}" class="btn btn-secondary">
                                 <i class="fas fa-times me-2"></i>
-                                إلغاء
+                                {% trans 'إلغاء' %}
                             </a>
                             <button type="submit" class="btn btn-primary" id="submitBtn">
                                 <i class="fas fa-save me-2"></i>
-                                {% trans "إنشاء Totalة" %}
+                                {% trans "إنشاء مجموعة" %}
                             </button>
                         </div>
                     </form>
@@ -199,7 +199,7 @@ function toggleAppPermissions(appName) {
 
 // تحسين تجربة المستخدم
 document.addEventListener('DOMContentLoaded', function() {
-    // التحقق من قوة اسم {% trans "Total" %}ة
+    // التحقق من قوة اسم المجموعة
     const nameInput = document.getElementById('{{ form.name.id_for_label }}');
     if (nameInput) {
         nameInput.addEventListener('input', function() {
@@ -218,12 +218,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // {% trans "Confirmation" %} قبل الإرسال
+    // تأكيد قبل الإرسال
     document.getElementById('groupForm').addEventListener('submit', function(e) {
         const checkedPermissions = document.querySelectorAll('.permission-checkbox:checked');
         
         if (checkedPermissions.length === 0) {
-            if (!confirm('لم تحدد أي صلاحيات للمجموعة. هل تريد المتابعة؟')) {
+            if (!confirm('{% trans "لم تحدد أي صلاحيات للمجموعة. هل تريد المتابعة؟" %}')) {
                 e.preventDefault();
                 return false;
             }
@@ -231,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // إظهار مؤشر التحميل
         const submitBtn = document.getElementById('submitBtn');
-        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>جاري الإنشاء...';
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>{% trans "جاري الإنشاء..." %}';
         submitBtn.disabled = true;
     });
 });
