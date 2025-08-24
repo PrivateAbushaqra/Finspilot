@@ -13,6 +13,7 @@ from .models import Account, JournalEntry, JournalLine
 from .forms import (AccountForm, JournalEntryForm, JournalLineFormSet, 
                    JournalSearchForm, TrialBalanceForm)
 from .services import JournalService
+from core.signals import log_view_activity
 
 
 @login_required
@@ -85,6 +86,16 @@ def account_list(request):
         'current_type': account_type,
         'search_query': search
     }
+    # سجل النشاط: فتح صفحة قائمة الحسابات
+    try:
+        class Obj:
+            id = 0
+            pk = 0
+            def __str__(self):
+                return str(_('Accounts List'))
+        log_view_activity(request, 'view', Obj(), str(_('Viewing accounts list')))
+    except Exception:
+        pass
     return render(request, 'journal/account_list.html', context)
 
 

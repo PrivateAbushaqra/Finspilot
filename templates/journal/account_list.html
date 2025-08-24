@@ -2,28 +2,29 @@
 {% load i18n %}
 {% load humanize %}
 
-{% block title %}{% trans "List الحسابات" %}{% endblock %}
+{% get_current_language as LANGUAGE_CODE %}
+{% block title %}{% if LANGUAGE_CODE == 'ar' %}قائمة الحسابات{% else %}{% trans "Accounts List" %}{% endif %}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
             <div class="d-sm-flex align-items-center justify-content-between mb-4">
-                <h1 class="h3 mb-0 text-gray-800">{% trans "List الحسابات" %}</h1>
+                <h1 class="h3 mb-0 text-gray-800">{% if LANGUAGE_CODE == 'ar' %}قائمة الحسابات{% else %}{% trans "Accounts List" %}{% endif %}</h1>
                 <a href="{% url 'journal:account_create' %}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> {% trans "حساب New" %}
+                    <i class="fas fa-plus"></i> {% if LANGUAGE_CODE == 'ar' %}حساب جديد{% else %}{% trans "New Account" %}{% endif %}
                 </a>
             </div>
         </div>
     </div>
 
-    <!-- ف{% trans "No" %}تر {% trans "Search" %} -->
+    <!-- Filter / Search -->
     <div class="card shadow mb-4">
         <div class="card-body">
             <form method="get" class="row">
                 <div class="col-md-4">
-                    <input type="text" name="search" class="form-control" 
-                           placeholder="{% trans "Search في الحسابات..." %}" 
+              <input type="text" name="search" class="form-control" 
+                  placeholder="{% if LANGUAGE_CODE == 'ar' %}ابحث في الحسابات...{% else %}{% trans "Search in accounts..." %}{% endif %}" 
                            value="{{ search_query }}">
                 </div>
                 <div class="col-md-3">
@@ -62,7 +63,7 @@
                                 <th>{% trans "اسم الحساب" %}</th>
                                 <th>{% trans "Type" %}</th>
                                 <th>{% trans "الحساب الرئيسي" %}</th>
-                                <th>{% trans "الBalance" %}</th>
+                                <th>{% if LANGUAGE_CODE == 'ar' %}الرصيد{% else %}{% trans "Balance" %}{% endif %}</th>
                                 <th>{% trans "Status" %}</th>
                                 <th>{% trans "الإجراءات" %}</th>
                             </tr>
@@ -93,7 +94,7 @@
                                     {% if account.is_active %}
                                         <span class="badge badge-success">{% trans "Active" %}</span>
                                     {% else %}
-                                        <span class="badge badge-secondary">{% trans "غير Active" %}</span>
+                                        <span class="badge badge-secondary">{% trans "Inactive" %}</span>
                                     {% endif %}
                                 </td>
                                 <td>
@@ -107,9 +108,11 @@
                                             <i class="fas fa-edit"></i>
                                         </a>
                                         {% if user.is_superuser or perms.users.can_delete_accounts %}
-                                        <button type="button" class="btn btn-sm btn-danger" 
-                                                title="{% trans "حذف" %}"
-                                                onclick="confirmDelete('{{ account.name }}', '{% url 'journal:account_delete' account.pk %}')">
+                    <button type="button" class="btn btn-sm btn-danger" 
+                        title="{% trans "حذف" %}"
+                        data-name="{{ account.name|escapejs }}"
+                        data-url="{% url 'journal:account_delete' account.pk %}"
+                        onclick="confirmDelete(this.dataset.name, this.dataset.url)">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                         {% endif %}
@@ -159,9 +162,9 @@
                 <div class="text-center text-muted py-5">
                     <i class="fas fa-list fa-3x mb-3"></i>
                     <h5>{% trans "لا توجد حسابات" %}</h5>
-                    <p>{% trans "لم يتم العثور على حسابات تطابق معايير Search" %}</p>
+                    <p>{% if LANGUAGE_CODE == 'ar' %}لم يتم العثور على حسابات تطابق معايير البحث{% else %}{% trans "No accounts found matching the search criteria" %}{% endif %}</p>
                     <a href="{% url 'journal:account_create' %}" class="btn btn-primary">
-                        {% trans "إنشاء حساب New" %}
+                        {% if LANGUAGE_CODE == 'ar' %}إنشاء حساب جديد{% else %}{% trans "Create New Account" %}{% endif %}
                     </a>
                 </div>
             {% endif %}
