@@ -103,15 +103,59 @@ def account_list(request):
 @login_required
 def account_create(request):
     """إنشاء حساب جديد"""
+    is_modal = request.GET.get('modal') == '1'
+
+    # تسجيل فتح نموذج الإنشاء (بما في ذلك منبثق)
+    try:
+        class Obj:
+            id = 0
+            pk = 0
+            def __str__(self):
+                return str(_('Create Account'))
+        log_view_activity(request, 'view', Obj(), str(_('فتح شاشة إنشاء حساب')))
+    except Exception:
+        pass
+
     if request.method == 'POST':
         form = AccountForm(request.POST)
         if form.is_valid():
-            form.save()
-            messages.success(request, _('تم إنشاء الحساب بنجاح'))
-            return redirect('journal:account_list')
+            account = form.save()
+
+            # سجل النشاط عند الإنشاء
+            try:
+                from core.models import AuditLog
+                AuditLog.objects.create(
+                    user=request.user,
+                    action_type='create',
+                    content_type='Account',
+                    object_id=account.pk,
+                    description=f"تم إنشاء الحساب: {account.code} - {account.name}"
+                )
+            except Exception:
+                pass
+
+            if is_modal or request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'id': account.id,
+                    'code': account.code,
+                    'name': account.name,
+                    'display': f"{account.code} - {account.name}"
+                })
+            else:
+                messages.success(request, _('تم إنشاء الحساب بنجاح'))
+                return redirect('journal:account_list')
+        else:
+            if is_modal or request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                # أعد النموذج مع الأخطاء كـ HTML جزئي
+                html = render(request, 'journal/account_form_modal.html', {'form': form, 'title': _('إنشاء حساب جديد')}).content.decode('utf-8')
+                return JsonResponse({'success': False, 'html': html}, status=400)
     else:
         form = AccountForm()
-    
+
+    # عرض النموذج
+    if is_modal:
+        return render(request, 'journal/account_form_modal.html', {'form': form, 'title': _('إنشاء حساب جديد')})
     return render(request, 'journal/account_form.html', {'form': form, 'title': _('إنشاء حساب جديد')})
 
 

@@ -79,9 +79,14 @@
                 <div class="card shadow">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h6 class="m-0 font-weight-bold text-primary">{% if LANGUAGE_CODE == 'ar' %}بنود القيد المحاسبي{% else %}{% trans "Journal Entry Items" %}{% endif %}</h6>
-                        <button type="button" class="btn btn-sm btn-success" onclick="addJournalLine()">
-                            <i class="fas fa-plus me-1"></i>{% if LANGUAGE_CODE == 'ar' %}إضافة بند{% else %}{% trans "Add Item" %}{% endif %}
-                        </button>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-sm btn-success" onclick="addJournalLine()">
+                                <i class="fas fa-plus me-1"></i>{% if LANGUAGE_CODE == 'ar' %}إضافة بند{% else %}{% trans "Add Item" %}{% endif %}
+                            </button>
+                            <button type="button" id="openAccountModalBtn" class="btn btn-sm btn-primary">
+                                <i class="fas fa-user-plus me-1"></i>{% if LANGUAGE_CODE == 'ar' %}حساب جديد{% else %}{% trans "New Account" %}{% endif %}
+                            </button>
+                        </div>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
@@ -196,44 +201,28 @@
     </form>
 </div>
 
-<!-- New entry row template -->
-<div id="emptyLineTemplate" style="display: none;">
-    <tr class="journal-line-row" data-form-prefix="form-__prefix__">
-        <td>
-            <select name="form-__prefix__-account" class="form-control" id="id_form-__prefix__-account">
-                <option value="">{% if LANGUAGE_CODE == 'ar' %}اختر حساب{% else %}{% trans "Select Account" %}{% endif %}</option>
-                {% for account in accounts %}
-                    <option value="{{ account.pk }}">{{ account.code }} - {{ account.name }}</option>
-                {% endfor %}
-            </select>
-        </td>
-        <td>
-            <input type="text" name="form-__prefix__-line_description" class="form-control" id="id_form-__prefix__-line_description">
-        </td>
-        <td>
-            <input type="number" name="form-__prefix__-debit" class="form-control" step="0.001" min="0" id="id_form-__prefix__-debit">
-        </td>
-        <td>
-            <input type="number" name="form-__prefix__-credit" class="form-control" step="0.001" min="0" id="id_form-__prefix__-credit">
-        </td>
-        <td class="text-center">
-            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearLine(this)" title="{% if LANGUAGE_CODE == 'ar' %}مسح البند{% else %}{% trans 'Clear Item' %}{% endif %}">
-                <i class="fas fa-eraser"></i>
-            </button>
-        </td>
-        <td class="text-center">
-            <input type="hidden" name="form-__prefix__-DELETE" id="id_form-__prefix__-DELETE">
-            <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteLine(this)" title="{% if LANGUAGE_CODE == 'ar' %}حذف البند{% else %}{% trans "Delete Item" %}{% endif %}">
-                <i class="fas fa-trash"></i>
-            </button>
-        </td>
-    </tr>
+<!-- Modal Container -->
+<div class="modal fade" id="accountModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content" id="accountModalContent">
+      <div class="modal-header">
+        <h5 class="modal-title">{% if LANGUAGE_CODE == 'ar' %}إنشاء حساب جديد{% else %}{% trans "Create New Account" %}{% endif %}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center py-4">
+          <div class="spinner-border" role="status"><span class="visually-hidden">{% if LANGUAGE_CODE == 'ar' %}جارٍ التحميل...{% else %}{% trans "Loading..." %}{% endif %}</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
 let lineCount = parseInt('{{ formset.total_form_count }}');
+const IS_AR = '{{ LANGUAGE_CODE }}' === 'ar';
 
 // Add new journal line
 function addJournalLine() {
@@ -303,13 +292,13 @@ function calculateTotals() {
     const saveButton = document.getElementById('saveButton');
     
     if (Math.abs(totalDebit - totalCredit) < 0.001 && totalDebit > 0) {
-    balanceStatus.className = 'badge bg-success';
-    balanceStatus.innerHTML = '<i class="fas fa-check me-1"></i>{% trans "Balanced" %}';
+        balanceStatus.className = 'badge bg-success';
+        balanceStatus.innerHTML = '<i class="fas fa-check me-1"></i>' + (IS_AR ? 'متوازن' : '{% trans "Balanced" %}');
         balanceAlert.classList.add('d-none');
         saveButton.disabled = false;
     } else {
-    balanceStatus.className = 'badge bg-danger';
-    balanceStatus.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>{% trans "Unbalanced" %}';
+        balanceStatus.className = 'badge bg-danger';
+        balanceStatus.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>' + (IS_AR ? 'غير متوازن' : '{% trans "Unbalanced" %}');
         balanceAlert.classList.remove('d-none');
         saveButton.disabled = true;
     }
@@ -337,7 +326,7 @@ function addEventListeners() {
 
 // Reset form
 function resetForm() {
-    if (confirm('{% trans "Are you sure you want to reset the form? All entered data will be lost." %}')) {
+    if (confirm(IS_AR ? 'هل أنت متأكد أنك تريد إعادة تعيين النموذج؟ ستُفقد كل البيانات المدخلة.' : '{% trans "Are you sure you want to reset the form? All entered data will be lost." %}')) {
         document.getElementById('journalEntryForm').reset();
         calculateTotals();
     }
@@ -350,19 +339,74 @@ document.getElementById('journalEntryForm').addEventListener('submit', function(
     
     if (Math.abs(totalDebit - totalCredit) > 0.001) {
         e.preventDefault();
-        alert('{% trans "Debit total must equal Credit total" %}');
+        alert(IS_AR ? 'يجب أن يساوي مجموع المدين مجموع الدائن' : '{% trans "Debit total must equal Credit total" %}');
         return false;
     }
     
     if (totalDebit === 0) {
         e.preventDefault();
-        alert('{% trans "Journal entry items must be entered" %}');
+        alert(IS_AR ? 'يجب إدخال بنود القيد المحاسبي' : '{% trans "Journal entry items must be entered" %}');
         return false;
     }
     
     // Update total amounts
     calculateTotals();
 });
+
+// Attach AJAX submit handler for modal form
+function initAccountModalHandlers() {
+    const form = document.getElementById('modalAccountForm');
+    if (!form) return;
+    form.addEventListener('submit', async function(e){
+        e.preventDefault();
+        const url = form.getAttribute('action');
+        const formData = new FormData(form);
+        const resp = await fetch(url, {method:'POST', headers: {'X-Requested-With':'XMLHttpRequest'}, body: formData});
+        if (resp.ok) {
+            const data = await resp.json();
+            // close modal
+            const modalEl = document.getElementById('accountModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+            // add new account to all selects
+            document.querySelectorAll('select[name$="-account"]').forEach(sel => {
+                const opt = new Option(data.display, data.id, false, false);
+                sel.add(opt);
+            });
+            // select it in last row for convenience
+            const lastSelect = document.querySelector('#journalLinesBody tr:last-child select[name$="-account"]');
+            if (lastSelect) {
+                lastSelect.value = data.id;
+            }
+        } else {
+            let payload = null;
+            try { payload = await resp.json(); } catch(_) {}
+            if (payload && payload.html) {
+                document.getElementById('accountModalContent').innerHTML = payload.html;
+                // reattach handler to the new content
+                initAccountModalHandlers();
+            }
+        }
+    }, { once: true });
+}
+
+// Open modal and load account form
+const openBtn = document.getElementById('openAccountModalBtn');
+if (openBtn) {
+  openBtn.addEventListener('click', async function() {
+    const modalEl = document.getElementById('accountModal');
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+    try {
+      const resp = await fetch("{% url 'journal:account_create' %}?modal=1", {headers: {'X-Requested-With':'XMLHttpRequest'}});
+      const html = await resp.text();
+      document.getElementById('accountModalContent').innerHTML = html;
+            initAccountModalHandlers();
+    } catch (e) {
+    document.getElementById('accountModalContent').innerHTML = `{% if LANGUAGE_CODE == 'ar' %}<div class="p-3 text-danger">تعذر تحميل النموذج</div>{% else %}<div class="p-3 text-danger">{% trans "Failed to load form" %}</div>{% endif %}`;
+    }
+  });
+}
 
 // Page load
 document.addEventListener('DOMContentLoaded', function() {

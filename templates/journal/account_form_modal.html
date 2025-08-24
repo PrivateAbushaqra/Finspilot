@@ -1,0 +1,46 @@
+{% load i18n %}
+<div class="modal-header">
+  <h5 class="modal-title">{{ title }}</h5>
+  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+<form id="modalAccountForm" method="post" action="{% url 'journal:account_create' %}?modal=1">
+  <div class="modal-body">
+    {% csrf_token %}
+    <div class="mb-3">
+      <label class="form-label" for="{{ form.code.id_for_label }}">{{ form.code.label }} <span class="text-danger">*</span></label>
+      {{ form.code }}
+      {% if form.code.errors %}<div class="text-danger small">{{ form.code.errors.0 }}</div>{% endif %}
+    </div>
+    <div class="mb-3">
+      <label class="form-label" for="{{ form.name.id_for_label }}">{{ form.name.label }} <span class="text-danger">*</span></label>
+      {{ form.name }}
+      {% if form.name.errors %}<div class="text-danger small">{{ form.name.errors.0 }}</div>{% endif %}
+    </div>
+    <div class="mb-3">
+      <label class="form-label" for="{{ form.account_type.id_for_label }}">{{ form.account_type.label }} <span class="text-danger">*</span></label>
+      {{ form.account_type }}
+      {% if form.account_type.errors %}<div class="text-danger small">{{ form.account_type.errors.0 }}</div>{% endif %}
+    </div>
+    <div class="mb-3">
+      <label class="form-label" for="{{ form.parent.id_for_label }}">{{ form.parent.label }}</label>
+      {{ form.parent }}
+      {% if form.parent.errors %}<div class="text-danger small">{{ form.parent.errors.0 }}</div>{% endif %}
+    </div>
+    <div class="mb-3">
+      <label class="form-label" for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+      {{ form.description }}
+      {% if form.description.errors %}<div class="text-danger small">{{ form.description.errors.0 }}</div>{% endif %}
+    </div>
+    <div class="form-check">
+      {{ form.is_active }}
+      <label class="form-check-label" for="{{ form.is_active.id_for_label }}">{{ form.is_active.label }}</label>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+    <button type="submit" class="btn btn-primary">
+      <i class="fas fa-save me-1"></i> {% trans "Save" %}
+    </button>
+  </div>
+</form>
+<!-- JS for submission is initialized by entry_create.html after this HTML is injected -->
