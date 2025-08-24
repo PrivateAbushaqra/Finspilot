@@ -5,6 +5,8 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.utils.translation import gettext_lazy as _
 import json
+from core.models import AuditLog
+from core.utils import get_client_ip
 
 # Import models from different apps
 try:
@@ -60,6 +62,18 @@ except ImportError:
 @login_required
 def search_view(request):
     """عرض صفحة البحث الشامل"""
+    # سجل النشاط: عرض صفحة البحث
+    try:
+        AuditLog.objects.create(
+            user=request.user,
+            action_type='view',
+            content_type='search',
+            object_id=None,
+            description=_('عرض صفحة البحث الشامل'),
+            ip_address=get_client_ip(request),
+        )
+    except Exception:
+        pass
     return render(request, 'search/search.html')
 
 @login_required
@@ -68,6 +82,18 @@ def search_api(request):
     query = request.GET.get('q', '').strip()
     
     if not query or len(query) < 2:
+        # سجل النشاط لمحاولة بحث قصيرة
+        try:
+            AuditLog.objects.create(
+                user=request.user,
+                action_type='view',
+                content_type='search',
+                object_id=None,
+                description=_('محاولة بحث بدون كلمة كافية'),
+                ip_address=get_client_ip(request),
+            )
+        except Exception:
+            pass
         return JsonResponse({
             'results': [],
             'message': 'يرجى إدخال كلمة بحث أكثر من حرفين'
@@ -302,6 +328,19 @@ def search_api(request):
     # ترتيب النتائج حسب التاريخ (الأحدث أولاً)
     results.sort(key=lambda x: x.get('date', ''), reverse=True)
     
+    # سجل النشاط لعملية البحث
+    try:
+        AuditLog.objects.create(
+            user=request.user,
+            action_type='view',
+            content_type='search',
+            object_id=None,
+            description=_('تنفيذ بحث شامل') + f": '{query}' (نتائج: {len(results)})",
+            ip_address=get_client_ip(request),
+        )
+    except Exception:
+        pass
+
     return JsonResponse({
         'results': results,
         'total': len(results),
