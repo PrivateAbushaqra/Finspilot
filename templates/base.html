@@ -336,6 +336,8 @@
             border-radius: 5px;
             font-weight: bold;
             position: relative;
+            /* Space for checkmark indicator */
+            padding-inline-end: 1.75rem;
         }
 
         /* Logical border for active item depending on direction */
@@ -359,6 +361,18 @@
         }
         html[dir="ltr"] .sidebar .nav-link.active::before { left: 8px; right: auto; }
         html[dir="rtl"] .sidebar .nav-link.active::before { right: 8px; left: auto; }
+
+        /* Add a clear checkmark indicator on the selected (active) item */
+        .sidebar .nav-link.active::after {
+            content: "✓";
+            color: var(--sidebar-active-border);
+            font-size: 0.95rem;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        html[dir="ltr"] .sidebar .nav-link.active::after { right: 10px; left: auto; }
+        html[dir="rtl"] .sidebar .nav-link.active::after { left: 10px; right: auto; }
         
         @keyframes pulse {
             0% { opacity: 1; }
