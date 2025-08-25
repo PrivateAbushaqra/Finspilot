@@ -1097,6 +1097,26 @@
         // Always select the active page on page load
         setActiveSidebarItem();
 
+        // Restore submenu open state on load (works for both AR/EN and without AJAX)
+        const initialCollapses = document.querySelectorAll('.sidebar .collapse');
+        initialCollapses.forEach(col => {
+            const saved = localStorage.getItem('sidebar_' + col.id);
+            if (saved === 'open') {
+                col.classList.add('show');
+            }
+        });
+
+        // When clicking any leaf link, persist its parent menu as open
+        const leafLinks = document.querySelectorAll('.sidebar .nav-link[href]:not([data-bs-toggle])');
+        leafLinks.forEach(a => {
+            a.addEventListener('click', function() {
+                const parentCol = this.closest('.collapse');
+                if (parentCol && parentCol.id) {
+                    localStorage.setItem('sidebar_' + parentCol.id, 'open');
+                }
+            });
+        });
+
         // تعطيل التنقل الجزئي (AJAX) افتراضياً لتفادي فقدان الأنماط والسكربتات
         // فعِّله بوضع window.ENABLE_AJAX_NAV = true قبل هذا السكربت إن رغبت.
         if (window.ENABLE_AJAX_NAV !== true) {
