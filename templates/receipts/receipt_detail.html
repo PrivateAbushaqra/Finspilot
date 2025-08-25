@@ -13,7 +13,7 @@
                     <h3 class="card-title">{{ page_title }}</h3>
                     <div>
                         <a href="{% url 'receipts:receipt_list' %}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left"></i> {% trans "العودة للList" %}
+                            <i class="fas fa-arrow-left"></i> {% trans "Back to List" %}
                         </a>
                         {% if not receipt.is_reversed %}
                         <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editReceiptModal">
@@ -21,7 +21,7 @@
                         </button>
                         {% if receipt.can_be_reversed %}
                         <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#reverseReceiptModal">
-                            <i class="fas fa-undo"></i> {% trans "عكس الVoucher" %}
+                            <i class="fas fa-undo"></i> {% trans "Reverse Voucher" %}
                         </button>
                         {% endif %}
                         {% endif %}
@@ -29,14 +29,14 @@
                 </div>
                 <div class="card-body">
                     <div class="row mb-4">
-                        <!-- {% trans "Information" %} ال{% trans "Voucher" %} -->
+            <!-- Voucher Information -->
                         <div class="col-md-8">
                             <div class="card">
                                 <div class="card-body">
-                                    <h5 class="card-title">{% trans "{% trans "Information" %} ال{% trans "Voucher" %}" %}</h5>
+                    <h5 class="card-title">{% trans "Voucher Information" %}</h5>
                                     <table class="table table-borderless">
                                         <tr>
-                                            <th width="30%">{% trans "رقم الVoucher" %}:</th>
+                        <th width="30%">{% trans "Voucher Number" %}:</th>
                                             <td>{{ receipt.receipt_number }}</td>
                                         </tr>
                                         <tr>
@@ -44,11 +44,11 @@
                                             <td>{{ receipt.date|date:"Y-m-d" }}</td>
                                         </tr>
                                         <tr>
-                                            <th>{% trans "العميل" %}:</th>
+                                            <th>{% trans "Customer" %}:</th>
                                             <td>{{ receipt.customer.name }}</td>
                                         </tr>
                                         <tr>
-                                            <th>{% trans "نوع الPayment" %}:</th>
+                                            <th>{% trans "Payment Type" %}:</th>
                                             <td>
                                                 <span class="badge bg-{% if receipt.payment_type == 'cash' %}success{% else %}info{% endif %}">
                                                     {{ receipt.get_payment_type_display }}
@@ -62,30 +62,30 @@
                                         
                                         {% if receipt.payment_type == 'cash' %}
                                         <tr>
-                                            <th>{% trans "الصندوق" %}:</th>
+                                            <th>{% trans "Cashbox" %}:</th>
                                             <td>{{ receipt.cashbox.name|default:"-" }}</td>
                                         </tr>
                                         {% endif %}
                                         
                                         {% if receipt.payment_type == 'check' %}
                                         <tr>
-                                            <th>{% trans "رقم الشيك" %}:</th>
+                                            <th>{% trans "Check Number" %}:</th>
                                             <td>{{ receipt.check_number }}</td>
                                         </tr>
                                         <tr>
-                                            <th>{% trans "تاريخ الشيك" %}:</th>
+                                            <th>{% trans "Check Date" %}:</th>
                                             <td>{{ receipt.check_date|date:"Y-m-d" }}</td>
                                         </tr>
                                         <tr>
-                                            <th>{% trans "تاريخ الاستحقاق" %}:</th>
+                                            <th>{% trans "Due Date" %}:</th>
                                             <td>{{ receipt.check_due_date|date:"Y-m-d" }}</td>
                                         </tr>
                                         <tr>
-                                            <th>{% trans "البنك" %}:</th>
+                                            <th>{% trans "Bank" %}:</th>
                                             <td>{{ receipt.bank_name }}</td>
                                         </tr>
                                         <tr>
-                                            <th>{% trans "حالة الشيك" %}:</th>
+                                            <th>{% trans "Check Status" %}:</th>
                                             <td>
                                                 <span class="badge bg-{% if receipt.check_status == 'pending' %}warning{% elif receipt.check_status == 'collected' %}success{% else %}danger{% endif %}">
                                                     {{ receipt.get_check_status_display }}
@@ -99,29 +99,29 @@
                                             <td>{{ receipt.description|default:"-" }}</td>
                                         </tr>
                                         <tr>
-                                            <th>{% trans "ملاحظات" %}:</th>
+                                            <th>{% trans "Notes" %}:</th>
                                             <td>{{ receipt.notes|default:"-" }}</td>
                                         </tr>
                                         <tr>
-                                            <th>{% trans "أنشئ بواسطة" %}:</th>
+                                            <th>{% trans "Created By" %}:</th>
                                             <td>{{ receipt.created_by.username }}</td>
                                         </tr>
                                         <tr>
-                                            <th>{% trans "تاريخ الإنشاء" %}:</th>
+                                            <th>{% trans "Created At" %}:</th>
                                             <td>{{ receipt.created_at|date:"Y-m-d H:i" }}</td>
                                         </tr>
                                         
                                         {% if receipt.is_reversed %}
                                         <tr>
-                                            <th>{% trans "عُكس بواسطة" %}:</th>
+                                            <th>{% trans "Reversed By" %}:</th>
                                             <td>{{ receipt.reversed_by.username }}</td>
                                         </tr>
                                         <tr>
-                                            <th>{% trans "تاريخ العكس" %}:</th>
+                                            <th>{% trans "Reversed At" %}:</th>
                                             <td>{{ receipt.reversed_at|date:"Y-m-d H:i" }}</td>
                                         </tr>
                                         <tr>
-                                            <th>{% trans "سبب العكس" %}:</th>
+                                            <th>{% trans "Reversal Reason" %}:</th>
                                             <td>{{ receipt.reversal_reason }}</td>
                                         </tr>
                                         {% endif %}
@@ -130,11 +130,11 @@
                             </div>
                         </div>
                         
-                        <!-- {% trans "Summary" %} ال{% trans "Voucher" %} -->
+                        <!-- Voucher Summary -->
                         <div class="col-md-4">
                             <div class="card">
                                 <div class="card-body">
-                                    <h5 class="card-title">{% trans "{% trans "Summary" %} ال{% trans "Voucher" %}" %}</h5>
+                                    <h5 class="card-title">{% trans "Voucher Summary" %}</h5>
                                     <div class="text-center">
                                         <div class="mb-3">
                                             <i class="fas fa-receipt fa-3x {% if receipt.is_reversed %}text-danger{% else %}text-primary{% endif %}"></i>
@@ -145,10 +145,10 @@
                                         <p class="text-muted">{{ receipt.date|date:"Y-m-d" }}</p>
                                         
                                         {% if receipt.is_reversed %}
-                                        <span class="badge bg-danger">{% trans "معكوس" %}</span>
+                                        <span class="badge bg-danger">{% trans "Reversed" %}</span>
                                         {% elif receipt.payment_type == 'check' and receipt.check_status == 'pending' %}
                                         <a href="{% url 'receipts:check_collect' receipt.id %}" class="btn btn-warning btn-sm">
-                                            <i class="fas fa-coins"></i> {% trans "تحصيل الشيك" %}
+                                            <i class="fas fa-coins"></i> {% trans "Collect Check" %}
                                         </a>
                                         {% endif %}
                                     </div>
@@ -157,24 +157,24 @@
                         </div>
                     </div>
                     
-                    <!-- تحصي{% trans "No" %}ت الشيك -->
+                    <!-- Check Collections -->
                     {% if receipt.payment_type == 'check' and collections %}
                     <div class="row">
                         <div class="col-12">
                             <div class="card">
                                 <div class="card-header">
-                                    <h5 class="card-title">{% trans "تحصيلات الشيك" %}</h5>
+                                    <h5 class="card-title">{% trans "Check Collections" %}</h5>
                                 </div>
                                 <div class="card-body">
                                     <div class="table-responsive">
                                         <table class="table table-striped">
                                             <thead>
                                                 <tr>
-                                                    <th>{% trans "تاريخ التحصيل" %}</th>
+                                                    <th>{% trans "Collection Date" %}</th>
                                                     <th>{% trans "Status" %}</th>
-                                                    <th>{% trans "الصندوق" %}</th>
-                                                    <th>{% trans "ملاحظات" %}</th>
-                                                    <th>{% trans "أنشئ بواسطة" %}</th>
+                                                    <th>{% trans "Cashbox" %}</th>
+                                                    <th>{% trans "Notes" %}</th>
+                                                    <th>{% trans "Created By" %}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -200,13 +200,13 @@
                     </div>
                     {% endif %}
                     
-                    <!-- حركات الحساب -->
+                    <!-- Related Account Movements -->
                     {% if account_movements %}
                     <div class="row mt-3">
                         <div class="col-12">
                             <div class="card">
                                 <div class="card-header">
-                                    <h5 class="card-title">{% trans "حركات الحساب المرتبطة" %}</h5>
+                                    <h5 class="card-title">{% trans "Related Account Movements" %}</h5>
                                 </div>
                                 <div class="card-body">
                                     <div class="table-responsive">
@@ -214,10 +214,10 @@
                                             <thead>
                                                 <tr>
                                                     <th>{% trans "Date" %}</th>
-                                                    <th>{% trans "نوع الحركة" %}</th>
+                                                    <th>{% trans "Movement Type" %}</th>
                                                     <th>{% trans "Amount" %}</th>
                                                     <th>{% trans "Description" %}</th>
-                                                    <th>{% trans "رقم المرجع" %}</th>
+                                                    <th>{% trans "Reference Number" %}</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -246,7 +246,7 @@
     </div>
 </div>
 
-<!-- Modal {% trans "Edit" %} ال{% trans "Voucher" %} -->
+<!-- Modal Edit Voucher -->
 {% if not receipt.is_reversed %}
 <div class="modal fade" id="editReceiptModal" tabindex="-1">
     <div class="modal-dialog">
@@ -254,7 +254,7 @@
             <form method="post" action="{% url 'receipts:receipt_edit' receipt.id %}">
                 {% csrf_token %}
                 <div class="modal-header">
-                    <h5 class="modal-title">{% trans "{% trans "Edit" %} ال{% trans "Voucher" %}" %}</h5>
+                    <h5 class="modal-title">{% trans "Edit Voucher" %}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
@@ -263,24 +263,20 @@
                         <textarea name="description" class="form-control" rows="3">{{ receipt.description }}</textarea>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">{% trans "ملاحظات" %}</label>
+                        <label class="form-label">{% trans "Notes" %}</label>
                         <textarea name="notes" class="form-control" rows="2">{{ receipt.notes }}</textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        إلغاء
-                    </button>
-                    <button type="submit" class="btn btn-primary">
-                        تحديث
-                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button type="submit" class="btn btn-primary">{% trans "Update" %}</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- Modal عكس ال{% trans "Voucher" %} -->
+<!-- Modal Reverse Voucher -->
 {% if receipt.can_be_reversed %}
 <div class="modal fade" id="reverseReceiptModal" tabindex="-1">
     <div class="modal-dialog">
@@ -288,30 +284,26 @@
             <form method="post" action="{% url 'receipts:receipt_reverse' receipt.id %}">
                 {% csrf_token %}
                 <div class="modal-header">
-                    <h5 class="modal-title">{% trans "عكس الVoucher" %}</h5>
+                    <h5 class="modal-title">{% trans "Reverse Voucher" %}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-warning">
                         <i class="fas fa-exclamation-triangle"></i>
-                        {% trans "{% trans "Warning" %}: عكس ال{% trans "Voucher" %} سيؤثر على {% trans "Balance" %} العميل والصندوق. هذا الإجراء لا يمكن التراجع عنه!" %}
+                        <strong>{% trans "Warning" %}:</strong> {% trans "Reversing the voucher will affect the customer's and cashbox balance. This action cannot be undone!" %}
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">{% trans "سبب العكس" %} *</label>
+                        <label class="form-label">{% trans "Reversal Reason" %} *</label>
                         <textarea name="reason" class="form-control" rows="3" required></textarea>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">{% trans "ملاحظات إضافية" %}</label>
+                        <label class="form-label">{% trans "Additional Notes" %}</label>
                         <textarea name="notes" class="form-control" rows="2"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        إلغاء
-                    </button>
-                    <button type="submit" class="btn btn-danger">
-                        {% trans "عكس الVoucher" %}
-                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button type="submit" class="btn btn-danger">{% trans "Reverse Voucher" %}</button>
                 </div>
             </form>
         </div>

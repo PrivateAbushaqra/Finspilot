@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FinsPilot Accounting System\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-08-25 12:42+0300\n"
+"POT-Creation-Date: 2025-08-25 12:51+0300\n"
 "PO-Revision-Date: 2025-08-09 11:52\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
@@ -302,6 +302,9 @@ msgstr ""
 #: .\templates\purchases\return_edit.html:74
 #: .\templates\purchases\return_edit.html:76
 #: .\templates\receipts\receipt_add.html:146
+#: .\templates\receipts\receipt_detail.html:102
+#: .\templates\receipts\receipt_detail.html:176
+#: .\templates\receipts\receipt_detail.html:266
 #: .\templates\sales\return_add.html:258 .\templates\sales\return_add.html:260
 #: .\templates\sales\return_edit.html:162
 msgid "Notes"
@@ -324,6 +327,8 @@ msgstr ""
 #: .\templates\cashboxes\transfer_list.html:100
 #: .\templates\journal\entries_by_type.html:109
 #: .\templates\journal\entry_list.html:134
+#: .\templates\receipts\receipt_detail.html:106
+#: .\templates\receipts\receipt_detail.html:177
 #: .\templates\receipts\receipt_list.html:94
 msgid "Created By"
 msgstr ""
@@ -341,7 +346,8 @@ msgstr ""
 #: .\receipts\models.py:138 .\reports\models.py:7
 #: .\revenues_expenses\models.py:19 .\revenues_expenses\models.py:68
 #: .\revenues_expenses\models.py:139 .\sales\models.py:34 .\sales\models.py:90
-#: .\settings\models.py:53 .\settings\models.py:121 .\users\models.py:21
+#: .\settings\models.py:53 .\settings\models.py:121
+#: .\templates\receipts\receipt_detail.html:110 .\users\models.py:21
 #: .\users\models.py:150 .\users\models.py:165
 msgid "Created At"
 msgstr ""
@@ -685,7 +691,6 @@ msgstr "Created at"
 #: .\assets_liabilities\models.py:170
 #: .\templates\payments\voucher_detail.html:194
 #: .\templates\receipts\check_collect.html:47
-#: .\templates\receipts\receipt_detail.html:80
 #, fuzzy
 #| msgid "تاريخ الإنشاء"
 msgid "تاريخ الاستحقاق"
@@ -914,7 +919,6 @@ msgstr ""
 #: .\templates\purchases\purchase_statement.html:89
 #: .\templates\purchases\purchase_statement.html:144
 #: .\templates\receipts\check_collect.html:156
-#: .\templates\receipts\receipt_detail.html:297
 #: .\templates\sales\invoice_add.html:926
 #: .\templates\sales\invoice_add.html:953
 #: .\templates\sales\invoice_add.html:970
@@ -1015,7 +1019,7 @@ msgstr ""
 msgid "Withdrawal"
 msgstr ""
 
-#: .\banks\models.py:129
+#: .\banks\models.py:129 .\templates\receipts\receipt_detail.html:220
 msgid "Reference Number"
 msgstr ""
 
@@ -1153,7 +1157,6 @@ msgstr "Created at"
 #: .\templates\cashboxes\transfer_list.html:329
 #: .\templates\payments\voucher_detail.html:182
 #: .\templates\receipts\check_collect.html:31
-#: .\templates\receipts\receipt_detail.html:72
 msgid "رقم الشيك"
 msgstr ""
 
@@ -1161,7 +1164,6 @@ msgstr ""
 #: .\templates\cashboxes\transfer_list.html:334
 #: .\templates\payments\voucher_detail.html:190
 #: .\templates\receipts\check_collect.html:43
-#: .\templates\receipts\receipt_detail.html:76
 #, fuzzy
 #| msgid "تاريخ الإنشاء"
 msgid "تاريخ الشيك"
@@ -1234,8 +1236,6 @@ msgstr ""
 #: .\cashboxes\models.py:282 .\sales\models.py:26
 #: .\templates\cashboxes\transfer_detail.html:120
 #: .\templates\payments\voucher_detail.html:154
-#: .\templates\receipts\receipt_detail.html:65
-#: .\templates\receipts\receipt_detail.html:175
 msgid "الصندوق"
 msgstr ""
 
@@ -2263,6 +2263,7 @@ msgstr ""
 #: .\templates\payments\voucher_list.html:140
 #: .\templates\purchases\invoice_add.html:177
 #: .\templates\receipts\receipt_add.html:51
+#: .\templates\receipts\receipt_detail.html:51
 #: .\templates\receipts\receipt_list.html:41
 #: .\templates\receipts\receipt_list.html:91
 msgid "Payment Type"
@@ -2347,6 +2348,8 @@ msgid "To Date"
 msgstr ""
 
 #: .\payments\forms.py:222 .\payments\models.py:80
+#: .\templates\receipts\receipt_detail.html:124
+#: .\templates\receipts\receipt_detail.html:296
 msgid "Reversal Reason"
 msgstr ""
 
@@ -2399,6 +2402,7 @@ msgstr ""
 #: .\payments\models.py:36 .\templates\payments\voucher_list.html:136
 #: .\templates\receipts\check_list.html:70
 #: .\templates\receipts\receipt_add.html:31
+#: .\templates\receipts\receipt_detail.html:39
 #: .\templates\receipts\receipt_list.html:88
 msgid "Voucher Number"
 msgstr ""
@@ -2475,12 +2479,15 @@ msgstr ""
 #: .\templates\banks\transfer_list.html:479
 #: .\templates\banks\transfer_list.html:490 .\templates\core\dashboard.html:289
 #: .\templates\core\dashboard.html:291 .\templates\core\dashboard.html:356
+#: .\templates\receipts\receipt_detail.html:65
+#: .\templates\receipts\receipt_detail.html:175
 msgid "Cashbox"
 msgstr ""
 
 #: .\payments\models.py:54 .\templates\banks\account_list.html:106
 #: .\templates\banks\transfer_list.html:469
 #: .\templates\receipts\check_list.html:76
+#: .\templates\receipts\receipt_detail.html:84
 #: .\templates\sales\return_add.html:249
 msgid "Bank"
 msgstr ""
@@ -2491,11 +2498,13 @@ msgstr ""
 
 #: .\payments\models.py:58 .\templates\receipts\check_list.html:71
 #: .\templates\receipts\receipt_add.html:98
+#: .\templates\receipts\receipt_detail.html:72
 msgid "Check Number"
 msgstr ""
 
 #: .\payments\models.py:59 .\templates\receipts\check_list.html:74
 #: .\templates\receipts\receipt_add.html:103
+#: .\templates\receipts\receipt_detail.html:76
 msgid "Check Date"
 msgstr ""
 
@@ -2504,17 +2513,19 @@ msgid "Check Due Date"
 msgstr ""
 
 #: .\payments\models.py:62 .\templates\receipts\check_list.html:29
+#: .\templates\receipts\receipt_detail.html:88
 msgid "Check Status"
 msgstr ""
 
 #: .\payments\models.py:76 .\templates\payments\voucher_list.html:179
 #: .\templates\payments\voucher_list.html:184
+#: .\templates\receipts\receipt_detail.html:148
 #: .\templates\receipts\receipt_list.html:68
 #: .\templates\receipts\receipt_list.html:116
 msgid "Reversed"
 msgstr ""
 
-#: .\payments\models.py:78
+#: .\payments\models.py:78 .\templates\receipts\receipt_detail.html:116
 msgid "Reversed By"
 msgstr ""
 
@@ -2647,7 +2658,6 @@ msgstr ""
 #: .\templates\journal\account_detail.html:74
 #: .\templates\journal\entry_detail.html:81
 #: .\templates\payments\voucher_detail.html:112
-#: .\templates\receipts\receipt_detail.html:110
 msgid "تاريخ الإنشاء"
 msgstr "Created at"
 
@@ -2942,7 +2952,6 @@ msgstr "Created at"
 
 #: .\receipts\models.py:29 .\sales\models.py:22 .\sales\models.py:84
 #: .\templates\receipts\check_collect.html:35
-#: .\templates\receipts\receipt_detail.html:47
 msgid "العميل"
 msgstr ""
 
@@ -2962,7 +2971,6 @@ msgid "صندوق الشيك"
 msgstr ""
 
 #: .\receipts\models.py:44 .\templates\payments\voucher_detail.html:198
-#: .\templates\receipts\receipt_detail.html:88
 msgid "حالة الشيك"
 msgstr ""
 
@@ -2971,13 +2979,11 @@ msgid "مُعكوس"
 msgstr ""
 
 #: .\receipts\models.py:60 .\templates\payments\voucher_detail.html:225
-#: .\templates\receipts\receipt_detail.html:116
 msgid "عُكس بواسطة"
 msgstr ""
 
 #: .\receipts\models.py:61 .\receipts\models.py:133
 #: .\templates\payments\voucher_detail.html:229
-#: .\templates\receipts\receipt_detail.html:120
 #, fuzzy
 #| msgid "تاريخ الإنشاء"
 msgid "تاريخ العكس"
@@ -2986,8 +2992,6 @@ msgstr "Created at"
 #: .\receipts\models.py:62 .\receipts\models.py:134
 #: .\templates\payments\voucher_detail.html:234
 #: .\templates\payments\voucher_detail.html:263
-#: .\templates\receipts\receipt_detail.html:124
-#: .\templates\receipts\receipt_detail.html:300
 msgid "سبب العكس"
 msgstr ""
 
@@ -3018,7 +3022,6 @@ msgid "سند القبض"
 msgstr ""
 
 #: .\receipts\models.py:111 .\templates\receipts\check_collect.html:97
-#: .\templates\receipts\receipt_detail.html:173
 #, fuzzy
 #| msgid "تاريخ الإنشاء"
 msgid "تاريخ التحصيل"
@@ -3142,7 +3145,7 @@ msgstr ""
 msgid "voucher"
 msgstr ""
 
-#: .\receipts\views.py:441 .\templates\receipts\receipt_detail.html:151
+#: .\receipts\views.py:441
 msgid "تحصيل الشيك"
 msgstr ""
 
@@ -3324,6 +3327,7 @@ msgstr ""
 #: .\templates\customers\transactions.html:328
 #: .\templates\receipts\check_list.html:72
 #: .\templates\receipts\receipt_add.html:36
+#: .\templates\receipts\receipt_detail.html:47
 #: .\templates\receipts\receipt_list.html:30
 #: .\templates\receipts\receipt_list.html:90
 #: .\templates\reports\customer_statement.html:29
@@ -3396,7 +3400,6 @@ msgid "طريقة الدفع"
 msgstr ""
 
 #: .\revenues_expenses\models.py:55
-#: .\templates\receipts\receipt_detail.html:220
 #, fuzzy
 #| msgid "اسم المجموعة"
 msgid "رقم المرجع"
@@ -4048,8 +4051,6 @@ msgstr ""
 #: .\templates\cashboxes\transfer_detail.html:78
 #: .\templates\journal\entry_detail.html:77
 #: .\templates\payments\voucher_detail.html:108
-#: .\templates\receipts\receipt_detail.html:106
-#: .\templates\receipts\receipt_detail.html:177
 msgid "أنشئ بواسطة"
 msgstr ""
 
@@ -4435,7 +4436,6 @@ msgstr ""
 #: .\templates\purchases\invoice_list.html:307
 #: .\templates\purchases\return_edit.html:87
 #: .\templates\purchases\return_list.html:195
-#: .\templates\receipts\receipt_detail.html:160
 #: .\templates\revenues_expenses\dashboard.html:185
 #: .\templates\revenues_expenses\entry_detail.html:9
 #: .\templates\revenues_expenses\entry_list.html:23
@@ -4890,7 +4890,6 @@ msgstr ""
 #: .\templates\purchases\return_edit.html:88
 #: .\templates\purchases\return_list.html:143
 #: .\templates\receipts\receipt_detail.html:20
-#: .\templates\receipts\receipt_detail.html:249
 #: .\templates\revenues_expenses\category_list.html:59
 #: .\templates\revenues_expenses\entry_list.html:134
 #: .\templates\sales\invoice_detail.html:180
@@ -5655,6 +5654,7 @@ msgstr ""
 #: .\templates\assets_liabilities\liability_list.html:118
 #: .\templates\receipts\check_list.html:75
 #: .\templates\receipts\receipt_add.html:108
+#: .\templates\receipts\receipt_detail.html:80
 msgid "Due Date"
 msgstr ""
 
@@ -5836,6 +5836,8 @@ msgstr ""
 #: .\templates\products\product_list.html:924
 #: .\templates\purchases\return_add.html:154
 #: .\templates\receipts\receipt_add.html:159
+#: .\templates\receipts\receipt_detail.html:271
+#: .\templates\receipts\receipt_detail.html:305
 #: .\templates\settings\document_print_settings.html:455
 #: .\templates\settings\document_print_settings.html:491
 #: .\templates\settings\print_design.html:516
@@ -5904,6 +5906,7 @@ msgstr ""
 #: .\templates\purchases\invoice_add.html:107
 #: .\templates\purchases\return_add.html:21
 #: .\templates\receipts\receipt_add.html:15
+#: .\templates\receipts\receipt_detail.html:16
 #: .\templates\sales\invoice_add.html:154
 #: .\templates\sales\invoice_detail.html:22 .\templates\users\group_add.html:20
 #: .\templates\users\group_delete.html:20 .\templates\users\group_edit.html:20
@@ -5981,6 +5984,7 @@ msgid "Determines whether the account is active or not"
 msgstr ""
 
 #: .\templates\banks\account_add.html:248
+#: .\templates\receipts\receipt_detail.html:300
 msgid "Additional Notes"
 msgstr ""
 
@@ -6096,7 +6100,6 @@ msgstr ""
 #: .\templates\purchases\return_edit.html:88
 #: .\templates\receipts\check_collect.html:19
 #: .\templates\receipts\receipt_add.html:132
-#: .\templates\receipts\receipt_detail.html:32
 #: .\templates\revenues_expenses\category_create.html:88
 #: .\templates\sales\invoice_add.html:325
 #: .\templates\sales\invoice_add.html:937
@@ -6382,6 +6385,7 @@ msgstr ""
 #: .\templates\products\product_list.html:678
 #: .\templates\purchases\invoice_delete.html:38
 #: .\templates\purchases\return_delete.html:23
+#: .\templates\receipts\receipt_detail.html:293
 #: .\templates\sales\return_delete.html:154
 msgid "Warning"
 msgstr ""
@@ -6422,14 +6426,6 @@ msgstr ""
 #: .\templates\payments\voucher_detail.html:294
 #: .\templates\payments\voucher_detail.html:296
 #: .\templates\payments\voucher_detail.html:301
-#: .\templates\receipts\receipt_detail.html:32
-#: .\templates\receipts\receipt_detail.html:36
-#: .\templates\receipts\receipt_detail.html:133
-#: .\templates\receipts\receipt_detail.html:137
-#: .\templates\receipts\receipt_detail.html:249
-#: .\templates\receipts\receipt_detail.html:257
-#: .\templates\receipts\receipt_detail.html:283
-#: .\templates\receipts\receipt_detail.html:297
 msgid "Voucher"
 msgstr ""
 
@@ -6630,10 +6626,6 @@ msgstr ""
 #: .\templates\payments\voucher_detail.html:286
 #: .\templates\payments\voucher_detail.html:294
 #: .\templates\payments\voucher_detail.html:301
-#: .\templates\receipts\receipt_detail.html:36
-#: .\templates\receipts\receipt_detail.html:137
-#: .\templates\receipts\receipt_detail.html:257
-#: .\templates\receipts\receipt_detail.html:297
 #, python-format
 msgid "{%% trans "
 msgstr ""
@@ -7265,7 +7257,6 @@ msgstr ""
 #: .\templates\cashboxes\cashbox_detail.html:17
 #: .\templates\cashboxes\transfer_detail.html:15
 #: .\templates\payments\voucher_detail.html:15
-#: .\templates\receipts\receipt_detail.html:16
 #, fuzzy
 #| msgid "العودة للقائمة"
 msgid "العودة للList"
@@ -7305,7 +7296,6 @@ msgstr ""
 
 #: .\templates\cashboxes\cashbox_detail.html:97
 #: .\templates\cashboxes\transfer_detail.html:121
-#: .\templates\receipts\receipt_detail.html:217
 #, fuzzy
 #| msgid "تأكيد الحذف"
 msgid "نوع الحركة"
@@ -7394,6 +7384,7 @@ msgid "Edit Cashbox"
 msgstr ""
 
 #: .\templates\cashboxes\cashbox_list.html:220
+#: .\templates\receipts\receipt_detail.html:272
 msgid "Update"
 msgstr ""
 
@@ -8693,6 +8684,7 @@ msgstr ""
 #: .\templates\inventory\movement_list.html:173
 #: .\templates\inventory\movement_list.html:448
 #: .\templates\inventory\movement_list.html:518
+#: .\templates\receipts\receipt_detail.html:217
 msgid "Movement Type"
 msgstr ""
 
@@ -9367,15 +9359,11 @@ msgstr ""
 
 #: .\templates\payments\voucher_detail.html:22
 #: .\templates\payments\voucher_detail.html:271
-#: .\templates\receipts\receipt_detail.html:24
-#: .\templates\receipts\receipt_detail.html:291
-#: .\templates\receipts\receipt_detail.html:313
 msgid "عكس الVoucher"
 msgstr ""
 
 #: .\templates\payments\voucher_detail.html:47
 #: .\templates\receipts\check_collect.html:27
-#: .\templates\receipts\receipt_detail.html:39
 msgid "رقم الVoucher"
 msgstr ""
 
@@ -9384,12 +9372,10 @@ msgid "نوع الVoucher"
 msgstr ""
 
 #: .\templates\payments\voucher_detail.html:63
-#: .\templates\receipts\receipt_detail.html:51
 msgid "نوع الPayment"
 msgstr ""
 
 #: .\templates\payments\voucher_detail.html:85
-#: .\templates\receipts\receipt_detail.html:148
 msgid "معكوس"
 msgstr ""
 
@@ -9411,7 +9397,6 @@ msgstr ""
 
 #: .\templates\payments\voucher_detail.html:165
 #: .\templates\receipts\check_collect.html:51
-#: .\templates\receipts\receipt_detail.html:84
 #, fuzzy
 #| msgid "البنوك"
 msgid "البنك"
@@ -10209,7 +10194,6 @@ msgstr ""
 #: .\templates\purchases\invoice_detail.html:444
 #: .\templates\purchases\invoice_detail.html:458
 #: .\templates\purchases\invoice_edit.html:233
-#: .\templates\receipts\receipt_detail.html:133
 #: .\templates\sales\invoice_add.html:353 .\templates\sales\return_add.html:268
 msgid "Summary"
 msgstr ""
@@ -10425,9 +10409,6 @@ msgid "اختر الصندوق"
 msgstr ""
 
 #: .\templates\receipts\check_collect.html:126
-#: .\templates\receipts\receipt_detail.html:102
-#: .\templates\receipts\receipt_detail.html:176
-#: .\templates\receipts\receipt_detail.html:266
 msgid "ملاحظات"
 msgstr ""
 
@@ -10470,6 +10451,7 @@ msgid "Add New Receipt Voucher"
 msgstr ""
 
 #: .\templates\receipts\receipt_add.html:27
+#: .\templates\receipts\receipt_detail.html:36
 msgid "Voucher Information"
 msgstr ""
 
@@ -10508,18 +10490,44 @@ msgstr ""
 msgid "Connection error"
 msgstr ""
 
-#: .\templates\receipts\receipt_detail.html:166
-#, fuzzy
-#| msgid "صلاحيات المجموعة"
-msgid "تحصيلات الشيك"
-msgstr "Group Permissions"
-
-#: .\templates\receipts\receipt_detail.html:209
-msgid "حركات الحساب المرتبطة"
+#: .\templates\receipts\receipt_detail.html:24
+#: .\templates\receipts\receipt_detail.html:287
+#: .\templates\receipts\receipt_detail.html:306
+msgid "Reverse Voucher"
 msgstr ""
 
-#: .\templates\receipts\receipt_detail.html:304
-msgid "ملاحظات إضافية"
+#: .\templates\receipts\receipt_detail.html:120
+msgid "Reversed At"
+msgstr ""
+
+#: .\templates\receipts\receipt_detail.html:137
+msgid "Voucher Summary"
+msgstr ""
+
+#: .\templates\receipts\receipt_detail.html:151
+msgid "Collect Check"
+msgstr ""
+
+#: .\templates\receipts\receipt_detail.html:166
+msgid "Check Collections"
+msgstr ""
+
+#: .\templates\receipts\receipt_detail.html:173
+msgid "Collection Date"
+msgstr ""
+
+#: .\templates\receipts\receipt_detail.html:209
+msgid "Related Account Movements"
+msgstr ""
+
+#: .\templates\receipts\receipt_detail.html:257
+msgid "Edit Voucher"
+msgstr ""
+
+#: .\templates\receipts\receipt_detail.html:293
+msgid ""
+"Reversing the voucher will affect the customer's and cashbox balance. This "
+"action cannot be undone!"
 msgstr ""
 
 #: .\templates\receipts\receipt_list.html:6
@@ -12470,6 +12478,11 @@ msgstr "Users will inherit the group's permissions"
 #| msgid "المستخدمون سيرثون صلاحيات المجموعة"
 msgid "تم إظهار المستخدمين ذوي الصلاحيات العالية"
 msgstr "Users will inherit the group's permissions"
+
+#, fuzzy
+#~| msgid "صلاحيات المجموعة"
+#~ msgid "تحصيلات الشيك"
+#~ msgstr "Group Permissions"
 
 #, fuzzy
 #~| msgid "حدد الصلاحيات المناسبة للمجموعة"
