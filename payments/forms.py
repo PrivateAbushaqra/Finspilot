@@ -22,7 +22,7 @@ class PaymentVoucherForm(forms.ModelForm):
         widgets = {
             'voucher_number': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Enter voucher number manually'
+                'placeholder': _('Enter voucher number manually (e.g., PAY-2025-001)')
             }),
             'date': forms.DateInput(attrs={
                 'type': 'date',
