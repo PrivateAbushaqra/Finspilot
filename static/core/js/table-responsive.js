@@ -1,5 +1,9 @@
-// تحسينات JavaScript للجداول المستجيبة
+// Responsive tables enhancements
 document.addEventListener('DOMContentLoaded', function() {
+    // Detect document language for fallback labels
+    const __docLang = (typeof document !== 'undefined' && document.documentElement && (document.documentElement.lang || 'en')).toLowerCase();
+    const __isAr = __docLang.startsWith('ar');
+    const __fallbackColumn = __isAr ? 'العمود' : 'Column';
     // تحويل الجداول إلى بطاقات على الأجهزة المحمولة
     function createMobileCards() {
         const tables = document.querySelectorAll('.table-responsive table');
@@ -64,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const label = document.createElement('span');
             label.className = 'mobile-card-label';
-            label.textContent = headers[index] || `العمود ${index + 1}`;
+            label.textContent = headers[index] || `${__fallbackColumn} ${index + 1}`;
             
             const value = document.createElement('span');
             value.className = 'mobile-card-value';
