@@ -428,7 +428,8 @@ def transfer_list(request):
         'cashboxes': cashboxes,
         'banks': banks,
         'next_transfer_number': next_transfer_number,
-        'page_title': _('تحويلات الصناديق'),
+    # Use English msgid to avoid Arabic leaking in EN UI; AR translation handled in locale files
+    'page_title': _('Cashbox Transfers'),
     }
     return render(request, 'cashboxes/transfer_list.html', context)
 
