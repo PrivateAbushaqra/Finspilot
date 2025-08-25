@@ -1039,7 +1039,7 @@
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Function to determine active page in sidebar (always runs)
-        function setActiveSidebarItem() {
+    function setActiveSidebarItem() {
             const currentUrl = window.location.pathname;
             const sidebarLinks = document.querySelectorAll('.sidebar .nav-link[href]');
             
@@ -1072,12 +1072,25 @@
             });
             
             // Activate the link
+            let openedParentId = null;
             if (activeLink) {
                 activeLink.classList.add('active');
                 
                 // Find the parent menu and submenu containing this link
                 const parentCollapse = activeLink.closest('.collapse');
                 if (parentCollapse) {
+                    // Close all other menus to ensure only one stays open
+                    document.querySelectorAll('.sidebar .collapse').forEach(c => {
+                        if (c !== parentCollapse) {
+                            c.classList.remove('show');
+                            try {
+                                const inst = bootstrap.Collapse.getOrCreateInstance ? bootstrap.Collapse.getOrCreateInstance(c, {toggle: false}) : new bootstrap.Collapse(c, {toggle: false});
+                                inst.hide();
+                            } catch(e) {}
+                            if (c.id) localStorage.setItem('sidebar_' + c.id, 'closed');
+                        }
+                    });
+
                     // Open the submenu
                     const bsCollapse = new bootstrap.Collapse(parentCollapse, {show: true});
                     bsCollapse.show();
@@ -1089,28 +1102,41 @@
                     }
                     
                     // Save the open menu state
-                    localStorage.setItem('sidebar_' + parentCollapse.id, 'open');
+                    if (parentCollapse.id) localStorage.setItem('sidebar_' + parentCollapse.id, 'open');
+                    openedParentId = parentCollapse.id || null;
                 }
             }
+
+            return openedParentId;
         }
         
         // Always select the active page on page load
-        setActiveSidebarItem();
+        const activeParentId = setActiveSidebarItem();
 
-        // Restore submenu open state on load (works for both AR/EN and without AJAX)
-        const initialCollapses = document.querySelectorAll('.sidebar .collapse');
-        initialCollapses.forEach(col => {
-            const saved = localStorage.getItem('sidebar_' + col.id);
-            if (saved === 'open') {
-                col.classList.add('show');
-            }
-        });
+        // Restore submenu open state on load (only if no active link was matched)
+        if (!activeParentId) {
+            const initialCollapses = document.querySelectorAll('.sidebar .collapse');
+            initialCollapses.forEach(col => {
+                const saved = localStorage.getItem('sidebar_' + col.id);
+                if (saved === 'open') {
+                    col.classList.add('show');
+                } else {
+                    col.classList.remove('show');
+                }
+            });
+        }
 
         // When clicking any leaf link, persist its parent menu as open
         const leafLinks = document.querySelectorAll('.sidebar .nav-link[href]:not([data-bs-toggle])');
         leafLinks.forEach(a => {
             a.addEventListener('click', function() {
                 const parentCol = this.closest('.collapse');
+                // Close all others in localStorage so only one remains open
+                document.querySelectorAll('.sidebar .collapse').forEach(c => {
+                    if (c !== parentCol && c.id) {
+                        localStorage.setItem('sidebar_' + c.id, 'closed');
+                    }
+                });
                 if (parentCol && parentCol.id) {
                     localStorage.setItem('sidebar_' + parentCol.id, 'open');
                 }
