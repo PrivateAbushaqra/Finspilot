@@ -324,25 +324,41 @@
             transform: translateX(-5px);
         }
         
+        :root {
+            --sidebar-active-bg: rgba(255,255,255,0.18);
+            --sidebar-active-text: #ffffff;
+            --sidebar-active-border: #22d3ee; /* cyan accent */
+        }
+
         .sidebar .nav-link.active {
-            color: #fff !important;
-            background-color: #007bff !important;
+            color: var(--sidebar-active-text) !important;
+            background-color: var(--sidebar-active-bg) !important;
             border-radius: 5px;
             font-weight: bold;
             position: relative;
-            border-left: 4px solid #28a745;
         }
-        
+
+        /* Logical border for active item depending on direction */
+        html[dir="ltr"] .sidebar .nav-link.active {
+            border-left: 4px solid var(--sidebar-active-border);
+            border-right: none;
+        }
+        html[dir="rtl"] .sidebar .nav-link.active {
+            border-right: 4px solid var(--sidebar-active-border);
+            border-left: none;
+        }
+
         .sidebar .nav-link.active::before {
             content: "●";
-            color: #28a745;
+            color: var(--sidebar-active-border);
             font-size: 12px;
             position: absolute;
-            left: 8px;
             top: 50%;
             transform: translateY(-50%);
             animation: pulse 2s infinite;
         }
+        html[dir="ltr"] .sidebar .nav-link.active::before { left: 8px; right: auto; }
+        html[dir="rtl"] .sidebar .nav-link.active::before { right: 8px; left: auto; }
         
         @keyframes pulse {
             0% { opacity: 1; }
@@ -356,10 +372,11 @@
         
         /* Highlight main menu containing active page */
         .sidebar .nav-item.has-active-child > a[data-bs-toggle="collapse"] {
-            background-color: rgba(0, 123, 255, 0.1);
-            border-left: 3px solid #007bff;
+            background-color: var(--sidebar-active-bg);
             font-weight: bold;
         }
+        html[dir="ltr"] .sidebar .nav-item.has-active-child > a[data-bs-toggle="collapse"] { border-left: 3px solid var(--sidebar-active-border); }
+        html[dir="rtl"] .sidebar .nav-item.has-active-child > a[data-bs-toggle="collapse"] { border-right: 3px solid var(--sidebar-active-border); }
         
         .main-content {
             padding: 2rem;
@@ -468,11 +485,10 @@
             pointer-events: none;
         }
         
-        /* Add effect for active link */
+        /* Add effect for active link - unified with variables */
         .sidebar .nav-link.active {
-            background-color: rgba(255,255,255,0.2) !important;
-            color: #fff !important;
-            border-right: 3px solid #fff;
+            background-color: var(--sidebar-active-bg) !important;
+            color: var(--sidebar-active-text) !important;
         }
     </style>
     
