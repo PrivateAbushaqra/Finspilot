@@ -17,7 +17,7 @@
                     <div>
                         <a href="{% url 'users:group_list' %}" class="btn btn-secondary">
                             <i class="fas fa-arrow-left me-2"></i>
-                            {% trans "العودة للقائمة" %}
+                            {% trans "Back to List" %}
                         </a>
                     </div>
                 </div>
@@ -25,14 +25,14 @@
                     <form method="post" id="groupForm">
                         {% csrf_token %}
                         
-                        <!-- معلومات المجموعة الأساسية -->
+                        <!-- Basic Group Information -->
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <div class="card border-primary">
                                     <div class="card-header bg-primary text-white">
                                         <h5 class="mb-0">
                                             <i class="fas fa-info-circle me-2"></i>
-                                            {% trans "معلومات المجموعة" %}
+                                            {% trans "Group Information" %}
                                         </h5>
                                     </div>
                                     <div class="card-body">
@@ -50,7 +50,7 @@
                                                 </div>
                                             {% endif %}
                                             <small class="form-text text-muted">
-                                                {% trans 'اختر اسماً وصفياً للمجموعة (مثل: المدراء، المحاسبين، أمناء المخزن)' %}
+                                                {% trans 'Choose a descriptive name for the group (e.g., Managers, Accountants, Storekeepers)' %}
                                             </small>
                                         </div>
                                     </div>
@@ -62,26 +62,26 @@
                                     <div class="card-header bg-info text-white">
                                         <h5 class="mb-0">
                                             <i class="fas fa-lightbulb me-2"></i>
-                                            {% trans 'نصائح مهمة' %}
+                                            {% trans 'Important Tips' %}
                                         </h5>
                                     </div>
                                     <div class="card-body">
                                         <ul class="list-unstyled mb-0">
                                             <li class="mb-2">
                                                 <i class="fas fa-check text-success me-2"></i>
-                                                {% trans 'اختر اسماً واضحاً للمجموعة' %}
+                                                {% trans 'Choose a clear name for the group' %}
                                             </li>
                                             <li class="mb-2">
                                                 <i class="fas fa-check text-success me-2"></i>
-                                                {% trans "حدد الصلاحيات المناسبة للمجموعة" %}
+                                                {% trans "Assign the appropriate permissions to the group" %}
                                             </li>
                                             <li class="mb-2">
                                                 <i class="fas fa-check text-success me-2"></i>
-                                                {% trans "يمكنك تعديل الصلاحيات لاحقاً" %}
+                                                {% trans "You can modify the permissions later" %}
                                             </li>
                                             <li class="mb-0">
                                                 <i class="fas fa-info text-info me-2"></i>
-                                                {% trans "المستخدمون سيرثون صلاحيات المجموعة" %}
+                                                {% trans "Users will inherit the group's permissions" %}
                                             </li>
                                         </ul>
                                     </div>
@@ -89,12 +89,12 @@
                             </div>
                         </div>
                         
-                        <!-- الصلاحيات -->
+                        <!-- Permissions -->
                         <div class="card border-success">
                             <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
                                 <h5 class="mb-0">
                                     <i class="fas fa-key me-2"></i>
-                                    {% trans "صلاحيات المجموعة" %}
+                                    {% trans "Group Permissions" %}
                                 </h5>
                                 <div>
                                     <button type="button" class="btn btn-sm btn-light" onclick="selectAllPermissions(true)">
@@ -114,26 +114,26 @@
                                                     <h6 class="mb-0">
                                                         <i class="fas fa-folder me-2"></i>
                                                         {% if app == 'auth' %}
-                                                            {% trans 'إدارة المستخدمين' %}
+                                                            {% trans 'User Management' %}
                                                         {% elif app == 'users' %}
-                                                            {% trans 'المستخدمين' %}
+                                                            {% trans 'Users' %}
                                                         {% elif app == 'banks' %}
-                                                            {% trans 'البنوك' %}
+                                                            {% trans 'Banks' %}
                                                         {% elif app == 'sales' %}
-                                                            {% trans 'المبيعات' %}
+                                                            {% trans 'Sales' %}
                                                         {% elif app == 'purchases' %}
-                                                            {% trans 'المشتريات' %}
+                                                            {% trans 'Purchases' %}
                                                         {% elif app == 'inventory' %}
-                                                            {% trans 'المخزون' %}
+                                                            {% trans 'Inventory' %}
                                                         {% elif app == 'reports' %}
-                                                            {% trans 'التقارير' %}
+                                                            {% trans 'Reports' %}
                                                         {% else %}
                                                             {{ app|title }}
                                                         {% endif %}
                                                         <button type="button" 
                                                                 class="btn btn-sm btn-outline-primary float-end" 
                                                                 onclick="toggleAppPermissions('{{ app }}')">
-                                                            {% trans 'تبديل' %}
+                                                            {% trans 'Toggle' %}
                                                         </button>
                                                     </h6>
                                                 </div>
@@ -157,20 +157,20 @@
                                 </div>
                                 <div class="alert alert-info mt-3">
                                     <i class="fas fa-info-circle me-2"></i>
-                                    {% trans "يمكنك تعديل الصلاحيات في أي وقت بعد إنشاء المجموعة" %}
+                                    {% trans "You can modify the permissions at any time after creating the group" %}
                                 </div>
                             </div>
                         </div>
                         
-                        <!-- أزرار الحفظ -->
+                        <!-- Save Buttons -->
                         <div class="d-flex justify-content-between mt-4">
                             <a href="{% url 'users:group_list' %}" class="btn btn-secondary">
                                 <i class="fas fa-times me-2"></i>
-                                {% trans 'إلغاء' %}
+                                {% trans 'Cancel' %}
                             </a>
                             <button type="submit" class="btn btn-primary" id="submitBtn">
                                 <i class="fas fa-save me-2"></i>
-                                {% trans "إنشاء مجموعة" %}
+                                {% trans "Create Group" %}
                             </button>
                         </div>
                     </form>
@@ -197,9 +197,9 @@ function toggleAppPermissions(appName) {
     });
 }
 
-// تحسين تجربة المستخدم
+// User experience improvements
 document.addEventListener('DOMContentLoaded', function() {
-    // التحقق من قوة اسم المجموعة
+    // Check group name strength
     const nameInput = document.getElementById('{{ form.name.id_for_label }}');
     if (nameInput) {
         nameInput.addEventListener('input', function() {
@@ -218,20 +218,20 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // تأكيد قبل الإرسال
+    // Confirm before submit
     document.getElementById('groupForm').addEventListener('submit', function(e) {
         const checkedPermissions = document.querySelectorAll('.permission-checkbox:checked');
         
         if (checkedPermissions.length === 0) {
-            if (!confirm('{% trans "لم تحدد أي صلاحيات للمجموعة. هل تريد المتابعة؟" %}')) {
+            if (!confirm('{% trans "No permissions have been selected for the group. Do you want to continue?" %}')) {
                 e.preventDefault();
                 return false;
             }
         }
         
-        // إظهار مؤشر التحميل
+    // Show loading indicator
         const submitBtn = document.getElementById('submitBtn');
-        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>{% trans "جاري الإنشاء..." %}';
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>{% trans "Creating..." %}';
         submitBtn.disabled = true;
     });
 });

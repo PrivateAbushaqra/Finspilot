@@ -18,11 +18,11 @@
                     <div>
                         <a href="{% url 'users:group_add' %}" class="btn btn-primary">
                             <i class="fas fa-plus me-2"></i>
-                            {% trans "إضافة مجموعة" %}
+                            {% trans "Add Group" %}
                         </a>
                         <a href="{% url 'users:user_list' %}" class="btn btn-secondary">
                             <i class="fas fa-users me-2"></i>
-                            {% trans 'المستخدمين' %}
+                            {% trans 'Users' %}
                         </a>
                     </div>
                 </div>
@@ -33,11 +33,11 @@
                                 <thead class="table-dark">
                                     <tr>
                                         <th width="5%">#</th>
-                                        <th width="25%">{% trans "اسم المجموعة" %}</th>
-                                        <th width="15%">{% trans 'عدد المستخدمين' %}</th>
-                                        <th width="15%">{% trans "عدد الصلاحيات" %}</th>
-                                        <th width="25%">{% trans 'تاريخ الإنشاء' %}</th>
-                                        <th width="15%">{% trans 'الإجراءات' %}</th>
+                                        <th width="25%">{% trans "Group Name" %}</th>
+                                        <th width="15%">{% trans 'Number of users' %}</th>
+                                        <th width="15%">{% trans "Number of permissions" %}</th>
+                                        <th width="25%">{% trans 'Created at' %}</th>
+                                        <th width="15%">{% trans 'Actions' %}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -48,7 +48,7 @@
                                             <strong>{{ group.name }}</strong>
                                             {% if group.name|lower in 'superadmin,admin,staff' %}
                                                 <span class="badge bg-warning text-dark ms-2">
-                                                    <i class="fas fa-shield-alt"></i> {% trans 'نظام' %}
+                                                    <i class="fas fa-shield-alt"></i> {% trans 'System' %}
                                                 </span>
                                             {% endif %}
                                         </td>
@@ -65,7 +65,7 @@
                                         <td>
                                             <small class="text-muted">
                                                 <i class="fas fa-calendar"></i> 
-                                                {% if group.date_joined %}{{ group.date_joined|date:"Y-m-d H:i" }}{% else %}{% trans "غير محدد" %}{% endif %}
+                                                {% if group.date_joined %}{{ group.date_joined|date:"Y-m-d H:i" }}{% else %}{% trans "Not set" %}{% endif %}
                                             </small>
                                         </td>
                                         <td>
@@ -76,7 +76,7 @@
                                                     <i class="fas fa-edit"></i>
                                                 </a>
                                                 {% if group.name|lower not in 'superadmin,admin,staff' %}
-                                                                     {% trans 'هل أنت متأكد من حذف هذه المجموعة؟' as confirm_group_delete %}
+                                                                     {% trans 'Are you sure you want to delete this group?' as confirm_group_delete %}
                                                                      <a href="{% url 'users:group_delete' group.pk %}" 
                                                                          class="btn btn-sm btn-outline-danger" 
                                                                          title="{% trans "Delete" %}"
@@ -87,7 +87,7 @@
                                                 {% else %}
                                                     <button class="btn btn-sm btn-outline-secondary" 
                                                             disabled 
-                                                            title="{% trans "لا يمكن حذف مجموعات النظام" %}">
+                                                            title="{% trans "System groups cannot be deleted" %}">
                                                         <i class="fas fa-lock"></i>
                                                     </button>
                                                 {% endif %}
@@ -101,26 +101,26 @@
                     {% else %}
                         <div class="text-center py-5">
                             <i class="fas fa-layer-group fa-3x text-muted mb-3"></i>
-                            <h4>{% trans "لا توجد مجموعات" %}</h4>
-                            <p class="text-muted">{% trans 'لم يتم إنشاء أي مجموعات بعد' %}</p>
+                            <h4>{% trans "No groups found" %}</h4>
+                            <p class="text-muted">{% trans 'No groups have been created yet' %}</p>
                             <a href="{% url 'users:group_add' %}" class="btn btn-primary">
                                 <i class="fas fa-plus me-2"></i>
-                                {% trans 'إنشاء أول مجموعة' %}
+                                {% trans 'Create first group' %}
                             </a>
                         </div>
                     {% endif %}
                 </div>
             </div>
             
-            <!-- {% trans "Information" %} إضافية -->
+            <!-- Additional Information -->
             <div class="row mt-4">
                 <div class="col-md-4">
                     <div class="card border-primary">
                         <div class="card-body text-center">
                             <i class="fas fa-info-circle fa-2x text-primary mb-2"></i>
-                            <h5 class="card-title">{% trans "المجموعات" %}</h5>
+                            <h5 class="card-title">{% trans "Groups" %}</h5>
                             <p class="card-text small">
-                                {% trans "المجموعات تساعد في تنظيم المستخدمين وإدارة صلاحياتهم بشكل جماعي" %}
+                                {% trans "Groups help organize users and manage their permissions collectively" %}
                             </p>
                         </div>
                     </div>
@@ -129,9 +129,9 @@
                     <div class="card border-success">
                         <div class="card-body text-center">
                             <i class="fas fa-key fa-2x text-success mb-2"></i>
-                            <h5 class="card-title">{% trans "الصلاحيات" %}</h5>
+                            <h5 class="card-title">{% trans "Permissions" %}</h5>
                             <p class="card-text small">
-                                {% trans "يمكن تعيين صلاحيات متعددة لكل مجموعة ليرثها جميع أعضائها" %}
+                                {% trans "You can assign multiple permissions to a group that all members inherit" %}
                             </p>
                         </div>
                     </div>
@@ -140,9 +140,9 @@
                     <div class="card border-warning">
                         <div class="card-body text-center">
                             <i class="fas fa-shield-alt fa-2x text-warning mb-2"></i>
-                            <h5 class="card-title">{% trans 'الحماية' %}</h5>
+                            <h5 class="card-title">{% trans 'Protection' %}</h5>
                             <p class="card-text small">
-                                {% trans "مجموعات النظام محمية من الحذف للحفاظ على استقرار النظام" %}
+                                {% trans "System groups are protected from deletion to maintain stability" %}
                             </p>
                         </div>
                     </div>

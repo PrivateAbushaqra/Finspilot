@@ -19,7 +19,7 @@
                     {% if edit_warnings %}
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle me-2"></i>
-                        <strong>{% trans "ملاحظة:" %}</strong>
+                        <strong>{% trans "Note:" %}</strong>
                         <ul class="mb-0 mt-2">
                             {% for warning in edit_warnings %}
                             <li>{{ warning }}</li>
@@ -31,12 +31,12 @@
                     <form method="post">
                         {% csrf_token %}
                         
-                        <!-- {% trans "Information" %} أساسية -->
+                        <!-- Basic Information -->
                         <div class="row mb-4">
                             <div class="col-12">
                                 <h5 class="border-bottom pb-2 mb-3">
                                     <i class="fas fa-user me-2"></i>
-                                    {% trans "الInformation الأساسية" %}
+                                    {% trans "Basic Information" %}
                                 </h5>
                             </div>
                             
@@ -101,12 +101,12 @@
                             </div>
                         </div>
 
-                        <!-- {% trans "Settings" %} الحساب -->
+                        <!-- Account Settings -->
                         <div class="row mb-4">
                             <div class="col-12">
                                 <h5 class="border-bottom pb-2 mb-3">
                                     <i class="fas fa-cogs me-2"></i>
-                                    {% trans "Settings الحساب" %}
+                                    {% trans "Account Settings" %}
                                 </h5>
                             </div>
                             
@@ -128,7 +128,7 @@
                                 {% if form.pos_warehouse.errors %}
                                     <div class="text-danger small">{{ form.pos_warehouse.errors.0 }}</div>
                                 {% endif %}
-                                <div class="form-text">{% trans 'المستودع الذي ستصدر منه فواتير نقطة البيع' %}</div>
+                                <div class="form-text">{% trans 'Warehouse from which POS invoices will be issued' %}</div>
                             </div>
                             
                             <div class="col-md-6 mb-3" id="active-field">
@@ -144,12 +144,12 @@
                             </div>
                         </div>
 
-                        <!-- مجموعات -->
+                        <!-- Groups -->
                         <div class="row mb-4">
                             <div class="col-12">
                                 <h5 class="border-bottom pb-2 mb-3">
                                     <i class="fas fa-users me-2"></i>
-                                    {% trans "المجموعات والأدوار" %}
+                                    {% trans "Groups and Roles" %}
                                 </h5>
                             </div>
                             
@@ -158,7 +158,7 @@
                                     <div class="card-header bg-info text-white">
                                         <h6 class="mb-0">
                                             <i class="fas fa-layer-group me-2"></i>
-                                            {% trans "عضوية المجموعات" %}
+                                            {% trans "Group Membership" %}
                                         </h6>
                                     </div>
                                     <div class="card-body">
@@ -177,8 +177,8 @@
                                                                 <strong>{{ group.name }}</strong>
                                                                 <br>
                                                                 <small class="text-muted">
-                                                                    <i class="fas fa-users"></i> {{ group.user_set.count }} مستخدم
-                                                                    <i class="fas fa-key ms-2"></i> {{ group.permissions.count }} صلاحية
+                                                                    <i class="fas fa-users"></i> {{ group.user_set.count }} {% trans "users" %}
+                                                                    <i class="fas fa-key ms-2"></i> {{ group.permissions.count }} {% trans "permissions" %}
                                                                 </small>
                                                             </label>
                                                         </div>
@@ -188,30 +188,30 @@
                                         {% else %}
                                             <div class="text-center py-3">
                                                 <i class="fas fa-layer-group fa-2x text-muted mb-2"></i>
-                                                <p class="text-muted mb-0">{% trans "لا توجد مجموعات متاحة" %}</p>
+                                                <p class="text-muted mb-0">{% trans "No groups available" %}</p>
                                                 <a href="{% url 'users:group_add' %}" class="btn btn-primary btn-sm mt-2">
                                                     <i class="fas fa-plus me-1"></i>
-                                                    {% trans 'إنشاء مجموعة' %}
+                                                    {% trans 'Create Group' %}
                                                 </a>
                                             </div>
                                         {% endif %}
                                         
                                         <div class="alert alert-info mt-3">
                                             <i class="fas fa-info-circle me-2"></i>
-                                            <strong>{% trans "ملاحظة:" %}</strong>
-                                            {% trans "المستخدم سيحصل على جميع صلاحيات المجموعات المحددة" %}
+                                            <strong>{% trans "Note:" %}</strong>
+                                            {% trans "User will receive all permissions from selected groups" %}
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- {% trans "Settings" %} إضافية -->
+                        <!-- Additional Settings -->
                         <div class="row mb-4">
                             <div class="col-12">
                                 <h5 class="border-bottom pb-2 mb-3">
                                     <i class="fas fa-sliders-h me-2"></i>
-                                    {% trans "Settings إضافية" %}
+                                    {% trans "Additional Settings" %}
                                 </h5>
                             </div>
                             
@@ -234,39 +234,39 @@
                             </div>
                         </div>
 
-                        <!-- {% trans "Information" %} إضافية -->
+                        <!-- Additional Information -->
                         <div class="row mb-4">
                             <div class="col-12">
                                 <h5 class="border-bottom pb-2 mb-3">
                                     <i class="fas fa-info-circle me-2"></i>
-                                    {% trans "Information إضافية" %}
+                                    {% trans "Additional Information" %}
                                 </h5>
                             </div>
                             
                             <div class="col-md-6">
-                                <p><strong>{% trans 'تاريخ الإنشاء:' %}</strong><br>
+                                <p><strong>{% trans 'Created at:' %}</strong><br>
                                 {{ user_to_edit.created_at|date:"Y-m-d H:i" }}</p>
                             </div>
                             
                             <div class="col-md-6">
-                                <p><strong>{% trans "آخر تحديث:" %}</strong><br>
+                                <p><strong>{% trans "Last updated:" %}</strong><br>
                                 {{ user_to_edit.updated_at|date:"Y-m-d H:i" }}</p>
                             </div>
                             
                             <div class="col-md-6">
-                                <p><strong>{% trans 'آخر دخول:' %}</strong><br>
+                                <p><strong>{% trans 'Last login:' %}</strong><br>
                                 {% if user_to_edit.last_login %}
                                     {{ user_to_edit.last_login|date:"Y-m-d H:i" }}
                                 {% else %}
-                                    <span class="text-muted">{% trans 'لم يسجل دخول مطلقاً' %}</span>
+                                    <span class="text-muted">{% trans 'Never logged in' %}</span>
                                 {% endif %}</p>
                             </div>
                             
                             <div class="col-md-6">
-                                <p><strong>{% trans 'تغيير كلمة المرور:' %}</strong><br>
+                                <p><strong>{% trans 'Change password:' %}</strong><br>
                                 <a href="{% url 'admin:auth_user_password_change' user_to_edit.id %}" class="btn btn-sm btn-outline-warning" target="_blank">
                                     <i class="fas fa-key me-2"></i>
-                                    {% trans 'تغيير كلمة المرور' %}
+                                    {% trans 'Change Password' %}
                                 </a></p>
                             </div>
                         </div>
@@ -274,18 +274,18 @@
                         <div class="d-flex justify-content-between">
                             <a href="{% url 'users:user_list' %}" class="btn btn-secondary">
                                 <i class="fas fa-arrow-left me-2"></i>
-                                إلغاء
+                                {% trans "Cancel" %}
                             </a>
                             
                             {% if can_edit %}
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save me-2"></i>
-                                {% trans "Save التغييرات" %}
+                                {% trans "Save Changes" %}
                             </button>
                             {% else %}
                             <button type="button" class="btn btn-primary" disabled>
                                 <i class="fas fa-ban me-2"></i>
-                                {% trans "لا يمكن الEdit" %}
+                                {% trans "Edit not allowed" %}
                             </button>
                             {% endif %}
                         </div>
@@ -299,7 +299,7 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // منطق خاص بالصلاحيات
+    // Permissions helper
     const userTypeSelect = document.getElementById('{{ form.user_type.id_for_label }}');
     const permissionCheckboxes = document.querySelectorAll('input[type="checkbox"][name^="can_"]');
     
@@ -307,25 +307,25 @@ document.addEventListener('DOMContentLoaded', function() {
         const userType = userTypeSelect.value;
         
         if (userType === 'superadmin' || userType === 'admin') {
-            // تفعيل جميع الصلاحيات للمديرين
+            // Enable all permissions for admins
             permissionCheckboxes.forEach(checkbox => {
                 checkbox.checked = true;
             });
         }
     }
     
-    // تحديث الصلاحيات عند تغيير نوع المستخدم
+    // Update permissions when user type changes
     if (userTypeSelect) {
         userTypeSelect.addEventListener('change', function() {
             updatePermissions();
             togglePOSWarehouseField();
         });
         
-        // تشغيل التحقق عند تحميل الصفحة
+    // Run check on load
         togglePOSWarehouseField();
     }
     
-    // منع تفعيل كاش فقط وذمم فقط معاً
+    // Prevent cash-only and credit-only at the same time
     const cashOnlyCheckbox = document.getElementById('{{ form.cash_only.id_for_label }}');
     const creditOnlyCheckbox = document.getElementById('{{ form.credit_only.id_for_label }}');
     
@@ -344,7 +344,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// إظهار/{% trans "Hide" %} حقل المستودع حسب نوع المستخدم
+// Show/Hide POS warehouse field based on user type
 function togglePOSWarehouseField() {
     const userTypeSelect = document.getElementById('{{ form.user_type.id_for_label }}');
     const posWarehouseField = document.getElementById('pos-warehouse-field');
@@ -353,23 +353,23 @@ function togglePOSWarehouseField() {
     if (userTypeSelect && posWarehouseField) {
         if (userTypeSelect.value === 'pos_user') {
             posWarehouseField.style.display = 'block';
-            // جعل الحقل مطلوب
+            // Make field required
             const warehouseSelect = posWarehouseField.querySelector('select');
             if (warehouseSelect) {
                 warehouseSelect.setAttribute('required', 'required');
             }
-            // نقل حقل "{% trans "Active" %}" للصف {% trans "Next" %}
+            // Move the "{% trans "Active" %}" field to the next row
             if (activeField) {
                 activeField.className = 'col-md-12 mb-3';
             }
         } else {
             posWarehouseField.style.display = 'none';
-            // إزالة الـ required
+            // Remove required
             const warehouseSelect = posWarehouseField.querySelector('select');
             if (warehouseSelect) {
                 warehouseSelect.removeAttribute('required');
             }
-            // إعادة حقل "{% trans "Active" %}" لحجمه الأصلي
+            // Restore the "{% trans "Active" %}" field to original size
             if (activeField) {
                 activeField.className = 'col-md-6 mb-3';
             }

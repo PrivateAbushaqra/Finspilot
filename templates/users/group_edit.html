@@ -17,7 +17,7 @@
                     <div>
                         <a href="{% url 'users:group_list' %}" class="btn btn-secondary">
                             <i class="fas fa-arrow-left me-2"></i>
-                            {% trans "العودة للقائمة" %}
+                            {% trans "Back to List" %}
                         </a>
                     </div>
                 </div>
@@ -25,14 +25,14 @@
                     <form method="post" id="groupEditForm">
                         {% csrf_token %}
                         
-                        <!-- {% trans "Information" %} {% trans "Total" %}ة الأساسية -->
+                        <!-- Basic Information -->
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <div class="card border-primary">
                                     <div class="card-header bg-primary text-white">
                                         <h5 class="mb-0">
                                             <i class="fas fa-info-circle me-2"></i>
-                                            {% trans "معلومات المجموعة" %}
+                                            {% trans "Group Information" %}
                                         </h5>
                                     </div>
                                     <div class="card-body">
@@ -49,10 +49,10 @@
                                                     {% endfor %}
                                                 </div>
                                             {% endif %}
-                                            {% if object.name|lower in 'superadmin,admin,staff' %}
+                        {% if object.name|lower in 'superadmin,admin,staff' %}
                                                 <div class="alert alert-warning mt-2">
                                                     <i class="fas fa-exclamation-triangle me-2"></i>
-                                                    {% trans "تحذير: هذه مجموعة نظام أساسية" %}
+                            {% trans "Warning: This is a core system group" %}
                                                 </div>
                                             {% endif %}
                                         </div>
@@ -65,7 +65,7 @@
                                     <div class="card-header bg-info text-white">
                                         <h5 class="mb-0">
                                             <i class="fas fa-users me-2"></i>
-                                            {% trans "أعضاء المجموعة" %}
+                        {% trans "Group Members" %}
                                         </h5>
                                     </div>
                                     <div class="card-body">
@@ -91,7 +91,7 @@
                                         {% else %}
                                             <div class="text-center py-3">
                                                 <i class="fas fa-users fa-2x text-muted mb-2"></i>
-                                                <p class="text-muted mb-0">{% trans "لا يوجد أعضاء في هذه المجموعة" %}</p>
+                                                <p class="text-muted mb-0">{% trans "There are no members in this group" %}</p>
                                             </div>
                                         {% endif %}
                                     </div>
@@ -99,12 +99,12 @@
                             </div>
                         </div>
                         
-                        <!-- الصلاحيات -->
+                        <!-- Permissions -->
                         <div class="card border-success">
                             <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
                                 <h5 class="mb-0">
                                     <i class="fas fa-key me-2"></i>
-                                    {% trans "صلاحيات المجموعة" %}
+                                    {% trans "Group Permissions" %}
                                 </h5>
                                 <div>
                                     <button type="button" class="btn btn-sm btn-light" onclick="selectAllPermissions(true)">
@@ -124,26 +124,26 @@
                                                     <h6 class="mb-0">
                                                         <i class="fas fa-folder me-2"></i>
                                                         {% if app == 'auth' %}
-                                                            {% trans 'إدارة المستخدمين' %}
+                                                            {% trans 'User Management' %}
                                                         {% elif app == 'users' %}
-                                                            {% trans 'المستخدمين' %}
+                                                            {% trans 'Users' %}
                                                         {% elif app == 'banks' %}
-                                                            {% trans 'البنوك' %}
+                                                            {% trans 'Banks' %}
                                                         {% elif app == 'sales' %}
-                                                            {% trans 'المبيعات' %}
+                                                            {% trans 'Sales' %}
                                                         {% elif app == 'purchases' %}
-                                                            {% trans 'المشتريات' %}
+                                                            {% trans 'Purchases' %}
                                                         {% elif app == 'inventory' %}
-                                                            {% trans 'المخزون' %}
+                                                            {% trans 'Inventory' %}
                                                         {% elif app == 'reports' %}
-                                                            {% trans 'التقارير' %}
+                                                            {% trans 'Reports' %}
                                                         {% else %}
                                                             {{ app|title }}
                                                         {% endif %}
                                                         <button type="button" 
                                                                 class="btn btn-sm btn-outline-primary float-end" 
                                                                 onclick="toggleAppPermissions('{{ app }}')">
-                                                            {% trans 'تبديل' %}
+                                                            {% trans 'Toggle' %}
                                                         </button>
                                                     </h6>
                                                 </div>
@@ -168,30 +168,30 @@
                                 </div>
                                 <div class="alert alert-info mt-3">
                                     <i class="fas fa-info-circle me-2"></i>
-                                    {% trans "التغييرات على الصلاحيات ستؤثر على جميع أعضاء المجموعة" %}
+                                    {% trans "Changes to permissions will affect all group members" %}
                                 </div>
                             </div>
                         </div>
                         
-                        <!-- أزرار الحفظ -->
+                        <!-- Save Buttons -->
                         <div class="d-flex justify-content-between mt-4">
                             <a href="{% url 'users:group_list' %}" class="btn btn-secondary">
                                 <i class="fas fa-times me-2"></i>
-                                {% trans 'إلغاء' %}
+                                {% trans 'Cancel' %}
                             </a>
                 <div>
                                 {% if object.name|lower not in 'superadmin,admin,staff' %}
-                    {% trans "هل أنت متأكد من حذف هذه المجموعة؟" as confirm_group_delete %}
+                    {% trans "Are you sure you want to delete this group?" as confirm_group_delete %}
                                                 <a href="{% url 'users:group_delete' object.pk %}" 
                                                     class="btn btn-danger me-2"
                        onclick="return confirm('{{ confirm_group_delete|escapejs }}')">
                                         <i class="fas fa-trash me-2"></i>
-                                        {% trans "حذف المجموعة" %}
+                                        {% trans "Delete Group" %}
                                     </a>
                                 {% endif %}
                                 <button type="submit" class="btn btn-primary" id="submitBtn">
                                     <i class="fas fa-save me-2"></i>
-                                    {% trans "حفظ التغييرات" %}
+                                    {% trans "Save Changes" %}
                                 </button>
                             </div>
                         </div>
@@ -219,9 +219,9 @@ function toggleAppPermissions(appName) {
     });
 }
 
-// تحسين تجربة المستخدم
+// User experience improvements
 document.addEventListener('DOMContentLoaded', function() {
-    // التحقق من قوة اسم المجموعة
+    // Validate group name
     const nameInput = document.getElementById('{{ form.name.id_for_label }}');
     if (nameInput) {
         nameInput.addEventListener('input', function() {
@@ -240,11 +240,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // تأكيد قبل الإرسال
+    // Confirm before submit
     document.getElementById('groupEditForm').addEventListener('submit', function(e) {
-        // إظهار مؤشر التحميل
+        // Show loading indicator
         const submitBtn = document.getElementById('submitBtn');
-    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>{% trans "جاري الحفظ..." %}';
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>{% trans "Saving..." %}';
         submitBtn.disabled = true;
     });
 });

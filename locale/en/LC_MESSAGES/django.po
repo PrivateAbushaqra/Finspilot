@@ -1,9 +1,8 @@
-#
 msgid ""
 msgstr ""
 "Project-Id-Version: FinsPilot Accounting System\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-08-24 23:53+0300\n"
+"POT-Creation-Date: 2025-08-25 12:02+0300\n"
 "PO-Revision-Date: 2025-08-09 11:52\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
@@ -2653,7 +2652,6 @@ msgstr ""
 #: .\templates\journal\entry_detail.html:81
 #: .\templates\payments\voucher_detail.html:112
 #: .\templates\receipts\receipt_detail.html:110
-#: .\templates\users\group_list.html:39
 msgid "تاريخ الإنشاء"
 msgstr "Created at"
 
@@ -3152,8 +3150,7 @@ msgstr ""
 msgid "تحصيل الشيك"
 msgstr ""
 
-#: .\reports\apps.py:8 .\templates\users\group_add.html:129
-#: .\templates\users\group_edit.html:139
+#: .\reports\apps.py:8
 msgid "التقارير"
 msgstr "Reports"
 
@@ -4481,7 +4478,7 @@ msgstr ""
 #: .\templates\settings\document_print_settings.html:1045
 #: .\templates\settings\document_print_settings.html:1049
 #: .\templates\settings\index.html:46 .\templates\settings\index.html:47
-#: .\templates\settings\index.html:49
+#: .\templates\settings\index.html:49 .\templates\users\user_delete.html:76
 msgid "No"
 msgstr ""
 
@@ -4567,7 +4564,8 @@ msgid "Integrated Accounting System"
 msgstr ""
 
 #: .\templates\accounts\login.html:255 .\templates\registration\login.html:99
-#: .\templates\registration\login.html:145 .\templates\users\user_list.html:102
+#: .\templates\registration\login.html:145
+#: .\templates\users\user_delete.html:148 .\templates\users\user_list.html:102
 #: .\users\views.py:58 .\users\views.py:178
 msgid "Username"
 msgstr ""
@@ -4662,7 +4660,7 @@ msgstr ""
 #: .\templates\receipts\receipt_list.html:166
 #: .\templates\revenues_expenses\entry_list.html:169
 #: .\templates\sales\invoice_list.html:423
-#: .\templates\sales\return_list.html:274 .\templates\users\user_edit.html:361
+#: .\templates\sales\return_list.html:274
 msgid "Next"
 msgstr ""
 
@@ -4833,7 +4831,7 @@ msgstr ""
 #: .\templates\receipts\receipt_list.html:95
 #: .\templates\revenues_expenses\category_list.html:34
 #: .\templates\settings\document_sequences.html:45
-#: .\templates\users\user_list.html:109
+#: .\templates\users\group_list.html:40 .\templates\users\user_list.html:109
 msgid "Actions"
 msgstr ""
 
@@ -5458,7 +5456,6 @@ msgstr ""
 #: .\templates\settings\superadmin_management.html:150
 #: .\templates\settings\superadmin_management.html:222
 #: .\templates\settings\superadmin_management.html:319
-#: .\templates\users\user_edit.html:104 .\templates\users\user_edit.html:209
 msgid "Settings"
 msgstr ""
 
@@ -5853,7 +5850,9 @@ msgstr ""
 #: .\templates\purchases\return_add.html:154
 #: .\templates\receipts\receipt_add.html:159
 #: .\templates\settings\document_print_settings.html:444
-#: .\templates\users\user_add.html:260
+#: .\templates\users\group_add.html:169 .\templates\users\group_edit.html:180
+#: .\templates\users\user_add.html:260 .\templates\users\user_delete.html:114
+#: .\templates\users\user_edit.html:277
 msgid "Cancel"
 msgstr ""
 
@@ -5916,7 +5915,8 @@ msgstr ""
 #: .\templates\purchases\return_add.html:21
 #: .\templates\receipts\receipt_add.html:15
 #: .\templates\sales\invoice_add.html:154
-#: .\templates\sales\invoice_detail.html:22
+#: .\templates\sales\invoice_detail.html:22 .\templates\users\group_add.html:20
+#: .\templates\users\group_delete.html:20 .\templates\users\group_edit.html:20
 msgid "Back to List"
 msgstr ""
 
@@ -5930,7 +5930,7 @@ msgstr ""
 
 #: .\templates\banks\account_add.html:130
 #: .\templates\settings\document_print_settings.html:404
-#: .\templates\users\user_add.html:39
+#: .\templates\users\user_add.html:39 .\templates\users\user_edit.html:39
 msgid "Basic Information"
 msgstr ""
 
@@ -6125,8 +6125,6 @@ msgstr ""
 #: .\templates\settings\superadmin_management.html:135
 #: .\templates\settings\superadmin_management.html:234
 #: .\templates\settings\superadmin_management.html:288
-#: .\templates\users\group_edit.html:28 .\templates\users\group_list.html:115
-#: .\templates\users\user_edit.html:34 .\templates\users\user_edit.html:237
 msgid "Information"
 msgstr ""
 
@@ -6354,6 +6352,8 @@ msgstr ""
 #: .\templates\banks\account_list.html:621
 #: .\templates\cashboxes\cashbox_list.html:249
 #: .\templates\products\product_list.html:678
+#: .\templates\users\group_delete.html:242
+#: .\templates\users\user_delete.html:22 .\templates\users\user_delete.html:149
 msgid "This action cannot be undone!"
 msgstr ""
 
@@ -6803,6 +6803,7 @@ msgid "Warning: This action cannot be undone and will affect balances!"
 msgstr ""
 
 #: .\templates\banks\transfer_list.html:950
+#: .\templates\users\group_delete.html:250
 msgid "Deleting..."
 msgstr ""
 
@@ -6935,7 +6936,8 @@ msgid "All Customers & Suppliers"
 msgstr ""
 
 #: .\templates\base.html:730 .\templates\core\dashboard.html:534
-#: .\templates\core\dashboard.html:569
+#: .\templates\core\dashboard.html:569 .\templates\users\group_add.html:125
+#: .\templates\users\group_edit.html:135
 msgid "Purchases"
 msgstr ""
 
@@ -6965,7 +6967,8 @@ msgid "Purchase Return Statement"
 msgstr ""
 
 #: .\templates\base.html:762 .\templates\core\dashboard.html:534
-#: .\templates\core\dashboard.html:562
+#: .\templates\core\dashboard.html:562 .\templates\users\group_add.html:123
+#: .\templates\users\group_edit.html:133
 msgid "Sales"
 msgstr ""
 
@@ -6998,6 +7001,7 @@ msgid "Point of Sale"
 msgstr ""
 
 #: .\templates\base.html:799 .\templates\products\product_list.html:867
+#: .\templates\users\group_add.html:127 .\templates\users\group_edit.html:137
 msgid "Inventory"
 msgstr ""
 
@@ -7066,7 +7070,8 @@ msgstr ""
 msgid "Assets & Liabilities"
 msgstr ""
 
-#: .\templates\base.html:903
+#: .\templates\base.html:903 .\templates\users\group_add.html:129
+#: .\templates\users\group_edit.html:139
 msgid "Reports"
 msgstr ""
 
@@ -7188,7 +7193,7 @@ msgstr ""
 #: .\templates\sales\invoice_list.html:98
 #: .\templates\sales\invoice_list.html:107
 #: .\templates\sales\invoice_list.html:226
-#: .\templates\sales\invoice_list.html:244 .\templates\users\user_edit.html:347
+#: .\templates\sales\invoice_list.html:244
 msgid "Hide"
 msgstr ""
 
@@ -7339,13 +7344,10 @@ msgid "هل أنت متأكد من Delete الصندوق"
 msgstr "Are you sure you want to delete this group?"
 
 #: .\templates\cashboxes\cashbox_detail.html:237
-#: .\templates\users\group_delete.html:242
-#: .\templates\users\user_delete.html:22
 msgid "هذا الإجراء لا يمكن التراجع عنه!"
 msgstr "This action cannot be undone!"
 
 #: .\templates\cashboxes\cashbox_detail.html:251
-#: .\templates\users\user_delete.html:128
 #, fuzzy
 #| msgid "تأكيد الحذف"
 msgid "لا يمكن الحذف"
@@ -7694,8 +7696,8 @@ msgid "Export to Excel"
 msgstr ""
 
 #: .\templates\core\audit_log.html:37 .\templates\core\audit_log.html:103
-#: .\templates\users\user_list.html:124 .\users\models.py:11
-#: .\users\models.py:25
+#: .\templates\users\user_delete.html:52 .\templates\users\user_list.html:124
+#: .\users\models.py:11 .\users\models.py:25
 msgid "User"
 msgstr ""
 
@@ -7876,6 +7878,7 @@ msgid "Update Balances"
 msgstr ""
 
 #: .\templates\core\dashboard.html:267 .\templates\core\dashboard.html:321
+#: .\templates\users\group_add.html:121 .\templates\users\group_edit.html:131
 msgid "Banks"
 msgstr ""
 
@@ -8225,6 +8228,7 @@ msgstr ""
 
 #: .\templates\core\profit_loss_report.html:344
 #: .\templates\receipts\receipt_add.html:137
+#: .\templates\users\user_edit.html:242
 msgid "Additional Information"
 msgstr ""
 
@@ -8848,8 +8852,7 @@ msgstr "Deletion impact"
 
 # Users > Groups templates
 #: .\templates\journal\account_detail.html:16
-#: .\templates\journal\entry_detail.html:18 .\templates\users\group_add.html:20
-#: .\templates\users\group_delete.html:20 .\templates\users\group_edit.html:20
+#: .\templates\journal\entry_detail.html:18
 msgid "العودة للقائمة"
 msgstr "Back to List"
 
@@ -8917,7 +8920,6 @@ msgstr ""
 
 #: .\templates\journal\account_detail.html:141
 #: .\templates\journal\account_list.html:68
-#: .\templates\users\group_list.html:40
 msgid "الإجراءات"
 msgstr "Actions"
 
@@ -8994,7 +8996,6 @@ msgstr ""
 
 #: .\templates\journal\account_list.html:180
 #: .\templates\settings\document_print_settings.html:466
-#: .\templates\users\group_delete.html:150
 msgid "تأكيد الحذف"
 msgstr "Delete confirmation"
 
@@ -9014,7 +9015,6 @@ msgstr "This action cannot be undone!"
 #: .\templates\settings\document_print_settings.html:480
 #: .\templates\settings\print_design.html:498
 #: .\templates\settings\print_design.html:519
-#: .\templates\users\group_add.html:169 .\templates\users\group_edit.html:180
 msgid "إلغاء"
 msgstr "Cancel"
 
@@ -9162,7 +9162,6 @@ msgstr ""
 #: .\templates\sales\return_edit.html:224
 #: .\templates\sales\sales_report.html:160
 #: .\templates\settings\document_print_settings.html:1014
-#: .\templates\users\group_edit.html:28
 msgid "Total"
 msgstr ""
 
@@ -9348,7 +9347,6 @@ msgid "أنشئ بواسطة:"
 msgstr ""
 
 #: .\templates\partials\document_creator_info.html:27
-#: .\templates\users\user_edit.html:247
 #, fuzzy
 #| msgid "تاريخ الإنشاء"
 msgid "تاريخ الإنشاء:"
@@ -9942,6 +9940,7 @@ msgid "An error occurred while saving the category. Please try again."
 msgstr ""
 
 #: .\templates\products\product_add.html:346
+#: .\templates\users\group_edit.html:247
 msgid "Saving..."
 msgstr ""
 
@@ -10030,6 +10029,7 @@ msgstr ""
 
 #: .\templates\products\product_edit.html:321
 #: .\templates\settings\document_sequence_edit.html:141
+#: .\templates\users\group_edit.html:194 .\templates\users\user_edit.html:283
 msgid "Save Changes"
 msgstr ""
 
@@ -10853,7 +10853,8 @@ msgstr ""
 
 #: .\templates\settings\company_fixed.html:195
 #: .\templates\settings\superadmin_management.html:379
-#: .\templates\users\user_add.html:236
+#: .\templates\users\user_add.html:236 .\templates\users\user_edit.html:22
+#: .\templates\users\user_edit.html:201
 msgid "Note:"
 msgstr ""
 
@@ -10908,7 +10909,6 @@ msgid "شعار النظام الحالي"
 msgstr ""
 
 #: .\templates\settings\document_print_settings.html:318
-#: .\templates\users\user_edit.html:22 .\templates\users\user_edit.html:201
 msgid "ملاحظة:"
 msgstr ""
 
@@ -10966,7 +10966,6 @@ msgid "هل أنت متأكد من حذف إعدادات الطباعة لـ"
 msgstr "Are you sure you want to delete this group?"
 
 #: .\templates\settings\document_print_settings.html:472
-#: .\templates\users\user_delete.html:92
 #, fuzzy
 #| msgid "هذا الإجراء لا يمكن التراجع عنه!"
 msgid "لا يمكن التراجع عن هذا الإجراء"
@@ -11258,7 +11257,8 @@ msgstr ""
 msgid "Configure document numbering sequences"
 msgstr ""
 
-#: .\templates\settings\index.html:79 .\templates\users\user_list.html:5
+#: .\templates\settings\index.html:79 .\templates\users\group_add.html:117
+#: .\templates\users\group_edit.html:127 .\templates\users\user_list.html:5
 #: .\templates\users\user_list.html:72
 msgid "User Management"
 msgstr ""
@@ -11407,6 +11407,7 @@ msgid "Example: Contact Information"
 msgstr ""
 
 #: .\templates\settings\partials\document_form.html:184
+#: .\templates\users\user_edit.html:214
 msgid "Additional Settings"
 msgstr ""
 
@@ -11728,37 +11729,38 @@ msgstr ""
 
 #: .\templates\users\group_add.html:35 .\templates\users\group_delete.html:43
 #: .\templates\users\group_edit.html:35
-msgid "معلومات المجموعة"
-msgstr "Group Information"
+msgid "Group Information"
+msgstr ""
 
 #: .\templates\users\group_add.html:53
-msgid "اختر اسماً وصفياً للمجموعة (مثل: المدراء، المحاسبين، أمناء المخزن)"
+msgid ""
+"Choose a descriptive name for the group (e.g., Managers, Accountants, "
+"Storekeepers)"
 msgstr ""
-"Choose a descriptive group name (e.g., Managers, Accountants, Storekeepers)"
 
 #: .\templates\users\group_add.html:65
-msgid "نصائح مهمة"
-msgstr "Important Tips"
+msgid "Important Tips"
+msgstr ""
 
 #: .\templates\users\group_add.html:72
-msgid "اختر اسماً واضحاً للمجموعة"
-msgstr "Choose a clear group name"
+msgid "Choose a clear name for the group"
+msgstr ""
 
 #: .\templates\users\group_add.html:76
-msgid "حدد الصلاحيات المناسبة للمجموعة"
-msgstr "Assign appropriate permissions to the group"
+msgid "Assign the appropriate permissions to the group"
+msgstr ""
 
 #: .\templates\users\group_add.html:80
-msgid "يمكنك تعديل الصلاحيات لاحقاً"
-msgstr "You can edit permissions later"
+msgid "You can modify the permissions later"
+msgstr ""
 
 #: .\templates\users\group_add.html:84
-msgid "المستخدمون سيرثون صلاحيات المجموعة"
-msgstr "Users will inherit the group's permissions"
+msgid "Users will inherit the group's permissions"
+msgstr ""
 
 #: .\templates\users\group_add.html:97 .\templates\users\group_edit.html:107
-msgid "صلاحيات المجموعة"
-msgstr "Group Permissions"
+msgid "Group Permissions"
+msgstr ""
 
 #: .\templates\users\group_add.html:101 .\templates\users\group_edit.html:111
 msgid "Select All"
@@ -11768,179 +11770,149 @@ msgstr ""
 msgid "Deselect All"
 msgstr ""
 
-#: .\templates\users\group_add.html:117 .\templates\users\group_edit.html:127
-msgid "إدارة المستخدمين"
-msgstr "User Management"
-
 #: .\templates\users\group_add.html:119 .\templates\users\group_edit.html:129
-#: .\templates\users\group_list.html:25
-msgid "المستخدمين"
-msgstr "Users"
-
-#: .\templates\users\group_add.html:121 .\templates\users\group_edit.html:131
-msgid "البنوك"
-msgstr "Banks"
-
-#: .\templates\users\group_add.html:123 .\templates\users\group_edit.html:133
-msgid "المبيعات"
-msgstr "Sales"
-
-#: .\templates\users\group_add.html:125 .\templates\users\group_edit.html:135
-msgid "المشتريات"
-msgstr "Purchases"
-
-#: .\templates\users\group_add.html:127 .\templates\users\group_edit.html:137
-msgid "المخزون"
-msgstr "Inventory"
+#: .\templates\users\group_list.html:25 .\users\models.py:26
+msgid "Users"
+msgstr ""
 
 #: .\templates\users\group_add.html:136 .\templates\users\group_edit.html:146
-msgid "تبديل"
-msgstr "Toggle"
+msgid "Toggle"
+msgstr ""
 
 #: .\templates\users\group_add.html:160
-msgid "يمكنك تعديل الصلاحيات في أي وقت بعد إنشاء المجموعة"
-msgstr "You can modify permissions at any time after creating the group"
+msgid "You can modify the permissions at any time after creating the group"
+msgstr ""
 
-#: .\templates\users\group_add.html:173 .\templates\users\user_edit.html:194
-msgid "إنشاء مجموعة"
-msgstr "Create Group"
+#: .\templates\users\group_add.html:173 .\templates\users\user_add.html:229
+#: .\templates\users\user_edit.html:194
+msgid "Create Group"
+msgstr ""
 
 #: .\templates\users\group_add.html:226
-msgid "لم تحدد أي صلاحيات للمجموعة. هل تريد المتابعة؟"
+msgid ""
+"No permissions have been selected for the group. Do you want to continue?"
 msgstr ""
-"You haven't selected any permissions for the group. Do you want to continue?"
 
 #: .\templates\users\group_add.html:234
-msgid "جاري الإنشاء..."
-msgstr "Creating..."
+msgid "Creating..."
+msgstr ""
 
 #: .\templates\users\group_delete.html:5 .\templates\users\group_delete.html:15
+#: .\templates\users\group_edit.html:189
 msgid "Delete Group"
 msgstr ""
 
 #: .\templates\users\group_delete.html:30
-msgid "تحذير: عملية الحذف نهائية"
-msgstr "Warning: Deletion is permanent"
+msgid "Warning: Deletion is permanent"
+msgstr ""
 
 #: .\templates\users\group_delete.html:31
-msgid "هذه العملية لا يمكن التراجع عنها. سيتم حذف المجموعة نهائياً من النظام."
-msgstr ""
-"This action cannot be undone. The group will be permanently removed from the "
+msgid ""
+"This action cannot be undone. The group will be permanently deleted from the "
 "system."
+msgstr ""
 
 #: .\templates\users\group_delete.html:49
 #: .\templates\users\group_delete.html:236 .\templates\users\group_list.html:36
-msgid "اسم المجموعة"
-msgstr "Group Name"
+#: .\users\models.py:147 .\users\views.py:533 .\users\views.py:652
+msgid "Group Name"
+msgstr ""
 
 #: .\templates\users\group_delete.html:53 .\templates\users\group_list.html:37
-msgid "عدد المستخدمين"
-msgstr "Number of users"
+msgid "Number of users"
+msgstr ""
 
 #: .\templates\users\group_delete.html:59 .\templates\users\group_list.html:38
-msgid "عدد الصلاحيات"
-msgstr "Number of permissions"
+msgid "Number of permissions"
+msgstr ""
 
 #: .\templates\users\group_delete.html:74
-msgid "تأثير الحذف"
-msgstr "Deletion impact"
+msgid "Deletion impact"
+msgstr ""
 
 #: .\templates\users\group_delete.html:81
-msgid "سيتم حذف المجموعة نهائياً"
-msgstr "The group will be permanently deleted"
+msgid "The group will be permanently deleted"
+msgstr ""
 
 #: .\templates\users\group_delete.html:86
-msgid "المستخدمون سيفقدون صلاحيات المجموعة"
-msgstr "Users will lose the group's permissions"
+msgid "Users will lose the group's permissions"
+msgstr ""
 
 #: .\templates\users\group_delete.html:91
-msgid "ستُحذف جميع صلاحيات المجموعة"
-msgstr "All group permissions will be removed"
+msgid "All group permissions will be removed"
+msgstr ""
 
 #: .\templates\users\group_delete.html:95
-msgid "سيتم إزالة المراجع من قاعدة البيانات"
-msgstr "References will be removed from the database"
+msgid "References will be removed from the database"
+msgstr ""
 
 #: .\templates\users\group_delete.html:109
-msgid "المستخدمون المتأثرون"
-msgstr "Affected users"
+msgid "Affected users"
+msgstr ""
 
 #: .\templates\users\group_delete.html:115
-msgid "هؤلاء المستخدمون سيفقدون صلاحيات هذه المجموعة بعد حذفها:"
-msgstr "These users will lose this group's permissions after it's deleted:"
+msgid "These users will lose this group's permissions after deletion:"
+msgstr ""
+
+#: .\templates\users\group_delete.html:150
+msgid "Delete confirmation"
+msgstr ""
 
 #: .\templates\users\group_delete.html:158
-msgid "أؤكد أنني أريد حذف المجموعة"
-msgstr "I confirm that I want to delete the group"
+msgid "I confirm that I want to delete the group"
+msgstr ""
 
 #: .\templates\users\group_delete.html:158
-msgid "نهائياً"
-msgstr "permanently"
+msgid "permanently"
+msgstr ""
 
 #: .\templates\users\group_delete.html:167
-msgid "أدرك أن"
-msgstr "I acknowledge that"
+msgid "I understand that"
+msgstr ""
 
 #: .\templates\users\group_delete.html:167
-#: .\templates\users\group_delete.html:239
-msgid "مستخدم سيفقدون صلاحيات هذه المجموعة"
-msgstr "users will lose this group's permissions"
+msgid "users will lose this group's permissions"
+msgstr ""
 
 #: .\templates\users\group_delete.html:178
-msgid "إلغاء والعودة"
-msgstr "Cancel and go back"
+msgid "Cancel and go back"
+msgstr ""
 
 #: .\templates\users\group_delete.html:183
-msgid "تعديل بدلاً من الحذف"
-msgstr "Edit instead of deleting"
+msgid "Edit instead of deleting"
+msgstr ""
 
 #: .\templates\users\group_delete.html:187
-msgid "حذف المجموعة نهائياً"
-msgstr "Permanently delete group"
+msgid "Permanently delete group"
+msgstr ""
 
 #: .\templates\users\group_delete.html:235
-msgid "هل أنت متأكد تماماً من حذف المجموعة؟"
-msgstr "Are you absolutely sure you want to delete the group?"
-
-#: .\templates\users\group_delete.html:250
-msgid "جاري الحذف..."
-msgstr "Deleting..."
+msgid "Are you absolutely sure you want to delete the group?"
+msgstr ""
 
 #: .\templates\users\group_edit.html:5 .\templates\users\group_edit.html:15
 msgid "Edit Group"
 msgstr ""
 
 #: .\templates\users\group_edit.html:55
-msgid "تحذير: هذه مجموعة نظام أساسية"
-msgstr "Warning: This is a core system group"
+msgid "Warning: This is a core system group"
+msgstr ""
 
 #: .\templates\users\group_edit.html:68
-msgid "أعضاء المجموعة"
-msgstr "Group Members"
+msgid "Group Members"
+msgstr ""
 
 #: .\templates\users\group_edit.html:94
-msgid "لا يوجد أعضاء في هذه المجموعة"
-msgstr "There are no members in this group"
+msgid "There are no members in this group"
+msgstr ""
 
 #: .\templates\users\group_edit.html:171
-msgid "التغييرات على الصلاحيات ستؤثر على جميع أعضاء المجموعة"
-msgstr "Permission changes will affect all group members"
+msgid "Changes to permissions will affect all group members"
+msgstr ""
 
 #: .\templates\users\group_edit.html:184 .\templates\users\group_list.html:79
-msgid "هل أنت متأكد من حذف هذه المجموعة؟"
-msgstr "Are you sure you want to delete this group?"
-
-#: .\templates\users\group_edit.html:189
-msgid "حذف المجموعة"
-msgstr "Delete Group"
-
-#: .\templates\users\group_edit.html:194
-msgid "حفظ التغييرات"
-msgstr "Save Changes"
-
-#: .\templates\users\group_edit.html:247
-msgid "جاري الحفظ..."
-msgstr "Saving..."
+msgid "Are you sure you want to delete this group?"
+msgstr ""
 
 #: .\templates\users\group_list.html:5 .\templates\users\group_list.html:15
 #: .\templates\users\user_list.html:93 .\users\models.py:155
@@ -11948,58 +11920,62 @@ msgid "User Groups"
 msgstr ""
 
 #: .\templates\users\group_list.html:21
-msgid "إضافة مجموعة"
-msgstr "Add Group"
+msgid "Add Group"
+msgstr ""
+
+#: .\templates\users\group_list.html:39
+msgid "Created at"
+msgstr ""
 
 #: .\templates\users\group_list.html:51
-msgid "نظام"
-msgstr "System"
+msgid "System"
+msgstr ""
 
 #: .\templates\users\group_list.html:68
-msgid "غير محدد"
-msgstr "Not specified"
+msgid "Not set"
+msgstr ""
 
 #: .\templates\users\group_list.html:90
-msgid "لا يمكن حذف مجموعات النظام"
-msgstr "System groups cannot be deleted"
+msgid "System groups cannot be deleted"
+msgstr ""
 
 #: .\templates\users\group_list.html:104
-msgid "لا توجد مجموعات"
-msgstr "No groups"
+msgid "No groups found"
+msgstr ""
 
 #: .\templates\users\group_list.html:105
-msgid "لم يتم إنشاء أي مجموعات بعد"
-msgstr "No groups have been created yet"
+msgid "No groups have been created yet"
+msgstr ""
 
 #: .\templates\users\group_list.html:108
-msgid "إنشاء أول مجموعة"
-msgstr "Create the first group"
+msgid "Create first group"
+msgstr ""
 
-#: .\templates\users\group_list.html:121
-msgid "المجموعات"
-msgstr "Groups"
+#: .\templates\users\group_list.html:121 .\users\views.py:35
+#: .\users\views.py:155
+msgid "Groups"
+msgstr ""
 
 #: .\templates\users\group_list.html:123
-msgid "المجموعات تساعد في تنظيم المستخدمين وإدارة صلاحياتهم بشكل جماعي"
-msgstr "Groups help organize users and manage their permissions collectively"
+msgid "Groups help organize users and manage their permissions collectively"
+msgstr ""
 
-#: .\templates\users\group_list.html:132
-msgid "الصلاحيات"
-msgstr "Permissions"
+#: .\templates\users\group_list.html:132 .\users\models.py:149
+#: .\users\views.py:526 .\users\views.py:645
+msgid "Permissions"
+msgstr ""
 
 #: .\templates\users\group_list.html:134
-msgid "يمكن تعيين صلاحيات متعددة لكل مجموعة ليرثها جميع أعضائها"
+msgid "You can assign multiple permissions to a group that all members inherit"
 msgstr ""
-"Multiple permissions can be assigned to each group and inherited by all its "
-"members"
 
 #: .\templates\users\group_list.html:143
-msgid "الحماية"
-msgstr "Protection"
+msgid "Protection"
+msgstr ""
 
 #: .\templates\users\group_list.html:145
-msgid "مجموعات النظام محمية من الحذف للحفاظ على استقرار النظام"
-msgstr "System groups are protected from deletion to maintain stability"
+msgid "System groups are protected from deletion to maintain stability"
+msgstr ""
 
 #: .\templates\users\user_add.html:15
 msgid "Add New User"
@@ -12017,7 +11993,7 @@ msgstr ""
 msgid "For communication and notifications"
 msgstr ""
 
-#: .\templates\users\user_add.html:143
+#: .\templates\users\user_add.html:143 .\templates\users\user_edit.html:109
 msgid "Account Settings"
 msgstr ""
 
@@ -12025,7 +12001,7 @@ msgstr ""
 msgid "Determines permission level"
 msgstr ""
 
-#: .\templates\users\user_add.html:166
+#: .\templates\users\user_add.html:166 .\templates\users\user_edit.html:131
 msgid "Warehouse from which POS invoices will be issued"
 msgstr ""
 
@@ -12033,31 +12009,27 @@ msgstr ""
 msgid "Can be disabled later"
 msgstr ""
 
-#: .\templates\users\user_add.html:188
+#: .\templates\users\user_add.html:188 .\templates\users\user_edit.html:152
 msgid "Groups and Roles"
 msgstr ""
 
-#: .\templates\users\user_add.html:197
+#: .\templates\users\user_add.html:197 .\templates\users\user_edit.html:161
 msgid "Group Membership"
 msgstr ""
 
-#: .\templates\users\user_add.html:215
+#: .\templates\users\user_add.html:215 .\templates\users\user_edit.html:180
 msgid "users"
 msgstr ""
 
-#: .\templates\users\user_add.html:216
+#: .\templates\users\user_add.html:216 .\templates\users\user_edit.html:181
 msgid "permissions"
 msgstr ""
 
-#: .\templates\users\user_add.html:226
+#: .\templates\users\user_add.html:226 .\templates\users\user_edit.html:191
 msgid "No groups available"
 msgstr ""
 
-#: .\templates\users\user_add.html:229
-msgid "Create Group"
-msgstr ""
-
-#: .\templates\users\user_add.html:237
+#: .\templates\users\user_add.html:237 .\templates\users\user_edit.html:202
 msgid "User will receive all permissions from selected groups"
 msgstr ""
 
@@ -12110,179 +12082,115 @@ msgid "Delete User"
 msgstr ""
 
 #: .\templates\users\user_delete.html:21
-msgid "تحذير!"
+msgid "Warning!"
 msgstr ""
 
 #: .\templates\users\user_delete.html:27
-#, fuzzy
-#| msgid "هل أنت متأكد من حذف هذه المجموعة؟"
-msgid "هل أنت متأكد من حذف المستخدم التالي؟"
-msgstr "Are you sure you want to delete this group?"
+msgid "Are you sure you want to delete the following user?"
+msgstr ""
 
 #: .\templates\users\user_delete.html:33
-#, fuzzy
-#| msgid "عدد المستخدمين"
-msgid "اسم المستخدم:"
-msgstr "Number of users"
+msgid "Username:"
+msgstr ""
 
 #: .\templates\users\user_delete.html:37
-#, fuzzy
-#| msgid "اسم المجموعة"
-msgid "الاسم الكامل:"
-msgstr "Group Name"
+msgid "Full name:"
+msgstr ""
 
 #: .\templates\users\user_delete.html:41
-#, fuzzy
-#| msgid "تأكد من صحة البريد الإلكتروني للتواصل"
-msgid "البريد الإلكتروني:"
-msgstr "Ensure the email is valid for communication"
+msgid "Email:"
+msgstr ""
 
 #: .\templates\users\user_delete.html:45
-#, fuzzy
-#| msgid "عدد المستخدمين"
-msgid "نوع المستخدم:"
-msgstr "Number of users"
+msgid "User type:"
+msgstr ""
 
-#: .\templates\users\user_delete.html:48
-msgid "مدير عام"
+#: .\templates\users\user_delete.html:48 .\users\models.py:9
+msgid "Super Admin"
 msgstr ""
 
 #: .\templates\users\user_delete.html:50
-msgid "مدير"
+msgid "Admin"
 msgstr ""
-
-#: .\templates\users\user_delete.html:52
-#, fuzzy
-#| msgid "المستخدمين"
-msgid "مستخدم"
-msgstr "Users"
 
 #: .\templates\users\user_delete.html:57
-msgid "القسم:"
+msgid "Department:"
 msgstr ""
 
-#: .\templates\users\user_delete.html:61
-#, fuzzy
-#| msgid "تاريخ الإنشاء"
-msgid "تاريخ آخر دخول:"
-msgstr "Created at"
+#: .\templates\users\user_delete.html:61 .\templates\users\user_edit.html:257
+msgid "Last login:"
+msgstr ""
 
 #: .\templates\users\user_delete.html:66 .\templates\users\user_edit.html:261
-msgid "لم يسجل دخول مطلقاً"
+msgid "Never logged in"
 msgstr ""
 
 #: .\templates\users\user_delete.html:71
-msgid "عضو في الفريق:"
-msgstr ""
-
-#: .\templates\users\user_delete.html:76
-msgid "لا"
+msgid "Staff member:"
 msgstr ""
 
 #: .\templates\users\user_delete.html:86
-#, fuzzy
-#| msgid "تأثير الحذف"
-msgid "تأثير الحذف:"
-msgstr "Deletion impact"
+msgid "Deletion impact:"
+msgstr ""
 
 #: .\templates\users\user_delete.html:89
-#, fuzzy
-#| msgid "ستُحذف جميع صلاحيات المجموعة"
-msgid "سيتم حذف جميع بيانات المستخدم نهائياً"
-msgstr "All group permissions will be removed"
+msgid "All user data will be permanently deleted"
+msgstr ""
 
 #: .\templates\users\user_delete.html:90
-msgid "سيفقد المستخدم إمكانية الوصول للنظام"
+msgid "The user will lose access to the system"
 msgstr ""
 
 #: .\templates\users\user_delete.html:91
-msgid "ستبقى السجلات التي أنشأها المستخدم محفوظة"
+msgid "Records created by the user will remain"
+msgstr ""
+
+#: .\templates\users\user_delete.html:92
+msgid "This action cannot be undone"
 msgstr ""
 
 #: .\templates\users\user_delete.html:98
-#, fuzzy
-#| msgid "لا يمكن حذف مجموعات النظام"
-msgid "لا يمكن حذف هذا المستخدم!"
-msgstr "System groups cannot be deleted"
+msgid "This user cannot be deleted!"
+msgstr ""
+
+#: .\templates\users\user_delete.html:120
+msgid "Are you sure you want to delete this user?"
+msgstr ""
 
 #: .\templates\users\user_delete.html:122
-#, fuzzy
-#| msgid "حذف المجموعة نهائياً"
-msgid "حذف المستخدم نهائياً"
-msgstr "Permanently delete group"
+msgid "Permanently delete user"
+msgstr ""
+
+#: .\templates\users\user_delete.html:128
+msgid "Deletion not allowed"
+msgstr ""
+
+#: .\templates\users\user_delete.html:147
+msgid "Are you absolutely sure you want to delete this user?"
+msgstr ""
 
 #: .\templates\users\user_edit.html:5 .\templates\users\user_edit.html:15
 msgid "Edit User"
 msgstr ""
 
-#: .\templates\users\user_edit.html:39
-msgid "الInformation الأساسية"
-msgstr ""
-
-#: .\templates\users\user_edit.html:109
-msgid "Settings الحساب"
-msgstr ""
-
-#: .\templates\users\user_edit.html:131
-msgid "المستودع الذي ستصدر منه فواتير نقطة البيع"
-msgstr ""
-
-#: .\templates\users\user_edit.html:152
-#, fuzzy
-#| msgid "المجموعات"
-msgid "المجموعات والأدوار"
-msgstr "Groups"
-
-#: .\templates\users\user_edit.html:161
-#, fuzzy
-#| msgid "المجموعات"
-msgid "عضوية المجموعات"
-msgstr "Groups"
-
-#: .\templates\users\user_edit.html:191
-#, fuzzy
-#| msgid "لا توجد مجموعات"
-msgid "لا توجد مجموعات متاحة"
-msgstr "No groups"
-
-#: .\templates\users\user_edit.html:202
-#, fuzzy
-#| msgid "المستخدمون سيفقدون صلاحيات المجموعة"
-msgid "المستخدم سيحصل على جميع صلاحيات المجموعات المحددة"
-msgstr "Users will lose the group's permissions"
-
-#: .\templates\users\user_edit.html:214
-msgid "Settings إضافية"
-msgstr ""
-
-#: .\templates\users\user_edit.html:242
-msgid "Information إضافية"
+#: .\templates\users\user_edit.html:247
+msgid "Created at:"
 msgstr ""
 
 #: .\templates\users\user_edit.html:252
-msgid "آخر تحديث:"
-msgstr ""
-
-#: .\templates\users\user_edit.html:257
-msgid "آخر دخول:"
+msgid "Last updated:"
 msgstr ""
 
 #: .\templates\users\user_edit.html:266
-msgid "تغيير كلمة المرور:"
+msgid "Change password:"
 msgstr ""
 
 #: .\templates\users\user_edit.html:269
-msgid "تغيير كلمة المرور"
+msgid "Change Password"
 msgstr ""
 
-#: .\templates\users\user_edit.html:283
-#, fuzzy
-#| msgid "حفظ التغييرات"
-msgid "Save التغييرات"
-msgstr "Save Changes"
-
 #: .\templates\users\user_edit.html:288
-msgid "لا يمكن الEdit"
+msgid "Edit not allowed"
 msgstr ""
 
 #: .\templates\users\user_list.html:84 .\templates\users\user_list.html:190
@@ -12316,10 +12224,6 @@ msgstr ""
 msgid "No users found"
 msgstr ""
 
-#: .\users\models.py:9
-msgid "Super Admin"
-msgstr ""
-
 #: .\users\models.py:12
 msgid "POS User"
 msgstr ""
@@ -12330,10 +12234,6 @@ msgstr ""
 
 #: .\users\models.py:20
 msgid "Dedicated warehouse for POS user to issue invoices from"
-msgstr ""
-
-#: .\users\models.py:26
-msgid "Users"
 msgstr ""
 
 #: .\users\models.py:29
@@ -12420,14 +12320,6 @@ msgstr ""
 msgid "POS only"
 msgstr ""
 
-#: .\users\models.py:147 .\users\views.py:533 .\users\views.py:652
-msgid "Group Name"
-msgstr ""
-
-#: .\users\models.py:149 .\users\views.py:526 .\users\views.py:645
-msgid "Permissions"
-msgstr ""
-
 #: .\users\models.py:154
 msgid "User Group"
 msgstr ""
@@ -12465,10 +12357,6 @@ msgstr ""
 
 #: .\users\views.py:28
 msgid "أدخل كلمة المرور مرة أخرى للتأكيد"
-msgstr ""
-
-#: .\users\views.py:35 .\users\views.py:155
-msgid "Groups"
 msgstr ""
 
 #: .\users\views.py:60 .\users\views.py:180
@@ -12626,6 +12514,279 @@ msgstr "Users will inherit the group's permissions"
 #| msgid "المستخدمون سيرثون صلاحيات المجموعة"
 msgid "تم إظهار المستخدمين ذوي الصلاحيات العالية"
 msgstr "Users will inherit the group's permissions"
+
+#~ msgid "تحذير: عملية الحذف نهائية"
+#~ msgstr "Warning: Deletion is permanent"
+
+#~ msgid ""
+#~ "هذه العملية لا يمكن التراجع عنها. سيتم حذف المجموعة نهائياً من النظام."
+#~ msgstr ""
+#~ "This action cannot be undone. The group will be permanently removed from "
+#~ "the system."
+
+#~ msgid "معلومات المجموعة"
+#~ msgstr "Group Information"
+
+#~ msgid "اسم المجموعة"
+#~ msgstr "Group Name"
+
+#~ msgid "عدد المستخدمين"
+#~ msgstr "Number of users"
+
+#~ msgid "عدد الصلاحيات"
+#~ msgstr "Number of permissions"
+
+#~ msgid "تأثير الحذف"
+#~ msgstr "Deletion impact"
+
+#~ msgid "سيتم حذف المجموعة نهائياً"
+#~ msgstr "The group will be permanently deleted"
+
+#~ msgid "المستخدمون سيفقدون صلاحيات المجموعة"
+#~ msgstr "Users will lose the group's permissions"
+
+#~ msgid "ستُحذف جميع صلاحيات المجموعة"
+#~ msgstr "All group permissions will be removed"
+
+#~ msgid "سيتم إزالة المراجع من قاعدة البيانات"
+#~ msgstr "References will be removed from the database"
+
+#~ msgid "المستخدمون المتأثرون"
+#~ msgstr "Affected users"
+
+#~ msgid "هؤلاء المستخدمون سيفقدون صلاحيات هذه المجموعة بعد حذفها:"
+#~ msgstr "These users will lose this group's permissions after it's deleted:"
+
+#~ msgid "أؤكد أنني أريد حذف المجموعة"
+#~ msgstr "I confirm that I want to delete the group"
+
+#~ msgid "نهائياً"
+#~ msgstr "permanently"
+
+#~ msgid "أدرك أن"
+#~ msgstr "I acknowledge that"
+
+#~ msgid "مستخدم سيفقدون صلاحيات هذه المجموعة"
+#~ msgstr "users will lose this group's permissions"
+
+#~ msgid "إلغاء والعودة"
+#~ msgstr "Cancel and go back"
+
+#~ msgid "تعديل بدلاً من الحذف"
+#~ msgstr "Edit instead of deleting"
+
+#~ msgid "حذف المجموعة نهائياً"
+#~ msgstr "Permanently delete group"
+
+#~ msgid "هل أنت متأكد تماماً من حذف المجموعة؟"
+#~ msgstr "Are you absolutely sure you want to delete the group?"
+
+#~ msgid "جاري الحذف..."
+#~ msgstr "Deleting..."
+
+#~ msgid "تحذير: هذه مجموعة نظام أساسية"
+#~ msgstr "Warning: This is a core system group"
+
+#~ msgid "أعضاء المجموعة"
+#~ msgstr "Group Members"
+
+#~ msgid "لا يوجد أعضاء في هذه المجموعة"
+#~ msgstr "There are no members in this group"
+
+#~ msgid "صلاحيات المجموعة"
+#~ msgstr "Group Permissions"
+
+#~ msgid "إدارة المستخدمين"
+#~ msgstr "User Management"
+
+#~ msgid "المستخدمين"
+#~ msgstr "Users"
+
+#~ msgid "البنوك"
+#~ msgstr "Banks"
+
+#~ msgid "المبيعات"
+#~ msgstr "Sales"
+
+#~ msgid "المشتريات"
+#~ msgstr "Purchases"
+
+#~ msgid "المخزون"
+#~ msgstr "Inventory"
+
+#~ msgid "تبديل"
+#~ msgstr "Toggle"
+
+#~ msgid "التغييرات على الصلاحيات ستؤثر على جميع أعضاء المجموعة"
+#~ msgstr "Permission changes will affect all group members"
+
+#~ msgid "هل أنت متأكد من حذف هذه المجموعة؟"
+#~ msgstr "Are you sure you want to delete this group?"
+
+#~ msgid "حذف المجموعة"
+#~ msgstr "Delete Group"
+
+#~ msgid "حفظ التغييرات"
+#~ msgstr "Save Changes"
+
+#~ msgid "جاري الحفظ..."
+#~ msgstr "Saving..."
+
+#~ msgid "إضافة مجموعة"
+#~ msgstr "Add Group"
+
+#~ msgid "نظام"
+#~ msgstr "System"
+
+#~ msgid "غير محدد"
+#~ msgstr "Not specified"
+
+#~ msgid "لا يمكن حذف مجموعات النظام"
+#~ msgstr "System groups cannot be deleted"
+
+#~ msgid "لا توجد مجموعات"
+#~ msgstr "No groups"
+
+#~ msgid "لم يتم إنشاء أي مجموعات بعد"
+#~ msgstr "No groups have been created yet"
+
+#~ msgid "إنشاء أول مجموعة"
+#~ msgstr "Create the first group"
+
+#~ msgid "المجموعات"
+#~ msgstr "Groups"
+
+#~ msgid "المجموعات تساعد في تنظيم المستخدمين وإدارة صلاحياتهم بشكل جماعي"
+#~ msgstr ""
+#~ "Groups help organize users and manage their permissions collectively"
+
+#~ msgid "الصلاحيات"
+#~ msgstr "Permissions"
+
+#~ msgid "يمكن تعيين صلاحيات متعددة لكل مجموعة ليرثها جميع أعضائها"
+#~ msgstr ""
+#~ "Multiple permissions can be assigned to each group and inherited by all "
+#~ "its members"
+
+#~ msgid "الحماية"
+#~ msgstr "Protection"
+
+#~ msgid "مجموعات النظام محمية من الحذف للحفاظ على استقرار النظام"
+#~ msgstr "System groups are protected from deletion to maintain stability"
+
+#, fuzzy
+#~| msgid "هل أنت متأكد من حذف هذه المجموعة؟"
+#~ msgid "هل أنت متأكد من حذف المستخدم التالي؟"
+#~ msgstr "Are you sure you want to delete this group?"
+
+#, fuzzy
+#~| msgid "عدد المستخدمين"
+#~ msgid "اسم المستخدم:"
+#~ msgstr "Number of users"
+
+#, fuzzy
+#~| msgid "اسم المجموعة"
+#~ msgid "الاسم الكامل:"
+#~ msgstr "Group Name"
+
+#, fuzzy
+#~| msgid "تأكد من صحة البريد الإلكتروني للتواصل"
+#~ msgid "البريد الإلكتروني:"
+#~ msgstr "Ensure the email is valid for communication"
+
+#, fuzzy
+#~| msgid "عدد المستخدمين"
+#~ msgid "نوع المستخدم:"
+#~ msgstr "Number of users"
+
+#, fuzzy
+#~| msgid "المستخدمين"
+#~ msgid "مستخدم"
+#~ msgstr "Users"
+
+#, fuzzy
+#~| msgid "تاريخ الإنشاء"
+#~ msgid "تاريخ آخر دخول:"
+#~ msgstr "Created at"
+
+#, fuzzy
+#~| msgid "تأثير الحذف"
+#~ msgid "تأثير الحذف:"
+#~ msgstr "Deletion impact"
+
+#, fuzzy
+#~| msgid "ستُحذف جميع صلاحيات المجموعة"
+#~ msgid "سيتم حذف جميع بيانات المستخدم نهائياً"
+#~ msgstr "All group permissions will be removed"
+
+#, fuzzy
+#~| msgid "لا يمكن حذف مجموعات النظام"
+#~ msgid "لا يمكن حذف هذا المستخدم!"
+#~ msgstr "System groups cannot be deleted"
+
+#, fuzzy
+#~| msgid "حذف المجموعة نهائياً"
+#~ msgid "حذف المستخدم نهائياً"
+#~ msgstr "Permanently delete group"
+
+#, fuzzy
+#~| msgid "المجموعات"
+#~ msgid "المجموعات والأدوار"
+#~ msgstr "Groups"
+
+#, fuzzy
+#~| msgid "المجموعات"
+#~ msgid "عضوية المجموعات"
+#~ msgstr "Groups"
+
+#, fuzzy
+#~| msgid "لا توجد مجموعات"
+#~ msgid "لا توجد مجموعات متاحة"
+#~ msgstr "No groups"
+
+#~ msgid "إنشاء مجموعة"
+#~ msgstr "Create Group"
+
+#, fuzzy
+#~| msgid "المستخدمون سيفقدون صلاحيات المجموعة"
+#~ msgid "المستخدم سيحصل على جميع صلاحيات المجموعات المحددة"
+#~ msgstr "Users will lose the group's permissions"
+
+#, fuzzy
+#~| msgid "حفظ التغييرات"
+#~ msgid "Save التغييرات"
+#~ msgstr "Save Changes"
+
+#~ msgid "اختر اسماً وصفياً للمجموعة (مثل: المدراء، المحاسبين، أمناء المخزن)"
+#~ msgstr ""
+#~ "Choose a descriptive group name (e.g., Managers, Accountants, "
+#~ "Storekeepers)"
+
+#~ msgid "نصائح مهمة"
+#~ msgstr "Important Tips"
+
+#~ msgid "اختر اسماً واضحاً للمجموعة"
+#~ msgstr "Choose a clear group name"
+
+#~ msgid "حدد الصلاحيات المناسبة للمجموعة"
+#~ msgstr "Assign appropriate permissions to the group"
+
+#~ msgid "يمكنك تعديل الصلاحيات لاحقاً"
+#~ msgstr "You can edit permissions later"
+
+#~ msgid "المستخدمون سيرثون صلاحيات المجموعة"
+#~ msgstr "Users will inherit the group's permissions"
+
+#~ msgid "يمكنك تعديل الصلاحيات في أي وقت بعد إنشاء المجموعة"
+#~ msgstr "You can modify permissions at any time after creating the group"
+
+#~ msgid "لم تحدد أي صلاحيات للمجموعة. هل تريد المتابعة؟"
+#~ msgstr ""
+#~ "You haven't selected any permissions for the group. Do you want to "
+#~ "continue?"
+
+#~ msgid "جاري الإنشاء..."
+#~ msgstr "Creating..."
 
 #~ msgid "Saudi Riyal"
 #~ msgstr "الريال السعودي"

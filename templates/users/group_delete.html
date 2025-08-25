@@ -17,46 +17,46 @@
                     <div>
                         <a href="{% url 'users:group_list' %}" class="btn btn-outline-light btn-sm">
                             <i class="fas fa-arrow-left me-2"></i>
-                            {% trans "العودة للقائمة" %}
+                            {% trans "Back to List" %}
                         </a>
                     </div>
                 </div>
                 <div class="card-body">
-                    <!-- تحذير أساسي -->
+                    <!-- Primary warning -->
                     <div class="alert alert-danger">
                         <div class="d-flex align-items-center">
                             <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
                             <div>
-                                <h5 class="alert-heading mb-2">{% trans "تحذير: عملية الحذف نهائية" %}</h5>
-                                <p class="mb-0">{% trans "هذه العملية لا يمكن التراجع عنها. سيتم حذف المجموعة نهائياً من النظام." %}</p>
+                                <h5 class="alert-heading mb-2">{% trans "Warning: Deletion is permanent" %}</h5>
+                                <p class="mb-0">{% trans "This action cannot be undone. The group will be permanently deleted from the system." %}</p>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- معلومات المجموعة -->
+                    <!-- Group information -->
                     <div class="row mb-4">
                         <div class="col-md-6">
                             <div class="card border-info">
                                 <div class="card-header bg-info text-white">
                                     <h5 class="mb-0">
                                         <i class="fas fa-info-circle me-2"></i>
-                                        {% trans "معلومات المجموعة" %}
+                                        {% trans "Group Information" %}
                                     </h5>
                                 </div>
                                 <div class="card-body">
                                     <table class="table table-borderless mb-0">
                                         <tr>
-                                            <td width="40%"><strong>{% trans "اسم المجموعة" %}:</strong></td>
+                                            <td width="40%"><strong>{% trans "Group Name" %}:</strong></td>
                                             <td>{{ object.name }}</td>
                                         </tr>
                                         <tr>
-                                            <td><strong>{% trans 'عدد المستخدمين' %}:</strong></td>
+                                            <td><strong>{% trans 'Number of users' %}:</strong></td>
                                             <td>
                                                 <span class="badge bg-info">{{ user_count }}</span>
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td><strong>{% trans "عدد الصلاحيات" %}:</strong></td>
+                                            <td><strong>{% trans "Number of permissions" %}:</strong></td>
                                             <td>
                                                 <span class="badge bg-success">{{ permission_count }}</span>
                                             </td>
@@ -71,28 +71,28 @@
                                 <div class="card-header bg-warning text-dark">
                                     <h5 class="mb-0">
                                         <i class="fas fa-exclamation-circle me-2"></i>
-                                        {% trans "تأثير الحذف" %}
+                                        {% trans "Deletion impact" %}
                                     </h5>
                                 </div>
                                 <div class="card-body">
                                     <ul class="list-unstyled mb-0">
                                         <li class="mb-2">
                                             <i class="fas fa-times text-danger me-2"></i>
-                                            {% trans "سيتم حذف المجموعة نهائياً" %}
+                                            {% trans "The group will be permanently deleted" %}
                                         </li>
                                         {% if user_count > 0 %}
                                             <li class="mb-2">
                                                 <i class="fas fa-users text-warning me-2"></i>
-                                                {% trans "المستخدمون سيفقدون صلاحيات المجموعة" %}
+                                                {% trans "Users will lose the group's permissions" %}
                                             </li>
                                         {% endif %}
                                         <li class="mb-2">
                                             <i class="fas fa-key text-info me-2"></i>
-                                            {% trans "ستُحذف جميع صلاحيات المجموعة" %}
+                                            {% trans "All group permissions will be removed" %}
                                         </li>
                                         <li class="mb-0">
                                             <i class="fas fa-database text-secondary me-2"></i>
-                                            {% trans 'سيتم إزالة المراجع من قاعدة البيانات' %}
+                                            {% trans 'References will be removed from the database' %}
                                         </li>
                                     </ul>
                                 </div>
@@ -100,19 +100,19 @@
                         </div>
                     </div>
                     
-                    <!-- المستخدمون المتأثرون -->
+                    <!-- Affected users -->
                     {% if group_users %}
                         <div class="card border-warning mb-4">
                             <div class="card-header bg-warning text-dark">
                                 <h5 class="mb-0">
                                     <i class="fas fa-users me-2"></i>
-                                    {% trans 'المستخدمون المتأثرون' %} ({{ user_count }})
+                                    {% trans 'Affected users' %} ({{ user_count }})
                                 </h5>
                             </div>
                             <div class="card-body">
                                 <div class="alert alert-warning">
                                     <i class="fas fa-exclamation-triangle me-2"></i>
-                                    {% trans "هؤلاء المستخدمون سيفقدون صلاحيات هذه المجموعة بعد حذفها:" %}
+                                    {% trans "These users will lose this group's permissions after deletion:" %}
                                 </div>
                                 <div class="row">
                                     {% for user in group_users %}
@@ -138,16 +138,16 @@
                         </div>
                     {% endif %}
                     
-                    <!-- نموذج الحذف -->
+                    <!-- Deletion form -->
                     <form method="post" id="deleteForm">
                         {% csrf_token %}
                         
-                        <!-- تأكيد الحذف -->
+                        <!-- Delete confirmation -->
                         <div class="card border-danger">
                             <div class="card-header bg-danger text-white">
                                 <h5 class="mb-0">
                                     <i class="fas fa-check-circle me-2"></i>
-                                    {% trans "تأكيد الحذف" %}
+                                    {% trans "Delete confirmation" %}
                                 </h5>
                             </div>
                             <div class="card-body">
@@ -155,7 +155,7 @@
                                     <input type="checkbox" class="form-check-input" id="confirmDelete" required>
                                     <label class="form-check-label" for="confirmDelete">
                                         <strong>
-                                            {% trans "أؤكد أنني أريد حذف المجموعة" %} "{{ object.name }}" {% trans 'نهائياً' %}
+                                            {% trans "I confirm that I want to delete the group" %} "{{ object.name }}" {% trans 'permanently' %}
                                         </strong>
                                     </label>
                                 </div>
@@ -164,27 +164,27 @@
                                     <div class="form-check mt-2">
                                         <input type="checkbox" class="form-check-input" id="confirmUsers" required>
                                         <label class="form-check-label" for="confirmUsers">
-                                            {% trans 'أدرك أن' %} {{ user_count }} {% trans "مستخدم سيفقدون صلاحيات هذه المجموعة" %}
+                                            {% trans 'I understand that' %} {{ user_count }} {% trans "users will lose this group's permissions" %}
                                         </label>
                                     </div>
                                 {% endif %}
                             </div>
                         </div>
                         
-                        <!-- أزرار التحكم -->
+                        <!-- Action buttons -->
                         <div class="d-flex justify-content-between mt-4">
                             <a href="{% url 'users:group_list' %}" class="btn btn-secondary">
                                 <i class="fas fa-arrow-left me-2"></i>
-                                {% trans "إلغاء والعودة" %}
+                                {% trans "Cancel and go back" %}
                             </a>
                             <div>
                                 <a href="{% url 'users:group_edit' object.pk %}" class="btn btn-warning me-2">
                                     <i class="fas fa-edit me-2"></i>
-                                    {% trans "تعديل بدلاً من الحذف" %}
+                                    {% trans "Edit instead of deleting" %}
                                 </a>
                                 <button type="submit" class="btn btn-danger" id="deleteBtn" disabled>
                                     <i class="fas fa-trash me-2"></i>
-                                    {% trans "حذف المجموعة نهائياً" %}
+                                    {% trans "Permanently delete group" %}
                                 </button>
                             </div>
                         </div>
@@ -207,7 +207,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateDeleteButton() {
         let allChecked = confirmDelete.checked;
         
-        // إذا كان هناك مستخدمون، يجب تأكيد ذلك أيضاً
+        // If there are users, must confirm that too
         if (confirmUsers) {
             allChecked = allChecked && confirmUsers.checked;
         }
@@ -228,26 +228,26 @@ document.addEventListener('DOMContentLoaded', function() {
         confirmUsers.addEventListener('change', updateDeleteButton);
     }
     
-    // تأكيد إضافي قبل الحذف
+    // Extra confirmation before deletion
     document.getElementById('deleteForm').addEventListener('submit', function(e) {
         const groupName = '{{ object.name|escapejs }}';
         
-    let confirmMessage = '{% trans "هل أنت متأكد تماماً من حذف المجموعة؟" %}';
-    confirmMessage += "\n\n" + '{% trans "اسم المجموعة" %}: ' + '"' + groupName + '"';
+    let confirmMessage = '{% trans "Are you absolutely sure you want to delete the group?" %}';
+    confirmMessage += "\n\n" + '{% trans "Group Name" %}: ' + '"' + groupName + '"';
         
     {% if user_count > 0 %}
-    confirmMessage += '\n\n' + '{{ user_count }}' + ' ' + '{% trans "مستخدم سيفقدون صلاحيات هذه المجموعة" %}.';
+    confirmMessage += "\n\n" + '{{ user_count }}' + ' ' + "{% trans \"users will lose this group's permissions\" %}.";
     {% endif %}
         
-        confirmMessage += '\n\n' + '{% trans "هذا الإجراء لا يمكن التراجع عنه!" %}';
+        confirmMessage += '\n\n' + '{% trans "This action cannot be undone!" %}';
         
         if (!confirm(confirmMessage)) {
             e.preventDefault();
             return false;
         }
         
-        // إظهار مؤشر التحميل
-        deleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>{% trans "جاري الحذف..." %}';
+        // Show loading indicator
+        deleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>{% trans "Deleting..." %}';
         deleteBtn.disabled = true;
     });
 });

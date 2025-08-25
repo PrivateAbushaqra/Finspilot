@@ -18,62 +18,62 @@
                 <div class="card-body">
                     <div class="alert alert-warning" role="alert">
                         <i class="fas fa-exclamation-triangle me-2"></i>
-                        <strong>{% trans "تحذير!" %}</strong>
-                        {% trans "هذا الإجراء لا يمكن التراجع عنه!" %}
+                        <strong>{% trans "Warning!" %}</strong>
+                        {% trans "This action cannot be undone!" %}
                     </div>
                     
                     <div class="row">
                         <div class="col-md-6">
-                            <h5>{% trans "هل أنت متأكد من حذف المستخدم التالي؟" %}</h5>
+                            <h5>{% trans "Are you sure you want to delete the following user?" %}</h5>
                             
                             <div class="card mt-3">
                                 <div class="card-body">
                                     <table class="table table-sm">
                                         <tr>
-                                            <td><strong>{% trans 'اسم المستخدم:' %}</strong></td>
+                                            <td><strong>{% trans 'Username:' %}</strong></td>
                                             <td>{{ user_to_delete.username }}</td>
                                         </tr>
                                         <tr>
-                                            <td><strong>{% trans "الاسم الكامل:" %}</strong></td>
+                                            <td><strong>{% trans "Full name:" %}</strong></td>
                                             <td>{{ user_to_delete.get_full_name|default:"-" }}</td>
                                         </tr>
                                         <tr>
-                                            <td><strong>{% trans 'البريد الإلكتروني:' %}</strong></td>
+                                            <td><strong>{% trans 'Email:' %}</strong></td>
                                             <td>{{ user_to_delete.email|default:"-" }}</td>
                                         </tr>
                                         <tr>
-                                            <td><strong>{% trans 'نوع المستخدم:' %}</strong></td>
+                                            <td><strong>{% trans 'User type:' %}</strong></td>
                                             <td>
                                                 {% if user_to_delete.user_type == 'superadmin' %}
-                                                    <span class="badge bg-danger">{% trans 'مدير عام' %}</span>
+                                                    <span class="badge bg-danger">{% trans 'Super Admin' %}</span>
                                                 {% elif user_to_delete.user_type == 'admin' %}
-                                                    <span class="badge bg-warning">{% trans 'مدير' %}</span>
+                                                    <span class="badge bg-warning">{% trans 'Admin' %}</span>
                                                 {% else %}
-                                                    <span class="badge bg-info">{% trans 'مستخدم' %}</span>
+                                                    <span class="badge bg-info">{% trans 'User' %}</span>
                                                 {% endif %}
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td><strong>{% trans 'القسم:' %}</strong></td>
+                                            <td><strong>{% trans 'Department:' %}</strong></td>
                                             <td>{{ user_to_delete.department|default:"-" }}</td>
                                         </tr>
                                         <tr>
-                                            <td><strong>{% trans 'تاريخ آخر دخول:' %}</strong></td>
+                                            <td><strong>{% trans 'Last login:' %}</strong></td>
                                             <td>
                                                 {% if user_stats.last_login %}
                                                     {{ user_stats.last_login|date:"Y-m-d H:i" }}
                                                 {% else %}
-                                                    <span class="text-muted">{% trans 'لم يسجل دخول مطلقاً' %}</span>
+                                                    <span class="text-muted">{% trans 'Never logged in' %}</span>
                                                 {% endif %}
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td><strong>{% trans 'عضو في الفريق:' %}</strong></td>
+                                            <td><strong>{% trans 'Staff member:' %}</strong></td>
                                             <td>
                                                 {% if user_stats.is_staff %}
                                                     <span class="badge bg-success">{% trans "Yes" %}</span>
                                                 {% else %}
-                                                    <span class="badge bg-secondary">{% trans "لا" %}</span>
+                                                    <span class="badge bg-secondary">{% trans "No" %}</span>
                                                 {% endif %}
                                             </td>
                                         </tr>
@@ -83,19 +83,19 @@
                         </div>
                         
                         <div class="col-md-6">
-                            <h5>{% trans "تأثير الحذف:" %}</h5>
+                            <h5>{% trans "Deletion impact:" %}</h5>
                             <div class="alert alert-info">
                                 <ul class="mb-0">
-                                    <li>{% trans "سيتم حذف جميع بيانات المستخدم نهائياً" %}</li>
-                                    <li>{% trans 'سيفقد المستخدم إمكانية الوصول للنظام' %}</li>
-                                    <li>{% trans "ستبقى السجلات التي أنشأها المستخدم محفوظة" %}</li>
-                                    <li>{% trans "لا يمكن التراجع عن هذا الإجراء" %}</li>
+                                    <li>{% trans "All user data will be permanently deleted" %}</li>
+                                    <li>{% trans "The user will lose access to the system" %}</li>
+                                    <li>{% trans "Records created by the user will remain" %}</li>
+                                    <li>{% trans "This action cannot be undone" %}</li>
                                 </ul>
                             </div>
                             
                             {% if delete_warnings %}
                             <div class="alert alert-danger">
-                                <strong>{% trans "لا يمكن حذف هذا المستخدم!" %}</strong>
+                                <strong>{% trans "This user cannot be deleted!" %}</strong>
                                 <ul class="mb-0 mt-2">
                                     {% for warning in delete_warnings %}
                                     <li>{{ warning }}</li>
@@ -111,21 +111,21 @@
                     <div class="d-flex justify-content-between">
                         <a href="{% url 'users:user_list' %}" class="btn btn-secondary">
                             <i class="fas fa-arrow-left me-2"></i>
-                            إلغاء
+                            {% trans "Cancel" %}
                         </a>
                         
                         {% if can_delete %}
                         <form method="post" class="d-inline">
                             {% csrf_token %}
-                            <button type="submit" class="btn btn-danger" onclick="return confirm('هل أنت متأكد من حذف هذا المستخدم؟')">
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('{% trans 'Are you sure you want to delete this user?' %}')">
                                 <i class="fas fa-trash me-2"></i>
-                                {% trans "حذف المستخدم نهائياً" %}
+                                {% trans "Permanently delete user" %}
                             </button>
                         </form>
                         {% else %}
                         <button type="button" class="btn btn-danger" disabled>
                             <i class="fas fa-ban me-2"></i>
-                            {% trans "لا يمكن الحذف" %}
+                            {% trans "Deletion not allowed" %}
                         </button>
                         {% endif %}
                     </div>
@@ -139,12 +139,14 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // تأكيد إضافي عند الضغط على زر الحذف
+    // Extra confirmation on delete
     const deleteForm = document.querySelector('form[method="post"]');
     if (deleteForm) {
         deleteForm.addEventListener('submit', function(e) {
             const username = '{{ user_to_delete.username|escapejs }}';
-            const confirmMessage = 'هل أنت متأكد تماماً من حذف المستخدم "' + username + '"؟\n\nهذا الإجراء لا يمكن التراجع عنه!';
+            let confirmMessage = '{% trans "Are you absolutely sure you want to delete this user?" %}';
+            confirmMessage += "\n\n" + '{% trans "Username" %}: ' + '"' + username + '"';
+            confirmMessage += "\n\n" + '{% trans "This action cannot be undone!" %}';
             
             if (!confirm(confirmMessage)) {
                 e.preventDefault();
