@@ -78,7 +78,7 @@
                                 <label class="form-label">&nbsp;</label>
                                 <div class="d-grid">
                                     <button type="submit" class="btn btn-secondary">
-                                        <i class="fas fa-search"></i> {% trans "بحث" %}
+                                        <i class="fas fa-search"></i> {% trans "Search" %}
                                     </button>
                                 </div>
                             </div>
@@ -232,13 +232,13 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">{% trans "الرسوم" %}</label>
+                                <label class="form-label">{% trans "Fees" %}</label>
                                 <input type="number" name="fees" class="form-control" step="0.001" value="0">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">{% trans "سعر الصرف" %}</label>
+                                <label class="form-label">{% trans "Exchange Rate" %}</label>
                                 <input type="number" name="exchange_rate" class="form-control" step="0.0001" value="1">
                             </div>
                         </div>
@@ -303,35 +303,35 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">{% trans "رقم مستند الDeposit" %} *</label>
-                                    <input type="text" name="deposit_document_number" class="form-control" placeholder="{% trans "ادخل رقم مستند الDeposit" %}">
+                                    <label class="form-label">{% trans "Deposit Document Number" %} *</label>
+                                    <input type="text" name="deposit_document_number" class="form-control" placeholder="{% trans "Enter the deposit document number" %}">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">{% trans "نوع الDeposit" %} *</label>
+                                    <label class="form-label">{% trans "Deposit Type" %} *</label>
                                     <select name="deposit_type" id="deposit_type" class="form-select">
-                                        <option value="">{% trans "اختر نوع الDeposit" %}</option>
-                                        <option value="cash">{% trans "نقداً" %}</option>
-                                        <option value="check">{% trans "شيك" %}</option>
+                                        <option value="">{% trans "Select deposit type" %}</option>
+                                        <option value="cash">{% trans "Cash" %}</option>
+                                        <option value="check">{% trans "Check" %}</option>
                                     </select>
                                 </div>
                             </div>
                         </div>
                         
-                        <!-- {% trans "Information" %} الشيك - تظهر فقط عند اختيار شيك -->
+                        <!-- Check Information - يظهر فقط عند اختيار شيك -->
                         <div id="check_info_group" class="d-none">
-                            <h6 class="text-muted">{% trans "Information الشيك" %}</h6>
+                            <h6 class="text-muted">{% trans "Check Information" %}</h6>
                             <div class="row">
                                 <div class="col-md-4">
                                     <div class="mb-3">
-                                        <label class="form-label">{% trans "رقم الشيك" %} *</label>
-                                        <input type="text" name="check_number" class="form-control" placeholder="{% trans 'رقم الشيك' %}">
+                                        <label class="form-label">{% trans "Check Number" %} *</label>
+                                        <input type="text" name="check_number" class="form-control" placeholder="{% trans 'Check Number' %}">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="mb-3">
-                                        <label class="form-label">{% trans "تاريخ الشيك" %} *</label>
+                                        <label class="form-label">{% trans "Check Date" %} *</label>
                                         <input type="date" name="check_date" class="form-control">
                                     </div>
                                 </div>
@@ -550,12 +550,12 @@ function calculateDepreciation() {
     const period = document.getElementById('period').value;
     
     if (assetValue <= 0 || usefulLife <= 0) {
-        alert('{% trans "يرجى إدخال قيمة الأصل والعمر الافتراضي" %}');
+        alert('{% trans "Please enter the asset value and useful life" %}');
         return;
     }
     
     if (salvageValue >= assetValue) {
-        alert('{% trans "القيمة التخريدية يجب أن تكون أقل من قيمة الأصل" %}');
+        alert('{% trans "Salvage value must be less than the asset value" %}');
         return;
     }
     

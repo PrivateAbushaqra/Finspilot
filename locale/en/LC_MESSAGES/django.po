@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FinsPilot Accounting System\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-08-25 12:51+0300\n"
+"POT-Creation-Date: 2025-08-25 20:21+0300\n"
 "PO-Revision-Date: 2025-08-09 11:52\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
@@ -984,11 +984,13 @@ msgstr ""
 #: .\templates\banks\transfer_list.html:822
 #: .\templates\banks\transfer_list.html:858
 #: .\templates\cashboxes\transfer_list.html:99
+#: .\templates\cashboxes\transfer_list.html:235
 msgid "Fees"
 msgstr ""
 
 #: .\banks\models.py:102 .\cashboxes\models.py:139 .\settings\models.py:47
 #: .\templates\banks\transfer_add.html:327
+#: .\templates\cashboxes\transfer_list.html:241
 msgid "Exchange Rate"
 msgstr ""
 
@@ -1077,16 +1079,19 @@ msgstr ""
 msgid "الصناديق النقدية"
 msgstr ""
 
-#: .\cashboxes\models.py:98
-msgid "من صندوق إلى صندوق"
+#: .\cashboxes\models.py:98 .\templates\cashboxes\transfer_list.html:59
+#: .\templates\cashboxes\transfer_list.html:209
+msgid "Cashbox to Cashbox"
 msgstr ""
 
-#: .\cashboxes\models.py:99
-msgid "من صندوق إلى بنك"
+#: .\cashboxes\models.py:99 .\templates\cashboxes\transfer_list.html:62
+#: .\templates\cashboxes\transfer_list.html:210
+msgid "Cashbox to Bank"
 msgstr ""
 
-#: .\cashboxes\models.py:100
-msgid "من بنك إلى صندوق"
+#: .\cashboxes\models.py:100 .\templates\cashboxes\transfer_list.html:65
+#: .\templates\cashboxes\transfer_list.html:211
+msgid "Bank to Cashbox"
 msgstr ""
 
 #: .\cashboxes\models.py:104
@@ -1131,46 +1136,53 @@ msgstr "Group Name"
 msgid "اسم البنك المستقبل"
 msgstr ""
 
-#: .\cashboxes\models.py:127 .\templates\cashboxes\transfer_list.html:315
-msgid "نقداً"
+#: .\cashboxes\models.py:127 .\payments\models.py:17
+#: .\templates\cashboxes\transfer_list.html:315
+#: .\templates\payments\voucher_list.html:42
+#: .\templates\purchases\invoice_add.html:180
+#: .\templates\receipts\receipt_add.html:54
+#: .\templates\receipts\receipt_list.html:45
+#: .\templates\sales\return_add.html:248
+msgid "Cash"
 msgstr ""
 
-#: .\cashboxes\models.py:128 .\receipts\models.py:16
-#: .\revenues_expenses\models.py:41 .\sales\models.py:15
+#: .\cashboxes\models.py:128 .\payments\models.py:18
 #: .\templates\cashboxes\transfer_list.html:316
-#: .\templates\payments\voucher_detail.html:178
-msgid "شيك"
+#: .\templates\core\dashboard.html:305 .\templates\core\dashboard.html:307
+#: .\templates\core\dashboard.html:385 .\templates\core\dashboard.html:397
+#: .\templates\payments\voucher_list.html:43
+#: .\templates\receipts\receipt_add.html:55
+#: .\templates\receipts\receipt_list.html:48
+msgid "Check"
 msgstr ""
 
-#: .\cashboxes\models.py:131
-msgid "رقم مستند الإيداع"
+#: .\cashboxes\models.py:131 .\templates\cashboxes\transfer_list.html:306
+msgid "Deposit Document Number"
 msgstr ""
 
-#: .\cashboxes\models.py:132
-#, fuzzy
-#| msgid "تاريخ الإنشاء"
-msgid "نوع الإيداع"
-msgstr "Created at"
+#: .\cashboxes\models.py:132 .\templates\cashboxes\transfer_list.html:312
+msgid "Deposit Type"
+msgstr ""
 
-#: .\cashboxes\models.py:133 .\receipts\models.py:38
+#: .\cashboxes\models.py:133 .\payments\models.py:58
 #: .\templates\cashboxes\transfer_list.html:328
 #: .\templates\cashboxes\transfer_list.html:329
-#: .\templates\payments\voucher_detail.html:182
-#: .\templates\receipts\check_collect.html:31
-msgid "رقم الشيك"
+#: .\templates\receipts\check_list.html:71
+#: .\templates\receipts\receipt_add.html:98
+#: .\templates\receipts\receipt_detail.html:72
+msgid "Check Number"
 msgstr ""
 
-#: .\cashboxes\models.py:134 .\receipts\models.py:39
+#: .\cashboxes\models.py:134 .\payments\models.py:59
 #: .\templates\cashboxes\transfer_list.html:334
-#: .\templates\payments\voucher_detail.html:190
-#: .\templates\receipts\check_collect.html:43
-#, fuzzy
-#| msgid "تاريخ الإنشاء"
-msgid "تاريخ الشيك"
-msgstr "Created at"
+#: .\templates\receipts\check_list.html:74
+#: .\templates\receipts\receipt_add.html:103
+#: .\templates\receipts\receipt_detail.html:76
+msgid "Check Date"
+msgstr ""
 
-#: .\cashboxes\models.py:135
-msgid "اسم بنك الشيك"
+#: .\cashboxes\models.py:135 .\templates\cashboxes\transfer_list.html:340
+msgid "Check Bank Name"
 msgstr ""
 
 #: .\cashboxes\models.py:147
@@ -1182,43 +1194,44 @@ msgid "تحويلات الصناديق"
 msgstr ""
 
 #: .\cashboxes\models.py:165
-msgid "يجب تحديد الصندوق المرسل والمستقبل"
+msgid "Sender and receiver cashboxes must be specified"
 msgstr ""
 
 #: .\cashboxes\models.py:167
-msgid "لا يمكن التحويل من الصندوق إلى نفسه"
+msgid "Cannot transfer from a cashbox to itself"
 msgstr ""
 
 #: .\cashboxes\models.py:170
-msgid "يجب تحديد الصندوق المرسل والبنك المستقبل"
+msgid "Sender cashbox and receiver bank must be specified"
 msgstr ""
 
-#: .\cashboxes\models.py:173 .\cashboxes\views.py:189
-msgid "رقم مستند الإيداع مطلوب للتحويل إلى البنك"
+#: .\cashboxes\models.py:173
+msgid "Deposit document number is required for transfers to bank"
 msgstr ""
 
-#: .\cashboxes\models.py:175 .\cashboxes\views.py:192
-msgid "نوع الإيداع مطلوب"
+#: .\cashboxes\models.py:175
+msgid "Deposit type is required"
 msgstr ""
 
-#: .\cashboxes\models.py:179 .\cashboxes\views.py:196
-msgid "رقم الشيك مطلوب عند اختيار نوع الإيداع \"شيك\""
+#: .\cashboxes\models.py:179
+msgid "Check number is required when deposit type is \"Check\""
 msgstr ""
 
-#: .\cashboxes\models.py:181 .\cashboxes\views.py:199 .\receipts\models.py:81
-#, fuzzy
-#| msgid "تاريخ الإنشاء"
-msgid "تاريخ الشيك مطلوب"
-msgstr "Created at"
+#: .\cashboxes\models.py:181 .\payments\forms.py:135
+msgid "Check date is required"
+msgstr ""
 
-#: .\cashboxes\models.py:183 .\cashboxes\views.py:202
-#, fuzzy
-#| msgid "اسم المجموعة"
-msgid "اسم بنك الشيك مطلوب"
-msgstr "Group Name"
+#: .\cashboxes\models.py:183
+msgid "Check bank name is required"
+msgstr ""
 
 #: .\cashboxes\models.py:186
-msgid "يجب تحديد البنك المرسل والصندوق المستقبل"
+msgid "Sender bank and receiver cashbox must be specified"
+msgstr ""
+
+#: .\cashboxes\models.py:235 .\cashboxes\models.py:239
+#: .\cashboxes\models.py:247 .\cashboxes\models.py:251
+msgid "Deleted"
 msgstr ""
 
 #: .\cashboxes\models.py:276
@@ -1300,6 +1313,30 @@ msgstr ""
 #| msgid "إنشاء أول مجموعة"
 msgid "جميع الحقول مطلوبة"
 msgstr "Create the first group"
+
+#: .\cashboxes\views.py:189
+msgid "رقم مستند الإيداع مطلوب للتحويل إلى البنك"
+msgstr ""
+
+#: .\cashboxes\views.py:192
+msgid "نوع الإيداع مطلوب"
+msgstr ""
+
+#: .\cashboxes\views.py:196
+msgid "رقم الشيك مطلوب عند اختيار نوع الإيداع \"شيك\""
+msgstr ""
+
+#: .\cashboxes\views.py:199 .\receipts\models.py:81
+#, fuzzy
+#| msgid "تاريخ الإنشاء"
+msgid "تاريخ الشيك مطلوب"
+msgstr "Created at"
+
+#: .\cashboxes\views.py:202
+#, fuzzy
+#| msgid "اسم المجموعة"
+msgid "اسم بنك الشيك مطلوب"
+msgstr "Group Name"
 
 #: .\cashboxes\views.py:209
 msgid "رقم التحويل موجود مسبقاً! يرجى استخدام رقم آخر."
@@ -2213,10 +2250,6 @@ msgstr ""
 msgid "Check number is required"
 msgstr ""
 
-#: .\payments\forms.py:135
-msgid "Check date is required"
-msgstr ""
-
 #: .\payments\forms.py:137
 msgid "Check due date is required"
 msgstr ""
@@ -2230,6 +2263,7 @@ msgstr ""
 #: .\templates\assets_liabilities\asset_list.html:69
 #: .\templates\assets_liabilities\liability_list.html:39
 #: .\templates\assets_liabilities\liability_list.html:69
+#: .\templates\cashboxes\transfer_list.html:81
 #: .\templates\core\audit_log.html:85 .\templates\core\tax_report.html:194
 #: .\templates\customers\customer_list.html:117
 #: .\templates\customers\customer_list.html:226
@@ -2351,23 +2385,6 @@ msgstr ""
 #: .\templates\receipts\receipt_detail.html:124
 #: .\templates\receipts\receipt_detail.html:296
 msgid "Reversal Reason"
-msgstr ""
-
-#: .\payments\models.py:17 .\templates\payments\voucher_list.html:42
-#: .\templates\purchases\invoice_add.html:180
-#: .\templates\receipts\receipt_add.html:54
-#: .\templates\receipts\receipt_list.html:45
-#: .\templates\sales\return_add.html:248
-msgid "Cash"
-msgstr ""
-
-#: .\payments\models.py:18 .\templates\core\dashboard.html:305
-#: .\templates\core\dashboard.html:307 .\templates\core\dashboard.html:385
-#: .\templates\core\dashboard.html:397
-#: .\templates\payments\voucher_list.html:43
-#: .\templates\receipts\receipt_add.html:55
-#: .\templates\receipts\receipt_list.html:48
-msgid "Check"
 msgstr ""
 
 #: .\payments\models.py:23 .\templates\payments\voucher_list.html:51
@@ -2494,18 +2511,6 @@ msgstr ""
 
 #: .\payments\models.py:55
 msgid "Transfer Reference"
-msgstr ""
-
-#: .\payments\models.py:58 .\templates\receipts\check_list.html:71
-#: .\templates\receipts\receipt_add.html:98
-#: .\templates\receipts\receipt_detail.html:72
-msgid "Check Number"
-msgstr ""
-
-#: .\payments\models.py:59 .\templates\receipts\check_list.html:74
-#: .\templates\receipts\receipt_add.html:103
-#: .\templates\receipts\receipt_detail.html:76
-msgid "Check Date"
 msgstr ""
 
 #: .\payments\models.py:60
@@ -2926,6 +2931,11 @@ msgstr ""
 msgid "نقدي"
 msgstr ""
 
+#: .\receipts\models.py:16 .\revenues_expenses\models.py:41
+#: .\sales\models.py:15 .\templates\payments\voucher_detail.html:178
+msgid "شيك"
+msgstr ""
+
 #: .\receipts\models.py:20
 msgid "في الانتظار"
 msgstr ""
@@ -2959,6 +2969,18 @@ msgstr ""
 #: .\templates\receipts\check_collect.html:116
 msgid "الصندوق النقدي"
 msgstr ""
+
+#: .\receipts\models.py:38 .\templates\payments\voucher_detail.html:182
+#: .\templates\receipts\check_collect.html:31
+msgid "رقم الشيك"
+msgstr ""
+
+#: .\receipts\models.py:39 .\templates\payments\voucher_detail.html:190
+#: .\templates\receipts\check_collect.html:43
+#, fuzzy
+#| msgid "تاريخ الإنشاء"
+msgid "تاريخ الشيك"
+msgstr "Created at"
 
 #: .\receipts\models.py:40
 #, fuzzy
@@ -6042,7 +6064,6 @@ msgstr ""
 #: .\templates\banks\bank_cashbox_transfer_add.html:262
 #: .\templates\banks\cashbox_transfer_detail.html:340
 #: .\templates\banks\transfer_detail.html:272
-#: .\templates\cashboxes\transfer_list.html:322
 #: .\templates\cashboxes\transfer_list.html:400
 #: .\templates\customers\add.html:146 .\templates\customers\add.html:186
 #: .\templates\customers\add.html:214 .\templates\customers\add.html:220
@@ -7422,12 +7443,10 @@ msgid "إلى"
 msgstr ""
 
 #: .\templates\cashboxes\transfer_detail.html:66
-#: .\templates\cashboxes\transfer_list.html:235
 msgid "الرسوم"
 msgstr ""
 
 #: .\templates\cashboxes\transfer_detail.html:70
-#: .\templates\cashboxes\transfer_list.html:241
 #, fuzzy
 #| msgid "تأثير الحذف"
 msgid "سعر الصرف"
@@ -7465,26 +7484,6 @@ msgstr ""
 #: .\templates\cashboxes\transfer_list.html:416
 #: .\templates\cashboxes\transfer_list.html:476
 msgid "Calculate Depreciation"
-msgstr ""
-
-#: .\templates\cashboxes\transfer_list.html:59
-#: .\templates\cashboxes\transfer_list.html:209
-msgid "Cashbox to Cashbox"
-msgstr ""
-
-#: .\templates\cashboxes\transfer_list.html:62
-#: .\templates\cashboxes\transfer_list.html:210
-msgid "Cashbox to Bank"
-msgstr ""
-
-#: .\templates\cashboxes\transfer_list.html:65
-#: .\templates\cashboxes\transfer_list.html:211
-msgid "Bank to Cashbox"
-msgstr ""
-
-#: .\templates\cashboxes\transfer_list.html:81
-#: .\templates\journal\account_list.html:42
-msgid "بحث"
 msgstr ""
 
 #: .\templates\cashboxes\transfer_list.html:174
@@ -7530,29 +7529,16 @@ msgstr ""
 msgid "Deposit Information"
 msgstr ""
 
-#: .\templates\cashboxes\transfer_list.html:306
-msgid "رقم مستند الDeposit"
-msgstr ""
-
 #: .\templates\cashboxes\transfer_list.html:307
-msgid "ادخل رقم مستند الDeposit"
-msgstr ""
-
-#: .\templates\cashboxes\transfer_list.html:312
-msgid "نوع الDeposit"
+msgid "Enter the deposit document number"
 msgstr ""
 
 #: .\templates\cashboxes\transfer_list.html:314
-msgid "اختر نوع الDeposit"
+msgid "Select deposit type"
 msgstr ""
 
 #: .\templates\cashboxes\transfer_list.html:324
-#: .\templates\receipts\check_collect.html:24
-msgid "Information الشيك"
-msgstr ""
-
-#: .\templates\cashboxes\transfer_list.html:340
-msgid "Check Bank Name"
+msgid "Check Information"
 msgstr ""
 
 #: .\templates\cashboxes\transfer_list.html:341
@@ -7659,11 +7645,11 @@ msgid "Save Depreciation Results"
 msgstr ""
 
 #: .\templates\cashboxes\transfer_list.html:553
-msgid "يرجى إدخال قيمة الأصل والعمر الافتراضي"
+msgid "Please enter the asset value and useful life"
 msgstr ""
 
 #: .\templates\cashboxes\transfer_list.html:558
-msgid "القيمة التخريدية يجب أن تكون أقل من قيمة الأصل"
+msgid "Salvage value must be less than the asset value"
 msgstr ""
 
 #: .\templates\cashboxes\transfer_list.html:650
@@ -8956,6 +8942,10 @@ msgstr ""
 #: .\templates\journal\account_list.html:15
 #: .\templates\journal\entry_create.html:87
 msgid "New Account"
+msgstr ""
+
+#: .\templates\journal\account_list.html:42
+msgid "بحث"
 msgstr ""
 
 #: .\templates\journal\account_list.html:129
@@ -10377,6 +10367,10 @@ msgstr ""
 #| msgid "العودة للقائمة"
 msgid "العودة للVoucher"
 msgstr "Back to List"
+
+#: .\templates\receipts\check_collect.html:24
+msgid "Information الشيك"
+msgstr ""
 
 #: .\templates\receipts\check_collect.html:55
 msgid "Status الحالية"
@@ -12478,6 +12472,11 @@ msgstr "Users will inherit the group's permissions"
 #| msgid "المستخدمون سيرثون صلاحيات المجموعة"
 msgid "تم إظهار المستخدمين ذوي الصلاحيات العالية"
 msgstr "Users will inherit the group's permissions"
+
+#, fuzzy
+#~| msgid "تاريخ الإنشاء"
+#~ msgid "نوع الإيداع"
+#~ msgstr "Created at"
 
 #, fuzzy
 #~| msgid "صلاحيات المجموعة"

@@ -95,9 +95,9 @@ class Cashbox(models.Model):
 class CashboxTransfer(models.Model):
     """التحويل بين الصناديق أو بين الصناديق والبنوك"""
     TRANSFER_TYPES = [
-        ('cashbox_to_cashbox', _('من صندوق إلى صندوق')),
-        ('cashbox_to_bank', _('من صندوق إلى بنك')),
-        ('bank_to_cashbox', _('من بنك إلى صندوق')),
+        ('cashbox_to_cashbox', _('Cashbox to Cashbox')),
+        ('cashbox_to_bank', _('Cashbox to Bank')),
+        ('bank_to_cashbox', _('Bank to Cashbox')),
     ]
     
     transfer_number = models.CharField(_('Transfer Number'), max_length=50, unique=True)
@@ -124,15 +124,15 @@ class CashboxTransfer(models.Model):
     
     # معلومات الإيداع للتحويل من الصندوق إلى البنك
     DEPOSIT_TYPES = [
-        ('cash', _('نقداً')),
-        ('check', _('شيك')),
+        ('cash', _('Cash')),
+        ('check', _('Check')),
     ]
     
-    deposit_document_number = models.CharField(_('رقم مستند الإيداع'), max_length=50, blank=True)
-    deposit_type = models.CharField(_('نوع الإيداع'), max_length=10, choices=DEPOSIT_TYPES, blank=True)
-    check_number = models.CharField(_('رقم الشيك'), max_length=50, blank=True)
-    check_date = models.DateField(_('تاريخ الشيك'), null=True, blank=True)
-    check_bank_name = models.CharField(_('اسم بنك الشيك'), max_length=200, blank=True)
+    deposit_document_number = models.CharField(_('Deposit Document Number'), max_length=50, blank=True)
+    deposit_type = models.CharField(_('Deposit Type'), max_length=10, choices=DEPOSIT_TYPES, blank=True)
+    check_number = models.CharField(_('Check Number'), max_length=50, blank=True)
+    check_date = models.DateField(_('Check Date'), null=True, blank=True)
+    check_bank_name = models.CharField(_('Check Bank Name'), max_length=200, blank=True)
     
     amount = models.DecimalField(_('Amount'), max_digits=15, decimal_places=3)
     fees = models.DecimalField(_('Fees'), max_digits=15, decimal_places=3, default=0)
@@ -162,28 +162,28 @@ class CashboxTransfer(models.Model):
         # التحقق من صحة نوع التحويل
         if self.transfer_type == 'cashbox_to_cashbox':
             if not self.from_cashbox or not self.to_cashbox:
-                raise ValidationError(_('يجب تحديد الصندوق المرسل والمستقبل'))
+                raise ValidationError(_('Sender and receiver cashboxes must be specified'))
             if self.from_cashbox == self.to_cashbox:
-                raise ValidationError(_('لا يمكن التحويل من الصندوق إلى نفسه'))
+                raise ValidationError(_('Cannot transfer from a cashbox to itself'))
         elif self.transfer_type == 'cashbox_to_bank':
             if not self.from_cashbox or not self.to_bank:
-                raise ValidationError(_('يجب تحديد الصندوق المرسل والبنك المستقبل'))
+                raise ValidationError(_('Sender cashbox and receiver bank must be specified'))
             # التحقق من معلومات الإيداع
             if not self.deposit_document_number:
-                raise ValidationError(_('رقم مستند الإيداع مطلوب للتحويل إلى البنك'))
+                raise ValidationError(_('Deposit document number is required for transfers to bank'))
             if not self.deposit_type:
-                raise ValidationError(_('نوع الإيداع مطلوب'))
+                raise ValidationError(_('Deposit type is required'))
             # التحقق من معلومات الشيك
             if self.deposit_type == 'check':
                 if not self.check_number:
-                    raise ValidationError(_('رقم الشيك مطلوب عند اختيار نوع الإيداع "شيك"'))
+                    raise ValidationError(_('Check number is required when deposit type is "Check"'))
                 if not self.check_date:
-                    raise ValidationError(_('تاريخ الشيك مطلوب'))
+                    raise ValidationError(_('Check date is required'))
                 if not self.check_bank_name:
-                    raise ValidationError(_('اسم بنك الشيك مطلوب'))
+                    raise ValidationError(_('Check bank name is required'))
         elif self.transfer_type == 'bank_to_cashbox':
             if not self.from_bank or not self.to_cashbox:
-                raise ValidationError(_('يجب تحديد البنك المرسل والصندوق المستقبل'))
+                raise ValidationError(_('Sender bank and receiver cashbox must be specified'))
     
     def save(self, *args, **kwargs):
         # حفظ أسماء الصناديق والبنوك قبل الحفظ
@@ -232,11 +232,11 @@ class CashboxTransfer(models.Model):
         if self.from_cashbox:
             return self.from_cashbox.name
         elif self.from_cashbox_name:
-            return f"{self.from_cashbox_name} (محذوف)"
+            return f"{self.from_cashbox_name} ({_('Deleted')})"
         elif self.from_bank:
             return self.from_bank.name
         elif self.from_bank_name:
-            return f"{self.from_bank_name} (محذوف)"
+            return f"{self.from_bank_name} ({_('Deleted')})"
         return ""
     
     def get_to_display_name(self):
@@ -244,11 +244,11 @@ class CashboxTransfer(models.Model):
         if self.to_cashbox:
             return self.to_cashbox.name
         elif self.to_cashbox_name:
-            return f"{self.to_cashbox_name} (محذوف)"
+            return f"{self.to_cashbox_name} ({_('Deleted')})"
         elif self.to_bank:
             return self.to_bank.name
         elif self.to_bank_name:
-            return f"{self.to_bank_name} (محذوف)"
+            return f"{self.to_bank_name} ({_('Deleted')})"
         return ""
     
     def get_from_icon(self):
