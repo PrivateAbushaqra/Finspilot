@@ -88,12 +88,12 @@
                 <div>
                     <h1 class="h3 mb-0 text-gray-800">
                         <i class="fas fa-university text-primary me-2"></i>
-                        {% trans "Details" %} الحساب البنكي
+                        {% trans "Bank Account Details" %}
                     </h1>
                     <nav aria-label="breadcrumb" class="mt-2">
                         <ol class="breadcrumb">
                             <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">{% trans "Dashboard" %}</a></li>
-                            <li class="breadcrumb-item"><a href="{% url 'banks:account_list' %}">الحسابات البنكية</a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'banks:account_list' %}">{% trans "Bank Accounts" %}</a></li>
                             <li class="breadcrumb-item active">{{ account.name }}</li>
                         </ol>
                     </nav>
@@ -101,7 +101,7 @@
                 <div>
                     <a href="{% url 'banks:account_transactions' account.pk %}" class="btn btn-info action-btn me-2">
                         <i class="fas fa-list me-1"></i>
-                        إدارة الحركات
+                        {% trans "Manage Transactions" %}
                     </a>
                     <a href="{% url 'banks:account_edit' account.pk %}" class="btn btn-warning action-btn me-2">
                         <i class="fas fa-edit me-1"></i>
@@ -131,11 +131,11 @@
                                 <div class="col-md-6">
                                     <p class="mb-2">
                                         <i class="fas fa-building me-2"></i>
-                                        <strong>البنك:</strong> {{ account.bank_name }}
+                                        <strong>{% trans "Bank" %}:</strong> {{ account.bank_name }}
                                     </p>
                                     <p class="mb-2">
                                         <i class="fas fa-credit-card me-2"></i>
-                                        <strong>رقم الحساب:</strong> {{ account.account_number }}
+                                        <strong>{% trans "Account Number" %}:</strong> {{ account.account_number }}
                                     </p>
                                     {% if account.iban %}
                                     <p class="mb-2">
@@ -148,18 +148,18 @@
                                     {% if account.swift_code %}
                                     <p class="mb-2">
                                         <i class="fas fa-code me-2"></i>
-                                        <strong>رمز SWIFT:</strong> {{ account.swift_code }}
+                                        <strong>{% trans "SWIFT Code" %}:</strong> {{ account.swift_code }}
                                     </p>
                                     {% endif %}
                                     <p class="mb-2">
                                         <i class="fas fa-coins me-2"></i>
-                                        <strong>العملة:</strong> {{ account.currency }}
+                                        <strong>{% trans "Currency" %}:</strong> {{ account.currency }}
                                     </p>
                                     <p class="mb-2">
                                         <i class="fas fa-toggle-{% if account.is_active %}on{% else %}off{% endif %} me-2"></i>
                                         <strong>{% trans "Status" %}:</strong>
                                         <span class="badge {% if account.is_active %}badge-status bg-success{% else %}badge-status bg-danger{% endif %}">
-                                            {% if account.is_active %}{% trans "Active" %}{% else %}غير {% trans "Active" %}{% endif %}
+                                            {% if account.is_active %}{% trans "Active" %}{% else %}{% trans "Inactive" %}{% endif %}
                                         </span>
                                     </p>
                                 </div>
@@ -167,7 +167,7 @@
                         </div>
                         <div class="col-md-4">
                             <div class="balance-card text-center">
-                                <h5 class="text-muted mb-2">ال{% trans "Balance" %} الحالي</h5>
+                                <h5 class="text-muted mb-2">{% trans "Current Balance" %}</h5>
                                 <h2 class="mb-0 {% if account.balance > 0 %}text-success{% elif account.balance < 0 %}text-danger{% else %}text-muted{% endif %}">
                                     {{ account.balance|floatformat:3 }} {{ account.currency }}
                                 </h2>
@@ -182,25 +182,25 @@
                 <div class="col-md-3">
                     <div class="stats-card">
                         <h4>{{ this_month_deposits|floatformat:3 }}</h4>
-                        <p class="mb-0">{% trans "Deposit" %}ات {% trans "This Month" %}</p>
+                        <p class="mb-0">{% trans "Deposits This Month" %}</p>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="stats-card warning">
                         <h4>{{ this_month_withdrawals|floatformat:3 }}</h4>
-                        <p class="mb-0">سحوبات {% trans "This Month" %}</p>
+                        <p class="mb-0">{% trans "Withdrawals This Month" %}</p>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="stats-card danger">
                         <h4>{{ transfers_from.count }}</h4>
-                        <p class="mb-0">تحوي{% trans "No" %}ت صادرة</p>
+                        <p class="mb-0">{% trans "Outgoing Transfers" %}</p>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="stats-card">
                         <h4>{{ transfers_to.count }}</h4>
-                        <p class="mb-0">تحوي{% trans "No" %}ت واردة</p>
+                        <p class="mb-0">{% trans "Incoming Transfers" %}</p>
                     </div>
                 </div>
             </div>
@@ -212,7 +212,7 @@
                         <div class="card-header">
                             <h5 class="mb-0">
                                 <i class="fas fa-list me-2"></i>
-                                الحركات {% trans "Last" %}ة
+                                {% trans "Latest Transactions" %}
                             </h5>
                         </div>
                         <div class="card-body">
@@ -244,7 +244,7 @@
                             {% else %}
                                 <div class="text-center py-4">
                                     <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                                    <p class="text-muted">لا توجد حركات مالية</p>
+                                    <p class="text-muted">{% trans "No financial transactions" %}</p>
                                 </div>
                             {% endif %}
                         </div>
@@ -256,7 +256,7 @@
                         <div class="card-header">
                             <h5 class="mb-0">
                                 <i class="fas fa-exchange-alt me-2"></i>
-                                التحوي{% trans "No" %}ت {% trans "Last" %}ة
+                                {% trans "Latest Transfers" %}
                             </h5>
                         </div>
                         <div class="card-body">
@@ -267,9 +267,9 @@
                                         <div>
                                             <h6 class="mb-1">
                                                 <i class="fas fa-arrow-right text-danger me-1"></i>
-                                                {% trans "Transfer" %} صادر
+                                                {% trans "Outgoing Transfer" %}
                                             </h6>
-                                            <p class="mb-1 text-muted">إلى: {{ transfer.to_account.name }}</p>
+                                            <p class="mb-1 text-muted">{% trans "To" %}: {{ transfer.to_account.name }}</p>
                                             <small class="text-muted">{{ transfer.date }}</small>
                                         </div>
                                         <div class="text-end">
@@ -287,9 +287,9 @@
                                         <div>
                                             <h6 class="mb-1">
                                                 <i class="fas fa-arrow-left text-success me-1"></i>
-                                                {% trans "Transfer" %} وارد
+                                                {% trans "Incoming Transfer" %}
                                             </h6>
-                                            <p class="mb-1 text-muted">من: {{ transfer.from_account.name }}</p>
+                                            <p class="mb-1 text-muted">{% trans "From" %}: {{ transfer.from_account.name }}</p>
                                             <small class="text-muted">{{ transfer.date }}</small>
                                         </div>
                                         <div class="text-end">
@@ -303,7 +303,7 @@
                             {% else %}
                                 <div class="text-center py-4">
                                     <i class="fas fa-exchange-alt fa-3x text-muted mb-3"></i>
-                                    <p class="text-muted">لا توجد تحوي{% trans "No" %}ت</p>
+                                    <p class="text-muted">{% trans "No bank transfers" %}</p>
                                 </div>
                             {% endif %}
                         </div>
@@ -319,7 +319,7 @@
                         <div class="card-header">
                             <h5 class="mb-0">
                                 <i class="fas fa-sticky-note me-2"></i>
-                                ملاحظات
+                                {% trans "Notes" %}
                             </h5>
                         </div>
                         <div class="card-body">
