@@ -1084,14 +1084,14 @@ class PrintDesignView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         return redirect('settings:index')
     
     def get_context_data(self, **kwargs):
-        from .models import DocumentPrintSettings
-        
+        from .models import DocumentPrintSettings, CompanySettings
+
         context = super().get_context_data(**kwargs)
-        
+
         # الحصول على جميع إعدادات الطباعة
         print_settings = DocumentPrintSettings.objects.filter(is_active=True).order_by('document_name_ar')
         context['print_settings'] = print_settings
-        
+
         # قائمة المستندات المتاحة للإضافة
         document_types = [
             {'key': 'invoice', 'name_ar': _('فاتورة مبيعات'), 'name_en': _('Sales Invoice')},
