@@ -327,7 +327,8 @@
         :root {
             --sidebar-active-bg: rgba(255,255,255,0.18);
             --sidebar-active-text: #ffffff;
-            --sidebar-active-border: #22d3ee; /* cyan accent */
+            --sidebar-active-border: #16a34a; /* green accent for better visibility */
+            --sidebar-active-check-size: 1.1rem; /* adjustable checkmark size */
         }
 
         .sidebar .nav-link.active {
@@ -366,7 +367,7 @@
         .sidebar .nav-link.active::after {
             content: "✓";
             color: var(--sidebar-active-border);
-            font-size: 0.95rem;
+            font-size: var(--sidebar-active-check-size);
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
