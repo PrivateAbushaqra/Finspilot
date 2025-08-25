@@ -68,14 +68,14 @@
         <div>
             <h1 class="h3 mb-0">
                 <i class="fas fa-list text-primary me-2"></i>
-                حركات الحساب البنكي
+                {% trans "Bank Account Transactions" %}
             </h1>
             <nav aria-label="breadcrumb" class="mt-2">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">{% trans "Dashboard" %}</a></li>
-                    <li class="breadcrumb-item"><a href="{% url 'banks:account_list' %}">الحسابات البنكية</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'banks:account_list' %}">{% trans "Bank Accounts" %}</a></li>
                     <li class="breadcrumb-item"><a href="{% url 'banks:account_detail' account.pk %}">{{ account.name }}</a></li>
-                    <li class="breadcrumb-item active">الحركات</li>
+                    <li class="breadcrumb-item active">{% trans "Transactions" %}</li>
                 </ol>
             </nav>
         </div>
@@ -87,7 +87,7 @@
             {% if delete_mode and can_delete_account %}
             <button class="btn btn-danger" id="finalDeleteBtn">
                 <i class="fas fa-trash me-1"></i>
-                {% trans "Delete" %} الحساب نهائياً
+                {% trans "Delete Account Permanently" %}
             </button>
             {% endif %}
         </div>
@@ -106,9 +106,11 @@
     {% if delete_mode %}
     <!-- Delete Mode Warning -->
     <div class="delete-warning">
-        <h4><i class="fas fa-exclamation-triangle me-2"></i>وضع {% trans "Delete" %} الحساب</h4>
-        <p class="mb-2">ل{% trans "Delete" %} الحساب البنكي "{{ account.name }}"، يجب إزالة جميع الحركات المالية المرتبطة به أو{% trans "No" %}ً.</p>
-        <p class="mb-0"><strong>عدد الحركات المتبقية: {{ transactions_count }}</strong></p>
+        <h4><i class="fas fa-exclamation-triangle me-2"></i>{% trans "Account Deletion Mode" %}</h4>
+        <p class="mb-2">
+            {% blocktrans with acc=account.name %}To delete the bank account "{{ acc }}", you must remove all related financial transactions first.{% endblocktrans %}
+        </p>
+        <p class="mb-0"><strong>{% trans "Remaining Transactions" %}: {{ transactions_count }}</strong></p>
     </div>
     {% endif %}
 
@@ -120,11 +122,11 @@
                 <p class="mb-0">{{ account.bank_name }} - {{ account.account_number }}</p>
             </div>
             <div class="col-md-3 text-center">
-                <div class="mb-1">ال{% trans "Balance" %} الحالي</div>
+                <div class="mb-1">{% trans "Current Balance" %}</div>
                 <h3 class="mb-0" id="currentBalance">{{ account.balance|floatformat:3 }} {% get_currency_symbol %}</h3>
             </div>
             <div class="col-md-3 text-center">
-                <div class="mb-1">عدد الحركات</div>
+                <div class="mb-1">{% trans "Transactions Count" %}</div>
                 <h3 class="mb-0" id="transactionsCount">{{ transactions_count }}</h3>
             </div>
         </div>
@@ -136,7 +138,7 @@
         <div class="card-header">
             <h5 class="mb-0">
                 <i class="fas fa-exchange-alt me-2"></i>
-                الحركات المالية
+                {% trans "Financial Transactions" %}
             </h5>
         </div>
         <div class="card-body">
@@ -164,11 +166,11 @@
                     <div class="col-md-4">
                         <p class="mb-1">{{ transaction.description|truncatechars:60 }}</p>
                         {% if transaction.reference_number %}
-                        <small class="text-muted">مرجع: {{ transaction.reference_number }}</small>
+                        <small class="text-muted">{% trans "Reference" %}: {{ transaction.reference_number }}</small>
                         {% endif %}
                     </div>
                     <div class="col-md-2">
-                        <small class="text-muted">بواسطة: {{ transaction.created_by.username }}</small><br>
+                        <small class="text-muted">{% trans "By" %}: {{ transaction.created_by.username }}</small><br>
                         <small class="text-muted">{{ transaction.created_at|date:"Y/m/d H:i" }}</small>
                     </div>
                     <div class="col-md-1 text-end">
@@ -177,7 +179,7 @@
                                 data-transaction-type="{{ transaction.get_transaction_type_display }}"
                                 data-transaction-amount="{{ transaction.amount }}"
                                 data-transaction-date="{{ transaction.date }}"
-                                title="{% trans "Delete" %} المعاملة">
+                                title="{% trans "Delete Transaction" %}">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -191,10 +193,10 @@
     <div class="card">
         <div class="card-body text-center py-5">
             <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-            <h5>لا توجد حركات مالية</h5>
-            <p class="text-muted">لا توجد حركات مالية مرتبطة بهذا الحساب البنكي.</p>
+            <h5>{% trans "No financial transactions" %}</h5>
+            <p class="text-muted">{% trans "No financial transactions are associated with this bank account." %}</p>
             {% if delete_mode %}
-            <p class="text-success"><i class="fas fa-check me-1"></i>يمكن الآن {% trans "Delete" %} الحساب البنكي!</p>
+            <p class="text-success"><i class="fas fa-check me-1"></i>{% trans "You can now delete the bank account!" %}</p>
             {% endif %}
         </div>
     </div>
@@ -206,15 +208,15 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">{% trans "Confirmation" %} {% trans "Delete" %} المعاملة</h5>
+                <h5 class="modal-title">{% trans "Delete Transaction Confirmation" %}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-warning">
                     <i class="fas fa-exclamation-triangle me-2"></i>
-                    <strong>{% trans "Warning" %}:</strong> سيتم إعادة ضبط {% trans "Balance" %} الحساب تلقائياً عند {% trans "Delete" %} هذه المعاملة.
+                    <strong>{% trans "Warning" %}:</strong> {% trans "The account balance will be recalculated automatically when deleting this transaction." %}
                 </div>
-                <p>هل أنت متأكد من {% trans "Delete" %} المعاملة {% trans "Next" %}ة؟</p>
+                <p>{% trans "Are you sure you want to delete this transaction?" %}</p>
                 <div class="border rounded p-3 bg-light">
                     <strong>{% trans "Type" %}:</strong> <span id="modalTransactionType"></span><br>
                     <strong>{% trans "Amount" %}:</strong> <span id="modalTransactionAmount"></span><br>
@@ -222,10 +224,10 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
                 <button type="button" class="btn btn-danger" id="confirmDeleteTransaction">
                     <i class="fas fa-trash me-1"></i>
-                    {% trans "Delete" %} المعاملة
+                    {% trans "Delete Transaction" %}
                 </button>
             </div>
         </div>
@@ -237,19 +239,19 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">{% trans "Delete" %} الحساب البنكي نهائياً</h5>
+                <h5 class="modal-title">{% trans "Permanently delete bank account" %}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-danger">
                     <i class="fas fa-exclamation-triangle me-2"></i>
-                    <strong>{% trans "Warning" %}:</strong> هذا الإجراء لا يمكن التراجع عنه!
+                    <strong>{% trans "Warning" %}:</strong> {% trans "This action cannot be undone!" %}
                 </div>
-                <p>هل أنت متأكد من {% trans "Delete" %} الحساب البنكي "{{ account.name }}" نهائياً؟</p>
-                <p class="text-muted">سيتم فقدان جميع البيانات المرتبطة بهذا الحساب.</p>
+                <p>{% blocktrans with acc=account.name %}Are you sure you want to delete the bank account "{{ acc }}" permanently?{% endblocktrans %}</p>
+                <p class="text-muted">{% trans "All data associated with this account will be lost." %}</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
                 <form method="post" action="{% url 'banks:account_force_delete' account.pk %}" style="display: inline;">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-danger">
@@ -329,12 +331,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 deleteTransactionModal.hide();
             } else {
-                showAlert('danger', data.error || 'حدث {% trans "Error" %} أثناء {% trans "Delete" %} المعاملة');
+                showAlert('danger', data.error || '{% trans "An error occurred while deleting the transaction" %}');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            showAlert('danger', 'حدث {% trans "Error" %} في ا{% trans "No" %}تصال');
+            showAlert('danger', '{% trans "A network error occurred" %}');
         });
     });
     
