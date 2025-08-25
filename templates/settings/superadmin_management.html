@@ -24,14 +24,14 @@
         </div>
     </div>
 
-    <!-- روابط سريعة لإعدادات النظام -->
+    <!-- Quick links to system settings -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card border-info">
                 <div class="card-header bg-info text-white">
                     <h5 class="mb-0">
                         <i class="fas fa-link me-2"></i>
-                        {% trans "إعدادات النظام المتقدمة" %}
+                        {% trans "Advanced System Settings" %}
                     </h5>
                 </div>
                 <div class="card-body">
@@ -39,19 +39,19 @@
                         <div class="col-md-4 mb-2">
                             <a href="{% url 'settings:document_print_settings' %}" class="btn btn-outline-primary btn-sm w-100">
                                 <i class="fas fa-print me-2"></i>
-                                {% trans "إعدادات طباعة المستندات" %}
+                                {% trans "Document Print Settings" %}
                             </a>
                         </div>
                         <div class="col-md-4 mb-2">
                             <a href="{% url 'settings:currency_list' %}" class="btn btn-outline-success btn-sm w-100">
                                 <i class="fas fa-coins me-2"></i>
-                                {% trans "إدارة العملات" %}
+                                {% trans "Currency Management" %}
                             </a>
                         </div>
                         <div class="col-md-4 mb-2">
                             <a href="{% url 'backup:backup_restore' %}" class="btn btn-outline-warning btn-sm w-100">
                                 <i class="fas fa-database me-2"></i>
-                                {% trans "نسخ احتياطي واستعادة" %}
+                                {% trans "Backup and Restore" %}
                             </a>
                         </div>
                     </div>
@@ -64,7 +64,7 @@
         {% csrf_token %}
         
         <div class="row">
-            <!-- {% trans "Settings" %} واجهة النظام -->
+            <!-- System Interface Settings -->
             <div class="col-md-6 mb-4">
                 <div class="card h-100">
                     <div class="card-header bg-info text-white">
@@ -74,7 +74,7 @@
                         </h5>
                     </div>
                     <div class="card-body">
-                        <!-- عنوان النظام -->
+                        <!-- System Title -->
                         <div class="mb-3">
                             <label for="system_title" class="form-label">{% trans "System Title" %}</label>
                             <input type="text" class="form-control" id="system_title" name="system_title" 
@@ -82,7 +82,7 @@
                                    required>
                         </div>
 
-                        <!-- {% trans "Address" %} الفرعي -->
+                        <!-- System Subtitle -->
                         <div class="mb-3">
                             <label for="system_subtitle" class="form-label">{% trans "System Subtitle" %}</label>
                             <input type="text" class="form-control" id="system_subtitle" name="system_subtitle" 
@@ -105,7 +105,7 @@
                             {% endif %}
                         </div>
 
-                        <!-- صورة الخلفية -->
+                        <!-- Background image -->
                         <div class="mb-3">
                             <label for="background_image" class="form-label">{% trans "Background Image" %}</label>
                             <input type="file" class="form-control" id="background_image" name="background_image" 
@@ -120,7 +120,7 @@
                             {% endif %}
                         </div>
 
-                        <!-- شفافية الخلفية -->
+                        <!-- Background opacity -->
                         <div class="mb-3">
                             <label for="background_opacity" class="form-label">
                                 {% trans "Background Opacity" %}: <span id="opacityValue">{{ superadmin_settings.background_opacity|default:'0.8' }}</span>
@@ -132,7 +132,7 @@
                             <div class="form-text">{% trans "Background transparency level (0.1 = very transparent, 1.0 = opaque)" %}</div>
                         </div>
 
-                        <!-- إظهار {% trans "Information" %} الشركة -->
+                        <!-- Show company information -->
                         <div class="mb-3">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" id="show_company_info" 
@@ -147,7 +147,7 @@
                 </div>
             </div>
 
-            <!-- {% trans "Settings" %} الألوان -->
+            <!-- Color Settings -->
             <div class="col-md-6 mb-4">
                 <div class="card h-100">
                     <div class="card-header bg-warning text-dark">
@@ -157,7 +157,7 @@
                         </h5>
                     </div>
                     <div class="card-body">
-                        <!-- اللون الأساسي -->
+                        <!-- Primary color -->
                         <div class="mb-3">
                             <label for="primary_color" class="form-label">{% trans "Primary Color" %}</label>
                             <div class="input-group">
@@ -170,7 +170,7 @@
                             </div>
                         </div>
 
-                        <!-- اللون الثانوي -->
+                        <!-- Secondary color -->
                         <div class="mb-3">
                             <label for="secondary_color" class="form-label">{% trans "Secondary Color" %}</label>
                             <div class="input-group">
@@ -183,7 +183,7 @@
                             </div>
                         </div>
 
-                        <!-- لون التمييز -->
+                        <!-- Accent color -->
                         <div class="mb-3">
                             <label for="accent_color" class="form-label">{% trans "Accent Color" %}</label>
                             <div class="input-group">
@@ -196,7 +196,7 @@
                             </div>
                         </div>
 
-                        <!-- معاينة الألوان -->
+                        <!-- Colors preview -->
                         <div class="mb-3">
                             <label class="form-label">{% trans "Color Preview" %}</label>
                             <div class="d-flex gap-2 flex-wrap">
@@ -219,7 +219,7 @@
             </div>
         </div>
 
-        <!-- {% trans "Settings" %} الشركة المحسنة -->
+    <!-- Enhanced company settings -->
         <div class="row">
             <div class="col-12 mb-4">
                 <div class="card">
@@ -231,7 +231,7 @@
                     </div>
                     <div class="card-body">
                         <div class="row">
-                            <!-- {% trans "Information" %} الشركة -->
+                            <!-- Company information -->
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="company_name" class="form-label">{% trans "Company Name" %}</label>
@@ -264,7 +264,7 @@
                                            value="{{ company_settings.website|default:'' }}">
                                 </div>
 
-                                <!-- شعار الشركة لل{% trans "Print" %} -->
+                                <!-- Company logo for printing -->
                                 <div class="mb-3">
                                     <label for="company_logo" class="form-label">{% trans "Company Logo (Printing)" %}</label>
                                     <input type="file" class="form-control" id="company_logo" name="company_logo" 
@@ -285,7 +285,7 @@
             </div>
         </div>
 
-        <!-- {% trans "Information" %} النظام -->
+    <!-- System information -->
         {% if superadmin_settings.last_updated %}
         <div class="row mb-4">
             <div class="col-12">
@@ -316,7 +316,7 @@
         </div>
         {% endif %}
 
-        <!-- {% trans "Settings" %} الأمان والجلسة -->
+    <!-- Security & Session Settings -->
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card border-danger">
@@ -384,7 +384,7 @@
             </div>
         </div>
 
-        <!-- أزرار التحكم -->
+    <!-- Action buttons -->
         <div class="row">
             <div class="col-12 text-center">
                 <button type="submit" class="btn btn-primary btn-lg me-3">
@@ -402,7 +402,7 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // تحديث معاينة الألوان في {% trans "Time" %} الفعلي
+    // Live update for color previews
     const colorInputs = [
         { input: 'primary_color', preview: 'primaryPreview', text: 'primary_color' },
         { input: 'secondary_color', preview: 'secondaryPreview', text: 'secondary_color' },
@@ -420,7 +420,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // {% trans "Confirmation" %} قبل ال{% trans "Save" %}
+    // Confirmation before save
     document.getElementById('superadminForm').addEventListener('submit', function(e) {
         const message = '{% trans "Are you sure you want to save these settings? This will affect the entire system appearance." %}';
         if (!confirm(message)) {

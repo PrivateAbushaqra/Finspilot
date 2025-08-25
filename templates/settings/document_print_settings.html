@@ -503,6 +503,17 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- Document types data as JSON to avoid mixing Django tags inside JS logic -->
+<script id="documentTypesData" type="application/json">
+{
+{% for doc_type in document_types %}
+    "{{ doc_type.key }}": {
+        "ar": "{{ doc_type.name_ar|escapejs }}",
+        "en": "{{ doc_type.name_en|escapejs }}"
+    }{% if not forloop.last %},{% endif %}
+{% endfor %}
+}
+</script>
 <script>
 function toggleDocument(documentType) {
     const content = document.getElementById('content-' + documentType);
@@ -1212,15 +1223,17 @@ document.addEventListener('DOMContentLoaded', function() {
         
     }, 500);
     
-    // استخدام البيانات من الخادم بدلاً من الترجمات الثابتة
-    const documentTypesData = {};
-    
-    {% for doc_type in document_types %}
-    documentTypesData['{{ doc_type.key }}'] = {
-        'ar': '{{ doc_type.name_ar|escapejs }}',
-        'en': '{{ doc_type.name_en|escapejs }}'
-    };
-    {% endfor %}
+    // استخدام JSON محمّل مسبقاً بدلاً من وسوم القوالب داخل سكربت JS
+    let documentTypesData = {};
+    try {
+        const el = document.getElementById('documentTypesData');
+        if (el) {
+            documentTypesData = JSON.parse(el.textContent || '{}');
+        }
+    } catch (e) {
+        console.warn('Failed to parse documentTypesData JSON', e);
+        documentTypesData = {};
+    }
     
     const typeSelect = document.querySelector('select[name="document_type"]');
     if (typeSelect) {

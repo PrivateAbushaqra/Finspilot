@@ -310,7 +310,7 @@ function previewDocument() {
         // البحث عن النموذج الحالي
         const currentForm = document.querySelector('form');
         if (!currentForm) {
-            alert('{% trans "يرجى تحديد مستند للمعاينة" %}');
+            alert('{% trans "Please select a document to preview" %}');
             return;
         }
         
@@ -323,7 +323,7 @@ function previewDocument() {
         console.log('Collected form values:', { documentType, documentNameAr, documentNameEn });
         
         if (!documentType || !documentNameAr || !documentNameEn) {
-            alert('{% trans "يرجى ملء البيانات الأساسية للمستند" %}');
+            alert('{% trans "Please fill in the basic document information" %}');
             return;
         }
         
@@ -366,7 +366,7 @@ function previewDocument() {
             <html dir="rtl">
             <head>
                 <meta charset="UTF-8">
-                <title>{% trans "معاينة المستند" %} - ${documentNameAr}</title>
+                <title>{% trans "Document Preview" %} - ${documentNameAr}</title>
                 <style>
                     body {
                         font-family: 'Arial', sans-serif;
@@ -417,13 +417,13 @@ function previewDocument() {
                     <div style="text-align: center; margin: 30px 0;">
                         <h2>${documentNameAr}</h2>
                         <p style="color: #666;">${documentNameEn}</p>
-                        <p><strong>{% trans "نوع المستند" %}:</strong> ${documentType}</p>
-                        <p><strong>{% trans "حجم الورق" %}:</strong> ${paperSize}</p>
+                        <p><strong>{% trans "Document Type" %}:</strong> ${documentType}</p>
+                        <p><strong>{% trans "Paper Size" %}:</strong> ${paperSize}</p>
                     </div>
                     
                     <div style="margin: 40px 0; padding: 20px; border: 1px dashed #ccc;">
                         <p style="text-align: center; color: #999;">
-                            {% trans "محتوى المستند سيظهر هنا" %}
+                            {% trans "Document content will appear here" %}
                         </p>
                     </div>
                     
