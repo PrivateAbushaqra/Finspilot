@@ -1077,10 +1077,10 @@
                 activeLink.classList.add('active');
                 
                 // Find the parent menu and submenu containing this link
-                const parentCollapse = activeLink.closest('.collapse');
-                if (parentCollapse) {
+                const parentCollapse = activeLink.closest('.collapse[id]');
+                if (parentCollapse && parentCollapse.id) {
                     // Close all other menus to ensure only one stays open
-                    document.querySelectorAll('.sidebar .collapse').forEach(c => {
+                    document.querySelectorAll('.sidebar .collapse[id]').forEach(c => {
                         if (c !== parentCollapse) {
                             c.classList.remove('show');
                             try {
@@ -1094,6 +1094,10 @@
                     // Open the submenu
                     const bsCollapse = new bootstrap.Collapse(parentCollapse, {show: true});
                     bsCollapse.show();
+                    parentCollapse.classList.add('show');
+                    // Update toggler aria-expanded
+                    const toggler = document.querySelector('.sidebar a[data-bs-toggle="collapse"][href="#' + parentCollapse.id + '"]');
+                    if (toggler) toggler.setAttribute('aria-expanded', 'true');
                     
                     // Highlight the parent menu
                     const mainNavItem = parentCollapse.closest('.nav-item');
@@ -1115,24 +1119,29 @@
 
         // Restore submenu open state on load (only if no active link was matched)
         if (!activeParentId) {
-            const initialCollapses = document.querySelectorAll('.sidebar .collapse');
+            const initialCollapses = document.querySelectorAll('.sidebar .collapse[id]');
             initialCollapses.forEach(col => {
                 const saved = localStorage.getItem('sidebar_' + col.id);
                 if (saved === 'open') {
-                    col.classList.add('show');
+            col.classList.add('show');
+            // Ensure toggler reflects expanded state
+            const toggler = document.querySelector('.sidebar a[data-bs-toggle="collapse"][href="#' + col.id + '"]');
+            if (toggler) toggler.setAttribute('aria-expanded', 'true');
                 } else {
-                    col.classList.remove('show');
+            col.classList.remove('show');
+            const toggler = document.querySelector('.sidebar a[data-bs-toggle="collapse"][href="#' + col.id + '"]');
+            if (toggler) toggler.setAttribute('aria-expanded', 'false');
                 }
             });
         }
 
         // When clicking any leaf link, persist its parent menu as open
-        const leafLinks = document.querySelectorAll('.sidebar .nav-link[href]:not([data-bs-toggle])');
+    const leafLinks = document.querySelectorAll('.sidebar .nav-link[href]:not([data-bs-toggle])');
         leafLinks.forEach(a => {
             a.addEventListener('click', function() {
-                const parentCol = this.closest('.collapse');
+        const parentCol = this.closest('.collapse[id]');
                 // Close all others in localStorage so only one remains open
-                document.querySelectorAll('.sidebar .collapse').forEach(c => {
+        document.querySelectorAll('.sidebar .collapse[id]').forEach(c => {
                     if (c !== parentCol && c.id) {
                         localStorage.setItem('sidebar_' + c.id, 'closed');
                     }
