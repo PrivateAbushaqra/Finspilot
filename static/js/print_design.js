@@ -7,6 +7,94 @@ let draggedElement = null;
 let currentSettings = {};
 let isResizing = false;
 
+// Lightweight i18n for this static file
+const __docLang = (typeof document !== 'undefined' && document.documentElement && (document.documentElement.lang || 'en')).toLowerCase();
+const __isAr = __docLang.startsWith('ar');
+const __langPrefix = '/' + (__docLang.split('-')[0] || 'en');
+const __T = {
+    ar: {
+        company_name: 'اسم الشركة',
+        logo: 'الشعار',
+        date: 'التاريخ',
+        page_number: 'رقم الصفحة',
+        custom_text: 'نص مخصص',
+        cancel: 'إلغاء',
+        header: 'الرأس',
+        footer: 'التذييل',
+        left: 'يسار',
+        center: 'وسط',
+        right: 'يمين',
+        page: 'صفحة',
+        confirm_delete: 'هل أنت متأكد من حذف إعدادات طباعة "{name}"؟',
+        err_create: 'حدث خطأ في إنشاء المستند',
+        err_unknown: 'خطأ غير معروف',
+        err_delete: 'حدث خطأ في حذف المستند',
+        text_label: 'النص',
+        font_size: 'حجم الخط',
+    xsmall: 'صغير جداً',
+    small: 'صغير',
+    medium: 'متوسط',
+    large: 'كبير',
+    xlarge: 'كبير جداً',
+    xxlarge: 'ضخم',
+        text_align: 'محاذاة النص',
+        color: 'لون النص',
+        logo_size: 'حجم الشعار',
+    logo_align: 'محاذاة الشعار',
+    edit: 'تعديل',
+    delete: 'حذف',
+    confirm_remove_element: 'هل أنت متأكد من حذف هذا العنصر؟',
+    no_document_to_save: 'لا يوجد مستند محدد للحفظ',
+    save_ok: 'تم حفظ التصميم بنجاح',
+    save_err: 'حدث خطأ في حفظ التصميم',
+    select_document_first: 'يرجى اختيار مستند أولاً',
+    fill_required: 'يرجى ملء جميع الحقول المطلوبة',
+    no_document_to_export: 'لا يوجد مستند محدد للتصدير'
+    },
+    en: {
+        company_name: 'Company Name',
+        logo: 'Logo',
+        date: 'Date',
+        page_number: 'Page Number',
+        custom_text: 'Custom Text',
+        cancel: 'Cancel',
+        header: 'Header',
+        footer: 'Footer',
+        left: 'Left',
+        center: 'Center',
+        right: 'Right',
+        page: 'Page',
+        confirm_delete: 'Are you sure you want to delete print settings for "{name}"?',
+        err_create: 'An error occurred while creating the document',
+        err_unknown: 'Unknown error',
+        err_delete: 'An error occurred while deleting the document',
+        text_label: 'Text',
+        font_size: 'Font size',
+    xsmall: 'Extra Small',
+        small: 'Small',
+        medium: 'Medium',
+        large: 'Large',
+    xlarge: 'Extra Large',
+    xxlarge: 'Huge',
+        text_align: 'Text alignment',
+        color: 'Text color',
+        logo_size: 'Logo size',
+    logo_align: 'Logo alignment',
+    edit: 'Edit',
+    delete: 'Delete',
+    confirm_remove_element: 'Are you sure you want to delete this element?',
+    no_document_to_save: 'No document selected to save',
+    save_ok: 'Design saved successfully',
+    save_err: 'An error occurred while saving the design',
+    select_document_first: 'Please select a document first',
+    fill_required: 'Please fill in all required fields',
+    no_document_to_export: 'No document selected to export'
+    }
+};
+function tr(key){
+    return (__isAr ? __T.ar : __T.en)[key] || key;
+}
+
 // إعداد الصفحة عند التحميل
 document.addEventListener('DOMContentLoaded', function() {
     initializeDropZones();
@@ -80,11 +168,11 @@ function showElementMenu(zone) {
     menu.style.zIndex = '1000';
     
     const elements = [
-        {type: 'company_name', icon: 'building', text: 'اسم الشركة'},
-        {type: 'logo', icon: 'image', text: 'الشعار'},
-        {type: 'date', icon: 'calendar', text: 'التاريخ'},
-        {type: 'page_number', icon: 'hashtag', text: 'رقم الصفحة'},
-        {type: 'custom_text', icon: 'text-width', text: 'نص مخصص'}
+        {type: 'company_name', icon: 'building', text: tr('company_name')},
+        {type: 'logo', icon: 'image', text: tr('logo')},
+        {type: 'date', icon: 'calendar', text: tr('date')},
+        {type: 'page_number', icon: 'hashtag', text: tr('page_number')},
+        {type: 'custom_text', icon: 'text-width', text: tr('custom_text')}
     ];
     
     elements.forEach(el => {
@@ -103,7 +191,7 @@ function showElementMenu(zone) {
     // إضافة زر إلغاء
     const cancelBtn = document.createElement('button');
     cancelBtn.className = 'btn btn-sm btn-secondary d-block w-100';
-    cancelBtn.innerHTML = 'إلغاء';
+    cancelBtn.innerHTML = tr('cancel');
     cancelBtn.onclick = () => menu.remove();
     menu.appendChild(cancelBtn);
     
@@ -143,7 +231,7 @@ function loadDocument(documentType) {
 
 // تحميل إعدادات المستند من الخادم
 function loadDocumentSettings(documentType) {
-    fetch(`/ar/settings/api/document-settings/${documentType}/`)
+    fetch(`${__langPrefix}/settings/api/document-settings/${documentType}/`)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
@@ -168,7 +256,7 @@ function loadDocumentSettings(documentType) {
             }
         })
         .catch(error => {
-            console.error('خطأ في تحميل إعدادات المستند:', error);
+            console.error('Error loading document settings:', error);
             // إنشاء إعدادات افتراضية
             currentSettings = {
                 document_type: documentType,
@@ -240,8 +328,8 @@ function clearAllDropZones() {
         const zone = document.getElementById(zoneId);
         if (zone) {
             const position = zone.dataset.position;
-            const section = zone.closest('.preview-header') ? 'الرأس' : 'التذييل';
-            const positionText = position === 'left' ? 'يسار' : position === 'center' ? 'وسط' : 'يمين';
+            const section = zone.closest('.preview-header') ? tr('header') : tr('footer');
+            const positionText = position === 'left' ? tr('left') : position === 'center' ? tr('center') : tr('right');
             zone.innerHTML = `<span class="text-muted">${positionText} ${section}</span>`;
         }
     });
@@ -256,22 +344,23 @@ function createDraggableElement(type, content) {
     element.dataset.content = content || '';
     
     let elementContent = '';
+    const dateLocale = __isAr ? 'ar-EG' : 'en-US';
     switch(type) {
         case 'company_name':
-            elementContent = `<i class="fas fa-building me-2"></i>اسم الشركة`;
+            elementContent = `<i class="fas fa-building me-2"></i>${tr('company_name')}`;
             break;
         case 'logo':
-            elementContent = `<i class="fas fa-image me-2"></i>الشعار`;
+            elementContent = `<i class="fas fa-image me-2"></i>${tr('logo')}`;
             break;
         case 'date':
-            elementContent = `<i class="fas fa-calendar me-2"></i>${new Date().toLocaleDateString('ar-EG')}`;
+            elementContent = `<i class="fas fa-calendar me-2"></i>${new Date().toLocaleDateString(dateLocale)}`;
             break;
         case 'page_number':
-            elementContent = `<i class="fas fa-hashtag me-2"></i>صفحة 1`;
+            elementContent = `<i class="fas fa-hashtag me-2"></i>${tr('page')} 1`;
             break;
         case 'custom_text':
-            elementContent = content || 'نص مخصص';
-            element.dataset.content = content || 'نص مخصص';
+            elementContent = content || tr('custom_text');
+            element.dataset.content = content || tr('custom_text');
             break;
     }
     
@@ -322,28 +411,28 @@ function showElementProperties(element) {
         case 'custom_text':
             propertiesHTML = `
                 <div class="mb-3">
-                    <label class="form-label">النص</label>
-                    <textarea class="form-control" rows="3" onchange="updateElementContent(this.value)" oninput="updateElementContent(this.value)">${content || 'نص مخصص'}</textarea>
+                    <label class="form-label">${tr('text_label')}</label>
+                    <textarea class="form-control" rows="3" onchange="updateElementContent(this.value)" oninput="updateElementContent(this.value)">${content || tr('custom_text')}</textarea>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">حجم الخط</label>
+                    <label class="form-label">${tr('font_size')}</label>
                     <select class="form-select" onchange="updateElementStyle('fontSize', this.value)">
-                        <option value="12px">صغير</option>
-                        <option value="14px" selected>متوسط</option>
-                        <option value="16px">كبير</option>
-                        <option value="18px">كبير جداً</option>
+                        <option value="12px">${tr('small')}</option>
+                        <option value="14px" selected>${tr('medium')}</option>
+                        <option value="16px">${tr('large')}</option>
+                        <option value="18px">${tr('xlarge')}</option>
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">محاذاة النص</label>
+                    <label class="form-label">${tr('text_align')}</label>
                     <select class="form-select" onchange="updateElementStyle('textAlign', this.value)">
-                        <option value="right">يمين</option>
-                        <option value="center">وسط</option>
-                        <option value="left">يسار</option>
+                        <option value="right">${tr('right')}</option>
+                        <option value="center">${tr('center')}</option>
+                        <option value="left">${tr('left')}</option>
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">لون النص</label>
+                    <label class="form-label">${tr('color')}</label>
                     <input type="color" class="form-control form-control-color" value="#000000" onchange="updateElementStyle('color', this.value)">
                 </div>
             `;
@@ -351,21 +440,21 @@ function showElementProperties(element) {
         case 'logo':
             propertiesHTML = `
                 <div class="mb-3">
-                    <label class="form-label">حجم الشعار</label>
+                    <label class="form-label">${tr('logo_size')}</label>
                     <select class="form-select" onchange="updateElementStyle('width', this.value)">
-                        <option value="60px">صغير جداً</option>
-                        <option value="80px">صغير</option>
-                        <option value="120px" selected>متوسط</option>
-                        <option value="160px">كبير</option>
-                        <option value="200px">كبير جداً</option>
+                        <option value="60px">${tr('xsmall')}</option>
+                        <option value="80px">${tr('small')}</option>
+                        <option value="120px" selected>${tr('medium')}</option>
+                        <option value="160px">${tr('large')}</option>
+                        <option value="200px">${tr('xlarge')}</option>
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">محاذاة الشعار</label>
+                    <label class="form-label">${tr('logo_align')}</label>
                     <select class="form-select" onchange="updateElementStyle('textAlign', this.value)">
-                        <option value="right">يمين</option>
-                        <option value="center" selected>وسط</option>
-                        <option value="left">يسار</option>
+                        <option value="right">${tr('right')}</option>
+                        <option value="center" selected>${tr('center')}</option>
+                        <option value="left">${tr('left')}</option>
                     </select>
                 </div>
             `;
@@ -373,20 +462,20 @@ function showElementProperties(element) {
         default:
             propertiesHTML = `
                 <div class="mb-3">
-                    <label class="form-label">حجم الخط</label>
+                    <label class="form-label">${tr('font_size')}</label>
                     <select class="form-select" onchange="updateElementStyle('fontSize', this.value)">
-                        <option value="12px">صغير</option>
-                        <option value="14px" selected>متوسط</option>
-                        <option value="16px">كبير</option>
-                        <option value="18px">كبير جداً</option>
+                        <option value="12px">${tr('small')}</option>
+                        <option value="14px" selected>${tr('medium')}</option>
+                        <option value="16px">${tr('large')}</option>
+                        <option value="18px">${tr('xlarge')}</option>
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">محاذاة النص</label>
+                    <label class="form-label">${tr('text_align')}</label>
                     <select class="form-select" onchange="updateElementStyle('textAlign', this.value)">
-                        <option value="right">يمين</option>
-                        <option value="center">وسط</option>
-                        <option value="left">يسار</option>
+                        <option value="right">${tr('right')}</option>
+                        <option value="center">${tr('center')}</option>
+                        <option value="left">${tr('left')}</option>
                     </select>
                 </div>
             `;
@@ -432,10 +521,10 @@ function addElementControls(element) {
     const controls = document.createElement('div');
     controls.className = 'element-controls';
     controls.innerHTML = `
-        <button class="control-btn bg-warning text-dark" onclick="editElement(this.parentElement.parentElement)" title="تعديل">
+        <button class="control-btn bg-warning text-dark" onclick="editElement(this.parentElement.parentElement)" title="${tr('edit')}">
             <i class="fas fa-edit"></i>
         </button>
-        <button class="control-btn bg-danger text-white" onclick="removeElement(this.parentElement.parentElement)" title="حذف">
+        <button class="control-btn bg-danger text-white" onclick="removeElement(this.parentElement.parentElement)" title="${tr('delete')}">
             <i class="fas fa-times"></i>
         </button>
     `;
@@ -450,15 +539,15 @@ function addElementControls(element) {
 
 // حذف عنصر
 function removeElement(element) {
-    if (confirm('هل أنت متأكد من حذف هذا العنصر؟')) {
+    if (confirm(tr('confirm_remove_element'))) {
         const parent = element.parentElement;
         element.remove();
         
         // إعادة النص الافتراضي للمنطقة
         if (parent.children.length === 0) {
             const position = parent.dataset.position;
-            const section = parent.closest('.preview-header') ? 'الرأس' : 'التذييل';
-            const positionText = position === 'left' ? 'يسار' : position === 'center' ? 'وسط' : 'يمين';
+            const section = parent.closest('.preview-header') ? tr('header') : tr('footer');
+            const positionText = position === 'left' ? tr('left') : position === 'center' ? tr('center') : tr('right');
             parent.innerHTML = `<span class="text-muted">${positionText} ${section}</span>`;
         }
         
@@ -526,7 +615,7 @@ function setPaperOrientation(orientation) {
 // حفظ التصميم الحالي
 function saveCurrentDesign() {
     if (!currentDocument) {
-        alert('لا يوجد مستند محدد للحفظ');
+        alert(tr('no_document_to_save'));
         return;
     }
     
@@ -555,7 +644,7 @@ function saveCurrentDesign() {
     };
     
     // إرسال البيانات للخادم
-    fetch('/ar/settings/print-design/', {
+    fetch(`${__langPrefix}/settings/print-design/`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -566,14 +655,14 @@ function saveCurrentDesign() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('تم حفظ التصميم بنجاح');
+            alert(tr('save_ok'));
         } else {
-            alert('حدث خطأ في حفظ التصميم: ' + (data.error || 'خطأ غير معروف'));
+            alert(tr('save_err') + ': ' + (data.error || tr('err_unknown')));
         }
     })
     .catch(error => {
-        console.error('خطأ في حفظ التصميم:', error);
-        alert('حدث خطأ في حفظ التصميم');
+        console.error('Save design error:', error);
+        alert(tr('save_err'));
     });
 }
 
@@ -591,7 +680,7 @@ function getLogoPosition() {
 // إضافة عنصر جديد من اللوحة
 function addElement(type) {
     if (!currentDocument) {
-        alert('يرجى اختيار مستند أولاً');
+        alert(tr('select_document_first'));
         return;
     }
     
@@ -629,7 +718,7 @@ function createDocument() {
     const paperSize = document.getElementById('newPaperSize').value;
     
     if (!type || !nameAr || !nameEn) {
-        alert('يرجى ملء جميع الحقول المطلوبة');
+        alert(tr('fill_required'));
         return;
     }
     
@@ -644,7 +733,7 @@ function createDocument() {
         margins: 20
     };
     
-    fetch('/ar/settings/print-design/', {
+    fetch(`${__langPrefix}/settings/print-design/`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -657,12 +746,12 @@ function createDocument() {
         if (data.success) {
             location.reload();
         } else {
-            alert('حدث خطأ في إنشاء المستند: ' + (data.error || 'خطأ غير معروف'));
+            alert(tr('err_create') + ': ' + (data.error || tr('err_unknown')));
         }
     })
     .catch(error => {
-        console.error('خطأ في إنشاء المستند:', error);
-        alert('حدث خطأ في إنشاء المستند');
+        console.error('Create document error:', error);
+        alert(tr('err_create'));
     });
 }
 
@@ -670,8 +759,8 @@ function createDocument() {
 function deleteDocument(event, documentId, documentName) {
     event.stopPropagation();
     
-    if (confirm(`هل أنت متأكد من حذف إعدادات طباعة "${documentName}"؟`)) {
-        fetch('/ar/settings/print-design/', {
+    if (confirm(tr('confirm_delete').replace('{name}', documentName))) {
+    fetch(`${__langPrefix}/settings/print-design/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
@@ -687,12 +776,12 @@ function deleteDocument(event, documentId, documentName) {
             if (data.success) {
                 location.reload();
             } else {
-                alert('حدث خطأ في حذف المستند: ' + (data.error || 'خطأ غير معروف'));
+                alert(tr('err_delete') + ': ' + (data.error || tr('err_unknown')));
             }
         })
         .catch(error => {
-            console.error('خطأ في حذف المستند:', error);
-            alert('حدث خطأ في حذف المستند');
+            console.error('Delete document error:', error);
+            alert(tr('err_delete'));
         });
     }
 }
@@ -766,7 +855,7 @@ function getCookie(name) {
 // تصدير البيانات (للاستخدام المستقبلي)
 function exportDesign() {
     if (!currentDocument) {
-        alert('لا يوجد مستند محدد للتصدير');
+        alert(tr('no_document_to_export'));
         return;
     }
     

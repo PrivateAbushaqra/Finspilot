@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load static %}
 
-{% block title %}{% trans "إدارة تصميم الطباعة" %}{% endblock %}
+{% block title %}{% trans "Print Design Management" %}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -287,14 +287,14 @@
                     <div>
                         <h1 class="h3 mb-0">
                             <i class="fas fa-paint-brush me-2 text-primary"></i>
-                            {% trans "تصميم صفحات الطباعة" %}
+                            {% trans "Print Pages Design" %}
                         </h1>
-                        <p class="text-muted mt-1">{% trans "تصميم وتخصيص صفحات الطباعة للمستندات" %}</p>
+                        <p class="text-muted mt-1">{% trans "Design and customize the print pages for your documents" %}</p>
                     </div>
                     <div>
                         <button class="btn btn-primary" onclick="addNewDocument()" id="addDocumentBtn">
                             <i class="fas fa-plus me-2"></i>
-                            {% trans "إضافة مستند جديد" %}
+                            {% trans "Add New Document" %}
                         </button>
                     </div>
                 </div>
@@ -306,20 +306,20 @@
                 <div class="card-header">
                     <h5 class="mb-0">
                         <i class="fas fa-image me-2 text-info"></i>
-                        {% trans "شعار النظام الحالي" %}
+                        {% trans "Current System Logo" %}
                     </h5>
                 </div>
                 <div class="card-body">
                     <div class="row align-items-center">
                         <div class="col-md-2">
-                            <img src="{{ general_settings.logo.url }}" alt="{% trans 'شعار النظام' %}" class="logo-preview">
+                            <img src="{{ general_settings.logo.url }}" alt="{% trans 'System Logo' %}" class="logo-preview">
                         </div>
                         <div class="col-md-10">
-                            <p class="mb-1"><strong>{% trans "ملاحظة:" %}</strong> {% trans "هذا هو الشعار الذي سيتم استخدامه في المستندات المطبوعة" %}</p>
+                            <p class="mb-1"><strong>{% trans "Note:" %}</strong> {% trans "This logo will be used in printed documents" %}</p>
                             <p class="text-muted mb-0">
-                                {% trans "يمكن تغيير الشعار من" %} 
+                                {% trans "You can change the logo from" %} 
                                 <a href="{% url 'settings:superadmin_management' %}" class="text-decoration-none">
-                                    {% trans "إعدادات السوبر أدمين" %}
+                                    {% trans "Super Admin Settings" %}
                                 </a>
                             </p>
                         </div>
@@ -333,7 +333,7 @@
                 <div class="card-header">
                     <h5 class="mb-0">
                         <i class="fas fa-file-alt me-2 text-success"></i>
-                        {% trans "إعدادات طباعة المستندات" %}
+                        {% trans "Document Print Settings" %}
                     </h5>
                 </div>
                 <div class="card-body">
@@ -346,20 +346,31 @@
                                     <div class="col-md-6">
                                         <h6 class="mb-1">
                                             <i class="fas fa-file-alt me-2 text-primary"></i>
-                                            {{ setting.document_name_ar }}
+                                            {% get_current_language as LANGUAGE_CODE %}
+                                            {% if LANGUAGE_CODE == 'en' %}
+                                                {{ setting.document_name_en }}
+                                            {% else %}
+                                                {{ setting.document_name_ar }}
+                                            {% endif %}
                                         </h6>
-                                        <small class="text-muted">{{ setting.document_name_en }}</small>
+                                        <small class="text-muted">
+                                            {% if LANGUAGE_CODE == 'en' %}
+                                                {{ setting.document_name_ar }}
+                                            {% else %}
+                                                {{ setting.document_name_en }}
+                                            {% endif %}
+                                        </small>
                                     </div>
                                     <div class="col-md-3">
                                         <span class="badge bg-info">{{ setting.paper_size }}</span>
                                         {% if setting.show_logo %}
                                             <span class="badge bg-success ms-1">
-                                                <i class="fas fa-image me-1"></i>{% trans "شعار" %}
+                                                <i class="fas fa-image me-1"></i>{% trans "Logo" %}
                                             </span>
                                         {% endif %}
                                     </div>
                                     <div class="col-md-3 text-end">
-                                        <button class="btn btn-sm btn-outline-danger" onclick="deleteDocument({{ setting.id }}, '{{ setting.document_name_ar|escapejs }}')">
+                                        <button type="button" class="btn btn-sm btn-outline-danger js-open-delete" data-doc-id="{{ setting.id }}" data-doc-name-en="{{ setting.document_name_en|escapejs }}" data-doc-name-ar="{{ setting.document_name_ar|escapejs }}">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                         <i class="fas fa-chevron-down ms-2"></i>
@@ -456,20 +467,20 @@
     </div>
 </div>
 
-<!-- Modal للحذف -->
+<!-- Delete Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title text-danger">
                     <i class="fas fa-exclamation-triangle me-2"></i>
-                    {% trans "تأكيد الحذف" %}
+                    {% trans "Delete Confirmation" %}
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p>{% trans "هل أنت متأكد من حذف إعدادات الطباعة لـ" %} <strong id="documentToDelete"></strong>؟</p>
-                <p class="text-muted">{% trans "لا يمكن التراجع عن هذا الإجراء" %}</p>
+                <p>{% trans "Are you sure you want to delete the print settings for" %} <strong id="documentToDelete"></strong>?</p>
+                <p class="text-muted">{% trans "This action cannot be undone" %}</p>
             </div>
             <div class="modal-footer">
                 <form method="post">
@@ -477,11 +488,11 @@
                     <input type="hidden" name="action" value="delete_settings">
                     <input type="hidden" name="document_id" id="documentIdToDelete">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        {% trans "إلغاء" %}
+                        {% trans "Cancel" %}
                     </button>
                     <button type="submit" class="btn btn-danger">
                         <i class="fas fa-trash me-2"></i>
-                        {% trans "حذف" %}
+                        {% trans "Delete" %}
                     </button>
                 </form>
             </div>
@@ -590,13 +601,13 @@ function previewDocument() {
                     return;
                 }
             } else {
-                alert('{% trans "يرجى إنشاء أو تحديد مستند أولاً" %}');
+                alert('{% trans "Please create or select a document first" %}');
                 return;
             }
         }
         
         if (!documentType || !documentNameAr || !documentNameEn) {
-            alert('{% trans "يرجى ملء البيانات الأساسية للمستند" %}');
+            alert('{% trans "Please fill in the basic document information" %}');
             return;
         }
         
@@ -1182,6 +1193,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.body.style.overflow = '';
                 document.body.style.paddingRight = '';
             });
+        });
+        
+        // ربط زر الحذف الجديد المعتمد على data-attributes
+        document.addEventListener('click', function(e){
+            const btn = e.target.closest('.js-open-delete');
+            if(!btn) return;
+            e.preventDefault();
+            const id = btn.getAttribute('data-doc-id');
+            const nameEn = btn.getAttribute('data-doc-name-en') || '';
+            const nameAr = btn.getAttribute('data-doc-name-ar') || '';
+            const isAr = (document.documentElement.lang || '').toLowerCase().startsWith('ar');
+            const name = isAr ? nameAr : nameEn;
+            if (typeof deleteDocument === 'function') {
+                deleteDocument(id, name);
+            }
         });
         
     }, 500);
