@@ -36,7 +36,7 @@ def cashbox_list(request):
         'total_balance': total_balance,
         'currencies': currencies,
         'base_currency': base_currency,
-        'page_title': _('الصناديق النقدية'),
+        'page_title': _('Cashboxes'),
     }
     return render(request, 'cashboxes/cashbox_list.html', context)
 
@@ -65,7 +65,7 @@ def cashbox_detail(request, cashbox_id):
         'cashbox': cashbox,
         'transactions': page_obj,
         'currencies': currencies,
-        'page_title': f'{_("تفاصيل الصندوق")} - {cashbox.name}',
+        'page_title': f'{_("Cashbox Details")} - {cashbox.name}',
     }
     return render(request, 'cashboxes/cashbox_detail.html', context)
 
@@ -82,7 +82,7 @@ def cashbox_create(request):
         responsible_user_id = request.POST.get('responsible_user')
         
         if not name:
-            messages.error(request, _('اسم الصندوق مطلوب'))
+            messages.error(request, _('Cashbox name is required'))
             return redirect('cashboxes:cashbox_list')
         
         try:
@@ -103,14 +103,14 @@ def cashbox_create(request):
                         transaction_type='initial_balance',
                         date=timezone.now().date(),
                         amount=Decimal(initial_balance),
-                        description=_('الرصيد الافتتاحي'),
+                        description=_('Opening Balance'),
                         created_by=request.user
                     )
                 
-                messages.success(request, _('تم إنشاء الصندوق بنجاح'))
+                messages.success(request, _('Cashbox created successfully'))
                 return redirect('cashboxes:cashbox_detail', cashbox_id=cashbox.id)
         except Exception as e:
-            messages.error(request, _('حدث خطأ أثناء إنشاء الصندوق'))
+            messages.error(request, _('An error occurred while creating the cashbox'))
     
     return redirect('cashboxes:cashbox_list')
 
@@ -128,7 +128,7 @@ def cashbox_edit(request, cashbox_id):
         responsible_user_id = request.POST.get('responsible_user')
         
         if not name:
-            messages.error(request, _('اسم الصندوق مطلوب'))
+            messages.error(request, _('Cashbox name is required'))
             return redirect('cashboxes:cashbox_detail', cashbox_id=cashbox_id)
         
         try:
@@ -139,10 +139,10 @@ def cashbox_edit(request, cashbox_id):
             cashbox.responsible_user_id = responsible_user_id if responsible_user_id else None
             cashbox.save()
             
-            messages.success(request, _('تم تحديث الصندوق بنجاح'))
+            messages.success(request, _('Cashbox updated successfully'))
             return redirect('cashboxes:cashbox_detail', cashbox_id=cashbox_id)
         except Exception as e:
-            messages.error(request, _('حدث خطأ أثناء تحديث الصندوق'))
+            messages.error(request, _('An error occurred while updating the cashbox'))
     
     return redirect('cashboxes:cashbox_detail', cashbox_id=cashbox_id)
 
@@ -155,7 +155,7 @@ def transfer_create(request):
     try:
         sequence = DocumentSequence.objects.get(document_type='cashbox_transfer')
     except DocumentSequence.DoesNotExist:
-        messages.warning(request, _('تحذير: لم يتم إعداد تسلسل أرقام التحويلات بين الصناديق! يرجى إضافة تسلسل "التحويل بين الصناديق" من صفحة الإعدادات قبل إنشاء أي تحويل.'))
+        messages.warning(request, _('Warning: Cashbox transfer sequence is not set! Please add the "Cashbox Transfer" sequence in Settings before creating any transfer.'))
     
     if request.method == 'POST':
         transfer_type = request.POST.get('transfer_type')
@@ -180,33 +180,33 @@ def transfer_create(request):
         to_bank_id = request.POST.get('to_bank')
         
         if not all([transfer_type, date, amount]):
-            messages.error(request, _('جميع الحقول مطلوبة'))
+            messages.error(request, _('All fields are required'))
             return redirect('cashboxes:transfer_list')
         
         # التحقق من معلومات الإيداع للتحويل من صندوق إلى بنك
         if transfer_type == 'cashbox_to_bank':
             if not deposit_document_number:
-                messages.error(request, _('رقم مستند الإيداع مطلوب للتحويل إلى البنك'))
+                messages.error(request, _('Deposit document number is required for transfers to bank'))
                 return redirect('cashboxes:transfer_list')
             if not deposit_type:
-                messages.error(request, _('نوع الإيداع مطلوب'))
+                messages.error(request, _('Deposit type is required'))
                 return redirect('cashboxes:transfer_list')
             if deposit_type == 'check':
                 if not check_number:
-                    messages.error(request, _('رقم الشيك مطلوب عند اختيار نوع الإيداع "شيك"'))
+                    messages.error(request, _('Check number is required when deposit type is "Check"'))
                     return redirect('cashboxes:transfer_list')
                 if not check_date:
-                    messages.error(request, _('تاريخ الشيك مطلوب'))
+                    messages.error(request, _('Check date is required'))
                     return redirect('cashboxes:transfer_list')
                 if not check_bank_name:
-                    messages.error(request, _('اسم بنك الشيك مطلوب'))
+                    messages.error(request, _('Check bank name is required'))
                     return redirect('cashboxes:transfer_list')
         
         # التحقق من رقم التحويل إذا تم إدخاله
         if transfer_number:
             # التحقق من عدم تكرار الرقم
             if CashboxTransfer.objects.filter(transfer_number=transfer_number).exists():
-                messages.error(request, _('رقم التحويل موجود مسبقاً! يرجى استخدام رقم آخر.'))
+                messages.error(request, _('Transfer number already exists! Please use another number.'))
                 return redirect('cashboxes:transfer_list')
         
         try:
@@ -215,7 +215,7 @@ def transfer_create(request):
             exchange_rate = Decimal(exchange_rate or 1)
             
             if amount <= 0:
-                messages.error(request, _('المبلغ يجب أن يكون أكبر من صفر'))
+                messages.error(request, _('Amount must be greater than zero'))
                 return redirect('cashboxes:transfer_list')
             
             with transaction.atomic():
@@ -278,7 +278,7 @@ def transfer_create(request):
                     
                     # التحقق من الرصيد
                     if from_cashbox.balance < amount:
-                        messages.error(request, _('الرصيد غير كافي في الصندوق المرسل'))
+                        messages.error(request, _('Insufficient balance in the sender cashbox'))
                         return redirect('cashboxes:transfer_list')
                     
                     # تحديث الأرصدة
@@ -293,7 +293,7 @@ def transfer_create(request):
                         transaction_type='transfer_out',
                         date=date,
                         amount=-amount,
-                        description=f'{description} - {_("تحويل إلى")} {to_cashbox.name}',
+                        description=f'{description} - {_("Transfer to")} {to_cashbox.name}',
                         related_transfer=transfer,
                         created_by=request.user
                     )
@@ -303,7 +303,7 @@ def transfer_create(request):
                         transaction_type='transfer_in',
                         date=date,
                         amount=amount,
-                        description=f'{description} - {_("تحويل من")} {from_cashbox.name}',
+                        description=f'{description} - {_("Transfer from")} {from_cashbox.name}',
                         related_transfer=transfer,
                         created_by=request.user
                     )
@@ -314,7 +314,7 @@ def transfer_create(request):
                     
                     # التحقق من الرصيد
                     if from_cashbox.balance < amount:
-                        messages.error(request, _('الرصيد غير كافي في الصندوق'))
+                        messages.error(request, _('Insufficient balance in the cashbox'))
                         return redirect('cashboxes:transfer_list')
                     
                     # تحديث الأرصدة
@@ -329,7 +329,7 @@ def transfer_create(request):
                         transaction_type='transfer_out',
                         date=date,
                         amount=-amount,
-                        description=f'{description} - {_("تحويل إلى بنك")} {to_bank.name}',
+                        description=f'{description} - {_("Transfer to Bank")} {to_bank.name}',
                         related_transfer=transfer,
                         created_by=request.user
                     )
@@ -340,7 +340,7 @@ def transfer_create(request):
                     
                     # التحقق من الرصيد
                     if from_bank.balance < amount:
-                        messages.error(request, _('الرصيد غير كافي في البنك'))
+                        messages.error(request, _('Insufficient balance in the bank'))
                         return redirect('cashboxes:transfer_list')
                     
                     # تحديث الأرصدة
@@ -355,16 +355,16 @@ def transfer_create(request):
                         transaction_type='transfer_in',
                         date=date,
                         amount=amount,
-                        description=f'{description} - {_("تحويل من بنك")} {from_bank.name}',
+                        description=f'{description} - {_("Transfer from Bank")} {from_bank.name}',
                         related_transfer=transfer,
                         created_by=request.user
                     )
                 
-                messages.success(request, _('تم إنشاء التحويل بنجاح'))
+                messages.success(request, _('Transfer created successfully'))
                 return redirect('cashboxes:transfer_detail', transfer_id=transfer.id)
         
         except Exception as e:
-            messages.error(request, _('حدث خطأ أثناء إنشاء التحويل'))
+            messages.error(request, _('An error occurred while creating the transfer'))
     
     return redirect('cashboxes:transfer_list')
 
@@ -535,10 +535,10 @@ class CashboxTransactionDeleteView(View):
                     # إعادة حساب رصيد الصندوق
                     cashbox.sync_balance()
                 
-                messages.success(request, _('تم حذف المعاملة بنجاح وتم تحديث جميع الأرصدة المرتبطة.'))
+                messages.success(request, _('Transaction deleted successfully and all related balances have been updated.'))
                 
         except Exception as e:
-            messages.error(request, _('حدث خطأ أثناء حذف المعاملة: {}').format(str(e)))
+            messages.error(request, _('An error occurred while deleting the transaction: {}').format(str(e)))
         
         return redirect('cashboxes:cashbox_detail', cashbox_id=cashbox.id)
 
@@ -597,10 +597,10 @@ class CashboxTransferDeleteView(View):
                 for cashbox_item in cashboxes_to_sync:
                     cashbox_item.sync_balance()
                 
-                messages.success(request, _('تم حذف التحويل بنجاح وتم تحديث جميع الأرصدة المرتبطة.'))
+                messages.success(request, _('Transfer deleted successfully and all related balances have been updated.'))
                 
         except Exception as e:
-            messages.error(request, _('حدث خطأ أثناء حذف التحويل: {}').format(str(e)))
+            messages.error(request, _('An error occurred while deleting the transfer: {}').format(str(e)))
         
         return redirect('cashboxes:cashbox_list')
 
@@ -614,7 +614,7 @@ class ClearCashboxTransactionsView(View):
         
         # التحقق من الصلاحيات
         if not (request.user.is_superuser or request.user.is_staff):
-            messages.error(request, _('ليس لديك صلاحية لمسح معاملات الصندوق'))
+            messages.error(request, _('You do not have permission to clear cashbox transactions'))
             return redirect('cashboxes:cashbox_detail', cashbox_id=cashbox_id)
         
         try:
@@ -658,10 +658,10 @@ class ClearCashboxTransactionsView(View):
                 for cashbox_item in cashboxes_to_sync:
                     cashbox_item.sync_balance()
                 
-                messages.success(request, _('تم مسح جميع معاملات الصندوق "{}" بنجاح وتم تحديث جميع الأرصدة المرتبطة.').format(cashbox.name))
+                messages.success(request, _('All transactions for cashbox "{}" were cleared successfully and all related balances were updated.').format(cashbox.name))
                 
         except Exception as e:
-            messages.error(request, _('حدث خطأ أثناء مسح معاملات الصندوق: {}').format(str(e)))
+            messages.error(request, _('An error occurred while clearing cashbox transactions: {}').format(str(e)))
         
         return redirect('cashboxes:cashbox_detail', cashbox_id=cashbox_id)
 
@@ -671,7 +671,7 @@ def cashbox_delete(request, cashbox_id):
     """حذف الصندوق - محسّن للتعامل مع الحماية"""
     # التحقق من الصلاحيات
     if not (request.user.is_superuser or request.user.is_staff):
-        messages.error(request, _('ليس لديك صلاحية لحذف الصناديق'))
+        messages.error(request, _('You do not have permission to delete cashboxes'))
         return redirect('cashboxes:cashbox_list')
         
     cashbox = get_object_or_404(Cashbox, id=cashbox_id)
@@ -690,18 +690,18 @@ def cashbox_delete(request, cashbox_id):
                     # والصناديق الأخرى ستحتفظ بأرصدتها الصحيحة
                 
                 elif cashbox.balance != 0:
-                    messages.error(request, _('لا يمكن حذف الصندوق لأن الرصيد غير صفر'))
+                    messages.error(request, _('Cannot delete the cashbox because the balance is not zero'))
                     return redirect('cashboxes:cashbox_detail', cashbox_id=cashbox_id)
                 
                 # الآن احذف الصندوق - التحويلات ستصبح تلقائياً بمرجع NULL
                 cashbox_name = cashbox.name
                 cashbox.delete()
-                messages.success(request, _('تم حذف الصندوق "{}" بنجاح مع الحفاظ على التحويلات والأرصدة في الصناديق الأخرى').format(cashbox_name))
+                messages.success(request, _('Cashbox "{}" was deleted successfully while preserving transfers and balances in other cashboxes').format(cashbox_name))
                 return redirect('cashboxes:cashbox_list')
                 
         except ProtectedError as e:
-            messages.error(request, _('لا يمكن حذف الصندوق بسبب وجود معاملات مرتبطة محمية'))
+            messages.error(request, _('Cannot delete the cashbox due to protected related transactions'))
         except Exception as e:
-            messages.error(request, _('حدث خطأ أثناء حذف الصندوق: {}').format(str(e)))
+            messages.error(request, _('An error occurred while deleting the cashbox: {}').format(str(e)))
     
     return redirect('cashboxes:cashbox_detail', cashbox_id=cashbox_id)

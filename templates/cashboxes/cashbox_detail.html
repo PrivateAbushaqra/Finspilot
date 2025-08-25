@@ -14,7 +14,7 @@
                     <h3 class="card-title">{{ page_title }}</h3>
                     <div>
                         <a href="{% url 'cashboxes:cashbox_list' %}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left"></i> {% trans "العودة للList" %}
+                            <i class="fas fa-arrow-left"></i> {% trans "Back to List" %}
                         </a>
                         <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editCashboxModal">
                             <i class="fas fa-edit"></i> {% trans "Edit" %}
@@ -40,10 +40,10 @@
                         <div class="col-md-6">
                             <div class="card">
                                 <div class="card-body">
-                                    <h5 class="card-title">{% trans "Information الصندوق" %}</h5>
+                                    <h5 class="card-title">{% trans "Cashbox Information" %}</h5>
                                     <table class="table table-borderless">
                                         <tr>
-                                            <th>{% trans "اسم الصندوق" %}:</th>
+                                            <th>{% trans "Cashbox Name" %}:</th>
                                             <td>{{ cashbox.name }}</td>
                                         </tr>
                                         <tr>
@@ -55,11 +55,11 @@
                                             <td>{{ cashbox.location|default:"-" }}</td>
                                         </tr>
                                         <tr>
-                                            <th>{% trans "المسؤول" %}:</th>
+                                            <th>{% trans "Manager" %}:</th>
                                             <td>{{ cashbox.responsible_user.username|default:"-" }}</td>
                                         </tr>
                                         <tr>
-                                            <th>{% trans "تاريخ الإنشاء" %}:</th>
+                                            <th>{% trans "Creation Date" %}:</th>
                                             <td>{{ cashbox.created_at|date:"Y-m-d H:i" }}</td>
                                         </tr>
                                     </table>
@@ -69,7 +69,7 @@
                         <div class="col-md-6">
                             <div class="card">
                                 <div class="card-body">
-                                    <h5 class="card-title">{% trans "الBalance الحالي" %}</h5>
+                                    <h5 class="card-title">{% trans "Current Balance" %}</h5>
                                     <div class="text-center">
                                         <h2 class="{% if cashbox.balance > 0 %}text-success{% elif cashbox.balance < 0 %}text-danger{% endif %}">
                                             {{ cashbox.balance|floatformat:3 }}
@@ -85,7 +85,7 @@
                         <div class="col-12">
                             <div class="card">
                                 <div class="card-header">
-                                    <h5 class="card-title">{% trans "حركات الصندوق" %}</h5>
+                                    <h5 class="card-title">{% trans "Cashbox Transactions" %}</h5>
                                 </div>
                                 <div class="card-body">
                                     {% if transactions %}
@@ -94,10 +94,10 @@
                                                 <thead>
                                                     <tr>
                                                         <th>{% trans "Date" %}</th>
-                                                        <th>{% trans "نوع الحركة" %}</th>
+                                                        <th>{% trans "Transaction Type" %}</th>
                                                         <th>{% trans "Amount" %}</th>
                                                         <th>{% trans "Description" %}</th>
-                                                        <th>{% trans "أنشئ بواسطة" %}</th>
+                                                        <th>{% trans "Created By" %}</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -152,7 +152,7 @@
                                         {% endif %}
                                     {% else %}
                                         <div class="text-center">
-                                            <p class="mb-0">{% trans "لا توجد حركات للصندوق" %}</p>
+                                            <p class="mb-0">{% trans "No cashbox transactions" %}</p>
                                         </div>
                                     {% endif %}
                                 </div>
@@ -172,12 +172,12 @@
             <form method="post" action="{% url 'cashboxes:cashbox_edit' cashbox.id %}">
                 {% csrf_token %}
                 <div class="modal-header">
-                    <h5 class="modal-title">{% trans "Edit الصندوق" %}</h5>
+                    <h5 class="modal-title">{% trans "Edit Cashbox" %}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">{% trans "اسم الصندوق" %} *</label>
+                        <label class="form-label">{% trans "Cashbox Name" %} *</label>
                         <input type="text" name="name" class="form-control" value="{{ cashbox.name }}" required>
                     </div>
                     <div class="mb-3">
@@ -185,12 +185,12 @@
                         <textarea name="description" class="form-control" rows="3">{{ cashbox.description }}</textarea>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">{% trans "العملة" %}</label>
+                        <label class="form-label">{% trans "Currency" %}</label>
                         <select name="currency" class="form-select">
                             {% for currency in currencies %}
                                 <option value="{{ currency.code }}" {% if cashbox.currency == currency.code %}selected{% endif %}>
                                     {{ currency.code }} - {{ currency.name }}
-                                    {% if currency.is_base_currency %} (العملة الأساسية){% endif %}
+                                    {% if currency.is_base_currency %} ({% trans "Base Currency" %}){% endif %}
                                 </option>
                             {% endfor %}
                         </select>
@@ -202,10 +202,10 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        إلغاء
+                        {% trans "Cancel" %}
                     </button>
                     <button type="submit" class="btn btn-primary">
-                        تحديث
+                        {% trans "Update" %}
                     </button>
                 </div>
             </form>
@@ -221,34 +221,34 @@
                 <form method="post" action="{% url 'cashboxes:cashbox_delete' cashbox.id %}">
                     {% csrf_token %}
                     <div class="modal-header">
-                        <h5 class="modal-title">{% trans "Delete الصندوق" %}</h5>
+                        <h5 class="modal-title">{% trans "Delete Cashbox" %}</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <p>{% trans "هل أنت متأكد من Delete الصندوق" %} <strong>{{ cashbox.name }}</strong>؟</p>
+                        <p>{% trans "Are you sure you want to delete the cashbox" %} <strong>{{ cashbox.name }}</strong>?</p>
                         {% if cashbox.balance != 0 %}
                         <div class="alert alert-danger">
                             <i class="fas fa-exclamation-triangle"></i>
-                            {% trans "لا يمكن {% trans "Delete" %} الصندوق لأن ال{% trans "Balance" %} الحالي" %}: {{ cashbox.balance|floatformat:3 }} {{ cashbox.currency|default:"SAR" }}
+                            {% trans "Cannot delete cashbox because current balance is" %}: {{ cashbox.balance|floatformat:3 }} {{ cashbox.currency|default:"SAR" }}
                         </div>
                         {% else %}
                         <div class="alert alert-warning">
                             <i class="fas fa-exclamation-triangle"></i>
-                            {% trans "هذا الإجراء لا يمكن التراجع عنه!" %}
+                            {% trans "This action cannot be undone!" %}
                         </div>
                         {% endif %}
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                            إلغاء
+                            {% trans "Cancel" %}
                         </button>
                         {% if cashbox.balance == 0 %}
                         <button type="submit" class="btn btn-danger">
-                            <i class="fas fa-trash"></i> {% trans "Delete الصندوق" %}
+                            <i class="fas fa-trash"></i> {% trans "Delete Cashbox" %}
                         </button>
                         {% else %}
                         <button type="button" class="btn btn-danger" disabled>
-                            <i class="fas fa-trash"></i> {% trans "لا يمكن الحذف" %}
+                            <i class="fas fa-trash"></i> {% trans "Cannot Delete" %}
                         </button>
                         {% endif %}
                     </div>

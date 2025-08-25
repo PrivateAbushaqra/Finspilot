@@ -12,7 +12,7 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h3 class="card-title">{{ page_title }}</h3>
                     <a href="{% url 'cashboxes:transfer_list' %}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> {% trans "العودة للList" %}
+                        <i class="fas fa-arrow-left"></i> {% trans "Back to List" %}
                     </a>
                 </div>
                 <div class="card-body">
@@ -20,10 +20,10 @@
                         <div class="col-md-8">
                             <div class="card">
                                 <div class="card-body">
-                                    <h5 class="card-title">{% trans "{% trans "Information" %} ال{% trans "Transfer" %}" %}</h5>
+                                    <h5 class="card-title">{% trans "Transfer Information" %}</h5>
                                     <table class="table table-borderless">
                                         <tr>
-                                            <th width="30%">{% trans "رقم الTransfer" %}:</th>
+                                            <th width="30%">{% trans "Transfer Number" %}:</th>
                                             <td>{{ transfer.transfer_number }}</td>
                                         </tr>
                                         <tr>
@@ -31,7 +31,7 @@
                                             <td>{{ transfer.date|date:"Y-m-d" }}</td>
                                         </tr>
                                         <tr>
-                                            <th>{% trans "نوع الTransfer" %}:</th>
+                                            <th>{% trans "Transfer Type" %}:</th>
                                             <td>
                                                 <span class="badge bg-{% if transfer.transfer_type == 'cashbox_to_cashbox' %}info{% elif transfer.transfer_type == 'cashbox_to_bank' %}warning{% else %}success{% endif %}">
                                                     {{ transfer.get_transfer_type_display }}
@@ -39,7 +39,7 @@
                                             </td>
                                         </tr>
                                         <tr>
-                                            <th>{% trans "من" %}:</th>
+                                            <th>{% trans "From" %}:</th>
                                             <td>
                                                 {% if transfer.from_cashbox %}
                                                     <i class="fas fa-box text-info"></i> {{ transfer.from_cashbox.name }}
@@ -49,7 +49,7 @@
                                             </td>
                                         </tr>
                                         <tr>
-                                            <th>{% trans "إلى" %}:</th>
+                                            <th>{% trans "To" %}:</th>
                                             <td>
                                                 {% if transfer.to_cashbox %}
                                                     <i class="fas fa-box text-info"></i> {{ transfer.to_cashbox.name }}
@@ -63,11 +63,11 @@
                                             <td class="text-success h5">{{ transfer.amount|floatformat:3 }}</td>
                                         </tr>
                                         <tr>
-                                            <th>{% trans "الرسوم" %}:</th>
+                                            <th>{% trans "Fees" %}:</th>
                                             <td>{{ transfer.fees|floatformat:3 }}</td>
                                         </tr>
                                         <tr>
-                                            <th>{% trans "سعر الصرف" %}:</th>
+                                            <th>{% trans "Exchange Rate" %}:</th>
                                             <td>{{ transfer.exchange_rate|floatformat:4 }}</td>
                                         </tr>
                                         <tr>
@@ -75,7 +75,7 @@
                                             <td>{{ transfer.description|default:"-" }}</td>
                                         </tr>
                                         <tr>
-                                            <th>{% trans "أنشئ بواسطة" %}:</th>
+                                            <th>{% trans "Created By" %}:</th>
                                             <td>{{ transfer.created_by.username }}</td>
                                         </tr>
                                         <tr>
@@ -89,14 +89,14 @@
                         <div class="col-md-4">
                             <div class="card">
                                 <div class="card-body">
-                                    <h5 class="card-title">{% trans "{% trans "Summary" %} ال{% trans "Transfer" %}" %}</h5>
+                                    <h5 class="card-title">{% trans "Transfer Summary" %}</h5>
                                     <div class="text-center">
                                         <div class="mb-3">
                                             <i class="fas fa-exchange-alt fa-3x text-primary"></i>
                                         </div>
                                         <h4 class="text-success">{{ transfer.amount|floatformat:3 }}</h4>
                                         {% if transfer.fees > 0 %}
-                                        <p class="text-muted">{% trans "رسوم" %}: {{ transfer.fees|floatformat:3 }}</p>
+                                        <p class="text-muted">{% trans "Fees" %}: {{ transfer.fees|floatformat:3 }}</p>
                                         {% endif %}
                                         <p class="text-muted">{{ transfer.date|date:"Y-m-d" }}</p>
                                     </div>
@@ -109,7 +109,7 @@
                         <div class="col-12">
                             <div class="card">
                                 <div class="card-header">
-                                    <h5 class="card-title">{% trans "الحركات المرتبطة" %}</h5>
+                                    <h5 class="card-title">{% trans "Related Transactions" %}</h5>
                                 </div>
                                 <div class="card-body">
                                     {% if related_transactions %}
@@ -117,8 +117,8 @@
                                             <table class="table table-striped">
                                                 <thead>
                                                     <tr>
-                                                        <th>{% trans "الصندوق" %}</th>
-                                                        <th>{% trans "نوع الحركة" %}</th>
+                                                        <th>{% trans "Cashbox" %}</th>
+                                                        <th>{% trans "Transaction Type" %}</th>
                                                         <th>{% trans "Amount" %}</th>
                                                         <th>{% trans "Description" %}</th>
                                                         <th>{% trans "Date" %}</th>
