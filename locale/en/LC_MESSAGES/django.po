@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FinsPilot Accounting System\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-08-25 12:02+0300\n"
+"POT-Creation-Date: 2025-08-25 12:21+0300\n"
 "PO-Revision-Date: 2025-08-09 11:52\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
@@ -117,7 +117,7 @@ msgstr "Delete confirmation"
 #: .\templates\receipts\receipt_detail.html:43
 #: .\templates\receipts\receipt_detail.html:216
 #: .\templates\receipts\receipt_list.html:89
-#: .\templates\reports\customer_statement.html:75
+#: .\templates\reports\customer_statement.html:74
 #: .\templates\revenues_expenses\dashboard.html:158
 #: .\templates\revenues_expenses\entry_list.html:75
 #: .\templates\sales\invoice_delete.html:77
@@ -133,6 +133,7 @@ msgstr "Delete confirmation"
 #: .\templates\sales\sales_return_statement.html:138
 #: .\templates\sales\sales_statement.html:138
 #: .\templates\search\search.html:344
+#: .\templates\settings\print_design.html:357
 msgid "Date"
 msgstr ""
 
@@ -277,7 +278,7 @@ msgstr "Delete Group"
 #: .\templates\receipts\receipt_detail.html:98
 #: .\templates\receipts\receipt_detail.html:219
 #: .\templates\receipts\receipt_detail.html:262
-#: .\templates\reports\customer_statement.html:78
+#: .\templates\reports\customer_statement.html:77
 #: .\templates\revenues_expenses\category_create.html:55
 #: .\templates\revenues_expenses\category_create.html:97
 #: .\templates\revenues_expenses\category_list.html:31
@@ -1406,7 +1407,6 @@ msgid "حدث خطأ أثناء حذف الصندوق: {}"
 msgstr ""
 
 #: .\core\models.py:10 .\settings\models.py:83
-#: .\templates\settings\print_design.html:336
 #, fuzzy
 #| msgid "اسم المجموعة"
 msgid "اسم الشركة"
@@ -1555,7 +1555,6 @@ msgstr ""
 
 #: .\core\models.py:69 .\settings\models.py:232
 #: .\templates\settings\partials\document_form.html:420
-#: .\templates\settings\print_design.html:472
 #, fuzzy
 #| msgid "عدد المستخدمين"
 msgid "نوع المستند"
@@ -1581,7 +1580,7 @@ msgstr "Deleting..."
 msgid "تسلسل أرقام المستندات"
 msgstr ""
 
-#: .\core\models.py:250 .\templates\settings\print_design.html:499
+#: .\core\models.py:250
 #, fuzzy
 #| msgid "إنشاء مجموعة"
 msgid "إنشاء"
@@ -1827,7 +1826,6 @@ msgstr "Users"
 
 #: .\inventory\models.py:58 .\inventory\models.py:122 .\purchases\models.py:46
 #: .\sales\models.py:52 .\sales\models.py:107
-#: .\templates\settings\print_design.html:414
 msgid "الكمية"
 msgstr ""
 
@@ -3172,8 +3170,8 @@ msgstr ""
 #: .\reports\views.py:117 .\reports\views.py:153 .\reports\views.py:167
 #: .\reports\views.py:178 .\reports\views.py:201 .\settings\views.py:966
 #: .\settings\views.py:1102 .\templates\base.html:921
-#: .\templates\reports\customer_statement.html:5
-#: .\templates\reports\customer_statement.html:10
+#: .\templates\reports\customer_statement.html:4
+#: .\templates\reports\customer_statement.html:9
 msgid "Customer Statement"
 msgstr ""
 
@@ -3194,7 +3192,7 @@ msgstr ""
 #: .\templates\products\product_edit.html:385
 #: .\templates\products\product_list.html:1219
 #: .\templates\purchases\invoice_add.html:895
-#: .\templates\reports\customer_statement.html:76
+#: .\templates\reports\customer_statement.html:75
 #: .\templates\sales\invoice_add.html:1055
 #: .\templates\sales\return_add.html:148 .\templates\sales\return_add.html:150
 #: .\templates\settings\document_sequence_add.html:145
@@ -3215,7 +3213,7 @@ msgstr ""
 #: .\templates\journal\account_list.html:64
 #: .\templates\products\product_list.html:550
 #: .\templates\products\product_list.html:582
-#: .\templates\reports\customer_statement.html:77
+#: .\templates\reports\customer_statement.html:76
 #: .\templates\revenues_expenses\category_create.html:46
 #: .\templates\revenues_expenses\category_list.html:30
 #: .\templates\revenues_expenses\dashboard.html:159
@@ -3249,7 +3247,7 @@ msgstr ""
 #: .\templates\journal\trial_balance.html:251
 #: .\templates\purchases\invoice_add.html:924
 #: .\templates\purchases\purchase_statement.html:143
-#: .\templates\reports\customer_statement.html:79
+#: .\templates\reports\customer_statement.html:78
 #: .\templates\sales\invoice_add.html:1084
 #: .\templates\sales\sales_return_statement.html:141
 msgid "Debit"
@@ -3272,14 +3270,14 @@ msgstr ""
 #: .\templates\journal\trial_balance.html:259
 #: .\templates\purchases\invoice_add.html:181
 #: .\templates\purchases\purchase_return_statement.html:143
-#: .\templates\reports\customer_statement.html:80
+#: .\templates\reports\customer_statement.html:79
 #: .\templates\sales\return_add.html:250
 #: .\templates\sales\sales_statement.html:141
 msgid "Credit"
 msgstr ""
 
 #: .\reports\views.py:135 .\reports\views.py:171
-#: .\templates\reports\customer_statement.html:81
+#: .\templates\reports\customer_statement.html:80
 msgid "Running Balance"
 msgstr ""
 
@@ -3288,18 +3286,18 @@ msgstr ""
 #: .\templates\products\product_edit.html:235
 #: .\templates\products\product_edit.html:256
 #: .\templates\products\product_list.html:873
-#: .\templates\reports\customer_statement.html:88
+#: .\templates\reports\customer_statement.html:87
 msgid "Opening Balance"
 msgstr ""
 
 #: .\reports\views.py:145 .\reports\views.py:175
 #: .\templates\core\tax_report.html:279
-#: .\templates\reports\customer_statement.html:110
+#: .\templates\reports\customer_statement.html:109
 msgid "Totals"
 msgstr ""
 
 #: .\reports\views.py:146 .\reports\views.py:176
-#: .\templates\reports\customer_statement.html:116
+#: .\templates\reports\customer_statement.html:115
 msgid "Closing Balance"
 msgstr ""
 
@@ -3330,8 +3328,8 @@ msgstr ""
 #: .\templates\receipts\receipt_add.html:36
 #: .\templates\receipts\receipt_list.html:30
 #: .\templates\receipts\receipt_list.html:90
-#: .\templates\reports\customer_statement.html:30
-#: .\templates\reports\customer_statement.html:64
+#: .\templates\reports\customer_statement.html:29
+#: .\templates\reports\customer_statement.html:63
 #: .\templates\sales\invoice_add.html:247
 #: .\templates\sales\invoice_list.html:205
 #: .\templates\sales\invoice_list.html:293
@@ -3350,7 +3348,7 @@ msgstr ""
 #: .\templates\banks\transfer_list.html:371
 #: .\templates\cashboxes\transfer_list.html:96
 #: .\templates\core\profit_loss_report.html:161
-#: .\templates\reports\customer_statement.html:43
+#: .\templates\reports\customer_statement.html:42
 msgid "From"
 msgstr ""
 
@@ -3359,7 +3357,7 @@ msgstr ""
 #: .\templates\banks\transfer_list.html:208
 #: .\templates\banks\transfer_list.html:373
 #: .\templates\cashboxes\transfer_list.html:97
-#: .\templates\reports\customer_statement.html:47
+#: .\templates\reports\customer_statement.html:46
 msgid "To"
 msgstr ""
 
@@ -3972,26 +3970,25 @@ msgstr ""
 msgid "مثال: invoice, receipt, purchase_order"
 msgstr ""
 
-#: .\settings\models.py:233 .\templates\settings\print_design.html:481
+#: .\settings\models.py:233
 #, fuzzy
 #| msgid "اسم المجموعة"
 msgid "اسم المستند بالعربية"
 msgstr "Group Name"
 
-#: .\settings\models.py:234 .\templates\settings\print_design.html:485
+#: .\settings\models.py:234
 #, fuzzy
 #| msgid "معلومات المجموعة"
 msgid "اسم المستند بالإنجليزية"
 msgstr "Group Information"
 
-#: .\settings\models.py:237 .\templates\settings\print_design.html:360
-#: .\templates\settings\print_design.html:489
+#: .\settings\models.py:237
 #, fuzzy
 #| msgid "اسم المجموعة"
 msgid "حجم الورقة"
 msgstr "Group Name"
 
-#: .\settings\models.py:238 .\templates\settings\print_design.html:367
+#: .\settings\models.py:238
 msgid "اتجاه الورقة"
 msgstr ""
 
@@ -4279,7 +4276,7 @@ msgstr ""
 #: .\templates\purchases\invoice_detail.html:315
 #: .\templates\purchases\purchase_report.html:57
 #: .\templates\purchases\return_detail.html:210
-#: .\templates\reports\customer_statement.html:20
+#: .\templates\reports\customer_statement.html:19
 #: .\templates\sales\invoice_detail.html:184
 #: .\templates\sales\invoice_list.html:105
 #: .\templates\sales\invoice_list.html:107
@@ -5311,7 +5308,7 @@ msgstr ""
 #: .\templates\purchases\purchase_statement.html:89
 #: .\templates\purchases\purchase_statement.html:119
 #: .\templates\purchases\return_list.html:139
-#: .\templates\reports\customer_statement.html:52
+#: .\templates\reports\customer_statement.html:51
 #: .\templates\revenues_expenses\dashboard.html:99
 #: .\templates\revenues_expenses\dashboard.html:126
 #: .\templates\revenues_expenses\entry_list.html:126
@@ -5422,6 +5419,7 @@ msgstr ""
 #: .\templates\sales\return_add.html:296 .\templates\sales\return_add.html:300
 #: .\templates\sales\return_edit.html:241
 #: .\templates\settings\currency_edit.html:121
+#: .\templates\settings\print_design.html:538
 #: .\templates\settings\superadmin_management.html:423
 msgid "Save"
 msgstr ""
@@ -5474,7 +5472,7 @@ msgstr ""
 #: .\templates\products\product_edit.html:391
 #: .\templates\products\product_list.html:1380
 #: .\templates\purchases\invoice_add.html:517
-#: .\templates\reports\customer_statement.html:33
+#: .\templates\reports\customer_statement.html:32
 #: .\templates\revenues_expenses\category_create.html:110
 #: .\templates\sales\invoice_add.html:446
 #: .\templates\sales\invoice_add.html:864 .\templates\sales\return_add.html:583
@@ -5850,6 +5848,8 @@ msgstr ""
 #: .\templates\purchases\return_add.html:154
 #: .\templates\receipts\receipt_add.html:159
 #: .\templates\settings\document_print_settings.html:444
+#: .\templates\settings\print_design.html:516
+#: .\templates\settings\print_design.html:537
 #: .\templates\users\group_add.html:169 .\templates\users\group_edit.html:180
 #: .\templates\users\user_add.html:260 .\templates\users\user_delete.html:114
 #: .\templates\users\user_edit.html:277
@@ -7170,6 +7170,12 @@ msgstr ""
 msgid "Report"
 msgstr ""
 
+#: .\templates\base.html:1339
+#, fuzzy
+#| msgid "Print Design"
+msgid "Print Date:"
+msgstr "Print Design"
+
 #: .\templates\base.html:1394 .\templates\cashboxes\transfer_list.html:378
 #: .\templates\customers\customer_list.html:86
 #: .\templates\customers\customer_list.html:110
@@ -7394,6 +7400,7 @@ msgid "No cashboxes available"
 msgstr ""
 
 #: .\templates\cashboxes\cashbox_list.html:170
+#: .\templates\settings\print_design.html:517
 msgid "Create"
 msgstr ""
 
@@ -7659,7 +7666,7 @@ msgid "Detailed Depreciation Table"
 msgstr ""
 
 #: .\templates\cashboxes\transfer_list.html:519
-#: .\templates\reports\customer_statement.html:67
+#: .\templates\reports\customer_statement.html:66
 msgid "Period"
 msgstr ""
 
@@ -8295,6 +8302,7 @@ msgstr ""
 #: .\templates\settings\document_sequence_add.html:36
 #: .\templates\settings\document_sequence_edit.html:37
 #: .\templates\settings\document_sequences.html:41
+#: .\templates\settings\print_design.html:485
 msgid "Document Type"
 msgstr ""
 
@@ -8486,6 +8494,7 @@ msgstr ""
 #: .\templates\sales\return_detail.html:192
 #: .\templates\sales\return_edit.html:187
 #: .\templates\settings\document_print_settings.html:996
+#: .\templates\settings\print_design.html:427
 msgid "Quantity"
 msgstr ""
 
@@ -8906,7 +8915,6 @@ msgid "إجمالي الدائن"
 msgstr ""
 
 #: .\templates\journal\account_detail.html:134
-#: .\templates\settings\print_design.html:344
 msgid "التاريخ"
 msgstr ""
 
@@ -9013,8 +9021,6 @@ msgstr "This action cannot be undone!"
 
 #: .\templates\journal\account_list.html:194
 #: .\templates\settings\document_print_settings.html:480
-#: .\templates\settings\print_design.html:498
-#: .\templates\settings\print_design.html:519
 msgid "إلغاء"
 msgstr "Cancel"
 
@@ -9162,6 +9168,7 @@ msgstr ""
 #: .\templates\sales\return_edit.html:224
 #: .\templates\sales\sales_report.html:160
 #: .\templates\settings\document_print_settings.html:1014
+#: .\templates\settings\print_design.html:429
 msgid "Total"
 msgstr ""
 
@@ -9960,6 +9967,7 @@ msgstr ""
 #: .\templates\products\product_edit.html:335
 #: .\templates\products\product_list.html:519
 #: .\templates\sales\invoice_add.html:307
+#: .\templates\settings\print_design.html:428
 msgid "Price"
 msgstr ""
 
@@ -10546,19 +10554,19 @@ msgstr ""
 msgid "Accounts Management"
 msgstr ""
 
-#: .\templates\reports\customer_statement.html:14
+#: .\templates\reports\customer_statement.html:13
 msgid "Export CSV"
 msgstr ""
 
-#: .\templates\reports\customer_statement.html:17
+#: .\templates\reports\customer_statement.html:16
 msgid "Export Excel"
 msgstr ""
 
-#: .\templates\reports\customer_statement.html:104
+#: .\templates\reports\customer_statement.html:103
 msgid "No data for this period"
 msgstr ""
 
-#: .\templates\reports\customer_statement.html:132
+#: .\templates\reports\customer_statement.html:131
 msgid "Search query"
 msgstr ""
 
@@ -10758,6 +10766,7 @@ msgstr ""
 #: .\templates\settings\company.html:26
 #: .\templates\settings\company_fixed.html:25
 #: .\templates\settings\document_print_settings.html:968
+#: .\templates\settings\print_design.html:349
 #: .\templates\settings\superadmin_management.html:237
 msgid "Company Name"
 msgstr ""
@@ -10884,21 +10893,16 @@ msgid "إدارة تصميم الطباعة"
 msgstr "Print Design"
 
 #: .\templates\settings\document_print_settings.html:290
-#: .\templates\settings\print_design.html:5
-#: .\templates\settings\print_design.html:264
 #, fuzzy
 #| msgid "تصميم الطباعة"
 msgid "تصميم صفحات الطباعة"
 msgstr "Print Design"
 
 #: .\templates\settings\document_print_settings.html:292
-#: .\templates\settings\print_design.html:266
 msgid "تصميم وتخصيص صفحات الطباعة للمستندات"
 msgstr ""
 
 #: .\templates\settings\document_print_settings.html:297
-#: .\templates\settings\print_design.html:275
-#: .\templates\settings\print_design.html:465
 #, fuzzy
 #| msgid "إضافة مجموعة"
 msgid "إضافة مستند جديد"
@@ -11021,6 +11025,7 @@ msgid "Sample Content"
 msgstr ""
 
 #: .\templates\settings\document_print_settings.html:994
+#: .\templates\settings\print_design.html:426
 msgid "Item"
 msgstr ""
 
@@ -11038,6 +11043,8 @@ msgstr ""
 
 #: .\templates\settings\document_print_settings.html:1024
 #: .\templates\settings\partials\document_form.html:16
+#: .\templates\settings\print_design.html:373
+#: .\templates\settings\print_design.html:507
 msgid "Paper Size"
 msgstr ""
 
@@ -11300,6 +11307,7 @@ msgid "Configure reporting settings and templates"
 msgstr ""
 
 #: .\templates\settings\partials\document_form.html:12
+#: .\templates\settings\print_design.html:370
 msgid "Paper Settings"
 msgstr ""
 
@@ -11443,132 +11451,128 @@ msgstr "Group Name"
 msgid "محتوى المستند سيظهر هنا"
 msgstr ""
 
+#: .\templates\settings\print_design.html:5
+#: .\templates\settings\print_design.html:264
+#, fuzzy
+#| msgid "Print Design"
+msgid "Print Pages Design"
+msgstr "Print Design"
+
+#: .\templates\settings\print_design.html:266
+msgid "Design and customize the print pages for your documents"
+msgstr ""
+
 #: .\templates\settings\print_design.html:271
 #, fuzzy
-#| msgid "حفظ التغييرات"
-msgid "حفظ التصميم"
-msgstr "Save Changes"
+#| msgid "Print Design"
+msgid "Save Design"
+msgstr "Print Design"
+
+#: .\templates\settings\print_design.html:275
+#: .\templates\settings\print_design.html:478
+msgid "Add New Document"
+msgstr ""
 
 #: .\templates\settings\print_design.html:286
-#, fuzzy
-#| msgid "اسم المجموعة"
-msgid "قائمة المستندات"
-msgstr "Group Name"
-
-#: .\templates\settings\print_design.html:332
-msgid "أدوات التصميم"
+msgid "Documents List"
 msgstr ""
 
-#: .\templates\settings\print_design.html:340
-msgid "الشعار"
+#: .\templates\settings\print_design.html:345
+msgid "Design Tools"
 msgstr ""
 
-#: .\templates\settings\print_design.html:348
-#, fuzzy
-#| msgid "اسم المجموعة"
-msgid "رقم الصفحة"
-msgstr "Group Name"
-
-#: .\templates\settings\print_design.html:352
-msgid "نص مخصص"
+#: .\templates\settings\print_design.html:353
+msgid "Logo"
 msgstr ""
 
-#: .\templates\settings\print_design.html:357
-#, fuzzy
-#| msgid "صلاحيات المجموعة"
-msgid "إعدادات الورقة"
-msgstr "Group Permissions"
-
-#: .\templates\settings\print_design.html:371
-msgid "طولي"
+#: .\templates\settings\print_design.html:361
+msgid "Page Number"
 msgstr ""
 
-#: .\templates\settings\print_design.html:375
-msgid "عرضي"
+#: .\templates\settings\print_design.html:365
+msgid "Custom Text"
+msgstr ""
+
+#: .\templates\settings\print_design.html:380
+msgid "Paper Orientation"
+msgstr ""
+
+#: .\templates\settings\print_design.html:384
+msgid "Portrait"
 msgstr ""
 
 #: .\templates\settings\print_design.html:388
-msgid "اختر مستند لتصميمه"
-msgstr ""
-
-#: .\templates\settings\print_design.html:389
-msgid "اختر مستند من القائمة الجانبية أو أضف مستند جديد"
-msgstr ""
-
-#: .\templates\settings\print_design.html:395
-msgid "يسار الرأس"
-msgstr ""
-
-#: .\templates\settings\print_design.html:398
-msgid "وسط الرأس"
+msgid "Landscape"
 msgstr ""
 
 #: .\templates\settings\print_design.html:401
-msgid "يمين الرأس"
+msgid "Choose a document to design"
+msgstr ""
+
+#: .\templates\settings\print_design.html:402
+msgid "Select a document from the sidebar or add a new one"
 msgstr ""
 
 #: .\templates\settings\print_design.html:408
-msgid "محتوى المستند"
+msgid "Left Header"
 msgstr ""
 
-#: .\templates\settings\print_design.html:409
-msgid "هذا المحتوى يمثل بيانات المستند الفعلية مثل الفواتير والإيصالات"
+#: .\templates\settings\print_design.html:411
+msgid "Center Header"
 msgstr ""
 
-#: .\templates\settings\print_design.html:413
-msgid "الصنف"
+#: .\templates\settings\print_design.html:414
+msgid "Right Header"
 msgstr ""
-
-#: .\templates\settings\print_design.html:415
-msgid "السعر"
-msgstr ""
-
-#: .\templates\settings\print_design.html:416
-#, fuzzy
-#| msgid "المجموعات"
-msgid "المجموع"
-msgstr "Groups"
 
 #: .\templates\settings\print_design.html:421
-msgid "منتج تجريبي"
+msgid "Document Content"
+msgstr ""
+
+#: .\templates\settings\print_design.html:422
+msgid ""
+"This content represents the actual document data such as invoices and "
+"receipts"
 msgstr ""
 
 #: .\templates\settings\print_design.html:434
-msgid "يسار التذييل"
+msgid "Sample Product"
 msgstr ""
 
-#: .\templates\settings\print_design.html:437
-#, fuzzy
-#| msgid "حفظ التغييرات"
-msgid "وسط التذييل"
-msgstr "Save Changes"
-
-#: .\templates\settings\print_design.html:440
-msgid "يمين التذييل"
+#: .\templates\settings\print_design.html:447
+msgid "Left Footer"
 msgstr ""
 
-#: .\templates\settings\print_design.html:449
-msgid "خصائص العنصر"
+#: .\templates\settings\print_design.html:450
+msgid "Center Footer"
 msgstr ""
 
-#: .\templates\settings\print_design.html:451
-msgid "اختر عنصر لتعديل خصائصه"
+#: .\templates\settings\print_design.html:453
+msgid "Right Footer"
 msgstr ""
 
-#: .\templates\settings\print_design.html:474
-#, fuzzy
-#| msgid "إدارة المستخدمين"
-msgid "اختر نوع المستند"
-msgstr "User Management"
+#: .\templates\settings\print_design.html:462
+msgid "Element Properties"
+msgstr ""
 
-#: .\templates\settings\print_design.html:510
-#, fuzzy
-#| msgid "تعديل بدلاً من الحذف"
-msgid "تعديل العنصر"
-msgstr "Edit instead of deleting"
+#: .\templates\settings\print_design.html:464
+msgid "Select an element to edit its properties"
+msgstr ""
 
-#: .\templates\settings\print_design.html:520
-msgid "حفظ"
+#: .\templates\settings\print_design.html:487
+msgid "Select document type"
+msgstr ""
+
+#: .\templates\settings\print_design.html:499
+msgid "Document name (Arabic)"
+msgstr ""
+
+#: .\templates\settings\print_design.html:503
+msgid "Document name (English)"
+msgstr ""
+
+#: .\templates\settings\print_design.html:528
+msgid "Edit Element"
 msgstr ""
 
 #: .\templates\settings\superadmin_management.html:6
@@ -12514,6 +12518,46 @@ msgstr "Users will inherit the group's permissions"
 #| msgid "المستخدمون سيرثون صلاحيات المجموعة"
 msgid "تم إظهار المستخدمين ذوي الصلاحيات العالية"
 msgstr "Users will inherit the group's permissions"
+
+#, fuzzy
+#~| msgid "حفظ التغييرات"
+#~ msgid "حفظ التصميم"
+#~ msgstr "Save Changes"
+
+#, fuzzy
+#~| msgid "اسم المجموعة"
+#~ msgid "قائمة المستندات"
+#~ msgstr "Group Name"
+
+#, fuzzy
+#~| msgid "اسم المجموعة"
+#~ msgid "رقم الصفحة"
+#~ msgstr "Group Name"
+
+#, fuzzy
+#~| msgid "صلاحيات المجموعة"
+#~ msgid "إعدادات الورقة"
+#~ msgstr "Group Permissions"
+
+#, fuzzy
+#~| msgid "المجموعات"
+#~ msgid "المجموع"
+#~ msgstr "Groups"
+
+#, fuzzy
+#~| msgid "حفظ التغييرات"
+#~ msgid "وسط التذييل"
+#~ msgstr "Save Changes"
+
+#, fuzzy
+#~| msgid "إدارة المستخدمين"
+#~ msgid "اختر نوع المستند"
+#~ msgstr "User Management"
+
+#, fuzzy
+#~| msgid "تعديل بدلاً من الحذف"
+#~ msgid "تعديل العنصر"
+#~ msgstr "Edit instead of deleting"
 
 #~ msgid "تحذير: عملية الحذف نهائية"
 #~ msgstr "Warning: Deletion is permanent"

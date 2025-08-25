@@ -918,7 +918,7 @@
                                     </li>
                                     <li class="nav-item">
                                         {% if user.user_type == 'superadmin' or user.user_type == 'admin' or user.is_superuser or perms.reports.can_view_customer_statement %}
-                                        <a class="nav-link" href="{% url 'reports:customer_statement' %}">{% get_current_language as LANGUAGE_CODE %}{% if LANGUAGE_CODE == 'ar' %}كشف حساب عميل{% else %}{% trans "Customer Statement" %}{% endif %}</a>
+                                        <a class="nav-link" href="{% url 'reports:customer_statement' %}">{% trans "Customer Statement" %}</a>
                                         {% endif %}
                                     </li>
                                 </ul>
@@ -1336,7 +1336,7 @@
         
     const pageTitle = document.querySelector('h1, h2, h3, h4, .card-title, .page-title')?.textContent?.trim() || '{% trans "Report" %}';
         
-        const printDateLabel = document.documentElement.lang === 'ar' ? 'تاريخ الطباعة:' : 'Print Date:';
+    const printDateLabel = '{% trans "Print Date:" %}';
         printHeader.innerHTML = `
             <div class="print-company-info">
                 {% trans "Finspilot - Accounting System" %}

@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load static %}
 
-{% block title %}{% trans "تصميم صفحات الطباعة" %}{% endblock %}
+{% block title %}{% trans "Print Pages Design" %}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -261,42 +261,49 @@
                     <div>
                         <h1 class="h3 mb-0">
                             <i class="fas fa-paint-brush me-2 text-primary"></i>
-                            {% trans "تصميم صفحات الطباعة" %}
+                            {% trans "Print Pages Design" %}
                         </h1>
-                        <p class="text-muted mt-1">{% trans "تصميم وتخصيص صفحات الطباعة للمستندات" %}</p>
+                        <p class="text-muted mt-1">{% trans "Design and customize the print pages for your documents" %}</p>
                     </div>
                     <div>
                         <button class="btn btn-success me-2" onclick="saveCurrentDesign()" id="saveDesignBtn">
                             <i class="fas fa-save me-2"></i>
-                            {% trans "حفظ التصميم" %}
+                            {% trans "Save Design" %}
                         </button>
                         <button class="btn btn-primary" onclick="addNewDocument()" id="addDocumentBtn">
                             <i class="fas fa-plus me-2"></i>
-                            {% trans "إضافة مستند جديد" %}
+                            {% trans "Add New Document" %}
                         </button>
                     </div>
                 </div>
             </div>
 
             <div class="design-container">
-                <!-- قائمة المستندات -->
+                <!-- Documents list -->
                 <div class="documents-panel">
                     <h6 class="mb-3">
                         <i class="fas fa-list me-2"></i>
-                        {% trans "قائمة المستندات" %}
+                        {% trans "Documents List" %}
                     </h6>
                     
+                    {% get_current_language as LANGUAGE_CODE %}
                     <div id="documentsList">
                         {% for setting in print_settings %}
                         <div class="document-list-item" onclick="loadDocument('{{ setting.document_type }}')" data-document-type="{{ setting.document_type }}">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <div class="fw-bold">{{ setting.document_name_ar }}</div>
-                                    <small class="text-muted">{{ setting.document_name_en }}</small>
+                                    {% get_current_language as LANGUAGE_CODE %}
+                                    {% if LANGUAGE_CODE == 'en' %}
+                                        <div class="fw-bold">{{ setting.document_name_en }}</div>
+                                        <small class="text-muted">{{ setting.document_name_ar }}</small>
+                                    {% else %}
+                                        <div class="fw-bold">{{ setting.document_name_ar }}</div>
+                                        <small class="text-muted">{{ setting.document_name_en }}</small>
+                                    {% endif %}
                                 </div>
                                 <div>
                                     <span class="badge bg-info">{{ setting.paper_size }}</span>
-                                    <button class="btn btn-sm btn-outline-danger ms-1" onclick="deleteDocument(event, {{ setting.id }}, '{{ setting.document_name_ar|escapejs }}')">
+                                    <button type="button" class="btn btn-sm btn-outline-danger ms-1 js-delete-doc" data-doc-id="{{ setting.id }}" data-doc-name="{{ setting.document_name_en|escape }}">
                                         <i class="fas fa-trash fa-xs"></i>
                                     </button>
                                 </div>
@@ -304,14 +311,20 @@
                         </div>
                         {% endfor %}
                         
-                        <!-- المستندات المتاحة للإضافة -->
+                        <!-- Available documents to add -->
                         {% for doc_type in document_types %}
                         {% if not doc_type.key in existing_documents %}
                         <div class="document-list-item" onclick="createNewDocument('{{ doc_type.key }}', '{{ doc_type.name_ar }}', '{{ doc_type.name_en }}')" style="border-style: dashed; opacity: 0.7;">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div>
-                                    <div class="fw-bold">{{ doc_type.name_ar }}</div>
-                                    <small class="text-muted">{{ doc_type.name_en }}</small>
+                                    {% get_current_language as LANGUAGE_CODE %}
+                                    {% if LANGUAGE_CODE == 'en' %}
+                                        <div class="fw-bold">{{ doc_type.name_en }}</div>
+                                        <small class="text-muted">{{ doc_type.name_ar }}</small>
+                                    {% else %}
+                                        <div class="fw-bold">{{ doc_type.name_ar }}</div>
+                                        <small class="text-muted">{{ doc_type.name_en }}</small>
+                                    {% endif %}
                                 </div>
                                 <div>
                                     <i class="fas fa-plus text-success"></i>
@@ -323,56 +336,56 @@
                     </div>
                 </div>
 
-                <!-- مساحة التصميم -->
+                <!-- Design workspace -->
                 <div class="design-workspace">
-                    <!-- أدوات التصميم -->
+                    <!-- Design tools -->
                     <div class="design-tools">
                         <div class="row">
                             <div class="col-md-6">
-                                <h6 class="mb-3">{% trans "أدوات التصميم" %}</h6>
+                                <h6 class="mb-3">{% trans "Design Tools" %}</h6>
                                 <div class="element-palette">
                                     <button class="palette-item" onclick="addElement('company_name')">
                                         <i class="fas fa-building me-1"></i>
-                                        {% trans "اسم الشركة" %}
+                                        {% trans "Company Name" %}
                                     </button>
                                     <button class="palette-item" onclick="addElement('logo')">
                                         <i class="fas fa-image me-1"></i>
-                                        {% trans "الشعار" %}
+                                        {% trans "Logo" %}
                                     </button>
                                     <button class="palette-item" onclick="addElement('date')">
                                         <i class="fas fa-calendar me-1"></i>
-                                        {% trans "التاريخ" %}
+                                        {% trans "Date" %}
                                     </button>
                                     <button class="palette-item" onclick="addElement('page_number')">
                                         <i class="fas fa-hashtag me-1"></i>
-                                        {% trans "رقم الصفحة" %}
+                                        {% trans "Page Number" %}
                                     </button>
                                     <button class="palette-item" onclick="addElement('custom_text')">
                                         <i class="fas fa-text-width me-1"></i>
-                                        {% trans "نص مخصص" %}
+                                        {% trans "Custom Text" %}
                                     </button>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <h6 class="mb-3">{% trans "إعدادات الورقة" %}</h6>
+                                <h6 class="mb-3">{% trans "Paper Settings" %}</h6>
                                 <div class="row">
                                     <div class="col-12 mb-3">
-                                        <label class="form-label">{% trans "حجم الورقة" %}</label>
+                                        <label class="form-label">{% trans "Paper Size" %}</label>
                                         <div class="d-flex gap-2">
                                             <button class="btn btn-outline-primary" onclick="setPaperSize('A4')" id="a4Btn">A4</button>
                                             <button class="btn btn-outline-primary" onclick="setPaperSize('A5')" id="a5Btn">A5</button>
                                         </div>
                                     </div>
                                     <div class="col-12">
-                                        <label class="form-label">{% trans "اتجاه الورقة" %}</label>
+                                        <label class="form-label">{% trans "Paper Orientation" %}</label>
                                         <div class="d-flex gap-2">
                                             <button class="btn btn-outline-success" onclick="setPaperOrientation('portrait')" id="portraitBtn">
                                                 <i class="fas fa-mobile-alt me-1"></i>
-                                                {% trans "طولي" %}
+                                                {% trans "Portrait" %}
                                             </button>
                                             <button class="btn btn-outline-success" onclick="setPaperOrientation('landscape')" id="landscapeBtn">
                                                 <i class="fas fa-tablet-alt me-1"></i>
-                                                {% trans "عرضي" %}
+                                                {% trans "Landscape" %}
                                             </button>
                                         </div>
                                     </div>
@@ -381,44 +394,44 @@
                         </div>
                     </div>
 
-                    <!-- معاينة المستند -->
+                    <!-- Document preview -->
                     <div class="document-preview paper-a4" id="documentPreview">
                         <div class="text-center text-muted p-4" id="noDocumentMessage">
                             <i class="fas fa-file-alt fa-3x mb-3"></i>
-                            <h5>{% trans "اختر مستند لتصميمه" %}</h5>
-                            <p>{% trans "اختر مستند من القائمة الجانبية أو أضف مستند جديد" %}</p>
+                            <h5>{% trans "Choose a document to design" %}</h5>
+                            <p>{% trans "Select a document from the sidebar or add a new one" %}</p>
                         </div>
                         
-                        <!-- رأس المستند -->
+                        <!-- Document header -->
                         <div class="preview-header drop-zone" data-section="header" id="headerSection" style="display: none;">
                             <div class="drop-zone" data-position="left" id="headerLeft">
-                                <span class="text-muted">{% trans "يسار الرأس" %}</span>
+                                <span class="text-muted">{% trans "Left Header" %}</span>
                             </div>
                             <div class="drop-zone" data-position="center" id="headerCenter">
-                                <span class="text-muted">{% trans "وسط الرأس" %}</span>
+                                <span class="text-muted">{% trans "Center Header" %}</span>
                             </div>
                             <div class="drop-zone" data-position="right" id="headerRight">
-                                <span class="text-muted">{% trans "يمين الرأس" %}</span>
+                                <span class="text-muted">{% trans "Right Header" %}</span>
                             </div>
                         </div>
                         
-                        <!-- محتوى المستند -->
+                        <!-- Document content -->
                         <div class="preview-content" id="contentSection" style="display: none;">
                             <div class="sample-content">
-                                <h5>{% trans "محتوى المستند" %}</h5>
-                                <p>{% trans "هذا المحتوى يمثل بيانات المستند الفعلية مثل الفواتير والإيصالات" %}</p>
+                                <h5>{% trans "Document Content" %}</h5>
+                                <p>{% trans "This content represents the actual document data such as invoices and receipts" %}</p>
                                 <table class="table table-sm">
                                     <thead>
                                         <tr>
-                                            <th>{% trans "الصنف" %}</th>
-                                            <th>{% trans "الكمية" %}</th>
-                                            <th>{% trans "السعر" %}</th>
-                                            <th>{% trans "المجموع" %}</th>
+                                            <th>{% trans "Item" %}</th>
+                                            <th>{% trans "Quantity" %}</th>
+                                            <th>{% trans "Price" %}</th>
+                                            <th>{% trans "Total" %}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td>{% trans "منتج تجريبي" %}</td>
+                                            <td>{% trans "Sample Product" %}</td>
                                             <td>2</td>
                                             <td>100.00</td>
                                             <td>200.00</td>
@@ -428,65 +441,70 @@
                             </div>
                         </div>
                         
-                        <!-- تذييل المستند -->
+                        <!-- Document footer -->
                         <div class="preview-footer drop-zone" data-section="footer" id="footerSection" style="display: none;">
                             <div class="drop-zone" data-position="left" id="footerLeft">
-                                <span class="text-muted">{% trans "يسار التذييل" %}</span>
+                                <span class="text-muted">{% trans "Left Footer" %}</span>
                             </div>
                             <div class="drop-zone" data-position="center" id="footerCenter">
-                                <span class="text-muted">{% trans "وسط التذييل" %}</span>
+                                <span class="text-muted">{% trans "Center Footer" %}</span>
                             </div>
                             <div class="drop-zone" data-position="right" id="footerRight">
-                                <span class="text-muted">{% trans "يمين التذييل" %}</span>
+                                <span class="text-muted">{% trans "Right Footer" %}</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- لوحة خصائص العنصر المحدد -->
+            <!-- Selected element properties panel -->
             <div class="properties-panel" id="propertiesPanel">
-                <h6>{% trans "خصائص العنصر" %}</h6>
+                <h6>{% trans "Element Properties" %}</h6>
                 <div id="elementProperties">
-                    <p class="text-muted">{% trans "اختر عنصر لتعديل خصائصه" %}</p>
+                    <p class="text-muted">{% trans "Select an element to edit its properties" %}</p>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal لإضافة مستند جديد -->
+<!-- Modal: Add new document -->
 <div class="modal fade" id="addDocumentModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
                     <i class="fas fa-plus me-2"></i>
-                    {% trans "إضافة مستند جديد" %}
+                    {% trans "Add New Document" %}
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <form id="newDocumentForm">
                     <div class="mb-3">
-                        <label class="form-label">{% trans "نوع المستند" %}</label>
+                        <label class="form-label">{% trans "Document Type" %}</label>
                         <select class="form-select" id="newDocumentType" required>
-                            <option value="">{% trans "اختر نوع المستند" %}</option>
+                            <option value="">{% trans "Select document type" %}</option>
                             {% for doc_type in document_types %}
-                            <option value="{{ doc_type.key }}">{{ doc_type.name_ar }}</option>
+                            {% get_current_language as LANGUAGE_CODE %}
+                            {% if LANGUAGE_CODE == 'en' %}
+                                <option value="{{ doc_type.key }}">{{ doc_type.name_en }}</option>
+                            {% else %}
+                                <option value="{{ doc_type.key }}">{{ doc_type.name_ar }}</option>
+                            {% endif %}
                             {% endfor %}
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">{% trans "اسم المستند بالعربية" %}</label>
+                        <label class="form-label">{% trans "Document name (Arabic)" %}</label>
                         <input type="text" class="form-control" id="newDocumentNameAr" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">{% trans "اسم المستند بالإنجليزية" %}</label>
+                        <label class="form-label">{% trans "Document name (English)" %}</label>
                         <input type="text" class="form-control" id="newDocumentNameEn" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">{% trans "حجم الورقة" %}</label>
+                        <label class="form-label">{% trans "Paper Size" %}</label>
                         <select class="form-select" id="newPaperSize">
                             <option value="A4">A4</option>
                             <option value="A5">A5</option>
@@ -495,29 +513,29 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "إلغاء" %}</button>
-                <button type="button" class="btn btn-primary" onclick="createDocument()">{% trans "إنشاء" %}</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" class="btn btn-primary" onclick="createDocument()">{% trans "Create" %}</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal لتعديل العنصر -->
+<!-- Modal: Edit element -->
 <div class="modal fade" id="editElementModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">{% trans "تعديل العنصر" %}</h5>
+                <h5 class="modal-title">{% trans "Edit Element" %}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div id="elementEditForm">
-                    <!-- سيتم ملؤه بـ JavaScript -->
+                    <!-- Will be filled by JavaScript -->
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "إلغاء" %}</button>
-                <button type="button" class="btn btn-primary" onclick="saveElementChanges()">{% trans "حفظ" %}</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" class="btn btn-primary" onclick="saveElementChanges()">{% trans "Save" %}</button>
             </div>
         </div>
     </div>
@@ -526,4 +544,15 @@
 
 {% block extra_js %}
 <script src="{% static 'js/print_design.js' %}"></script>
+<script>
+// Wire up delete buttons without inline JS to avoid quote conflicts
+document.addEventListener('click', function(e){
+    const btn = e.target.closest('.js-delete-doc');
+    if(!btn) return;
+    const id = btn.getAttribute('data-doc-id');
+    const name = btn.getAttribute('data-doc-name');
+    if(!id) return;
+    deleteDocument(e, id, name);
+});
+</script>
 {% endblock %}
