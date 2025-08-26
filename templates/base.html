@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{% trans "Finspilot - Accounting System" %}{% endblock %}</title>
+    <title>{% block title %}{% if superadmin_settings and superadmin_settings.system_title %}{{ superadmin_settings.system_title }}{% else %}{% trans "Finspilot - Accounting System" %}{% endif %}{% endblock %}</title>
     
     <!-- Bootstrap CSS -->
     {% if LANGUAGE_CODE == 'ar' %}
@@ -39,10 +39,56 @@
     {% endif %}
     
     <style>
+        /* Default design tokens - can be overridden at runtime by superadmin settings */
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --accent-color: #28a745;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f8f9fa;
         }
+
+        /* overlay class for background opacity (added dynamically if needed) */
+        .superadmin-bg-overlay {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background: rgba(255,255,255,1);
+            z-index: 0;
+        }
+    </style>
+
+    {% if superadmin_settings %}
+    <script>
+        (function(){
+            try{
+                var root = document.documentElement;
+                root.style.setProperty('--primary-color', "{{ superadmin_settings.primary_color|default:'#007bff' }}");
+                root.style.setProperty('--secondary-color', "{{ superadmin_settings.secondary_color|default:'#6c757d' }}");
+                root.style.setProperty('--accent-color', "{{ superadmin_settings.accent_color|default:'#28a745' }}");
+
+                document.addEventListener('DOMContentLoaded', function(){
+                    {% if superadmin_settings.background_image %}
+                    document.body.style.backgroundImage = "url('{{ superadmin_settings.background_image.url }}')";
+                    document.body.style.backgroundSize = 'cover';
+                    document.body.style.backgroundRepeat = 'no-repeat';
+                    document.body.style.backgroundPosition = 'center center';
+                    {% endif %}
+
+                    {% if superadmin_settings.background_opacity %}
+                    var overlay = document.createElement('div');
+                    overlay.className = 'superadmin-bg-overlay';
+                    overlay.style.opacity = "{{ superadmin_settings.background_opacity|default:'0.8' }}";
+                    document.body.appendChild(overlay);
+                    {% endif %}
+                });
+            }catch(e){console && console.error && console.error(e);} 
+        })();
+    </script>
+    {% endif %}
         
         /* Print CSS */
         @media print {

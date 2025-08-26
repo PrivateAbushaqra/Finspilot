@@ -83,6 +83,8 @@ TEMPLATES = [
                 'core.context_processors.company_context',
                 'core.context_processors.notifications_context',
                 'core.context_processors.language_context',
+                # Superadmin UI settings (site-wide styles, title, logo, background)
+                'settings.context_processors.superadmin_context',
             ],
         },
     },
