@@ -14,7 +14,11 @@
         <!-- معلومات الشركة -->
         <div class="company-info" style="margin-top: 10px;">
             <h2 style="margin: 5px 0; font-size: 24px; font-weight: bold; color: #333;">
-                {{ settings_company.company_name|default:"FinsPilot" }}
+                {% if settings_company and settings_company.company_name %}
+                    {{ settings_company.company_name }}
+                {% else %}
+                    Finspilot
+                {% endif %}
             </h2>
             {% if settings_company.company_name_en %}
             <h3 style="margin: 5px 0; font-size: 18px; color: #666;">
