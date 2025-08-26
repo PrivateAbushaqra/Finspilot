@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{% trans "Finspilot - Accounting System" %}{% endblock %}</title>
+    <title>{% block title %}{% if superadmin_settings and superadmin_settings.system_title %}{{ superadmin_settings.system_title }}{% else %}{% trans "Finspilot - Accounting System" %}{% endif %}{% endblock %}</title>
     
     <!-- Bootstrap CSS -->
     {% if LANGUAGE_CODE == 'ar' %}
@@ -39,6 +39,20 @@
     {% endif %}
     
     <style>
+        :root {
+            /* fallbacks kept intentionally; values overridden if superadmin_settings provided */
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --accent-color: #28a745;
+        }
+        {% if superadmin_settings %}
+        /* apply colors from SuperadminSettings when available */
+        :root {
+            --primary-color: {{ superadmin_settings.primary_color|default:'#007bff' }};
+            --secondary-color: {{ superadmin_settings.secondary_color|default:'#6c757d' }};
+            --accent-color: {{ superadmin_settings.accent_color|default:'#28a745' }};
+        }
+        {% endif %}
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f8f9fa;

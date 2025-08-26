@@ -344,6 +344,20 @@ def perform_backup_task(user, timestamp, filename, filepath, format_type='json')
             },
             'data': {}
         }
+
+        # تضمين قائمة بملفات الوسائط المهمة (شعارات النظام وصور الخلفية) ضمن المحتوى
+        try:
+            media_files = []
+            system_media_dir = os.path.join(settings.MEDIA_ROOT, 'system')
+            if os.path.exists(system_media_dir):
+                for root, dirs, files in os.walk(system_media_dir):
+                    for fname in files:
+                        fpath = os.path.join(root, fname)
+                        rel = os.path.relpath(fpath, settings.MEDIA_ROOT)
+                        media_files.append(rel.replace('\\', '/'))
+            backup_content['media_files'] = media_files
+        except Exception as e:
+            logger.warning(f"فشل في حصر ملفات الوسائط للنسخ الاحتياطي: {str(e)}")
         
         # متغيرات التتبع
         processed_tables = 0
@@ -1450,6 +1464,20 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                 cache.delete('restore_last_update')
                 cache.delete('restore_last_percentage')
             threading.Thread(target=cleanup_restore_cache, daemon=True).start()
+        # إذا كانت النسخة تحتوي على ملفات وسائط، سجّل ذلك في سجل المراجعة لتوعية المسؤول
+        try:
+            if isinstance(backup_data, dict) and 'media_files' in backup_data and backup_data['media_files']:
+                if AUDIT_AVAILABLE and user:
+                    try:
+                        AuditLog.objects.create(
+                            user=user,
+                            action='backup_restore_media_files_listed',
+                            details=f'تحتوي النسخة على {len(backup_data["media_files"]) } ملف وسائط (system/*). يتطلب نقلها يدوياً إلى MEDIA_ROOT.'
+                        )
+                    except Exception:
+                        pass
+        except Exception:
+            pass
         return True
     except Exception as e:
         logger.error(f"خطأ في تنفيذ الاستعادة: {str(e)}")
