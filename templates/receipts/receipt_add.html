@@ -241,7 +241,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (customerSelect) {
         customerSelect.addEventListener('change', function() {
             if (this.value) {
-                fetch(`/en/receipts/api/customer/${this.value}/balance/`)
+                fetch("{% url 'receipts:get_customer_balance' 0 %}".replace('0', this.value))
                     .then(response => response.json())
                     .then(data => {
                         if (data.error) {
