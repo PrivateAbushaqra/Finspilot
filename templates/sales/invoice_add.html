@@ -268,8 +268,18 @@
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label for="id_creator_name" class="form-label">{% trans "User Name" %}</label>
-                            <input type="text" class="form-control bg-light" id="id_creator_name" value="{{ creator_full_name }}" readonly>
-                            <small class="form-text text-muted">{% trans "The name of the user creating this invoice (first and last)" %}</small>
+                            {% if can_change_creator %}
+                                <select class="form-select" id="id_creator_name" name="creator_user">
+                                    <option value="">{% trans "Select User" %}</option>
+                                    {% for u in all_users %}
+                                        <option value="{{ u.id }}" {% if u.username == request.user.username %}selected{% endif %}>{{ u.first_name }} {{ u.last_name }}{% if not u.first_name and not u.last_name %} ({{ u.username }}){% endif %}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-text text-muted">{% trans "Select the user who will be recorded as the creator of this invoice" %}</small>
+                            {% else %}
+                                <input type="text" class="form-control bg-light" id="id_creator_name" value="{{ creator_full_name }}" readonly>
+                                <small class="form-text text-muted">{% trans "The name of the user creating this invoice (first and last)" %}</small>
+                            {% endif %}
                         </div>
                     </div>
 
