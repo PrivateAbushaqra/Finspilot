@@ -29,6 +29,8 @@ class SalesInvoice(models.Model):
     tax_amount = models.DecimalField(_('مبلغ الضريبة'), max_digits=15, decimal_places=3, default=0)
     discount_amount = models.DecimalField(_('مبلغ الخصم'), max_digits=15, decimal_places=3, default=0)
     total_amount = models.DecimalField(_('المبلغ الإجمالي'), max_digits=15, decimal_places=3, default=0)
+    # new: whether tax is included/calculated for this invoice
+    inclusive_tax = models.BooleanField(_('شامل ضريبة'), default=True)
     notes = models.TextField(_('Notes'), blank=True)
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name=_('Created By'))
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
@@ -38,6 +40,9 @@ class SalesInvoice(models.Model):
         verbose_name = _('فاتورة مبيعات')
         verbose_name_plural = _('فواتير المبيعات')
         ordering = ['-date', '-invoice_number']
+        permissions = (
+            ('can_toggle_invoice_tax', 'Can toggle invoice tax inclusion'),
+        )
 
     def __str__(self):
         customer_name = self.customer.name if self.customer else 'عميل نقدي'
@@ -73,6 +78,8 @@ class SalesInvoiceItem(models.Model):
         self.tax_amount = tax_amount.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
         self.total_amount = (subtotal + tax_amount).quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
         super().save(*args, **kwargs)
+
+
 
 
 class SalesReturn(models.Model):

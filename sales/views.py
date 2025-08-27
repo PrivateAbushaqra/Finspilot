@@ -306,6 +306,12 @@ def sales_invoice_create(request):
                         total_tax_amount = Decimal('0')
 
                         # إنشاء الفاتورة
+                        # determine inclusive_tax flag: default True, but only changeable by users with permission
+                        inclusive_tax_flag = True
+                        if 'inclusive_tax' in request.POST:
+                            if user.is_superuser or user.has_perm('sales.can_toggle_invoice_tax'):
+                                inclusive_tax_flag = request.POST.get('inclusive_tax') in ['1', 'true', 'on', 'checked']
+
                         invoice = SalesInvoice.objects.create(
                             invoice_number=invoice_number,
                             date=invoice_date,
@@ -314,6 +320,7 @@ def sales_invoice_create(request):
                             discount_amount=discount_amount,
                             notes=notes,
                             created_by=user,
+                            inclusive_tax=inclusive_tax_flag,
                             subtotal=0,  # سيتم تحديثها لاحقاً
                             tax_amount=0,  # سيتم تحديثها لاحقاً
                             total_amount=0  # سيتم تحديثها لاحقاً
@@ -392,8 +399,13 @@ def sales_invoice_create(request):
 
                         # تحديث مجاميع الفاتورة
                         invoice.subtotal = subtotal.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
-                        invoice.tax_amount = total_tax_amount.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
-                        invoice.total_amount = (subtotal + total_tax_amount - discount_amount).quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+                        # if invoice.inclusive_tax is False and user had permission to unset it, zero tax amounts
+                        if invoice.inclusive_tax:
+                            invoice.tax_amount = total_tax_amount.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+                            invoice.total_amount = (subtotal + total_tax_amount - discount_amount).quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+                        else:
+                            invoice.tax_amount = Decimal('0').quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+                            invoice.total_amount = (subtotal - discount_amount).quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
                         invoice.save()
 
                         # إذا تم إدخال رقم يدوي يطابق البادئة، نقوم بدفع عداد التسلسل للأمام لتجنب التكرار لاحقاً
@@ -422,6 +434,19 @@ def sales_invoice_create(request):
                                 invoice,
                                 _('إنشاء فاتورة مبيعات رقم %(number)s') % {'number': invoice.invoice_number}
                             )
+                        except Exception:
+                            pass
+
+                        # Log change of inclusive_tax if applicable
+                        try:
+                            if 'inclusive_tax' in request.POST:
+                                from core.signals import log_user_activity
+                                log_user_activity(
+                                    request,
+                                    'update',
+                                    invoice,
+                                    _('تعيين خيار شامل ضريبة: %(value)s لفاتورة %(number)s') % {'value': str(invoice.inclusive_tax), 'number': invoice.invoice_number}
+                                )
                         except Exception:
                             pass
 
@@ -546,8 +571,32 @@ class SalesInvoiceUpdateView(LoginRequiredMixin, UpdateView):
         return reverse_lazy('sales:invoice_detail', kwargs={'pk': self.object.pk})
     
     def form_valid(self, form):
+        # detect change to inclusive_tax and log activity
+        try:
+            old = SalesInvoice.objects.get(pk=form.instance.pk)
+            old_inclusive = old.inclusive_tax
+        except SalesInvoice.DoesNotExist:
+            old_inclusive = None
+
+        response = super().form_valid(form)
+
+        try:
+            new_inclusive = self.object.inclusive_tax
+            if old_inclusive is not None and old_inclusive != new_inclusive:
+                from core.signals import log_user_activity
+                log_user_activity(
+                    self.request,
+                    'update',
+                    self.object,
+                    _('تغيير خيار شامل ضريبة من %(old)s إلى %(new)s لفاتورة %(number)s') % {
+                        'old': str(old_inclusive), 'new': str(new_inclusive), 'number': self.object.invoice_number
+                    }
+                )
+        except Exception:
+            pass
+
         messages.success(self.request, 'تم تحديث فاتورة المبيعات بنجاح')
-        return super().form_valid(form)
+        return response
 
 
 class SalesInvoiceDeleteView(LoginRequiredMixin, DeleteView):
