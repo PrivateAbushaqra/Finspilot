@@ -358,9 +358,9 @@
                             <input class="form-check-input" type="checkbox" value="1" id="id_inclusive_tax" name="inclusive_tax" checked
                                 {% if not can_toggle_invoice_tax %} disabled {% endif %}>
                             <label class="form-check-label" for="id_inclusive_tax">
-                                {% trans "شامل ضريبة" %}
+                                {% trans "Inclusive Tax" %}
                             </label>
-                            <small class="d-block text-muted">{% trans "عند إلغاء التحديد للمستخدمين المسموح لهم، سيتم احتساب المجاميع بدون ضريبة" %}</small>
+                            <small class="d-block text-muted">{% trans "When unchecked by permitted users, totals will be calculated without tax" %}</small>
                         </div>
                         <div class="summary-details">
                             <div class="d-flex justify-content-between mb-2">
@@ -846,7 +846,7 @@ document.getElementById('salesInvoiceForm').addEventListener('submit', function(
     
     if (!hasValidProducts) {
         e.preventDefault();
-        alert('يجب {% trans "Add" %} منتج واحد على الأقل مع كمية وسعر صحيحين');
+        alert("{% trans 'Please add at least one product with valid quantity and price' %}");
         return;
     }
     
@@ -919,8 +919,8 @@ function saveNewCustomer() {
             modal.hide();
             form.reset();
             
-            alert('تم إنشاء العميل بنجاح!');
-            console.log('تم {% trans "Save" %} العميل بنجاح');
+            alert("{% trans 'Customer created successfully!' %}");
+            console.log("{% trans 'Customer saved successfully' %}");
         } else {
             console.error('{% trans "Error" %} من الخادم:', data.message);
             alert('{% trans "Error" %}: ' + (data.message || 'حدث {% trans "Error" %} أثناء إنشاء العميل'));
