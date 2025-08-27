@@ -101,10 +101,22 @@ IS_RENDER = config('RENDER', default=False, cast=bool)
 
 if DATABASE_URL:
     # Render يوفر connection string مباشرة
+    # امنع فرض SSL عندما يشير DATABASE_URL إلى مضيف محلي (مثلاً خلال المحاكاة المحلية)
+    # لكن حافظ على فرض SSL في بيئة Render الحقيقية (IS_RENDER=True و DEBUG=False)
+    from urllib.parse import urlparse
+
+    parsed_db_url = urlparse(DATABASE_URL)
+    db_host = (parsed_db_url.hostname or '').lower()
+    # اعتبر هذه المضيفات محلية ولا نطلب SSL عند الاتصال بها
+    local_hosts = ('localhost', '127.0.0.1', '::1', '0.0.0.0')
+    is_local_db = db_host in local_hosts
+
+    ssl_required = bool(IS_RENDER and not DEBUG and not is_local_db)
+
     DATABASES['default'] = dj_database_url.parse(
         DATABASE_URL,
         conn_max_age=600,
-        ssl_require=(IS_RENDER and not DEBUG)
+        ssl_require=ssl_required
     )
 else:
     pg_name = config('PG_NAME', default=config('DB_NAME', default=None))

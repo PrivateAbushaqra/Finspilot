@@ -306,11 +306,11 @@ def sales_invoice_create(request):
                         total_tax_amount = Decimal('0')
 
                         # إنشاء الفاتورة
-                        # determine inclusive_tax flag: default True, but only changeable by users with permission
-                        inclusive_tax_flag = True
-                        if 'inclusive_tax' in request.POST:
-                            if user.is_superuser or user.has_perm('sales.can_toggle_invoice_tax'):
-                                inclusive_tax_flag = request.POST.get('inclusive_tax') in ['1', 'true', 'on', 'checked']
+                        # determine inclusive_tax flag: default True; if user has permission, use presence of checkbox
+                        if user.is_superuser or user.has_perm('sales.can_toggle_invoice_tax'):
+                            inclusive_tax_flag = 'inclusive_tax' in request.POST
+                        else:
+                            inclusive_tax_flag = True
 
                         invoice = SalesInvoice.objects.create(
                             invoice_number=invoice_number,
@@ -437,15 +437,17 @@ def sales_invoice_create(request):
                         except Exception:
                             pass
 
-                        # Log change of inclusive_tax if applicable
+                        # Log inclusive_tax value if the user had permission to toggle it (include both checked and unchecked)
                         try:
-                            if 'inclusive_tax' in request.POST:
+                            if user.is_superuser or user.has_perm('sales.can_toggle_invoice_tax'):
                                 from core.signals import log_user_activity
                                 log_user_activity(
                                     request,
                                     'update',
                                     invoice,
-                                    _('تعيين خيار شامل ضريبة: %(value)s لفاتورة %(number)s') % {'value': str(invoice.inclusive_tax), 'number': invoice.invoice_number}
+                                    _('تعيين خيار شامل ضريبة: %(value)s لفاتورة %(number)s') % {
+                                        'value': str(invoice.inclusive_tax), 'number': invoice.invoice_number
+                                    }
                                 )
                         except Exception:
                             pass
@@ -475,59 +477,79 @@ def sales_invoice_create(request):
             return redirect('sales:invoice_add')
     
     # GET request - عرض نموذج إنشاء الفاتورة
-    context = {
-        'customers': CustomerSupplier.objects.filter(type__in=['customer', 'both']),
-        'today_date': date.today().isoformat(),
-    }
-    
-    # إضافة بيانات المنتجات بتنسيق JSON للبحث
-    products = Product.objects.filter(is_active=True).select_related('category')
-    products_data = []
-    for product in products:
-        products_data.append({
-            'id': product.id,
-            'code': product.code,
-            'name': product.name,
-            'price': float(product.sale_price),
-            'tax_rate': float(product.tax_rate),
-            'category': product.category.name if product.category else ''
-        })
-    
-    context['products_json'] = json.dumps(products_data)
-    context['products'] = products  # إضافة المنتجات للـ modal
-    
-    # التحقق من صلاحيات المستخدم
-    user = request.user
-    context['can_edit_invoice_number'] = user.is_superuser or user.is_staff or user.has_perm('sales.change_salesinvoice_number')
-    context['can_edit_date'] = user.is_superuser or user.is_staff or user.has_perm('sales.change_salesinvoice_date')
-    
-    # إضافة رقم الفاتورة المتوقع للعرض
     try:
-        sequence = DocumentSequence.objects.get(document_type='sales_invoice')
-        # استخدم معاينة الرقم التالي لتعكس أعلى رقم مستخدم فعلياً
-        if hasattr(sequence, 'peek_next_number'):
-            context['next_invoice_number'] = sequence.peek_next_number()
-        else:
-            context['next_invoice_number'] = sequence.get_formatted_number()
-    except DocumentSequence.DoesNotExist:
-        last_invoice = SalesInvoice.objects.order_by('-id').first()
-        if last_invoice:
-            number = int(last_invoice.invoice_number.split('-')[-1]) + 1 if '-' in last_invoice.invoice_number else int(last_invoice.invoice_number) + 1
-        else:
-            number = 1
-        context['next_invoice_number'] = f"SALES-{number:06d}"
-    
-    # Currency settings
-    try:
-        company_settings = CompanySettings.objects.first()
-        if company_settings and company_settings.base_currency:
-            context['base_currency'] = company_settings.base_currency
-        else:
-            context['base_currency'] = Currency.objects.filter(is_active=True).first()
-    except:
-        pass
-    
-    return render(request, 'sales/invoice_add.html', context)
+        context = {
+            'customers': CustomerSupplier.objects.filter(type__in=['customer', 'both']),
+            'today_date': date.today().isoformat(),
+        }
+
+        # إضافة بيانات المنتجات بتنسيق JSON للبحث
+        products = Product.objects.filter(is_active=True).select_related('category')
+        products_data = []
+        for product in products:
+            products_data.append({
+                'id': product.id,
+                'code': product.code,
+                'name': product.name,
+                'price': float(product.sale_price),
+                'tax_rate': float(product.tax_rate),
+                'category': product.category.name if product.category else ''
+            })
+
+        context['products_json'] = json.dumps(products_data)
+        context['products'] = products  # إضافة المنتجات للـ modal
+
+        # التحقق من صلاحيات المستخدم
+        user = request.user
+        context['can_edit_invoice_number'] = user.is_superuser or user.is_staff or user.has_perm('sales.change_salesinvoice_number')
+        context['can_edit_date'] = user.is_superuser or user.is_staff or user.has_perm('sales.change_salesinvoice_date')
+        # صلاحية تعديل خيار شمول الضريبة - استخدم في القالب لتجنّب استدعاءات دوال داخل قوالب
+        context['can_toggle_invoice_tax'] = user.is_superuser or user.has_perm('sales.can_toggle_invoice_tax')
+
+        # إضافة رقم الفاتورة المتوقع للعرض
+        try:
+            sequence = DocumentSequence.objects.get(document_type='sales_invoice')
+            # استخدم معاينة الرقم التالي لتعكس أعلى رقم مستخدم فعلياً
+            if hasattr(sequence, 'peek_next_number'):
+                context['next_invoice_number'] = sequence.peek_next_number()
+            else:
+                context['next_invoice_number'] = sequence.get_formatted_number()
+        except DocumentSequence.DoesNotExist:
+            last_invoice = SalesInvoice.objects.order_by('-id').first()
+            if last_invoice:
+                number = int(last_invoice.invoice_number.split('-')[-1]) + 1 if '-' in last_invoice.invoice_number else int(last_invoice.invoice_number) + 1
+            else:
+                number = 1
+            context['next_invoice_number'] = f"SALES-{number:06d}"
+
+        # Currency settings
+        try:
+            company_settings = CompanySettings.objects.first()
+            if company_settings and company_settings.base_currency:
+                context['base_currency'] = company_settings.base_currency
+            else:
+                context['base_currency'] = Currency.objects.filter(is_active=True).first()
+        except:
+            pass
+
+        return render(request, 'sales/invoice_add.html', context)
+    except Exception as e:
+        # سجل الاستثناء في اللوق وAuditLog ثم أعِد توجيه المستخدم بدل أن ترفع 500
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.exception("Error rendering sales invoice add page: %s", e)
+
+        try:
+            from core.signals import log_user_activity
+            # استخدم كائن SalesInvoice وهمي لوصف الحدث
+            dummy = SalesInvoice()
+            log_user_activity(request, 'view', dummy, _('خطأ عند عرض صفحة إنشاء الفاتورة: %(error)s') % {'error': str(e)})
+        except Exception:
+            # لا نرمي أي استثناء إضافي أثناء تسجيل الخطأ
+            pass
+
+        messages.error(request, _('حدث خطأ أثناء تحميل صفحة إنشاء الفاتورة. تم تسجيل الخطأ لدى النظام.'))
+        return redirect('sales:invoice_list')
 
 
 class SalesInvoiceDetailView(LoginRequiredMixin, DetailView):

@@ -90,6 +90,7 @@
 
                 <form method="post">
                     {% csrf_token %}
+                    <input type="hidden" name="inclusive_tax" value="0">
                     
                     <div class="row">
                         <!-- Basic Invoice Information -->
