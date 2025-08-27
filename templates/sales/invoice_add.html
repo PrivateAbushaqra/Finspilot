@@ -288,12 +288,12 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5>
                         <i class="fas fa-box me-1"></i>
-                        المنتجات
+                        {% trans "Products" %}
                     </h5>
                     <button type="button" class="btn btn-add-product" id="addProductBtn" 
-                            title="انقر هنا ل{% trans "Add" %} منتج {% trans "New" %}" data-action="add-product">
+                            title="{% trans "Click to add a new product" %}" data-action="add-product">
                         <i class="fas fa-plus me-1"></i>
-                        {% trans "Add" %} منتج
+                        {% trans "Add" %} {% trans "Product" %}
                     </button>
                 </div>
                 
@@ -303,7 +303,7 @@
                             <tr>
                                 <th width="15%">رقم المنتج</th>
                                 <th width="20%">المنتج</th>
-                                <th width="10%">{% trans "Quantity" %} المتوفرة</th>
+                                <th width="10%">{% trans "Available Quantity" %}</th>
                                 <th width="10%">{% trans "Quantity" %}</th>
                                 <th width="12%">{% trans "Price" %}</th>
                                 <th width="8%">ضريبة %</th>
@@ -313,7 +313,7 @@
                             </tr>
                         </thead>
                         <tbody id="productsTableBody">
-                            <!-- سيتم {% trans "Add" %} الصفوف هنا بـ JavaScript -->
+                            <!-- {% trans "Product rows will be added here by JavaScript" %} -->
                         </tbody>
                     </table>
                 </div>
@@ -499,7 +499,7 @@ function ensurePageReady() {
         `;
         console.log('✅ Button styles applied directly');
     }
-    
+
     isPageReady = true;
 }
 
@@ -550,7 +550,7 @@ function setupAddProductButton() {
             console.log('✅ Product row added successfully');
         } catch (error) {
             console.error('❌ Error adding product row:', error);
-            alert('حدث خطأ أثناء إضافة المنتج. يرجى المحاولة مرة أخرى.');
+            alert("{% trans 'An error occurred while adding the product. Please try again.' %}");
         }
     });
     
@@ -610,7 +610,7 @@ function addProductRow() {
         const tbody = document.getElementById('productsTableBody');
         if (!tbody) {
             console.error('لم يتم العثور على {% trans "Table" %} المنتجات');
-            alert('{% trans "Error" %}: لم يتم العثور على {% trans "Table" %} المنتجات');
+            alert("{% trans 'Error: Products table not found' %}");
             return;
         }
         
@@ -674,8 +674,8 @@ function addProductRow() {
     console.log('تم إكمال addProductRow بنجاح');
     
     } catch (error) {
-        console.error('{% trans "Error" %} في addProductRow:', error);
-        alert('حدث {% trans "Error" %} أثناء {% trans "Add" %} صف المنتج: ' + error.message);
+    console.error('{% trans "Error" %} في addProductRow:', error);
+    alert("{% trans 'Error while adding product row' %}: " + (error && error.message ? error.message : ''));
         // استرجاع العداد في حالة ال{% trans "Error" %}
         if (productRowCounter > 0) {
             productRowCounter--;
@@ -689,7 +689,7 @@ function removeProductRow(rowId) {
         // Check if this is the last row
         const allRows = document.querySelectorAll('#productsTableBody tr');
         if (allRows.length <= 1) {
-            alert('يجب أن تحتوي ال{% trans "Invoice" %} على منتج واحد على الأقل');
+            alert("{% trans 'Invoice must contain at least one product' %}");
             return;
         }
         
@@ -853,24 +853,24 @@ document.getElementById('salesInvoiceForm').addEventListener('submit', function(
     // التحقق من العميل
     const customer = document.getElementById('id_customer').value;
     if (!customer) {
-        e.preventDefault();
-        alert('يرجى اختيار العميل');
+    e.preventDefault();
+    alert("{% trans 'Please select a customer' %}");
         return;
     }
     
     // التحقق من نوع ال{% trans "Payment" %}
     const paymentType = document.getElementById('id_payment_type').value;
     if (!paymentType) {
-        e.preventDefault();
-        alert('يرجى اختيار نوع ال{% trans "Payment" %}');
+    e.preventDefault();
+    alert("{% trans 'Please select a payment method' %}");
         return;
     }
     
     // التحقق {% trans "From Date" %} ال{% trans "Invoice" %}
     const invoiceDate = document.getElementById('id_date').value;
     if (!invoiceDate) {
-        e.preventDefault();
-        alert('يرجى {% trans "Select" %} تاريخ ال{% trans "Invoice" %}');
+    e.preventDefault();
+    alert("{% trans 'Please select the invoice date' %}");
         return;
     }
 });
