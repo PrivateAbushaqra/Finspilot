@@ -97,6 +97,22 @@ class UserCreateForm(forms.ModelForm):
                 choices = list(self.fields['user_type'].choices)
                 self.fields['user_type'].choices = [c for c in choices if c[0] != 'superadmin']
 
+        # Make first_name required for new users
+        if 'first_name' in self.fields:
+            self.fields['first_name'].required = True
+            # ensure HTML required attribute is present on widget
+            try:
+                self.fields['first_name'].widget.attrs.update({'required': 'required'})
+            except Exception:
+                pass
+
+    def clean_first_name(self):
+        """Ensure first name is provided."""
+        first_name = self.cleaned_data.get('first_name', '')
+        if not first_name or not str(first_name).strip():
+            raise forms.ValidationError(_('First name is required'))
+        return first_name
+
     def clean_username(self):
         username = self.cleaned_data['username']
         

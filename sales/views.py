@@ -326,6 +326,34 @@ def sales_invoice_create(request):
                             total_amount=0  # سيتم تحديثها لاحقاً
                         )
 
+                        # إذا كان المستخدم له صلاحية تغيير منشئ الفاتورة، تحقق من وجود حقل creator_user_id
+                        try:
+                            if user.is_superuser or user.has_perm('sales.can_change_invoice_creator'):
+                                creator_user_id = request.POST.get('creator_user')
+                                if creator_user_id:
+                                    from django.contrib.auth import get_user_model
+                                    U = get_user_model()
+                                    try:
+                                        chosen = U.objects.get(id=creator_user_id)
+                                        invoice.created_by = chosen
+                                        invoice.save()
+
+                                        # سجل التغيير في السجل
+                                        from core.signals import log_user_activity
+                                        log_user_activity(
+                                            request,
+                                            'update',
+                                            invoice,
+                                            _('تم تغيير منشئ الفاتورة إلى %(name)s على يد %(user)s') % {
+                                                'name': f"{chosen.first_name or ''} {chosen.last_name or chosen.username}",
+                                                'user': user.username
+                                            }
+                                        )
+                                    except Exception:
+                                        pass
+                        except Exception:
+                            pass
+
                         # إضافة عناصر الفاتورة
                         for i, product_id in enumerate(products):
                             if product_id and i < len(quantities) and i < len(prices):
@@ -505,6 +533,39 @@ def sales_invoice_create(request):
         context['can_edit_date'] = user.is_superuser or user.is_staff or user.has_perm('sales.change_salesinvoice_date')
         # صلاحية تعديل خيار شمول الضريبة - استخدم في القالب لتجنّب استدعاءات دوال داخل قوالب
         context['can_toggle_invoice_tax'] = user.is_superuser or user.has_perm('sales.can_toggle_invoice_tax')
+
+        # اسم المستخدم المنشئ (الاسم الأول + الاسم الأخير) لعرضه في القالب
+        try:
+            creator_full = f"{user.first_name or ''} {user.last_name or ''}".strip()
+        except Exception:
+            creator_full = user.username
+        context['creator_full_name'] = creator_full
+        # صلاحية تغيير منشئ الفاتورة وقائمة المستخدمين
+        try:
+            can_change_creator = user.is_superuser or user.has_perm('sales.can_change_invoice_creator')
+        except Exception:
+            can_change_creator = False
+        context['can_change_creator'] = can_change_creator
+        if can_change_creator:
+            try:
+                from django.contrib.auth import get_user_model
+                U = get_user_model()
+                context['all_users'] = U.objects.all()
+            except Exception:
+                context['all_users'] = []
+
+        # سجل عرض صفحة إنشاء الفاتورة في سجل النشاط
+        try:
+            from core.signals import log_user_activity
+            dummy = SalesInvoice()
+            log_user_activity(
+                request,
+                'view',
+                dummy,
+                _('Viewed sales invoice creation page')
+            )
+        except Exception:
+            pass
 
         # إضافة رقم الفاتورة المتوقع للعرض
         try:

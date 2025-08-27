@@ -1,5 +1,84 @@
 from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
+from decimal import Decimal
+from django.utils import timezone
+
+from products.models import Category, Product
+from customers.models import CustomerSupplier
+from sales.models import SalesInvoice
+
+User = get_user_model()
+
+
+class TestInclusiveTax(TestCase):
+    def setUp(self):
+        # create category and product
+        self.cat = Category.objects.create(name='TEST-CAT', sequence_number=99999)
+        self.prod = Product.objects.create(code='TST-1', name='T1', product_type='physical', category=self.cat, sale_price=Decimal('100.000'), tax_rate=Decimal('5.00'))
+        # create customer
+        self.cust = CustomerSupplier.objects.create(name='TEST-CUST', type='customer')
+
+        # users
+        self.normal = User.objects.create_user(username='normal', password='pass')
+        self.super = User.objects.create_user(username='super', password='pass', is_superuser=True, is_staff=True)
+
+        self.client = Client()
+        # prevent writing real AuditLog entries during tests which may reference users across dbs
+        try:
+            from unittest.mock import patch
+            patcher = patch('core.signals.log_user_activity')
+            self.addCleanup(patcher.stop)
+            self.mock_log = patcher.start()
+        except Exception:
+            self.mock_log = None
+
+    def test_normal_user_invoice_inclusive_by_default(self):
+        self.client.login(username='normal', password='pass')
+        post_data = {
+            'customer': str(self.cust.id),
+            'payment_type': 'cash',
+            'products[]': [str(self.prod.id)],
+            'quantities[]': ['1'],
+            'prices[]': [str(self.prod.sale_price)],
+            'tax_rates[]': [str(self.prod.tax_rate)],
+            'discount': '0',
+            'notes': 'test_normal_inclusive',
+        }
+        resp = self.client.post('/ar/sales/invoices/add/', post_data, follow=True)
+        self.assertIn(resp.status_code, (200, 302))
+
+        inv = SalesInvoice.objects.filter(notes='test_normal_inclusive').first()
+        self.assertIsNotNone(inv, 'Invoice should be created')
+        # normal users cannot toggle => inclusive_tax True
+        self.assertTrue(inv.inclusive_tax)
+        # tax should be applied
+        expected_tax = (self.prod.sale_price * (self.prod.tax_rate / Decimal('100'))).quantize(Decimal('0.001'))
+        self.assertEqual(inv.tax_amount.quantize(Decimal('0.001')), expected_tax)
+
+    def test_superuser_can_unset_inclusive_tax(self):
+        self.client.login(username='super', password='pass')
+        # For superuser, omitting the 'inclusive_tax' key will set it to False in current logic
+        post_data = {
+            'customer': str(self.cust.id),
+            'payment_type': 'cash',
+            'products[]': [str(self.prod.id)],
+            'quantities[]': ['1'],
+            'prices[]': [str(self.prod.sale_price)],
+            'tax_rates[]': [str(self.prod.tax_rate)],
+            'discount': '0',
+            'notes': 'test_super_exclusive',
+        }
+        resp = self.client.post('/ar/sales/invoices/add/', post_data, follow=True)
+        self.assertIn(resp.status_code, (200, 302))
+
+        inv = SalesInvoice.objects.filter(notes='test_super_exclusive').first()
+        self.assertIsNotNone(inv, 'Invoice should be created')
+        # superuser omitted key => inclusive_tax False
+        self.assertFalse(inv.inclusive_tax)
+        # tax should be zero
+        self.assertEqual(inv.tax_amount.quantize(Decimal('0.001')), Decimal('0').quantize(Decimal('0.001')))
+from django.test import TestCase, Client
+from django.contrib.auth import get_user_model
 from django.urls import reverse
 from decimal import Decimal
 from customers.models import CustomerSupplier

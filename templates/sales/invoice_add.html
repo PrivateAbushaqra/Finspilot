@@ -267,6 +267,24 @@
                     
                     <div class="col-md-6">
                         <div class="mb-3">
+                            <label for="id_creator_name" class="form-label">{% trans "User Name" %}</label>
+                            {% if can_change_creator %}
+                                <select class="form-select" id="id_creator_name" name="creator_user">
+                                    <option value="">{% trans "Select User" %}</option>
+                                    {% for u in all_users %}
+                                        <option value="{{ u.id }}" {% if u.username == request.user.username %}selected{% endif %}>{{ u.first_name }} {{ u.last_name }}{% if not u.first_name and not u.last_name %} ({{ u.username }}){% endif %}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-text text-muted">{% trans "Select the user who will be recorded as the creator of this invoice" %}</small>
+                            {% else %}
+                                <input type="text" class="form-control bg-light" id="id_creator_name" value="{{ creator_full_name }}" readonly>
+                                <small class="form-text text-muted">{% trans "The name of the user creating this invoice (first and last)" %}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="mb-3">
                             <label for="id_payment_type" class="form-label">
                                 {% trans "Payment Method" %} <span class="required-field">*</span>
                             </label>
@@ -288,12 +306,12 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5>
                         <i class="fas fa-box me-1"></i>
-                        المنتجات
+                        {% trans "Products" %}
                     </h5>
                     <button type="button" class="btn btn-add-product" id="addProductBtn" 
-                            title="انقر هنا ل{% trans "Add" %} منتج {% trans "New" %}" data-action="add-product">
+                            title="{% trans "Click to add a new product" %}" data-action="add-product">
                         <i class="fas fa-plus me-1"></i>
-                        {% trans "Add" %} منتج
+                        {% trans "Add" %} {% trans "Product" %}
                     </button>
                 </div>
                 
@@ -303,7 +321,7 @@
                             <tr>
                                 <th width="15%">رقم المنتج</th>
                                 <th width="20%">المنتج</th>
-                                <th width="10%">{% trans "Quantity" %} المتوفرة</th>
+                                <th width="10%">{% trans "Available Quantity" %}</th>
                                 <th width="10%">{% trans "Quantity" %}</th>
                                 <th width="12%">{% trans "Price" %}</th>
                                 <th width="8%">ضريبة %</th>
@@ -313,7 +331,7 @@
                             </tr>
                         </thead>
                         <tbody id="productsTableBody">
-                            <!-- سيتم {% trans "Add" %} الصفوف هنا بـ JavaScript -->
+                            <!-- {% trans "Product rows will be added here by JavaScript" %} -->
                         </tbody>
                     </table>
                 </div>
@@ -358,9 +376,9 @@
                             <input class="form-check-input" type="checkbox" value="1" id="id_inclusive_tax" name="inclusive_tax" checked
                                 {% if not can_toggle_invoice_tax %} disabled {% endif %}>
                             <label class="form-check-label" for="id_inclusive_tax">
-                                {% trans "شامل ضريبة" %}
+                                {% trans "Inclusive Tax" %}
                             </label>
-                            <small class="d-block text-muted">{% trans "عند إلغاء التحديد للمستخدمين المسموح لهم، سيتم احتساب المجاميع بدون ضريبة" %}</small>
+                            <small class="d-block text-muted">{% trans "When unchecked by permitted users, totals will be calculated without tax" %}</small>
                         </div>
                         <div class="summary-details">
                             <div class="d-flex justify-content-between mb-2">
@@ -499,7 +517,7 @@ function ensurePageReady() {
         `;
         console.log('✅ Button styles applied directly');
     }
-    
+
     isPageReady = true;
 }
 
@@ -550,7 +568,7 @@ function setupAddProductButton() {
             console.log('✅ Product row added successfully');
         } catch (error) {
             console.error('❌ Error adding product row:', error);
-            alert('حدث خطأ أثناء إضافة المنتج. يرجى المحاولة مرة أخرى.');
+            alert("{% trans 'An error occurred while adding the product. Please try again.' %}");
         }
     });
     
@@ -610,7 +628,7 @@ function addProductRow() {
         const tbody = document.getElementById('productsTableBody');
         if (!tbody) {
             console.error('لم يتم العثور على {% trans "Table" %} المنتجات');
-            alert('{% trans "Error" %}: لم يتم العثور على {% trans "Table" %} المنتجات');
+            alert("{% trans 'Error: Products table not found' %}");
             return;
         }
         
@@ -674,8 +692,8 @@ function addProductRow() {
     console.log('تم إكمال addProductRow بنجاح');
     
     } catch (error) {
-        console.error('{% trans "Error" %} في addProductRow:', error);
-        alert('حدث {% trans "Error" %} أثناء {% trans "Add" %} صف المنتج: ' + error.message);
+    console.error('{% trans "Error" %} في addProductRow:', error);
+    alert("{% trans 'Error while adding product row' %}: " + (error && error.message ? error.message : ''));
         // استرجاع العداد في حالة ال{% trans "Error" %}
         if (productRowCounter > 0) {
             productRowCounter--;
@@ -689,7 +707,7 @@ function removeProductRow(rowId) {
         // Check if this is the last row
         const allRows = document.querySelectorAll('#productsTableBody tr');
         if (allRows.length <= 1) {
-            alert('يجب أن تحتوي ال{% trans "Invoice" %} على منتج واحد على الأقل');
+            alert("{% trans 'Invoice must contain at least one product' %}");
             return;
         }
         
@@ -846,31 +864,31 @@ document.getElementById('salesInvoiceForm').addEventListener('submit', function(
     
     if (!hasValidProducts) {
         e.preventDefault();
-        alert('يجب {% trans "Add" %} منتج واحد على الأقل مع كمية وسعر صحيحين');
+        alert("{% trans 'Please add at least one product with valid quantity and price' %}");
         return;
     }
     
     // التحقق من العميل
     const customer = document.getElementById('id_customer').value;
     if (!customer) {
-        e.preventDefault();
-        alert('يرجى اختيار العميل');
+    e.preventDefault();
+    alert("{% trans 'Please select a customer' %}");
         return;
     }
     
     // التحقق من نوع ال{% trans "Payment" %}
     const paymentType = document.getElementById('id_payment_type').value;
     if (!paymentType) {
-        e.preventDefault();
-        alert('يرجى اختيار نوع ال{% trans "Payment" %}');
+    e.preventDefault();
+    alert("{% trans 'Please select a payment method' %}");
         return;
     }
     
     // التحقق {% trans "From Date" %} ال{% trans "Invoice" %}
     const invoiceDate = document.getElementById('id_date').value;
     if (!invoiceDate) {
-        e.preventDefault();
-        alert('يرجى {% trans "Select" %} تاريخ ال{% trans "Invoice" %}');
+    e.preventDefault();
+    alert("{% trans 'Please select the invoice date' %}");
         return;
     }
 });
@@ -919,8 +937,8 @@ function saveNewCustomer() {
             modal.hide();
             form.reset();
             
-            alert('تم إنشاء العميل بنجاح!');
-            console.log('تم {% trans "Save" %} العميل بنجاح');
+            alert("{% trans 'Customer created successfully!' %}");
+            console.log("{% trans 'Customer saved successfully' %}");
         } else {
             console.error('{% trans "Error" %} من الخادم:', data.message);
             alert('{% trans "Error" %}: ' + (data.message || 'حدث {% trans "Error" %} أثناء إنشاء العميل'));

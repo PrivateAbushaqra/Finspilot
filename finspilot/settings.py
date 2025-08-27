@@ -2,12 +2,16 @@ import os
 from pathlib import Path
 from decouple import config
 import dj_database_url
+import sys
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config('SECRET_KEY')
 
 DEBUG = config('DEBUG', default=False, cast=bool)
+
+# Detect when running tests so we can relax some production-only settings
+TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'
 
 # السماح بالمضيفين مع قيمة افتراضية آمنة محلياً
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost').split(',')
@@ -182,7 +186,7 @@ STATICFILES_DIRS = [
 ]
 
 # تحسين تقديم الملفات الثابتة في الإنتاج فقط
-if not DEBUG:
+if not DEBUG and not TESTING:
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files
@@ -274,7 +278,7 @@ LOGOUT_REDIRECT_URL = '/ar/auth/login/'
 
 # ===== إعدادات أمنية للإنتاج فقط =====
 # تُفعّل فقط عندما DEBUG=False لضمان أن بيئة التطوير المحلية لا تتأثر
-if not DEBUG:
+if not DEBUG and not TESTING:
     # إعادة التوجيه إلى HTTPS
     SECURE_SSL_REDIRECT = True
 
