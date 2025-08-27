@@ -270,3 +270,22 @@ AUTH_USER_MODEL = 'users.User'
 LOGIN_URL = '/ar/auth/login/'
 LOGIN_REDIRECT_URL = '/ar/'
 LOGOUT_REDIRECT_URL = '/ar/auth/login/'
+
+
+# ===== إعدادات أمنية للإنتاج فقط =====
+# تُفعّل فقط عندما DEBUG=False لضمان أن بيئة التطوير المحلية لا تتأثر
+if not DEBUG:
+    # إعادة التوجيه إلى HTTPS
+    SECURE_SSL_REDIRECT = True
+
+    # اجعل الكوكيز آمنة (تنقل فقط مع HTTPS)
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+    # HSTS: ابدأ بقيمة صغيرة ثم زدها تدريجياً عند التأكد
+    SECURE_HSTS_SECONDS = int(config('SECURE_HSTS_SECONDS', default=3600))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = config('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=True, cast=bool)
+    SECURE_HSTS_PRELOAD = config('SECURE_HSTS_PRELOAD', default=False, cast=bool)
+
+    # إذا كان التطبيق خلف Proxy أو Load Balancer الذي يحدد X-Forwarded-Proto
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
