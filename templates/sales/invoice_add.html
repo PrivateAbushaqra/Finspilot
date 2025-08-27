@@ -267,6 +267,14 @@
                     
                     <div class="col-md-6">
                         <div class="mb-3">
+                            <label for="id_creator_name" class="form-label">{% trans "User Name" %}</label>
+                            <input type="text" class="form-control bg-light" id="id_creator_name" value="{{ creator_full_name }}" readonly>
+                            <small class="form-text text-muted">{% trans "The name of the user creating this invoice (first and last)" %}</small>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="mb-3">
                             <label for="id_payment_type" class="form-label">
                                 {% trans "Payment Method" %} <span class="required-field">*</span>
                             </label>

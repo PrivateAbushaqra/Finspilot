@@ -506,6 +506,26 @@ def sales_invoice_create(request):
         # صلاحية تعديل خيار شمول الضريبة - استخدم في القالب لتجنّب استدعاءات دوال داخل قوالب
         context['can_toggle_invoice_tax'] = user.is_superuser or user.has_perm('sales.can_toggle_invoice_tax')
 
+        # اسم المستخدم المنشئ (الاسم الأول + الاسم الأخير) لعرضه في القالب
+        try:
+            creator_full = f"{user.first_name or ''} {user.last_name or ''}".strip()
+        except Exception:
+            creator_full = user.username
+        context['creator_full_name'] = creator_full
+
+        # سجل عرض صفحة إنشاء الفاتورة في سجل النشاط
+        try:
+            from core.signals import log_user_activity
+            dummy = SalesInvoice()
+            log_user_activity(
+                request,
+                'view',
+                dummy,
+                _('Viewed sales invoice creation page')
+            )
+        except Exception:
+            pass
+
         # إضافة رقم الفاتورة المتوقع للعرض
         try:
             sequence = DocumentSequence.objects.get(document_type='sales_invoice')
