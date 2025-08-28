@@ -959,6 +959,8 @@ class DocumentPrintSettingsView(LoginRequiredMixin, UserPassesTestMixin, Templat
         # قائمة المستندات المتاحة للطباعة
         document_types = [
             {'key': 'invoice', 'name_ar': _('فاتورة مبيعات'), 'name_en': _('Sales Invoice')},
+                {'key': 'credit_note', 'name_ar': _('إشعار دائن'), 'name_en': _('Credit Note')},
+                {'key': 'debit_note', 'name_ar': _('إشعار مدين'), 'name_en': _('Debit Note')},
             {'key': 'purchase_order', 'name_ar': _('أمر شراء'), 'name_en': _('Purchase Order')},
             {'key': 'receipt', 'name_ar': _('إيصال استلام'), 'name_en': _('Receipt')},
             {'key': 'payment_voucher', 'name_ar': _('إذن صرف'), 'name_en': _('Payment Voucher')},
@@ -1095,6 +1097,8 @@ class PrintDesignView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         # قائمة المستندات المتاحة للإضافة
         document_types = [
             {'key': 'invoice', 'name_ar': _('فاتورة مبيعات'), 'name_en': _('Sales Invoice')},
+            {'key': 'credit_note', 'name_ar': _('إشعار دائن'), 'name_en': _('Credit Note')},
+            {'key': 'debit_note', 'name_ar': _('إشعار مدين'), 'name_en': _('Debit Note')},
             {'key': 'purchase_order', 'name_ar': _('أمر شراء'), 'name_en': _('Purchase Order')},
             {'key': 'receipt', 'name_ar': _('إيصال استلام'), 'name_en': _('Receipt')},
             {'key': 'payment_voucher', 'name_ar': _('إذن صرف'), 'name_en': _('Payment Voucher')},
