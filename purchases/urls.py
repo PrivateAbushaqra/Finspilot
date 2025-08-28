@@ -24,4 +24,8 @@ urlpatterns = [
     path('reports/', views.PurchaseReportView.as_view(), name='purchase_report'),
     path('statement/', views.PurchaseStatementView.as_view(), name='purchase_statement'),
     path('returns-statement/', views.PurchaseReturnStatementView.as_view(), name='purchase_return_statement'),
+    # Debit Notes (separate section)
+    path('debit-notes/', views.PurchaseDebitNoteListView.as_view(), name='debitnote_list'),
+    path('debit-notes/add/', views.purchase_debitnote_create, name='debitnote_add'),
+    path('debit-notes/<int:pk>/', views.PurchaseDebitNoteDetailView.as_view(), name='debitnote_detail'),
 ]

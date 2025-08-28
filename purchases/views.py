@@ -1,12 +1,13 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView, DetailView, View
 from django.db.models import Sum, Count, Q
 from django.utils import timezone
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from decimal import Decimal, ROUND_HALF_UP
 from .models import PurchaseInvoice, PurchaseInvoiceItem, PurchaseReturn, PurchaseReturnItem, PurchaseReturn, PurchaseReturnItem
 from customers.models import CustomerSupplier
@@ -15,6 +16,11 @@ from inventory.models import InventoryMovement, Warehouse
 from accounts.services import create_purchase_invoice_transaction, create_purchase_return_transaction, delete_transaction_by_reference
 from journal.services import JournalService
 from core.models import DocumentSequence
+from .models import PurchaseDebitNote
+from decimal import Decimal
+from django.db import transaction
+from django.utils.translation import gettext_lazy as _
+from core.models import CompanySettings
 
 
 def create_purchase_invoice_journal_entry(invoice, user):
@@ -367,6 +373,94 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
         except Exception as e:
             messages.error(request, f'حدث خطأ أثناء إنشاء الفاتورة: {str(e)}')
             return self.get(request)
+
+
+class PurchaseDebitNoteListView(LoginRequiredMixin, ListView):
+    model = PurchaseDebitNote
+    template_name = 'purchases/debitnote_list.html'
+    context_object_name = 'debitnotes'
+
+    def get_queryset(self):
+        queryset = PurchaseDebitNote.objects.all()
+        search = self.request.GET.get('search')
+        if search:
+            queryset = queryset.filter(Q(note_number__icontains=search) | Q(supplier__name__icontains=search))
+        return queryset.select_related('supplier', 'created_by')
+
+
+@login_required
+def purchase_debitnote_create(request):
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                supplier_id = request.POST.get('supplier')
+                if not supplier_id:
+                    messages.error(request, _('يرجى اختيار مورد'))
+                    return redirect('purchases:debitnote_add')
+
+                supplier = get_object_or_404(CustomerSupplier, id=supplier_id)
+
+                # توليد الرقم
+                try:
+                    seq = DocumentSequence.objects.get(document_type='debit_note')
+                    note_number = seq.get_next_number()
+                except DocumentSequence.DoesNotExist:
+                    last = PurchaseDebitNote.objects.order_by('-id').first()
+                    number = last.id + 1 if last else 1
+                    note_number = f"DN-{number:06d}"
+
+                debit = PurchaseDebitNote.objects.create(
+                    note_number=note_number,
+                    date=request.POST.get('date', date.today()),
+                    supplier=supplier,
+                    subtotal=Decimal(request.POST.get('subtotal', '0') or '0'),
+                    tax_amount=Decimal(request.POST.get('tax_amount', '0') or '0'),
+                    total_amount=Decimal(request.POST.get('total_amount', '0') or '0'),
+                    notes=request.POST.get('notes', ''),
+                    created_by=request.user
+                )
+
+                try:
+                    from core.signals import log_user_activity
+                    log_user_activity(request, 'create', debit, _('إنشاء اشعار مدين رقم %(number)s') % {'number': debit.note_number})
+                except Exception:
+                    pass
+
+                messages.success(request, _('تم إنشاء اشعار مدين رقم %(number)s') % {'number': debit.note_number})
+                return redirect('purchases:debitnote_detail', pk=debit.pk)
+        except Exception as e:
+            messages.error(request, _('حدث خطأ أثناء حفظ الإشعار: %(error)s') % {'error': str(e)})
+            return redirect('purchases:debitnote_add')
+
+    context = {
+        'suppliers': CustomerSupplier.objects.filter(Q(type='supplier')|Q(type='both')),
+        'today_date': date.today().isoformat(),
+    }
+    try:
+        seq = DocumentSequence.objects.get(document_type='debit_note')
+        context['next_note_number'] = seq.peek_next_number() if hasattr(seq, 'peek_next_number') else seq.get_formatted_number()
+    except DocumentSequence.DoesNotExist:
+        last = PurchaseDebitNote.objects.order_by('-id').first()
+        number = last.id + 1 if last else 1
+        context['next_note_number'] = f"DN-{number:06d}"
+
+    return render(request, 'purchases/debitnote_add.html', context)
+
+
+class PurchaseDebitNoteDetailView(LoginRequiredMixin, DetailView):
+    model = PurchaseDebitNote
+    template_name = 'purchases/debitnote_detail.html'
+    context_object_name = 'debitnote'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        try:
+            company_settings = CompanySettings.objects.first()
+            if company_settings and company_settings.base_currency:
+                context['base_currency'] = company_settings.base_currency
+        except Exception:
+            pass
+        return context
 
 class PurchaseInvoiceDetailView(LoginRequiredMixin, TemplateView):
     template_name = 'purchases/invoice_detail.html'

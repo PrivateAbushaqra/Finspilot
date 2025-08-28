@@ -136,3 +136,25 @@ class SalesReturnItem(models.Model):
         self.tax_amount = tax_amount.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
         self.total_amount = (subtotal + tax_amount).quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
         super().save(*args, **kwargs)
+
+
+class SalesCreditNote(models.Model):
+    """اشعار دائن لمبيعات"""
+    note_number = models.CharField(_('رقم إشعار دائن'), max_length=50, unique=True)
+    date = models.DateField(_('Date'))
+    customer = models.ForeignKey(CustomerSupplier, on_delete=models.PROTECT, verbose_name=_('العميل'))
+    subtotal = models.DecimalField(_('المجموع الفرعي'), max_digits=15, decimal_places=3, default=0)
+    tax_amount = models.DecimalField(_('مبلغ الضريبة'), max_digits=15, decimal_places=3, default=0)
+    total_amount = models.DecimalField(_('المبلغ الإجمالي'), max_digits=15, decimal_places=3, default=0)
+    notes = models.TextField(_('ملاحظات'), blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name=_('Created By'))
+    created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
+    updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
+
+    class Meta:
+        verbose_name = _('اشعار دائن')
+        verbose_name_plural = _('اشعارات دائن')
+        ordering = ['-date', '-note_number']
+
+    def __str__(self):
+        return f"{self.note_number} - {self.customer.name}"

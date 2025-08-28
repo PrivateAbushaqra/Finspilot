@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}{% trans "Purchase Debit Notes" %}{% endblock %}
+{% block content %}
+<div class="container">
+  <h1>{% trans "Purchase Debit Notes" %}</h1>
+  <a class="btn btn-primary mb-2" href="{% url 'purchases:debitnote_add' %}">{% trans "Create Debit Note" %}</a>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>{% trans "Number" %}</th>
+        <th>{% trans "Supplier" %}</th>
+        <th>{% trans "Date" %}</th>
+        <th>{% trans "Total" %}</th>
+        <th>{% trans "Actions" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for note in debitnotes %}
+      <tr>
+        <td>{{ note.note_number }}</td>
+        <td>{{ note.supplier.name }}</td>
+        <td>{{ note.date }}</td>
+        <td>{{ note.total_amount }}</td>
+        <td><a href="{% url 'purchases:debitnote_detail' note.pk %}">{% trans "View" %}</a></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5">{% trans "No debit notes found" %}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

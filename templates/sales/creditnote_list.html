@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}{% trans "Sales Credit Notes" %}{% endblock %}
+{% block content %}
+<div class="container">
+  <h1>{% trans "Sales Credit Notes" %}</h1>
+  <a class="btn btn-primary mb-2" href="{% url 'sales:creditnote_add' %}">{% trans "Create Credit Note" %}</a>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>{% trans "Number" %}</th>
+        <th>{% trans "Customer" %}</th>
+        <th>{% trans "Date" %}</th>
+        <th>{% trans "Total" %}</th>
+        <th>{% trans "Actions" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for note in creditnotes %}
+      <tr>
+        <td>{{ note.note_number }}</td>
+        <td>{{ note.customer.name }}</td>
+        <td>{{ note.date }}</td>
+        <td>{{ note.total_amount }}</td>
+        <td><a href="{% url 'sales:creditnote_detail' note.pk %}">{% trans "View" %}</a></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5">{% trans "No credit notes found" %}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if is_paginated %}
+    <nav>
+      <ul class="pagination">
+        {% if page_obj.has_previous %}
+          <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo;</a></li>
+        {% endif %}
+        <li class="page-item active"><span class="page-link">{{ page_obj.number }}</span></li>
+        {% if page_obj.has_next %}
+          <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">&raquo;</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+</div>
+{% endblock %}

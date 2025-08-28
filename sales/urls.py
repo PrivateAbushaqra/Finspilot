@@ -29,4 +29,8 @@ urlpatterns = [
     path('reports/', views.SalesReportView.as_view(), name='sales_report'),
     path('statement/', views.SalesStatementView.as_view(), name='sales_statement'),
     path('returns-statement/', views.SalesReturnStatementView.as_view(), name='sales_return_statement'),
+    # Credit Notes (separate section)
+    path('credit-notes/', views.SalesCreditNoteListView.as_view(), name='creditnote_list'),
+    path('credit-notes/add/', views.sales_creditnote_create, name='creditnote_add'),
+    path('credit-notes/<int:pk>/', views.SalesCreditNoteDetailView.as_view(), name='creditnote_detail'),
 ]

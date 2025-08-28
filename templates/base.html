@@ -789,6 +789,9 @@
                                         <a class="nav-link" href="{% url 'purchases:return_list' %}">{% trans "Purchase Returns List" %}</a>
                                     </li>
                                     <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'purchases:debitnote_list' %}">{% trans "Debit Notes" %}</a>
+                                    </li>
+                                    <li class="nav-item">
                                         <a class="nav-link" href="{% url 'purchases:purchase_statement' %}">{% trans "Purchase Statement" %}</a>
                                     </li>
                                     <li class="nav-item">
@@ -819,6 +822,9 @@
                                     </li>
                                     <li class="nav-item">
                                         <a class="nav-link" href="{% url 'sales:return_list' %}">{% trans "Sales Returns List" %}</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'sales:creditnote_list' %}">{% trans "Credit Notes" %}</a>
                                     </li>
                                     <li class="nav-item">
                                         <a class="nav-link" href="{% url 'sales:sales_statement' %}">{% trans "Sales Statement" %}</a>

@@ -161,3 +161,25 @@ class PurchaseReturnItem(models.Model):
         
         self.full_clean()
         super().save(*args, **kwargs)
+
+
+class PurchaseDebitNote(models.Model):
+    """اشعار مدين للمشتريات"""
+    note_number = models.CharField(_('رقم اشعار مدين'), max_length=50, unique=True)
+    date = models.DateField(_('Date'))
+    supplier = models.ForeignKey(CustomerSupplier, on_delete=models.PROTECT, verbose_name=_('المورد'))
+    subtotal = models.DecimalField(_('المجموع الفرعي'), max_digits=15, decimal_places=3, default=0)
+    tax_amount = models.DecimalField(_('مبلغ الضريبة'), max_digits=15, decimal_places=3, default=0)
+    total_amount = models.DecimalField(_('المبلغ الاجمالي'), max_digits=15, decimal_places=3, default=0)
+    notes = models.TextField(_('ملاحظات'), blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name=_('Created By'))
+    created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
+    updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
+
+    class Meta:
+        verbose_name = _('اشعار مدين')
+        verbose_name_plural = _('اشعارات مدين')
+        ordering = ['-date', '-note_number']
+
+    def __str__(self):
+        return f"{self.note_number} - {self.supplier.name}"

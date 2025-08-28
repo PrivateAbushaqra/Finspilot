@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}{{ creditnote.note_number }}{% endblock %}
+{% block content %}
+<div class="container">
+  <h1>{{ creditnote.note_number }}</h1>
+  <p><strong>{% trans "Customer" %}:</strong> {{ creditnote.customer.name }}</p>
+  <p><strong>{% trans "Date" %}:</strong> {{ creditnote.date }}</p>
+  <p><strong>{% trans "Subtotal" %}:</strong> {{ creditnote.subtotal }}</p>
+  <p><strong>{% trans "Tax" %}:</strong> {{ creditnote.tax_amount }}</p>
+  <p><strong>{% trans "Total" %}:</strong> {{ creditnote.total_amount }}</p>
+  <p><strong>{% trans "Notes" %}:</strong> {{ creditnote.notes }}</p>
+</div>
+{% endblock %}

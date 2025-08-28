@@ -13,6 +13,7 @@ from django.utils import timezone
 from decimal import Decimal, ROUND_HALF_UP
 from datetime import date, datetime
 from .models import SalesInvoice, SalesInvoiceItem, SalesReturn
+from .models import SalesCreditNote
 from products.models import Product
 from customers.models import CustomerSupplier
 from settings.models import CompanySettings, Currency
@@ -908,6 +909,129 @@ class SalesReturnUpdateView(LoginRequiredMixin, UpdateView):
         except:
             pass
         
+        return context
+
+
+class SalesCreditNoteListView(LoginRequiredMixin, ListView):
+    model = SalesCreditNote
+    template_name = 'sales/creditnote_list.html'
+    context_object_name = 'creditnotes'
+    paginate_by = 10
+
+    def get_queryset(self):
+        queryset = SalesCreditNote.objects.all()
+        search = self.request.GET.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(note_number__icontains=search) |
+                Q(customer__name__icontains=search)
+            )
+        date_from = self.request.GET.get('date_from')
+        date_to = self.request.GET.get('date_to')
+        if date_from:
+            queryset = queryset.filter(date__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(date__lte=date_to)
+        return queryset.select_related('customer', 'created_by')
+
+
+@login_required
+def sales_creditnote_create(request):
+    """إنشاء إشعار دائن للمبيعات"""
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                user = request.user
+                customer_id = request.POST.get('customer')
+                notes = request.POST.get('notes', '')
+
+                if not customer_id:
+                    messages.error(request, _('يرجى اختيار عميل'))
+                    return redirect('sales:creditnote_add')
+
+                customer = get_object_or_404(CustomerSupplier, id=customer_id)
+
+                # توليد رقم الإشعار عبر DocumentSequence
+                try:
+                    seq = DocumentSequence.objects.get(document_type='credit_note')
+                    note_number = seq.get_next_number()
+                except DocumentSequence.DoesNotExist:
+                    last = SalesCreditNote.objects.order_by('-id').first()
+                    if last:
+                        try:
+                            number = int(last.note_number.split('-')[-1]) + 1
+                        except Exception:
+                            number = last.id + 1
+                    else:
+                        number = 1
+                    note_number = f"CN-{number:06d}"
+
+                credit = SalesCreditNote.objects.create(
+                    note_number=note_number,
+                    date=request.POST.get('date', date.today()),
+                    customer=customer,
+                    subtotal=Decimal(request.POST.get('subtotal', '0') or '0'),
+                    tax_amount=Decimal(request.POST.get('tax_amount', '0') or '0'),
+                    total_amount=Decimal(request.POST.get('total_amount', '0') or '0'),
+                    notes=notes,
+                    created_by=user
+                )
+
+                # سجل الـ AuditLog
+                try:
+                    from core.signals import log_user_activity
+                    log_user_activity(
+                        request,
+                        'create',
+                        credit,
+                        _('إنشاء إشعار دائن رقم %(number)s') % {'number': credit.note_number}
+                    )
+                except Exception:
+                    pass
+
+                messages.success(request, _('تم إنشاء إشعار دائن رقم %(number)s') % {'number': credit.note_number})
+                return redirect('sales:creditnote_detail', pk=credit.pk)
+        except Exception as e:
+            messages.error(request, _('حدث خطأ أثناء حفظ الإشعار: %(error)s') % {'error': str(e)})
+            return redirect('sales:creditnote_add')
+
+    # GET
+    context = {
+        'customers': CustomerSupplier.objects.filter(type__in=['customer', 'both']),
+        'today_date': date.today().isoformat(),
+    }
+    try:
+        seq = DocumentSequence.objects.get(document_type='credit_note')
+        context['next_note_number'] = seq.peek_next_number() if hasattr(seq, 'peek_next_number') else seq.get_formatted_number()
+    except DocumentSequence.DoesNotExist:
+        last = SalesCreditNote.objects.order_by('-id').first()
+        if last:
+            try:
+                number = int(last.note_number.split('-')[-1]) + 1
+            except Exception:
+                number = last.id + 1
+        else:
+            number = 1
+        context['next_note_number'] = f"CN-{number:06d}"
+
+    return render(request, 'sales/creditnote_add.html', context)
+
+
+class SalesCreditNoteDetailView(LoginRequiredMixin, DetailView):
+    model = SalesCreditNote
+    template_name = 'sales/creditnote_detail.html'
+    context_object_name = 'creditnote'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        try:
+            company_settings = CompanySettings.objects.first()
+            if company_settings and company_settings.base_currency:
+                context['base_currency'] = company_settings.base_currency
+            else:
+                context['base_currency'] = Currency.objects.filter(is_active=True).first()
+        except:
+            pass
         return context
 
 
