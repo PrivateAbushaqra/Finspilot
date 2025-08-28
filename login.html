@@ -1,0 +1,1470 @@
+
+
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول - Finspilot</title>
+    
+    <!-- Bootstrap CSS -->
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Responsive CSS -->
+    
+    <link rel="stylesheet" href="/static/core/css/responsive.5c2fea9ba64a.css">
+    <link rel="stylesheet" href="/static/core/css/table-responsive.4c081b96336b.css">
+    
+    <!-- Session Management CSS -->
+    
+    
+    <!-- Session settings for JavaScript -->
+    
+    
+    <style>
+        :root {
+            /* fallbacks kept intentionally; values overridden if superadmin_settings provided */
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --accent-color: #28a745;
+        }
+        
+        /* apply colors from SuperadminSettings when available */
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --accent-color: #28a745;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+        }
+        
+        /* Print CSS */
+        @media print {
+            .no-print, .sidebar, .navbar, .btn, .pagination, 
+            .dropdown, .modal, .toast, .alert-dismissible .btn-close,
+            .print-hide, .search-filters, .filters, .form-control,
+            .page-title-right, .card-header .d-flex .btn, .action-buttons,
+            .actions-column, .edit-column, .delete-column, .d-none {
+                display: none !important;
+            }
+            
+            * {
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            
+            body {
+                background-color: white !important;
+                color: black !important;
+                font-size: 8pt;
+                line-height: 1.1;
+                margin: 0;
+                padding: 0;
+                font-family: 'Arial', sans-serif;
+            }
+            
+            .container, .container-fluid {
+                width: 100% !important;
+                max-width: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            
+            .row {
+                margin: 0 !important;
+            }
+            
+            .col, .col-12, [class*="col-"] {
+                padding: 0 !important;
+                width: 100% !important;
+            }
+            
+            .card {
+                border: none !important;
+                box-shadow: none !important;
+                page-break-inside: avoid;
+                margin: 0;
+                width: 100%;
+            }
+            
+            .card-header {
+                background-color: #f8f9fa !important;
+                color: black !important;
+                border: 2px solid #000 !important;
+                text-align: center;
+                padding: 8px 0;
+                margin-bottom: 15px;
+                font-weight: bold;
+                font-size: 12pt;
+            }
+            
+            .card-title, h1, h2, h3, h4, h5, h6, .page-title {
+                color: black !important;
+                text-align: center;
+                font-size: 11pt;
+                font-weight: bold;
+                margin: 5px 0;
+            }
+            
+            .card-body {
+                padding: 0 !important;
+            }
+            
+            /* Improve table display */
+            .table-responsive {
+                overflow: visible !important;
+            }
+            
+            .table {
+                border-collapse: collapse !important;
+                width: 100% !important;
+                margin: 0 !important;
+                font-size: 7pt;
+                table-layout: auto;
+                border: 2px solid #000 !important;
+                background-color: white !important;
+            }
+            
+            .table th, .table td {
+                border: 1px solid #000 !important;
+                padding: 2px 1px !important;
+                text-align: center !important;
+                word-wrap: break-word;
+                vertical-align: middle;
+                font-size: 7pt;
+                overflow: visible;
+                white-space: normal;
+                max-width: none;
+            }
+            
+            .table thead th {
+                background-color: #e9ecef !important;
+                color: black !important;
+                font-weight: bold !important;
+                font-size: 8pt;
+                border: 2px solid #000 !important;
+                text-align: center !important;
+            }
+            
+            .table tbody tr:nth-child(even) {
+                background-color: #f8f9fa !important;
+            }
+            
+            .table tbody tr:nth-child(odd) {
+                background-color: white !important;
+            }
+            
+            /* Hide actions column and buttons properly */
+            .table th:last-child, 
+            .table td:last-child,
+            .table th:nth-last-child(1),
+            .table td:nth-last-child(1),
+            .table th:nth-last-child(2),
+            .table td:nth-last-child(2),
+            .actions-column,
+            .action-buttons,
+            .btn-group,
+            .btn-sm,
+            .edit-btn,
+            .delete-btn,
+            .view-btn,
+            .operations-column,
+            th:contains("Actions"),
+            th:contains("Operations"),
+            th:contains("Control"),
+            th:contains("Manage") {
+                display: none !important;
+                visibility: hidden !important;
+            }
+            
+            /* Show all important data */
+            .table th:not(.actions-column):not([class*="action"]):not([class*="btn"]),
+            .table td:not(.actions-column):not([class*="action"]):not([class*="btn"]) {
+                display: table-cell !important;
+                visibility: visible !important;
+            }
+            
+            /* Improve colored text display */
+            .text-primary, .text-success, .text-danger, .text-warning, .text-info, .text-secondary {
+                color: black !important;
+            }
+            
+            .badge {
+                color: black !important;
+                border: 1px solid black !important;
+                background-color: white !important;
+                font-size: 6pt;
+                padding: 1px 3px;
+            }
+            
+            /* Improve financial data display */
+            .balance, .amount, .price, .total, .currency {
+                font-weight: bold !important;
+                text-align: right !important;
+                direction: ltr;
+            }
+            
+            /* Enhanced print header */
+            .print-header {
+                text-align: center;
+                margin-bottom: 20px;
+                border-bottom: 3px solid #000;
+                padding-bottom: 10px;
+                background-color: #f8f9fa !important;
+                font-size: 14pt;
+                font-weight: bold;
+            }
+            
+            .print-date {
+                text-align: left;
+                margin-bottom: 10px;
+                font-size: 7pt;
+                border-bottom: 1px solid #666;
+                padding-bottom: 3px;
+                direction: ltr;
+            }
+            
+            .print-company-info {
+                text-align: center;
+                margin-bottom: 15px;
+                font-size: 10pt;
+                font-weight: bold;
+                border: 2px solid #000;
+                padding: 5px;
+                background-color: #f0f0f0 !important;
+            }
+            
+            /* Improve page breaks */
+            .page-break {
+                page-break-before: always;
+            }
+            
+            @page {
+                margin: 0.5cm;
+                size: A4 landscape;
+            }
+            
+            /* Prevent breaking rows and important elements */
+            .table tr {
+                page-break-inside: avoid;
+            }
+            
+            .card {
+                page-break-inside: avoid;
+            }
+            
+            /* Advanced page number settings (default EN, overridden below for AR) */
+            @page {
+                margin: 0.5cm;
+                size: A4 landscape;
+                @bottom-center {
+                    content: "Page " counter(page) " of " counter(pages);
+                    font-size: 8pt;
+                    font-weight: bold;
+                }
+                @top-center {
+                    content: "Print Date: " attr(data-print-date);
+                    font-size: 7pt;
+                }
+            }
+            
+            /* Improve long data display */
+            .long-text {
+                white-space: normal !important;
+                word-wrap: break-word !important;
+                max-width: 100px;
+            }
+            
+            /* Improve dates and numbers display */
+            .date-column, .number-column, .id-column {
+                white-space: nowrap !important;
+                font-family: 'Courier New', monospace;
+                font-size: 7pt;
+            }
+            
+            /* Hide unnecessary elements */
+            .search-form, .filter-form, .pagination-wrapper,
+            .alert, .message, .notification, .tooltip,
+            .popover, .modal-backdrop, .offcanvas {
+                display: none !important;
+            }
+            
+            /* Improve numeric data display */
+            .numeric-data {
+                text-align: right !important;
+                font-family: 'Courier New', monospace;
+                direction: ltr;
+            }
+        }
+        
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+        
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 0.75rem 1rem;
+            border-radius: 0.375rem;
+            margin: 0.25rem 0;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar .nav-link:hover {
+            color: #fff;
+            background-color: rgba(255,255,255,0.1);
+            transform: translateX(-5px);
+        }
+        
+        :root {
+            --sidebar-active-bg: rgba(255,255,255,0.18);
+            --sidebar-active-text: #ffffff;
+            --sidebar-active-border: #16a34a; /* green accent for better visibility */
+            --sidebar-active-check-size: 1.1rem; /* adjustable checkmark size */
+        }
+
+        .sidebar .nav-link.active {
+            color: var(--sidebar-active-text) !important;
+            background-color: var(--sidebar-active-bg) !important;
+            border-radius: 5px;
+            font-weight: bold;
+            position: relative;
+            /* Space for checkmark indicator */
+            padding-inline-end: 1.75rem;
+        }
+
+        /* Logical border for active item depending on direction */
+        html[dir="ltr"] .sidebar .nav-link.active {
+            border-left: 4px solid var(--sidebar-active-border);
+            border-right: none;
+        }
+        html[dir="rtl"] .sidebar .nav-link.active {
+            border-right: 4px solid var(--sidebar-active-border);
+            border-left: none;
+        }
+
+        .sidebar .nav-link.active::before {
+            content: "●";
+            color: var(--sidebar-active-border);
+            font-size: 12px;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            animation: pulse 2s infinite;
+        }
+        html[dir="ltr"] .sidebar .nav-link.active::before { left: 8px; right: auto; }
+        html[dir="rtl"] .sidebar .nav-link.active::before { right: 8px; left: auto; }
+
+        /* Add a clear checkmark indicator on the selected (active) item */
+        .sidebar .nav-link.active::after {
+            content: "✓";
+            color: var(--sidebar-active-border);
+            font-size: var(--sidebar-active-check-size);
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        html[dir="ltr"] .sidebar .nav-link.active::after { right: 10px; left: auto; }
+        html[dir="rtl"] .sidebar .nav-link.active::after { left: 10px; right: auto; }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .sidebar .nav-link.active i {
+            color: white !important;
+        }
+        
+        /* Highlight main menu containing active page */
+        .sidebar .nav-item.has-active-child > a[data-bs-toggle="collapse"] {
+            background-color: var(--sidebar-active-bg);
+            font-weight: bold;
+        }
+        html[dir="ltr"] .sidebar .nav-item.has-active-child > a[data-bs-toggle="collapse"] { border-left: 3px solid var(--sidebar-active-border); }
+        html[dir="rtl"] .sidebar .nav-item.has-active-child > a[data-bs-toggle="collapse"] { border-right: 3px solid var(--sidebar-active-border); }
+        
+        .main-content {
+            padding: 2rem;
+        }
+        
+        .card {
+            border: none;
+            border-radius: 0.75rem;
+            box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075);
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+        }
+        
+        .card-header {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 0.75rem 0.75rem 0 0 !important;
+        }
+        
+        .navbar {
+            background: white !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .company-logo {
+            opacity: 0.1;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: -1;
+            max-width: 500px;
+            max-height: 500px;
+        }
+        
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .stats-card {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 1rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(45deg, #764ba2, #667eea);
+            transform: translateY(-1px);
+        }
+        
+        /* Language Selector Styles */
+        #languageDropdown {
+            color: #495057;
+        }
+        
+        #languageDropdown:hover {
+            color: #007bff;
+        }
+        
+        .dropdown-item.active {
+            background-color: #f8f9fa;
+            color: #007bff;
+        }
+        
+        .dropdown-item button {
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: right;
+            padding: 0;
+            color: inherit;
+        }
+        
+        .dropdown-item:hover button {
+            color: inherit;
+        }
+        
+        /* AJAX Loading improvements */
+        .main-content {
+            min-height: 500px;
+            transition: opacity 0.2s ease-in-out;
+        }
+        
+        .sidebar .nav-link.loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        /* Add effect for active link - unified with variables */
+        .sidebar .nav-link.active {
+            background-color: var(--sidebar-active-bg) !important;
+            color: var(--sidebar-active-text) !important;
+        }
+    </style>
+    
+    
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        overflow-x: hidden;
+    }
+
+    .login-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+
+    /* Animation Scene */
+    .animation-scene {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        z-index: 1;
+    }
+
+    /* Login Form */
+    .login-form {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        max-width: 400px;
+        width: 90%;
+        transform: translateY(0);
+        opacity: 1;
+        animation: showForm 1s ease-out forwards;
+        z-index: 3;
+        position: relative;
+    }
+
+    .login-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .login-header h2 {
+        color: #333;
+        margin-bottom: 0.5rem;
+        font-weight: 700;
+    }
+
+    .login-header p {
+        color: #666;
+        margin: 0;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+        opacity: 1;
+        transform: translateY(0);
+        animation: slideInForm 0.6s ease-out forwards;
+    }
+
+    .form-group:nth-child(1) { animation-delay: 0.2s; }
+    .form-group:nth-child(2) { animation-delay: 0.4s; }
+    .form-group:nth-child(3) { animation-delay: 0.6s; }
+
+    .form-control {
+        background: rgba(255, 255, 255, 0.9);
+        border: 2px solid #e1e5e9;
+        border-radius: 10px;
+        padding: 12px 15px;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        background: rgba(255, 255, 255, 1);
+    }
+
+    .form-label {
+        color: #333;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .btn-login {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 12px 30px;
+        color: white;
+        font-size: 16px;
+        font-weight: 600;
+        width: 100%;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .btn-login:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-login:active {
+        transform: translateY(0);
+    }
+
+    /* Floating Elements */
+    .floating-element {
+        position: absolute;
+        animation: float 6s ease-in-out infinite;
+    }
+
+    .floating-element:nth-child(1) {
+        top: 20%;
+        left: 10%;
+        animation-delay: 0s;
+    }
+
+    .floating-element:nth-child(2) {
+        top: 60%;
+        right: 15%;
+        animation-delay: 2s;
+    }
+
+    .floating-element:nth-child(3) {
+        top: 40%;
+        left: 80%;
+        animation-delay: 4s;
+    }
+
+    /* Keyframe Animations */
+    @keyframes showForm {
+        0% {
+            transform: translateY(50px);
+            opacity: 0;
+        }
+        100% {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideInForm {
+        0% {
+            transform: translateY(20px);
+            opacity: 0;
+        }
+        100% {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+    }
+
+    /* Error Messages */
+    .error-message {
+        background: rgba(220, 53, 69, 0.1);
+        border: 1px solid rgba(220, 53, 69, 0.3);
+        color: #dc3545;
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+
+    /* Footer */
+    .login-footer {
+        text-align: center;
+        margin-top: 2rem;
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .login-form {
+            padding: 1.5rem;
+            margin: 1rem;
+        }
+    }
+
+    /* Hide navbar on login page */
+    .navbar, .sidebar {
+        display: none !important;
+    }
+</style>
+
+</head>
+<body>
+    
+    <style>
+    /* Arabic override for print page counters */
+    @page {
+        @bottom-center {
+            content: "الصفحة " counter(page) " من " counter(pages);
+        }
+        @top-center {
+            content: "تاريخ الطباعة: " attr(data-print-date);
+        }
+    }
+    </style>
+    
+    <!-- Company Logo Background -->
+    
+    
+    <!-- Top Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="/ar/">
+                <i class="fas fa-chart-line me-2"></i>
+                 - لوحة التحكم
+            </a>
+            
+            <div class="navbar-nav ms-auto">
+                <!-- Language Selector -->
+                <div class="nav-item dropdown me-3">
+                    <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-globe me-1"></i>
+                        
+                        العربية
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <form action="/i18n/setlang/" method="post" style="display: inline;" class="language-form" data-target-lang="ar">
+                                <input type="hidden" name="csrfmiddlewaretoken" value="tOnGQoBU2w9IUmQQu3luW9AuqxYnTma8imqI2v2ZBQlFqScDJsJx8gTRk5HhTvMu">
+                                <input name="next" type="hidden" value="/ar/auth/login/?next=/ar/sales/invoices/add/" class="next-field" />
+                                <input name="language" type="hidden" value="ar" />
+                                <button type="submit" class="dropdown-item active">
+                                    <i class="fas fa-check me-2" ></i>
+                                    العربية
+                                </button>
+                            </form>
+                        </li>
+                        <li>
+                            <form action="/i18n/setlang/" method="post" style="display: inline;" class="language-form" data-target-lang="en">
+                                <input type="hidden" name="csrfmiddlewaretoken" value="tOnGQoBU2w9IUmQQu3luW9AuqxYnTma8imqI2v2ZBQlFqScDJsJx8gTRk5HhTvMu">
+                                <input name="next" type="hidden" value="/ar/auth/login/?next=/ar/sales/invoices/add/" class="next-field" />
+                                <input name="language" type="hidden" value="en" />
+                                <button type="submit" class="dropdown-item ">
+                                    <i class="fas fa-check me-2" style="visibility: hidden;"></i>
+                                    الإنجليزية
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+                
+                <!-- Notifications -->
+                
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            
+            
+            <!-- Main Content -->
+            <main class="col-12 px-md-4">
+                <div class="main-content" id="main-content">
+                    
+                    
+                    
+<div class="login-container">
+    <!-- Animation Scene -->
+    <div class="animation-scene">
+        <!-- Floating Elements -->
+        <div class="floating-element">💼</div>
+        <div class="floating-element">📊</div>
+        <div class="floating-element">💰</div>
+    </div>
+
+    <!-- Login Form -->
+    <div class="login-form">
+        <div class="login-header">
+            <h2>
+                <i class="fas fa-chart-line me-2"></i>
+                Finspilot
+            </h2>
+            <p>نظام المحاسبة المتكامل</p>
+        </div>
+
+        
+
+        
+
+        <form method="post" class="needs-validation" novalidate>
+            <input type="hidden" name="csrfmiddlewaretoken" value="tOnGQoBU2w9IUmQQu3luW9AuqxYnTma8imqI2v2ZBQlFqScDJsJx8gTRk5HhTvMu">
+            <div class="form-group">
+                <label for="id_username" class="form-label">
+                    <i class="fas fa-user me-1"></i>
+                    اسم المستخدم
+                </label>
+                <input type="text" 
+                       class="form-control" 
+                       id="id_username" 
+                       name="username" 
+                       placeholder="أدخل اسم المستخدم"
+                       required>
+            </div>
+            
+            <div class="form-group">
+                <label for="id_password" class="form-label">
+                    <i class="fas fa-lock me-1"></i>
+                    كلمة المرور
+                </label>
+                <input type="password" 
+                       class="form-control" 
+                       id="id_password" 
+                       name="password" 
+                       placeholder="أدخل كلمة المرور"
+                       required>
+            </div>
+            
+            <div class="form-group">
+                <button type="submit" class="btn-login">
+                    <i class="fas fa-sign-in-alt me-2"></i>
+                    تسجيل الدخول
+                </button>
+            </div>
+        </form>
+
+        <div class="login-footer">
+            <small>© 2025 Finspilot</small>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add smooth entrance animation for form
+    const form = document.querySelector('.login-form');
+    
+    // Show form with animation
+    setTimeout(() => {
+        form.style.display = 'block';
+    }, 500);
+
+    // Form validation
+    const forms = document.querySelectorAll('.needs-validation');
+    Array.prototype.slice.call(forms).forEach(function(form) {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+    });
+
+    // Focus animation
+    const inputs = document.querySelectorAll('.form-control');
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.classList.add('focused');
+        });
+        
+        input.addEventListener('blur', function() {
+            if (!this.value) {
+                this.parentElement.classList.remove('focused');
+            }
+        });
+    });
+});
+</script>
+
+
+
+
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Function to determine active page in sidebar (always runs)
+    function setActiveSidebarItem() {
+            const currentUrl = window.location.pathname;
+            const sidebarLinks = document.querySelectorAll('.sidebar .nav-link[href]');
+            
+            // Remove active from all links
+            sidebarLinks.forEach(link => {
+                link.classList.remove('active');
+                // Remove has-active-child from other menus
+                const parentNavItem = link.closest('.nav-item');
+                if (parentNavItem) {
+                    parentNavItem.classList.remove('has-active-child');
+                }
+            });
+            
+            // Find the link matching the current page
+            let activeLink = null;
+            let exactMatch = false;
+            
+            sidebarLinks.forEach(link => {
+                const linkPath = new URL(link.href).pathname;
+                
+                // Exact match
+                if (linkPath === currentUrl) {
+                    activeLink = link;
+                    exactMatch = true;
+                }
+                // Partial match (if no exact match found)
+                else if (!exactMatch && currentUrl.startsWith(linkPath) && linkPath !== '/') {
+                    activeLink = link;
+                }
+            });
+            
+            // Activate the link
+            let openedParentId = null;
+            if (activeLink) {
+                activeLink.classList.add('active');
+                
+                // Find the parent menu and submenu containing this link
+                const parentCollapse = activeLink.closest('.collapse[id]');
+                if (parentCollapse && parentCollapse.id) {
+                    // Close all other menus to ensure only one stays open
+                    document.querySelectorAll('.sidebar .collapse[id]').forEach(c => {
+                        if (c !== parentCollapse) {
+                            c.classList.remove('show');
+                            try {
+                                const inst = bootstrap.Collapse.getOrCreateInstance ? bootstrap.Collapse.getOrCreateInstance(c, {toggle: false}) : new bootstrap.Collapse(c, {toggle: false});
+                                inst.hide();
+                            } catch(e) {}
+                            if (c.id) localStorage.setItem('sidebar_' + c.id, 'closed');
+                        }
+                    });
+
+                    // Open the submenu
+                    const bsCollapse = new bootstrap.Collapse(parentCollapse, {show: true});
+                    bsCollapse.show();
+                    parentCollapse.classList.add('show');
+                    // Update toggler aria-expanded
+                    const toggler = document.querySelector('.sidebar a[data-bs-toggle="collapse"][href="#' + parentCollapse.id + '"]');
+                    if (toggler) toggler.setAttribute('aria-expanded', 'true');
+                    
+                    // Highlight the parent menu
+                    const mainNavItem = parentCollapse.closest('.nav-item');
+                    if (mainNavItem) {
+                        mainNavItem.classList.add('has-active-child');
+                    }
+                    
+                    // Save the open menu state
+                    if (parentCollapse.id) localStorage.setItem('sidebar_' + parentCollapse.id, 'open');
+                    openedParentId = parentCollapse.id || null;
+                }
+            }
+
+            return openedParentId;
+        }
+        
+        // Always select the active page on page load
+        const activeParentId = setActiveSidebarItem();
+
+        // Restore submenu open state on load (only if no active link was matched)
+        if (!activeParentId) {
+            const initialCollapses = document.querySelectorAll('.sidebar .collapse[id]');
+            initialCollapses.forEach(col => {
+                const saved = localStorage.getItem('sidebar_' + col.id);
+                if (saved === 'open') {
+            col.classList.add('show');
+            // Ensure toggler reflects expanded state
+            const toggler = document.querySelector('.sidebar a[data-bs-toggle="collapse"][href="#' + col.id + '"]');
+            if (toggler) toggler.setAttribute('aria-expanded', 'true');
+                } else {
+            col.classList.remove('show');
+            const toggler = document.querySelector('.sidebar a[data-bs-toggle="collapse"][href="#' + col.id + '"]');
+            if (toggler) toggler.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
+
+        // When clicking any leaf link, persist its parent menu as open
+    const leafLinks = document.querySelectorAll('.sidebar .nav-link[href]:not([data-bs-toggle])');
+        leafLinks.forEach(a => {
+            a.addEventListener('click', function() {
+        const parentCol = this.closest('.collapse[id]');
+                // Close all others in localStorage so only one remains open
+        document.querySelectorAll('.sidebar .collapse[id]').forEach(c => {
+                    if (c !== parentCol && c.id) {
+                        localStorage.setItem('sidebar_' + c.id, 'closed');
+                    }
+                });
+                if (parentCol && parentCol.id) {
+                    localStorage.setItem('sidebar_' + parentCol.id, 'open');
+                }
+            });
+        });
+
+        // تعطيل التنقل الجزئي (AJAX) افتراضياً لتفادي فقدان الأنماط والسكربتات
+        // فعِّله بوضع window.ENABLE_AJAX_NAV = true قبل هذا السكربت إن رغبت.
+        if (window.ENABLE_AJAX_NAV !== true) {
+            return;
+        }
+        
+        // Handle clicks on sidebar links
+        const sidebarLinks = document.querySelectorAll('.sidebar .nav-link[href]:not([data-bs-toggle])');
+        
+        sidebarLinks.forEach(link => {
+            // Ignore links that open dropdowns or external links
+            if (link.getAttribute('data-bs-toggle') === 'collapse' || 
+                link.href.startsWith('mailto:') || 
+                link.href.startsWith('tel:') ||
+                link.href.includes('#') ||
+                link.href.includes('admin:logout') ||
+                link.closest('[data-bs-toggle="collapse"]')) {
+                return;
+            }
+            
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const url = this.href;
+                const mainContent = document.getElementById('main-content');
+                
+                // Avoid reloading the same page
+                if (window.location.href === url) {
+                    return;
+                }
+                
+                // إضافة loading indicator
+                this.classList.add('loading');
+                mainContent.style.opacity = '0.5';
+                
+                // إضافة spinner
+                const loadingDiv = document.createElement('div');
+                loadingDiv.className = 'position-absolute top-50 start-50 translate-middle';
+                loadingDiv.innerHTML = `
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">جاري التحميل...</span>
+                    </div>
+                `;
+                mainContent.style.position = 'relative';
+                mainContent.appendChild(loadingDiv);
+                
+                // Send AJAX request
+                fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.text();
+                })
+                .then(html => {
+                    // Extract content from loaded page
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newContent = doc.querySelector('.main-content, #main-content');
+                    
+                    if (newContent) {
+                        // Remove loading state
+                        this.classList.remove('loading');
+                        loadingDiv.remove();
+                        
+                        // Update content
+                        mainContent.innerHTML = newContent.innerHTML;
+                        mainContent.style.opacity = '1';
+                        
+                        // Update URL in address bar
+                        history.pushState({url: url}, '', url);
+                        
+                        // Execute any new scripts in content
+                        const scripts = mainContent.querySelectorAll('script');
+                        scripts.forEach(script => {
+                            if (script.src) {
+                                // For external scripts
+                                const newScript = document.createElement('script');
+                                newScript.src = script.src;
+                                document.head.appendChild(newScript);
+                            } else {
+                                // For inline scripts
+                                const newScript = document.createElement('script');
+                                newScript.textContent = script.textContent;
+                                document.body.appendChild(newScript);
+                            }
+                        });
+                        
+                        // Update page title
+                        const newTitle = doc.querySelector('title');
+                        if (newTitle) {
+                            document.title = newTitle.textContent;
+                        }
+                        
+                        // Reinitialize Bootstrap components if needed
+                        if (typeof bootstrap !== 'undefined') {
+                            // Reinitialize tooltips and popovers
+                            const tooltipTriggerList = [].slice.call(mainContent.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                                return new bootstrap.Tooltip(tooltipTriggerEl);
+                            });
+                        }
+                    } else {
+                        throw new Error('Content not found in response');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading page:', error);
+                    // On error, remove loading and navigate normally
+                    this.classList.remove('loading');
+                    if (loadingDiv.parentNode) {
+                        loadingDiv.remove();
+                    }
+                    mainContent.style.opacity = '1';
+                    
+                    // Normal redirect as fallback
+                    window.location.href = url;
+                });
+                
+                // Update active link using enhanced function
+                setActiveSidebarItem();
+            });
+        });
+        
+        // Handle browser buttons (Back/Forward)
+        window.addEventListener('popstate', function(e) {
+            if (e.state && e.state.url) {
+                // Load saved page from history
+                const url = e.state.url;
+                const mainContent = document.getElementById('main-content');
+                
+                fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const newContent = doc.querySelector('.main-content, #main-content');
+                    
+                    if (newContent) {
+                        mainContent.innerHTML = newContent.innerHTML;
+                        
+                        // Update title
+                        const newTitle = doc.querySelector('title');
+                        if (newTitle) {
+                            document.title = newTitle.textContent;
+                        }
+                        
+                        // Update active link in sidebar
+                        setActiveSidebarItem();
+                    }
+                })
+                .catch(() => {
+                    window.location.reload();
+                });
+            } else {
+                // If no saved state exists, reload page
+                window.location.reload();
+            }
+        });
+        
+        // Handle dropdown menu open/close (close others when opening new one)
+        const collapseToggleLinks = document.querySelectorAll('.sidebar a[data-bs-toggle="collapse"]');
+        collapseToggleLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                const targetCollapse = document.querySelector(this.getAttribute('href'));
+                const isCurrentlyCollapsed = !targetCollapse.classList.contains('show');
+                
+                if (isCurrentlyCollapsed) {
+                    // If current menu is closed and will be opened, close all other menus
+                    const allCollapses = document.querySelectorAll('.sidebar .collapse.show');
+                    allCollapses.forEach(collapse => {
+                        if (collapse !== targetCollapse) {
+                            const bsCollapse = bootstrap.Collapse.getInstance(collapse);
+                            if (bsCollapse) {
+                                bsCollapse.hide();
+                            } else {
+                                const newBsCollapse = new bootstrap.Collapse(collapse, {show: false});
+                                newBsCollapse.hide();
+                            }
+                        }
+                    });
+                }
+            });
+        });
+        
+        // Save dropdown menu states
+        const collapseElements = document.querySelectorAll('.sidebar .collapse');
+        collapseElements.forEach(collapse => {
+            collapse.addEventListener('shown.bs.collapse', function() {
+                localStorage.setItem('sidebar_' + this.id, 'open');
+            });
+            
+            collapse.addEventListener('hidden.bs.collapse', function() {
+                localStorage.setItem('sidebar_' + this.id, 'closed');
+            });
+            
+            // Restore menu states on page load
+            const savedState = localStorage.getItem('sidebar_' + collapse.id);
+            if (savedState === 'open') {
+                const bsCollapse = new bootstrap.Collapse(collapse, {show: true});
+            }
+        });
+    });
+    
+    // Enhanced print function
+    function printPage() {
+        // Add print header
+        addPrintHeader();
+        
+        // Optimize tables for printing
+        optimizeTablesForPrint();
+        
+        // Print
+        window.print();
+        
+        // Remove print header after printing
+        setTimeout(() => {
+            removePrintHeader();
+            restoreTablesAfterPrint();
+        }, 1000);
+    }
+    
+    function addPrintHeader() {
+        // Check for existing print header
+        const existingHeader = document.querySelector('.print-header-added');
+        if (existingHeader) {
+            existingHeader.remove();
+        }
+        
+        // Create print header
+        const printHeader = document.createElement('div');
+        printHeader.className = 'print-header-added';
+        printHeader.style.display = 'none';
+        
+        const currentDate = new Date();
+        const dateStr = currentDate.toLocaleDateString('ar-SA', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+    const pageTitle = document.querySelector('h1, h2, h3, h4, .card-title, .page-title')?.textContent?.trim() || 'تقرير';
+        
+    const printDateLabel = 'Print Date:';
+        printHeader.innerHTML = `
+            <div class="print-company-info">
+                نظام فينسبايلوت للمحاسبة
+            </div>
+            <div class="print-header">
+                ${pageTitle}
+            </div>
+            <div class="print-date">
+                ${printDateLabel} ${dateStr}
+            </div>
+            <style>
+                @media print {
+                    .print-header-added {
+                        display: block !important;
+                    }
+                }
+            </style>
+        `;
+        
+        // Insert header at beginning of main content
+        const mainContent = document.querySelector('.main-content, #main-content, .card-body, .container-fluid');
+        if (mainContent) {
+            mainContent.insertBefore(printHeader, mainContent.firstChild);
+        }
+    }
+    
+    function removePrintHeader() {
+        const printHeader = document.querySelector('.print-header-added');
+        if (printHeader) {
+            printHeader.remove();
+        }
+    }
+    
+    function optimizeTablesForPrint() {
+        const tables = document.querySelectorAll('.table');
+        tables.forEach(table => {
+            // Save original view
+            table.setAttribute('data-original-width', table.style.width);
+            
+            // Add CSS classes for printing
+            table.classList.add('print-optimized');
+            
+            // Optimize column display
+            const headers = table.querySelectorAll('thead th');
+            const rows = table.querySelectorAll('tbody tr');
+            
+            // Hide action columns
+            headers.forEach((header, index) => {
+                const headerText = header.textContent.toLowerCase();
+                if (headerText.includes('actions') || headerText.includes('operations') || 
+                    headerText.includes('control') || headerText.includes('procedures') ||
+                    header.querySelector('.btn, button, a[href]')) {
+                    header.style.display = 'none';
+                    
+                    // إخفاء الخلايا المقابلة في كل صف
+                    rows.forEach(row => {
+                        const cell = row.children[index];
+                        if (cell) {
+                            cell.style.display = 'none';
+                        }
+                    });
+                }
+            });
+            
+            // إضافة فئات CSS للبيانات الرقمية
+            rows.forEach(row => {
+                Array.from(row.children).forEach(cell => {
+                    const text = cell.textContent.trim();
+                    
+                    // التحقق من البيانات الرقمية
+                    if (/^\d+([.,]\d+)*\s*(ريال|ر\.س|SAR|$)?$/.test(text)) {
+                        cell.classList.add('numeric-data');
+                    }
+                    
+                    // التحقق من التواريخ
+                    if (/\d{4}-\d{2}-\d{2}|\d{2}\/\d{2}\/\d{4}/.test(text)) {
+                        cell.classList.add('date-column');
+                    }
+                    
+                    // التحقق من الأرقام المرجعية
+                    if (/^[A-Z]{2,}-\d+$/.test(text)) {
+                        cell.classList.add('id-column');
+                    }
+                });
+            });
+        });
+    }
+    
+    function restoreTablesAfterPrint() {
+        const tables = document.querySelectorAll('.table.print-optimized');
+        tables.forEach(table => {
+            table.classList.remove('print-optimized');
+            
+            // استعادة الاستعراض الأصلي
+            const originalWidth = table.getAttribute('data-original-width');
+            if (originalWidth) {
+                table.style.width = originalWidth;
+                table.removeAttribute('data-original-width');
+            }
+            
+            // إظهار الأعمدة المخفية
+            const hiddenElements = table.querySelectorAll('[style*="display: none"]');
+            hiddenElements.forEach(element => {
+                element.style.display = '';
+            });
+        });
+    }
+    
+    // إضافة معالج للطباعة بالكيبورد (Ctrl+P)
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.key === 'p') {
+            e.preventDefault();
+            printPage();
+        }
+    });
+    </script>
+    
+    <!-- Session Management JavaScript -->
+    
+    
+    <!-- Auto Translation JavaScript -->
+    <script>
+    
+    </script>
+    
+    <!-- Responsive JavaScript -->
+    <script src="/static/core/js/responsive.6f111b867f62.js"></script>
+    <script src="/static/core/js/table-responsive.20d120f8372d.js"></script>
+    
+    <!-- Language Switching Enhancement -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // التعامل مع نماذج تبديل اللغة
+        const languageForms = document.querySelectorAll('.language-form');
+        languageForms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                // تحديد المسار الصحيح بناءً على اللغة المستهدفة
+                const targetLang = this.dataset.targetLang;
+                const nextField = this.querySelector('.next-field');
+                const currentPath = nextField.value;
+                
+                // تحويل المسار إلى اللغة المستهدفة
+                let newPath = currentPath;
+                if (targetLang === 'ar') {
+                    // التحويل إلى العربية
+                    if (newPath.startsWith('/en/')) {
+                        newPath = newPath.replace('/en/', '/ar/');
+                    } else if (!newPath.startsWith('/ar/')) {
+                        newPath = '/ar' + newPath;
+                    }
+                } else if (targetLang === 'en') {
+                    // التحويل إلى الإنجليزية
+                    if (newPath.startsWith('/ar/')) {
+                        newPath = newPath.replace('/ar/', '/en/');
+                    } else if (!newPath.startsWith('/en/')) {
+                        newPath = '/en' + newPath;
+                    }
+                }
+                
+                // تحديث قيمة next
+                nextField.value = newPath;
+                
+                // إضافة مؤشر تحميل
+                const button = this.querySelector('button');
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جاري التبديل...';
+                button.disabled = true;
+                
+                // التأكد من إرسال النموذج
+                setTimeout(() => {
+                    if (button.disabled) {
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                    }
+                }, 3000);
+            });
+        });
+    });
+    </script>
+    
+    
+
+</body>
+</html>

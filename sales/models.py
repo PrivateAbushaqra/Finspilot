@@ -42,6 +42,7 @@ class SalesInvoice(models.Model):
         ordering = ['-date', '-invoice_number']
         permissions = (
             ('can_toggle_invoice_tax', 'Can toggle invoice tax inclusion'),
+            ('can_change_invoice_creator', 'Can change invoice creator'),
         )
 
     def __str__(self):
