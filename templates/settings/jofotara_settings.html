@@ -99,7 +99,7 @@
                 </div>
                 
                 <div class="card-body">
-                    <!-- API Information -->
+                    <!-- معلومات API -->
                     <div class="api-info">
                         <div class="d-flex align-items-center mb-2">
                             <i class="fas fa-info-circle text-primary me-2"></i>
@@ -113,7 +113,7 @@
                     <form method="post" id="jofotaraForm">
                         {% csrf_token %}
                         
-                        <!-- API Settings -->
+                        <!-- إعدادات API -->
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
@@ -188,7 +188,7 @@
                             </div>
                         </div>
                         
-                        <!-- Mock API Information -->
+                        <!-- معلومات API تجريبي -->
                         <div class="mock-api-section" id="mockApiSection" {% if not jofotara_settings.use_mock_api %}style="display: none;"{% endif %}>
                             <div class="d-flex align-items-center mb-2">
                                 <i class="fas fa-flask text-warning me-2"></i>
@@ -204,7 +204,7 @@
                             </ul>
                         </div>
                         
-                        <!-- Action Buttons -->
+                        <!-- أزرار العمل -->
                         <div class="row mt-4">
                             <div class="col-12">
                                 <div class="d-flex gap-3">
@@ -227,7 +227,7 @@
                         </div>
                     </form>
                     
-                    <!-- Test Results -->
+                    <!-- نتائج الاختبار -->
                     <div id="testResults" class="mt-4" style="display: none;">
                         <div class="card">
                             <div class="card-header">
@@ -253,7 +253,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('تم تحميل صفحة إعدادات جوفوتارا');
     
-    // Toggle mock API section visibility
+    // تبديل رؤية قسم API تجريبي
     const useMockApiCheckbox = document.getElementById('use_mock_api');
     const mockApiSection = document.getElementById('mockApiSection');
     
@@ -267,7 +267,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Update status indicator
+    // تحديث مؤشر الحالة
     const isActiveCheckbox = document.getElementById('is_active');
     const statusIndicator = document.querySelector('.status-indicator');
     
@@ -281,30 +281,30 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Test connection functionality
+    // وظيفة اختبار الاتصال
     const testConnectionBtn = document.getElementById('testConnectionBtn');
     const testResults = document.getElementById('testResults');
     const testResultsContent = document.getElementById('testResultsContent');
     
     if (testConnectionBtn) {
         testConnectionBtn.addEventListener('click', function() {
-            // Show loading state
+            // عرض حالة التحميل
             testConnectionBtn.disabled = true;
             testConnectionBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>{% trans "Testing..." %}';
             
-            // Prepare form data
+            // تحضير بيانات النموذج
             const formData = new FormData();
             formData.append('action', 'test_connection');
             formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
             
-            // Send test request
+            // إرسال طلب الاختبار
             fetch(window.location.href, {
                 method: 'POST',
                 body: formData
             })
             .then(response => response.json())
             .then(data => {
-                // Show results
+                // عرض النتائج
                 testResults.style.display = 'block';
                 
                 if (data.success) {
@@ -334,17 +334,17 @@ document.addEventListener('DOMContentLoaded', function() {
                         <p class="mb-0">{% trans "Failed to connect to the server. Please check your network connection." %}</p>
                     </div>
                 `;
-                console.error('Test connection error:', error);
+                console.error('خطأ في اختبار الاتصال:', error);
             })
             .finally(() => {
-                // Reset button state
+                // إعادة تعيين حالة الزر
                 testConnectionBtn.disabled = false;
                 testConnectionBtn.innerHTML = '<i class="fas fa-plug me-2"></i>{% trans "Test Connection" %}';
             });
         });
     }
     
-    // Form validation
+    // التحقق من صحة النموذج
     const form = document.getElementById('jofotaraForm');
     if (form) {
         form.addEventListener('submit', function(e) {
@@ -358,7 +358,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return false;
             }
             
-            // Show loading on submit button
+            // عرض التحميل عند الإرسال
             const submitBtn = form.querySelector('button[type="submit"]');
             if (submitBtn) {
                 submitBtn.disabled = true;
