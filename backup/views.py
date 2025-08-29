@@ -11,6 +11,7 @@ from django.utils.translation import gettext as _
 from django.utils import timezone
 from django.db import transaction
 from django.db import models
+from django.db.models.deletion import ProtectedError
 from django.core.cache import cache
 from django.template.defaultfilters import filesizeformat
 from django.urls import reverse
@@ -199,37 +200,77 @@ def delete_selected_tables(request):
                 except Exception:
                     continue
 
-        # تأكد من عدم وجود تبعيات خارج مجموعة الحذف
+        # وسّع مجموعة الجداول لتشمل جميع التبعيات المتسلسلة (closure)
+        selected_set = set([str(x) for x in tables])
+        def add_deps(label):
+            for dep in dep_map.get(label, set()):
+                if dep not in selected_set:
+                    selected_set.add(dep)
+                    add_deps(dep)
+
+        for t in list(selected_set):
+            add_deps(t)
+
+        # بعد التوسيع، تأكد من عدم وجود تبعيات خارج المجموعه النهائية
         cannot_delete = []
-        for t in tables:
-            t = str(t)
+        for t in list(selected_set):
             dependents = dep_map.get(t, set())
-            # إذا كان هناك تابعون ليسوا ضمن القوائم المختارة، نمنع الحذف
-            external = [d for d in dependents if d not in tables]
+            external = [d for d in dependents if d not in selected_set]
             if external:
                 cannot_delete.append({'table': t, 'blocked_by': external})
 
         if cannot_delete:
-            return JsonResponse({'success': False, 'error': 'بعض الجداول لا يمكن حذفها بسبب تبعيات', 'details': cannot_delete})
+            return JsonResponse({'success': False, 'error': 'بعض الجداول لا يمكن حذفها بسبب تبعيات خارجية', 'details': cannot_delete})
 
-        # تنفيذ الحذف داخل معاملة
+        # احسب ترتيب الحذف بحيث تُحذف التبعيات أولاً (post-order)
+        visited = set()
+        delete_order = []
+        def dfs(label):
+            if label in visited:
+                return
+            visited.add(label)
+            for dep in dep_map.get(label, set()):
+                if dep in selected_set:
+                    dfs(dep)
+            delete_order.append(label)
+
+        for label in list(selected_set):
+            dfs(label)
+
+        # تنفيذ الحذف داخل معاملة وبترتيب آمن
         deleted_stats = []
-        with transaction.atomic():
-            for t in tables:
-                model = model_map.get(t)
-                if model is None:
-                    continue
-                try:
-                    count = model.objects.all().count()
-                    model.objects.all().delete()
-                    deleted_stats.append({'table': t, 'deleted': count})
-                    from django.utils.translation import gettext as _
-                    log_audit(request.user, 'delete', _('Deleted all records from table %(table)s - count: %(count)s') % {'table': t, 'count': count})
-                except Exception as del_err:
-                    logger.error(f"خطأ أثناء حذف بيانات {t}: {str(del_err)}")
-                    raise del_err
+        try:
+            with transaction.atomic():
+                for t in delete_order:
+                    model = model_map.get(t)
+                    if model is None:
+                        continue
+                    try:
+                        count = model.objects.all().count()
+                        # حاول حذف السجلات؛ إذا كان هناك FK محمي فسيُثار ProtectedError
+                        model.objects.all().delete()
+                        deleted_stats.append({'table': t, 'deleted': count})
+                        from django.utils.translation import gettext as _
+                        log_audit(request.user, 'delete', _('Deleted all records from table %(table)s - count: %(count)s') % {'table': t, 'count': count})
+                    except ProtectedError as p_err:
+                        # جمع تفاصيل يمنع الحذف بسبب ProtectedError
+                        blockers = []
+                        try:
+                            # ProtectedError.args may include a list/queryset of blocking objects
+                            for item in getattr(p_err, 'protected_objects', []) or []:
+                                try:
+                                    blockers.append(str(item))
+                                except Exception:
+                                    blockers.append(repr(item))
+                        except Exception:
+                            blockers = [str(p_err)]
+                        logger.warning(f"ProtectedError deleting {t}: {blockers}")
+                        return JsonResponse({'success': False, 'error': 'ProtectedError', 'details': {'table': t, 'blocked_by_instances': blockers}})
 
-        return JsonResponse({'success': True, 'deleted': deleted_stats})
+            return JsonResponse({'success': True, 'deleted': deleted_stats})
+        except Exception as e:
+            logger.error(f"خطأ في delete_selected_tables: {str(e)}")
+            return JsonResponse({'success': False, 'error': str(e)})
     except Exception as e:
         logger.error(f"خطأ في delete_selected_tables: {str(e)}")
         return JsonResponse({'success': False, 'error': str(e)})
