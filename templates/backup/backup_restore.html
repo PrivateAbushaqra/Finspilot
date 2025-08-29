@@ -1114,11 +1114,12 @@ function loadDeletableTables() {
         var html = '<div class="table-responsive"><table class="table table-sm"><thead><tr><th></th><th>{% trans "Table" %}</th><th>{% trans "Records" %}</th><th>{% trans "Dependents" %}</th><th>{% trans "Safe to delete" %}</th></tr></thead><tbody>';
         data.tables.forEach(function(t){
             var deps = (t.dependents && t.dependents.length) ? t.dependents.join(', ') : '-';
-            var disabled = t.safe_to_delete ? '' : 'disabled';
-            var note = t.safe_to_delete ? '' : '{% trans "Has dependents" %}';
+            var hasDeps = (t.dependents && t.dependents.length);
+            var note = hasDeps ? '{% trans "Has dependents" %}' : '';
             // attach dependents as JSON in data-deps so client-side can auto-select them
             var depsJson = JSON.stringify(t.dependents || []);
-            html += `<tr><td><input type="checkbox" class="del-table-checkbox" data-label="${t.label}" data-deps='${depsJson}' ${disabled}></td><td>${t.display_name}<br><small class="text-muted">${t.label}</small></td><td>${t.record_count}</td><td><small class="text-muted">${deps}</small></td><td>${note}</td></tr>`;
+            var rowClass = hasDeps ? 'has-deps' : '';
+            html += `<tr class="${rowClass}"><td><input type="checkbox" class="del-table-checkbox" data-label="${t.label}" data-deps='${depsJson}'></td><td>${t.display_name}<br><small class="text-muted">${t.label}</small></td><td>${t.record_count}</td><td><small class="text-muted">${deps}</small></td><td>${note}</td></tr>`;
         });
     html += '</tbody></table></div>';
     container.innerHTML = html;
