@@ -11,11 +11,10 @@
     </div>
     <div class="mb-3">
       <label class="form-label">{% trans "Customer" %}</label>
-      <select name="customer" class="form-control">
-        {% for c in customers %}
-        <option value="{{ c.id }}">{{ c.name }}</option>
-        {% endfor %}
-      </select>
+      <input id="customer_search" class="form-control" list="customer_list" placeholder="{% trans "Type to search customer" %}">
+      <datalist id="customer_list"></datalist>
+      <input type="hidden" name="customer" id="customer_id_hidden" value="">
+      <small class="form-text text-muted">{% trans "Start typing to filter customers, then choose from the list." %}</small>
     </div>
     <div class="mb-3">
       <label class="form-label">{% trans "Date" %}</label>
@@ -40,4 +39,64 @@
     <button class="btn btn-primary" type="submit">{% trans "Save" %}</button>
   </form>
 </div>
+  <script>
+  (function(){
+    const input = document.getElementById('customer_search');
+    const datalist = document.getElementById('customer_list');
+    const hidden = document.getElementById('customer_id_hidden');
+    let nameToId = {};
+
+    function fetchResults(q){
+      if(!q || q.length < 1) return;
+      const url = new URL('{% url "customers:search_customers" %}', window.location.origin);
+      url.searchParams.set('q', q);
+      url.searchParams.set('limit', 10);
+      fetch(url.toString(), {credentials: 'same-origin'})
+        .then(r => r.json())
+        .then(data => {
+          nameToId = {};
+          datalist.innerHTML = '';
+          (data.results || []).forEach(item => {
+            const opt = document.createElement('option');
+            opt.value = item.name;
+            datalist.appendChild(opt);
+            nameToId[item.name] = item.id;
+          });
+        }).catch(err => {
+          console.error('customer search error', err);
+        });
+    }
+
+    let timer = null;
+    input.addEventListener('input', function(e){
+      hidden.value = '';
+      const q = this.value.trim();
+      if(timer) clearTimeout(timer);
+      timer = setTimeout(()=> fetchResults(q), 250);
+    });
+
+    // when user leaves the field, if the name matches a known id set the hidden input
+    input.addEventListener('change', function(){
+      const val = this.value.trim();
+      if(val && nameToId[val]){
+        hidden.value = nameToId[val];
+      } else {
+        hidden.value = '';
+      }
+    });
+
+    // preload options for accessibility: populate datalist with initial customers
+    document.addEventListener('DOMContentLoaded', function(){
+      try{
+        const initial = [];
+        {% for c in customers|slice:":10" %}
+          initial.push({id: {{ c.id }}, name: "{{ c.name|escapejs }}"});
+        {% endfor %}
+        initial.forEach(item => {
+          const opt = document.createElement('option'); opt.value = item.name; datalist.appendChild(opt); nameToId[item.name]=item.id;
+        });
+      }catch(e){console.error(e)}
+    });
+  })();
+  </script>
 {% endblock %}
