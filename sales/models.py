@@ -36,6 +36,12 @@ class SalesInvoice(models.Model):
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
     updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
 
+    # JoFotara integration fields
+    jofotara_uuid = models.CharField(_('JoFotara UUID'), max_length=100, blank=True, null=True, 
+                                   help_text=_('UUID returned from JoFotara API'))
+    jofotara_sent_at = models.DateTimeField(_('Sent to JoFotara At'), blank=True, null=True,
+                                          help_text=_('Date and time when invoice was sent to JoFotara'))
+
     class Meta:
         verbose_name = _('فاتورة مبيعات')
         verbose_name_plural = _('فواتير المبيعات')
@@ -43,6 +49,7 @@ class SalesInvoice(models.Model):
         permissions = (
             ('can_toggle_invoice_tax', 'Can toggle invoice tax inclusion'),
             ('can_change_invoice_creator', 'Can change invoice creator'),
+            ('can_send_to_jofotara', 'Can send invoices to JoFotara'),
         )
 
     def __str__(self):
@@ -151,10 +158,19 @@ class SalesCreditNote(models.Model):
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
     updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
 
+    # JoFotara integration fields
+    jofotara_uuid = models.CharField(_('JoFotara UUID'), max_length=100, blank=True, null=True, 
+                                   help_text=_('UUID returned from JoFotara API'))
+    jofotara_sent_at = models.DateTimeField(_('Sent to JoFotara At'), blank=True, null=True,
+                                          help_text=_('Date and time when credit note was sent to JoFotara'))
+
     class Meta:
         verbose_name = _('اشعار دائن')
         verbose_name_plural = _('اشعارات دائن')
         ordering = ['-date', '-note_number']
+        permissions = (
+            ('can_send_to_jofotara', 'Can send credit notes to JoFotara'),
+        )
 
     def __str__(self):
         return f"{self.note_number} - {self.customer.name}"

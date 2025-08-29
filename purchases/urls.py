@@ -27,5 +27,5 @@ urlpatterns = [
     # Debit Notes (separate section)
     path('debit-notes/', views.PurchaseDebitNoteListView.as_view(), name='debitnote_list'),
     path('debit-notes/add/', views.purchase_debitnote_create, name='debitnote_add'),
-    path('debit-notes/<int:pk>/', views.PurchaseDebitNoteDetailView.as_view(), name='debitnote_detail'),
+    path('debit-notes/<int:pk>/send-to-jofotara/', views.send_debitnote_to_jofotara, name='send_debitnote_to_jofotara'),
 ]

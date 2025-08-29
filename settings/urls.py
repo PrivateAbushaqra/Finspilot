@@ -18,6 +18,9 @@ urlpatterns = [
     path('document-print-settings/', views.DocumentPrintSettingsView.as_view(), name='document_print_settings'),
     path('print-design/', views.PrintDesignView.as_view(), name='print_design'),
     
+    # إعدادات JoFotara
+    path('jofotara-settings/', views.JoFotaraSettingsView.as_view(), name='jofotara_settings'),
+    
     # API endpoints للطباعة
     path('api/document-settings/<str:document_type>/', views.get_document_settings_ajax, name='document_settings_ajax'),
     

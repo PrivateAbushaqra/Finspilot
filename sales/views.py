@@ -1597,3 +1597,89 @@ class SalesReturnStatementView(LoginRequiredMixin, TemplateView):
         })
         
         return context
+
+
+@login_required
+@require_POST
+def send_invoice_to_jofotara(request, pk):
+    """إرسال فاتورة المبيعات إلى JoFotara"""
+    try:
+        # Get the invoice
+        invoice = get_object_or_404(SalesInvoice, pk=pk)
+        
+        # Check if user has permission to send invoices
+        if not request.user.has_perm('sales.can_send_to_jofotara'):
+            return JsonResponse({
+                'success': False,
+                'error': 'ليس لديك صلاحية إرسال الفواتير إلى JoFotara'
+            })
+        
+        # Import the utility function
+        from settings.utils import send_sales_invoice_to_jofotara
+        
+        # Send the invoice
+        result = send_sales_invoice_to_jofotara(invoice)
+        
+        if result['success']:
+            # Update invoice with JoFotara UUID if available
+            if 'uuid' in result:
+                invoice.jofotara_uuid = result['uuid']
+                invoice.jofotara_sent_at = timezone.now()
+                invoice.save()
+            
+            messages.success(request, f'تم إرسال الفاتورة {invoice.invoice_number} إلى JoFotara بنجاح')
+        else:
+            messages.error(request, f'فشل في إرسال الفاتورة: {result.get("error", "خطأ غير معروف")}')
+        
+        return JsonResponse(result)
+        
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error sending invoice to JoFotara: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': f'خطأ في النظام: {str(e)}'
+        })
+
+
+@login_required
+@require_POST
+def send_creditnote_to_jofotara(request, pk):
+    """إرسال إشعار دائن إلى JoFotara"""
+    try:
+        # Get the credit note
+        credit_note = get_object_or_404(SalesCreditNote, pk=pk)
+        
+        # Check if user has permission to send credit notes
+        if not request.user.has_perm('sales.can_send_to_jofotara'):
+            return JsonResponse({
+                'success': False,
+                'error': 'ليس لديك صلاحية إرسال الإشعارات الدائنة إلى JoFotara'
+            })
+        
+        # Import the utility function
+        from settings.utils import send_credit_note_to_jofotara
+        
+        # Send the credit note
+        result = send_credit_note_to_jofotara(credit_note)
+        
+        if result['success']:
+            # Update credit note with JoFotara UUID if available
+            if 'uuid' in result:
+                credit_note.jofotara_uuid = result['uuid']
+                credit_note.jofotara_sent_at = timezone.now()
+                credit_note.save()
+            
+            messages.success(request, f'تم إرسال الإشعار الدائن {credit_note.note_number} إلى JoFotara بنجاح')
+        else:
+            messages.error(request, f'فشل في إرسال الإشعار الدائن: {result.get("error", "خطأ غير معروف")}')
+        
+        return JsonResponse(result)
+        
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error sending credit note to JoFotara: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': f'خطأ في النظام: {str(e)}'
+        })

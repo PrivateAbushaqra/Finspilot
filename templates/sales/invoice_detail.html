@@ -90,8 +90,49 @@
                     </table>
                 </div>
             </div>
+            
+            <!-- JoFotara Status -->
+            <div class="col-md-6">
+                <h6>حالة الربط الإلكتروني مع دائرة الضريبة</h6>
+                <table class="table table-sm">
+                    <tr>
+                        <td><strong>حالة الإرسال:</strong></td>
+                        <td>
+                            {% if invoice.jofotara_sent_at %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check-circle me-1"></i>
+                                    تم الإرسال
+                                </span>
+                            {% else %}
+                                <span class="badge bg-warning">
+                                    <i class="fas fa-clock me-1"></i>
+                                    لم يتم الإرسال
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% if invoice.jofotara_sent_at %}
+                    <tr>
+                        <td><strong>تاريخ الإرسال:</strong></td>
+                        <td>{{ invoice.jofotara_sent_at|date:"Y-m-d H:i" }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if invoice.jofotara_uuid %}
+                    <tr>
+                        <td><strong>رقم التتبع (UUID):</strong></td>
+                        <td>
+                            <code>{{ invoice.jofotara_uuid }}</code>
+                            <button class="btn btn-sm btn-outline-secondary ms-2" onclick="copyToClipboard('{{ invoice.jofotara_uuid }}')">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
         </div>
     </div>
+</div>
 
     <!-- Invoice Items -->
     <div class="card mt-4">
@@ -183,6 +224,10 @@
                     <i class="fas fa-print me-2"></i>
                     {% trans "Print" %}
                 </button>
+                <button class="btn btn-info" id="sendToJofotaraBtn" onclick="sendToJofotara({{ invoice.pk }})">
+                    <i class="fas fa-link me-2"></i>
+                    إرسال إلى JoFotara
+                </button>
                 <a href="{% url 'sales:invoice_delete' invoice.pk %}" class="btn btn-danger"
                    onclick="return confirm('هل أنت متأكد من {% trans "Delete" %} هذه ال{% trans "Invoice" %}؟')">
                     <i class="fas fa-trash me-2"></i>
@@ -196,4 +241,71 @@
 <!-- Document Creator Information -->
 {% include 'partials/document_creator_info.html' with document=invoice %}
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function sendToJofotara(invoiceId) {
+    if (confirm("هل أنت متأكد من إرسال هذه الفاتورة إلى JoFotara؟")) {
+        const btn = document.getElementById("sendToJofotaraBtn");
+        const originalText = btn.innerHTML;
+        
+        // Show loading state
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جاري الإرسال...';
+        
+        // Send AJAX request
+        fetch(`/sales/invoice/${invoiceId}/send-to-jofotara/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('تم إرسال الفاتورة إلى JoFotara بنجاح!\nUUID: ' + (data.uuid || 'غير محدد'));
+                location.reload();
+            } else {
+                alert('فشل في إرسال الفاتورة: ' + (data.error || 'خطأ غير معروف'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('حدث خطأ في الاتصال بالخادم');
+        })
+        .finally(() => {
+            // Reset button state
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        });
+    }
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        // Show success message
+        const notification = document.createElement('div');
+        notification.className = 'alert alert-success alert-dismissible fade show position-fixed';
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        notification.innerHTML = `
+            <i class="fas fa-check-circle me-2"></i>
+            تم نسخ UUID إلى الحافظة
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(notification);
+        
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 3000);
+    }).catch(function(err) {
+        console.error('Failed to copy: ', err);
+        alert('فشل في نسخ النص');
+    });
+}
+</script>
 {% endblock %}

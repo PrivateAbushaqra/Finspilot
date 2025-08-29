@@ -7,6 +7,8 @@ from django.utils import timezone
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+import logging
 from datetime import datetime, timedelta, date
 from decimal import Decimal, ROUND_HALF_UP
 from .models import PurchaseInvoice, PurchaseInvoiceItem, PurchaseReturn, PurchaseReturnItem, PurchaseReturn, PurchaseReturnItem
@@ -1217,3 +1219,46 @@ class PurchaseReturnStatementView(LoginRequiredMixin, TemplateView):
         })
         
         return context
+
+
+@login_required
+@require_POST
+def send_debitnote_to_jofotara(request, pk):
+    """إرسال إشعار خصم إلى JoFotara"""
+    try:
+        # Get the debit note
+        debit_note = get_object_or_404(PurchaseDebitNote, pk=pk)
+        
+        # Check if user has permission to send debit notes
+        if not request.user.has_perm('purchases.can_send_to_jofotara'):
+            return JsonResponse({
+                'success': False,
+                'error': 'ليس لديك صلاحية إرسال الإشعارات الخصومات إلى JoFotara'
+            })
+        
+        # Import the utility function
+        from settings.utils import send_debit_note_to_jofotara
+        
+        # Send the debit note
+        result = send_debit_note_to_jofotara(debit_note)
+        
+        if result['success']:
+            # Update debit note with JoFotara UUID if available
+            if 'uuid' in result:
+                debit_note.jofotara_uuid = result['uuid']
+                debit_note.jofotara_sent_at = timezone.now()
+                debit_note.save()
+            
+            messages.success(request, f'تم إرسال الإشعار الخصم {debit_note.note_number} إلى JoFotara بنجاح')
+        else:
+            messages.error(request, f'فشل في إرسال الإشعار الخصم: {result.get("error", "خطأ غير معروف")}')
+        
+        return JsonResponse(result)
+        
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error sending debit note to JoFotara: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': f'خطأ في النظام: {str(e)}'
+        })

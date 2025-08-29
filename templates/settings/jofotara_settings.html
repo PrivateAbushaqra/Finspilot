@@ -1,0 +1,371 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "JoFotara Settings" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .settings-card {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .settings-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 8px 8px 0 0;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .input-group-text {
+        background-color: #f8f9fa;
+        border-color: #dee2e6;
+    }
+    
+    .btn-save {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        padding: 12px 30px;
+        border-radius: 25px;
+        font-weight: 600;
+    }
+    
+    .btn-test {
+        background: linear-gradient(135deg, #007bff 0%, #6610f2 100%);
+        border: none;
+        padding: 12px 30px;
+        border-radius: 25px;
+        font-weight: 600;
+    }
+    
+    .status-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 8px;
+    }
+    
+    .status-active {
+        background-color: #28a745;
+    }
+    
+    .status-inactive {
+        background-color: #dc3545;
+    }
+    
+    .mock-api-section {
+        background-color: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 20px;
+    }
+    
+    .api-info {
+        background-color: #e7f3ff;
+        border: 1px solid #b3d7ff;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card settings-card">
+                <div class="card-header settings-header">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-link fa-2x me-3"></i>
+                        <div>
+                            <h3 class="mb-1">{% trans "Electronic Integration with Income and Sales Tax Department" %}</h3>
+                            <p class="mb-0 opacity-75">{% trans "JoFotara System Settings" %}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- API Information -->
+                    <div class="api-info">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-info-circle text-primary me-2"></i>
+                            <strong>{% trans "API Information" %}</strong>
+                        </div>
+                        <p class="mb-0">
+                            {% trans "Configure the connection settings for the Jordanian Income and Sales Tax Department electronic invoicing system (JoFotara)." %}
+                        </p>
+                    </div>
+                    
+                    <form method="post" id="jofotaraForm">
+                        {% csrf_token %}
+                        
+                        <!-- API Settings -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="api_url" class="form-label">
+                                        <i class="fas fa-globe me-2"></i>
+                                        {% trans "API URL" %}
+                                    </label>
+                                    <input type="url" class="form-control" id="api_url" name="api_url" 
+                                           value="{{ jofotara_settings.api_url }}" 
+                                           placeholder="https://api.jofotara.gov.jo/v1/" required>
+                                    <div class="form-text">
+                                        {% trans "The base URL for JoFotara API endpoints" %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="client_id" class="form-label">
+                                        <i class="fas fa-id-card me-2"></i>
+                                        {% trans "Client ID" %}
+                                    </label>
+                                    <input type="text" class="form-control" id="client_id" name="client_id" 
+                                           value="{{ jofotara_settings.client_id }}" 
+                                           placeholder="Your Client ID" required>
+                                    <div class="form-text">
+                                        {% trans "Your registered Client ID from JoFotara" %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="client_secret" class="form-label">
+                                        <i class="fas fa-key me-2"></i>
+                                        {% trans "Client Secret" %}
+                                    </label>
+                                    <input type="password" class="form-control" id="client_secret" name="client_secret" 
+                                           value="{{ jofotara_settings.client_secret }}" 
+                                           placeholder="Your Client Secret" required>
+                                    <div class="form-text">
+                                        {% trans "Your Client Secret from JoFotara (keep secure)" %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        <i class="fas fa-toggle-on me-2"></i>
+                                        {% trans "Settings" %}
+                                    </label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="is_active" name="is_active"
+                                               {% if jofotara_settings.is_active %}checked{% endif %}>
+                                        <label class="form-check-label" for="is_active">
+                                            <span class="status-indicator {% if jofotara_settings.is_active %}status-active{% else %}status-inactive{% endif %}"></span>
+                                            {% trans "Enable JoFotara Integration" %}
+                                        </label>
+                                    </div>
+                                    <div class="form-check mt-2">
+                                        <input class="form-check-input" type="checkbox" id="use_mock_api" name="use_mock_api"
+                                               {% if jofotara_settings.use_mock_api %}checked{% endif %}>
+                                        <label class="form-check-label" for="use_mock_api">
+                                            <i class="fas fa-flask me-2 text-warning"></i>
+                                            {% trans "Use Mock API for Testing" %}
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Mock API Information -->
+                        <div class="mock-api-section" id="mockApiSection" {% if not jofotara_settings.use_mock_api %}style="display: none;"{% endif %}>
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="fas fa-flask text-warning me-2"></i>
+                                <strong>{% trans "Mock API Mode" %}</strong>
+                            </div>
+                            <p class="mb-2">
+                                {% trans "When enabled, the system will use mock responses for testing purposes:" %}
+                            </p>
+                            <ul class="mb-0">
+                                <li>{% trans "Generates fake UUID and QR codes" %}</li>
+                                <li>{% trans "Saves XML files locally in invoices/ folder" %}</li>
+                                <li>{% trans "Provides mock verification URLs" %}</li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex gap-3">
+                                    <button type="submit" name="action" value="save_settings" class="btn btn-save">
+                                        <i class="fas fa-save me-2"></i>
+                                        {% trans "Save Settings" %}
+                                    </button>
+                                    
+                                    <button type="button" id="testConnectionBtn" class="btn btn-test">
+                                        <i class="fas fa-plug me-2"></i>
+                                        {% trans "Test Connection" %}
+                                    </button>
+                                    
+                                    <a href="{% url 'settings:index' %}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-left me-2"></i>
+                                        {% trans "Back to Settings" %}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <!-- Test Results -->
+                    <div id="testResults" class="mt-4" style="display: none;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-clipboard-check me-2"></i>
+                                    {% trans "Connection Test Results" %}
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="testResultsContent"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('JoFotara Settings Page Loaded');
+    
+    // Toggle mock API section visibility
+    const useMockApiCheckbox = document.getElementById('use_mock_api');
+    const mockApiSection = document.getElementById('mockApiSection');
+    
+    if (useMockApiCheckbox && mockApiSection) {
+        useMockApiCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                mockApiSection.style.display = 'block';
+            } else {
+                mockApiSection.style.display = 'none';
+            }
+        });
+    }
+    
+    // Update status indicator
+    const isActiveCheckbox = document.getElementById('is_active');
+    const statusIndicator = document.querySelector('.status-indicator');
+    
+    if (isActiveCheckbox && statusIndicator) {
+        isActiveCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                statusIndicator.className = 'status-indicator status-active';
+            } else {
+                statusIndicator.className = 'status-indicator status-inactive';
+            }
+        });
+    }
+    
+    // Test connection functionality
+    const testConnectionBtn = document.getElementById('testConnectionBtn');
+    const testResults = document.getElementById('testResults');
+    const testResultsContent = document.getElementById('testResultsContent');
+    
+    if (testConnectionBtn) {
+        testConnectionBtn.addEventListener('click', function() {
+            // Show loading state
+            testConnectionBtn.disabled = true;
+            testConnectionBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>{% trans "Testing..." %}';
+            
+            // Prepare form data
+            const formData = new FormData();
+            formData.append('action', 'test_connection');
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+            
+            // Send test request
+            fetch(window.location.href, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Show results
+                testResults.style.display = 'block';
+                
+                if (data.success) {
+                    testResultsContent.innerHTML = `
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <strong>{% trans "Connection Successful!" %}</strong>
+                            <p class="mb-0">${data.message || '{% trans "API connection is working properly." %}'}</p>
+                        </div>
+                    `;
+                } else {
+                    testResultsContent.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>{% trans "Connection Failed" %}</strong>
+                            <p class="mb-0">${data.error || '{% trans "Unable to connect to JoFotara API." %}'}</p>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                testResults.style.display = 'block';
+                testResultsContent.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>{% trans "Network Error" %}</strong>
+                        <p class="mb-0">{% trans "Failed to connect to the server. Please check your network connection." %}</p>
+                    </div>
+                `;
+                console.error('Test connection error:', error);
+            })
+            .finally(() => {
+                // Reset button state
+                testConnectionBtn.disabled = false;
+                testConnectionBtn.innerHTML = '<i class="fas fa-plug me-2"></i>{% trans "Test Connection" %}';
+            });
+        });
+    }
+    
+    // Form validation
+    const form = document.getElementById('jofotaraForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const apiUrl = document.getElementById('api_url').value.trim();
+            const clientId = document.getElementById('client_id').value.trim();
+            const clientSecret = document.getElementById('client_secret').value.trim();
+            
+            if (!apiUrl || !clientId || !clientSecret) {
+                e.preventDefault();
+                alert('{% trans "Please fill in all required fields." %}');
+                return false;
+            }
+            
+            // Show loading on submit button
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>{% trans "Saving..." %}';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

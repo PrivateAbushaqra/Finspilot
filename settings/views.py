@@ -1214,3 +1214,80 @@ class PrintDesignView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             print(f"خطأ في حفظ تصميم الطباعة: {str(e)}")
             print(traceback.format_exc())
             return JsonResponse({'success': False, 'error': str(e)})
+
+
+class JoFotaraSettingsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+    """عرض إعدادات الربط الإلكتروني مع دائرة ضريبة الدخل والمبيعات (JoFotara)"""
+    template_name = 'settings/jofotara_settings.html'
+    
+    def test_func(self):
+        """التحقق من صلاحيات المستخدم - Superadmin فقط"""
+        return self.request.user.is_superuser
+    
+    def handle_no_permission(self):
+        messages.error(self.request, _('ليس لديك صلاحية للوصول لإعدادات JoFotara.'))
+        return redirect('settings:index')
+    
+    def get_context_data(self, **kwargs):
+        from .models import JoFotaraSettings
+        
+        context = super().get_context_data(**kwargs)
+        
+        # الحصول على إعدادات JoFotara أو إنشاء إعدادات فارغة
+        settings = JoFotaraSettings.objects.first()
+        if not settings:
+            settings = JoFotaraSettings()
+        context['jofotara_settings'] = settings
+        
+        return context
+    
+    def post(self, request, *args, **kwargs):
+        from .models import JoFotaraSettings
+        from core.models import AuditLog
+        
+        try:
+            action = request.POST.get('action')
+            
+            if action == 'save_settings':
+                # الحصول على الإعدادات أو إنشاء جديدة
+                settings, created = JoFotaraSettings.objects.get_or_create(
+                    defaults={}
+                )
+                
+                # تحديث البيانات
+                settings.api_url = request.POST.get('api_url', '')
+                settings.client_id = request.POST.get('client_id', '')
+                settings.client_secret = request.POST.get('client_secret', '')
+                settings.is_active = request.POST.get('is_active') == 'on'
+                settings.use_mock_api = request.POST.get('use_mock_api') == 'on'
+                settings.save()
+                
+                # تسجيل النشاط
+                AuditLog.objects.create(
+                    user=request.user,
+                    action_type='update' if not created else 'create',
+                    content_type='JoFotaraSettings',
+                    description=f'{"تم إنشاء" if created else "تم تحديث"} إعدادات JoFotara'
+                )
+                
+                messages.success(request, _('تم حفظ إعدادات JoFotara بنجاح'))
+                return redirect('settings:jofotara_settings')
+                
+            elif action == 'test_connection':
+                # اختبار الاتصال مع API
+                settings = JoFotaraSettings.objects.first()
+                if not settings:
+                    return JsonResponse({'success': False, 'error': 'لم يتم العثور على إعدادات JoFotara'})
+                
+                # استدعاء دالة اختبار الاتصال
+                from .utils import test_jofotara_connection
+                result = test_jofotara_connection()
+                
+                return JsonResponse(result)
+        
+        except Exception as e:
+            import traceback
+            print(f"خطأ في حفظ إعدادات JoFotara: {str(e)}")
+            print(traceback.format_exc())
+            messages.error(request, f'خطأ: {str(e)}')
+            return redirect('settings:jofotara_settings')

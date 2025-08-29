@@ -176,10 +176,19 @@ class PurchaseDebitNote(models.Model):
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
     updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
 
+    # JoFotara integration fields
+    jofotara_uuid = models.CharField(_('JoFotara UUID'), max_length=100, blank=True, null=True, 
+                                   help_text=_('UUID returned from JoFotara API'))
+    jofotara_sent_at = models.DateTimeField(_('Sent to JoFotara At'), blank=True, null=True,
+                                          help_text=_('Date and time when debit note was sent to JoFotara'))
+
     class Meta:
         verbose_name = _('اشعار مدين')
         verbose_name_plural = _('اشعارات مدين')
         ordering = ['-date', '-note_number']
+        permissions = (
+            ('can_send_to_jofotara', 'Can send debit notes to JoFotara'),
+        )
 
     def __str__(self):
         return f"{self.note_number} - {self.supplier.name}"
