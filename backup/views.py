@@ -246,6 +246,41 @@ def delete_selected_tables(request):
                     if model is None:
                         continue
                     try:
+                        # Special handling for User model: create or keep a fallback '__deleted__' user
+                        UserModel = None
+                        try:
+                            from django.contrib.auth import get_user_model
+                            UserModel = get_user_model()
+                        except Exception:
+                            UserModel = None
+
+                        if UserModel is not None and getattr(model, '__name__', '').lower() == getattr(UserModel, '__name__', '').lower():
+                            # ensure fallback exists
+                            fallback_username = '__deleted_user__'
+                            fallback = UserModel.objects.filter(username=fallback_username).first()
+                            if not fallback:
+                                # create minimal fallback user
+                                fallback = UserModel.objects.create(username=fallback_username, is_active=False)
+
+                            # reassign AuditLog.user entries that reference users we will delete to fallback
+                            try:
+                                user_ids = list(model.objects.exclude(pk=fallback.pk).values_list('pk', flat=True))
+                                from core.models import AuditLog as _AuditLog
+                                if user_ids:
+                                    _AuditLog.objects.filter(user_id__in=user_ids).update(user_id=fallback.pk)
+                            except Exception as reassign_err:
+                                logger.warning(f"Failed to reassign AuditLog.user before deleting users: {reassign_err}")
+
+                            # delete all users except fallback
+                            qs = model.objects.exclude(pk=fallback.pk)
+                            count = qs.count()
+                            qs.delete()
+                            deleted_stats.append({'table': t, 'deleted': count})
+                            from django.utils.translation import gettext as _
+                            log_audit(request.user, 'delete', _('Deleted all records from table %(table)s - count: %(count)s') % {'table': t, 'count': count})
+                            continue
+
+                        # Default deletion path for other models
                         count = model.objects.all().count()
                         # حاول حذف السجلات؛ إذا كان هناك FK محمي فسيُثار ProtectedError
                         model.objects.all().delete()
