@@ -237,108 +237,110 @@ def delete_selected_tables(request):
         for label in list(selected_set):
             dfs(label)
 
+    except Exception as e:
+        logger.error(f"خطأ في بناء خريطة التبعية أو حساب ترتيب الحذف: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)})
+
     # تنفيذ الحذف داخل معاملة وبترتيب آمن
     deleted_stats = []
     audit_reassign_notifications = []
-        try:
-            with transaction.atomic():
-                for t in delete_order:
-                    model = model_map.get(t)
-                    if model is None:
-                        continue
+    try:
+        with transaction.atomic():
+            for t in delete_order:
+                model = model_map.get(t)
+                if model is None:
+                    continue
+                try:
+                    # Special handling for User model: create or keep a fallback '__deleted_user__' user
+                    UserModel = None
                     try:
-                        # Special handling for User model: create or keep a fallback '__deleted__' user
+                        from django.contrib.auth import get_user_model
+                        UserModel = get_user_model()
+                    except Exception:
                         UserModel = None
+
+                    if UserModel is not None and getattr(model, '__name__', '').lower() == getattr(UserModel, '__name__', '').lower():
+                        # ensure fallback exists
+                        fallback_username = '__deleted_user__'
+                        fallback = UserModel.objects.filter(username=fallback_username).first()
+                        if not fallback:
+                            # create minimal fallback user
+                            fallback = UserModel.objects.create(username=fallback_username, is_active=False)
+
+                        # reassign AuditLog.user entries that reference users we will delete to fallback
                         try:
-                            from django.contrib.auth import get_user_model
-                            UserModel = get_user_model()
-                        except Exception:
-                            UserModel = None
+                            user_ids = list(model.objects.exclude(pk=fallback.pk).values_list('pk', flat=True))
+                            from core.models import AuditLog as _AuditLog
+                            if user_ids:
+                                _AuditLog.objects.filter(user_id__in=user_ids).update(user_id=fallback.pk)
+                        except Exception as reassign_err:
+                            logger.warning(f"Failed to reassign AuditLog.user before deleting users: {reassign_err}")
 
-                        if UserModel is not None and getattr(model, '__name__', '').lower() == getattr(UserModel, '__name__', '').lower():
-                            # ensure fallback exists
-                            fallback_username = '__deleted_user__'
-                            fallback = UserModel.objects.filter(username=fallback_username).first()
-                            if not fallback:
-                                # create minimal fallback user
-                                fallback = UserModel.objects.create(username=fallback_username, is_active=False)
+                        # notify front-end that we reassigned audit logs for this table
+                        audit_reassign_notifications.append({'table': t, 'fallback': fallback.username, 'reassigned_count': len(user_ids)})
 
-                # reassign AuditLog.user entries that reference users we will delete to fallback
-                            try:
-                                user_ids = list(model.objects.exclude(pk=fallback.pk).values_list('pk', flat=True))
-                                from core.models import AuditLog as _AuditLog
-                                if user_ids:
-                                    _AuditLog.objects.filter(user_id__in=user_ids).update(user_id=fallback.pk)
-                    # notify front-end that we reassigned audit logs for this table
-                    audit_reassign_notifications.append({'table': t, 'fallback': fallback.username, 'reassigned_count': len(user_ids)})
-                            except Exception as reassign_err:
-                                logger.warning(f"Failed to reassign AuditLog.user before deleting users: {reassign_err}")
-
-                            # delete all users except fallback
-                            qs = model.objects.exclude(pk=fallback.pk)
-                            count = qs.count()
-                            qs.delete()
-                            deleted_stats.append({'table': t, 'deleted': count})
-                            from django.utils.translation import gettext as _
-                            log_audit(request.user, 'delete', _('Deleted all records from table %(table)s - count: %(count)s') % {'table': t, 'count': count})
-                            continue
-
-                        # Default deletion path for other models
-                        count = model.objects.all().count()
-                        # حاول حذف السجلات؛ إذا كان هناك FK محمي فسيُثار ProtectedError أو قد يحدث IntegrityError
-                        try:
-                            model.objects.all().delete()
-                        except Exception as del_exc:
-                            from django.db import IntegrityError
-                            if isinstance(del_exc, IntegrityError):
-                                # Special retry logic for User model: try to reassign AuditLog.user references then retry
-                                try:
-                                    from django.contrib.auth import get_user_model
-                                    UserModelLocal = get_user_model()
-                                except Exception:
-                                    UserModelLocal = None
-
-                                if UserModelLocal is not None and getattr(model, '__name__', '').lower() == getattr(UserModelLocal, '__name__', '').lower():
-                                    # perform reassignment of AuditLog entries to fallback
-                                    try:
-                                        fallback_username = '__deleted_user__'
-                                        fallback = UserModelLocal.objects.filter(username=fallback_username).first()
-                                        if not fallback:
-                                            fallback = UserModelLocal.objects.create(username=fallback_username, is_active=False)
-                                        user_ids = list(model.objects.exclude(pk=fallback.pk).values_list('pk', flat=True))
-                                        from core.models import AuditLog as _AuditLog
-                                        if user_ids:
-                                            _AuditLog.objects.filter(user_id__in=user_ids).update(user_id=fallback.pk)
-                                        # retry delete
-                                        model.objects.exclude(pk=fallback.pk).delete()
-                                    except Exception as reassign_err:
-                                        logger.error(f"Failed to reassign AuditLog on IntegrityError: {reassign_err}")
-                                        raise del_exc
-                                else:
-                                    raise del_exc
-
+                        # delete all users except fallback
+                        qs = model.objects.exclude(pk=fallback.pk)
+                        count = qs.count()
+                        qs.delete()
                         deleted_stats.append({'table': t, 'deleted': count})
                         from django.utils.translation import gettext as _
                         log_audit(request.user, 'delete', _('Deleted all records from table %(table)s - count: %(count)s') % {'table': t, 'count': count})
-                    except ProtectedError as p_err:
-                        # جمع تفاصيل يمنع الحذف بسبب ProtectedError
-                        blockers = []
-                        try:
-                            # ProtectedError.args may include a list/queryset of blocking objects
-                            for item in getattr(p_err, 'protected_objects', []) or []:
-                                try:
-                                    blockers.append(str(item))
-                                except Exception:
-                                    blockers.append(repr(item))
-                        except Exception:
-                            blockers = [str(p_err)]
-                        logger.warning(f"ProtectedError deleting {t}: {blockers}")
-                        return JsonResponse({'success': False, 'error': 'ProtectedError', 'details': {'table': t, 'blocked_by_instances': blockers}})
+                        continue
 
-            return JsonResponse({'success': True, 'deleted': deleted_stats, 'audit_reassign_notifications': audit_reassign_notifications})
-        except Exception as e:
-            logger.error(f"خطأ في delete_selected_tables: {str(e)}")
-            return JsonResponse({'success': False, 'error': str(e)})
+                    # Default deletion path for other models
+                    count = model.objects.all().count()
+                    # حاول حذف السجلات؛ إذا كان هناك FK محمي فسيُثار ProtectedError أو قد يحدث IntegrityError
+                    try:
+                        model.objects.all().delete()
+                    except Exception as del_exc:
+                        from django.db import IntegrityError
+                        if isinstance(del_exc, IntegrityError):
+                            # Special retry logic for User model: try to reassign AuditLog.user references then retry
+                            try:
+                                from django.contrib.auth import get_user_model
+                                UserModelLocal = get_user_model()
+                            except Exception:
+                                UserModelLocal = None
+
+                            if UserModelLocal is not None and getattr(model, '__name__', '').lower() == getattr(UserModelLocal, '__name__', '').lower():
+                                # perform reassignment of AuditLog entries to fallback
+                                try:
+                                    fallback_username = '__deleted_user__'
+                                    fallback = UserModelLocal.objects.filter(username=fallback_username).first()
+                                    if not fallback:
+                                        fallback = UserModelLocal.objects.create(username=fallback_username, is_active=False)
+                                    user_ids = list(model.objects.exclude(pk=fallback.pk).values_list('pk', flat=True))
+                                    from core.models import AuditLog as _AuditLog
+                                    if user_ids:
+                                        _AuditLog.objects.filter(user_id__in=user_ids).update(user_id=fallback.pk)
+                                    # retry delete
+                                    model.objects.exclude(pk=fallback.pk).delete()
+                                except Exception as reassign_err:
+                                    logger.error(f"Failed to reassign AuditLog on IntegrityError: {reassign_err}")
+                                    raise del_exc
+                            else:
+                                raise del_exc
+
+                    deleted_stats.append({'table': t, 'deleted': count})
+                    from django.utils.translation import gettext as _
+                    log_audit(request.user, 'delete', _('Deleted all records from table %(table)s - count: %(count)s') % {'table': t, 'count': count})
+                except ProtectedError as p_err:
+                    # جمع تفاصيل يمنع الحذف بسبب ProtectedError
+                    blockers = []
+                    try:
+                        # ProtectedError.args may include a list/queryset of blocking objects
+                        for item in getattr(p_err, 'protected_objects', []) or []:
+                            try:
+                                blockers.append(str(item))
+                            except Exception:
+                                blockers.append(repr(item))
+                    except Exception:
+                        blockers = [str(p_err)]
+                    logger.warning(f"ProtectedError deleting {t}: {blockers}")
+                    return JsonResponse({'success': False, 'error': 'ProtectedError', 'details': {'table': t, 'blocked_by_instances': blockers}})
+
+        return JsonResponse({'success': True, 'deleted': deleted_stats, 'audit_reassign_notifications': audit_reassign_notifications})
     except Exception as e:
         logger.error(f"خطأ في delete_selected_tables: {str(e)}")
         return JsonResponse({'success': False, 'error': str(e)})
