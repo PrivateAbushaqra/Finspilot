@@ -223,7 +223,8 @@ def delete_selected_tables(request):
                     count = model.objects.all().count()
                     model.objects.all().delete()
                     deleted_stats.append({'table': t, 'deleted': count})
-                    log_audit(request.user, 'delete', f'تم حذف جميع السجلات من الجدول {t} - عدد: {count}')
+                    from django.utils.translation import gettext as _
+                    log_audit(request.user, 'delete', _('Deleted all records from table %(table)s - count: %(count)s') % {'table': t, 'count': count})
                 except Exception as del_err:
                     logger.error(f"خطأ أثناء حذف بيانات {t}: {str(del_err)}")
                     raise del_err

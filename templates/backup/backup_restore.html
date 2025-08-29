@@ -979,7 +979,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // تفعيل أزرار الاستعادة الحالية
     initializeRestoreButtons();
     // تهيئة ربط إدارة حذف الجداول
-    try { initDeletableBindings(); } catch(e){}
+    try { initDeletableBindings(); } catch(e){ console.warn('initDeletableBindings not ready', e); }
     
     // تأكيد الاستعادة
     var confirmRestoreBtn = document.getElementById('confirmRestore');
@@ -1116,15 +1116,124 @@ function loadDeletableTables() {
             var deps = (t.dependents && t.dependents.length) ? t.dependents.join(', ') : '-';
             var disabled = t.safe_to_delete ? '' : 'disabled';
             var note = t.safe_to_delete ? '' : '{% trans "Has dependents" %}';
-            html += `<tr><td><input type="checkbox" class="del-table-checkbox" data-label="${t.label}" ${disabled}></td><td>${t.display_name}<br><small class="text-muted">${t.label}</small></td><td>${t.record_count}</td><td><small class="text-muted">${deps}</small></td><td>${note}</td></tr>`;
+            // attach dependents as JSON in data-deps so client-side can auto-select them
+            var depsJson = JSON.stringify(t.dependents || []);
+            html += `<tr><td><input type="checkbox" class="del-table-checkbox" data-label="${t.label}" data-deps='${depsJson}' ${disabled}></td><td>${t.display_name}<br><small class="text-muted">${t.label}</small></td><td>${t.record_count}</td><td><small class="text-muted">${deps}</small></td><td>${note}</td></tr>`;
         });
-        html += '</tbody></table></div>';
-        container.innerHTML = html;
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+    // بعد إدراج HTML، اربط معالجات التبعيات
+    try { attachDependencyHandlers(); } catch(e) { console.warn('attachDependencyHandlers error', e); }
     })
     .catch(err => {
         console.error('Error loading deletable tables', err);
         var container = document.getElementById('deletable-tables-container');
         if (container) container.innerHTML = '<div class="text-danger">{% trans "Error loading deletable tables" %}</div>';
+    });
+}
+
+// ربط حدث تغيّر checkbox للتعامل مع التبعيات تلقائيًا
+function attachDependencyHandlers() {
+    var container = document.getElementById('deletable-tables-container');
+    if (!container) return;
+
+    // إزالة معالج سابق إن وُجد
+    if (container._depDelegatedHandler) {
+        container.removeEventListener('change', container._depDelegatedHandler);
+        container._depDelegatedHandler = null;
+    }
+
+    // مفوض: يستمع لتغيّر أي checkbox داخل الحاوية
+    var delegated = function(e) {
+        var cb = e.target;
+        if (!cb || !cb.classList || !cb.classList.contains('del-table-checkbox')) return;
+
+        var checked = cb.checked;
+        var deps;
+        try { deps = JSON.parse(cb.dataset.deps || '[]'); } catch(err) { deps = []; }
+
+        // لكل تبعية مباشرة: حدّدها أو ألغِ تحديدها بحسب حالة cb
+        deps.forEach(function(dep){
+            var target = document.querySelector('.del-table-checkbox[data-label="' + dep + '"]');
+            if (!target || target.disabled) return;
+            if (target.checked === checked) return;
+            target.checked = checked;
+            // دفْع حدث change ليتوسع السلوك لسلسلة التبعيات
+            var ev;
+            try { ev = new Event('change', { bubbles: true }); }
+            catch(e) { ev = document.createEvent('HTMLEvents'); ev.initEvent('change', true, false); }
+            target.dispatchEvent(ev);
+        });
+    };
+
+    container.addEventListener('change', delegated);
+    container._depDelegatedHandler = delegated;
+}
+
+// تهيئة ربط واجهة حذف الجداول: تحميل الجداول وربط زر الحذف
+function initDeletableBindings() {
+    // تحميل الجدول عند البدء
+    loadDeletableTables();
+
+    var deleteBtn = document.getElementById('deleteSelectedBtn');
+    if (!deleteBtn) return;
+
+    deleteBtn.addEventListener('click', function() {
+        var checkboxes = Array.from(document.querySelectorAll('.del-table-checkbox'));
+        var selected = checkboxes.filter(function(cb){ return cb.checked && !cb.disabled; }).map(function(cb){ return cb.dataset.label; });
+
+        if (!selected || selected.length === 0) {
+            alert('{% trans "Please select at least one table to delete" %}');
+            return;
+        }
+
+        if (!confirm('{% trans "Are you sure you want to delete the selected tables? This action cannot be undone." %}')) {
+            return;
+        }
+
+        var csrf = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (!csrf) {
+            alert('{% trans "CSRF token missing. Please reload the page." %}');
+            return;
+        }
+
+        // إرسال طلب الحذف
+        fetch('{% url "backup:delete_tables" %}', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrf.value,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ tables: selected, confirm: true })
+        })
+        .then(function(resp){
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            var ct = resp.headers.get('content-type') || '';
+            if (!ct.includes('application/json')) throw new Error('Non-JSON response');
+            return resp.json();
+        })
+        .then(function(data){
+            if (data.success) {
+                alert('{% trans "Selected tables deleted successfully" %}');
+                // إعادة تحميل قائمة الجداول
+                loadDeletableTables();
+                // تحديث النسخ إن لزم
+                refreshBackupsList();
+                // إعادة تسجيل الدخول أو تحديث الصفحة إذا احتاج
+            } else {
+                if (data.details) {
+                    alert('{% trans "Cannot delete; blocked by dependencies:" %} ' + JSON.stringify(data.details));
+                } else {
+                    alert('{% trans "Error:" %} ' + (data.error || 'Unknown'));
+                }
+            }
+        })
+        .catch(function(err){
+            console.error('Delete tables error', err);
+            alert('{% trans "Error deleting tables:" %} ' + err.message);
+        });
     });
 }
 
