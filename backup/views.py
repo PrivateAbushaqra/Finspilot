@@ -95,6 +95,145 @@ def get_restore_progress_data():
     })
 
 
+@login_required
+def get_deletable_tables(request):
+    """API تعرض الجداول التي يمكن حذفها مع فحص التبعيات بين النماذج.
+    سترجع قائمة من العناصر: { app_name, model_name, display_name, record_count, dependents: [labels], safe_to_delete }
+    safe_to_delete True يعني أنه لا يوجد نموذج آخر يعتمد على هذا النموذج (FK) بخلاف التطبيقات المستبعدة.
+    """
+    try:
+        result = []
+        # بناء خريطة العلاقات العكسية: model_label -> set(of dependent model labels)
+        dep_map = {}
+        all_models = []
+        for app_config in apps.get_app_configs():
+            for model in app_config.get_models():
+                label = f"{app_config.name}.{model._meta.model_name}"
+                dep_map[label] = set()
+                all_models.append((app_config, model))
+
+        # ملء الخريطة
+        for app_config, model in all_models:
+            for field in model._meta.get_fields():
+                try:
+                    if field.is_relation and (field.many_to_one or field.one_to_one) and field.related_model is not None:
+                        rel = field.related_model
+                        rel_label = f"{rel._meta.app_label}.{rel._meta.model_name}"
+                        src_label = f"{app_config.name}.{model._meta.model_name}"
+                        dep_map[rel_label].add(src_label)
+                except Exception:
+                    continue
+
+        # جمع المعلومات لكل نموذج
+        for app_config, model in all_models:
+            try:
+                label = f"{app_config.name}.{model._meta.model_name}"
+                display = model._meta.verbose_name or label
+                count = model.objects.count()
+                dependents = sorted(list(dep_map.get(label, [])))
+                # امن للحذف إذا لا يوجد تابعون (dependents) أو التوابع كلها ضمن التطبيقات المستبعدة
+                safe = len(dependents) == 0
+                result.append({
+                    'app_name': app_config.name,
+                    'model_name': model._meta.model_name,
+                    'label': label,
+                    'display_name': str(display),
+                    'record_count': count,
+                    'dependents': dependents,
+                    'safe_to_delete': safe
+                })
+            except Exception as e:
+                logger.warning(f"فشل جلب معلومات النموذج {app_config.name}.{model}: {str(e)}")
+                continue
+
+        # رتب بحسب عدد السجلات تنازلياً
+        result.sort(key=lambda x: (-x['record_count'], x['label']))
+        return JsonResponse({'success': True, 'tables': result})
+    except Exception as e:
+        logger.error(f"خطأ في get_deletable_tables: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@login_required
+def delete_selected_tables(request):
+    """مسح الجداول المحددة (data-only) بعد فحص التبعيات.
+    يتوقع POST body 'tables' كقائمة من labels ['app.model', ...] و 'confirm' boolean.
+    سيقوم بحذف جميع السجلات في تلك الجداول داخل معاملة واحدة، ويُسجل كل عملية في AuditLog.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'طريقة طلب غير صحيحة'})
+
+    try:
+        payload = json.loads(request.body.decode('utf-8')) if request.body else {}
+    except Exception:
+        payload = request.POST.dict() if request.POST else {}
+
+    tables = payload.get('tables') or payload.get('labels') or []
+    confirm = payload.get('confirm') in [True, 'true', '1', 1, 'on']
+
+    if not tables or not isinstance(tables, list):
+        return JsonResponse({'success': False, 'error': 'يرجى تحديد جداول للحذف'})
+
+    if not confirm:
+        return JsonResponse({'success': False, 'error': 'يرجى تأكيد الحذف (confirm=true)'})
+
+    try:
+        # بناء خريطة التبعية كما في get_deletable_tables
+        dep_map = {}
+        model_map = {}
+        for app_config in apps.get_app_configs():
+            for model in app_config.get_models():
+                label = f"{app_config.name}.{model._meta.model_name}"
+                dep_map[label] = set()
+                model_map[label] = model
+
+        for label, model in list(model_map.items()):
+            for field in model._meta.get_fields():
+                try:
+                    if field.is_relation and (field.many_to_one or field.one_to_one) and field.related_model is not None:
+                        rel = field.related_model
+                        rel_label = f"{rel._meta.app_label}.{rel._meta.model_name}"
+                        src_label = label
+                        if rel_label in dep_map:
+                            dep_map[rel_label].add(src_label)
+                except Exception:
+                    continue
+
+        # تأكد من عدم وجود تبعيات خارج مجموعة الحذف
+        cannot_delete = []
+        for t in tables:
+            t = str(t)
+            dependents = dep_map.get(t, set())
+            # إذا كان هناك تابعون ليسوا ضمن القوائم المختارة، نمنع الحذف
+            external = [d for d in dependents if d not in tables]
+            if external:
+                cannot_delete.append({'table': t, 'blocked_by': external})
+
+        if cannot_delete:
+            return JsonResponse({'success': False, 'error': 'بعض الجداول لا يمكن حذفها بسبب تبعيات', 'details': cannot_delete})
+
+        # تنفيذ الحذف داخل معاملة
+        deleted_stats = []
+        with transaction.atomic():
+            for t in tables:
+                model = model_map.get(t)
+                if model is None:
+                    continue
+                try:
+                    count = model.objects.all().count()
+                    model.objects.all().delete()
+                    deleted_stats.append({'table': t, 'deleted': count})
+                    log_audit(request.user, 'delete', f'تم حذف جميع السجلات من الجدول {t} - عدد: {count}')
+                except Exception as del_err:
+                    logger.error(f"خطأ أثناء حذف بيانات {t}: {str(del_err)}")
+                    raise del_err
+
+        return JsonResponse({'success': True, 'deleted': deleted_stats})
+    except Exception as e:
+        logger.error(f"خطأ في delete_selected_tables: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
 def set_restore_progress_data(data):
     """تحديث بيانات تقدم الاستعادة في cache"""
     import time
@@ -1121,17 +1260,30 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
         # مسح البيانات الموجودة إذا طُلب ذلك
         if clear_data:
             logger.info("مسح البيانات الموجودة...")
+            # تجاهل التطبيقات الأساسية للنظام (contenttypes, auth, admin, sessions)
+            skip_labels = {'contenttypes', 'auth', 'admin', 'sessions'}
             all_models = []
             for app_config in apps.get_app_configs():
-                if app_config.name not in ['contenttypes', 'auth', 'admin', 'sessions']:
-                    for model in app_config.get_models():
-                        all_models.append(model)
-            for model in all_models:
                 try:
-                    model.objects.all().delete()
-                    logger.debug(f"تم مسح بيانات {model._meta.label}")
-                except Exception as model_error:
-                    logger.warning(f"تعذر مسح بيانات {model._meta.label}: {str(model_error)}")
+                    if app_config.label in skip_labels:
+                        continue
+                except Exception:
+                    # كحالة افتراضية: استمر
+                    pass
+                for model in app_config.get_models():
+                    all_models.append(model)
+
+            # حاول إجراء الحذف داخل معاملة لزيادة الاتساق؛ في حالة فشل سيتم التراجع
+            try:
+                with transaction.atomic():
+                    for model in all_models:
+                        try:
+                            model.objects.all().delete()
+                            logger.debug(f"تم مسح بيانات {model._meta.label}")
+                        except Exception as model_error:
+                            logger.warning(f"تعذر مسح بيانات {model._meta.label}: {str(model_error)}")
+            except Exception as tx_error:
+                logger.error(f"فشل أثناء محاولة مسح البيانات داخل معاملة: {str(tx_error)}")
             if AUDIT_AVAILABLE and user:
                 try:
                     AuditLog.objects.create(
@@ -1798,7 +1950,15 @@ def restore_backup(request):
         messages.error(request, "يرجى اختيار ملف النسخة الاحتياطية")
         return redirect('backup:backup_restore')
     
-    clear_data = request.POST.get('clear_data') == 'true'
+    # قبول عدة صيغ لتمرير قيمة clear_data من النموذج أو ال AJAX (مثال: 'on' من form submission، 'true' من AJAX)
+    raw_clear = request.POST.get('clear_data')
+    if raw_clear is None:
+        clear_data = False
+    else:
+        try:
+            clear_data = str(raw_clear).strip().lower() in ('true', '1', 'on', 'yes')
+        except Exception:
+            clear_data = False
     filename_from_list = request.POST.get('filename')
     backup_file = request.FILES.get('backup_file')
     
