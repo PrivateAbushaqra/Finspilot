@@ -364,7 +364,9 @@ class TaxReportView(LoginRequiredMixin, TemplateView):
                     })
         except (ImportError, Exception) as e:
             pass
-        
+
+
+    
         # فواتير المشتريات
         try:
             from purchases.models import PurchaseInvoice, PurchaseInvoiceItem
