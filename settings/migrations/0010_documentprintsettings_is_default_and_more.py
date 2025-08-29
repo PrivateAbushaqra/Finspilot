@@ -10,19 +10,46 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='documentprintsettings',
-            name='is_default',
-            field=models.BooleanField(default=False, help_text='هل هذا هو التصميم الافتراضي لهذا النوع من المستندات', verbose_name='افتراضي'),
-        ),
-        migrations.AddField(
-            model_name='documentprintsettings',
-            name='margins',
-            field=models.IntegerField(default=20, help_text='هوامش الصفحة بالبكسل (قيمة موحدة لجميع الجهات)', verbose_name='الهوامش'),
-        ),
-        migrations.AddField(
-            model_name='documentprintsettings',
-            name='orientation',
-            field=models.CharField(choices=[('portrait', 'عمودي'), ('landscape', 'أفقي')], default='portrait', max_length=10, verbose_name='اتجاه الورقة'),
+        # Use SeparateDatabaseAndState: perform safe SQL (IF NOT EXISTS) on DB,
+        # then update migration state so Django knows the fields exist without
+        # attempting to add them again at the DB level. This avoids DuplicateColumn
+        # errors on environments where previous SQL-based migration already created
+        # the columns.
+        migrations.SeparateDatabaseAndState(
+            database_operations=[
+                migrations.RunSQL(
+                    sql=(
+                        """
+                        ALTER TABLE settings_documentprintsettings ADD COLUMN IF NOT EXISTS is_default boolean DEFAULT FALSE;
+                        ALTER TABLE settings_documentprintsettings ADD COLUMN IF NOT EXISTS margins integer DEFAULT 20;
+                        ALTER TABLE settings_documentprintsettings ADD COLUMN IF NOT EXISTS orientation varchar(10) DEFAULT 'portrait';
+                        """
+                    ),
+                    reverse_sql=(
+                        """
+                        ALTER TABLE settings_documentprintsettings DROP COLUMN IF EXISTS orientation;
+                        ALTER TABLE settings_documentprintsettings DROP COLUMN IF EXISTS margins;
+                        ALTER TABLE settings_documentprintsettings DROP COLUMN IF EXISTS is_default;
+                        """
+                    ),
+                ),
+            ],
+            state_operations=[
+                migrations.AddField(
+                    model_name='documentprintsettings',
+                    name='is_default',
+                    field=models.BooleanField(default=False, help_text='هل هذا هو التصميم الافتراضي لهذا النوع من المستندات', verbose_name='افتراضي'),
+                ),
+                migrations.AddField(
+                    model_name='documentprintsettings',
+                    name='margins',
+                    field=models.IntegerField(default=20, help_text='هوامش الصفحة بالبكسل (قيمة موحدة لجميع الجهات)', verbose_name='الهوامش'),
+                ),
+                migrations.AddField(
+                    model_name='documentprintsettings',
+                    name='orientation',
+                    field=models.CharField(choices=[('portrait', 'عمودي'), ('landscape', 'أفقي')], default='portrait', max_length=10, verbose_name='اتجاه الورقة'),
+                ),
+            ],
         ),
     ]
