@@ -138,7 +138,7 @@
                                     </label>
                                     <input type="text" class="form-control" id="client_id" name="client_id" 
                                            value="{{ jofotara_settings.client_id }}" 
-                                           placeholder="Your Client ID" required>
+                                           placeholder="{% trans 'أدخل معرف العميل' %}" required>
                                     <div class="form-text">
                                         {% trans "Your registered Client ID from JoFotara" %}
                                     </div>
@@ -155,7 +155,7 @@
                                     </label>
                                     <input type="password" class="form-control" id="client_secret" name="client_secret" 
                                            value="{{ jofotara_settings.client_secret }}" 
-                                           placeholder="Your Client Secret" required>
+                                           placeholder="{% trans 'أدخل سر العميل' %}" required>
                                     <div class="form-text">
                                         {% trans "Your Client Secret from JoFotara (keep secure)" %}
                                     </div>
@@ -251,7 +251,7 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('JoFotara Settings Page Loaded');
+    console.log('تم تحميل صفحة إعدادات جوفوتارا');
     
     // Toggle mock API section visibility
     const useMockApiCheckbox = document.getElementById('use_mock_api');
