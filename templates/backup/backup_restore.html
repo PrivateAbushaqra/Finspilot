@@ -1238,7 +1238,13 @@ function initDeletableBindings() {
         })
         .then(function(data){
             if (data.success) {
-                alert('{% trans "Selected tables deleted successfully" %}');
+                var msg = '{% trans "Selected tables deleted successfully" %}';
+                if (data.audit_reassign_notifications && data.audit_reassign_notifications.length) {
+                    data.audit_reassign_notifications.forEach(function(n){
+                        msg += '\n- ' + (n.reassigned_count || 0) + ' {% trans "audit entries reassigned to" %} ' + n.fallback + ' ({% trans "table" %}: ' + n.table + ')';
+                    });
+                }
+                alert(msg);
                 // إعادة تحميل قائمة الجداول
                 loadDeletableTables();
                 // تحديث النسخ إن لزم

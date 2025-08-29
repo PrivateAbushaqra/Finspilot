@@ -237,8 +237,9 @@ def delete_selected_tables(request):
         for label in list(selected_set):
             dfs(label)
 
-        # تنفيذ الحذف داخل معاملة وبترتيب آمن
-        deleted_stats = []
+    # تنفيذ الحذف داخل معاملة وبترتيب آمن
+    deleted_stats = []
+    audit_reassign_notifications = []
         try:
             with transaction.atomic():
                 for t in delete_order:
@@ -262,12 +263,14 @@ def delete_selected_tables(request):
                                 # create minimal fallback user
                                 fallback = UserModel.objects.create(username=fallback_username, is_active=False)
 
-                            # reassign AuditLog.user entries that reference users we will delete to fallback
+                # reassign AuditLog.user entries that reference users we will delete to fallback
                             try:
                                 user_ids = list(model.objects.exclude(pk=fallback.pk).values_list('pk', flat=True))
                                 from core.models import AuditLog as _AuditLog
                                 if user_ids:
                                     _AuditLog.objects.filter(user_id__in=user_ids).update(user_id=fallback.pk)
+                    # notify front-end that we reassigned audit logs for this table
+                    audit_reassign_notifications.append({'table': t, 'fallback': fallback.username, 'reassigned_count': len(user_ids)})
                             except Exception as reassign_err:
                                 logger.warning(f"Failed to reassign AuditLog.user before deleting users: {reassign_err}")
 
@@ -332,7 +335,7 @@ def delete_selected_tables(request):
                         logger.warning(f"ProtectedError deleting {t}: {blockers}")
                         return JsonResponse({'success': False, 'error': 'ProtectedError', 'details': {'table': t, 'blocked_by_instances': blockers}})
 
-            return JsonResponse({'success': True, 'deleted': deleted_stats})
+            return JsonResponse({'success': True, 'deleted': deleted_stats, 'audit_reassign_notifications': audit_reassign_notifications})
         except Exception as e:
             logger.error(f"خطأ في delete_selected_tables: {str(e)}")
             return JsonResponse({'success': False, 'error': str(e)})
