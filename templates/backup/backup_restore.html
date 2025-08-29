@@ -1179,14 +1179,35 @@ function initDeletableBindings() {
     var deleteBtn = document.getElementById('deleteSelectedBtn');
     if (!deleteBtn) return;
 
-    deleteBtn.addEventListener('click', function() {
+        deleteBtn.addEventListener('click', function() {
         var checkboxes = Array.from(document.querySelectorAll('.del-table-checkbox'));
-        var selected = checkboxes.filter(function(cb){ return cb.checked && !cb.disabled; }).map(function(cb){ return cb.dataset.label; });
 
-        if (!selected || selected.length === 0) {
+        // بناء خريطة الملصق -> تبعيات من DOM
+        var labelToDeps = {};
+        checkboxes.forEach(function(cb){
+            try { labelToDeps[cb.dataset.label] = JSON.parse(cb.dataset.deps || '[]'); }
+            catch(e) { labelToDeps[cb.dataset.label] = []; }
+        });
+
+        // الجداول التي اختارها المستخدم مبدئياً (تلك المُعلّمة)
+        var initialSelected = checkboxes.filter(function(cb){ return cb.checked; }).map(function(cb){ return cb.dataset.label; });
+
+        if (!initialSelected || initialSelected.length === 0) {
             alert('{% trans "Please select at least one table to delete" %}');
             return;
         }
+
+        // توسيع المجموعة لتشمل كل التبعيات المتسلسلة (closure)
+        var closure = new Set();
+        function addWithDeps(label){
+            if (!label || closure.has(label)) return;
+            closure.add(label);
+            var deps = labelToDeps[label] || [];
+            deps.forEach(function(d){ addWithDeps(d); });
+        }
+        initialSelected.forEach(function(l){ addWithDeps(l); });
+
+        var selected = Array.from(closure);
 
         if (!confirm('{% trans "Are you sure you want to delete the selected tables? This action cannot be undone." %}')) {
             return;
