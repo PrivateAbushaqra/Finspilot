@@ -1,49 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load i18n %}
-
-function initDeletableBindings() {
-    // تحميل قائمة الجداول القابلة للحذف
-    try { loadDeletableTables(); } catch(e){}
-
-    var delBtn = document.getElementById('deleteSelectedBtn');
-    if (delBtn) {
-        delBtn.addEventListener('click', function(){
-            var checkboxes = Array.from(document.querySelectorAll('.del-table-checkbox'));
-            var selected = checkboxes.filter(c => c.checked).map(c => c.dataset.label);
-            if (selected.length === 0) {
-                alert('{% trans "Please select at least one table to delete" %}');
-                return;
-            }
-            if (!confirm('{% trans "Are you sure you want to delete all records from the selected tables? This cannot be undone." %}')) return;
-
-            var csrf = document.querySelector('[name=csrfmiddlewaretoken]');
-            var body = JSON.stringify({ tables: selected, confirm: true });
-            fetch('{% url "backup:delete_tables" %}', {
-                method: 'POST',
-
-.btn[data-loading="true"] {
-    opacity: 0.7;
-                body: body
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    alert('{% trans "Selected tables deleted successfully" %}');
-                    loadDeletableTables();
-                } else {
-                    alert('{% trans "Delete failed:" %} ' + (data.error || ''));
-                    if (data.details) console.warn(data.details);
-                }
-            })
-            .catch(err => {
-                console.error('Delete error', err);
-                alert('{% trans "An error occurred while deleting tables" %}');
-            });
-        });
-    }
-}
-        <div class="col-12">
+{% block content %}
+    <div class="col-12">
             <div class="card shadow">
                 <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                     <h3 class="mb-0">
