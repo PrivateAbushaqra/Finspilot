@@ -869,3 +869,84 @@ def logout_alias(request):
     # إعادة التوجيه لمسار الخروج الرسمي لضمان أي hooks/إشعارات موجودة هناك
     redirect_url = f"/{lang}/auth/logout/"
     return redirect(redirect_url)
+
+
+class SalesBySalespersonReportView(LoginRequiredMixin, TemplateView):
+    """تقرير المبيعات حسب البائع"""
+    template_name = 'core/sales_by_salesperson_report.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # استلام تواريخ الفلتر
+        start_date = self.request.GET.get('start_date')
+        end_date = self.request.GET.get('end_date')
+        salesperson_id = self.request.GET.get('salesperson')
+        
+        # تحديد الفترة الافتراضية: الشهر الحالي
+        if not start_date:
+            today = django_timezone.now().date()
+            start_date = today.replace(day=1).strftime('%Y-%m-%d')  # بداية الشهر الحالي
+        if not end_date:
+            end_date = django_timezone.now().date().strftime('%Y-%m-%d')   # اليوم الحالي
+            
+        # تحويل التواريخ لاستخدامها في الاستعلامات
+        start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+        end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
+        
+        # استيراد النماذج المطلوبة
+        try:
+            from sales.models import SalesInvoice
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+        except ImportError:
+            context['error'] = _("حدث خطأ في استيراد النماذج المطلوبة")
+            return context
+            
+        # الحصول على قائمة البائعين (المستخدمين الذين أنشأوا فواتير مبيعات)
+        salespeople = User.objects.filter(
+            salesinvoice__date__gte=start_date_obj,
+            salesinvoice__date__lte=end_date_obj
+        ).distinct().order_by('username')
+        
+        # فلترة الفواتير حسب البائع المحدد
+        sales_invoices = SalesInvoice.objects.filter(
+            date__gte=start_date_obj,
+            date__lte=end_date_obj
+        ).select_related('customer', 'created_by')
+        
+        if salesperson_id:
+            sales_invoices = sales_invoices.filter(created_by_id=salesperson_id)
+        
+        # إحصائيات المبيعات حسب البائع
+        salesperson_stats = sales_invoices.values(
+            'created_by__username', 
+            'created_by__first_name', 
+            'created_by__last_name'
+        ).annotate(
+            total_invoices=Count('id'),
+            total_amount=Sum('total_amount'),
+            total_tax=Sum('tax_amount'),
+            total_discount=Sum('discount_amount')
+        ).order_by('-total_amount')
+        
+        # إرسال البيانات للـ template
+        context.update({
+            'start_date': start_date,
+            'end_date': end_date,
+            'salesperson_id': salesperson_id,
+            'salespeople': salespeople,
+            'sales_invoices': sales_invoices,
+            'salesperson_stats': salesperson_stats,
+        })
+        
+        # تسجيل النشاط في سجل المراجعة
+        from .signals import log_user_activity
+        log_user_activity(
+            self.request, 
+            'view', 
+            self, 
+            _('عرض تقرير المبيعات حسب البائع')
+        )
+        
+        return context
