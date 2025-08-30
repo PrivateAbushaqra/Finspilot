@@ -48,6 +48,28 @@ def customer_statement(request):
     default_end = today
 
     customer_id = request.GET.get('customer')
+    """
+    Customer Statement report: select customer and date range, view transactions with opening/closing balances.
+    Supports export to CSV/XLSX (XLSX best-effort; falls back to CSV if libs missing).
+    """
+    # Permission gate: allow superuser or user_type admin/superadmin implicitly; else require explicit permission
+    user = request.user
+    has_perm = (
+        getattr(user, 'is_superuser', False) or
+        getattr(user, 'user_type', None) in ['superadmin', 'admin'] or
+        user.has_perm('reports.can_view_customer_statement')
+    )
+    if not has_perm:
+        raise PermissionDenied
+
+    customers = CustomerSupplier.objects.filter(type__in=['customer', 'both'], is_active=True).order_by('name')
+
+    # Defaults: last 30 days
+    today = date.today()
+    default_start = today - timedelta(days=30)
+    default_end = today
+
+    customer_id = request.GET.get('customer')
     start_raw = request.GET.get('start_date')
     end_raw = request.GET.get('end_date')
     export = request.GET.get('export')  # csv or xlsx
@@ -204,3 +226,186 @@ def customer_statement(request):
             pass
 
     return render(request, 'reports/customer_statement.html', context)
+
+
+@login_required
+def sales_by_salesperson(request):
+    """
+    Sales Report By Sales Person: select salesperson and date range, view sales invoices created by that person.
+    Supports export to CSV/XLSX.
+    """
+    # Permission gate: allow superuser or user_type admin/superadmin implicitly; else require explicit permission
+    user = request.user
+    has_perm = (
+        getattr(user, 'is_superuser', False) or
+        getattr(user, 'user_type', None) in ['superadmin', 'admin'] or
+        user.has_perm('reports.can_view_customer_statement')  # Using same permission for simplicity
+    )
+    if not has_perm:
+        raise PermissionDenied
+
+    from django.contrib.auth import get_user_model
+    from sales.models import SalesInvoice
+    User = get_user_model()
+
+    # Get all available (active) users to allow selecting any user
+    # بدل حصر القائمة بالمستخدمين الذين أنشأوا فواتير فقط، نعرض جميع المستخدمين النشطين
+    sales_users = User.objects.filter(
+        is_active=True
+    ).order_by('first_name', 'last_name', 'username')
+
+    # Defaults: last 30 days
+    today = date.today()
+    default_start = today - timedelta(days=30)
+    default_end = today
+
+    salesperson_id = request.GET.get('salesperson')
+    start_raw = request.GET.get('start_date')
+    end_raw = request.GET.get('end_date')
+    export = request.GET.get('export')
+
+    start_date = _parse_date(start_raw, default_start)
+    end_date = _parse_date(end_raw, default_end)
+
+    selected_salesperson = None
+    sales_invoices = []
+    totals_subtotal = Decimal('0.000')
+    totals_tax = Decimal('0.000')
+    totals_discount = Decimal('0.000')
+    totals_total = Decimal('0.000')
+    invoice_count = 0
+
+    view_logged = False
+
+    if salesperson_id:
+        try:
+            selected_salesperson = User.objects.get(pk=salesperson_id)
+        except User.DoesNotExist:
+            selected_salesperson = None
+
+    if selected_salesperson:
+        # Get sales invoices created by this salesperson in the date range
+        invoices_qs = SalesInvoice.objects.filter(
+            created_by=selected_salesperson,
+            date__gte=start_date,
+            date__lte=end_date,
+        ).order_by('-date', '-invoice_number').select_related('customer')
+
+        for invoice in invoices_qs:
+            sales_invoices.append({
+                'date': invoice.date,
+                'invoice_number': invoice.invoice_number,
+                'customer': invoice.customer.name if invoice.customer else _('Cash Customer'),
+                'payment_type': invoice.get_payment_type_display(),
+                'subtotal': invoice.subtotal,
+                'tax_amount': invoice.tax_amount,
+                'discount_amount': invoice.discount_amount,
+                'total_amount': invoice.total_amount,
+            })
+
+        # Calculate totals
+        totals_subtotal = invoices_qs.aggregate(total=Sum('subtotal'))['total'] or Decimal('0')
+        totals_tax = invoices_qs.aggregate(total=Sum('tax_amount'))['total'] or Decimal('0')
+        totals_discount = invoices_qs.aggregate(total=Sum('discount_amount'))['total'] or Decimal('0')
+        totals_total = invoices_qs.aggregate(total=Sum('total_amount'))['total'] or Decimal('0')
+        invoice_count = invoices_qs.count()
+
+        # Audit log for viewing a report
+        try:
+            desc = _("Viewing sales report for %(salesperson)s from %(start)s to %(end)s") % {
+                'salesperson': selected_salesperson.get_full_name() or selected_salesperson.username,
+                'start': start_date,
+                'end': end_date,
+            }
+            class ReportObj:
+                id = 0
+                pk = 0
+                def __str__(self):
+                    return str(_('Sales Report By Sales Person'))
+            log_view_activity(request, 'view', ReportObj(), desc)
+            view_logged = True
+        except Exception:
+            pass
+
+        # Handle export
+        if export and export.lower() in ('csv', 'xlsx'):
+            filename_base = f"sales_by_salesperson_{selected_salesperson.username}_{start_date}_{end_date}"
+            if export.lower() == 'xlsx':
+                try:
+                    import io
+                    from openpyxl import Workbook
+                    wb = Workbook()
+                    ws = wb.active
+                    ws.title = str(_('Sales Report'))
+                    headers = [
+                        _('Date'), _('Invoice Number'), _('Customer'), _('Payment Type'), 
+                        _('Subtotal'), _('Tax Amount'), _('Discount Amount'), _('Total Amount')
+                    ]
+                    ws.append(headers)
+                    for inv in sales_invoices:
+                        ws.append([
+                            str(inv['date']), inv['invoice_number'], inv['customer'], inv['payment_type'],
+                            float(inv['subtotal']), float(inv['tax_amount']), float(inv['discount_amount']), float(inv['total_amount'])
+                        ])
+                    # Totals row
+                    ws.append(['', '', _('Totals'), '', float(totals_subtotal), float(totals_tax), float(totals_discount), float(totals_total)])
+                    ws.append(['', '', _('Invoice Count'), invoice_count, '', '', '', ''])
+                    bio = io.BytesIO()
+                    wb.save(bio)
+                    bio.seek(0)
+                    response = HttpResponse(bio.read(), content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                    response['Content-Disposition'] = f'attachment; filename={filename_base}.xlsx'
+                    try:
+                        log_export_activity(request, str(_('Sales Report By Sales Person')), f'{filename_base}.xlsx', 'XLSX')
+                    except Exception:
+                        pass
+                    return response
+                except Exception:
+                    export = 'csv'
+
+            if export.lower() == 'csv':
+                import csv
+                response = HttpResponse(content_type='text/csv; charset=utf-8')
+                response.write('\ufeff')
+                response['Content-Disposition'] = f'attachment; filename={filename_base}.csv'
+                writer = csv.writer(response)
+                writer.writerow([_('Sales Report By Sales Person')])
+                writer.writerow([_('Sales Person'), selected_salesperson.get_full_name() or selected_salesperson.username])
+                writer.writerow([_('From'), start_date, _('To'), end_date])
+                writer.writerow([])
+                writer.writerow([_('Date'), _('Invoice Number'), _('Customer'), _('Payment Type'), _('Subtotal'), _('Tax Amount'), _('Discount Amount'), _('Total Amount')])
+                for inv in sales_invoices:
+                    writer.writerow([inv['date'], inv['invoice_number'], inv['customer'], inv['payment_type'], inv['subtotal'], inv['tax_amount'], inv['discount_amount'], inv['total_amount']])
+                writer.writerow(['', '', _('Totals'), '', totals_subtotal, totals_tax, totals_discount, totals_total])
+                writer.writerow(['', '', _('Invoice Count'), invoice_count, '', '', '', ''])
+                try:
+                    log_export_activity(request, str(_('Sales Report By Sales Person')), f'{filename_base}.csv', 'CSV')
+                except Exception:
+                    pass
+                return response
+
+    context = {
+        'sales_users': sales_users,
+        'selected_salesperson': selected_salesperson,
+        'start_date': start_date,
+        'end_date': end_date,
+        'sales_invoices': sales_invoices,
+        'totals_subtotal': totals_subtotal,
+        'totals_tax': totals_tax,
+        'totals_discount': totals_discount,
+        'totals_total': totals_total,
+        'invoice_count': invoice_count,
+    }
+
+    if not view_logged:
+        try:
+            class ReportObj:
+                id = 0
+                pk = 0
+                def __str__(self):
+                    return str(_('Sales Report By Sales Person'))
+            log_view_activity(request, 'view', ReportObj(), str(_('Viewing sales report by salesperson page')))
+        except Exception:
+            pass
+
+    return render(request, 'reports/sales_by_salesperson.html', context)
