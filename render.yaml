@@ -1,22 +1,12 @@
 services:
   - type: web
-    name: finspilot-web
+    name: finspilot
     env: python
     region: oregon
     branch: main
     plan: free
-    buildCommand: "pip install -r requirements.txt && python manage.py migrate --noinput && python manage.py compilemessages && python manage.py collectstatic --noinput"
+    buildCommand: "python -m pip install --upgrade pip setuptools wheel && pip install -r requirements.txt && python manage.py migrate --noinput && python manage.py compilemessages && python manage.py collectstatic --noinput"
     startCommand: "gunicorn finspilot.wsgi:application --bind 0.0.0.0:$PORT"
-    envVars:
-      - key: DJANGO_SETTINGS_MODULE
-        value: finspilot.settings
-      - key: PYTHONUNBUFFERED
-        value: '1'services:
-  - type: web
-    name: finspilot
-    env: python
-  buildCommand: "python -m pip install --upgrade pip setuptools wheel && pip install -r requirements.txt && python manage.py compilemessages -l ar && python manage.py collectstatic --noinput && python manage.py migrate --noinput"
-    startCommand: gunicorn finspilot.wsgi:application
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
@@ -28,6 +18,8 @@ services:
         value: False
       - key: ALLOWED_HOSTS
         value: finspilot.onrender.com
+      - key: PYTHONUNBUFFERED
+        value: '1'
       # تزويد متغيرات قاعدة البيانات بصيغة PG_* المتوافقة مع settings
       - key: PG_NAME
         fromDatabase:
@@ -51,6 +43,7 @@ services:
           property: port
       - key: RENDER
         value: True
+
 databases:
   - name: finspilot-db
     databaseName: finspilot
