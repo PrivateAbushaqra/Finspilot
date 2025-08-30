@@ -248,11 +248,12 @@ def sales_by_salesperson(request):
     from sales.models import SalesInvoice
     User = get_user_model()
 
-    # Get all available (active) users to allow selecting any user
-    # بدل حصر القائمة بالمستخدمين الذين أنشأوا فواتير فقط، نعرض جميع المستخدمين النشطين
+    # Users who created sales invoices only (and are active)
+    # إظهار المستخدمين الذين قاموا بإنشاء فواتير مبيعات فقط
     sales_users = User.objects.filter(
-        is_active=True
-    ).order_by('first_name', 'last_name', 'username')
+        is_active=True,
+        salesinvoice__isnull=False
+    ).distinct().order_by('first_name', 'last_name', 'username')
 
     # Defaults: last 30 days
     today = date.today()
