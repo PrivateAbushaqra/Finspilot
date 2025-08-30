@@ -41,5 +41,6 @@ urlpatterns += i18n_patterns(
     path('revenues-expenses/', include('revenues_expenses.urls')),
     path('assets-liabilities/', include('assets_liabilities.urls')),
     path('backup/', include('backup.urls')),
+    path('hr/', include('hr.urls')),  # الموارد البشرية
     # path('financial-reports/', include('financial_reports.urls')),  # معطل مؤقتاً
 )

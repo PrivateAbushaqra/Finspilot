@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}
+    {% if form.instance.pk %}{% trans "Edit Employee" %}{% else %}{% trans "Add Employee" %}{% endif %} - {{ block.super }}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background: #f8f9fa;
+        border-left: 4px solid #007bff;
+        padding: 1rem;
+        margin-bottom: 2rem;
+    }
+    .form-section h5 {
+        color: #007bff;
+        margin-bottom: 1rem;
+    }
+    .required-field::after {
+        content: " *";
+        color: red;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'hr:dashboard' %}">{% trans "HR Dashboard" %}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'hr:employee_list' %}">{% trans "Employees" %}</a></li>
+            {% if form.instance.pk %}
+                <li class="breadcrumb-item"><a href="{% url 'hr:employee_detail' form.instance.pk %}">{{ form.instance.first_name }} {{ form.instance.last_name }}</a></li>
+                <li class="breadcrumb-item active">{% trans "Edit" %}</li>
+            {% else %}
+                <li class="breadcrumb-item active">{% trans "Add Employee" %}</li>
+            {% endif %}
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i class="fas fa-user-plus me-2"></i>
+            {% if form.instance.pk %}{% trans "Edit Employee" %}{% else %}{% trans "Add Employee" %}{% endif %}
+        </h2>
+        <a href="{% url 'hr:employee_list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>{% trans "Back to Employees" %}
+        </a>
+    </div>
+
+    <!-- Form -->
+    <form method="post" class="needs-validation" novalidate>
+        {% csrf_token %}
+        
+        <!-- Personal Information Section -->
+        <div class="form-section">
+            <h5><i class="fas fa-user me-2"></i>{% trans "Personal Information" %}</h5>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.first_name.id_for_label }}" class="form-label required-field">{{ form.first_name.label }}</label>
+                    {{ form.first_name }}
+                    {% if form.first_name.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.first_name.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.last_name.id_for_label }}" class="form-label required-field">{{ form.last_name.label }}</label>
+                    {{ form.last_name }}
+                    {% if form.last_name.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.last_name.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }}</label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.email.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.phone_number.id_for_label }}" class="form-label">{{ form.phone_number.label }}</label>
+                    {{ form.phone_number }}
+                    {% if form.phone_number.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.phone_number.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.date_of_birth.id_for_label }}" class="form-label">{{ form.date_of_birth.label }}</label>
+                    {{ form.date_of_birth }}
+                    {% if form.date_of_birth.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.date_of_birth.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.national_id.id_for_label }}" class="form-label">{{ form.national_id.label }}</label>
+                    {{ form.national_id }}
+                    {% if form.national_id.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.national_id.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-12 mb-3">
+                    <label for="{{ form.address.id_for_label }}" class="form-label">{{ form.address.label }}</label>
+                    {{ form.address }}
+                    {% if form.address.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.address.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Employment Information Section -->
+        <div class="form-section">
+            <h5><i class="fas fa-briefcase me-2"></i>{% trans "Employment Information" %}</h5>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.employee_id.id_for_label }}" class="form-label required-field">{{ form.employee_id.label }}</label>
+                    {{ form.employee_id }}
+                    {% if form.employee_id.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.employee_id.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="form-text">{% trans "Unique identifier for the employee" %}</div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.date_joined.id_for_label }}" class="form-label required-field">{{ form.date_joined.label }}</label>
+                    {{ form.date_joined }}
+                    {% if form.date_joined.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.date_joined.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.department.id_for_label }}" class="form-label">{{ form.department.label }}</label>
+                    {{ form.department }}
+                    {% if form.department.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.department.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.position.id_for_label }}" class="form-label">{{ form.position.label }}</label>
+                    {{ form.position }}
+                    {% if form.position.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.position.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.user.id_for_label }}" class="form-label">{{ form.user.label }}</label>
+                    {{ form.user }}
+                    {% if form.user.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.user.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="form-text">{% trans "Link employee to a system user (optional)" %}</div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="form-check">
+                        {{ form.is_active }}
+                        <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                            {{ form.is_active.label }}
+                        </label>
+                    </div>
+                    {% if form.is_active.errors %}
+                        <div class="invalid-feedback d-block">
+                            {% for error in form.is_active.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'hr:employee_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-times me-2"></i>{% trans "Cancel" %}
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>
+                        {% if form.instance.pk %}{% trans "Update Employee" %}{% else %}{% trans "Create Employee" %}{% endif %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add form validation classes
+    const form = document.querySelector('.needs-validation');
+    const inputs = form.querySelectorAll('input, select, textarea');
+    
+    inputs.forEach(input => {
+        input.classList.add('form-control');
+        if (input.type === 'checkbox') {
+            input.classList.remove('form-control');
+            input.classList.add('form-check-input');
+        }
+    });
+
+    // Department/Position filtering
+    const departmentSelect = document.getElementById('{{ form.department.id_for_label }}');
+    const positionSelect = document.getElementById('{{ form.position.id_for_label }}');
+    
+    if (departmentSelect && positionSelect) {
+        departmentSelect.addEventListener('change', function() {
+            const departmentId = this.value;
+            if (departmentId) {
+                // Make AJAX call to get positions for selected department
+                fetch(`{% url 'hr:get_positions_by_department' 0 %}`.replace('0', departmentId))
+                    .then(response => response.json())
+                    .then(data => {
+                        // Clear existing options
+                        positionSelect.innerHTML = '<option value="">{% trans "Select Position" %}</option>';
+                        
+                        // Add new options
+                        data.positions.forEach(position => {
+                            const option = document.createElement('option');
+                            option.value = position.id;
+                            option.textContent = position.title;
+                            positionSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => console.error('Error:', error));
+            } else {
+                positionSelect.innerHTML = '<option value="">{% trans "Select Position" %}</option>';
+            }
+        });
+    }
+
+    // Form validation
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+});
+</script>
+{% endblock %}

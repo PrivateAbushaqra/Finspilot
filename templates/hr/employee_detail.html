@@ -1,0 +1,260 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}
+    {{ employee.first_name }} {{ employee.last_name }} - {% trans "Employee Details" %} - {{ block.super }}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    .profile-avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background-color: rgba(255,255,255,0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+    .info-card {
+        border: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
+    }
+    .info-card:hover {
+        transform: translateY(-2px);
+    }
+    .section-title {
+        color: #495057;
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'hr:dashboard' %}">{% trans "HR Dashboard" %}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'hr:employee_list' %}">{% trans "Employees" %}</a></li>
+            <li class="breadcrumb-item active">{{ employee.first_name }} {{ employee.last_name }}</li>
+        </ol>
+    </nav>
+
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <div class="row align-items-center">
+            <div class="col-auto">
+                <div class="profile-avatar">
+                    <i class="fas fa-user fa-3x"></i>
+                </div>
+            </div>
+            <div class="col">
+                <h1 class="mb-1">{{ employee.first_name }} {{ employee.last_name }}</h1>
+                <p class="mb-2">{{ employee.position.title|default:"-" }} • {{ employee.department.name|default:"-" }}</p>
+                <p class="mb-0">
+                    <span class="badge bg-{% if employee.is_active %}success{% else %}secondary{% endif %} me-2">
+                        {% if employee.is_active %}{% trans "Active" %}{% else %}{% trans "Inactive" %}{% endif %}
+                    </span>
+                    <span class="badge bg-light text-dark">{{ employee.employee_id }}</span>
+                </p>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group" role="group">
+                    <a href="{% url 'hr:employee_edit' employee.pk %}" class="btn btn-light">
+                        <i class="fas fa-edit me-2"></i>{% trans "Edit" %}
+                    </a>
+                    <a href="{% url 'hr:employee_delete' employee.pk %}" class="btn btn-outline-light">
+                        <i class="fas fa-trash me-2"></i>{% trans "Delete" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Personal Information -->
+        <div class="col-lg-6 mb-4">
+            <div class="card info-card">
+                <div class="card-header">
+                    <h5 class="section-title mb-0">
+                        <i class="fas fa-user-circle me-2"></i>{% trans "Personal Information" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "First Name" %}</label>
+                            <p class="mb-0">{{ employee.first_name }}</p>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Last Name" %}</label>
+                            <p class="mb-0">{{ employee.last_name }}</p>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Email" %}</label>
+                            <p class="mb-0">{{ employee.email|default:"-" }}</p>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Phone Number" %}</label>
+                            <p class="mb-0">{{ employee.phone_number|default:"-" }}</p>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="text-muted small">{% trans "Address" %}</label>
+                            <p class="mb-0">{{ employee.address|default:"-" }}</p>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Date of Birth" %}</label>
+                            <p class="mb-0">{{ employee.date_of_birth|date:"M d, Y"|default:"-" }}</p>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "National ID" %}</label>
+                            <p class="mb-0">{{ employee.national_id|default:"-" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employment Information -->
+        <div class="col-lg-6 mb-4">
+            <div class="card info-card">
+                <div class="card-header">
+                    <h5 class="section-title mb-0">
+                        <i class="fas fa-briefcase me-2"></i>{% trans "Employment Information" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Employee ID" %}</label>
+                            <p class="mb-0">{{ employee.employee_id }}</p>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Department" %}</label>
+                            <p class="mb-0">{{ employee.department.name|default:"-" }}</p>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Position" %}</label>
+                            <p class="mb-0">{{ employee.position.title|default:"-" }}</p>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Date Joined" %}</label>
+                            <p class="mb-0">{{ employee.date_joined|date:"M d, Y" }}</p>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Status" %}</label>
+                            <p class="mb-0">
+                                <span class="badge bg-{% if employee.is_active %}success{% else %}secondary{% endif %}">
+                                    {% if employee.is_active %}{% trans "Active" %}{% else %}{% trans "Inactive" %}{% endif %}
+                                </span>
+                            </p>
+                        </div>
+                        {% if employee.user %}
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "System User" %}</label>
+                            <p class="mb-0">
+                                <a href="#" class="text-decoration-none">{{ employee.user.username }}</a>
+                            </p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Contract -->
+    {% if employee.current_contract %}
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card info-card">
+                <div class="card-header">
+                    <h5 class="section-title mb-0">
+                        <i class="fas fa-file-contract me-2"></i>{% trans "Current Contract" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label class="text-muted small">{% trans "Contract Type" %}</label>
+                            <p class="mb-0">{{ employee.current_contract.get_contract_type_display }}</p>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="text-muted small">{% trans "Start Date" %}</label>
+                            <p class="mb-0">{{ employee.current_contract.start_date|date:"M d, Y" }}</p>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="text-muted small">{% trans "End Date" %}</label>
+                            <p class="mb-0">{{ employee.current_contract.end_date|date:"M d, Y"|default:"-" }}</p>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label class="text-muted small">{% trans "Salary" %}</label>
+                            <p class="mb-0">{{ employee.current_contract.salary|floatformat:2 }} {{ employee.current_contract.currency }}</p>
+                        </div>
+                        {% if employee.current_contract.notes %}
+                        <div class="col-12">
+                            <label class="text-muted small">{% trans "Notes" %}</label>
+                            <p class="mb-0">{{ employee.current_contract.notes }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="section-title mb-0">
+                        <i class="fas fa-tasks me-2"></i>{% trans "Quick Actions" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'hr:contract_create' %}?employee={{ employee.pk }}" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-file-contract mb-2 d-block"></i>
+                                {% trans "New Contract" %}
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'hr:attendance_create' %}?employee={{ employee.pk }}" class="btn btn-outline-success w-100">
+                                <i class="fas fa-clock mb-2 d-block"></i>
+                                {% trans "Record Attendance" %}
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'hr:leave_request_create' %}?employee={{ employee.pk }}" class="btn btn-outline-warning w-100">
+                                <i class="fas fa-calendar-times mb-2 d-block"></i>
+                                {% trans "Request Leave" %}
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{% url 'hr:employee_document_create' %}?employee={{ employee.pk }}" class="btn btn-outline-info w-100">
+                                <i class="fas fa-file-upload mb-2 d-block"></i>
+                                {% trans "Upload Document" %}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

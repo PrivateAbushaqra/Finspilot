@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'revenues_expenses',
     'assets_liabilities',
     'backup',
+    'hr',
 ]
 
 MIDDLEWARE = [

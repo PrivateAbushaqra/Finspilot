@@ -1,0 +1,272 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}
+    {% trans "Attendance Records" %} - {{ block.super }}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .attendance-card {
+        transition: transform 0.2s;
+        border-left: 4px solid;
+    }
+    .attendance-card:hover {
+        transform: translateY(-2px);
+    }
+    .attendance-card.present {
+        border-left-color: #28a745;
+    }
+    .attendance-card.absent {
+        border-left-color: #dc3545;
+    }
+    .attendance-card.late {
+        border-left-color: #ffc107;
+    }
+    .time-badge {
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+    }
+    .filter-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2><i class="fas fa-clock me-2"></i>{% trans "Attendance Records" %}</h2>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'hr:dashboard' %}">{% trans "HR Dashboard" %}</a></li>
+                    <li class="breadcrumb-item active">{% trans "Attendance" %}</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="btn-group" role="group">
+            <a href="{% url 'hr:attendance_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>{% trans "Record Attendance" %}
+            </a>
+            <a href="{% url 'hr:attendance_upload' %}" class="btn btn-outline-primary">
+                <i class="fas fa-upload me-2"></i>{% trans "Upload CSV" %}
+            </a>
+            <a href="{% url 'hr:attendance_report' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-chart-bar me-2"></i>{% trans "Reports" %}
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card filter-card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">{% trans "Employee" %}</label>
+                    <select name="employee" class="form-select">
+                        <option value="">{% trans "All Employees" %}</option>
+                        {% for emp in employees %}
+                            <option value="{{ emp.id }}" {% if request.GET.employee == emp.id|stringformat:"s" %}selected{% endif %}>
+                                {{ emp.first_name }} {{ emp.last_name }} ({{ emp.employee_id }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">{% trans "From Date" %}</label>
+                    <input type="date" name="from_date" class="form-control" value="{{ request.GET.from_date }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">{% trans "To Date" %}</label>
+                    <input type="date" name="to_date" class="form-control" value="{{ request.GET.to_date }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">{% trans "Status" %}</label>
+                    <select name="status" class="form-select">
+                        <option value="">{% trans "All Status" %}</option>
+                        <option value="present" {% if request.GET.status == 'present' %}selected{% endif %}>{% trans "Present" %}</option>
+                        <option value="absent" {% if request.GET.status == 'absent' %}selected{% endif %}>{% trans "Absent" %}</option>
+                        <option value="late" {% if request.GET.status == 'late' %}selected{% endif %}>{% trans "Late" %}</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-light me-2">
+                        <i class="fas fa-search me-2"></i>{% trans "Filter" %}
+                    </button>
+                    <a href="{% url 'hr:attendance_list' %}" class="btn btn-outline-light">
+                        <i class="fas fa-times me-2"></i>{% trans "Clear" %}
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Attendance Summary -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-users fa-2x text-primary mb-2"></i>
+                    <h4 class="mb-1">{{ total_records }}</h4>
+                    <p class="text-muted mb-0">{% trans "Total Records" %}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                    <h4 class="mb-1">{{ present_count }}</h4>
+                    <p class="text-muted mb-0">{% trans "Present" %}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-times-circle fa-2x text-danger mb-2"></i>
+                    <h4 class="mb-1">{{ absent_count }}</h4>
+                    <p class="text-muted mb-0">{% trans "Absent" %}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                    <h4 class="mb-1">{{ late_count }}</h4>
+                    <p class="text-muted mb-0">{% trans "Late" %}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Records -->
+    <div class="row">
+        {% for attendance in attendances %}
+        <div class="col-lg-6 col-xl-4 mb-4">
+            <div class="card attendance-card {{ attendance.status|lower }}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h6 class="card-title mb-1">
+                                <a href="{% url 'hr:employee_detail' attendance.employee.pk %}" class="text-decoration-none">
+                                    {{ attendance.employee.first_name }} {{ attendance.employee.last_name }}
+                                </a>
+                            </h6>
+                            <small class="text-muted">{{ attendance.employee.employee_id }}</small>
+                        </div>
+                        <span class="badge bg-{% if attendance.status == 'present' %}success{% elif attendance.status == 'absent' %}danger{% elif attendance.status == 'late' %}warning{% else %}secondary{% endif %}">
+                            {{ attendance.get_status_display }}
+                        </span>
+                    </div>
+                    
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <small class="text-muted d-block">{% trans "Date" %}</small>
+                            <strong>{{ attendance.date|date:"M d" }}</strong>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted d-block">{% trans "Check In" %}</small>
+                            <span class="time-badge">{{ attendance.check_in_time|time:"H:i"|default:"-" }}</span>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted d-block">{% trans "Check Out" %}</small>
+                            <span class="time-badge">{{ attendance.check_out_time|time:"H:i"|default:"-" }}</span>
+                        </div>
+                    </div>
+                    
+                    {% if attendance.working_hours %}
+                    <div class="mt-3 text-center">
+                        <small class="text-muted">{% trans "Working Hours" %}</small>
+                        <div class="fw-bold">{{ attendance.working_hours }} {% trans "hours" %}</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if attendance.notes %}
+                    <div class="mt-3">
+                        <small class="text-muted">{% trans "Notes" %}</small>
+                        <p class="small mb-0">{{ attendance.notes|truncatewords:15 }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mt-3 d-flex justify-content-between">
+                        <small class="text-muted">
+                            {% if attendance.created_by %}
+                                {% trans "Recorded by" %}: {{ attendance.created_by.get_full_name|default:attendance.created_by.username }}
+                            {% endif %}
+                        </small>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <a href="{% url 'hr:attendance_detail' attendance.pk %}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'hr:attendance_edit' attendance.pk %}" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'hr:attendance_delete' attendance.pk %}" class="btn btn-outline-danger btn-sm">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-clock fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">{% trans "No attendance records found" %}</h4>
+                    <p class="text-muted">{% trans "Start recording attendance for your employees" %}</p>
+                    <a href="{% url 'hr:attendance_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>{% trans "Record Attendance" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <nav aria-label="{% trans 'Attendance pagination' %}">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if request.GET.employee %}&employee={{ request.GET.employee }}{% endif %}{% if request.GET.from_date %}&from_date={{ request.GET.from_date }}{% endif %}{% if request.GET.to_date %}&to_date={{ request.GET.to_date }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                        {% trans "First" %}
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.employee %}&employee={{ request.GET.employee }}{% endif %}{% if request.GET.from_date %}&from_date={{ request.GET.from_date }}{% endif %}{% if request.GET.to_date %}&to_date={{ request.GET.to_date }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                        {% trans "Previous" %}
+                    </a>
+                </li>
+            {% endif %}
+
+            <li class="page-item active">
+                <span class="page-link">
+                    {% blocktrans with current=page_obj.number total=paginator.num_pages %}Page {{ current }} of {{ total }}{% endblocktrans %}
+                </span>
+            </li>
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.employee %}&employee={{ request.GET.employee }}{% endif %}{% if request.GET.from_date %}&from_date={{ request.GET.from_date }}{% endif %}{% if request.GET.to_date %}&to_date={{ request.GET.to_date }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                        {% trans "Next" %}
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ paginator.num_pages }}{% if request.GET.employee %}&employee={{ request.GET.employee }}{% endif %}{% if request.GET.from_date %}&from_date={{ request.GET.from_date }}{% endif %}{% if request.GET.to_date %}&to_date={{ request.GET.to_date }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                        {% trans "Last" %}
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}
