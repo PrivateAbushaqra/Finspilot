@@ -8,18 +8,11 @@ class UserAdmin(BaseUserAdmin):
     list_display = ['username', 'email', 'first_name', 'last_name', 'user_type', 'is_active']
     list_filter = ['user_type', 'is_active', 'is_staff', 'is_superuser']
     search_fields = ['username', 'email', 'first_name', 'last_name']
+    filter_horizontal = ('groups', 'user_permissions')
     
     fieldsets = BaseUserAdmin.fieldsets + (
         ('معلومات إضافية', {
-            'fields': ('user_type', 'phone', 'department')
-        }),
-        ('الصلاحيات', {
-            'fields': (
-                'can_access_sales', 'can_access_purchases', 'can_access_inventory',
-                'can_access_banks', 'can_access_reports', 'can_delete_invoices',
-                'can_edit_dates', 'can_edit_invoice_numbers', 'cash_only',
-                'credit_only', 'can_see_low_stock_alerts', 'can_access_pos', 'pos_only'
-            )
+            'fields': ('user_type', 'phone', 'department', 'pos_warehouse')
         }),
         ('التواريخ', {
             'fields': ('created_at', 'updated_at')
