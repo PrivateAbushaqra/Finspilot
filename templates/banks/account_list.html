@@ -240,10 +240,12 @@
                     </nav>
                 </div>
                 <div>
+                    {% if perms.banks.add_bankaccount %}
                     <a href="{% url 'banks:account_add' %}" class="btn btn-add text-white">
                         <i class="fas fa-plus me-1"></i>
                         {% trans "Add New Account" %}
                     </a>
+                    {% endif %}
                 </div>
             </div>
             
@@ -345,14 +347,21 @@
                                                 <a href="{% url 'banks:account_transactions' account.pk %}" class="btn btn-outline-info" title="{% trans 'View Account Transactions' %}">
                                                     <i class="fas fa-list"></i>
                                                 </a>
-                                                <a href="{% url 'banks:account_edit' account.pk %}" class="btn btn-outline-warning" title="{% trans 'Edit Account' %}">
-                                                    <i class="fas fa-edit"></i>
-                                                </a>
+                                                {% if perms.banks.change_bankaccount or request.user.is_superuser %}
+                                                    <a href="{% url 'banks:account_edit' account.pk %}" class="btn btn-outline-warning" title="{% trans 'Edit Account' %}">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                {% elif perms.banks.can_edit_banks_account %}
+                                                    <a href="{% url 'banks:account_edit' account.pk %}" class="btn btn-outline-warning" title="{% trans 'Edit Account' %}">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                {% endif %}
                                                 {% if account.is_active %}
                                                 <a href="{% url 'banks:transfer_add' %}" class="btn btn-outline-info" title="{% trans 'Transfer From/To Account' %}">
                                                     <i class="fas fa-exchange-alt"></i>
                                                 </a>
                                                 {% endif %}
+                                                {% if perms.banks.change_bankaccount %}
                                                 <button class="btn btn-outline-{% if account.is_active %}secondary{% else %}success{% endif %} toggle-status-btn" 
                                                         data-account-id="{{ account.pk }}" 
                                                         data-account-name="{{ account.name }}"
@@ -360,6 +369,7 @@
                                                         title="{% if account.is_active %}{% trans 'Deactivate' %}{% else %}{% trans 'Activate' %}{% endif %} {% trans 'Account' %}">
                                                     <i class="fas fa-{% if account.is_active %}pause{% else %}play{% endif %}"></i>
                                                 </button>
+                                                {% endif %}
                                                 
                                                 {% if user.is_superuser %}
                                                 <button class="btn btn-outline-warning clear-transactions-btn" 
@@ -370,6 +380,7 @@
                                                 </button>
                                                 {% endif %}
                                                 
+                                                {% if perms.banks.delete_bankaccount or perms.banks.can_delete_banks_account or perms.users.can_delete_accounts %}
                                                 <button class="btn btn-outline-danger delete-account-btn" 
                                                         data-account-id="{{ account.pk }}" 
                                                         data-account-name="{{ account.name }}" 
@@ -377,6 +388,7 @@
                                                         title="{% trans 'Delete Account' %}">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
+                                                {% endif %}
                                             </div>
                                         </div>
                                     </div>
@@ -389,10 +401,12 @@
                             <i class="fas fa-university"></i>
                             <h5>{% trans "No bank accounts yet" %}</h5>
                             <p class="mb-3">{% trans "Start by adding a new bank account to manage your finances" %}</p>
-                            <a href="{% url 'banks:account_add' %}" class="btn btn-add text-white">
-                                <i class="fas fa-plus me-1"></i>
-                                {% trans "Add First Account" %}
-                            </a>
+                            {% if perms.banks.add_bankaccount %}
+                                <a href="{% url 'banks:account_add' %}" class="btn btn-add text-white">
+                                    <i class="fas fa-plus me-1"></i>
+                                    {% trans "Add First Account" %}
+                                </a>
+                            {% endif %}
                         </div>
                         {% endif %}
                     </div>

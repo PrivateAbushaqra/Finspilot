@@ -19,11 +19,19 @@ class BankAccount(models.Model):
     notes = models.TextField(_('Notes'), blank=True)
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
     updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
+    created_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name=_('Created By'), null=True, blank=True)
 
     class Meta:
         verbose_name = _('Bank Account')
         verbose_name_plural = _('Bank Accounts')
         ordering = ['name']
+        permissions = [
+            # Keep name in English so it can be translated in templates via {% trans perm.name %}
+            ("can_add_banks_account", "Can Add Banks Account"),
+            ("can_view_banks_account", "Can View Banks Account"),
+            ("can_edit_banks_account", "Can Edit Banks Account"),
+            ("can_delete_banks_account", "Can Delete Banks Account"),
+        ]
 
     def __str__(self):
         return f"{self.name} - {self.bank_name}"

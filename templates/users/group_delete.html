@@ -236,7 +236,8 @@ document.addEventListener('DOMContentLoaded', function() {
     confirmMessage += "\n\n" + '{% trans "Group Name" %}: ' + '"' + groupName + '"';
         
     {% if user_count > 0 %}
-    confirmMessage += "\n\n" + '{{ user_count }}' + ' ' + "{% trans \"users will lose this group's permissions\" %}.";
+    {% blocktrans asvar lose_text %}users will lose this group's permissions{% endblocktrans %}
+    confirmMessage += "\n\n" + '{{ user_count }}' + ' ' + '{{ lose_text|escapejs }}' + '.';
     {% endif %}
         
         confirmMessage += '\n\n' + '{% trans "This action cannot be undone!" %}';

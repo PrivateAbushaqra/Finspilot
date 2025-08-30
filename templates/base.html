@@ -633,8 +633,8 @@
                                 {% trans "Dashboard" %}
                             </a>
                         </li>                    
-                        <!-- Bank Accounts -->
-                        {% if user.has_banks_permission %}
+                        <!-- Bank Accounts (visible if group grants view or edit banks account) -->
+                        {% if perms.banks.can_view_banks_account or perms.banks.can_edit_banks_account %}
                         <li class="nav-item">
                             <a class="nav-link" data-bs-toggle="collapse" href="#banksMenu">
                                 <i class="fas fa-university me-2"></i>
@@ -642,9 +642,11 @@
                             </a>
                             <div class="collapse" id="banksMenu">
                                 <ul class="nav flex-column ms-3">
+                                    {% if perms.banks.add_bankaccount or perms.banks.can_add_banks_account %}
                                     <li class="nav-item">
                                         <a class="nav-link" href="{% url 'banks:account_add' %}">{% trans "Add Account" %}</a>
                                     </li>
+                                    {% endif %}
                                     <li class="nav-item">
                                         <a class="nav-link" href="{% url 'banks:account_list' %}">{% trans "Accounts List" %}</a>
                                     </li>

@@ -76,7 +76,11 @@ class User(AbstractUser):
         return self.is_admin or self.has_perm('users.can_access_inventory')
 
     def has_banks_permission(self):
-        return self.is_admin or self.has_perm('users.can_access_banks')
+        return (
+            self.is_admin
+            or self.has_perm('users.can_access_banks')
+            or self.has_perm('banks.can_view_banks_account')
+        )
 
     def has_cashboxes_permission(self):
         return self.is_admin or self.has_perm('users.can_access_cashboxes')

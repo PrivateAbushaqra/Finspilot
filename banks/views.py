@@ -16,8 +16,25 @@ def clean_decimal_input(value):
         return '0'
     return str(value).replace(',', '').replace(' ', '').strip()
 
+class BanksViewPermissionMixin:
+    """حراسة صلاحيات العرض لصفحات البنوك (عرض فقط)."""
+    def user_can_view_banks(self):
+        u = getattr(self, 'request', None).user
+        # السماح للسوبر/المديرين، أو من لديه الصلاحية المخصصة للعرض
+        return (
+            u.is_authenticated and (
+                u.is_superuser or u.has_perm('banks.can_view_banks_account') or u.has_perm('banks.can_edit_banks_account') or u.has_perm('banks.can_delete_banks_account')
+            )
+        )
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.user_can_view_banks():
+            messages.error(request, _('You do not have permission to view bank pages.'))
+            return redirect('core:dashboard')
+        return super().dispatch(request, *args, **kwargs)
+
 # Temporary placeholder views
-class BankAccountListView(LoginRequiredMixin, TemplateView):
+class BankAccountListView(LoginRequiredMixin, BanksViewPermissionMixin, TemplateView):
     template_name = 'banks/account_list.html'
     
     def get_context_data(self, **kwargs):
@@ -63,6 +80,14 @@ class BankAccountCreateView(LoginRequiredMixin, View):
     template_name = 'banks/account_add.html'
     
     def get(self, request, *args, **kwargs):
+        # منع مستخدم العرض فقط من الوصول لصفحة الإضافة
+        if not (
+            request.user.is_superuser
+            or request.user.has_perm('banks.add_bankaccount')
+            or request.user.has_perm('banks.can_add_banks_account')
+        ):
+            messages.error(request, _('You do not have permission to add bank accounts.'))
+            return redirect('banks:account_list')
         context = {
             'currencies': Currency.get_active_currencies(),
             'base_currency': Currency.get_base_currency()
@@ -70,6 +95,13 @@ class BankAccountCreateView(LoginRequiredMixin, View):
         return render(request, self.template_name, context)
     
     def post(self, request, *args, **kwargs):
+        if not (
+            request.user.is_superuser
+            or request.user.has_perm('banks.add_bankaccount')
+            or request.user.has_perm('banks.can_add_banks_account')
+        ):
+            messages.error(request, _('You do not have permission to add bank accounts.'))
+            return redirect('banks:account_list')
         try:
             # استلام البيانات من النموذج
             name = request.POST.get('name', '').strip()
@@ -81,31 +113,31 @@ class BankAccountCreateView(LoginRequiredMixin, View):
             currency_code = request.POST.get('currency', '')
             is_active = request.POST.get('is_active') == 'on'
             notes = request.POST.get('notes', '').strip()
-            
+
             # التحقق من صحة البيانات
             if not name:
                 messages.error(request, 'اسم الحساب مطلوب!')
                 return render(request, self.template_name)
-                
+
             if not bank_name:
                 messages.error(request, 'اسم البنك مطلوب!')
                 return render(request, self.template_name)
-                
+
             if not account_number:
                 messages.error(request, 'رقم الحساب مطلوب!')
                 return render(request, self.template_name)
-            
+
             # التحقق من عدم تكرار رقم الحساب
             if BankAccount.objects.filter(account_number=account_number).exists():
                 messages.error(request, 'رقم الحساب موجود مسبقاً!')
                 return render(request, self.template_name)
-            
+
             # تحويل الرصيد إلى رقم
             try:
                 balance = Decimal(str(balance))
             except (ValueError, Decimal.InvalidOperation):
                 balance = Decimal('0.0')
-            
+
             # الحصول على العملة من قاعدة البيانات
             currency_obj = Currency.objects.filter(code=currency_code).first()
             if not currency_obj:
@@ -118,7 +150,7 @@ class BankAccountCreateView(LoginRequiredMixin, View):
                 else:
                     currency_obj = Currency.get_base_currency()
                     currency_code = currency_obj.code if currency_obj else ''
-            
+
             # إنشاء الحساب البنكي
             account = BankAccount.objects.create(
                 name=name,
@@ -129,12 +161,13 @@ class BankAccountCreateView(LoginRequiredMixin, View):
                 balance=balance,
                 currency=currency_code,  # CharField
                 is_active=is_active,
-                notes=notes
+                notes=notes,
+                created_by=request.user if request.user.is_authenticated else None
             )
-            
+
             messages.success(request, f'تم إنشاء الحساب البنكي "{account.name}" بنجاح!')
             return redirect('banks:account_list')
-            
+
         except Exception as e:
             messages.error(request, f'حدث خطأ أثناء إنشاء الحساب: {str(e)}')
             return render(request, self.template_name)
@@ -143,7 +176,12 @@ class BankAccountUpdateView(LoginRequiredMixin, View):
     template_name = 'banks/account_edit.html'
     
     def get(self, request, pk, *args, **kwargs):
+        if not (request.user.is_superuser or request.user.has_perm('banks.change_bankaccount') or request.user.has_perm('banks.can_edit_banks_account')):
+            messages.error(request, _('You do not have permission to edit bank accounts.'))
+            return redirect('banks:account_list')
         account = get_object_or_404(BankAccount, pk=pk)
+        # إن كان يملك الصلاحية المخصصة فقط (بدون change_bankaccount)، يسمح له بتعديل أي حساب
+        # لا تقييد بالمنشئ حسب طلب العميل
         # معالجة الرصيد إذا كان None
         if account.balance is None:
             account.balance = 0.000
@@ -159,8 +197,12 @@ class BankAccountUpdateView(LoginRequiredMixin, View):
         return render(request, self.template_name, context)
     
     def post(self, request, pk, *args, **kwargs):
+        if not (request.user.is_superuser or request.user.has_perm('banks.change_bankaccount') or request.user.has_perm('banks.can_edit_banks_account')):
+            messages.error(request, _('You do not have permission to edit bank accounts.'))
+            return redirect('banks:account_list')
         try:
             account = get_object_or_404(BankAccount, pk=pk)
+            # حامل can_edit_banks_account يمكنه تعديل أي حساب حتى بدون صلاحية change
             # استلام البيانات من النموذج
             name = request.POST.get('name', '').strip()
             bank_name = request.POST.get('bank_name', '').strip()
@@ -245,9 +287,32 @@ class BankAccountUpdateView(LoginRequiredMixin, View):
 class BankAccountDeleteView(LoginRequiredMixin, View):
     def post(self, request, pk, *args, **kwargs):
         from django.db import transaction
+        if not (
+            request.user.is_superuser
+            or request.user.has_perm('banks.delete_bankaccount')
+            or request.user.has_perm('banks.can_delete_banks_account')
+            or request.user.has_perm('users.can_delete_accounts')
+        ):
+            messages.error(request, _('You do not have permission to delete bank accounts.'))
+            return redirect('banks:account_list')
         try:
             account = BankAccount.objects.get(pk=pk)
             account_name = account.name
+            # إذا لم توجد أي حركات على الحساب، اسمح بالحذف مباشرة بغض النظر عن الرصيد
+            from .models import BankTransaction
+            no_transactions = not BankTransaction.objects.filter(bank=account).exists()
+            if no_transactions:
+                with transaction.atomic():
+                    # حذف أي تحويلات مرتبطة كإجراء احترازي
+                    BankTransfer.objects.filter(from_account=account).delete()
+                    BankTransfer.objects.filter(to_account=account).delete()
+                    from cashboxes.models import CashboxTransfer
+                    CashboxTransfer.objects.filter(from_bank=account).delete()
+                    CashboxTransfer.objects.filter(to_bank=account).delete()
+                    # حذف الحساب
+                    account.delete()
+                messages.success(request, f'تم حذف الحساب البنكي "{account_name}" لعدم وجود أي حركات عليه.')
+                return redirect('banks:account_list')
             
             # التحقق من عدم وجود رصيد في الحساب
             if account.balance != 0:
@@ -327,7 +392,7 @@ class BankAccountDeleteView(LoginRequiredMixin, View):
         
         return redirect('banks:account_list')
 
-class BankTransferListView(LoginRequiredMixin, TemplateView):
+class BankTransferListView(LoginRequiredMixin, BanksViewPermissionMixin, TemplateView):
     template_name = 'banks/transfer_list.html'
     
     def get_context_data(self, **kwargs):
@@ -392,6 +457,9 @@ class BankTransferCreateView(LoginRequiredMixin, View):
     template_name = 'banks/transfer_add.html'
     
     def get(self, request, *args, **kwargs):
+        if not (request.user.is_superuser or request.user.has_perm('banks.add_banktransfer')):
+            messages.error(request, _('You do not have permission to add bank transfers.'))
+            return redirect('banks:transfer_list')
         from core.models import DocumentSequence
         from cashboxes.models import Cashbox
         
@@ -1060,7 +1128,18 @@ class BankAccountTransactionsView(LoginRequiredMixin, TemplateView):
             'transactions': transactions,
             'transactions_count': transactions.count(),
             'delete_mode': delete_mode,
-            'can_delete_account': transactions.count() == 0 and account.balance == 0,
+            # إظهار زر الحذف النهائي لمن يملك صلاحية الحذف (المخصصة أو الافتراضية أو سوبر)
+            # الشرط: لا معاملات على الحساب (حتى لو الرصيد غير صفر)
+        'can_delete_account': (
+                delete_mode
+                and transactions.count() == 0
+                and (
+                    self.request.user.is_superuser
+                    or self.request.user.has_perm('banks.delete_bankaccount')
+            or self.request.user.has_perm('banks.can_delete_banks_account')
+            or self.request.user.has_perm('users.can_delete_accounts')
+                )
+            ),
         })
         
         return context
@@ -1143,19 +1222,64 @@ class BankAccountForceDeleteView(LoginRequiredMixin, View):
     def post(self, request, pk, *args, **kwargs):
         from django.db import transaction
         try:
+            # تحقق صلاحيات الحذف: سوبر أو delete_bankaccount أو الصلاحية المخصصة
+            if not (
+                request.user.is_superuser
+                or request.user.has_perm('banks.delete_bankaccount')
+                or request.user.has_perm('banks.can_delete_banks_account')
+                or request.user.has_perm('users.can_delete_accounts')
+            ):
+                messages.error(request, _('You do not have permission to delete bank accounts.'))
+                return redirect('banks:account_list')
+
             account = BankAccount.objects.get(pk=pk)
             account_name = account.name
             
-            # التحقق من صلاحية الحذف
+            # السماح بالحذف مباشرة إذا لم توجد أي معاملات، حتى لو كان الرصيد غير صفر
+            from .models import BankTransaction
+            no_transactions = not BankTransaction.objects.filter(bank=account).exists()
+            if no_transactions:
+                with transaction.atomic():
+                    # حذف التحويلات المرتبطة احترازياً
+                    BankTransfer.objects.filter(from_account=account).delete()
+                    BankTransfer.objects.filter(to_account=account).delete()
+                    from cashboxes.models import CashboxTransfer
+                    CashboxTransfer.objects.filter(from_bank=account).delete()
+                    CashboxTransfer.objects.filter(to_bank=account).delete()
+                    # حذف الحساب
+                    account.delete()
+                    # تنظيف بيانات الجلسة
+                    if 'delete_account_id' in request.session:
+                        del request.session['delete_account_id']
+                    if 'delete_account_name' in request.session:
+                        del request.session['delete_account_name']
+                messages.success(request, f'تم حذف الحساب البنكي "{account_name}" لعدم وجود أي حركات عليه.')
+                return redirect('banks:account_list')
+            
+            # التحقق من صلاحية الحذف في حال وجود معاملات: يتطلب رصيد صفر وعدم وجود معاملات
             if account.balance != 0:
                 messages.error(request, f'لا يمكن حذف الحساب لأن الرصيد غير صفر: {account.balance}')
                 return redirect('banks:account_transactions', pk=pk)
             
-            # التحقق من عدم وجود معاملات
-            from .models import BankTransaction
+            # التحقق من عدم وجود معاملات (في هذا المسار يجب أن لا توجد معاملات للحذف)
             if BankTransaction.objects.filter(bank=account).exists():
                 messages.error(request, 'لا يمكن حذف الحساب لأن هناك معاملات مرتبطة به')
                 return redirect('banks:account_transactions', pk=pk)
+
+            # في حال تحقق الشروط: لا معاملات ورصيد صفر
+            with transaction.atomic():
+                BankTransfer.objects.filter(from_account=account).delete()
+                BankTransfer.objects.filter(to_account=account).delete()
+                from cashboxes.models import CashboxTransfer
+                CashboxTransfer.objects.filter(from_bank=account).delete()
+                CashboxTransfer.objects.filter(to_bank=account).delete()
+                account.delete()
+                if 'delete_account_id' in request.session:
+                    del request.session['delete_account_id']
+                if 'delete_account_name' in request.session:
+                    del request.session['delete_account_name']
+            messages.success(request, f'تم حذف الحساب البنكي "{account_name}" بنجاح.')
+            return redirect('banks:account_list')
             
             # التحقق من التحويلات
             bank_transfers_from = BankTransfer.objects.filter(from_account=account)

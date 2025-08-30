@@ -138,18 +138,36 @@
                                                     </h6>
                                                 </div>
                                                 <div class="card-body p-2">
-                                                    {% for perm in perms %}
-                                                        <div class="form-check">
-                                                            <input type="checkbox" 
-                                                                   class="form-check-input permission-checkbox app-{{ app }}" 
-                                                                   name="permissions" 
-                                                                   value="{{ perm.pk }}" 
-                                                                   id="perm_{{ perm.pk }}">
-                                                            <label class="form-check-label small" for="perm_{{ perm.pk }}">
-                                                                {{ perm.name }}
-                                                            </label>
-                                                        </div>
-                                                    {% endfor %}
+                                                    {% if app == 'banks' %}
+                                                        {# عرض صلاحيات البنوك المخصصة فقط في صفحة الإضافة (عرض/إضافة/تعديل/حذف) #}
+                                                        {% for perm in perms %}
+                                                            {% if perm.codename == 'can_add_banks_account' or perm.codename == 'can_view_banks_account' or perm.codename == 'can_edit_banks_account' or perm.codename == 'can_delete_banks_account' %}
+                                                                <div class="form-check">
+                                                                    <input type="checkbox"
+                                                                           class="form-check-input permission-checkbox app-{{ app }}"
+                                                                           name="permissions"
+                                                                           value="{{ perm.pk }}"
+                                                                           id="perm_{{ perm.pk }}">
+                                                                    <label class="form-check-label small" for="perm_{{ perm.pk }}">
+                                                                        {% trans perm.name %}
+                                                                    </label>
+                                                                </div>
+                                                            {% endif %}
+                                                        {% endfor %}
+                                                    {% else %}
+                                                        {% for perm in perms %}
+                                                            <div class="form-check">
+                                                                <input type="checkbox" 
+                                                                       class="form-check-input permission-checkbox app-{{ app }}" 
+                                                                       name="permissions" 
+                                                                       value="{{ perm.pk }}" 
+                                                                       id="perm_{{ perm.pk }}">
+                                                                <label class="form-check-label small" for="perm_{{ perm.pk }}">
+                                                                    {% trans perm.name %}
+                                                                </label>
+                                                            </div>
+                                                        {% endfor %}
+                                                    {% endif %}
                                                 </div>
                                             </div>
                                         </div>

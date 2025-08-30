@@ -309,10 +309,12 @@
                             <i class="fas fa-print me-2"></i>
                             {% trans "Print Full Report" %}
                         </button>
+                        {% if perms.banks.add_banktransfer %}
                         <a href="{% url 'banks:transfer_add' %}" class="btn btn-add text-white">
                             <i class="fas fa-plus me-1"></i>
                             {% trans "Add New Transfer" %}
                         </a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -334,14 +336,18 @@
                                     {% trans "Total Transfers" %}: <strong>{{ total_transfers|default:0 }}</strong>
                                 </span>
                                 <div class="btn-group">
+                                    {% if perms.banks.add_banktransfer %}
                                     <a href="{% url 'banks:transfer_add' %}" class="btn btn-primary btn-sm">
                                         <i class="fas fa-university me-1"></i>
                                         {% trans "Bank Transfer" %}
                                     </a>
+                                    {% endif %}
+                                    {% if perms.cashboxes.add_cashboxtransfer or perms.banks.add_banktransfer %}
                                     <a href="{% url 'banks:bank_cashbox_transfer_add' %}" class="btn btn-success btn-sm">
                                         <i class="fas fa-money-check me-1"></i>
                                         {% trans "Bank/Cashbox Transfer" %}
                                     </a>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -431,14 +437,18 @@
                                                         <i class="fas fa-eye me-1"></i>
                                                         <span>{% trans "View" %}</span>
                                                     </a>
+                                                    {% if perms.banks.change_banktransfer %}
                                                     <a href="{% url 'banks:transfer_edit' transfer.id %}" class="btn btn-outline-warning btn-action" title="{% trans "Edit" %}">
                                                         <i class="fas fa-edit me-1"></i>
                                                         <span>{% trans "Edit" %}</span>
                                                     </a>
+                                                    {% endif %}
+                                                    {% if perms.banks.delete_banktransfer %}
                                                     <button class="btn btn-outline-danger btn-action" title="{% trans "Delete" %}" onclick="confirmDeleteTransfer('{{ transfer.id }}', '{{ transfer.transfer_number }}', 'bank')">
                                                         <i class="fas fa-trash me-1"></i>
                                                         <span>{% trans "Delete" %}</span>
                                                     </button>
+                                                    {% endif %}
                                                 </div>
                                             </div>
                                         </div>
@@ -515,14 +525,18 @@
                                                         <i class="fas fa-eye me-1"></i>
                                                         <span>{% trans "View" %}</span>
                                                     </a>
+                                                    {% if perms.cashboxes.change_cashboxtransfer %}
                                                     <a href="{% url 'banks:cashbox_transfer_edit' transfer.id %}" class="btn btn-outline-warning btn-action" title="{% trans "Edit" %}">
                                                         <i class="fas fa-edit me-1"></i>
                                                         <span>{% trans "Edit" %}</span>
                                                     </a>
+                                                    {% endif %}
+                                                    {% if perms.cashboxes.delete_cashboxtransfer %}
                                                     <button class="btn btn-outline-danger btn-action" title="{% trans "Delete" %}" onclick="confirmDeleteTransfer('{{ transfer.id }}', '{{ transfer.transfer_number }}', 'cashbox')">
                                                         <i class="fas fa-trash me-1"></i>
                                                         <span>{% trans "Delete" %}</span>
                                                     </button>
+                                                    {% endif %}
                                                 </div>
                                             </div>
                                         </div>
@@ -547,14 +561,18 @@
                                 <h5>{% trans "No bank transfers yet" %}</h5>
                                 <p class="mb-3">{% trans "Start by adding a new bank transfer between your accounts or between banks and cashboxes" %}</p>
                                 <div class="d-flex justify-content-center gap-2">
+                                    {% if perms.banks.add_banktransfer %}
                                     <a href="{% url 'banks:transfer_add' %}" class="btn btn-add text-white">
                                         <i class="fas fa-university me-1"></i>
                                         {% trans "Transfer Between Banks" %}
                                     </a>
+                                    {% endif %}
+                                    {% if perms.cashboxes.add_cashboxtransfer or perms.banks.add_banktransfer %}
                                     <a href="{% url 'banks:bank_cashbox_transfer_add' %}" class="btn btn-success">
                                         <i class="fas fa-money-check me-1"></i>
                                         {% trans "Bank/Cashbox Transfer" %}
                                     </a>
+                                    {% endif %}
                                 </div>
                             </div>
                         {% endif %}
