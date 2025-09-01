@@ -2,7 +2,7 @@
 {% load i18n %}
 
 
-{% block title %}{% trans "Login" %} - {{ block.super }}{% endblock %}
+{% block title %}{% trans "Sign In" %} - {{ block.super }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -78,15 +78,15 @@
         <div class="login-logo">
             <i class="fas fa-calculator"></i>
         </div>
-        <h2 class="mb-0">نظام فينسبايلوت ال{% trans "Accountant" %}ي</h2>
-        <p class="mb-0 mt-2">مرحباً بك، يرجى {% trans "Login" %}</p>
+        <h2 class="mb-0">{% trans "Finspilot Accounting System" %}</h2>
+        <p class="mb-0 mt-2">{% trans "Welcome, please login" %}</p>
     </div>
     
     <div class="login-body">
         {% if form.errors %}
             <div class="alert alert-danger">
                 <i class="fas fa-exclamation-triangle me-2"></i>
-                بيانات {% trans "Login" %} غير صحيحة. {% trans "Please try again" %}.
+                {% trans "Invalid login credentials. Please try again." %}
             </div>
         {% endif %}
         
@@ -121,7 +121,7 @@
             <div class="d-grid">
                 <button type="submit" class="btn btn-login">
                     <i class="fas fa-sign-in-alt me-2"></i>
-                    {% trans "Login" %}
+                    {% trans "Sign In" %}
                 </button>
             </div>
             
@@ -142,7 +142,7 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // التركيز على حقل {% trans "Username" %}
+    // التركيز على حقل اسم المستخدم
     document.getElementById('{{ form.username.id_for_label }}').focus();
 });
 </script>

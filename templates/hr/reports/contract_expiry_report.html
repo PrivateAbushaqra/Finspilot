@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Contract Expiry Report" %} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title">
+                        <i class="fas fa-calendar-times me-2"></i>
+                        {% trans "Contract Expiry Report" %}
+                    </h3>
+                    <a href="{% url 'hr:hr_reports' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>
+                        {% trans "Back to Reports" %}
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if expiring_contracts %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>{% trans "Employee" %}</th>
+                                        <th>{% trans "Contract Type" %}</th>
+                                        <th>{% trans "Start Date" %}</th>
+                                        <th>{% trans "End Date" %}</th>
+                                        <th>{% trans "Days Remaining" %}</th>
+                                        <th>{% trans "Status" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for contract in expiring_contracts %}
+                                    <tr class="{% if contract.days_remaining <= 30 %}table-warning{% elif contract.days_remaining <= 7 %}table-danger{% endif %}">
+                                        <td>
+                                            <a href="{% url 'hr:employee_detail' contract.employee.pk %}">
+                                                {{ contract.employee.get_full_name }}
+                                            </a>
+                                        </td>
+                                        <td>{{ contract.get_contract_type_display }}</td>
+                                        <td>{{ contract.start_date|date:"d/m/Y" }}</td>
+                                        <td>{{ contract.end_date|date:"d/m/Y" }}</td>
+                                        <td>
+                                            <span class="badge bg-{% if contract.days_remaining <= 7 %}danger{% elif contract.days_remaining <= 30 %}warning{% else %}success{% endif %}">
+                                                {{ contract.days_remaining }} {% trans "days" %}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{% if contract.is_active %}success{% else %}secondary{% endif %}">
+                                                {% if contract.is_active %}{% trans "Active" %}{% else %}{% trans "Inactive" %}{% endif %}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-file-contract fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">{% trans "No expiring contracts found" %}</h4>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

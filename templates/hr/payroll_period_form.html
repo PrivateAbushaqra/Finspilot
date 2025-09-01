@@ -1,0 +1,424 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+{% load django_bootstrap5 %}
+
+{% block page_title %}
+    {% if object %}
+        {% trans "تعديل فترة الرواتب" %}
+    {% else %}
+        {% trans "إضافة فترة رواتب جديدة" %}
+    {% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'css/bootstrap-datepicker.min.css' %}" rel="stylesheet">
+<style>
+    .payroll-form-container {
+        background: #ffffff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+        margin-top: 20px;
+    }
+    
+    .form-header {
+        border-bottom: 2px solid #28a745;
+        padding-bottom: 15px;
+        margin-bottom: 30px;
+    }
+    
+    .form-header h2 {
+        color: #28a745;
+        font-weight: 600;
+        margin: 0;
+    }
+    
+    .form-section {
+        margin-bottom: 25px;
+    }
+    
+    .form-section h5 {
+        color: #495057;
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+        font-weight: 500;
+    }
+    
+    .btn-action {
+        min-width: 120px;
+        margin: 0 5px;
+    }
+    
+    .period-info-box {
+        background: #f8f9fa;
+        border-left: 4px solid #28a745;
+        padding: 15px;
+        margin: 15px 0;
+        border-radius: 5px;
+    }
+    
+    .period-duration {
+        font-size: 0.9em;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+    
+    .validation-warning {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        color: #856404;
+        padding: 10px;
+        border-radius: 5px;
+        margin: 10px 0;
+    }
+    
+    .validation-warning i {
+        margin-right: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-calendar-alt me-2"></i>
+                        {% if object %}
+                            {% trans "تعديل فترة الرواتب" %}
+                        {% else %}
+                            {% trans "إضافة فترة رواتب جديدة" %}
+                        {% endif %}
+                    </h1>
+                    <p class="text-muted mb-0">{% trans "إدارة فترات الرواتب والأجور للموظفين" %}</p>
+                </div>
+                <div>
+                    <a href="{% url 'hr:payroll_period_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-right me-1"></i>
+                        {% trans "العودة للقائمة" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Section -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="payroll-form-container">
+                <div class="form-header">
+                    <h2>
+                        <i class="fas fa-money-bill-wave me-2"></i>
+                        {% if object %}
+                            {% trans "تعديل بيانات فترة الرواتب" %}
+                        {% else %}
+                            {% trans "تسجيل فترة رواتب جديدة" %}
+                        {% endif %}
+                    </h2>
+                </div>
+
+                <form method="post" id="payrollPeriodForm">
+                    {% csrf_token %}
+                    
+                    <!-- Basic Information Section -->
+                    <div class="form-section">
+                        <h5>
+                            <i class="fas fa-info-circle me-2"></i>
+                            {% trans "المعلومات الأساسية" %}
+                        </h5>
+                        
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label for="{{ form.name.id_for_label }}" class="form-label">
+                                    <i class="fas fa-tag me-1"></i>
+                                    {% trans "اسم الفترة" %} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.name }}
+                                {% if form.name.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.name.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="text-muted">{% trans "مثال: رواتب شهر يناير 2025" %}</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Date Range Section -->
+                    <div class="form-section">
+                        <h5>
+                            <i class="fas fa-calendar-check me-2"></i>
+                            {% trans "نطاق التواريخ" %}
+                        </h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.start_date.id_for_label }}" class="form-label">
+                                    <i class="fas fa-play me-1"></i>
+                                    {% trans "تاريخ البداية" %} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.start_date }}
+                                {% if form.start_date.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.start_date.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.end_date.id_for_label }}" class="form-label">
+                                    <i class="fas fa-stop me-1"></i>
+                                    {% trans "تاريخ النهاية" %} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.end_date }}
+                                {% if form.end_date.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.end_date.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Period Duration Display -->
+                        <div class="period-info-box">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-clock text-success me-2"></i>
+                                <strong>{% trans "مدة الفترة:" %}</strong>
+                                <span id="periodDuration" class="ms-2">{% trans "سيتم حسابها تلقائياً" %}</span>
+                            </div>
+                        </div>
+
+                        <!-- Validation Warning -->
+                        <div class="validation-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            {% trans "تأكد من أن الفترة لا تتداخل مع فترات أخرى موجودة" %}
+                        </div>
+                    </div>
+
+                    <!-- Notes Section -->
+                    <div class="form-section">
+                        <h5>
+                            <i class="fas fa-sticky-note me-2"></i>
+                            {% trans "ملاحظات إضافية" %}
+                        </h5>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                <i class="fas fa-comment me-1"></i>
+                                {% trans "ملاحظات" %}
+                            </label>
+                            {{ form.notes }}
+                            {% if form.notes.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.notes.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="text-muted">{% trans "أي ملاحظات إضافية حول فترة الرواتب" %}</small>
+                        </div>
+                    </div>
+
+                    <!-- Current Period Status (for edit mode) -->
+                    {% if object %}
+                    <div class="form-section">
+                        <h5>
+                            <i class="fas fa-info me-2"></i>
+                            {% trans "حالة الفترة الحالية" %}
+                        </h5>
+                        
+                        <div class="period-info-box">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>{% trans "حالة المعالجة:" %}</strong>
+                                    {% if object.is_processed %}
+                                        <span class="badge bg-success ms-2">
+                                            <i class="fas fa-check-circle me-1"></i>
+                                            {% trans "تمت المعالجة" %}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-warning ms-2">
+                                            <i class="fas fa-clock me-1"></i>
+                                            {% trans "في الانتظار" %}
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                
+                                {% if object.processed_date %}
+                                <div class="col-md-6">
+                                    <strong>{% trans "تاريخ المعالجة:" %}</strong>
+                                    <span class="ms-2">{{ object.processed_date|date:"d/m/Y H:i" }}</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            {% if object.processed_by %}
+                            <div class="mt-2">
+                                <strong>{% trans "تمت المعالجة بواسطة:" %}</strong>
+                                <span class="ms-2">{{ object.processed_by.get_full_name|default:object.processed_by.username }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Form Errors -->
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger" role="alert">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                {% trans "خطأ في البيانات" %}
+                            </h6>
+                            {% for error in form.non_field_errors %}
+                                <p class="mb-0">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                        <a href="{% url 'hr:payroll_period_list' %}" class="btn btn-outline-secondary btn-action">
+                            <i class="fas fa-times me-1"></i>
+                            {% trans "إلغاء" %}
+                        </a>
+                        <button type="submit" class="btn btn-success btn-action">
+                            <i class="fas fa-save me-1"></i>
+                            {% if object %}
+                                {% trans "حفظ التعديلات" %}
+                            {% else %}
+                                {% trans "إضافة الفترة" %}
+                            {% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/bootstrap-datepicker.min.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const startDateInput = document.getElementById('id_start_date');
+    const endDateInput = document.getElementById('id_end_date');
+    const periodDurationSpan = document.getElementById('periodDuration');
+
+    // حساب مدة الفترة
+    function calculatePeriodDuration() {
+        const startDate = new Date(startDateInput.value);
+        const endDate = new Date(endDateInput.value);
+        
+        if (startDate && endDate && endDate > startDate) {
+            const diffTime = Math.abs(endDate - startDate);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays <= 7) {
+                periodDurationSpan.textContent = `${diffDays} {% trans "أيام" %}`;
+            } else if (diffDays <= 31) {
+                const weeks = Math.floor(diffDays / 7);
+                const remainingDays = diffDays % 7;
+                let text = `${weeks} {% trans "أسبوع" %}`;
+                if (remainingDays > 0) {
+                    text += ` و ${remainingDays} {% trans "أيام" %}`;
+                }
+                periodDurationSpan.textContent = text;
+            } else {
+                const months = Math.floor(diffDays / 30);
+                const remainingDays = diffDays % 30;
+                let text = `${months} {% trans "شهر" %}`;
+                if (remainingDays > 0) {
+                    text += ` و ${remainingDays} {% trans "أيام" %}`;
+                }
+                periodDurationSpan.textContent = text;
+            }
+        } else if (endDate <= startDate) {
+            periodDurationSpan.textContent = '{% trans "تاريخ النهاية يجب أن يكون بعد تاريخ البداية" %}';
+            periodDurationSpan.style.color = '#dc3545';
+        } else {
+            periodDurationSpan.textContent = '{% trans "سيتم حسابها تلقائياً" %}';
+            periodDurationSpan.style.color = '#6c757d';
+        }
+    }
+
+    // إضافة مستمعين للأحداث
+    startDateInput.addEventListener('change', calculatePeriodDuration);
+    endDateInput.addEventListener('change', calculatePeriodDuration);
+
+    // حساب المدة عند تحميل الصفحة إذا كانت البيانات موجودة
+    if (startDateInput.value && endDateInput.value) {
+        calculatePeriodDuration();
+    }
+
+    // تحسين اختيار التواريخ
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+
+    // اقتراح تواريخ افتراضية للشهر الحالي
+    if (!startDateInput.value) {
+        const firstDay = new Date(currentYear, currentMonth, 1);
+        startDateInput.value = firstDay.toISOString().split('T')[0];
+    }
+
+    if (!endDateInput.value) {
+        const lastDay = new Date(currentYear, currentMonth + 1, 0);
+        endDateInput.value = lastDay.toISOString().split('T')[0];
+    }
+
+    // تحديث المدة بعد تعيين التواريخ الافتراضية
+    calculatePeriodDuration();
+
+    // اقتراح اسم الفترة تلقائياً
+    const nameInput = document.getElementById('id_name');
+    function generatePeriodName() {
+        if (startDateInput.value && !nameInput.value) {
+            const startDate = new Date(startDateInput.value);
+            const monthNames = [
+                'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+                'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+            ];
+            
+            const monthName = monthNames[startDate.getMonth()];
+            const year = startDate.getFullYear();
+            nameInput.value = `رواتب شهر ${monthName} ${year}`;
+        }
+    }
+
+    startDateInput.addEventListener('change', generatePeriodName);
+
+    // تأكيد قبل الحفظ
+    const form = document.getElementById('payrollPeriodForm');
+    form.addEventListener('submit', function(e) {
+        const startDate = new Date(startDateInput.value);
+        const endDate = new Date(endDateInput.value);
+        
+        // التحقق من صحة التواريخ
+        if (endDate <= startDate) {
+            e.preventDefault();
+            alert('{% trans "تاريخ النهاية يجب أن يكون بعد تاريخ البداية" %}');
+            return false;
+        }
+        
+        // تأكيد الحفظ
+        const action = '{% if object %}{% trans "تعديل" %}{% else %}{% trans "إضافة" %}{% endif %}';
+        if (!confirm(`{% trans "هل أنت متأكد من" %} ${action} {% trans "فترة الرواتب؟" %}`)) {
+            e.preventDefault();
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}

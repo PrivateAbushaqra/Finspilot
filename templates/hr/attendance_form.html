@@ -1,0 +1,394 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+{% load django_bootstrap5 %}
+
+{% block page_title %}
+    {% if object %}
+        {% trans "تعديل الحضور والانصراف" %}
+    {% else %}
+        {% trans "إضافة حضور وانصراف جديد" %}
+    {% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'css/bootstrap-datepicker.min.css' %}" rel="stylesheet">
+<style>
+    .attendance-form-container {
+        background: #ffffff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+        margin-top: 20px;
+    }
+    
+    .form-header {
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 15px;
+        margin-bottom: 30px;
+    }
+    
+    .form-header h2 {
+        color: #007bff;
+        font-weight: 600;
+        margin: 0;
+    }
+    
+    .form-section {
+        margin-bottom: 25px;
+    }
+    
+    .form-section h5 {
+        color: #495057;
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+        font-weight: 500;
+    }
+    
+    .btn-action {
+        min-width: 120px;
+        margin: 0 5px;
+    }
+    
+    .attendance-type-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+    }
+    
+    .attendance-type-badge {
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 0.85em;
+        font-weight: 500;
+    }
+    
+    .present { background-color: #d4edda; color: #155724; }
+    .absent { background-color: #f8d7da; color: #721c24; }
+    .late { background-color: #fff3cd; color: #856404; }
+    .half_day { background-color: #d1ecf1; color: #0c5460; }
+    .on_leave { background-color: #e2e3e5; color: #383d41; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-clock me-2"></i>
+                        {% if object %}
+                            {% trans "تعديل الحضور والانصراف" %}
+                        {% else %}
+                            {% trans "إضافة حضور وانصراف جديد" %}
+                        {% endif %}
+                    </h1>
+                    <p class="text-muted mb-0">{% trans "إدارة سجلات الحضور والانصراف للموظفين" %}</p>
+                </div>
+                <div>
+                    <a href="{% url 'hr:attendance_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-right me-1"></i>
+                        {% trans "العودة للقائمة" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Section -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="attendance-form-container">
+                <div class="form-header">
+                    <h2>
+                        <i class="fas fa-user-clock me-2"></i>
+                        {% if object %}
+                            {% trans "بيانات الحضور والانصراف" %}
+                        {% else %}
+                            {% trans "تسجيل حضور وانصراف جديد" %}
+                        {% endif %}
+                    </h2>
+                </div>
+
+                <form method="post" id="attendanceForm">
+                    {% csrf_token %}
+                    
+                    <!-- Employee and Date Section -->
+                    <div class="form-section">
+                        <h5>
+                            <i class="fas fa-user me-2"></i>
+                            {% trans "معلومات الموظف والتاريخ" %}
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.employee.id_for_label }}" class="form-label">
+                                    <i class="fas fa-user me-1"></i>
+                                    {% trans "الموظف" %} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.employee }}
+                                {% if form.employee.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.employee.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.date.id_for_label }}" class="form-label">
+                                    <i class="fas fa-calendar me-1"></i>
+                                    {% trans "التاريخ" %} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.date }}
+                                {% if form.date.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.date.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Time Section -->
+                    <div class="form-section">
+                        <h5>
+                            <i class="fas fa-clock me-2"></i>
+                            {% trans "أوقات الحضور والانصراف" %}
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.check_in_time.id_for_label }}" class="form-label">
+                                    <i class="fas fa-sign-in-alt me-1"></i>
+                                    {% trans "وقت الحضور" %}
+                                </label>
+                                {{ form.check_in_time }}
+                                {% if form.check_in_time.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.check_in_time.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.check_out_time.id_for_label }}" class="form-label">
+                                    <i class="fas fa-sign-out-alt me-1"></i>
+                                    {% trans "وقت الانصراف" %}
+                                </label>
+                                {{ form.check_out_time }}
+                                {% if form.check_out_time.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.check_out_time.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Attendance Type and Hours Section -->
+                    <div class="form-section">
+                        <h5>
+                            <i class="fas fa-clipboard-check me-2"></i>
+                            {% trans "نوع الحضور والساعات" %}
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.attendance_type.id_for_label }}" class="form-label">
+                                    <i class="fas fa-list me-1"></i>
+                                    {% trans "نوع الحضور" %} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.attendance_type }}
+                                {% if form.attendance_type.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.attendance_type.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                
+                                <!-- Attendance Type Guide -->
+                                <div class="attendance-type-badges">
+                                    <span class="attendance-type-badge present">{% trans "حاضر" %}</span>
+                                    <span class="attendance-type-badge absent">{% trans "غائب" %}</span>
+                                    <span class="attendance-type-badge late">{% trans "متأخر" %}</span>
+                                    <span class="attendance-type-badge half_day">{% trans "نصف يوم" %}</span>
+                                    <span class="attendance-type-badge on_leave">{% trans "في إجازة" %}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.overtime_hours.id_for_label }}" class="form-label">
+                                    <i class="fas fa-clock me-1"></i>
+                                    {% trans "ساعات الأوفرتايم" %}
+                                </label>
+                                {{ form.overtime_hours }}
+                                {% if form.overtime_hours.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {% for error in form.overtime_hours.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <small class="text-muted">{% trans "أدخل عدد ساعات العمل الإضافية" %}</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notes Section -->
+                    <div class="form-section">
+                        <h5>
+                            <i class="fas fa-sticky-note me-2"></i>
+                            {% trans "ملاحظات إضافية" %}
+                        </h5>
+                        <div class="mb-3">
+                            <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                <i class="fas fa-comment me-1"></i>
+                                {% trans "ملاحظات" %}
+                            </label>
+                            {{ form.notes }}
+                            {% if form.notes.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.notes.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="text-muted">{% trans "أي ملاحظات إضافية حول الحضور والانصراف" %}</small>
+                        </div>
+                    </div>
+
+                    <!-- Form Errors -->
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger" role="alert">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                {% trans "خطأ في البيانات" %}
+                            </h6>
+                            {% for error in form.non_field_errors %}
+                                <p class="mb-0">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                        <a href="{% url 'hr:attendance_list' %}" class="btn btn-outline-secondary btn-action">
+                            <i class="fas fa-times me-1"></i>
+                            {% trans "إلغاء" %}
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-action">
+                            <i class="fas fa-save me-1"></i>
+                            {% if object %}
+                                {% trans "حفظ التعديلات" %}
+                            {% else %}
+                                {% trans "إضافة الحضور" %}
+                            {% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/bootstrap-datepicker.min.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // تنسيق منتقي التاريخ
+    const dateInput = document.querySelector('input[type="date"]');
+    if (dateInput && !dateInput.value) {
+        const today = new Date();
+        const formattedDate = today.toISOString().split('T')[0];
+        dateInput.value = formattedDate;
+    }
+
+    // تنسيق أوقات الحضور والانصراف
+    const timeInputs = document.querySelectorAll('input[type="time"]');
+    timeInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            calculateWorkedHours();
+        });
+    });
+
+    // تنسيق نوع الحضور
+    const attendanceTypeSelect = document.getElementById('id_attendance_type');
+    const checkInTime = document.getElementById('id_check_in_time');
+    const checkOutTime = document.getElementById('id_check_out_time');
+    
+    if (attendanceTypeSelect) {
+        attendanceTypeSelect.addEventListener('change', function() {
+            const selectedType = this.value;
+            
+            // إذا كان غائب أو في إجازة، إخفاء أوقات الحضور والانصراف
+            if (selectedType === 'absent' || selectedType === 'on_leave') {
+                checkInTime.disabled = true;
+                checkOutTime.disabled = true;
+                checkInTime.value = '';
+                checkOutTime.value = '';
+            } else {
+                checkInTime.disabled = false;
+                checkOutTime.disabled = false;
+            }
+        });
+        
+        // تطبيق القاعدة عند تحميل الصفحة
+        attendanceTypeSelect.dispatchEvent(new Event('change'));
+    }
+
+    // حساب ساعات العمل تلقائياً
+    function calculateWorkedHours() {
+        const checkIn = document.getElementById('id_check_in_time').value;
+        const checkOut = document.getElementById('id_check_out_time').value;
+        
+        if (checkIn && checkOut) {
+            const checkInTime = new Date('1970-01-01T' + checkIn + ':00');
+            const checkOutTime = new Date('1970-01-01T' + checkOut + ':00');
+            
+            if (checkOutTime > checkInTime) {
+                const diffMs = checkOutTime - checkInTime;
+                const diffHours = diffMs / (1000 * 60 * 60);
+                
+                // عرض الساعات المحسوبة (يمكن إضافة حقل لعرضها)
+                console.log('ساعات العمل المحسوبة:', diffHours.toFixed(2));
+            }
+        }
+    }
+
+    // تأكيد قبل الحفظ
+    const form = document.getElementById('attendanceForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const attendanceType = document.getElementById('id_attendance_type').value;
+            const checkIn = document.getElementById('id_check_in_time').value;
+            const checkOut = document.getElementById('id_check_out_time').value;
+            
+            // التحقق من البيانات المطلوبة
+            if (attendanceType === 'present' && (!checkIn || !checkOut)) {
+                e.preventDefault();
+                alert('{% trans "يجب إدخال أوقات الحضور والانصراف للحضور العادي" %}');
+                return false;
+            }
+            
+            // تأكيد الحفظ
+            if (!confirm('{% trans "هل أنت متأكد من حفظ بيانات الحضور والانصراف؟" %}')) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

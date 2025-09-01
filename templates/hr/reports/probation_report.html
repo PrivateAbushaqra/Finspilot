@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Probation Period Report" %} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title">
+                        <i class="fas fa-user-clock me-2"></i>
+                        {% trans "Probation Period Report" %}
+                    </h3>
+                    <a href="{% url 'hr:hr_reports' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>
+                        {% trans "Back to Reports" %}
+                    </a>
+                </div>
+                <div class="card-body">
+                    <p class="text-center">{% trans "Probation period report functionality will be implemented soon" %}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

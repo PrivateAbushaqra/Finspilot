@@ -547,7 +547,7 @@
         <div class="container-fluid">
             <a class="navbar-brand fw-bold" href="{% url 'core:dashboard' %}">
                 <i class="fas fa-chart-line me-2"></i>
-                {{ company_settings.company_name }} - {% trans "Dashboard" %}
+                {{ company_settings.company_name }} - {% trans "Home" %}
             </a>
             
             <div class="navbar-nav ms-auto">
@@ -1624,10 +1624,10 @@
     {% if LANGUAGE_CODE == 'en' %}
     // Auto Translation for English - Extended Dictionary
     const TRANSLATIONS = {
-        // Main Navigation
-        'لوحة التحكم': 'Dashboard',
-        //'Dashboard': 'Dashboard',
-        '{% trans "Dashboard" %}': 'Home',
+        // Main Navigation (Arabic to English)
+        'لوحة التحكم': '',
+        'تسجيل الخروج': '', 
+        'الإعدادات': '',
         
         // Statistics
         'إحصائيات المبيعات': 'Sales Statistics',
@@ -1853,9 +1853,9 @@
         'المشاريع': 'Projects',
         
         // User Interface
-        'تسجيل الدخول': 'Login',
-        'Logout': 'Logout',
-        '{% trans "Exit" %}': 'Logout',
+        'تسجيل الدخول': 'تسجيل الدخول',
+        'Logout': '',
+        '{% trans "Exit" %}': '',
         'تسجيل': 'Register',
         'User': 'User',
         'المستخدمون': 'Users',
@@ -2076,8 +2076,8 @@
         'الأصول': 'Assets',
         'خصوم': 'Liabilities',
         'الخصوم': 'Liabilities',
-        'Global Search': 'Global Search',
-        'Bank Accounts': 'Bank Accounts',
+        'Global Search': 'البحث العام',
+        'Bank Accounts': 'الحسابات البنكية',
         'الصناديق': 'Cashboxes',
         'Payment Receipts': 'Payment Receipts',
         'سندات الدفع': 'Payment Vouchers',
@@ -2093,14 +2093,8 @@
         'سجل الأنشطة': 'Activity Log',
         'إدارة أرقام المستندات': 'Document Numbers Management',
         'إعدادات النظام': 'System Settings',
-        'إعدادات': 'Settings',
-        'Settings': 'Settings',
-        'Logout': 'Logout',
-        '{% trans "Exit" %}': 'Logout',
-        'Dashboard': 'Dashboard',
-        '{% trans "Dashboard" %}': 'Home',
-        'Arabic': 'Arabic',
-        'English': 'English',
+        'إعدادات': '',
+        'تسجيل الخروج': '',
         'اختر اللغة': 'Choose Language',
         'التنبيهات': 'Notifications',
         'الملف الشخصي': 'Profile',
@@ -2109,29 +2103,16 @@
         'اضافة مستخدم': 'Add User',
         'تحرير مستخدم': 'Edit User',
         'حذف مستخدم': 'Delete User',
-        '{% trans "List" %} المستخدمين': 'Users List',
         
         // Navigation Terms
-        'لوحة القيادة': 'Dashboard',
-        'ال{% trans "List" %} {% trans "Dashboard" %}': 'Main Menu',
-        'ال{% trans "List" %} الجانبية': 'Sidebar',
-        '{% trans "Home" %}': 'Home Page',
-        'عودة للرئيسية': 'Back to Home',
+        'لوحة القيادة': '',
+        'العودة للرئيسية': 'Back to Home',
         'اتصل بنا': 'Contact Us',
         'عن الشركة': 'About Company',
         'سياسة الخصوصية': 'Privacy Policy',
         'الشروط والأحكام': 'Terms & Conditions',
         
         // Action Buttons
-        '{% trans "Add" %} {% trans "New" %}': 'Add New',
-        'إنشاء {% trans "New" %}': 'Create New',
-        '{% trans "Edit" %} البيانات': 'Edit Data',
-        '{% trans "Save" %} البيانات': 'Save Data',
-        '{% trans "Delete" %} البيانات': 'Delete Data',
-        '{% trans "View" %} البيانات': 'View Data',
-        '{% trans "Print" %} ال{% trans "Report" %}': 'Print Report',
-        '{% trans "Export" %} البيانات': 'Export Data',
-        '{% trans "Import" %} البيانات': 'Import Data',
         'تحديث البيانات': 'Update Data',
         'إعادة تحميل': 'Reload',
         'تراجع': 'Undo',
@@ -2141,8 +2122,8 @@
         'قص': 'Cut',
         
         // Form Labels
-        'Username': 'Username',
-        'Password': 'Password',
+        'اسم المستخدم': 'Username',
+        'كلمة المرور': 'Password',
         'البريد ا{% trans "No" %}لكتروني': 'Email',
         'رقم {% trans "Phone" %}': 'Phone Number',
         '{% trans "Address" %} الالكامل': 'Full Address',

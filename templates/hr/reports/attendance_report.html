@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Attendance Report" %} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title">
+                        <i class="fas fa-calendar-check me-2"></i>
+                        {% trans "Monthly Attendance Report" %}
+                    </h3>
+                    <div>
+                        <a href="{% url 'hr:export_attendance_excel' %}" class="btn btn-success">
+                            <i class="fas fa-file-excel me-1"></i>
+                            {% trans "Export to Excel" %}
+                        </a>
+                        <a href="{% url 'hr:hr_reports' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>
+                            {% trans "Back to Reports" %}
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="mb-4">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label class="form-label">{% trans "Month" %}</label>
+                                <select name="month" class="form-select">
+                                    {% for month_num, month_name in months %}
+                                    <option value="{{ month_num }}" {% if month_num == selected_month %}selected{% endif %}>
+                                        {{ month_name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">{% trans "Year" %}</label>
+                                <select name="year" class="form-select">
+                                    {% for year in years %}
+                                    <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>
+                                        {{ year }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">{% trans "Department" %}</label>
+                                <select name="department" class="form-select">
+                                    <option value="">{% trans "All Departments" %}</option>
+                                    {% for dept in departments %}
+                                    <option value="{{ dept.id }}" {% if dept.id == selected_department %}selected{% endif %}>
+                                        {{ dept.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search me-1"></i>{% trans "Filter" %}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Summary Cards -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h4>{{ total_records }}</h4>
+                                    <p class="mb-0">{% trans "Total Records" %}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h4>{{ present_count }}</h4>
+                                    <p class="mb-0">{% trans "Present" %}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-danger text-white">
+                                <div class="card-body text-center">
+                                    <h4>{{ absent_count }}</h4>
+                                    <p class="mb-0">{% trans "Absent" %}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body text-center">
+                                    <h4>{{ late_count }}</h4>
+                                    <p class="mb-0">{% trans "Late" %}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if attendances %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>{% trans "Employee" %}</th>
+                                        <th>{% trans "Date" %}</th>
+                                        <th>{% trans "Check In" %}</th>
+                                        <th>{% trans "Check Out" %}</th>
+                                        <th>{% trans "Working Hours" %}</th>
+                                        <th>{% trans "Status" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for attendance in attendances %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'hr:employee_detail' attendance.employee.pk %}">
+                                                {{ attendance.employee.get_full_name }}
+                                            </a>
+                                        </td>
+                                        <td>{{ attendance.date|date:"d/m/Y" }}</td>
+                                        <td>{{ attendance.check_in_time|time:"H:i"|default:"-" }}</td>
+                                        <td>{{ attendance.check_out_time|time:"H:i"|default:"-" }}</td>
+                                        <td>{{ attendance.working_hours|default:"-" }}</td>
+                                        <td>
+                                            <span class="badge bg-{% if attendance.status == 'present' %}success{% elif attendance.status == 'absent' %}danger{% elif attendance.status == 'late' %}warning{% else %}secondary{% endif %}">
+                                                {{ attendance.get_status_display }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-calendar-check fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">{% trans "No attendance records found for the selected period" %}</h4>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

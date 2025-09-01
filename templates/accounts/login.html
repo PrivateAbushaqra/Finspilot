@@ -3,7 +3,7 @@
 {% load i18n %}
 {% load static %}
 
-{% block title %}{% trans "Login" %} - Finspilot{% endblock %}
+{% block title %}تسجيل الدخول - فينس بايلوت{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -35,7 +35,7 @@
         z-index: 1;
     }
 
-    /* Login Form */
+    /* نموذج تسجيل الدخول */
     .login-form {
         background: rgba(255, 255, 255, 0.95);
         backdrop-filter: blur(10px);
@@ -219,12 +219,12 @@
         <div class="floating-element">💰</div>
     </div>
 
-    <!-- Login Form -->
+    <!-- نموذج تسجيل الدخول -->
     <div class="login-form">
         <div class="login-header">
             <h2>
                 <i class="fas fa-chart-line me-2"></i>
-                Finspilot
+                {% trans "FinsPilot" %}
             </h2>
             <p>{% trans "Integrated Accounting System" %}</p>
         </div>
@@ -278,13 +278,13 @@
             <div class="form-group">
                 <button type="submit" class="btn-login">
                     <i class="fas fa-sign-in-alt me-2"></i>
-                    {% trans "Login" %}
+                    تسجيل الدخول
                 </button>
             </div>
         </form>
 
         <div class="login-footer">
-            <small>© 2025 Finspilot</small>
+            <small>© 2025 {% trans "FinsPilot" %}</small>
         </div>
     </div>
 </div>

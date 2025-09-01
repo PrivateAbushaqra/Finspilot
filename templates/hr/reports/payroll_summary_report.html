@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Payroll Summary Report" %} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title">
+                        <i class="fas fa-file-invoice-dollar me-2"></i>
+                        {% trans "Payroll Summary Report" %}
+                    </h3>
+                    <div>
+                        <a href="{% url 'hr:export_payroll_excel' %}" class="btn btn-success">
+                            <i class="fas fa-file-excel me-1"></i>
+                            {% trans "Export to Excel" %}
+                        </a>
+                        <a href="{% url 'hr:hr_reports' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>
+                            {% trans "Back to Reports" %}
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="mb-4">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label class="form-label">{% trans "Month" %}</label>
+                                <select name="month" class="form-select">
+                                    {% for month_num, month_name in months %}
+                                    <option value="{{ month_num }}" {% if month_num == selected_month %}selected{% endif %}>
+                                        {{ month_name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">{% trans "Year" %}</label>
+                                <select name="year" class="form-select">
+                                    {% for year in years %}
+                                    <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>
+                                        {{ year }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">{% trans "Department" %}</label>
+                                <select name="department" class="form-select">
+                                    <option value="">{% trans "All Departments" %}</option>
+                                    {% for dept in departments %}
+                                    <option value="{{ dept.id }}" {% if dept.id == selected_department %}selected{% endif %}>
+                                        {{ dept.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search me-1"></i>{% trans "Filter" %}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Summary Cards -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h4>{{ total_employees }}</h4>
+                                    <p class="mb-0">{% trans "Total Employees" %}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h4>{{ total_gross|floatformat:0 }}</h4>
+                                    <p class="mb-0">{% trans "Gross Salary" %}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body text-center">
+                                    <h4>{{ total_deductions|floatformat:0 }}</h4>
+                                    <p class="mb-0">{% trans "Total Deductions" %}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body text-center">
+                                    <h4>{{ total_net|floatformat:0 }}</h4>
+                                    <p class="mb-0">{% trans "Net Salary" %}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if payroll_entries %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>{% trans "Employee" %}</th>
+                                        <th>{% trans "Department" %}</th>
+                                        <th>{% trans "Basic Salary" %}</th>
+                                        <th>{% trans "Allowances" %}</th>
+                                        <th>{% trans "Overtime" %}</th>
+                                        <th>{% trans "Gross Salary" %}</th>
+                                        <th>{% trans "Deductions" %}</th>
+                                        <th>{% trans "Net Salary" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for entry in payroll_entries %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'hr:employee_detail' entry.employee.pk %}">
+                                                {{ entry.employee.get_full_name }}
+                                            </a>
+                                        </td>
+                                        <td>{{ entry.employee.department.name|default:"-" }}</td>
+                                        <td>{{ entry.basic_salary|floatformat:2 }}</td>
+                                        <td>{{ entry.allowances|floatformat:2 }}</td>
+                                        <td>{{ entry.overtime_amount|floatformat:2 }}</td>
+                                        <td>{{ entry.gross_salary|floatformat:2 }}</td>
+                                        <td>{{ entry.total_deductions|floatformat:2 }}</td>
+                                        <td><strong>{{ entry.net_salary|floatformat:2 }}</strong></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-money-bill-wave fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">{% trans "No payroll records found for the selected period" %}</h4>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

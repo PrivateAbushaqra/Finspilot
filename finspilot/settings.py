@@ -1,8 +1,12 @@
 import os
+import sys
 from pathlib import Path
 from decouple import config
 import dj_database_url
-import sys
+
+# Set UTF-8 encoding
+sys.stdout.reconfigure(encoding='utf-8')
+os.environ.setdefault('PYTHONIOENCODING', 'utf-8')
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 

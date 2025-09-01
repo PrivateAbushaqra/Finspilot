@@ -1,9 +1,11 @@
 from django import forms
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 from datetime import date, datetime
 from decimal import Decimal
+
+User = get_user_model()
 
 from .models import (
     Department, Position, Employee, Contract, Attendance, 
@@ -58,7 +60,7 @@ class EmployeeForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # فلترة المستخدمين لعرض المتاحين فقط
         self.fields['user'].queryset = User.objects.filter(
-            employee__isnull=True
+            employee_profile__isnull=True
         ).exclude(id=self.instance.user_id if self.instance.user else None)
         self.fields['user'].required = False
         self.fields['user'].empty_label = _('Select User (Optional)')

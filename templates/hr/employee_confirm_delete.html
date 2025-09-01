@@ -1,0 +1,371 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+{% load django_bootstrap5 %}
+
+{% block page_title %}
+    {% trans "تأكيد حذف الموظف" %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .delete-form-container {
+        background: #ffffff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+        margin-top: 20px;
+    }
+    
+    .delete-header {
+        border-bottom: 2px solid #dc3545;
+        padding-bottom: 15px;
+        margin-bottom: 30px;
+    }
+    
+    .delete-header h2 {
+        color: #dc3545;
+        font-weight: 600;
+        margin: 0;
+    }
+    
+    .warning-section {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+    }
+    
+    .employee-info-box {
+        background: #f8f9fa;
+        border-left: 4px solid #6c757d;
+        padding: 15px;
+        margin: 15px 0;
+        border-radius: 5px;
+    }
+    
+    .employee-details {
+        background: #e9ecef;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 15px 0;
+    }
+    
+    .btn-action {
+        min-width: 120px;
+        margin: 0 5px;
+    }
+    
+    .danger-icon {
+        font-size: 2.5em;
+        color: #dc3545;
+        margin-bottom: 15px;
+    }
+    
+    .warning-list {
+        margin-left: 20px;
+    }
+    
+    .warning-list li {
+        margin-bottom: 8px;
+        color: #721c24;
+        font-weight: 500;
+    }
+    
+    .employee-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: #6c757d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2em;
+        font-weight: bold;
+    }
+    
+    .confirm-text {
+        font-size: 1.1em;
+        font-weight: 500;
+        color: #495057;
+        text-align: center;
+        margin: 20px 0;
+    }
+    
+    .related-data-warning {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        color: #856404;
+        padding: 15px;
+        border-radius: 5px;
+        margin: 15px 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-user-times me-2"></i>
+                        {% trans "حذف الموظف" %}
+                    </h1>
+                    <p class="text-muted mb-0">{% trans "تأكيد حذف بيانات الموظف من النظام" %}</p>
+                </div>
+                <div>
+                    <a href="{% url 'hr:employee_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-right me-1"></i>
+                        {% trans "العودة لقائمة الموظفين" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Section -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="delete-form-container">
+                <div class="delete-header">
+                    <h2>
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        {% trans "تأكيد حذف الموظف" %}
+                    </h2>
+                </div>
+
+                <!-- Warning Section -->
+                <div class="warning-section">
+                    <div class="text-center">
+                        <div class="danger-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <h4 class="text-danger mb-3">{% trans "تحذير مهم!" %}</h4>
+                        <p class="confirm-text">
+                            {% trans "هل أنت متأكد من رغبتك في حذف هذا الموظف؟" %}
+                        </p>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <strong class="text-danger">{% trans "تنبيه:" %}</strong>
+                        <ul class="warning-list mt-2">
+                            <li>{% trans "هذا الإجراء لا يمكن التراجع عنه" %}</li>
+                            <li>{% trans "ستفقد جميع بيانات الموظف نهائياً" %}</li>
+                            <li>{% trans "قد تتأثر البيانات المرتبطة بهذا الموظف" %}</li>
+                            <li>{% trans "يُنصح بعمل نسخة احتياطية قبل الحذف" %}</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Employee Information -->
+                <div class="employee-details">
+                    <h5 class="mb-3">
+                        <i class="fas fa-user me-2"></i>
+                        {% trans "بيانات الموظف المراد حذفه:" %}
+                    </h5>
+                    
+                    <div class="row">
+                        <div class="col-md-2 text-center">
+                            <div class="employee-avatar">
+                                {{ object.first_name.0|default:"M" }}{{ object.last_name.0|default:"" }}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-10">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>{% trans "رقم الموظف:" %}</strong>
+                                    <span class="ms-2">{{ object.employee_id }}</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>{% trans "الاسم الكامل:" %}</strong>
+                                    <span class="ms-2">{{ object.full_name }}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-2">
+                                <div class="col-md-6">
+                                    <strong>{% trans "القسم:" %}</strong>
+                                    <span class="ms-2">{{ object.department.name|default:"غير محدد" }}</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>{% trans "المنصب:" %}</strong>
+                                    <span class="ms-2">{{ object.position.title|default:"غير محدد" }}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-2">
+                                <div class="col-md-6">
+                                    <strong>{% trans "البريد الإلكتروني:" %}</strong>
+                                    <span class="ms-2">{{ object.email|default:"غير محدد" }}</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>{% trans "رقم الهاتف:" %}</strong>
+                                    <span class="ms-2">{{ object.phone|default:"غير محدد" }}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-2">
+                                <div class="col-md-6">
+                                    <strong>{% trans "تاريخ التوظيف:" %}</strong>
+                                    <span class="ms-2">{{ object.hire_date|date:"d/m/Y"|default:"غير محدد" }}</span>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>{% trans "الحالة:" %}</strong>
+                                    {% if object.status == 'active' %}
+                                        <span class="badge bg-success ms-2">{% trans "نشط" %}</span>
+                                    {% elif object.status == 'inactive' %}
+                                        <span class="badge bg-warning ms-2">{% trans "غير نشط" %}</span>
+                                    {% elif object.status == 'terminated' %}
+                                        <span class="badge bg-danger ms-2">{% trans "منتهي الخدمة" %}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary ms-2">{{ object.get_status_display }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Related Data Warning -->
+                <div class="related-data-warning">
+                    <div class="d-flex align-items-start">
+                        <i class="fas fa-info-circle text-warning me-2 mt-1"></i>
+                        <div>
+                            <strong>{% trans "البيانات المرتبطة:" %}</strong>
+                            <p class="mb-1 mt-2">{% trans "قد يكون لهذا الموظف بيانات مرتبطة في النظام مثل:" %}</p>
+                            <ul class="mb-0 mt-1">
+                                <li>{% trans "سجلات الحضور والانصراف" %}</li>
+                                <li>{% trans "طلبات الإجازات" %}</li>
+                                <li>{% trans "بيانات الرواتب" %}</li>
+                                <li>{% trans "تقييمات الأداء" %}</li>
+                                <li>{% trans "الوثائق والملفات" %}</li>
+                            </ul>
+                            <small class="text-muted mt-2 d-block">
+                                {% trans "تأكد من مراجعة هذه البيانات قبل الحذف أو قم بأرشفتها إذا لزم الأمر." %}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Confirmation Form -->
+                <form method="post" id="deleteEmployeeForm">
+                    {% csrf_token %}
+                    
+                    <!-- Final Confirmation -->
+                    <div class="employee-info-box text-center">
+                        <h6 class="text-danger mb-3">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            {% trans "للمتابعة، أكد أنك قرأت جميع التحذيرات أعلاه" %}
+                        </h6>
+                        
+                        <div class="form-check d-flex justify-content-center">
+                            <input class="form-check-input me-2" type="checkbox" id="confirmDelete" required>
+                            <label class="form-check-label" for="confirmDelete">
+                                {% trans "أؤكد أنني قرأت التحذيرات وأريد المتابعة مع حذف الموظف" %}
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-center gap-3 border-top pt-4 mt-4">
+                        <a href="{% url 'hr:employee_list' %}" class="btn btn-outline-secondary btn-action">
+                            <i class="fas fa-times me-1"></i>
+                            {% trans "إلغاء" %}
+                        </a>
+                        <a href="{% url 'hr:employee_detail' object.pk %}" class="btn btn-info btn-action">
+                            <i class="fas fa-eye me-1"></i>
+                            {% trans "عرض التفاصيل" %}
+                        </a>
+                        <button type="submit" class="btn btn-danger btn-action" id="deleteBtn" disabled>
+                            <i class="fas fa-trash-alt me-1"></i>
+                            {% trans "تأكيد الحذف" %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmCheckbox = document.getElementById('confirmDelete');
+    const deleteBtn = document.getElementById('deleteBtn');
+    const deleteForm = document.getElementById('deleteEmployeeForm');
+
+    // تفعيل/تعطيل زر الحذف بناءً على checkbox
+    confirmCheckbox.addEventListener('change', function() {
+        deleteBtn.disabled = !this.checked;
+        
+        if (this.checked) {
+            deleteBtn.classList.remove('btn-danger');
+            deleteBtn.classList.add('btn-danger');
+        }
+    });
+
+    // تأكيد إضافي عند الإرسال
+    deleteForm.addEventListener('submit', function(e) {
+        if (!confirmCheckbox.checked) {
+            e.preventDefault();
+            alert('{% trans "يجب تأكيد قراءة التحذيرات أولاً" %}');
+            return false;
+        }
+
+        // تأكيد نهائي
+        const employeeName = '{{ object.full_name|escapejs }}';
+        const confirmMessage = `{% trans "تأكيد أخير: هل أنت متأكد من حذف الموظف" %} "${employeeName}"؟\n\n{% trans "هذا الإجراء لا يمكن التراجع عنه!" %}`;
+        
+        if (!confirm(confirmMessage)) {
+            e.preventDefault();
+            return false;
+        }
+
+        // تعطيل الزر لمنع الضغط المتعدد
+        deleteBtn.disabled = true;
+        deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>{% trans "جاري الحذف..." %}';
+    });
+
+    // تحذير عند محاولة مغادرة الصفحة أثناء عملية الحذف
+    let deleteInProgress = false;
+    
+    deleteForm.addEventListener('submit', function() {
+        deleteInProgress = true;
+    });
+
+    window.addEventListener('beforeunload', function(e) {
+        if (deleteInProgress) {
+            const message = '{% trans "عملية الحذف قيد التنفيذ. هل أنت متأكد من مغادرة الصفحة؟" %}';
+            e.returnValue = message;
+            return message;
+        }
+    });
+
+    // تحسين تجربة المستخدم - تمييز المعلومات المهمة
+    const employeeId = '{{ object.employee_id|escapejs }}';
+    const employeeName = '{{ object.full_name|escapejs }}';
+    
+    // إضافة تأثير بصري للتحذير
+    const warningSection = document.querySelector('.warning-section');
+    let blinkCount = 0;
+    const blinkInterval = setInterval(function() {
+        warningSection.style.background = blinkCount % 2 === 0 ? '#f8d7da' : '#f5c6cb';
+        blinkCount++;
+        if (blinkCount >= 6) { // 3 مرات وميض
+            clearInterval(blinkInterval);
+            warningSection.style.background = '#f8d7da';
+        }
+    }, 500);
+
+    // تسجيل محاولة الوصول لصفحة الحذف في console للتتبع
+    console.log(`تم الوصول لصفحة حذف الموظف: ${employeeName} (${employeeId})`);
+});
+</script>
+{% endblock %}

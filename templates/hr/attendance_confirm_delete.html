@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block page_title %}{% trans "تأكيد حذف سجل الحضور" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .delete-confirmation-container {
+        background: #ffffff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+        margin-top: 20px;
+    }
+    
+    .warning-icon {
+        font-size: 4rem;
+        color: #dc3545;
+        margin-bottom: 20px;
+    }
+    
+    .attendance-details {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 20px 0;
+        border-left: 4px solid #dc3545;
+    }
+    
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .detail-row:last-child {
+        border-bottom: none;
+    }
+    
+    .detail-label {
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .detail-value {
+        color: #212529;
+    }
+    
+    .btn-action {
+        min-width: 120px;
+        margin: 0 5px;
+    }
+    
+    .attendance-status {
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.85em;
+        font-weight: 500;
+    }
+    
+    .status-present { background-color: #d4edda; color: #155724; }
+    .status-absent { background-color: #f8d7da; color: #721c24; }
+    .status-late { background-color: #fff3cd; color: #856404; }
+    .status-half_day { background-color: #d1ecf1; color: #0c5460; }
+    .status-on_leave { background-color: #e2e3e5; color: #383d41; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-trash-alt me-2"></i>
+                        {% trans "حذف سجل الحضور" %}
+                    </h1>
+                    <p class="text-muted mb-0">{% trans "تأكيد حذف سجل الحضور والانصراف" %}</p>
+                </div>
+                <div>
+                    <a href="{% url 'hr:attendance_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-right me-1"></i>
+                        {% trans "العودة للقائمة" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Section -->
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <div class="delete-confirmation-container text-center">
+                <div class="warning-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                
+                <h2 class="text-danger mb-3">{% trans "تحذير!" %}</h2>
+                <p class="lead mb-4">
+                    {% trans "هل أنت متأكد من رغبتك في حذف سجل الحضور هذا؟" %}
+                </p>
+                <p class="text-muted mb-4">
+                    {% trans "هذا الإجراء لا يمكن التراجع عنه وسيتم حذف جميع البيانات المرتبطة بهذا السجل نهائياً." %}
+                </p>
+
+                <!-- Attendance Details -->
+                <div class="attendance-details text-start">
+                    <h5 class="text-danger mb-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        {% trans "تفاصيل السجل المراد حذفه" %}
+                    </h5>
+                    
+                    <div class="detail-row">
+                        <span class="detail-label">
+                            <i class="fas fa-user me-1"></i>
+                            {% trans "الموظف" %}:
+                        </span>
+                        <span class="detail-value">{{ object.employee.full_name }}</span>
+                    </div>
+                    
+                    <div class="detail-row">
+                        <span class="detail-label">
+                            <i class="fas fa-calendar me-1"></i>
+                            {% trans "التاريخ" %}:
+                        </span>
+                        <span class="detail-value">{{ object.date|date:"d/m/Y" }}</span>
+                    </div>
+                    
+                    <div class="detail-row">
+                        <span class="detail-label">
+                            <i class="fas fa-clock me-1"></i>
+                            {% trans "نوع الحضور" %}:
+                        </span>
+                        <span class="detail-value">
+                            <span class="attendance-status status-{{ object.attendance_type }}">
+                                {{ object.get_attendance_type_display }}
+                            </span>
+                        </span>
+                    </div>
+                    
+                    {% if object.check_in_time %}
+                    <div class="detail-row">
+                        <span class="detail-label">
+                            <i class="fas fa-sign-in-alt me-1"></i>
+                            {% trans "وقت الحضور" %}:
+                        </span>
+                        <span class="detail-value">{{ object.check_in_time|time:"H:i" }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if object.check_out_time %}
+                    <div class="detail-row">
+                        <span class="detail-label">
+                            <i class="fas fa-sign-out-alt me-1"></i>
+                            {% trans "وقت الانصراف" %}:
+                        </span>
+                        <span class="detail-value">{{ object.check_out_time|time:"H:i" }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if object.worked_hours %}
+                    <div class="detail-row">
+                        <span class="detail-label">
+                            <i class="fas fa-hourglass-half me-1"></i>
+                            {% trans "ساعات العمل" %}:
+                        </span>
+                        <span class="detail-value">{{ object.worked_hours }} {% trans "ساعة" %}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if object.overtime_hours %}
+                    <div class="detail-row">
+                        <span class="detail-label">
+                            <i class="fas fa-clock me-1"></i>
+                            {% trans "ساعات الأوفرتايم" %}:
+                        </span>
+                        <span class="detail-value">{{ object.overtime_hours }} {% trans "ساعة" %}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if object.notes %}
+                    <div class="detail-row">
+                        <span class="detail-label">
+                            <i class="fas fa-sticky-note me-1"></i>
+                            {% trans "ملاحظات" %}:
+                        </span>
+                        <span class="detail-value">{{ object.notes }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="detail-row">
+                        <span class="detail-label">
+                            <i class="fas fa-user-edit me-1"></i>
+                            {% trans "تم الإنشاء بواسطة" %}:
+                        </span>
+                        <span class="detail-value">{{ object.created_by.get_full_name|default:object.created_by.username }}</span>
+                    </div>
+                    
+                    <div class="detail-row">
+                        <span class="detail-label">
+                            <i class="fas fa-clock me-1"></i>
+                            {% trans "تاريخ الإنشاء" %}:
+                        </span>
+                        <span class="detail-value">{{ object.created_at|date:"d/m/Y H:i" }}</span>
+                    </div>
+                </div>
+
+                <!-- Confirmation Form -->
+                <form method="post" class="mt-4">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="{% url 'hr:attendance_list' %}" class="btn btn-outline-secondary btn-action">
+                            <i class="fas fa-times me-1"></i>
+                            {% trans "إلغاء" %}
+                        </a>
+                        <button type="submit" class="btn btn-danger btn-action" onclick="return confirmDelete()">
+                            <i class="fas fa-trash-alt me-1"></i>
+                            {% trans "تأكيد الحذف" %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function confirmDelete() {
+    return confirm('{% trans "هل أنت متأكد من رغبتك في حذف سجل الحضور هذا نهائياً؟ لا يمكن التراجع عن هذا الإجراء." %}');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // إضافة تأثير تحذيري عند النقر على زر الحذف
+    const deleteButton = document.querySelector('.btn-danger');
+    if (deleteButton) {
+        deleteButton.addEventListener('mouseenter', function() {
+            this.classList.add('shadow-lg');
+        });
+        
+        deleteButton.addEventListener('mouseleave', function() {
+            this.classList.remove('shadow-lg');
+        });
+    }
+});
+</script>
+{% endblock %}
