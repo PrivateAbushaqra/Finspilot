@@ -5,7 +5,7 @@ services:
     region: oregon
     branch: main
     plan: free
-    buildCommand: "python -m pip install --upgrade pip setuptools wheel && pip install -r requirements.txt && python manage.py migrate --noinput && python compile_arabic_messages.py && python manage.py collectstatic --noinput"
+    buildCommand: "python -m pip install --upgrade pip setuptools wheel && pip install -r requirements.txt && python manage.py migrate --noinput && python manage.py collectstatic --noinput"
     startCommand: "gunicorn finspilot.wsgi:application --bind 0.0.0.0:$PORT"
     envVars:
       - key: PYTHON_VERSION
