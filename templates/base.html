@@ -1619,6 +1619,12 @@
     <script src="{% static 'core/js/session-manager.js' %}"></script>
     {% endif %}
     
+    <!-- Auto Translation JavaScript for Arabic Page -->
+    {% if LANGUAGE_CODE == 'ar' %}
+    {% load static %}
+    <script src="{% static 'core/js/arabic-auto-translate.js' %}"></script>
+    {% endif %}
+    
     <!-- Auto Translation JavaScript -->
     <script>
     {% if LANGUAGE_CODE == 'en' %}
