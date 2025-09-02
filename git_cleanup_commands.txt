@@ -1,0 +1,41 @@
+# Git Commands for Cleanup Commit
+# Use these commands in Git Bash to commit the cleanup changes
+
+# Add all changes to staging area
+git add .
+
+# Remove deleted files from git tracking
+git add -u
+
+# Commit the cleanup with detailed message in Arabic
+git commit -m "تنظيف النظام: إزالة الملفات المؤقتة وملفات الاختبار
+
+- إزالة جميع ملفات الاختبار المؤقتة (50+ ملف)
+- إزالة نصوص الترجمة المؤقتة والتقارير
+- إزالة ملفات التحقق من الترجمة العربية  
+- تنظيف مجلد locale وإبقاء الملفات الأساسية فقط
+- إزالة ملفات النشر والتوزيع المؤقتة
+- المحافظة على سلامة النظام وجميع الوظائف الأساسية
+
+تم التحقق من سلامة النظام: System check identified no issues"
+
+# Push to remote repository (if needed)
+git push origin main
+
+# Alternative commit message in English (if preferred)
+# git commit -m "System cleanup: Remove temporary files and test scripts
+# 
+# - Removed all temporary test files (50+ files)
+# - Removed temporary translation scripts and reports  
+# - Removed Arabic translation validation files
+# - Cleaned locale directory keeping only essential files
+# - Removed temporary deployment scripts
+# - Preserved system integrity and core functionality
+# 
+# System verified: System check identified no issues"
+
+# View git status to confirm cleanup
+git status
+
+# View recent commits
+git log --oneline -5
