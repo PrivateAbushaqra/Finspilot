@@ -223,13 +223,9 @@
                                             <th width="10%">{% trans "Quantity" %} المتوفرة</th>
                                             <th width="10%">{% trans "Quantity" %}</th>
                                             <th width="12%">سعر الوحدة</th>
-                                            {% if user.is_superuser %}
                                             <th width="8%">نسبة الضريبة</th>
-                                            {% endif %}
                                             <th width="12%">{% trans "Total" %}</th>
-                                            {% if user.is_superuser %}
                                             <th width="10%">الضريبة</th>
-                                            {% endif %}
                                             <th width="5%">{% trans "Delete" %}</th>
                                         </tr>
                                     </thead>
@@ -320,9 +316,7 @@
                                 <th>{% trans "Description" %}</th>
                                 <th>{% trans "Quantity" %} المتوفرة</th>
                                 <th>آخر سعر شراء</th>
-                                {% if user.is_superuser %}
                                 <th>نسبة الضريبة</th>
-                                {% endif %}
                                 <th>اختيار</th>
                             </tr>
                         </thead>
@@ -344,12 +338,10 @@
                                         <span class="text-muted">غير محدد</span>
                                     {% endif %}
                                 </td>
-                                {% if user.is_superuser %}
                                 <td><small>{{ product.tax_rate|floatformat:2 }}%</small></td>
-                                {% endif %}
                                 <td>
                                     <button type="button" class="btn btn-sm btn-primary" 
-                                            onclick="selectProduct('{{ product.id }}', '{{ product.code }}', '{{ product.name }}', '{{ product.last_purchase_price|default:0 }}', '{{ product.tax_rate }}', '{{ product.current_stock }}')"
+                                            onclick="selectProduct('{{ product.id }}', '{{ product.code }}', '{{ product.name }}', '{{ product.last_purchase_price|default:0 }}', '{{ product.tax_rate }}', '0')"
                                             title="اختيار {{ product.name }}">
                                         <i class="fas fa-plus"></i>
                                     </button>
@@ -357,7 +349,7 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="6" class="text-center text-muted">
+                                <td colspan="7" class="text-center text-muted">
                                     <i class="fas fa-box-open fa-2x mb-2"></i>
                                     <p>لا توجد منتجات متاحة</p>
                                 </td>
@@ -416,24 +408,16 @@ function addProductRow() {
         const row = document.createElement('tr');
         row.id = `productRow${productRowCount}`;
         
-        const isSuperuser = {{ user.is_superuser|yesno:"true,false" }};
+        let taxCells = `
+            <td>
+                <input type="number" class="form-control" name="tax_rate[]" id="taxRate${productRowCount}" 
+                       min="0" step="0.01" placeholder="0.00" onchange="calculateRowTotal(${productRowCount})">
+            </td>`;
         
-        let taxCells = '';
-        if (isSuperuser) {
-            taxCells = `
-                <td>
-                    <input type="number" class="form-control" name="tax_rate[]" id="taxRate${productRowCount}" 
-                           min="0" step="0.01" placeholder="0.00" readonly>
-                </td>`;
-        }
-        
-        let taxAmountCells = '';
-        if (isSuperuser) {
-            taxAmountCells = `
-                <td>
-                    <input type="text" class="form-control" id="rowTax${productRowCount}" readonly placeholder="0.00">
-                </td>`;
-        }
+        let taxAmountCells = `
+            <td>
+                <input type="text" class="form-control" id="rowTax${productRowCount}" readonly placeholder="0.00">
+            </td>`;
         
         row.innerHTML = `
             <td>
@@ -468,7 +452,7 @@ function addProductRow() {
             </td>
             ${taxAmountCells}
             <td class="text-center">
-                <button type="button" class="btn btn-remove-product text-white" onclick="removeProductRow(${productRowCount})" title="{% trans "Delete" %} المنتج">
+                <button type="button" class="btn btn-remove-product text-white" onclick="removeProductRow(${productRowCount})" title="حذف المنتج">
                     <i class="fas fa-times"></i>
                 </button>
             </td>
@@ -479,8 +463,8 @@ function addProductRow() {
         console.log(`تم إضافة صف منتج جديد: productRow${productRowCount}`);
         
     } catch (error) {
-        console.error('{% trans "Error" %} في {% trans "Add" %} صف منتج:', error);
-        alert('حدث {% trans "Error" %} في {% trans "Add" %} صف منتج {% trans "New" %}');
+        console.error('خطأ في إضافة صف منتج:', error);
+        alert('حدث خطأ في إضافة صف منتج جديد');
     }
 }
 
@@ -507,8 +491,8 @@ function openProductModal(rowId) {
         const modal = new bootstrap.Modal(modalElement);
         modal.show();
     } catch (error) {
-        console.error('{% trans "Error" %} في {% trans "Open" %} مودال المنتجات:', error);
-        alert('{% trans "Error" %} في {% trans "Open" %} نافذة اختيار المنتجات');
+        console.error('خطأ في فتح مودال المنتجات:', error);
+        alert('خطأ في فتح نافذة اختيار المنتجات');
     }
 }
 
@@ -543,19 +527,26 @@ function selectProduct(productId, productCode, productName, lastPurchasePrice, t
         }
         
         // تحديث معدل الضريبة
+        console.log('تعبئة نسبة الضريبة:', taxRate);
         if (taxRateInput) {
-            taxRateInput.value = taxRate || 0;
+            taxRateInput.value = parseFloat(taxRate || 0).toFixed(2);
+            console.log('تم تعبئة taxRateInput:', taxRateInput.value);
         }
         if (hiddenTaxRateInput) {
-            hiddenTaxRateInput.value = taxRate || 0;
+            hiddenTaxRateInput.value = parseFloat(taxRate || 0).toFixed(2);
+            console.log('تم تعبئة hiddenTaxRateInput:', hiddenTaxRateInput.value);
         }
         
         // تعبئة آخر سعر شراء كقيمة اقتراحية
         if (lastPurchasePrice && parseFloat(lastPurchasePrice) > 0 && unitPriceInput) {
             unitPriceInput.value = parseFloat(lastPurchasePrice).toFixed(3);
-            // حساب {% trans "Total" %} إذا كانت {% trans "Quantity" %} موجودة
-            calculateRowTotal(currentRow);
+            console.log('تم تعبئة سعر الوحدة:', unitPriceInput.value);
         }
+        
+        // إنتظار قليل للتأكد من تعبئة جميع البيانات ثم حساب المجموع
+        setTimeout(() => {
+            calculateRowTotal(currentRow);
+        }, 100);
         
         // إغ{% trans "No" %}ق المودال
         const modalElement = document.getElementById('productModal');
@@ -573,47 +564,63 @@ function selectProduct(productId, productCode, productName, lastPurchasePrice, t
         }
         
     } catch (error) {
-        console.error('{% trans "Error" %} في اختيار المنتج:', error);
-        alert('حدث {% trans "Error" %} في اختيار المنتج');
+        console.error('خطأ في اختيار المنتج:', error);
+        alert('حدث خطأ في اختيار المنتج');
     }
 }
 
 function calculateRowTotal(rowId) {
+    console.log('حساب مجموع الصف:', rowId);
+    
     const quantity = parseFloat(document.getElementById(`quantity${rowId}`).value) || 0;
     const unitPrice = parseFloat(document.getElementById(`unitPrice${rowId}`).value) || 0;
+    
+    console.log('الكمية:', quantity, 'السعر:', unitPrice);
     
     // الحصول على معدل الضريبة من الحقل المرئي أو المخفي
     let taxRate = 0;
     const taxRateElement = document.getElementById(`taxRate${rowId}`);
     const hiddenTaxRateElement = document.getElementById(`hiddenTaxRate${rowId}`);
     
-    if (taxRateElement) {
+    if (taxRateElement && taxRateElement.value) {
         taxRate = parseFloat(taxRateElement.value) || 0;
-    } else if (hiddenTaxRateElement) {
+        console.log('نسبة الضريبة من الحقل المرئي:', taxRate);
+    } else if (hiddenTaxRateElement && hiddenTaxRateElement.value) {
         taxRate = parseFloat(hiddenTaxRateElement.value) || 0;
+        console.log('نسبة الضريبة من الحقل المخفي:', taxRate);
     }
     
-    // حساب {% trans "Total" %} الفرعي (بدون ضريبة)
+    console.log('نسبة الضريبة النهائية:', taxRate);
+    
+    // حساب المجموع الفرعي (بدون ضريبة)
     const subtotal = quantity * unitPrice;
     
     // حساب قيمة الضريبة
     const taxAmount = subtotal * (taxRate / 100);
     
-    // {% trans "Total" %} الإجمالي (مع الضريبة)
+    // المجموع الإجمالي (مع الضريبة)
     const total = subtotal + taxAmount;
     
-    document.getElementById(`rowTotal${rowId}`).value = subtotal.toFixed(2);
+    console.log('المجموع الفرعي:', subtotal, 'الضريبة:', taxAmount, 'الإجمالي:', total);
     
-    // تحديث حقل الضريبة إذا كان موجوداً (للمشرف العام فقط)
+    // تحديث حقل المجموع الفرعي
+    const rowTotalElement = document.getElementById(`rowTotal${rowId}`);
+    if (rowTotalElement) {
+        rowTotalElement.value = subtotal.toFixed(2);
+    }
+    
+    // تحديث حقل الضريبة إذا كان موجوداً
     const rowTaxElement = document.getElementById(`rowTax${rowId}`);
     if (rowTaxElement) {
         rowTaxElement.value = taxAmount.toFixed(2);
+        console.log('تم تحديث حقل الضريبة المرئي:', taxAmount.toFixed(2));
     }
     
     // تحديث الحقل المخفي للضريبة
     const hiddenTaxField = document.getElementById(`hiddenRowTax${rowId}`);
     if (hiddenTaxField) {
         hiddenTaxField.value = taxAmount.toFixed(2);
+        console.log('تم تحديث حقل الضريبة المخفي:', taxAmount.toFixed(2));
     }
     
     calculateTotals();
@@ -623,7 +630,7 @@ function calculateTotals() {
     let subtotal = 0;
     let totalTax = 0;
     
-    // حساب {% trans "Total" %} الفرعي ومجموع الضرائب
+    // حساب المجموع الفرعي ومجموع الضرائب
     const rows = document.querySelectorAll('#productsTableBody tr');
     rows.forEach(row => {
         const rowTotalInput = row.querySelector('[id^="rowTotal"]');
