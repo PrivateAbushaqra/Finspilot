@@ -366,19 +366,35 @@ class CustomerSupplierDeleteView(LoginRequiredMixin, View):
     def get(self, request, pk, *args, **kwargs):
         customer_supplier = get_object_or_404(CustomerSupplier, pk=pk)
         
-        # فحص البيانات المرتبطة (يمكن توسيعها لاحقاً)
-        related_data = {
-            'invoices': 0,  # سيتم ربطها بنماذج الفواتير لاحقاً
-            'payments': 0,  # سيتم ربطها بنماذج المدفوعات لاحقاً
-            'transactions': 0,  # سيتم ربطها بنماذج المعاملات لاحقاً
-        }
+        # التحقق من الصلاحيات - فقط للسوبر أدمين
+        if not request.user.is_superuser:
+            messages.error(request, _('ليس لديك صلاحية لحذف العملاء/الموردين'))
+            return redirect('customers:detail', pk=pk)
+        
+        # فحص البيانات المرتبطة
+        related_data = self._get_related_data_count(customer_supplier)
         
         context = {
             'customer_supplier': customer_supplier,
             'related_data': related_data,
-            'can_delete': not any(related_data.values())
+            'can_delete': True,  # السوبر أدمين يمكنه الحذف دائماً
+            'warning_message': _('تحذير: سيتم حذف جميع البيانات المرتبطة نهائياً!') if any(related_data.values()) else None
         }
         return render(request, self.template_name, context)
+    
+    def _get_related_data_count(self, customer_supplier):
+        """حساب عدد البيانات المرتبطة"""
+        from sales.models import SalesInvoice, SalesReturn
+        from purchases.models import PurchaseInvoice, PurchaseReturn
+        from accounts.models import AccountTransaction
+        
+        return {
+            'sales_invoices': SalesInvoice.objects.filter(customer=customer_supplier).count(),
+            'purchase_invoices': PurchaseInvoice.objects.filter(supplier=customer_supplier).count(),
+            'sales_returns': SalesReturn.objects.filter(customer=customer_supplier).count(),
+            'purchase_returns': PurchaseReturn.objects.filter(original_invoice__supplier=customer_supplier).count(),
+            'transactions': AccountTransaction.objects.filter(customer_supplier=customer_supplier).count(),
+        }
     
     def post(self, request, pk, *args, **kwargs):
         customer_supplier = get_object_or_404(CustomerSupplier, pk=pk)
@@ -387,28 +403,158 @@ class CustomerSupplierDeleteView(LoginRequiredMixin, View):
             # التحقق من تأكيد الحذف
             confirm = request.POST.get('confirm_delete')
             if confirm != 'DELETE':
-                messages.error(request, 'يجب كتابة "DELETE" للتأكيد!')
+                messages.error(request, _('يجب كتابة "DELETE" للتأكيد!'))
                 return redirect('customers:delete', pk=pk)
             
-            # حفظ البيانات للرسالة
+            # التحقق من الصلاحيات - فقط للسوبر أدمين
+            if not request.user.is_superuser:
+                messages.error(request, _('ليس لديك صلاحية لحذف العملاء/الموردين'))
+                return redirect('customers:delete', pk=pk)
+            
+            # حفظ البيانات للرسالة والتدقيق
             name = customer_supplier.name
             type_display = customer_supplier.get_type_display()
+            customer_id = customer_supplier.id
             
-            # حذف العميل/المورد
-            customer_supplier.delete()
+            # الحذف الإجباري باستخدام Raw SQL مباشرة
+            self._force_delete_customer_supplier(customer_supplier)
+            
+            # تسجيل عملية الحذف في سجل الأنشطة
+            from core.models import AuditLog
+            AuditLog.objects.create(
+                user=request.user,
+                action_type='delete',
+                content_type='CustomerSupplier',
+                object_id=customer_id,
+                description=_(f'تم حذف العميل/المورد وجميع البيانات المرتبطة نهائياً: {name} ({type_display})'),
+                ip_address=self.get_client_ip(request)
+            )
             
             # رسالة نجاح
             messages.success(
                 request, 
-                f'تم حذف {type_display} "{name}" بنجاح!\n'
-                f'جميع البيانات المرتبطة تم حذفها نهائياً.'
+                _(f'تم حذف {type_display} "{name}" بنجاح!\n'
+                f'جميع البيانات المرتبطة تم حذفها نهائياً.')
             )
             
             return redirect('customers:list')
             
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء حذف البيانات: {str(e)}')
+            # تسجيل الخطأ في سجل الأنشطة
+            from core.models import AuditLog
+            AuditLog.objects.create(
+                user=request.user,
+                action_type='delete_failed',
+                content_type='CustomerSupplier',
+                object_id=customer_supplier.id,
+                description=_(f'فشل حذف العميل/المورد: {str(e)}'),
+                ip_address=self.get_client_ip(request)
+            )
+            
+            messages.error(request, _(f'حدث خطأ أثناء حذف البيانات: {str(e)}'))
             return redirect('customers:delete', pk=pk)
+    
+    def _force_delete_customer_supplier(self, customer_supplier):
+        """حذف إجباري للعميل/المورد وجميع بياناته بـ Raw SQL"""
+        from django.db import connection, transaction
+        
+        with transaction.atomic():
+            with connection.cursor() as cursor:
+                customer_id = customer_supplier.id
+                
+                # 1. حذف مردودات الشراء والمبيعات
+                cursor.execute("""
+                    DELETE FROM purchases_purchasereturnitem 
+                    WHERE return_invoice_id IN (
+                        SELECT id FROM purchases_purchasereturn 
+                        WHERE original_invoice_id IN (
+                            SELECT id FROM purchases_purchaseinvoice WHERE supplier_id = %s
+                        )
+                    )
+                """, [customer_id])
+                
+                cursor.execute("""
+                    DELETE FROM purchases_purchasereturn 
+                    WHERE original_invoice_id IN (
+                        SELECT id FROM purchases_purchaseinvoice WHERE supplier_id = %s
+                    )
+                """, [customer_id])
+                
+                cursor.execute("""
+                    DELETE FROM sales_salesreturnitem 
+                    WHERE return_invoice_id IN (
+                        SELECT id FROM sales_salesreturn 
+                        WHERE customer_id = %s
+                    )
+                """, [customer_id])
+                
+                cursor.execute("""
+                    DELETE FROM sales_salesreturn WHERE customer_id = %s
+                """, [customer_id])
+                
+                # 2. حذف حركات المخزون المرتبطة
+                cursor.execute("""
+                    DELETE FROM inventory_inventorymovement 
+                    WHERE reference_id IN (
+                        SELECT id FROM purchases_purchaseinvoice WHERE supplier_id = %s
+                    ) AND reference_type = 'purchase_invoice'
+                """, [customer_id])
+                
+                cursor.execute("""
+                    DELETE FROM inventory_inventorymovement 
+                    WHERE reference_id IN (
+                        SELECT id FROM sales_salesinvoice WHERE customer_id = %s
+                    ) AND reference_type = 'sales_invoice'
+                """, [customer_id])
+                
+                # 3. حذف عناصر الفواتير
+                cursor.execute("""
+                    DELETE FROM purchases_purchaseinvoiceitem 
+                    WHERE invoice_id IN (
+                        SELECT id FROM purchases_purchaseinvoice WHERE supplier_id = %s
+                    )
+                """, [customer_id])
+                
+                cursor.execute("""
+                    DELETE FROM sales_salesinvoiceitem 
+                    WHERE invoice_id IN (
+                        SELECT id FROM sales_salesinvoice WHERE customer_id = %s
+                    )
+                """, [customer_id])
+                
+                # 4. حذف الفواتير نفسها (تجاوز PROTECT)
+                cursor.execute("""
+                    DELETE FROM purchases_purchaseinvoice WHERE supplier_id = %s
+                """, [customer_id])
+                
+                cursor.execute("""
+                    DELETE FROM sales_salesinvoice WHERE customer_id = %s
+                """, [customer_id])
+                
+                # 5. حذف معاملات الحساب
+                cursor.execute("""
+                    DELETE FROM accounts_accounttransaction WHERE customer_supplier_id = %s
+                """, [customer_id])
+                
+                # 6. حذف أي حركات مخزون أخرى
+                cursor.execute("""
+                    DELETE FROM inventory_inventorymovement 
+                    WHERE customer_supplier_id = %s
+                """, [customer_id])
+                
+                # 8. أخيراً حذف العميل/المورد نفسه
+                cursor.execute("""
+                    DELETE FROM customers_customersupplier WHERE id = %s
+                """, [customer_id])
+    
+    def get_client_ip(self, request):
+        """الحصول على عنوان IP الخاص بالعميل"""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
 
 class CustomerSupplierTransactionsView(LoginRequiredMixin, TemplateView):
     template_name = 'customers/transactions.html'
