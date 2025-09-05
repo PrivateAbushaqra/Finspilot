@@ -1,0 +1,520 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{{ page_title }} - Triangle{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background: #fff;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid #dc3545;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .section-title {
+        color: #dc3545;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .required-field {
+        color: #dc3545;
+    }
+    
+    .form-help {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    
+    .currency-symbol {
+        background: #e9ecef;
+        border: 1px solid #ced4da;
+        border-left: none;
+        padding: 0.375rem 0.75rem;
+        font-weight: bold;
+    }
+    
+    #addCategoryBtn {
+        border-left: none;
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+    
+    .input-group .form-select {
+        border-right: none;
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+    
+    .modal-header {
+        background: linear-gradient(135deg, #dc3545, #b02a37);
+        color: white;
+    }
+    
+    .modal-header .btn-close {
+        filter: invert(1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                <h1 class="h3 mb-0 text-gray-800">
+                    <i class="fas fa-plus-circle text-danger me-2"></i>
+                    {{ page_title }}
+                </h1>
+                <a href="{% url 'assets_liabilities:liability_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>{% trans "Back to Liabilities List" %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" class="needs-validation" novalidate>
+        {% csrf_token %}
+        
+        <!-- معلومات أساسية -->
+        <div class="form-section">
+            <h5 class="section-title">
+                <i class="fas fa-info-circle me-2"></i>
+                {% trans "Basic Information" %}
+            </h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ form.liability_number.id_for_label }}" class="form-label">
+                            {% trans "Liability Number" %}
+                        </label>
+                        {{ form.liability_number }}
+                        <div class="form-help">
+                            {% trans "Leave empty to auto-generate" %}
+                        </div>
+                        {% if form.liability_number.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.liability_number.errors|first }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ form.name.id_for_label }}" class="form-label">
+                            {% trans "Liability Name" %} <span class="required-field">*</span>
+                        </label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.name.errors|first }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ form.category.id_for_label }}" class="form-label">
+                            {% trans "Category" %} <span class="required-field">*</span>
+                        </label>
+                        <div class="input-group">
+                            {{ form.category }}
+                            <button type="button" class="btn btn-outline-danger" id="addCategoryBtn" onclick="showAddCategoryModal()">
+                                <i class="fas fa-plus"></i>
+                                <span class="d-none d-md-inline ms-1">{% trans "Add Category First" %}</span>
+                            </button>
+                        </div>
+                        {% if form.category.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.category.errors|first }}
+                            </div>
+                        {% endif %}
+                        <div class="form-help">
+                            {% trans "Select an existing category or add a new one first" %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ form.status.id_for_label }}" class="form-label">
+                            {% trans "Status" %}
+                        </label>
+                        {{ form.status }}
+                        {% if form.status.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.status.errors|first }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="{{ form.description.id_for_label }}" class="form-label">
+                    {% trans "Description" %}
+                </label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <div class="invalid-feedback d-block">
+                        {{ form.description.errors|first }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- معلومات مالية -->
+        <div class="form-section">
+            <h5 class="section-title">
+                <i class="fas fa-dollar-sign me-2"></i>
+                {% trans "Financial Information" %}
+            </h5>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="{{ form.original_amount.id_for_label }}" class="form-label">
+                            {% trans "Original Amount" %} <span class="required-field">*</span>
+                        </label>
+                        <div class="input-group">
+                            {{ form.original_amount }}
+                            <span class="input-group-text currency-symbol">
+                                {% if form.instance.currency %}
+                                    {{ form.instance.currency.symbol }}
+                                {% else %}
+                                    د.أ
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% if form.original_amount.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.original_amount.errors|first }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="{{ form.current_balance.id_for_label }}" class="form-label">
+                            {% trans "Current Balance" %}
+                        </label>
+                        <div class="input-group">
+                            {{ form.current_balance }}
+                            <span class="input-group-text currency-symbol">
+                                {% if form.instance.currency %}
+                                    {{ form.instance.currency.symbol }}
+                                {% else %}
+                                    د.أ
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% if form.current_balance.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.current_balance.errors|first }}
+                            </div>
+                        {% endif %}
+                        <div class="form-help">
+                            {% trans "Leave empty to default to original amount" %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="{{ form.interest_rate.id_for_label }}" class="form-label">
+                            {% trans "Interest Rate" %}
+                        </label>
+                        <div class="input-group">
+                            {{ form.interest_rate }}
+                            <span class="input-group-text">%</span>
+                        </div>
+                        {% if form.interest_rate.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.interest_rate.errors|first }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ form.currency.id_for_label }}" class="form-label">
+                            {% trans "Currency" %}
+                        </label>
+                        {{ form.currency }}
+                        {% if form.currency.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.currency.errors|first }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- معلومات التواريخ -->
+        <div class="form-section">
+            <h5 class="section-title">
+                <i class="fas fa-calendar me-2"></i>
+                {% trans "Date Information" %}
+            </h5>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="{{ form.start_date.id_for_label }}" class="form-label">
+                            {% trans "Start Date" %} <span class="required-field">*</span>
+                        </label>
+                        {{ form.start_date }}
+                        {% if form.start_date.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.start_date.errors|first }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="{{ form.due_date.id_for_label }}" class="form-label">
+                            {% trans "Due Date" %} <span class="required-field">*</span>
+                        </label>
+                        {{ form.due_date }}
+                        {% if form.due_date.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.due_date.errors|first }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="{{ form.last_payment_date.id_for_label }}" class="form-label">
+                            {% trans "Last Payment Date" %}
+                        </label>
+                        {{ form.last_payment_date }}
+                        {% if form.last_payment_date.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.last_payment_date.errors|first }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- معلومات الطرف الآخر -->
+        <div class="form-section">
+            <h5 class="section-title">
+                <i class="fas fa-handshake me-2"></i>
+                {% trans "Creditor Information" %}
+            </h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ form.creditor_name.id_for_label }}" class="form-label">
+                            {% trans "Creditor Name" %} <span class="required-field">*</span>
+                        </label>
+                        {{ form.creditor_name }}
+                        {% if form.creditor_name.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.creditor_name.errors|first }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ form.creditor_contact.id_for_label }}" class="form-label">
+                            {% trans "Contact Information" %}
+                        </label>
+                        {{ form.creditor_contact }}
+                        {% if form.creditor_contact.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.creditor_contact.errors|first }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ form.contract_number.id_for_label }}" class="form-label">
+                            {% trans "Contract Number" %}
+                        </label>
+                        {{ form.contract_number }}
+                        {% if form.contract_number.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.contract_number.errors|first }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- أزرار الحفظ -->
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-end">
+                    <a href="{% url 'assets_liabilities:liability_list' %}" class="btn btn-secondary me-2">
+                        <i class="fas fa-times me-2"></i>{% trans "Cancel" %}
+                    </a>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-save me-2"></i>{% trans "Save Liability" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Modal إضافة فئة جديدة -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCategoryModalLabel">
+                    <i class="fas fa-plus-circle me-2"></i>
+                    {% trans "Add New Category" %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="categoryForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="categoryName" class="form-label">
+                            {% trans "Category Name" %} <span class="required-field">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="categoryName" name="name" required>
+                        <div class="invalid-feedback">
+                            {% trans "Please provide a category name." %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="categoryDescription" class="form-label">
+                            {% trans "Description" %}
+                        </label>
+                        <textarea class="form-control" id="categoryDescription" name="description" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>{% trans "Cancel" %}
+                </button>
+                <button type="button" class="btn btn-danger" onclick="addCategory()">
+                    <i class="fas fa-save me-2"></i>{% trans "Save Category" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// إظهار modal إضافة فئة
+function showAddCategoryModal() {
+    $('#addCategoryModal').modal('show');
+}
+
+// إضافة فئة جديدة
+function addCategory() {
+    const form = document.getElementById('categoryForm');
+    const formData = new FormData(form);
+    
+    // إضافة نوع الفئة (liability)
+    formData.append('category_type', 'liability');
+    
+    fetch('{% url "assets_liabilities:liability_category_create_ajax" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': formData.get('csrfmiddlewaretoken'),
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // إضافة الفئة الجديدة إلى قائمة الفئات
+            const categorySelect = document.getElementById('{{ form.category.id_for_label }}');
+            const newOption = new Option(data.category.name, data.category.id, true, true);
+            categorySelect.add(newOption);
+            
+            // إغلاق modal
+            $('#addCategoryModal').modal('hide');
+            
+            // إعادة تعيين النموذج
+            form.reset();
+            
+            // إظهار رسالة نجاح
+            showSuccessMessage('{% trans "Category added successfully!" %}');
+        } else {
+            // إظهار رسالة خطأ
+            showErrorMessage(data.error || '{% trans "An error occurred while adding the category." %}');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showErrorMessage('{% trans "An error occurred while adding the category." %}');
+    });
+}
+
+// إظهار رسالة نجاح
+function showSuccessMessage(message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-success alert-dismissible fade show';
+    alertDiv.innerHTML = `
+        <i class="fas fa-check-circle me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    const container = document.querySelector('.container-fluid');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    // إزالة الرسالة بعد 5 ثوان
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+
+// إظهار رسالة خطأ
+function showErrorMessage(message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-danger alert-dismissible fade show';
+    alertDiv.innerHTML = `
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    const container = document.querySelector('.container-fluid');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    // إزالة الرسالة بعد 5 ثوان
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+
+// تحديد التاريخ الافتراضي لتاريخ البداية (اليوم)
+document.addEventListener('DOMContentLoaded', function() {
+    const startDateField = document.getElementById('{{ form.start_date.id_for_label }}');
+    if (startDateField && !startDateField.value) {
+        const today = new Date().toISOString().split('T')[0];
+        startDateField.value = today;
+    }
+});
+</script>
+{% endblock %}

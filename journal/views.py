@@ -653,20 +653,50 @@ def journal_entry_detail_with_lines(request, pk):
 
 @login_required
 def delete_journal_entry(request, pk):
-    """حذف قيد محاسبي (للمشرفين فقط)"""
-    if not (request.user.is_superuser or request.user.is_staff):
-        messages.error(request, _('ليس لديك صلاحية لحذف القيود المحاسبية'))
+    """حذف قيد محاسبي (للمشرفين العليين فقط)"""
+    # التحقق من صلاحيات المستخدم
+    if not request.user.is_superuser:
+        messages.error(request, _('ليس لديك صلاحية لحذف القيود المحاسبية. هذه الصلاحية مقتصرة على المشرفين العليين فقط.'))
         return redirect('journal:entry_list')
     
     entry = get_object_or_404(JournalEntry, pk=pk)
     
     if request.method == 'POST':
         try:
-            entry_number = entry.entry_number
-            entry.delete()
-            messages.success(request, f'تم حذف القيد {entry_number} بنجاح')
+            with transaction.atomic():
+                entry_number = entry.entry_number
+                entry_description = entry.description
+                entry_type = entry.get_reference_type_display()
+                entry_amount = entry.total_amount
+                
+                # تسجيل النشاط قبل الحذف
+                from core.signals import log_activity
+                log_activity(
+                    action_type='delete',
+                    obj=None,  # لأن الكائن سيتم حذفه
+                    description=f'حذف القيد المحاسبي رقم {entry_number} - النوع: {entry_type} - المبلغ: {entry_amount} - الوصف: {entry_description[:50]}',
+                    user=request.user
+                )
+                
+                # حذف القيد
+                entry.delete()
+                
+                messages.success(request, f'تم حذف القيد المحاسبي {entry_number} بنجاح')
+                
         except Exception as e:
-            messages.error(request, f'خطأ في حذف القيد: {str(e)}')
+            messages.error(request, f'خطأ في حذف القيد المحاسبي: {str(e)}')
+            
+            # تسجيل خطأ الحذف في سجل الأنشطة
+            try:
+                from core.signals import log_activity
+                log_activity(
+                    action_type='error',
+                    obj=entry,
+                    description=f'فشل في حذف القيد المحاسبي رقم {entry.entry_number}: {str(e)}',
+                    user=request.user
+                )
+            except:
+                pass
         
         return redirect('journal:entry_list')
     

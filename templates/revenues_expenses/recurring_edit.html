@@ -1,0 +1,280 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{{ page_title }} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .form-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="form-container">
+        <!-- Header -->
+        <div class="form-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-edit me-2"></i>
+                        {{ page_title }}
+                    </h1>
+                    <p class="mb-0 opacity-75">{% trans "Edit recurring revenue or expense item" %}</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="btn-group">
+                        <a href="{% url 'revenues_expenses:recurring_detail' recurring.id %}" class="btn btn-light">
+                            <i class="fas fa-eye me-2"></i>
+                            {% trans "View Details" %}
+                        </a>
+                        <a href="{% url 'revenues_expenses:recurring_list' %}" class="btn btn-outline-light">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            {% trans "Back to List" %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <div class="p-4">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="row">
+                    <!-- Basic Information -->
+                    <div class="col-lg-6">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    {% trans "Basic Information" %}
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">{% trans "Name" %} *</label>
+                                    {{ form.name }}
+                                    {% if form.name.errors %}
+                                        <div class="text-danger">{{ form.name.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">{% trans "Category" %} *</label>
+                                    {{ form.category }}
+                                    {% if form.category.errors %}
+                                        <div class="text-danger">{{ form.category.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">{% trans "Description" %} *</label>
+                                    {{ form.description }}
+                                    {% if form.description.errors %}
+                                        <div class="text-danger">{{ form.description.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Financial Information -->
+                    <div class="col-lg-6">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-dollar-sign me-2"></i>
+                                    {% trans "Financial Information" %}
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <div class="mb-3">
+                                            <label class="form-label">{% trans "Amount" %} *</label>
+                                            {{ form.amount }}
+                                            {% if form.amount.errors %}
+                                                <div class="text-danger">{{ form.amount.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label class="form-label">{% trans "Currency" %}</label>
+                                            {{ form.currency }}
+                                            {% if form.currency.errors %}
+                                                <div class="text-danger">{{ form.currency.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">{% trans "Payment Method" %}</label>
+                                    {{ form.payment_method }}
+                                    {% if form.payment_method.errors %}
+                                        <div class="text-danger">{{ form.payment_method.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Scheduling Information -->
+                    <div class="col-lg-6">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-calendar me-2"></i>
+                                    {% trans "Scheduling Information" %}
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">{% trans "Frequency" %} *</label>
+                                    {{ form.frequency }}
+                                    {% if form.frequency.errors %}
+                                        <div class="text-danger">{{ form.frequency.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">{% trans "Start Date" %} *</label>
+                                            {{ form.start_date }}
+                                            {% if form.start_date.errors %}
+                                                <div class="text-danger">{{ form.start_date.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">{% trans "End Date" %}</label>
+                                            {{ form.end_date }}
+                                            {% if form.end_date.errors %}
+                                                <div class="text-danger">{{ form.end_date.errors }}</div>
+                                            {% endif %}
+                                            <small class="form-text text-muted">{% trans "Leave empty for unlimited duration" %}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Settings -->
+                    <div class="col-lg-6">
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-cog me-2"></i>
+                                    {% trans "Settings" %}
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        {{ form.is_active }}
+                                        <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                            {% trans "Active" %}
+                                        </label>
+                                    </div>
+                                    {% if form.is_active.errors %}
+                                        <div class="text-danger">{{ form.is_active.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        {{ form.auto_generate }}
+                                        <label class="form-check-label" for="{{ form.auto_generate.id_for_label }}">
+                                            {% trans "Auto Generate Entries" %}
+                                        </label>
+                                    </div>
+                                    {% if form.auto_generate.errors %}
+                                        <div class="text-danger">{{ form.auto_generate.errors }}</div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">{% trans "Automatically create entries when due dates arrive" %}</small>
+                                </div>
+                                
+                                <!-- Current Status Info -->
+                                <div class="alert alert-info">
+                                    <h6>{% trans "Current Status" %}</h6>
+                                    <ul class="mb-0">
+                                        <li>{% trans "Next Due Date" %}: 
+                                            <strong class="{% if recurring.next_due_date < today %}text-danger{% elif recurring.next_due_date == today %}text-warning{% else %}text-success{% endif %}">
+                                                {{ recurring.next_due_date }}
+                                            </strong>
+                                        </li>
+                                        {% if recurring.last_generated %}
+                                            <li>{% trans "Last Generated" %}: <strong>{{ recurring.last_generated }}</strong></li>
+                                        {% endif %}
+                                        <li>{% trans "Created" %}: <strong>{{ recurring.created_at|date:"Y-m-d H:i" }}</strong></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Submit Buttons -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <button type="submit" class="btn btn-primary btn-lg me-3">
+                                    <i class="fas fa-save me-2"></i>
+                                    {% trans "Update Recurring Item" %}
+                                </button>
+                                <a href="{% url 'revenues_expenses:recurring_detail' recurring.id %}" class="btn btn-secondary btn-lg">
+                                    <i class="fas fa-times me-2"></i>
+                                    {% trans "Cancel" %}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set minimum dates
+    const startDateInput = document.querySelector('input[name="start_date"]');
+    const endDateInput = document.querySelector('input[name="end_date"]');
+    
+    if (startDateInput && endDateInput) {
+        // Update end date minimum when start date changes
+        startDateInput.addEventListener('change', function() {
+            endDateInput.min = this.value;
+        });
+        
+        // Set initial minimum for end date
+        if (startDateInput.value) {
+            endDateInput.min = startDateInput.value;
+        }
+    }
+});
+
+// Add current date for comparison
+const today = new Date().toISOString().split('T')[0];
+</script>
+{% endblock %}

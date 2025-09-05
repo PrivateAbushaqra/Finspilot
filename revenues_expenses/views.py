@@ -15,6 +15,84 @@ from .forms import RevenueExpenseCategoryForm, RevenueExpenseEntryForm, Recurrin
 from settings.models import CompanySettings
 
 
+def create_journal_entry_for_revenue_expense(entry, user):
+    """إنشاء قيد محاسبي لقيد الإيرادات/المصروفات"""
+    from journal.models import JournalEntry, JournalLine, Account
+    
+    # البحث عن الحسابات المناسبة
+    if entry.type == 'revenue':
+        # للإيرادات: نقدية مدين، إيرادات دائن
+        if entry.payment_method == 'cash':
+            debit_account = Account.objects.filter(code='1101').first()  # الصندوق
+        elif entry.payment_method == 'bank':
+            debit_account = Account.objects.filter(code='1102').first()  # البنك
+        else:
+            debit_account = Account.objects.filter(code='1101').first()  # افتراضي صندوق
+            
+        # حساب الإيرادات حسب الفئة
+        if 'مبيعات' in entry.category.name:
+            credit_account = Account.objects.filter(code='4001').first()  # إيرادات المبيعات
+        elif 'خدمات' in entry.category.name:
+            credit_account = Account.objects.filter(code='4002').first()  # إيرادات الخدمات
+        else:
+            credit_account = Account.objects.filter(code='4999').first()  # إيرادات أخرى
+        
+    else:  # expense
+        # للمصروفات: مصروفات مدين، نقدية دائن
+        # حساب المصروفات حسب الفئة
+        if 'إدارية' in entry.category.name:
+            debit_account = Account.objects.filter(code='5001').first()  # مصروفات إدارية
+        elif 'تشغيل' in entry.category.name:
+            debit_account = Account.objects.filter(code='5002').first()  # مصروفات تشغيلية
+        elif 'رواتب' in entry.category.name:
+            debit_account = Account.objects.filter(code='5003').first()  # الرواتب والأجور
+        elif 'إيجار' in entry.category.name:
+            debit_account = Account.objects.filter(code='5004').first()  # الإيجارات
+        elif 'مرافق' in entry.category.name:
+            debit_account = Account.objects.filter(code='5005').first()  # المرافق
+        else:
+            debit_account = Account.objects.filter(code='5999').first()  # مصروفات أخرى
+        
+        if entry.payment_method == 'cash':
+            credit_account = Account.objects.filter(code='1101').first()  # الصندوق
+        elif entry.payment_method == 'bank':
+            credit_account = Account.objects.filter(code='1102').first()  # البنك
+        else:
+            credit_account = Account.objects.filter(code='1101').first()  # افتراضي صندوق
+    
+    if not debit_account or not credit_account:
+        raise Exception("لم يتم العثور على الحسابات المحاسبية المناسبة")
+    
+    # إنشاء القيد المحاسبي
+    journal_entry = JournalEntry.objects.create(
+        entry_date=entry.date,
+        description=f'{entry.get_type_display()} - {entry.category.name} - {entry.description}',
+        reference_type='revenue_expense',
+        reference_id=entry.id,
+        total_amount=entry.amount,
+        created_by=user
+    )
+    
+    # إنشاء بنود القيد
+    JournalLine.objects.create(
+        journal_entry=journal_entry,
+        account=debit_account,
+        debit=entry.amount,
+        credit=Decimal('0'),
+        line_description=f'{entry.get_type_display()} - {entry.category.name}'
+    )
+    
+    JournalLine.objects.create(
+        journal_entry=journal_entry,
+        account=credit_account,
+        debit=Decimal('0'),
+        credit=entry.amount,
+        line_description=f'{entry.get_type_display()} - {entry.category.name}'
+    )
+    
+    return journal_entry
+
+
 @login_required
 def revenue_expense_dashboard(request):
     """لوحة تحكم الإيرادات والمصروفات"""
@@ -182,10 +260,64 @@ def entry_approve(request, entry_id):
 @login_required
 def recurring_list(request):
     """قائمة الإيرادات والمصروفات المتكررة"""
-    recurring = RecurringRevenueExpense.objects.filter(is_active=True).select_related('category', 'created_by', 'currency')
+    recurring_items = RecurringRevenueExpense.objects.select_related(
+        'category', 'created_by', 'currency'
+    ).order_by('-created_at')
+    
+    # التصفية
+    category_type = request.GET.get('type')
+    if category_type:
+        recurring_items = recurring_items.filter(category__type=category_type)
+    
+    category = request.GET.get('category')
+    if category:
+        recurring_items = recurring_items.filter(category_id=category)
+    
+    frequency = request.GET.get('frequency')
+    if frequency:
+        recurring_items = recurring_items.filter(frequency=frequency)
+    
+    status = request.GET.get('status')
+    if status == 'active':
+        recurring_items = recurring_items.filter(is_active=True)
+    elif status == 'inactive':
+        recurring_items = recurring_items.filter(is_active=False)
+    
+    search = request.GET.get('search')
+    if search:
+        recurring_items = recurring_items.filter(
+            Q(name__icontains=search) |
+            Q(description__icontains=search)
+        )
+    
+    # الترقيم
+    paginator = Paginator(recurring_items, 25)
+    page_number = request.GET.get('page')
+    recurring_items = paginator.get_page(page_number)
+    
+    # البيانات للتصفية
+    categories = RevenueExpenseCategory.objects.filter(is_active=True).order_by('name')
+    
+    # إحصائيات
+    total_recurring = RecurringRevenueExpense.objects.filter(is_active=True).count()
+    overdue_count = RecurringRevenueExpense.objects.filter(
+        is_active=True,
+        next_due_date__lt=date.today()
+    ).count()
+    due_today_count = RecurringRevenueExpense.objects.filter(
+        is_active=True,
+        next_due_date=date.today()
+    ).count()
+    
     context = {
-        'recurring': recurring,
         'page_title': _('الإيرادات والمصروفات المتكررة'),
+        'recurring_items': recurring_items,
+        'categories': categories,
+        'frequency_choices': RecurringRevenueExpense.FREQUENCY_CHOICES,
+        'entry_types': RevenueExpenseCategory.CATEGORY_TYPES,
+        'total_recurring': total_recurring,
+        'overdue_count': overdue_count,
+        'due_today_count': due_today_count,
     }
     return render(request, 'revenues_expenses/recurring_list.html', context)
 
@@ -196,11 +328,42 @@ def recurring_create(request):
     if request.method == 'POST':
         form = RecurringRevenueExpenseForm(request.POST)
         if form.is_valid():
-            recurring = form.save(commit=False)
-            recurring.created_by = request.user
-            recurring.save()
-            messages.success(request, _('تم إنشاء الإيراد/المصروف المتكرر بنجاح'))
-            return redirect('revenues_expenses:recurring_list')
+            with transaction.atomic():
+                recurring = form.save(commit=False)
+                recurring.created_by = request.user
+                
+                # حساب التاريخ المستحق التالي
+                from dateutil.relativedelta import relativedelta
+                start_date = recurring.start_date
+                
+                if recurring.frequency == 'daily':
+                    recurring.next_due_date = start_date
+                elif recurring.frequency == 'weekly':
+                    recurring.next_due_date = start_date
+                elif recurring.frequency == 'monthly':
+                    recurring.next_due_date = start_date
+                elif recurring.frequency == 'quarterly':
+                    recurring.next_due_date = start_date
+                elif recurring.frequency == 'semi_annual':
+                    recurring.next_due_date = start_date
+                elif recurring.frequency == 'annual':
+                    recurring.next_due_date = start_date
+                else:
+                    recurring.next_due_date = start_date
+                
+                recurring.save()
+                
+                # تسجيل النشاط
+                from core.signals import log_activity
+                log_activity(
+                    action_type='create',
+                    obj=recurring,
+                    description=f'إضافة إيراد/مصروف متكرر جديد: {recurring.name}',
+                    user=request.user
+                )
+                
+                messages.success(request, _('تم إنشاء الإيراد/المصروف المتكرر بنجاح'))
+                return redirect('revenues_expenses:recurring_list')
         else:
             messages.error(request, _('يرجى تصحيح الأخطاء في النموذج'))
     else:
@@ -211,6 +374,338 @@ def recurring_create(request):
         'page_title': _('إضافة إيراد/مصروف متكرر'),
     }
     return render(request, 'revenues_expenses/recurring_create.html', context)
+
+
+@login_required
+def recurring_detail(request, recurring_id):
+    """تفاصيل الإيراد/المصروف المتكرر"""
+    recurring = get_object_or_404(RecurringRevenueExpense, id=recurring_id)
+    
+    # الحصول على القيود المولدة من هذا المتكرر
+    generated_entries = RevenueExpenseEntry.objects.filter(
+        description__icontains=f"متكرر #{recurring.id}"
+    ).order_by('-date')
+    
+    context = {
+        'page_title': f'{recurring.name} - {_("تفاصيل الإيراد/المصروف المتكرر")}',
+        'recurring': recurring,
+        'generated_entries': generated_entries,
+    }
+    return render(request, 'revenues_expenses/recurring_detail.html', context)
+
+
+@login_required
+def recurring_edit(request, recurring_id):
+    """تعديل الإيراد/المصروف المتكرر"""
+    recurring = get_object_or_404(RecurringRevenueExpense, id=recurring_id)
+    
+    if request.method == 'POST':
+        form = RecurringRevenueExpenseForm(request.POST, instance=recurring)
+        if form.is_valid():
+            with transaction.atomic():
+                updated_recurring = form.save()
+                
+                # تسجيل النشاط
+                from core.signals import log_activity
+                log_activity(
+                    action_type='update',
+                    obj=updated_recurring,
+                    description=f'تعديل الإيراد/المصروف المتكرر: {updated_recurring.name}',
+                    user=request.user
+                )
+                
+                messages.success(request, _('تم تحديث الإيراد/المصروف المتكرر بنجاح'))
+                return redirect('revenues_expenses:recurring_detail', recurring_id=recurring.id)
+        else:
+            messages.error(request, _('يرجى تصحيح الأخطاء في النموذج'))
+    else:
+        form = RecurringRevenueExpenseForm(instance=recurring)
+    
+    context = {
+        'form': form,
+        'recurring': recurring,
+        'page_title': f'{recurring.name} - {_("تعديل الإيراد/المصروف المتكرر")}',
+    }
+    return render(request, 'revenues_expenses/recurring_edit.html', context)
+
+
+@login_required
+def recurring_delete(request, recurring_id):
+    """حذف الإيراد/المصروف المتكرر"""
+    recurring = get_object_or_404(RecurringRevenueExpense, id=recurring_id)
+    
+    if request.method == 'POST':
+        with transaction.atomic():
+            recurring_name = recurring.name
+            
+            # تسجيل النشاط قبل الحذف
+            from core.signals import log_activity
+            log_activity(
+                action_type='delete',
+                obj=None,
+                description=f'حذف الإيراد/المصروف المتكرر: {recurring_name}',
+                user=request.user
+            )
+            
+            recurring.delete()
+            
+            messages.success(request, f'تم حذف الإيراد/المصروف المتكرر "{recurring_name}" بنجاح')
+            return redirect('revenues_expenses:recurring_list')
+    
+    return redirect('revenues_expenses:recurring_detail', recurring_id=recurring_id)
+
+
+@login_required
+def recurring_toggle_status(request, recurring_id):
+    """تفعيل/إلغاء تفعيل الإيراد/المصروف المتكرر"""
+    recurring = get_object_or_404(RecurringRevenueExpense, id=recurring_id)
+    
+    if request.method == 'POST':
+        with transaction.atomic():
+            recurring.is_active = not recurring.is_active
+            recurring.save()
+            
+            status_text = 'تفعيل' if recurring.is_active else 'إلغاء تفعيل'
+            
+            # تسجيل النشاط
+            from core.signals import log_activity
+            log_activity(
+                action_type='update',
+                obj=recurring,
+                description=f'{status_text} الإيراد/المصروف المتكرر: {recurring.name}',
+                user=request.user
+            )
+            
+            messages.success(request, f'تم {status_text} الإيراد/المصروف المتكرر بنجاح')
+    
+    return redirect('revenues_expenses:recurring_detail', recurring_id=recurring_id)
+
+
+@login_required
+def recurring_generate_entry(request, recurring_id):
+    """توليد قيد من الإيراد/المصروف المتكرر يدوياً"""
+    recurring = get_object_or_404(RecurringRevenueExpense, id=recurring_id)
+    
+    if request.method == 'POST':
+        with transaction.atomic():
+            # إنشاء قيد جديد من المتكرر
+            entry = RevenueExpenseEntry.objects.create(
+                type=recurring.category.type,
+                category=recurring.category,
+                amount=recurring.amount,
+                currency=recurring.currency,
+                description=f"{recurring.description}\n(مولد من متكرر #{recurring.id}: {recurring.name})",
+                payment_method=recurring.payment_method,
+                date=date.today(),
+                created_by=request.user
+            )
+            
+            # تحديث آخر تاريخ توليد
+            recurring.last_generated = date.today()
+            
+            # حساب التاريخ المستحق التالي
+            from dateutil.relativedelta import relativedelta
+            
+            if recurring.frequency == 'daily':
+                recurring.next_due_date = recurring.next_due_date + relativedelta(days=1)
+            elif recurring.frequency == 'weekly':
+                recurring.next_due_date = recurring.next_due_date + relativedelta(weeks=1)
+            elif recurring.frequency == 'monthly':
+                recurring.next_due_date = recurring.next_due_date + relativedelta(months=1)
+            elif recurring.frequency == 'quarterly':
+                recurring.next_due_date = recurring.next_due_date + relativedelta(months=3)
+            elif recurring.frequency == 'semi_annual':
+                recurring.next_due_date = recurring.next_due_date + relativedelta(months=6)
+            elif recurring.frequency == 'annual':
+                recurring.next_due_date = recurring.next_due_date + relativedelta(years=1)
+            
+            recurring.save()
+            
+            # تسجيل النشاط
+            from core.signals import log_activity
+            log_activity(
+                action_type='create',
+                obj=entry,
+                description=f'توليد قيد من المتكرر: {recurring.name} - رقم القيد: {entry.entry_number}',
+                user=request.user
+            )
+            
+            messages.success(request, f'تم توليد القيد {entry.entry_number} من الإيراد/المصروف المتكرر بنجاح')
+            return redirect('revenues_expenses:entry_detail', entry_id=entry.id)
+    
+    return redirect('revenues_expenses:recurring_detail', recurring_id=recurring_id)
+
+
+@login_required
+def entry_detail(request, entry_id):
+    """تفاصيل قيد الإيرادات/المصروفات"""
+    entry = get_object_or_404(RevenueExpenseEntry, id=entry_id)
+    
+    context = {
+        'page_title': f'{entry.entry_number} - {_("تفاصيل القيد")}',
+        'entry': entry,
+    }
+    return render(request, 'revenues_expenses/entry_detail.html', context)
+
+
+@login_required
+def entry_create(request):
+    """إضافة قيد إيرادات/مصروفات"""
+    if request.method == 'POST':
+        form = RevenueExpenseEntryForm(request.POST)
+        if form.is_valid():
+            with transaction.atomic():
+                entry = form.save(commit=False)
+                entry.created_by = request.user
+                
+                # معالجة الخيارات الإضافية
+                auto_approve = request.POST.get('auto_approve') == 'true'
+                create_journal = request.POST.get('create_journal') == 'true'
+                
+                entry.save()
+                
+                # الاعتماد التلقائي إذا تم تحديده
+                if auto_approve:
+                    entry.is_approved = True
+                    entry.approved_by = request.user
+                    entry.approved_at = datetime.now()
+                    entry.save()
+                
+                # إنشاء القيد المحاسبي إذا تم تحديده
+                if create_journal:
+                    try:
+                        journal_entry = create_journal_entry_for_revenue_expense(entry, request.user)
+                        messages.info(request, f'تم إنشاء القيد المحاسبي رقم {journal_entry.entry_number}')
+                    except Exception as e:
+                        messages.warning(request, f'تم إنشاء القيد بنجاح لكن فشل في إنشاء القيد المحاسبي: {str(e)}')
+                
+                # تسجيل النشاط
+                from core.signals import log_activity
+                log_activity(
+                    action_type='create',
+                    obj=entry,
+                    description=f'إضافة قيد {entry.get_type_display()} جديد: {entry.entry_number} - {entry.description[:50]}',
+                    user=request.user
+                )
+                
+                success_message = f'تم إنشاء القيد {entry.entry_number} بنجاح. المبلغ: {entry.amount:,.3f} {entry.currency.code if entry.currency else ""}'
+                if auto_approve:
+                    success_message += ' (معتمد تلقائياً)'
+                
+                messages.success(request, success_message)
+                return redirect('revenues_expenses:entry_detail', entry_id=entry.id)
+        else:
+            # إضافة رسائل خطأ مفصلة
+            for field, errors in form.errors.items():
+                for error in errors:
+                    field_label = form.fields[field].label if field in form.fields else field
+                    messages.error(request, f'{field_label}: {error}')
+    else:
+        form = RevenueExpenseEntryForm()
+        # تعيين التاريخ الحالي كافتراضي
+        from datetime import date
+        form.fields['date'].initial = date.today()
+    
+    # إحضار الإحصائيات للعرض
+    from django.db.models import Sum
+    from datetime import date
+    today = date.today()
+    
+    today_revenues = RevenueExpenseEntry.objects.filter(
+        type='revenue',
+        date=today,
+        is_approved=True
+    ).aggregate(total=Sum('amount'))['total'] or 0
+    
+    today_expenses = RevenueExpenseEntry.objects.filter(
+        type='expense', 
+        date=today,
+        is_approved=True
+    ).aggregate(total=Sum('amount'))['total'] or 0
+    
+    # إحضار الفئات النشطة للجافا سكريبت
+    revenue_categories = RevenueExpenseCategory.objects.filter(
+        type='revenue', is_active=True
+    ).values('id', 'name').order_by('name')
+    
+    expense_categories = RevenueExpenseCategory.objects.filter(
+        type='expense', is_active=True
+    ).values('id', 'name').order_by('name')
+    
+    context = {
+        'form': form,
+        'page_title': _('إضافة قيد إيرادات/مصروفات'),
+        'today_revenues': today_revenues,
+        'today_expenses': today_expenses,
+        'revenue_categories': list(revenue_categories),
+        'expense_categories': list(expense_categories),
+    }
+    return render(request, 'revenues_expenses/entry_create.html', context)
+
+
+@login_required
+def get_categories_by_type(request, entry_type):
+    """API لجلب الفئات حسب النوع"""
+    categories = RevenueExpenseCategory.objects.filter(
+        type=entry_type, 
+        is_active=True
+    ).values('id', 'name').order_by('name')
+    
+    return JsonResponse({
+        'categories': list(categories)
+    })
+
+
+@login_required
+def get_today_stats(request):
+    """API لجلب إحصائيات اليوم"""
+    from django.db.models import Sum
+    from datetime import date
+    today = date.today()
+    
+    revenues = RevenueExpenseEntry.objects.filter(
+        type='revenue',
+        date=today,
+        is_approved=True
+    ).aggregate(total=Sum('amount'))['total'] or 0
+    
+    expenses = RevenueExpenseEntry.objects.filter(
+        type='expense',
+        date=today,
+        is_approved=True
+    ).aggregate(total=Sum('amount'))['total'] or 0
+    
+    return JsonResponse({
+        'revenues': f"{revenues:,.2f}",
+        'expenses': f"{expenses:,.2f}",
+        'net': f"{revenues - expenses:,.2f}"
+    })
+
+
+@login_required
+def entry_approve(request, entry_id):
+    """اعتماد قيد الإيرادات/المصروفات"""
+    entry = get_object_or_404(RevenueExpenseEntry, id=entry_id)
+    
+    if request.method == 'POST':
+        with transaction.atomic():
+            entry.is_approved = True
+            entry.approved_by = request.user
+            entry.approved_at = datetime.now()
+            entry.save()
+            
+            # تسجيل النشاط
+            from core.signals import log_activity
+            log_activity(
+                action_type='approve',
+                obj=entry,
+                description=f'اعتماد قيد {entry.get_type_display()}: {entry.entry_number}',
+                user=request.user
+            )
+            
+            messages.success(request, f'تم اعتماد القيد {entry.entry_number} بنجاح')
+    
+    return redirect('revenues_expenses:entry_detail', entry_id=entry_id)
 
 
 @login_required

@@ -1,0 +1,367 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load currency_tags %}
+
+{% block title %}{{ page_title }} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-container {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .detail-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+    }
+    
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    .status-active {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .status-inactive {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    
+    .info-card {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        background: #f8f9fa;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.25rem;
+    }
+    
+    .info-value {
+        color: #212529;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="detail-container">
+        <!-- Header -->
+        <div class="detail-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-calendar-alt me-2"></i>
+                        {{ recurring.name }}
+                    </h1>
+                    <p class="mb-0 opacity-75">{{ page_title }}</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="btn-group">
+                        <a href="{% url 'revenues_expenses:recurring_edit' recurring.id %}" class="btn btn-light">
+                            <i class="fas fa-edit me-2"></i>
+                            {% trans "Edit" %}
+                        </a>
+                        <a href="{% url 'revenues_expenses:recurring_list' %}" class="btn btn-outline-light">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            {% trans "Back to List" %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Details -->
+        <div class="p-4">
+            <div class="row">
+                <!-- Basic Information -->
+                <div class="col-lg-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-info-circle me-2"></i>
+                                {% trans "Basic Information" %}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="info-card">
+                                <div class="info-label">{% trans "Name" %}</div>
+                                <div class="info-value">{{ recurring.name }}</div>
+                            </div>
+                            
+                            <div class="info-card">
+                                <div class="info-label">{% trans "Category" %}</div>
+                                <div class="info-value">
+                                    <span class="badge bg-{% if recurring.category.type == 'revenue' %}success{% else %}danger{% endif %}">
+                                        {{ recurring.category.get_type_display }}
+                                    </span>
+                                    {{ recurring.category.name }}
+                                </div>
+                            </div>
+                            
+                            <div class="info-card">
+                                <div class="info-label">{% trans "Description" %}</div>
+                                <div class="info-value">{{ recurring.description|linebreaks }}</div>
+                            </div>
+                            
+                            <div class="info-card">
+                                <div class="info-label">{% trans "Status" %}</div>
+                                <div class="info-value">
+                                    <span class="status-badge {% if recurring.is_active %}status-active{% else %}status-inactive{% endif %}">
+                                        {% if recurring.is_active %}{% trans "Active" %}{% else %}{% trans "Inactive" %}{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Financial Information -->
+                <div class="col-lg-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-dollar-sign me-2"></i>
+                                {% trans "Financial Information" %}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="info-card">
+                                <div class="info-label">{% trans "Amount" %}</div>
+                                <div class="info-value h4">
+                                    {{ recurring.amount|currency_format:recurring.currency.code }}
+                                </div>
+                            </div>
+                            
+                            <div class="info-card">
+                                <div class="info-label">{% trans "Currency" %}</div>
+                                <div class="info-value">
+                                    {{ recurring.currency.code }} - {{ recurring.currency.name }}
+                                </div>
+                            </div>
+                            
+                            <div class="info-card">
+                                <div class="info-label">{% trans "Payment Method" %}</div>
+                                <div class="info-value">{{ recurring.get_payment_method_display }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Scheduling Information -->
+                <div class="col-lg-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-calendar me-2"></i>
+                                {% trans "Scheduling Information" %}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="info-card">
+                                <div class="info-label">{% trans "Frequency" %}</div>
+                                <div class="info-value">
+                                    <span class="badge bg-primary">{{ recurring.get_frequency_display }}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="info-card">
+                                <div class="info-label">{% trans "Start Date" %}</div>
+                                <div class="info-value">{{ recurring.start_date }}</div>
+                            </div>
+                            
+                            <div class="info-card">
+                                <div class="info-label">{% trans "End Date" %}</div>
+                                <div class="info-value">
+                                    {% if recurring.end_date %}
+                                        {{ recurring.end_date }}
+                                    {% else %}
+                                        <span class="text-muted">{% trans "Unlimited" %}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="info-card">
+                                <div class="info-label">{% trans "Next Due Date" %}</div>
+                                <div class="info-value">
+                                    <span class="{% if recurring.next_due_date < today %}text-danger{% elif recurring.next_due_date == today %}text-warning{% else %}text-success{% endif %}">
+                                        {{ recurring.next_due_date }}
+                                        {% if recurring.next_due_date < today %}
+                                            <span class="badge bg-danger ms-2">{% trans "Overdue" %}</span>
+                                        {% elif recurring.next_due_date == today %}
+                                            <span class="badge bg-warning ms-2">{% trans "Due Today" %}</span>
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            {% if recurring.last_generated %}
+                                <div class="info-card">
+                                    <div class="info-label">{% trans "Last Generated" %}</div>
+                                    <div class="info-value">{{ recurring.last_generated }}</div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Settings & Actions -->
+                <div class="col-lg-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-cog me-2"></i>
+                                {% trans "Settings & Actions" %}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="info-card">
+                                <div class="info-label">{% trans "Auto Generate" %}</div>
+                                <div class="info-value">
+                                    {% if recurring.auto_generate %}
+                                        <span class="badge bg-success">{% trans "Enabled" %}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{% trans "Disabled" %}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="info-card">
+                                <div class="info-label">{% trans "Created By" %}</div>
+                                <div class="info-value">{{ recurring.created_by.get_full_name|default:recurring.created_by.username }}</div>
+                            </div>
+                            
+                            <div class="info-card">
+                                <div class="info-label">{% trans "Created At" %}</div>
+                                <div class="info-value">{{ recurring.created_at }}</div>
+                            </div>
+                            
+                            <!-- Action Buttons -->
+                            <div class="d-grid gap-2 mt-3">
+                                {% if recurring.is_active %}
+                                    <button type="button" class="btn btn-success" onclick="generateEntry()">
+                                        <i class="fas fa-play me-2"></i>
+                                        {% trans "Generate Entry Now" %}
+                                    </button>
+                                {% endif %}
+                                
+                                <button type="button" class="btn btn-warning" onclick="toggleStatus()">
+                                    <i class="fas fa-{% if recurring.is_active %}pause{% else %}play{% endif %} me-2"></i>
+                                    {% if recurring.is_active %}{% trans "Deactivate" %}{% else %}{% trans "Activate" %}{% endif %}
+                                </button>
+                                
+                                <button type="button" class="btn btn-danger" onclick="deleteRecurring()">
+                                    <i class="fas fa-trash me-2"></i>
+                                    {% trans "Delete" %}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Generated Entries -->
+                {% if generated_entries %}
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-list me-2"></i>
+                                    {% trans "Generated Entries" %} ({{ generated_entries.count }})
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>{% trans "Entry Number" %}</th>
+                                                <th>{% trans "Date" %}</th>
+                                                <th>{% trans "Amount" %}</th>
+                                                <th>{% trans "Status" %}</th>
+                                                <th>{% trans "Actions" %}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for entry in generated_entries %}
+                                                <tr>
+                                                    <td>{{ entry.entry_number }}</td>
+                                                    <td>{{ entry.date }}</td>
+                                                    <td>{{ entry.amount|currency_format:entry.currency.code }}</td>
+                                                    <td>
+                                                        {% if entry.is_approved %}
+                                                            <span class="badge bg-success">{% trans "Approved" %}</span>
+                                                        {% else %}
+                                                            <span class="badge bg-warning">{% trans "Pending" %}</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        <a href="{% url 'revenues_expenses:entry_detail' entry.id %}" class="btn btn-sm btn-outline-primary">
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden Forms -->
+<form id="generateForm" method="post" action="{% url 'revenues_expenses:recurring_generate_entry' recurring.id %}" style="display: none;">
+    {% csrf_token %}
+</form>
+
+<form id="toggleForm" method="post" action="{% url 'revenues_expenses:recurring_toggle_status' recurring.id %}" style="display: none;">
+    {% csrf_token %}
+</form>
+
+<form id="deleteForm" method="post" action="{% url 'revenues_expenses:recurring_delete' recurring.id %}" style="display: none;">
+    {% csrf_token %}
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function generateEntry() {
+    if (confirm('{% trans "Are you sure you want to generate an entry from this recurring item?" %}')) {
+        document.getElementById('generateForm').submit();
+    }
+}
+
+function toggleStatus() {
+    var action = "{% if recurring.is_active %}deactivate{% else %}activate{% endif %}";
+    if (confirm('{% trans "Are you sure you want to" %} ' + action + ' {% trans "this recurring item?" %}')) {
+        document.getElementById('toggleForm').submit();
+    }
+}
+
+function deleteRecurring() {
+    if (confirm('{% trans "Are you sure you want to delete" %} "{{ recurring.name }}"? {% trans "This action cannot be undone." %}')) {
+        document.getElementById('deleteForm').submit();
+    }
+}
+
+// Add current date for comparison
+const today = new Date().toISOString().split('T')[0];
+</script>
+{% endblock %}

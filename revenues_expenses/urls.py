@@ -19,4 +19,14 @@ urlpatterns = [
     
     # الإيرادات والمصروفات المتكررة
     path('recurring/', views.recurring_list, name='recurring_list'),
+    path('recurring/create/', views.recurring_create, name='recurring_create'),
+    path('recurring/<int:recurring_id>/', views.recurring_detail, name='recurring_detail'),
+    path('recurring/<int:recurring_id>/edit/', views.recurring_edit, name='recurring_edit'),
+    path('recurring/<int:recurring_id>/delete/', views.recurring_delete, name='recurring_delete'),
+    path('recurring/<int:recurring_id>/toggle-status/', views.recurring_toggle_status, name='recurring_toggle_status'),
+    path('recurring/<int:recurring_id>/generate/', views.recurring_generate_entry, name='recurring_generate_entry'),
+    
+    # API endpoints
+    path('api/categories/<str:entry_type>/', views.get_categories_by_type, name='api_categories_by_type'),
+    path('api/today-stats/', views.get_today_stats, name='api_today_stats'),
 ]

@@ -389,6 +389,15 @@
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                                 {% endif %}
+                                                
+                                                {% if user.is_superuser %}
+                                                <button class="btn btn-danger superadmin-delete-btn" 
+                                                        data-account-id="{{ account.pk }}" 
+                                                        data-account-name="{{ account.name }}" 
+                                                        title="{% trans 'Absolute Delete (SuperAdmin Only)' %}">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                                {% endif %}
                                             </div>
                                         </div>
                                     </div>
@@ -520,6 +529,48 @@
     </div>
 </div>
 
+<!-- SuperAdmin Absolute Delete Modal -->
+<div class="modal fade" id="superAdminDeleteModal" tabindex="-1" aria-labelledby="superAdminDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-danger">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="superAdminDeleteModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    {% trans "SuperAdmin Absolute Deletion" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="fw-bold text-danger">{% trans "Are you sure you want to perform absolute deletion for bank account" %} "<span id="superAdminDeleteAccountName"></span>"?</p>
+                <div class="alert alert-danger">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-skull-crossbones me-2"></i>
+                        {% trans "CRITICAL WARNING:" %}
+                    </h6>
+                    <ul class="mb-0">
+                        <li>{% trans "This will delete the account permanently" %}</li>
+                        <li>{% trans "All transactions related to this account will be deleted" %}</li>
+                        <li>{% trans "All transfers related to this account will be deleted" %}</li>
+                        <li>{% trans "This action is irreversible and bypasses all safety checks" %}</li>
+                        <li>{% trans "Only SuperAdmin can perform this operation" %}</li>
+                    </ul>
+                </div>
+                <p class="text-muted small">{% trans "This operation will be logged in the audit log." %}</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                <form id="superAdminDeleteForm" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash-alt me-1"></i>
+                        {% trans "Absolute Delete" %}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Toggle Status Confirmation Modal -->
 <div class="modal fade" id="toggleStatusModal" tabindex="-1" aria-labelledby="toggleStatusModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -568,6 +619,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const deleteForm = document.getElementById('deleteForm');
     const deleteAccountNameSpan = document.getElementById('deleteAccountName');
     
+    // SuperAdmin Delete functionality
+    const superAdminDeleteModal = new bootstrap.Modal(document.getElementById('superAdminDeleteModal'));
+    const superAdminDeleteForm = document.getElementById('superAdminDeleteForm');
+    const superAdminDeleteAccountNameSpan = document.getElementById('superAdminDeleteAccountName');
+    
     // Toggle status functionality
     const toggleStatusModal = new bootstrap.Modal(document.getElementById('toggleStatusModal'));
     const toggleStatusForm = document.getElementById('toggleStatusForm');
@@ -598,6 +654,23 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // {% trans "View" %} نافذة {% trans "Confirmation" %} الحذف
             deleteModal.show();
+        }
+        
+        // Handle SuperAdmin delete button clicks
+        if (e.target.closest('.superadmin-delete-btn')) {
+            e.preventDefault();
+            
+            const button = e.target.closest('.superadmin-delete-btn');
+            const accountId = button.getAttribute('data-account-id');
+            const accountName = button.getAttribute('data-account-name');
+            
+            // تحديث نموذج الحذف المطلق
+            const deleteUrl = '{% url "banks:account_superadmin_delete" 0 %}'.replace('/0/', '/' + accountId + '/');
+            superAdminDeleteForm.action = deleteUrl;
+            superAdminDeleteAccountNameSpan.textContent = accountName;
+            
+            // عرض نافذة التأكيد للحذف المطلق
+            superAdminDeleteModal.show();
         }
         
         // Handle toggle status button clicks

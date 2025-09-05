@@ -958,7 +958,7 @@ msgstr ""
 #: .\templates\banks\account_list.html:238
 #: .\templates\banks\account_transactions.html:76 .\templates\base.html:641
 msgid "Bank Accounts"
-msgstr ""
+msgstr "الحسابات المصرفية"
 
 #: .\banks\models.py:102 .\cashboxes\models.py:103 .\inventory\models.py:114
 #: .\templates\banks\transfer_add.html:212
@@ -2046,7 +2046,7 @@ msgstr ""
 #: .\templates\hr\dashboard.html:76 .\templates\hr\dashboard.html:246
 #: .\templates\hr\department_list.html:5 .\templates\hr\department_list.html:15
 msgid "Departments"
-msgstr ""
+msgstr "الأقسام"
 
 #: .\hr\models.py:37
 msgid "Minimum Salary"
@@ -2069,7 +2069,7 @@ msgstr ""
 #: .\templates\hr\department_detail.html:77 .\templates\hr\position_list.html:4
 #: .\templates\hr\position_list.html:14
 msgid "Positions"
-msgstr ""
+msgstr "المناصب"
 
 #: .\hr\models.py:56
 msgid "Male"
@@ -2254,7 +2254,7 @@ msgstr ""
 #: .\templates\hr\position_list.html:30
 #: .\templates\hr\reports\salary_breakdown_report.html:28
 msgid "Employees"
-msgstr ""
+msgstr "الموظفين"
 
 #: .\hr\models.py:185
 msgid "Permanent"
@@ -2385,7 +2385,7 @@ msgstr ""
 #: .\hr\models.py:253 .\templates\base.html:1008
 #: .\templates\hr\attendance_list.html:46
 msgid "Attendance"
-msgstr ""
+msgstr "الحضور"
 
 #: .\hr\models.py:254
 msgid "Attendances"
@@ -2487,7 +2487,7 @@ msgstr ""
 #: .\templates\hr\leave_request_list.html:4
 #: .\templates\hr\leave_request_list.html:14
 msgid "Leave Requests"
-msgstr ""
+msgstr "طلبات الإجازة"
 
 #: .\hr\models.py:354
 msgid "Is Processed"
@@ -3114,7 +3114,7 @@ msgstr ""
 #: .\templates\journal\account_list.html:6
 #: .\templates\journal\account_list.html:13
 msgid "Accounts List"
-msgstr ""
+msgstr "قائمة الحسابات"
 
 #: .\journal\views.py:97
 msgid "Viewing accounts list"
@@ -3537,7 +3537,7 @@ msgstr ""
 #: .\templates\payments\voucher_list.html:5
 #: .\templates\payments\voucher_list.html:12
 msgid "Payment Vouchers"
-msgstr ""
+msgstr "سندات الدفع"
 
 #: .\payments\views.py:130
 msgid "Payment voucher created successfully"
@@ -4213,7 +4213,7 @@ msgstr ""
 #: .\templates\reports\customer_statement.html:4
 #: .\templates\reports\customer_statement.html:9
 msgid "Customer Statement"
-msgstr ""
+msgstr "كشف حساب العميل"
 
 #: .\reports\views.py:155 .\templates\core\profit_loss_report.html:223
 msgid "Statement"
@@ -4425,7 +4425,7 @@ msgstr ""
 #: .\templates\base.html:979 .\templates\reports\sales_by_salesperson.html:5
 #: .\templates\reports\sales_by_salesperson.html:13
 msgid "Sales Report By Sales Person"
-msgstr ""
+msgstr "تقرير المبيعات حسب البائع"
 
 #: .\reports\views.py:338
 msgid "Sales Report"
@@ -5688,7 +5688,7 @@ msgstr ""
 #: .\templates\accounts\login.html:227 .\templates\accounts\login.html:287
 #: .\templates\partials\print_header.html:20
 msgid "فينس بايلوت"
-msgstr ""
+msgstr "Finspilot"
 
 #: .\templates\accounts\login.html:229
 msgid "Integrated Accounting System"
@@ -6561,7 +6561,7 @@ msgstr ""
 #: .\templates\settings\index.html:65
 #: .\templates\settings\jofotara_settings.html:169
 msgid "Settings"
-msgstr ""
+msgstr "الإعدادات"
 
 #: .\templates\assets_liabilities\dashboard.html:531
 #: .\templates\assets_liabilities\dashboard.html:559
@@ -7071,7 +7071,7 @@ msgstr ""
 #: .\templates\journal\trial_balance.html:115
 #: .\templates\products\product_detail.html:23
 msgid "Dashboard"
-msgstr ""
+msgstr "لوحة التحكم"
 
 #: .\templates\banks\account_add.html:92
 #: .\templates\banks\account_list.html:246
@@ -7421,12 +7421,294 @@ msgstr ""
 
 #: .\templates\banks\account_list.html:378
 msgid "Delete All Account Transactions"
-msgstr ""
+msgstr "حذف جميع حركات الحساب"
 
 #: .\templates\banks\account_list.html:388
 #: .\templates\banks\account_list.html:515
 msgid "Delete Account"
-msgstr ""
+msgstr "حذف الحساب"
+
+msgid "Absolute Delete (SuperAdmin Only)"
+msgstr "حذف مطلق (للمشرف الرئيسي فقط)"
+
+msgid "Only superadmin can perform absolute deletion."
+msgstr "المشرف الرئيسي فقط يستطيع القيام بالحذف المطلق."
+
+msgid "SuperAdmin Absolute Deletion"
+msgstr "حذف مطلق للمشرف الرئيسي"
+
+msgid "Are you sure you want to perform absolute deletion for bank account"
+msgstr "هل أنت متأكد من أنك تريد القيام بحذف مطلق للحساب البنكي"
+
+msgid "CRITICAL WARNING:"
+msgstr "تحذير حرج:"
+
+msgid "This will delete the account permanently"
+msgstr "هذا سيحذف الحساب نهائياً"
+
+msgid "All transactions related to this account will be deleted"
+msgstr "جميع المعاملات المرتبطة بهذا الحساب ستحذف"
+
+msgid "All transfers related to this account will be deleted"
+msgstr "جميع التحويلات المرتبطة بهذا الحساب ستحذف"
+
+msgid "This action is irreversible and bypasses all safety checks"
+msgstr "هذا الإجراء غير قابل للإلغاء ويتجاوز جميع فحوصات الأمان"
+
+msgid "Only SuperAdmin can perform this operation"
+msgstr "المشرف الرئيسي فقط يستطيع القيام بهذه العملية"
+
+msgid "This operation will be logged in the audit log."
+msgstr "هذه العملية ستسجل في سجل الأنشطة."
+
+msgid "Recurring Revenues and Expenses"
+msgstr "الإيرادات والمصاريف المتكررة"
+
+msgid "Manage your recurring revenues and expenses"
+msgstr "إدارة الإيرادات والمصاريف المتكررة"
+
+msgid "Add New Recurring Item"
+msgstr "إضافة عنصر متكرر جديد"
+
+msgid "Total Recurring Items"
+msgstr "إجمالي العناصر المتكررة"
+
+msgid "Due Today"
+msgstr "مستحق اليوم"
+
+msgid "Overdue"
+msgstr "متأخر"
+
+msgid "Status Tracking"
+msgstr "تتبع الحالة"
+
+msgid "All Types"
+msgstr "جميع الأنواع"
+
+msgid "All Categories"
+msgstr "جميع الفئات"
+
+msgid "All Frequencies"
+msgstr "جميع التكرارات"
+
+msgid "All Status"
+msgstr "جميع الحالات"
+
+msgid "Search by name or description..."
+msgstr "البحث بالاسم أو الوصف..."
+
+msgid "View Details"
+msgstr "عرض التفاصيل"
+
+msgid "Edit"
+msgstr "تعديل"
+
+msgid "Generate Entry"
+msgstr "توليد قيد"
+
+msgid "Deactivate"
+msgstr "إلغاء التفعيل"
+
+msgid "Activate"
+msgstr "تفعيل"
+
+msgid "Delete"
+msgstr "حذف"
+
+msgid "Next Due Date"
+msgstr "التاريخ المستحق التالي"
+
+msgid "No recurring items found"
+msgstr "لا توجد عناصر متكررة"
+
+msgid "Start by creating your first recurring revenue or expense"
+msgstr "ابدأ بإنشاء أول إيراد أو مصروف متكرر"
+
+msgid "Add First Recurring Item"
+msgstr "إضافة أول عنصر متكرر"
+
+msgid "Are you sure you want to generate an entry from this recurring item?"
+msgstr "هل أنت متأكد من أنك تريد توليد قيد من هذا العنصر المتكرر؟"
+
+msgid "Are you sure you want to change the status of this recurring item?"
+msgstr "هل أنت متأكد من أنك تريد تغيير حالة هذا العنصر المتكرر؟"
+
+msgid "Are you sure you want to delete"
+msgstr "هل أنت متأكد من أنك تريد حذف"
+
+msgid "This action cannot be undone."
+msgstr "هذا الإجراء لا يمكن التراجع عنه."
+
+msgid "Create a new recurring revenue or expense item"
+msgstr "إنشاء إيراد أو مصروف متكرر جديد"
+
+msgid "Back to List"
+msgstr "العودة للقائمة"
+
+msgid "Basic Information"
+msgstr "المعلومات الأساسية"
+
+msgid "Financial Information"
+msgstr "المعلومات المالية"
+
+msgid "Scheduling Information"
+msgstr "معلومات الجدولة"
+
+msgid "Settings"
+msgstr "الإعدادات"
+
+msgid "Auto Generate Entries"
+msgstr "توليد القيود تلقائياً"
+
+msgid "Automatically create entries when due dates arrive"
+msgstr "إنشاء القيود تلقائياً عند وصول المواعيد المستحقة"
+
+msgid "Leave empty for unlimited duration"
+msgstr "اتركه فارغاً للمدة غير المحدودة"
+
+msgid "Create Recurring Item"
+msgstr "إنشاء العنصر المتكرر"
+
+msgid "Cancel"
+msgstr "إلغاء"
+
+msgid "Currency"
+msgstr "العملة"
+
+msgid "Payment Method"
+msgstr "طريقة الدفع"
+
+msgid "Frequency"
+msgstr "التكرار"
+
+msgid "Start Date"
+msgstr "تاريخ البداية"
+
+msgid "End Date"
+msgstr "تاريخ النهاية"
+
+msgid "Active"
+msgstr "نشط"
+
+msgid "Inactive"
+msgstr "غير نشط"
+
+msgid "Unlimited"
+msgstr "غير محدود"
+
+msgid "Last Generated"
+msgstr "آخر توليد"
+
+msgid "Enabled"
+msgstr "مفعل"
+
+msgid "Disabled"
+msgstr "معطل"
+
+msgid "Created By"
+msgstr "أنشأه"
+
+msgid "Created At"
+msgstr "تاريخ الإنشاء"
+
+msgid "Generate Entry Now"
+msgstr "توليد قيد الآن"
+
+msgid "Generated Entries"
+msgstr "القيود المولدة"
+
+msgid "Entry Number"
+msgstr "رقم القيد"
+
+msgid "Date"
+msgstr "التاريخ"
+
+msgid "Amount"
+msgstr "المبلغ"
+
+msgid "Status"
+msgstr "الحالة"
+
+msgid "Actions"
+msgstr "الإجراءات"
+
+msgid "Approved"
+msgstr "معتمد"
+
+msgid "Pending"
+msgstr "في الانتظار"
+
+msgid "Edit recurring revenue or expense item"
+msgstr "تعديل الإيراد أو المصروف المتكرر"
+
+msgid "Current Status"
+msgstr "الحالة الحالية"
+
+msgid "Update Recurring Item"
+msgstr "تحديث العنصر المتكرر"
+
+msgid "Entry Information"
+msgstr "معلومات القيد"
+
+msgid "Type"
+msgstr "النوع"
+
+msgid "Category"
+msgstr "الفئة"
+
+msgid "Pending Approval"
+msgstr "في انتظار الاعتماد"
+
+msgid "Financial Details"
+msgstr "التفاصيل المالية"
+
+msgid "Reference Number"
+msgstr "رقم المرجع"
+
+msgid "Description"
+msgstr "الوصف"
+
+msgid "System Information"
+msgstr "معلومات النظام"
+
+msgid "Last Updated"
+msgstr "آخر تحديث"
+
+msgid "Approved By"
+msgstr "اعتمده"
+
+msgid "Approved At"
+msgstr "تاريخ الاعتماد"
+
+msgid "Entry Approval"
+msgstr "اعتماد القيد"
+
+msgid "This entry is pending approval. Click the button below to approve it."
+msgstr "هذا القيد في انتظار الاعتماد. انقر على الزر أدناه لاعتماده."
+
+msgid "Approve Entry"
+msgstr "اعتماد القيد"
+
+msgid "Entry Approved"
+msgstr "تم اعتماد القيد"
+
+msgid "This entry has been approved and is now part of your financial records."
+msgstr "تم اعتماد هذا القيد وهو الآن جزء من سجلاتك المالية."
+
+msgid "Approve"
+msgstr "اعتماد"
+
+msgid "Are you sure you want to approve this entry?"
+msgstr "هل أنت متأكد من أنك تريد اعتماد هذا القيد؟"
+
+msgid "Entry:"
+msgstr "القيد:"
+
+msgid "Absolute Delete"
+msgstr "حذف مطلق"
+
+msgid "Delete Account"
+msgstr "حذف الحساب"
 
 #: .\templates\banks\account_list.html:402
 msgid "No bank accounts yet"
@@ -7483,33 +7765,33 @@ msgstr ""
 
 #: .\templates\banks\account_list.html:589
 msgid "Cannot delete account"
-msgstr ""
+msgstr "لا يمكن حذف الحساب"
 
 #: .\templates\banks\account_list.html:589
 msgid "because its balance is"
-msgstr ""
+msgstr "لأن رصيده"
 
 #: .\templates\banks\account_list.html:589
 msgid "Correct way:"
-msgstr ""
+msgstr "الطريقة الصحيحة:"
 
 #: .\templates\banks\account_list.html:589
 msgid "Go to transfers page and transfer all money to another account"
-msgstr ""
+msgstr "اذهب إلى صفحة التحويلات وحول جميع الأموال إلى حساب آخر"
 
 #: .\templates\banks\account_list.html:589
 msgid ""
 "Come back here and click delete again - the account will be deleted even if "
 "it has transactions!"
-msgstr ""
+msgstr "ارجع هنا واضغط حذف مرة أخرى - سيتم حذف الحساب حتى لو كان له حركات!"
 
 #: .\templates\banks\account_list.html:589
 msgid "Or (for Superadmin):"
-msgstr ""
+msgstr "أو (للمشرف العام):"
 
 #: .\templates\banks\account_list.html:589
 msgid "Click Clear All Transactions then Delete Account"
-msgstr ""
+msgstr "اضغط مسح جميع الحركات ثم حذف الحساب"
 
 #: .\templates\banks\account_list.html:599
 #: .\templates\banks\account_list.html:623
@@ -8140,7 +8422,7 @@ msgstr ""
 #: .\templates\base.html:9 .\templates\base.html:1501
 #: .\templates\registration\login.html:81
 msgid "فينس بايلوت - النظام المحاسبي"
-msgstr ""
+msgstr "Finspilot - النظام المحاسبي"
 
 #: .\templates\base.html:542 .\templates\partials\print_header.html:9
 #: .\templates\settings\company.html:85 .\templates\settings\company.html:89
@@ -8152,169 +8434,169 @@ msgstr ""
 
 #: .\templates\base.html:550
 msgid "Home"
-msgstr ""
+msgstr "الرئيسية"
 
 #: .\templates\base.html:559 .\templates\base.html:569
 msgid "Arabic"
-msgstr ""
+msgstr "العربية"
 
 #: .\templates\base.html:559 .\templates\base.html:580
 msgid "English"
-msgstr ""
+msgstr "الإنجليزية"
 
 #: .\templates\base.html:607
 msgid "Logout"
-msgstr ""
+msgstr "تسجيل الخروج"
 
 #: .\templates\base.html:622 .\templates\search\search.html:5
 #: .\templates\search\search.html:190
 msgid "Comprehensive Search"
-msgstr ""
+msgstr "البحث الشامل"
 
 #: .\templates\base.html:626
 msgid "Global Search"
-msgstr ""
+msgstr "البحث العام"
 
 #: .\templates\base.html:647
 msgid "Add Account"
-msgstr ""
+msgstr "إضافة حساب"
 
 #: .\templates\base.html:654 .\templates\base.html:674
 msgid "Transfers List"
-msgstr ""
+msgstr "قائمة التحويلات"
 
 #: .\templates\base.html:666
 msgid "Cash Boxes"
-msgstr ""
+msgstr "الصناديق النقدية"
 
 #: .\templates\base.html:671
 msgid "Cashboxes List"
-msgstr ""
+msgstr "قائمة الصناديق النقدية"
 
 #: .\templates\base.html:686
 msgid "Payment Receipts"
-msgstr ""
+msgstr "إيصالات الدفع"
 
 #: .\templates\base.html:691
 msgid "Add Payment Receipt"
-msgstr ""
+msgstr "إضافة إيصال دفع"
 
 #: .\templates\base.html:694
 msgid "Receipts List"
-msgstr ""
+msgstr "قائمة الإيصالات"
 
 #: .\templates\base.html:697
 msgid "Checks Management"
-msgstr ""
+msgstr "إدارة الشيكات"
 
 #: .\templates\base.html:714
 msgid "Add Payment Voucher"
-msgstr ""
+msgstr "إضافة سند دفع"
 
 #: .\templates\base.html:717
 msgid "Vouchers List"
-msgstr ""
+msgstr "قائمة السندات"
 
 #: .\templates\base.html:728
 msgid "Categories & Products"
-msgstr ""
+msgstr "الفئات والمنتجات"
 
 #: .\templates\base.html:733 .\templates\products\product_add.html:136
 #: .\templates\products\product_edit.html:111
 #: .\templates\products\product_list.html:378
 #: .\templates\products\product_list.html:937
 msgid "Add Category"
-msgstr ""
+msgstr "إضافة فئة"
 
 #: .\templates\base.html:736 .\templates\purchases\invoice_add.html:231
 msgid "Add Product"
-msgstr ""
+msgstr "إضافة منتج"
 
 #: .\templates\base.html:739 .\templates\products\category_list.html:267
 msgid "Categories List"
-msgstr ""
+msgstr "قائمة الفئات"
 
 #: .\templates\base.html:742 .\templates\products\product_list.html:7
 #: .\templates\products\product_list.html:371
 #: .\templates\products\product_list.html:534
 #: .\templates\products\product_list.html:1288
 msgid "Products List"
-msgstr ""
+msgstr "قائمة المنتجات"
 
 #: .\templates\base.html:752
 msgid "Customers & Suppliers"
-msgstr ""
+msgstr "العملاء والموردين"
 
 #: .\templates\base.html:757 .\templates\customers\add.html:6
 msgid "Add Customer/Supplier"
-msgstr ""
+msgstr "إضافة عميل/مورد"
 
 #: .\templates\base.html:760 .\templates\customers\customer_list.html:5
 #: .\templates\customers\customer_list.html:165
 #: .\templates\customers\customer_list.html:271
 msgid "Customers List"
-msgstr ""
+msgstr "قائمة العملاء"
 
 #: .\templates\base.html:763
 msgid "Suppliers List"
-msgstr ""
+msgstr "قائمة الموردين"
 
 #: .\templates\base.html:766
 msgid "All Customers & Suppliers"
-msgstr ""
+msgstr "جميع العملاء والموردين"
 
 #: .\templates\base.html:777 .\templates\core\dashboard.html:534
 #: .\templates\core\dashboard.html:569 .\templates\users\group_add.html:125
 #: .\templates\users\group_edit.html:135
 msgid "Purchases"
-msgstr ""
+msgstr "المشتريات"
 
 #: .\templates\base.html:782
 msgid "Create Purchase Invoice"
-msgstr ""
+msgstr "إنشاء فاتورة مشتريات"
 
 #: .\templates\base.html:785 .\templates\purchases\return_add.html:7
 #: .\templates\purchases\return_add.html:17
 msgid "Create Purchase Return"
-msgstr ""
+msgstr "إنشاء مردود مشتريات"
 
 #: .\templates\base.html:788
 msgid "Purchase Invoices List"
-msgstr ""
+msgstr "قائمة فواتير المشتريات"
 
 #: .\templates\base.html:791 .\templates\purchases\return_list.html:7
 msgid "Purchase Returns List"
-msgstr ""
+msgstr "قائمة مردودات المشتريات"
 
 #: .\templates\base.html:794
 msgid "Debit Notes"
-msgstr ""
+msgstr "مذكرات الدين"
 
 #: .\templates\base.html:797 .\templates\purchases\purchase_statement.html:7
 msgid "Purchase Statement"
-msgstr ""
+msgstr "كشف المشتريات"
 
 #: .\templates\base.html:800
 msgid "Purchase Return Statement"
-msgstr ""
+msgstr "كشف مردودات المشتريات"
 
 #: .\templates\base.html:812 .\templates\core\dashboard.html:534
 #: .\templates\core\dashboard.html:562 .\templates\users\group_add.html:123
 #: .\templates\users\group_edit.html:133
 msgid "Sales"
-msgstr ""
+msgstr "المبيعات"
 
 #: .\templates\base.html:817
 msgid "Create Sales Invoice"
-msgstr ""
+msgstr "إنشاء فاتورة مبيعات"
 
 #: .\templates\base.html:820
 msgid "Create Sales Return"
-msgstr ""
+msgstr "إنشاء مردود مبيعات"
 
 #: .\templates\base.html:823
 msgid "Sales Invoices List"
-msgstr ""
+msgstr "قائمة فواتير المبيعات"
 
 #: .\templates\base.html:826
 msgid "Sales Returns List"
@@ -8334,168 +8616,168 @@ msgstr ""
 
 #: .\templates\base.html:839 .\templates\sales\pos.html:9
 msgid "Point of Sale"
-msgstr ""
+msgstr "نقطة البيع"
 
 #: .\templates\base.html:852 .\templates\products\product_list.html:867
 #: .\templates\users\group_add.html:127 .\templates\users\group_edit.html:137
 msgid "Inventory"
-msgstr ""
+msgstr "المخزون"
 
 #: .\templates\base.html:857
 msgid "View Inventory"
-msgstr ""
+msgstr "عرض المخزون"
 
 #: .\templates\base.html:860
 msgid "Warehouses"
-msgstr ""
+msgstr "المخازن"
 
 #: .\templates\base.html:863
 msgid "Inventory Movement"
-msgstr ""
+msgstr "حركة المخزون"
 
 #: .\templates\base.html:866
 msgid "Stock Alerts"
-msgstr ""
+msgstr "تنبيهات المخزون"
 
 #: .\templates\base.html:877
 msgid "Revenues & Expenses"
-msgstr ""
+msgstr "الإيرادات والمصروفات"
 
 #: .\templates\base.html:885
 msgid "Manage Categories"
-msgstr ""
+msgstr "إدارة الفئات"
 
 #: .\templates\base.html:888
 msgid "Entries List"
-msgstr ""
+msgstr "قائمة القيود"
 
 #: .\templates\base.html:891 .\templates\revenues_expenses\entry_create.html:6
 #: .\templates\revenues_expenses\entry_create.html:9
 msgid "Add New Entry"
-msgstr ""
+msgstr "إضافة قيد جديد"
 
 #: .\templates\base.html:894
 msgid "Recurring Revenue"
-msgstr ""
+msgstr "الإيرادات المتكررة"
 
 #: .\templates\base.html:904 .\templates\journal\entry_list.html:13
 msgid "Journal Entries"
-msgstr ""
+msgstr "القيود اليومية"
 
 #: .\templates\base.html:912 .\templates\journal\entries_by_type.html:16
 msgid "All Entries"
-msgstr ""
+msgstr "جميع القيود"
 
 #: .\templates\base.html:915 .\templates\journal\entries_by_type.html:6
 msgid "Entries by Type"
-msgstr ""
+msgstr "القيود حسب النوع"
 
 #: .\templates\base.html:918
 msgid "Create Manual Entry"
-msgstr ""
+msgstr "إنشاء قيد يدوي"
 
 #: .\templates\base.html:921
 msgid "Chart of Accounts"
-msgstr ""
+msgstr "دليل الحسابات"
 
 #: .\templates\base.html:924
 msgid "Trial Balance"
-msgstr ""
+msgstr "ميزان المراجعة"
 
 #: .\templates\base.html:934
 msgid "Assets & Liabilities"
-msgstr ""
+msgstr "الأصول والخصوم"
 
 #: .\templates\base.html:956 .\templates\hr\attendance_list.html:58
 #: .\templates\users\group_add.html:129 .\templates\users\group_edit.html:139
 msgid "Reports"
-msgstr ""
+msgstr "التقارير"
 
 #: .\templates\base.html:961
 msgid "Sales Reports"
-msgstr ""
+msgstr "تقارير المبيعات"
 
 #: .\templates\base.html:967
 msgid "Purchase Reports"
-msgstr ""
+msgstr "تقارير المشتريات"
 
 #: .\templates\base.html:970 .\templates\core\tax_report.html:6
 #: .\templates\core\tax_report.html:120
 msgid "Tax Report"
-msgstr ""
+msgstr "تقرير الضرائب"
 
 #: .\templates\base.html:973
 msgid "Profit and Loss"
-msgstr ""
+msgstr "الأرباح والخسائر"
 
 #: .\templates\base.html:991
 msgid "Human Resources"
-msgstr ""
+msgstr "الموارد البشرية"
 
 #: .\templates\base.html:996 .\templates\hr\attendance_list.html:45
 #: .\templates\hr\dashboard.html:5 .\templates\hr\employee_detail.html:49
 #: .\templates\hr\employee_form.html:32 .\templates\hr\employee_list.html:30
 msgid "HR Dashboard"
-msgstr ""
+msgstr "لوحة تحكم الموارد البشرية"
 
 #: .\templates\base.html:1014
 msgid "Payroll"
-msgstr ""
+msgstr "كشوف المرتبات"
 
 #: .\templates\base.html:1017 .\templates\hr\dashboard.html:249
 #: .\templates\hr\reports.html:4 .\templates\hr\reports.html:14
 msgid "HR Reports"
-msgstr ""
+msgstr "تقارير الموارد البشرية"
 
 #: .\templates\base.html:1029 .\templates\base.html:1061
 msgid "System Management"
-msgstr ""
+msgstr "إدارة النظام"
 
 #: .\templates\base.html:1034 .\templates\users\user_add.html:5
 #: .\templates\users\user_list.html:77
 msgid "Add User"
-msgstr ""
+msgstr "إضافة مستخدم"
 
 #: .\templates\base.html:1037
 msgid "Users List"
-msgstr ""
+msgstr "قائمة المستخدمين"
 
 #: .\templates\base.html:1040
 msgid "Groups & Permissions"
-msgstr ""
+msgstr "المجموعات والصلاحيات"
 
 #: .\templates\base.html:1045 .\templates\core\audit_log.html:4
 #: .\templates\core\audit_log.html:14
 msgid "Activity Log"
-msgstr ""
+msgstr "سجل الأنشطة"
 
 #: .\templates\base.html:1049
 msgid "Document Number Management"
-msgstr ""
+msgstr "إدارة أرقام الوثائق"
 
 #: .\templates\base.html:1052 .\templates\settings\index.html:12
 msgid "System Settings"
-msgstr ""
+msgstr "إعدادات النظام"
 
 #: .\templates\base.html:1062
 msgid "Advanced"
-msgstr ""
+msgstr "متقدم"
 
 #: .\templates\base.html:1070
 msgid "Print Design"
-msgstr ""
+msgstr "تصميم الطباعة"
 
 #: .\templates\base.html:1078 .\templates\settings\jofotara_settings.html:5
 msgid "JoFotara Settings"
-msgstr ""
+msgstr "إعدادات جوفاتورا"
 
 #: .\templates\base.html:1086 .\templates\settings\index.html:108
 msgid "Backup"
-msgstr ""
+msgstr "النسخ الاحتياطي"
 
 #: .\templates\base.html:1282 .\templates\journal\entry_create.html:214
 msgid "Loading..."
-msgstr ""
+msgstr "جاري التحميل..."
 
 #: .\templates\base.html:1496 .\templates\customers\list.html:255
 #: .\templates\customers\list.html:256 .\templates\customers\list.html:266
@@ -11047,7 +11329,7 @@ msgstr ""
 
 #: .\templates\hr\reports\department_report.html:26
 msgid "employees"
-msgstr ""
+msgstr "الموظفين"
 
 #: .\templates\hr\reports\employee_report.html:4
 #: .\templates\hr\reports\employee_report.html:14
@@ -13658,7 +13940,7 @@ msgstr ""
 #: .\templates\settings\company.html:28
 #: .\templates\settings\company_fixed.html:27
 msgid "فينس بايلوت - برنامج محاسبي"
-msgstr ""
+msgstr "Finspilot - برنامج محاسبي"
 
 #: .\templates\settings\company.html:32
 #: .\templates\settings\company_fixed.html:31

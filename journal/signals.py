@@ -218,38 +218,37 @@ def delete_revenue_expense_journal_entry(sender, instance, **kwargs):
 @receiver(post_save, sender='assets_liabilities.Asset')
 def create_asset_journal_entry(sender, instance, created, **kwargs):
     """إنشاء قيد محاسبي تلقائياً عند إنشاء أصل جديد"""
-    if created and instance.id and instance.purchase_value:
+    if created and instance.id and instance.purchase_cost:
         try:
             user = getattr(instance, 'created_by', None)
             if user:
                 lines_data = []
                 # قيد شراء الأصل: مدين الأصل، دائن الصندوق/البنك
-                if instance.category and instance.category.account:
-                    lines_data = [
-                        {
-                            'account_id': instance.category.account.id,
-                            'debit': instance.purchase_value,
-                            'credit': 0,
-                            'description': f"شراء أصل: {instance.name}"
-                        },
-                        {
-                            'account_id': instance.payment_account.id if instance.payment_account else None,
-                            'debit': 0,
-                            'credit': instance.purchase_value,
-                            'description': f"دفع ثمن أصل: {instance.name}"
-                        }
-                    ]
+                # يمكن تفعيل هذا لاحقاً عند ربط الحسابات
+                logger.info(f"تم إنشاء أصل جديد: {instance.name} بقيمة {instance.purchase_cost}")
                 
-                if lines_data and all(line['account_id'] is not None for line in lines_data):
-                    JournalService.create_journal_entry(
-                        entry_date=instance.purchase_date,
-                        reference_type='asset_purchase',
-                        reference_id=instance.id,
-                        description=f"شراء أصل: {instance.name}",
-                        lines_data=lines_data,
-                        user=user
-                    )
-                    logger.info(f"تم إنشاء قيد محاسبي تلقائياً لشراء الأصل {instance.name}")
+                # lines_data = [
+                #     {
+                #         'account_id': asset_account_id,
+                #         'debit': instance.purchase_cost,
+                #         'credit': 0,
+                #         'description': f"شراء أصل: {instance.name}"
+                #     },
+                #     {
+                #         'account_id': cash_account_id,
+                #         'debit': 0,
+                #         'credit': instance.purchase_cost,
+                #         'description': f"دفع ثمن أصل: {instance.name}"
+                #     }
+                # ]
+                
+                # JournalService.create_journal_entry(
+                #     reference_type='asset',
+                #     reference_id=instance.id,
+                #     description=f"شراء أصل: {instance.name}",
+                #     lines_data=lines_data,
+                #     user=user
+                # )
         except Exception as e:
             logger.error(f"خطأ في إنشاء القيد المحاسبي لشراء الأصل {instance.name}: {e}")
 

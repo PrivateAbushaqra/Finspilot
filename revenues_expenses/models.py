@@ -105,6 +105,25 @@ class RevenueExpenseEntry(models.Model):
             self.entry_number = f"{prefix}{new_number:06d}"
         
         super().save(*args, **kwargs)
+    
+    def generate_entry_number(self):
+        """توليد رقم قيد جديد"""
+        prefix = 'RE' if self.type == 'revenue' else 'EX'
+        last_entry = RevenueExpenseEntry.objects.filter(
+            type=self.type,
+            entry_number__startswith=prefix
+        ).order_by('-id').first()
+        
+        if last_entry:
+            try:
+                last_number = int(last_entry.entry_number.replace(prefix, ''))
+                new_number = last_number + 1
+            except:
+                new_number = 1
+        else:
+            new_number = 1
+        
+        return f"{prefix}{new_number:06d}"
 
 
 class RecurringRevenueExpense(models.Model):

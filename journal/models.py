@@ -62,6 +62,7 @@ class JournalEntry(models.Model):
         ('purchase_return', _('مردود مشتريات')),
         ('receipt_voucher', _('سند قبض')),
         ('payment_voucher', _('سند صرف')),
+        ('revenue_expense', _('قيد إيرادات/مصروفات')),
         ('asset_depreciation', _('استهلاك الأصول')),
         ('manual', _('قيد يدوي')),
         ('adjustment', _('قيد تسوية')),

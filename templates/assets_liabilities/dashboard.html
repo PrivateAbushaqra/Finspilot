@@ -4,6 +4,10 @@
 
 {% block title %}{% trans "الأصول والخصوم" %}{% endblock %}
 
+{% block extra_head %}
+<meta name="csrf-token" content="{{ csrf_token }}">
+{% endblock %}
+
 {% block content %}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">
@@ -407,12 +411,14 @@
                                 <label class="form-label">فئة الأصل</label>
                                 <select class="form-select" name="asset_category" required>
                                     <option value="">اختر فئة الأصل</option>
-                                    <option value="equipment">معدات</option>
-                                    <option value="furniture">أثاث</option>
-                                    <option value="vehicle">مركبات</option>
-                                    <option value="building">مباني</option>
-                                    <option value="land">أراضي</option>
-                                    <option value="other">أخرى</option>
+                                    <option value="معدات الكمبيوتر">معدات الكمبيوتر</option>
+                                    <option value="الأثاث المكتبي">الأثاث المكتبي</option>
+                                    <option value="مركبات النقل">مركبات النقل</option>
+                                    <option value="معدات التشغيل">معدات التشغيل</option>
+                                    <option value="المباني والعقارات">المباني والعقارات</option>
+                                    <option value="البرمجيات والتراخيص">البرمجيات والتراخيص</option>
+                                    <option value="الأجهزة الطبية">الأجهزة الطبية</option>
+                                    <option value="أصول أخرى">أصول أخرى</option>
                                 </select>
                             </div>
                         </div>
@@ -693,31 +699,90 @@ function exportPaymentTable() {
     // هنا يمكنك {% trans "Add" %} كود {% trans "Export" %} حقيقي
 }
 
+// وظيفة للحصول على قيمة من cookie
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
 // {% trans "Add" %} أصل {% trans "New" %}
 function saveAsset() {
     const form = document.getElementById('addAssetForm');
     const formData = new FormData(form);
     
     // التحقق من البيانات المطلوبة
-    if (!formData.get('asset_name') || !formData.get('asset_value')) {
+    if (!formData.get('asset_name') || !formData.get('asset_value') || !formData.get('asset_category')) {
         alert('يرجى ملء جميع الحقول المطلوبة');
+        return;
+    }
+    
+    // إضافة CSRF token
+    let csrfToken = null;
+    
+    // البحث عن CSRF token في أماكن مختلفة
+    if (document.querySelector('[name=csrfmiddlewaretoken]')) {
+        csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    } else if (document.querySelector('meta[name="csrf-token"]')) {
+        csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    } else {
+        // الحصول على CSRF token من cookie
+        csrfToken = getCookie('csrftoken');
+    }
+    
+    if (!csrfToken) {
+        alert('خطأ في الحصول على رمز الأمان. يرجى إعادة تحميل الصفحة.');
         return;
     }
     
     const assetData = {
         name: formData.get('asset_name'),
         category: formData.get('asset_category'),
-        value: parseFloat(formData.get('asset_value')),
-        purchaseDate: formData.get('purchase_date'),
-        usefulLife: parseInt(formData.get('useful_life')) || 0,
-        salvageValue: parseFloat(formData.get('salvage_value')) || 0,
-        description: formData.get('asset_description')
+        purchase_value: parseFloat(formData.get('asset_value')),
+        purchase_date: formData.get('purchase_date'),
+        useful_life: parseInt(formData.get('useful_life')) || 5,
+        salvage_value: parseFloat(formData.get('salvage_value')) || 0,
+        description: formData.get('asset_description'),
+        csrfmiddlewaretoken: csrfToken
     };
     
-    console.log('{% trans "Save" %} أصل {% trans "New" %}:', assetData);
-    
-    // إظهار رسالة نجاح
-    alert('تم {% trans "Save" %} الأصل بنجاح!');
+    // إرسال البيانات إلى السيرفر
+    fetch('{% url "assets_liabilities:asset_create" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
+        },
+        body: JSON.stringify(assetData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('تم حفظ الأصل بنجاح!');
+            // إغلاق المودال وإعادة تعيين النموذج
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addAssetModal'));
+            modal.hide();
+            form.reset();
+            // إعادة تحميل الصفحة لعرض الأصل الجديد
+            location.reload();
+        } else {
+            alert('خطأ في حفظ الأصل: ' + (data.error || 'خطأ غير معروف'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ في الاتصال بالسيرفر');
+    });
+}
     
     // إغ{% trans "No" %}ق المودال وإعادة تعيين النموذج
     const modal = bootstrap.Modal.getInstance(document.getElementById('addAssetModal'));

@@ -1,11 +1,597 @@
 {% extends 'base.html' %}
 {% load i18n %}
 
-
-
 {% block title %}{% trans "Add New Entry" %}{% endblock %}
 
 {% block content %}
-<h2>{% trans "Add New Entry" %}</h2>
-<p>{% trans "The form will be added soon" %}</p>
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-plus-circle me-2"></i>
+        إضافة قيد إيرادات/مصروفات جديد
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{% url 'revenues_expenses:entry_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i>
+            {% trans "Back to List" %}
+        </a>
+    </div>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-file-invoice me-2"></i>
+                    بيانات القيد
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" id="entryForm">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <!-- نوع القيد -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.type.id_for_label }}" class="form-label">
+                                <i class="fas fa-tag me-1"></i>
+                                نوع القيد <span class="text-danger">*</span>
+                            </label>
+                            {{ form.type }}
+                            {% if form.type.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.type.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                اختر ما إذا كان هذا إيراد أم مصروف
+                            </small>
+                        </div>
+
+                        <!-- الفئة -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.category.id_for_label }}" class="form-label">
+                                <i class="fas fa-folder me-1"></i>
+                                الفئة <span class="text-danger">*</span>
+                            </label>
+                            {{ form.category }}
+                            {% if form.category.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.category.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                سيتم تحديث الفئات حسب النوع المختار
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- المبلغ -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.amount.id_for_label }}" class="form-label">
+                                <i class="fas fa-money-bill me-1"></i>
+                                المبلغ <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                {{ form.amount }}
+                                <span class="input-group-text">
+                                    <i class="fas fa-calculator"></i>
+                                </span>
+                            </div>
+                            {% if form.amount.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.amount.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                أدخل المبلغ بدقة حتى 3 خانات عشرية
+                            </small>
+                        </div>
+
+                        <!-- العملة -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.currency.id_for_label }}" class="form-label">
+                                <i class="fas fa-coins me-1"></i>
+                                العملة <span class="text-danger">*</span>
+                            </label>
+                            {{ form.currency }}
+                            {% if form.currency.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.currency.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                سيتم تعيين العملة الافتراضية تلقائياً
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- طريقة الدفع -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.payment_method.id_for_label }}" class="form-label">
+                                <i class="fas fa-credit-card me-1"></i>
+                                طريقة الدفع <span class="text-danger">*</span>
+                            </label>
+                            {{ form.payment_method }}
+                            {% if form.payment_method.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.payment_method.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                ستؤثر على الحساب المحاسبي المستخدم
+                            </small>
+                        </div>
+
+                        <!-- رقم المرجع -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.reference_number.id_for_label }}" class="form-label">
+                                <i class="fas fa-hashtag me-1"></i>
+                                رقم المرجع
+                            </label>
+                            {{ form.reference_number }}
+                            {% if form.reference_number.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.reference_number.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                رقم الفاتورة أو الإيصال (اختياري)
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- التاريخ -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.date.id_for_label }}" class="form-label">
+                                <i class="fas fa-calendar me-1"></i>
+                                التاريخ <span class="text-danger">*</span>
+                            </label>
+                            {{ form.date }}
+                            {% if form.date.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.date.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                سيؤثر على التقارير والإحصائيات
+                            </small>
+                        </div>
+
+                        <!-- رقم القيد التلقائي -->
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-number me-1"></i>
+                                رقم القيد
+                            </label>
+                            <div class="form-control bg-light">
+                                <span class="text-muted">
+                                    <i class="fas fa-magic me-1"></i>
+                                    سيتم إنشاؤه تلقائياً
+                                </span>
+                            </div>
+                            <small class="form-text text-muted">
+                                سيبدأ بـ RE للإيرادات أو EX للمصروفات
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- الوصف -->
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">
+                            <i class="fas fa-align-left me-1"></i>
+                            الوصف <span class="text-danger">*</span>
+                        </label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.description.errors.0 }}
+                            </div>
+                        {% endif %}
+                        <small class="form-text text-muted">
+                            وصف مفصل للقيد يساعد في التتبع واللتقارير
+                        </small>
+                    </div>
+
+                    <!-- خيارات إضافية -->
+                    <div class="card border-info mb-3">
+                        <div class="card-header bg-info text-white">
+                            <h6 class="mb-0">
+                                <i class="fas fa-cogs me-1"></i>
+                                خيارات إضافية
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="autoApprove">
+                                        <label class="form-check-label" for="autoApprove">
+                                            <i class="fas fa-check-circle me-1"></i>
+                                            اعتماد تلقائي للقيد
+                                        </label>
+                                    </div>
+                                    <small class="form-text text-muted">
+                                        سيتم اعتماد القيد تلقائياً بعد الحفظ
+                                    </small>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="createJournal" checked>
+                                        <label class="form-check-label" for="createJournal">
+                                            <i class="fas fa-book me-1"></i>
+                                            إنشاء قيد محاسبي
+                                        </label>
+                                    </div>
+                                    <small class="form-text text-muted">
+                                        سيتم إنشاء قيد محاسبي مقابل تلقائياً
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'revenues_expenses:entry_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>
+                            إلغاء
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>
+                            حفظ القيد
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- معلومات إضافية -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    معلومات مهمة
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-lightbulb me-1"></i>
+                        تلميحات
+                    </h6>
+                    <small>
+                        • سيتم إنشاء رقم قيد تلقائياً<br>
+                        • يمكنك اعتماد القيد لاحقاً من صفحة التفاصيل<br>
+                        • جميع الحقول المطلوبة مميزة بـ <span class="text-danger">*</span>
+                    </small>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        ملاحظة
+                    </h6>
+                    <small>
+                        تأكد من اختيار النوع والفئة الصحيحة قبل الحفظ
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- إحصائيات سريعة -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    إحصائيات اليوم
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="stat-item">
+                            <h5 class="text-success" id="todayRevenues">--</h5>
+                            <small class="text-muted">إيرادات</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="stat-item">
+                            <h5 class="text-danger" id="todayExpenses">--</h5>
+                            <small class="text-muted">مصروفات</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="stat-item">
+                            <h5 class="text-primary" id="todayNet">--</h5>
+                            <small class="text-muted">الصافي</small>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="text-center">
+                    <small class="text-muted">
+                        <i class="fas fa-sync-alt me-1"></i>
+                        يتم التحديث كل 30 ثانية
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- روابط سريعة -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-link me-2"></i>
+                    روابط سريعة
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'revenues_expenses:entry_list' %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-list me-1"></i>
+                        قائمة القيود
+                    </a>
+                    <a href="{% url 'revenues_expenses:category_list' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-folder me-1"></i>
+                        إدارة الفئات
+                    </a>
+                    <a href="{% url 'revenues_expenses:recurring_list' %}" class="btn btn-outline-info btn-sm">
+                        <i class="fas fa-redo me-1"></i>
+                        القيود المتكررة
+                    </a>
+                    <a href="{% url 'journal:entry_list' %}" class="btn btn-outline-success btn-sm">
+                        <i class="fas fa-book me-1"></i>
+                        دفتر اليومية
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const typeField = document.getElementById('{{ form.type.id_for_label }}');
+    const categoryField = document.getElementById('{{ form.category.id_for_label }}');
+    const amountField = document.getElementById('{{ form.amount.id_for_label }}');
+    const paymentMethodField = document.getElementById('{{ form.payment_method.id_for_label }}');
+    const autoApproveField = document.getElementById('autoApprove');
+    const createJournalField = document.getElementById('createJournal');
+    
+    // إضافة hidden inputs للخيارات الإضافية
+    const form = document.getElementById('entryForm');
+    if (!document.getElementById('hiddenAutoApprove')) {
+        const hiddenAutoApprove = document.createElement('input');
+        hiddenAutoApprove.type = 'hidden';
+        hiddenAutoApprove.id = 'hiddenAutoApprove';
+        hiddenAutoApprove.name = 'auto_approve';
+        hiddenAutoApprove.value = 'false';
+        form.appendChild(hiddenAutoApprove);
+    }
+    
+    if (!document.getElementById('hiddenCreateJournal')) {
+        const hiddenCreateJournal = document.createElement('input');
+        hiddenCreateJournal.type = 'hidden';
+        hiddenCreateJournal.id = 'hiddenCreateJournal';
+        hiddenCreateJournal.name = 'create_journal';
+        hiddenCreateJournal.value = 'true';
+        form.appendChild(hiddenCreateJournal);
+    }
+    
+    // تحديث الخيارات المخفية
+    autoApproveField.addEventListener('change', function() {
+        document.getElementById('hiddenAutoApprove').value = this.checked ? 'true' : 'false';
+    });
+    
+    createJournalField.addEventListener('change', function() {
+        document.getElementById('hiddenCreateJournal').value = this.checked ? 'true' : 'false';
+    });
+    
+    // تحديث الفئات عند تغيير النوع
+    typeField.addEventListener('change', function() {
+        const selectedType = this.value;
+        
+        // مسح الفئات الحالية
+        categoryField.innerHTML = '<option value="">اختر الفئة...</option>';
+        
+        if (selectedType) {
+            // جلب الفئات المتاحة للنوع المحدد
+            fetch(`/ar/revenues-expenses/api/categories/${selectedType}/`)
+                .then(response => response.json())
+                .then(data => {
+                    data.categories.forEach(category => {
+                        const option = document.createElement('option');
+                        option.value = category.id;
+                        option.textContent = category.name;
+                        categoryField.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('خطأ في جلب الفئات:', error);
+                });
+        }
+        
+        // تحديث لون النوع
+        if (selectedType === 'revenue') {
+            typeField.className = typeField.className.replace(/border-\w+/, 'border-success');
+        } else if (selectedType === 'expense') {
+            typeField.className = typeField.className.replace(/border-\w+/, 'border-danger');
+        }
+    });
+    
+    // تنسيق المبلغ أثناء الكتابة
+    amountField.addEventListener('input', function() {
+        let value = this.value.replace(/[^\d.]/g, '');
+        const parts = value.split('.');
+        if (parts[1] && parts[1].length > 3) {
+            parts[1] = parts[1].substring(0, 3);
+            value = parts.join('.');
+        }
+        this.value = value;
+        
+        // تحديث العرض
+        if (value) {
+            const formatted = parseFloat(value).toLocaleString('ar', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 3
+            });
+            this.title = `القيمة المنسقة: ${formatted}`;
+        }
+    });
+    
+    // تحديث أيقونة طريقة الدفع
+    paymentMethodField.addEventListener('change', function() {
+        const label = document.querySelector(`label[for="${this.id}"]`);
+        const icon = label.querySelector('i');
+        
+        switch(this.value) {
+            case 'cash':
+                icon.className = 'fas fa-money-bill me-1';
+                break;
+            case 'bank':
+                icon.className = 'fas fa-university me-1';
+                break;
+            case 'cheque':
+                icon.className = 'fas fa-money-check me-1';
+                break;
+            case 'transfer':
+                icon.className = 'fas fa-exchange-alt me-1';
+                break;
+            default:
+                icon.className = 'fas fa-credit-card me-1';
+        }
+    });
+    
+    // تعيين التاريخ الحالي كافتراضي إذا لم يكن محدداً
+    const dateField = document.getElementById('{{ form.date.id_for_label }}');
+    if (!dateField.value) {
+        const today = new Date().toISOString().split('T')[0];
+        dateField.value = today;
+    }
+    
+    // جلب إحصائيات اليوم
+    loadTodayStats();
+    
+    // تحديث الإحصائيات كل 30 ثانية
+    setInterval(loadTodayStats, 30000);
+    
+    // تحقق من النموذج قبل الإرسال
+    form.addEventListener('submit', function(e) {
+        let hasErrors = false;
+        
+        // التحقق من المبلغ
+        if (!amountField.value || parseFloat(amountField.value) <= 0) {
+            showFieldError(amountField, 'يجب إدخال مبلغ صحيح أكبر من الصفر');
+            hasErrors = true;
+        }
+        
+        // التحقق من النوع والفئة
+        if (!typeField.value) {
+            showFieldError(typeField, 'يجب اختيار نوع القيد');
+            hasErrors = true;
+        }
+        
+        if (!categoryField.value) {
+            showFieldError(categoryField, 'يجب اختيار الفئة');
+            hasErrors = true;
+        }
+        
+        if (hasErrors) {
+            e.preventDefault();
+            return false;
+        }
+        
+        // إظهار مؤشر التحميل
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>جاري الحفظ...';
+        submitBtn.disabled = true;
+        
+        // إعادة تفعيل الزر في حالة فشل الإرسال
+        setTimeout(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }, 10000);
+    });
+});
+
+function showFieldError(field, message) {
+    // إزالة رسائل الخطأ السابقة
+    const existingError = field.parentNode.querySelector('.field-error');
+    if (existingError) {
+        existingError.remove();
+    }
+    
+    // إضافة class خطأ
+    field.classList.add('is-invalid');
+    
+    // إضافة رسالة خطأ
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'field-error text-danger small mt-1';
+    errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i>${message}`;
+    field.parentNode.appendChild(errorDiv);
+    
+    // إزالة الخطأ عند التفاعل مع الحقل
+    field.addEventListener('focus', function() {
+        this.classList.remove('is-invalid');
+        const error = this.parentNode.querySelector('.field-error');
+        if (error) error.remove();
+    }, { once: true });
+}
+
+function loadTodayStats() {
+    fetch('/ar/revenues-expenses/api/today-stats/')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('todayRevenues').textContent = data.revenues || '0.00';
+            document.getElementById('todayExpenses').textContent = data.expenses || '0.00';
+            
+            // إضافة مؤشر الصافي
+            const netElement = document.getElementById('todayNet');
+            if (netElement) {
+                netElement.textContent = data.net || '0.00';
+                const netValue = parseFloat(data.net.replace(/,/g, '') || 0);
+                netElement.className = `h5 ${netValue >= 0 ? 'text-success' : 'text-danger'}`;
+            }
+        })
+        .catch(error => {
+            console.error('خطأ في جلب الإحصائيات:', error);
+        });
+}
+</script>
+
+<style>
+.stat-item h5 {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.alert {
+    border-radius: 8px;
+}
+
+.card {
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+</style>
 {% endblock %}

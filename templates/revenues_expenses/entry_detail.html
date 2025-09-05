@@ -1,10 +1,290 @@
 {% extends 'base.html' %}
+{% load i18n %}
+{% load currency_tags %}
 
+{% block title %}{{ page_title }} - {{ block.super }}{% endblock %}
 
-
-{% block title %}{% trans "Entry Details" %}{% endblock %}
+{% block extra_css %}
+<style>
+    .entry-container {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .entry-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+    }
+    
+    .info-card {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        background: #f8f9fa;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.25rem;
+    }
+    
+    .info-value {
+        color: #212529;
+    }
+    
+    .status-approved {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .status-pending {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<h2>{% trans "Details" %} القيد</h2>
-<p>سيتم {% trans "Add" %} ال{% trans "Details" %} {% trans "No" %}حقاً</p>
+<div class="container-fluid">
+    <div class="entry-container">
+        <!-- Header -->
+        <div class="entry-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-file-invoice me-2"></i>
+                        {{ entry.entry_number }}
+                    </h1>
+                    <p class="mb-0 opacity-75">{{ page_title }}</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="btn-group">
+                        {% if not entry.is_approved %}
+                            <button type="button" class="btn btn-success" onclick="approveEntry()">
+                                <i class="fas fa-check me-2"></i>
+                                {% trans "Approve" %}
+                            </button>
+                        {% endif %}
+                        <a href="{% url 'revenues_expenses:entry_list' %}" class="btn btn-light">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            {% trans "Back to List" %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Entry Details -->
+        <div class="p-4">
+            <div class="row">
+                <!-- Basic Information -->
+                <div class="col-lg-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-info-circle me-2"></i>
+                                {% trans "Entry Information" %}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="info-card">
+                                <div class="info-label">{% trans "Entry Number" %}</div>
+                                <div class="info-value h5">{{ entry.entry_number }}</div>
+                            </div>
+                            
+                            <div class="info-card">
+                                <div class="info-label">{% trans "Type" %}</div>
+                                <div class="info-value">
+                                    <span class="badge bg-{% if entry.type == 'revenue' %}success{% else %}danger{% endif %} fs-6">
+                                        {{ entry.get_type_display }}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="info-card">
+                                <div class="info-label">{% trans "Category" %}</div>
+                                <div class="info-value">{{ entry.category.name }}</div>
+                            </div>
+                            
+                            <div class="info-card">
+                                <div class="info-label">{% trans "Date" %}</div>
+                                <div class="info-value">{{ entry.date }}</div>
+                            </div>
+                            
+                            <div class="info-card">
+                                <div class="info-label">{% trans "Status" %}</div>
+                                <div class="info-value">
+                                    <span class="badge {% if entry.is_approved %}status-approved{% else %}status-pending{% endif %} fs-6">
+                                        {% if entry.is_approved %}{% trans "Approved" %}{% else %}{% trans "Pending Approval" %}{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Financial Information -->
+                <div class="col-lg-6">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-dollar-sign me-2"></i>
+                                {% trans "Financial Details" %}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="info-card">
+                                <div class="info-label">{% trans "Amount" %}</div>
+                                <div class="info-value">
+                                    <span class="h3 text-{% if entry.type == 'revenue' %}success{% else %}danger{% endif %}">
+                                        {{ entry.amount|currency_format:entry.currency.code }}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="info-card">
+                                <div class="info-label">{% trans "Currency" %}</div>
+                                <div class="info-value">
+                                    {{ entry.currency.code }} - {{ entry.currency.name }}
+                                </div>
+                            </div>
+                            
+                            <div class="info-card">
+                                <div class="info-label">{% trans "Payment Method" %}</div>
+                                <div class="info-value">{{ entry.get_payment_method_display }}</div>
+                            </div>
+                            
+                            {% if entry.reference_number %}
+                                <div class="info-card">
+                                    <div class="info-label">{% trans "Reference Number" %}</div>
+                                    <div class="info-value">{{ entry.reference_number }}</div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Description -->
+                <div class="col-lg-8">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-comment-alt me-2"></i>
+                                {% trans "Description" %}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="info-value">{{ entry.description|linebreaks }}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- System Information -->
+                <div class="col-lg-4">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-cog me-2"></i>
+                                {% trans "System Information" %}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="info-card">
+                                <div class="info-label">{% trans "Created By" %}</div>
+                                <div class="info-value">
+                                    {{ entry.created_by.get_full_name|default:entry.created_by.username }}
+                                </div>
+                            </div>
+                            
+                            <div class="info-card">
+                                <div class="info-label">{% trans "Created At" %}</div>
+                                <div class="info-value">{{ entry.created_at|date:"Y-m-d H:i:s" }}</div>
+                            </div>
+                            
+                            {% if entry.updated_at != entry.created_at %}
+                                <div class="info-card">
+                                    <div class="info-label">{% trans "Last Updated" %}</div>
+                                    <div class="info-value">{{ entry.updated_at|date:"Y-m-d H:i:s" }}</div>
+                                </div>
+                            {% endif %}
+                            
+                            {% if entry.is_approved %}
+                                <div class="info-card">
+                                    <div class="info-label">{% trans "Approved By" %}</div>
+                                    <div class="info-value">
+                                        {{ entry.approved_by.get_full_name|default:entry.approved_by.username }}
+                                    </div>
+                                </div>
+                                
+                                <div class="info-card">
+                                    <div class="info-label">{% trans "Approved At" %}</div>
+                                    <div class="info-value">{{ entry.approved_at|date:"Y-m-d H:i:s" }}</div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Actions -->
+            {% if not entry.is_approved %}
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card border-success">
+                            <div class="card-header bg-light-success">
+                                <h5 class="mb-0 text-success">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    {% trans "Entry Approval" %}
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted">
+                                    {% trans "This entry is pending approval. Click the button below to approve it." %}
+                                </p>
+                                <button type="button" class="btn btn-success btn-lg" onclick="approveEntry()">
+                                    <i class="fas fa-check me-2"></i>
+                                    {% trans "Approve Entry" %}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="row">
+                    <div class="col-12">
+                        <div class="alert alert-success">
+                            <h5 class="alert-heading">
+                                <i class="fas fa-check-circle me-2"></i>
+                                {% trans "Entry Approved" %}
+                            </h5>
+                            <p class="mb-0">
+                                {% trans "This entry has been approved and is now part of your financial records." %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Hidden Forms -->
+<form id="approveForm" method="post" action="{% url 'revenues_expenses:entry_approve' entry.id %}" style="display: none;">
+    {% csrf_token %}
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function approveEntry() {
+    if (confirm('{% trans "Are you sure you want to approve this entry?" %}\n\n{% trans "Entry:" %} {{ entry.entry_number }}\n{% trans "Amount:" %} {{ entry.amount|currency_format:entry.currency.code }}\n\n{% trans "This action cannot be undone." %}')) {
+        document.getElementById('approveForm').submit();
+    }
+}
+</script>
 {% endblock %}

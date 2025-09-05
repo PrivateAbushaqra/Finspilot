@@ -1,0 +1,583 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{{ page_title }} - Triangle{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background: #fff;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid #007bff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .section-title {
+        color: #007bff;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .required-field {
+        color: #dc3545;
+    }
+    
+    .form-help {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    
+    .currency-symbol {
+        background: #e9ecef;
+        border: 1px solid #ced4da;
+        border-left: none;
+        padding: 0.375rem 0.75rem;
+        font-weight: bold;
+    }
+    
+    #addCategoryBtn {
+        border-left: none;
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+    
+    .input-group .form-select {
+        border-right: none;
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+    
+    .modal-header {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        color: white;
+    }
+    
+    .modal-header .btn-close {
+        filter: invert(1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                <h1 class="h3 mb-0 text-gray-800">
+                    <i class="fas fa-plus-circle text-success me-2"></i>
+                    {{ page_title }}
+                </h1>
+                <a href="{% url 'assets_liabilities:asset_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>{% trans "Back to Assets List" %}
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" class="needs-validation" novalidate>
+        {% csrf_token %}
+        
+        <!-- معلومات أساسية -->
+        <div class="form-section">
+            <h5 class="section-title">
+                <i class="fas fa-info-circle me-2"></i>
+                {% trans "Basic Information" %}
+            </h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ form.asset_number.id_for_label }}" class="form-label">
+                            {% trans "Asset Number" %}
+                        </label>
+                        {{ form.asset_number }}
+                        <div class="form-help">
+                            {% trans "Leave empty to auto-generate" %}
+                        </div>
+                        {% if form.asset_number.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.asset_number.errors|first }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ form.name.id_for_label }}" class="form-label">
+                            {% trans "Asset Name" %} <span class="required-field">*</span>
+                        </label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.name.errors|first }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ form.category.id_for_label }}" class="form-label">
+                            {% trans "Category" %} <span class="required-field">*</span>
+                        </label>
+                        <div class="input-group">
+                            {{ form.category }}
+                            <button type="button" class="btn btn-outline-primary" id="addCategoryBtn" onclick="showAddCategoryModal()">
+                                <i class="fas fa-plus"></i>
+                                <span class="d-none d-md-inline ms-1">{% trans "Add Category First" %}</span>
+                            </button>
+                        </div>
+                        {% if form.category.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.category.errors|first }}
+                            </div>
+                        {% endif %}
+                        <div class="form-help">
+                            {% trans "Select an existing category or add a new one first" %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ form.status.id_for_label }}" class="form-label">
+                            {% trans "Status" %}
+                        </label>
+                        {{ form.status }}
+                        {% if form.status.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.status.errors|first }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="{{ form.description.id_for_label }}" class="form-label">
+                    {% trans "Description" %}
+                </label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <div class="invalid-feedback d-block">
+                        {{ form.description.errors|first }}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- معلومات مالية -->
+        <div class="form-section">
+            <h5 class="section-title">
+                <i class="fas fa-dollar-sign me-2"></i>
+                {% trans "Financial Information" %}
+            </h5>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="{{ form.purchase_cost.id_for_label }}" class="form-label">
+                            {% trans "Purchase Cost" %} <span class="required-field">*</span>
+                        </label>
+                        <div class="input-group">
+                            {{ form.purchase_cost }}
+                            <span class="input-group-text currency-symbol">
+                                {% if form.instance.currency %}
+                                    {{ form.instance.currency.symbol }}
+                                {% else %}
+                                    د.أ
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% if form.purchase_cost.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.purchase_cost.errors|first }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="{{ form.current_value.id_for_label }}" class="form-label">
+                            {% trans "Current Value" %}
+                        </label>
+                        <div class="input-group">
+                            {{ form.current_value }}
+                            <span class="input-group-text currency-symbol">
+                                {% if form.instance.currency %}
+                                    {{ form.instance.currency.symbol }}
+                                {% else %}
+                                    د.أ
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="form-help">
+                            {% trans "Leave empty to use purchase cost" %}
+                        </div>
+                        {% if form.current_value.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.current_value.errors|first }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="{{ form.salvage_value.id_for_label }}" class="form-label">
+                            {% trans "Salvage Value" %}
+                        </label>
+                        <div class="input-group">
+                            {{ form.salvage_value }}
+                            <span class="input-group-text currency-symbol">
+                                {% if form.instance.currency %}
+                                    {{ form.instance.currency.symbol }}
+                                {% else %}
+                                    د.أ
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% if form.salvage_value.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.salvage_value.errors|first }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ form.currency.id_for_label }}" class="form-label">
+                            {% trans "Currency" %}
+                        </label>
+                        {{ form.currency }}
+                        {% if form.currency.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.currency.errors|first }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ form.depreciation_method.id_for_label }}" class="form-label">
+                            {% trans "Depreciation Method" %}
+                        </label>
+                        {{ form.depreciation_method }}
+                        {% if form.depreciation_method.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.depreciation_method.errors|first }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- معلومات الشراء -->
+        <div class="form-section">
+            <h5 class="section-title">
+                <i class="fas fa-shopping-cart me-2"></i>
+                {% trans "Purchase Information" %}
+            </h5>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="{{ form.purchase_date.id_for_label }}" class="form-label">
+                            {% trans "Purchase Date" %} <span class="required-field">*</span>
+                        </label>
+                        {{ form.purchase_date }}
+                        {% if form.purchase_date.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.purchase_date.errors|first }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="{{ form.supplier.id_for_label }}" class="form-label">
+                            {% trans "Supplier" %}
+                        </label>
+                        {{ form.supplier }}
+                        {% if form.supplier.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.supplier.errors|first }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="mb-3">
+                        <label for="{{ form.invoice_number.id_for_label }}" class="form-label">
+                            {% trans "Invoice Number" %}
+                        </label>
+                        {{ form.invoice_number }}
+                        {% if form.invoice_number.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.invoice_number.errors|first }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ form.warranty_expiry.id_for_label }}" class="form-label">
+                            {% trans "Warranty Expiry" %}
+                        </label>
+                        {{ form.warranty_expiry }}
+                        {% if form.warranty_expiry.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.warranty_expiry.errors|first }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ form.location.id_for_label }}" class="form-label">
+                            {% trans "Location" %}
+                        </label>
+                        {{ form.location }}
+                        {% if form.location.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.location.errors|first }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- المسؤولية -->
+        <div class="form-section">
+            <h5 class="section-title">
+                <i class="fas fa-user-tie me-2"></i>
+                {% trans "Responsibility" %}
+            </h5>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="mb-3">
+                        <label for="{{ form.responsible_person.id_for_label }}" class="form-label">
+                            {% trans "Responsible Person" %}
+                        </label>
+                        {{ form.responsible_person }}
+                        {% if form.responsible_person.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.responsible_person.errors|first }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- أزرار الحفظ -->
+        <div class="form-section">
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'assets_liabilities:asset_list' %}" class="btn btn-secondary btn-lg">
+                    <i class="fas fa-times me-2"></i>
+                    {% trans "Cancel" %}
+                </a>
+                <button type="submit" class="btn btn-success btn-lg">
+                    <i class="fas fa-save me-2"></i>
+                    {% trans "Save Asset" %}
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Modal إضافة فئة جديدة -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCategoryModalLabel">
+                    <i class="fas fa-plus-circle text-primary me-2"></i>
+                    {% trans "Add New Category" %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addCategoryForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="categoryName" class="form-label">
+                            {% trans "Category Name" %} <span class="required-field">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="categoryName" name="category_name" required>
+                        <div class="form-help">
+                            {% trans "Enter a unique name for the new category" %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="categoryDescription" class="form-label">
+                            {% trans "Description" %}
+                        </label>
+                        <textarea class="form-control" id="categoryDescription" name="category_description" rows="3"></textarea>
+                        <div class="form-help">
+                            {% trans "Optional description for the category" %}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="categoryActive" name="is_active" checked>
+                            <label class="form-check-label" for="categoryActive">
+                                {% trans "Active Category" %}
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>
+                    {% trans "Cancel" %}
+                </button>
+                <button type="button" class="btn btn-primary" onclick="saveCategory()">
+                    <i class="fas fa-save me-1"></i>
+                    {% trans "Save Category" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // تحديث رمز العملة عند تغيير العملة
+    const currencySelect = document.getElementById('{{ form.currency.id_for_label }}');
+    const currencySymbols = document.querySelectorAll('.currency-symbol');
+    
+    if (currencySelect) {
+        currencySelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const symbol = selectedOption.dataset.symbol || 'د.أ';
+            
+            currencySymbols.forEach(function(element) {
+                element.textContent = symbol;
+            });
+        });
+    }
+    
+    // تحديث القيمة الحالية عند تغيير تكلفة الشراء
+    const purchaseCostInput = document.getElementById('{{ form.purchase_cost.id_for_label }}');
+    const currentValueInput = document.getElementById('{{ form.current_value.id_for_label }}');
+    
+    if (purchaseCostInput && currentValueInput) {
+        purchaseCostInput.addEventListener('input', function() {
+            if (!currentValueInput.value) {
+                currentValueInput.value = this.value;
+            }
+        });
+    }
+    
+    // التحقق من صحة النموذج
+    const form = document.querySelector('.needs-validation');
+    if (form) {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            form.classList.add('was-validated');
+        });
+    }
+});
+
+// وظائف إدارة الفئات
+function showAddCategoryModal() {
+    const modal = new bootstrap.Modal(document.getElementById('addCategoryModal'));
+    modal.show();
+}
+
+function saveCategory() {
+    const form = document.getElementById('addCategoryForm');
+    const formData = new FormData(form);
+    
+    // التحقق من البيانات المطلوبة
+    const categoryName = formData.get('category_name');
+    if (!categoryName) {
+        alert('يرجى إدخال اسم الفئة');
+        return;
+    }
+    
+    // إعداد البيانات للإرسال
+    const categoryData = {
+        name: categoryName,
+        description: formData.get('category_description') || '',
+        is_active: formData.get('is_active') ? true : false,
+        csrfmiddlewaretoken: formData.get('csrfmiddlewaretoken')
+    };
+    
+    // إرسال طلب إنشاء الفئة
+    fetch('{% url "assets_liabilities:category_create_ajax" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': categoryData.csrfmiddlewaretoken,
+        },
+        body: JSON.stringify(categoryData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // إضافة الفئة الجديدة إلى القائمة
+            const categorySelect = document.getElementById('{{ form.category.id_for_label }}');
+            const newOption = document.createElement('option');
+            newOption.value = data.category_id;
+            newOption.textContent = data.category_name;
+            newOption.selected = true;
+            categorySelect.appendChild(newOption);
+            
+            // إغلاق المودال وإعادة تعيين النموذج
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addCategoryModal'));
+            modal.hide();
+            form.reset();
+            
+            // عرض رسالة نجاح
+            showSuccessMessage('تم إضافة الفئة بنجاح');
+        } else {
+            alert('خطأ في إضافة الفئة: ' + (data.error || 'خطأ غير معروف'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ في الاتصال بالخادم');
+    });
+}
+
+function showSuccessMessage(message) {
+    // إنشاء رسالة نجاح مؤقتة
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-success alert-dismissible fade show position-fixed';
+    alertDiv.style.top = '20px';
+    alertDiv.style.right = '20px';
+    alertDiv.style.zIndex = '9999';
+    alertDiv.innerHTML = `
+        <i class="fas fa-check-circle me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    // إزالة الرسالة بعد 5 ثوان
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+</script>
+{% endblock %}

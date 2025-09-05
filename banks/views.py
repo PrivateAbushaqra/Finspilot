@@ -311,6 +311,16 @@ class BankAccountDeleteView(LoginRequiredMixin, View):
                     CashboxTransfer.objects.filter(to_bank=account).delete()
                     # حذف الحساب
                     account.delete()
+                    
+                # تسجيل النشاط في سجل الأنشطة
+                from core.signals import log_activity
+                log_activity(
+                    action_type='delete',
+                    obj=None,  # الكائن محذوف
+                    description=f'حذف الحساب البنكي "{account_name}" (لم توجد حركات)',
+                    user=request.user
+                )
+                
                 messages.success(request, f'تم حذف الحساب البنكي "{account_name}" لعدم وجود أي حركات عليه.')
                 return redirect('banks:account_list')
             
@@ -378,6 +388,16 @@ class BankAccountDeleteView(LoginRequiredMixin, View):
                 
                 # حذف الحساب
                 account.delete()
+                
+                # تسجيل النشاط في سجل الأنشطة
+                from core.signals import log_activity
+                log_activity(
+                    action_type='delete',
+                    obj=None,  # الكائن محذوف
+                    description=f'حذف الحساب البنكي "{account_name}"',
+                    user=request.user
+                )
+                
                 messages.success(request, f'تم حذف الحساب البنكي "{account_name}" بنجاح!')
             
         except BankAccount.DoesNotExist:
@@ -1216,6 +1236,64 @@ class BankTransactionDeleteView(LoginRequiredMixin, View):
         except Exception as e:
             return JsonResponse({'error': f'حدث خطأ أثناء حذف المعاملة: {str(e)}'}, status=500)
 
+class BankAccountSuperAdminDeleteView(LoginRequiredMixin, View):
+    """حذف مطلق للحسابات البنكية - للـ superadmin فقط"""
+    
+    def post(self, request, pk, *args, **kwargs):
+        from django.db import transaction
+        
+        # التحقق من أن المستخدم superadmin فقط
+        if not request.user.is_superuser:
+            messages.error(request, _('Only superadmin can perform absolute deletion.'))
+            return redirect('banks:account_list')
+        
+        try:
+            account = BankAccount.objects.get(pk=pk)
+            account_name = account.name
+            
+            with transaction.atomic():
+                # حذف جميع المعاملات المرتبطة بالحساب
+                from .models import BankTransaction
+                BankTransaction.objects.filter(bank=account).delete()
+                
+                # حذف جميع التحويلات المرتبطة بالحساب
+                BankTransfer.objects.filter(from_account=account).delete()
+                BankTransfer.objects.filter(to_account=account).delete()
+                
+                # حذف جميع تحويلات الصناديق المرتبطة بالحساب
+                from cashboxes.models import CashboxTransfer
+                CashboxTransfer.objects.filter(from_bank=account).delete()
+                CashboxTransfer.objects.filter(to_bank=account).delete()
+                
+                # حذف الحساب نفسه
+                account.delete()
+                
+                # تسجيل النشاط في سجل الأنشطة
+                from core.signals import log_activity
+                log_activity(
+                    action_type='delete',
+                    obj=None,  # الكائن محذوف
+                    description=f'حذف مطلق للحساب البنكي "{account_name}" مع جميع حركاته وتحويلاته (superadmin)',
+                    user=request.user
+                )
+                
+                # مسح بيانات الجلسة
+                if 'delete_account_id' in request.session:
+                    del request.session['delete_account_id']
+                if 'delete_account_name' in request.session:
+                    del request.session['delete_account_name']
+                
+                messages.success(request, f'تم الحذف المطلق للحساب البنكي "{account_name}" مع جميع حركاته وتحويلاته بنجاح!')
+            
+            return redirect('banks:account_list')
+            
+        except BankAccount.DoesNotExist:
+            messages.error(request, 'الحساب البنكي غير موجود!')
+            return redirect('banks:account_list')
+        except Exception as e:
+            messages.error(request, f'حدث خطأ أثناء الحذف المطلق: {str(e)}')
+            return redirect('banks:account_list')
+
 class BankAccountForceDeleteView(LoginRequiredMixin, View):
     """حذف الحساب البنكي بالقوة بعد إزالة جميع الحركات"""
     
@@ -1319,6 +1397,15 @@ class BankAccountForceDeleteView(LoginRequiredMixin, View):
                 
                 # حذف الحساب
                 account.delete()
+                
+                # تسجيل النشاط في سجل الأنشطة
+                from core.signals import log_activity
+                log_activity(
+                    action_type='delete',
+                    obj=None,  # الكائن محذوف
+                    description=f'حذف الحساب البنكي "{account_name}" نهائياً',
+                    user=request.user
+                )
                 
                 # مسح بيانات الجلسة
                 if 'delete_account_id' in request.session:

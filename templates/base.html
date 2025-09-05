@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{% if superadmin_settings and superadmin_settings.system_title %}{{ superadmin_settings.system_title }}{% else %}{% trans "فينس بايلوت - النظام المحاسبي" %}{% endif %}{% endblock %}</title>
+    <title>{% block title %}{% if superadmin_settings and superadmin_settings.system_title %}{{ superadmin_settings.system_title }}{% else %}Finspilot - النظام المحاسبي{% endif %}{% endblock %}</title>
     
     <!-- Bootstrap CSS -->
     {% if LANGUAGE_CODE == 'ar' %}
@@ -1498,7 +1498,7 @@
     const printDateLabel = '{% trans "Print Date:" %}';
         printHeader.innerHTML = `
             <div class="print-company-info">
-                {% trans "فينس بايلوت - النظام المحاسبي" %}
+                Finspilot - النظام المحاسبي
             </div>
             <div class="print-header">
                 ${pageTitle}

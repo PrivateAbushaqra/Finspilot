@@ -25,10 +25,11 @@ class AssetCategoryForm(forms.ModelForm):
 class AssetForm(forms.ModelForm):
     class Meta:
         model = Asset
-        fields = ['name', 'category', 'description', 'purchase_cost', 'current_value', 'salvage_value', 
+        fields = ['asset_number', 'name', 'category', 'description', 'purchase_cost', 'current_value', 'salvage_value', 
                  'currency', 'purchase_date', 'supplier', 'invoice_number', 'warranty_expiry', 
                  'location', 'responsible_person', 'status', 'depreciation_method']
         widgets = {
+            'asset_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'سيتم توليده تلقائياً إذا ترك فارغاً'}),
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'category': forms.Select(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),

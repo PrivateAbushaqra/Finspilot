@@ -1,11 +1,394 @@
 {% extends 'base.html' %}
 {% load i18n %}
+{% load currency_tags %}
 
+{% block title %}{{ page_title }} - {{ block.super }}{% endblock %}
 
-
-{% block title %}{% trans "Recurring Revenues and Expenses" %}{% endblock %}
+{% block extra_css %}
+<style>
+    .recurring-container {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .recurring-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+    }
+    
+    .recurring-card {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        margin-bottom: 1rem;
+    }
+    
+    .recurring-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    .status-active {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .status-inactive {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+    
+    .status-overdue {
+        background-color: #f5c6cb;
+        color: #721c24;
+    }
+    
+    .status-due-today {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    
+    .frequency-badge {
+        background-color: #e9ecef;
+        color: #495057;
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.8rem;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<h2>{% trans "Recurring Revenues and Expenses" %}</h2>
-<p>{% trans "The list will be added soon" %}</p>
+<div class="container-fluid">
+    <div class="recurring-container">
+        <!-- Header -->
+        <div class="recurring-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-calendar-alt me-2"></i>
+                        {{ page_title }}
+                    </h1>
+                    <p class="mb-0 opacity-75">{% trans "Manage your recurring revenues and expenses" %}</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <a href="{% url 'revenues_expenses:recurring_create' %}" class="btn btn-light">
+                        <i class="fas fa-plus me-2"></i>
+                        {% trans "Add New Recurring Item" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="p-4">
+            <div class="row mb-4">
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card border-primary">
+                        <div class="card-body text-center">
+                            <i class="fas fa-sync fa-2x text-primary mb-2"></i>
+                            <h5 class="card-title text-primary">{{ total_recurring }}</h5>
+                            <p class="card-text">{% trans "Total Recurring Items" %}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card border-warning">
+                        <div class="card-body text-center">
+                            <i class="fas fa-exclamation-circle fa-2x text-warning mb-2"></i>
+                            <h5 class="card-title text-warning">{{ due_today_count }}</h5>
+                            <p class="card-text">{% trans "Due Today" %}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card border-danger">
+                        <div class="card-body text-center">
+                            <i class="fas fa-clock fa-2x text-danger mb-2"></i>
+                            <h5 class="card-title text-danger">{{ overdue_count }}</h5>
+                            <p class="card-text">{% trans "Overdue" %}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="card border-info">
+                        <div class="card-body text-center">
+                            <i class="fas fa-chart-line fa-2x text-info mb-2"></i>
+                            <h5 class="card-title text-info">{% trans "Active" %}</h5>
+                            <p class="card-text">{% trans "Status Tracking" %}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-filter me-2"></i>
+                        {% trans "Filters" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">{% trans "Search" %}</label>
+                            <input type="text" name="search" class="form-control" 
+                                   value="{{ request.GET.search }}" 
+                                   placeholder="{% trans 'Search by name or description...' %}">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">{% trans "Type" %}</label>
+                            <select name="type" class="form-control">
+                                <option value="">{% trans "All Types" %}</option>
+                                {% for key, value in entry_types %}
+                                    <option value="{{ key }}" {% if request.GET.type == key %}selected{% endif %}>{{ value }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">{% trans "Category" %}</label>
+                            <select name="category" class="form-control">
+                                <option value="">{% trans "All Categories" %}</option>
+                                {% for category in categories %}
+                                    <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ category.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">{% trans "Frequency" %}</label>
+                            <select name="frequency" class="form-control">
+                                <option value="">{% trans "All Frequencies" %}</option>
+                                {% for key, value in frequency_choices %}
+                                    <option value="{{ key }}" {% if request.GET.frequency == key %}selected{% endif %}>{{ value }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">{% trans "Status" %}</label>
+                            <select name="status" class="form-control">
+                                <option value="">{% trans "All Status" %}</option>
+                                <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>{% trans "Active" %}</option>
+                                <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>{% trans "Inactive" %}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label">&nbsp;</label>
+                            <button type="submit" class="btn btn-primary d-block">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Recurring Items List -->
+            {% if recurring_items %}
+                <div class="row">
+                    {% for item in recurring_items %}
+                        <div class="col-lg-6 col-xl-4 mb-4">
+                            <div class="recurring-card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">{{ item.name|truncatechars:30 }}</h6>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                                type="button" data-bs-toggle="dropdown">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="{% url 'revenues_expenses:recurring_detail' item.id %}">
+                                                <i class="fas fa-eye me-2"></i>{% trans "View Details" %}
+                                            </a></li>
+                                            <li><a class="dropdown-item" href="{% url 'revenues_expenses:recurring_edit' item.id %}">
+                                                <i class="fas fa-edit me-2"></i>{% trans "Edit" %}
+                                            </a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-success" href="#" onclick="generateEntry({{ item.id }})">
+                                                <i class="fas fa-play me-2"></i>{% trans "Generate Entry" %}
+                                            </a></li>
+                                            <li><a class="dropdown-item text-warning" href="#" onclick="toggleStatus({{ item.id }})">
+                                                <i class="fas fa-{% if item.is_active %}pause{% else %}play{% endif %} me-2"></i>
+                                                {% if item.is_active %}{% trans "Deactivate" %}{% else %}{% trans "Activate" %}{% endif %}
+                                            </a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-danger" href="#" onclick="deleteRecurring({{ item.id }}, '{{ item.name }}')">
+                                                <i class="fas fa-trash me-2"></i>{% trans "Delete" %}
+                                            </a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row mb-2">
+                                        <div class="col-6">
+                                            <small class="text-muted">{% trans "Type" %}</small>
+                                            <div>
+                                                <span class="badge bg-{% if item.category.type == 'revenue' %}success{% else %}danger{% endif %}">
+                                                    {{ item.category.get_type_display }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted">{% trans "Amount" %}</small>
+                                            <div class="fw-bold">
+                                                {{ item.amount|currency_format:item.currency.code }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-6">
+                                            <small class="text-muted">{% trans "Category" %}</small>
+                                            <div>{{ item.category.name|truncatechars:15 }}</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted">{% trans "Frequency" %}</small>
+                                            <div>
+                                                <span class="frequency-badge">{{ item.get_frequency_display }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-6">
+                                            <small class="text-muted">{% trans "Next Due Date" %}</small>
+                                            <div class="{% if item.next_due_date < today %}text-danger{% elif item.next_due_date == today %}text-warning{% endif %}">
+                                                {{ item.next_due_date }}
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted">{% trans "Status" %}</small>
+                                            <div>
+                                                {% if item.is_active %}
+                                                    {% if item.next_due_date < today %}
+                                                        <span class="status-badge status-overdue">{% trans "Overdue" %}</span>
+                                                    {% elif item.next_due_date == today %}
+                                                        <span class="status-badge status-due-today">{% trans "Due Today" %}</span>
+                                                    {% else %}
+                                                        <span class="status-badge status-active">{% trans "Active" %}</span>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <span class="status-badge status-inactive">{% trans "Inactive" %}</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% if item.description %}
+                                        <div class="mt-2">
+                                            <small class="text-muted">{% trans "Description" %}</small>
+                                            <div class="small">{{ item.description|truncatechars:50 }}</div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Pagination -->
+                {% if recurring_items.has_other_pages %}
+                    <nav aria-label="{% trans 'Pagination' %}">
+                        <ul class="pagination justify-content-center">
+                            {% if recurring_items.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ recurring_items.previous_page_number }}">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for num in recurring_items.paginator.page_range %}
+                                {% if recurring_items.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ num }}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if recurring_items.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ recurring_items.next_page_number }}">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <!-- Empty State -->
+                <div class="text-center py-5">
+                    <i class="fas fa-calendar-alt fa-4x text-muted mb-3"></i>
+                    <h5 class="text-muted">{% trans "No recurring items found" %}</h5>
+                    <p class="text-muted">{% trans "Start by creating your first recurring revenue or expense" %}</p>
+                    <a href="{% url 'revenues_expenses:recurring_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>
+                        {% trans "Add First Recurring Item" %}
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Hidden Forms for Actions -->
+<form id="generateForm" method="post" style="display: none;">
+    {% csrf_token %}
+</form>
+
+<form id="toggleForm" method="post" style="display: none;">
+    {% csrf_token %}
+</form>
+
+<form id="deleteForm" method="post" style="display: none;">
+    {% csrf_token %}
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function generateEntry(recurringId) {
+    if (confirm('{% trans "Are you sure you want to generate an entry from this recurring item?" %}')) {
+        const form = document.getElementById('generateForm');
+        form.action = '{% url "revenues_expenses:recurring_generate_entry" 0 %}'.replace('0', recurringId);
+        form.submit();
+    }
+}
+
+function toggleStatus(recurringId) {
+    if (confirm('{% trans "Are you sure you want to change the status of this recurring item?" %}')) {
+        const form = document.getElementById('toggleForm');
+        form.action = '{% url "revenues_expenses:recurring_toggle_status" 0 %}'.replace('0', recurringId);
+        form.submit();
+    }
+}
+
+function deleteRecurring(recurringId, name) {
+    if (confirm('{% trans "Are you sure you want to delete" %} "' + name + '"? {% trans "This action cannot be undone." %}')) {
+        const form = document.getElementById('deleteForm');
+        form.action = '{% url "revenues_expenses:recurring_delete" 0 %}'.replace('0', recurringId);
+        form.submit();
+    }
+}
+
+// Add current date for comparison
+const today = new Date().toISOString().split('T')[0];
+document.addEventListener('DOMContentLoaded', function() {
+    // Store today's date for template comparisons
+    window.today = today;
+});
+</script>
 {% endblock %}

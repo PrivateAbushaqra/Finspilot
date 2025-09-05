@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load humanize %}
+{% load currency_tags %}
+
+{% block title %}{% trans "Confirm Delete Journal Entry" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .delete-warning {
+        background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+        color: white;
+        border-radius: 10px;
+        padding: 2rem;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .entry-details {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        border-left: 4px solid #dc3545;
+    }
+    
+    .entry-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .entry-info:last-child {
+        border-bottom: none;
+    }
+    
+    .danger-zone {
+        background: #fff5f5;
+        border: 2px solid #feb2b2;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            
+            <!-- Warning Header -->
+            <div class="delete-warning">
+                <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+                <h3>{% trans "Delete Journal Entry" %}</h3>
+                <p class="mb-0">{% trans "You are about to permanently delete this journal entry" %}</p>
+            </div>
+            
+            <!-- Entry Information -->
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-invoice me-2"></i>
+                        {% trans "Entry Details" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="entry-details">
+                        <div class="entry-info">
+                            <strong>{% trans "Entry Number" %}:</strong>
+                            <span class="badge bg-primary">{{ entry.entry_number }}</span>
+                        </div>
+                        <div class="entry-info">
+                            <strong>{% trans "Date" %}:</strong>
+                            <span>{{ entry.entry_date|date:"d/m/Y" }}</span>
+                        </div>
+                        <div class="entry-info">
+                            <strong>{% trans "Type" %}:</strong>
+                            <span>{{ entry.get_reference_type_display }}</span>
+                        </div>
+                        <div class="entry-info">
+                            <strong>{% trans "Description" %}:</strong>
+                            <span>{{ entry.description }}</span>
+                        </div>
+                        <div class="entry-info">
+                            <strong>{% trans "Total Amount" %}:</strong>
+                            <span class="fs-5 text-primary">
+                                <strong>{{ entry.total_amount|floatformat:3|intcomma }} {% get_currency_symbol %}</strong>
+                            </span>
+                        </div>
+                        <div class="entry-info">
+                            <strong>{% trans "Created By" %}:</strong>
+                            <span>{{ entry.created_by.get_full_name|default:entry.created_by.username }}</span>
+                        </div>
+                        <div class="entry-info">
+                            <strong>{% trans "Created At" %}:</strong>
+                            <span>{{ entry.created_at|date:"d/m/Y H:i" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Entry Lines -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-list me-2"></i>
+                        {% trans "Journal Entry Lines" %}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>{% trans "Account" %}</th>
+                                    <th>{% trans "Code" %}</th>
+                                    <th class="text-center">{% trans "Debit" %}</th>
+                                    <th class="text-center">{% trans "Credit" %}</th>
+                                    <th>{% trans "Description" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for line in lines %}
+                                <tr>
+                                    <td>{{ line.account.name }}</td>
+                                    <td><code>{{ line.account.code }}</code></td>
+                                    <td class="text-center">
+                                        {% if line.debit > 0 %}
+                                            <span class="text-success fw-bold">
+                                                {{ line.debit|floatformat:3|intcomma }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if line.credit > 0 %}
+                                            <span class="text-danger fw-bold">
+                                                {{ line.credit|floatformat:3|intcomma }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ line.line_description|default:"-" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Danger Zone -->
+            <div class="danger-zone mt-4">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h6 class="text-danger mb-2">
+                            <i class="fas fa-skull-crossbones me-2"></i>
+                            {% trans "Danger Zone" %}
+                        </h6>
+                        <p class="text-muted mb-0">
+                            {% trans "This action cannot be undone. The journal entry and all its lines will be permanently deleted." %}
+                        </p>
+                        <small class="text-warning">
+                            <i class="fas fa-info-circle me-1"></i>
+                            {% trans "This operation is only available for SuperAdmin users." %}
+                        </small>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <form method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                <i class="fas fa-trash-alt me-2"></i>
+                                {% trans "Delete Permanently" %}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-between mt-4 mb-4">
+                <a href="{% url 'journal:entry_list' %}" class="btn btn-secondary btn-lg">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    {% trans "Cancel and Go Back" %}
+                </a>
+                <a href="{% url 'journal:entry_detail' entry.pk %}" class="btn btn-info">
+                    <i class="fas fa-eye me-2"></i>
+                    {% trans "View Entry Details" %}
+                </a>
+            </div>
+            
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // إضافة تأكيد مضاعف للحذف
+    const deleteForm = document.querySelector('form[method="post"]');
+    if (deleteForm) {
+        deleteForm.addEventListener('submit', function(e) {
+            const entryNumber = '{{ entry.entry_number|escapejs }}';
+            const confirmation = confirm('تأكيد أخير!\n\nهل أنت متأكد تماماً من حذف القيد المحاسبي رقم: ' + entryNumber + '؟\n\nهذا الإجراء لا يمكن التراجع عنه!');
+            
+            if (!confirmation) {
+                e.preventDefault();
+                return false;
+            }
+            
+            // تأكيد إضافي
+            const finalConfirm = prompt('اكتب "حذف" لتأكيد الحذف النهائي:');
+            if (finalConfirm !== 'حذف') {
+                e.preventDefault();
+                alert('تم إلغاء عملية الحذف');
+                return false;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -18,7 +18,7 @@
                     <a href="{% url 'assets_liabilities:dashboard' %}" class="btn btn-secondary">
                         <i class="fas fa-arrow-left me-2"></i>{% trans "Back to Dashboard" %}
                     </a>
-                    <a href="#" class="btn btn-primary">
+                    <a href="{% url 'assets_liabilities:liability_create' %}" class="btn btn-primary">
                         <i class="fas fa-plus me-2"></i>{% trans "Add New Liability" %}
                     </a>
                 </div>
@@ -227,7 +227,7 @@
                         <i class="fas fa-credit-card fa-3x text-gray-300 mb-3"></i>
                         <h5 class="text-gray-600">{% trans "No Liabilities Found" %}</h5>
                         <p class="text-gray-500">{% trans "No liabilities were found based on the specified search criteria" %}</p>
-                        <a href="#" class="btn btn-primary">
+                        <a href="{% url 'assets_liabilities:liability_create' %}" class="btn btn-primary">
                             <i class="fas fa-plus me-2"></i>{% trans "Add First Liability" %}
                         </a>
                     </div>
