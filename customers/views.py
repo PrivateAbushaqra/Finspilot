@@ -426,15 +426,14 @@ class CustomerSupplierDeleteView(LoginRequiredMixin, View):
                 action_type='delete',
                 content_type='CustomerSupplier',
                 object_id=customer_id,
-                description=_(f'تم حذف العميل/المورد وجميع البيانات المرتبطة نهائياً: {name} ({type_display})'),
+                description=_('تم حذف العميل/المورد وجميع البيانات المرتبطة نهائياً: %(name)s (%(type)s)') % {'name': name, 'type': type_display},
                 ip_address=self.get_client_ip(request)
             )
             
             # رسالة نجاح
             messages.success(
                 request, 
-                _(f'تم حذف {type_display} "{name}" بنجاح!\n'
-                f'جميع البيانات المرتبطة تم حذفها نهائياً.')
+                _('تم حذف %(type)s "%(name)s" بنجاح!\nجميع البيانات المرتبطة تم حذفها نهائياً.') % {'type': type_display, 'name': name}
             )
             
             return redirect('customers:list')
@@ -447,11 +446,11 @@ class CustomerSupplierDeleteView(LoginRequiredMixin, View):
                 action_type='delete_failed',
                 content_type='CustomerSupplier',
                 object_id=customer_supplier.id,
-                description=_(f'فشل حذف العميل/المورد: {str(e)}'),
+                description=_('فشل حذف العميل/المورد: %(error)s') % {'error': str(e)},
                 ip_address=self.get_client_ip(request)
             )
             
-            messages.error(request, _(f'حدث خطأ أثناء حذف البيانات: {str(e)}'))
+            messages.error(request, _('حدث خطأ أثناء حذف البيانات: %(error)s') % {'error': str(e)})
             return redirect('customers:delete', pk=pk)
     
     def _force_delete_customer_supplier(self, customer_supplier):
@@ -490,6 +489,16 @@ class CustomerSupplierDeleteView(LoginRequiredMixin, View):
                 
                 cursor.execute("""
                     DELETE FROM sales_salesreturn WHERE customer_id = %s
+                """, [customer_id])
+                
+                # حذف إشعارات خصم المشتريات
+                cursor.execute("""
+                    DELETE FROM purchases_purchasedebitnote WHERE supplier_id = %s
+                """, [customer_id])
+                
+                # حذف إشعارات ائتمان المبيعات
+                cursor.execute("""
+                    DELETE FROM sales_salescreditnote WHERE customer_id = %s
                 """, [customer_id])
                 
                 # 2. حذف حركات المخزون المرتبطة
@@ -536,13 +545,11 @@ class CustomerSupplierDeleteView(LoginRequiredMixin, View):
                     DELETE FROM accounts_accounttransaction WHERE customer_supplier_id = %s
                 """, [customer_id])
                 
-                # 6. حذف أي حركات مخزون أخرى
-                cursor.execute("""
-                    DELETE FROM inventory_inventorymovement 
-                    WHERE customer_supplier_id = %s
-                """, [customer_id])
+                # 6. حذف أي حركات مخزون مرتبطة بفواتير هذا العميل/المورد
+                # (حركات المخزون لا تربط مباشرة بالعميل/المورد بل بالفواتير)
+                # تم حذفها بالفعل عندما تم حذف الفواتير أعلاه
                 
-                # 8. أخيراً حذف العميل/المورد نفسه
+                # 7. أخيراً حذف العميل/المورد نفسه
                 cursor.execute("""
                     DELETE FROM customers_customersupplier WHERE id = %s
                 """, [customer_id])
@@ -572,11 +579,40 @@ class CustomerSupplierTransactionsView(LoginRequiredMixin, TemplateView):
             # استيراد نموذج المعاملات
             from accounts.models import AccountTransaction
             from datetime import datetime
+            from django.db.models import Sum
             
             # الحصول على المعاملات
-            transactions = AccountTransaction.objects.filter(
-                customer_supplier=customer_supplier
-            ).order_by('date', 'created_at')
+            from django.db.models import Q
+            
+            # إنشاء query للعميل/المورد الحالي
+            query = Q(customer_supplier=customer_supplier)
+            
+            # إذا كان العميل من نوع "customer" أو "both"، ابحث عن موردين بنفس الاسم
+            if customer_supplier.type in ['customer', 'both']:
+                # البحث عن موردين بنفس الاسم
+                related_suppliers = CustomerSupplier.objects.filter(
+                    name=customer_supplier.name,
+                    type__in=['supplier', 'both']
+                ).exclude(id=customer_supplier.id)
+                
+                if related_suppliers.exists():
+                    # إضافة موردين مرتبطين للـ query
+                    query |= Q(customer_supplier__in=related_suppliers)
+            
+            # إذا كان المورد من نوع "supplier" أو "both"، ابحث عن عملاء بنفس الاسم  
+            elif customer_supplier.type in ['supplier', 'both']:
+                # البحث عن عملاء بنفس الاسم
+                related_customers = CustomerSupplier.objects.filter(
+                    name=customer_supplier.name,
+                    type__in=['customer', 'both']
+                ).exclude(id=customer_supplier.id)
+                
+                if related_customers.exists():
+                    # إضافة عملاء مرتبطين للـ query
+                    query |= Q(customer_supplier__in=related_customers)
+            
+            # جلب جميع المعاملات باستخدام query واحد
+            transactions = AccountTransaction.objects.filter(query).order_by('-date', '-id')
             
             # تطبيق فلترة التاريخ
             if date_from:
@@ -613,7 +649,7 @@ class CustomerSupplierTransactionsView(LoginRequiredMixin, TemplateView):
                 'date_to': date_to,
             })
             
-        except ImportError:
+        except ImportError as e:
             # في حالة عدم وجود نموذج الحسابات
             context.update({
                 'customer_supplier': customer_supplier,
@@ -933,3 +969,133 @@ def ajax_add_customer(request):
             'success': False,
             'message': f'حدث خطأ أثناء إنشاء العميل: {str(e)}'
         })
+
+
+@login_required
+def preview_transaction_document(request, customer_pk, transaction_id):
+    """معاينة المستند المرتبط بالمعاملة"""
+    from accounts.models import AccountTransaction
+    from django.http import Http404
+    from django.contrib import messages
+    from django.shortcuts import redirect
+    
+    try:
+        # التحقق من صحة المعاملة والعميل
+        customer_supplier = get_object_or_404(CustomerSupplier, pk=customer_pk)
+        transaction = get_object_or_404(AccountTransaction, id=transaction_id, customer_supplier=customer_supplier)
+        
+        # تسجيل النشاط
+        from core.models import AuditLog
+        AuditLog.objects.create(
+            user=request.user,
+            action_type='view',
+            content_type='AccountTransaction',
+            object_id=transaction.id,
+            description=f'معاينة مستند المعاملة {transaction.transaction_number} للعميل/المورد {customer_supplier.name}',
+            ip_address=request.META.get('REMOTE_ADDR', '')
+        )
+        
+        # التحقق من وجود مرجع صالح
+        if not transaction.reference_type or not transaction.reference_id:
+            if transaction.transaction_type == 'adjustment':
+                messages.info(request, f'هذه معاملة تسوية رصيد: {transaction.description}')
+            else:
+                messages.info(request, 'هذه المعاملة لا تحتوي على مستند مرتبط للمعاينة')
+            return redirect('customers:transactions', pk=customer_pk)
+        
+        # تحديد نوع المستند والمسار المناسب
+        document_found = False
+        
+        if transaction.reference_type == 'sales_invoice':
+            from sales.models import SalesInvoice
+            try:
+                invoice = SalesInvoice.objects.get(id=transaction.reference_id)
+                messages.success(request, f'تم فتح فاتورة المبيعات رقم {invoice.invoice_number}')
+                return redirect('sales:invoice_detail', pk=invoice.id)
+            except SalesInvoice.DoesNotExist:
+                messages.error(request, f'فاتورة المبيعات المرتبطة بهذه المعاملة (ID: {transaction.reference_id}) غير موجودة في النظام')
+                
+        elif transaction.reference_type == 'purchase_invoice':
+            from purchases.models import PurchaseInvoice
+            try:
+                invoice = PurchaseInvoice.objects.get(id=transaction.reference_id)
+                messages.success(request, f'تم فتح فاتورة المشتريات رقم {invoice.invoice_number}')
+                return redirect('purchases:invoice_detail', pk=invoice.id)
+            except PurchaseInvoice.DoesNotExist:
+                messages.error(request, f'فاتورة المشتريات المرتبطة بهذه المعاملة (ID: {transaction.reference_id}) غير موجودة في النظام')
+                
+        elif transaction.reference_type == 'sales_return':
+            from sales.models import SalesReturn
+            try:
+                return_doc = SalesReturn.objects.get(id=transaction.reference_id)
+                messages.success(request, f'تم فتح مردود المبيعات رقم {return_doc.return_number}')
+                return redirect('sales:return_detail', pk=return_doc.id)
+            except SalesReturn.DoesNotExist:
+                messages.error(request, f'مردود المبيعات المرتبط بهذه المعاملة (ID: {transaction.reference_id}) غير موجود في النظام')
+                
+        elif transaction.reference_type == 'purchase_return':
+            from purchases.models import PurchaseReturn
+            try:
+                return_doc = PurchaseReturn.objects.get(id=transaction.reference_id)
+                messages.success(request, f'تم فتح مردود المشتريات رقم {return_doc.return_number}')
+                return redirect('purchases:return_detail', pk=return_doc.id)
+            except PurchaseReturn.DoesNotExist:
+                messages.error(request, f'مردود المشتريات المرتبط بهذه المعاملة (ID: {transaction.reference_id}) غير موجود في النظام')
+                
+        elif transaction.reference_type == 'debit_note':
+            from purchases.models import PurchaseDebitNote
+            try:
+                debit_note = PurchaseDebitNote.objects.get(id=transaction.reference_id)
+                messages.success(request, f'تم فتح مذكرة الدين رقم {debit_note.note_number}')
+                return redirect('purchases:debitnote_detail', pk=debit_note.id)
+            except PurchaseDebitNote.DoesNotExist:
+                messages.error(request, f'مذكرة الدين المرتبطة بهذه المعاملة (ID: {transaction.reference_id}) غير موجودة في النظام')
+                
+        elif transaction.reference_type == 'credit_note':
+            from sales.models import SalesCreditNote
+            try:
+                credit_note = SalesCreditNote.objects.get(id=transaction.reference_id)
+                messages.success(request, f'تم فتح مذكرة ائتمان رقم {credit_note.note_number}')
+                return redirect('sales:creditnote_detail', pk=credit_note.id)
+            except SalesCreditNote.DoesNotExist:
+                messages.error(request, f'مذكرة الائتمان المرتبطة بهذه المعاملة (ID: {transaction.reference_id}) غير موجودة في النظام')
+                
+        elif transaction.reference_type == 'payment':
+            from payments.models import PaymentVoucher
+            try:
+                payment = PaymentVoucher.objects.get(id=transaction.reference_id)
+                messages.success(request, f'تم فتح سند الدفع رقم {payment.voucher_number}')
+                return redirect('payments:detail', pk=payment.id)
+            except PaymentVoucher.DoesNotExist:
+                messages.error(request, f'سند الدفع المرتبط بهذه المعاملة (ID: {transaction.reference_id}) غير موجود في النظام')
+                
+        elif transaction.reference_type == 'receipt':
+            from receipts.models import PaymentReceipt
+            try:
+                receipt = PaymentReceipt.objects.get(id=transaction.reference_id)
+                messages.success(request, f'تم فتح سند القبض رقم {receipt.receipt_number}')
+                return redirect('receipts:detail', pk=receipt.id)
+            except PaymentReceipt.DoesNotExist:
+                messages.error(request, f'سند القبض المرتبط بهذه المعاملة (ID: {transaction.reference_id}) غير موجود في النظام')
+                
+        else:
+            messages.warning(request, f'نوع المستند "{transaction.reference_type}" غير مدعوم للمعاينة حالياً')
+            
+    except Exception as e:
+        messages.error(request, f'حدث خطأ أثناء محاولة معاينة المستند: {str(e)}')
+        # تسجيل الخطأ في سجل الأنشطة
+        try:
+            from core.models import AuditLog
+            AuditLog.objects.create(
+                user=request.user,
+                action_type='error',
+                content_type='AccountTransaction',
+                object_id=transaction_id,
+                description=f'خطأ في معاينة مستند المعاملة {transaction_id}: {str(e)}',
+                ip_address=request.META.get('REMOTE_ADDR', '')
+            )
+        except:
+            pass  # تجاهل الأخطاء في تسجيل الخطأ
+    
+    # العودة إلى صفحة المعاملات
+    return redirect('customers:transactions', pk=customer_pk)

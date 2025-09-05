@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}حذف مذكرة الدين{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-trash me-2"></i>
+                        تأكيد حذف مذكرة الدين
+                    </h3>
+                </div>
+                
+                <div class="card-body">
+                    <div class="alert alert-warning" role="alert">
+                        <h4 class="alert-heading">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            تحذير!
+                        </h4>
+                        <p>هل أنت متأكد من رغبتك في حذف مذكرة الدين التالية؟</p>
+                        <hr>
+                        <p class="mb-0">هذا الإجراء لا يمكن التراجع عنه!</p>
+                    </div>
+                    
+                    <div class="card mt-3">
+                        <div class="card-body">
+                            <h5 class="card-title">تفاصيل مذكرة الدين:</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>رقم المذكرة:</strong> {{ debitnote.note_number }}</p>
+                                    <p><strong>المورد:</strong> {{ debitnote.supplier.name }}</p>
+                                    <p><strong>التاريخ:</strong> {{ debitnote.date }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>المجموع الفرعي:</strong> {{ debitnote.subtotal }}</p>
+                                    <p><strong>الضريبة:</strong> {{ debitnote.tax_amount }}</p>
+                                    <p><strong>المجموع الإجمالي:</strong> <span class="fw-bold text-primary">{{ debitnote.total_amount }}</span></p>
+                                </div>
+                            </div>
+                            {% if debitnote.description %}
+                            <div class="row">
+                                <div class="col-12">
+                                    <p><strong>الوصف:</strong> {{ debitnote.description }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="fas fa-trash me-2"></i>نعم، احذف مذكرة الدين
+                                </button>
+                            </div>
+                            <div>
+                                <a href="{% url 'purchases:debitnote_detail' debitnote.pk %}" class="btn btn-secondary me-2">
+                                    <i class="fas fa-arrow-left me-2"></i>العودة للتفاصيل
+                                </a>
+                                <a href="{% url 'purchases:debitnote_list' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-list me-2"></i>العودة للقائمة
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -8,6 +8,8 @@ class Category(models.Model):
     """فئة المنتجات"""
     sequence_number = models.IntegerField(_('الرقم التسلسلي'), unique=True, null=True, blank=True)
     name = models.CharField(_('اسم الفئة'), max_length=100, unique=True)
+    name_en = models.CharField(_('الاسم بالإنجليزية'), max_length=100, blank=True)
+    code = models.CharField(_('رمز التصنيف'), max_length=20, blank=True, unique=True, null=True)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, 
                               verbose_name=_('الفئة الأساسية'), related_name='subcategories')
     description = models.TextField(_('الوصف'), blank=True)

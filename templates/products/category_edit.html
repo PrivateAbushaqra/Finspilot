@@ -47,7 +47,7 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="name_en" class="form-label">اسم بالإنجليزية</label>
-                                    <input type="text" class="form-control" id="name_en" name="name_en" value="">
+                                    <input type="text" class="form-control" id="name_en" name="name_en" value="{{ category.name_en|default:'' }}">
                                 </div>
                             </div>
                         </div>
@@ -56,7 +56,7 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="code" class="form-label">رمز التصنيف</label>
-                                    <input type="text" class="form-control" id="code" name="code" value="">
+                                    <input type="text" class="form-control" id="code" name="code" value="{{ category.code|default:'' }}">
                                 </div>
                             </div>
                             <div class="col-md-6">

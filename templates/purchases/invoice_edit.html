@@ -159,6 +159,22 @@
                                     </select>
                                 </div>
                             </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label"><i class="fas fa-percentage me-1"></i> {% trans "Tax Settings" %}</label>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" name="is_tax_inclusive" id="is_tax_inclusive" 
+                                               {% if invoice.is_tax_inclusive %}checked{% endif %}>
+                                        <label class="form-check-label" for="is_tax_inclusive">
+                                            {% trans "Tax Inclusive" %}
+                                        </label>
+                                    </div>
+                                    <div class="form-text">
+                                        <strong>{% trans "Tax Calculation" %}:</strong> {% trans "When checked, tax is calculated and added. When unchecked, no tax is calculated." %}
+                                        <br><small class="text-muted">الافتراضي: مُختار (يحسب الضريبة)</small>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         
                         <!-- صف المستودع -->
@@ -167,14 +183,15 @@
                                 <div class="mb-3">
                                     <label class="form-label"><i class="fas fa-warehouse me-1"></i> المستودع</label>
                                     <select class="form-select" name="warehouse">
-                                        <option value="">المستودع ا{% trans "No" %}فتراضي</option>
+                                        <option value="">{% trans "Select Warehouse" %}</option>
                                         {% for warehouse in warehouses %}
                                         <option value="{{ warehouse.id }}" {% if invoice.warehouse and warehouse.id == invoice.warehouse.id %}selected{% endif %}>
                                             {{ warehouse.name }} - {{ warehouse.code }}
+                                            {% if warehouse.is_default %} (افتراضي){% endif %}
                                         </option>
                                         {% endfor %}
                                     </select>
-                                    <div class="form-text">اختر المستودع الذي سيتم إدخال المنتجات إليه.</div>
+                                    <div class="form-text">{% trans "Select the warehouse where products will be stored." %}</div>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -358,6 +375,21 @@ document.addEventListener('DOMContentLoaded', function() {
     if (existingItems.length === 0) {
         addProductRow();
     }
+    
+    // إضافة مستمع لحدث تغيير خانة "شامل ضريبة"
+    const taxInclusiveCheckbox = document.getElementById('is_tax_inclusive');
+    if (taxInclusiveCheckbox) {
+        taxInclusiveCheckbox.addEventListener('change', function() {
+            // إعادة حساب جميع الصفوف عند تغيير حالة الخانة
+            const rows = document.querySelectorAll('#productsTableBody tr');
+            rows.forEach(row => {
+                const rowId = row.id.replace('productRow', '');
+                if (rowId) {
+                    calculateRowTotal(parseInt(rowId));
+                }
+            });
+        });
+    }
 });
 
 function addProductRow() {
@@ -490,8 +522,11 @@ function calculateRowTotal(rowId) {
     // حساب {% trans "Total" %} الفرعي (بدون ضريبة)
     const subtotal = quantity * unitPrice;
     
+    // التحقق من حالة خانة "شامل ضريبة"
+    const isTaxInclusive = document.getElementById('is_tax_inclusive').checked;
+    
     // حساب قيمة الضريبة
-    const taxAmount = subtotal * (taxRate / 100);
+    const taxAmount = isTaxInclusive ? subtotal * (taxRate / 100) : 0;
     
     document.getElementById(`rowTotal${rowId}`).value = subtotal.toFixed(2);
     

@@ -49,7 +49,7 @@ class CategoryCreateView(LoginRequiredMixin, View):
                 return self.get(request)
             
             # التحقق من عدم تكرار الرمز
-            if code and Category.objects.filter(name=code).exists():
+            if code and Category.objects.filter(code=code).exists():
                 messages.error(request, 'رمز التصنيف موجود مسبقاً!')
                 return self.get(request)
             
@@ -64,6 +64,8 @@ class CategoryCreateView(LoginRequiredMixin, View):
             # إنشاء التصنيف
             category = Category.objects.create(
                 name=name,
+                name_en=name_en,
+                code=code if code else None,
                 parent=parent,
                 description=description,
                 is_active=is_active
@@ -119,6 +121,8 @@ class CategoryUpdateView(LoginRequiredMixin, View):
             
             # تحديث التصنيف
             category.name = name
+            category.name_en = name_en
+            category.code = code if code else None
             category.parent = parent
             category.description = description
             category.is_active = is_active

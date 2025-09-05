@@ -14,7 +14,10 @@ class AccountTransaction(models.Model):
         ('purchase_invoice', _('فاتورة مشتريات')),
         ('sales_return', _('مردود مبيعات')),
         ('purchase_return', _('مردود مشتريات')),
-        ('payment', _('دفعة')),
+        ('debit_note', _('مذكرة دين')),
+        ('credit_note', _('مذكرة ائتمان')),
+        ('payment', _('سند دفع')),
+        ('receipt', _('سند قبض')),
         ('adjustment', _('تسوية')),
     ]
     

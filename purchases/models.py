@@ -21,6 +21,8 @@ class PurchaseInvoice(models.Model):
     warehouse = models.ForeignKey('inventory.Warehouse', on_delete=models.PROTECT, 
                                 verbose_name=_('المستودع'), null=True, blank=True)
     payment_type = models.CharField(_('نوع الدفع'), max_length=20, choices=PAYMENT_TYPES)
+    is_tax_inclusive = models.BooleanField(_('شامل ضريبة'), default=True, 
+                                         help_text=_('عند الاختيار، ستكون الأسعار شاملة للضريبة'))
     subtotal = models.DecimalField(_('المجموع الفرعي'), max_digits=15, decimal_places=3, default=0)
     tax_amount = models.DecimalField(_('مبلغ الضريبة'), max_digits=15, decimal_places=3, default=0)
     total_amount = models.DecimalField(_('المبلغ الإجمالي'), max_digits=15, decimal_places=3, default=0)
@@ -61,11 +63,19 @@ class PurchaseInvoiceItem(models.Model):
         from decimal import Decimal, ROUND_HALF_UP
         
         subtotal = self.quantity * self.unit_price
-        tax_amount = subtotal * (self.tax_rate / Decimal('100'))
+        
+        if self.invoice.is_tax_inclusive:
+            # عند تفعيل "شامل ضريبة": يحسب الضريبة بشكل طبيعي
+            tax_amount = subtotal * (self.tax_rate / Decimal('100'))
+            total_amount = subtotal + tax_amount
+        else:
+            # عند إلغاء "شامل ضريبة": لا يحسب أي ضريبة
+            tax_amount = Decimal('0')
+            total_amount = subtotal
         
         # تقريب إلى 3 خانات عشرية
         self.tax_amount = tax_amount.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
-        self.total_amount = (subtotal + tax_amount).quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+        self.total_amount = total_amount.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
         super().save(*args, **kwargs)
 
 

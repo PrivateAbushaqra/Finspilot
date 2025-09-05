@@ -131,6 +131,7 @@
 {% endblock %}
 
 {% block content %}
+{% csrf_token %}
 <div class="container-fluid">
     <div class="row">
         <!-- Header Section -->
@@ -307,6 +308,9 @@
                                     <th>{% trans "Unit Price" %}</th>
                                     <th>{% trans "Total Cost" %}</th>
                                     <th>{% trans "Notes" %}</th>
+                                    {% if request.user.user_type == 'superadmin' or request.user.is_superuser %}
+                                    <th>{% trans "Actions" %}</th>
+                                    {% endif %}
                                 </tr>
                             </thead>
                             <tbody>
@@ -366,6 +370,15 @@
                                             <span class="text-muted">-</span>
                                         {% endif %}
                                     </td>
+                                    {% if request.user.user_type == 'superadmin' or request.user.is_superuser %}
+                                    <td>
+                                        <button class="btn btn-danger btn-sm" 
+                                                onclick="deleteMovement({{ movement.id }}, '{{ movement.movement_number }}')"
+                                                title="{% trans 'Delete Movement' %}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                    {% endif %}
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -562,6 +575,35 @@ function printMovementReport() {
     
     // Clean up
     document.body.removeChild(printDiv);
+}
+
+// دالة حذف حركة مخزون واحدة
+function deleteMovement(movementId, movementNumber) {
+    if (confirm(`هل أنت متأكد من حذف حركة المخزون رقم "${movementNumber}"؟\nهذا الإجراء لا يمكن التراجع عنه!`)) {
+        // إرسال طلب DELETE إلى الخادم
+        fetch(`/ar/inventory/movements/${movementId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // عرض رسالة نجاح وإعادة تحميل الصفحة
+                alert(data.message);
+                location.reload();
+            } else {
+                alert(data.message || 'حدث خطأ أثناء حذف الحركة. يرجى المحاولة مرة أخرى.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى.');
+        });
+    }
 }
 </script>
 {% endblock %}

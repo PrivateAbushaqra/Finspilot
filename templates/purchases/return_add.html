@@ -198,7 +198,7 @@ document.addEventListener('DOMContentLoaded', function() {
         itemsTableBody.appendChild(loadingMessage);
         
         // Build correct URL
-        const url = `/en/purchases/ajax/get-invoice-items/${invoiceId}/`;
+        const url = `{% url 'purchases:get_invoice_items' 0 %}`.replace('0', invoiceId);
         console.log('Using URL:', url);
         
         fetch(url)

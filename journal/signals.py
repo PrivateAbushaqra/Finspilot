@@ -56,9 +56,9 @@ def create_payment_voucher_journal_entry(sender, instance, created, **kwargs):
             user = getattr(instance, 'created_by', None)
             if user:
                 JournalService.create_payment_voucher_entry(instance, user)
-                logger.info(f"تم إنشاء قيد محاسبي تلقائياً لسند الصرف {instance.payment_number}")
+                logger.info(f"تم إنشاء قيد محاسبي تلقائياً لسند الصرف {instance.voucher_number}")
         except Exception as e:
-            logger.error(f"خطأ في إنشاء القيد المحاسبي لسند الصرف {instance.payment_number}: {e}")
+            logger.error(f"خطأ في إنشاء القيد المحاسبي لسند الصرف {instance.voucher_number}: {e}")
 
 
 @receiver(post_save, sender='sales.SalesReturn')
@@ -122,9 +122,9 @@ def delete_payment_voucher_journal_entry(sender, instance, **kwargs):
     """حذف القيد المحاسبي تلقائياً عند حذف سند صرف"""
     try:
         JournalService.delete_journal_entry_by_reference('payment_voucher', instance.id)
-        logger.info(f"تم حذف القيد المحاسبي لسند الصرف {instance.payment_number}")
+        logger.info(f"تم حذف القيد المحاسبي لسند الصرف {instance.voucher_number}")
     except Exception as e:
-        logger.error(f"خطأ في حذف القيد المحاسبي لسند الصرف {instance.payment_number}: {e}")
+        logger.error(f"خطأ في حذف القيد المحاسبي لسند الصرف {instance.voucher_number}: {e}")
 
 
 @receiver(post_delete, sender='sales.SalesReturn')

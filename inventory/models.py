@@ -15,6 +15,7 @@ class Warehouse(models.Model):
     manager = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
                                verbose_name=_('مدير المستودع'))
     is_active = models.BooleanField(_('Active'), default=True)
+    is_default = models.BooleanField(_('المستودع الافتراضي'), default=False)
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
     updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
 
@@ -27,6 +28,22 @@ class Warehouse(models.Model):
         if self.parent:
             return f"{self.parent.name} -> {self.name}"
         return self.name
+
+    def save(self, *args, **kwargs):
+        # التأكد من وجود مستودع افتراضي واحد فقط
+        if self.is_default:
+            Warehouse.objects.filter(is_default=True).exclude(pk=self.pk).update(is_default=False)
+        
+        # إذا كان أول مستودع يتم إنشاؤه، جعله افتراضي
+        if not Warehouse.objects.exists() and not self.is_default:
+            self.is_default = True
+            
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def get_default_warehouse(cls):
+        """الحصول على المستودع الافتراضي"""
+        return cls.objects.filter(is_default=True, is_active=True).first()
 
 
 class InventoryMovement(models.Model):

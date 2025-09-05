@@ -261,6 +261,7 @@
                                         <th>المستودع الأساسي</th>
                                         <th>المدير</th>
                                         <th>{% trans "Status" %}</th>
+                                        <th>افتراضي</th>
                                         <th>{% trans "Address" %}</th>
                                         <th class="text-center">الإجراءات</th>
                                     </tr>
@@ -288,6 +289,15 @@
                                                 {% if warehouse.is_active %}{% trans "Active" %}
                                                 {% else %}غير {% trans "Active" %}{% endif %}
                                             </span>
+                                        </td>
+                                        <td>
+                                            {% if warehouse.is_default %}
+                                                <span class="badge bg-primary">
+                                                    <i class="fas fa-star me-1"></i>افتراضي
+                                                </span>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
                                         </td>
                                         <td>
                                             {% if warehouse.address %}

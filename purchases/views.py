@@ -3,11 +3,13 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView, DetailView, View
 from django.db.models import Sum, Count, Q
+from django.db import models
 from django.utils import timezone
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from core.signals import log_activity
 import logging
 from datetime import datetime, timedelta, date
 from decimal import Decimal, ROUND_HALF_UP
@@ -27,13 +29,128 @@ from core.models import CompanySettings
 
 def create_purchase_invoice_journal_entry(invoice, user):
     """إنشاء قيد محاسبي لفاتورة المشتريات"""
+
+
+def create_debit_note_journal_entry(debit_note, user):
+    """إنشاء قيد محاسبي لمذكرة الدين"""
     try:
-        # إنشاء القيد المحاسبي باستخدام JournalService
-        JournalService.create_purchase_invoice_entry(invoice, user)
+        from journal.services import JournalService
+        from journal.models import Account
+        from accounts.models import AccountTransaction
+        from django.db import models
+        import uuid
+        
+        # تسجيل بداية العملية
+        logger = logging.getLogger(__name__)
+        logger.info(f"إنشاء قيد محاسبي لمذكرة الدين {debit_note.note_number}")
+        
+        # إنشاء حركة حساب للمورد (مثل ما يحدث في فواتير المشتريات)
+        transaction_number = f"DN-{uuid.uuid4().hex[:8].upper()}"
+        
+        # إنشاء AccountTransaction لمذكرة الدين
+        account_transaction = AccountTransaction.objects.create(
+            transaction_number=transaction_number,
+            date=debit_note.date,
+            customer_supplier=debit_note.supplier,
+            transaction_type='debit_note',  # نوع مذكرة دين
+            direction='debit',  # مدين (زيادة دين المورد)
+            amount=debit_note.total_amount,
+            reference_type='debit_note',
+            reference_id=debit_note.id,
+            description=f'مذكرة دين رقم {debit_note.note_number}',
+            notes=debit_note.notes or '',
+            created_by=user
+        )
+        
+        logger.info(f"تم إنشاء AccountTransaction رقم {account_transaction.id} للمورد {debit_note.supplier.name}")
+        
+        # البحث عن حساب المورد للقيد المحاسبي
+        # البحث باستخدام اسم المورد أو كود خاص
+        supplier_account_name = f"حساب المورد - {debit_note.supplier.name}"
+        supplier_account = Account.objects.filter(
+            name__icontains=debit_note.supplier.name,
+            account_type='liability'
+        ).first()
+        
+        if not supplier_account:
+            # البحث عن حساب الموردين العام
+            suppliers_parent_account = Account.objects.filter(
+                models.Q(code='2100') | models.Q(name__icontains='موردين')
+            ).first()
+            
+            if not suppliers_parent_account:
+                # إنشاء حساب الموردين الرئيسي إذا لم يكن موجوداً
+                suppliers_parent_account = Account.objects.create(
+                    code='2100',
+                    name='حسابات الموردين',
+                    account_type='liability',
+                    description='حسابات الموردين الرئيسية'
+                )
+            
+            # إنشاء حساب للمورد إذا لم يكن موجوداً
+            supplier_account = Account.objects.create(
+                code=f"2100-{debit_note.supplier.id:04d}",
+                name=supplier_account_name,
+                account_type='liability',
+                parent=suppliers_parent_account,
+                description=f'حساب المورد {debit_note.supplier.name}'
+            )
+        
+        # إنشاء القيد المحاسبي
+        journal_service = JournalService()
+        
+        # تحضير بيانات البنود للقيد المحاسبي
+        lines_data = []
+        
+        # بند المورد (مدين)
+        lines_data.append({
+            'account_id': supplier_account.id,
+            'debit': float(debit_note.total_amount),
+            'credit': 0,
+            'description': f'مذكرة دين رقم {debit_note.note_number}'
+        })
+        
+        # حساب المصروفات أو الحساب المقابل (دائن)
+        expenses_account = Account.objects.filter(code='4100').first()  # حساب المصروفات العامة
+        if not expenses_account:
+            # إنشاء حساب المصروفات إذا لم يكن موجوداً
+            expenses_account = Account.objects.create(
+                code='4100',
+                name='مصروفات عامة',
+                account_type='expense',
+                description='المصروفات العامة والإدارية'
+            )
+        
+        lines_data.append({
+            'account_id': expenses_account.id,
+            'debit': 0,
+            'credit': float(debit_note.total_amount),
+            'description': f'مذكرة دين رقم {debit_note.note_number}'
+        })
+        
+        # إنشاء القيد المحاسبي بالتوقيع الصحيح
+        journal_service.create_journal_entry(
+            entry_date=debit_note.date,
+            reference_type='debit_note',
+            description=f'مذكرة دين رقم {debit_note.note_number} - {debit_note.supplier.name}',
+            lines_data=lines_data,
+            reference_id=debit_note.id,
+            user=user
+        )
+        
+        return True
+        
     except Exception as e:
-        print(f"خطأ في إنشاء القيد المحاسبي لفاتورة المشتريات: {e}")
-        # لا نوقف العملية في حالة فشل إنشاء القيد المحاسبي
-        pass
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error creating debit note journal entry: {str(e)}")
+        logger.error(f"خطأ تفصيلي: {e.__class__.__name__}: {str(e)}")
+        import traceback
+        logger.error(f"Stack trace: {traceback.format_exc()}")
+        raise e  # إعادة رفع الخطأ لرؤيته في رسائل النظام
+
+
+def create_purchase_invoice_journal_entry_old(invoice, user):
+    """إنشاء قيد محاسبي لفاتورة المشتريات - الطريقة القديمة"""
 
 def create_purchase_return_journal_entry(purchase_return, user):
     """إنشاء قيد محاسبي لمردود المشتريات"""
@@ -52,8 +169,8 @@ def create_purchase_invoice_account_transaction(invoice, user):
         from accounts.models import AccountTransaction
         import uuid
         
-        # إذا كانت طريقة الدفع ليست نقداً، نسجل حركة في حساب المورد
-        if invoice.payment_type != 'cash' and invoice.supplier:
+        # إنشاء معاملة لجميع فواتير المشتريات (نقدية وائتمانية)
+        if invoice.supplier:
             # توليد رقم الحركة
             transaction_number = f"PURCH-{uuid.uuid4().hex[:8].upper()}"
             
@@ -64,19 +181,28 @@ def create_purchase_invoice_account_transaction(invoice, user):
             
             previous_balance = last_transaction.balance_after if last_transaction else Decimal('0')
             
-            # إنشاء حركة دائنة للمورد (زيادة الذمم الدائنة)
-            new_balance = previous_balance + invoice.total_amount
+            # تحديد الاتجاه والوصف حسب طريقة الدفع
+            if invoice.payment_type == 'cash':
+                # للدفع النقدي - لا تؤثر على رصيد المورد
+                direction = 'debit'
+                new_balance = previous_balance
+                description = f'مشتريات نقدية - فاتورة رقم {invoice.invoice_number}'
+            else:
+                # للدفع الائتماني - زيادة الذمم الدائنة
+                direction = 'credit'
+                new_balance = previous_balance + invoice.total_amount
+                description = f'مشتريات ائتمانية - فاتورة رقم {invoice.invoice_number}'
             
             AccountTransaction.objects.create(
                 transaction_number=transaction_number,
                 date=invoice.date,
                 customer_supplier=invoice.supplier,
                 transaction_type='purchase_invoice',
-                direction='credit',
+                direction=direction,
                 amount=invoice.total_amount,
                 reference_type='purchase_invoice',
                 reference_id=invoice.id,
-                description=f'مشتريات - فاتورة رقم {invoice.invoice_number}',
+                description=description,
                 balance_after=new_balance,
                 created_by=user
             )
@@ -94,29 +220,31 @@ def create_purchase_return_account_transaction(return_invoice, user):
     """إنشاء حركة حساب للمورد عند إنشاء مردود مشتريات"""
     try:
         from accounts.models import AccountTransaction
+        from customers.models import CustomerSupplier
+        from decimal import Decimal
         import uuid
         
-        # إذا كان هناك مورد، نسجل حركة مدينة (تقليل الذمم الدائنة)
-        if return_invoice.supplier:
-            # توليد رقم الحركة
+        supplier = return_invoice.original_invoice.supplier
+        
+        if supplier:
+            # إنشاء معاملة حساب للمورد الأصلي
             transaction_number = f"PRET-{uuid.uuid4().hex[:8].upper()}"
             
-            # حساب الرصيد السابق
+            # حساب الرصيد السابق للمورد
             last_transaction = AccountTransaction.objects.filter(
-                customer_supplier=return_invoice.supplier
+                customer_supplier=supplier
             ).order_by('-created_at').first()
             
             previous_balance = last_transaction.balance_after if last_transaction else Decimal('0')
-            
-            # إنشاء حركة مدينة للمورد (تقليل الذمم الدائنة)
             new_balance = previous_balance - return_invoice.total_amount
             
+            # إنشاء معاملة للمورد
             AccountTransaction.objects.create(
                 transaction_number=transaction_number,
                 date=return_invoice.date,
-                customer_supplier=return_invoice.supplier,
+                customer_supplier=supplier,
                 transaction_type='purchase_return',
-                direction='debit',
+                direction='credit',  # دائن للمورد (تقليل دين المورد)
                 amount=return_invoice.total_amount,
                 reference_type='purchase_return',
                 reference_id=return_invoice.id,
@@ -124,6 +252,39 @@ def create_purchase_return_account_transaction(return_invoice, user):
                 balance_after=new_balance,
                 created_by=user
             )
+            
+            # إذا كان المورد من نوع "supplier" فقط، ابحث عن عميل بنفس الاسم
+            if supplier.type == 'supplier':
+                matching_customers = CustomerSupplier.objects.filter(
+                    name=supplier.name,
+                    type__in=['customer', 'both']
+                ).exclude(id=supplier.id)
+                
+                # إنشاء معاملة للعميل المطابق أيضاً
+                for customer in matching_customers:
+                    customer_transaction_number = f"PRET-C-{uuid.uuid4().hex[:8].upper()}"
+                    
+                    # حساب الرصيد السابق للعميل
+                    last_customer_transaction = AccountTransaction.objects.filter(
+                        customer_supplier=customer
+                    ).order_by('-created_at').first()
+                    
+                    customer_previous_balance = last_customer_transaction.balance_after if last_customer_transaction else Decimal('0')
+                    customer_new_balance = customer_previous_balance - return_invoice.total_amount  # مدين للعميل
+                    
+                    AccountTransaction.objects.create(
+                        transaction_number=customer_transaction_number,
+                        date=return_invoice.date,
+                        customer_supplier=customer,
+                        transaction_type='purchase_return',
+                        direction='debit',  # مدين للعميل (زيادة دين العميل)
+                        amount=return_invoice.total_amount,
+                        reference_type='purchase_return',
+                        reference_id=return_invoice.id,
+                        description=f'مردود مشتريات - فاتورة رقم {return_invoice.return_number} (عميل مرتبط)',
+                        balance_after=customer_new_balance,
+                        created_by=user
+                    )
             
     except ImportError:
         # في حالة عدم وجود نموذج الحسابات
@@ -219,7 +380,12 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
             'suppliers': CustomerSupplier.objects.filter(
                 Q(type='supplier') | Q(type='both')
             ).order_by('name'),
-            'warehouses': Warehouse.objects.filter(is_active=True).order_by('name'),
+            'warehouses': Warehouse.objects.filter(
+                is_active=True
+            ).exclude(
+                code__in=['MAIN', 'DEFAULT', 'SYSTEM', '1000']  # استبعاد المستودعات النظامية/الافتراضية
+            ).order_by('name'),
+            'default_warehouse': Warehouse.get_default_warehouse(),
             'products': products_with_prices,
             'next_invoice_number': next_invoice_number
         }
@@ -247,6 +413,7 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
             supplier_id = request.POST.get('supplier')
             warehouse_id = request.POST.get('warehouse')
             payment_type = request.POST.get('payment_type')
+            is_tax_inclusive = request.POST.get('is_tax_inclusive') == 'on'  # checkbox value
             notes = request.POST.get('notes', '').strip()
             
             # التحقق من صحة البيانات
@@ -281,6 +448,7 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
                 supplier=supplier,
                 warehouse=warehouse,
                 payment_type=payment_type,
+                is_tax_inclusive=is_tax_inclusive,
                 notes=notes,
                 created_by=created_by,
                 subtotal=0,
@@ -369,6 +537,13 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
                 # إنشاء القيد المحاسبي
                 create_purchase_invoice_journal_entry(invoice, request.user)
             
+            # تسجيل النشاط
+            try:
+                description = f'تم إنشاء فاتورة مشتريات رقم {invoice_number} للمورد {invoice.supplier.name}'
+                log_activity(request.user, 'CREATE', invoice, description, request)
+            except Exception as log_error:
+                print(f"Warning: Failed to log activity: {log_error}")
+            
             messages.success(request, f'تم إنشاء فاتورة المشتريات رقم {invoice_number} بنجاح!')
             return redirect('purchases:invoice_detail', pk=invoice.pk)
             
@@ -421,6 +596,15 @@ def purchase_debitnote_create(request):
                     notes=request.POST.get('notes', ''),
                     created_by=request.user
                 )
+
+                # إنشاء القيد المحاسبي
+                try:
+                    create_debit_note_journal_entry(debit, request.user)
+                    messages.success(request, f'تم إنشاء القيد المحاسبي لمذكرة الدين رقم {debit.note_number}')
+                except Exception as e:
+                    error_msg = f"Error creating journal entry for debit note: {str(e)}"
+                    logging.getLogger(__name__).error(error_msg)
+                    messages.warning(request, f'تم إنشاء مذكرة الدين ولكن حدث خطأ في القيد المحاسبي: {str(e)}')
 
                 try:
                     from core.signals import log_user_activity
@@ -530,7 +714,12 @@ class PurchaseInvoiceUpdateView(LoginRequiredMixin, View):
                 'suppliers': CustomerSupplier.objects.filter(
                     Q(type='supplier') | Q(type='both')
                 ).order_by('name'),
-                'warehouses': Warehouse.objects.filter(is_active=True).order_by('name'),
+                'warehouses': Warehouse.objects.filter(
+                    is_active=True
+                ).exclude(
+                    code__in=['MAIN', 'DEFAULT', 'SYSTEM', '1000']  # استبعاد المستودعات النظامية/الافتراضية
+                ).order_by('name'),
+                'default_warehouse': Warehouse.get_default_warehouse(),
                 'products': products_with_prices,
                 'invoice_items': invoice.items.select_related('product').all()
             }
@@ -551,6 +740,7 @@ class PurchaseInvoiceUpdateView(LoginRequiredMixin, View):
             supplier_id = request.POST.get('supplier')
             warehouse_id = request.POST.get('warehouse')
             payment_type = request.POST.get('payment_type')
+            is_tax_inclusive = request.POST.get('is_tax_inclusive') == 'on'  # checkbox value
             notes = request.POST.get('notes', '').strip()
             
             # التحقق من صحة البيانات
@@ -580,6 +770,7 @@ class PurchaseInvoiceUpdateView(LoginRequiredMixin, View):
             invoice.supplier = supplier
             invoice.warehouse = warehouse
             invoice.payment_type = payment_type
+            invoice.is_tax_inclusive = is_tax_inclusive
             invoice.notes = notes
             
             # حذف عناصر الفاتورة القديمة
@@ -670,6 +861,13 @@ class PurchaseInvoiceUpdateView(LoginRequiredMixin, View):
                 create_purchase_invoice_account_transaction(invoice, request.user)
                 create_purchase_invoice_journal_entry(invoice, request.user)
                 
+                # تسجيل النشاط
+                try:
+                    description = f'تم تحديث فاتورة مشتريات رقم {invoice.invoice_number} للمورد {invoice.supplier.name}'
+                    log_activity(request.user, 'UPDATE', invoice, description, request)
+                except Exception as log_error:
+                    print(f"Warning: Failed to log activity: {log_error}")
+                
                 messages.success(request, f'تم تحديث فاتورة المشتريات رقم {invoice.invoice_number} بنجاح')
                 return redirect('purchases:invoice_detail', pk=invoice.pk)
             else:
@@ -700,8 +898,36 @@ class PurchaseInvoiceDeleteView(LoginRequiredMixin, DeleteView):
         invoice_number = invoice.invoice_number
         
         try:
+            # حذف حركات المخزون المرتبطة بالفاتورة (فقط إذا كانت موجودة)
+            try:
+                from inventory.models import InventoryMovement
+                inventory_movements = InventoryMovement.objects.filter(
+                    reference_type='purchase_invoice',
+                    reference_id=invoice.id
+                )
+                if inventory_movements.exists():
+                    movement_count = inventory_movements.count()
+                    inventory_movements.delete()
+                    print(f"تم حذف {movement_count} حركة مخزون لفاتورة المشتريات {invoice_number}")
+                else:
+                    print(f"لا توجد حركات مخزون لفاتورة المشتريات {invoice_number} (فاتورة قديمة)")
+            except ImportError:
+                pass
+            except Exception as e:
+                print(f"خطأ في حذف حركات المخزون: {e}")
+            
             # حذف حركة حساب المورد المرتبطة بالفاتورة
             delete_transaction_by_reference('purchase_invoice', invoice.id)
+            
+            # تسجيل النشاط قبل الحذف
+            from core.signals import log_activity
+            log_activity(
+                user=request.user,
+                action_type='DELETE',
+                obj=invoice,
+                description=f'تم حذف فاتورة مشتريات رقم: {invoice_number}',
+                request=request
+            )
             
             # The items will be deleted automatically due to CASCADE relationship
             # Delete the invoice
@@ -786,8 +1012,35 @@ class PurchaseReturnCreateView(LoginRequiredMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        # Get all purchase invoices for selection
-        context['invoices'] = PurchaseInvoice.objects.select_related('supplier').order_by('-date')
+        # Get only purchase invoices that can have returns
+        from django.db.models import Q, Sum
+        
+        # Get invoices with full returns (should be excluded completely)
+        invoices_with_full_returns = PurchaseReturn.objects.filter(
+            return_type='full'
+        ).values_list('original_invoice_id', flat=True)
+        
+        # Get all purchase invoices excluding those with full returns
+        all_invoices = PurchaseInvoice.objects.select_related('supplier').exclude(
+            id__in=invoices_with_full_returns
+        ).order_by('-date')
+        
+        # Filter out invoices where the sum of partial returns equals the original total
+        available_invoices = []
+        
+        for invoice in all_invoices:
+            # Check if this invoice has any items that can still be returned
+            partial_returns = PurchaseReturn.objects.filter(
+                original_invoice=invoice,
+                return_type='partial'
+            )
+            total_returned = partial_returns.aggregate(total=Sum('total_amount'))['total'] or 0
+            
+            # If the total returned is less than the invoice total, it can have more returns
+            if total_returned < invoice.total_amount:
+                available_invoices.append(invoice)
+        
+        context['invoices'] = available_invoices
         
         # Generate next return number
         last_return = PurchaseReturn.objects.order_by('-id').first()
@@ -825,6 +1078,16 @@ class PurchaseReturnCreateView(LoginRequiredMixin, CreateView):
         
         # إنشاء القيد المحاسبي
         create_purchase_return_journal_entry(self.object, self.request.user)
+        
+        # تسجيل النشاط
+        from core.signals import log_activity
+        log_activity(
+            user=self.request.user,
+            action_type='CREATE',
+            obj=self.object,
+            description=f'تم إنشاء مردود مشتريات رقم: {self.object.return_number} للفاتورة: {self.object.original_invoice.supplier_invoice_number}',
+            request=self.request
+        )
         
         messages.success(self.request, f'تم إنشاء مردود المشتريات رقم {self.object.return_number} بنجاح')
         return response
@@ -931,6 +1194,16 @@ class PurchaseReturnUpdateView(LoginRequiredMixin, UpdateView):
         return context
     
     def form_valid(self, form):
+        # تسجيل النشاط
+        from core.signals import log_activity
+        log_activity(
+            user=self.request.user,
+            action='UPDATE',
+            model_name='PurchaseReturn',
+            object_id=self.object.id,
+            details=f'تم تحديث مردود مشتريات رقم: {self.object.return_number}'
+        )
+        
         response = super().form_valid(form)
         messages.success(self.request, f'تم تحديث مردود المشتريات رقم {self.object.return_number} بنجاح')
         return response
@@ -955,6 +1228,16 @@ class PurchaseReturnDeleteView(LoginRequiredMixin, DeleteView):
                 reference_type='purchase_return',
                 reference_id=return_obj.id
             ).delete()
+            
+            # تسجيل النشاط قبل الحذف
+            from core.signals import log_activity
+            log_activity(
+                user=request.user,
+                action_type='DELETE',
+                obj=return_obj,
+                description=f'تم حذف مردود مشتريات رقم: {return_number}',
+                request=request
+            )
             
             # Delete the return
             result = super().delete(request, *args, **kwargs)
@@ -1262,3 +1545,121 @@ def send_debitnote_to_jofotara(request, pk):
             'success': False,
             'error': f'خطأ في النظام: {str(e)}'
         })
+
+
+class PurchaseDebitNoteDetailView(LoginRequiredMixin, DetailView):
+    """عرض تفاصيل مذكرة الدين"""
+    model = PurchaseDebitNote
+    template_name = 'purchases/debitnote_detail.html'
+    context_object_name = 'debitnote'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        try:
+            company_settings = CompanySettings.objects.first()
+            if company_settings and company_settings.base_currency:
+                context['base_currency'] = company_settings.base_currency
+        except Exception:
+            pass
+        return context
+
+
+class PurchaseDebitNoteReportView(LoginRequiredMixin, ListView):
+    """كشف مذكرات الدين"""
+    model = PurchaseDebitNote
+    template_name = 'purchases/debitnote_report.html'
+    context_object_name = 'debitnotes'
+    paginate_by = 50
+    
+    def get_queryset(self):
+        queryset = PurchaseDebitNote.objects.select_related('supplier', 'created_by').all()
+        
+        # فلترة حسب التاريخ
+        date_from = self.request.GET.get('date_from')
+        date_to = self.request.GET.get('date_to')
+        supplier = self.request.GET.get('supplier')
+        
+        if date_from:
+            queryset = queryset.filter(date__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(date__lte=date_to)
+        if supplier:
+            queryset = queryset.filter(supplier_id=supplier)
+            
+        return queryset.order_by('-date', '-note_number')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # إضافة إجماليات
+        queryset = self.get_queryset()
+        context['total_amount'] = queryset.aggregate(
+            total=Sum('total_amount')
+        )['total'] or 0
+        
+        context['total_count'] = queryset.count()
+        
+        # إضافة قائمة الموردين للفلترة
+        from customers.models import CustomerSupplier
+        context['suppliers'] = CustomerSupplier.objects.filter(
+            type__in=['supplier', 'both']
+        ).order_by('name')
+        
+        # إضافة قيم الفلترة الحالية
+        context['filters'] = {
+            'date_from': self.request.GET.get('date_from', ''),
+            'date_to': self.request.GET.get('date_to', ''),
+            'supplier': self.request.GET.get('supplier', ''),
+        }
+        
+        try:
+            company_settings = CompanySettings.objects.first()
+            if company_settings and company_settings.base_currency:
+                context['base_currency'] = company_settings.base_currency
+        except Exception:
+            pass
+            
+        return context
+
+
+class PurchaseDebitNoteUpdateView(LoginRequiredMixin, UpdateView):
+    model = PurchaseDebitNote
+    fields = ['supplier', 'date', 'description', 'subtotal', 'tax_rate', 'tax_amount', 'total_amount']
+    template_name = 'purchases/debitnote_form.html'
+    context_object_name = 'debitnote'
+    
+    def get_success_url(self):
+        return reverse_lazy('purchases:debitnote_detail', kwargs={'pk': self.object.pk})
+    
+    def form_valid(self, form):
+        form.instance.updated_by = self.request.user
+        response = super().form_valid(form)
+        
+        # Update journal entry if exists
+        if hasattr(self.object, 'journal_entry') and self.object.journal_entry:
+            try:
+                # Update supplier account balance
+                create_debit_note_journal_entry(self.object, self.request.user)
+            except Exception as e:
+                messages.error(self.request, f'خطأ في تحديث القيد المحاسبي: {str(e)}')
+        
+        messages.success(self.request, 'تم تحديث مذكرة الدين بنجاح')
+        return response
+
+
+class PurchaseDebitNoteDeleteView(LoginRequiredMixin, DeleteView):
+    model = PurchaseDebitNote
+    template_name = 'purchases/debitnote_confirm_delete.html'
+    context_object_name = 'debitnote'
+    success_url = reverse_lazy('purchases:debitnote_list')
+    
+    def delete(self, request, *args, **kwargs):
+        # Delete associated journal entry if exists
+        if hasattr(self.get_object(), 'journal_entry') and self.get_object().journal_entry:
+            try:
+                self.get_object().journal_entry.delete()
+            except Exception as e:
+                messages.error(request, f'خطأ في حذف القيد المحاسبي: {str(e)}')
+        
+        messages.success(request, 'تم حذف مذكرة الدين بنجاح')
+        return super().delete(request, *args, **kwargs)

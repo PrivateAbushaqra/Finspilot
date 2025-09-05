@@ -30,6 +30,50 @@ def create_payment_journal_entry(voucher, user):
         pass
 
 
+def create_payment_account_transaction(voucher, user):
+    """إنشاء حركة حساب للمورد عند إنشاء سند دفع"""
+    try:
+        from accounts.models import AccountTransaction
+        import uuid
+        
+        # إنشاء معاملة للموردين فقط
+        if voucher.supplier and voucher.voucher_type == 'supplier':
+            # توليد رقم الحركة
+            transaction_number = f"PAY-{uuid.uuid4().hex[:8].upper()}"
+            
+            # حساب الرصيد السابق
+            last_transaction = AccountTransaction.objects.filter(
+                customer_supplier=voucher.supplier
+            ).order_by('-created_at').first()
+            
+            previous_balance = last_transaction.balance_after if last_transaction else 0
+            
+            # إنشاء حركة مدينة للمورد (تقليل الذمم الدائنة)
+            new_balance = previous_balance - voucher.amount
+            
+            AccountTransaction.objects.create(
+                transaction_number=transaction_number,
+                date=voucher.date,
+                customer_supplier=voucher.supplier,
+                transaction_type='payment',
+                direction='debit',
+                amount=voucher.amount,
+                reference_type='payment',
+                reference_id=voucher.id,
+                description=f'سند دفع رقم {voucher.voucher_number}',
+                balance_after=new_balance,
+                created_by=user
+            )
+            
+    except ImportError:
+        # في حالة عدم وجود نموذج الحسابات
+        pass
+    except Exception as e:
+        print(f"خطأ في إنشاء حركة الحساب: {e}")
+        # لا نوقف العملية في حالة فشل تسجيل الحركة المالية
+        pass
+
+
 def get_currency_symbol():
     """Get currency symbol from company settings"""
     from settings.models import CompanySettings, Currency
@@ -123,6 +167,9 @@ def payment_voucher_create(request):
                     
                     # Create cash box or bank transaction
                     create_payment_transaction(voucher)
+                    
+                    # Create account transaction for supplier
+                    create_payment_account_transaction(voucher, request.user)
                     
                     # Create journal entry
                     create_payment_journal_entry(voucher, request.user)

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% load currency_tags %}
 
 
@@ -141,9 +142,9 @@
                     <form method="post" class="d-inline">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-danger" 
-                                onclick="return confirm('هل أنت متأكد من {% trans "Delete" %} هذا المردود؟ لا يمكن التراجع عن هذا الإجراء.')">
+                                onclick="return confirm('هل أنت متأكد من حذف هذا المردود؟ لا يمكن التراجع عن هذا الإجراء.')">
                             <i class="fas fa-trash me-2"></i>
-                            {% trans "Yes" %}، ا{% trans "Delete" %} المردود
+                            {% trans "Yes" %}، احذف المردود
                         </button>
                     </form>
                     

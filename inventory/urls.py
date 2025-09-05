@@ -13,6 +13,7 @@ urlpatterns = [
     path('warehouses/edit/<int:pk>/', views.WarehouseEditView.as_view(), name='warehouse_edit'),
     path('warehouses/delete/<int:pk>/', views.WarehouseDeleteView.as_view(), name='warehouse_delete'),
     path('movements/', views.MovementListView.as_view(), name='movement_list'),
+    path('movements/<int:pk>/delete/', views.MovementDeleteView.as_view(), name='movement_delete'),
     path('movements/bulk-delete/', views.MovementBulkDeleteView.as_view(), name='movement_bulk_delete'),
     path('transfers/', views.TransferListView.as_view(), name='transfer_list'),
     path('transfers/add/', views.TransferCreateView.as_view(), name='transfer_add'),

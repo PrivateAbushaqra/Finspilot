@@ -144,7 +144,7 @@ def receipt_add(request):
                 # إضافة الحركة إلى حساب العميل
                 AccountTransaction.create_transaction(
                     customer_supplier=customer,
-                    transaction_type='payment',
+                    transaction_type='receipt',  # تصحيح نوع المعاملة
                     direction='credit',  # دائن - يقلل من رصيد العميل
                     amount=amount,
                     reference_type='receipt',
@@ -291,7 +291,7 @@ def receipt_reverse(request, receipt_id):
                 # عكس حركة حساب العميل
                 AccountTransaction.create_transaction(
                     customer_supplier=receipt.customer,
-                    transaction_type='payment',
+                    transaction_type='receipt',
                     direction='debit',  # مدين - يزيد من رصيد العميل (عكس الدفع)
                     amount=receipt.amount,
                     reference_type='receipt_reversal',
@@ -414,7 +414,7 @@ def check_collect(request, receipt_id):
                     # عكس حركة حساب العميل
                     AccountTransaction.create_transaction(
                         customer_supplier=receipt.customer,
-                        transaction_type='payment',
+                        transaction_type='receipt',
                         direction='debit',  # مدين - يزيد من رصيد العميل (عكس الدفع)
                         amount=receipt.amount,
                         reference_type='check_bounced',

@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}
+    {% if object.pk %}تحديث مذكرة الدين{% else %}إنشاء مذكرة دين جديدة{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-edit me-2"></i>
+                        {% if object.pk %}تحديث مذكرة الدين رقم: {{ object.note_number }}{% else %}إنشاء مذكرة دين جديدة{% endif %}
+                    </h3>
+                    <a href="{% if object.pk %}{% url 'purchases:debitnote_detail' object.pk %}{% else %}{% url 'purchases:debitnote_list' %}{% endif %}" class="btn btn-outline-light float-end">
+                        <i class="fas fa-arrow-left me-2"></i>العودة
+                    </a>
+                </div>
+                
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.supplier.id_for_label }}" class="form-label">المورد *</label>
+                                    <select class="form-control" name="supplier" id="{{ form.supplier.id_for_label }}" required>
+                                        <option value="">اختر المورد</option>
+                                        {% for supplier in form.supplier.field.queryset %}
+                                        <option value="{{ supplier.pk }}" {% if supplier.pk == form.supplier.value %}selected{% endif %}>
+                                            {{ supplier.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    {% if form.supplier.errors %}
+                                        <div class="text-danger">{{ form.supplier.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.date.id_for_label }}" class="form-label">التاريخ *</label>
+                                    <input type="date" class="form-control" name="date" id="{{ form.date.id_for_label }}" value="{{ form.date.value|date:'Y-m-d' }}" required>
+                                    {% if form.date.errors %}
+                                        <div class="text-danger">{{ form.date.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="{{ form.description.id_for_label }}" class="form-label">الوصف</label>
+                                    <textarea class="form-control" name="description" id="{{ form.description.id_for_label }}" rows="3">{{ form.description.value|default:'' }}</textarea>
+                                    {% if form.description.errors %}
+                                        <div class="text-danger">{{ form.description.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ form.subtotal.id_for_label }}" class="form-label">المجموع الفرعي *</label>
+                                    <input type="number" step="0.01" class="form-control" name="subtotal" id="{{ form.subtotal.id_for_label }}" value="{{ form.subtotal.value|default:'' }}" required>
+                                    {% if form.subtotal.errors %}
+                                        <div class="text-danger">{{ form.subtotal.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ form.tax_rate.id_for_label }}" class="form-label">معدل الضريبة (%)</label>
+                                    <input type="number" step="0.01" class="form-control" name="tax_rate" id="{{ form.tax_rate.id_for_label }}" value="{{ form.tax_rate.value|default:'' }}">
+                                    {% if form.tax_rate.errors %}
+                                        <div class="text-danger">{{ form.tax_rate.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ form.tax_amount.id_for_label }}" class="form-label">مبلغ الضريبة</label>
+                                    <input type="number" step="0.01" class="form-control" name="tax_amount" id="{{ form.tax_amount.id_for_label }}" value="{{ form.tax_amount.value|default:'' }}">
+                                    {% if form.tax_amount.errors %}
+                                        <div class="text-danger">{{ form.tax_amount.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.total_amount.id_for_label }}" class="form-label">المجموع الإجمالي *</label>
+                                    <input type="number" step="0.01" class="form-control" name="total_amount" id="{{ form.total_amount.id_for_label }}" value="{{ form.total_amount.value|default:'' }}" required>
+                                    {% if form.total_amount.errors %}
+                                        <div class="text-danger">{{ form.total_amount.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="d-flex gap-3">
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-save me-2"></i>
+                                        {% if object.pk %}تحديث مذكرة الدين{% else %}إنشاء مذكرة دين{% endif %}
+                                    </button>
+                                    
+                                    <a href="{% if object.pk %}{% url 'purchases:debitnote_detail' object.pk %}{% else %}{% url 'purchases:debitnote_list' %}{% endif %}" class="btn btn-secondary">
+                                        <i class="fas fa-times me-2"></i>إلغاء
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-calculate tax amount and total
+document.addEventListener('DOMContentLoaded', function() {
+    const subtotalInput = document.querySelector('input[name="subtotal"]');
+    const taxRateInput = document.querySelector('input[name="tax_rate"]');
+    const taxAmountInput = document.querySelector('input[name="tax_amount"]');
+    const totalAmountInput = document.querySelector('input[name="total_amount"]');
+    
+    function calculateTotals() {
+        const subtotal = parseFloat(subtotalInput.value) || 0;
+        const taxRate = parseFloat(taxRateInput.value) || 0;
+        
+        const taxAmount = subtotal * (taxRate / 100);
+        const totalAmount = subtotal + taxAmount;
+        
+        taxAmountInput.value = taxAmount.toFixed(2);
+        totalAmountInput.value = totalAmount.toFixed(2);
+    }
+    
+    subtotalInput.addEventListener('input', calculateTotals);
+    taxRateInput.addEventListener('input', calculateTotals);
+});
+</script>
+{% endblock %}

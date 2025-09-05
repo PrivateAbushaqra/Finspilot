@@ -194,7 +194,7 @@ class JournalService:
                 'account_id': supplier_account.id,
                 'debit': payment.amount,
                 'credit': 0,
-                'description': f'سند دفع رقم {payment.payment_number}'
+                'description': f'سند دفع رقم {payment.voucher_number}'
             })
         else:
             expense_account = JournalService.get_or_create_expense_account(payment.expense_type)
@@ -202,17 +202,17 @@ class JournalService:
                 'account_id': expense_account.id,
                 'debit': payment.amount,
                 'credit': 0,
-                'description': f'مصروف - سند رقم {payment.payment_number}'
+                'description': f'مصروف - سند رقم {payment.voucher_number}'
             })
         
         # حساب الصندوق أو البنك (دائن)
-        if payment.payment_method == 'cash':
+        if payment.payment_type == 'cash':
             cash_account = JournalService.get_cash_account()
             lines_data.append({
                 'account_id': cash_account.id,
                 'debit': 0,
                 'credit': payment.amount,
-                'description': f'دفع نقدي - سند رقم {payment.payment_number}'
+                'description': f'دفع نقدي - سند رقم {payment.voucher_number}'
             })
         else:
             bank_account = JournalService.get_or_create_bank_account(payment.bank)
@@ -220,14 +220,14 @@ class JournalService:
                 'account_id': bank_account.id,
                 'debit': 0,
                 'credit': payment.amount,
-                'description': f'دفع بنكي - سند رقم {payment.payment_number}'
+                'description': f'دفع بنكي - سند رقم {payment.voucher_number}'
             })
         
         return JournalService.create_journal_entry(
             entry_date=payment.date,
             reference_type='payment_voucher',
             reference_id=payment.id,
-            description=f'سند دفع رقم {payment.payment_number}',
+            description=f'سند دفع رقم {payment.voucher_number}',
             lines_data=lines_data,
             user=user
         )

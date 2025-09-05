@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>مذكرات الدين</title>
+    <style>
+        .big-button {
+            background-color: red !important;
+            color: white !important;
+            font-size: 24px !important;
+            padding: 20px 40px !important;
+            border: 3px solid black !important;
+            margin: 20px !important;
+            display: block !important;
+            width: 300px !important;
+        }
+    </style>
+</head>
+<body>
+    <h1>مذكرات الدين للمشتريات</h1>
+    
+    <div style="background-color: yellow; padding: 20px; border: 5px solid red;">
+        <h2>TEST - هذا اختبار للزر</h2>
+        
+        <a href="/ar/purchases/debit-notes/add/" class="big-button">
+            ➕ إنشاء مذكرة دين جديدة
+        </a>
+        
+        <a href="/ar/purchases/debit-notes/report/" class="big-button">
+            📊 كشف مذكرات الدين - الزر المطلوب
+        </a>
+    </div>
+    
+    <table border="1" style="width: 100%; margin-top: 20px;">
+        <thead>
+            <tr style="background-color: gray;">
+                <th>الرقم</th>
+                <th>المورد</th>
+                <th>التاريخ</th>
+                <th>المجموع</th>
+                <th>الإجراءات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for note in debitnotes %}
+            <tr>
+                <td>{{ note.note_number }}</td>
+                <td>{{ note.supplier.name }}</td>
+                <td>{{ note.date }}</td>
+                <td>{{ note.total_amount }}</td>
+                <td><a href="/ar/purchases/debit-notes/{{ note.pk }}/">عرض</a></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5">لا توجد مذكرات دين</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

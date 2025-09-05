@@ -690,6 +690,7 @@ class SalesInvoiceDeleteView(LoginRequiredMixin, DeleteView):
     
     def delete(self, request, *args, **kwargs):
         invoice = self.get_object()
+        invoice_number = invoice.invoice_number
         
         # حذف حركات المخزون المرتبطة (فقط إذا كانت موجودة)
         try:
@@ -699,10 +700,11 @@ class SalesInvoiceDeleteView(LoginRequiredMixin, DeleteView):
                 reference_id=invoice.id
             )
             if inventory_movements.exists():
+                movement_count = inventory_movements.count()
                 inventory_movements.delete()
-                print(f"تم حذف {inventory_movements.count()} حركة مخزون للفاتورة {invoice.invoice_number}")
+                print(f"تم حذف {movement_count} حركة مخزون للفاتورة {invoice_number}")
             else:
-                print(f"لا توجد حركات مخزون للفاتورة {invoice.invoice_number} (فاتورة قديمة)")
+                print(f"لا توجد حركات مخزون للفاتورة {invoice_number} (فاتورة قديمة)")
         except ImportError:
             pass
         except Exception as e:
@@ -711,7 +713,17 @@ class SalesInvoiceDeleteView(LoginRequiredMixin, DeleteView):
         # حذف قيود دفتر اليومية المرتبطة
         delete_transaction_by_reference('sales_invoice', invoice.id)
         
-        messages.success(request, 'تم حذف فاتورة المبيعات بنجاح')
+        # تسجيل النشاط قبل الحذف
+        from core.signals import log_activity
+        log_activity(
+            user=request.user,
+            action_type='DELETE',
+            obj=invoice,
+            description=f'تم حذف فاتورة مبيعات رقم: {invoice_number}',
+            request=request
+        )
+        
+        messages.success(request, f'تم حذف فاتورة المبيعات رقم {invoice_number} بنجاح')
         return super().delete(request, *args, **kwargs)
 
 
@@ -1042,6 +1054,7 @@ class SalesReturnDeleteView(LoginRequiredMixin, DeleteView):
     
     def delete(self, request, *args, **kwargs):
         return_invoice = self.get_object()
+        return_number = return_invoice.return_number
         
         # حذف حركات المخزون المرتبطة (فقط إذا كانت موجودة)
         try:
@@ -1051,16 +1064,27 @@ class SalesReturnDeleteView(LoginRequiredMixin, DeleteView):
                 reference_id=return_invoice.id
             )
             if inventory_movements.exists():
+                movement_count = inventory_movements.count()
                 inventory_movements.delete()
-                print(f"تم حذف {inventory_movements.count()} حركة مخزون للمردود {return_invoice.return_number}")
+                print(f"تم حذف {movement_count} حركة مخزون للمردود {return_number}")
             else:
-                print(f"لا توجد حركات مخزون للمردود {return_invoice.return_number} (مردود قديم)")
+                print(f"لا توجد حركات مخزون للمردود {return_number} (مردود قديم)")
         except ImportError:
             pass
         except Exception as e:
             print(f"خطأ في حذف حركات المخزون: {e}")
         
-        messages.success(request, 'تم حذف مردود المبيعات بنجاح')
+        # تسجيل النشاط قبل الحذف
+        from core.signals import log_activity
+        log_activity(
+            user=request.user,
+            action_type='DELETE',
+            obj=return_invoice,
+            description=f'تم حذف مردود مبيعات رقم: {return_number}',
+            request=request
+        )
+        
+        messages.success(request, f'تم حذف مردود المبيعات رقم {return_number} بنجاح')
         return super().delete(request, *args, **kwargs)
 
 

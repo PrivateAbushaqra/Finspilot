@@ -205,10 +205,20 @@ class WarehouseListView(LoginRequiredMixin, ListView):
 class WarehouseCreateView(LoginRequiredMixin, CreateView):
     model = Warehouse
     template_name = 'inventory/warehouse_add.html'
-    fields = ['name', 'code', 'address', 'parent', 'manager', 'is_active']
+    fields = ['name', 'code', 'address', 'parent', 'manager', 'is_active', 'is_default']
     success_url = reverse_lazy('inventory:warehouse_list')
     
     def form_valid(self, form):
+        # تسجيل النشاط
+        from core.signals import log_activity
+        warehouse = form.save()
+        log_activity(
+            user=self.request.user,
+            action='CREATE',
+            model_name='Warehouse',
+            object_id=warehouse.id,
+            details=f'تم إنشاء المستودع: {warehouse.name}'
+        )
         messages.success(self.request, 'تم إنشاء المستودع بنجاح')
         return super().form_valid(form)
 
@@ -715,14 +725,77 @@ class WarehouseDetailView(LoginRequiredMixin, DetailView):
 
 class WarehouseEditView(LoginRequiredMixin, UpdateView):
     model = Warehouse
-    fields = ['name', 'code', 'address', 'is_active']
+    fields = ['name', 'code', 'address', 'is_active', 'is_default']
     template_name = 'inventory/warehouse_edit.html'
     success_url = '/ar/inventory/warehouses/'
     
     def form_valid(self, form):
+        # تسجيل النشاط
+        from core.signals import log_activity
+        warehouse = form.save()
+        log_activity(
+            user=self.request.user,
+            action='UPDATE',
+            model_name='Warehouse',
+            object_id=warehouse.id,
+            details=f'تم تحديث المستودع: {warehouse.name}'
+        )
         messages.success(self.request, f'تم تحديث المستودع "{form.instance.name}" بنجاح!')
         return super().form_valid(form)
     
     def form_invalid(self, form):
         messages.error(self.request, 'حدث خطأ أثناء تحديث المستودع. يرجى المحاولة مرة أخرى.')
         return super().form_invalid(form)
+
+
+class MovementDeleteView(LoginRequiredMixin, View):
+    """حذف حركة مخزون واحدة"""
+    
+    def post(self, request, pk, *args, **kwargs):
+        """حذف حركة المخزون"""
+        # التحقق من الصلاحيات
+        if not (request.user.user_type == 'superadmin' or request.user.is_superuser):
+            return JsonResponse({
+                'success': False, 
+                'message': 'ليس لديك صلاحية لحذف حركات المخزون'
+            }, status=403)
+        
+        try:
+            # الحصول على الحركة
+            movement = get_object_or_404(InventoryMovement, pk=pk)
+            movement_number = movement.movement_number
+            
+            # تسجيل النشاط قبل الحذف
+            from core.signals import log_activity
+            log_activity(
+                user=request.user,
+                action_type='DELETE',
+                obj=movement,
+                description=f'تم حذف حركة مخزون رقم: {movement_number}',
+                request=request
+            )
+            
+            # حذف الحركة
+            movement.delete()
+            
+            messages.success(
+                request, 
+                f'تم حذف حركة المخزون رقم {movement_number} بنجاح'
+            )
+            
+            return JsonResponse({
+                'success': True, 
+                'message': f'تم حذف حركة المخزون رقم {movement_number} بنجاح'
+            })
+            
+        except InventoryMovement.DoesNotExist:
+            return JsonResponse({
+                'success': False, 
+                'message': 'حركة المخزون غير موجودة'
+            }, status=404)
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False, 
+                'message': f'حدث خطأ أثناء حذف الحركة: {str(e)}'
+            }, status=500)

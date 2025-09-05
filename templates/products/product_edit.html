@@ -1,13 +1,16 @@
 {% extends 'base.html' %}
 {% load i18n %}
+{% load l10n %}
 
 
 
 {% block title %}{% trans "Edit Product" %} - {{ block.super }}{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
+<div class="container-fluid">                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="tax_rate" name="tax_rate" 
+                                               step="0.01" min="0" max="100" value="{{ product.tax_rate|unlocalize }}" 
+                                               placeholder="{% trans 'Example: 15' %}"> <div class="row">
         <div class="col-12">
             <!-- Page Header -->
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -154,19 +157,19 @@
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="cost_price" class="form-label">{% trans "Cost Price" %}</label>
-                                    <input type="number" class="form-control" id="cost_price" name="cost_price" step="0.001" min="0" value="{% if product.cost_price %}{{ product.cost_price }}{% else %}0{% endif %}">
+                                    <input type="number" class="form-control" id="cost_price" name="cost_price" step="0.001" min="0" value="{{ product.cost_price|unlocalize }}">
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="sale_price" class="form-label">{% trans "Sale Price" %} <span class="text-danger">*</span></label>
-                                    <input type="number" class="form-control" id="sale_price" name="sale_price" step="0.001" min="0" value="{% if product.sale_price %}{{ product.sale_price }}{% else %}0{% endif %}" required>
+                                    <input type="number" class="form-control" id="sale_price" name="sale_price" step="0.001" min="0" value="{{ product.sale_price|unlocalize }}" required>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="wholesale_price" class="form-label">{% trans "Wholesale Price" %}</label>
-                                    <input type="number" class="form-control" id="wholesale_price" name="wholesale_price" step="0.001" min="0" value="{% if product.wholesale_price %}{{ product.wholesale_price }}{% else %}0{% endif %}">
+                                    <input type="number" class="form-control" id="wholesale_price" name="wholesale_price" step="0.001" min="0" value="{{ product.wholesale_price|unlocalize }}">
                                 </div>
                             </div>
                         </div>
@@ -180,7 +183,7 @@
                                     </label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="tax_rate" name="tax_rate" 
-                                               step="0.01" min="0" max="100" value="{% if product.tax_rate %}{{ product.tax_rate }}{% else %}0{% endif %}" 
+                                               step="0.01" min="0" max="100" value="{{ product.tax_rate|default:0 }}" 
                                                placeholder="{% trans 'Example: 15' %}">
                                         <span class="input-group-text">%</span>
                                     </div>
@@ -235,7 +238,7 @@
                                             {% trans "Opening Balance" %}
                                         </label>
                                         <input type="number" class="form-control" id="opening_balance" name="opening_balance" 
-                                               step="0.001" min="0" value="{% if product.opening_balance %}{{ product.opening_balance }}{% else %}0{% endif %}">
+                                               step="0.001" min="0" value="{{ product.get_opening_balance|default:0 }}">
                                         <small class="form-text text-muted">
                                             <i class="fas fa-info-circle me-1"></i>
                                             {% trans "Initial stock when starting to use the system" %}
@@ -249,7 +252,7 @@
                                             {% trans "Current Stock" %}
                                         </label>
                                         <input type="number" class="form-control" id="current_stock" name="current_stock" 
-                                               min="0" value="{% if product.current_stock %}{{ product.current_stock }}{% else %}0{% endif %}" 
+                                               min="0" value="{{ product.current_stock|default:0 }}" 
                                                readonly style="background-color: #f8f9fa; cursor: not-allowed;">
                                         <small class="form-text text-muted">
                                             <i class="fas fa-calculator me-1"></i>

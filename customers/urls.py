@@ -12,6 +12,7 @@ urlpatterns = [
     path('delete/<int:pk>/', views.CustomerSupplierDeleteView.as_view(), name='delete'),
     path('<int:pk>/transactions/', views.CustomerSupplierTransactionsView.as_view(), name='transactions'),
     path('<int:customer_pk>/transactions/<int:transaction_id>/delete/', views.delete_transaction, name='delete_transaction'),
+    path('<int:customer_pk>/transactions/<int:transaction_id>/preview/', views.preview_transaction_document, name='preview_transaction'),
     path('api/customer/<int:customer_id>/', views.get_customer_supplier_ajax, name='customer_ajax'),
     path('api/search/', views.search_customers_ajax, name='search_customers'),
     path('ajax/add-supplier/', views.ajax_add_supplier, name='ajax_add_supplier'),
