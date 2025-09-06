@@ -1138,17 +1138,31 @@
             });
         }
         
-        // وظيفة لمسح جميع الحالات النشطة
+        // وظيفة لمسح جميع الحالات النشطة مع تأثير انيميشن
         function clearAllActiveStates() {
-            // إزالة جميع active classes من الروابط
-            document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+            // إزالة جميع active classes من الروابط مع تأثير تدريجي
+            document.querySelectorAll('.sidebar .nav-link.active').forEach(link => {
+                link.style.transition = 'all 0.3s ease';
                 link.classList.remove('active');
             });
             
             // إزالة has-active-child من جميع عناصر nav-item
-            document.querySelectorAll('.sidebar .nav-item').forEach(item => {
+            document.querySelectorAll('.sidebar .nav-item.has-active-child').forEach(item => {
+                item.style.transition = 'all 0.3s ease';
                 item.classList.remove('has-active-child');
             });
+        }
+        
+        // وظيفة لإضافة تأثير بصري عند التفعيل
+        function activateWithEffect(element) {
+            element.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+            element.classList.add('active');
+            
+            // إضافة تأثير pulse مؤقت
+            element.style.transform = 'translateX(-5px) scale(1.02)';
+            setTimeout(() => {
+                element.style.transform = 'translateX(-3px)';
+            }, 200);
         }
         
         // وظيفة تحديد العنصر النشط بناءً على URL الحالي
@@ -1162,7 +1176,7 @@
             if (currentPath === '/' || currentPath === '/ar/' || currentPath === '/en/') {
                 const dashboardLink = document.querySelector('.sidebar .nav-link[href="/ar/"], .sidebar .nav-link[href="/"], .sidebar .nav-link[href="/en/"]');
                 if (dashboardLink) {
-                    dashboardLink.classList.add('active');
+                    activateWithEffect(dashboardLink);
                 }
                 return;
             }
@@ -1197,13 +1211,14 @@
             
             // تطبيق أفضل مطابقة
             if (bestMatch) {
-                // تعيين الرابط كنشط
-                bestMatch.classList.add('active');
+                // تعيين الرابط كنشط مع تأثير بصري
+                activateWithEffect(bestMatch);
                 
                 // البحث عن القائمة الفرعية الأب
                 const parentCollapse = bestMatch.closest('.collapse[id]');
                 if (parentCollapse) {
-                    // فتح القائمة الفرعية
+                    // فتح القائمة الفرعية مع تأثير سلس
+                    parentCollapse.style.transition = 'all 0.3s ease';
                     parentCollapse.classList.add('show');
                     
                     // البحث عن زر القائمة الرئيسية
@@ -1211,6 +1226,7 @@
                     if (menuButton) {
                         const parentNavItem = menuButton.closest('.nav-item');
                         if (parentNavItem) {
+                            parentNavItem.style.transition = 'all 0.3s ease';
                             parentNavItem.classList.add('has-active-child');
                         }
                     }
