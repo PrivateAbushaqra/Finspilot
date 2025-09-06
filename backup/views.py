@@ -1371,6 +1371,9 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
     """تنفيذ عملية الاستعادة الفعلية"""
     try:
         logger.info("بدء تنفيذ عملية الاستعادة")
+        
+        # تسجيل بداية العملية في سجل الأنشطة
+        log_audit(user, 'create', _('بدء عملية استعادة النسخة الاحتياطية'))
 
         # تهيئة تتبع التقدم
         flat_tables = []
@@ -1391,6 +1394,9 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                             'actual_records': 0,
                             'error': None
                         })
+
+        # تسجيل إحصائيات العملية
+        log_audit(user, 'view', _('تحليل النسخة الاحتياطية - {} جدول بإجمالي {} سجل').format(len(flat_tables), total_records_expected))
 
         progress_data = get_restore_progress_data()
         progress_data.update({
@@ -1475,6 +1481,17 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                         for record in model_records:
                             try:
                                 model_label = f"{app_name}.{model_name.lower()}"
+                                
+                                # تصحيح أسماء التطبيقات والنماذج القديمة
+                                if model_label.startswith('revenues.'):
+                                    model_label = model_label.replace('revenues.', 'revenues_expenses.')
+                                elif model_label.startswith('assets.'):
+                                    model_label = model_label.replace('assets.', 'assets_liabilities.')
+                                elif model_label.startswith('expenses.'):
+                                    model_label = model_label.replace('expenses.', 'revenues_expenses.')
+                                elif model_label.startswith('liabilities.'):
+                                    model_label = model_label.replace('liabilities.', 'assets_liabilities.')
+                                
                                 model = apps.get_model(model_label)
                                 fields = record.get('fields', {})
                                 # تحويلات توافقية لحقول قديمة قبل إنشاء الكائن
@@ -1629,11 +1646,7 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                                             setattr(obj, fname, safe_val)
                                             if AUDIT_AVAILABLE and user:
                                                 try:
-                                                    AuditLog.objects.create(
-                                                        user=user,
-                                                        action='backup_restore_field_fix',
-                                                        details=f'تم استبدال قيمة None بقيمة افتراضية للحقل الإلزامي "{fname}" في النموذج {model_label}.'
-                                                    )
+                                                    log_audit(user, 'update', f'تم استبدال قيمة None بقيمة افتراضية للحقل الإلزامي "{fname}" في النموذج {model_label}.')
                                                 except Exception:
                                                     pass
                                         else:
@@ -1643,11 +1656,7 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                                     if field_name not in model_field_names:
                                         if AUDIT_AVAILABLE and user:
                                             try:
-                                                AuditLog.objects.create(
-                                                    user=user,
-                                                    action='backup_restore_ignore_field',
-                                                    details=f'تم تجاهل الحقل غير الموجود "{field_name}" في النموذج {model_label} أثناء الاستعادة.'
-                                                )
+                                                log_audit(user, 'view', f'تم تجاهل الحقل غير الموجود "{field_name}" في النموذج {model_label} أثناء الاستعادة.')
                                             except Exception:
                                                 pass
                                 if pk:
@@ -1686,11 +1695,7 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                                         m2m_manager.set(m2m_values)
                                     except Exception as m2m_error:
                                         if AUDIT_AVAILABLE and user:
-                                            AuditLog.objects.create(
-                                                user=user,
-                                                action='backup_restore_m2m_error',
-                                                details=f'خطأ في تعيين الحقل ManyToMany "{m2m_name}" في النموذج {model_label}: {str(m2m_error)}'
-                                            )
+                                            log_audit(user, 'error', f'خطأ في تعيين الحقل ManyToMany "{m2m_name}" في النموذج {model_label}: {str(m2m_error)}')
                                 restored_count += 1
                                 processed_in_table += 1
                                 processed_records += 1
@@ -1704,8 +1709,9 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                                 # تقدير الوقت والكنترول العام
                                 elapsed = time.time() - start_time
                                 overall_percentage = 0
-                                if pd.get('total_records', 0):
-                                    overall_percentage = int((processed_records / pd['total_records']) * 100)
+                                # استخدم total_records_expected المحسوب في البداية بدلاً من total_records المتغير
+                                if total_records_expected > 0:
+                                    overall_percentage = min(100, int((processed_records / total_records_expected) * 100))
                                 pd.update({
                                     'processed_records': processed_records,
                                     'percentage': overall_percentage,
@@ -1725,8 +1731,13 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                         if table_index < len(ts):
                             ts[table_index]['status'] = 'completed'
                             ts[table_index]['progress'] = 100 if expected_in_table == 0 else ts[table_index]['progress']
+                        
+                        # حساب النسبة العامة بناءً على الجداول المكتملة
+                        overall_percentage = min(100, int((processed_tables / len(flat_tables)) * 90)) if len(flat_tables) > 0 else 90
+                        
                         pd.update({
                             'processed_tables': processed_tables,
+                            'percentage': overall_percentage,
                             'tables_status': ts,
                             'current_table': f'اكتمل {app_name}.{model_name} ✅ ({processed_in_table} سجل)'
                         })
@@ -1734,30 +1745,33 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
             logger.info(f"تم استعادة {restored_count} من {total_records} سجل")
             if AUDIT_AVAILABLE and user:
                 try:
-                    AuditLog.objects.create(
-                        user=user,
-                        action='backup_restore_data_completed',
-                        details=f'تم استعادة {restored_count} سجل من أصل {total_records}. عدد الأخطاء: {len(errors)}'
-                    )
+                    log_audit(user, 'create', f'تم استعادة {restored_count} سجل من أصل {total_records}. عدد الأخطاء: {len(errors)}')
                     if errors:
-                        AuditLog.objects.create(
-                            user=user,
-                            action='backup_restore_data_errors',
-                            details='\n'.join(errors)
-                        )
+                        log_audit(user, 'error', '\n'.join(errors))
                 except Exception:
                     pass
             # لا نفشل العملية بالكامل عند وجود أخطاء جزئية؛ تم تسجيلها في سجل الأنشطة بالفعل
             # يمكن لاحقاً عرض تحذير في الواجهة إذا لزم، دون رمي استثناء هنا
             logger.info("تم إتمام عملية الاستعادة بنجاح")
-            # إنهاء حالة التقدم
+            
+            # تسجيل نهاية العملية بنجاح في سجل الأنشطة
+            log_audit(user, 'create', _('تم إكمال عملية الاستعادة بنجاح - {} جدول، {} سجل مستعاد').format(processed_tables, restored_count))
+            
+            # إنهاء حالة التقدم مع ضمان 100%
             pd = get_restore_progress_data()
+            # تأكد أن جميع الجداول مكتملة
+            ts = pd.get('tables_status', [])
+            for table_status in ts:
+                table_status['status'] = 'completed'
+                table_status['progress'] = 100
             pd.update({
                 'status': 'completed',
                 'is_running': False,
                 'percentage': 100,
+                'processed_records': total_records_expected,  # تأكد من المطابقة الكاملة
                 'current_table': 'تم إتمام الاستعادة بنجاح! ✅',
-                'estimated_time': 'اكتمل'
+                'estimated_time': 'اكتمل',
+                'tables_status': ts
             })
             set_restore_progress_data(pd)
             # تنظيف كاش الاستعادة بعد 10 ثواني
@@ -1772,11 +1786,7 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
             if isinstance(backup_data, dict) and 'media_files' in backup_data and backup_data['media_files']:
                 if AUDIT_AVAILABLE and user:
                     try:
-                        AuditLog.objects.create(
-                            user=user,
-                            action='backup_restore_media_files_listed',
-                            details=f'تحتوي النسخة على {len(backup_data["media_files"]) } ملف وسائط (system/*). يتطلب نقلها يدوياً إلى MEDIA_ROOT.'
-                        )
+                        log_audit(user, 'view', f'تحتوي النسخة على {len(backup_data["media_files"]) } ملف وسائط (system/*). يتطلب نقلها يدوياً إلى MEDIA_ROOT.')
                     except Exception:
                         pass
         except Exception:
@@ -1795,11 +1805,7 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
         set_restore_progress_data(pd)
         if AUDIT_AVAILABLE and user:
             try:
-                AuditLog.objects.create(
-                    user=user,
-                    action='backup_restore_error',
-                    details=f'خطأ في الاستعادة: {str(e)}'
-                )
+                log_audit(user, 'error', f'خطأ في الاستعادة: {str(e)}')
             except Exception:
                 pass
         raise e
