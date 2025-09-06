@@ -104,10 +104,30 @@ def get_deletable_tables(request):
     """
     try:
         result = []
+        
+        # قائمة التطبيقات المحمية من Django (يجب استبعادها من قائمة الحذف)
+        protected_apps = [
+            'admin',
+            'auth',
+            'contenttypes',
+            'sessions',
+            'messages',
+            'staticfiles',
+            'corsheaders',
+            'rest_framework',
+            'django_bootstrap5',
+            'crispy_forms',
+            'crispy_bootstrap5',
+        ]
+        
         # بناء خريطة العلاقات العكسية: model_label -> set(of dependent model labels)
         dep_map = {}
         all_models = []
         for app_config in apps.get_app_configs():
+            # استبعاد التطبيقات المحمية من قائمة الحذف
+            if app_config.name in protected_apps:
+                continue
+                
             for model in app_config.get_models():
                 label = f"{app_config.name}.{model._meta.model_name}"
                 dep_map[label] = set()
@@ -149,10 +169,16 @@ def get_deletable_tables(request):
 
         # رتب بحسب عدد السجلات تنازلياً
         result.sort(key=lambda x: (-x['record_count'], x['label']))
+        
+        # تسجيل العملية في سجل الأنشطة
+        log_audit(request.user, 'view', _('عرض قائمة الجداول القابلة للحذف - تم العثور على {} جدول').format(len(result)))
+        
         return JsonResponse({'success': True, 'tables': result})
     except Exception as e:
         logger.error(f"خطأ في get_deletable_tables: {str(e)}")
-        return JsonResponse({'success': False, 'error': str(e)})
+        # تسجيل الخطأ في سجل الأنشطة
+        log_audit(request.user, 'error', _('خطأ في عرض قائمة الجداول القابلة للحذف: {}').format(str(e)))
+        return JsonResponse({'success': False, 'error': _('حدث خطأ في تحميل قائمة الجداول')})
 
 
 @login_required
