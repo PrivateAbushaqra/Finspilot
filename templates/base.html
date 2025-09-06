@@ -1127,14 +1127,14 @@
             const currentUrl = window.location.pathname;
             const sidebarLinks = document.querySelectorAll('.sidebar .nav-link[href]');
             
-            // Remove active from all links
+            // Remove active from all links and has-active-child from all nav-items
             sidebarLinks.forEach(link => {
                 link.classList.remove('active');
-                // Remove has-active-child from other menus
-                const parentNavItem = link.closest('.nav-item');
-                if (parentNavItem) {
-                    parentNavItem.classList.remove('has-active-child');
-                }
+            });
+            
+            // Remove has-active-child from ALL nav-items (including main menu items)
+            document.querySelectorAll('.sidebar .nav-item').forEach(navItem => {
+                navItem.classList.remove('has-active-child');
             });
             
             // Find the link matching the current page
@@ -1181,12 +1181,13 @@
                     parentCollapse.classList.add('show');
                     // Update toggler aria-expanded
                     const toggler = document.querySelector('.sidebar a[data-bs-toggle="collapse"][href="#' + parentCollapse.id + '"]');
-                    if (toggler) toggler.setAttribute('aria-expanded', 'true');
-                    
-                    // Highlight the parent menu
-                    const mainNavItem = parentCollapse.closest('.nav-item');
-                    if (mainNavItem) {
-                        mainNavItem.classList.add('has-active-child');
+                    if (toggler) {
+                        toggler.setAttribute('aria-expanded', 'true');
+                        // Highlight the parent menu item
+                        const mainNavItem = toggler.closest('.nav-item');
+                        if (mainNavItem) {
+                            mainNavItem.classList.add('has-active-child');
+                        }
                     }
                     
                     // Save the open menu state
