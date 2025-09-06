@@ -1122,82 +1122,94 @@
     
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Function to determine active page in sidebar (always runs)
-    function setActiveSidebarItem() {
-            const currentUrl = window.location.pathname;
-            const sidebarLinks = document.querySelectorAll('.sidebar .nav-link[href]');
-            
-            // Remove active from all links and has-active-child from all nav-items
-            sidebarLinks.forEach(link => {
+        // Function to clear all active states
+        function clearAllActiveStates() {
+            // Remove active from all sidebar links
+            document.querySelectorAll('.sidebar .nav-link').forEach(link => {
                 link.classList.remove('active');
             });
             
-            // Remove has-active-child from ALL nav-items (including main menu items)
+            // Remove has-active-child from all nav-items
             document.querySelectorAll('.sidebar .nav-item').forEach(navItem => {
                 navItem.classList.remove('has-active-child');
             });
             
-            // Find the link matching the current page
-            let activeLink = null;
-            let exactMatch = false;
-            
-            sidebarLinks.forEach(link => {
-                const linkPath = new URL(link.href).pathname;
-                
-                // Exact match
-                if (linkPath === currentUrl) {
-                    activeLink = link;
-                    exactMatch = true;
-                }
-                // Partial match (if no exact match found)
-                else if (!exactMatch && currentUrl.startsWith(linkPath) && linkPath !== '/') {
-                    activeLink = link;
-                }
+            // Close all collapse menus
+            document.querySelectorAll('.sidebar .collapse').forEach(collapse => {
+                collapse.classList.remove('show');
             });
+        }
+        
+        // Function to determine active page in sidebar (always runs)
+        function setActiveSidebarItem() {
+            const currentUrl = window.location.pathname;
             
-            // Activate the link
-            let openedParentId = null;
+            // First clear all active states
+            clearAllActiveStates();
+            
+            // Find matching links
+            const sidebarLinks = document.querySelectorAll('.sidebar .nav-link[href]');
+            let activeLink = null;
+            
+            // Look for exact match first
+            for (const link of sidebarLinks) {
+                try {
+                    const linkPath = new URL(link.href).pathname;
+                    if (linkPath === currentUrl) {
+                        activeLink = link;
+                        break;
+                    }
+                } catch(e) {
+                    continue;
+                }
+            }
+            
+            // If no exact match, look for partial match
+            if (!activeLink) {
+                for (const link of sidebarLinks) {
+                    try {
+                        const linkPath = new URL(link.href).pathname;
+                        if (linkPath !== '/' && currentUrl.startsWith(linkPath)) {
+                            activeLink = link;
+                            break;
+                        }
+                    } catch(e) {
+                        continue;
+                    }
+                }
+            }
+            
+            // Activate the found link and its parent menu
             if (activeLink) {
+                // Mark the link as active
                 activeLink.classList.add('active');
                 
-                // Find the parent menu and submenu containing this link
+                // Find and open the parent collapse menu
                 const parentCollapse = activeLink.closest('.collapse[id]');
-                if (parentCollapse && parentCollapse.id) {
-                    // Close all other menus to ensure only one stays open
-                    document.querySelectorAll('.sidebar .collapse[id]').forEach(c => {
-                        if (c !== parentCollapse) {
-                            c.classList.remove('show');
-                            try {
-                                const inst = bootstrap.Collapse.getOrCreateInstance ? bootstrap.Collapse.getOrCreateInstance(c, {toggle: false}) : new bootstrap.Collapse(c, {toggle: false});
-                                inst.hide();
-                            } catch(e) {}
-                            if (c.id) localStorage.setItem('sidebar_' + c.id, 'closed');
-                        }
-                    });
-
-                    // Open the submenu
-                    const bsCollapse = new bootstrap.Collapse(parentCollapse, {show: true});
-                    bsCollapse.show();
+                if (parentCollapse) {
                     parentCollapse.classList.add('show');
-                    // Update toggler aria-expanded
-                    const toggler = document.querySelector('.sidebar a[data-bs-toggle="collapse"][href="#' + parentCollapse.id + '"]');
-                    if (toggler) {
-                        toggler.setAttribute('aria-expanded', 'true');
-                        // Highlight the parent menu item
-                        const mainNavItem = toggler.closest('.nav-item');
+                    
+                    // Find the main menu button and mark it as having active child
+                    const menuButton = document.querySelector(`a[href="#${parentCollapse.id}"]`);
+                    if (menuButton) {
+                        const mainNavItem = menuButton.closest('.nav-item');
                         if (mainNavItem) {
                             mainNavItem.classList.add('has-active-child');
                         }
                     }
-                    
-                    // Save the open menu state
-                    if (parentCollapse.id) localStorage.setItem('sidebar_' + parentCollapse.id, 'open');
-                    openedParentId = parentCollapse.id || null;
                 }
             }
-
-            return openedParentId;
         }
+        
+        // Run on page load
+        setActiveSidebarItem();
+        
+        // Re-run when clicking sidebar links (for AJAX navigation if enabled)
+        document.querySelectorAll('.sidebar .nav-link[href]').forEach(link => {
+            link.addEventListener('click', function() {
+                setTimeout(setActiveSidebarItem, 100);
+            });
+        });
         
         // Always select the active page on page load
         const activeParentId = setActiveSidebarItem();
