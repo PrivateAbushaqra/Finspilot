@@ -829,6 +829,9 @@
                                         <a class="nav-link {% if active_menu == 'sales' and 'creditnote_list' in request.path %}active{% endif %}" href="{% url 'sales:creditnote_list' %}">{% trans "Credit Notes" %}</a>
                                     </li>
                                     <li class="nav-item">
+                                        <a class="nav-link {% if active_menu == 'sales' and 'creditnote_report' in request.path %}active{% endif %}" href="{% url 'sales:creditnote_report' %}">كشف مذكرات الدائن</a>
+                                    </li>
+                                    <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'sales' and 'sales_statement' in request.path %}active{% endif %}" href="{% url 'sales:sales_statement' %}">{% trans "Sales Statement" %}</a>
                                     </li>
                                     <li class="nav-item">
@@ -1702,6 +1705,7 @@
         'كشف مردودات المشتريات': 'Purchase Returns Statement',
         'كشف مبيعات': 'Sales Statement',
         'كشف مردودات مبيعات': 'Sales Returns Statement',
+        'كشف مذكرات الدائن': 'Credit Notes Statement',
         'سند': 'Voucher',
         'سندات': 'Vouchers',
         'إيصال': 'Receipt',

@@ -1,46 +1,128 @@
 {% extends 'base.html' %}
 {% load i18n %}
-{% block title %}{% trans "Sales Credit Notes" %}{% endblock %}
+
+{% block title %}مذكرات الدائن{% endblock %}
+
 {% block content %}
-<div class="container">
-  <h1>{% trans "Sales Credit Notes" %}</h1>
-  <a class="btn btn-primary mb-2" href="{% url 'sales:creditnote_add' %}">{% trans "Create Credit Note" %}</a>
-  <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>{% trans "Number" %}</th>
-        <th>{% trans "Customer" %}</th>
-        <th>{% trans "Date" %}</th>
-        <th>{% trans "Total" %}</th>
-        <th>{% trans "Actions" %}</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for note in creditnotes %}
-      <tr>
-        <td>{{ note.note_number }}</td>
-        <td>{{ note.customer.name }}</td>
-        <td>{{ note.date }}</td>
-        <td>{{ note.total_amount }}</td>
-        <td><a href="{% url 'sales:creditnote_detail' note.pk %}">{% trans "View" %}</a></td>
-      </tr>
-      {% empty %}
-      <tr><td colspan="5">{% trans "No credit notes found" %}</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% if is_paginated %}
-    <nav>
-      <ul class="pagination">
-        {% if page_obj.has_previous %}
-          <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo;</a></li>
-        {% endif %}
-        <li class="page-item active"><span class="page-link">{{ page_obj.number }}</span></li>
-        {% if page_obj.has_next %}
-          <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">&raquo;</a></li>
-        {% endif %}
-      </ul>
-    </nav>
-  {% endif %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-file-invoice-dollar me-2"></i>
+                        مذكرات الدائن
+                    </h3>
+                    <div class="float-end">
+                        <a href="{% url 'sales:creditnote_add' %}" class="btn btn-success btn-sm">
+                            <i class="fas fa-plus me-2"></i>إنشاء مذكرة دائن
+                        </a>
+                        <a href="{% url 'sales:creditnote_report' %}" class="btn btn-info btn-sm">
+                            <i class="fas fa-chart-line me-2"></i>كشف مذكرات الدائن
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    {% if creditnotes %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>رقم المذكرة</th>
+                                    <th>التاريخ</th>
+                                    <th>العميل</th>
+                                    <th>المجموع الفرعي</th>
+                                    <th>الضريبة</th>
+                                    <th>المجموع الإجمالي</th>
+                                    <th>أنشئ بواسطة</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for creditnote in creditnotes %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ creditnote.note_number }}</strong>
+                                    </td>
+                                    <td>{{ creditnote.date }}</td>
+                                    <td>{{ creditnote.customer.name }}</td>
+                                    <td>{{ creditnote.subtotal }}</td>
+                                    <td>{{ creditnote.tax_amount }}</td>
+                                    <td>
+                                        <strong class="text-primary">{{ creditnote.total_amount }}</strong>
+                                    </td>
+                                    <td>{{ creditnote.created_by.get_full_name|default:creditnote.created_by.username }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'sales:creditnote_detail' creditnote.pk %}" 
+                                               class="btn btn-sm btn-outline-primary" 
+                                               title="عرض التفاصيل">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'sales:creditnote_edit' creditnote.pk %}" 
+                                               class="btn btn-sm btn-outline-warning"
+                                               title="تحديث">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'sales:creditnote_delete' creditnote.pk %}" 
+                                               class="btn btn-sm btn-outline-danger"
+                                               title="حذف"
+                                               onclick="return confirm('هل أنت متأكد من حذف مذكرة الدائن هذه؟')">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if is_paginated %}
+                    <nav aria-label="Page navigation" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1">الأول</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">السابق</a>
+                                </li>
+                            {% endif %}
+
+                            <li class="page-item active">
+                                <span class="page-link">
+                                    صفحة {{ page_obj.number }} من {{ page_obj.paginator.num_pages }}
+                                </span>
+                            </li>
+
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">التالي</a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">الأخير</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-file-invoice-dollar fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">لا توجد مذكرات دائن</h5>
+                        <p class="text-muted">يمكنك إنشاء مذكرة دائن جديدة بالضغط على الزر أعلاه</p>
+                        <a href="{% url 'sales:creditnote_add' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>إنشاء أول مذكرة دائن
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

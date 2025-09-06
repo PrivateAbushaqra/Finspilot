@@ -1941,3 +1941,76 @@ def get_invoices_for_returns(request):
             'success': False,
             'error': f'خطأ في النظام: {str(e)}'
         })
+
+
+class SalesCreditNoteReportView(LoginRequiredMixin, ListView):
+    """كشف مذكرات الدائن"""
+    model = SalesCreditNote
+    template_name = 'sales/creditnote_report.html'
+    context_object_name = 'creditnotes'
+    paginate_by = 50
+    
+    def get(self, request, *args, **kwargs):
+        # تسجيل النشاط
+        try:
+            from core.signals import log_user_activity
+            log_user_activity(
+                request,
+                'view',
+                None,
+                _('عرض كشف مذكرات الدائن')
+            )
+        except Exception:
+            pass
+        
+        return super().get(request, *args, **kwargs)
+    
+    def get_queryset(self):
+        queryset = SalesCreditNote.objects.select_related('customer', 'created_by').all()
+        
+        # فلترة حسب التاريخ
+        date_from = self.request.GET.get('date_from')
+        date_to = self.request.GET.get('date_to')
+        customer = self.request.GET.get('customer')
+        
+        if date_from:
+            queryset = queryset.filter(date__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(date__lte=date_to)
+        if customer:
+            queryset = queryset.filter(customer_id=customer)
+            
+        return queryset.order_by('-date', '-note_number')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # إضافة إجماليات
+        queryset = self.get_queryset()
+        context['total_amount'] = queryset.aggregate(
+            total=Sum('total_amount')
+        )['total'] or 0
+        
+        context['total_count'] = queryset.count()
+        
+        # إضافة قائمة العملاء للفلترة
+        from customers.models import CustomerSupplier
+        context['customers'] = CustomerSupplier.objects.filter(
+            type__in=['customer', 'both']
+        ).order_by('name')
+        
+        # إضافة قيم الفلترة الحالية
+        context['filters'] = {
+            'date_from': self.request.GET.get('date_from', ''),
+            'date_to': self.request.GET.get('date_to', ''),
+            'customer': self.request.GET.get('customer', ''),
+        }
+        
+        try:
+            company_settings = CompanySettings.objects.first()
+            if company_settings and company_settings.base_currency:
+                context['base_currency'] = company_settings.base_currency
+        except Exception:
+            pass
+            
+        return context

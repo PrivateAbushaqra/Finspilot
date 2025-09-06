@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', function() {
         'Create Sales Return': 'إنشاء مرتجع مبيعات',
         'Sales Invoices List': 'قائمة فواتير المبيعات',
         'Sales Returns List': 'قائمة مرتجعات المبيعات',
-        'Credit Notes': 'سندات القبض',
+        'Credit Notes': 'مذكرات دائن',
         'Sales Statement': 'كشف المبيعات',
         'Sales Returns Statement': 'كشف مرتجعات المبيعات',
         'Sales Reports': 'تقارير المبيعات',
