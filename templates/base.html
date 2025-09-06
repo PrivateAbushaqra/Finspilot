@@ -1122,93 +1122,130 @@
     
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Function to clear all active states
+        // Function to clear all active states COMPLETELY
         function clearAllActiveStates() {
-            // Remove active from all sidebar links
+            // Remove active from ALL sidebar links
             document.querySelectorAll('.sidebar .nav-link').forEach(link => {
                 link.classList.remove('active');
             });
             
-            // Remove has-active-child from all nav-items
+            // Remove has-active-child from ALL nav-items
             document.querySelectorAll('.sidebar .nav-item').forEach(navItem => {
                 navItem.classList.remove('has-active-child');
             });
             
-            // Close all collapse menus
+            // Close ALL collapse menus
             document.querySelectorAll('.sidebar .collapse').forEach(collapse => {
                 collapse.classList.remove('show');
             });
         }
         
-        // Function to determine active page in sidebar (always runs)
+        // Function to set active sidebar item based on current URL
         function setActiveSidebarItem() {
-            const currentUrl = window.location.pathname;
+            const currentPath = window.location.pathname;
             
-            // First clear all active states
+            // FIRST - Clear everything completely
             clearAllActiveStates();
             
-            // Find matching links - prefer exact matches, then longest partial matches
-            const sidebarLinks = document.querySelectorAll('.sidebar .nav-link[href]');
-            let activeLink = null;
+            // Debug info
+            console.log('Current path:', currentPath);
+            
+            // Find all sidebar links
+            const allLinks = document.querySelectorAll('.sidebar .nav-link[href]');
+            let bestMatch = null;
             let bestMatchLength = 0;
             
-            // Look for the best matching link
-            for (const link of sidebarLinks) {
+            // Check each link to find the best match
+            allLinks.forEach(link => {
                 try {
-                    const linkPath = new URL(link.href).pathname;
+                    const linkUrl = new URL(link.href);
+                    const linkPath = linkUrl.pathname;
                     
-                    // Skip root paths
-                    if (linkPath === '/' || linkPath === '/ar/' || linkPath === '/en/') continue;
-                    
-                    // Exact match - highest priority
-                    if (linkPath === currentUrl) {
-                        activeLink = link;
-                        bestMatchLength = linkPath.length;
-                        break;
+                    // Skip homepage and language-only paths
+                    if (linkPath === '/' || linkPath === '/ar/' || linkPath === '/en/') {
+                        return;
                     }
                     
-                    // Partial match - find the longest match
-                    if (currentUrl.startsWith(linkPath) && linkPath.length > bestMatchLength) {
-                        activeLink = link;
+                    // Check for exact match first
+                    if (linkPath === currentPath) {
+                        bestMatch = link;
                         bestMatchLength = linkPath.length;
+                        console.log('Exact match found:', linkPath);
+                        return;
                     }
-                } catch(e) {
-                    continue;
+                    
+                    // Check for partial match (but must be longer than current best)
+                    if (currentPath.startsWith(linkPath) && linkPath.length > bestMatchLength) {
+                        bestMatch = link;
+                        bestMatchLength = linkPath.length;
+                        console.log('Partial match found:', linkPath, 'length:', linkPath.length);
+                    }
+                } catch (e) {
+                    console.log('Error processing link:', link.href);
                 }
-            }
+            });
             
-            // Activate the found link and its parent menu
-            if (activeLink) {
-                // Mark the link as active
-                activeLink.classList.add('active');
+            // Apply the best match
+            if (bestMatch) {
+                console.log('Activating link:', bestMatch.href);
                 
-                // Find and open the parent collapse menu
-                const parentCollapse = activeLink.closest('.collapse[id]');
+                // Mark the link as active
+                bestMatch.classList.add('active');
+                
+                // Find parent collapse menu
+                const parentCollapse = bestMatch.closest('.collapse[id]');
                 if (parentCollapse) {
+                    console.log('Opening collapse menu:', parentCollapse.id);
                     parentCollapse.classList.add('show');
                     
-                    // Find the main menu button and mark it as having active child
-                    const menuButton = document.querySelector(`a[href="#${parentCollapse.id}"]`);
-                    if (menuButton) {
-                        const mainNavItem = menuButton.closest('.nav-item');
+                    // Find and mark the main menu button
+                    const menuToggle = document.querySelector(`[href="#${parentCollapse.id}"]`);
+                    if (menuToggle) {
+                        const mainNavItem = menuToggle.closest('.nav-item');
                         if (mainNavItem) {
+                            console.log('Marking parent as active');
                             mainNavItem.classList.add('has-active-child');
                         }
                     }
                 }
+            } else {
+                console.log('No match found for path:', currentPath);
             }
+            
+            // Log final state
+            setTimeout(() => {
+                const activeLinks = document.querySelectorAll('.sidebar .nav-link.active');
+                const openMenus = document.querySelectorAll('.sidebar .collapse.show');
+                const activeParents = document.querySelectorAll('.sidebar .nav-item.has-active-child');
+                
+                console.log('Final state:');
+                console.log('- Active links:', activeLinks.length);
+                console.log('- Open menus:', openMenus.length);
+                console.log('- Active parents:', activeParents.length);
+                
+                if (activeLinks.length > 1) {
+                    console.warn('WARNING: Multiple active links detected!');
+                    activeLinks.forEach((link, index) => {
+                        console.log(`Active link ${index + 1}:`, link.href, link.textContent.trim());
+                    });
+                }
+            }, 100);
         }
         
-        // Run on page load
+        // Run the function immediately
         setActiveSidebarItem();
         
-        // Re-run when clicking sidebar links (for AJAX navigation if enabled)
+        // Re-run when sidebar links are clicked
         document.querySelectorAll('.sidebar .nav-link[href]').forEach(link => {
             link.addEventListener('click', function() {
-                setTimeout(setActiveSidebarItem, 100);
+                // Small delay to allow navigation
+                setTimeout(setActiveSidebarItem, 150);
             });
         });
 
+        // تعطيل localStorage مؤقتاً للاختبار
+        // localStorage menu state management is temporarily disabled for testing
+        /*
         // Restore submenu open state from localStorage (but don't override active page detection)
         document.querySelectorAll('.sidebar .collapse[id]').forEach(col => {
             const saved = localStorage.getItem('sidebar_' + col.id);
@@ -1225,12 +1262,12 @@
         });
 
         // When clicking any leaf link, persist its parent menu as open
-    const leafLinks = document.querySelectorAll('.sidebar .nav-link[href]:not([data-bs-toggle])');
+        const leafLinks = document.querySelectorAll('.sidebar .nav-link[href]:not([data-bs-toggle])');
         leafLinks.forEach(a => {
             a.addEventListener('click', function() {
-        const parentCol = this.closest('.collapse[id]');
+                const parentCol = this.closest('.collapse[id]');
                 // Close all others in localStorage so only one remains open
-        document.querySelectorAll('.sidebar .collapse[id]').forEach(c => {
+                document.querySelectorAll('.sidebar .collapse[id]').forEach(c => {
                     if (c !== parentCol && c.id) {
                         localStorage.setItem('sidebar_' + c.id, 'closed');
                     }
@@ -1240,6 +1277,7 @@
                 }
             });
         });
+        */
 
         // تعطيل التنقل الجزئي (AJAX) افتراضياً لتفادي فقدان الأنماط والسكربتات
         // فعِّله بوضع window.ENABLE_AJAX_NAV = true قبل هذا السكربت إن رغبت.
