@@ -779,20 +779,29 @@ function calculateRowTotal(row) {
     const price = parseFloat(row.querySelector('.price-input').value) || 0;
     const taxRate = parseFloat(row.querySelector('.tax-rate-input').value) || 0;
     
-    // حساب {% trans "Total" %} الفرعي (قبل الضريبة)
-    const subtotal = quantity * price;
+    // التحقق من حالة "شامل ضريبة"
+    const isInclusiveTax = document.getElementById('id_inclusive_tax').checked;
     
-    // حساب مبلغ الضريبة
-    const taxAmount = subtotal * (taxRate / 100);
+    let subtotal, taxAmount, total;
     
-    // حساب الإجمالي (مع الضريبة)
-    const total = subtotal + taxAmount;
+    if (isInclusiveTax) {
+        // إذا كانت الضريبة شاملة، السعر يشمل الضريبة
+        total = quantity * price;
+        // حساب الضريبة المدرجة في السعر
+        taxAmount = total * (taxRate / (100 + taxRate));
+        subtotal = total - taxAmount;
+    } else {
+        // إذا لم تكن الضريبة شاملة، السعر لا يشمل الضريبة
+        subtotal = quantity * price;
+        taxAmount = subtotal * (taxRate / 100);
+        total = subtotal + taxAmount;
+    }
     
-    // {% trans "View" %} النتائج
+    // عرض النتائج
     row.querySelector('.tax-amount-input').value = taxAmount.toFixed(2);
     row.querySelector('.total-input').value = total.toFixed(2);
     
-    // تحديث الحقول ال{% trans "Hidden" %}ة
+    // تحديث الحقول المخفية
     row.querySelector('.tax-rate-hidden-input').value = taxRate;
     row.querySelector('.tax-amount-hidden-input').value = taxAmount.toFixed(2);
 }
@@ -801,27 +810,51 @@ function calculateGrandTotal() {
     let subtotal = 0;
     let totalTax = 0;
     
+    // التحقق من حالة "شامل ضريبة"
+    const isInclusiveTax = document.getElementById('id_inclusive_tax').checked;
+    
     // جمع المجاميع من جميع الصفوف
     document.querySelectorAll('#productsTableBody tr').forEach(row => {
         const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
         const price = parseFloat(row.querySelector('.price-input').value) || 0;
-        const taxAmount = parseFloat(row.querySelector('.tax-amount-input').value) || 0;
+        const taxRate = parseFloat(row.querySelector('.tax-rate-input').value) || 0;
         
-        // {% trans "Add" %} إلى {% trans "Total" %} الفرعي (قبل الضريبة)
-        subtotal += quantity * price;
-        
-        // {% trans "Add" %} إلى إجمالي الضريبة
-        totalTax += taxAmount;
+        if (quantity > 0 && price > 0) {
+            if (isInclusiveTax) {
+                // إذا كانت الضريبة شاملة
+                const total = quantity * price;
+                const taxAmount = total * (taxRate / (100 + taxRate));
+                const rowSubtotal = total - taxAmount;
+                
+                subtotal += rowSubtotal;
+                totalTax += taxAmount;
+            } else {
+                // إذا لم تكن الضريبة شاملة
+                const rowSubtotal = quantity * price;
+                const taxAmount = rowSubtotal * (taxRate / 100);
+                
+                subtotal += rowSubtotal;
+                totalTax += taxAmount;
+            }
+        }
     });
     
     const discount = parseFloat(document.getElementById('id_discount').value) || 0;
-    const total = subtotal + totalTax - discount;
     
-    // Update display
+    let finalTotal;
+    if (isInclusiveTax) {
+        // إذا كانت الضريبة شاملة، نطرح الخصم من الإجمالي الشامل للضريبة
+        finalTotal = subtotal + totalTax - discount;
+    } else {
+        // إذا لم تكن الضريبة شاملة، نضيف الضريبة بعد طرح الخصم
+        finalTotal = subtotal + totalTax - discount;
+    }
+    
+    // تحديث العرض
     document.getElementById('subtotalDisplay').textContent = subtotal.toFixed(2) + ' {% get_currency_symbol %}';
     document.getElementById('discountDisplay').textContent = discount.toFixed(2) + ' {% get_currency_symbol %}';
     document.getElementById('taxDisplay').textContent = totalTax.toFixed(2) + ' {% get_currency_symbol %}';
-    document.getElementById('totalDisplay').textContent = total.toFixed(2) + ' {% get_currency_symbol %}';
+    document.getElementById('totalDisplay').textContent = finalTotal.toFixed(2) + ' {% get_currency_symbol %}';
 }
 
 // Search in products modal
@@ -845,6 +878,15 @@ document.getElementById('productSearch').addEventListener('input', function() {
 
 // Calculate totals when discount changes
 document.getElementById('id_discount').addEventListener('input', calculateGrandTotal);
+
+// Calculate totals when inclusive tax checkbox changes
+document.getElementById('id_inclusive_tax').addEventListener('change', function() {
+    // إعادة حساب جميع الصفوف عند تغيير حالة "شامل ضريبة"
+    document.querySelectorAll('#productsTableBody tr').forEach(row => {
+        calculateRowTotal(row);
+    });
+    calculateGrandTotal();
+});
 
 // Form validation
 document.getElementById('salesInvoiceForm').addEventListener('submit', function(e) {
