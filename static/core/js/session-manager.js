@@ -317,11 +317,148 @@ class SessionManager {
     handleSessionExpired(message = 'انتهت جلسة العمل') {
         this.clearTimers();
         
-        // إظهار رسالة انتهاء الجلسة
-        alert(message + '. سيتم توجيهك لصفحة تسجيل الدخول.');
+        // إزالة أي نوافذ تحذير مفتوحة
+        this.hideSessionWarning();
         
-        // إعادة التوجيه لصفحة تسجيل الدخول
-        window.location.href = '/ar/auth/login/';
+        // تسجيل خروج صامت من الجلسة
+        try {
+            fetch('/ar/auth/logout/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': this.getCSRFToken(),
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'same-origin'
+            }).catch(() => {
+                // تجاهل الأخطاء في هذه المرحلة
+            });
+        } catch (error) {
+            // تجاهل الأخطاء
+        }
+        
+        // إظهار رسالة انتهاء الجلسة
+        const modal = document.createElement('div');
+        modal.className = 'session-expired-modal';
+        modal.innerHTML = `
+            <div class="session-expired-backdrop">
+                <div class="session-expired-dialog">
+                    <div class="session-expired-header">
+                        <i class="fas fa-clock text-danger"></i>
+                        <h4>انتهت جلسة العمل</h4>
+                    </div>
+                    <div class="session-expired-body">
+                        <p>${message}</p>
+                        <p>لأسباب أمنية، يجب عليك تسجيل الدخول مرة أخرى للمتابعة.</p>
+                    </div>
+                    <div class="session-expired-footer">
+                        <button type="button" class="btn btn-primary" onclick="sessionManager.redirectToLogin()">
+                            <i class="fas fa-sign-in-alt"></i> تسجيل الدخول
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // إضافة الأنماط إذا لم تكن موجودة
+        if (!document.querySelector('#session-expired-styles')) {
+            const styles = document.createElement('style');
+            styles.id = 'session-expired-styles';
+            styles.textContent = `
+                .session-expired-modal {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    z-index: 10000;
+                    backdrop-filter: blur(3px);
+                }
+                .session-expired-backdrop {
+                    position: absolute;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.7);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .session-expired-dialog {
+                    background: white;
+                    border-radius: 12px;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+                    max-width: 450px;
+                    width: 90%;
+                    animation: sessionExpiredSlideIn 0.3s ease-out;
+                }
+                @keyframes sessionExpiredSlideIn {
+                    from {
+                        opacity: 0;
+                        transform: scale(0.9) translateY(-20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: scale(1) translateY(0);
+                    }
+                }
+                .session-expired-header {
+                    padding: 25px 25px 15px 25px;
+                    text-align: center;
+                    border-bottom: 1px solid #eee;
+                }
+                .session-expired-header i {
+                    font-size: 2.5em;
+                    margin-bottom: 15px;
+                }
+                .session-expired-header h4 {
+                    margin: 0;
+                    color: #333;
+                    font-weight: 600;
+                }
+                .session-expired-body {
+                    padding: 20px 25px;
+                    text-align: center;
+                    color: #666;
+                    line-height: 1.6;
+                }
+                .session-expired-footer {
+                    padding: 15px 25px 25px 25px;
+                    text-align: center;
+                    border-top: 1px solid #eee;
+                }
+                .session-expired-footer .btn {
+                    padding: 12px 30px;
+                    font-weight: 600;
+                    border-radius: 8px;
+                }
+            `;
+            document.head.appendChild(styles);
+        }
+        
+        document.body.appendChild(modal);
+        
+        // منع التفاعل مع بقية الصفحة
+        document.body.style.overflow = 'hidden';
+        
+        // توجه تلقائياً بعد 10 ثوانٍ إذا لم يضغط المستخدم
+        setTimeout(() => {
+            this.redirectToLogin();
+        }, 10000);
+    }
+    
+    redirectToLogin() {
+        // إزالة النافذة المنبثقة
+        const modal = document.querySelector('.session-expired-modal');
+        if (modal) {
+            modal.remove();
+        }
+        
+        // إعادة تعيين overflow
+        document.body.style.overflow = '';
+        
+        // التوجيه لصفحة تسجيل الدخول
+        const currentLanguage = document.documentElement.getAttribute('lang') || 'ar';
+        const lang = currentLanguage.split('-')[0]; // أخذ اللغة الأساسية فقط
+        window.location.href = `/${lang}/auth/login/?session_expired=1`;
     }
     
     logout() {

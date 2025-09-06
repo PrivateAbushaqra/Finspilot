@@ -16,6 +16,16 @@ class LoginView(auth_views.LoginView):
     template_name = 'accounts/login.html'
     redirect_authenticated_user = True
     
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # تحقق من معامل session_expired في URL
+        if self.request.GET.get('session_expired'):
+            from django.contrib import messages
+            messages.warning(self.request, 'انتهت جلسة العمل بسبب عدم النشاط. يرجى تسجيل الدخول مرة أخرى.')
+        
+        return context
+    
     def get_success_url(self):
         # إذا كان المستخدم من نوع "مستخدم نقطة بيع"، توجيهه إلى شاشة نقطة البيع
         if (self.request.user.is_authenticated and 
