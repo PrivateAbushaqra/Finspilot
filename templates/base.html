@@ -1157,12 +1157,13 @@
                 try {
                     const linkPath = new URL(link.href).pathname;
                     
-                    // Skip root path
-                    if (linkPath === '/') continue;
+                    // Skip root paths
+                    if (linkPath === '/' || linkPath === '/ar/' || linkPath === '/en/') continue;
                     
                     // Exact match - highest priority
                     if (linkPath === currentUrl) {
                         activeLink = link;
+                        bestMatchLength = linkPath.length;
                         break;
                     }
                     
@@ -1207,27 +1208,21 @@
                 setTimeout(setActiveSidebarItem, 100);
             });
         });
-        
-        // Always select the active page on page load
-        const activeParentId = setActiveSidebarItem();
 
-        // Restore submenu open state on load (only if no active link was matched)
-        if (!activeParentId) {
-            const initialCollapses = document.querySelectorAll('.sidebar .collapse[id]');
-            initialCollapses.forEach(col => {
-                const saved = localStorage.getItem('sidebar_' + col.id);
-                if (saved === 'open') {
-            col.classList.add('show');
-            // Ensure toggler reflects expanded state
-            const toggler = document.querySelector('.sidebar a[data-bs-toggle="collapse"][href="#' + col.id + '"]');
-            if (toggler) toggler.setAttribute('aria-expanded', 'true');
-                } else {
-            col.classList.remove('show');
-            const toggler = document.querySelector('.sidebar a[data-bs-toggle="collapse"][href="#' + col.id + '"]');
-            if (toggler) toggler.setAttribute('aria-expanded', 'false');
-                }
-            });
-        }
+        // Restore submenu open state from localStorage (but don't override active page detection)
+        document.querySelectorAll('.sidebar .collapse[id]').forEach(col => {
+            const saved = localStorage.getItem('sidebar_' + col.id);
+            if (saved === 'open' && !col.classList.contains('show')) {
+                col.classList.add('show');
+                // Ensure toggler reflects expanded state
+                const toggler = document.querySelector('.sidebar a[data-bs-toggle="collapse"][href="#' + col.id + '"]');
+                if (toggler) toggler.setAttribute('aria-expanded', 'true');
+            } else if (saved === 'closed') {
+                col.classList.remove('show');
+                const toggler = document.querySelector('.sidebar a[data-bs-toggle="collapse"][href="#' + col.id + '"]');
+                if (toggler) toggler.setAttribute('aria-expanded', 'false');
+            }
+        });
 
         // When clicking any leaf link, persist its parent menu as open
     const leafLinks = document.querySelectorAll('.sidebar .nav-link[href]:not([data-bs-toggle])');
