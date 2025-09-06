@@ -1079,9 +1079,24 @@ class PrintDesignView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     
     def test_func(self):
         """التحقق من صلاحيات المستخدم"""
-        return self.request.user.has_system_management_permission()
+        # المستخدمون الذين يمكنهم الوصول: Superadmin, Admin, أو من لديه صلاحية محددة
+        return (self.request.user.user_type in ['superadmin', 'admin'] or 
+                self.request.user.is_superuser or 
+                self.request.user.has_perm('settings.can_access_print_design'))
     
     def handle_no_permission(self):
+        # تسجيل محاولة الوصول المرفوضة في سجل الأنشطة
+        try:
+            from core.models import AuditLog
+            AuditLog.objects.create(
+                user=self.request.user,
+                action_type='denied',
+                content_type='settings_print_design',
+                description=_('محاولة وصول مرفوضة لصفحة تصميم الطباعة - صلاحية غير متوفرة')
+            )
+        except Exception:
+            pass
+        
         messages.error(self.request, _('ليس لديك صلاحية للوصول لتصميم الطباعة.'))
         return redirect('settings:index')
     
@@ -1089,6 +1104,18 @@ class PrintDesignView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         from .models import DocumentPrintSettings, CompanySettings
 
         context = super().get_context_data(**kwargs)
+        
+        # تسجيل الوصول الناجح في سجل الأنشطة
+        try:
+            from core.models import AuditLog
+            AuditLog.objects.create(
+                user=self.request.user,
+                action_type='view',
+                content_type='settings_print_design',
+                description=_('دخول إلى صفحة تصميم الطباعة')
+            )
+        except Exception:
+            pass
 
         # الحصول على جميع إعدادات الطباعة
         print_settings = DocumentPrintSettings.objects.filter(is_active=True).order_by('document_name_ar')

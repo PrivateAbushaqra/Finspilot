@@ -313,3 +313,19 @@ class JoFotaraSettings(models.Model):
 
     def __str__(self):
         return f"JoFotara Settings - {'Active' if self.is_active else 'Inactive'}"
+
+
+class SettingsPermissionManager(models.Model):
+    """نموذج إدارة الصلاحيات لتطبيق الإعدادات"""
+    
+    class Meta:
+        managed = False  # هذا النموذج لن ينشئ جدول في قاعدة البيانات
+        permissions = [
+            ('can_access_print_design', _('Can access print design settings')),
+        ]
+        verbose_name = _('Settings Permission Manager')
+        verbose_name_plural = _('Settings Permission Managers')
+        default_permissions = ()  # لا نريد الصلاحيات الافتراضية
+
+    def __str__(self):
+        return "Settings Permission Manager"
