@@ -648,10 +648,10 @@
                                     </li>
                                     {% endif %}
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'banks:account_list' %}">{% trans "Accounts List" %}</a>
+                                        <a class="nav-link {% if active_menu == 'banks' and 'account_list' in request.path %}active{% endif %}" href="{% url 'banks:account_list' %}">{% trans "Accounts List" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'banks:transfer_list' %}">{% trans "Transfers List" %}</a>
+                                        <a class="nav-link {% if active_menu == 'banks' and 'transfer_list' in request.path %}active{% endif %}" href="{% url 'banks:transfer_list' %}">{% trans "Transfers List" %}</a>
                                     </li>
                                 </ul>
                             </div>
@@ -661,17 +661,17 @@
                         <!-- Cashboxes -->
                         {% if user.has_cashboxes_permission %}
                         <li class="nav-item">
-                            <a class="nav-link {% if active_menu == 'cashboxes' %}active{% endif %}" data-bs-toggle="collapse" href="#cashboxesMenu">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#cashboxesMenu">
                                 <i class="fas fa-cash-register me-2"></i>
                                 {% trans "Cash Boxes" %}
                             </a>
                             <div class="collapse" id="cashboxesMenu">
                                 <ul class="nav flex-column ms-3">
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'cashboxes:cashbox_list' %}">{% trans "Cashboxes List" %}</a>
+                                        <a class="nav-link {% if active_menu == 'cashboxes' and 'cashbox_list' in request.path %}active{% endif %}" href="{% url 'cashboxes:cashbox_list' %}">{% trans "Cashboxes List" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'cashboxes:transfer_list' %}">{% trans "Transfers List" %}</a>
+                                        <a class="nav-link {% if active_menu == 'cashboxes' and 'transfer_list' in request.path %}active{% endif %}" href="{% url 'cashboxes:transfer_list' %}">{% trans "Transfers List" %}</a>
                                     </li>
                                 </ul>
                             </div>
@@ -681,20 +681,20 @@
                         <!-- Payment Receipts -->
                         {% if user.has_receipts_permission %}
                         <li class="nav-item">
-                            <a class="nav-link {% if active_menu == 'receipts' %}active{% endif %}" data-bs-toggle="collapse" href="#receiptsMenu">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#receiptsMenu">
                                 <i class="fas fa-receipt me-2"></i>
                                 {% trans "Payment Receipts" %}
                             </a>
                             <div class="collapse" id="receiptsMenu">
                                 <ul class="nav flex-column ms-3">
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'receipts:receipt_add' %}">{% trans "Add Payment Receipt" %}</a>
+                                        <a class="nav-link {% if active_menu == 'receipts' and 'receipt_add' in request.path %}active{% endif %}" href="{% url 'receipts:receipt_add' %}">{% trans "Add Payment Receipt" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'receipts:receipt_list' %}">{% trans "Receipts List" %}</a>
+                                        <a class="nav-link {% if active_menu == 'receipts' and 'receipt_list' in request.path %}active{% endif %}" href="{% url 'receipts:receipt_list' %}">{% trans "Receipts List" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'receipts:check_list' %}">{% trans "Checks Management" %}</a>
+                                        <a class="nav-link {% if active_menu == 'receipts' and 'check_list' in request.path %}active{% endif %}" href="{% url 'receipts:check_list' %}">{% trans "Checks Management" %}</a>
                                     </li>
                                 </ul>
                             </div>
@@ -704,17 +704,17 @@
                         <!-- Payment Vouchers -->
                         {% if user.has_receipts_permission %}
                         <li class="nav-item">
-                            <a class="nav-link {% if active_menu == 'payments' %}active{% endif %}" data-bs-toggle="collapse" href="#paymentsMenu">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#paymentsMenu">
                                 <i class="fas fa-money-bill-wave me-2"></i>
                                 {% trans "Payment Vouchers" %}
                             </a>
                             <div class="collapse" id="paymentsMenu">
                                 <ul class="nav flex-column ms-3">
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'payments:voucher_create' %}">{% trans "Add Payment Voucher" %}</a>
+                                        <a class="nav-link {% if active_menu == 'payments' and 'voucher_create' in request.path %}active{% endif %}" href="{% url 'payments:voucher_create' %}">{% trans "Add Payment Voucher" %}</a>
                                     </li>
                                         <li class="nav-item">
-                                            <a class="nav-link" href="{% url 'payments:voucher_list' %}">{% trans "Vouchers List" %}</a>
+                                            <a class="nav-link {% if active_menu == 'payments' and 'voucher_list' in request.path %}active{% endif %}" href="{% url 'payments:voucher_list' %}">{% trans "Vouchers List" %}</a>
                                         </li>
                                 </ul>
                             </div>
@@ -723,23 +723,23 @@
                         
                         <!-- Products & Categories -->
                         <li class="nav-item">
-                            <a class="nav-link {% if active_menu == 'products' %}active{% endif %}" data-bs-toggle="collapse" href="#productsMenu">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#productsMenu">
                                 <i class="fas fa-boxes me-2"></i>
                                 {% trans "Categories & Products" %}
                             </a>
                             <div class="collapse" id="productsMenu">
                                 <ul class="nav flex-column ms-3">
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'products:category_add' %}">{% trans "Add Category" %}</a>
+                                        <a class="nav-link {% if active_menu == 'products' and 'category_add' in request.path %}active{% endif %}" href="{% url 'products:category_add' %}">{% trans "Add Category" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'products:product_add' %}">{% trans "Add Product" %}</a>
+                                        <a class="nav-link {% if active_menu == 'products' and 'product_add' in request.path %}active{% endif %}" href="{% url 'products:product_add' %}">{% trans "Add Product" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'products:category_list' %}">{% trans "Categories List" %}</a>
+                                        <a class="nav-link {% if active_menu == 'products' and 'category_list' in request.path %}active{% endif %}" href="{% url 'products:category_list' %}">{% trans "Categories List" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'products:product_list' %}">{% trans "Products List" %}</a>
+                                        <a class="nav-link {% if active_menu == 'products' and 'product_list' in request.path %}active{% endif %}" href="{% url 'products:product_list' %}">{% trans "Products List" %}</a>
                                     </li>
                                 </ul>
                             </div>
@@ -747,23 +747,23 @@
                         
                         <!-- Customers & Suppliers -->
                         <li class="nav-item">
-                            <a class="nav-link {% if active_menu == 'customers' %}active{% endif %}" data-bs-toggle="collapse" href="#customersMenu">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#customersMenu">
                                 <i class="fas fa-users me-2"></i>
                                 {% trans "Customers & Suppliers" %}
                             </a>
                             <div class="collapse" id="customersMenu">
                                 <ul class="nav flex-column ms-3">
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'customers:add' %}">{% trans "Add Customer/Supplier" %}</a>
+                                        <a class="nav-link {% if active_menu == 'customers' and 'add' in request.path %}active{% endif %}" href="{% url 'customers:add' %}">{% trans "Add Customer/Supplier" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'customers:customer_list' %}">{% trans "Customers List" %}</a>
+                                        <a class="nav-link {% if active_menu == 'customers' and 'customer_list' in request.path %}active{% endif %}" href="{% url 'customers:customer_list' %}">{% trans "Customers List" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'customers:supplier_list' %}">{% trans "Suppliers List" %}</a>
+                                        <a class="nav-link {% if active_menu == 'customers' and 'supplier_list' in request.path %}active{% endif %}" href="{% url 'customers:supplier_list' %}">{% trans "Suppliers List" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'customers:list' %}">{% trans "All Customers & Suppliers" %}</a>
+                                        <a class="nav-link {% if active_menu == 'customers' and 'list' in request.path and 'customer_list' not in request.path and 'supplier_list' not in request.path %}active{% endif %}" href="{% url 'customers:list' %}">{% trans "All Customers & Suppliers" %}</a>
                                     </li>
                                 </ul>
                             </div>
@@ -772,32 +772,32 @@
                         <!-- Purchases -->
                         {% if user.has_purchases_permission %}
                         <li class="nav-item">
-                            <a class="nav-link {% if active_menu == 'purchases' %}active{% endif %}" data-bs-toggle="collapse" href="#purchasesMenu">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#purchasesMenu">
                                 <i class="fas fa-shopping-cart me-2"></i>
                                 {% trans "Purchases" %}
                             </a>
                             <div class="collapse" id="purchasesMenu">
                                 <ul class="nav flex-column ms-3">
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'purchases:invoice_add' %}">{% trans "Create Purchase Invoice" %}</a>
+                                        <a class="nav-link {% if active_menu == 'purchases' and 'invoice_add' in request.path %}active{% endif %}" href="{% url 'purchases:invoice_add' %}">{% trans "Create Purchase Invoice" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'purchases:return_add' %}">{% trans "Create Purchase Return" %}</a>
+                                        <a class="nav-link {% if active_menu == 'purchases' and 'return_add' in request.path %}active{% endif %}" href="{% url 'purchases:return_add' %}">{% trans "Create Purchase Return" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'purchases:invoice_list' %}">{% trans "Purchase Invoices List" %}</a>
+                                        <a class="nav-link {% if active_menu == 'purchases' and 'invoice_list' in request.path %}active{% endif %}" href="{% url 'purchases:invoice_list' %}">{% trans "Purchase Invoices List" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'purchases:return_list' %}">{% trans "Purchase Returns List" %}</a>
+                                        <a class="nav-link {% if active_menu == 'purchases' and 'return_list' in request.path %}active{% endif %}" href="{% url 'purchases:return_list' %}">{% trans "Purchase Returns List" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'purchases:debitnote_list' %}">{% trans "Debit Notes" %}</a>
+                                        <a class="nav-link {% if active_menu == 'purchases' and 'debitnote_list' in request.path %}active{% endif %}" href="{% url 'purchases:debitnote_list' %}">{% trans "Debit Notes" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'purchases:purchase_statement' %}">{% trans "Purchase Statement" %}</a>
+                                        <a class="nav-link {% if active_menu == 'purchases' and 'purchase_statement' in request.path %}active{% endif %}" href="{% url 'purchases:purchase_statement' %}">{% trans "Purchase Statement" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'purchases:purchase_return_statement' %}">{% trans "Purchase Return Statement" %}</a>
+                                        <a class="nav-link {% if active_menu == 'purchases' and 'purchase_return_statement' in request.path %}active{% endif %}" href="{% url 'purchases:purchase_return_statement' %}">{% trans "Purchase Return Statement" %}</a>
                                     </li>
                                 </ul>
                             </div>
@@ -807,36 +807,36 @@
                         <!-- Sales -->
                         {% if user.has_sales_permission %}
                         <li class="nav-item">
-                            <a class="nav-link {% if active_menu == 'sales' %}active{% endif %}" data-bs-toggle="collapse" href="#salesMenu">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#salesMenu">
                                 <i class="fas fa-cash-register me-2"></i>
                                 {% trans "Sales" %}
                             </a>
                             <div class="collapse" id="salesMenu">
                                 <ul class="nav flex-column ms-3">
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'sales:invoice_add' %}">{% trans "Create Sales Invoice" %}</a>
+                                        <a class="nav-link {% if active_menu == 'sales' and 'invoice_add' in request.path %}active{% endif %}" href="{% url 'sales:invoice_add' %}">{% trans "Create Sales Invoice" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'sales:return_add' %}">{% trans "Create Sales Return" %}</a>
+                                        <a class="nav-link {% if active_menu == 'sales' and 'return_add' in request.path %}active{% endif %}" href="{% url 'sales:return_add' %}">{% trans "Create Sales Return" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'sales:invoice_list' %}">{% trans "Sales Invoices List" %}</a>
+                                        <a class="nav-link {% if active_menu == 'sales' and 'invoice_list' in request.path %}active{% endif %}" href="{% url 'sales:invoice_list' %}">{% trans "Sales Invoices List" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'sales:return_list' %}">{% trans "Sales Returns List" %}</a>
+                                        <a class="nav-link {% if active_menu == 'sales' and 'return_list' in request.path %}active{% endif %}" href="{% url 'sales:return_list' %}">{% trans "Sales Returns List" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'sales:creditnote_list' %}">{% trans "Credit Notes" %}</a>
+                                        <a class="nav-link {% if active_menu == 'sales' and 'creditnote_list' in request.path %}active{% endif %}" href="{% url 'sales:creditnote_list' %}">{% trans "Credit Notes" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'sales:sales_statement' %}">{% trans "Sales Statement" %}</a>
+                                        <a class="nav-link {% if active_menu == 'sales' and 'sales_statement' in request.path %}active{% endif %}" href="{% url 'sales:sales_statement' %}">{% trans "Sales Statement" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'sales:sales_return_statement' %}">{% trans "Sales Returns Statement" %}</a>
+                                        <a class="nav-link {% if active_menu == 'sales' and 'sales_return_statement' in request.path %}active{% endif %}" href="{% url 'sales:sales_return_statement' %}">{% trans "Sales Returns Statement" %}</a>
                                     </li>
                                     {% if user.has_pos_permission %}
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'sales:pos' %}">{% trans "Point of Sale" %}</a>
+                                        <a class="nav-link {% if active_menu == 'sales' and 'pos' in request.path %}active{% endif %}" href="{% url 'sales:pos' %}">{% trans "Point of Sale" %}</a>
                                     </li>
                                     {% endif %}
                                 </ul>
@@ -847,23 +847,23 @@
                         <!-- Inventory -->
                         {% if user.has_inventory_permission %}
                         <li class="nav-item">
-                            <a class="nav-link {% if active_menu == 'inventory' %}active{% endif %}" data-bs-toggle="collapse" href="#inventoryMenu">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#inventoryMenu">
                                 <i class="fas fa-warehouse me-2"></i>
                                 {% trans "Inventory" %}
                             </a>
                             <div class="collapse" id="inventoryMenu">
                                 <ul class="nav flex-column ms-3">
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'inventory:list' %}">{% trans "View Inventory" %}</a>
+                                        <a class="nav-link {% if active_menu == 'inventory' and 'list' in request.path and 'warehouse_list' not in request.path and 'movement_list' not in request.path %}active{% endif %}" href="{% url 'inventory:list' %}">{% trans "View Inventory" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'inventory:warehouse_list' %}">{% trans "Warehouses" %}</a>
+                                        <a class="nav-link {% if active_menu == 'inventory' and 'warehouse_list' in request.path %}active{% endif %}" href="{% url 'inventory:warehouse_list' %}">{% trans "Warehouses" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'inventory:movement_list' %}">{% trans "Inventory Movement" %}</a>
+                                        <a class="nav-link {% if active_menu == 'inventory' and 'movement_list' in request.path %}active{% endif %}" href="{% url 'inventory:movement_list' %}">{% trans "Inventory Movement" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'inventory:low_stock' %}">{% trans "Stock Alerts" %}</a>
+                                        <a class="nav-link {% if active_menu == 'inventory' and 'low_stock' in request.path %}active{% endif %}" href="{% url 'inventory:low_stock' %}">{% trans "Stock Alerts" %}</a>
                                     </li>
                                 </ul>
                             </div>
@@ -872,26 +872,26 @@
                         
                         <!-- Revenues & Expenses -->
                         <li class="nav-item">
-                            <a class="nav-link {% if active_menu == 'revenues_expenses' %}active{% endif %}" data-bs-toggle="collapse" href="#revenuesExpensesMenu">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#revenuesExpensesMenu">
                                 <i class="fas fa-chart-line me-2"></i>
                                 {% trans "Revenues & Expenses" %}
                             </a>
                             <div class="collapse" id="revenuesExpensesMenu">
                                 <ul class="nav flex-column ms-3">
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'revenues_expenses:dashboard' %}">{% trans "Dashboard" %}</a>
+                                        <a class="nav-link {% if active_menu == 'revenues_expenses' and 'dashboard' in request.path %}active{% endif %}" href="{% url 'revenues_expenses:dashboard' %}">{% trans "Dashboard" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'revenues_expenses:category_list' %}">{% trans "Manage Categories" %}</a>
+                                        <a class="nav-link {% if active_menu == 'revenues_expenses' and 'category_list' in request.path %}active{% endif %}" href="{% url 'revenues_expenses:category_list' %}">{% trans "Manage Categories" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'revenues_expenses:entry_list' %}">{% trans "Entries List" %}</a>
+                                        <a class="nav-link {% if active_menu == 'revenues_expenses' and 'entry_list' in request.path %}active{% endif %}" href="{% url 'revenues_expenses:entry_list' %}">{% trans "Entries List" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'revenues_expenses:entry_create' %}">{% trans "Add New Entry" %}</a>
+                                        <a class="nav-link {% if active_menu == 'revenues_expenses' and 'entry_create' in request.path %}active{% endif %}" href="{% url 'revenues_expenses:entry_create' %}">{% trans "Add New Entry" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'revenues_expenses:recurring_list' %}">{% trans "Recurring Revenue" %}</a>
+                                        <a class="nav-link {% if active_menu == 'revenues_expenses' and 'recurring_list' in request.path %}active{% endif %}" href="{% url 'revenues_expenses:recurring_list' %}">{% trans "Recurring Revenue" %}</a>
                                     </li>
                                 </ul>
                             </div>
@@ -899,29 +899,29 @@
                         
                         <!-- Journal Entries -->
                         <li class="nav-item">
-                            <a class="nav-link {% if active_menu == 'journal' %}active{% endif %}" data-bs-toggle="collapse" href="#journalMenu">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#journalMenu">
                                 <i class="fas fa-book me-2"></i>
                                 {% trans "Journal Entries" %}
                             </a>
                             <div class="collapse" id="journalMenu">
                                 <ul class="nav flex-column ms-3">
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'journal:dashboard' %}">{% trans "Dashboard" %}</a>
+                                        <a class="nav-link {% if active_menu == 'journal' and 'dashboard' in request.path %}active{% endif %}" href="{% url 'journal:dashboard' %}">{% trans "Dashboard" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'journal:entry_list' %}">{% trans "All Entries" %}</a>
+                                        <a class="nav-link {% if active_menu == 'journal' and 'entry_list' in request.path %}active{% endif %}" href="{% url 'journal:entry_list' %}">{% trans "All Entries" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'journal:entries_by_type' %}">{% trans "Entries by Type" %}</a>
+                                        <a class="nav-link {% if active_menu == 'journal' and 'entries_by_type' in request.path %}active{% endif %}" href="{% url 'journal:entries_by_type' %}">{% trans "Entries by Type" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'journal:entry_create' %}">{% trans "Create Manual Entry" %}</a>
+                                        <a class="nav-link {% if active_menu == 'journal' and 'entry_create' in request.path %}active{% endif %}" href="{% url 'journal:entry_create' %}">{% trans "Create Manual Entry" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'journal:account_list' %}">{% trans "Chart of Accounts" %}</a>
+                                        <a class="nav-link {% if active_menu == 'journal' and 'account_list' in request.path %}active{% endif %}" href="{% url 'journal:account_list' %}">{% trans "Chart of Accounts" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'journal:trial_balance' %}">{% trans "Trial Balance" %}</a>
+                                        <a class="nav-link {% if active_menu == 'journal' and 'trial_balance' in request.path %}active{% endif %}" href="{% url 'journal:trial_balance' %}">{% trans "Trial Balance" %}</a>
                                     </li>
                                 </ul>
                             </div>
@@ -929,20 +929,20 @@
                         
                         <!-- Assets & Liabilities -->
                         <li class="nav-item">
-                            <a class="nav-link {% if active_menu == 'assets_liabilities' %}active{% endif %}" data-bs-toggle="collapse" href="#assetsLiabilitiesMenu">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#assetsLiabilitiesMenu">
                                 <i class="fas fa-balance-scale me-2"></i>
                                 {% trans "Assets & Liabilities" %}
                             </a>
                             <div class="collapse" id="assetsLiabilitiesMenu">
                                 <ul class="nav flex-column ms-3">
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'assets_liabilities:dashboard' %}">{% trans "Dashboard" %}</a>
+                                        <a class="nav-link {% if active_menu == 'assets_liabilities' and 'dashboard' in request.path %}active{% endif %}" href="{% url 'assets_liabilities:dashboard' %}">{% trans "Dashboard" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'assets_liabilities:asset_list' %}">{% trans "Assets List" %}</a>
+                                        <a class="nav-link {% if active_menu == 'assets_liabilities' and 'asset_list' in request.path %}active{% endif %}" href="{% url 'assets_liabilities:asset_list' %}">{% trans "Assets List" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'assets_liabilities:liability_list' %}">{% trans "Liabilities List" %}</a>
+                                        <a class="nav-link {% if active_menu == 'assets_liabilities' and 'liability_list' in request.path %}active{% endif %}" href="{% url 'assets_liabilities:liability_list' %}">{% trans "Liabilities List" %}</a>
                                     </li>
                                 </ul>
                             </div>
@@ -951,32 +951,29 @@
                         <!-- Reports -->
                         {% if user.has_reports_permission %}
                         <li class="nav-item">
-                            <a class="nav-link {% if active_menu == 'reports' %}active{% endif %}" data-bs-toggle="collapse" href="#reportsMenu">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#reportsMenu">
                                 <i class="fas fa-chart-bar me-2"></i>
                                 {% trans "Reports" %}
                             </a>
                             <div class="collapse" id="reportsMenu">
                                 <ul class="nav flex-column ms-3">
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'sales:sales_report' %}">{% trans "Sales Reports" %}</a>
+                                        <a class="nav-link {% if active_menu == 'reports' and 'sales_report' in request.path %}active{% endif %}" href="{% url 'sales:sales_report' %}">{% trans "Sales Reports" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'reports:sales_by_salesperson' %}">{% trans "Sales Report By Sales Person" %}</a>
+                                        <a class="nav-link {% if active_menu == 'reports' and 'sales_by_salesperson' in request.path %}active{% endif %}" href="{% url 'reports:sales_by_salesperson' %}">{% trans "Sales Report By Sales Person" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'purchases:purchase_report' %}">{% trans "Purchase Reports" %}</a>
+                                        <a class="nav-link {% if active_menu == 'reports' and 'purchase_report' in request.path %}active{% endif %}" href="{% url 'purchases:purchase_report' %}">{% trans "Purchase Reports" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'core:tax_report' %}">{% trans "Tax Report" %}</a>
+                                        <a class="nav-link {% if active_menu == 'reports' and 'tax_report' in request.path %}active{% endif %}" href="{% url 'core:tax_report' %}">{% trans "Tax Report" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'core:profit_loss_report' %}">{% trans "Profit and Loss" %}</a>
+                                        <a class="nav-link {% if active_menu == 'reports' and 'profit_loss_report' in request.path %}active{% endif %}" href="{% url 'core:profit_loss_report' %}">{% trans "Profit and Loss" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'reports:customer_statement' %}">{% trans "Customer Statement" %}</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'reports:sales_by_salesperson' %}">{% trans "Sales Report By Sales Person" %}</a>
+                                        <a class="nav-link {% if active_menu == 'reports' and 'customer_statement' in request.path %}active{% endif %}" href="{% url 'reports:customer_statement' %}">{% trans "Customer Statement" %}</a>
                                     </li>
                                 </ul>
                             </div>
@@ -986,35 +983,35 @@
                         <!-- Human Resources -->
                         {% if user.is_superuser or perms.hr.can_view_hr %}
                         <li class="nav-item">
-                            <a class="nav-link {% if active_menu == 'hr' %}active{% endif %}" data-bs-toggle="collapse" href="#hrMenu">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#hrMenu">
                                 <i class="fas fa-users-cog me-2"></i>
                                 {% trans "Human Resources" %}
                             </a>
                             <div class="collapse" id="hrMenu">
                                 <ul class="nav flex-column ms-3">
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'hr:dashboard' %}">{% trans "HR Dashboard" %}</a>
+                                        <a class="nav-link {% if active_menu == 'hr' and 'dashboard' in request.path %}active{% endif %}" href="{% url 'hr:dashboard' %}">{% trans "HR Dashboard" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'hr:employee_list' %}">{% trans "Employees" %}</a>
+                                        <a class="nav-link {% if active_menu == 'hr' and 'employee_list' in request.path %}active{% endif %}" href="{% url 'hr:employee_list' %}">{% trans "Employees" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'hr:department_list' %}">{% trans "Departments" %}</a>
+                                        <a class="nav-link {% if active_menu == 'hr' and 'department_list' in request.path %}active{% endif %}" href="{% url 'hr:department_list' %}">{% trans "Departments" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'hr:position_list' %}">{% trans "Positions" %}</a>
+                                        <a class="nav-link {% if active_menu == 'hr' and 'position_list' in request.path %}active{% endif %}" href="{% url 'hr:position_list' %}">{% trans "Positions" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'hr:attendance_list' %}">{% trans "Attendance" %}</a>
+                                        <a class="nav-link {% if active_menu == 'hr' and 'attendance_list' in request.path %}active{% endif %}" href="{% url 'hr:attendance_list' %}">{% trans "Attendance" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'hr:leave_request_list' %}">{% trans "Leave Requests" %}</a>
+                                        <a class="nav-link {% if active_menu == 'hr' and 'leave_request_list' in request.path %}active{% endif %}" href="{% url 'hr:leave_request_list' %}">{% trans "Leave Requests" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'hr:payroll_period_list' %}">{% trans "Payroll" %}</a>
+                                        <a class="nav-link {% if active_menu == 'hr' and 'payroll_period_list' in request.path %}active{% endif %}" href="{% url 'hr:payroll_period_list' %}">{% trans "Payroll" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'hr:hr_reports' %}">{% trans "HR Reports" %}</a>
+                                        <a class="nav-link {% if active_menu == 'hr' and 'hr_reports' in request.path %}active{% endif %}" href="{% url 'hr:hr_reports' %}">{% trans "HR Reports" %}</a>
                                     </li>
                                 </ul>
                             </div>
@@ -1024,39 +1021,39 @@
                         <!-- System Management -->
                         {% if user.has_system_management_permission %}
                         <li class="nav-item">
-                            <a class="nav-link {% if active_menu == 'settings' or active_menu == 'users' or active_menu == 'backup' or active_menu == 'tools' or active_menu == 'audit_log' %}active{% endif %}" data-bs-toggle="collapse" href="#systemMenu">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#systemMenu">
                                 <i class="fas fa-cogs me-2"></i>
                                 {% trans "System Management" %}
                             </a>
                             <div class="collapse" id="systemMenu">
                                 <ul class="nav flex-column ms-3">
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'users:user_add' %}">{% trans "Add User" %}</a>
+                                        <a class="nav-link {% if active_menu == 'users' and 'add' in request.path %}active{% endif %}" href="{% url 'users:user_add' %}">{% trans "Add User" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'users:user_list' %}">{% trans "Users List" %}</a>
+                                        <a class="nav-link {% if active_menu == 'users' and 'list' in request.path %}active{% endif %}" href="{% url 'users:user_list' %}">{% trans "Users List" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'users:group_list' %}">{% trans "Groups & Permissions" %}</a>
+                                        <a class="nav-link {% if active_menu == 'users' and 'group' in request.path %}active{% endif %}" href="{% url 'users:group_list' %}">{% trans "Groups & Permissions" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'core:audit_log' %}">
+                                        <a class="nav-link {% if active_menu == 'audit_log' %}active{% endif %}" href="{% url 'core:audit_log' %}">
                                             <i class="fas fa-history me-2"></i>
                                             {% trans "Activity Log" %}
                                         </a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'settings:document_sequences' %}">{% trans "Document Number Management" %}</a>
+                                        <a class="nav-link {% if active_menu == 'settings' and 'document_sequences' in request.path %}active{% endif %}" href="{% url 'settings:document_sequences' %}">{% trans "Document Number Management" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'settings:company' %}">{% trans "System Settings" %}</a>
+                                        <a class="nav-link {% if active_menu == 'settings' and 'company' in request.path %}active{% endif %}" href="{% url 'settings:company' %}">{% trans "System Settings" %}</a>
                                     </li>
                                     
                                     <!-- System Management - For Super Admin and Admin -->
                                     {% if user.user_type == 'superadmin' or user.user_type == 'admin' or user.is_superuser or user.has_company_settings_permission %}
                                     
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'settings:superadmin_management' %}">
+                                        <a class="nav-link {% if active_menu == 'settings' and 'superadmin_management' in request.path %}active{% endif %}" href="{% url 'settings:superadmin_management' %}">
                                             <i class="fas fa-crown me-2 text-warning"></i>
                                             {% trans "System Management" %}
                                             <span class="badge bg-danger ms-1">{% trans "Advanced" %}</span>
@@ -1065,7 +1062,7 @@
                                     
                                     <!-- Print Design Settings -->
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'settings:print_design' %}">
+                                        <a class="nav-link {% if active_menu == 'settings' and 'print_design' in request.path %}active{% endif %}" href="{% url 'settings:print_design' %}">
                                             <i class="fas fa-paint-brush me-2 text-success"></i>
                                             {% trans "Print Design" %}
                                         </a>
@@ -1073,7 +1070,7 @@
                                     
                                     <!-- JoFotara Settings -->
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'settings:jofotara_settings' %}">
+                                        <a class="nav-link {% if active_menu == 'settings' and 'jofotara_settings' in request.path %}active{% endif %}" href="{% url 'settings:jofotara_settings' %}">
                                             <i class="fas fa-link me-2 text-info"></i>
                                             {% trans "JoFotara Settings" %}
                                         </a>
@@ -1081,7 +1078,7 @@
                                     
                                     <!-- Backup and Restore -->
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'backup:backup_restore' %}">
+                                        <a class="nav-link {% if active_menu == 'backup' %}active{% endif %}" href="{% url 'backup:backup_restore' %}">
                                             <i class="fas fa-database me-2 text-info"></i>
                                             {% trans "Backup" %}
                                         </a>
