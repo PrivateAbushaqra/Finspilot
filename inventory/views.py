@@ -210,14 +210,13 @@ class WarehouseCreateView(LoginRequiredMixin, CreateView):
     
     def form_valid(self, form):
         # تسجيل النشاط
-        from core.signals import log_activity
+        from core.signals import log_user_activity
         warehouse = form.save()
-        log_activity(
-            user=self.request.user,
-            action='CREATE',
-            model_name='Warehouse',
-            object_id=warehouse.id,
-            details=f'تم إنشاء المستودع: {warehouse.name}'
+        log_user_activity(
+            request=self.request,
+            action_type='CREATE',
+            obj=warehouse,
+            description=f'تم إنشاء المستودع: {warehouse.name}'
         )
         messages.success(self.request, 'تم إنشاء المستودع بنجاح')
         return super().form_valid(form)
@@ -731,14 +730,13 @@ class WarehouseEditView(LoginRequiredMixin, UpdateView):
     
     def form_valid(self, form):
         # تسجيل النشاط
-        from core.signals import log_activity
+        from core.signals import log_user_activity
         warehouse = form.save()
-        log_activity(
-            user=self.request.user,
-            action='UPDATE',
-            model_name='Warehouse',
-            object_id=warehouse.id,
-            details=f'تم تحديث المستودع: {warehouse.name}'
+        log_user_activity(
+            request=self.request,
+            action_type='UPDATE',
+            obj=warehouse,
+            description=f'تم تحديث المستودع: {warehouse.name}'
         )
         messages.success(self.request, f'تم تحديث المستودع "{form.instance.name}" بنجاح!')
         return super().form_valid(form)
