@@ -568,9 +568,9 @@ function createPrintContent() {
     // Create page header with statistics
     const pageHeader = `
         <div class="print-header">
-            <h1>Journal Entries List</h1>
+            <h1>{% trans "Journal Entries List" %}</h1>
             <div class="date-range">
-                Total Entries: ${totalEntriesCount} | Total Amount: ${totalAmountValue}
+                {% trans "Total Entries" %}: ${totalEntriesCount} | {% trans "Total Amount" %}: ${totalAmountValue}
             </div>
         </div>
     `;
@@ -580,12 +580,12 @@ function createPrintContent() {
         <table class="print-table">
             <thead>
                 <tr>
-                    <th style="width: 10%;">Entry Number</th>
+                    <th style="width: 10%;">{% trans "Entry Number" %}</th>
                     <th style="width: 12%;">{% trans "Date" %}</th>
-                    <th style="width: 15%;">Operation Type</th>
+                    <th style="width: 15%;">{% trans "Operation Type" %}</th>
                     <th style="width: 35%;">{% trans "Description" %}</th>
                     <th style="width: 15%;">{% trans "Amount" %}</th>
-                    <th style="width: 13%;">Created By</th>
+                    <th style="width: 13%;">{% trans "Created By" %}</th>
                 </tr>
             </thead>
             <tbody>

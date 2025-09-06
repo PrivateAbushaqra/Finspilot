@@ -461,10 +461,23 @@ def get_backup_tables_info():
     """الحصول على معلومات مفصلة عن جميع الجداول في قاعدة البيانات"""
     tables_info = []
     
+    # قائمة التطبيقات المستثناة من النسخ الاحتياطي (تطبيقات Django الأساسية فقط)
+    excluded_apps = [
+        'django.contrib.admin',
+        'django.contrib.contenttypes', 
+        'django.contrib.sessions',
+        'django.contrib.messages',
+        'django.contrib.staticfiles',
+        'corsheaders',
+        'rest_framework',
+        'django_bootstrap5',
+        'crispy_forms',
+        'crispy_bootstrap5',
+    ]
+    
     try:
         for app_config in apps.get_app_configs():
-            if app_config.name in ['django.contrib.admin', 'django.contrib.auth', 
-                                   'django.contrib.contenttypes', 'django.contrib.sessions']:
+            if app_config.name in excluded_apps:
                 continue
                 
             for model in app_config.get_models():
@@ -1783,7 +1796,7 @@ def create_backup(request):
                 )
             except Exception:
                 pass
-        messages.error(request, 'طريقة طلب غير صحيحة')
+        messages.error(request, _('طريقة طلب غير صحيحة'))
         return redirect('backup:backup_restore')
     
     progress_data = get_backup_progress_data()
@@ -1823,7 +1836,7 @@ def create_backup(request):
                 # العملية ما زالت قيد التشغيل - تسجيل المحاولة
                 log_audit(request.user, 'error', f'محاولة بدء نسخة احتياطية أثناء وجود عملية قيد التشغيل - نسبة الإنجاز: {current_percentage}%')
                 
-                messages.error(request, 'عملية نسخ احتياطي قيد التشغيل بالفعل')
+                messages.error(request, _('عملية نسخ احتياطي قيد التشغيل بالفعل'))
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                     return JsonResponse({
                         'success': False,
@@ -1902,7 +1915,7 @@ def create_backup(request):
                 'message': f'تم بدء إنشاء النسخة الاحتياطية {format_name}: {filename}'
             })
         
-        messages.success(request, f'تم بدء إنشاء النسخة الاحتياطية {format_name}: {filename}')
+        messages.success(request, _(f'تم بدء إنشاء النسخة الاحتياطية {format_name}: {filename}'))
         return redirect('backup:backup_restore')
         
     except Exception as e:
@@ -2051,15 +2064,15 @@ def restore_backup(request):
     """استعادة النسخة الاحتياطية"""
     
     if request.method != 'POST':
-        messages.error(request, "طريقة طلب غير صحيحة")
+        messages.error(request, _("طريقة طلب غير صحيحة"))
         return redirect('backup:backup_restore')
     
     if not request.user.is_superuser:
-        messages.error(request, "غير مسموح لك بإجراء هذه العملية")
+        messages.error(request, _("غير مسموح لك بإجراء هذه العملية"))
         return redirect('backup:backup_restore')
     
     if 'backup_file' not in request.FILES and not request.POST.get('filename'):
-        messages.error(request, "يرجى اختيار ملف النسخة الاحتياطية")
+        messages.error(request, _("يرجى اختيار ملف النسخة الاحتياطية"))
         return redirect('backup:backup_restore')
     
     # قبول عدة صيغ لتمرير قيمة clear_data من النموذج أو ال AJAX (مثال: 'on' من form submission، 'true' من AJAX)
@@ -2080,7 +2093,7 @@ def restore_backup(request):
             backup_dir = os.path.join(settings.MEDIA_ROOT, 'backups')
             filepath = os.path.join(backup_dir, filename_from_list)
             if not os.path.exists(filepath):
-                msg = "الملف غير موجود"
+                msg = _("الملف غير موجود")
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                     return JsonResponse({'success': False, 'error': msg})
                 messages.error(request, msg)
@@ -2092,7 +2105,7 @@ def restore_backup(request):
                 with open(filepath, 'rb') as f:
                     backup_data = load_backup_from_xlsx(f, user=request.user)
             else:
-                msg = "نوع الملف غير مدعوم"
+                msg = _("نوع الملف غير مدعوم")
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                     return JsonResponse({'success': False, 'error': msg})
                 messages.error(request, msg)
@@ -2117,7 +2130,7 @@ def restore_backup(request):
                         pass
             except Exception as xlsx_error:
                 logger.error(f"خطأ في قراءة ملف Excel: {str(xlsx_error)}")
-                messages.error(request, f"خطأ في قراءة ملف Excel: {str(xlsx_error)}")
+                messages.error(request, _(f"خطأ في قراءة ملف Excel: {str(xlsx_error)}"))
                 if AUDIT_AVAILABLE:
                     try:
                         AuditLog.objects.create(
@@ -2130,7 +2143,7 @@ def restore_backup(request):
                 return redirect('backup:backup_restore')
             input_name_for_audit = backup_file.name
         else:
-            messages.error(request, "نوع الملف غير مدعوم")
+            messages.error(request, _("نوع الملف غير مدعوم"))
             return redirect('backup:backup_restore')
         
         if AUDIT_AVAILABLE:
@@ -2176,17 +2189,17 @@ def restore_backup(request):
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({
                 'success': True,
-                'message': 'تم بدء عملية الاستعادة في الخلفية'
+                'message': _('تم بدء عملية الاستعادة في الخلفية')
             })
         else:
-            messages.info(request, "تم بدء عملية الاستعادة في الخلفية، يمكن متابعة التقدم على هذه الصفحة")
+            messages.info(request, _("تم بدء عملية الاستعادة في الخلفية، يمكن متابعة التقدم على هذه الصفحة"))
             return redirect('backup:backup_restore')
         
     except json.JSONDecodeError:
-        messages.error(request, "ملف JSON غير صحيح")
+        messages.error(request, _("ملف JSON غير صحيح"))
     except Exception as e:
         logger.error(f"خطأ في استعادة النسخة الاحتياطية: {str(e)}")
-        messages.error(request, f"حدث خطأ في الاستعادة: {str(e)}")
+        messages.error(request, _(f"حدث خطأ في الاستعادة: {str(e)}"))
     
     return redirect('backup:backup_restore')
 
