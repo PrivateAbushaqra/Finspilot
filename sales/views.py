@@ -1142,6 +1142,72 @@ class SalesCreditNoteDetailView(LoginRequiredMixin, DetailView):
         return context
 
 
+class SalesCreditNoteUpdateView(LoginRequiredMixin, UpdateView):
+    model = SalesCreditNote
+    template_name = 'sales/creditnote_edit.html'
+    fields = ['note_number', 'date', 'customer', 'subtotal', 'tax_amount', 'total_amount', 'notes']
+    
+    def get_success_url(self):
+        return reverse_lazy('sales:creditnote_detail', kwargs={'pk': self.object.pk})
+    
+    def form_valid(self, form):
+        # تسجيل النشاط
+        try:
+            from core.signals import log_user_activity
+            log_user_activity(
+                self.request,
+                'update',
+                self.object,
+                _('تحديث إشعار دائن رقم %(number)s') % {'number': self.object.note_number}
+            )
+        except Exception:
+            pass
+        
+        messages.success(self.request, _('تم تحديث إشعار الدائن بنجاح'))
+        return super().form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['customers'] = CustomerSupplier.objects.filter(type__in=['customer', 'both'])
+        
+        # Currency settings
+        try:
+            company_settings = CompanySettings.objects.first()
+            if company_settings and company_settings.base_currency:
+                context['base_currency'] = company_settings.base_currency
+            else:
+                context['base_currency'] = Currency.objects.filter(is_active=True).first()
+        except:
+            pass
+        
+        return context
+
+
+class SalesCreditNoteDeleteView(LoginRequiredMixin, DeleteView):
+    model = SalesCreditNote
+    template_name = 'sales/creditnote_delete.html'
+    success_url = reverse_lazy('sales:creditnote_list')
+    
+    def delete(self, request, *args, **kwargs):
+        creditnote = self.get_object()
+        note_number = creditnote.note_number
+        
+        # تسجيل النشاط قبل الحذف
+        try:
+            from core.signals import log_user_activity
+            log_user_activity(
+                request,
+                'delete',
+                creditnote,
+                _('حذف إشعار دائن رقم %(number)s') % {'number': note_number}
+            )
+        except Exception:
+            pass
+        
+        messages.success(request, _('تم حذف إشعار الدائن رقم %(number)s بنجاح') % {'number': note_number})
+        return super().delete(request, *args, **kwargs)
+
+
 class SalesReturnDeleteView(LoginRequiredMixin, DeleteView):
     model = SalesReturn
     template_name = 'sales/return_delete.html'

@@ -36,5 +36,7 @@ urlpatterns = [
     path('credit-notes/', views.SalesCreditNoteListView.as_view(), name='creditnote_list'),
     path('credit-notes/add/', views.sales_creditnote_create, name='creditnote_add'),
     path('credit-notes/<int:pk>/', views.SalesCreditNoteDetailView.as_view(), name='creditnote_detail'),
+    path('credit-notes/edit/<int:pk>/', views.SalesCreditNoteUpdateView.as_view(), name='creditnote_edit'),
+    path('credit-notes/delete/<int:pk>/', views.SalesCreditNoteDeleteView.as_view(), name='creditnote_delete'),
     path('credit-notes/<int:pk>/send-to-jofotara/', views.send_creditnote_to_jofotara, name='send_creditnote_to_jofotara'),
 ]
