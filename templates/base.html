@@ -1122,124 +1122,109 @@
     
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Function to clear all active states COMPLETELY
+        
+        // وظيفة لمسح جميع الحالات النشطة
         function clearAllActiveStates() {
-            // Remove active from ALL sidebar links
             document.querySelectorAll('.sidebar .nav-link').forEach(link => {
                 link.classList.remove('active');
             });
             
-            // Remove has-active-child from ALL nav-items
             document.querySelectorAll('.sidebar .nav-item').forEach(navItem => {
                 navItem.classList.remove('has-active-child');
             });
             
-            // Close ALL collapse menus
             document.querySelectorAll('.sidebar .collapse').forEach(collapse => {
                 collapse.classList.remove('show');
             });
         }
         
-        // Function to set active sidebar item based on current URL
+        // وظيفة لمسح جميع الحالات النشطة
+        function clearAllActiveStates() {
+            // إزالة جميع active classes من الروابط
+            document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // إزالة has-active-child من جميع عناصر nav-item
+            document.querySelectorAll('.sidebar .nav-item').forEach(item => {
+                item.classList.remove('has-active-child');
+            });
+        }
+        
+        // وظيفة تحديد العنصر النشط بناءً على URL الحالي
         function setActiveSidebarItem() {
             const currentPath = window.location.pathname;
             
-            // FIRST - Clear everything completely
+            // مسح جميع الحالات أولاً
             clearAllActiveStates();
             
-            // Debug info
-            console.log('Current path:', currentPath);
+            // للصفحة الرئيسية، نشط رابط Dashboard
+            if (currentPath === '/' || currentPath === '/ar/' || currentPath === '/en/') {
+                const dashboardLink = document.querySelector('.sidebar .nav-link[href="/ar/"], .sidebar .nav-link[href="/"], .sidebar .nav-link[href="/en/"]');
+                if (dashboardLink) {
+                    dashboardLink.classList.add('active');
+                }
+                return;
+            }
             
-            // Find all sidebar links
-            const allLinks = document.querySelectorAll('.sidebar .nav-link[href]');
+            // البحث عن أفضل مطابقة
             let bestMatch = null;
-            let bestMatchLength = 0;
+            let bestScore = -1;
             
-            // Check each link to find the best match
-            allLinks.forEach(link => {
+            document.querySelectorAll('.sidebar .nav-link[href]').forEach(link => {
+                const href = link.getAttribute('href');
+                if (!href || href === '#') return;
+                
                 try {
-                    const linkUrl = new URL(link.href);
-                    const linkPath = linkUrl.pathname;
+                    const url = new URL(href, window.location.origin);
+                    const linkPath = url.pathname;
                     
-                    // Skip homepage and language-only paths
-                    if (linkPath === '/' || linkPath === '/ar/' || linkPath === '/en/') {
-                        return;
-                    }
+                    // تجاهل المسارات الجذر
+                    if (linkPath === '/' || linkPath === '/ar/' || linkPath === '/en/') return;
                     
-                    // Check for exact match first
-                    if (linkPath === currentPath) {
-                        bestMatch = link;
-                        bestMatchLength = linkPath.length;
-                        console.log('Exact match found:', linkPath);
-                        return;
-                    }
-                    
-                    // Check for partial match (but must be longer than current best)
-                    if (currentPath.startsWith(linkPath) && linkPath.length > bestMatchLength) {
-                        bestMatch = link;
-                        bestMatchLength = linkPath.length;
-                        console.log('Partial match found:', linkPath, 'length:', linkPath.length);
+                    // تحقق من المطابقة
+                    if (currentPath.startsWith(linkPath)) {
+                        const score = linkPath.length;
+                        if (score > bestScore) {
+                            bestMatch = link;
+                            bestScore = score;
+                        }
                     }
                 } catch (e) {
-                    console.log('Error processing link:', link.href);
+                    // تجاهل الأخطاء
                 }
             });
             
-            // Apply the best match
+            // تطبيق أفضل مطابقة
             if (bestMatch) {
-                console.log('Activating link:', bestMatch.href);
-                
-                // Mark the link as active
+                // تعيين الرابط كنشط
                 bestMatch.classList.add('active');
                 
-                // Find parent collapse menu
+                // البحث عن القائمة الفرعية الأب
                 const parentCollapse = bestMatch.closest('.collapse[id]');
                 if (parentCollapse) {
-                    console.log('Opening collapse menu:', parentCollapse.id);
+                    // فتح القائمة الفرعية
                     parentCollapse.classList.add('show');
                     
-                    // Find and mark the main menu button
-                    const menuToggle = document.querySelector(`[href="#${parentCollapse.id}"]`);
-                    if (menuToggle) {
-                        const mainNavItem = menuToggle.closest('.nav-item');
-                        if (mainNavItem) {
-                            console.log('Marking parent as active');
-                            mainNavItem.classList.add('has-active-child');
+                    // البحث عن زر القائمة الرئيسية
+                    const menuButton = document.querySelector(`[href="#${parentCollapse.id}"]`);
+                    if (menuButton) {
+                        const parentNavItem = menuButton.closest('.nav-item');
+                        if (parentNavItem) {
+                            parentNavItem.classList.add('has-active-child');
                         }
                     }
                 }
-            } else {
-                console.log('No match found for path:', currentPath);
             }
-            
-            // Log final state
-            setTimeout(() => {
-                const activeLinks = document.querySelectorAll('.sidebar .nav-link.active');
-                const openMenus = document.querySelectorAll('.sidebar .collapse.show');
-                const activeParents = document.querySelectorAll('.sidebar .nav-item.has-active-child');
-                
-                console.log('Final state:');
-                console.log('- Active links:', activeLinks.length);
-                console.log('- Open menus:', openMenus.length);
-                console.log('- Active parents:', activeParents.length);
-                
-                if (activeLinks.length > 1) {
-                    console.warn('WARNING: Multiple active links detected!');
-                    activeLinks.forEach((link, index) => {
-                        console.log(`Active link ${index + 1}:`, link.href, link.textContent.trim());
-                    });
-                }
-            }, 100);
         }
         
-        // Run the function immediately
+        // تشغيل الوظيفة عند تحميل الصفحة
         setActiveSidebarItem();
         
-        // Re-run when sidebar links are clicked
+        // إعادة تشغيل الوظيفة عند النقر على روابط الشريط الجانبي
         document.querySelectorAll('.sidebar .nav-link[href]').forEach(link => {
             link.addEventListener('click', function() {
-                // Small delay to allow navigation
-                setTimeout(setActiveSidebarItem, 150);
+                setTimeout(setActiveSidebarItem, 100);
             });
         });
 
