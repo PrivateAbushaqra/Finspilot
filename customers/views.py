@@ -50,26 +50,42 @@ class CustomerSupplierListView(LoginRequiredMixin, TemplateView):
         total_customers = CustomerSupplier.objects.filter(type__in=['customer', 'both']).count()
         total_suppliers = CustomerSupplier.objects.filter(type__in=['supplier', 'both']).count()
         
-        # إحصائيات العملاء
+        # إحصائيات العملاء بناءً على current_balance
         customers = CustomerSupplier.objects.filter(type__in=['customer', 'both'])
-        customer_balance = customers.aggregate(total=Sum('balance'))['total'] or 0
-        customer_debit = customers.filter(balance__lt=0).aggregate(total=Sum('balance'))['total'] or 0
-        customer_credit = customers.filter(balance__gt=0).aggregate(total=Sum('balance'))['total'] or 0
+        customer_balance = 0
+        customer_debit = 0
+        customer_credit = 0
         
-        # إحصائيات الموردين  
+        for customer in customers:
+            balance = customer.current_balance
+            customer_balance += balance
+            if balance < 0:
+                customer_debit += abs(balance)
+            elif balance > 0:
+                customer_credit += balance
+        
+        # إحصائيات الموردين بناءً على current_balance
         suppliers = CustomerSupplier.objects.filter(type__in=['supplier', 'both'])
-        supplier_balance = suppliers.aggregate(total=Sum('balance'))['total'] or 0
-        supplier_debit = suppliers.filter(balance__lt=0).aggregate(total=Sum('balance'))['total'] or 0
-        supplier_credit = suppliers.filter(balance__gt=0).aggregate(total=Sum('balance'))['total'] or 0
+        supplier_balance = 0
+        supplier_debit = 0
+        supplier_credit = 0
+        
+        for supplier in suppliers:
+            balance = supplier.current_balance
+            supplier_balance += balance
+            if balance < 0:
+                supplier_debit += abs(balance)
+            elif balance > 0:
+                supplier_credit += balance
         
         context.update({
             'total_customers': total_customers,
             'total_suppliers': total_suppliers,
             'customer_balance': customer_balance,
             'supplier_balance': supplier_balance,
-            'customer_debit': abs(customer_debit),  # المديونية (قيمة موجبة)
+            'customer_debit': customer_debit,  # المديونية (قيمة موجبة)
             'customer_credit': customer_credit,     # الأرصدة الدائنة
-            'supplier_debit': abs(supplier_debit),  # المديونية (قيمة موجبة)
+            'supplier_debit': supplier_debit,  # المديونية (قيمة موجبة)
             'supplier_credit': supplier_credit,     # الأرصدة الدائنة
         })
         
@@ -115,11 +131,27 @@ class CustomerListView(LoginRequiredMixin, ListView):
         
         # إحصائيات العملاء
         all_customers = CustomerSupplier.objects.filter(type__in=['customer', 'both'])
+        
+        # حساب الإحصائيات بناءً على current_balance (المحسوب من المعاملات)
+        total_debt = 0
+        customer_credit = 0
+        total_balance = 0
+        
+        for customer in all_customers:
+            balance = customer.current_balance
+            total_balance += balance
+            if balance < 0:
+                total_debt += abs(balance)
+            elif balance > 0:
+                customer_credit += balance
+        
         context.update({
             'total_customers': all_customers.count(),
             'active_customers': all_customers.filter(is_active=True).count(),
-            'total_debt': all_customers.aggregate(total=Sum('balance'))['total'] or 0,
-            'average_balance': all_customers.aggregate(avg=Sum('balance'))['avg'] or 0,
+            'total_debt': total_debt,  # المديونية (قيمة موجبة)
+            'customer_credit': customer_credit,  # الأرصدة الدائنة
+            'total_balance': total_balance,  # إجمالي الأرصدة
+            'average_balance': total_balance / all_customers.count() if all_customers.count() > 0 else 0,
         })
         
         return context
@@ -164,11 +196,27 @@ class SupplierListView(LoginRequiredMixin, ListView):
         
         # إحصائيات الموردين
         all_suppliers = CustomerSupplier.objects.filter(type__in=['supplier', 'both'])
+        
+        # حساب الإحصائيات بناءً على current_balance (المحسوب من المعاملات)
+        total_debt = 0
+        supplier_credit = 0
+        total_balance = 0
+        
+        for supplier in all_suppliers:
+            balance = supplier.current_balance
+            total_balance += balance
+            if balance < 0:
+                total_debt += abs(balance)
+            elif balance > 0:
+                supplier_credit += balance
+        
         context.update({
             'total_suppliers': all_suppliers.count(),
             'active_suppliers': all_suppliers.filter(is_active=True).count(),
-            'total_debt': all_suppliers.aggregate(total=Sum('balance'))['total'] or 0,
-            'average_balance': all_suppliers.aggregate(avg=Sum('balance'))['avg'] or 0,
+            'total_debt': total_debt,  # المديونية (قيمة موجبة)
+            'supplier_credit': supplier_credit,  # الأرصدة الدائنة
+            'total_balance': total_balance,  # إجمالي الأرصدة
+            'average_balance': total_balance / all_suppliers.count() if all_suppliers.count() > 0 else 0,
         })
         
         return context

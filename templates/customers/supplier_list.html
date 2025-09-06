@@ -102,28 +102,40 @@
 
     <!-- Statistics Cards -->
     <div class="row mb-4">
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="stats-card text-center">
                 <h3 class="text-purple">{{ total_suppliers }}</h3>
-                <p class="text-muted mb-0">إجمالي ال{% trans "Supplier" %}ين</p>
+                <p class="text-muted mb-0">إجمالي الموردين</p>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="stats-card text-center">
                 <h3 class="text-primary">{{ active_suppliers }}</h3>
-                <p class="text-muted mb-0">ال{% trans "Supplier" %}ون ال{% trans "Active" %}ون</p>
+                <p class="text-muted mb-0">الموردون النشطون</p>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="stats-card text-center">
-                <h3 class="text-warning">{{ total_debt|floatformat:3 }}</h3>
+                <h3 class="text-danger">{{ total_debt|floatformat:3 }}</h3>
                 <p class="text-muted mb-0">إجمالي المديونية</p>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
             <div class="stats-card text-center">
-                <h3 class="text-info">{{ average_balance|floatformat:3 }}</h3>
-                <p class="text-muted mb-0">متوسط {% trans "Balance" %}</p>
+                <h3 class="text-success">{{ supplier_credit|floatformat:3 }}</h3>
+                <p class="text-muted mb-0">الأرصدة الدائنة</p>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stats-card text-center">
+                <h3 class="text-info">{{ total_balance|floatformat:3 }}</h3>
+                <p class="text-muted mb-0">صافي الرصيد</p>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stats-card text-center">
+                <h3 class="text-secondary">{{ average_balance|floatformat:3 }}</h3>
+                <p class="text-muted mb-0">متوسط الرصيد</p>
             </div>
         </div>
     </div>
