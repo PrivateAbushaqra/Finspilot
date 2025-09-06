@@ -1306,15 +1306,27 @@ class JoFotaraSettingsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView
                 if not settings:
                     return JsonResponse({'success': False, 'error': 'لم يتم العثور على إعدادات JoFotara'})
                 
-                # استدعاء دالة اختبار الاتصال
-                from .utils import test_jofotara_connection
-                result = test_jofotara_connection()
-                
-                return JsonResponse(result)
+                try:
+                    # استدعاء دالة اختبار الاتصال
+                    from .utils import test_jofotara_connection
+                    result = test_jofotara_connection()
+                    return JsonResponse(result)
+                except Exception as test_error:
+                    return JsonResponse({'success': False, 'error': f'خطأ في اختبار الاتصال: {str(test_error)}'})
+            
+            else:
+                # في حالة عدم وجود action أو action غير معروف
+                messages.warning(request, 'لم يتم تحديد العملية المطلوبة')
+                return redirect('settings:jofotara_settings')
         
         except Exception as e:
             import traceback
             print(f"خطأ في حفظ إعدادات JoFotara: {str(e)}")
             print(traceback.format_exc())
-            messages.error(request, f'خطأ: {str(e)}')
-            return redirect('settings:jofotara_settings')
+            
+            # التحقق من نوع الطلب لإرجاع response مناسب
+            if request.POST.get('action') == 'test_connection':
+                return JsonResponse({'success': False, 'error': f'خطأ في الخادم: {str(e)}'})
+            else:
+                messages.error(request, f'خطأ: {str(e)}')
+                return redirect('settings:jofotara_settings')
