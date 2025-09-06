@@ -782,19 +782,20 @@ function calculateRowTotal(row) {
     // التحقق من حالة "شامل ضريبة"
     const isInclusiveTax = document.getElementById('id_inclusive_tax').checked;
     
-    let subtotal, taxAmount, total;
+    let taxAmount, total;
     
     if (isInclusiveTax) {
-        // إذا كانت الضريبة شاملة، السعر يشمل الضريبة
-        total = quantity * price;
-        // حساب الضريبة المدرجة في السعر
-        taxAmount = total * (taxRate / (100 + taxRate));
-        subtotal = total - taxAmount;
+        // إذا كانت الضريبة شاملة: المجموع = (الكمية × السعر) + ضريبة
+        // المجموع الأساسي = الكمية × السعر
+        const baseTotal = quantity * price;
+        // الضريبة = المجموع الأساسي × نسبة الضريبة ÷ 100
+        taxAmount = baseTotal * (taxRate / 100);
+        // الإجمالي = المجموع الأساسي + الضريبة
+        total = baseTotal + taxAmount;
     } else {
-        // إذا لم تكن الضريبة شاملة، السعر لا يشمل الضريبة
-        subtotal = quantity * price;
-        taxAmount = subtotal * (taxRate / 100);
-        total = subtotal + taxAmount;
+        // إذا لم تكن الضريبة شاملة: لا توجد ضريبة
+        taxAmount = 0;
+        total = quantity * price;
     }
     
     // عرض النتائج
@@ -822,33 +823,25 @@ function calculateGrandTotal() {
         if (quantity > 0 && price > 0) {
             if (isInclusiveTax) {
                 // إذا كانت الضريبة شاملة
-                const total = quantity * price;
-                const taxAmount = total * (taxRate / (100 + taxRate));
-                const rowSubtotal = total - taxAmount;
+                const baseTotal = quantity * price;
+                const taxAmount = baseTotal * (taxRate / 100);
                 
-                subtotal += rowSubtotal;
+                subtotal += baseTotal;
                 totalTax += taxAmount;
             } else {
-                // إذا لم تكن الضريبة شاملة
+                // إذا لم تكن الضريبة شاملة: لا توجد ضريبة
                 const rowSubtotal = quantity * price;
-                const taxAmount = rowSubtotal * (taxRate / 100);
                 
                 subtotal += rowSubtotal;
-                totalTax += taxAmount;
+                totalTax += 0; // لا توجد ضريبة في هذه الحالة
             }
         }
     });
     
     const discount = parseFloat(document.getElementById('id_discount').value) || 0;
     
-    let finalTotal;
-    if (isInclusiveTax) {
-        // إذا كانت الضريبة شاملة، نطرح الخصم من الإجمالي الشامل للضريبة
-        finalTotal = subtotal + totalTax - discount;
-    } else {
-        // إذا لم تكن الضريبة شاملة، نضيف الضريبة بعد طرح الخصم
-        finalTotal = subtotal + totalTax - discount;
-    }
+    // حساب الإجمالي النهائي
+    const finalTotal = subtotal + totalTax - discount;
     
     // تحديث العرض
     document.getElementById('subtotalDisplay').textContent = subtotal.toFixed(2) + ' {% get_currency_symbol %}';
