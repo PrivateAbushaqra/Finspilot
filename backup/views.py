@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import TemplateView
 from django.http import JsonResponse, HttpResponse, Http404
@@ -102,6 +102,13 @@ def get_deletable_tables(request):
     سترجع قائمة من العناصر: { app_name, model_name, display_name, record_count, dependents: [labels], safe_to_delete }
     safe_to_delete True يعني أنه لا يوجد نموذج آخر يعتمد على هذا النموذج (FK) بخلاف التطبيقات المستبعدة.
     """
+    
+    # فحص الصلاحية
+    if not request.user.has_perm('backup.can_delete_advanced_data'):
+        # تسجيل محاولة الوصول غير المسموح
+        log_audit(request.user, 'denied', _('محاولة وصول مرفوضة لعرض قائمة الجداول القابلة للحذف - صلاحية غير متوفرة'))
+        return JsonResponse({'success': False, 'error': _('ليس لديك صلاحية للوصول لهذه الميزة')})
+    
     try:
         result = []
         
@@ -189,6 +196,12 @@ def delete_selected_tables(request):
     """
     if request.method != 'POST':
         return JsonResponse({'success': False, 'error': 'طريقة طلب غير صحيحة'})
+
+    # فحص الصلاحية
+    if not request.user.has_perm('backup.can_delete_advanced_data'):
+        # تسجيل محاولة الوصول غير المسموح
+        log_audit(request.user, 'denied', _('محاولة وصول مرفوضة لحذف بيانات الجداول - صلاحية غير متوفرة'))
+        return JsonResponse({'success': False, 'error': _('ليس لديك صلاحية لحذف البيانات')})
 
     try:
         payload = json.loads(request.body.decode('utf-8')) if request.body else {}
