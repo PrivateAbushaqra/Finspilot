@@ -290,24 +290,62 @@ def sales_by_salesperson(request):
             date__lte=end_date,
         ).order_by('-date', '-invoice_number').select_related('customer')
 
+        # Get sales returns created by this salesperson in the date range
+        from sales.models import SalesReturn
+        returns_qs = SalesReturn.objects.filter(
+            created_by=selected_salesperson,
+            date__gte=start_date,
+            date__lte=end_date,
+        ).order_by('-date', '-return_number').select_related('customer', 'original_invoice')
+
         for invoice in invoices_qs:
             sales_invoices.append({
+                'type': 'invoice',
                 'date': invoice.date,
-                'invoice_number': invoice.invoice_number,
+                'document_number': invoice.invoice_number,
                 'customer': invoice.customer.name if invoice.customer else _('Cash Customer'),
                 'payment_type': invoice.get_payment_type_display(),
                 'subtotal': invoice.subtotal,
                 'tax_amount': invoice.tax_amount,
                 'discount_amount': invoice.discount_amount,
                 'total_amount': invoice.total_amount,
+                'original_invoice': None,
             })
 
-        # Calculate totals
+        for return_invoice in returns_qs:
+            sales_invoices.append({
+                'type': 'return',
+                'date': return_invoice.date,
+                'document_number': return_invoice.return_number,
+                'customer': return_invoice.customer.name if return_invoice.customer else _('Cash Customer'),
+                'payment_type': 'مردود',
+                'subtotal': -return_invoice.subtotal,  # سالب لأنه مردود
+                'tax_amount': -return_invoice.tax_amount,
+                'discount_amount': Decimal('0'),  # المردودات لا تحتوي على خصم عادة
+                'total_amount': -return_invoice.total_amount,
+                'original_invoice': return_invoice.original_invoice.invoice_number if return_invoice.original_invoice else None,
+            })
+
+        # Sort by date descending
+        sales_invoices.sort(key=lambda x: x['date'], reverse=True)
+
+        # Calculate totals (including returns as negative values)
         totals_subtotal = invoices_qs.aggregate(total=Sum('subtotal'))['total'] or Decimal('0')
         totals_tax = invoices_qs.aggregate(total=Sum('tax_amount'))['total'] or Decimal('0')
         totals_discount = invoices_qs.aggregate(total=Sum('discount_amount'))['total'] or Decimal('0')
         totals_total = invoices_qs.aggregate(total=Sum('total_amount'))['total'] or Decimal('0')
+        
+        # Subtract returns from totals
+        returns_subtotal = returns_qs.aggregate(total=Sum('subtotal'))['total'] or Decimal('0')
+        returns_tax = returns_qs.aggregate(total=Sum('tax_amount'))['total'] or Decimal('0')
+        returns_total = returns_qs.aggregate(total=Sum('total_amount'))['total'] or Decimal('0')
+        
+        totals_subtotal -= returns_subtotal
+        totals_tax -= returns_tax
+        totals_total -= returns_total
+        
         invoice_count = invoices_qs.count()
+        returns_count = returns_qs.count()
 
         # Audit log for viewing a report
         try:
@@ -337,18 +375,21 @@ def sales_by_salesperson(request):
                     ws = wb.active
                     ws.title = str(_('Sales Report'))
                     headers = [
-                        _('Date'), _('Invoice Number'), _('Customer'), _('Payment Type'), 
-                        _('Subtotal'), _('Tax Amount'), _('Discount Amount'), _('Total Amount')
+                        _('Type'), _('Date'), _('Document Number'), _('Customer'), _('Payment Type'), 
+                        _('Subtotal'), _('Tax Amount'), _('Discount Amount'), _('Total Amount'), _('Original Invoice')
                     ]
                     ws.append(headers)
                     for inv in sales_invoices:
                         ws.append([
-                            str(inv['date']), inv['invoice_number'], inv['customer'], inv['payment_type'],
-                            float(inv['subtotal']), float(inv['tax_amount']), float(inv['discount_amount']), float(inv['total_amount'])
+                            'فاتورة' if inv['type'] == 'invoice' else 'مردود',
+                            str(inv['date']), inv['document_number'], inv['customer'], inv['payment_type'],
+                            float(inv['subtotal']), float(inv['tax_amount']), float(inv['discount_amount']), 
+                            float(inv['total_amount']), inv['original_invoice'] or ''
                         ])
                     # Totals row
-                    ws.append(['', '', _('Totals'), '', float(totals_subtotal), float(totals_tax), float(totals_discount), float(totals_total)])
-                    ws.append(['', '', _('Invoice Count'), invoice_count, '', '', '', ''])
+                    ws.append(['', '', '', _('Totals'), '', float(totals_subtotal), float(totals_tax), float(totals_discount), float(totals_total), ''])
+                    ws.append(['', '', '', _('Invoice Count'), invoice_count, '', '', '', '', ''])
+                    ws.append(['', '', '', _('Returns Count'), returns_count, '', '', '', '', ''])
                     bio = io.BytesIO()
                     wb.save(bio)
                     bio.seek(0)
@@ -372,11 +413,23 @@ def sales_by_salesperson(request):
                 writer.writerow([_('Sales Person'), selected_salesperson.get_full_name() or selected_salesperson.username])
                 writer.writerow([_('From'), start_date, _('To'), end_date])
                 writer.writerow([])
-                writer.writerow([_('Date'), _('Invoice Number'), _('Customer'), _('Payment Type'), _('Subtotal'), _('Tax Amount'), _('Discount Amount'), _('Total Amount')])
+                writer.writerow([_('Date'), _('Type'), _('Document Number'), _('Customer'), _('Payment Type'), _('Subtotal'), _('Tax Amount'), _('Discount Amount'), _('Total Amount'), _('Original Invoice')])
                 for inv in sales_invoices:
-                    writer.writerow([inv['date'], inv['invoice_number'], inv['customer'], inv['payment_type'], inv['subtotal'], inv['tax_amount'], inv['discount_amount'], inv['total_amount']])
-                writer.writerow(['', '', _('Totals'), '', totals_subtotal, totals_tax, totals_discount, totals_total])
-                writer.writerow(['', '', _('Invoice Count'), invoice_count, '', '', '', ''])
+                    writer.writerow([
+                        inv['date'], 
+                        'فاتورة' if inv['type'] == 'invoice' else 'مردود',
+                        inv['document_number'], 
+                        inv['customer'], 
+                        inv['payment_type'], 
+                        inv['subtotal'], 
+                        inv['tax_amount'], 
+                        inv['discount_amount'], 
+                        inv['total_amount'],
+                        inv['original_invoice'] or ''
+                    ])
+                writer.writerow(['', '', '', _('Totals'), '', totals_subtotal, totals_tax, totals_discount, totals_total, ''])
+                writer.writerow(['', '', '', _('Invoice Count'), invoice_count, '', '', '', '', ''])
+                writer.writerow(['', '', '', _('Returns Count'), returns_count, '', '', '', '', ''])
                 try:
                     log_export_activity(request, str(_('Sales Report By Sales Person')), f'{filename_base}.csv', 'CSV')
                 except Exception:
@@ -394,6 +447,7 @@ def sales_by_salesperson(request):
         'totals_discount': totals_discount,
         'totals_total': totals_total,
         'invoice_count': invoice_count,
+        'returns_count': returns_count,
     }
 
     if not view_logged:

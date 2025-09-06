@@ -21,6 +21,7 @@ from core.models import DocumentSequence
 from accounts.services import create_sales_invoice_transaction, create_sales_return_transaction, delete_transaction_by_reference
 from journal.services import JournalService
 import json
+import logging
 from django.utils.translation import gettext_lazy as _
 
 
@@ -805,36 +806,130 @@ class SalesReturnCreateView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         from django.db import transaction
         
-        with transaction.atomic():
-            # توليد رقم المرتجع إذا لم يكن محدد
-            if not form.cleaned_data.get('return_number'):
-                try:
-                    sequence = DocumentSequence.objects.get(document_type='sales_return')
-                    form.instance.return_number = sequence.get_next_number()
-                except DocumentSequence.DoesNotExist:
-                    last_return = SalesReturn.objects.order_by('-id').first()
-                    if last_return:
-                        number = int(last_return.return_number.split('-')[-1]) + 1 if '-' in last_return.return_number else int(last_return.return_number) + 1
-                    else:
-                        number = 1
-                    form.instance.return_number = f"RETURN-{number:06d}"
-            
-            form.instance.created_by = self.request.user
-            
-            # حفظ المردود
-            response = super().form_valid(form)
-            
-            # إنشاء حركة حساب للعميل
-            create_sales_return_account_transaction(self.object, self.request.user)
-            
-            # إنشاء حركات المخزون للمردود
-            create_sales_return_inventory_movements(self.object, self.request.user)
-            
-            # إنشاء القيد المحاسبي
-            create_sales_return_journal_entry(self.object, self.request.user)
-            
-            messages.success(self.request, 'تم إنشاء مردود المبيعات بنجاح')
-            return response
+        print(f"POST data: {self.request.POST}")
+        
+        try:
+            with transaction.atomic():
+                # التحقق من البيانات المطلوبة
+                if not form.cleaned_data.get('original_invoice'):
+                    messages.error(self.request, 'يرجى اختيار الفاتورة الأصلية')
+                    return self.form_invalid(form)
+                
+                # توليد رقم المرتجع إذا لم يكن محدد
+                if not form.cleaned_data.get('return_number'):
+                    try:
+                        sequence = DocumentSequence.objects.get(document_type='sales_return')
+                        form.instance.return_number = sequence.get_next_number()
+                    except DocumentSequence.DoesNotExist:
+                        last_return = SalesReturn.objects.order_by('-id').first()
+                        if last_return:
+                            number = int(last_return.return_number.split('-')[-1]) + 1 if '-' in last_return.return_number else int(last_return.return_number) + 1
+                        else:
+                            number = 1
+                        form.instance.return_number = f"RETURN-{number:06d}"
+                
+                form.instance.created_by = self.request.user
+                
+                # معالجة بيانات المنتجات المرتجعة
+                return_quantities = {}
+                return_prices = {}
+                
+                for key, value in self.request.POST.items():
+                    if key.startswith('return_quantities[') and key.endswith(']'):
+                        product_id = key[18:-1]  # استخراج product_id
+                        try:
+                            quantity = Decimal(value) if value else Decimal('0')
+                            if quantity > 0:
+                                return_quantities[int(product_id)] = quantity
+                        except (ValueError, TypeError):
+                            continue
+                    elif key.startswith('return_prices[') and key.endswith(']'):
+                        product_id = key[14:-1]  # استخراج product_id
+                        try:
+                            price = Decimal(value) if value else Decimal('0')
+                            if price >= 0:
+                                return_prices[int(product_id)] = price
+                        except (ValueError, TypeError):
+                            continue
+                
+                # التحقق من وجود منتجات للإرجاع
+                if not return_quantities:
+                    messages.error(self.request, 'يرجى تحديد كمية للإرجاع لمنتج واحد على الأقل')
+                    return self.form_invalid(form)
+                
+                # حساب المجاميع
+                subtotal = Decimal('0')
+                total_tax = Decimal('0')
+                
+                # حفظ المردود أولاً
+                response = super().form_valid(form)
+                
+                # إنشاء عناصر المردود
+                from .models import SalesReturnItem
+                for product_id, quantity in return_quantities.items():
+                    if product_id in return_prices:
+                        try:
+                            product = Product.objects.get(id=product_id)
+                            unit_price = return_prices[product_id]
+                            
+                            # حساب الضريبة والإجمالي
+                            line_subtotal = quantity * unit_price
+                            tax_rate = product.tax_rate or Decimal('0')
+                            tax_amount = line_subtotal * (tax_rate / Decimal('100'))
+                            total_amount = line_subtotal + tax_amount
+                            
+                            # إنشاء عنصر المردود
+                            SalesReturnItem.objects.create(
+                                return_invoice=self.object,
+                                product=product,
+                                quantity=quantity,
+                                unit_price=unit_price,
+                                tax_rate=tax_rate,
+                                tax_amount=tax_amount,
+                                total_amount=total_amount
+                            )
+                            
+                            subtotal += line_subtotal
+                            total_tax += tax_amount
+                            
+                        except Product.DoesNotExist:
+                            continue
+                
+                # تحديث مجاميع المردود
+                self.object.subtotal = subtotal
+                self.object.tax_amount = total_tax
+                self.object.total_amount = subtotal + total_tax
+                self.object.save()
+                
+                # إنشاء حركة حساب للعميل
+                create_sales_return_account_transaction(self.object, self.request.user)
+                
+                # إنشاء حركات المخزون للمردود
+                create_sales_return_inventory_movements(self.object, self.request.user)
+                
+                # إنشاء القيد المحاسبي
+                create_sales_return_journal_entry(self.object, self.request.user)
+                
+                # تسجيل النشاط
+                from core.signals import log_user_activity
+                log_user_activity(
+                    self.request,
+                    'create',
+                    self.object,
+                    f'تم إنشاء مردود مبيعات رقم {self.object.return_number}'
+                )
+                
+                messages.success(self.request, f'تم إنشاء مردود المبيعات رقم {self.object.return_number} بنجاح')
+                return response
+                
+        except Exception as e:
+            messages.error(self.request, f'حدث خطأ أثناء حفظ المردود: {str(e)}')
+            return self.form_invalid(form)
+    
+    def form_invalid(self, form):
+        print(f"Form errors: {form.errors}")
+        messages.error(self.request, 'يرجى التحقق من البيانات المدخلة وإصلاح الأخطاء')
+        return super().form_invalid(form)
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1710,25 +1805,34 @@ def send_creditnote_to_jofotara(request, pk):
 
 
 @login_required
+@csrf_exempt
 def get_invoices_for_returns(request):
     """API endpoint لجلب الفواتير المتاحة للمرتجعات مع البحث"""
+    print(f"API called by user: {request.user}")
+    print(f"Request method: {request.method}")
+    print(f"Request GET params: {request.GET}")
+    
     try:
         search_term = request.GET.get('search', '').strip()
+        print(f"Search term: '{search_term}'")
         
         # جلب الفواتير مع إمكانية البحث
         invoices = SalesInvoice.objects.select_related('customer').all()
+        print(f"Total invoices in database: {invoices.count()}")
         
         if search_term:
             invoices = invoices.filter(
                 Q(invoice_number__icontains=search_term) |
                 Q(customer__name__icontains=search_term)
             )
+            print(f"Filtered invoices count: {invoices.count()}")
         
         # تحديد الحد الأقصى للنتائج
         invoices = invoices[:20]
         
         invoices_data = []
         for invoice in invoices:
+            print(f"Processing invoice: {invoice.invoice_number}")
             # جلب عناصر الفاتورة
             items_data = []
             for item in invoice.items.select_related('product').all():
@@ -1754,6 +1858,7 @@ def get_invoices_for_returns(request):
                 'items': items_data
             })
         
+        print(f"Returning {len(invoices_data)} invoices")
         return JsonResponse({
             'success': True,
             'invoices': invoices_data
@@ -1763,6 +1868,9 @@ def get_invoices_for_returns(request):
         import logging
         logger = logging.getLogger(__name__)
         logger.error(f"Error fetching invoices for returns: {str(e)}")
+        print(f"Error in API: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return JsonResponse({
             'success': False,
             'error': f'خطأ في النظام: {str(e)}'

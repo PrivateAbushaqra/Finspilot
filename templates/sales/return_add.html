@@ -11,8 +11,50 @@
     .form-container {
         background: #fff;
         border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        padding: 2rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);document.addEventListener('DOMContentLoaded', function() {
+    // تعيين التاريخ الحالي
+    const today = new Date().toISOString().split('T')[0];
+    const dateField = document.getElementById('id_return_date');
+    if (dateField && !dateField.value) {
+        dateField.value = today;
+    }
+    
+    // زر عرض جميع الفواتير
+    document.getElementById('showAllInvoices').addEventListener('click', function() {
+        console.log('Show all invoices clicked');
+        loadAllInvoices();
+    });
+});
+
+function loadAllInvoices() {
+    console.log('Loading all invoices...');
+    const apiUrl = '/ar/sales/api/invoices-for-returns/';
+    
+    fetch(apiUrl)
+        .then(response => {
+            console.log('All invoices API response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('All invoices API response data:', data);
+            if (data.success) {
+                availableInvoices = data.invoices;
+                displaySearchResults(data.invoices);
+                document.getElementById('id_original_invoice_search').focus();
+            } else {
+                console.error('خطأ في جلب الفواتير:', data.error);
+                alert('خطأ في تحميل الفواتير: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('خطأ في الشبكة:', error);
+            alert('خطأ في الاتصال مع الخادم');
+        });
+}
+
+// تخزين الفواتير المختارة
+let availableInvoices = [];
+let selectedInvoice = null;ding: 2rem;
         margin-bottom: 2rem;
     }
     
@@ -171,11 +213,12 @@
                     <div class="col-md-12">
                         <div class="mb-3">
                             <label for="id_original_invoice" class="form-label">
-                                ال{% trans "Invoice" %} الأصلية <span class="required-field">*</span>
+                                الفاتورة الأصلية <span class="required-field">*</span>
                             </label>
                             <div class="invoice-search">
                                 <input type="text" class="form-control" id="id_original_invoice_search" 
-                                       placeholder="ابحث عن ال{% trans "Invoice" %} برقمها أو اسم {% trans "Customer" %}..." autocomplete="off" required>
+                                       placeholder="ابحث عن الفاتورة برقمها أو اسم العميل..." autocomplete="off" required>
+                                <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="showAllInvoices">عرض جميع الفواتير</button>
                                 <input type="hidden" id="id_original_invoice" name="original_invoice">
                                 <div class="search-results" id="invoiceSearchResults"></div>
                             </div>
@@ -197,6 +240,22 @@
                         </div>
                     </div>
                 </div>
+                
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="mb-3">
+                            <label for="id_customer" class="form-label">
+                                العميل <span class="required-field">*</span>
+                            </label>
+                            <select class="form-control" id="id_customer" name="customer" required>
+                                <option value="">اختر العميل...</option>
+                                {% for customer in customers %}
+                                <option value="{{ customer.id }}">{{ customer.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Return Items Section -->
@@ -212,7 +271,7 @@
                     <!-- Return items will be loaded here when invoice is selected -->
                     <div class="text-center text-muted py-4" id="noInvoiceMessage">
                         <i class="fas fa-search fa-2x mb-2"></i>
-                        <p>اختر ال{% trans "Invoice" %} الأصلية أو{% trans "No" %}ً ل{% trans "View" %} المنتجات المتاحة للإرجاع</p>
+                        <p>اختر الفاتورة الأصلية أولاً لعرض المنتجات المتاحة للإرجاع</p>
                     </div>
                 </div>
             </div>
@@ -318,35 +377,73 @@ let selectedInvoice = null;
 
 // Load available invoices
 document.addEventListener('DOMContentLoaded', function() {
-    // تعيين {% trans "Date" %} الحالي
+    // تعيين التاريخ الحالي
     const today = new Date().toISOString().split('T')[0];
     const dateField = document.getElementById('id_return_date');
     if (dateField && !dateField.value) {
         dateField.value = today;
     }
+    
+    // زر عرض جميع الفواتير
+    document.getElementById('showAllInvoices').addEventListener('click', function() {
+        console.log('Show all invoices clicked');
+        loadAllInvoices();
+    });
 });
 
-// تخزين الفواتير المختارة
-let availableInvoices = [];
-let selectedInvoice = null;
+function loadAllInvoices() {
+    console.log('Loading all invoices...');
+    const apiUrl = '/ar/sales/api/invoices-for-returns/';
+    
+    fetch(apiUrl)
+        .then(response => {
+            console.log('All invoices API response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('All invoices API response data:', data);
+            if (data.success) {
+                availableInvoices = data.invoices;
+                displaySearchResults(data.invoices);
+                document.getElementById('id_original_invoice_search').focus();
+            } else {
+                console.error('خطأ في جلب الفواتير:', data.error);
+                alert('خطأ في تحميل الفواتير: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('خطأ في الشبكة:', error);
+            alert('خطأ في الاتصال مع الخادم');
+        });
+}
 
 // Invoice search functionality
 document.getElementById('id_original_invoice_search').addEventListener('input', function() {
+    console.log('Search input triggered with value:', this.value);
     performInvoiceSearch(this.value);
 });
 
 function performInvoiceSearch(searchTerm) {
+    console.log('performInvoiceSearch called with:', searchTerm);
     const resultsContainer = document.getElementById('invoiceSearchResults');
     
     if (searchTerm.length < 2) {
+        console.log('Search term too short, hiding results');
         resultsContainer.style.display = 'none';
         return;
     }
     
     // استدعاء API لجلب الفواتير
-    fetch(`/ar/sales/api/invoices-for-returns/?search=${encodeURIComponent(searchTerm)}`)
-        .then(response => response.json())
+    const apiUrl = `/ar/sales/api/invoices-for-returns/?search=${encodeURIComponent(searchTerm)}`;
+    console.log('Making API call to:', apiUrl);
+    
+    fetch(apiUrl)
+        .then(response => {
+            console.log('API response status:', response.status);
+            return response.json();
+        })
         .then(data => {
+            console.log('API response data:', data);
             if (data.success) {
                 availableInvoices = data.invoices;
                 displaySearchResults(data.invoices);
@@ -364,6 +461,7 @@ function performInvoiceSearch(searchTerm) {
 }
 
 function displaySearchResults(invoices) {
+    console.log('displaySearchResults called with invoices:', invoices);
     const resultsContainer = document.getElementById('invoiceSearchResults');
     resultsContainer.innerHTML = '';
     
@@ -379,9 +477,11 @@ function displaySearchResults(invoices) {
             resultsContainer.appendChild(item);
         });
         resultsContainer.style.display = 'block';
+        console.log('Displayed', invoices.length, 'invoices');
     } else {
-        resultsContainer.innerHTML = '<div class="search-result-item text-muted">{% trans "No invoices found" %} مطابقة</div>';
+        resultsContainer.innerHTML = '<div class="search-result-item text-muted">لا توجد فواتير مطابقة للبحث</div>';
         resultsContainer.style.display = 'block';
+        console.log('No invoices found');
     }
 }
 
