@@ -1442,14 +1442,7 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
             except Exception as tx_error:
                 logger.error(f"فشل أثناء محاولة مسح البيانات داخل معاملة: {str(tx_error)}")
             if AUDIT_AVAILABLE and user:
-                try:
-                    AuditLog.objects.create(
-                        user=user,
-                        action='backup_restore_clear_data',
-                        details='تم مسح البيانات الموجودة قبل الاستعادة'
-                    )
-                except Exception:
-                    pass
+                log_audit(user, 'delete', 'تم مسح البيانات الموجودة قبل الاستعادة')
         # استعادة البيانات
         if 'data' in backup_data:
             total_records = 0
@@ -1480,17 +1473,28 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                         processed_in_table = 0
                         for record in model_records:
                             try:
+                                # تصحيح أسماء التطبيقات والنماذج القديمة
+                                original_app_name = app_name
+                                original_model_name = model_name
+                                
+                                if app_name == 'revenues':
+                                    app_name = 'revenues_expenses'
+                                elif app_name == 'assets':
+                                    app_name = 'assets_liabilities'
+                                elif app_name == 'expenses':
+                                    app_name = 'revenues_expenses'
+                                elif app_name == 'liabilities':
+                                    app_name = 'assets_liabilities'
+                                
                                 model_label = f"{app_name}.{model_name.lower()}"
                                 
-                                # تصحيح أسماء التطبيقات والنماذج القديمة
-                                if model_label.startswith('revenues.'):
-                                    model_label = model_label.replace('revenues.', 'revenues_expenses.')
-                                elif model_label.startswith('assets.'):
-                                    model_label = model_label.replace('assets.', 'assets_liabilities.')
-                                elif model_label.startswith('expenses.'):
-                                    model_label = model_label.replace('expenses.', 'revenues_expenses.')
-                                elif model_label.startswith('liabilities.'):
-                                    model_label = model_label.replace('liabilities.', 'assets_liabilities.')
+                                # معالجة خاصة لـ AuditLog - تصحيح الحقول القديمة
+                                if model_label == 'core.auditlog':
+                                    fields = record.get('fields', {})
+                                    if 'action' in fields and 'action_type' not in fields:
+                                        fields['action_type'] = fields.pop('action')
+                                    if 'details' in fields and 'description' not in fields:
+                                        fields['description'] = fields.pop('details')
                                 
                                 model = apps.get_model(model_label)
                                 fields = record.get('fields', {})
@@ -1661,7 +1665,42 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                                                 pass
                                 if pk:
                                     obj.pk = pk
-                                obj.save()
+                                try:
+                                    obj.save()
+                                except Exception as save_error:
+                                    # معالجة أخطاء التكرار والقيود
+                                    error_msg = str(save_error).lower()
+                                    if 'duplicate key' in error_msg or 'unique constraint' in error_msg:
+                                        # في حالة التكرار، حاول التحديث بدلاً من الإدراج
+                                        try:
+                                            if pk:
+                                                existing_obj = model.objects.filter(pk=pk).first()
+                                                if existing_obj:
+                                                    # تحديث الكائن الموجود
+                                                    for fname, val in fields.items():
+                                                        if hasattr(existing_obj, fname) and fname != 'id':
+                                                            setattr(existing_obj, fname, val)
+                                                    existing_obj.save()
+                                                    if AUDIT_AVAILABLE and user:
+                                                        log_audit(user, 'update', f'تم تحديث سجل موجود في {model_label} بدلاً من إنشاء مكرر')
+                                                else:
+                                                    # إذا لم يوجد بالـ PK، جرب بدون PK
+                                                    obj.pk = None
+                                                    obj.save()
+                                            else:
+                                                # جرب حفظ بدون PK
+                                                obj.pk = None
+                                                obj.save()
+                                        except Exception as retry_error:
+                                            # إذا فشل كل شيء، تجاهل هذا السجل
+                                            logger.warning(f"تعذر استعادة سجل {model_label} بسبب تكرار: {str(retry_error)}")
+                                            if AUDIT_AVAILABLE and user:
+                                                log_audit(user, 'error', f'تم تجاهل سجل مكرر في {model_label}: {str(retry_error)}')
+                                            total_records += 1
+                                            continue
+                                    else:
+                                        # خطأ آخر غير التكرار
+                                        raise save_error
                                 # تعيين الحقول ManyToMany بعد الحفظ
                                 for m2m_name, m2m_values in m2m_fields.items():
                                     try:
