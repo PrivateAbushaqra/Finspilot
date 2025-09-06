@@ -1707,3 +1707,63 @@ def send_creditnote_to_jofotara(request, pk):
             'success': False,
             'error': f'خطأ في النظام: {str(e)}'
         })
+
+
+@login_required
+def get_invoices_for_returns(request):
+    """API endpoint لجلب الفواتير المتاحة للمرتجعات مع البحث"""
+    try:
+        search_term = request.GET.get('search', '').strip()
+        
+        # جلب الفواتير مع إمكانية البحث
+        invoices = SalesInvoice.objects.select_related('customer').all()
+        
+        if search_term:
+            invoices = invoices.filter(
+                Q(invoice_number__icontains=search_term) |
+                Q(customer__name__icontains=search_term)
+            )
+        
+        # تحديد الحد الأقصى للنتائج
+        invoices = invoices[:20]
+        
+        invoices_data = []
+        for invoice in invoices:
+            # جلب عناصر الفاتورة
+            items_data = []
+            for item in invoice.items.select_related('product').all():
+                items_data.append({
+                    'product_id': item.product.id,
+                    'product_name': item.product.name,
+                    'product_code': item.product.code,
+                    'quantity': float(item.quantity),
+                    'unit_price': float(item.unit_price),
+                    'tax_rate': float(item.tax_rate),
+                    'tax_amount': float(item.tax_amount),
+                    'total': float(item.total_amount)
+                })
+            
+            invoices_data.append({
+                'id': invoice.id,
+                'invoice_number': invoice.invoice_number,
+                'customer': invoice.customer.name if invoice.customer else '',
+                'customer_id': invoice.customer.id if invoice.customer else None,
+                'date': invoice.date.strftime('%Y-%m-%d'),
+                'total': float(invoice.total_amount),
+                'payment_type': invoice.get_payment_type_display(),
+                'items': items_data
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'invoices': invoices_data
+        })
+        
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error fetching invoices for returns: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': f'خطأ في النظام: {str(e)}'
+        })

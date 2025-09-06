@@ -19,6 +19,9 @@ urlpatterns = [
     path('returns/edit/<int:pk>/', views.SalesReturnUpdateView.as_view(), name='return_edit'),
     path('returns/delete/<int:pk>/', views.SalesReturnDeleteView.as_view(), name='return_delete'),
     
+    # API endpoints  
+    path('api/invoices-for-returns/', views.get_invoices_for_returns, name='api_invoices_for_returns'),
+    
     # Point of Sale
     path('pos/', views.pos_view, name='pos'),
     path('pos/create-invoice/', views.pos_create_invoice, name='pos_create_invoice'),
