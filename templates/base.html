@@ -1147,35 +1147,32 @@
             // First clear all active states
             clearAllActiveStates();
             
-            // Find matching links
+            // Find matching links - prefer exact matches, then longest partial matches
             const sidebarLinks = document.querySelectorAll('.sidebar .nav-link[href]');
             let activeLink = null;
+            let bestMatchLength = 0;
             
-            // Look for exact match first
+            // Look for the best matching link
             for (const link of sidebarLinks) {
                 try {
                     const linkPath = new URL(link.href).pathname;
+                    
+                    // Skip root path
+                    if (linkPath === '/') continue;
+                    
+                    // Exact match - highest priority
                     if (linkPath === currentUrl) {
                         activeLink = link;
                         break;
                     }
+                    
+                    // Partial match - find the longest match
+                    if (currentUrl.startsWith(linkPath) && linkPath.length > bestMatchLength) {
+                        activeLink = link;
+                        bestMatchLength = linkPath.length;
+                    }
                 } catch(e) {
                     continue;
-                }
-            }
-            
-            // If no exact match, look for partial match
-            if (!activeLink) {
-                for (const link of sidebarLinks) {
-                    try {
-                        const linkPath = new URL(link.href).pathname;
-                        if (linkPath !== '/' && currentUrl.startsWith(linkPath)) {
-                            activeLink = link;
-                            break;
-                        }
-                    } catch(e) {
-                        continue;
-                    }
                 }
             }
             
