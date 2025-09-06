@@ -621,14 +621,14 @@
                     <ul class="nav flex-column">
                         <!-- {% trans "Comprehensive Search" %} -->
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'search:search' %}">
+                            <a class="nav-link {% if active_menu == 'search' %}active{% endif %}" href="{% url 'search:search' %}">
                                 <i class="fas fa-search me-2"></i>
                                 {% trans "Global Search" %}
                             </a>
                         </li>
                         <!-- Dashboard -->
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'core:dashboard' %}">
+                            <a class="nav-link {% if active_menu == 'dashboard' %}active{% endif %}" href="{% url 'core:dashboard' %}">
                                 <i class="fas fa-home me-2"></i>
                                 {% trans "Dashboard" %}
                             </a>
@@ -636,7 +636,7 @@
                         <!-- Bank Accounts (visible if group grants view or edit banks account) -->
                         {% if perms.banks.can_view_banks_account or perms.banks.can_edit_banks_account %}
                         <li class="nav-item">
-                            <a class="nav-link" data-bs-toggle="collapse" href="#banksMenu">
+                            <a class="nav-link {% if active_menu == 'banks' %}active{% endif %}" data-bs-toggle="collapse" href="#banksMenu">
                                 <i class="fas fa-university me-2"></i>
                                 {% trans "Bank Accounts" %}
                             </a>
@@ -661,7 +661,7 @@
                         <!-- Cashboxes -->
                         {% if user.has_cashboxes_permission %}
                         <li class="nav-item">
-                            <a class="nav-link" data-bs-toggle="collapse" href="#cashboxesMenu">
+                            <a class="nav-link {% if active_menu == 'cashboxes' %}active{% endif %}" data-bs-toggle="collapse" href="#cashboxesMenu">
                                 <i class="fas fa-cash-register me-2"></i>
                                 {% trans "Cash Boxes" %}
                             </a>
@@ -681,7 +681,7 @@
                         <!-- Payment Receipts -->
                         {% if user.has_receipts_permission %}
                         <li class="nav-item">
-                            <a class="nav-link" data-bs-toggle="collapse" href="#receiptsMenu">
+                            <a class="nav-link {% if active_menu == 'receipts' %}active{% endif %}" data-bs-toggle="collapse" href="#receiptsMenu">
                                 <i class="fas fa-receipt me-2"></i>
                                 {% trans "Payment Receipts" %}
                             </a>
@@ -704,7 +704,7 @@
                         <!-- Payment Vouchers -->
                         {% if user.has_receipts_permission %}
                         <li class="nav-item">
-                            <a class="nav-link" data-bs-toggle="collapse" href="#paymentsMenu">
+                            <a class="nav-link {% if active_menu == 'payments' %}active{% endif %}" data-bs-toggle="collapse" href="#paymentsMenu">
                                 <i class="fas fa-money-bill-wave me-2"></i>
                                 {% trans "Payment Vouchers" %}
                             </a>
@@ -723,7 +723,7 @@
                         
                         <!-- Products & Categories -->
                         <li class="nav-item">
-                            <a class="nav-link" data-bs-toggle="collapse" href="#productsMenu">
+                            <a class="nav-link {% if active_menu == 'products' %}active{% endif %}" data-bs-toggle="collapse" href="#productsMenu">
                                 <i class="fas fa-boxes me-2"></i>
                                 {% trans "Categories & Products" %}
                             </a>
@@ -747,7 +747,7 @@
                         
                         <!-- Customers & Suppliers -->
                         <li class="nav-item">
-                            <a class="nav-link" data-bs-toggle="collapse" href="#customersMenu">
+                            <a class="nav-link {% if active_menu == 'customers' %}active{% endif %}" data-bs-toggle="collapse" href="#customersMenu">
                                 <i class="fas fa-users me-2"></i>
                                 {% trans "Customers & Suppliers" %}
                             </a>
@@ -772,7 +772,7 @@
                         <!-- Purchases -->
                         {% if user.has_purchases_permission %}
                         <li class="nav-item">
-                            <a class="nav-link" data-bs-toggle="collapse" href="#purchasesMenu">
+                            <a class="nav-link {% if active_menu == 'purchases' %}active{% endif %}" data-bs-toggle="collapse" href="#purchasesMenu">
                                 <i class="fas fa-shopping-cart me-2"></i>
                                 {% trans "Purchases" %}
                             </a>
@@ -807,7 +807,7 @@
                         <!-- Sales -->
                         {% if user.has_sales_permission %}
                         <li class="nav-item">
-                            <a class="nav-link" data-bs-toggle="collapse" href="#salesMenu">
+                            <a class="nav-link {% if active_menu == 'sales' %}active{% endif %}" data-bs-toggle="collapse" href="#salesMenu">
                                 <i class="fas fa-cash-register me-2"></i>
                                 {% trans "Sales" %}
                             </a>
@@ -847,7 +847,7 @@
                         <!-- Inventory -->
                         {% if user.has_inventory_permission %}
                         <li class="nav-item">
-                            <a class="nav-link" data-bs-toggle="collapse" href="#inventoryMenu">
+                            <a class="nav-link {% if active_menu == 'inventory' %}active{% endif %}" data-bs-toggle="collapse" href="#inventoryMenu">
                                 <i class="fas fa-warehouse me-2"></i>
                                 {% trans "Inventory" %}
                             </a>
@@ -872,7 +872,7 @@
                         
                         <!-- Revenues & Expenses -->
                         <li class="nav-item">
-                            <a class="nav-link" data-bs-toggle="collapse" href="#revenuesExpensesMenu">
+                            <a class="nav-link {% if active_menu == 'revenues_expenses' %}active{% endif %}" data-bs-toggle="collapse" href="#revenuesExpensesMenu">
                                 <i class="fas fa-chart-line me-2"></i>
                                 {% trans "Revenues & Expenses" %}
                             </a>
@@ -899,7 +899,7 @@
                         
                         <!-- Journal Entries -->
                         <li class="nav-item">
-                            <a class="nav-link" data-bs-toggle="collapse" href="#journalMenu">
+                            <a class="nav-link {% if active_menu == 'journal' %}active{% endif %}" data-bs-toggle="collapse" href="#journalMenu">
                                 <i class="fas fa-book me-2"></i>
                                 {% trans "Journal Entries" %}
                             </a>
@@ -929,7 +929,7 @@
                         
                         <!-- Assets & Liabilities -->
                         <li class="nav-item">
-                            <a class="nav-link" data-bs-toggle="collapse" href="#assetsLiabilitiesMenu">
+                            <a class="nav-link {% if active_menu == 'assets_liabilities' %}active{% endif %}" data-bs-toggle="collapse" href="#assetsLiabilitiesMenu">
                                 <i class="fas fa-balance-scale me-2"></i>
                                 {% trans "Assets & Liabilities" %}
                             </a>
@@ -951,7 +951,7 @@
                         <!-- Reports -->
                         {% if user.has_reports_permission %}
                         <li class="nav-item">
-                            <a class="nav-link" data-bs-toggle="collapse" href="#reportsMenu">
+                            <a class="nav-link {% if active_menu == 'reports' %}active{% endif %}" data-bs-toggle="collapse" href="#reportsMenu">
                                 <i class="fas fa-chart-bar me-2"></i>
                                 {% trans "Reports" %}
                             </a>
@@ -986,7 +986,7 @@
                         <!-- Human Resources -->
                         {% if user.is_superuser or perms.hr.can_view_hr %}
                         <li class="nav-item">
-                            <a class="nav-link" data-bs-toggle="collapse" href="#hrMenu">
+                            <a class="nav-link {% if active_menu == 'hr' %}active{% endif %}" data-bs-toggle="collapse" href="#hrMenu">
                                 <i class="fas fa-users-cog me-2"></i>
                                 {% trans "Human Resources" %}
                             </a>
@@ -1024,7 +1024,7 @@
                         <!-- System Management -->
                         {% if user.has_system_management_permission %}
                         <li class="nav-item">
-                            <a class="nav-link" data-bs-toggle="collapse" href="#systemMenu">
+                            <a class="nav-link {% if active_menu == 'settings' or active_menu == 'users' or active_menu == 'backup' or active_menu == 'tools' or active_menu == 'audit_log' %}active{% endif %}" data-bs-toggle="collapse" href="#systemMenu">
                                 <i class="fas fa-cogs me-2"></i>
                                 {% trans "System Management" %}
                             </a>
@@ -3253,6 +3253,23 @@
                 }, 3000);
             });
         });
+    });
+    
+    // JavaScript لفتح القوائم المنسدلة النشطة تلقائياً
+    document.addEventListener('DOMContentLoaded', function() {
+        // العثور على الرابط النشط في الشريط الجانبي
+        const activeLink = document.querySelector('.sidebar .nav-link.active');
+        if (activeLink) {
+            // إذا كان الرابط النشط له قائمة منسدلة، افتحها
+            const collapseHref = activeLink.getAttribute('href');
+            if (collapseHref && collapseHref.startsWith('#')) {
+                const collapseElement = document.querySelector(collapseHref);
+                if (collapseElement) {
+                    // إضافة class 'show' لفتح القائمة
+                    collapseElement.classList.add('show');
+                }
+            }
+        }
     });
     </script>
     

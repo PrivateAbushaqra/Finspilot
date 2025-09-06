@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-06 11:16+0300\n"
+"POT-Creation-Date: 2025-09-06 12:45+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -20,7 +20,7 @@ msgstr ""
 "&& n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5;\n"
 
 #: .\accounts\models.py:13 .\inventory\models.py:59 .\journal\models.py:59
-#: .\sales\models.py:46 .\settings\views.py:961 .\settings\views.py:1099
+#: .\sales\models.py:46 .\settings\views.py:961 .\settings\views.py:1126
 msgid "فاتورة مبيعات"
 msgstr "فاتورة مبيعات"
 
@@ -523,21 +523,14 @@ msgstr "قابل للإهلاك"
 #: .\templates\banks\account_edit.html:246
 #: .\templates\banks\account_edit.html:249
 #: .\templates\banks\account_list.html:339 .\templates\customers\add.html:226
-#: .\templates\customers\customer_list.html:196
-#: .\templates\customers\customer_list.html:235
-#: .\templates\customers\customer_list.html:236
-#: .\templates\customers\customer_list.html:315
-#: .\templates\customers\customer_list.html:317
-#: .\templates\customers\customer_list.html:374
-#: .\templates\customers\customer_list.html:376
-#: .\templates\customers\customer_list.html:568
+#: .\templates\customers\customer_list.html:245
+#: .\templates\customers\customer_list.html:294
 #: .\templates\customers\delete.html:180 .\templates\customers\edit.html:239
-#: .\templates\customers\supplier_list.html:114
-#: .\templates\customers\supplier_list.html:153
-#: .\templates\customers\supplier_list.html:154
-#: .\templates\customers\supplier_list.html:233
-#: .\templates\customers\supplier_list.html:282
-#: .\templates\customers\supplier_list.html:460
+#: .\templates\customers\supplier_list.html:165
+#: .\templates\customers\supplier_list.html:166
+#: .\templates\customers\supplier_list.html:245
+#: .\templates\customers\supplier_list.html:294
+#: .\templates\customers\supplier_list.html:472
 #: .\templates\hr\contract_list.html:57 .\templates\hr\employee_detail.html:68
 #: .\templates\hr\employee_detail.html:160 .\templates\hr\employee_list.html:64
 #: .\templates\hr\employee_list.html:96
@@ -879,74 +872,118 @@ msgstr ""
 msgid "إضافة قيد إهلاك"
 msgstr ""
 
-#: .\backup\views.py:174
+#: .\backup\models.py:12
+msgid "Can delete advanced data tables"
+msgstr ""
+
+#: .\backup\models.py:13
+#, fuzzy
+#| msgid "Cannot delete account"
+msgid "Can delete backup files"
+msgstr "لا يمكن حذف الحساب"
+
+#: .\backup\models.py:15
+#, fuzzy
+#| msgid "Backup"
+msgid "Backup Manager"
+msgstr "النسخ الاحتياطي"
+
+#: .\backup\models.py:16
+msgid "Backup Managers"
+msgstr ""
+
+#: .\backup\views.py:109
+#, fuzzy
+#| msgid "محاولة وصول مرفوضة لصفحة تصميم الطباعة - صلاحية غير متوفرة"
+msgid "محاولة وصول مرفوضة لعرض قائمة الجداول القابلة للحذف - صلاحية غير متوفرة"
+msgstr "محاولة وصول مرفوضة لصفحة تصميم الطباعة - صلاحية غير متوفرة"
+
+#: .\backup\views.py:110
+#, fuzzy
+#| msgid "ليس لديك صلاحية لحذف حركات المخزون"
+msgid "ليس لديك صلاحية للوصول لهذه الميزة"
+msgstr "ليس لديك صلاحية لحذف حركات المخزون"
+
+#: .\backup\views.py:181
 msgid "عرض قائمة الجداول القابلة للحذف - تم العثور على {} جدول"
 msgstr ""
 
-#: .\backup\views.py:180
+#: .\backup\views.py:187
 msgid "خطأ في عرض قائمة الجداول القابلة للحذف: {}"
 msgstr ""
 
-#: .\backup\views.py:181
+#: .\backup\views.py:188
 msgid "حدث خطأ في تحميل قائمة الجداول"
 msgstr ""
 
-#: .\backup\views.py:314 .\backup\views.py:353
+#: .\backup\views.py:203
+#, fuzzy
+#| msgid "محاولة وصول مرفوضة لصفحة تصميم الطباعة - صلاحية غير متوفرة"
+msgid "محاولة وصول مرفوضة لحذف بيانات الجداول - صلاحية غير متوفرة"
+msgstr "محاولة وصول مرفوضة لصفحة تصميم الطباعة - صلاحية غير متوفرة"
+
+#: .\backup\views.py:204
+#, fuzzy
+#| msgid "ليس لديك صلاحية لحذف حركات المخزون"
+msgid "ليس لديك صلاحية لحذف البيانات"
+msgstr "ليس لديك صلاحية لحذف حركات المخزون"
+
+#: .\backup\views.py:327 .\backup\views.py:366
 #, python-format
 msgid "Deleted all records from table %(table)s - count: %(count)s"
 msgstr ""
 
-#: .\backup\views.py:1376
+#: .\backup\views.py:1389
 msgid "بدء عملية استعادة النسخة الاحتياطية"
 msgstr ""
 
-#: .\backup\views.py:1399
+#: .\backup\views.py:1412
 msgid "تحليل النسخة الاحتياطية - {} جدول بإجمالي {} سجل"
 msgstr ""
 
-#: .\backup\views.py:1758
+#: .\backup\views.py:1810
 msgid "تم إكمال عملية الاستعادة بنجاح - {} جدول، {} سجل مستعاد"
 msgstr ""
 
-#: .\backup\views.py:1831 .\backup\views.py:2099
+#: .\backup\views.py:1883 .\backup\views.py:2151
 #, fuzzy
 #| msgid "حركة المخزون غير موجودة"
 msgid "طريقة طلب غير صحيحة"
 msgstr "حركة المخزون غير موجودة"
 
-#: .\backup\views.py:1871
+#: .\backup\views.py:1923
 msgid "عملية نسخ احتياطي قيد التشغيل بالفعل"
 msgstr ""
 
-#: .\backup\views.py:2103
+#: .\backup\views.py:2155
 msgid "غير مسموح لك بإجراء هذه العملية"
 msgstr ""
 
-#: .\backup\views.py:2107
+#: .\backup\views.py:2159
 msgid "يرجى اختيار ملف النسخة الاحتياطية"
 msgstr ""
 
-#: .\backup\views.py:2128
+#: .\backup\views.py:2180
 #, fuzzy
 #| msgid "أصول غير ملموسة"
 msgid "الملف غير موجود"
 msgstr "أصول غير ملموسة"
 
-#: .\backup\views.py:2140 .\backup\views.py:2178
+#: .\backup\views.py:2192 .\backup\views.py:2230
 #, fuzzy
 #| msgid "نوع المرجع"
 msgid "نوع الملف غير مدعوم"
 msgstr "نوع المرجع"
 
-#: .\backup\views.py:2224
+#: .\backup\views.py:2276
 msgid "تم بدء عملية الاستعادة في الخلفية"
 msgstr ""
 
-#: .\backup\views.py:2227
+#: .\backup\views.py:2279
 msgid "تم بدء عملية الاستعادة في الخلفية، يمكن متابعة التقدم على هذه الصفحة"
 msgstr ""
 
-#: .\backup\views.py:2231
+#: .\backup\views.py:2283
 #, fuzzy
 #| msgid "حركة المخزون غير موجودة"
 msgid "ملف JSON غير صحيح"
@@ -1023,27 +1060,23 @@ msgstr ""
 #: .\templates\cashboxes\cashbox_detail.html:30
 #: .\templates\cashboxes\cashbox_list.html:51
 #: .\templates\customers\add.html:199 .\templates\customers\add.html:205
-#: .\templates\customers\customer_list.html:208
-#: .\templates\customers\customer_list.html:240
-#: .\templates\customers\customer_list.html:243
-#: .\templates\customers\customer_list.html:244
-#: .\templates\customers\customer_list.html:245
-#: .\templates\customers\customer_list.html:306
-#: .\templates\customers\customer_list.html:350
-#: .\templates\customers\customer_list.html:543
-#: .\templates\customers\customer_list.html:549
+#: .\templates\customers\customer_list.html:170
+#: .\templates\customers\customer_list.html:173
+#: .\templates\customers\customer_list.html:174
+#: .\templates\customers\customer_list.html:175
+#: .\templates\customers\customer_list.html:237
+#: .\templates\customers\customer_list.html:273
 #: .\templates\customers\delete.html:167 .\templates\customers\edit.html:194
 #: .\templates\customers\edit.html:200 .\templates\customers\edit.html:208
 #: .\templates\customers\list.html:191 .\templates\customers\list.html:209
-#: .\templates\customers\supplier_list.html:126
-#: .\templates\customers\supplier_list.html:158
-#: .\templates\customers\supplier_list.html:161
-#: .\templates\customers\supplier_list.html:162
-#: .\templates\customers\supplier_list.html:163
-#: .\templates\customers\supplier_list.html:225
-#: .\templates\customers\supplier_list.html:261
-#: .\templates\customers\supplier_list.html:435
-#: .\templates\customers\supplier_list.html:441
+#: .\templates\customers\supplier_list.html:170
+#: .\templates\customers\supplier_list.html:173
+#: .\templates\customers\supplier_list.html:174
+#: .\templates\customers\supplier_list.html:175
+#: .\templates\customers\supplier_list.html:237
+#: .\templates\customers\supplier_list.html:273
+#: .\templates\customers\supplier_list.html:447
+#: .\templates\customers\supplier_list.html:453
 #: .\templates\customers\transactions.html:177
 #: .\templates\customers\transactions.html:214
 #: .\templates\customers\transactions.html:319
@@ -1603,12 +1636,13 @@ msgstr ""
 
 #: .\core\models.py:14 .\customers\models.py:18 .\hr\forms.py:40
 #: .\hr\models.py:97 .\settings\models.py:87 .\templates\base.html:2134
-#: .\templates\customers\customer_list.html:228
-#: .\templates\customers\customer_list.html:348
+#: .\templates\customers\customer_list.html:158
+#: .\templates\customers\customer_list.html:227
+#: .\templates\customers\customer_list.html:271
 #: .\templates\customers\delete.html:159
-#: .\templates\customers\supplier_list.html:146
-#: .\templates\customers\supplier_list.html:215
-#: .\templates\customers\supplier_list.html:259
+#: .\templates\customers\supplier_list.html:158
+#: .\templates\customers\supplier_list.html:227
+#: .\templates\customers\supplier_list.html:271
 #: .\templates\partials\print_header.html:36
 #: .\templates\purchases\debitnote_detail.html:66
 #: .\templates\purchases\invoice_add.html:924
@@ -1626,12 +1660,12 @@ msgstr ""
 #: .\core\models.py:15 .\customers\models.py:17 .\hr\forms.py:39
 #: .\hr\models.py:96 .\settings\models.py:88 .\templates\customers\add.html:160
 #: .\templates\customers\add.html:162
-#: .\templates\customers\customer_list.html:349
-#: .\templates\customers\customer_list.html:503
+#: .\templates\customers\customer_list.html:272
+#: .\templates\customers\customer_list.html:407
 #: .\templates\customers\delete.html:163 .\templates\customers\edit.html:155
 #: .\templates\customers\edit.html:157
-#: .\templates\customers\supplier_list.html:260
-#: .\templates\customers\supplier_list.html:395
+#: .\templates\customers\supplier_list.html:272
+#: .\templates\customers\supplier_list.html:407
 #: .\templates\hr\employee_detail.html:106
 #: .\templates\hr\reports\employee_report.html:39
 #: .\templates\partials\print_header.html:39
@@ -1688,11 +1722,11 @@ msgstr ""
 msgid "مردود المبيعات"
 msgstr ""
 
-#: .\core\models.py:58 .\settings\views.py:962 .\settings\views.py:1100
+#: .\core\models.py:58 .\settings\views.py:962 .\settings\views.py:1127
 msgid "إشعار دائن"
 msgstr ""
 
-#: .\core\models.py:59 .\settings\views.py:963 .\settings\views.py:1101
+#: .\core\models.py:59 .\settings\views.py:963 .\settings\views.py:1128
 msgid "إشعار مدين"
 msgstr ""
 
@@ -1910,26 +1944,26 @@ msgstr ""
 msgid "Customer quick search: %(q)s"
 msgstr ""
 
-#: .\customers\views.py:371 .\customers\views.py:411
+#: .\customers\views.py:419 .\customers\views.py:459
 msgid "ليس لديك صلاحية لحذف العملاء/الموردين"
 msgstr ""
 
-#: .\customers\views.py:381
+#: .\customers\views.py:429
 msgid "تحذير: سيتم حذف جميع البيانات المرتبطة نهائياً!"
 msgstr ""
 
-#: .\customers\views.py:406
+#: .\customers\views.py:454
 msgid "يجب كتابة \"DELETE\" للتأكيد!"
 msgstr ""
 
-#: .\customers\views.py:429
+#: .\customers\views.py:477
 #, python-format
 msgid ""
 "تم حذف العميل/المورد وجميع البيانات المرتبطة نهائياً: %(name)s (%(type)s)"
 msgstr ""
 "تم حذف العميل/المورد وجميع البيانات المرتبطة نهائياً: %(name)s (%(type)s)"
 
-#: .\customers\views.py:436
+#: .\customers\views.py:484
 #, fuzzy, python-format
 #| msgid ""
 #| "تم حذف %(type)s \"%(name)s\" بنجاح!\\nجميع البيانات المرتبطة تم حذفها "
@@ -1941,12 +1975,12 @@ msgstr ""
 "تم حذف %(type)s \"%(name)s\" بنجاح!\n"
 "جميع البيانات المرتبطة تم حذفها نهائياً."
 
-#: .\customers\views.py:449
+#: .\customers\views.py:497
 #, python-format
 msgid "فشل حذف العميل/المورد: %(error)s"
 msgstr "فشل حذف العميل/المورد: %(error)s"
 
-#: .\customers\views.py:453
+#: .\customers\views.py:501
 #, python-format
 msgid "حدث خطأ أثناء حذف البيانات: %(error)s"
 msgstr "حدث خطأ أثناء حذف البيانات: %(error)s"
@@ -1991,10 +2025,10 @@ msgstr ""
 
 #: .\hr\forms.py:42 .\hr\models.py:99 .\templates\base.html:2135
 #: .\templates\customers\add.html:170 .\templates\customers\add.html:172
-#: .\templates\customers\customer_list.html:515
+#: .\templates\customers\customer_list.html:419
 #: .\templates\customers\delete.html:136 .\templates\customers\edit.html:165
 #: .\templates\customers\edit.html:167
-#: .\templates\customers\supplier_list.html:407
+#: .\templates\customers\supplier_list.html:419
 #: .\templates\hr\employee_detail.html:114
 #: .\templates\inventory\warehouse_add.html:67
 #: .\templates\inventory\warehouse_delete.html:92
@@ -2339,13 +2373,12 @@ msgstr ""
 #: .\templates\banks\account_list.html:106
 #: .\templates\banks\account_list.html:685
 #: .\templates\banks\account_list.html:696
-#: .\templates\customers\customer_list.html:232
-#: .\templates\customers\customer_list.html:312
-#: .\templates\customers\customer_list.html:351
+#: .\templates\customers\customer_list.html:162
+#: .\templates\customers\customer_list.html:274
 #: .\templates\customers\delete.html:177 .\templates\customers\list.html:191
 #: .\templates\customers\list.html:209
-#: .\templates\customers\supplier_list.html:150
-#: .\templates\customers\supplier_list.html:262
+#: .\templates\customers\supplier_list.html:162
+#: .\templates\customers\supplier_list.html:274
 #: .\templates\hr\attendance_list.html:87 .\templates\hr\contract_list.html:32
 #: .\templates\hr\dashboard.html:177 .\templates\hr\department_detail.html:98
 #: .\templates\hr\employee_detail.html:157
@@ -2727,7 +2760,7 @@ msgstr ""
 msgid "Net Salary"
 msgstr ""
 
-#: .\hr\models.py:398 .\settings\views.py:967 .\settings\views.py:1105
+#: .\hr\models.py:398 .\settings\views.py:967 .\settings\views.py:1132
 msgid "Journal Entry"
 msgstr ""
 
@@ -3257,7 +3290,7 @@ msgstr ""
 msgid "إجمالي المبلغ"
 msgstr ""
 
-#: .\journal\models.py:83 .\settings\views.py:967 .\settings\views.py:1105
+#: .\journal\models.py:83 .\settings\views.py:967 .\settings\views.py:1132
 msgid "قيد محاسبي"
 msgstr ""
 
@@ -3445,9 +3478,8 @@ msgstr ""
 #: .\templates\assets_liabilities\liability_list.html:69
 #: .\templates\cashboxes\transfer_list.html:81
 #: .\templates\core\audit_log.html:85 .\templates\core\tax_report.html:194
-#: .\templates\customers\customer_list.html:117
-#: .\templates\customers\customer_list.html:226
-#: .\templates\customers\supplier_list.html:144
+#: .\templates\customers\customer_list.html:156
+#: .\templates\customers\supplier_list.html:156
 #: .\templates\hr\employee_list.html:70 .\templates\journal\entry_list.html:68
 #: .\templates\payments\voucher_list.html:33
 #: .\templates\payments\voucher_list.html:67
@@ -3625,28 +3657,26 @@ msgstr ""
 #: .\templates\customers\supplier_list.html:5
 #: .\templates\customers\supplier_list.html:83
 #: .\templates\customers\supplier_list.html:92
-#: .\templates\customers\supplier_list.html:108
-#: .\templates\customers\supplier_list.html:114
-#: .\templates\customers\supplier_list.html:138
-#: .\templates\customers\supplier_list.html:146
-#: .\templates\customers\supplier_list.html:152
-#: .\templates\customers\supplier_list.html:189
-#: .\templates\customers\supplier_list.html:309
-#: .\templates\customers\supplier_list.html:310
-#: .\templates\customers\supplier_list.html:313
-#: .\templates\customers\supplier_list.html:326
-#: .\templates\customers\supplier_list.html:365
-#: .\templates\customers\supplier_list.html:381
-#: .\templates\customers\supplier_list.html:430
-#: .\templates\customers\supplier_list.html:460
-#: .\templates\customers\supplier_list.html:462
-#: .\templates\customers\supplier_list.html:473
-#: .\templates\customers\supplier_list.html:505
-#: .\templates\customers\supplier_list.html:534
-#: .\templates\customers\supplier_list.html:535
-#: .\templates\customers\supplier_list.html:537
-#: .\templates\customers\supplier_list.html:541
+#: .\templates\customers\supplier_list.html:150
+#: .\templates\customers\supplier_list.html:158
+#: .\templates\customers\supplier_list.html:164
+#: .\templates\customers\supplier_list.html:201
+#: .\templates\customers\supplier_list.html:321
+#: .\templates\customers\supplier_list.html:322
+#: .\templates\customers\supplier_list.html:325
+#: .\templates\customers\supplier_list.html:338
+#: .\templates\customers\supplier_list.html:377
+#: .\templates\customers\supplier_list.html:393
+#: .\templates\customers\supplier_list.html:442
+#: .\templates\customers\supplier_list.html:472
+#: .\templates\customers\supplier_list.html:474
+#: .\templates\customers\supplier_list.html:485
+#: .\templates\customers\supplier_list.html:517
 #: .\templates\customers\supplier_list.html:546
+#: .\templates\customers\supplier_list.html:547
+#: .\templates\customers\supplier_list.html:549
+#: .\templates\customers\supplier_list.html:553
+#: .\templates\customers\supplier_list.html:558
 #: .\templates\customers\transactions.html:5
 #: .\templates\customers\transactions.html:139
 #: .\templates\customers\transactions.html:372
@@ -3719,7 +3749,7 @@ msgstr ""
 msgid "Reversal Date"
 msgstr ""
 
-#: .\payments\models.py:83 .\settings\views.py:966 .\settings\views.py:1104
+#: .\payments\models.py:83 .\settings\views.py:966 .\settings\views.py:1131
 #: .\templates\settings\document_sequence_add.html:108
 msgid "Payment Voucher"
 msgstr ""
@@ -4407,7 +4437,7 @@ msgstr ""
 
 #: .\reports\views.py:139 .\reports\views.py:175 .\reports\views.py:189
 #: .\reports\views.py:200 .\reports\views.py:223 .\settings\views.py:968
-#: .\settings\views.py:1106 .\templates\base.html:976
+#: .\settings\views.py:1133 .\templates\base.html:976
 #: .\templates\reports\customer_statement.html:4
 #: .\templates\reports\customer_statement.html:9
 msgid "Customer Statement"
@@ -4421,11 +4451,9 @@ msgstr ""
 #: .\templates\accounts\customer_statement.html:24
 #: .\templates\assets_liabilities\dashboard.html:366 .\templates\base.html:1563
 #: .\templates\base.html:1568 .\templates\customers\add.html:165
-#: .\templates\customers\add.html:167
-#: .\templates\customers\customer_list.html:509
-#: .\templates\customers\delete.html:142 .\templates\customers\edit.html:160
-#: .\templates\customers\edit.html:162
-#: .\templates\customers\supplier_list.html:401
+#: .\templates\customers\add.html:167 .\templates\customers\delete.html:142
+#: .\templates\customers\edit.html:160 .\templates\customers\edit.html:162
+#: .\templates\customers\supplier_list.html:413
 #: .\templates\products\product_edit.html:356
 #: .\templates\products\product_edit.html:388
 #: .\templates\products\product_list.html:1219
@@ -4443,12 +4471,13 @@ msgstr ""
 
 #: .\reports\views.py:157 .\reports\views.py:193
 #: .\templates\assets_liabilities\dashboard.html:368
-#: .\templates\backup\backup_restore.html:195
-#: .\templates\backup\backup_restore.html:374
+#: .\templates\backup\backup_restore.html:197
+#: .\templates\backup\backup_restore.html:376
 #: .\templates\banks\account_transactions.html:221
 #: .\templates\banks\transfer_list.html:153
+#: .\templates\customers\customer_list.html:270
 #: .\templates\customers\delete.html:127 .\templates\customers\edit.html:115
-#: .\templates\customers\supplier_list.html:258
+#: .\templates\customers\supplier_list.html:270
 #: .\templates\inventory\movement_list.html:303
 #: .\templates\inventory\product_detail.html:317
 #: .\templates\journal\account_list.html:64
@@ -4474,13 +4503,10 @@ msgstr ""
 #: .\templates\accounts\transaction_list.html:91
 #: .\templates\accounts\transaction_list.html:137
 #: .\templates\customers\add.html:175 .\templates\customers\add.html:177
-#: .\templates\customers\add.html:196
-#: .\templates\customers\customer_list.html:519
-#: .\templates\customers\customer_list.html:538
-#: .\templates\customers\edit.html:170 .\templates\customers\edit.html:172
-#: .\templates\customers\edit.html:191
-#: .\templates\customers\supplier_list.html:411
-#: .\templates\customers\supplier_list.html:430
+#: .\templates\customers\add.html:196 .\templates\customers\edit.html:170
+#: .\templates\customers\edit.html:172 .\templates\customers\edit.html:191
+#: .\templates\customers\supplier_list.html:423
+#: .\templates\customers\supplier_list.html:442
 #: .\templates\customers\transactions.html:198
 #: .\templates\customers\transactions.html:312
 #: .\templates\financial_reports\trial_balance.html:85
@@ -4545,17 +4571,7 @@ msgstr ""
 #: .\templates\customers\add.html:136 .\templates\customers\add.html:172
 #: .\templates\customers\add.html:177 .\templates\customers\add.html:196
 #: .\templates\customers\add.html:298
-#: .\templates\customers\customer_list.html:271
-#: .\templates\customers\customer_list.html:538
-#: .\templates\customers\customer_list.html:568
-#: .\templates\customers\customer_list.html:570
-#: .\templates\customers\customer_list.html:581
-#: .\templates\customers\customer_list.html:613
-#: .\templates\customers\customer_list.html:642
-#: .\templates\customers\customer_list.html:643
-#: .\templates\customers\customer_list.html:645
-#: .\templates\customers\customer_list.html:649
-#: .\templates\customers\customer_list.html:654
+#: .\templates\customers\customer_list.html:201
 #: .\templates\customers\delete.html:5 .\templates\customers\delete.html:90
 #: .\templates\customers\edit.html:93 .\templates\customers\edit.html:131
 #: .\templates\customers\edit.html:167 .\templates\customers\edit.html:172
@@ -5489,6 +5505,19 @@ msgstr ""
 msgid "إعدادات JoFotara"
 msgstr ""
 
+# Print Design Permissions
+#: .\settings\models.py:324
+msgid "Can access print design settings"
+msgstr "يمكن الوصول لإعدادات تصميم الطباعة"
+
+#: .\settings\models.py:326
+msgid "Settings Permission Manager"
+msgstr "مدير صلاحيات الإعدادات"
+
+#: .\settings\models.py:327
+msgid "Settings Permission Managers"
+msgstr "مديرو صلاحيات الإعدادات"
+
 #: .\settings\views.py:386
 msgid "ليس لديك صلاحية لتعديل تسلسل المستندات!"
 msgstr ""
@@ -5505,68 +5534,68 @@ msgstr ""
 msgid "ليس لديك صلاحية للوصول لإعدادات الطباعة."
 msgstr ""
 
-#: .\settings\views.py:961 .\settings\views.py:1099
+#: .\settings\views.py:961 .\settings\views.py:1126
 #: .\templates\core\dashboard.html:452
 msgid "Sales Invoice"
 msgstr ""
 
-#: .\settings\views.py:962 .\settings\views.py:1100
+#: .\settings\views.py:962 .\settings\views.py:1127
 #: .\templates\settings\document_sequence_add.html:98
 msgid "Credit Note"
 msgstr ""
 
-#: .\settings\views.py:963 .\settings\views.py:1101
+#: .\settings\views.py:963 .\settings\views.py:1128
 #: .\templates\settings\document_sequence_add.html:103
 msgid "Debit Note"
 msgstr ""
 
-#: .\settings\views.py:964 .\settings\views.py:1102
+#: .\settings\views.py:964 .\settings\views.py:1129
 msgid "أمر شراء"
 msgstr ""
 
-#: .\settings\views.py:964 .\settings\views.py:1102
+#: .\settings\views.py:964 .\settings\views.py:1129
 msgid "Purchase Order"
 msgstr ""
 
-#: .\settings\views.py:965 .\settings\views.py:1103
+#: .\settings\views.py:965 .\settings\views.py:1130
 msgid "إيصال استلام"
 msgstr ""
 
-#: .\settings\views.py:965 .\settings\views.py:1103
+#: .\settings\views.py:965 .\settings\views.py:1130
 msgid "Receipt"
 msgstr ""
 
-#: .\settings\views.py:966 .\settings\views.py:1104
+#: .\settings\views.py:966 .\settings\views.py:1131
 msgid "إذن صرف"
 msgstr ""
 
-#: .\settings\views.py:968 .\settings\views.py:1106
+#: .\settings\views.py:968 .\settings\views.py:1133
 msgid "كشف حساب عميل"
 msgstr ""
 
-#: .\settings\views.py:969 .\settings\views.py:1107
+#: .\settings\views.py:969 .\settings\views.py:1134
 msgid "كشف حساب مورد"
 msgstr ""
 
-#: .\settings\views.py:969 .\settings\views.py:1107
+#: .\settings\views.py:969 .\settings\views.py:1134
 msgid "Supplier Statement"
 msgstr ""
 
-#: .\settings\views.py:970 .\settings\views.py:1108
+#: .\settings\views.py:970 .\settings\views.py:1135
 msgid "تقرير المخزون"
 msgstr ""
 
-#: .\settings\views.py:970 .\settings\views.py:1108
+#: .\settings\views.py:970 .\settings\views.py:1135
 #: .\templates\inventory\list.html:238 .\templates\inventory\list.html:715
 #: .\templates\inventory\list.html:719 .\templates\inventory\list.html:783
 msgid "Inventory Report"
 msgstr ""
 
-#: .\settings\views.py:971 .\settings\views.py:1109
+#: .\settings\views.py:971 .\settings\views.py:1136
 msgid "تقرير مالي"
 msgstr ""
 
-#: .\settings\views.py:971 .\settings\views.py:1109
+#: .\settings\views.py:971 .\settings\views.py:1136
 msgid "Financial Report"
 msgstr ""
 
@@ -5586,15 +5615,23 @@ msgstr ""
 msgid "الإعدادات غير موجودة"
 msgstr ""
 
-#: .\settings\views.py:1085
+#: .\settings\views.py:1095
+msgid "محاولة وصول مرفوضة لصفحة تصميم الطباعة - صلاحية غير متوفرة"
+msgstr "محاولة وصول مرفوضة لصفحة تصميم الطباعة - صلاحية غير متوفرة"
+
+#: .\settings\views.py:1100
 msgid "ليس لديك صلاحية للوصول لتصميم الطباعة."
 msgstr ""
 
-#: .\settings\views.py:1228
+#: .\settings\views.py:1115
+msgid "دخول إلى صفحة تصميم الطباعة"
+msgstr "دخول إلى صفحة تصميم الطباعة"
+
+#: .\settings\views.py:1255
 msgid "ليس لديك صلاحية للوصول لإعدادات JoFotara."
 msgstr ""
 
-#: .\settings\views.py:1273
+#: .\settings\views.py:1300
 msgid "تم حفظ إعدادات JoFotara بنجاح"
 msgstr ""
 
@@ -5604,13 +5641,12 @@ msgstr ""
 #: .\templates\banks\account_edit.html:101
 #: .\templates\banks\bank_cashbox_transfer_add.html:164
 #: .\templates\banks\cashbox_transfer_detail.html:126
-#: .\templates\customers\add.html:104
-#: .\templates\customers\customer_list.html:178
-#: .\templates\customers\delete.html:94 .\templates\customers\edit.html:98
+#: .\templates\customers\add.html:104 .\templates\customers\delete.html:94
+#: .\templates\customers\edit.html:98
 #: .\templates\customers\supplier_list.html:5
 #: .\templates\customers\supplier_list.html:83
 #: .\templates\customers\supplier_list.html:96
-#: .\templates\customers\supplier_list.html:189
+#: .\templates\customers\supplier_list.html:201
 #: .\templates\customers\transactions.html:148
 #: .\templates\customers\transactions.html:267
 #: .\templates\customers\transactions.html:539
@@ -5771,29 +5807,20 @@ msgstr "طباعة"
 #: .\templates\base.html:2330 .\templates\core\notifications.html:273
 #: .\templates\core\notifications.html:277
 #: .\templates\core\notifications.html:295 .\templates\customers\add.html:190
-#: .\templates\customers\add.html:199
-#: .\templates\customers\customer_list.html:196
-#: .\templates\customers\customer_list.html:220
-#: .\templates\customers\customer_list.html:403
-#: .\templates\customers\customer_list.html:404
-#: .\templates\customers\customer_list.html:420
-#: .\templates\customers\customer_list.html:475
-#: .\templates\customers\customer_list.html:532
-#: .\templates\customers\customer_list.html:543
-#: .\templates\customers\customer_list.html:637
-#: .\templates\customers\delete.html:148 .\templates\customers\edit.html:185
-#: .\templates\customers\edit.html:212 .\templates\customers\edit.html:216
-#: .\templates\customers\list.html:112 .\templates\customers\list.html:114
-#: .\templates\customers\list.html:128 .\templates\customers\list.html:130
-#: .\templates\customers\list.html:157 .\templates\customers\list.html:163
-#: .\templates\customers\list.html:188 .\templates\customers\list.html:190
-#: .\templates\customers\list.html:191 .\templates\customers\list.html:255
-#: .\templates\customers\list.html:256 .\templates\customers\list.html:291
-#: .\templates\customers\supplier_list.html:310
-#: .\templates\customers\supplier_list.html:367
-#: .\templates\customers\supplier_list.html:424
-#: .\templates\customers\supplier_list.html:435
-#: .\templates\customers\supplier_list.html:529
+#: .\templates\customers\add.html:199 .\templates\customers\delete.html:148
+#: .\templates\customers\edit.html:185 .\templates\customers\edit.html:212
+#: .\templates\customers\edit.html:216 .\templates\customers\list.html:112
+#: .\templates\customers\list.html:114 .\templates\customers\list.html:128
+#: .\templates\customers\list.html:130 .\templates\customers\list.html:157
+#: .\templates\customers\list.html:163 .\templates\customers\list.html:188
+#: .\templates\customers\list.html:190 .\templates\customers\list.html:191
+#: .\templates\customers\list.html:255 .\templates\customers\list.html:256
+#: .\templates\customers\list.html:291
+#: .\templates\customers\supplier_list.html:322
+#: .\templates\customers\supplier_list.html:379
+#: .\templates\customers\supplier_list.html:436
+#: .\templates\customers\supplier_list.html:447
+#: .\templates\customers\supplier_list.html:541
 #: .\templates\customers\transactions.html:5
 #: .\templates\customers\transactions.html:139
 #: .\templates\customers\transactions.html:361
@@ -5889,14 +5916,10 @@ msgstr "لا"
 #: .\templates\accounts\transaction_list.html:286
 #: .\templates\banks\bank_cashbox_transfer_add.html:577
 #: .\templates\base.html:2163 .\templates\base.html:2164
-#: .\templates\base.html:2165 .\templates\customers\customer_list.html:648
-#: .\templates\customers\customer_list.html:649
-#: .\templates\customers\customer_list.html:653
-#: .\templates\customers\customer_list.html:654
-#: .\templates\customers\supplier_list.html:540
-#: .\templates\customers\supplier_list.html:541
-#: .\templates\customers\supplier_list.html:545
-#: .\templates\customers\supplier_list.html:546
+#: .\templates\base.html:2165 .\templates\customers\supplier_list.html:552
+#: .\templates\customers\supplier_list.html:553
+#: .\templates\customers\supplier_list.html:557
+#: .\templates\customers\supplier_list.html:558
 #: .\templates\customers\transactions.html:542
 #: .\templates\customers\transactions.html:550
 #: .\templates\inventory\list.html:630
@@ -5986,8 +6009,7 @@ msgstr ""
 
 #: .\templates\accounts\transaction_list.html:230
 #: .\templates\core\audit_log.html:184
-#: .\templates\customers\customer_list.html:424
-#: .\templates\customers\supplier_list.html:330
+#: .\templates\customers\supplier_list.html:342
 #: .\templates\hr\attendance_list.html:240 .\templates\hr\contract_list.html:95
 #: .\templates\hr\department_list.html:90 .\templates\hr\employee_list.html:165
 #: .\templates\hr\leave_request_list.html:97
@@ -6005,9 +6027,7 @@ msgstr ""
 #: .\templates\cashboxes\cashbox_detail.html:129
 #: .\templates\cashboxes\transfer_list.html:148
 #: .\templates\core\audit_log.html:189 .\templates\core\notifications.html:222
-#: .\templates\customers\customer_list.html:427
-#: .\templates\customers\customer_list.html:431
-#: .\templates\customers\supplier_list.html:333
+#: .\templates\customers\supplier_list.html:345
 #: .\templates\customers\transactions.html:388
 #: .\templates\financial_reports\income_statement.html:42
 #: .\templates\financial_reports\income_statement.html:45
@@ -6033,9 +6053,7 @@ msgstr ""
 #: .\templates\cashboxes\cashbox_detail.html:147
 #: .\templates\cashboxes\transfer_list.html:166
 #: .\templates\core\audit_log.html:203 .\templates\core\notifications.html:234
-#: .\templates\customers\customer_list.html:449
-#: .\templates\customers\customer_list.html:456
-#: .\templates\customers\supplier_list.html:345
+#: .\templates\customers\supplier_list.html:357
 #: .\templates\customers\transactions.html:397
 #: .\templates\hr\attendance_list.html:259
 #: .\templates\hr\contract_list.html:110
@@ -6060,10 +6078,8 @@ msgid "Next"
 msgstr ""
 
 #: .\templates\accounts\transaction_list.html:246
-#: .\templates\core\audit_log.html:208
-#: .\templates\customers\customer_list.html:452
-#: .\templates\customers\list.html:282
-#: .\templates\customers\supplier_list.html:348
+#: .\templates\core\audit_log.html:208 .\templates\customers\list.html:282
+#: .\templates\customers\supplier_list.html:360
 #: .\templates\hr\attendance_list.html:264
 #: .\templates\hr\contract_list.html:113
 #: .\templates\hr\department_list.html:108
@@ -6227,7 +6243,7 @@ msgstr ""
 #: .\templates\assets_liabilities\asset_detail.html:360
 #: .\templates\assets_liabilities\liability_create.html:369
 #: .\templates\assets_liabilities\liability_create.html:413
-#: .\templates\backup\backup_restore.html:304
+#: .\templates\backup\backup_restore.html:306
 #: .\templates\banks\account_add.html:266
 #: .\templates\banks\account_list.html:519
 #: .\templates\banks\account_list.html:561
@@ -6368,11 +6384,12 @@ msgstr ""
 #: .\templates\cashboxes\cashbox_detail.html:168
 #: .\templates\cashboxes\cashbox_list.html:83
 #: .\templates\cashboxes\cashbox_list.html:84
-#: .\templates\customers\customer_list.html:325
+#: .\templates\customers\customer_list.html:248
+#: .\templates\customers\customer_list.html:299
 #: .\templates\customers\edit.html:93 .\templates\customers\edit.html:114
 #: .\templates\customers\edit.html:115
-#: .\templates\customers\supplier_list.html:236
-#: .\templates\customers\supplier_list.html:287
+#: .\templates\customers\supplier_list.html:248
+#: .\templates\customers\supplier_list.html:299
 #: .\templates\hr\contract_list.html:72
 #: .\templates\hr\department_detail.html:19
 #: .\templates\hr\department_list.html:67
@@ -6595,12 +6612,12 @@ msgstr "الاسم"
 
 #: .\templates\assets_liabilities\asset_list.html:138
 #: .\templates\assets_liabilities\liability_list.html:120
-#: .\templates\backup\backup_restore.html:196
-#: .\templates\backup\backup_restore.html:375
+#: .\templates\backup\backup_restore.html:198
+#: .\templates\backup\backup_restore.html:377
 #: .\templates\cashboxes\cashbox_list.html:56
 #: .\templates\cashboxes\transfer_list.html:101
-#: .\templates\customers\customer_list.html:352
-#: .\templates\customers\supplier_list.html:263
+#: .\templates\customers\customer_list.html:275
+#: .\templates\customers\supplier_list.html:275
 #: .\templates\hr\contract_list.html:33 .\templates\hr\dashboard.html:178
 #: .\templates\hr\department_detail.html:99
 #: .\templates\hr\department_list.html:33
@@ -6650,8 +6667,8 @@ msgstr ""
 
 #: .\templates\assets_liabilities\asset_list.html:190
 #: .\templates\assets_liabilities\liability_list.html:171
-#: .\templates\backup\backup_restore.html:250
-#: .\templates\backup\backup_restore.html:421
+#: .\templates\backup\backup_restore.html:252
+#: .\templates\backup\backup_restore.html:423
 #: .\templates\banks\account_transactions.html:259
 #: .\templates\banks\transfer_list.html:447
 #: .\templates\banks\transfer_list.html:449
@@ -6664,15 +6681,16 @@ msgstr ""
 #: .\templates\cashboxes\cashbox_list.html:92
 #: .\templates\cashboxes\cashbox_list.html:99
 #: .\templates\cashboxes\cashbox_list.html:259
-#: .\templates\customers\customer_list.html:331
+#: .\templates\customers\customer_list.html:254
+#: .\templates\customers\customer_list.html:305
 #: .\templates\customers\delete.html:5 .\templates\customers\delete.html:90
 #: .\templates\customers\delete.html:105 .\templates\customers\delete.html:107
 #: .\templates\customers\delete.html:120 .\templates\customers\delete.html:190
 #: .\templates\customers\delete.html:219 .\templates\customers\delete.html:224
 #: .\templates\customers\delete.html:259 .\templates\customers\delete.html:305
 #: .\templates\customers\edit.html:255 .\templates\customers\edit.html:292
-#: .\templates\customers\supplier_list.html:242
-#: .\templates\customers\supplier_list.html:293
+#: .\templates\customers\supplier_list.html:254
+#: .\templates\customers\supplier_list.html:305
 #: .\templates\customers\transactions.html:349
 #: .\templates\customers\transactions.html:516
 #: .\templates\customers\transactions.html:542
@@ -6817,14 +6835,13 @@ msgstr ""
 #: .\templates\base.html:1277 .\templates\base.html:1563
 #: .\templates\base.html:1607 .\templates\customers\add.html:100
 #: .\templates\customers\add.html:294 .\templates\customers\add.html:298
-#: .\templates\customers\customer_list.html:617
 #: .\templates\customers\list.html:190 .\templates\customers\list.html:208
 #: .\templates\customers\list.html:242
 #: .\templates\customers\supplier_list.html:92
-#: .\templates\customers\supplier_list.html:310
-#: .\templates\customers\supplier_list.html:313
-#: .\templates\customers\supplier_list.html:365
-#: .\templates\customers\supplier_list.html:509
+#: .\templates\customers\supplier_list.html:322
+#: .\templates\customers\supplier_list.html:325
+#: .\templates\customers\supplier_list.html:377
+#: .\templates\customers\supplier_list.html:521
 #: .\templates\customers\transactions.html:373
 #: .\templates\financial_reports\balance_sheet.html:8
 #: .\templates\financial_reports\cash_flow.html:8
@@ -6900,16 +6917,14 @@ msgstr "إضافة"
 #: .\templates\banks\bank_cashbox_transfer_add.html:155
 #: .\templates\banks\transfer_add.html:141
 #: .\templates\core\notifications.html:165 .\templates\customers\add.html:100
-#: .\templates\customers\add.html:294
-#: .\templates\customers\customer_list.html:613
-#: .\templates\customers\customer_list.html:645
-#: .\templates\customers\edit.html:115 .\templates\customers\list.html:232
-#: .\templates\customers\list.html:242 .\templates\customers\list.html:243
+#: .\templates\customers\add.html:294 .\templates\customers\edit.html:115
+#: .\templates\customers\list.html:232 .\templates\customers\list.html:242
+#: .\templates\customers\list.html:243
 #: .\templates\customers\supplier_list.html:92
-#: .\templates\customers\supplier_list.html:310
-#: .\templates\customers\supplier_list.html:365
-#: .\templates\customers\supplier_list.html:505
-#: .\templates\customers\supplier_list.html:537
+#: .\templates\customers\supplier_list.html:322
+#: .\templates\customers\supplier_list.html:377
+#: .\templates\customers\supplier_list.html:517
+#: .\templates\customers\supplier_list.html:549
 #: .\templates\customers\transactions.html:413
 #: .\templates\financial_reports\income_statement.html:238
 #: .\templates\financial_reports\trial_balance.html:173
@@ -6973,10 +6988,9 @@ msgstr "جديد"
 #: .\templates\cashboxes\cashbox_list.html:77
 #: .\templates\cashboxes\cashbox_list.html:78
 #: .\templates\cashboxes\transfer_list.html:623
-#: .\templates\customers\customer_list.html:645
 #: .\templates\customers\list.html:190 .\templates\customers\list.html:208
 #: .\templates\customers\list.html:256 .\templates\customers\list.html:267
-#: .\templates\customers\supplier_list.html:537
+#: .\templates\customers\supplier_list.html:549
 #: .\templates\customers\transactions.html:281
 #: .\templates\customers\transactions.html:361
 #: .\templates\customers\transactions.html:373
@@ -7049,7 +7063,7 @@ msgstr ""
 #: .\templates\assets_liabilities\dashboard.html:698
 #: .\templates\assets_liabilities\dashboard.html:901
 #: .\templates\assets_liabilities\dashboard.html:922
-#: .\templates\backup\backup_restore.html:1114 .\templates\base.html:1793
+#: .\templates\backup\backup_restore.html:1116 .\templates\base.html:1793
 #: .\templates\cashboxes\transfer_list.html:630
 #: .\templates\financial_reports\trial_balance.html:182
 #: .\templates\journal\account_list.html:54
@@ -7085,13 +7099,10 @@ msgstr ""
 #: .\templates\banks\cashbox_transfer_edit.html:112
 #: .\templates\banks\cashbox_transfer_edit.html:326 .\templates\base.html:2405
 #: .\templates\customers\add.html:246 .\templates\customers\add.html:273
-#: .\templates\customers\customer_list.html:581
-#: .\templates\customers\customer_list.html:613
-#: .\templates\customers\customer_list.html:643
 #: .\templates\customers\edit.html:259 .\templates\customers\edit.html:285
-#: .\templates\customers\supplier_list.html:473
-#: .\templates\customers\supplier_list.html:505
-#: .\templates\customers\supplier_list.html:535
+#: .\templates\customers\supplier_list.html:485
+#: .\templates\customers\supplier_list.html:517
+#: .\templates\customers\supplier_list.html:547
 #: .\templates\customers\transactions.html:453
 #: .\templates\customers\transactions.html:476
 #: .\templates\inventory\transfer_add.html:107
@@ -7507,7 +7518,7 @@ msgstr ""
 
 #: .\templates\backup\backup_restore.html:75
 #: .\templates\backup\backup_restore.html:94
-#: .\templates\backup\backup_restore.html:284
+#: .\templates\backup\backup_restore.html:286
 msgid "Restore Backup"
 msgstr ""
 
@@ -7516,115 +7527,117 @@ msgid "Select backup file"
 msgstr ""
 
 #: .\templates\backup\backup_restore.html:89
-#: .\templates\backup\backup_restore.html:298
+#: .\templates\backup\backup_restore.html:300
 msgid "Clear existing data before restore"
 msgstr ""
 
-#: .\templates\backup\backup_restore.html:165
+#: .\templates\backup\backup_restore.html:166
 msgid "Delete Data (Advanced)"
 msgstr "حذف البيانات (متقدم)"
 
-#: .\templates\backup\backup_restore.html:169
+#: .\templates\backup\backup_restore.html:170
 msgid ""
 "Select tables to delete data from. Dependent tables will be shown and cannot "
 "be deleted unless dependencies are selected as well."
-msgstr "اختر الجداول لحذف البيانات منها. الجداول التابعة ستظهر ولا يمكن حذفها إلا إذا تم اختيار التبعيات أيضاً."
+msgstr ""
+"اختر الجداول لحذف البيانات منها. الجداول التابعة ستظهر ولا يمكن حذفها إلا "
+"إذا تم اختيار التبعيات أيضاً."
 
-#: .\templates\backup\backup_restore.html:171
+#: .\templates\backup\backup_restore.html:172
 msgid "Loading tables..."
 msgstr "جاري تحميل الجداول..."
 
-#: .\templates\backup\backup_restore.html:174
+#: .\templates\backup\backup_restore.html:175
 msgid "Delete Selected Tables"
 msgstr "حذف الجداول المحددة"
 
-#: .\templates\backup\backup_restore.html:182
+#: .\templates\backup\backup_restore.html:184
 msgid "Existing Backups"
-msgstr ""
-
-#: .\templates\backup\backup_restore.html:192
-#: .\templates\backup\backup_restore.html:371
-msgid "Filename"
-msgstr ""
-
-#: .\templates\backup\backup_restore.html:193
-#: .\templates\backup\backup_restore.html:372
-msgid "Size"
 msgstr ""
 
 #: .\templates\backup\backup_restore.html:194
 #: .\templates\backup\backup_restore.html:373
+msgid "Filename"
+msgstr ""
+
+#: .\templates\backup\backup_restore.html:195
+#: .\templates\backup\backup_restore.html:374
+msgid "Size"
+msgstr ""
+
+#: .\templates\backup\backup_restore.html:196
+#: .\templates\backup\backup_restore.html:375
 #: .\templates\revenues_expenses\recurring_edit.html:226
 msgid "Created"
 msgstr ""
 
-#: .\templates\backup\backup_restore.html:210
-#: .\templates\backup\backup_restore.html:224
+#: .\templates\backup\backup_restore.html:212
+#: .\templates\backup\backup_restore.html:226
 msgid "Unknown"
 msgstr ""
 
-#: .\templates\backup\backup_restore.html:232
-#: .\templates\backup\backup_restore.html:408
+#: .\templates\backup\backup_restore.html:234
+#: .\templates\backup\backup_restore.html:410
 msgid "Download"
 msgstr ""
 
-#: .\templates\backup\backup_restore.html:240
-#: .\templates\backup\backup_restore.html:308
-#: .\templates\backup\backup_restore.html:414
+#: .\templates\backup\backup_restore.html:242
+#: .\templates\backup\backup_restore.html:310
+#: .\templates\backup\backup_restore.html:416
 msgid "Restore"
 msgstr ""
 
-#: .\templates\backup\backup_restore.html:264
-#: .\templates\backup\backup_restore.html:357
+#: .\templates\backup\backup_restore.html:266
+#: .\templates\backup\backup_restore.html:359
 msgid "No backups found"
 msgstr ""
 
-#: .\templates\backup\backup_restore.html:265
-#: .\templates\backup\backup_restore.html:358
+#: .\templates\backup\backup_restore.html:267
+#: .\templates\backup\backup_restore.html:360
 msgid "Create your first backup using the form above"
 msgstr ""
 
-#: .\templates\backup\backup_restore.html:289
+#: .\templates\backup\backup_restore.html:291
 msgid "Are you sure you want to restore this backup?"
 msgstr ""
 
-#: .\templates\backup\backup_restore.html:292
+#: .\templates\backup\backup_restore.html:294
 msgid "Warning:"
 msgstr ""
 
-#: .\templates\backup\backup_restore.html:293
+#: .\templates\backup\backup_restore.html:295
 msgid "This action will replace existing data and cannot be undone!"
 msgstr ""
 
-#: .\templates\backup\backup_restore.html:1111
+#: .\templates\backup\backup_restore.html:1113
 msgid "Failed to load tables"
 msgstr ""
 
-#: .\templates\backup\backup_restore.html:1114
+#: .\templates\backup\backup_restore.html:1116
 msgid "Records"
 msgstr ""
 
-#: .\templates\backup\backup_restore.html:1114
+#: .\templates\backup\backup_restore.html:1116
 msgid "Dependents"
 msgstr ""
 
-#: .\templates\backup\backup_restore.html:1114
+#: .\templates\backup\backup_restore.html:1116
 msgid "Safe to delete"
 msgstr ""
 
-#: .\templates\backup\backup_restore.html:1118
+#: .\templates\backup\backup_restore.html:1120
 msgid "Has dependents"
 msgstr ""
 
-#: .\templates\backup\backup_restore.html:1132
+#: .\templates\backup\backup_restore.html:1134
 msgid "Error loading deletable tables"
 msgstr ""
 
-#: .\templates\backup\backup_restore.html:1196
+#: .\templates\backup\backup_restore.html:1198
 msgid "Please select at least one table to delete"
 msgstr ""
 
-#: .\templates\backup\backup_restore.html:1212
+#: .\templates\backup\backup_restore.html:1214
 #, fuzzy
 #| msgid "Are you sure you want to change the status of this recurring item?"
 msgid ""
@@ -7632,31 +7645,31 @@ msgid ""
 "undone."
 msgstr "هل أنت متأكد من أنك تريد تغيير حالة هذا العنصر المتكرر؟"
 
-#: .\templates\backup\backup_restore.html:1218
+#: .\templates\backup\backup_restore.html:1220
 msgid "CSRF token missing. Please reload the page."
 msgstr ""
 
-#: .\templates\backup\backup_restore.html:1241
+#: .\templates\backup\backup_restore.html:1243
 msgid "Selected tables deleted successfully"
 msgstr ""
 
-#: .\templates\backup\backup_restore.html:1244
+#: .\templates\backup\backup_restore.html:1246
 msgid "audit entries reassigned to"
 msgstr ""
 
-#: .\templates\backup\backup_restore.html:1244
+#: .\templates\backup\backup_restore.html:1246
 msgid "table"
 msgstr ""
 
-#: .\templates\backup\backup_restore.html:1255
+#: .\templates\backup\backup_restore.html:1257
 msgid "Cannot delete; blocked by dependencies:"
 msgstr ""
 
-#: .\templates\backup\backup_restore.html:1257
+#: .\templates\backup\backup_restore.html:1259
 msgid "Error:"
 msgstr ""
 
-#: .\templates\backup\backup_restore.html:1263
+#: .\templates\backup\backup_restore.html:1265
 msgid "Error deleting tables:"
 msgstr ""
 
@@ -7689,7 +7702,6 @@ msgstr ""
 #: .\templates\base.html:882 .\templates\base.html:909
 #: .\templates\base.html:939 .\templates\core\dashboard.html:6
 #: .\templates\core\dashboard.html:125
-#: .\templates\customers\customer_list.html:178
 #: .\templates\customers\supplier_list.html:96
 #: .\templates\inventory\warehouse_detail.html:121
 #: .\templates\inventory\warehouse_edit.html:95
@@ -7862,22 +7874,15 @@ msgstr ""
 #: .\templates\cashboxes\transfer_list.html:400
 #: .\templates\customers\add.html:146 .\templates\customers\add.html:186
 #: .\templates\customers\add.html:214 .\templates\customers\add.html:220
-#: .\templates\customers\customer_list.html:481
-#: .\templates\customers\customer_list.html:484
-#: .\templates\customers\customer_list.html:524
-#: .\templates\customers\customer_list.html:527
-#: .\templates\customers\customer_list.html:555
-#: .\templates\customers\customer_list.html:558
-#: .\templates\customers\customer_list.html:563
 #: .\templates\customers\edit.html:141 .\templates\customers\edit.html:181
 #: .\templates\customers\edit.html:227 .\templates\customers\edit.html:233
-#: .\templates\customers\supplier_list.html:373
-#: .\templates\customers\supplier_list.html:376
-#: .\templates\customers\supplier_list.html:416
-#: .\templates\customers\supplier_list.html:419
-#: .\templates\customers\supplier_list.html:447
-#: .\templates\customers\supplier_list.html:450
-#: .\templates\customers\supplier_list.html:455
+#: .\templates\customers\supplier_list.html:385
+#: .\templates\customers\supplier_list.html:388
+#: .\templates\customers\supplier_list.html:428
+#: .\templates\customers\supplier_list.html:431
+#: .\templates\customers\supplier_list.html:459
+#: .\templates\customers\supplier_list.html:462
+#: .\templates\customers\supplier_list.html:467
 #: .\templates\customers\transactions.html:172
 #: .\templates\inventory\warehouse_delete.html:84
 #: .\templates\inventory\warehouse_delete.html:88
@@ -7942,7 +7947,7 @@ msgstr ""
 #: .\templates\banks\transfer_list.html:310
 #: .\templates\cashboxes\cashbox_list.html:18
 #: .\templates\cashboxes\transfer_list.html:18
-#: .\templates\customers\customer_list.html:170
+#: .\templates\customers\customer_list.html:88
 #: .\templates\customers\list.html:118
 #: .\templates\customers\supplier_list.html:88
 #: .\templates\payments\voucher_list.html:16
@@ -8217,7 +8222,6 @@ msgid "Bank Account Transactions"
 msgstr ""
 
 #: .\templates\banks\account_transactions.html:78
-#: .\templates\customers\customer_list.html:328
 #: .\templates\customers\delete.html:210
 #: .\templates\customers\transactions.html:190
 #: .\templates\customers\transactions.html:224
@@ -8634,9 +8638,9 @@ msgid "Savings Account"
 msgstr ""
 
 #: .\templates\banks\transfer_list.html:386
-#: .\templates\customers\customer_list.html:220
+#: .\templates\customers\customer_list.html:150
 #: .\templates\customers\list.html:191 .\templates\customers\list.html:209
-#: .\templates\customers\supplier_list.html:138
+#: .\templates\customers\supplier_list.html:150
 #: .\templates\customers\transactions.html:224
 #: .\templates\hr\attendance_list.html:97
 #: .\templates\hr\reports\attendance_report.html:63
@@ -8875,8 +8879,8 @@ msgid "Add Customer/Supplier"
 msgstr "إضافة عميل/مورد"
 
 #: .\templates\base.html:760 .\templates\customers\customer_list.html:5
-#: .\templates\customers\customer_list.html:165
-#: .\templates\customers\customer_list.html:271
+#: .\templates\customers\customer_list.html:83
+#: .\templates\customers\customer_list.html:201
 msgid "Customers List"
 msgstr "قائمة العملاء"
 
@@ -9158,8 +9162,6 @@ msgid "Print Date:"
 msgstr ""
 
 #: .\templates\base.html:1553 .\templates\cashboxes\transfer_list.html:378
-#: .\templates\customers\customer_list.html:86
-#: .\templates\customers\customer_list.html:110
 #: .\templates\inventory\warehouse_edit.html:192
 #: .\templates\journal\account_form.html:391
 #: .\templates\products\product_edit.html:356
@@ -10150,54 +10152,29 @@ msgid "No documents with taxes found"
 msgstr ""
 
 #: .\templates\customers\add.html:152 .\templates\customers\add.html:266
-#: .\templates\customers\customer_list.html:228
-#: .\templates\customers\customer_list.html:489
+#: .\templates\customers\customer_list.html:158
 #: .\templates\customers\edit.html:147 .\templates\customers\edit.html:280
 msgid "Customer Name"
 msgstr ""
 
 #: .\templates\customers\add.html:155 .\templates\customers\add.html:157
-#: .\templates\customers\customer_list.html:495
+#: .\templates\customers\customer_list.html:399
 #: .\templates\customers\edit.html:150 .\templates\customers\edit.html:152
-#: .\templates\customers\supplier_list.html:387
+#: .\templates\customers\supplier_list.html:399
 #: .\templates\hr\employee_detail.html:110
 msgid "Phone Number"
 msgstr ""
 
 #: .\templates\customers\add.html:290
-#: .\templates\customers\customer_list.html:174
-#: .\templates\customers\customer_list.html:404
-#: .\templates\customers\customer_list.html:473
+#: .\templates\customers\customer_list.html:92
+#: .\templates\customers\customer_list.html:377
 #: .\templates\customers\list.html:231
 msgid "Add New Customer"
 msgstr ""
 
-#: .\templates\customers\customer_list.html:190
-#: .\templates\customers\list.html:145
-msgid "Total Customers"
-msgstr ""
-
-#: .\templates\customers\customer_list.html:234
+#: .\templates\customers\customer_list.html:164
 #: .\templates\receipts\receipt_list.html:32
 msgid "All Customers"
-msgstr ""
-
-#: .\templates\customers\customer_list.html:346
-#: .\templates\products\category_list.html:281
-msgid "Sequence Number"
-msgstr ""
-
-#: .\templates\customers\customer_list.html:407
-msgid "Add First Customer"
-msgstr ""
-
-#: .\templates\customers\customer_list.html:654
-#: .\templates\customers\supplier_list.html:546
-#: .\templates\products\product_edit.html:586
-#: .\templates\products\product_list.html:1135
-#: .\templates\purchases\invoice_add.html:805
-#: .\templates\sales\invoice_add.html:949 .\templates\search\search.html:298
-msgid "Please try again"
 msgstr ""
 
 #: .\templates\customers\edit.html:6
@@ -10206,6 +10183,18 @@ msgstr ""
 
 #: .\templates\customers\list.html:5
 msgid "Customers and Suppliers"
+msgstr ""
+
+#: .\templates\customers\list.html:145
+msgid "Total Customers"
+msgstr ""
+
+#: .\templates\customers\supplier_list.html:558
+#: .\templates\products\product_edit.html:586
+#: .\templates\products\product_list.html:1135
+#: .\templates\purchases\invoice_add.html:805
+#: .\templates\sales\invoice_add.html:949 .\templates\search\search.html:298
+msgid "Please try again"
 msgstr ""
 
 #: .\templates\customers\transactions.html:144
@@ -13015,6 +13004,10 @@ msgstr ""
 
 #: .\templates\products\category_list.html:254
 msgid "Sub"
+msgstr ""
+
+#: .\templates\products\category_list.html:281
+msgid "Sequence Number"
 msgstr ""
 
 #: .\templates\products\category_list.html:300
@@ -16342,9 +16335,6 @@ msgstr ""
 #~ msgid "تم حذف حركة المخزون رقم %(movement_number)s بنجاح"
 #~ msgstr "تم حذف حركة المخزون رقم %(movement_number)s بنجاح"
 
-#~ msgid "ليس لديك صلاحية لحذف حركات المخزون"
-#~ msgstr "ليس لديك صلاحية لحذف حركات المخزون"
-
 #~ msgid "تم حذف حركة مخزون رقم: %(movement_number)s"
 #~ msgstr "تم حذف حركة مخزون رقم: %(movement_number)s"
 
@@ -16542,19 +16532,3 @@ msgstr ""
 
 #~ msgid "Contact Us"
 #~ msgstr "اتصل بنا"
-
-# Print Design Permissions
-msgid "Can access print design settings"
-msgstr "يمكن الوصول لإعدادات تصميم الطباعة"
-
-msgid "Settings Permission Manager"
-msgstr "مدير صلاحيات الإعدادات"
-
-msgid "Settings Permission Managers"
-msgstr "مديرو صلاحيات الإعدادات"
-
-msgid "محاولة وصول مرفوضة لصفحة تصميم الطباعة - صلاحية غير متوفرة"
-msgstr "محاولة وصول مرفوضة لصفحة تصميم الطباعة - صلاحية غير متوفرة"
-
-msgid "دخول إلى صفحة تصميم الطباعة"
-msgstr "دخول إلى صفحة تصميم الطباعة"

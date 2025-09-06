@@ -92,6 +92,7 @@ TEMPLATES = [
                 'core.context_processors.company_context',
                 'core.context_processors.notifications_context',
                 'core.context_processors.language_context',
+                'core.context_processors.active_menu_context',
                 # expose superadmin settings globally
                 'settings.context_processors.superadmin_context',
             ],
