@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-06 13:44+0300\n"
+"POT-Creation-Date: 2025-09-07 23:46+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -83,7 +83,7 @@ msgstr "رقم الحركة"
 #: .\cashboxes\models.py:105 .\cashboxes\models.py:284 .\hr\models.py:239
 #: .\inventory\models.py:69 .\inventory\models.py:115 .\purchases\models.py:18
 #: .\purchases\models.py:179 .\reports\views.py:157 .\reports\views.py:193
-#: .\reports\views.py:340 .\reports\views.py:375
+#: .\reports\views.py:378 .\reports\views.py:416
 #: .\revenues_expenses\models.py:56 .\sales\models.py:20 .\sales\models.py:96
 #: .\sales\models.py:151 .\templates\accounts\customer_statement.html:118
 #: .\templates\accounts\transaction_list.html:132
@@ -143,19 +143,20 @@ msgstr "رقم الحركة"
 #: .\templates\receipts\receipt_detail.html:216
 #: .\templates\receipts\receipt_list.html:89
 #: .\templates\reports\customer_statement.html:74
-#: .\templates\reports\sales_by_salesperson.html:74
+#: .\templates\reports\sales_by_salesperson.html:75
 #: .\templates\revenues_expenses\dashboard.html:158
 #: .\templates\revenues_expenses\entry_detail.html:115
 #: .\templates\revenues_expenses\entry_list.html:75
 #: .\templates\revenues_expenses\recurring_detail.html:291
 #: .\templates\sales\creditnote_add.html:20
+#: .\templates\sales\creditnote_delete.html:28
 #: .\templates\sales\creditnote_detail.html:41
-#: .\templates\sales\creditnote_list.html:13
+#: .\templates\sales\creditnote_edit.html:32
 #: .\templates\sales\invoice_delete.html:77
 #: .\templates\sales\invoice_edit.html:116
 #: .\templates\sales\invoice_list.html:211
 #: .\templates\sales\invoice_list.html:346
-#: .\templates\sales\return_add.html:164 .\templates\sales\return_add.html:321
+#: .\templates\sales\return_add.html:206
 #: .\templates\sales\return_delete.html:77
 #: .\templates\sales\return_detail.html:117
 #: .\templates\sales\return_edit.html:113
@@ -247,7 +248,7 @@ msgstr "الاتجاه"
 #: .\templates\revenues_expenses\recurring_list.html:243
 #: .\templates\sales\invoice_delete.html:94
 #: .\templates\sales\invoice_list.html:216
-#: .\templates\sales\return_add.html:460
+#: .\templates\sales\return_add.html:560
 #: .\templates\sales\return_delete.html:109
 #: .\templates\sales\return_detail.html:96
 #: .\templates\sales\sales_report.html:157
@@ -346,7 +347,7 @@ msgstr "الوصف"
 #: .\receipts\models.py:49 .\receipts\models.py:115 .\receipts\models.py:135
 #: .\sales\models.py:34 .\sales\models.py:103
 #: .\templates\banks\account_add.html:252
-#: .\templates\banks\account_detail.html:324
+#: .\templates\banks\account_detail.html:324 .\templates\customers\add.html:218
 #: .\templates\hr\attendance_list.html:191
 #: .\templates\hr\employee_detail.html:208
 #: .\templates\inventory\low_stock.html:383
@@ -361,7 +362,9 @@ msgstr "الوصف"
 #: .\templates\receipts\receipt_detail.html:176
 #: .\templates\receipts\receipt_detail.html:266
 #: .\templates\sales\creditnote_add.html:36
-#: .\templates\sales\return_add.html:258 .\templates\sales\return_add.html:260
+#: .\templates\sales\creditnote_delete.html:40
+#: .\templates\sales\creditnote_edit.html:48
+#: .\templates\sales\return_add.html:317 .\templates\sales\return_add.html:319
 #: .\templates\sales\return_edit.html:162
 msgid "Notes"
 msgstr "ملاحظات"
@@ -398,6 +401,7 @@ msgstr "الرصيد بعد الحركة"
 #: .\templates\receipts\receipt_list.html:94
 #: .\templates\revenues_expenses\entry_detail.html:198
 #: .\templates\revenues_expenses\recurring_detail.html:243
+#: .\templates\sales\creditnote_delete.html:37
 msgid "Created By"
 msgstr "أنشأ بواسطة"
 
@@ -423,7 +427,8 @@ msgstr "أنشأ بواسطة"
 #: .\templates\journal\entry_confirm_delete.html:97
 #: .\templates\receipts\receipt_detail.html:110
 #: .\templates\revenues_expenses\entry_detail.html:205
-#: .\templates\revenues_expenses\recurring_detail.html:248 .\users\models.py:21
+#: .\templates\revenues_expenses\recurring_detail.html:248
+#: .\templates\sales\creditnote_delete.html:38 .\users\models.py:21
 #: .\users\models.py:154 .\users\models.py:169
 msgid "Created At"
 msgstr "تاريخ الإنشاء"
@@ -522,7 +527,7 @@ msgstr "قابل للإهلاك"
 #: .\templates\banks\account_detail.html:164
 #: .\templates\banks\account_edit.html:246
 #: .\templates\banks\account_edit.html:249
-#: .\templates\banks\account_list.html:339 .\templates\customers\add.html:226
+#: .\templates\banks\account_list.html:339
 #: .\templates\customers\customer_list.html:245
 #: .\templates\customers\customer_list.html:294
 #: .\templates\customers\delete.html:180 .\templates\customers\edit.html:239
@@ -580,7 +585,7 @@ msgstr "قابل للإهلاك"
 #: .\templates\revenues_expenses\recurring_list.html:127
 #: .\templates\revenues_expenses\recurring_list.html:183
 #: .\templates\revenues_expenses\recurring_list.html:277
-#: .\templates\sales\invoice_add.html:1141
+#: .\templates\sales\invoice_add.html:1176
 #: .\templates\settings\currency_add.html:85
 #: .\templates\settings\currency_add.html:88
 #: .\templates\settings\currency_edit.html:87
@@ -1059,7 +1064,6 @@ msgstr ""
 #: .\templates\banks\transfer_add.html:434
 #: .\templates\cashboxes\cashbox_detail.html:30
 #: .\templates\cashboxes\cashbox_list.html:51
-#: .\templates\customers\add.html:199 .\templates\customers\add.html:205
 #: .\templates\customers\customer_list.html:170
 #: .\templates\customers\customer_list.html:173
 #: .\templates\customers\customer_list.html:174
@@ -1092,11 +1096,11 @@ msgstr ""
 #: .\templates\purchases\purchase_statement.html:89
 #: .\templates\purchases\purchase_statement.html:144
 #: .\templates\receipts\check_collect.html:156
-#: .\templates\sales\invoice_add.html:953
-#: .\templates\sales\invoice_add.html:980
-#: .\templates\sales\invoice_add.html:997
-#: .\templates\sales\invoice_add.html:1116
-#: .\templates\sales\invoice_add.html:1122
+#: .\templates\sales\invoice_add.html:988
+#: .\templates\sales\invoice_add.html:1015
+#: .\templates\sales\invoice_add.html:1032
+#: .\templates\sales\invoice_add.html:1151
+#: .\templates\sales\invoice_add.html:1157
 #: .\templates\sales\sales_return_statement.html:87
 #: .\templates\sales\sales_return_statement.html:142
 #: .\templates\sales\sales_statement.html:87
@@ -1105,9 +1109,10 @@ msgid "Balance"
 msgstr "الرصيد"
 
 #: .\banks\models.py:16 .\templates\cashboxes\cashbox_list.html:144
+#: .\templates\customers\add.html:199
 #: .\templates\purchases\invoice_add.html:972
 msgid "Initial Balance"
-msgstr ""
+msgstr "الرصيد الابتدائي"
 
 #: .\banks\models.py:16
 msgid "Initial account balance at the start of operations"
@@ -1122,7 +1127,7 @@ msgstr ""
 #: .\templates\banks\account_list.html:6
 #: .\templates\banks\account_list.html:233
 #: .\templates\banks\account_list.html:238
-#: .\templates\banks\account_transactions.html:76 .\templates\base.html:641
+#: .\templates\banks\account_transactions.html:76 .\templates\base.html:644
 msgid "Bank Accounts"
 msgstr "الحسابات المصرفية"
 
@@ -1255,7 +1260,7 @@ msgstr ""
 
 #: .\banks\views.py:481
 msgid "You do not have permission to add bank transfers."
-msgstr ""
+msgstr "ليس لديك الصلاحية لإضافة التحويلات البنكية."
 
 #: .\banks\views.py:499
 msgid ""
@@ -1345,9 +1350,9 @@ msgstr ""
 #: .\templates\purchases\invoice_add.html:180
 #: .\templates\receipts\receipt_add.html:54
 #: .\templates\receipts\receipt_list.html:45
-#: .\templates\sales\return_add.html:248
+#: .\templates\sales\return_add.html:307
 msgid "Cash"
-msgstr ""
+msgstr "نقدي"
 
 #: .\cashboxes\models.py:128 .\payments\models.py:18
 #: .\templates\cashboxes\transfer_list.html:316
@@ -1611,23 +1616,29 @@ msgstr ""
 msgid ""
 "Cashbox \"{}\" was deleted successfully while preserving transfers and "
 "balances in other cashboxes"
-msgstr ""
+msgstr "الأرصدة في صناديق النقد الأخرى"
 
 #: .\cashboxes\views.py:703
 msgid "Cannot delete the cashbox due to protected related transactions"
 msgstr "لا يمكن حذف صندوق النقد بسبب المعاملات ذات الصلة المحمية"
 
 #: .\cashboxes\views.py:705
+#, fuzzy
+#| msgid "An error occurred while deleting the cashbox"
 msgid "An error occurred while deleting the cashbox: {}"
-msgstr ""
+msgstr "حدث خطأ أثناء حذف صندوق النقد"
 
 #: .\core\models.py:10 .\settings\models.py:83
+#, fuzzy
+#| msgid "رقم الحركة"
 msgid "اسم الشركة"
-msgstr ""
+msgstr "رقم الحركة"
 
 #: .\core\models.py:11
+#, fuzzy
+#| msgid "تاريخ الشراء"
 msgid "شعار الشركة"
-msgstr ""
+msgstr "تاريخ الشراء"
 
 #: .\core\models.py:13 .\core\models.py:290 .\customers\models.py:19
 #: .\inventory\models.py:14 .\settings\models.py:89
@@ -1635,7 +1646,7 @@ msgid "العنوان"
 msgstr ""
 
 #: .\core\models.py:14 .\customers\models.py:18 .\hr\forms.py:40
-#: .\hr\models.py:97 .\settings\models.py:87 .\templates\base.html:2132
+#: .\hr\models.py:97 .\settings\models.py:87 .\templates\base.html:2182
 #: .\templates\customers\customer_list.html:158
 #: .\templates\customers\customer_list.html:227
 #: .\templates\customers\customer_list.html:271
@@ -1648,7 +1659,7 @@ msgstr ""
 #: .\templates\purchases\invoice_add.html:924
 #: .\templates\purchases\invoice_detail.html:389
 #: .\templates\sales\creditnote_detail.html:66
-#: .\templates\sales\invoice_add.html:1068
+#: .\templates\sales\invoice_add.html:1103
 #: .\templates\sales\invoice_detail.html:79
 #: .\templates\settings\company.html:57
 #: .\templates\settings\company_fixed.html:56
@@ -1659,7 +1670,6 @@ msgstr ""
 
 #: .\core\models.py:15 .\customers\models.py:17 .\hr\forms.py:39
 #: .\hr\models.py:96 .\settings\models.py:88 .\templates\customers\add.html:160
-#: .\templates\customers\add.html:162
 #: .\templates\customers\customer_list.html:272
 #: .\templates\customers\customer_list.html:407
 #: .\templates\customers\delete.html:163 .\templates\customers\edit.html:155
@@ -1675,7 +1685,7 @@ msgstr ""
 #: .\templates\users\user_list.html:104 .\users\views.py:59
 #: .\users\views.py:195
 msgid "Email"
-msgstr ""
+msgstr "البريد الإلكتروني"
 
 #: .\core\models.py:16 .\customers\models.py:21 .\settings\models.py:85
 msgid "الرقم الضريبي"
@@ -1924,8 +1934,10 @@ msgid "المدينة"
 msgstr ""
 
 #: .\customers\models.py:22
+#, fuzzy
+#| msgid "مذكرة دين"
 msgid "حد الائتمان"
-msgstr ""
+msgstr "مذكرة دين"
 
 #: .\customers\models.py:30
 msgid "عميل/مورد"
@@ -2023,8 +2035,8 @@ msgstr ""
 msgid "Mobile"
 msgstr ""
 
-#: .\hr\forms.py:42 .\hr\models.py:99 .\templates\base.html:2133
-#: .\templates\customers\add.html:170 .\templates\customers\add.html:172
+#: .\hr\forms.py:42 .\hr\models.py:99 .\templates\base.html:2183
+#: .\templates\customers\add.html:170
 #: .\templates\customers\customer_list.html:419
 #: .\templates\customers\delete.html:136 .\templates\customers\edit.html:165
 #: .\templates\customers\edit.html:167
@@ -2042,14 +2054,14 @@ msgstr ""
 #: .\templates\purchases\invoice_add.html:944
 #: .\templates\purchases\invoice_detail.html:393
 #: .\templates\sales\creditnote_detail.html:74
-#: .\templates\sales\invoice_add.html:1088
+#: .\templates\sales\invoice_add.html:1123
 #: .\templates\sales\invoice_detail.html:87
 #: .\templates\settings\company.html:72
 #: .\templates\settings\company_fixed.html:71
 #: .\templates\settings\superadmin_management.html:10
 #: .\templates\settings\superadmin_management.html:257
 msgid "Address"
-msgstr ""
+msgstr "العنوان"
 
 #: .\hr\forms.py:43 .\hr\models.py:124
 msgid "Emergency Contact Name"
@@ -2232,9 +2244,9 @@ msgstr ""
 msgid "Department"
 msgstr ""
 
-#: .\hr\models.py:24 .\templates\base.html:999 .\templates\hr\dashboard.html:76
-#: .\templates\hr\dashboard.html:246 .\templates\hr\department_list.html:5
-#: .\templates\hr\department_list.html:15
+#: .\hr\models.py:24 .\templates\base.html:1005
+#: .\templates\hr\dashboard.html:76 .\templates\hr\dashboard.html:246
+#: .\templates\hr\department_list.html:5 .\templates\hr\department_list.html:15
 msgid "Departments"
 msgstr "الأقسام"
 
@@ -2255,7 +2267,7 @@ msgstr ""
 msgid "Position"
 msgstr ""
 
-#: .\hr\models.py:47 .\templates\base.html:1002
+#: .\hr\models.py:47 .\templates\base.html:1008
 #: .\templates\hr\department_detail.html:77 .\templates\hr\position_list.html:4
 #: .\templates\hr\position_list.html:14
 msgid "Positions"
@@ -2423,7 +2435,7 @@ msgstr ""
 #: .\templates\sales\invoice_list.html:221
 #: .\templates\sales\invoice_list.html:297
 #: .\templates\sales\invoice_list.html:348
-#: .\templates\sales\return_add.html:194
+#: .\templates\sales\return_add.html:237
 #: .\templates\settings\currency_list.html:34
 #: .\templates\users\user_list.html:107
 msgid "Status"
@@ -2445,7 +2457,7 @@ msgstr "الحالة"
 msgid "Employee"
 msgstr ""
 
-#: .\hr\models.py:135 .\templates\base.html:996
+#: .\hr\models.py:135 .\templates\base.html:1002
 #: .\templates\hr\department_detail.html:69
 #: .\templates\hr\employee_detail.html:50 .\templates\hr\employee_form.html:33
 #: .\templates\hr\employee_list.html:5 .\templates\hr\employee_list.html:27
@@ -2477,17 +2489,17 @@ msgstr ""
 #: .\templates\purchases\return_edit.html:68
 #: .\templates\purchases\return_list.html:130
 msgid "Expired"
-msgstr ""
+msgstr "منتهي الصلاحية"
 
 #: .\hr\models.py:195
 msgid "Draft"
-msgstr ""
+msgstr "مسودة"
 
 #: .\hr\models.py:201 .\templates\hr\contract_list.html:28
 #: .\templates\hr\employee_detail.html:191
 #: .\templates\hr\reports\contract_expiry_report.html:28
 msgid "Contract Type"
-msgstr ""
+msgstr "نوع العقد"
 
 #: .\hr\models.py:202 .\hr\models.py:321 .\hr\models.py:352
 #: .\templates\assets_liabilities\liability_create.html:273
@@ -2590,7 +2602,7 @@ msgstr ""
 msgid "Manual Entry"
 msgstr ""
 
-#: .\hr\models.py:253 .\templates\base.html:1005
+#: .\hr\models.py:253 .\templates\base.html:1011
 #: .\templates\hr\attendance_list.html:46
 msgid "Attendance"
 msgstr "الحضور"
@@ -2661,7 +2673,7 @@ msgstr ""
 msgid "Approved"
 msgstr ""
 
-#: .\hr\models.py:313 .\templates\base.html:2156
+#: .\hr\models.py:313 .\templates\base.html:2206
 #: .\templates\hr\reports\leave_summary_report.html:70
 msgid "Rejected"
 msgstr ""
@@ -2695,7 +2707,7 @@ msgstr ""
 msgid "Leave Request"
 msgstr ""
 
-#: .\hr\models.py:337 .\templates\base.html:1008
+#: .\hr\models.py:337 .\templates\base.html:1014
 #: .\templates\hr\leave_request_list.html:4
 #: .\templates\hr\leave_request_list.html:14
 msgid "Leave Requests"
@@ -2776,15 +2788,15 @@ msgstr ""
 #: .\templates\revenues_expenses\recurring_edit.html:126
 #: .\templates\sales\invoice_add.html:289
 msgid "Payment Method"
-msgstr ""
+msgstr "طريقة الدفع"
 
 #: .\hr\models.py:411
 msgid "Payroll Entry"
-msgstr ""
+msgstr "إدخال الرواتب"
 
 #: .\hr\models.py:412
 msgid "Payroll Entries"
-msgstr ""
+msgstr "إدخالات الرواتب"
 
 #: .\hr\models.py:436
 msgid "ID Copy"
@@ -2806,7 +2818,7 @@ msgstr ""
 #: .\templates\payments\voucher_list.html:54
 #: .\templates\purchases\return_add.html:78
 msgid "Other"
-msgstr ""
+msgstr "آخر"
 
 #: .\hr\models.py:445 .\templates\core\tax_report.html:176
 #: .\templates\core\tax_report.html:207
@@ -3330,7 +3342,7 @@ msgstr ""
 msgid "مجموع المدين يجب أن يساوي مجموع الدائن"
 msgstr ""
 
-#: .\journal\views.py:96 .\templates\base.html:651
+#: .\journal\views.py:96 .\templates\base.html:654
 #: .\templates\journal\account_list.html:6
 #: .\templates\journal\account_list.html:13
 msgid "Accounts List"
@@ -3493,7 +3505,7 @@ msgstr ""
 #: .\templates\revenues_expenses\recurring_list.html:145
 #: .\templates\sales\invoice_list.html:291 .\templates\sales\pos.html:1135
 #: .\templates\sales\pos.html:1471 .\templates\sales\pos.html:1480
-#: .\templates\sales\pos.html:1587 .\templates\sales\return_add.html:526
+#: .\templates\sales\pos.html:1587 .\templates\sales\return_add.html:626
 #: .\templates\sales\return_list.html:128 .\templates\search\search.html:217
 #: .\templates\search\search.html:223 .\templates\search\search.html:251
 #: .\templates\search\search.html:267 .\templates\search\search.html:275
@@ -3506,22 +3518,22 @@ msgstr "بحث"
 msgid "Voucher number, beneficiary, or description..."
 msgstr ""
 
-#: .\payments\forms.py:186 .\payments\models.py:39 .\reports\views.py:340
-#: .\reports\views.py:375 .\templates\payments\voucher_list.html:39
+#: .\payments\forms.py:186 .\payments\models.py:39 .\reports\views.py:378
+#: .\reports\views.py:416 .\templates\payments\voucher_list.html:39
 #: .\templates\payments\voucher_list.html:140
 #: .\templates\purchases\invoice_add.html:177
 #: .\templates\receipts\receipt_add.html:51
 #: .\templates\receipts\receipt_detail.html:51
 #: .\templates\receipts\receipt_list.html:41
 #: .\templates\receipts\receipt_list.html:91
-#: .\templates\reports\sales_by_salesperson.html:77
+#: .\templates\reports\sales_by_salesperson.html:78
 msgid "Payment Type"
-msgstr ""
+msgstr "نوع الدفع"
 
 #: .\payments\forms.py:187 .\payments\forms.py:194
 #: .\templates\accounts\transaction_list.html:36
-#: .\templates\accounts\transaction_list.html:47 .\templates\base.html:2270
-#: .\templates\base.html:2272 .\templates\cashboxes\transfer_list.html:57
+#: .\templates\accounts\transaction_list.html:47 .\templates\base.html:2320
+#: .\templates\base.html:2322 .\templates\cashboxes\transfer_list.html:57
 #: .\templates\core\notifications.html:81
 #: .\templates\payments\voucher_list.html:41
 #: .\templates\payments\voucher_list.html:50
@@ -3536,7 +3548,7 @@ msgstr ""
 #: .\templates\payments\voucher_list.html:48
 #: .\templates\payments\voucher_list.html:139
 msgid "Voucher Type"
-msgstr ""
+msgstr "نوع المستند"
 
 #: .\payments\forms.py:200 .\templates\accounts\customer_statement.html:42
 #: .\templates\accounts\transaction_list.html:56
@@ -3563,7 +3575,7 @@ msgstr ""
 #: .\templates\purchases\return_list.html:53
 #: .\templates\receipts\receipt_list.html:53
 #: .\templates\revenues_expenses\entry_list.html:47
-#: .\templates\sales\invoice_add.html:887
+#: .\templates\sales\invoice_add.html:922
 #: .\templates\sales\invoice_list.html:308
 #: .\templates\sales\return_list.html:134
 #: .\templates\sales\return_list.html:322
@@ -3618,7 +3630,7 @@ msgstr ""
 
 #: .\payments\models.py:24 .\templates\payments\voucher_list.html:52
 msgid "Expenses"
-msgstr ""
+msgstr "نفقات"
 
 #: .\payments\models.py:31
 msgid "Cleared"
@@ -3639,9 +3651,7 @@ msgstr "تاريخ الايصال"
 #: .\payments\models.py:44 .\templates\assets_liabilities\asset_create.html:305
 #: .\templates\assets_liabilities\asset_detail.html:163
 #: .\templates\customers\add.html:100 .\templates\customers\add.html:129
-#: .\templates\customers\add.html:136 .\templates\customers\add.html:152
-#: .\templates\customers\add.html:172 .\templates\customers\add.html:177
-#: .\templates\customers\add.html:266 .\templates\customers\add.html:294
+#: .\templates\customers\add.html:136 .\templates\customers\add.html:294
 #: .\templates\customers\add.html:298 .\templates\customers\delete.html:5
 #: .\templates\customers\delete.html:90 .\templates\customers\edit.html:93
 #: .\templates\customers\edit.html:147 .\templates\customers\edit.html:167
@@ -3690,15 +3700,15 @@ msgstr "تاريخ الايصال"
 #: .\templates\purchases\return_list.html:71
 #: .\templates\purchases\return_list.html:104
 msgid "Supplier"
-msgstr ""
+msgstr "مورد"
 
 #: .\payments\models.py:45
 msgid "Beneficiary Name"
-msgstr ""
+msgstr "اسم المستفيد"
 
 #: .\payments\models.py:46
 msgid "In case the beneficiary is not a registered supplier"
-msgstr ""
+msgstr "في حالة عدم كون المستفيد موردًا مسجلاً"
 
 #: .\payments\models.py:50 .\templates\banks\transfer_list.html:479
 #: .\templates\banks\transfer_list.html:489
@@ -3716,7 +3726,7 @@ msgstr ""
 #: .\templates\banks\transfer_list.html:479
 #: .\templates\receipts\check_list.html:76
 #: .\templates\receipts\receipt_detail.html:84
-#: .\templates\sales\return_add.html:249
+#: .\templates\sales\return_add.html:308
 msgid "Bank"
 msgstr ""
 
@@ -3739,22 +3749,22 @@ msgstr "التحقق من الحالة"
 #: .\templates\receipts\receipt_list.html:68
 #: .\templates\receipts\receipt_list.html:116
 msgid "Reversed"
-msgstr ""
+msgstr "معكوس"
 
 #: .\payments\models.py:78 .\templates\receipts\receipt_detail.html:116
 msgid "Reversed By"
-msgstr ""
+msgstr "تم عكسها بواسطة"
 
 #: .\payments\models.py:79
 msgid "Reversal Date"
-msgstr ""
+msgstr "تاريخ الانعكاس"
 
 #: .\payments\models.py:83 .\settings\views.py:966 .\settings\views.py:1131
 #: .\templates\settings\document_sequence_add.html:108
 msgid "Payment Voucher"
 msgstr ""
 
-#: .\payments\models.py:84 .\templates\base.html:709
+#: .\payments\models.py:84 .\templates\base.html:712
 #: .\templates\payments\voucher_list.html:5
 #: .\templates\payments\voucher_list.html:12
 msgid "Payment Vouchers"
@@ -3762,23 +3772,23 @@ msgstr "سندات الدفع"
 
 #: .\payments\views.py:177
 msgid "Payment voucher created successfully"
-msgstr ""
+msgstr "تم إنشاء سند الدفع بنجاح"
 
 #: .\payments\views.py:180
 msgid "Error creating payment voucher"
-msgstr ""
+msgstr "خطأ في إنشاء سند الدفع"
 
 #: .\payments\views.py:188 .\templates\payments\voucher_list.html:219
 msgid "Create New Payment Voucher"
-msgstr ""
+msgstr "إنشاء قسيمة دفع جديدة"
 
 #: .\payments\views.py:214
 msgid "Cannot edit a reversed payment voucher"
-msgstr ""
+msgstr "لا يمكن تعديل إيصال الدفع العكسي"
 
 #: .\payments\views.py:231
 msgid "Payment voucher updated successfully"
-msgstr ""
+msgstr "تم تحديث إيصال الدفع بنجاح"
 
 #: .\payments\views.py:243
 msgid "Edit Payment Voucher"
@@ -3819,27 +3829,27 @@ msgstr ""
 #: .\templates\products\product_list.html:720
 #: .\templates\purchases\return_add.html:99
 msgid "Product Name"
-msgstr ""
+msgstr "اسم المنتج"
 
 #: .\products\forms.py:20 .\templates\products\category_add.html:49
 #: .\templates\products\product_edit.html:54
 msgid "English Name"
-msgstr ""
+msgstr "English Name"
 
 #: .\products\forms.py:22 .\templates\products\product_add.html:97
 #: .\templates\products\product_edit.html:81
 #: .\templates\products\product_list.html:753
 msgid "Barcode"
-msgstr ""
+msgstr "Barcode"
 
 #: .\products\forms.py:23 .\templates\products\product_add.html:109
 #: .\templates\products\product_list.html:764
 msgid "Serial Number"
-msgstr ""
+msgstr "Serial Number"
 
 #: .\products\forms.py:25
 msgid "Product Description"
-msgstr ""
+msgstr "وصف المنتج"
 
 #: .\products\forms.py:47 .\templates\assets_liabilities\asset_create.html:415
 #: .\templates\assets_liabilities\liability_create.html:396
@@ -3850,11 +3860,11 @@ msgstr ""
 #: .\templates\products\product_list.html:954
 #: .\templates\revenues_expenses\category_list.html:29
 msgid "Category Name"
-msgstr ""
+msgstr "اسم الفئة"
 
 #: .\products\forms.py:49
 msgid "Category Description"
-msgstr ""
+msgstr "وصف الفئة"
 
 #: .\products\models.py:11 .\products\models.py:65
 msgid "الاسم بالإنجليزية"
@@ -4077,56 +4087,56 @@ msgid "رقم المردود"
 msgstr ""
 
 #: .\purchases\models.py:100 .\sales\models.py:98
-msgid "الفاتورة الأصلية"
-msgstr ""
+msgid "Original invoice"
+msgstr "الفاتورة الأصلية"
 
 #: .\purchases\models.py:101
-msgid "تاريخ المردود"
-msgstr ""
+msgid "Return date"
+msgstr "تاريخ المردود"
 
 #: .\purchases\models.py:102
-msgid "نوع المردود"
-msgstr ""
+msgid "Type of return"
+msgstr "نوع المردود"
 
 #: .\purchases\models.py:103
-msgid "سبب المردود"
-msgstr ""
+msgid "Reason for return"
+msgstr "سبب المردود"
 
 #: .\purchases\models.py:114
-msgid "مردودات المشتريات"
-msgstr ""
+msgid "Purchase returns"
+msgstr "مردودات المشتريات"
 
 #: .\purchases\models.py:130
-msgid "العنصر الأصلي"
-msgstr ""
+msgid "Original item"
+msgstr "المنتج الأصلي"
 
 #: .\purchases\models.py:132
-msgid "الكمية المرتجعة"
-msgstr ""
+msgid "Returned Quantity"
+msgstr "الكمية المرتجعة"
 
 #: .\purchases\models.py:139
-msgid "عنصر مردود مشتريات"
-msgstr ""
+msgid "Purchase return item"
+msgstr "منتج مردود مشتريات"
 
 #: .\purchases\models.py:140
-msgid "عناصر مردود المشتريات"
-msgstr ""
+msgid "Purchase Return Elements"
+msgstr "عناصر مردود المشتريات"
 
 #: .\purchases\models.py:150
-msgid "الكمية المرتجعة لا يمكن أن تكون أكبر من الكمية الأصلية"
-msgstr ""
+msgid "The returned quantity cannot be greater than the original quantity."
+msgstr "الكمية المرتجعة لا يمكن أن تكون أكبر من الكمية الأصلية"
 
 #: .\purchases\models.py:159
-msgid "إجمالي الكمية المرتجعة يتجاوز الكمية الأصلية"
-msgstr ""
+msgid "The total returned quantity exceeds the original quantity."
+msgstr "إجمالي الكمية المرتجعة يتجاوز الكمية الأصلية"
 
 #: .\purchases\models.py:178
-msgid "رقم اشعار مدين"
-msgstr ""
+msgid "Debtor notification number"
+msgstr "رقم اشعار مدين"
 
 #: .\purchases\models.py:183
-msgid "المبلغ الاجمالي"
-msgstr ""
+msgid "Total amount"
+msgstr "المبلغ الاجمالي"
 
 #: .\purchases\models.py:184 .\sales\models.py:156
 #: .\templates\hr\attendance_confirm_delete.html:190
@@ -4175,7 +4185,7 @@ msgstr ""
 msgid "تم إنشاء اشعار مدين رقم %(number)s"
 msgstr ""
 
-#: .\purchases\views.py:618 .\sales\views.py:1007
+#: .\purchases\views.py:618 .\sales\views.py:1102
 #, python-format
 msgid "حدث خطأ أثناء حفظ الإشعار: %(error)s"
 msgstr ""
@@ -4341,6 +4351,8 @@ msgid "Receipt voucher"
 msgstr ""
 
 #: .\receipts\views.py:153
+#, fuzzy
+#| msgid "Payment Type"
 msgid "Payment type"
 msgstr "نوع الدفع"
 
@@ -4437,7 +4449,7 @@ msgstr ""
 
 #: .\reports\views.py:139 .\reports\views.py:175 .\reports\views.py:189
 #: .\reports\views.py:200 .\reports\views.py:223 .\settings\views.py:968
-#: .\settings\views.py:1133 .\templates\base.html:976
+#: .\settings\views.py:1133 .\templates\base.html:982
 #: .\templates\reports\customer_statement.html:4
 #: .\templates\reports\customer_statement.html:9
 msgid "Customer Statement"
@@ -4449,9 +4461,8 @@ msgstr ""
 
 #: .\reports\views.py:157 .\reports\views.py:193
 #: .\templates\accounts\customer_statement.html:24
-#: .\templates\assets_liabilities\dashboard.html:366 .\templates\base.html:1561
-#: .\templates\base.html:1566 .\templates\customers\add.html:165
-#: .\templates\customers\add.html:167 .\templates\customers\delete.html:142
+#: .\templates\assets_liabilities\dashboard.html:366 .\templates\base.html:1610
+#: .\templates\base.html:1615 .\templates\customers\delete.html:142
 #: .\templates\customers\edit.html:160 .\templates\customers\edit.html:162
 #: .\templates\customers\supplier_list.html:413
 #: .\templates\products\product_edit.html:356
@@ -4461,16 +4472,17 @@ msgstr ""
 #: .\templates\purchases\invoice_add.html:938
 #: .\templates\reports\customer_statement.html:75
 #: .\templates\sales\creditnote_add.html:9
-#: .\templates\sales\creditnote_list.html:11
-#: .\templates\sales\invoice_add.html:1082
-#: .\templates\sales\return_add.html:148 .\templates\sales\return_add.html:150
+#: .\templates\sales\creditnote_delete.html:26
+#: .\templates\sales\creditnote_edit.html:19
+#: .\templates\sales\invoice_add.html:1117
+#: .\templates\sales\return_add.html:190 .\templates\sales\return_add.html:192
 #: .\templates\settings\document_sequence_add.html:145
 #: .\templates\settings\document_sequence_edit.html:164
 msgid "Number"
-msgstr ""
+msgstr "رقم"
 
-#: .\reports\views.py:157 .\reports\views.py:193
-#: .\templates\assets_liabilities\dashboard.html:368
+#: .\reports\views.py:157 .\reports\views.py:193 .\reports\views.py:378
+#: .\reports\views.py:416 .\templates\assets_liabilities\dashboard.html:368
 #: .\templates\backup\backup_restore.html:197
 #: .\templates\backup\backup_restore.html:376
 #: .\templates\banks\account_transactions.html:221
@@ -4485,6 +4497,7 @@ msgstr ""
 #: .\templates\products\product_list.html:550
 #: .\templates\products\product_list.html:582
 #: .\templates\reports\customer_statement.html:76
+#: .\templates\reports\sales_by_salesperson.html:74
 #: .\templates\revenues_expenses\category_create.html:46
 #: .\templates\revenues_expenses\category_list.html:30
 #: .\templates\revenues_expenses\dashboard.html:159
@@ -4502,9 +4515,8 @@ msgstr "نوع"
 #: .\templates\accounts\customer_statement.html:122
 #: .\templates\accounts\transaction_list.html:91
 #: .\templates\accounts\transaction_list.html:137
-#: .\templates\customers\add.html:175 .\templates\customers\add.html:177
-#: .\templates\customers\add.html:196 .\templates\customers\edit.html:170
-#: .\templates\customers\edit.html:172 .\templates\customers\edit.html:191
+#: .\templates\customers\edit.html:170 .\templates\customers\edit.html:172
+#: .\templates\customers\edit.html:191
 #: .\templates\customers\supplier_list.html:423
 #: .\templates\customers\supplier_list.html:442
 #: .\templates\customers\transactions.html:198
@@ -4520,7 +4532,7 @@ msgstr "نوع"
 #: .\templates\purchases\invoice_add.html:967
 #: .\templates\purchases\purchase_statement.html:143
 #: .\templates\reports\customer_statement.html:78
-#: .\templates\sales\invoice_add.html:1111
+#: .\templates\sales\invoice_add.html:1146
 #: .\templates\sales\sales_return_statement.html:141
 msgid "Debit"
 msgstr ""
@@ -4544,7 +4556,7 @@ msgstr ""
 #: .\templates\purchases\invoice_add.html:181
 #: .\templates\purchases\purchase_return_statement.html:143
 #: .\templates\reports\customer_statement.html:79
-#: .\templates\sales\return_add.html:250
+#: .\templates\sales\return_add.html:309
 #: .\templates\sales\sales_statement.html:141
 msgid "Credit"
 msgstr ""
@@ -4554,10 +4566,10 @@ msgstr ""
 msgid "Running Balance"
 msgstr ""
 
-#: .\reports\views.py:167 .\reports\views.py:197 .\reports\views.py:350
-#: .\reports\views.py:378 .\templates\core\tax_report.html:279
+#: .\reports\views.py:167 .\reports\views.py:197 .\reports\views.py:390
+#: .\reports\views.py:430 .\templates\core\tax_report.html:279
 #: .\templates\reports\customer_statement.html:109
-#: .\templates\reports\sales_by_salesperson.html:100
+#: .\templates\reports\sales_by_salesperson.html:110
 msgid "Totals"
 msgstr ""
 
@@ -4566,11 +4578,9 @@ msgstr ""
 msgid "Closing Balance"
 msgstr ""
 
-#: .\reports\views.py:190 .\reports\views.py:340 .\reports\views.py:375
+#: .\reports\views.py:190 .\reports\views.py:378 .\reports\views.py:416
 #: .\templates\customers\add.html:100 .\templates\customers\add.html:122
-#: .\templates\customers\add.html:136 .\templates\customers\add.html:172
-#: .\templates\customers\add.html:177 .\templates\customers\add.html:196
-#: .\templates\customers\add.html:298
+#: .\templates\customers\add.html:136 .\templates\customers\add.html:298
 #: .\templates\customers\customer_list.html:201
 #: .\templates\customers\delete.html:5 .\templates\customers\delete.html:90
 #: .\templates\customers\edit.html:93 .\templates\customers\edit.html:131
@@ -4587,22 +4597,23 @@ msgstr ""
 #: .\templates\receipts\receipt_list.html:90
 #: .\templates\reports\customer_statement.html:29
 #: .\templates\reports\customer_statement.html:63
-#: .\templates\reports\sales_by_salesperson.html:76
+#: .\templates\reports\sales_by_salesperson.html:77
 #: .\templates\sales\creditnote_add.html:13
-#: .\templates\sales\creditnote_list.html:12
+#: .\templates\sales\creditnote_delete.html:27
+#: .\templates\sales\creditnote_edit.html:23
 #: .\templates\sales\invoice_add.html:248
 #: .\templates\sales\invoice_list.html:205
 #: .\templates\sales\invoice_list.html:293
 #: .\templates\sales\invoice_list.html:345
-#: .\templates\sales\return_add.html:178 .\templates\sales\return_add.html:189
-#: .\templates\sales\return_add.html:237 .\templates\sales\return_edit.html:145
+#: .\templates\sales\return_add.html:232 .\templates\sales\return_add.html:296
+#: .\templates\sales\return_edit.html:145
 #: .\templates\sales\return_list.html:130
 #: .\templates\sales\return_list.html:146
 #: .\templates\sales\return_list.html:193
 msgid "Customer"
-msgstr ""
+msgstr "عميل"
 
-#: .\reports\views.py:191 .\reports\views.py:373
+#: .\reports\views.py:191 .\reports\views.py:414
 #: .\templates\banks\account_detail.html:294
 #: .\templates\banks\transfer_add.html:515
 #: .\templates\banks\transfer_list.html:153
@@ -4615,7 +4626,7 @@ msgstr ""
 msgid "From"
 msgstr ""
 
-#: .\reports\views.py:191 .\reports\views.py:373
+#: .\reports\views.py:191 .\reports\views.py:414
 #: .\templates\banks\account_detail.html:274
 #: .\templates\banks\transfer_add.html:515
 #: .\templates\banks\transfer_list.html:153
@@ -4631,69 +4642,62 @@ msgstr ""
 msgid "Viewing customer statement page"
 msgstr ""
 
-#: .\reports\views.py:297
+#: .\reports\views.py:306 .\reports\views.py:320
 msgid "Cash Customer"
 msgstr ""
 
-#: .\reports\views.py:314
+#: .\reports\views.py:352
 #, python-format
 msgid "Viewing sales report for %(salesperson)s from %(start)s to %(end)s"
 msgstr ""
 
-#: .\reports\views.py:323 .\reports\views.py:358 .\reports\views.py:371
-#: .\reports\views.py:381 .\reports\views.py:405 .\templates\base.html:964
+#: .\reports\views.py:361 .\reports\views.py:399 .\reports\views.py:412
+#: .\reports\views.py:434 .\reports\views.py:459 .\templates\base.html:970
 #: .\templates\reports\sales_by_salesperson.html:5
 #: .\templates\reports\sales_by_salesperson.html:13
 msgid "Sales Report By Sales Person"
 msgstr "تقرير المبيعات حسب البائع"
 
-#: .\reports\views.py:338
+#: .\reports\views.py:376
 msgid "Sales Report"
 msgstr ""
 
-#: .\reports\views.py:340 .\reports\views.py:375
-#: .\templates\assets_liabilities\asset_create.html:318
-#: .\templates\assets_liabilities\asset_detail.html:169
-#: .\templates\purchases\invoice_add.html:131
-#: .\templates\purchases\return_add.html:220
-#: .\templates\reports\sales_by_salesperson.html:75
-#: .\templates\sales\invoice_add.html:193
-#: .\templates\sales\invoice_detail.html:17
-#: .\templates\sales\invoice_detail.html:38
-#: .\templates\sales\invoice_list.html:200
-#: .\templates\sales\invoice_list.html:293
-#: .\templates\sales\invoice_list.html:344
-#: .\templates\sales\return_add.html:188
-msgid "Invoice Number"
+#: .\reports\views.py:378 .\reports\views.py:416
+#: .\templates\core\tax_report.html:206
+#: .\templates\reports\sales_by_salesperson.html:76
+#: .\templates\settings\document_print_settings.html:1006
+msgid "Document Number"
 msgstr ""
 
-#: .\reports\views.py:341 .\reports\views.py:375
+#: .\reports\views.py:379 .\reports\views.py:416
 #: .\templates\purchases\debitnote_add.html:24
 #: .\templates\purchases\debitnote_detail.html:124
 #: .\templates\purchases\invoice_add.html:271
 #: .\templates\purchases\return_add.html:125
-#: .\templates\reports\sales_by_salesperson.html:78
+#: .\templates\reports\sales_by_salesperson.html:79
 #: .\templates\sales\creditnote_add.html:24
 #: .\templates\sales\creditnote_detail.html:124
+#: .\templates\sales\creditnote_edit.html:36
 msgid "Subtotal"
-msgstr ""
+msgstr "المجموع الفرعي"
 
-#: .\reports\views.py:341 .\reports\views.py:375
+#: .\reports\views.py:379 .\reports\views.py:416
 #: .\templates\products\product_add.html:233
 #: .\templates\products\product_edit.html:211
 #: .\templates\products\product_list.html:854
 #: .\templates\purchases\debitnote_add.html:28
-#: .\templates\reports\sales_by_salesperson.html:79
+#: .\templates\reports\sales_by_salesperson.html:80
 #: .\templates\sales\creditnote_add.html:28
+#: .\templates\sales\creditnote_edit.html:40
 msgid "Tax Amount"
 msgstr ""
 
-#: .\reports\views.py:341 .\reports\views.py:375
-#: .\templates\reports\sales_by_salesperson.html:80
+#: .\reports\views.py:379 .\reports\views.py:416
+#: .\templates\reports\sales_by_salesperson.html:81
 msgid "Discount Amount"
 msgstr ""
 
-#: .\reports\views.py:341 .\reports\views.py:375
+#: .\reports\views.py:379 .\reports\views.py:416
 #: .\templates\banks\transfer_detail.html:347
 #: .\templates\banks\transfer_list.html:606 .\templates\core\dashboard.html:388
 #: .\templates\hr\payroll_period_list.html:31
@@ -4703,21 +4707,36 @@ msgstr ""
 #: .\templates\payments\voucher_list.html:82
 #: .\templates\purchases\debitnote_add.html:32
 #: .\templates\purchases\invoice_list.html:124
-#: .\templates\reports\sales_by_salesperson.html:81
+#: .\templates\reports\sales_by_salesperson.html:82
 #: .\templates\sales\creditnote_add.html:32
+#: .\templates\sales\creditnote_delete.html:29
+#: .\templates\sales\creditnote_edit.html:44
 msgid "Total Amount"
 msgstr "المبلغ الإجمالي"
 
-#: .\reports\views.py:351 .\reports\views.py:379
-#: .\templates\reports\sales_by_salesperson.html:107
+#: .\reports\views.py:379 .\reports\views.py:416
+#: .\templates\purchases\return_add.html:55
+#: .\templates\reports\sales_by_salesperson.html:83
+msgid "Original Invoice"
+msgstr ""
+
+#: .\reports\views.py:391 .\reports\views.py:431
+#: .\templates\reports\sales_by_salesperson.html:118
 msgid "Invoice Count"
 msgstr "عدد الفواتير"
 
-#: .\reports\views.py:372 .\templates\reports\sales_by_salesperson.html:19
+#: .\reports\views.py:392 .\reports\views.py:432
+#: .\templates\reports\sales_by_salesperson.html:122
+#, fuzzy
+#| msgid "Days Count"
+msgid "Returns Count"
+msgstr "عدد الأيام"
+
+#: .\reports\views.py:413 .\templates\reports\sales_by_salesperson.html:19
 msgid "Sales Person"
 msgstr "مندوب المبيعات"
 
-#: .\reports\views.py:406
+#: .\reports\views.py:460
 msgid "Viewing sales report by salesperson page"
 msgstr ""
 
@@ -4999,74 +5018,102 @@ msgid ""
 "تم إيداع %(amount)s في الصندوق %(cashbox)s من فاتورة مبيعات رقم %(invoice)s"
 msgstr "تم حذف فاتورة مبيعات رقم: %(invoice_number)s"
 
-#: .\sales\views.py:288
+#: .\sales\views.py:289
 msgid "يرجى تعبئة جميع الحقول المطلوبة"
 msgstr ""
 
-#: .\sales\views.py:302
+#: .\sales\views.py:303
 msgid "يرجى إضافة منتج واحد على الأقل"
 msgstr ""
 
-#: .\sales\views.py:348
+#: .\sales\views.py:349
 #, python-format
 msgid "تم تغيير منشئ الفاتورة إلى %(name)s على يد %(user)s"
 msgstr ""
 
-#: .\sales\views.py:464
+#: .\sales\views.py:465
 #, python-format
 msgid "إنشاء فاتورة مبيعات رقم %(number)s"
 msgstr ""
 
-#: .\sales\views.py:477
+#: .\sales\views.py:478
 #, python-format
 msgid "تعيين خيار شامل ضريبة: %(value)s لفاتورة %(number)s"
 msgstr ""
 
-#: .\sales\views.py:486
+#: .\sales\views.py:487
 #, python-format
 msgid "تم إنشاء فاتورة المبيعات رقم %(number)s بنجاح"
 msgstr ""
 
-#: .\sales\views.py:502
+#: .\sales\views.py:503
 msgid "تعذر إنشاء الفاتورة بعد محاولات متعددة، يرجى المحاولة لاحقاً"
 msgstr ""
 
-#: .\sales\views.py:505
+#: .\sales\views.py:506
 #, python-format
 msgid "حدث خطأ أثناء حفظ الفاتورة: %(error)s"
 msgstr ""
 
-#: .\sales\views.py:566
+#: .\sales\views.py:567
 msgid "Viewed sales invoice creation page"
 msgstr ""
 
-#: .\sales\views.py:608
+#: .\sales\views.py:609
 #, python-format
 msgid "خطأ عند عرض صفحة إنشاء الفاتورة: %(error)s"
 msgstr ""
 
-#: .\sales\views.py:613
+#: .\sales\views.py:614
 msgid "حدث خطأ أثناء تحميل صفحة إنشاء الفاتورة. تم تسجيل الخطأ لدى النظام."
 msgstr ""
 
-#: .\sales\views.py:675
+#: .\sales\views.py:676
 #, python-format
 msgid "تغيير خيار شامل ضريبة من %(old)s إلى %(new)s لفاتورة %(number)s"
 msgstr ""
 
-#: .\sales\views.py:961
+#: .\sales\views.py:1056
 msgid "يرجى اختيار عميل"
 msgstr ""
 
-#: .\sales\views.py:999
+#: .\sales\views.py:1094
 #, python-format
 msgid "إنشاء إشعار دائن رقم %(number)s"
 msgstr ""
 
-#: .\sales\views.py:1004
+#: .\sales\views.py:1099
 #, python-format
 msgid "تم إنشاء إشعار دائن رقم %(number)s"
 msgstr ""
+
+#: .\sales\views.py:1161
+#, fuzzy, python-format
+#| msgid "تم حذف حركة مخزون رقم: %(movement_number)s"
+msgid "تحديث إشعار دائن رقم %(number)s"
+msgstr "تم حذف حركة مخزون رقم: %(movement_number)s"
+
+#: .\sales\views.py:1166
+#, fuzzy
+#| msgid "تم تصحيح اتجاه معاملة مردود المشتريات"
+msgid "تم تحديث إشعار الدائن بنجاح"
+msgstr "تم تصحيح اتجاه معاملة مردود المشتريات"
+
+#: .\sales\views.py:1202
+#, fuzzy, python-format
+#| msgid "تم حذف حركة مخزون رقم: %(movement_number)s"
+msgid "حذف إشعار دائن رقم %(number)s"
+msgstr "تم حذف حركة مخزون رقم: %(movement_number)s"
+
+#: .\sales\views.py:1207
+#, fuzzy, python-format
+#| msgid "تم حذف حركة المخزون رقم %(movement_number)s بنجاح"
+msgid "تم حذف إشعار الدائن رقم %(number)s بنجاح"
+msgstr "تم حذف حركة المخزون رقم %(movement_number)s بنجاح"
+
+#: .\sales\views.py:1961
+msgid "عرض كشف مذكرات الدائن"
+msgstr "View Credit Notes Statement"
 
 #: .\search\views.py:72
 msgid "عرض صفحة البحث الشامل"
@@ -5641,8 +5688,7 @@ msgstr ""
 #: .\templates\banks\account_edit.html:101
 #: .\templates\banks\bank_cashbox_transfer_add.html:164
 #: .\templates\banks\cashbox_transfer_detail.html:126
-#: .\templates\customers\add.html:104 .\templates\customers\delete.html:94
-#: .\templates\customers\edit.html:98
+#: .\templates\customers\delete.html:94 .\templates\customers\edit.html:98
 #: .\templates\customers\supplier_list.html:5
 #: .\templates\customers\supplier_list.html:83
 #: .\templates\customers\supplier_list.html:96
@@ -5680,11 +5726,11 @@ msgstr ""
 #: .\templates\purchases\return_delete.html:158
 #: .\templates\purchases\return_list.html:17
 #: .\templates\revenues_expenses\category_create.html:17
-#: .\templates\sales\invoice_add.html:929
+#: .\templates\sales\invoice_add.html:964
 #: .\templates\sales\invoice_delete.html:162
 #: .\templates\sales\invoice_edit.html:65
 #: .\templates\sales\invoice_list.html:282
-#: .\templates\sales\return_add.html:105
+#: .\templates\sales\return_add.html:147
 #: .\templates\sales\return_delete.html:176
 #: .\templates\sales\return_detail.html:67
 #: .\templates\sales\return_detail.html:254
@@ -5693,7 +5739,7 @@ msgstr ""
 #: .\templates\settings\currency_add.html:34
 #: .\templates\settings\currency_edit.html:17
 msgid "List"
-msgstr ""
+msgstr "قائمة"
 
 #: .\templates\accounts\customer_statement.html:32
 #: .\templates\banks\bank_cashbox_transfer_add.html:160
@@ -5701,7 +5747,7 @@ msgstr ""
 #: .\templates\banks\transfer_list.html:432
 #: .\templates\banks\transfer_list.html:434
 #: .\templates\banks\transfer_list.html:520
-#: .\templates\banks\transfer_list.html:522 .\templates\base.html:1605
+#: .\templates\banks\transfer_list.html:522 .\templates\base.html:1654
 #: .\templates\core\audit_log.html:23
 #: .\templates\core\profit_loss_report.html:144
 #: .\templates\core\tax_report.html:126
@@ -5793,29 +5839,28 @@ msgstr "طباعة"
 #: .\templates\banks\bank_cashbox_transfer_add.html:570
 #: .\templates\banks\cashbox_transfer_detail.html:109
 #: .\templates\banks\cashbox_transfer_edit.html:87
-#: .\templates\banks\transfer_detail.html:124 .\templates\base.html:1551
-#: .\templates\base.html:2057 .\templates\base.html:2131
-#: .\templates\base.html:2134 .\templates\base.html:2154
-#: .\templates\base.html:2163 .\templates\base.html:2177
-#: .\templates\base.html:2200 .\templates\base.html:2220
-#: .\templates\base.html:2221 .\templates\base.html:2222
-#: .\templates\base.html:2232 .\templates\base.html:2234
-#: .\templates\base.html:2240 .\templates\base.html:2251
-#: .\templates\base.html:2252 .\templates\base.html:2253
-#: .\templates\base.html:2254 .\templates\base.html:2317
-#: .\templates\base.html:2318 .\templates\base.html:2327
-#: .\templates\base.html:2328 .\templates\core\notifications.html:273
+#: .\templates\banks\transfer_detail.html:124 .\templates\base.html:1600
+#: .\templates\base.html:2107 .\templates\base.html:2181
+#: .\templates\base.html:2184 .\templates\base.html:2204
+#: .\templates\base.html:2213 .\templates\base.html:2227
+#: .\templates\base.html:2250 .\templates\base.html:2270
+#: .\templates\base.html:2271 .\templates\base.html:2272
+#: .\templates\base.html:2282 .\templates\base.html:2284
+#: .\templates\base.html:2290 .\templates\base.html:2301
+#: .\templates\base.html:2302 .\templates\base.html:2303
+#: .\templates\base.html:2304 .\templates\base.html:2367
+#: .\templates\base.html:2368 .\templates\base.html:2377
+#: .\templates\base.html:2378 .\templates\core\notifications.html:273
 #: .\templates\core\notifications.html:277
-#: .\templates\core\notifications.html:295 .\templates\customers\add.html:190
-#: .\templates\customers\add.html:199 .\templates\customers\delete.html:148
-#: .\templates\customers\edit.html:185 .\templates\customers\edit.html:212
-#: .\templates\customers\edit.html:216 .\templates\customers\list.html:112
-#: .\templates\customers\list.html:114 .\templates\customers\list.html:128
-#: .\templates\customers\list.html:130 .\templates\customers\list.html:157
-#: .\templates\customers\list.html:163 .\templates\customers\list.html:188
-#: .\templates\customers\list.html:190 .\templates\customers\list.html:191
-#: .\templates\customers\list.html:255 .\templates\customers\list.html:256
-#: .\templates\customers\list.html:291
+#: .\templates\core\notifications.html:295
+#: .\templates\customers\delete.html:148 .\templates\customers\edit.html:185
+#: .\templates\customers\edit.html:212 .\templates\customers\edit.html:216
+#: .\templates\customers\list.html:112 .\templates\customers\list.html:114
+#: .\templates\customers\list.html:128 .\templates\customers\list.html:130
+#: .\templates\customers\list.html:157 .\templates\customers\list.html:163
+#: .\templates\customers\list.html:188 .\templates\customers\list.html:190
+#: .\templates\customers\list.html:191 .\templates\customers\list.html:255
+#: .\templates\customers\list.html:256 .\templates\customers\list.html:291
 #: .\templates\customers\supplier_list.html:322
 #: .\templates\customers\supplier_list.html:379
 #: .\templates\customers\supplier_list.html:436
@@ -5878,14 +5923,13 @@ msgstr "طباعة"
 #: .\templates\revenues_expenses\dashboard.html:185
 #: .\templates\revenues_expenses\entry_list.html:23
 #: .\templates\revenues_expenses\entry_list.html:120
-#: .\templates\sales\invoice_add.html:935
-#: .\templates\sales\invoice_add.html:1010
-#: .\templates\sales\invoice_add.html:1105
-#: .\templates\sales\invoice_add.html:1116
+#: .\templates\sales\invoice_add.html:970
+#: .\templates\sales\invoice_add.html:1045
+#: .\templates\sales\invoice_add.html:1140
+#: .\templates\sales\invoice_add.html:1151
 #: .\templates\sales\invoice_list.html:299 .\templates\sales\pos.html:1425
 #: .\templates\sales\pos.html:1480 .\templates\sales\pos.html:1634
-#: .\templates\sales\return_add.html:215 .\templates\sales\return_add.html:246
-#: .\templates\sales\return_add.html:282
+#: .\templates\sales\return_add.html:305 .\templates\sales\return_add.html:341
 #: .\templates\sales\return_delete.html:156
 #: .\templates\sales\return_list.html:148
 #: .\templates\sales\sales_report.html:131
@@ -5915,8 +5959,8 @@ msgstr "لا"
 #: .\templates\accounts\transaction_list.html:281
 #: .\templates\accounts\transaction_list.html:286
 #: .\templates\banks\bank_cashbox_transfer_add.html:577
-#: .\templates\base.html:2161 .\templates\base.html:2162
-#: .\templates\base.html:2163 .\templates\customers\supplier_list.html:552
+#: .\templates\base.html:2211 .\templates\base.html:2212
+#: .\templates\base.html:2213 .\templates\customers\supplier_list.html:552
 #: .\templates\customers\supplier_list.html:553
 #: .\templates\customers\supplier_list.html:557
 #: .\templates\customers\supplier_list.html:558
@@ -5952,13 +5996,13 @@ msgstr "لا"
 #: .\templates\purchases\return_add.html:230
 #: .\templates\sales\invoice_add.html:695
 #: .\templates\sales\invoice_add.html:697
-#: .\templates\sales\invoice_add.html:943
-#: .\templates\sales\invoice_add.html:944
-#: .\templates\sales\invoice_add.html:948
-#: .\templates\sales\invoice_add.html:949
-#: .\templates\sales\invoice_add.html:971
-#: .\templates\sales\invoice_add.html:1009
-#: .\templates\sales\invoice_add.html:1031 .\templates\sales\pos.html:1159
+#: .\templates\sales\invoice_add.html:978
+#: .\templates\sales\invoice_add.html:979
+#: .\templates\sales\invoice_add.html:983
+#: .\templates\sales\invoice_add.html:984
+#: .\templates\sales\invoice_add.html:1006
+#: .\templates\sales\invoice_add.html:1044
+#: .\templates\sales\invoice_add.html:1066 .\templates\sales\pos.html:1159
 #: .\templates\sales\pos.html:1164 .\templates\sales\pos.html:1353
 #: .\templates\sales\pos.html:1414 .\templates\sales\pos.html:1425
 #: .\templates\sales\pos.html:1431 .\templates\sales\pos.html:1444
@@ -6101,14 +6145,14 @@ msgstr "العودة للإعدادات"
 #: .\templates\assets_liabilities\asset_create.html:89
 #: .\templates\assets_liabilities\asset_detail.html:93
 #: .\templates\assets_liabilities\liability_create.html:89
-#: .\templates\banks\account_add.html:130
+#: .\templates\banks\account_add.html:130 .\templates\customers\add.html:146
 #: .\templates\revenues_expenses\recurring_create.html:57
 #: .\templates\revenues_expenses\recurring_detail.html:96
 #: .\templates\revenues_expenses\recurring_edit.html:63
 #: .\templates\settings\document_print_settings.html:415
 #: .\templates\users\user_add.html:39 .\templates\users\user_edit.html:39
 msgid "Basic Information"
-msgstr "المعلومات اساسية"
+msgstr "المعلومات الأساسية"
 
 #: .\templates\assets_liabilities\asset_create.html:95
 #: .\templates\assets_liabilities\asset_detail.html:98
@@ -6156,7 +6200,7 @@ msgstr "الفئة"
 #, fuzzy
 #| msgid "Add Category"
 msgid "Add Category First"
-msgstr "إضافة فئة"
+msgstr "أضف الفئة أولاً"
 
 #: .\templates\assets_liabilities\asset_create.html:142
 #: .\templates\assets_liabilities\liability_create.html:142
@@ -6165,7 +6209,7 @@ msgstr "حدد فئة موجودة أو أضف فئة جديدة أولاً"
 
 #: .\templates\assets_liabilities\asset_create.html:178
 #: .\templates\assets_liabilities\liability_create.html:178
-#: .\templates\banks\account_add.html:214
+#: .\templates\banks\account_add.html:214 .\templates\customers\add.html:186
 #: .\templates\revenues_expenses\recurring_create.html:94
 #: .\templates\revenues_expenses\recurring_detail.html:138
 #: .\templates\revenues_expenses\recurring_edit.html:100
@@ -6214,6 +6258,20 @@ msgstr "معلومات النظام"
 msgid "Purchase Date"
 msgstr ""
 
+#: .\templates\assets_liabilities\asset_create.html:318
+#: .\templates\assets_liabilities\asset_detail.html:169
+#: .\templates\purchases\invoice_add.html:131
+#: .\templates\purchases\return_add.html:220
+#: .\templates\sales\invoice_add.html:193
+#: .\templates\sales\invoice_detail.html:17
+#: .\templates\sales\invoice_detail.html:38
+#: .\templates\sales\invoice_list.html:200
+#: .\templates\sales\invoice_list.html:293
+#: .\templates\sales\invoice_list.html:344
+#: .\templates\sales\return_add.html:231
+msgid "Invoice Number"
+msgstr ""
+
 #: .\templates\assets_liabilities\asset_create.html:334
 #: .\templates\assets_liabilities\asset_detail.html:177
 msgid "Warranty Expiry"
@@ -6258,7 +6316,8 @@ msgstr ""
 #: .\templates\cashboxes\cashbox_list.html:255
 #: .\templates\cashboxes\transfer_list.html:355
 #: .\templates\core\audit_log.html:89 .\templates\core\audit_log.html:241
-#: .\templates\hr\department_form.html:94 .\templates\hr\employee_form.html:200
+#: .\templates\customers\add.html:238 .\templates\hr\department_form.html:94
+#: .\templates\hr\employee_form.html:200
 #: .\templates\inventory\low_stock.html:370
 #: .\templates\inventory\low_stock.html:388
 #: .\templates\inventory\movement_list.html:489
@@ -6279,6 +6338,7 @@ msgstr ""
 #: .\templates\receipts\receipt_detail.html:305
 #: .\templates\revenues_expenses\recurring_create.html:223
 #: .\templates\revenues_expenses\recurring_edit.html:245
+#: .\templates\sales\creditnote_delete.html:56
 #: .\templates\settings\document_print_settings.html:455
 #: .\templates\settings\document_print_settings.html:491
 #: .\templates\settings\print_design.html:516
@@ -6308,20 +6368,20 @@ msgstr ""
 #: .\templates\revenues_expenses\category_create.html:6
 #: .\templates\revenues_expenses\category_list.html:17
 msgid "Add New Category"
-msgstr ""
+msgstr "إضافة فئة جديدة"
 
 #: .\templates\assets_liabilities\asset_create.html:419
 msgid "Enter a unique name for the new category"
-msgstr ""
+msgstr "أدخل اسمًا فريدًا للفئة الجديدة"
 
 #: .\templates\assets_liabilities\asset_create.html:428
 msgid "Optional description for the category"
-msgstr ""
+msgstr "وصف اختياري للفئة"
 
 #: .\templates\assets_liabilities\asset_create.html:435
 #: .\templates\products\category_list.html:185
 msgid "Active Category"
-msgstr ""
+msgstr "الفئة النشطة"
 
 #: .\templates\assets_liabilities\asset_create.html:448
 #: .\templates\assets_liabilities\liability_create.html:416
@@ -6331,7 +6391,7 @@ msgstr ""
 #: .\templates\products\product_list.html:1016
 #: .\templates\products\product_list.html:1141
 msgid "Save Category"
-msgstr ""
+msgstr "حفظ الفئة"
 
 #: .\templates\assets_liabilities\asset_detail.html:77
 #: .\templates\banks\account_add.html:99
@@ -6339,7 +6399,7 @@ msgstr ""
 #: .\templates\banks\transfer_detail.html:111
 #: .\templates\cashboxes\cashbox_detail.html:17
 #: .\templates\cashboxes\transfer_detail.html:15
-#: .\templates\hr\department_detail.html:23
+#: .\templates\customers\add.html:104 .\templates\hr\department_detail.html:23
 #: .\templates\hr\department_form.html:30
 #: .\templates\journal\entry_create.html:14
 #: .\templates\payments\voucher_form.html:20
@@ -6361,7 +6421,7 @@ msgstr ""
 #: .\templates\sales\invoice_detail.html:22 .\templates\users\group_add.html:20
 #: .\templates\users\group_delete.html:20 .\templates\users\group_edit.html:20
 msgid "Back to List"
-msgstr ""
+msgstr "العودة للقائمة"
 
 #: .\templates\assets_liabilities\asset_detail.html:80
 #: .\templates\assets_liabilities\asset_list.html:182
@@ -6440,7 +6500,7 @@ msgstr ""
 #: .\templates\sales\invoice_edit.html:60
 #: .\templates\sales\invoice_edit.html:82
 #: .\templates\sales\invoice_list.html:383
-#: .\templates\sales\return_add.html:164
+#: .\templates\sales\return_add.html:206
 #: .\templates\sales\return_detail.html:72
 #: .\templates\sales\return_detail.html:260
 #: .\templates\sales\return_edit.html:5 .\templates\sales\return_edit.html:56
@@ -6592,7 +6652,7 @@ msgstr ""
 msgid "Total Value"
 msgstr ""
 
-#: .\templates\assets_liabilities\asset_list.html:122 .\templates\base.html:942
+#: .\templates\assets_liabilities\asset_list.html:122 .\templates\base.html:948
 msgid "Assets List"
 msgstr ""
 
@@ -6635,7 +6695,6 @@ msgstr "الاسم"
 #: .\templates\receipts\receipt_list.html:95
 #: .\templates\revenues_expenses\category_list.html:34
 #: .\templates\revenues_expenses\recurring_detail.html:294
-#: .\templates\sales\creditnote_list.html:15
 #: .\templates\settings\document_sequences.html:45
 #: .\templates\users\group_list.html:40 .\templates\users\user_list.html:109
 msgid "Actions"
@@ -6673,7 +6732,7 @@ msgstr ""
 #: .\templates\banks\transfer_list.html:447
 #: .\templates\banks\transfer_list.html:449
 #: .\templates\banks\transfer_list.html:535
-#: .\templates\banks\transfer_list.html:537 .\templates\base.html:2404
+#: .\templates\banks\transfer_list.html:537 .\templates\base.html:2454
 #: .\templates\cashboxes\cashbox_detail.html:25
 #: .\templates\cashboxes\cashbox_detail.html:32
 #: .\templates\cashboxes\cashbox_detail.html:216
@@ -6831,9 +6890,9 @@ msgstr "الإحصائيات"
 #: .\templates\assets_liabilities\dashboard.html:718
 #: .\templates\banks\account_list.html:715
 #: .\templates\banks\account_list.html:723
-#: .\templates\banks\transfer_add.html:141 .\templates\base.html:1271
-#: .\templates\base.html:1275 .\templates\base.html:1561
-#: .\templates\base.html:1605 .\templates\customers\add.html:100
+#: .\templates\banks\transfer_add.html:141 .\templates\base.html:1320
+#: .\templates\base.html:1324 .\templates\base.html:1610
+#: .\templates\base.html:1654 .\templates\customers\add.html:100
 #: .\templates\customers\add.html:294 .\templates\customers\add.html:298
 #: .\templates\customers\list.html:190 .\templates\customers\list.html:208
 #: .\templates\customers\list.html:242
@@ -6882,10 +6941,8 @@ msgstr "الإحصائيات"
 #: .\templates\revenues_expenses\entry_list.html:183
 #: .\templates\sales\invoice_add.html:314
 #: .\templates\sales\invoice_add.html:687
-#: .\templates\sales\invoice_add.html:810
-#: .\templates\sales\invoice_add.html:813
-#: .\templates\sales\invoice_add.html:909
-#: .\templates\sales\invoice_add.html:929
+#: .\templates\sales\invoice_add.html:944
+#: .\templates\sales\invoice_add.html:964
 #: .\templates\sales\invoice_list.html:160
 #: .\templates\sales\invoice_list.html:249
 #: .\templates\sales\invoice_list.html:436 .\templates\sales\pos.html:1115
@@ -6953,15 +7010,15 @@ msgstr "إضافة"
 #: .\templates\sales\invoice_add.html:250
 #: .\templates\sales\invoice_add.html:635
 #: .\templates\sales\invoice_add.html:690
-#: .\templates\sales\invoice_add.html:896
-#: .\templates\sales\invoice_add.html:898
-#: .\templates\sales\invoice_add.html:905
-#: .\templates\sales\invoice_add.html:929
-#: .\templates\sales\invoice_add.html:1040
-#: .\templates\sales\invoice_add.html:1046
+#: .\templates\sales\invoice_add.html:931
+#: .\templates\sales\invoice_add.html:933
+#: .\templates\sales\invoice_add.html:940
+#: .\templates\sales\invoice_add.html:964
+#: .\templates\sales\invoice_add.html:1075
+#: .\templates\sales\invoice_add.html:1081
 #: .\templates\sales\invoice_list.html:433 .\templates\sales\pos.html:1091
 #: .\templates\sales\pos.html:1146 .\templates\sales\pos.html:1462
-#: .\templates\sales\return_add.html:100 .\templates\sales\return_list.html:52
+#: .\templates\sales\return_add.html:142 .\templates\sales\return_list.html:52
 #: .\templates\sales\return_list.html:291
 #: .\templates\settings\currency_add.html:14
 #: .\templates\settings\currency_list.html:161
@@ -6984,7 +7041,7 @@ msgstr "جديد"
 #: .\templates\banks\transfer_list.html:436
 #: .\templates\banks\transfer_list.html:438
 #: .\templates\banks\transfer_list.html:524
-#: .\templates\banks\transfer_list.html:526 .\templates\base.html:1590
+#: .\templates\banks\transfer_list.html:526 .\templates\base.html:1639
 #: .\templates\cashboxes\cashbox_list.html:77
 #: .\templates\cashboxes\cashbox_list.html:78
 #: .\templates\cashboxes\transfer_list.html:623
@@ -7030,15 +7087,12 @@ msgstr "جديد"
 #: .\templates\revenues_expenses\dashboard.html:99
 #: .\templates\revenues_expenses\dashboard.html:126
 #: .\templates\revenues_expenses\entry_list.html:126
-#: .\templates\sales\creditnote_list.html:25
-#: .\templates\sales\invoice_add.html:791
-#: .\templates\sales\invoice_add.html:980
+#: .\templates\sales\invoice_add.html:1015
 #: .\templates\sales\invoice_edit.html:69
 #: .\templates\sales\invoice_list.html:115
 #: .\templates\sales\invoice_list.html:197
 #: .\templates\sales\invoice_list.html:379 .\templates\sales\pos.html:1168
 #: .\templates\sales\pos.html:1516 .\templates\sales\pos.html:1576
-#: .\templates\sales\return_add.html:215
 #: .\templates\sales\return_detail.html:62
 #: .\templates\sales\return_edit.html:67 .\templates\sales\return_list.html:232
 #: .\templates\sales\sales_report.html:73
@@ -7063,7 +7117,7 @@ msgstr "عرض"
 #: .\templates\assets_liabilities\dashboard.html:698
 #: .\templates\assets_liabilities\dashboard.html:901
 #: .\templates\assets_liabilities\dashboard.html:922
-#: .\templates\backup\backup_restore.html:1116 .\templates\base.html:1791
+#: .\templates\backup\backup_restore.html:1116 .\templates\base.html:1841
 #: .\templates\cashboxes\transfer_list.html:630
 #: .\templates\financial_reports\trial_balance.html:182
 #: .\templates\journal\account_list.html:54
@@ -7097,8 +7151,7 @@ msgstr ""
 #: .\templates\banks\account_edit.html:344
 #: .\templates\banks\account_edit.html:347
 #: .\templates\banks\cashbox_transfer_edit.html:112
-#: .\templates\banks\cashbox_transfer_edit.html:326 .\templates\base.html:2403
-#: .\templates\customers\add.html:246 .\templates\customers\add.html:273
+#: .\templates\banks\cashbox_transfer_edit.html:326 .\templates\base.html:2453
 #: .\templates\customers\edit.html:259 .\templates\customers\edit.html:285
 #: .\templates\customers\supplier_list.html:485
 #: .\templates\customers\supplier_list.html:517
@@ -7127,10 +7180,10 @@ msgstr ""
 #: .\templates\sales\creditnote_add.html:39
 #: .\templates\sales\invoice_add.html:412
 #: .\templates\sales\invoice_add.html:416
-#: .\templates\sales\invoice_add.html:905
-#: .\templates\sales\invoice_add.html:1153
+#: .\templates\sales\invoice_add.html:940
+#: .\templates\sales\invoice_add.html:1188
 #: .\templates\sales\invoice_edit.html:255
-#: .\templates\sales\return_add.html:296 .\templates\sales\return_add.html:300
+#: .\templates\sales\return_add.html:355 .\templates\sales\return_add.html:359
 #: .\templates\sales\return_edit.html:241
 #: .\templates\settings\currency_edit.html:121
 #: .\templates\settings\print_design.html:538
@@ -7152,7 +7205,7 @@ msgid "Export"
 msgstr "تصدير"
 
 #: .\templates\assets_liabilities\dashboard.html:484
-#: .\templates\banks\account_edit.html:213 .\templates\base.html:605
+#: .\templates\banks\account_edit.html:213 .\templates\base.html:608
 #: .\templates\inventory\warehouse_edit.html:174
 #: .\templates\inventory\warehouse_edit.html:178
 #: .\templates\products\product_list.html:242
@@ -7160,7 +7213,7 @@ msgstr "تصدير"
 #: .\templates\purchases\invoice_detail.html:55
 #: .\templates\revenues_expenses\recurring_create.html:179
 #: .\templates\revenues_expenses\recurring_edit.html:185
-#: .\templates\sales\invoice_add.html:987
+#: .\templates\sales\invoice_add.html:1022
 #: .\templates\sales\invoice_list.html:115
 #: .\templates\settings\company_fixed.html:141
 #: .\templates\settings\currency_list.html:20 .\templates\settings\index.html:4
@@ -7186,7 +7239,7 @@ msgstr ""
 #: .\templates\purchases\invoice_add.html:534
 #: .\templates\reports\customer_statement.html:32
 #: .\templates\revenues_expenses\category_create.html:110
-#: .\templates\sales\invoice_add.html:473 .\templates\sales\return_add.html:583
+#: .\templates\sales\invoice_add.html:473 .\templates\sales\return_add.html:683
 #: .\templates\settings\currency_edit.html:113
 #: .\templates\settings\index.html:47
 msgid "Select"
@@ -7194,9 +7247,9 @@ msgstr ""
 
 #: .\templates\assets_liabilities\dashboard.html:638
 #: .\templates\assets_liabilities\dashboard.html:646
-#: .\templates\assets_liabilities\dashboard.html:654 .\templates\base.html:2303
-#: .\templates\base.html:2304 .\templates\base.html:2305
-#: .\templates\base.html:2306 .\templates\customers\transactions.html:425
+#: .\templates\assets_liabilities\dashboard.html:654 .\templates\base.html:2353
+#: .\templates\base.html:2354 .\templates\base.html:2355
+#: .\templates\base.html:2356 .\templates\customers\transactions.html:425
 #: .\templates\payments\voucher_detail.html:140
 #: .\templates\payments\voucher_detail.html:144
 #: .\templates\purchases\invoice_delete.html:67
@@ -7205,7 +7258,7 @@ msgstr ""
 #: .\templates\purchases\invoice_edit.html:156
 #: .\templates\purchases\purchase_report.html:163
 #: .\templates\sales\invoice_add.html:292
-#: .\templates\sales\invoice_add.html:879
+#: .\templates\sales\invoice_add.html:914
 #: .\templates\sales\invoice_delete.html:104
 #: .\templates\sales\invoice_detail.html:46
 #: .\templates\sales\invoice_edit.html:148 .\templates\sales\pos.html:1028
@@ -7271,7 +7324,7 @@ msgstr ""
 #: .\templates\inventory\warehouse_delete.html:121
 #: .\templates\inventory\warehouse_delete.html:128
 #: .\templates\products\product_delete.html:67
-#: .\templates\sales\invoice_add.html:295 .\templates\sales\return_add.html:249
+#: .\templates\sales\invoice_add.html:295 .\templates\sales\return_add.html:308
 msgid "Transfer"
 msgstr ""
 
@@ -7299,7 +7352,7 @@ msgstr ""
 #: .\templates\purchases\return_edit.html:21
 #: .\templates\purchases\return_list.html:139
 #: .\templates\revenues_expenses\entry_list.html:126
-#: .\templates\sales\invoice_edit.html:69 .\templates\sales\return_add.html:224
+#: .\templates\sales\invoice_edit.html:69 .\templates\sales\return_add.html:283
 #: .\templates\sales\return_detail.html:60
 #: .\templates\sales\return_detail.html:62
 #: .\templates\sales\return_edit.html:67 .\templates\sales\return_list.html:232
@@ -7309,7 +7362,7 @@ msgstr ""
 
 #: .\templates\assets_liabilities\dashboard.html:896
 #: .\templates\banks\bank_cashbox_transfer_add.html:389
-#: .\templates\base.html:2344 .\templates\core\dashboard.html:152
+#: .\templates\base.html:2394 .\templates\core\dashboard.html:152
 #: .\templates\core\dashboard.html:203
 #: .\templates\financial_reports\trial_balance.html:73
 #: .\templates\inventory\list.html:343
@@ -7397,7 +7450,7 @@ msgstr ""
 
 #: .\templates\assets_liabilities\liability_create.html:400
 msgid "Please provide a category name."
-msgstr ""
+msgstr "يرجى كتابة اسم الفئة."
 
 #: .\templates\assets_liabilities\liability_create.html:461
 #, fuzzy
@@ -7428,7 +7481,7 @@ msgid "Total Liabilities"
 msgstr ""
 
 #: .\templates\assets_liabilities\liability_list.html:105
-#: .\templates\base.html:945
+#: .\templates\base.html:951
 msgid "Liabilities List"
 msgstr ""
 
@@ -7452,7 +7505,7 @@ msgstr "مستحق قريبا"
 #: .\templates\assets_liabilities\liability_list.html:154
 #: .\templates\sales\invoice_list.html:302
 #: .\templates\sales\invoice_list.html:365
-#: .\templates\sales\return_add.html:419
+#: .\templates\sales\return_add.html:518
 msgid "Paid"
 msgstr "مدفوع"
 
@@ -7698,9 +7751,9 @@ msgstr "إضافة حساب بنكي جديد"
 #: .\templates\banks\cashbox_transfer_edit.html:86
 #: .\templates\banks\transfer_add.html:139
 #: .\templates\banks\transfer_detail.html:93
-#: .\templates\banks\transfer_list.html:301 .\templates\base.html:633
-#: .\templates\base.html:882 .\templates\base.html:909
-#: .\templates\base.html:939 .\templates\core\dashboard.html:6
+#: .\templates\banks\transfer_list.html:301 .\templates\base.html:636
+#: .\templates\base.html:888 .\templates\base.html:915
+#: .\templates\base.html:945 .\templates\core\dashboard.html:6
 #: .\templates\core\dashboard.html:125
 #: .\templates\customers\supplier_list.html:96
 #: .\templates\inventory\warehouse_detail.html:121
@@ -7791,7 +7844,7 @@ msgstr "أي ملاحظات إضافية حول الحساب المصرفي"
 msgid "Required fields"
 msgstr "حقول إلزامية"
 
-#: .\templates\banks\account_add.html:270
+#: .\templates\banks\account_add.html:270 .\templates\customers\add.html:246
 msgid "Save Account"
 msgstr "حفظ الحساب"
 
@@ -7812,6 +7865,7 @@ msgstr "إدارة الحركات"
 #: .\templates\banks\account_detail.html:118
 #: .\templates\banks\account_edit.html:101
 #: .\templates\banks\account_transactions.html:85
+#: .\templates\sales\creditnote_edit.html:58
 msgid "Back"
 msgstr "رجوع"
 
@@ -7872,8 +7926,6 @@ msgstr "تعديل الحساب البنكي"
 #: .\templates\banks\bank_cashbox_transfer_add.html:262
 #: .\templates\banks\cashbox_transfer_detail.html:340
 #: .\templates\cashboxes\transfer_list.html:400
-#: .\templates\customers\add.html:146 .\templates\customers\add.html:186
-#: .\templates\customers\add.html:214 .\templates\customers\add.html:220
 #: .\templates\customers\edit.html:141 .\templates\customers\edit.html:181
 #: .\templates\customers\edit.html:227 .\templates\customers\edit.html:233
 #: .\templates\customers\supplier_list.html:385
@@ -7923,21 +7975,21 @@ msgstr "تعديل الحساب البنكي"
 #: .\templates\receipts\receipt_add.html:132
 #: .\templates\revenues_expenses\category_create.html:88
 #: .\templates\sales\invoice_add.html:344
-#: .\templates\sales\invoice_add.html:964
-#: .\templates\sales\invoice_add.html:976
-#: .\templates\sales\invoice_add.html:1054
-#: .\templates\sales\invoice_add.html:1057
-#: .\templates\sales\invoice_add.html:1097
-#: .\templates\sales\invoice_add.html:1100
-#: .\templates\sales\invoice_add.html:1128
-#: .\templates\sales\invoice_add.html:1131
-#: .\templates\sales\invoice_add.html:1136
-#: .\templates\sales\return_add.html:136
+#: .\templates\sales\invoice_add.html:999
+#: .\templates\sales\invoice_add.html:1011
+#: .\templates\sales\invoice_add.html:1089
+#: .\templates\sales\invoice_add.html:1092
+#: .\templates\sales\invoice_add.html:1132
+#: .\templates\sales\invoice_add.html:1135
+#: .\templates\sales\invoice_add.html:1163
+#: .\templates\sales\invoice_add.html:1166
+#: .\templates\sales\invoice_add.html:1171
+#: .\templates\sales\return_add.html:178
 #: .\templates\sales\return_detail.html:105
 #: .\templates\settings\currency_list.html:117
 #: .\templates\settings\currency_list.html:122
 msgid "Information"
-msgstr ""
+msgstr "المعلومات"
 
 #: .\templates\banks\account_list.html:269
 msgid "Bank Accounts List"
@@ -8207,12 +8259,11 @@ msgstr ""
 msgid "This account balance will return to initial balance"
 msgstr ""
 
-#: .\templates\banks\account_list.html:710 .\templates\base.html:1597
+#: .\templates\banks\account_list.html:710 .\templates\base.html:1646
 #: .\templates\purchases\invoice_edit.html:488
 #: .\templates\purchases\invoice_edit.html:511
 #: .\templates\purchases\invoice_edit.html:539
 #: .\templates\purchases\invoice_edit.html:562
-#: .\templates\sales\invoice_add.html:795
 #: .\templates\settings\document_sequences.html:92
 msgid "Hidden"
 msgstr ""
@@ -8304,6 +8355,7 @@ msgstr ""
 #: .\templates\purchases\invoice_delete.html:38
 #: .\templates\purchases\return_delete.html:24
 #: .\templates\receipts\receipt_detail.html:293
+#: .\templates\sales\creditnote_delete.html:18
 #: .\templates\sales\return_delete.html:154
 msgid "Warning"
 msgstr ""
@@ -8357,7 +8409,7 @@ msgstr ""
 #: .\templates\banks\bank_cashbox_transfer_add.html:597
 #: .\templates\inventory\list.html:618
 #: .\templates\purchases\invoice_add.html:866
-#: .\templates\sales\invoice_add.html:1010
+#: .\templates\sales\invoice_add.html:1045
 msgid "Failed"
 msgstr ""
 
@@ -8374,10 +8426,12 @@ msgstr ""
 #: .\templates\payments\voucher_detail.html:294
 #: .\templates\payments\voucher_detail.html:296
 #: .\templates\payments\voucher_detail.html:301
+#, fuzzy
+#| msgid "Voucher Type"
 msgid "Voucher"
-msgstr ""
+msgstr "نوع المستند"
 
-#: .\templates\banks\cashbox_transfer_edit.html:439 .\templates\base.html:2170
+#: .\templates\banks\cashbox_transfer_edit.html:439 .\templates\base.html:2220
 #: .\templates\customers\edit.html:216
 #: .\templates\journal\account_form.html:184
 #: .\templates\products\product_list.html:511
@@ -8657,7 +8711,7 @@ msgstr "تصفية"
 
 #: .\templates\banks\transfer_list.html:390
 #: .\templates\core\profit_loss_report.html:212
-#: .\templates\journal\entry_create.html:185
+#: .\templates\customers\add.html:242 .\templates\journal\entry_create.html:185
 #: .\templates\settings\partials\document_form.html:228
 msgid "Reset"
 msgstr "إعادة ضبط"
@@ -8771,361 +8825,363 @@ msgstr ""
 msgid "An error occurred while deleting the transfer. Please try again."
 msgstr ""
 
-#: .\templates\base.html:542 .\templates\partials\print_header.html:9
+#: .\templates\base.html:545 .\templates\partials\print_header.html:9
 #: .\templates\settings\company.html:85 .\templates\settings\company.html:89
 #: .\templates\settings\company_fixed.html:84
 #: .\templates\settings\company_fixed.html:88
 #: .\templates\settings\document_print_settings.html:974
+#, fuzzy
+#| msgid "Company logo"
 msgid "Company Logo"
-msgstr ""
+msgstr "شعار الشركة"
 
-#: .\templates\base.html:550
+#: .\templates\base.html:553
 msgid "Home"
 msgstr "الرئيسية"
 
-#: .\templates\base.html:559 .\templates\base.html:569
+#: .\templates\base.html:562 .\templates\base.html:572
 msgid "Arabic"
 msgstr "العربية"
 
-#: .\templates\base.html:559 .\templates\base.html:580
+#: .\templates\base.html:562 .\templates\base.html:583
 msgid "English"
 msgstr "الإنجليزية"
 
-#: .\templates\base.html:607
+#: .\templates\base.html:610
 msgid "Logout"
 msgstr "تسجيل الخروج"
 
-#: .\templates\base.html:622 .\templates\search\search.html:5
+#: .\templates\base.html:625 .\templates\search\search.html:5
 #: .\templates\search\search.html:190
 msgid "Comprehensive Search"
 msgstr "البحث الشامل"
 
-#: .\templates\base.html:626
+#: .\templates\base.html:629
 msgid "Global Search"
 msgstr "البحث العام"
 
-#: .\templates\base.html:647
+#: .\templates\base.html:650
 msgid "Add Account"
 msgstr "إضافة حساب"
 
-#: .\templates\base.html:654 .\templates\base.html:674
+#: .\templates\base.html:657 .\templates\base.html:677
 msgid "Transfers List"
 msgstr "قائمة التحويلات"
 
-#: .\templates\base.html:666
+#: .\templates\base.html:669
 msgid "Cash Boxes"
 msgstr "الصناديق النقدية"
 
-#: .\templates\base.html:671
+#: .\templates\base.html:674
 msgid "Cashboxes List"
 msgstr "قائمة الصناديق النقدية"
 
-#: .\templates\base.html:686
+#: .\templates\base.html:689
 msgid "Payment Receipts"
 msgstr "إيصالات الدفع"
 
-#: .\templates\base.html:691
+#: .\templates\base.html:694
 msgid "Add Payment Receipt"
 msgstr "إضافة إيصال دفع"
 
-#: .\templates\base.html:694
+#: .\templates\base.html:697
 msgid "Receipts List"
 msgstr "قائمة الإيصالات"
 
-#: .\templates\base.html:697
+#: .\templates\base.html:700
 msgid "Checks Management"
 msgstr "إدارة الشيكات"
 
-#: .\templates\base.html:714
+#: .\templates\base.html:717
 msgid "Add Payment Voucher"
 msgstr "إضافة سند دفع"
 
-#: .\templates\base.html:717
+#: .\templates\base.html:720
 msgid "Vouchers List"
 msgstr "قائمة السندات"
 
-#: .\templates\base.html:728
+#: .\templates\base.html:731
 msgid "Categories & Products"
 msgstr "الفئات والمنتجات"
 
-#: .\templates\base.html:733 .\templates\products\product_add.html:136
+#: .\templates\base.html:736 .\templates\products\product_add.html:136
 #: .\templates\products\product_edit.html:114
 #: .\templates\products\product_list.html:378
 #: .\templates\products\product_list.html:937
 msgid "Add Category"
 msgstr "إضافة فئة"
 
-#: .\templates\base.html:736 .\templates\purchases\invoice_add.html:231
+#: .\templates\base.html:739 .\templates\purchases\invoice_add.html:231
 msgid "Add Product"
 msgstr "إضافة منتج"
 
-#: .\templates\base.html:739 .\templates\products\category_list.html:267
+#: .\templates\base.html:742 .\templates\products\category_list.html:267
 msgid "Categories List"
 msgstr "قائمة الفئات"
 
-#: .\templates\base.html:742 .\templates\products\product_list.html:7
+#: .\templates\base.html:745 .\templates\products\product_list.html:7
 #: .\templates\products\product_list.html:371
 #: .\templates\products\product_list.html:534
 #: .\templates\products\product_list.html:1288
 msgid "Products List"
 msgstr "قائمة المنتجات"
 
-#: .\templates\base.html:752
+#: .\templates\base.html:755
 msgid "Customers & Suppliers"
 msgstr "العملاء والموردين"
 
-#: .\templates\base.html:757 .\templates\customers\add.html:6
+#: .\templates\base.html:760 .\templates\customers\add.html:6
 msgid "Add Customer/Supplier"
 msgstr "إضافة عميل/مورد"
 
-#: .\templates\base.html:760 .\templates\customers\customer_list.html:5
+#: .\templates\base.html:763 .\templates\customers\customer_list.html:5
 #: .\templates\customers\customer_list.html:83
 #: .\templates\customers\customer_list.html:201
 msgid "Customers List"
 msgstr "قائمة العملاء"
 
-#: .\templates\base.html:763
+#: .\templates\base.html:766
 msgid "Suppliers List"
 msgstr "قائمة الموردين"
 
-#: .\templates\base.html:766
+#: .\templates\base.html:769
 msgid "All Customers & Suppliers"
 msgstr "جميع العملاء والموردين"
 
-#: .\templates\base.html:777 .\templates\core\dashboard.html:534
+#: .\templates\base.html:780 .\templates\core\dashboard.html:534
 #: .\templates\core\dashboard.html:569 .\templates\users\group_add.html:125
 #: .\templates\users\group_edit.html:135
 msgid "Purchases"
 msgstr "المشتريات"
 
-#: .\templates\base.html:782
+#: .\templates\base.html:785
 msgid "Create Purchase Invoice"
 msgstr "إنشاء فاتورة مشتريات"
 
-#: .\templates\base.html:785 .\templates\purchases\return_add.html:7
+#: .\templates\base.html:788 .\templates\purchases\return_add.html:7
 #: .\templates\purchases\return_add.html:17
 msgid "Create Purchase Return"
 msgstr "إنشاء مردود مشتريات"
 
-#: .\templates\base.html:788
+#: .\templates\base.html:791
 msgid "Purchase Invoices List"
 msgstr "قائمة فواتير المشتريات"
 
-#: .\templates\base.html:791 .\templates\purchases\return_list.html:7
+#: .\templates\base.html:794 .\templates\purchases\return_list.html:7
 msgid "Purchase Returns List"
 msgstr "قائمة مردودات المشتريات"
 
-#: .\templates\base.html:794
+#: .\templates\base.html:797
 msgid "Debit Notes"
-msgstr "مذكرات الدين"
+msgstr "مذكرات الدائن"
 
-#: .\templates\base.html:797 .\templates\purchases\purchase_statement.html:7
+#: .\templates\base.html:800 .\templates\purchases\purchase_statement.html:7
 msgid "Purchase Statement"
 msgstr "كشف المشتريات"
 
-#: .\templates\base.html:800
+#: .\templates\base.html:803
 msgid "Purchase Return Statement"
 msgstr "كشف مردودات المشتريات"
 
-#: .\templates\base.html:812 .\templates\core\dashboard.html:534
+#: .\templates\base.html:815 .\templates\core\dashboard.html:534
 #: .\templates\core\dashboard.html:562 .\templates\users\group_add.html:123
 #: .\templates\users\group_edit.html:133
 msgid "Sales"
 msgstr "المبيعات"
 
-#: .\templates\base.html:817
+#: .\templates\base.html:820
 msgid "Create Sales Invoice"
 msgstr "إنشاء فاتورة مبيعات"
 
-#: .\templates\base.html:820
+#: .\templates\base.html:823
 msgid "Create Sales Return"
 msgstr "إنشاء مردود مبيعات"
 
-#: .\templates\base.html:823
+#: .\templates\base.html:826
 msgid "Sales Invoices List"
 msgstr "قائمة فواتير المبيعات"
 
-#: .\templates\base.html:826
+#: .\templates\base.html:829
 msgid "Sales Returns List"
 msgstr ""
 
-#: .\templates\base.html:829
+#: .\templates\base.html:832
 msgid "Credit Notes"
 msgstr "مذكرات دائن"
 
-#: .\templates\base.html:832
+#: .\templates\base.html:838
 msgid "Sales Statement"
 msgstr ""
 
-#: .\templates\base.html:835
+#: .\templates\base.html:841
 msgid "Sales Returns Statement"
 msgstr ""
 
-#: .\templates\base.html:839 .\templates\sales\pos.html:9
+#: .\templates\base.html:845 .\templates\sales\pos.html:9
 msgid "Point of Sale"
 msgstr "نقطة البيع"
 
-#: .\templates\base.html:852 .\templates\products\product_list.html:867
+#: .\templates\base.html:858 .\templates\products\product_list.html:867
 #: .\templates\users\group_add.html:127 .\templates\users\group_edit.html:137
 msgid "Inventory"
 msgstr "المخزون"
 
-#: .\templates\base.html:857
+#: .\templates\base.html:863
 msgid "View Inventory"
 msgstr "عرض المخزون"
 
-#: .\templates\base.html:860
+#: .\templates\base.html:866
 msgid "Warehouses"
 msgstr "المخازن"
 
-#: .\templates\base.html:863
+#: .\templates\base.html:869
 msgid "Inventory Movement"
 msgstr "حركة المخزون"
 
-#: .\templates\base.html:866
+#: .\templates\base.html:872
 msgid "Stock Alerts"
 msgstr "تنبيهات المخزون"
 
-#: .\templates\base.html:877
+#: .\templates\base.html:883
 msgid "Revenues & Expenses"
 msgstr "الإيرادات والمصروفات"
 
-#: .\templates\base.html:885
+#: .\templates\base.html:891
 msgid "Manage Categories"
 msgstr "إدارة الفئات"
 
-#: .\templates\base.html:888
+#: .\templates\base.html:894
 msgid "Entries List"
 msgstr "قائمة القيود"
 
-#: .\templates\base.html:891 .\templates\revenues_expenses\entry_create.html:4
+#: .\templates\base.html:897 .\templates\revenues_expenses\entry_create.html:4
 msgid "Add New Entry"
 msgstr "إضافة قيد جديد"
 
-#: .\templates\base.html:894
+#: .\templates\base.html:900
 msgid "Recurring Revenue"
 msgstr "الإيرادات المتكررة"
 
-#: .\templates\base.html:904 .\templates\journal\entry_list.html:13
+#: .\templates\base.html:910 .\templates\journal\entry_list.html:13
 msgid "Journal Entries"
 msgstr "القيود اليومية"
 
-#: .\templates\base.html:912 .\templates\journal\entries_by_type.html:16
+#: .\templates\base.html:918 .\templates\journal\entries_by_type.html:16
 msgid "All Entries"
 msgstr "جميع القيود"
 
-#: .\templates\base.html:915 .\templates\journal\entries_by_type.html:6
+#: .\templates\base.html:921 .\templates\journal\entries_by_type.html:6
 msgid "Entries by Type"
 msgstr "القيود حسب النوع"
 
-#: .\templates\base.html:918
+#: .\templates\base.html:924
 msgid "Create Manual Entry"
 msgstr "إنشاء قيد يدوي"
 
-#: .\templates\base.html:921
+#: .\templates\base.html:927
 msgid "Chart of Accounts"
 msgstr "دليل الحسابات"
 
-#: .\templates\base.html:924
+#: .\templates\base.html:930
 msgid "Trial Balance"
 msgstr "ميزان المراجعة"
 
-#: .\templates\base.html:934
+#: .\templates\base.html:940
 msgid "Assets & Liabilities"
 msgstr "الأصول والخصوم"
 
-#: .\templates\base.html:956 .\templates\hr\attendance_list.html:58
+#: .\templates\base.html:962 .\templates\hr\attendance_list.html:58
 #: .\templates\users\group_add.html:129 .\templates\users\group_edit.html:139
 msgid "Reports"
 msgstr "التقارير"
 
-#: .\templates\base.html:961
+#: .\templates\base.html:967
 msgid "Sales Reports"
 msgstr "تقارير المبيعات"
 
-#: .\templates\base.html:967
+#: .\templates\base.html:973
 msgid "Purchase Reports"
 msgstr "تقارير المشتريات"
 
-#: .\templates\base.html:970 .\templates\core\tax_report.html:6
+#: .\templates\base.html:976 .\templates\core\tax_report.html:6
 #: .\templates\core\tax_report.html:120
 msgid "Tax Report"
 msgstr "تقرير الضرائب"
 
-#: .\templates\base.html:973
+#: .\templates\base.html:979
 msgid "Profit and Loss"
 msgstr "الأرباح والخسائر"
 
-#: .\templates\base.html:988
+#: .\templates\base.html:994
 msgid "Human Resources"
 msgstr "الموارد البشرية"
 
-#: .\templates\base.html:993 .\templates\hr\attendance_list.html:45
+#: .\templates\base.html:999 .\templates\hr\attendance_list.html:45
 #: .\templates\hr\dashboard.html:5 .\templates\hr\employee_detail.html:49
 #: .\templates\hr\employee_form.html:32 .\templates\hr\employee_list.html:30
 msgid "HR Dashboard"
 msgstr "لوحة تحكم الموارد البشرية"
 
-#: .\templates\base.html:1011
+#: .\templates\base.html:1017
 msgid "Payroll"
 msgstr "كشوف المرتبات"
 
-#: .\templates\base.html:1014 .\templates\hr\dashboard.html:249
+#: .\templates\base.html:1020 .\templates\hr\dashboard.html:249
 #: .\templates\hr\reports.html:4 .\templates\hr\reports.html:14
 msgid "HR Reports"
 msgstr "تقارير الموارد البشرية"
 
-#: .\templates\base.html:1026 .\templates\base.html:1058
+#: .\templates\base.html:1032 .\templates\base.html:1064
 msgid "System Management"
 msgstr "إدارة النظام"
 
-#: .\templates\base.html:1031 .\templates\users\user_add.html:5
+#: .\templates\base.html:1037 .\templates\users\user_add.html:5
 #: .\templates\users\user_list.html:77
 msgid "Add User"
 msgstr "إضافة مستخدم"
 
-#: .\templates\base.html:1034
+#: .\templates\base.html:1040
 msgid "Users List"
 msgstr "قائمة المستخدمين"
 
-#: .\templates\base.html:1037
+#: .\templates\base.html:1043
 msgid "Groups & Permissions"
 msgstr "المجموعات والصلاحيات"
 
-#: .\templates\base.html:1042 .\templates\core\audit_log.html:4
+#: .\templates\base.html:1048 .\templates\core\audit_log.html:4
 #: .\templates\core\audit_log.html:14
 msgid "Activity Log"
 msgstr "سجل الأنشطة"
 
-#: .\templates\base.html:1046
+#: .\templates\base.html:1052
 msgid "Document Number Management"
 msgstr "إدارة أرقام الوثائق"
 
-#: .\templates\base.html:1049 .\templates\settings\index.html:12
+#: .\templates\base.html:1055 .\templates\settings\index.html:12
 msgid "System Settings"
 msgstr "إعدادات النظام"
 
-#: .\templates\base.html:1059
+#: .\templates\base.html:1065
 msgid "Advanced"
 msgstr "متقدم"
 
-#: .\templates\base.html:1067
+#: .\templates\base.html:1073
 msgid "Print Design"
 msgstr "تصميم الطباعة"
 
-#: .\templates\base.html:1075 .\templates\settings\jofotara_settings.html:5
+#: .\templates\base.html:1081 .\templates\settings\jofotara_settings.html:5
 msgid "JoFotara Settings"
 msgstr "إعدادات جوفاتورا"
 
-#: .\templates\base.html:1083 .\templates\settings\index.html:108
+#: .\templates\base.html:1089 .\templates\settings\index.html:108
 msgid "Backup"
 msgstr "النسخ الاحتياطي"
 
-#: .\templates\base.html:1280 .\templates\journal\entry_create.html:214
+#: .\templates\base.html:1329 .\templates\journal\entry_create.html:214
 msgid "Loading..."
 msgstr "جاري التحميل..."
 
-#: .\templates\base.html:1494 .\templates\customers\list.html:255
+#: .\templates\base.html:1543 .\templates\customers\list.html:255
 #: .\templates\customers\list.html:256 .\templates\customers\list.html:266
 #: .\templates\customers\list.html:267
 #: .\templates\financial_reports\balance_sheet.html:8
@@ -9157,11 +9213,11 @@ msgstr "جاري التحميل..."
 msgid "Report"
 msgstr ""
 
-#: .\templates\base.html:1496
+#: .\templates\base.html:1545
 msgid "Print Date:"
 msgstr ""
 
-#: .\templates\base.html:1551 .\templates\cashboxes\transfer_list.html:378
+#: .\templates\base.html:1600 .\templates\cashboxes\transfer_list.html:378
 #: .\templates\inventory\warehouse_edit.html:192
 #: .\templates\journal\account_form.html:391
 #: .\templates\products\product_edit.html:356
@@ -9186,36 +9242,37 @@ msgstr ""
 msgid "Hide"
 msgstr ""
 
-#: .\templates\base.html:1862
+#: .\templates\base.html:1912
 msgid "Exit"
 msgstr ""
 
-#: .\templates\base.html:1870
+#: .\templates\base.html:1920
 msgid "Profile"
 msgstr ""
 
-#: .\templates\base.html:2093
+#: .\templates\base.html:2143
 msgid "إدارة السوبر أدمين"
 msgstr ""
 
-#: .\templates\base.html:2136 .\templates\purchases\invoice_add.html:948
-#: .\templates\sales\invoice_add.html:1092
+#: .\templates\base.html:2186 .\templates\customers\add.html:175
+#: .\templates\purchases\invoice_add.html:948
+#: .\templates\sales\invoice_add.html:1127
 msgid "City"
 msgstr ""
 
-#: .\templates\base.html:2158
+#: .\templates\base.html:2208
 msgid "OK"
 msgstr ""
 
-#: .\templates\base.html:2364
+#: .\templates\base.html:2414
 msgid "Second"
 msgstr ""
 
-#: .\templates\base.html:2393 .\templates\products\product_list.html:1034
+#: .\templates\base.html:2443 .\templates\products\product_list.html:1034
 #: .\templates\products\product_list.html:1153
 #: .\templates\products\product_list.html:1393
 #: .\templates\purchases\invoice_add.html:753
-#: .\templates\sales\invoice_add.html:898
+#: .\templates\sales\invoice_add.html:933
 msgid "Open"
 msgstr ""
 
@@ -9638,9 +9695,10 @@ msgstr ""
 #: .\templates\purchases\return_edit.html:55
 #: .\templates\purchases\return_edit.html:59
 #: .\templates\purchases\return_list.html:103
+#: .\templates\reports\sales_by_salesperson.html:93
 #: .\templates\sales\invoice_add.html:372
 #: .\templates\sales\invoice_add.html:412
-#: .\templates\sales\invoice_add.html:887
+#: .\templates\sales\invoice_add.html:922
 #: .\templates\sales\invoice_delete.html:55
 #: .\templates\sales\invoice_delete.html:60
 #: .\templates\sales\invoice_delete.html:70
@@ -9660,8 +9718,7 @@ msgstr ""
 #: .\templates\sales\invoice_list.html:388
 #: .\templates\sales\invoice_list.html:433 .\templates\sales\pos.html:1087
 #: .\templates\sales\pos.html:1397 .\templates\sales\pos.html:1455
-#: .\templates\sales\return_add.html:174 .\templates\sales\return_add.html:178
-#: .\templates\sales\return_add.html:215 .\templates\sales\return_add.html:568
+#: .\templates\sales\return_add.html:668
 #: .\templates\sales\return_delete.html:94
 #: .\templates\sales\return_detail.html:135
 #: .\templates\sales\return_edit.html:130
@@ -9677,45 +9734,45 @@ msgstr ""
 
 #: .\templates\core\dashboard.html:173 .\templates\core\dashboard.html:224
 msgid "Half Year"
-msgstr ""
+msgstr "نصف عام"
 
 #: .\templates\core\dashboard.html:180 .\templates\core\dashboard.html:231
 msgid "This Year"
-msgstr ""
+msgstr "هذا العام"
 
 #: .\templates\core\dashboard.html:196
 msgid "Purchase Statistics"
-msgstr ""
+msgstr "إحصائيات الشراء"
 
 #: .\templates\core\dashboard.html:244 .\templates\core\dashboard.html:251
 msgid "Bank and Cashbox Balances"
-msgstr ""
+msgstr "أرصدة البنوك وصناديق النقد"
 
 #: .\templates\core\dashboard.html:256
 msgid "Update Balances"
-msgstr ""
+msgstr "تحديث الأرصدة"
 
 #: .\templates\core\dashboard.html:267 .\templates\core\dashboard.html:321
 #: .\templates\users\group_add.html:121 .\templates\users\group_edit.html:131
 msgid "Banks"
-msgstr ""
+msgstr "البنوك"
 
 #: .\templates\core\dashboard.html:299 .\templates\core\dashboard.html:372
 #: .\templates\core\dashboard.html:379
 msgid "Pending Checks"
-msgstr ""
+msgstr "الشيكات المعلقة"
 
 #: .\templates\core\dashboard.html:314
 msgid "Bank Balances"
-msgstr ""
+msgstr "أرصدة البنوك"
 
 #: .\templates\core\dashboard.html:343
 msgid "Cashbox Balances"
-msgstr ""
+msgstr "أرصدة صندوق النقد"
 
 #: .\templates\core\dashboard.html:391
 msgid "Check Details Display"
-msgstr ""
+msgstr "عرض تفاصيل التحقق"
 
 #: .\templates\core\dashboard.html:408
 msgid "Show Details"
@@ -9747,11 +9804,11 @@ msgstr "الروابط السريعة"
 
 #: .\templates\core\dashboard.html:460
 msgid "Purchase Invoice"
-msgstr ""
+msgstr "فاتورة الشراء"
 
 #: .\templates\core\dashboard.html:467
 msgid "New Product"
-msgstr ""
+msgstr "منتج جديد"
 
 #: .\templates\core\dashboard.html:473 .\templates\core\tax_report.html:208
 msgid "Customer/Supplier"
@@ -9834,16 +9891,20 @@ msgid "Updated"
 msgstr ""
 
 #: .\templates\core\dashboard.html:612
+#, fuzzy
+#| msgid "Bank Accounts"
 msgid "bank account"
-msgstr ""
+msgstr "الحسابات المصرفية"
 
 #: .\templates\core\dashboard.html:612
 msgid "and"
 msgstr ""
 
 #: .\templates\core\dashboard.html:612
+#, fuzzy
+#| msgid "Select Cashbox"
 msgid "cashbox"
-msgstr ""
+msgstr "اختر صندوق النقد"
 
 #: .\templates\core\dashboard.html:613
 msgid "Reload page to show updated balances"
@@ -10035,7 +10096,8 @@ msgid "Net Profit Margin"
 msgstr ""
 
 #: .\templates\core\profit_loss_report.html:344
-#: .\templates\receipts\receipt_add.html:137
+#: .\templates\customers\add.html:214 .\templates\receipts\receipt_add.html:137
+#: .\templates\sales\creditnote_delete.html:35
 #: .\templates\users\user_edit.html:242
 msgid "Additional Information"
 msgstr "معلومات إضافية"
@@ -10078,27 +10140,27 @@ msgstr ""
 
 #: .\templates\core\tax_report.html:150
 msgid "Purchase invoices + Sales returns"
-msgstr ""
+msgstr "فواتير الشراء + إرجاعات المبيعات"
 
 #: .\templates\core\tax_report.html:155
 msgid "Net Tax"
-msgstr ""
+msgstr "الضريبة الصافية"
 
 #: .\templates\core\tax_report.html:159
 msgid "Amount Due/Refundable"
-msgstr ""
+msgstr "المبلغ المستحق/القابل للاسترداد"
 
 #: .\templates\core\tax_report.html:164
 msgid "Number of Documents"
-msgstr ""
+msgstr "عدد المستندات"
 
 #: .\templates\core\tax_report.html:166
 msgid "Total Documents"
-msgstr ""
+msgstr "إجمالي المستندات"
 
 #: .\templates\core\tax_report.html:178
 msgid "All Documents"
-msgstr ""
+msgstr "جميع المستندات"
 
 #: .\templates\core\tax_report.html:179 .\templates\sales\invoice_list.html:7
 #: .\templates\sales\invoice_list.html:162
@@ -10112,28 +10174,23 @@ msgstr ""
 #: .\templates\purchases\invoice_list.html:84
 #: .\templates\purchases\invoice_list.html:178
 msgid "Purchase Invoices"
-msgstr ""
+msgstr "فواتير الشراء"
 
 #: .\templates\core\tax_report.html:181
 msgid "Sales Returns"
-msgstr ""
+msgstr "مردود المبيعات"
 
 #: .\templates\core\tax_report.html:182
 msgid "Purchase Returns"
-msgstr ""
+msgstr "مردود مشتريات"
 
 #: .\templates\core\tax_report.html:195
 msgid "Document number or customer/supplier name"
-msgstr ""
-
-#: .\templates\core\tax_report.html:206
-#: .\templates\settings\document_print_settings.html:1006
-msgid "Document Number"
-msgstr ""
+msgstr "رقم المستند أو اسم العميل/المورد"
 
 #: .\templates\core\tax_report.html:210
 msgid "Amount Before Tax"
-msgstr ""
+msgstr "المبلغ قبل الضريبة"
 
 #: .\templates\core\tax_report.html:212 .\templates\inventory\list.html:415
 #: .\templates\inventory\list.html:425 .\templates\inventory\list.html:436
@@ -10151,19 +10208,91 @@ msgstr ""
 msgid "No documents with taxes found"
 msgstr ""
 
-#: .\templates\customers\add.html:152 .\templates\customers\add.html:266
-#: .\templates\customers\customer_list.html:158
-#: .\templates\customers\edit.html:147 .\templates\customers\edit.html:280
-msgid "Customer Name"
-msgstr ""
+#: .\templates\customers\add.html:116
+#, fuzzy
+#| msgid "Chart of Accounts"
+msgid "Choose Account Type"
+msgstr "اختر نوع الحساب"
 
-#: .\templates\customers\add.html:155 .\templates\customers\add.html:157
+#: .\templates\customers\add.html:150 .\templates\users\user_list.html:103
+msgid "Full Name"
+msgstr "الاسم الكامل"
+
+#: .\templates\customers\add.html:152
+msgid "Customer Name or Supplier Name as it appears in invoices"
+msgstr "اسم العميل أو المورد كما سيظهر في الفواتير"
+
+#: .\templates\customers\add.html:155
 #: .\templates\customers\customer_list.html:399
 #: .\templates\customers\edit.html:150 .\templates\customers\edit.html:152
 #: .\templates\customers\supplier_list.html:399
 #: .\templates\hr\employee_detail.html:110
 msgid "Phone Number"
-msgstr ""
+msgstr "رقم الهاتف"
+
+#: .\templates\customers\add.html:157
+msgid "Primary phone number for communication"
+msgstr "رقم الهاتف الأساسي للتواصل"
+
+#: .\templates\customers\add.html:162
+msgid "Email for sending invoices and reports"
+msgstr "البريد الإلكتروني لإرسال الفواتير والتقارير"
+
+#: .\templates\customers\add.html:165 .\templates\partials\print_header.html:45
+#: .\templates\settings\company.html:40
+#: .\templates\settings\company_fixed.html:39
+msgid "Tax Number"
+msgstr "الرقم الضريبي"
+
+#: .\templates\customers\add.html:167
+msgid "Registered tax number for company or individual"
+msgstr "الرقم الضريبي المسجل للشركة أو الفرد"
+
+#: .\templates\customers\add.html:172
+msgid "Complete address for customer or supplier"
+msgstr "العنوان الكامل للعميل أو المورد"
+
+#: .\templates\customers\add.html:177
+msgid "City where the customer or supplier is located"
+msgstr "المدينة التي يقع فيها العميل أو المورد"
+
+#: .\templates\customers\add.html:190
+msgid "Credit Limit"
+msgstr "حد الائتمان"
+
+#: .\templates\customers\add.html:196
+msgid "Maximum amount the customer can owe"
+msgstr "أقصى مبلغ يمكن للعميل أن يكون مديناً به"
+
+#: .\templates\customers\add.html:205
+msgid "Current balance (positive: receivable, negative: payable)"
+msgstr "الرصيد الحالي (موجب: له، سالب: عليه)"
+
+#: .\templates\customers\add.html:220
+#, fuzzy
+#| msgid "Additional Information"
+msgid "Any notes or additional information"
+msgstr "معلومات إضافية"
+
+#: .\templates\customers\add.html:226
+#, fuzzy
+#| msgid "Active Accounts"
+msgid "Active Account"
+msgstr "الحسابات النشطة"
+
+#: .\templates\customers\add.html:228
+msgid "Deactivating hides the account from lists"
+msgstr "إلغاء التفعيل يخفي الحساب من القوائم"
+
+#: .\templates\customers\add.html:266
+msgid "Please enter customer/supplier name"
+msgstr "يرجى إدخال اسم العميل/المورد"
+
+#: .\templates\customers\add.html:273 .\templates\products\product_add.html:346
+#: .\templates\settings\jofotara_settings.html:365
+#: .\templates\users\group_edit.html:266
+msgid "Saving..."
+msgstr "جاي الحفظ..."
 
 #: .\templates\customers\add.html:290
 #: .\templates\customers\customer_list.html:92
@@ -10171,6 +10300,11 @@ msgstr ""
 #: .\templates\customers\list.html:231
 msgid "Add New Customer"
 msgstr ""
+
+#: .\templates\customers\customer_list.html:158
+#: .\templates\customers\edit.html:147 .\templates\customers\edit.html:280
+msgid "Customer Name"
+msgstr "اسم العميل"
 
 #: .\templates\customers\customer_list.html:164
 #: .\templates\receipts\receipt_list.html:32
@@ -10193,7 +10327,7 @@ msgstr ""
 #: .\templates\products\product_edit.html:586
 #: .\templates\products\product_list.html:1135
 #: .\templates\purchases\invoice_add.html:805
-#: .\templates\sales\invoice_add.html:949 .\templates\search\search.html:298
+#: .\templates\sales\invoice_add.html:984 .\templates\search\search.html:298
 msgid "Please try again"
 msgstr "يرجى المحاولة مرة أخرى"
 
@@ -10929,8 +11063,10 @@ msgid "رقم الموظف:"
 msgstr ""
 
 #: .\templates\hr\employee_confirm_delete.html:186
+#, fuzzy
+#| msgid "اسم الأصل"
 msgid "الاسم الكامل:"
-msgstr ""
+msgstr "اسم الأصل"
 
 #: .\templates\hr\employee_confirm_delete.html:193
 msgid "القسم:"
@@ -10945,8 +11081,10 @@ msgid "البريد الإلكتروني:"
 msgstr ""
 
 #: .\templates\hr\employee_confirm_delete.html:208
+#, fuzzy
+#| msgid "رقم الأصل"
 msgid "رقم الهاتف:"
-msgstr ""
+msgstr "رقم الأصل"
 
 #: .\templates\hr\employee_confirm_delete.html:215
 msgid "تاريخ التوظيف:"
@@ -11334,8 +11472,10 @@ msgid "تسجيل فترة رواتب جديدة"
 msgstr ""
 
 #: .\templates\hr\payroll_period_form.html:132
+#, fuzzy
+#| msgid "حركات الحسابات"
 msgid "المعلومات الأساسية"
-msgstr ""
+msgstr "حركات الحسابات"
 
 #: .\templates\hr\payroll_period_form.html:139
 msgid "اسم الفترة"
@@ -11630,6 +11770,8 @@ msgid "Department Report"
 msgstr ""
 
 #: .\templates\hr\reports\department_report.html:26
+#, fuzzy
+#| msgid "Employees"
 msgid "employees"
 msgstr "الموظفين"
 
@@ -11872,22 +12014,22 @@ msgstr ""
 #: .\templates\sales\invoice_detail.html:149
 #: .\templates\sales\invoice_edit.html:190 .\templates\sales\pos.html:1139
 #: .\templates\sales\pos.html:1236 .\templates\sales\pos.html:1255
-#: .\templates\sales\return_add.html:442
+#: .\templates\sales\return_add.html:542
 #: .\templates\sales\return_detail.html:192
 #: .\templates\sales\return_edit.html:187
 #: .\templates\settings\document_print_settings.html:1018
 #: .\templates\settings\print_design.html:427
 msgid "Quantity"
-msgstr ""
+msgstr "كمية"
 
 #: .\templates\inventory\list.html:468 .\templates\inventory\list.html:729
 msgid "Stock Status"
-msgstr ""
+msgstr "حالة المخزون"
 
 #: .\templates\inventory\list.html:552
 #: .\templates\products\product_detail.html:8
 msgid "Product Details"
-msgstr ""
+msgstr "تفاصيل المنتج"
 
 #: .\templates\inventory\list.html:651
 #: .\templates\products\product_edit.html:165
@@ -11927,7 +12069,7 @@ msgstr ""
 #: .\templates\inventory\low_stock.html:292
 #: .\templates\products\product_list.html:445
 msgid "Out of Stock"
-msgstr ""
+msgstr "إنتهى من المخزن"
 
 #: .\templates\inventory\low_stock.html:181
 #: .\templates\inventory\low_stock.html:198
@@ -12008,73 +12150,73 @@ msgstr ""
 
 #: .\templates\inventory\low_stock.html:369
 msgid "Replenish Stock"
-msgstr ""
+msgstr "تجديد المخزون"
 
 #: .\templates\inventory\low_stock.html:375
 msgid "Replenish Quantity"
-msgstr ""
+msgstr "تجديد الكمية"
 
 #: .\templates\inventory\low_stock.html:379
 #: .\templates\inventory\movement_list.html:475
 msgid "Unit Cost"
-msgstr ""
+msgstr "تكلفة الوحدة"
 
 #: .\templates\inventory\low_stock.html:391
 msgid "Add to Stock"
-msgstr ""
+msgstr "أضف إلى المخزون"
 
 #: .\templates\inventory\low_stock.html:420
 msgid "Do you want to replenish all low stock products?"
-msgstr ""
+msgstr "هل تريد تجديد جميع المنتجات ذات المخزون المنخفض؟"
 
 #: .\templates\inventory\low_stock.html:438
 msgid "Starting to print low stock report..."
-msgstr ""
+msgstr "بدء طباعة تقرير المخزون المنخفض..."
 
 #: .\templates\inventory\low_stock.html:461
 msgid "Number of low stock cards found"
-msgstr ""
+msgstr "عدد البطاقات ذات المخزون المنخفض التي تم العثور عليها"
 
 #: .\templates\inventory\low_stock.html:465
 msgid "No low stock products found"
-msgstr ""
+msgstr "لم يتم العثور على منتجات ذات مخزون منخفض"
 
 #: .\templates\inventory\low_stock.html:478
 #: .\templates\inventory\low_stock.html:479
 #: .\templates\inventory\low_stock.html:482
 msgid "Not specified"
-msgstr ""
+msgstr "غير محدد"
 
 #: .\templates\inventory\low_stock.html:483
 #: .\templates\products\category_list.html:253
 msgid "Main"
-msgstr ""
+msgstr "رئيسي"
 
 #: .\templates\inventory\low_stock.html:485
 msgid "Low stock data"
-msgstr ""
+msgstr "بيانات المخزون المنخفضة"
 
 #: .\templates\inventory\low_stock.html:550
 msgid "Quantity added to stock successfully"
-msgstr ""
+msgstr "تمت إضافة الكمية إلى المخزون بنجاح"
 
 #: .\templates\inventory\movement_list.html:4
 #: .\templates\inventory\movement_list.html:142
 msgid "Inventory Movements"
-msgstr ""
+msgstr "حركة المخزون"
 
 #: .\templates\inventory\movement_list.html:147
 msgid "Print Movement Report"
-msgstr ""
+msgstr "تقرير حركة الطباعة"
 
 #: .\templates\inventory\movement_list.html:152
 #: .\templates\inventory\movement_list.html:425
 msgid "Add New Movement"
-msgstr ""
+msgstr "إضافة حركة جديدة"
 
 #: .\templates\inventory\movement_list.html:156
 msgid "Delete All Movements"
-msgstr ""
+msgstr "حذف جميع الحركات"
 
 #: .\templates\inventory\movement_list.html:174
 #: .\templates\inventory\movement_list.html:461
@@ -12151,7 +12293,7 @@ msgstr ""
 #: .\templates\inventory\movement_list.html:308
 #: .\templates\purchases\return_add.html:104
 #: .\templates\purchases\return_edit.html:100
-#: .\templates\sales\return_add.html:453 .\templates\sales\return_edit.html:188
+#: .\templates\sales\return_add.html:553 .\templates\sales\return_edit.html:188
 msgid "Unit Price"
 msgstr ""
 
@@ -12492,10 +12634,7 @@ msgstr ""
 #: .\templates\purchases\return_detail.html:147
 #: .\templates\purchases\return_detail.html:188
 #: .\templates\purchases\return_edit.html:136
-#: .\templates\sales\creditnote_list.html:14
 #: .\templates\sales\invoice_add.html:385
-#: .\templates\sales\invoice_add.html:782
-#: .\templates\sales\invoice_add.html:810
 #: .\templates\sales\invoice_detail.html:194
 #: .\templates\sales\invoice_edit.html:218
 #: .\templates\sales\invoice_edit.html:238 .\templates\sales\pos.html:1040
@@ -12539,11 +12678,11 @@ msgstr "القيود اليومية"
 
 #: .\templates\journal\entry_confirm_delete.html:57
 msgid "You are about to permanently delete this journal entry"
-msgstr ""
+msgstr "أنت على وشك حذف إدخال القيد هذا بشكل دائم"
 
 #: .\templates\journal\entry_confirm_delete.html:65
 msgid "Entry Details"
-msgstr ""
+msgstr "تفاصيل الدخول"
 
 #: .\templates\journal\entry_confirm_delete.html:109
 #, fuzzy
@@ -12745,12 +12884,6 @@ msgstr ""
 msgid "آخر Update:"
 msgstr ""
 
-#: .\templates\partials\print_header.html:45
-#: .\templates\settings\company.html:40
-#: .\templates\settings\company_fixed.html:39
-msgid "Tax Number"
-msgstr ""
-
 #: .\templates\partials\print_header.html:48
 #: .\templates\settings\company.html:47
 #: .\templates\settings\company_fixed.html:46
@@ -12850,11 +12983,11 @@ msgstr ""
 
 #: .\templates\payments\voucher_form.html:43
 msgid "Enter voucher number manually (e.g., PAY-2025-001)"
-msgstr ""
+msgstr "أدخل رقم السند يدويًا (على سبيل المثال، PAY-2025-001)"
 
 #: .\templates\payments\voucher_form.html:107
 msgid "If the beneficiary is not a registered supplier"
-msgstr ""
+msgstr "إذا لم يكن المستفيد موردًا مسجلاً"
 
 #: .\templates\payments\voucher_form.html:140
 #: .\templates\receipts\receipt_add.html:76
@@ -12872,32 +13005,32 @@ msgstr ""
 
 #: .\templates\payments\voucher_list.html:19
 msgid "Add New Payment Voucher"
-msgstr ""
+msgstr "إضافة قسيمة دفع جديدة"
 
 #: .\templates\payments\voucher_list.html:97
 msgid "Number of Vouchers"
-msgstr ""
+msgstr "عدد القسائم"
 
 #: .\templates\payments\voucher_list.html:112
 msgid "Average Amount"
-msgstr ""
+msgstr "متوسط ​​المبلغ"
 
 #: .\templates\payments\voucher_list.html:138
 msgid "Beneficiary"
-msgstr ""
+msgstr "المستفيد"
 
 #: .\templates\payments\voucher_list.html:217
 msgid "No payment vouchers found"
-msgstr ""
+msgstr "لم يتم العثور على قسائم الدفع"
 
 #: .\templates\payments\voucher_list.html:280
 #: .\templates\settings\document_print_settings.html:477
 msgid "Delete Confirmation"
-msgstr ""
+msgstr "تأكيد الحذف"
 
 #: .\templates\payments\voucher_list.html:284
 msgid "Are you sure you want to delete payment voucher number"
-msgstr ""
+msgstr "هل أنت متأكد أنك تريد حذف رقم إيصال الدفع؟"
 
 #: .\templates\payments\voucher_list.html:285
 #: .\templates\revenues_expenses\entry_detail.html:285
@@ -12909,47 +13042,47 @@ msgstr "هذا الإجراء لا يمكن التراجع عنه."
 
 #: .\templates\products\category_add.html:19
 msgid "Create a new category for products"
-msgstr ""
+msgstr "إنشاء فئة جديدة للمنتجات"
 
 #: .\templates\products\category_add.html:34
 msgid "Category Information"
-msgstr ""
+msgstr "معلومات الفئة"
 
 #: .\templates\products\category_add.html:58
 #: .\templates\products\product_list.html:969
 msgid "Category Code"
-msgstr ""
+msgstr "رمز الفئة"
 
 #: .\templates\products\category_add.html:59
 #: .\templates\products\product_list.html:970
 msgid "Example: ELECTRONICS"
-msgstr ""
+msgstr "مثال: الإلكترونيات"
 
 #: .\templates\products\category_add.html:64
 #: .\templates\products\product_add.html:550
 #: .\templates\products\product_edit.html:486
 #: .\templates\products\product_list.html:975
 msgid "Parent Category"
-msgstr ""
+msgstr "الفئة الأعلى"
 
 #: .\templates\products\category_add.html:66
 #: .\templates\products\category_list.html:302
 #: .\templates\products\product_list.html:977
 #: .\templates\products\product_list.html:1047
 msgid "Main Category"
-msgstr ""
+msgstr "الفئة الرئيسية"
 
 #: .\templates\products\category_add.html:83
 msgid "Sort Order"
-msgstr ""
+msgstr "ترتيب الفرز"
 
 #: .\templates\products\category_delete.html:6
 msgid "Delete Category"
-msgstr ""
+msgstr "حذف الفئة"
 
 #: .\templates\products\category_edit.html:6
 msgid "Edit Category"
-msgstr ""
+msgstr "تعديل الفئة"
 
 #: .\templates\products\category_edit.html:83
 #: .\templates\products\product_list.html:518
@@ -12966,36 +13099,36 @@ msgstr ""
 
 #: .\templates\products\category_list.html:145
 msgid "Manage and organize product categories"
-msgstr ""
+msgstr "إدارة وتنظيم فئات المنتجات"
 
 #: .\templates\products\category_list.html:150
 #: .\templates\products\category_list.html:271
 msgid "Print Complete Report"
-msgstr ""
+msgstr "طباعة التقرير الكامل"
 
 #: .\templates\products\category_list.html:166
 msgid "Total Categories"
-msgstr ""
+msgstr "إجمالي الفئات"
 
 #: .\templates\products\category_list.html:183
 msgid "Active Categories"
-msgstr ""
+msgstr "الفئات النشطة"
 
 #: .\templates\products\category_list.html:200
 msgid "Related Products"
-msgstr ""
+msgstr "المنتجات ذات الصلة"
 
 #: .\templates\products\category_list.html:217
 msgid "Subcategories"
-msgstr ""
+msgstr "الفئات الفرعية"
 
 #: .\templates\products\category_list.html:219
 msgid "Subcategory"
-msgstr ""
+msgstr "الفئة الفرعية"
 
 #: .\templates\products\category_list.html:240
 msgid "Search in categories"
-msgstr ""
+msgstr "البحث في الفئات"
 
 #: .\templates\products\category_list.html:245
 #: .\templates\receipts\check_list.html:31
@@ -13004,31 +13137,31 @@ msgstr "جميع الحالات"
 
 #: .\templates\products\category_list.html:254
 msgid "Sub"
-msgstr ""
+msgstr "فرعي"
 
 #: .\templates\products\category_list.html:281
 msgid "Sequence Number"
-msgstr ""
+msgstr "أرقام التسلسل"
 
 #: .\templates\products\category_list.html:300
 msgid "Subcategory of"
-msgstr ""
+msgstr "الفئة الفرعية من"
 
 #: .\templates\products\category_list.html:329
 msgid "Are you sure you want to delete this category?"
-msgstr ""
+msgstr "هل أنت متأكد أنك تريد حذف هذه الفئة؟"
 
 #: .\templates\products\category_list.html:343
 msgid "No categories found"
-msgstr ""
+msgstr "لم يتم العثور على فئات"
 
 #: .\templates\products\category_list.html:344
 msgid "No categories have been created yet. Click"
-msgstr ""
+msgstr "لم يتم إنشاء أي فئات بعد. انقر هنا"
 
 #: .\templates\products\category_list.html:344
 msgid "to start creating categories."
-msgstr ""
+msgstr "لبدء إنشاء الفئات."
 
 #: .\templates\products\product_add.html:6
 #: .\templates\products\product_add.html:32
@@ -13041,22 +13174,22 @@ msgstr ""
 
 #: .\templates\products\product_add.html:34
 msgid "Create a new product in the system"
-msgstr ""
+msgstr "إنشاء منتج جديد في النظام"
 
 #: .\templates\products\product_add.html:49
 #: .\templates\products\product_edit.html:37
 msgid "Product Information"
-msgstr ""
+msgstr "معلومات المنتج"
 
 #: .\templates\products\product_add.html:68
 msgid "Name in English"
-msgstr ""
+msgstr "الاسم باللغة الإنجليزية"
 
 #: .\templates\products\product_add.html:78
 #: .\templates\products\product_edit.html:63
 #: .\templates\products\product_list.html:735
 msgid "Product Type"
-msgstr ""
+msgstr "نوع المنتج"
 
 #: .\templates\products\product_add.html:80
 #: .\templates\products\product_detail.html:83
@@ -13064,7 +13197,7 @@ msgstr ""
 #: .\templates\products\product_list.html:610
 #: .\templates\products\product_list.html:737
 msgid "Physical Product"
-msgstr ""
+msgstr "المنتج المادي"
 
 #: .\templates\products\product_add.html:81
 #: .\templates\products\product_add.html:164
@@ -13074,127 +13207,128 @@ msgstr ""
 #: .\templates\products\product_list.html:605
 #: .\templates\products\product_list.html:738
 msgid "Service"
-msgstr ""
+msgstr "خدمة"
 
 #: .\templates\products\product_add.html:87
 #: .\templates\products\product_list.html:744
 msgid "Product Code (SKU)"
-msgstr ""
+msgstr "رمز المنتج"
 
 #: .\templates\products\product_add.html:88
 #: .\templates\products\product_list.html:745
 msgid "Example: PROD-001"
-msgstr ""
+msgstr "مثال: PROD-001"
 
 #: .\templates\products\product_add.html:110
 msgid "For warranty"
-msgstr ""
+msgstr "للضمان"
 
 #: .\templates\products\product_add.html:113
 #: .\templates\products\product_edit.html:92
 #: .\templates\products\product_list.html:768
 msgid "Example: SN123456789"
-msgstr ""
+msgstr "مثال: SN123456789"
 
 #: .\templates\products\product_add.html:117
 msgid "This field is for products sold by piece and need warranty (optional)"
 msgstr ""
+"هذا المجال مخصص للمنتجات المباعة بالقطعة والتي تحتاج إلى ضمان (اختياري)"
 
 #: .\templates\products\product_add.html:129
 #: .\templates\products\product_edit.html:107
 msgid "Select Category"
-msgstr ""
+msgstr "اختر الفئة"
 
 #: .\templates\products\product_add.html:147
 #: .\templates\products\product_edit.html:127
 msgid "Service Product (Non-countable)"
-msgstr ""
+msgstr "منتج الخدمة (غير قابل للعد)"
 
 #: .\templates\products\product_add.html:151
 msgid "Service products do not affect inventory"
-msgstr ""
+msgstr "لا تؤثر منتجات الخدمة على المخزون"
 
 #: .\templates\products\product_add.html:151
 msgid "Service products do not need quantities"
-msgstr ""
+msgstr "منتجات الخدمة لا تحتاج إلى كميات"
 
 #: .\templates\products\product_add.html:161
 #: .\templates\products\product_edit.html:140
 #: .\templates\products\product_list.html:789
 msgid "Unit of Measurement"
-msgstr ""
+msgstr "وحدة القياس"
 
 #: .\templates\products\product_add.html:163
 #: .\templates\products\product_edit.html:142
 #: .\templates\products\product_list.html:791
 msgid "Piece"
-msgstr ""
+msgstr "قطعة"
 
 #: .\templates\products\product_add.html:165
 #: .\templates\products\product_edit.html:144
 #: .\templates\products\product_list.html:792
 msgid "Kilogram"
-msgstr ""
+msgstr "كيلوغرام"
 
 #: .\templates\products\product_add.html:166
 #: .\templates\products\product_edit.html:145
 #: .\templates\products\product_list.html:793
 msgid "Liter"
-msgstr ""
+msgstr "لتر"
 
 #: .\templates\products\product_add.html:167
 #: .\templates\products\product_edit.html:146
 #: .\templates\products\product_list.html:794
 msgid "Meter"
-msgstr ""
+msgstr "متر"
 
 #: .\templates\products\product_add.html:168
 #: .\templates\products\product_edit.html:147
 #: .\templates\products\product_list.html:795
 msgid "Box"
-msgstr ""
+msgstr "صندوق"
 
 #: .\templates\products\product_add.html:169
 #: .\templates\products\product_edit.html:148
 #: .\templates\products\product_list.html:796
 msgid "Pack"
-msgstr ""
+msgstr "علبة"
 
 #: .\templates\products\product_add.html:176
 #: .\templates\products\product_edit.html:155
 #: .\templates\products\product_list.html:803
 msgid "Pricing"
-msgstr ""
+msgstr "التسعير"
 
 #: .\templates\products\product_add.html:180
 #: .\templates\products\product_edit.html:159
 #: .\templates\products\product_list.html:807
 msgid "Cost Price"
-msgstr ""
+msgstr "سعر التكلفة"
 
 #: .\templates\products\product_add.html:181
 msgid "Calculated automatically from purchases"
-msgstr ""
+msgstr "يتم حسابها تلقائيًا من المشتريات"
 
 #: .\templates\products\product_add.html:182
 msgid "Cost is calculated from purchase invoices using weighted average method"
-msgstr ""
+msgstr "يتم حساب التكلفة من فواتير الشراء باستخدام طريقة المتوسط ​​المرجح"
 
 #: .\templates\products\product_add.html:187
 #: .\templates\products\product_add.html:229
 msgid "Selling Price"
-msgstr ""
+msgstr "سعر البيع"
 
 #: .\templates\products\product_add.html:193
 #: .\templates\products\product_edit.html:171
 #: .\templates\products\product_list.html:819
 msgid "Wholesale Price"
-msgstr ""
+msgstr "سعر الجملة"
 
 #: .\templates\products\product_add.html:204
 #, python-format
 msgid "Tax Rate %%"
-msgstr ""
+msgstr "نسبة الضريبة %%"
 
 #: .\templates\products\product_add.html:209
 #: .\templates\products\product_edit.html:13
@@ -13207,7 +13341,7 @@ msgstr ""
 #: .\templates\products\product_edit.html:192
 #: .\templates\products\product_list.html:839
 msgid "Will be calculated automatically in invoices"
-msgstr ""
+msgstr "سيتم حسابها تلقائيا في الفواتير"
 
 #: .\templates\products\product_add.html:226
 #: .\templates\products\product_edit.html:204
@@ -13215,7 +13349,7 @@ msgstr ""
 #: .\templates\purchases\invoice_add.html:195
 #: .\templates\purchases\invoice_edit.html:173
 msgid "Tax Calculation"
-msgstr ""
+msgstr "حساب الضرائب"
 
 #: .\templates\products\product_add.html:238
 #: .\templates\products\product_edit.html:216
@@ -13225,7 +13359,7 @@ msgstr ""
 #: .\templates\products\product_add.html:249
 #: .\templates\products\product_edit.html:227
 msgid "Inventory Management"
-msgstr ""
+msgstr "إدارة المخزون"
 
 #: .\templates\products\product_add.html:253
 #: .\templates\products\product_edit.html:231
@@ -13233,56 +13367,58 @@ msgid ""
 "This section is for countable products only. Service products do not need "
 "inventory management."
 msgstr ""
+"هذا القسم مخصص للمنتجات القابلة للعد فقط. منتجات الخدمات لا تحتاج إلى إدارة "
+"مخزون."
 
 #: .\templates\products\product_add.html:266
 #: .\templates\products\product_edit.html:244
 #: .\templates\products\product_list.html:876
 msgid "Initial stock when starting to use the system"
-msgstr ""
+msgstr "المخزون الأولي عند البدء في استخدام النظام"
 
 #: .\templates\products\product_add.html:272
 #: .\templates\products\product_edit.html:265
 msgid "Minimum Stock Level"
-msgstr ""
+msgstr "الحد الأدنى لمستوى المخزون"
 
 #: .\templates\products\product_add.html:278
 #: .\templates\products\product_edit.html:271
 msgid "Maximum Stock Level"
-msgstr ""
+msgstr "الحد الأقصى لمستوى المخزون"
 
 #: .\templates\products\product_add.html:295
 #: .\templates\products\product_edit.html:288
 msgid "Product Image"
-msgstr ""
+msgstr "صورة المنتج"
 
 #: .\templates\products\product_add.html:310
 #: .\templates\products\product_edit.html:310
 msgid "Track Inventory"
-msgstr ""
+msgstr "تتبع المخزون"
 
 #: .\templates\products\product_add.html:324
 #: .\templates\products\product_list.html:929
 #: .\templates\products\product_list.html:1304
 msgid "Save Product"
-msgstr ""
+msgstr "حفظ المنتج"
 
 #: .\templates\products\product_add.html:337
 msgid "Selling price is lower than cost price. Are you sure?"
-msgstr ""
+msgstr "سعر البيع أقل من سعر التكلفة. هل أنت متأكد؟"
 
 #: .\templates\products\product_add.html:338
 msgid "Yes, I'm sure"
-msgstr ""
+msgstr "نعم انا متأكد"
 
 #: .\templates\products\product_add.html:339
 #: .\templates\products\product_edit.html:440
 msgid "Edit Price"
-msgstr ""
+msgstr "تعديل السعر"
 
 #: .\templates\products\product_add.html:340
 #: .\templates\purchases\return_edit.html:88
 msgid "Alert"
-msgstr ""
+msgstr "تحذير"
 
 #: .\templates\products\product_add.html:341
 msgid ""
@@ -13292,36 +13428,30 @@ msgstr ""
 
 #: .\templates\products\product_add.html:342
 msgid "Completed Successfully!"
-msgstr ""
+msgstr "تمت بنجاح!"
 
 #: .\templates\products\product_add.html:343
 msgid "Error!"
-msgstr ""
+msgstr "خطأ!"
 
 #: .\templates\products\product_add.html:344
 msgid "Network Error!"
-msgstr ""
+msgstr "خطأ في الشبكة!"
 
 #: .\templates\products\product_add.html:345
 msgid "An error occurred while saving the category. Please try again."
-msgstr ""
-
-#: .\templates\products\product_add.html:346
-#: .\templates\settings\jofotara_settings.html:365
-#: .\templates\users\group_edit.html:266
-msgid "Saving..."
-msgstr ""
+msgstr "حدث خطأ أثناء حفظ التصنيف. يُرجى المحاولة مرة أخرى."
 
 #: .\templates\products\product_add.html:552
 #: .\templates\products\product_add.html:596
 msgid "No parent category"
-msgstr ""
+msgstr "لا يوجد فئة رئيسية"
 
 #: .\templates\products\product_delete.html:6
 #: .\templates\products\product_list.html:691
 #: .\templates\products\product_list.html:1389
 msgid "Delete Product"
-msgstr ""
+msgstr "حذف المنتج"
 
 #: .\templates\products\product_detail.html:181
 #: .\templates\products\product_detail.html:202
@@ -13397,6 +13527,7 @@ msgid "Current Image"
 msgstr ""
 
 #: .\templates\products\product_edit.html:324
+#: .\templates\sales\creditnote_edit.html:54
 #: .\templates\settings\document_sequence_edit.html:141
 #: .\templates\users\group_edit.html:213 .\templates\users\user_edit.html:283
 msgid "Save Changes"
@@ -13408,103 +13539,103 @@ msgstr ""
 
 #: .\templates\products\product_edit.html:439
 msgid "Yes, I am sure"
-msgstr ""
+msgstr "نعم انا متأكد"
 
 #: .\templates\products\product_edit.html:488
 msgid "No Parent Category"
-msgstr ""
+msgstr "لا يوجد فئة رئيسية"
 
 #: .\templates\products\product_edit.html:569
 msgid "Completed Successfully"
-msgstr ""
+msgstr "تم الانتهاء بنجاح"
 
 #: .\templates\products\product_list.html:373
 msgid "Manage and organize products"
-msgstr ""
+msgstr "إدارة وتنظيم المنتجات"
 
 #: .\templates\products\product_list.html:411
 msgid "Available in Stock"
-msgstr ""
+msgstr "متوفر في المخزون"
 
 #: .\templates\products\product_list.html:470
 msgid "Search by name, code, barcode, or serial number"
-msgstr ""
+msgstr "البحث حسب الاسم أو الرمز أو الرمز الشريطي أو الرقم التسلسلي"
 
 #: .\templates\products\product_list.html:520
 msgid "Sort by Stock"
-msgstr ""
+msgstr "ترتيب حسب المخزون"
 
 #: .\templates\products\product_list.html:538
 msgid "Print Report"
-msgstr ""
+msgstr "طباعة التقرير"
 
 #: .\templates\products\product_list.html:553
 #: .\templates\products\product_list.html:585
 msgid "Price with Tax"
-msgstr ""
+msgstr "السعر مع الضريبة"
 
 #: .\templates\products\product_list.html:554
 #: .\templates\products\product_list.html:586
 msgid "Stock"
-msgstr ""
+msgstr "مخزون"
 
 #: .\templates\products\product_list.html:652
 msgid "No products found"
-msgstr ""
+msgstr "لم يتم العثور على أي منتجات"
 
 #: .\templates\products\product_list.html:653
 msgid "No products have been created yet. Click"
-msgstr ""
+msgstr "لم يتم إنشاء أي منتجات بعد. انقر هنا"
 
 #: .\templates\products\product_list.html:653
 msgid "to start creating products"
-msgstr ""
+msgstr "لم يتم إنشاء أي منتجات لاحقة. انقر هنا"
 
 #: .\templates\products\product_list.html:675
 msgid "Are you sure you want to delete product"
-msgstr ""
+msgstr "هل أنت متأكد أنك تريد حذف المنتج؟"
 
 #: .\templates\products\product_list.html:765
 msgid "for warranty"
-msgstr ""
+msgstr "للضمان"
 
 #: .\templates\products\product_list.html:782
 #: .\templates\products\product_list.html:1166
 msgid "Choose Category"
-msgstr ""
+msgstr "اختر الفئة"
 
 #: .\templates\products\product_list.html:859
 msgid "Price including Tax"
-msgstr ""
+msgstr "السعر شامل الضريبة"
 
 #: .\templates\products\product_list.html:881
 msgid "Minimum Stock"
-msgstr ""
+msgstr "الحد الأدنى للمخزون"
 
 #: .\templates\products\product_list.html:887
 msgid "Maximum Stock"
-msgstr ""
+msgstr "الحد الأقصى للمخزون"
 
 #: .\templates\products\product_list.html:914
 msgid "Track Stock"
-msgstr ""
+msgstr "تتبع المخون"
 
 #: .\templates\products\product_list.html:1298
 msgid "Network error occurred. Please try again."
-msgstr ""
+msgstr "حدث خطأ في الشبكة. يُرجى المحاولة مرة أخرى."
 
 #: .\templates\products\product_list.html:1362
 msgid "Error: Cannot select product to delete"
-msgstr ""
+msgstr "خطأ: لا يمكن تحديد المنتج الذي تريد حذفه"
 
 #: .\templates\products\product_list.html:1410
 msgid "Error: Delete URL was not selected correctly"
-msgstr ""
+msgstr "خطأ: لم يتم تحديد حذف عنوان URL بشكل صحيح"
 
 #: .\templates\purchases\debitnote_add.html:3
 #: .\templates\purchases\debitnote_add.html:6
 msgid "Create Debit Note"
-msgstr ""
+msgstr "إنشاء مذكرة خصم"
 
 #: .\templates\purchases\debitnote_add.html:14
 msgid "Type to search supplier"
@@ -13524,7 +13655,7 @@ msgstr ""
 #: .\templates\sales\creditnote_detail.html:16
 #: .\templates\sales\creditnote_detail.html:37
 msgid "Note Number"
-msgstr ""
+msgstr "رقم الملاحظة"
 
 #: .\templates\purchases\debitnote_detail.html:29
 msgid "Debit Note Data"
@@ -13536,25 +13667,25 @@ msgstr ""
 
 #: .\templates\purchases\invoice_add.html:7
 msgid "Add Purchase Invoice"
-msgstr ""
+msgstr "إضافة فاتورة الشراء"
 
 #: .\templates\purchases\invoice_add.html:103
 msgid "Add New Purchase Invoice"
-msgstr ""
+msgstr "إضافة فاتورة شراء جديدة"
 
 #: .\templates\purchases\invoice_add.html:119
 #: .\templates\purchases\invoice_detail.html:7
 msgid "Purchase Invoice Details"
-msgstr ""
+msgstr "تفاصيل فاتورة الشراء"
 
 #: .\templates\purchases\invoice_add.html:134
 #: .\templates\purchases\invoice_add.html:135
 msgid "Invoice number is automatically generated from sequence settings"
-msgstr ""
+msgstr "يتم إنشاء رقم الفاتورة تلقائيًا من إعدادات التسلسل"
 
 #: .\templates\purchases\invoice_add.html:140
 msgid "Supplier Invoice Number"
-msgstr ""
+msgstr "رقم فاتورة المورد"
 
 #: .\templates\purchases\invoice_add.html:179
 #: .\templates\receipts\receipt_add.html:53
@@ -13577,12 +13708,17 @@ msgid ""
 "When checked, tax is calculated and added. When unchecked, no tax is "
 "calculated."
 msgstr ""
+"عند تحديد هذا الخيار، تُحسب الضريبة وتُضاف. عند إلغاء تحديده، لا تُضاف أي ضريبة."
+"محسوب."
 
 #: .\templates\purchases\invoice_add.html:216
 msgid ""
 "Select the warehouse where products will be stored. If not specified, no "
 "warehouse will be assigned."
 msgstr ""
+"حدد المستودع الذي سيتم تخزين المنتجات فيه. إذا لم يتم تحديده، فلا"
+"سيتم تخصيص المستودع."
+
 
 #: .\templates\purchases\invoice_add.html:227
 msgid "Invoice Products"
@@ -13625,7 +13761,7 @@ msgstr "نعم"
 #: .\templates\purchases\invoice_detail.html:444
 #: .\templates\purchases\invoice_detail.html:458
 #: .\templates\purchases\invoice_edit.html:250
-#: .\templates\sales\invoice_add.html:372 .\templates\sales\return_add.html:268
+#: .\templates\sales\invoice_add.html:372 .\templates\sales\return_add.html:327
 msgid "Summary"
 msgstr ""
 
@@ -13647,13 +13783,12 @@ msgstr ""
 #: .\templates\purchases\invoice_list.html:226
 #: .\templates\purchases\return_list.html:108
 #: .\templates\sales\invoice_list.html:347
-#: .\templates\sales\return_add.html:193 .\templates\sales\return_list.html:195
+#: .\templates\sales\return_add.html:236 .\templates\sales\return_list.html:195
 msgid "Grand Total"
 msgstr ""
 
 #: .\templates\purchases\invoice_list.html:287
 #: .\templates\sales\invoice_list.html:432
-#: .\templates\sales\return_add.html:392
 msgid "No invoices found"
 msgstr ""
 
@@ -13667,60 +13802,56 @@ msgstr ""
 
 #: .\templates\purchases\return_add.html:33
 msgid "Return Number"
-msgstr ""
+msgstr "رقم المرتجع"
 
 #: .\templates\purchases\return_add.html:39
-#: .\templates\sales\return_add.html:158
+#: .\templates\sales\return_add.html:200
 msgid "Return Date"
-msgstr ""
+msgstr "تاريخ المرتج"
 
 #: .\templates\purchases\return_add.html:45
 msgid "Return Type"
-msgstr ""
+msgstr "نوع الإرجاع"
 
 #: .\templates\purchases\return_add.html:47
 msgid "Partial Return"
-msgstr ""
+msgstr "مرتجع جزئي"
 
 #: .\templates\purchases\return_add.html:48
 msgid "Full Return"
-msgstr ""
-
-#: .\templates\purchases\return_add.html:55
-msgid "Original Invoice"
-msgstr ""
+msgstr "مرتجع كامل"
 
 #: .\templates\purchases\return_add.html:57
 msgid "Select Original Invoice"
-msgstr ""
+msgstr "حدد الفاتورة الأصلية"
 
 #: .\templates\purchases\return_add.html:70
 msgid "Return Reason"
-msgstr ""
+msgstr "سبب الإرجاع"
 
 #: .\templates\purchases\return_add.html:72
 msgid "Select Return Reason"
-msgstr ""
+msgstr "إختر سبب الإرجاع"
 
 #: .\templates\purchases\return_add.html:73
 msgid "Defective Product"
-msgstr ""
+msgstr "منتج تالف"
 
 #: .\templates\purchases\return_add.html:74
 msgid "Wrong Item"
-msgstr ""
+msgstr "منتج خاطئ"
 
 #: .\templates\purchases\return_add.html:75
 msgid "Excess Quantity"
-msgstr ""
+msgstr "الكمية الزائدة"
 
 #: .\templates\purchases\return_add.html:77
 msgid "Damaged During Transport"
-msgstr ""
+msgstr "تضررت أثناء النقل"
 
 #: .\templates\purchases\return_add.html:85
 msgid "Enter any additional notes..."
-msgstr ""
+msgstr "أدخل أي ملاحظات إضافية..."
 
 #: .\templates\purchases\return_add.html:93
 msgid "Available Invoice Items for Return"
@@ -13772,25 +13903,25 @@ msgstr ""
 #: .\templates\purchases\return_list.html:65
 #: .\templates\purchases\return_list.html:123
 msgid "Partial"
-msgstr ""
+msgstr "جزئي"
 
 #: .\templates\purchases\return_detail.html:7
 msgid "Purchase Return Details"
-msgstr ""
+msgstr "تفاصيل مردود الشراء"
 
 #: .\templates\purchases\return_edit.html:7
 msgid "Edit Purchase Return"
-msgstr ""
+msgstr "تعديل مردود الشراء"
 
 #: .\templates\purchases\return_edit.html:65
 #: .\templates\purchases\return_list.html:127
-#: .\templates\sales\return_add.html:235
+#: .\templates\sales\return_add.html:294
 msgid "Defective"
 msgstr ""
 
 #: .\templates\purchases\return_edit.html:69
 #: .\templates\purchases\return_list.html:131
-#: .\templates\sales\return_add.html:238
+#: .\templates\sales\return_add.html:297
 msgid "Damaged"
 msgstr ""
 
@@ -13876,6 +14007,7 @@ msgid "Voucher Information"
 msgstr "معلومات الإيصال"
 
 #: .\templates\receipts\receipt_add.html:38
+#: .\templates\sales\creditnote_edit.html:25
 #: .\templates\sales\invoice_add.html:254
 msgid "Select Customer"
 msgstr "إختر العميل"
@@ -13887,7 +14019,7 @@ msgstr ""
 #: .\templates\receipts\receipt_add.html:80
 #: .\templates\receipts\receipt_add.html:118
 msgid "Cash Box"
-msgstr ""
+msgstr "صندوق النقد"
 
 #: .\templates\receipts\receipt_add.html:82
 #: .\templates\receipts\receipt_add.html:120
@@ -13914,41 +14046,43 @@ msgstr ""
 #: .\templates\receipts\receipt_detail.html:287
 #: .\templates\receipts\receipt_detail.html:306
 msgid "Reverse Voucher"
-msgstr ""
+msgstr "قسيمة عكسية"
 
 #: .\templates\receipts\receipt_detail.html:120
 msgid "Reversed At"
-msgstr ""
+msgstr "عكس عند"
 
 #: .\templates\receipts\receipt_detail.html:137
 msgid "Voucher Summary"
-msgstr ""
+msgstr "ملخص القسيمة"
 
 #: .\templates\receipts\receipt_detail.html:151
 msgid "Collect Check"
-msgstr ""
+msgstr "جمع الشيك"
 
 #: .\templates\receipts\receipt_detail.html:166
 msgid "Check Collections"
-msgstr ""
+msgstr "تحصيل الشيكات"
 
 #: .\templates\receipts\receipt_detail.html:173
 msgid "Collection Date"
-msgstr ""
+msgstr "تحصيل شيكات"
 
 #: .\templates\receipts\receipt_detail.html:209
 msgid "Related Account Movements"
-msgstr ""
+msgstr "حركات الحسابات ذات الصلة"
 
 #: .\templates\receipts\receipt_detail.html:257
 msgid "Edit Voucher"
-msgstr ""
+msgstr "تعديل القسيمة"
 
 #: .\templates\receipts\receipt_detail.html:293
 msgid ""
 "Reversing the voucher will affect the customer's and cashbox balance. This "
 "action cannot be undone!"
 msgstr ""
+"سيؤثر إلغاء القسيمة على رصيد العميل وصندوق النقد. لا يمكن التراجع عن هذا "
+"الإجراء!"
 
 #: .\templates\receipts\receipt_list.html:6
 msgid "Receipt List"
@@ -14001,7 +14135,11 @@ msgstr ""
 msgid "Sales for"
 msgstr ""
 
-#: .\templates\reports\sales_by_salesperson.html:115
+#: .\templates\reports\sales_by_salesperson.html:91
+msgid "Return"
+msgstr ""
+
+#: .\templates\reports\sales_by_salesperson.html:130
 msgid "No sales invoices found for the selected period."
 msgstr ""
 
@@ -14262,7 +14400,6 @@ msgstr "هل أنت متأكد من أنك تريد تغيير حالة هذا �
 
 #: .\templates\sales\creditnote_add.html:3
 #: .\templates\sales\creditnote_add.html:6
-#: .\templates\sales\creditnote_list.html:7
 msgid "Create Credit Note"
 msgstr ""
 
@@ -14274,10 +14411,32 @@ msgstr ""
 msgid "Start typing to filter customers, then choose from the list."
 msgstr ""
 
+#: .\templates\sales\creditnote_delete.html:3
+#: .\templates\sales\creditnote_delete.html:12
+#, fuzzy
+#| msgid "Credit Notes"
+msgid "Delete Credit Note"
+msgstr "مذكرات دائن"
+
+#: .\templates\sales\creditnote_delete.html:19
+#, fuzzy
+#| msgid "Are you sure you want to change the status of this recurring item?"
+msgid ""
+"Are you sure you want to delete this credit note? This action cannot be "
+"undone."
+msgstr "هل أنت متأكد من أنك تريد تغيير حالة هذا العنصر المتكرر؟"
+
+#: .\templates\sales\creditnote_delete.html:24
 #: .\templates\sales\creditnote_detail.html:5
 #: .\templates\sales\creditnote_detail.html:14
 msgid "Credit Note Details"
 msgstr ""
+
+#: .\templates\sales\creditnote_delete.html:52
+#, fuzzy
+#| msgid "Delete"
+msgid "Yes, Delete"
+msgstr "حذف"
 
 #: .\templates\sales\creditnote_detail.html:29
 msgid "Credit Note Data"
@@ -14287,14 +14446,12 @@ msgstr ""
 msgid "Credit Note Information"
 msgstr ""
 
-#: .\templates\sales\creditnote_list.html:3
-#: .\templates\sales\creditnote_list.html:6
-msgid "Sales Credit Notes"
-msgstr ""
-
-#: .\templates\sales\creditnote_list.html:28
-msgid "No credit notes found"
-msgstr ""
+#: .\templates\sales\creditnote_edit.html:3
+#: .\templates\sales\creditnote_edit.html:6
+#, fuzzy
+#| msgid "Credit Notes"
+msgid "Edit Credit Note"
+msgstr "مذكرات دائن"
 
 #: .\templates\sales\invoice_add.html:7 .\templates\sales\invoice_add.html:147
 msgid "Add Sales Invoice"
@@ -14302,94 +14459,94 @@ msgstr ""
 
 #: .\templates\sales\invoice_add.html:149
 msgid "Create a new sales invoice"
-msgstr ""
+msgstr "إنشاء فاتورة مبيعات جديدة"
 
 #: .\templates\sales\invoice_add.html:173
 msgid "Sales Invoice Information"
-msgstr ""
+msgstr "معلومات فاتورة المبيعات"
 
 #: .\templates\sales\invoice_add.html:186
 #: .\templates\sales\invoice_detail.html:35
 msgid "Invoice Information"
-msgstr ""
+msgstr "معلومات الفاتورة"
 
 #: .\templates\sales\invoice_add.html:202
 #: .\templates\sales\invoice_add.html:212
 msgid ""
 "You can edit the invoice number or leave the field for automatic generation"
-msgstr ""
+msgstr "يمكنك تعديل رقم الفاتورة أو ترك الحقل للتوليد التلقائي"
 
 #: .\templates\sales\invoice_add.html:207
 msgid ""
 "Invoice number will be automatically generated from the document numbering "
 "system"
-msgstr ""
+msgstr "سيتم إنشاء رقم الفاتورة تلقائيًا من نظام ترقيم المستندات."
 
 #: .\templates\sales\invoice_add.html:214
 msgid ""
 "Invoice number will be automatically created when saved (you do not have "
 "permission to edit the number)"
-msgstr ""
+msgstr "سيتم إنشاء رقم الفاتورة تلقائيًا عند الحفظ (ليس لديك صلاحية تعديل الرقم)"
 
 #: .\templates\sales\invoice_add.html:223
 #: .\templates\sales\invoice_detail.html:42
-#: .\templates\sales\return_add.html:190
+#: .\templates\sales\return_add.html:233
 msgid "Invoice Date"
-msgstr ""
+msgstr "تاريخ الفاتورة"
 
 #: .\templates\sales\invoice_add.html:228
 msgid "You can edit the invoice date"
-msgstr ""
+msgstr "يمكنك تعديل تاريخ الفاتورة"
 
 #: .\templates\sales\invoice_add.html:230
 msgid "You can edit the invoice date as needed"
-msgstr ""
+msgstr "يمكنك تعديل تاريخ الفاتورة حسب الحاجة"
 
 #: .\templates\sales\invoice_add.html:235
 msgid "Today date (you do not have permission to edit date)"
-msgstr ""
+msgstr "يمكنك تعديل التاريخ حسب الحاجة"
 
 #: .\templates\sales\invoice_add.html:237
 msgid ""
 "Invoice date is fixed to today's date (you do not have permission to edit "
 "date)"
-msgstr ""
+msgstr "تاريخ الفاتورة ثابت بتاريخ اليوم (ليس لديك صلاحية تعديل التاريخ)"
 
 #: .\templates\sales\invoice_add.html:249
 msgid "Create new customer"
-msgstr ""
+msgstr "إنشاء عميل جديد"
 
 #: .\templates\sales\invoice_add.html:262
 msgid "Customer Balance"
-msgstr ""
+msgstr "رصيد العميل"
 
 #: .\templates\sales\invoice_add.html:270
 msgid "User Name"
-msgstr ""
+msgstr "اسم المستخدم"
 
 #: .\templates\sales\invoice_add.html:273
 msgid "Select User"
-msgstr ""
+msgstr "حدد المستخدم"
 
 #: .\templates\sales\invoice_add.html:278
 msgid "Select the user who will be recorded as the creator of this invoice"
-msgstr ""
+msgstr "حدد المستخدم الذي سيتم تسجيله كمنشئ لهذه الفاتورة"
 
 #: .\templates\sales\invoice_add.html:281
 msgid "The name of the user creating this invoice (first and last)"
-msgstr ""
+msgstr "اسم المستخدم الذي يقوم بإنشاء هذه الفاتورة (الاسم الأول والأخير)"
 
 #: .\templates\sales\invoice_add.html:309
 msgid "Products"
-msgstr ""
+msgstr "المنتجات"
 
 #: .\templates\sales\invoice_add.html:312
 msgid "Click to add a new product"
-msgstr ""
+msgstr "انقر لإضافة منتج جديد"
 
 #: .\templates\sales\invoice_add.html:324
 msgid "Available Quantity"
-msgstr ""
+msgstr "الكمية المتوفرة"
 
 #: .\templates\sales\invoice_add.html:334
 msgid "Product rows will be added here by JavaScript"
@@ -14397,12 +14554,12 @@ msgstr ""
 
 #: .\templates\sales\invoice_add.html:379
 msgid "Inclusive Tax"
-msgstr ""
+msgstr "الضريبة الشاملة"
 
 #: .\templates\sales\invoice_add.html:381
 msgid ""
 "When unchecked by permitted users, totals will be calculated without tax"
-msgstr ""
+msgstr "عند إلغاء تحديد المستخدمين المسموح لهم، سيتم حساب الإجماليات بدون ضريبة"
 
 #: .\templates\sales\invoice_add.html:571
 msgid "An error occurred while adding the product. Please try again."
@@ -14420,27 +14577,27 @@ msgstr ""
 msgid "Invoice must contain at least one product"
 msgstr ""
 
-#: .\templates\sales\invoice_add.html:867
+#: .\templates\sales\invoice_add.html:902
 msgid "Please add at least one product with valid quantity and price"
 msgstr ""
 
-#: .\templates\sales\invoice_add.html:875
+#: .\templates\sales\invoice_add.html:910
 msgid "Please select a customer"
 msgstr ""
 
-#: .\templates\sales\invoice_add.html:883
+#: .\templates\sales\invoice_add.html:918
 msgid "Please select a payment method"
 msgstr ""
 
-#: .\templates\sales\invoice_add.html:891
+#: .\templates\sales\invoice_add.html:926
 msgid "Please select the invoice date"
 msgstr ""
 
-#: .\templates\sales\invoice_add.html:940
+#: .\templates\sales\invoice_add.html:975
 msgid "Customer created successfully!"
 msgstr ""
 
-#: .\templates\sales\invoice_add.html:941
+#: .\templates\sales\invoice_add.html:976
 msgid "Customer saved successfully"
 msgstr ""
 
@@ -14465,7 +14622,7 @@ msgstr ""
 msgid "Invoices List"
 msgstr ""
 
-#: .\templates\sales\return_add.html:7 .\templates\sales\return_add.html:98
+#: .\templates\sales\return_add.html:7 .\templates\sales\return_add.html:140
 msgid "Add Sales Return"
 msgstr ""
 
@@ -14488,8 +14645,7 @@ msgstr "نصائح البحث:"
 #: .\templates\search\search.html:210
 msgid ""
 "You can search using invoice number, customer name, or any part of the data"
-msgstr ""
-"يمكنك البحث باستخدام رقم الفاتورة أو اسم العميل أو أي جزء من البيانات"
+msgstr "يمكنك البحث باستخدام رقم الفاتورة أو اسم العميل أو أي جزء من البيانات"
 
 #: .\templates\search\search.html:211
 msgid ""
@@ -15744,8 +15900,10 @@ msgid "Add Group"
 msgstr ""
 
 #: .\templates\users\group_list.html:39
+#, fuzzy
+#| msgid "Created At"
 msgid "Created at"
-msgstr ""
+msgstr "تاريخ الإنشاء"
 
 #: .\templates\users\group_list.html:51
 msgid "System"
@@ -15935,7 +16093,7 @@ msgstr ""
 
 #: .\templates\users\user_delete.html:57
 msgid "Department:"
-msgstr ""
+msgstr "القسم"
 
 #: .\templates\users\user_delete.html:61 .\templates\users\user_edit.html:257
 msgid "Last login:"
@@ -16016,10 +16174,6 @@ msgstr ""
 #: .\templates\users\user_list.html:86 .\templates\users\user_list.html:193
 #: .\templates\users\user_list.html:205 .\templates\users\user_list.html:214
 msgid "Hide High Permission Users"
-msgstr ""
-
-#: .\templates\users\user_list.html:103
-msgid "Full Name"
 msgstr ""
 
 #: .\templates\users\user_list.html:105 .\users\models.py:15
@@ -16284,6 +16438,28 @@ msgstr ""
 msgid "تم إظهار المستخدمين ذوي الصلاحيات العالية"
 msgstr ""
 
+#~ msgid "Full Name:"
+#~ msgstr "الاسم الكامل"
+
+#~ msgid "Job Title:"
+#~ msgstr "المنصب"
+
+#~ msgid "Email Address:"
+#~ msgstr "البريد الإلكتروني"
+
+#~ msgid "Phone Number:"
+#~ msgstr "رقم الهاتف"
+
+#~ msgid "Basic Informations"
+#~ msgstr "المعلومات الأساسية"
+
+#~ msgid "Enter the opposite of voucher..."
+#~ msgstr "أدخل سبب عكس السند"
+
+#, python-format
+#~ msgid "Are You Sure"
+#~ msgstr "هل أنت متأكد من"
+
 #~ msgid "دفعة"
 #~ msgstr "دفعة"
 
@@ -16305,14 +16481,14 @@ msgstr ""
 #~ msgid "تم حذف إشعارات ائتمان المبيعات المرتبطة بالعميل"
 #~ msgstr "تم حذف إشعارات ائتمان المبيعات المرتبطة بالعميل"
 
-#~ msgid "تم إنشاء القيد المحاسبي لمذكرة الدين رقم %(number)s"
-#~ msgstr "تم إنشاء القيد المحاسبي لمذكرة الدين رقم %(number)s"
+#~ msgid "تم إنشاء القيد المحاسبي لمذكرة الدائن رقم %(number)s"
+#~ msgstr "تم إنشاء القيد المحاسبي لمذكرة الدائن رقم %(number)s"
 
-#~ msgid "خطأ في إنشاء القيد المحاسبي لمذكرة الدين: %(error)s"
-#~ msgstr "خطأ في إنشاء القيد المحاسبي لمذكرة الدين: %(error)s"
+#~ msgid "خطأ في إنشاء القيد المحاسبي لمذكرة الدائن: %(error)s"
+#~ msgstr "خطأ في إنشاء القيد المحاسبي لمذكرة الدائن: %(error)s"
 
-#~ msgid "تم إنشاء مذكرة الدين والقيد المحاسبي بنجاح: %(number)s"
-#~ msgstr "تم إنشاء مذكرة الدين والقيد المحاسبي بنجاح: %(number)s"
+#~ msgid "تم إنشاء مذكرة الدائن والقيد المحاسبي بنجاح: %(number)s"
+#~ msgstr "تم إنشاء مذكرة الدائن والقيد المحاسبي بنجاح: %(number)s"
 
 #~ msgid "تم حذف %(count)d حركة مخزون لفاتورة المشتريات %(invoice_number)s"
 #~ msgstr "تم حذف %(count)d حركة مخزون لفاتورة المشتريات %(invoice_number)s"
@@ -16333,12 +16509,6 @@ msgstr ""
 
 #~ msgid "تم حذف مردود مبيعات رقم: %(return_number)s"
 #~ msgstr "تم حذف مردود مبيعات رقم: %(return_number)s"
-
-#~ msgid "تم حذف حركة المخزون رقم %(movement_number)s بنجاح"
-#~ msgstr "تم حذف حركة المخزون رقم %(movement_number)s بنجاح"
-
-#~ msgid "تم حذف حركة مخزون رقم: %(movement_number)s"
-#~ msgstr "تم حذف حركة مخزون رقم: %(movement_number)s"
 
 #~ msgid "Transaction Details"
 #~ msgstr "تفاصيل المعاملات"
@@ -16534,6 +16704,3 @@ msgstr ""
 
 #~ msgid "Contact Us"
 #~ msgstr "اتصل بنا"
-
-msgid "عرض كشف مذكرات الدائن"
-msgstr "View Credit Notes Statement"

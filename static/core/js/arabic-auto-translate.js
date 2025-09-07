@@ -247,6 +247,7 @@ document.addEventListener('DOMContentLoaded', function() {
         'Group': 'تجميع', 
         'Select': 'تحديد', 
         'Choose': 'اختيار', 
+        'Choose Account Type': 'اختر نوع الحساب',
         'Message': 'الرسالة', 
         'Messages': 'الرسائل', 
         'Notification': 'الإشعار', 
