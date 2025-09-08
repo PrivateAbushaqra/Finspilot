@@ -32,8 +32,8 @@ class PurchaseInvoice(models.Model):
     updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
 
     class Meta:
-        verbose_name = _('فاتورة مشتريات')
-        verbose_name_plural = _('فواتير المشتريات')
+        verbose_name = _('Purchase Invoice')
+        verbose_name_plural = _('Purchase Invoices')
         ordering = ['-date', '-invoice_number']
 
     def __str__(self):
@@ -110,8 +110,8 @@ class PurchaseReturn(models.Model):
     updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
 
     class Meta:
-        verbose_name = _('مردود مشتريات')
-        verbose_name_plural = _('مردودات المشتريات')
+        verbose_name = _('Purchase Return')
+        verbose_name_plural = _('Purchase Returns')
         ordering = ['-date', '-return_number']
 
     def __str__(self):

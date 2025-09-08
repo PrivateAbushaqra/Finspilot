@@ -43,8 +43,8 @@ class SalesInvoice(models.Model):
                                           help_text=_('Date and time when invoice was sent to JoFotara'))
 
     class Meta:
-        verbose_name = _('فاتورة مبيعات')
-        verbose_name_plural = _('فواتير المبيعات')
+        verbose_name = _('Sales Invoice')
+        verbose_name_plural = _('Sales Invoices')
         ordering = ['-date', '-invoice_number']
         permissions = (
             ('can_toggle_invoice_tax', 'Can toggle invoice tax inclusion'),
@@ -106,8 +106,8 @@ class SalesReturn(models.Model):
     updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
 
     class Meta:
-        verbose_name = _('مردود مبيعات')
-        verbose_name_plural = _('مردود المبيعات')
+        verbose_name = _('Sales Return')
+        verbose_name_plural = _('Sales Returns')
         ordering = ['-date', '-return_number']
 
     def __str__(self):

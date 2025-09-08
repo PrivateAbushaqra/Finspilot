@@ -56,16 +56,16 @@ class Account(models.Model):
 class JournalEntry(models.Model):
     """قيد محاسبي"""
     REFERENCE_TYPES = [
-        ('sales_invoice', _('فاتورة مبيعات')),
-        ('purchase_invoice', _('فاتورة مشتريات')),
-        ('sales_return', _('مردود مبيعات')),
-        ('purchase_return', _('مردود مشتريات')),
-        ('receipt_voucher', _('سند قبض')),
-        ('payment_voucher', _('سند صرف')),
-        ('revenue_expense', _('قيد إيرادات/مصروفات')),
-        ('asset_depreciation', _('استهلاك الأصول')),
-        ('manual', _('قيد يدوي')),
-        ('adjustment', _('قيد تسوية')),
+        ('sales_invoice', _('Sales Invoice')),
+        ('purchase_invoice', _('Purchase Invoice')),
+        ('sales_return', _('Sales Return')),
+        ('purchase_return', _('Purchase Return')),
+        ('receipt_voucher', _('Receipt Voucher')),
+        ('payment_voucher', _('Payment Voucher')),
+        ('revenue_expense', _('Revenue/Expense Entry')),
+        ('asset_depreciation', _('Asset Depreciation')),
+        ('manual', _('Manual Entry')),
+        ('adjustment', _('Adjustment Entry')),
     ]
 
     entry_number = models.CharField(_('رقم القيد'), max_length=50, unique=True, blank=True)

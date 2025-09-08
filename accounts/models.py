@@ -10,15 +10,15 @@ User = get_user_model()
 class AccountTransaction(models.Model):
     """حركات الحسابات المالية للعملاء والموردين"""
     TRANSACTION_TYPES = [
-        ('sales_invoice', _('فاتورة مبيعات')),
-        ('purchase_invoice', _('فاتورة مشتريات')),
-        ('sales_return', _('مردود مبيعات')),
-        ('purchase_return', _('مردود مشتريات')),
-        ('debit_note', _('مذكرة دين')),
-        ('credit_note', _('مذكرة ائتمان')),
-        ('payment', _('سند دفع')),
-        ('receipt', _('سند قبض')),
-        ('adjustment', _('تسوية')),
+        ('sales_invoice', _('Sales Invoice')),
+        ('purchase_invoice', _('Purchase Invoice')),
+        ('sales_return', _('Sales Return')),
+        ('purchase_return', _('Purchase Return')),
+        ('debit_note', _('Debit Note')),
+        ('credit_note', _('Credit Note')),
+        ('payment', _('Payment Voucher')),
+        ('receipt', _('Receipt Voucher')),
+        ('adjustment', _('settlement')),
     ]
     
     DIRECTION_TYPES = [

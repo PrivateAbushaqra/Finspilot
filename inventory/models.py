@@ -52,17 +52,17 @@ class InventoryMovement(models.Model):
         ('in', _('وارد')),
         ('out', _('صادر')),
         ('transfer', _('تحويل')),
-        ('adjustment', _('تسوية')),
+        ('adjustment', _('settlement')),
     ]
 
     REFERENCE_TYPES = [
-        ('sales_invoice', _('فاتورة مبيعات')),
-        ('sales_return', _('مردود مبيعات')),
-        ('purchase_invoice', _('فاتورة مشتريات')),
-        ('purchase_return', _('مردود مشتريات')),
-        ('warehouse_transfer', _('تحويل مستودع')),
-        ('adjustment', _('تسوية')),
-        ('opening_balance', _('رصيد افتتاحي')),
+        ('sales_invoice', _('Sales Invoice')),
+        ('sales_return', _('Sales Return')),
+        ('purchase_invoice', _('Purchase Invoice')),
+        ('purchase_return', _('Purchase Return')),
+        ('warehouse_transfer', _('Warehouse Transfer')),
+        ('adjustment', _('Adjustment')),
+        ('opening_balance', _('Opening Balance')),
     ]
 
     movement_number = models.CharField(_('رقم الحركة'), max_length=50, unique=True)

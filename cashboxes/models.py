@@ -276,7 +276,7 @@ class CashboxTransaction(models.Model):
         ('transfer_in', _('تحويل وارد')),
         ('transfer_out', _('تحويل صادر')),
         ('initial_balance', _('رصيد افتتاحي')),
-        ('adjustment', _('تسوية')),
+        ('adjustment', _('settlement')),
     ]
     
     cashbox = models.ForeignKey(Cashbox, on_delete=models.PROTECT, verbose_name=_('الصندوق'))
