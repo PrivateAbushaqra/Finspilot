@@ -153,6 +153,10 @@ else:
         DATABASES['default'] = {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
+            'OPTIONS': {
+                'charset': 'utf8',
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            },
         }
 # المتغيرات المطلوبة في ملف .env:
 # PG_NAME=اسم_قاعدة_البيانات
