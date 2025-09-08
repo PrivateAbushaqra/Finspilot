@@ -273,6 +273,7 @@ def sales_by_salesperson(request):
     totals_discount = Decimal('0.000')
     totals_total = Decimal('0.000')
     invoice_count = 0
+    returns_count = 0
 
     view_logged = False
 

@@ -179,7 +179,17 @@ class AttendanceForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['employee'].queryset = Employee.objects.filter(status='active')
+        # ترتيب الموظفين بحسب الاسم وإظهار الموظفين النشطين فقط
+        active_employees = Employee.objects.filter(status='active').select_related('department', 'position')
+        self.fields['employee'].queryset = active_employees.order_by('first_name', 'last_name')
+        
+        # تحسين عرض قائمة الموظفين
+        self.fields['employee'].empty_label = _('اختر الموظف')
+        
+        # تحديد التاريخ الافتراضي لليوم الحالي
+        if not self.instance.pk:
+            from datetime import date
+            self.fields['date'].initial = date.today()
 
     def clean(self):
         cleaned_data = super().clean()

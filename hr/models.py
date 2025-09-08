@@ -143,11 +143,25 @@ class Employee(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.first_name} {self.last_name} ({self.employee_id})"
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name} ({self.employee_id})"
+        elif self.first_name:
+            return f"{self.first_name} ({self.employee_id})"
+        elif self.last_name:
+            return f"{self.last_name} ({self.employee_id})"
+        else:
+            return f"{_('Employee')} ({self.employee_id})"
 
     @property
     def full_name(self):
-        return f"{self.first_name} {self.last_name}"
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        elif self.first_name:
+            return self.first_name
+        elif self.last_name:
+            return self.last_name
+        else:
+            return f"{_('Employee')} {self.employee_id}"
 
     @property
     def full_name_en(self):
