@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Delete Contract" %} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'hr:dashboard' %}">{% trans "HR Dashboard" %}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'hr:contract_list' %}">{% trans "Contracts" %}</a></li>
+            <li class="breadcrumb-item active">{% trans "Delete Contract" %}</li>
+        </ol>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>
+            <i class="fas fa-trash-alt me-2 text-danger"></i>
+            {% trans "Delete Contract" %}
+        </h2>
+        <a href="{% url 'hr:contract_list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>{% trans "Back to Contracts" %}
+        </a>
+    </div>
+
+    <!-- Warning Alert -->
+    <div class="alert alert-danger" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <strong>{% trans "Warning!" %}</strong> {% trans "This action cannot be undone. Are you sure you want to delete this contract?" %}
+    </div>
+
+    <!-- Contract Details -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-file-contract me-2"></i>
+                {% trans "Contract Details" %}
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>{% trans "Employee:" %}</strong> {{ object.employee.first_name }} {{ object.employee.last_name }}</p>
+                    <p><strong>{% trans "Contract Number:" %}</strong> {{ object.contract_number }}</p>
+                    <p><strong>{% trans "Contract Type:" %}</strong> {{ object.get_contract_type_display }}</p>
+                    <p><strong>{% trans "Status:" %}</strong> {{ object.get_status_display }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>{% trans "Start Date:" %}</strong> {{ object.start_date|date:"d/m/Y" }}</p>
+                    <p><strong>{% trans "End Date:" %}</strong> {{ object.end_date|date:"d/m/Y" if object.end_date else "N/A" }}</p>
+                    <p><strong>{% trans "Salary:" %}</strong> {{ object.salary|floatformat:2 }}</p>
+                    <p><strong>{% trans "Working Hours/Day:" %}</strong> {{ object.working_hours_per_day }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Form -->
+    <div class="card mt-4">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <p class="mb-3">
+                    {% trans "Please confirm that you want to delete this contract. This action cannot be reversed." %}
+                </p>
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{% url 'hr:contract_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-times me-2"></i>{% trans "Cancel" %}
+                    </a>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash-alt me-2"></i>{% trans "Delete Contract" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
