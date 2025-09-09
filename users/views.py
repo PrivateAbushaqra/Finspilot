@@ -98,6 +98,10 @@ class UserCreateForm(forms.ModelForm):
                 # منع إنشاء superadmin من قبل مستخدم عادي
                 choices = list(self.fields['user_type'].choices)
                 self.fields['user_type'].choices = [c for c in choices if c[0] != 'superadmin']
+            
+            # إخفاء حقل is_superuser عن المستخدمين غير المصرح لهم
+            if 'is_superuser' in self.fields:
+                del self.fields['is_superuser']
 
         # Make first_name required for new users
         if 'first_name' in self.fields:
@@ -241,6 +245,10 @@ class UserEditForm(forms.ModelForm):
                 # منع تغيير النوع إلى superadmin
                 choices = list(self.fields['user_type'].choices)
                 self.fields['user_type'].choices = [c for c in choices if c[0] != 'superadmin']
+            
+            # إخفاء حقل is_superuser عن المستخدمين غير المصرح لهم
+            if 'is_superuser' in self.fields:
+                del self.fields['is_superuser']
 
     def clean_username(self):
         username = self.cleaned_data['username']

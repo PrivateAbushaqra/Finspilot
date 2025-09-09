@@ -179,6 +179,7 @@
                                 <div class="form-text">{% trans "Can be disabled later" %}</div>
                             </div>
                             
+                            {% if form.is_superuser %}
                             <div class="col-md-6 mb-3" id="superuser-field">
                                 <div class="form-check form-switch">
                                     {{ form.is_superuser }}
@@ -191,6 +192,7 @@
                                 {% endif %}
                                 <div class="form-text">{% trans "Grants full system access" %}</div>
                             </div>
+                            {% endif %}
                         </div>
 
                         <!-- Groups -->
