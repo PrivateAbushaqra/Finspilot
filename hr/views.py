@@ -673,6 +673,33 @@ class ContractCreateView(HRMixin, PermissionRequiredMixin, CreateView):
     success_url = reverse_lazy('hr:contract_list')
     permission_required = 'hr.can_manage_employees'
 
+    def get_initial(self):
+        initial = super().get_initial()
+        employee_id = self.request.GET.get('employee')
+        if employee_id:
+            try:
+                from .models import Employee
+                employee = Employee.objects.get(pk=employee_id)
+                initial['employee'] = employee
+            except Employee.DoesNotExist:
+                pass
+        return initial
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        response = super().form_valid(form)
+        
+        # تسجيل النشاط
+        from core.signals import log_user_activity
+        log_user_activity(
+            self.request,
+            'create',
+            form.instance,
+            f'تم إنشاء عقد جديد: {form.instance.contract_number} للموظف {form.instance.employee.full_name}'
+        )
+        
+        return response
+
 
 class ContractUpdateView(HRMixin, PermissionRequiredMixin, UpdateView):
     model = Contract
@@ -681,12 +708,38 @@ class ContractUpdateView(HRMixin, PermissionRequiredMixin, UpdateView):
     success_url = reverse_lazy('hr:contract_list')
     permission_required = 'hr.can_manage_employees'
 
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        
+        # تسجيل النشاط
+        from core.signals import log_user_activity
+        log_user_activity(
+            self.request,
+            'update',
+            form.instance,
+            f'تم تحديث العقد: {form.instance.contract_number} للموظف {form.instance.employee.full_name}'
+        )
+        
+        return response
+
 
 class ContractDeleteView(HRMixin, PermissionRequiredMixin, DeleteView):
     model = Contract
     template_name = 'hr/contract_confirm_delete.html'
     success_url = reverse_lazy('hr:contract_list')
     permission_required = 'hr.can_manage_employees'
+
+    def delete(self, request, *args, **kwargs):
+        contract = self.get_object()
+        # تسجيل النشاط قبل الحذف
+        from core.signals import log_user_activity
+        log_user_activity(
+            request,
+            'delete',
+            contract,
+            f'تم حذف العقد: {contract.contract_number} للموظف {contract.employee.full_name}'
+        )
+        return super().delete(request, *args, **kwargs)
 
 
 # Additional Attendance Views
