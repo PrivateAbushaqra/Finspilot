@@ -420,7 +420,9 @@ class UserDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     
     def test_func(self):
         """التحقق من صلاحية المستخدم لحذف المستخدمين"""
-        return self.request.user.is_admin
+        # السماح فقط لمن لديه صلاحية حذف المستخدمين أو سوبرأدمين
+        user = self.request.user
+        return user.is_superuser or user.has_perm('users.delete_user')
     
     def get_object(self, queryset=None):
         """الحصول على المستخدم المراد حذفه"""
@@ -444,7 +446,7 @@ class UserDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         context['can_delete'] = (
             user_to_delete.username != 'superadmin' and 
             user_to_delete != self.request.user and
-            not user_to_delete.is_superuser  # منع حذف أي مستخدم superuser نهائياً
+            not user_to_delete.is_superuser
         )
         
         # أسباب عدم إمكانية الحذف
@@ -461,33 +463,28 @@ class UserDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     def delete(self, request, *args, **kwargs):
         """حذف المستخدم مع التحقق من القيود"""
         user = self.get_object()
-        
         # منع حذف المستخدم الحالي
         if user == request.user:
             messages.error(request, _('لا يمكنك حذف نفسك'))
             return self.get(request, *args, **kwargs)
-        
         # منع حذف المستخدم الأساسي superadmin
         if user.username == 'superadmin':
             messages.error(request, _('لا يمكن حذف المستخدم الأساسي'))
             return self.get(request, *args, **kwargs)
-        
         # منع حذف أي مستخدم له صلاحيات superuser
         if user.is_superuser:
             messages.error(request, _('لا يمكن حذف المستخدمين ذوي صلاحيات Superuser'))
             return self.get(request, *args, **kwargs)
-        
         username = user.username
         messages.success(request, _('تم حذف المستخدم "{}" بنجاح').format(username))
-        
-        # تسجيل النشاط
-        log_user_activity(
+        # تسجيل النشاط في سجل الأنشطة
+        from core.signals import log_view_activity
+        log_view_activity(
             request,
             'delete',
             user,
-            f'تم حذف المستخدم: {username}'
+            _('تم حذف المستخدم: {}').format(username)
         )
-        
         return super().delete(request, *args, **kwargs)
 
 class UserGroupListView(LoginRequiredMixin, ListView):
