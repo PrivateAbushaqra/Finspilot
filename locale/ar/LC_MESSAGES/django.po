@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-07 23:46+0300\n"
+"POT-Creation-Date: 2025-09-09 12:00+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -21,44 +21,56 @@ msgstr ""
 
 #: .\accounts\models.py:13 .\inventory\models.py:59 .\journal\models.py:59
 #: .\sales\models.py:46 .\settings\views.py:961 .\settings\views.py:1126
-msgid "فاتورة مبيعات"
-msgstr "فاتورة مبيعات"
+#: .\templates\core\dashboard.html:452
+msgid "Sales Invoice"
+msgstr ""
 
 #: .\accounts\models.py:14 .\inventory\models.py:61 .\journal\models.py:60
-#: .\purchases\models.py:35
-msgid "فاتورة مشتريات"
-msgstr "فاتورة مشتريات"
+#: .\purchases\models.py:35 .\templates\core\dashboard.html:460
+msgid "Purchase Invoice"
+msgstr "فاتورة الشراء"
 
 #: .\accounts\models.py:15 .\inventory\models.py:60 .\journal\models.py:61
 #: .\sales\models.py:109
-msgid "مردود مبيعات"
-msgstr "مردود مبيعات"
+#, fuzzy
+#| msgid "Sales Returns"
+msgid "Sales Return"
+msgstr "مردود المبيعات"
 
 #: .\accounts\models.py:16 .\inventory\models.py:62 .\journal\models.py:62
 #: .\purchases\models.py:113
-msgid "مردود مشتريات"
+#, fuzzy
+#| msgid "Purchase Returns"
+msgid "Purchase Return"
 msgstr "مردود مشتريات"
 
-#: .\accounts\models.py:17
-msgid "مذكرة دين"
-msgstr "مذكرة دين"
-
-msgid "مذكرة ائتمان"
-msgstr "مذكرة دين"
-
-#: .\accounts\models.py:19
-msgid "سند دفع"
+#: .\accounts\models.py:17 .\settings\views.py:963 .\settings\views.py:1128
+#: .\templates\settings\document_sequence_add.html:103
+msgid "Debit Note"
 msgstr ""
 
-#: .\accounts\models.py:20 .\core\models.py:67 .\journal\models.py:63
-#: .\receipts\models.py:65
-msgid "سند قبض"
+#: .\accounts\models.py:18 .\settings\views.py:962 .\settings\views.py:1127
+#: .\templates\settings\document_sequence_add.html:98
+msgid "Credit Note"
 msgstr ""
+
+#: .\accounts\models.py:19 .\journal\models.py:64 .\payments\models.py:83
+#: .\settings\views.py:966 .\settings\views.py:1131
+#: .\templates\settings\document_sequence_add.html:108
+msgid "Payment Voucher"
+msgstr ""
+
+#: .\accounts\models.py:20 .\journal\models.py:63
+#, fuzzy
+#| msgid "Receipt Vouchers"
+msgid "Receipt Voucher"
+msgstr "قسائم الإيصال"
 
 #: .\accounts\models.py:21 .\cashboxes\models.py:279 .\inventory\models.py:55
-#: .\inventory\models.py:64
-msgid "تسوية"
-msgstr "تسوية"
+#, fuzzy
+#| msgid "Statement"
+msgid "settlement"
+msgstr "كشف حساب"
 
 #: .\accounts\models.py:25 .\journal\models.py:133
 #: .\templates\journal\account_detail.html:138
@@ -77,10 +89,10 @@ msgid "رقم الحركة"
 msgstr "رقم الحركة"
 
 #: .\accounts\models.py:30 .\banks\models.py:103 .\banks\models.py:138
-#: .\cashboxes\models.py:105 .\cashboxes\models.py:284 .\hr\models.py:239
+#: .\cashboxes\models.py:105 .\cashboxes\models.py:284 .\hr\models.py:253
 #: .\inventory\models.py:69 .\inventory\models.py:115 .\purchases\models.py:18
 #: .\purchases\models.py:179 .\reports\views.py:157 .\reports\views.py:193
-#: .\reports\views.py:378 .\reports\views.py:416
+#: .\reports\views.py:379 .\reports\views.py:417
 #: .\revenues_expenses\models.py:56 .\sales\models.py:20 .\sales\models.py:96
 #: .\sales\models.py:151 .\templates\accounts\customer_statement.html:118
 #: .\templates\accounts\transaction_list.html:132
@@ -268,7 +280,7 @@ msgstr "معرف المرجع"
 #: .\assets_liabilities\models.py:158 .\banks\models.py:111
 #: .\banks\models.py:136 .\cashboxes\models.py:11 .\cashboxes\models.py:140
 #: .\cashboxes\models.py:286 .\core\models.py:265 .\hr\models.py:15
-#: .\hr\models.py:36 .\hr\models.py:294 .\hr\models.py:447
+#: .\hr\models.py:36 .\hr\models.py:308 .\hr\models.py:461
 #: .\journal\models.py:27 .\payments\admin.py:40 .\payments\models.py:66
 #: .\receipts\models.py:48 .\reports\views.py:157 .\reports\views.py:193
 #: .\revenues_expenses\models.py:17 .\revenues_expenses\models.py:53
@@ -338,8 +350,8 @@ msgstr "الوصف"
 
 #: .\accounts\models.py:42 .\assets_liabilities\models.py:227
 #: .\banks\models.py:19 .\customers\models.py:25 .\hr\forms.py:55
-#: .\hr\models.py:126 .\hr\models.py:213 .\hr\models.py:245 .\hr\models.py:358
-#: .\hr\models.py:404 .\inventory\models.py:78 .\inventory\models.py:120
+#: .\hr\models.py:126 .\hr\models.py:227 .\hr\models.py:259 .\hr\models.py:372
+#: .\hr\models.py:418 .\inventory\models.py:78 .\inventory\models.py:120
 #: .\payments\models.py:67 .\purchases\models.py:29 .\purchases\models.py:107
 #: .\receipts\models.py:49 .\receipts\models.py:115 .\receipts\models.py:135
 #: .\sales\models.py:34 .\sales\models.py:103
@@ -375,8 +387,8 @@ msgstr "الرصيد بعد الحركة"
 #: .\assets_liabilities\models.py:184 .\assets_liabilities\models.py:234
 #: .\banks\models.py:22 .\banks\models.py:112 .\banks\models.py:139
 #: .\cashboxes\models.py:142 .\cashboxes\models.py:292 .\hr\models.py:131
-#: .\hr\models.py:217 .\hr\models.py:250 .\hr\models.py:333 .\hr\models.py:362
-#: .\hr\models.py:408 .\inventory\models.py:79 .\inventory\models.py:121
+#: .\hr\models.py:231 .\hr\models.py:264 .\hr\models.py:347 .\hr\models.py:376
+#: .\hr\models.py:422 .\inventory\models.py:79 .\inventory\models.py:121
 #: .\journal\models.py:78 .\payments\models.py:70 .\purchases\models.py:30
 #: .\purchases\models.py:108 .\purchases\models.py:185 .\receipts\models.py:52
 #: .\receipts\models.py:117 .\receipts\models.py:137
@@ -409,8 +421,8 @@ msgstr "أنشأ بواسطة"
 #: .\cashboxes\models.py:18 .\cashboxes\models.py:143 .\cashboxes\models.py:293
 #: .\core\models.py:35 .\core\models.py:75 .\core\models.py:293
 #: .\customers\models.py:26 .\hr\models.py:19 .\hr\models.py:42
-#: .\hr\models.py:129 .\hr\models.py:215 .\hr\models.py:248 .\hr\models.py:297
-#: .\hr\models.py:331 .\hr\models.py:360 .\hr\models.py:406
+#: .\hr\models.py:129 .\hr\models.py:229 .\hr\models.py:262 .\hr\models.py:311
+#: .\hr\models.py:345 .\hr\models.py:374 .\hr\models.py:420
 #: .\inventory\models.py:19 .\inventory\models.py:80 .\inventory\models.py:122
 #: .\journal\models.py:31 .\journal\models.py:79 .\journal\models.py:137
 #: .\payments\models.py:71 .\purchases\models.py:31 .\purchases\models.py:109
@@ -434,9 +446,9 @@ msgstr "تاريخ الإنشاء"
 #: .\assets_liabilities\models.py:183 .\banks\models.py:21
 #: .\banks\models.py:114 .\cashboxes\models.py:19 .\cashboxes\models.py:144
 #: .\core\models.py:36 .\core\models.py:76 .\customers\models.py:27
-#: .\hr\models.py:20 .\hr\models.py:43 .\hr\models.py:130 .\hr\models.py:216
-#: .\hr\models.py:249 .\hr\models.py:298 .\hr\models.py:332 .\hr\models.py:361
-#: .\hr\models.py:407 .\inventory\models.py:20 .\inventory\models.py:123
+#: .\hr\models.py:20 .\hr\models.py:43 .\hr\models.py:130 .\hr\models.py:230
+#: .\hr\models.py:263 .\hr\models.py:312 .\hr\models.py:346 .\hr\models.py:375
+#: .\hr\models.py:421 .\inventory\models.py:20 .\inventory\models.py:123
 #: .\journal\models.py:32 .\journal\models.py:80 .\payments\models.py:72
 #: .\purchases\models.py:32 .\purchases\models.py:110 .\purchases\models.py:187
 #: .\receipts\models.py:54 .\revenues_expenses\models.py:69
@@ -515,8 +527,8 @@ msgstr "قابل للإهلاك"
 #: .\assets_liabilities\models.py:27 .\assets_liabilities\models.py:43
 #: .\assets_liabilities\models.py:133 .\assets_liabilities\models.py:149
 #: .\banks\models.py:18 .\cashboxes\models.py:14 .\customers\models.py:24
-#: .\hr\models.py:18 .\hr\models.py:41 .\hr\models.py:75 .\hr\models.py:192
-#: .\hr\models.py:295 .\inventory\models.py:17 .\journal\models.py:28
+#: .\hr\models.py:18 .\hr\models.py:41 .\hr\models.py:75 .\hr\models.py:206
+#: .\hr\models.py:309 .\inventory\models.py:17 .\journal\models.py:28
 #: .\payments\models.py:75 .\receipts\models.py:57
 #: .\revenues_expenses\models.py:18 .\revenues_expenses\models.py:155
 #: .\settings\models.py:51 .\templates\assets_liabilities\asset_list.html:166
@@ -591,9 +603,9 @@ msgstr "قابل للإهلاك"
 #: .\templates\settings\currency_list.html:64
 #: .\templates\settings\currency_list.html:141
 #: .\templates\users\group_delete.html:128 .\templates\users\group_edit.html:83
-#: .\templates\users\user_edit.html:361 .\templates\users\user_edit.html:372
-#: .\templates\users\user_list.html:130 .\users\views.py:66
-#: .\users\views.py:202
+#: .\templates\users\user_edit.html:373 .\templates\users\user_edit.html:384
+#: .\templates\users\user_list.html:130 .\users\views.py:67
+#: .\users\views.py:205
 msgid "Active"
 msgstr "نشط"
 
@@ -918,9 +930,11 @@ msgstr ""
 msgid "حدث خطأ في تحميل قائمة الجداول"
 msgstr ""
 
+#: .\backup\views.py:203
 msgid "محاولة وصول مرفوضة لحذف بيانات الجداول - صلاحية غير متوفرة"
 msgstr "محاولة وصول مرفوضة لصفحة تصميم الطباعة - صلاحية غير متوفرة"
 
+#: .\backup\views.py:204
 msgid "ليس لديك صلاحية لحذف البيانات"
 msgstr "ليس لديك صلاحية لحذف حركات المخزون"
 
@@ -959,9 +973,11 @@ msgstr ""
 msgid "يرجى اختيار ملف النسخة الاحتياطية"
 msgstr ""
 
+#: .\backup\views.py:2180
 msgid "الملف غير موجود"
 msgstr "أصول غير ملموسة"
 
+#: .\backup\views.py:2192 .\backup\views.py:2230
 msgid "نوع الملف غير مدعوم"
 msgstr "نوع المرجع"
 
@@ -973,6 +989,7 @@ msgstr ""
 msgid "تم بدء عملية الاستعادة في الخلفية، يمكن متابعة التقدم على هذه الصفحة"
 msgstr ""
 
+#: .\backup\views.py:2283
 msgid "ملف JSON غير صحيح"
 msgstr "حركة المخزون غير موجودة"
 
@@ -1432,7 +1449,7 @@ msgstr ""
 msgid "تحويل صادر"
 msgstr ""
 
-#: .\cashboxes\models.py:278 .\inventory\models.py:65
+#: .\cashboxes\models.py:278
 msgid "رصيد افتتاحي"
 msgstr ""
 
@@ -1466,8 +1483,8 @@ msgstr ""
 msgid "Cashbox name is required"
 msgstr ""
 
-#: .\cashboxes\views.py:106 .\reports\views.py:161 .\reports\views.py:194
-#: .\templates\products\product_add.html:260
+#: .\cashboxes\views.py:106 .\inventory\models.py:65 .\reports\views.py:161
+#: .\reports\views.py:194 .\templates\products\product_add.html:260
 #: .\templates\products\product_edit.html:238
 #: .\templates\products\product_edit.html:259
 #: .\templates\products\product_list.html:873
@@ -1610,9 +1627,11 @@ msgstr "لا يمكن حذف صندوق النقد بسبب المعاملات �
 msgid "An error occurred while deleting the cashbox: {}"
 msgstr "حدث خطأ أثناء حذف صندوق النقد"
 
+#: .\core\models.py:10 .\settings\models.py:83
 msgid "اسم الشركة"
 msgstr "رقم الحركة"
 
+#: .\core\models.py:11
 msgid "شعار الشركة"
 msgstr "تاريخ الشراء"
 
@@ -1640,7 +1659,7 @@ msgstr ""
 #: .\templates\settings\company.html:57
 #: .\templates\settings\company_fixed.html:56
 #: .\templates\settings\superadmin_management.html:249 .\users\models.py:16
-#: .\users\views.py:63 .\users\views.py:199
+#: .\users\views.py:64 .\users\views.py:202
 msgid "Phone"
 msgstr ""
 
@@ -1658,8 +1677,8 @@ msgstr ""
 #: .\templates\settings\company.html:64
 #: .\templates\settings\company_fixed.html:63
 #: .\templates\settings\superadmin_management.html:243
-#: .\templates\users\user_list.html:104 .\users\views.py:59
-#: .\users\views.py:195
+#: .\templates\users\user_list.html:104 .\users\views.py:60
+#: .\users\views.py:198
 msgid "Email"
 msgstr "البريد الإلكتروني"
 
@@ -1704,15 +1723,15 @@ msgstr ""
 msgid "فاتورة نقطة البيع"
 msgstr ""
 
-#: .\core\models.py:57 .\sales\models.py:110 .\sales\models.py:120
+#: .\core\models.py:57 .\sales\models.py:120
 msgid "مردود المبيعات"
 msgstr ""
 
-#: .\core\models.py:58 .\settings\views.py:962 .\settings\views.py:1127
+#: .\core\models.py:58
 msgid "إشعار دائن"
 msgstr ""
 
-#: .\core\models.py:59 .\settings\views.py:963 .\settings\views.py:1128
+#: .\core\models.py:59
 msgid "إشعار مدين"
 msgstr ""
 
@@ -1745,7 +1764,11 @@ msgstr ""
 msgid "التحويل بين المستودعات"
 msgstr ""
 
-#: .\core\models.py:68 .\journal\models.py:64
+#: .\core\models.py:67 .\receipts\models.py:65
+msgid "سند قبض"
+msgstr ""
+
+#: .\core\models.py:68
 msgid "سند صرف"
 msgstr ""
 
@@ -1909,6 +1932,7 @@ msgstr ""
 msgid "المدينة"
 msgstr ""
 
+#: .\customers\models.py:22
 msgid "حد الائتمان"
 msgstr "مذكرة دين"
 
@@ -1979,12 +2003,12 @@ msgid "Employee ID"
 msgstr "رقم الموظف"
 
 #: .\hr\forms.py:33 .\hr\models.py:85 .\templates\hr\employee_detail.html:98
-#: .\users\views.py:60 .\users\views.py:196
+#: .\users\views.py:61 .\users\views.py:199
 msgid "First Name"
 msgstr "الاسم الأول"
 
 #: .\hr\forms.py:34 .\hr\models.py:86 .\templates\hr\employee_detail.html:102
-#: .\users\views.py:61 .\users\views.py:197
+#: .\users\views.py:62 .\users\views.py:200
 msgid "Last Name"
 msgstr "الاسم الاخير"
 
@@ -2044,13 +2068,13 @@ msgstr ""
 msgid "Emergency Contact Phone"
 msgstr ""
 
-#: .\hr\forms.py:51 .\hr\models.py:112 .\hr\models.py:380
+#: .\hr\forms.py:51 .\hr\models.py:112 .\hr\models.py:394
 #: .\templates\hr\reports\payroll_summary_report.html:112
 #: .\templates\hr\reports\salary_breakdown_report.html:29
 msgid "Basic Salary"
 msgstr ""
 
-#: .\hr\forms.py:52 .\hr\models.py:114 .\hr\models.py:206 .\hr\models.py:381
+#: .\hr\forms.py:52 .\hr\models.py:114 .\hr\models.py:220 .\hr\models.py:395
 #: .\templates\hr\reports\payroll_summary_report.html:113
 #: .\templates\hr\reports\salary_breakdown_report.html:30
 msgid "Allowances"
@@ -2096,12 +2120,12 @@ msgstr "لا يمكن أن يكون تاريخ التوظيف في المستق�
 msgid "Employee must be at least 16 years old at hire date."
 msgstr "يجب أن يكون عمر الموظف 16 عامًا على الأقل في تاريخ التوظيف."
 
-#: .\hr\forms.py:132 .\hr\models.py:200
+#: .\hr\forms.py:132 .\hr\models.py:214
 #: .\templates\assets_liabilities\liability_create.html:351
 msgid "Contract Number"
 msgstr "رقم العقد"
 
-#: .\hr\forms.py:152 .\hr\forms.py:291
+#: .\hr\forms.py:152 .\hr\forms.py:301
 msgid "End date must be after start date."
 msgstr "يجب أن يكون تاريخ النهاية بعد تاريخ البدء."
 
@@ -2109,83 +2133,87 @@ msgstr "يجب أن يكون تاريخ النهاية بعد تاريخ الب�
 msgid "End date is required for temporary contracts."
 msgstr "يجب تحديد تاريخ النهاية للعقود المؤقتة."
 
-#: .\hr\forms.py:193
+#: .\hr\forms.py:187
+msgid "اختر الموظف"
+msgstr "اختر الموظف"
+
+#: .\hr\forms.py:203
 msgid "Check-in time is required for present attendance."
 msgstr "يجب تسجيل وقت الحضور."
 
-#: .\hr\forms.py:197
+#: .\hr\forms.py:207
 msgid "Check-out time must be after check-in time."
 msgstr "يجب أن يكون وقت المغادرة بعد وقت تسجيل الوصول."
 
-#: .\hr\forms.py:205
+#: .\hr\forms.py:215
 msgid "CSV File"
 msgstr ""
 
-#: .\hr\forms.py:212
+#: .\hr\forms.py:222
 msgid "File must be in CSV format."
 msgstr ""
 
-#: .\hr\forms.py:230
+#: .\hr\forms.py:240
 msgid "Reason for leave"
 msgstr "سبب الإجازة"
 
-#: .\hr\forms.py:247
+#: .\hr\forms.py:257
 msgid "End date must be after or equal to start date."
 msgstr "يجب أن يكون تاريخ النهاية بعد تاريخ البدء أو يساويه."
 
-#: .\hr\forms.py:255
+#: .\hr\forms.py:265
 #, python-format
 msgid ""
 "Leave request exceeds maximum allowed days for this leave type (%(max_days)s "
 "days)."
 msgstr ""
 
-#: .\hr\forms.py:264
+#: .\hr\forms.py:274
 #, python-format
 msgid "Leave request exceeds available balance (%(balance)s days)."
 msgstr ""
 
-#: .\hr\forms.py:280 .\hr\models.py:351
+#: .\hr\forms.py:290 .\hr\models.py:365
 msgid "Period Name"
 msgstr ""
 
-#: .\hr\forms.py:300
+#: .\hr\forms.py:310
 msgid "Payroll period overlaps with existing period."
 msgstr "تتداخل فترة الرواتب مع الفترة الحالية."
 
-#: .\hr\forms.py:352
+#: .\hr\forms.py:362
 msgid "Document Title"
 msgstr "عنوان الوثيقة"
 
-#: .\hr\forms.py:369 .\hr\models.py:13
+#: .\hr\forms.py:379 .\hr\models.py:13
 msgid "Department Name"
 msgstr "اسم القسم"
 
-#: .\hr\forms.py:370 .\hr\models.py:14
+#: .\hr\forms.py:380 .\hr\models.py:14
 msgid "Department Code"
 msgstr "رمز القسم"
 
-#: .\hr\forms.py:380
+#: .\hr\forms.py:390
 msgid "Select Manager (Optional)"
 msgstr "حدد المدير (اختياري)"
 
-#: .\hr\forms.py:385
+#: .\hr\forms.py:395
 msgid "Department code already exists."
 msgstr "رمز القسم موجود بالفعل."
 
-#: .\hr\forms.py:399 .\hr\models.py:32
+#: .\hr\forms.py:409 .\hr\models.py:32
 msgid "Position Title"
 msgstr ""
 
-#: .\hr\forms.py:400 .\hr\models.py:33
+#: .\hr\forms.py:410 .\hr\models.py:33
 msgid "Position Code"
 msgstr ""
 
-#: .\hr\forms.py:415
+#: .\hr\forms.py:425
 msgid "Position code already exists."
 msgstr ""
 
-#: .\hr\forms.py:425
+#: .\hr\forms.py:435
 msgid "Maximum salary must be greater than minimum salary."
 msgstr ""
 
@@ -2213,7 +2241,7 @@ msgstr ""
 #: .\templates\hr\reports\salary_breakdown_report.html:27
 #: .\templates\hr\reports\upcoming_leaves_report.html:33
 #: .\templates\users\user_list.html:106 .\users\models.py:17
-#: .\users\views.py:64 .\users\views.py:200
+#: .\users\views.py:65 .\users\views.py:203
 msgid "Department"
 msgstr ""
 
@@ -2278,7 +2306,7 @@ msgstr ""
 msgid "Part Time"
 msgstr ""
 
-#: .\hr\models.py:70 .\hr\models.py:220 .\hr\models.py:435
+#: .\hr\models.py:70 .\hr\models.py:234 .\hr\models.py:449
 msgid "Contract"
 msgstr ""
 
@@ -2305,11 +2333,11 @@ msgstr ""
 msgid "Inactive"
 msgstr "غير نشط"
 
-#: .\hr\models.py:77 .\hr\models.py:194
+#: .\hr\models.py:77 .\hr\models.py:208
 msgid "Terminated"
 msgstr ""
 
-#: .\hr\models.py:78 .\hr\models.py:234
+#: .\hr\models.py:78 .\hr\models.py:248
 msgid "On Leave"
 msgstr ""
 
@@ -2345,7 +2373,7 @@ msgstr "تاريخ التوظيف"
 msgid "Termination Date"
 msgstr "تاريخ الإنهاء"
 
-#: .\hr\models.py:109 .\hr\models.py:211 .\hr\models.py:325
+#: .\hr\models.py:109 .\hr\models.py:225 .\hr\models.py:339
 #: .\templates\assets_liabilities\asset_create.html:149
 #: .\templates\assets_liabilities\asset_detail.html:111
 #: .\templates\assets_liabilities\asset_list.html:55
@@ -2414,10 +2442,10 @@ msgstr "تاريخ الإنهاء"
 msgid "Status"
 msgstr "الحالة"
 
-#: .\hr\models.py:134 .\hr\models.py:199 .\hr\models.py:238 .\hr\models.py:318
-#: .\hr\models.py:377 .\hr\models.py:444 .\templates\hr\attendance_list.html:68
-#: .\templates\hr\contract_list.html:27 .\templates\hr\dashboard.html:174
-#: .\templates\hr\leave_request_list.html:27
+#: .\hr\models.py:134 .\hr\models.py:153 .\hr\models.py:164 .\hr\models.py:213
+#: .\hr\models.py:252 .\hr\models.py:332 .\hr\models.py:391 .\hr\models.py:458
+#: .\templates\hr\attendance_list.html:68 .\templates\hr\contract_list.html:27
+#: .\templates\hr\dashboard.html:174 .\templates\hr\leave_request_list.html:27
 #: .\templates\hr\reports\anniversary_report.html:27
 #: .\templates\hr\reports\attendance_report.html:110
 #: .\templates\hr\reports\contract_expiry_report.html:27
@@ -2441,40 +2469,40 @@ msgstr "موظف"
 msgid "Employees"
 msgstr "الموظفين"
 
-#: .\hr\models.py:185
+#: .\hr\models.py:199
 msgid "Permanent"
 msgstr ""
 
-#: .\hr\models.py:186
+#: .\hr\models.py:200
 msgid "Temporary"
 msgstr "مؤقت"
 
-#: .\hr\models.py:187
+#: .\hr\models.py:201
 msgid "Probation"
 msgstr ""
 
-#: .\hr\models.py:188
+#: .\hr\models.py:202
 msgid "Renewal"
 msgstr ""
 
-#: .\hr\models.py:193 .\templates\assets_liabilities\asset_detail.html:182
+#: .\hr\models.py:207 .\templates\assets_liabilities\asset_detail.html:182
 #: .\templates\purchases\return_add.html:76
 #: .\templates\purchases\return_edit.html:68
 #: .\templates\purchases\return_list.html:130
 msgid "Expired"
 msgstr "منتهي الصلاحية"
 
-#: .\hr\models.py:195
+#: .\hr\models.py:209
 msgid "Draft"
 msgstr "مسودة"
 
-#: .\hr\models.py:201 .\templates\hr\contract_list.html:28
+#: .\hr\models.py:215 .\templates\hr\contract_list.html:28
 #: .\templates\hr\employee_detail.html:191
 #: .\templates\hr\reports\contract_expiry_report.html:28
 msgid "Contract Type"
 msgstr "نوع العقد"
 
-#: .\hr\models.py:202 .\hr\models.py:321 .\hr\models.py:352
+#: .\hr\models.py:216 .\hr\models.py:335 .\hr\models.py:366
 #: .\templates\assets_liabilities\liability_create.html:273
 #: .\templates\hr\contract_list.html:29 .\templates\hr\employee_detail.html:195
 #: .\templates\hr\leave_request_list.html:29
@@ -2489,7 +2517,7 @@ msgstr "نوع العقد"
 msgid "Start Date"
 msgstr "تاريخ البدء"
 
-#: .\hr\models.py:203 .\hr\models.py:322 .\hr\models.py:353
+#: .\hr\models.py:217 .\hr\models.py:336 .\hr\models.py:367
 #: .\templates\hr\contract_list.html:30 .\templates\hr\employee_detail.html:199
 #: .\templates\hr\leave_request_list.html:30
 #: .\templates\hr\payroll_period_list.html:29
@@ -2503,96 +2531,96 @@ msgstr "تاريخ البدء"
 msgid "End Date"
 msgstr "تاريخ الانتهاء"
 
-#: .\hr\models.py:204 .\payments\models.py:25
+#: .\hr\models.py:218 .\payments\models.py:25
 #: .\templates\hr\contract_list.html:31 .\templates\hr\employee_detail.html:203
 #: .\templates\payments\voucher_list.html:53
 msgid "Salary"
 msgstr "الراتب"
 
-#: .\hr\models.py:208
+#: .\hr\models.py:222
 msgid "Working Hours Per Day"
 msgstr "ساعات العمل في اليوم"
 
-#: .\hr\models.py:209
+#: .\hr\models.py:223
 msgid "Working Days Per Week"
 msgstr "أيام العمل في الأسبوع"
 
-#: .\hr\models.py:210
+#: .\hr\models.py:224
 msgid "Annual Leave Days"
 msgstr "أيام الإجازة السنوية"
 
-#: .\hr\models.py:212
+#: .\hr\models.py:226
 msgid "Terms and Conditions"
 msgstr "الشروط والأحكام"
 
-#: .\hr\models.py:221 .\templates\hr\contract_list.html:4
+#: .\hr\models.py:235 .\templates\hr\contract_list.html:4
 msgid "Contracts"
 msgstr "العقود"
 
-#: .\hr\models.py:230 .\templates\hr\attendance_list.html:90
+#: .\hr\models.py:244 .\templates\hr\attendance_list.html:90
 #: .\templates\hr\attendance_list.html:123 .\templates\hr\dashboard.html:137
 #: .\templates\hr\reports\attendance_report.html:83
 msgid "Present"
 msgstr "حاضر"
 
-#: .\hr\models.py:231 .\templates\hr\attendance_list.html:91
+#: .\hr\models.py:245 .\templates\hr\attendance_list.html:91
 #: .\templates\hr\attendance_list.html:132 .\templates\hr\dashboard.html:143
 #: .\templates\hr\reports\attendance_report.html:91
 msgid "Absent"
 msgstr "غائب"
 
-#: .\hr\models.py:232 .\templates\hr\attendance_list.html:92
+#: .\hr\models.py:246 .\templates\hr\attendance_list.html:92
 #: .\templates\hr\attendance_list.html:141 .\templates\hr\dashboard.html:149
 #: .\templates\hr\reports\attendance_report.html:99
 msgid "Late"
 msgstr "متأخر"
 
-#: .\hr\models.py:233
+#: .\hr\models.py:247
 msgid "Half Day"
 msgstr "نصف يوم"
 
-#: .\hr\models.py:240 .\templates\hr\reports\late_arrivals_report.html:47
+#: .\hr\models.py:254 .\templates\hr\reports\late_arrivals_report.html:47
 msgid "Check In Time"
 msgstr "وقت تسجيل الوصول"
 
-#: .\hr\models.py:241
+#: .\hr\models.py:255
 msgid "Check Out Time"
 msgstr "وقت المغادرة"
 
-#: .\hr\models.py:242
+#: .\hr\models.py:256
 msgid "Attendance Type"
 msgstr "نوع الحضور"
 
-#: .\hr\models.py:243
+#: .\hr\models.py:257
 msgid "Worked Hours"
 msgstr "ساعات العمل"
 
-#: .\hr\models.py:244 .\templates\hr\reports\overtime_report.html:48
+#: .\hr\models.py:258 .\templates\hr\reports\overtime_report.html:48
 msgid "Overtime Hours"
 msgstr "ساعات العمل الإضافية"
 
-#: .\hr\models.py:246
+#: .\hr\models.py:260 .\journal\models.py:67
 msgid "Manual Entry"
 msgstr "الإدخال اليدوي"
 
-#: .\hr\models.py:253 .\templates\base.html:1011
+#: .\hr\models.py:267 .\templates\base.html:1011
 #: .\templates\hr\attendance_list.html:46
 msgid "Attendance"
 msgstr "الحضور"
 
-#: .\hr\models.py:254
+#: .\hr\models.py:268
 msgid "Attendances"
 msgstr ""
 
-#: .\hr\models.py:287
+#: .\hr\models.py:301
 msgid "Leave Type Name"
 msgstr ""
 
-#: .\hr\models.py:288
+#: .\hr\models.py:302
 msgid "Leave Type Name (English)"
 msgstr ""
 
-#: .\hr\models.py:289 .\templates\inventory\low_stock.html:267
+#: .\hr\models.py:303 .\templates\inventory\low_stock.html:267
 #: .\templates\inventory\low_stock.html:478
 #: .\templates\journal\account_form.html:398
 #: .\templates\journal\account_form.html:405
@@ -2605,34 +2633,34 @@ msgstr ""
 msgid "Code"
 msgstr ""
 
-#: .\hr\models.py:290
+#: .\hr\models.py:304
 msgid "Days Per Year"
 msgstr ""
 
-#: .\hr\models.py:291 .\hr\models.py:401
+#: .\hr\models.py:305 .\hr\models.py:415
 msgid "Is Paid"
 msgstr ""
 
-#: .\hr\models.py:292
+#: .\hr\models.py:306
 msgid "Requires Approval"
 msgstr ""
 
-#: .\hr\models.py:293
+#: .\hr\models.py:307
 msgid "Max Consecutive Days"
 msgstr ""
 
-#: .\hr\models.py:301 .\hr\models.py:320 .\templates\hr\dashboard.html:175
+#: .\hr\models.py:315 .\hr\models.py:334 .\templates\hr\dashboard.html:175
 #: .\templates\hr\leave_request_list.html:28
 #: .\templates\hr\reports\leave_summary_report.html:82
 #: .\templates\hr\reports\upcoming_leaves_report.html:28
 msgid "Leave Type"
 msgstr ""
 
-#: .\hr\models.py:302
+#: .\hr\models.py:316
 msgid "Leave Types"
 msgstr ""
 
-#: .\hr\models.py:311 .\payments\models.py:30 .\templates\hr\dashboard.html:188
+#: .\hr\models.py:325 .\payments\models.py:30 .\templates\hr\dashboard.html:188
 #: .\templates\hr\payroll_period_list.html:59
 #: .\templates\hr\reports\leave_summary_report.html:62
 #: .\templates\receipts\check_list.html:33
@@ -2640,120 +2668,120 @@ msgstr ""
 msgid "Pending"
 msgstr ""
 
-#: .\hr\models.py:312 .\templates\hr\reports\leave_summary_report.html:54
+#: .\hr\models.py:326 .\templates\hr\reports\leave_summary_report.html:54
 #: .\templates\revenues_expenses\entry_detail.html:123
 #: .\templates\revenues_expenses\recurring_detail.html:305
 msgid "Approved"
 msgstr "موافقة"
 
-#: .\hr\models.py:313 .\templates\base.html:2206
+#: .\hr\models.py:327 .\templates\base.html:2206
 #: .\templates\hr\reports\leave_summary_report.html:70
 msgid "Rejected"
 msgstr "مرفوض"
 
-#: .\hr\models.py:314 .\payments\models.py:32
+#: .\hr\models.py:328 .\payments\models.py:32
 #: .\templates\receipts\check_list.html:42
 msgid "Cancelled"
 msgstr "تم الإلغاء"
 
-#: .\hr\models.py:323
+#: .\hr\models.py:337
 msgid "Days Count"
 msgstr "عدد الأيام"
 
-#: .\hr\models.py:324
+#: .\hr\models.py:338
 msgid "Reason"
 msgstr "سبب"
 
-#: .\hr\models.py:327 .\templates\revenues_expenses\entry_detail.html:218
+#: .\hr\models.py:341 .\templates\revenues_expenses\entry_detail.html:218
 msgid "Approved By"
 msgstr "تمت الموافقة من قبل"
 
-#: .\hr\models.py:328
+#: .\hr\models.py:342
 msgid "Approval Date"
 msgstr ""
 
-#: .\hr\models.py:329
+#: .\hr\models.py:343
 msgid "Rejection Reason"
 msgstr ""
 
-#: .\hr\models.py:336
+#: .\hr\models.py:350
 msgid "Leave Request"
 msgstr ""
 
-#: .\hr\models.py:337 .\templates\base.html:1014
+#: .\hr\models.py:351 .\templates\base.html:1014
 #: .\templates\hr\leave_request_list.html:4
 #: .\templates\hr\leave_request_list.html:14
 msgid "Leave Requests"
 msgstr "طلبات الإجازة"
 
-#: .\hr\models.py:354
+#: .\hr\models.py:368
 msgid "Is Processed"
 msgstr ""
 
-#: .\hr\models.py:355
+#: .\hr\models.py:369
 msgid "Processed Date"
 msgstr ""
 
-#: .\hr\models.py:357
+#: .\hr\models.py:371
 msgid "Processed By"
 msgstr ""
 
-#: .\hr\models.py:365 .\hr\models.py:375
+#: .\hr\models.py:379 .\hr\models.py:389
 msgid "Payroll Period"
 msgstr ""
 
-#: .\hr\models.py:366 .\templates\hr\payroll_period_list.html:4
+#: .\hr\models.py:380 .\templates\hr\payroll_period_list.html:4
 #: .\templates\hr\payroll_period_list.html:14
 msgid "Payroll Periods"
 msgstr ""
 
-#: .\hr\models.py:382
+#: .\hr\models.py:396
 msgid "Overtime Amount"
 msgstr ""
 
-#: .\hr\models.py:383
+#: .\hr\models.py:397
 msgid "Bonuses"
 msgstr ""
 
-#: .\hr\models.py:386 .\templates\hr\reports\payroll_summary_report.html:116
+#: .\hr\models.py:400 .\templates\hr\reports\payroll_summary_report.html:116
 msgid "Deductions"
 msgstr ""
 
-#: .\hr\models.py:387
+#: .\hr\models.py:401
 msgid "Social Security Deduction"
 msgstr ""
 
-#: .\hr\models.py:388
+#: .\hr\models.py:402
 msgid "Income Tax"
 msgstr ""
 
-#: .\hr\models.py:389
+#: .\hr\models.py:403
 msgid "Unpaid Leave Deduction"
 msgstr ""
 
-#: .\hr\models.py:392 .\templates\hr\reports\payroll_summary_report.html:83
+#: .\hr\models.py:406 .\templates\hr\reports\payroll_summary_report.html:83
 #: .\templates\hr\reports\payroll_summary_report.html:115
 msgid "Gross Salary"
 msgstr ""
 
-#: .\hr\models.py:393 .\templates\hr\reports\payroll_summary_report.html:91
+#: .\hr\models.py:407 .\templates\hr\reports\payroll_summary_report.html:91
 msgid "Total Deductions"
 msgstr ""
 
-#: .\hr\models.py:394 .\templates\hr\reports\payroll_summary_report.html:99
+#: .\hr\models.py:408 .\templates\hr\reports\payroll_summary_report.html:99
 #: .\templates\hr\reports\payroll_summary_report.html:117
 msgid "Net Salary"
 msgstr ""
 
-#: .\hr\models.py:398 .\settings\views.py:967 .\settings\views.py:1132
+#: .\hr\models.py:412 .\settings\views.py:967 .\settings\views.py:1132
 msgid "Journal Entry"
 msgstr ""
 
-#: .\hr\models.py:402
+#: .\hr\models.py:416
 msgid "Payment Date"
 msgstr ""
 
-#: .\hr\models.py:403 .\templates\purchases\invoice_list.html:215
+#: .\hr\models.py:417 .\templates\purchases\invoice_list.html:215
 #: .\templates\purchases\invoice_list.html:321
 #: .\templates\revenues_expenses\entry_detail.html:158
 #: .\templates\revenues_expenses\recurring_create.html:120
@@ -2763,37 +2791,37 @@ msgstr ""
 msgid "Payment Method"
 msgstr "طريقة الدفع"
 
-#: .\hr\models.py:411
+#: .\hr\models.py:425
 msgid "Payroll Entry"
 msgstr "إدخال الرواتب"
 
-#: .\hr\models.py:412
+#: .\hr\models.py:426
 msgid "Payroll Entries"
 msgstr "إدخالات الرواتب"
 
-#: .\hr\models.py:436
+#: .\hr\models.py:450
 msgid "ID Copy"
 msgstr ""
 
-#: .\hr\models.py:437
+#: .\hr\models.py:451
 msgid "Certificate"
 msgstr ""
 
-#: .\hr\models.py:438
+#: .\hr\models.py:452
 msgid "Resume"
 msgstr ""
 
-#: .\hr\models.py:439
+#: .\hr\models.py:453
 msgid "Photo"
 msgstr ""
 
-#: .\hr\models.py:440 .\payments\models.py:26
+#: .\hr\models.py:454 .\payments\models.py:26
 #: .\templates\payments\voucher_list.html:54
 #: .\templates\purchases\return_add.html:78
 msgid "Other"
 msgstr "آخر"
 
-#: .\hr\models.py:445 .\templates\core\tax_report.html:176
+#: .\hr\models.py:459 .\templates\core\tax_report.html:176
 #: .\templates\core\tax_report.html:207
 #: .\templates\settings\document_print_settings.html:422
 #: .\templates\settings\document_print_settings.html:991
@@ -2806,27 +2834,27 @@ msgstr "آخر"
 msgid "Document Type"
 msgstr "نوع المستند"
 
-#: .\hr\models.py:446 .\templates\hr\position_list.html:27
+#: .\hr\models.py:460 .\templates\hr\position_list.html:27
 msgid "Title"
 msgstr "عنوان"
 
-#: .\hr\models.py:448
+#: .\hr\models.py:462
 msgid "File"
 msgstr "ملف"
 
-#: .\hr\models.py:449
+#: .\hr\models.py:463
 msgid "Upload Date"
 msgstr "تاريخ التحميل"
 
-#: .\hr\models.py:450
+#: .\hr\models.py:464
 msgid "Uploaded By"
 msgstr "تم الرفع بواسطة"
 
-#: .\hr\models.py:453
+#: .\hr\models.py:467
 msgid "Employee Document"
 msgstr "وثيقة الموظف"
 
-#: .\hr\models.py:454
+#: .\hr\models.py:468
 msgid "Employee Documents"
 msgstr "مستندات الموظفين"
 
@@ -3081,9 +3109,17 @@ msgstr ""
 msgid "تحويل"
 msgstr ""
 
-#: .\inventory\models.py:63 .\inventory\models.py:126
-msgid "تحويل مستودع"
-msgstr ""
+#: .\inventory\models.py:63
+#, fuzzy
+#| msgid "Create Transfer"
+msgid "Warehouse Transfer"
+msgstr "إنشاء تحويل"
+
+#: .\inventory\models.py:64 .\templates\inventory\movement_list.html:180
+#: .\templates\inventory\movement_list.html:331
+#: .\templates\inventory\movement_list.html:467
+msgid "Adjustment"
+msgstr "تعديل"
 
 #: .\inventory\models.py:70 .\inventory\models.py:138 .\purchases\models.py:47
 #: .\purchases\models.py:131 .\sales\models.py:64 .\sales\models.py:121
@@ -3121,6 +3157,10 @@ msgstr ""
 
 #: .\inventory\models.py:119
 msgid "إلى المستودع"
+msgstr ""
+
+#: .\inventory\models.py:126
+msgid "تحويل مستودع"
 msgstr ""
 
 #: .\inventory\models.py:127
@@ -3244,20 +3284,22 @@ msgid "الحسابات"
 msgstr ""
 
 #: .\journal\models.py:65
-msgid "قيد إيرادات/مصروفات"
-msgstr ""
+#, fuzzy
+#| msgid "Revenues & Expenses"
+msgid "Revenue/Expense Entry"
+msgstr "الإيرادات والمصروفات"
 
 #: .\journal\models.py:66
-msgid "استهلاك الأصول"
-msgstr ""
-
-#: .\journal\models.py:67
-msgid "قيد يدوي"
-msgstr ""
+#, fuzzy
+#| msgid "Add Depreciation"
+msgid "Asset Depreciation"
+msgstr "إضافة الاستهلاك"
 
 #: .\journal\models.py:68
-msgid "قيد تسوية"
-msgstr ""
+#, fuzzy
+#| msgid "Adjustment"
+msgid "Adjustment Entry"
+msgstr "تعديل"
 
 #: .\journal\models.py:72 .\templates\journal\entry_detail.html:51
 msgid "تاريخ القيد"
@@ -3491,8 +3533,8 @@ msgstr "بحث"
 msgid "Voucher number, beneficiary, or description..."
 msgstr ""
 
-#: .\payments\forms.py:186 .\payments\models.py:39 .\reports\views.py:378
-#: .\reports\views.py:416 .\templates\payments\voucher_list.html:39
+#: .\payments\forms.py:186 .\payments\models.py:39 .\reports\views.py:379
+#: .\reports\views.py:417 .\templates\payments\voucher_list.html:39
 #: .\templates\payments\voucher_list.html:140
 #: .\templates\purchases\invoice_add.html:177
 #: .\templates\receipts\receipt_add.html:51
@@ -3731,11 +3773,6 @@ msgstr "تم عكسها بواسطة"
 #: .\payments\models.py:79
 msgid "Reversal Date"
 msgstr "تاريخ الانعكاس"
-
-#: .\payments\models.py:83 .\settings\views.py:966 .\settings\views.py:1131
-#: .\templates\settings\document_sequence_add.html:108
-msgid "Payment Voucher"
-msgstr ""
 
 #: .\payments\models.py:84 .\templates\base.html:712
 #: .\templates\payments\voucher_list.html:5
@@ -4002,9 +4039,12 @@ msgstr ""
 msgid "المبلغ الإجمالي"
 msgstr ""
 
-#: .\purchases\models.py:36
-msgid "فواتير المشتريات"
-msgstr ""
+#: .\purchases\models.py:36 .\templates\core\tax_report.html:180
+#: .\templates\purchases\invoice_list.html:7
+#: .\templates\purchases\invoice_list.html:84
+#: .\templates\purchases\invoice_list.html:178
+msgid "Purchase Invoices"
+msgstr "فواتير الشراء"
 
 #: .\purchases\models.py:46 .\sales\models.py:63
 msgid "الفاتورة"
@@ -4060,56 +4100,76 @@ msgid "رقم المردود"
 msgstr ""
 
 #: .\purchases\models.py:100 .\sales\models.py:98
-msgid "Original invoice"
-msgstr "الفاتورة الأصلية"
+#, fuzzy
+#| msgid "القيمة الحالية"
+msgid "الفاتورة الأصلية"
+msgstr "القيمة الحالية"
 
 #: .\purchases\models.py:101
-msgid "Return date"
-msgstr "تاريخ المردود"
+#, fuzzy
+#| msgid "تاريخ الشراء"
+msgid "تاريخ المردود"
+msgstr "تاريخ الشراء"
 
 #: .\purchases\models.py:102
-msgid "Type of return"
-msgstr "نوع المردود"
+#, fuzzy
+#| msgid "نوع المرجع"
+msgid "نوع المردود"
+msgstr "نوع المرجع"
 
 #: .\purchases\models.py:103
-msgid "Reason for return"
-msgstr "سبب المردود"
+#, fuzzy
+#| msgid "معرف المرجع"
+msgid "سبب المردود"
+msgstr "معرف المرجع"
 
-#: .\purchases\models.py:114
-msgid "Purchase returns"
-msgstr "مردودات المشتريات"
+#: .\purchases\models.py:114 .\templates\core\tax_report.html:182
+msgid "Purchase Returns"
+msgstr "مردود مشتريات"
 
 #: .\purchases\models.py:130
-msgid "Original item"
-msgstr "المنتج الأصلي"
+#, fuzzy
+#| msgid "اسم الأصل"
+msgid "العنصر الأصلي"
+msgstr "اسم الأصل"
 
 #: .\purchases\models.py:132
-msgid "Returned Quantity"
-msgstr "الكمية المرتجعة"
+#, fuzzy
+#| msgid "نوع المرجع"
+msgid "الكمية المرتجعة"
+msgstr "نوع المرجع"
 
 #: .\purchases\models.py:139
-msgid "Purchase return item"
-msgstr "منتج مردود مشتريات"
+#, fuzzy
+#| msgid "مردود مشتريات"
+msgid "عنصر مردود مشتريات"
+msgstr "مردود مشتريات"
 
 #: .\purchases\models.py:140
-msgid "Purchase Return Elements"
-msgstr "عناصر مردود المشتريات"
+#, fuzzy
+#| msgid "مردود مشتريات"
+msgid "عناصر مردود المشتريات"
+msgstr "مردود مشتريات"
 
 #: .\purchases\models.py:150
-msgid "The returned quantity cannot be greater than the original quantity."
-msgstr "الكمية المرتجعة لا يمكن أن تكون أكبر من الكمية الأصلية"
+msgid "الكمية المرتجعة لا يمكن أن تكون أكبر من الكمية الأصلية"
+msgstr ""
 
 #: .\purchases\models.py:159
-msgid "The total returned quantity exceeds the original quantity."
-msgstr "إجمالي الكمية المرتجعة يتجاوز الكمية الأصلية"
+msgid "إجمالي الكمية المرتجعة يتجاوز الكمية الأصلية"
+msgstr ""
 
 #: .\purchases\models.py:178
-msgid "Debtor notification number"
-msgstr "رقم اشعار مدين"
+#, fuzzy
+#| msgid "رقم الحركة"
+msgid "رقم اشعار مدين"
+msgstr "رقم الحركة"
 
 #: .\purchases\models.py:183
-msgid "Total amount"
-msgstr "المبلغ الاجمالي"
+#, fuzzy
+#| msgid "حد الائتمان"
+msgid "المبلغ الاجمالي"
+msgstr "مذكرة دين"
 
 #: .\purchases\models.py:184 .\sales\models.py:156
 #: .\templates\hr\attendance_confirm_delete.html:190
@@ -4323,6 +4383,7 @@ msgstr ""
 msgid "Receipt voucher"
 msgstr ""
 
+#: .\receipts\views.py:153
 msgid "Payment type"
 msgstr "نوع الدفع"
 
@@ -4413,6 +4474,9 @@ msgid "عرض كشف حساب العملاء"
 msgstr ""
 
 #: .\reports\views.py:130
+#, fuzzy, python-format
+#| msgid ""
+#| "Viewing customer statement for %(customer)s from %(start)s to %(end)s"
 msgid "Viewing customer statement for %(customer)s from %(start)s to %(end)s"
 msgstr "عرض كشف حساب العميل"
 
@@ -4450,8 +4514,8 @@ msgstr "كشف حساب"
 msgid "Number"
 msgstr "رقم"
 
-#: .\reports\views.py:157 .\reports\views.py:193 .\reports\views.py:378
-#: .\reports\views.py:416 .\templates\assets_liabilities\dashboard.html:368
+#: .\reports\views.py:157 .\reports\views.py:193 .\reports\views.py:379
+#: .\reports\views.py:417 .\templates\assets_liabilities\dashboard.html:368
 #: .\templates\backup\backup_restore.html:197
 #: .\templates\backup\backup_restore.html:376
 #: .\templates\banks\account_transactions.html:221
@@ -4535,8 +4599,8 @@ msgstr "دائن"
 msgid "Running Balance"
 msgstr "التوازن الجاري"
 
-#: .\reports\views.py:167 .\reports\views.py:197 .\reports\views.py:390
-#: .\reports\views.py:430 .\templates\core\tax_report.html:279
+#: .\reports\views.py:167 .\reports\views.py:197 .\reports\views.py:391
+#: .\reports\views.py:431 .\templates\core\tax_report.html:279
 #: .\templates\reports\customer_statement.html:109
 #: .\templates\reports\sales_by_salesperson.html:110
 msgid "Totals"
@@ -4547,7 +4611,7 @@ msgstr "المجموع"
 msgid "Closing Balance"
 msgstr "الرصيد الختامي"
 
-#: .\reports\views.py:190 .\reports\views.py:378 .\reports\views.py:416
+#: .\reports\views.py:190 .\reports\views.py:379 .\reports\views.py:417
 #: .\templates\customers\add.html:100 .\templates\customers\add.html:122
 #: .\templates\customers\add.html:136 .\templates\customers\add.html:298
 #: .\templates\customers\customer_list.html:201
@@ -4582,7 +4646,7 @@ msgstr "الرصيد الختامي"
 msgid "Customer"
 msgstr "عميل"
 
-#: .\reports\views.py:191 .\reports\views.py:414
+#: .\reports\views.py:191 .\reports\views.py:415
 #: .\templates\banks\account_detail.html:294
 #: .\templates\banks\transfer_add.html:515
 #: .\templates\banks\transfer_list.html:153
@@ -4595,7 +4659,7 @@ msgstr "عميل"
 msgid "From"
 msgstr "من"
 
-#: .\reports\views.py:191 .\reports\views.py:414
+#: .\reports\views.py:191 .\reports\views.py:415
 #: .\templates\banks\account_detail.html:274
 #: .\templates\banks\transfer_add.html:515
 #: .\templates\banks\transfer_list.html:153
@@ -4611,33 +4675,35 @@ msgstr "إلى"
 msgid "Viewing customer statement page"
 msgstr ""
 
-#: .\reports\views.py:306 .\reports\views.py:320
+#: .\reports\views.py:307 .\reports\views.py:321
 msgid "Cash Customer"
 msgstr "عميل نقدي"
 
-#: .\reports\views.py:352
+#: .\reports\views.py:353
+#, fuzzy, python-format
+#| msgid "Viewing sales report for %(salesperson)s from %(start)s to %(end)s"
 msgid "Viewing sales report for %(salesperson)s from %(start)s to %(end)s"
 msgstr "عرض تقرير المبيعات لـ"
 
-#: .\reports\views.py:361 .\reports\views.py:399 .\reports\views.py:412
-#: .\reports\views.py:434 .\reports\views.py:459 .\templates\base.html:970
+#: .\reports\views.py:362 .\reports\views.py:400 .\reports\views.py:413
+#: .\reports\views.py:435 .\reports\views.py:460 .\templates\base.html:970
 #: .\templates\reports\sales_by_salesperson.html:5
 #: .\templates\reports\sales_by_salesperson.html:13
 msgid "Sales Report By Sales Person"
 msgstr "تقرير المبيعات حسب البائع"
 
-#: .\reports\views.py:376
+#: .\reports\views.py:377
 msgid "Sales Report"
 msgstr "تقرير المبيعات"
 
-#: .\reports\views.py:378 .\reports\views.py:416
+#: .\reports\views.py:379 .\reports\views.py:417
 #: .\templates\core\tax_report.html:206
 #: .\templates\reports\sales_by_salesperson.html:76
 #: .\templates\settings\document_print_settings.html:1006
 msgid "Document Number"
 msgstr ""
 
-#: .\reports\views.py:379 .\reports\views.py:416
+#: .\reports\views.py:380 .\reports\views.py:417
 #: .\templates\purchases\debitnote_add.html:24
 #: .\templates\purchases\debitnote_detail.html:124
 #: .\templates\purchases\invoice_add.html:271
@@ -4649,7 +4715,7 @@ msgstr ""
 msgid "Subtotal"
 msgstr "المجموع الفرعي"
 
-#: .\reports\views.py:379 .\reports\views.py:416
+#: .\reports\views.py:380 .\reports\views.py:417
 #: .\templates\products\product_add.html:233
 #: .\templates\products\product_edit.html:211
 #: .\templates\products\product_list.html:854
@@ -4660,12 +4726,12 @@ msgstr "المجموع الفرعي"
 msgid "Tax Amount"
 msgstr ""
 
-#: .\reports\views.py:379 .\reports\views.py:416
+#: .\reports\views.py:380 .\reports\views.py:417
 #: .\templates\reports\sales_by_salesperson.html:81
 msgid "Discount Amount"
 msgstr ""
 
-#: .\reports\views.py:379 .\reports\views.py:416
+#: .\reports\views.py:380 .\reports\views.py:417
 #: .\templates\banks\transfer_detail.html:347
 #: .\templates\banks\transfer_list.html:606 .\templates\core\dashboard.html:388
 #: .\templates\hr\payroll_period_list.html:31
@@ -4682,26 +4748,27 @@ msgstr ""
 msgid "Total Amount"
 msgstr "المبلغ الإجمالي"
 
-#: .\reports\views.py:379 .\reports\views.py:416
+#: .\reports\views.py:380 .\reports\views.py:417
 #: .\templates\purchases\return_add.html:55
 #: .\templates\reports\sales_by_salesperson.html:83
 msgid "Original Invoice"
 msgstr ""
 
-#: .\reports\views.py:391 .\reports\views.py:431
+#: .\reports\views.py:392 .\reports\views.py:432
 #: .\templates\reports\sales_by_salesperson.html:118
 msgid "Invoice Count"
 msgstr "عدد الفواتير"
 
-#: .\reports\views.py:392 .\reports\views.py:432
+#: .\reports\views.py:393 .\reports\views.py:433
+#: .\templates\reports\sales_by_salesperson.html:122
 msgid "Returns Count"
 msgstr "عدد الأيام"
 
-#: .\reports\views.py:413 .\templates\reports\sales_by_salesperson.html:19
+#: .\reports\views.py:414 .\templates\reports\sales_by_salesperson.html:19
 msgid "Sales Person"
 msgstr "مندوب المبيعات"
 
-#: .\reports\views.py:460
+#: .\reports\views.py:461
 msgid "Viewing sales report by salesperson page"
 msgstr ""
 
@@ -4887,6 +4954,7 @@ msgstr ""
 msgid "تفاصيل الإيراد/المصروف المتكرر"
 msgstr "تم تصحيح اتجاه معاملة مردود المشتريات"
 
+#: .\revenues_expenses\views.py:417
 msgid "تم تحديث الإيراد/المصروف المتكرر بنجاح"
 msgstr "تم تصحيح اتجاه معاملة مردود المشتريات"
 
@@ -4918,9 +4986,13 @@ msgstr ""
 msgid "Date and time when invoice was sent to JoFotara"
 msgstr ""
 
-#: .\sales\models.py:47
-msgid "فواتير المبيعات"
-msgstr ""
+#: .\sales\models.py:47 .\templates\core\tax_report.html:179
+#: .\templates\sales\invoice_list.html:7
+#: .\templates\sales\invoice_list.html:162
+#: .\templates\sales\invoice_list.html:271
+#: .\templates\sales\invoice_list.html:273
+msgid "Sales Invoices"
+msgstr "فواتير المبيعات"
 
 #: .\sales\models.py:72
 msgid "عنصر فاتورة المبيعات"
@@ -4933,6 +5005,10 @@ msgstr ""
 #: .\sales\models.py:95
 msgid "رقم مرتجع المبيعات"
 msgstr ""
+
+#: .\sales\models.py:110 .\templates\core\tax_report.html:181
+msgid "Sales Returns"
+msgstr "مردود المبيعات"
 
 #: .\sales\models.py:129
 msgid "عنصر مردود المبيعات"
@@ -5055,9 +5131,13 @@ msgstr ""
 msgid "تحديث إشعار دائن رقم %(number)s"
 msgstr "تم حذف حركة مخزون رقم: %(movement_number)s"
 
+#: .\sales\views.py:1166
 msgid "تم تحديث إشعار الدائن بنجاح"
 msgstr "تم تصحيح اتجاه معاملة مردود المشتريات"
 
+#: .\sales\views.py:1202
+#, fuzzy, python-format
+#| msgid "حذف إشعار دائن رقم %(number)s"
 msgid "حذف إشعار دائن رقم %(number)s"
 msgstr "تم حذف حركة مخزون رقم: %(movement_number)s"
 
@@ -5537,21 +5617,6 @@ msgstr ""
 msgid "ليس لديك صلاحية للوصول لإعدادات الطباعة."
 msgstr ""
 
-#: .\settings\views.py:961 .\settings\views.py:1126
-#: .\templates\core\dashboard.html:452
-msgid "Sales Invoice"
-msgstr ""
-
-#: .\settings\views.py:962 .\settings\views.py:1127
-#: .\templates\settings\document_sequence_add.html:98
-msgid "Credit Note"
-msgstr ""
-
-#: .\settings\views.py:963 .\settings\views.py:1128
-#: .\templates\settings\document_sequence_add.html:103
-msgid "Debit Note"
-msgstr ""
-
 #: .\settings\views.py:964 .\settings\views.py:1129
 msgid "أمر شراء"
 msgstr ""
@@ -5619,6 +5684,11 @@ msgid "الإعدادات غير موجودة"
 msgstr ""
 
 #: .\settings\views.py:1095
+#, fuzzy
+#| msgid "محاولة وصول مرفوضة لحذف بيانات الجداول - صلاحية غير متوفرة"
+msgid "محاولة وصول مرفوضة لصفحة تصميم الطباعة - صلاحية غير متوفرة"
+msgstr "محاولة وصول مرفوضة لصفحة تصميم الطباعة - صلاحية غير متوفرة"
+
 #: .\settings\views.py:1100
 msgid "ليس لديك صلاحية للوصول لتصميم الطباعة."
 msgstr ""
@@ -5969,7 +6039,7 @@ msgstr "نظام المحاسبة المتكامل"
 
 #: .\templates\accounts\login.html:255 .\templates\registration\login.html:99
 #: .\templates\users\user_delete.html:148 .\templates\users\user_list.html:102
-#: .\users\views.py:58 .\users\views.py:194
+#: .\users\views.py:59 .\users\views.py:197
 msgid "Username"
 msgstr "اسم المستخدم"
 
@@ -6289,8 +6359,8 @@ msgstr "الشخص المسؤول"
 #: .\templates\settings\print_design.html:516
 #: .\templates\settings\print_design.html:537
 #: .\templates\users\group_add.html:187 .\templates\users\group_edit.html:199
-#: .\templates\users\user_add.html:260 .\templates\users\user_delete.html:114
-#: .\templates\users\user_edit.html:277
+#: .\templates\users\user_add.html:273 .\templates\users\user_delete.html:114
+#: .\templates\users\user_edit.html:289
 msgid "Cancel"
 msgstr "إلغاء"
 
@@ -7377,6 +7447,7 @@ msgstr "معلومات الدائن"
 msgid "Creditor Name"
 msgstr "إسم الدائن"
 
+#: .\templates\assets_liabilities\liability_create.html:335
 msgid "Contact Information"
 msgstr "معلومات القيد"
 
@@ -7479,7 +7550,8 @@ msgstr "اختر تنسيق النسخ الاحتياطي"
 
 #: .\templates\backup\backup_restore.html:36
 msgid "Click once on your preferred format. Each backup creates one file."
-msgstr "انقر مرة واحدة على التنسيق المفضل لديك. كل نسخة احتياطية تُنشئ ملفًا واحدًا."
+msgstr ""
+"انقر مرة واحدة على التنسيق المفضل لديك. كل نسخة احتياطية تُنشئ ملفًا واحدًا."
 
 #: .\templates\backup\backup_restore.html:42
 msgid "JSON Backup"
@@ -8013,6 +8085,11 @@ msgstr "حذف جميع حركات الحساب"
 
 #: .\templates\banks\account_list.html:388
 #: .\templates\banks\account_list.html:524
+#, fuzzy
+#| msgid "Active Account"
+msgid "Delete Account"
+msgstr "الحسابات النشطة"
+
 #: .\templates\banks\account_list.html:397
 msgid "Absolute Delete (SuperAdmin Only)"
 msgstr "حذف مطلق (للمشرف الرئيسي فقط)"
@@ -8113,6 +8190,11 @@ msgid "Confirm"
 msgstr "يتأكد"
 
 #: .\templates\banks\account_list.html:645
+#, fuzzy
+#| msgid "Cannot delete account"
+msgid "Cannot delete account"
+msgstr "لا يمكن حذف الحساب"
+
 #: .\templates\banks\account_list.html:645
 msgid "because its balance is"
 msgstr "لأن رصيده"
@@ -8302,6 +8384,10 @@ msgstr ""
 msgid "Permanently delete bank account"
 msgstr ""
 
+#: .\templates\banks\account_transactions.html:250
+#, fuzzy, python-format
+#| msgid ""
+#| "Are you sure you want to delete the bank account \"%(acc)s\" permanently?"
 msgid ""
 "Are you sure you want to delete the bank account \"%(acc)s\" permanently?"
 msgstr "هل أنت متأكد من أنك تريد القيام بحذف مطلق للحساب البنكي"
@@ -8350,6 +8436,7 @@ msgstr ""
 #: .\templates\payments\voucher_detail.html:260
 #: .\templates\payments\voucher_detail.html:294
 #: .\templates\payments\voucher_detail.html:296
+#: .\templates\payments\voucher_detail.html:301
 msgid "Voucher"
 msgstr "نوع المستند"
 
@@ -9096,6 +9183,11 @@ msgid "JoFotara Settings"
 msgstr "إعدادات جوفاتورا"
 
 #: .\templates\base.html:1089 .\templates\settings\index.html:108
+#, fuzzy
+#| msgid "Back"
+msgid "Backup"
+msgstr "رجوع"
+
 #: .\templates\base.html:1329 .\templates\journal\entry_create.html:214
 msgid "Loading..."
 msgstr "جاري التحميل..."
@@ -9721,10 +9813,6 @@ msgstr "إدارة الصناديق النقدية"
 msgid "Quick Links"
 msgstr "الروابط السريعة"
 
-#: .\templates\core\dashboard.html:460
-msgid "Purchase Invoice"
-msgstr "فاتورة الشراء"
-
 #: .\templates\core\dashboard.html:467
 msgid "New Product"
 msgstr "منتج جديد"
@@ -9809,6 +9897,7 @@ msgstr ""
 msgid "Updated"
 msgstr ""
 
+#: .\templates\core\dashboard.html:612
 msgid "bank account"
 msgstr "الحسابات المصرفية"
 
@@ -9816,6 +9905,7 @@ msgstr "الحسابات المصرفية"
 msgid "and"
 msgstr ""
 
+#: .\templates\core\dashboard.html:612
 msgid "cashbox"
 msgstr "اختر صندوق النقد"
 
@@ -10011,7 +10101,7 @@ msgstr ""
 #: .\templates\core\profit_loss_report.html:344
 #: .\templates\customers\add.html:214 .\templates\receipts\receipt_add.html:137
 #: .\templates\sales\creditnote_delete.html:35
-#: .\templates\users\user_edit.html:242
+#: .\templates\users\user_edit.html:254
 msgid "Additional Information"
 msgstr "معلومات إضافية"
 
@@ -10075,28 +10165,6 @@ msgstr "إجمالي المستندات"
 msgid "All Documents"
 msgstr "جميع المستندات"
 
-#: .\templates\core\tax_report.html:179 .\templates\sales\invoice_list.html:7
-#: .\templates\sales\invoice_list.html:162
-#: .\templates\sales\invoice_list.html:271
-#: .\templates\sales\invoice_list.html:273
-msgid "Sales Invoices"
-msgstr "فواتير المبيعات"
-
-#: .\templates\core\tax_report.html:180
-#: .\templates\purchases\invoice_list.html:7
-#: .\templates\purchases\invoice_list.html:84
-#: .\templates\purchases\invoice_list.html:178
-msgid "Purchase Invoices"
-msgstr "فواتير الشراء"
-
-#: .\templates\core\tax_report.html:181
-msgid "Sales Returns"
-msgstr "مردود المبيعات"
-
-#: .\templates\core\tax_report.html:182
-msgid "Purchase Returns"
-msgstr "مردود مشتريات"
-
 #: .\templates\core\tax_report.html:195
 msgid "Document number or customer/supplier name"
 msgstr "رقم المستند أو اسم العميل/المورد"
@@ -10121,6 +10189,7 @@ msgstr ""
 msgid "No documents with taxes found"
 msgstr ""
 
+#: .\templates\customers\add.html:116
 msgid "Choose Account Type"
 msgstr "اختر نوع الحساب"
 
@@ -10178,9 +10247,11 @@ msgstr "أقصى مبلغ يمكن للعميل أن يكون مديناً به"
 msgid "Current balance (positive: receivable, negative: payable)"
 msgstr "الرصيد الحالي (موجب: له، سالب: عليه)"
 
+#: .\templates\customers\add.html:220
 msgid "Any notes or additional information"
 msgstr "معلومات إضافية"
 
+#: .\templates\customers\add.html:226
 msgid "Active Account"
 msgstr "الحسابات النشطة"
 
@@ -10510,6 +10581,8 @@ msgstr "ترقيم الحضور"
 
 #: .\templates\hr\attendance_list.html:252
 #: .\templates\hr\employee_list.html:177
+#, fuzzy, python-format
+#| msgid "Page %(current)s of %(total)s"
 msgid "Page %(current)s of %(total)s"
 msgstr "صفحة"
 
@@ -10965,6 +11038,7 @@ msgstr ""
 msgid "رقم الموظف:"
 msgstr ""
 
+#: .\templates\hr\employee_confirm_delete.html:186
 msgid "الاسم الكامل:"
 msgstr "اسم الأصل"
 
@@ -10980,6 +11054,7 @@ msgstr ""
 msgid "البريد الإلكتروني:"
 msgstr ""
 
+#: .\templates\hr\employee_confirm_delete.html:208
 msgid "رقم الهاتف:"
 msgstr "رقم الأصل"
 
@@ -11368,6 +11443,7 @@ msgstr ""
 msgid "تسجيل فترة رواتب جديدة"
 msgstr ""
 
+#: .\templates\hr\payroll_period_form.html:132
 msgid "المعلومات الأساسية"
 msgstr "حركات الحسابات"
 
@@ -11663,6 +11739,7 @@ msgstr "سيتم تنفيذ وظيفة تقرير أنواع العقود قري
 msgid "Department Report"
 msgstr "تقرير القسم"
 
+#: .\templates\hr\reports\department_report.html:26
 msgid "employees"
 msgstr "الموظفين"
 
@@ -11688,6 +11765,7 @@ msgstr[3] ""
 msgstr[4] ""
 msgstr[5] ""
 
+#: .\templates\hr\reports\headcount_report.html:29
 msgid "Inactive Employees"
 msgstr "الموظفين"
 
@@ -12127,12 +12205,6 @@ msgstr "وارد"
 msgid "Outbound"
 msgstr ""
 
-#: .\templates\inventory\movement_list.html:180
-#: .\templates\inventory\movement_list.html:331
-#: .\templates\inventory\movement_list.html:467
-msgid "Adjustment"
-msgstr "تعديل"
-
 #: .\templates\inventory\movement_list.html:194
 msgid "All Warehouses"
 msgstr "جميع المستودعات"
@@ -12550,9 +12622,11 @@ msgstr ""
 msgid "No journal entries have been created yet"
 msgstr ""
 
+#: .\templates\journal\entry_confirm_delete.html:6
 msgid "Confirm Delete Journal Entry"
 msgstr "إنشاء قيد يدوي"
 
+#: .\templates\journal\entry_confirm_delete.html:56
 msgid "Delete Journal Entry"
 msgstr "القيود اليومية"
 
@@ -12564,6 +12638,7 @@ msgstr "أنت على وشك حذف إدخال القيد هذا بشكل دائ
 msgid "Entry Details"
 msgstr "تفاصيل الدخول"
 
+#: .\templates\journal\entry_confirm_delete.html:109
 msgid "Journal Entry Lines"
 msgstr "القيود اليومية"
 
@@ -12581,6 +12656,7 @@ msgstr ""
 msgid "This operation is only available for SuperAdmin users."
 msgstr "هذه العملية متاحة فقط لمستخدمي SuperAdmin."
 
+#: .\templates\journal\entry_confirm_delete.html:177
 msgid "Delete Permanently"
 msgstr "حذف الحركة"
 
@@ -12732,6 +12808,7 @@ msgstr "إجمالي الإدخالات"
 msgid "Journal Entries Table"
 msgstr "جدول القيود اليومية"
 
+#: .\templates\journal\entry_list.html:164
 msgid "SuperAdmin Only"
 msgstr "حذف مطلق (للمشرف الرئيسي فقط)"
 
@@ -13400,7 +13477,7 @@ msgstr ""
 #: .\templates\products\product_edit.html:324
 #: .\templates\sales\creditnote_edit.html:54
 #: .\templates\settings\document_sequence_edit.html:141
-#: .\templates\users\group_edit.html:213 .\templates\users\user_edit.html:283
+#: .\templates\users\group_edit.html:213 .\templates\users\user_edit.html:295
 msgid "Save Changes"
 msgstr ""
 
@@ -13579,17 +13656,16 @@ msgid ""
 "When checked, tax is calculated and added. When unchecked, no tax is "
 "calculated."
 msgstr ""
-"عند تحديد هذا الخيار، تُحسب الضريبة وتُضاف. عند إلغاء تحديده، لا تُضاف أي ضريبة."
-"محسوب."
+"عند تحديد هذا الخيار، تُحسب الضريبة وتُضاف. عند إلغاء تحديده، لا تُضاف أي "
+"ضريبة.محسوب."
 
 #: .\templates\purchases\invoice_add.html:216
 msgid ""
 "Select the warehouse where products will be stored. If not specified, no "
 "warehouse will be assigned."
 msgstr ""
-"حدد المستودع الذي سيتم تخزين المنتجات فيه. إذا لم يتم تحديده، فلا"
-"سيتم تخصيص المستودع."
-
+"حدد المستودع الذي سيتم تخزين المنتجات فيه. إذا لم يتم تحديده، فلاسيتم تخصيص "
+"المستودع."
 
 #: .\templates\purchases\invoice_add.html:227
 msgid "Invoice Products"
@@ -14048,12 +14124,27 @@ msgid "Revenues and Expenses"
 msgstr "الإيرادات والمصروفات"
 
 #: .\templates\revenues_expenses\entry_detail.html:91
+#, fuzzy
+#| msgid "Category Information"
+msgid "Entry Information"
+msgstr "معلومات الفئة"
+
 #: .\templates\revenues_expenses\entry_detail.html:123
 msgid "Pending Approval"
 msgstr "في انتظار الاعتماد"
 
 #: .\templates\revenues_expenses\entry_detail.html:137
+#, fuzzy
+#| msgid "Financial Reports"
+msgid "Financial Details"
+msgstr "التقارير المالية"
+
 #: .\templates\revenues_expenses\entry_detail.html:193
+#, fuzzy
+#| msgid "Date Information"
+msgid "System Information"
+msgstr "معلومات النظام"
+
 #: .\templates\revenues_expenses\entry_detail.html:225
 msgid "Approved At"
 msgstr "تاريخ الاعتماد"
@@ -14086,6 +14177,7 @@ msgstr "هل أنت متأكد من أنك تريد اعتماد هذا القي
 msgid "Entry:"
 msgstr "القيد:"
 
+#: .\templates\revenues_expenses\entry_detail.html:285
 msgid "Amount:"
 msgstr "المبلغ"
 
@@ -14100,6 +14192,11 @@ msgstr "إنشاء إيراد أو مصروف متكرر جديد"
 #: .\templates\revenues_expenses\recurring_create.html:136
 #: .\templates\revenues_expenses\recurring_detail.html:170
 #: .\templates\revenues_expenses\recurring_edit.html:142
+#, fuzzy
+#| msgid "Scheduling Information"
+msgid "Scheduling Information"
+msgstr "معلومات الجدولة"
+
 #: .\templates\revenues_expenses\recurring_create.html:141
 #: .\templates\revenues_expenses\recurring_detail.html:175
 #: .\templates\revenues_expenses\recurring_edit.html:147
@@ -14148,9 +14245,11 @@ msgstr "مستحق اليوم"
 msgid "Last Generated"
 msgstr "آخر توليد"
 
+#: .\templates\revenues_expenses\recurring_detail.html:227
 msgid "Settings & Actions"
 msgstr "الإعدادات"
 
+#: .\templates\revenues_expenses\recurring_detail.html:232
 msgid "Auto Generate"
 msgstr "توليد القيود تلقائياً"
 
@@ -14167,6 +14266,11 @@ msgid "Generate Entry Now"
 msgstr "توليد قيد الآن"
 
 #: .\templates\revenues_expenses\recurring_detail.html:282
+#, fuzzy
+#| msgid "Auto Generate Entries"
+msgid "Generated Entries"
+msgstr "توليد القيود تلقائياً"
+
 #: .\templates\revenues_expenses\recurring_detail.html:346
 #: .\templates\revenues_expenses\recurring_list.html:364
 msgid "Are you sure you want to generate an entry from this recurring item?"
@@ -14178,6 +14282,11 @@ msgstr "إجمالي العناصر المتكررة"
 
 #: .\templates\revenues_expenses\recurring_detail.html:359
 #: .\templates\revenues_expenses\recurring_list.html:380
+#, fuzzy
+#| msgid "Are you sure you want to delete product"
+msgid "Are you sure you want to delete"
+msgstr "هل أنت متأكد أنك تريد حذف المنتج؟"
+
 #: .\templates\revenues_expenses\recurring_edit.html:34
 msgid "Edit recurring revenue or expense item"
 msgstr "تعديل الإيراد أو المصروف المتكرر"
@@ -14199,6 +14308,11 @@ msgid "Add New Recurring Item"
 msgstr "إضافة عنصر متكرر جديد"
 
 #: .\templates\revenues_expenses\recurring_list.html:101
+#, fuzzy
+#| msgid "Create Recurring Item"
+msgid "Total Recurring Items"
+msgstr "إنشاء العنصر المتكرر"
+
 #: .\templates\revenues_expenses\recurring_list.html:128
 msgid "Status Tracking"
 msgstr "تتبع الحالة"
@@ -14215,10 +14329,16 @@ msgstr "جميع التكرارات"
 msgid "Generate Entry"
 msgstr "توليد قيد"
 
+#: .\templates\revenues_expenses\recurring_list.html:299
 msgid "Pagination"
 msgstr "المناصب"
 
 #: .\templates\revenues_expenses\recurring_list.html:335
+#, fuzzy
+#| msgid "No records found"
+msgid "No recurring items found"
+msgstr "لا توجد سجلات"
+
 #: .\templates\revenues_expenses\recurring_list.html:336
 msgid "Start by creating your first recurring revenue or expense"
 msgstr "ابدأ بإنشاء أول إيراد أو مصروف متكرر"
@@ -14245,9 +14365,11 @@ msgid "Start typing to filter customers, then choose from the list."
 msgstr ""
 
 #: .\templates\sales\creditnote_delete.html:3
+#: .\templates\sales\creditnote_delete.html:12
 msgid "Delete Credit Note"
 msgstr "مذكرات دائن"
 
+#: .\templates\sales\creditnote_delete.html:19
 msgid ""
 "Are you sure you want to delete this credit note? This action cannot be "
 "undone."
@@ -14259,6 +14381,7 @@ msgstr "هل أنت متأكد من أنك تريد تغيير حالة هذا �
 msgid "Credit Note Details"
 msgstr ""
 
+#: .\templates\sales\creditnote_delete.html:52
 msgid "Yes, Delete"
 msgstr "حذف"
 
@@ -14271,6 +14394,7 @@ msgid "Credit Note Information"
 msgstr ""
 
 #: .\templates\sales\creditnote_edit.html:3
+#: .\templates\sales\creditnote_edit.html:6
 msgid "Edit Credit Note"
 msgstr "مذكرات دائن"
 
@@ -14307,7 +14431,8 @@ msgstr "سيتم إنشاء رقم الفاتورة تلقائيًا من نظا
 msgid ""
 "Invoice number will be automatically created when saved (you do not have "
 "permission to edit the number)"
-msgstr "سيتم إنشاء رقم الفاتورة تلقائيًا عند الحفظ (ليس لديك صلاحية تعديل الرقم)"
+msgstr ""
+"سيتم إنشاء رقم الفاتورة تلقائيًا عند الحفظ (ليس لديك صلاحية تعديل الرقم)"
 
 #: .\templates\sales\invoice_add.html:223
 #: .\templates\sales\invoice_detail.html:42
@@ -14380,7 +14505,8 @@ msgstr "الضريبة الشاملة"
 #: .\templates\sales\invoice_add.html:381
 msgid ""
 "When unchecked by permitted users, totals will be calculated without tax"
-msgstr "عند إلغاء تحديد المستخدمين المسموح لهم، سيتم حساب الإجماليات بدون ضريبة"
+msgstr ""
+"عند إلغاء تحديد المستخدمين المسموح لهم، سيتم حساب الإجماليات بدون ضريبة"
 
 #: .\templates\sales\invoice_add.html:571
 msgid "An error occurred while adding the product. Please try again."
@@ -14546,6 +14672,11 @@ msgstr ""
 #: .\templates\settings\document_sequences.html:17
 #: .\templates\settings\jofotara_settings.html:223
 #: .\templates\settings\superadmin_management.html:396
+#, fuzzy
+#| msgid "Tax Settings"
+msgid "Back to Settings"
+msgstr "إعدادات الضرائب"
+
 #: .\templates\settings\company_fixed.html:147
 #: .\templates\settings\superadmin_management.html:326
 msgid "Security & Session Settings"
@@ -14586,8 +14717,8 @@ msgstr ""
 #: .\templates\settings\company_fixed.html:195
 #: .\templates\settings\document_print_settings.html:318
 #: .\templates\settings\superadmin_management.html:379
-#: .\templates\users\user_add.html:236 .\templates\users\user_edit.html:22
-#: .\templates\users\user_edit.html:201
+#: .\templates\users\user_add.html:249 .\templates\users\user_edit.html:22
+#: .\templates\users\user_edit.html:213
 msgid "Note:"
 msgstr ""
 
@@ -14930,6 +15061,7 @@ msgstr ""
 msgid "Reset to 1"
 msgstr ""
 
+#: .\templates\settings\document_sequence_edit.html:169
 msgid ""
 "Are you sure you want to reset the sequence to 1? This action cannot be "
 "undone."
@@ -15239,7 +15371,7 @@ msgid "Example: Contact Information"
 msgstr ""
 
 #: .\templates\settings\partials\document_form.html:184
-#: .\templates\users\user_edit.html:214
+#: .\templates\users\user_edit.html:226
 msgid "Additional Settings"
 msgstr ""
 
@@ -15571,8 +15703,8 @@ msgstr ""
 msgid "You can modify the permissions at any time after creating the group"
 msgstr ""
 
-#: .\templates\users\group_add.html:191 .\templates\users\user_add.html:229
-#: .\templates\users\user_edit.html:194
+#: .\templates\users\group_add.html:191 .\templates\users\user_add.html:242
+#: .\templates\users\user_edit.html:206
 msgid "Create Group"
 msgstr ""
 
@@ -15602,7 +15734,7 @@ msgstr ""
 
 #: .\templates\users\group_delete.html:49
 #: .\templates\users\group_delete.html:236 .\templates\users\group_list.html:36
-#: .\users\models.py:151 .\users\views.py:549 .\users\views.py:668
+#: .\users\models.py:151 .\users\views.py:548 .\users\views.py:667
 msgid "Group Name"
 msgstr ""
 
@@ -15712,6 +15844,7 @@ msgstr ""
 msgid "Add Group"
 msgstr ""
 
+#: .\templates\users\group_list.html:39
 msgid "Created at"
 msgstr "تاريخ الإنشاء"
 
@@ -15740,7 +15873,7 @@ msgid "Create first group"
 msgstr "إنشاء المجموعة الأولى"
 
 #: .\templates\users\group_list.html:121 .\users\views.py:35
-#: .\users\views.py:171
+#: .\users\views.py:173
 msgid "Groups"
 msgstr "المجموعات"
 
@@ -15749,7 +15882,7 @@ msgid "Groups help organize users and manage their permissions collectively"
 msgstr ""
 
 #: .\templates\users\group_list.html:132 .\users\models.py:153
-#: .\users\views.py:542 .\users\views.py:661
+#: .\users\views.py:541 .\users\views.py:660
 msgid "Permissions"
 msgstr "الأذونات"
 
@@ -15797,71 +15930,75 @@ msgstr ""
 msgid "Can be disabled later"
 msgstr ""
 
-#: .\templates\users\user_add.html:188 .\templates\users\user_edit.html:152
+#: .\templates\users\user_add.html:192
+msgid "Grants full system access"
+msgstr ""
+
+#: .\templates\users\user_add.html:201 .\templates\users\user_edit.html:164
 msgid "Groups and Roles"
 msgstr ""
 
-#: .\templates\users\user_add.html:197 .\templates\users\user_edit.html:161
+#: .\templates\users\user_add.html:210 .\templates\users\user_edit.html:173
 msgid "Group Membership"
 msgstr ""
 
-#: .\templates\users\user_add.html:215 .\templates\users\user_edit.html:180
+#: .\templates\users\user_add.html:228 .\templates\users\user_edit.html:192
 msgid "users"
 msgstr ""
 
-#: .\templates\users\user_add.html:216 .\templates\users\user_edit.html:181
+#: .\templates\users\user_add.html:229 .\templates\users\user_edit.html:193
 msgid "permissions"
 msgstr ""
 
-#: .\templates\users\user_add.html:226 .\templates\users\user_edit.html:191
+#: .\templates\users\user_add.html:239 .\templates\users\user_edit.html:203
 msgid "No groups available"
 msgstr ""
 
-#: .\templates\users\user_add.html:237 .\templates\users\user_edit.html:202
+#: .\templates\users\user_add.html:250 .\templates\users\user_edit.html:214
 msgid "User will receive all permissions from selected groups"
 msgstr ""
 
-#: .\templates\users\user_add.html:242
+#: .\templates\users\user_add.html:255
 msgid "Quick Shortcuts:"
 msgstr ""
 
-#: .\templates\users\user_add.html:244
+#: .\templates\users\user_add.html:257
 msgid "Auto Select by User Type"
 msgstr ""
 
-#: .\templates\users\user_add.html:247
+#: .\templates\users\user_add.html:260
 msgid "Clear All Selections"
 msgstr ""
 
-#: .\templates\users\user_add.html:265
+#: .\templates\users\user_add.html:278
 msgid "Create User"
 msgstr ""
 
-#: .\templates\users\user_add.html:285
+#: .\templates\users\user_add.html:298
 msgid "Passwords do not match"
 msgstr ""
 
-#: .\templates\users\user_add.html:286
+#: .\templates\users\user_add.html:299
 msgid "Password Strength"
 msgstr ""
 
-#: .\templates\users\user_add.html:287
+#: .\templates\users\user_add.html:300
 msgid "Very Weak"
 msgstr ""
 
-#: .\templates\users\user_add.html:288
+#: .\templates\users\user_add.html:301
 msgid "Weak"
 msgstr ""
 
-#: .\templates\users\user_add.html:289
+#: .\templates\users\user_add.html:302
 msgid "Medium"
 msgstr ""
 
-#: .\templates\users\user_add.html:290
+#: .\templates\users\user_add.html:303
 msgid "Strong"
 msgstr ""
 
-#: .\templates\users\user_add.html:291
+#: .\templates\users\user_add.html:304
 msgid "Very Strong"
 msgstr ""
 
@@ -15905,11 +16042,11 @@ msgstr ""
 msgid "Department:"
 msgstr "القسم"
 
-#: .\templates\users\user_delete.html:61 .\templates\users\user_edit.html:257
+#: .\templates\users\user_delete.html:61 .\templates\users\user_edit.html:269
 msgid "Last login:"
 msgstr "اخر دخول"
 
-#: .\templates\users\user_delete.html:66 .\templates\users\user_edit.html:261
+#: .\templates\users\user_delete.html:66 .\templates\users\user_edit.html:273
 msgid "Never logged in"
 msgstr ""
 
@@ -15957,23 +16094,23 @@ msgstr "هل أنت متأكد تمامًا أنك تريد حذف هذا الم
 msgid "Edit User"
 msgstr "تعديل المستخدم"
 
-#: .\templates\users\user_edit.html:247
+#: .\templates\users\user_edit.html:259
 msgid "Created at:"
 msgstr "تم الإنشاء في:"
 
-#: .\templates\users\user_edit.html:252
+#: .\templates\users\user_edit.html:264
 msgid "Last updated:"
 msgstr "آخر تحديث:"
 
-#: .\templates\users\user_edit.html:266
+#: .\templates\users\user_edit.html:278
 msgid "Change password:"
 msgstr "تغيير كلمة المرور:"
 
-#: .\templates\users\user_edit.html:269
+#: .\templates\users\user_edit.html:281
 msgid "Change Password"
 msgstr ""
 
-#: .\templates\users\user_edit.html:288
+#: .\templates\users\user_edit.html:300
 msgid "Edit not allowed"
 msgstr ""
 
@@ -15987,7 +16124,7 @@ msgid "Hide High Permission Users"
 msgstr ""
 
 #: .\templates\users\user_list.html:105 .\users\models.py:15
-#: .\users\views.py:62 .\users\views.py:198
+#: .\users\views.py:63 .\users\views.py:201
 msgid "User Type"
 msgstr "نوع المستخدم"
 
@@ -16003,7 +16140,7 @@ msgstr ""
 msgid "POS User"
 msgstr ""
 
-#: .\users\models.py:19 .\users\views.py:65 .\users\views.py:201
+#: .\users\models.py:19 .\users\views.py:66 .\users\views.py:204
 msgid "POS Warehouse"
 msgstr ""
 
@@ -16128,67 +16265,71 @@ msgstr ""
 msgid "أدخل كلمة المرور مرة أخرى للتأكيد"
 msgstr ""
 
-#: .\users\views.py:113
+#: .\users\views.py:68 .\users\views.py:206
+msgid "Superuser"
+msgstr "مستخدم خارق"
+
+#: .\users\views.py:115
 msgid "First name is required"
 msgstr "الاسم الأول مطلوب"
 
-#: .\users\views.py:121 .\users\views.py:246
+#: .\users\views.py:123 .\users\views.py:250
 msgid "اسم المستخدم موجود بالفعل"
 msgstr ""
 
-#: .\users\views.py:125
+#: .\users\views.py:127
 msgid "اسم المستخدم يجب أن يكون 3 أحرف على الأقل"
 msgstr ""
 
-#: .\users\views.py:134 .\users\views.py:255
+#: .\users\views.py:136 .\users\views.py:259
 msgid "البريد الإلكتروني موجود بالفعل"
 msgstr ""
 
-#: .\users\views.py:140
+#: .\users\views.py:142
 msgid "كلمة المرور يجب أن تكون 8 أحرف على الأقل"
 msgstr ""
 
-#: .\users\views.py:148
+#: .\users\views.py:150
 msgid "كلمتا المرور غير متطابقتين"
 msgstr ""
 
-#: .\users\views.py:326
+#: .\users\views.py:328
 msgid "تم إنشاء المستخدم \"{}\" بنجاح. يمكنه الآن تسجيل الدخول للنظام."
 msgstr ""
 
-#: .\users\views.py:339
+#: .\users\views.py:341
 msgid "حدث خطأ أثناء إنشاء المستخدم: {}"
 msgstr ""
 
-#: .\users\views.py:351
+#: .\users\views.py:353
 msgid "اختر اسم مستخدم واضح وسهل التذكر"
 msgstr ""
 
-#: .\users\views.py:352
+#: .\users\views.py:354
 msgid "استخدم كلمة مرور قوية تحتوي على أرقام وحروف"
 msgstr ""
 
-#: .\users\views.py:353
+#: .\users\views.py:355
 msgid "حدد الصلاحيات بحذر حسب دور المستخدم"
 msgstr ""
 
-#: .\users\views.py:354
+#: .\users\views.py:356
 msgid "تأكد من صحة البريد الإلكتروني للتواصل"
 msgstr ""
 
-#: .\users\views.py:381
+#: .\users\views.py:383
 msgid "تم تحديث بيانات المستخدم \"{}\" بنجاح"
 msgstr ""
 
-#: .\users\views.py:467
+#: .\users\views.py:470
 msgid "لا يمكنك حذف نفسك"
 msgstr ""
 
-#: .\users\views.py:472
+#: .\users\views.py:474
 msgid "لا يمكن حذف المستخدم الأساسي"
 msgstr ""
 
-#: .\users\views.py:477
+#: .\users\views.py:478
 msgid "لا يمكن حذف المستخدمين ذوي صلاحيات Superuser"
 msgstr ""
 
@@ -16196,57 +16337,120 @@ msgstr ""
 msgid "تم حذف المستخدم \"{}\" بنجاح"
 msgstr ""
 
-#: .\users\views.py:554 .\users\views.py:673
+#: .\users\views.py:488
+#, fuzzy
+#| msgid "معرف المرجع"
+msgid "تم حذف المستخدم: {}"
+msgstr "معرف المرجع"
+
+#: .\users\views.py:553 .\users\views.py:672
 msgid "أدخل اسم المجموعة"
 msgstr ""
 
-#: .\users\views.py:622
+#: .\users\views.py:621
 msgid "تم إنشاء المجموعة بنجاح"
 msgstr ""
 
-#: .\users\views.py:625
+#: .\users\views.py:624
 msgid "حدث خطأ أثناء إنشاء المجموعة: {}"
 msgstr ""
 
-#: .\users\views.py:777
+#: .\users\views.py:776
 msgid "لا يمكنك تعديل هذه المجموعة - تحتوي على صلاحيات مخصصة للسوبر أدمين فقط"
 msgstr ""
 
-#: .\users\views.py:802
+#: .\users\views.py:801
 msgid "تم تحديث المجموعة بنجاح"
 msgstr ""
 
-#: .\users\views.py:805
+#: .\users\views.py:804
 msgid "حدث خطأ أثناء تحديث المجموعة: {}"
 msgstr ""
 
-#: .\users\views.py:850
+#: .\users\views.py:849
 msgid "لا يمكن حذف مجموعات النظام الأساسية"
 msgstr ""
 
-#: .\users\views.py:865
+#: .\users\views.py:864
 msgid "لا يمكنك حذف هذه المجموعة - تحتوي على صلاحيات مخصصة للسوبر أدمين فقط"
 msgstr ""
 
-#: .\users\views.py:876
+#: .\users\views.py:875
 msgid "تحذير: هذه المجموعة تحتوي على {} مستخدم سيفقدون صلاحيات المجموعة"
 msgstr ""
 
-#: .\users\views.py:887
+#: .\users\views.py:886
 msgid "تم حذف المجموعة \"{}\" بنجاح"
 msgstr ""
 
-#: .\users\views.py:890
+#: .\users\views.py:889
 msgid "حدث خطأ أثناء حذف المجموعة: {}"
 msgstr ""
 
-#: .\users\views.py:918
+#: .\users\views.py:917
 msgid "تم إخفاء المستخدمين ذوي الصلاحيات العالية"
 msgstr ""
 
-#: .\users\views.py:918
+#: .\users\views.py:917
 msgid "تم إظهار المستخدمين ذوي الصلاحيات العالية"
 msgstr ""
+
+#~ msgid "فاتورة مبيعات"
+#~ msgstr "فاتورة مبيعات"
+
+#~ msgid "فاتورة مشتريات"
+#~ msgstr "فاتورة مشتريات"
+
+#~ msgid "مردود مبيعات"
+#~ msgstr "مردود مبيعات"
+
+#~ msgid "مذكرة دين"
+#~ msgstr "مذكرة دين"
+
+#~ msgid "مذكرة ائتمان"
+#~ msgstr "مذكرة دين"
+
+#~ msgid "تسوية"
+#~ msgstr "تسوية"
+
+#~ msgid "Original invoice"
+#~ msgstr "الفاتورة الأصلية"
+
+#~ msgid "Return date"
+#~ msgstr "تاريخ المردود"
+
+#~ msgid "Type of return"
+#~ msgstr "نوع المردود"
+
+#~ msgid "Reason for return"
+#~ msgstr "سبب المردود"
+
+#~ msgid "Purchase returns"
+#~ msgstr "مردودات المشتريات"
+
+#~ msgid "Original item"
+#~ msgstr "المنتج الأصلي"
+
+#~ msgid "Returned Quantity"
+#~ msgstr "الكمية المرتجعة"
+
+#~ msgid "Purchase return item"
+#~ msgstr "منتج مردود مشتريات"
+
+#~ msgid "Purchase Return Elements"
+#~ msgstr "عناصر مردود المشتريات"
+
+#~ msgid "The returned quantity cannot be greater than the original quantity."
+#~ msgstr "الكمية المرتجعة لا يمكن أن تكون أكبر من الكمية الأصلية"
+
+#~ msgid "The total returned quantity exceeds the original quantity."
+#~ msgstr "إجمالي الكمية المرتجعة يتجاوز الكمية الأصلية"
+
+#~ msgid "Debtor notification number"
+#~ msgstr "رقم اشعار مدين"
+
+#~ msgid "Total amount"
+#~ msgstr "المبلغ الاجمالي"
 
 #~ msgid "Full Name:"
 #~ msgstr "الاسم الكامل"
@@ -16476,9 +16680,6 @@ msgstr ""
 #~ msgid "Balance Sheet"
 #~ msgstr "الميزانية العمومية"
 
-#~ msgid "Financial Reports"
-#~ msgstr "التقارير المالية"
-
 #~ msgid "Account Statement"
 #~ msgstr "كشف حساب"
 
@@ -16490,9 +16691,6 @@ msgstr ""
 
 #~ msgid "Receipt History"
 #~ msgstr "سجل الإيصالات"
-
-#~ msgid "No records found"
-#~ msgstr "لا توجد سجلات"
 
 #~ msgid "Records found"
 #~ msgstr "سجل موجود"
@@ -16514,6 +16712,3 @@ msgstr ""
 
 #~ msgid "Contact Us"
 #~ msgstr "اتصل بنا"
-
-msgid "اختر الموظف"
-msgstr "اختر الموظف"

@@ -39,7 +39,7 @@ class UserCreateForm(forms.ModelForm):
         model = User
         fields = [
             'username', 'email', 'first_name', 'last_name', 
-            'user_type', 'phone', 'department', 'pos_warehouse', 'is_active', 'groups'
+            'user_type', 'phone', 'department', 'pos_warehouse', 'is_active', 'is_superuser', 'groups'
         ]
         
         widgets = {
@@ -52,6 +52,7 @@ class UserCreateForm(forms.ModelForm):
             'department': forms.TextInput(attrs={'class': 'form-control'}),
             'pos_warehouse': forms.Select(attrs={'class': 'form-select'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input', 'checked': True}),
+            'is_superuser': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
         
         labels = {
@@ -64,6 +65,7 @@ class UserCreateForm(forms.ModelForm):
             'department': _('Department'),
             'pos_warehouse': _('POS Warehouse'),
             'is_active': _('Active'),
+            'is_superuser': _('Superuser'),
         }
 
     def __init__(self, *args, **kwargs):
@@ -175,7 +177,7 @@ class UserEditForm(forms.ModelForm):
         model = User
         fields = [
             'username', 'email', 'first_name', 'last_name', 
-            'user_type', 'phone', 'department', 'pos_warehouse', 'is_active', 'groups'
+            'user_type', 'phone', 'department', 'pos_warehouse', 'is_active', 'is_superuser', 'groups'
         ]
         
         widgets = {
@@ -188,6 +190,7 @@ class UserEditForm(forms.ModelForm):
             'department': forms.TextInput(attrs={'class': 'form-control'}),
             'pos_warehouse': forms.Select(attrs={'class': 'form-select'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'is_superuser': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
         
         labels = {
@@ -200,6 +203,7 @@ class UserEditForm(forms.ModelForm):
             'department': _('Department'),
             'pos_warehouse': _('POS Warehouse'),
             'is_active': _('Active'),
+            'is_superuser': _('Superuser'),
         }
 
     def __init__(self, *args, **kwargs):
@@ -317,9 +321,7 @@ class UserCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
             # تعيين صلاحيات إضافية حسب نوع المستخدم
             if user.user_type in ['admin', 'superadmin']:
                 user.is_staff = True
-                if user.user_type == 'superadmin':
-                    user.is_superuser = True
-                user.save()
+            user.save()
             
             messages.success(
                 self.request, 
