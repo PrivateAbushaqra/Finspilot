@@ -1,0 +1,314 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load currency_tags %}
+
+{% block title %}
+    {{ contract.contract_number }} - {% trans "Contract Details" %} - {{ block.super }}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .contract-header {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    .contract-avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background-color: rgba(255,255,255,0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+    .info-card {
+        border: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
+    }
+    .info-card:hover {
+        transform: translateY(-2px);
+    }
+    .section-title {
+        color: #495057;
+        border-bottom: 2px solid #28a745;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .status-badge {
+        font-size: 0.875rem;
+        padding: 0.375rem 0.75rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'hr:dashboard' %}">{% trans "HR Dashboard" %}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'hr:contract_list' %}">{% trans "Contracts" %}</a></li>
+            <li class="breadcrumb-item active">{{ contract.contract_number }}</li>
+        </ol>
+    </nav>
+
+    <!-- Contract Header -->
+    <div class="contract-header">
+        <div class="row align-items-center">
+            <div class="col-auto">
+                <div class="contract-avatar">
+                    <i class="fas fa-file-contract fa-3x"></i>
+                </div>
+            </div>
+            <div class="col">
+                <h1 class="mb-1">{{ contract.contract_number }}</h1>
+                <p class="mb-2">{{ contract.employee.full_name }} • {{ contract.get_contract_type_display }}</p>
+                <p class="mb-0">
+                    <span class="badge bg-{% if contract.status == 'active' %}success{% elif contract.status == 'expired' %}warning{% elif contract.status == 'terminated' %}danger{% else %}secondary{% endif %} me-2 status-badge">
+                        {{ contract.get_status_display }}
+                    </span>
+                    <span class="badge bg-light text-dark">{{ contract.contract_type|title }}</span>
+                </p>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group" role="group">
+                    <a href="{% url 'hr:contract_edit' contract.pk %}" class="btn btn-light">
+                        <i class="fas fa-edit me-2"></i>{% trans "Edit" %}
+                    </a>
+                    <a href="{% url 'hr:contract_delete' contract.pk %}" class="btn btn-outline-light">
+                        <i class="fas fa-trash me-2"></i>{% trans "Delete" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Contract Information -->
+        <div class="col-lg-6 mb-4">
+            <div class="card info-card">
+                <div class="card-header">
+                    <h5 class="section-title mb-0">
+                        <i class="fas fa-file-contract me-2"></i>{% trans "Contract Information" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Contract Number" %}</label>
+                            <p class="mb-0">{{ contract.contract_number }}</p>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Contract Type" %}</label>
+                            <p class="mb-0">{{ contract.get_contract_type_display }}</p>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Start Date" %}</label>
+                            <p class="mb-0">{{ contract.start_date|date:"M d, Y" }}</p>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "End Date" %}</label>
+                            <p class="mb-0">{{ contract.end_date|date:"M d, Y"|default:"-" }}</p>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Status" %}</label>
+                            <p class="mb-0">
+                                <span class="badge bg-{% if contract.status == 'active' %}success{% elif contract.status == 'expired' %}warning{% elif contract.status == 'terminated' %}danger{% else %}secondary{% endif %}">
+                                    {{ contract.get_status_display }}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Created By" %}</label>
+                            <p class="mb-0">{{ contract.created_by.get_full_name|default:contract.created_by.username }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employee Information -->
+        <div class="col-lg-6 mb-4">
+            <div class="card info-card">
+                <div class="card-header">
+                    <h5 class="section-title mb-0">
+                        <i class="fas fa-user me-2"></i>{% trans "Employee Information" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label class="text-muted small">{% trans "Employee Name" %}</label>
+                            <p class="mb-0">
+                                <a href="{% url 'hr:employee_detail' contract.employee.pk %}" class="text-decoration-none">
+                                    {{ contract.employee.full_name }}
+                                </a>
+                            </p>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Employee ID" %}</label>
+                            <p class="mb-0">{{ contract.employee.employee_id }}</p>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Department" %}</label>
+                            <p class="mb-0">{{ contract.employee.department.name|default:"-" }}</p>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Position" %}</label>
+                            <p class="mb-0">{{ contract.employee.position.title|default:"-" }}</p>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Email" %}</label>
+                            <p class="mb-0">{{ contract.employee.email|default:"-" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Salary & Benefits -->
+        <div class="col-lg-6 mb-4">
+            <div class="card info-card">
+                <div class="card-header">
+                    <h5 class="section-title mb-0">
+                        <i class="fas fa-money-bill-wave me-2"></i>{% trans "Salary & Benefits" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Basic Salary" %}</label>
+                            <p class="mb-0 fw-bold text-primary">{{ contract.salary|currency_format }}</p>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Allowances" %}</label>
+                            <p class="mb-0 fw-bold text-success">{{ contract.allowances|currency_format }}</p>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Total Salary" %}</label>
+                            <p class="mb-0 fw-bold text-info">{{ contract.total_salary|currency_format }}</p>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Annual Leave Days" %}</label>
+                            <p class="mb-0">{{ contract.annual_leave_days }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Working Conditions -->
+        <div class="col-lg-6 mb-4">
+            <div class="card info-card">
+                <div class="card-header">
+                    <h5 class="section-title mb-0">
+                        <i class="fas fa-clock me-2"></i>{% trans "Working Conditions" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Working Hours/Day" %}</label>
+                            <p class="mb-0">{{ contract.working_hours_per_day }} {% trans "hours" %}</p>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Working Days/Week" %}</label>
+                            <p class="mb-0">{{ contract.working_days_per_week }} {% trans "days" %}</p>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="text-muted small">{% trans "Contract Duration" %}</label>
+                            <p class="mb-0">
+                                {% if contract.end_date %}
+                                    {{ contract.duration_days }} {% trans "days" %} ({% trans "from" %} {{ contract.start_date|date:"M d, Y" }} {% trans "to" %} {{ contract.end_date|date:"M d, Y" }})
+                                {% else %}
+                                    {% trans "Indefinite" %} ({% trans "started" %} {{ contract.start_date|date:"M d, Y" }})
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Terms & Conditions -->
+        {% if contract.terms_and_conditions %}
+        <div class="col-12 mb-4">
+            <div class="card info-card">
+                <div class="card-header">
+                    <h5 class="section-title mb-0">
+                        <i class="fas fa-file-alt me-2"></i>{% trans "Terms & Conditions" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="contract-terms">
+                        {{ contract.terms_and_conditions|linebreaks }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Notes -->
+        {% if contract.notes %}
+        <div class="col-12 mb-4">
+            <div class="card info-card">
+                <div class="card-header">
+                    <h5 class="section-title mb-0">
+                        <i class="fas fa-sticky-note me-2"></i>{% trans "Notes" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="contract-notes">
+                        {{ contract.notes|linebreaks }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Metadata -->
+        <div class="col-12 mb-4">
+            <div class="card info-card">
+                <div class="card-header">
+                    <h5 class="section-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>{% trans "Contract Metadata" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Created At" %}</label>
+                            <p class="mb-0">{{ contract.created_at|date:"M d, Y H:i" }}</p>
+                        </div>
+                        <div class="col-sm-6 mb-3">
+                            <label class="text-muted small">{% trans "Last Updated" %}</label>
+                            <p class="mb-0">{{ contract.updated_at|date:"M d, Y H:i" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Back Button -->
+    <div class="text-center mt-4">
+        <a href="{% url 'hr:contract_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>{% trans "Back to Contracts List" %}
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add any interactive functionality here if needed
+    console.log('Contract detail page loaded');
+});
+</script>
+{% endblock %}

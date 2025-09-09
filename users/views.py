@@ -854,7 +854,7 @@ class UserGroupDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         # منع حذف مجموعات النظام الأساسية
         system_groups = ['superadmin', 'admin', 'staff']
         if self.object.name.lower() in system_groups:
-            messages.error(request, _('لا يمكن حذف مجموعات النظام الأساسية'))
+            messages.error(request, _('Primary system groups cannot be deleted.'))
             return redirect('users:group_list')
         
         # منع المستخدمين غير superadmin من حذف المجموعات التي تحتوي على صلاحيات superadmin
@@ -869,7 +869,7 @@ class UserGroupDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
             )
             
             if superadmin_permissions_in_group.exists():
-                messages.error(request, _('لا يمكنك حذف هذه المجموعة - تحتوي على صلاحيات مخصصة للسوبر أدمين فقط'))
+                messages.error(request, _('You cannot delete this group - it has permissions reserved for super admins only.'))
                 return redirect('users:group_list')
         
         return super().dispatch(request, *args, **kwargs)

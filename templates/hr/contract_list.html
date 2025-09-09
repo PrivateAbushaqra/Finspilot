@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load i18n %}
+{% load currency_tags %}
 
 {% block title %}{% trans "Contracts" %} - {{ block.super }}{% endblock %}
 
@@ -50,7 +51,7 @@
                                                 <span class="text-muted">{% trans "Open-ended" %}</span>
                                             {% endif %}
                                         </td>
-                                        <td>{{ contract.salary|floatformat:2 }} {% trans "SAR" %}</td>
+                                        <td>{{ contract.salary|currency_format }}</td>
                                         <td>
                                             <span class="badge bg-{% if contract.is_active %}success{% else %}secondary{% endif %}">
                                                 {% if contract.is_active %}

@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load i18n %}
+{% load currency_tags %}
 
 {% block title %}{% trans "Delete Contract" %} - {{ block.super }}{% endblock %}
 
@@ -50,7 +51,7 @@
                 <div class="col-md-6">
                     <p><strong>{% trans "Start Date:" %}</strong> {{ object.start_date|date:"d/m/Y" }}</p>
                     <p><strong>{% trans "End Date:" %}</strong> {{ object.end_date|date:"d/m/Y" if object.end_date else "N/A" }}</p>
-                    <p><strong>{% trans "Salary:" %}</strong> {{ object.salary|floatformat:2 }}</p>
+                    <p><strong>{% trans "Salary:" %}</strong> {{ object.salary|currency_format }}</p>
                     <p><strong>{% trans "Working Hours/Day:" %}</strong> {{ object.working_hours_per_day }}</p>
                 </div>
             </div>

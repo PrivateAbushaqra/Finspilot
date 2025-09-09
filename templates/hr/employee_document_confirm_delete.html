@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Delete Employee Document" %} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-trash-alt me-2 text-danger"></i>
+                        {% trans "Delete Employee Document" %}
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>{% trans "Warning!" %}</strong> {% trans "This action cannot be undone." %}
+                    </div>
+
+                    <div class="mb-4">
+                        <h5>{% trans "Are you sure you want to delete this document?" %}</h5>
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-sm-4">
+                                        <strong>{% trans "Employee" %}:</strong>
+                                    </div>
+                                    <div class="col-sm-8">
+                                        {{ object.employee.first_name }} {{ object.employee.last_name }}
+                                        <br>
+                                        <small class="text-muted">{{ object.employee.employee_id }}</small>
+                                    </div>
+                                </div>
+
+                                <hr>
+
+                                <div class="row">
+                                    <div class="col-sm-4">
+                                        <strong>{% trans "Document Type" %}:</strong>
+                                    </div>
+                                    <div class="col-sm-8">
+                                        {% if object.document_type == 'contract' %}
+                                            {% trans "Contract" %}
+                                        {% elif object.document_type == 'id_copy' %}
+                                            {% trans "ID Copy" %}
+                                        {% elif object.document_type == 'certificate' %}
+                                            {% trans "Certificate" %}
+                                        {% elif object.document_type == 'resume' %}
+                                            {% trans "Resume" %}
+                                        {% elif object.document_type == 'photo' %}
+                                            {% trans "Photo" %}
+                                        {% else %}
+                                            {% trans "Other" %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-sm-4">
+                                        <strong>{% trans "Title" %}:</strong>
+                                    </div>
+                                    <div class="col-sm-8">
+                                        {{ object.title }}
+                                    </div>
+                                </div>
+
+                                {% if object.file %}
+                                <div class="row">
+                                    <div class="col-sm-4">
+                                        <strong>{% trans "File" %}:</strong>
+                                    </div>
+                                    <div class="col-sm-8">
+                                        {{ object.file.name|truncatechars:50 }}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'hr:employee_document_detail' object.pk %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>{% trans "Cancel" %}
+                        </a>
+
+                        <form method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-2"></i>{% trans "Delete Document" %}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

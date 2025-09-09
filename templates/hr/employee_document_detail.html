@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Employee Document Details" %} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title">
+                        <i class="fas fa-file-alt me-2"></i>
+                        {% trans "Employee Document Details" %}
+                    </h3>
+                    <div>
+                        <a href="{% url 'hr:employee_document_edit' object.pk %}" class="btn btn-warning me-2">
+                            <i class="fas fa-edit me-1"></i>{% trans "Edit" %}
+                        </a>
+                        <a href="{% url 'hr:employee_document_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>{% trans "Back to List" %}
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="row mb-3">
+                                <div class="col-sm-3">
+                                    <strong>{% trans "Employee" %}:</strong>
+                                </div>
+                                <div class="col-sm-9">
+                                    <a href="{% url 'hr:employee_detail' object.employee.pk %}" class="text-decoration-none">
+                                        {{ object.employee.first_name }} {{ object.employee.last_name }}
+                                    </a>
+                                    <br>
+                                    <small class="text-muted">{{ object.employee.employee_id }}</small>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-sm-3">
+                                    <strong>{% trans "Document Type" %}:</strong>
+                                </div>
+                                <div class="col-sm-9">
+                                    <span class="badge bg-secondary">
+                                        {% if object.document_type == 'contract' %}
+                                            {% trans "Contract" %}
+                                        {% elif object.document_type == 'id_copy' %}
+                                            {% trans "ID Copy" %}
+                                        {% elif object.document_type == 'certificate' %}
+                                            {% trans "Certificate" %}
+                                        {% elif object.document_type == 'resume' %}
+                                            {% trans "Resume" %}
+                                        {% elif object.document_type == 'photo' %}
+                                            {% trans "Photo" %}
+                                        {% else %}
+                                            {% trans "Other" %}
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-sm-3">
+                                    <strong>{% trans "Title" %}:</strong>
+                                </div>
+                                <div class="col-sm-9">
+                                    {{ object.title }}
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-sm-3">
+                                    <strong>{% trans "Description" %}:</strong>
+                                </div>
+                                <div class="col-sm-9">
+                                    {% if object.description %}
+                                        {{ object.description }}
+                                    {% else %}
+                                        <span class="text-muted">{% trans "No description" %}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-sm-3">
+                                    <strong>{% trans "Upload Date" %}:</strong>
+                                </div>
+                                <div class="col-sm-9">
+                                    {{ object.upload_date|date:"d/m/Y H:i" }}
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-sm-3">
+                                    <strong>{% trans "Uploaded By" %}:</strong>
+                                </div>
+                                <div class="col-sm-9">
+                                    {{ object.uploaded_by.get_full_name }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">
+                                        <i class="fas fa-file me-2"></i>{% trans "File Information" %}
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    {% if object.file %}
+                                        <div class="text-center mb-3">
+                                            <i class="fas fa-file-alt fa-3x text-primary mb-3"></i>
+                                            <h6>{{ object.file.name|truncatechars:30 }}</h6>
+                                        </div>
+
+                                        <div class="mb-2">
+                                            <strong>{% trans "File Size" %}:</strong>
+                                            <span id="file-size">Calculating...</span>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <strong>{% trans "File Type" %}:</strong>
+                                            <span>{{ object.file.name|slice:"-4:"|upper }}</span>
+                                        </div>
+
+                                        <div class="d-grid">
+                                            <a href="{{ object.file.url }}" target="_blank" class="btn btn-primary">
+                                                <i class="fas fa-download me-2"></i>{% trans "Download File" %}
+                                            </a>
+                                        </div>
+                                    {% else %}
+                                        <div class="text-center">
+                                            <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+                                            <p class="text-muted">{% trans "No file attached" %}</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Calculate file size if file exists
+    {% if object.file %}
+    fetch('{{ object.file.url }}', { method: 'HEAD' })
+        .then(function(response) {
+            var size = response.headers.get('content-length');
+            if (size) {
+                var sizeInMB = (size / (1024 * 1024)).toFixed(2);
+                document.getElementById('file-size').textContent = sizeInMB + ' MB';
+            } else {
+                document.getElementById('file-size').textContent = 'Unknown';
+            }
+        })
+        .catch(function() {
+            document.getElementById('file-size').textContent = 'Unknown';
+        });
+    {% endif %}
+});
+</script>
+{% endblock %}
+{% endblock %}

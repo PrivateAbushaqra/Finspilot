@@ -174,6 +174,11 @@ class Employee(models.Model):
         return self.basic_salary + self.allowances
 
     @property
+    def current_contract(self):
+        """العقد الحالي النشط للموظف"""
+        return self.contracts.filter(status='active').first()
+
+    @property
     def age(self):
         today = date.today()
         return today.year - self.birth_date.year - ((today.month, today.day) < (self.birth_date.month, self.birth_date.day))

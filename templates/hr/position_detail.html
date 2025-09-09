@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load currency_tags %}
+
+{% block title %}{{ position.title }} - {% trans "Position Details" %} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Navigation -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'hr:dashboard' %}">{% trans "HR Dashboard" %}</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'hr:position_list' %}">{% trans "Positions" %}</a></li>
+            <li class="breadcrumb-item active">{{ position.title }}</li>
+        </ol>
+    </nav>
+
+    <!-- Position Header -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center bg-primary text-white">
+            <div>
+                <h3 class="card-title mb-0">
+                    <i class="fas fa-briefcase me-2"></i>
+                    {{ position.title }}
+                </h3>
+                <small class="text-white-50">{{ position.code }}</small>
+            </div>
+            <div>
+                <a href="{% url 'hr:position_edit' position.pk %}" class="btn btn-light me-2">
+                    <i class="fas fa-edit me-1"></i>
+                    {% trans "Edit" %}
+                </a>
+                <a href="{% url 'hr:position_delete' position.pk %}" class="btn btn-outline-light me-2">
+                    <i class="fas fa-trash me-1"></i>
+                    {% trans "Delete" %}
+                </a>
+                <a href="{% url 'hr:position_list' %}" class="btn btn-outline-light">
+                    <i class="fas fa-arrow-left me-1"></i>
+                    {% trans "Back to List" %}
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <!-- Position Information -->
+                <div class="col-lg-8">
+                    <h5 class="mb-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        {% trans "Position Information" %}
+                    </h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="fw-bold">{% trans "Title" %}:</td>
+                                    <td>{{ position.title }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">{% trans "Code" %}:</td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ position.code }}</span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">{% trans "Department" %}:</td>
+                                    <td>
+                                        <a href="{% url 'hr:department_detail' position.department.pk %}" class="text-decoration-none">
+                                            {{ position.department.name }}
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">{% trans "Status" %}:</td>
+                                    <td>
+                                        <span class="badge bg-{% if position.is_active %}success{% else %}secondary{% endif %}">
+                                            {% if position.is_active %}
+                                                <i class="fas fa-check-circle me-1"></i>{% trans "Active" %}
+                                            {% else %}
+                                                <i class="fas fa-times-circle me-1"></i>{% trans "Inactive" %}
+                                            {% endif %}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="fw-bold">{% trans "Minimum Salary" %}:</td>
+                                    <td>{{ position.min_salary|currency_format }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">{% trans "Maximum Salary" %}:</td>
+                                    <td>{{ position.max_salary|currency_format }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">{% trans "Created Date" %}:</td>
+                                    <td>{{ position.created_at|date:"d/m/Y H:i" }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">{% trans "Last Updated" %}:</td>
+                                    <td>{{ position.updated_at|date:"d/m/Y H:i" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    {% if position.description %}
+                    <div class="mt-4">
+                        <h6 class="fw-bold">
+                            <i class="fas fa-align-left me-2"></i>
+                            {% trans "Description" %}
+                        </h6>
+                        <div class="bg-light p-3 rounded">
+                            {{ position.description|linebreaks }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Statistics -->
+                <div class="col-lg-4">
+                    <h5 class="mb-3">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        {% trans "Statistics" %}
+                    </h5>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h4 class="mb-1">{{ position.employees.count }}</h4>
+                                    <p class="mb-0 small">{% trans "Current Employees" %}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h4 class="mb-1">{{ active_employees_count }}</h4>
+                                    <p class="mb-0 small">{% trans "Active Employees" %}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="card bg-info text-white">
+                                <div class="card-body text-center">
+                                    <h4 class="mb-1">{{ inactive_employees_count }}</h4>
+                                    <p class="mb-0 small">{% trans "Inactive Employees" %}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Employees in this Position -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-users me-2"></i>
+                {% trans "Employees in this Position" %}
+                <span class="badge bg-primary ms-2">{{ position.employees.count }}</span>
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if position.employees.exists %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>{% trans "Employee ID" %}</th>
+                                <th>{% trans "Name" %}</th>
+                                <th>{% trans "Department" %}</th>
+                                <th>{% trans "Hire Date" %}</th>
+                                <th>{% trans "Status" %}</th>
+                                <th>{% trans "Actions" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for employee in position.employees.all %}
+                            <tr>
+                                <td>
+                                    <span class="badge bg-light text-dark">{{ employee.employee_id }}</span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'hr:employee_detail' employee.pk %}" class="text-decoration-none">
+                                        {{ employee.first_name }} {{ employee.last_name }}
+                                    </a>
+                                </td>
+                                <td>{{ employee.department.name }}</td>
+                                <td>{{ employee.hire_date|date:"d/m/Y" }}</td>
+                                <td>
+                                    {% if employee.status == 'active' %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check-circle me-1"></i>{% trans "Active" %}
+                                        </span>
+                                    {% elif employee.status == 'inactive' %}
+                                        <span class="badge bg-secondary">
+                                            <i class="fas fa-times-circle me-1"></i>{% trans "Inactive" %}
+                                        </span>
+                                    {% elif employee.status == 'terminated' %}
+                                        <span class="badge bg-danger">
+                                            <i class="fas fa-user-times me-1"></i>{% trans "Terminated" %}
+                                        </span>
+                                    {% elif employee.status == 'on_leave' %}
+                                        <span class="badge bg-warning">
+                                            <i class="fas fa-calendar-alt me-1"></i>{% trans "On Leave" %}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-light text-dark">{{ employee.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'hr:employee_detail' employee.pk %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">{% trans "No employees assigned to this position" %}</h5>
+                    <p class="text-muted">{% trans "Employees can be assigned to this position through the employee management section" %}</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

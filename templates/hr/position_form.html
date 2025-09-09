@@ -1,0 +1,241 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    {% if form.instance.pk %}
+        {% trans "Edit Position" %} - {{ form.instance.title }}
+    {% else %}
+        {% trans "Add Position" %}
+    {% endif %}
+    - {{ block.super }}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title">
+                        <i class="fas fa-user-tie me-2"></i>
+                        {% if form.instance.pk %}
+                            {% trans "Edit Position" %}: {{ form.instance.title }}
+                        {% else %}
+                            {% trans "Add New Position" %}
+                        {% endif %}
+                    </h3>
+                    <a href="{% url 'hr:position_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>
+                        {% trans "Back to List" %}
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.title.id_for_label }}" class="form-label">
+                                        {{ form.title.label }}
+                                        {% if form.title.field.required %}
+                                            <span class="text-danger">*</span>
+                                        {% endif %}
+                                    </label>
+                                    <input type="text" name="{{ form.title.name }}" value="{{ form.title.value|default_if_none:'' }}" class="form-control" id="{{ form.title.id_for_label }}" {% if form.title.field.required %}required{% endif %} placeholder="{% trans 'Position Title' %}">
+                                    {% if form.title.errors %}
+                                        <div class="text-danger small">
+                                            {{ form.title.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="{{ form.code.id_for_label }}" class="form-label">
+                                        {{ form.code.label }}
+                                        {% if form.code.field.required %}
+                                            <span class="text-danger">*</span>
+                                        {% endif %}
+                                    </label>
+                                    <input type="text" name="{{ form.code.name }}" value="{{ form.code.value|default_if_none:'' }}" class="form-control" id="{{ form.code.id_for_label }}" {% if form.code.field.required %}required{% endif %} placeholder="{% trans 'Position Code' %}">
+                                    {% if form.code.errors %}
+                                        <div class="text-danger small">
+                                            {{ form.code.errors }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">
+                                        {% trans "Unique code for this position" %}
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="{{ form.department.id_for_label }}" class="form-label">
+                                        {{ form.department.label }}
+                                        {% if form.department.field.required %}
+                                            <span class="text-danger">*</span>
+                                        {% endif %}
+                                    </label>
+                                    <select name="{{ form.department.name }}" class="form-select" id="{{ form.department.id_for_label }}" {% if form.department.field.required %}required{% endif %}>
+                                        <option value="">---------</option>
+                                        {% for choice_value, choice_label in form.department.field.choices %}
+                                            <option value="{{ choice_value }}" {% if choice_value == form.department.value %}selected{% endif %}>{{ choice_label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    {% if form.department.errors %}
+                                        <div class="text-danger small">
+                                            {{ form.department.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.min_salary.id_for_label }}" class="form-label">
+                                        {{ form.min_salary.label }}
+                                    </label>
+                                    <input type="number" name="{{ form.min_salary.name }}" value="{{ form.min_salary.value|default_if_none:'' }}" class="form-control" id="{{ form.min_salary.id_for_label }}" step="0.01" min="0" placeholder="{% trans 'Minimum Salary' %}">
+                                    {% if form.min_salary.errors %}
+                                        <div class="text-danger small">
+                                            {{ form.min_salary.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="{{ form.max_salary.id_for_label }}" class="form-label">
+                                        {{ form.max_salary.label }}
+                                    </label>
+                                    <input type="number" name="{{ form.max_salary.name }}" value="{{ form.max_salary.value|default_if_none:'' }}" class="form-control" id="{{ form.max_salary.id_for_label }}" step="0.01" min="0" placeholder="{% trans 'Maximum Salary' %}">
+                                    {% if form.max_salary.errors %}
+                                        <div class="text-danger small">
+                                            {{ form.max_salary.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input type="checkbox" name="{{ form.is_active.name }}" class="form-check-input" id="{{ form.is_active.id_for_label }}" {% if form.is_active.value %}checked{% endif %}>
+                                        <label for="{{ form.is_active.id_for_label }}" class="form-check-label">
+                                            {{ form.is_active.label }}
+                                        </label>
+                                    </div>
+                                    {% if form.is_active.errors %}
+                                        <div class="text-danger small">
+                                            {{ form.is_active.errors }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-text">
+                                        {% trans "Inactive positions won't be available for new assignments" %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="{{ form.description.id_for_label }}" class="form-label">
+                                        {{ form.description.label }}
+                                    </label>
+                                    <textarea name="{{ form.description.name }}" class="form-control" id="{{ form.description.id_for_label }}" rows="4" placeholder="{% trans 'Position description and responsibilities' %}">{{ form.description.value|default_if_none:'' }}</textarea>
+                                    {% if form.description.errors %}
+                                        <div class="text-danger small">
+                                            {{ form.description.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <a href="{% url 'hr:position_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-1"></i>
+                                {% trans "Cancel" %}
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>
+                                {% if form.instance.pk %}
+                                    {% trans "Update Position" %}
+                                {% else %}
+                                    {% trans "Create Position" %}
+                                {% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Focus on first input
+    const firstInput = document.querySelector('input[type="text"]');
+    if (firstInput) {
+        firstInput.focus();
+    }
+
+    // Form validation
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const titleField = document.querySelector('#{{ form.title.id_for_label }}');
+            const codeField = document.querySelector('#{{ form.code.id_for_label }}');
+            const departmentField = document.querySelector('#{{ form.department.id_for_label }}');
+
+            if (titleField && !titleField.value.trim()) {
+                e.preventDefault();
+                titleField.focus();
+                alert('{% trans "Position title is required" %}');
+                return false;
+            }
+
+            if (codeField && !codeField.value.trim()) {
+                e.preventDefault();
+                codeField.focus();
+                alert('{% trans "Position code is required" %}');
+                return false;
+            }
+
+            if (departmentField && !departmentField.value) {
+                e.preventDefault();
+                departmentField.focus();
+                alert('{% trans "Department is required" %}');
+                return false;
+            }
+        });
+    }
+
+    // Auto-generate position code if empty
+    const titleField = document.querySelector('#{{ form.title.id_for_label }}');
+    const codeField = document.querySelector('#{{ form.code.id_for_label }}');
+
+    if (titleField && codeField && !codeField.value) {
+        titleField.addEventListener('input', function() {
+            if (!codeField.value) {
+                const title = this.value.trim();
+                if (title) {
+                    // Generate code from first few letters of title
+                    const code = title.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, '');
+                    if (code.length >= 2) {
+                        codeField.value = code;
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

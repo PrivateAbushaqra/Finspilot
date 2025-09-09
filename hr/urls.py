@@ -81,6 +81,7 @@ urlpatterns = [
     path('documents/', views.EmployeeDocumentListView.as_view(), name='employee_document_list'),
     path('documents/<int:pk>/', views.EmployeeDocumentDetailView.as_view(), name='employee_document_detail'),
     path('documents/create/', views.EmployeeDocumentCreateView.as_view(), name='employee_document_create'),
+    path('documents/create/<int:employee_id>/', views.EmployeeDocumentCreateView.as_view(), name='employee_document_create_with_employee'),
     path('documents/<int:pk>/edit/', views.EmployeeDocumentUpdateView.as_view(), name='employee_document_edit'),
     path('documents/<int:pk>/delete/', views.EmployeeDocumentDeleteView.as_view(), name='employee_document_delete'),
     path('documents/expiring/', views.expiring_documents, name='expiring_documents'),

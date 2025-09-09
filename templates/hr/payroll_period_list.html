@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load i18n %}
+{% load currency_tags %}
 
 {% block title %}{% trans "Payroll Periods" %} - {{ block.super }}{% endblock %}
 
@@ -49,7 +50,7 @@
                                             </span>
                                         </td>
                                         <td>
-                                            <strong>{{ period.total_gross_salary|floatformat:2 }} {% trans "SAR" %}</strong>
+                                            <strong>{{ period.total_gross_salary|currency_format }}</strong>
                                         </td>
                                         <td>
                                             <span class="badge bg-{% if period.is_processed %}success{% else %}warning{% endif %}">

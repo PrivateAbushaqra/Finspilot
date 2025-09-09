@@ -628,6 +628,16 @@ class PositionDetailView(HRMixin, DetailView):
     template_name = 'hr/position_detail.html'
     context_object_name = 'position'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        position = self.get_object()
+        
+        # Add employee statistics to context
+        context['active_employees_count'] = position.employees.filter(status='active').count()
+        context['inactive_employees_count'] = position.employees.filter(status='inactive').count()
+        
+        return context
+
 
 class PositionCreateView(HRMixin, PermissionRequiredMixin, CreateView):
     model = Position
@@ -755,6 +765,18 @@ class AttendanceCreateView(HRMixin, PermissionRequiredMixin, CreateView):
     template_name = 'hr/attendance_form.html'
     success_url = reverse_lazy('hr:attendance_list')
     permission_required = 'hr.can_manage_attendance'
+
+    def get_initial(self):
+        initial = super().get_initial()
+        employee_id = self.request.GET.get('employee')
+        if employee_id:
+            try:
+                from .models import Employee
+                employee = Employee.objects.get(pk=employee_id)
+                initial['employee'] = employee
+            except Employee.DoesNotExist:
+                pass
+        return initial
     
     def form_valid(self, form):
         form.instance.created_by = self.request.user
@@ -844,9 +866,32 @@ class LeaveRequestCreateView(HRMixin, CreateView):
     template_name = 'hr/leave_request_form.html'
     success_url = reverse_lazy('hr:leave_request_list')
 
+    def get_initial(self):
+        initial = super().get_initial()
+        employee_id = self.request.GET.get('employee')
+        if employee_id:
+            try:
+                from .models import Employee
+                employee = Employee.objects.get(pk=employee_id)
+                initial['employee'] = employee
+            except Employee.DoesNotExist:
+                pass
+        return initial
+
     def form_valid(self, form):
         form.instance.created_by = self.request.user
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        
+        # تسجيل النشاط
+        from core.signals import log_user_activity
+        log_user_activity(
+            self.request,
+            'create',
+            form.instance,
+            f'تم إنشاء طلب إجازة للموظف {form.instance.employee.full_name} من نوع {form.instance.leave_type.name}'
+        )
+        
+        return response
 
 
 class LeaveRequestUpdateView(HRMixin, UpdateView):
@@ -855,11 +900,37 @@ class LeaveRequestUpdateView(HRMixin, UpdateView):
     template_name = 'hr/leave_request_form.html'
     success_url = reverse_lazy('hr:leave_request_list')
 
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        
+        # تسجيل النشاط
+        from core.signals import log_user_activity
+        log_user_activity(
+            self.request,
+            'update',
+            form.instance,
+            f'تم تحديث طلب إجازة للموظف {form.instance.employee.full_name}'
+        )
+        
+        return response
+
 
 class LeaveRequestDeleteView(HRMixin, DeleteView):
     model = LeaveRequest
     template_name = 'hr/leave_request_confirm_delete.html'
     success_url = reverse_lazy('hr:leave_request_list')
+
+    def delete(self, request, *args, **kwargs):
+        leave_request = self.get_object()
+        # تسجيل النشاط قبل الحذف
+        from core.signals import log_user_activity
+        log_user_activity(
+            request,
+            'delete',
+            leave_request,
+            f'تم حذف طلب إجازة للموظف {leave_request.employee.full_name}'
+        )
+        return super().delete(request, *args, **kwargs)
 
 
 # Leave Type Views
@@ -986,6 +1057,38 @@ class EmployeeDocumentCreateView(HRMixin, CreateView):
     template_name = 'hr/employee_document_form.html'
     success_url = reverse_lazy('hr:employee_document_list')
 
+    def get_initial(self):
+        initial = super().get_initial()
+        employee_id = self.kwargs.get('employee_id') or self.request.GET.get('employee')
+        if employee_id:
+            try:
+                employee = Employee.objects.get(pk=employee_id)
+                initial['employee'] = employee
+            except Employee.DoesNotExist:
+                pass
+        return initial
+
+    def form_valid(self, form):
+        # تعيين المستخدم الذي قام بالرفع
+        form.instance.uploaded_by = self.request.user
+        
+        response = super().form_valid(form)
+        
+        # تسجيل النشاط
+        create_hr_audit_log(
+            request=self.request,
+            action_type="create",
+            content_type_model=EmployeeDocument,
+            object_id=self.object.id,
+            description=_("Created employee document: %(title)s for employee %(employee)s") % {
+                'title': self.object.title,
+                'employee': self.object.employee.full_name
+            }
+        )
+        
+        messages.success(self.request, _('Employee document created successfully.'))
+        return response
+
 
 class EmployeeDocumentUpdateView(HRMixin, UpdateView):
     model = EmployeeDocument
@@ -993,11 +1096,52 @@ class EmployeeDocumentUpdateView(HRMixin, UpdateView):
     template_name = 'hr/employee_document_form.html'
     success_url = reverse_lazy('hr:employee_document_list')
 
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        
+        # تسجيل النشاط
+        create_hr_audit_log(
+            request=self.request,
+            action_type="update",
+            content_type_model=EmployeeDocument,
+            object_id=self.object.id,
+            description=_("Updated employee document: %(title)s for employee %(employee)s") % {
+                'title': self.object.title,
+                'employee': self.object.employee.full_name
+            }
+        )
+        
+        messages.success(self.request, _('Employee document updated successfully.'))
+        return response
+
 
 class EmployeeDocumentDeleteView(HRMixin, DeleteView):
     model = EmployeeDocument
     template_name = 'hr/employee_document_confirm_delete.html'
     success_url = reverse_lazy('hr:employee_document_list')
+
+    def delete(self, request, *args, **kwargs):
+        # حفظ البيانات قبل الحذف للتسجيل
+        obj = self.get_object()
+        employee_name = obj.employee.full_name
+        document_title = obj.title
+        
+        response = super().delete(request, *args, **kwargs)
+        
+        # تسجيل النشاط
+        create_hr_audit_log(
+            request=request,
+            action_type="delete",
+            content_type_model=EmployeeDocument,
+            object_id=None,  # لا يمكن الحصول على ID بعد الحذف
+            description=_("Deleted employee document: %(title)s for employee %(employee)s") % {
+                'title': document_title,
+                'employee': employee_name
+            }
+        )
+        
+        messages.success(request, _('Employee document deleted successfully.'))
+        return response
 
 
 # Report Views

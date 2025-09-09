@@ -367,6 +367,12 @@ class EmployeeDocumentForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['employee'].queryset = Employee.objects.filter(status='active')
+        
+        # إذا كان هناك instance (تحديث)، اجعل حقل employee غير قابل للتعديل
+        if self.instance and self.instance.pk:
+            self.fields['employee'].disabled = True
+            # في حالة التحديث، الملف غير مطلوب
+            self.fields['file'].required = False
 
 
 class DepartmentForm(forms.ModelForm):

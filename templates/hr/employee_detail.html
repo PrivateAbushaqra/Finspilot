@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load i18n %}
+{% load currency_tags %}
 
 {% block title %}
     {{ employee.first_name }} {{ employee.last_name }} - {% trans "Employee Details" %} - {{ block.super }}
@@ -201,7 +202,7 @@
                         </div>
                         <div class="col-md-3 mb-3">
                             <label class="text-muted small">{% trans "Salary" %}</label>
-                            <p class="mb-0">{{ employee.current_contract.salary|floatformat:2 }} {{ employee.current_contract.currency }}</p>
+                            <p class="mb-0">{{ employee.current_contract.salary|currency_format }}</p>
                         </div>
                         {% if employee.current_contract.notes %}
                         <div class="col-12">
