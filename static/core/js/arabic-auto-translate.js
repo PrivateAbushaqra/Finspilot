@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
         'Change': 'تغيير', 
         'Chart': 'مخطط', 
         'Charts': 'المخططات', 
-        'Check': 'فحص', 
+        'Check': 'شيك', 
         'Checks': 'الشيكات', 
         'Checks Management': 'إدارة الشيكات',
         'Color': 'اللون', 

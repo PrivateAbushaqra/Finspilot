@@ -12,6 +12,7 @@ from decimal import Decimal
 from django.views.generic import View
 from django.utils.decorators import method_decorator
 from django.db.models import ProtectedError
+from core.models import AuditLog
 
 from .models import Cashbox, CashboxTransfer, CashboxTransaction
 from banks.models import BankAccount
@@ -107,6 +108,17 @@ def cashbox_create(request):
                         created_by=request.user
                     )
                 
+                # تسجيل النشاط في سجل الأنشطة
+                AuditLog.objects.create(
+                    user=request.user,
+                    action='CREATE',
+                    model_name='Cashbox',
+                    object_id=cashbox.id,
+                    details=f'إنشاء صندوق نقدي جديد: {name}',
+                    ip_address=request.META.get('REMOTE_ADDR'),
+                    user_agent=request.META.get('HTTP_USER_AGENT')
+                )
+                
                 messages.success(request, _('Cashbox created successfully'))
                 return redirect('cashboxes:cashbox_detail', cashbox_id=cashbox.id)
         except Exception as e:
@@ -138,6 +150,17 @@ def cashbox_edit(request, cashbox_id):
             cashbox.location = location
             cashbox.responsible_user_id = responsible_user_id if responsible_user_id else None
             cashbox.save()
+            
+            # تسجيل النشاط في سجل الأنشطة
+            AuditLog.objects.create(
+                user=request.user,
+                action='UPDATE',
+                model_name='Cashbox',
+                object_id=cashbox_id,
+                details=f'تعديل الصندوق: {name}',
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT')
+            )
             
             messages.success(request, _('Cashbox updated successfully'))
             return redirect('cashboxes:cashbox_detail', cashbox_id=cashbox_id)

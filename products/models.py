@@ -21,6 +21,14 @@ class Category(models.Model):
         verbose_name = _('فئة')
         verbose_name_plural = _('الفئات')
         ordering = ['sequence_number']
+        permissions = [
+            ('can_view_products', _('يمكن عرض الفئات والمنتجات')),
+            ('can_add_products', _('يمكن إضافة المنتجات')),
+            ('can_add_categories', _('يمكن إضافة الفئات')),
+            ('can_edit_categories', _('يمكن تعديل الفئات')),
+            ('can_delete_categories', _('يمكن حذف الفئات')),
+            ('can_delete_products', _('يمكن حذف المنتجات')),
+        ]
 
     def save(self, *args, **kwargs):
         if not self.sequence_number:
@@ -88,6 +96,14 @@ class Product(models.Model):
         verbose_name = _('منتج')
         verbose_name_plural = _('المنتجات')
         ordering = ['code', 'name']
+        permissions = [
+            ('can_view_products', _('يمكن عرض الفئات والمنتجات')),
+            ('can_add_products', _('يمكن إضافة المنتجات')),
+            ('can_add_categories', _('يمكن إضافة الفئات')),
+            ('can_edit_categories', _('يمكن تعديل الفئات')),
+            ('can_delete_categories', _('يمكن حذف الفئات')),
+            ('can_delete_products', _('يمكن حذف المنتجات')),
+        ]
 
     def __str__(self):
         return f"{self.code} - {self.name}"

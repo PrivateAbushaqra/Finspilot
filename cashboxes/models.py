@@ -22,6 +22,11 @@ class Cashbox(models.Model):
         verbose_name = _('صندوق نقدي')
         verbose_name_plural = _('الصناديق النقدية')
         ordering = ['name']
+        permissions = [
+            ('can_add_cashboxes', _('يمكن إضافة الصناديق النقدية')),
+            ('can_edit_cashboxes', _('يمكن تعديل الصناديق النقدية')),
+            ('can_delete_cashboxes', _('يمكن حذف الصناديق النقدية')),
+        ]
 
     def __str__(self):
         return self.name

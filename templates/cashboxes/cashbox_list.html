@@ -17,9 +17,11 @@
                             <i class="fas fa-print me-1"></i>
                             {% trans "Print Full Report" %}
                         </button>
+                        {% if user.is_superuser or user.user_type in 'superadmin,admin' or perms.cashboxes.can_add_cashboxes %}
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCashboxModal">
                             <i class="fas fa-plus"></i> {% trans "Create New Cashbox" %}
                         </button>
+                        {% endif %}
                     </div>
                 </div>
                 <div class="card-body">
@@ -77,13 +79,15 @@
                                                    class="btn btn-sm btn-outline-primary" title="{% trans "View" %}">
                                                     <i class="fas fa-eye"></i> {% trans "View" %}
                                                 </a>
+                                                {% if user.is_superuser or user.user_type in 'superadmin,admin' or perms.cashboxes.can_edit_cashboxes %}
                                                 <button type="button" class="btn btn-sm btn-outline-warning" 
                                                         data-bs-toggle="modal" 
                                                         data-bs-target="#editCashboxModal{{ cashbox.id }}"
                                                         title="{% trans "Edit" %}">
                                                     <i class="fas fa-edit"></i> {% trans "Edit" %}
                                                 </button>
-                                                {% if user.is_superuser or user.is_staff %}
+                                                {% endif %}
+                                                {% if user.is_superuser or user.user_type in 'superadmin,admin' or perms.cashboxes.can_delete_cashboxes %}
                                                     {% if cashbox.balance == 0 %}
                                                     <button type="button" class="btn btn-sm btn-outline-danger" 
                                                             data-bs-toggle="modal" 

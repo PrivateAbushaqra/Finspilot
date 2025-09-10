@@ -922,5 +922,5 @@ def toggle_superuser_visibility(request):
     return JsonResponse({
         'success': True, 
         'hide_superusers': new_state,
-        'message': _('تم إخفاء المستخدمين ذوي الصلاحيات العالية') if new_state else _('تم إظهار المستخدمين ذوي الصلاحيات العالية')
+        'message': _('High privileged users are hidden') if new_state else _('High privileged users are shown.')
     })

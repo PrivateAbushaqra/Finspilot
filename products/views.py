@@ -176,6 +176,18 @@ class CategoryDeleteView(LoginRequiredMixin, View):
             
             # حذف التصنيف
             category.delete()
+            
+            # تسجيل النشاط
+            AuditLog.objects.create(
+                user=request.user,
+                action='DELETE',
+                model_name='Category',
+                object_id=pk,
+                details=f'حذف الفئة: {category_name}',
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT')
+            )
+            
             messages.success(request, f'تم حذف التصنيف "{category_name}" بنجاح!')
             
         except Category.DoesNotExist:
@@ -734,6 +746,18 @@ class ProductDeleteView(LoginRequiredMixin, View):
             
             # إذا لم تكن هناك ارتباطات، احذف المنتج
             product.delete()
+            
+            # تسجيل النشاط في سجل الأنشطة
+            AuditLog.objects.create(
+                user=request.user,
+                action='DELETE',
+                model_name='Product',
+                object_id=pk,
+                details=f'حذف المنتج: {product_name} (الكود: {product.code})',
+                ip_address=request.META.get('REMOTE_ADDR'),
+                user_agent=request.META.get('HTTP_USER_AGENT')
+            )
+            
             messages.success(request, f'تم حذف المنتج "{product_name}" بنجاح!')
             
         except Exception as e:

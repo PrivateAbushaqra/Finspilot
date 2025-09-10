@@ -319,10 +319,13 @@
                                     </td>
                                     <td class="text-center">
                                         <div class="btn-group btn-group-sm">
+                                            {% if user.is_superuser or user.user_type in 'superadmin,admin' or perms.products.can_edit_categories %}
                                             <a href="{% url 'products:category_edit' category.pk %}" class="btn btn-outline-warning" title="{% trans "Edit" %}">
                                                 <i class="fas fa-edit me-1"></i>
                                                 <span>{% trans "Edit" %}</span>
                                             </a>
+                                            {% endif %}
+                                            {% if user.is_superuser or user.user_type in 'superadmin,admin' or perms.products.can_delete_categories %}
                                             <a href="{% url 'products:category_delete' category.pk %}" 
                                                class="btn btn-outline-danger" 
                                                title="{% trans "Delete" %}"
@@ -330,6 +333,7 @@
                                                 <i class="fas fa-trash me-1"></i>
                                                 <span>{% trans "Delete" %}</span>
                                             </a>
+                                            {% endif %}
                                         </div>
                                     </td>
                                 </tr>

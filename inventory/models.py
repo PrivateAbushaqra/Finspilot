@@ -23,6 +23,9 @@ class Warehouse(models.Model):
         verbose_name = _('مستودع')
         verbose_name_plural = _('المستودعات')
         ordering = ['name']
+        permissions = [
+            ('can_view_inventory', _('يمكن عرض المخزون')),
+        ]
 
     def __str__(self):
         if self.parent:
@@ -83,6 +86,9 @@ class InventoryMovement(models.Model):
         verbose_name = _('حركة مخزون')
         verbose_name_plural = _('حركات المخزون')
         ordering = ['-date', '-movement_number']
+        permissions = [
+            ('can_view_inventory', _('يمكن عرض المخزون')),
+        ]
 
     def __str__(self):
         return f"{self.movement_number} - {self.product.name}"

@@ -7,6 +7,7 @@ from django.utils.translation import gettext_lazy as _
 from decimal import Decimal
 from .models import BankAccount, BankTransfer, BankTransaction
 from settings.models import Currency, CompanySettings
+from core.signals import log_user_activity
 
 def clean_decimal_input(value):
     """
@@ -39,6 +40,15 @@ class BankAccountListView(LoginRequiredMixin, BanksViewPermissionMixin, Template
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        
+        # تسجيل النشاط في سجل الأنشطة
+        log_user_activity(
+            self.request,
+            'ACCESS',
+            None,
+            _('تم الوصول إلى قائمة الحسابات المصرفية')
+        )
+        
         accounts = BankAccount.objects.all()
         context['accounts'] = accounts
         context['total_accounts'] = accounts.count()
@@ -88,6 +98,15 @@ class BankAccountCreateView(LoginRequiredMixin, View):
         ):
             messages.error(request, _('You do not have permission to add bank accounts.'))
             return redirect('banks:account_list')
+        
+        # تسجيل النشاط في سجل الأنشطة
+        log_user_activity(
+            request,
+            'ACCESS',
+            None,
+            _('تم الوصول إلى صفحة إضافة حساب مصرفي')
+        )
+        
         context = {
             'currencies': Currency.get_active_currencies(),
             'base_currency': Currency.get_base_currency()

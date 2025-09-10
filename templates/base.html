@@ -725,6 +725,7 @@
                         {% endif %}
                         
                         <!-- Products & Categories -->
+                        {% if user.is_superuser or perms.products.can_view_products %}
                         <li class="nav-item">
                             <a class="nav-link" data-bs-toggle="collapse" href="#productsMenu">
                                 <i class="fas fa-boxes me-2"></i>
@@ -732,12 +733,16 @@
                             </a>
                             <div class="collapse" id="productsMenu">
                                 <ul class="nav flex-column ms-3">
+                                    {% if user.is_superuser or user.user_type in 'superadmin,admin' or perms.products.can_add_categories %}
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'products' and 'category_add' in request.path %}active{% endif %}" href="{% url 'products:category_add' %}">{% trans "Add Category" %}</a>
                                     </li>
+                                    {% endif %}
+                                    {% if user.is_superuser or user.user_type in 'superadmin,admin' or perms.products.can_add_products %}
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'products' and 'product_add' in request.path %}active{% endif %}" href="{% url 'products:product_add' %}">{% trans "Add Product" %}</a>
                                     </li>
+                                    {% endif %}
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'products' and 'category_list' in request.path %}active{% endif %}" href="{% url 'products:category_list' %}">{% trans "Categories List" %}</a>
                                     </li>
@@ -747,6 +752,7 @@
                                 </ul>
                             </div>
                         </li>
+                        {% endif %}
                         
                         <!-- Customers & Suppliers -->
                         <li class="nav-item">

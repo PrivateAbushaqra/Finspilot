@@ -35,6 +35,7 @@ class User(AbstractUser):
             ('can_access_sales', _('Can access sales')),
             ('can_access_purchases', _('Can access purchases')),
             ('can_access_inventory', _('Can access inventory')),
+            ('can_access_products', _('Can access products')),
             ('can_access_banks', _('Can access banks')),
             ('can_access_cashboxes', _('Can access cashboxes')),
             ('can_access_receipts', _('Can access receipts')),
@@ -75,6 +76,13 @@ class User(AbstractUser):
     def has_inventory_permission(self):
         return self.is_admin or self.has_perm('users.can_access_inventory')
 
+    def has_products_permission(self):
+        return (
+            self.is_admin
+            or self.has_perm('users.can_access_products')
+            or self.has_perm('products.can_view_products')
+        )
+
     def has_banks_permission(self):
         return (
             self.is_admin
@@ -83,7 +91,13 @@ class User(AbstractUser):
         )
 
     def has_cashboxes_permission(self):
-        return self.is_admin or self.has_perm('users.can_access_cashboxes')
+        return (
+            self.is_admin 
+            or self.has_perm('users.can_access_cashboxes')
+            or self.has_perm('cashboxes.can_add_cashboxes')
+            or self.has_perm('cashboxes.can_edit_cashboxes')
+            or self.has_perm('cashboxes.can_delete_cashboxes')
+        )
 
     def has_receipts_permission(self):
         return self.is_admin or self.has_perm('users.can_access_receipts')

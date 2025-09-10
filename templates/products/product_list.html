@@ -632,12 +632,14 @@
                                             <a href="{% url 'products:product_edit' product.pk %}" class="btn btn-outline-warning btn-sm" title="{% trans "Edit" %}">
                                                 <i class="fas fa-edit"></i>
                                             </a>
+                                            {% if user.is_superuser or user.user_type in 'superadmin,admin' or perms.products.can_delete_products %}
                                             <button class="btn btn-outline-danger btn-sm delete-product" 
                                                     data-product-name="{{ product.name }}" 
                                                     data-product-id="{{ product.pk }}" 
                                                     title="{% trans "Delete" %}">
                                                 <i class="fas fa-trash"></i>
                                             </button>
+                                            {% endif %}
                                         </div>
                                     </td>
                                 </tr>
