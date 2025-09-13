@@ -35,6 +35,10 @@ class Account(models.Model):
         verbose_name = _('حساب')
         verbose_name_plural = _('الحسابات')
         ordering = ['code', 'name']
+        default_permissions = ('add', 'change', 'delete', 'view')
+        permissions = [
+            ('view_journalaccount', _('Can view حساب')),
+        ]
 
     def __str__(self):
         return f"{self.code} - {self.name}"

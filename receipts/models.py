@@ -65,6 +65,9 @@ class PaymentReceipt(models.Model):
         verbose_name = _('سند قبض')
         verbose_name_plural = _('سندات القبض')
         ordering = ['-date', '-receipt_number']
+        permissions = [
+                ('can_access_receipts', _('يمكن الوصول إلى سندات القبض')),
+        ]
 
     def __str__(self):
         return f"{self.receipt_number} - {self.customer.name} - {self.amount}"

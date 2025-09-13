@@ -87,12 +87,28 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">
                     <i class="fas fa-building me-2"></i>
-                    إدارة الأصول
+                    {% trans "Asset Management" %}
                 </h5>
-                <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addAssetModal">
-                    <i class="fas fa-plus me-1"></i>
-                    {% trans "Add" %} أصل {% trans "New" %}
-                </button>
+                <div class="d-flex gap-2">
+                    {% if perms.assets_liabilities.add_asset %}
+                    <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addAssetModal">
+                        <i class="fas fa-plus me-1"></i>
+                        {% trans "Add" %} {% trans "Asset" %}
+                    </button>
+                    {% endif %}
+                    {% if perms.assets_liabilities.add_assetcategory %}
+                    <a href="{% url 'assets_liabilities:category_create_ajax' %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-folder-plus me-1"></i>
+                        {% trans "Add" %} {% trans "Asset Category" %}
+                    </a>
+                    {% endif %}
+                    {% if perms.assets_liabilities.add_depreciationentry %}
+                    <a href="#" class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#depreciationModal">
+                        <i class="fas fa-percentage me-1"></i>
+                        {% trans "Add" %} {% trans "Depreciation Entry" %}
+                    </a>
+                    {% endif %}
+                </div>
             </div>
             <div class="card-body">
                 <div class="list-group">
@@ -118,12 +134,22 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">
                     <i class="fas fa-credit-card me-2"></i>
-                    إدارة الخصوم
+                    {% trans "Liability Management" %}
                 </h5>
-                <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#addDeductionModal">
-                    <i class="fas fa-plus me-1"></i>
-                    {% trans "Add" %} خصم {% trans "New" %}
-                </button>
+                <div class="d-flex gap-2">
+                    {% if perms.assets_liabilities.add_liability %}
+                    <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#addDeductionModal">
+                        <i class="fas fa-plus me-1"></i>
+                        {% trans "Add" %} {% trans "Liability" %}
+                    </button>
+                    {% endif %}
+                    {% if perms.assets_liabilities.add_liabilitycategory %}
+                    <a href="{% url 'assets_liabilities:liability_category_create_ajax' %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-folder-plus me-1"></i>
+                        {% trans "Add" %} {% trans "Liability Category" %}
+                    </a>
+                    {% endif %}
+                </div>
             </div>
             <div class="card-body">
                 <div class="list-group">

@@ -30,6 +30,12 @@ class CustomerSupplier(models.Model):
         verbose_name = _('عميل/مورد')
         verbose_name_plural = _('العملاء والموردون')
         ordering = ['sequence_number']
+        permissions = [
+            ('can_view_customers_suppliers', _('يمكن مشاهدة العملاء/الموردين')),
+            ('can_add_customers_suppliers', _('يمكن إضافة عميل/مورد')),
+            ('can_edit_customers_suppliers', _('يمكن تعديل عميل/مورد')),
+            ('can_delete_customers_suppliers', _('يمكن حذف عميل/مورد')),
+        ]
 
     def save(self, *args, **kwargs):
         if not self.sequence_number:

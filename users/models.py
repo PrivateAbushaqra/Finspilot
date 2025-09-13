@@ -4,6 +4,98 @@ from django.utils.translation import gettext_lazy as _
 
 
 class User(AbstractUser):
+    def has_revenueexpenseentry_view_permission(self):
+        """
+        تعيد True إذا كان لدى المستخدم صلاحية عرض قيد إيراد/مصروف
+        سواء من دجانغو أو من المجموعات المخصصة
+        """
+        if self.is_admin:
+            return True
+        # تحقق من صلاحية دجانغو الافتراضية
+        if self.has_perm('revenues_expenses.view_revenueexpenseentry'):
+            return True
+        # تحقق من صلاحيات المجموعات المخصصة
+        try:
+            from users.models import UserGroupMembership
+            group_ids = UserGroupMembership.objects.filter(user=self).values_list('group_id', flat=True)
+            from users.models import UserGroup
+            for group in UserGroup.objects.filter(id__in=group_ids):
+                group_perms = group.permissions or {}
+                for perms_list in group_perms.values():
+                    if 'view_revenueexpenseentry' in perms_list:
+                        return True
+        except Exception:
+            pass
+        return False
+    def has_revenueexpensecategory_view_permission(self):
+        """
+        تعيد True إذا كان لدى المستخدم صلاحية عرض فئة إيراد/مصروف
+        سواء من دجانغو أو من المجموعات المخصصة
+        """
+        if self.is_admin:
+            return True
+        # تحقق من صلاحية دجانغو الافتراضية
+        if self.has_perm('revenues_expenses.view_revenueexpensecategory'):
+            return True
+        # تحقق من صلاحيات المجموعات المخصصة
+        try:
+            from users.models import UserGroupMembership
+            group_ids = UserGroupMembership.objects.filter(user=self).values_list('group_id', flat=True)
+            from users.models import UserGroup
+            for group in UserGroup.objects.filter(id__in=group_ids):
+                group_perms = group.permissions or {}
+                for perms_list in group_perms.values():
+                    if 'view_revenueexpensecategory' in perms_list:
+                        return True
+        except Exception:
+            pass
+        return False
+    def has_revenueexpensecategory_add_permission(self):
+        """
+        تعيد True إذا كان لدى المستخدم صلاحية إضافة فئة إيراد/مصروف
+        سواء من دجانغو أو من المجموعات المخصصة
+        """
+        if self.is_admin:
+            return True
+        # تحقق من صلاحية دجانغو الافتراضية
+        if self.has_perm('revenues_expenses.add_revenueexpensecategory'):
+            return True
+        # تحقق من صلاحيات المجموعات المخصصة
+        try:
+            from users.models import UserGroupMembership
+            group_ids = UserGroupMembership.objects.filter(user=self).values_list('group_id', flat=True)
+            from users.models import UserGroup
+            for group in UserGroup.objects.filter(id__in=group_ids):
+                group_perms = group.permissions or {}
+                for perms_list in group_perms.values():
+                    if 'add_revenueexpensecategory' in perms_list:
+                        return True
+        except Exception:
+            pass
+        return False
+    def has_revenueexpenseentry_add_permission(self):
+        """
+        تعيد True إذا كان لدى المستخدم صلاحية إضافة قيد إيراد/مصروف
+        سواء من دجانغو أو من المجموعات المخصصة
+        """
+        if self.is_admin:
+            return True
+        # تحقق من صلاحية دجانغو الافتراضية
+        if self.has_perm('revenues_expenses.add_revenueexpenseentry'):
+            return True
+        # تحقق من صلاحيات المجموعات المخصصة
+        try:
+            from users.models import UserGroupMembership
+            group_ids = UserGroupMembership.objects.filter(user=self).values_list('group_id', flat=True)
+            from users.models import UserGroup
+            for group in UserGroup.objects.filter(id__in=group_ids):
+                group_perms = group.permissions or {}
+                for perms_list in group_perms.values():
+                    if 'add_revenueexpenseentry' in perms_list:
+                        return True
+        except Exception:
+            pass
+        return False
     """مستخدم مخصص"""
     USER_TYPES = [
         ('superadmin', _('Super Admin')),
@@ -32,14 +124,11 @@ class User(AbstractUser):
             ('can_backup_system', _('System backup')),
             
             # صلاحيات الوصول للأقسام
-            ('can_access_sales', _('Can access sales')),
-            ('can_access_purchases', _('Can access purchases')),
+                ('can_access_sales', _('Can access sales')),
             ('can_access_inventory', _('Can access inventory')),
             ('can_access_products', _('Can access products')),
             ('can_access_banks', _('Can access banks')),
             ('can_access_cashboxes', _('Can access cashboxes')),
-            ('can_access_receipts', _('Can access receipts')),
-            ('can_access_reports', _('Can access reports')),
             ('can_access_pos', _('Can access POS')),
             ('can_access_company_settings', _('Can access company settings')),
             
@@ -71,7 +160,16 @@ class User(AbstractUser):
         return self.is_admin or self.has_perm('users.can_access_sales')
 
     def has_purchases_permission(self):
-        return self.is_admin or self.has_perm('users.can_access_purchases')
+        return (
+            self.is_admin
+            or self.has_perm('purchases.can_view_purchases')
+            or self.has_perm('purchases.can_view_debitnote')
+            or self.has_perm('purchases.can_view_purchasereturn')
+            or self.has_perm('purchases.add_purchaseinvoice')
+            or self.has_perm('purchases.add_purchasereturn')
+            or self.has_perm('purchases.view_purchaseinvoice')
+            or self.has_perm('purchases.can_view_purchase_statement')
+        )
 
     def has_inventory_permission(self):
         return self.is_admin or self.has_perm('users.can_access_inventory')
@@ -81,6 +179,7 @@ class User(AbstractUser):
             self.is_admin
             or self.has_perm('users.can_access_products')
             or self.has_perm('products.can_view_products')
+            or self.has_perm('products.can_edit_products')
         )
 
     def has_banks_permission(self):
@@ -100,7 +199,7 @@ class User(AbstractUser):
         )
 
     def has_receipts_permission(self):
-        return self.is_admin or self.has_perm('users.can_access_receipts')
+        return self.is_admin or self.has_perm('receipts.can_access_receipts')
 
     def has_reports_permission(self):
         return self.is_admin or self.has_perm('users.can_access_reports')
@@ -128,6 +227,82 @@ class User(AbstractUser):
     def has_system_management_permission(self):
         return self.is_admin or self.has_perm('users.can_access_system_management')
 
+    def has_revenues_expenses_permission(self):
+        """
+        تعيد True إذا كان لدى المستخدم أي صلاحية من قسم الإيرادات والمصروفات
+        سواء كانت الصلاحية مباشرة أو من خلال المجموعات الافتراضية أو المجموعات المخصصة (UserGroup).
+        تقرأ جميع الصلاحيات المخزنة في UserGroup لأي مفتاح.
+        """
+        if self.is_admin:
+            return True
+        # صلاحيات دجانغو الافتراضية
+        from django.contrib.auth.models import Permission
+        from django.contrib.contenttypes.models import ContentType
+        try:
+            ct = ContentType.objects.get(app_label='revenues_expenses')
+            perms_django = set(Permission.objects.filter(content_type=ct).values_list('codename', flat=True))
+        except Exception:
+            perms_django = set()
+        user_perms = set(self.get_all_permissions())
+        # صلاحيات المجموعات المخصصة
+        try:
+            from users.models import UserGroupMembership
+            group_ids = UserGroupMembership.objects.filter(user=self).values_list('group_id', flat=True)
+            from users.models import UserGroup
+            custom_perms = set()
+            for group in UserGroup.objects.filter(id__in=group_ids):
+                group_perms = group.permissions or {}
+                # اجمع جميع الصلاحيات لأي مفتاح
+                for perms_list in group_perms.values():
+                    for perm in perms_list:
+                        custom_perms.add(perm)
+        except Exception:
+            custom_perms = set()
+        # تحقق من أي صلاحية تخص الإيرادات والمصروفات
+        all_perms = user_perms.union(custom_perms)
+        for perm in all_perms:
+            if 'revenueexpense' in perm or 'revenues_expenses' in perm:
+                return True
+        return False
+    def has_journal_permission(self):
+        """
+        تعيد True إذا كان لدى المستخدم أي صلاحية من قسم القيود اليومية (journal)
+        سواء كانت الصلاحية مباشرة أو من خلال المجموعات الافتراضية أو المجموعات المخصصة (UserGroup).
+        """
+        if self.is_admin:
+            return True
+        # صلاحيات دجانغو الافتراضية
+        from django.contrib.auth.models import Permission
+        from django.contrib.contenttypes.models import ContentType
+        try:
+            ct = ContentType.objects.get(app_label='journal')
+            perms_django = set(Permission.objects.filter(content_type=ct).values_list('codename', flat=True))
+        except Exception:
+            perms_django = set()
+        user_perms = set(self.get_all_permissions())
+        # صلاحيات المجموعات المخصصة
+        try:
+            from users.models import UserGroupMembership
+            group_ids = UserGroupMembership.objects.filter(user=self).values_list('group_id', flat=True)
+            from users.models import UserGroup
+            custom_perms = set()
+            for group in UserGroup.objects.filter(id__in=group_ids):
+                group_perms = group.permissions or {}
+                for perms_list in group_perms.values():
+                    for perm in perms_list:
+                        custom_perms.add(perm)
+        except Exception:
+            custom_perms = set()
+        all_perms = user_perms.union(custom_perms)
+        for perm in all_perms:
+            if (
+                'journalentry' in perm or 'journal_entry' in perm or
+                'account' in perm or 'journalaccount' in perm or
+                'journalline' in perm or 'journal_line' in perm or
+                'journal' in perm
+            ):
+                return True
+        return False
     def save(self, *args, **kwargs):
         """حفظ المستخدم مع تعيين الصلاحيات حسب النوع"""
         is_new = self.pk is None

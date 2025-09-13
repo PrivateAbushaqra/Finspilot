@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-4"><i class="fas fa-edit me-2"></i> {{ page_title }}</h2>
+    <form method="post" novalidate>
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-success">
+            <i class="fas fa-save me-1"></i> {% trans "Save Changes" %}
+        </button>
+        <a href="{% url 'revenues_expenses:category_list' %}" class="btn btn-secondary ms-2">
+            <i class="fas fa-arrow-left me-1"></i> {% trans "Back to Categories" %}
+        </a>
+    </form>
+</div>
+{% endblock %}

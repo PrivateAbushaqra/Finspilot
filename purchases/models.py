@@ -35,6 +35,11 @@ class PurchaseInvoice(models.Model):
         verbose_name = _('Purchase Invoice')
         verbose_name_plural = _('Purchase Invoices')
         ordering = ['-date', '-invoice_number']
+        permissions = [
+            ('can_view_purchases', _('Can View Purchase')),
+            ('can_view_purchase_statement', _('Can View Purchase Statement')),
+        ]
+    # لا يجب تعريف صلاحية view_purchaseinvoice هنا لأنها افتراضية من Django
 
     def __str__(self):
         return f"{self.supplier_invoice_number} - {self.supplier.name}"
@@ -111,8 +116,11 @@ class PurchaseReturn(models.Model):
 
     class Meta:
         verbose_name = _('Purchase Return')
-        verbose_name_plural = _('Purchase Returns')
+        verbose_name_plural = _('Purchase Returns List')
         ordering = ['-date', '-return_number']
+        permissions = (
+            ('can_view_purchasereturn', _('Can view مردود مشتريات')),
+        )
 
     def __str__(self):
         return f"{self.return_number} - {self.original_invoice.supplier.name}"
@@ -198,6 +206,7 @@ class PurchaseDebitNote(models.Model):
         ordering = ['-date', '-note_number']
         permissions = (
             ('can_send_to_jofotara', 'Can send debit notes to JoFotara'),
+            ('can_view_debitnote', _('Can view اشعار مدين')),
         )
 
     def __str__(self):

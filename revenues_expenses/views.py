@@ -1,3 +1,46 @@
+
+
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.db import transaction
+from django.utils.translation import gettext_lazy as _
+from django.http import JsonResponse
+from django.core.paginator import Paginator
+from django.db.models import Q, Sum
+from django.urls import reverse
+from datetime import date, datetime
+from decimal import Decimal
+
+from .models import RevenueExpenseCategory, RevenueExpenseEntry, RecurringRevenueExpense
+from .forms import RevenueExpenseCategoryForm, RevenueExpenseEntryForm, RecurringRevenueExpenseForm
+from settings.models import CompanySettings
+
+@login_required
+def category_edit(request, category_id):
+    """تعديل فئة إيراد/مصروف"""
+    category = get_object_or_404(RevenueExpenseCategory, id=category_id)
+    # حماية الوصول حسب الصلاحية
+    if not request.user.is_admin and not request.user.has_perm('revenues_expenses.change_revenueexpensecategory'):
+        messages.error(request, _('ليس لديك صلاحية تعديل فئة إيراد/مصروف'))
+        return redirect('revenues_expenses:category_list')
+    if request.method == 'POST':
+        form = RevenueExpenseCategoryForm(request.POST, instance=category)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _('تم تعديل الفئة بنجاح'))
+            return redirect('revenues_expenses:category_list')
+        else:
+            messages.error(request, _('يرجى تصحيح الأخطاء في النموذج'))
+    else:
+        form = RevenueExpenseCategoryForm(instance=category)
+    context = {
+        'form': form,
+        'category': category,
+        'page_title': _('تعديل فئة إيراد/مصروف'),
+    }
+    return render(request, 'revenues_expenses/category_edit.html', context)
+
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -159,37 +202,40 @@ def revenue_expense_dashboard(request):
 @login_required
 def category_list(request):
     """قائمة فئات الإيرادات والمصروفات"""
+    # حماية الوصول حسب الصلاحية (دالة مخصصة)
+    if not request.user.has_revenueexpensecategory_view_permission():
+        messages.error(request, _('ليس لديك صلاحية عرض فئة إيراد/مصروف'))
+        return redirect('revenues_expenses:dashboard')
     categories = RevenueExpenseCategory.objects.filter(is_active=True).select_related('created_by')
-    
     # التصفية
     category_type = request.GET.get('type')
     if category_type:
         categories = categories.filter(type=category_type)
-    
     search = request.GET.get('search')
     if search:
         categories = categories.filter(
             Q(name__icontains=search) |
             Q(description__icontains=search)
         )
-    
     # الترقيم
     paginator = Paginator(categories, 25)
     page_number = request.GET.get('page')
     categories = paginator.get_page(page_number)
-    
     context = {
         'page_title': _('فئات الإيرادات والمصروفات'),
         'categories': categories,
         'category_types': RevenueExpenseCategory.CATEGORY_TYPES,
     }
-    
     return render(request, 'revenues_expenses/category_list.html', context)
 
 
 @login_required
 def category_create(request):
     """إضافة فئة جديدة"""
+    # حماية الوصول حسب الصلاحية
+    if not request.user.is_admin and not request.user.has_revenueexpensecategory_add_permission():
+        messages.error(request, _('ليس لديك صلاحية إضافة فئة إيراد/مصروف'))
+        return redirect('revenues_expenses:category_list')
     if request.method == 'POST':
         form = RevenueExpenseCategoryForm(request.POST)
         if form.is_valid():
@@ -202,7 +248,6 @@ def category_create(request):
             messages.error(request, _('يرجى تصحيح الأخطاء في النموذج'))
     else:
         form = RevenueExpenseCategoryForm()
-    
     context = {
         'form': form,
         'page_title': _('إضافة فئة جديدة'),
@@ -211,8 +256,32 @@ def category_create(request):
 
 
 @login_required
+def category_delete(request, category_id):
+    """حذف فئة الإيراد/المصروف"""
+    category = get_object_or_404(RevenueExpenseCategory, id=category_id)
+    # حماية الوصول حسب الصلاحية
+    if not request.user.is_admin and not request.user.has_perm('revenues_expenses.delete_revenueexpensecategory'):
+        messages.error(request, _('ليس لديك صلاحية حذف فئة إيراد/مصروف'))
+        return redirect('revenues_expenses:category_list')
+    if request.method == 'POST':
+        category.is_active = False
+        category.save()
+        messages.success(request, _('تم حذف الفئة بنجاح'))
+        return redirect('revenues_expenses:category_list')
+    context = {
+        'category': category,
+        'page_title': _('تأكيد حذف الفئة'),
+    }
+    return render(request, 'revenues_expenses/category_confirm_delete.html', context)
+
+
+@login_required
 def entry_create(request):
     """إضافة قيد جديد"""
+    # حماية الوصول حسب الصلاحية
+    if not request.user.is_admin and not request.user.has_revenueexpenseentry_add_permission():
+        messages.error(request, _('ليس لديك صلاحية إضافة قيد إيراد/مصروف'))
+        return redirect('revenues_expenses:entry_list')
     if request.method == 'POST':
         form = RevenueExpenseEntryForm(request.POST)
         if form.is_valid():
@@ -225,12 +294,54 @@ def entry_create(request):
             messages.error(request, _('يرجى تصحيح الأخطاء في النموذج'))
     else:
         form = RevenueExpenseEntryForm()
-    
     context = {
         'form': form,
         'page_title': _('إضافة قيد جديد'),
     }
     return render(request, 'revenues_expenses/entry_create.html', context)
+
+
+@login_required
+def entry_delete(request, entry_id):
+    """حذف قيد الإيراد/المصروف"""
+    entry = get_object_or_404(RevenueExpenseEntry, id=entry_id)
+    if not request.user.is_admin and not request.user.has_perm('revenues_expenses.delete_revenueexpenseentry'):
+        messages.error(request, _('ليس لديك صلاحية حذف قيد إيراد/مصروف'))
+        return redirect('revenues_expenses:entry_list')
+    if request.method == 'POST':
+        entry.delete()
+        messages.success(request, _('تم حذف القيد بنجاح'))
+        return redirect('revenues_expenses:entry_list')
+    context = {
+        'entry': entry,
+        'page_title': _('تأكيد حذف القيد'),
+    }
+    return render(request, 'revenues_expenses/entry_confirm_delete.html', context)
+
+
+@login_required
+def entry_edit(request, entry_id):
+    """تعديل قيد الإيراد/المصروف"""
+    entry = get_object_or_404(RevenueExpenseEntry, id=entry_id)
+    if not request.user.is_admin and not request.user.has_perm('revenues_expenses.change_revenueexpenseentry'):
+        messages.error(request, _('ليس لديك صلاحية تعديل قيد إيراد/مصروف'))
+        return redirect('revenues_expenses:entry_list')
+    if request.method == 'POST':
+        form = RevenueExpenseEntryForm(request.POST, instance=entry)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _('تم تعديل القيد بنجاح'))
+            return redirect('revenues_expenses:entry_detail', entry_id=entry.id)
+        else:
+            messages.error(request, _('يرجى تصحيح الأخطاء في النموذج'))
+    else:
+        form = RevenueExpenseEntryForm(instance=entry)
+    context = {
+        'form': form,
+        'entry': entry,
+        'page_title': _('تعديل قيد إيراد/مصروف'),
+    }
+    return render(request, 'revenues_expenses/entry_edit.html', context)
 
 
 @login_required
@@ -710,6 +821,10 @@ def entry_approve(request, entry_id):
 
 @login_required
 def entry_list(request):
+    # حماية الوصول حسب الصلاحية
+    if not request.user.is_admin and not request.user.has_revenueexpenseentry_view_permission():
+        messages.error(request, _('ليس لديك صلاحية عرض قيد إيراد/مصروف'))
+        return redirect('revenues_expenses:dashboard')
     """قائمة قيود الإيرادات والمصروفات"""
     entries = RevenueExpenseEntry.objects.select_related(
         'category', 'created_by', 'approved_by', 'currency'

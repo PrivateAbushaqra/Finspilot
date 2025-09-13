@@ -692,7 +692,6 @@ def liability_category_create_ajax(request):
                 description=f'إضافة فئة خصم جديدة: {category.name}',
                 user=request.user
             )
-            
             return JsonResponse({
                 'success': True,
                 'message': f'تم إنشاء الفئة "{category.name}" بنجاح',

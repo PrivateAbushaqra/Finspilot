@@ -12,12 +12,14 @@
         <i class="fas fa-file-invoice me-2"></i>
         قيود الإيرادات والمصروفات
     </h1>
+    {% if user.has_revenueexpenseentry_add_permission %}
     <div class="btn-toolbar mb-2 mb-md-0">
         <a href="{% url 'revenues_expenses:entry_create' %}" class="btn btn-primary">
             <i class="fas fa-plus me-1"></i>
             {% trans "Add" %} قيد {% trans "New" %}
         </a>
     </div>
+    {% endif %}
 </div>
 
 <!-- ف{% trans "No" %}تر {% trans "Search" %} -->
@@ -131,9 +133,19 @@
                                     <i class="fas fa-check"></i>
                                 </a>
                                 {% endif %}
-                                <button class="btn btn-outline-secondary" title="{% trans "Edit" %}">
+                                {% if user_is_admin or user_has_entry_change_perm %}
+                                <a href="{% url 'revenues_expenses:entry_edit' entry.id %}" class="btn btn-outline-secondary" title="تعديل قيد إيراد/مصروف">
                                     <i class="fas fa-edit"></i>
-                                </button>
+                                </a>
+                                {% endif %}
+                                {% if user_is_admin or user_has_entry_delete_perm %}
+                                <form method="post" action="{% url 'revenues_expenses:entry_delete' entry.id %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-danger" title="حذف قيد إيراد/مصروف" onclick="return confirm('هل أنت متأكد من حذف هذا القيد؟');">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>
@@ -178,10 +190,12 @@
             <i class="fas fa-file-invoice fa-3x text-muted mb-3"></i>
             <h4 class="text-muted">لا توجد قيود</h4>
             <p class="text-muted">لم يتم إنشاء أي قيود للإيرادات والمصروفات بعد</p>
+            {% if user.has_revenueexpenseentry_add_permission %}
             <a href="{% url 'revenues_expenses:entry_create' %}" class="btn btn-primary">
                 <i class="fas fa-plus me-1"></i>
                 {% trans "Add" %} أول قيد
             </a>
+            {% endif %}
         </div>
         {% endif %}
     </div>

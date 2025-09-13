@@ -153,8 +153,13 @@ def payment_voucher_list(request):
     return render(request, 'payments/voucher_list.html', context)
 
 
+from django.core.exceptions import PermissionDenied
+
 @login_required
 def payment_voucher_create(request):
+    if not request.user.has_perm('payments.add_paymentvoucher'):
+        messages.error(request, _('ليس لديك صلاحية إضافة سند صرف'))
+        raise PermissionDenied(_('ليس لديك صلاحية إضافة سند صرف'))
     """Create new payment voucher"""
     if request.method == 'POST':
         form = PaymentVoucherForm(request.POST)
@@ -193,11 +198,13 @@ def payment_voucher_create(request):
 
 @login_required
 def payment_voucher_detail(request, pk):
-    """Payment voucher details"""
+    """عرض تفاصيل سند الصرف (يتطلب صلاحية عرض فقط)"""
+    if not request.user.has_perm('payments.view_paymentvoucher'):
+        from django.core.exceptions import PermissionDenied
+        messages.error(request, _('ليس لديك صلاحية عرض تفاصيل سندات الصرف'))
+        raise PermissionDenied(_('ليس لديك صلاحية عرض تفاصيل سندات الصرف'))
     voucher = get_object_or_404(PaymentVoucher, pk=pk)
-    
     currency_symbol = get_currency_symbol()
-    
     context = {
         'voucher': voucher,
         'currency_symbol': currency_symbol,

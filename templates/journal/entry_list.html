@@ -12,9 +12,11 @@
             <div class="d-sm-flex align-items-center justify-content-between mb-4">
                 <h1 class="h3 mb-0 text-gray-800">{% trans "Journal Entries" %}</h1>
                 <div>
+                    {% if perms.journal.add_journalentry %}
                     <a href="{% url 'journal:entry_create' %}" class="btn btn-primary">
                         <i class="fas fa-plus me-2"></i>{% trans "Create New Entry" %}
                     </a>
+                    {% endif %}
                     <a href="{% url 'journal:entries_by_type' %}" class="btn btn-outline-secondary">
                         <i class="fas fa-filter me-2"></i>{% trans "Filter by Type" %}
                     </a>
@@ -158,10 +160,17 @@
                                                class="btn btn-sm btn-outline-primary" title="{% trans "View Details" %}">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            {% if user.is_superuser %}
+                                            {% if perms.journal.change_journalentry %}
+                                            <a href="{% url 'journal:entry_edit' entry.pk %}" 
+                                               class="btn btn-sm btn-outline-warning" 
+                                               title="{% trans "Edit Entry" %}">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            {% endif %}
+                                            {% if perms.journal.delete_journalentry %}
                                             <a href="{% url 'journal:entry_delete' entry.pk %}" 
                                                class="btn btn-sm btn-outline-danger" 
-                                               title="{% trans "Delete Entry" %} ({% trans "SuperAdmin Only" %})">
+                                               title="{% trans 'Delete Entry' %}">
                                                 <i class="fas fa-trash"></i>
                                             </a>
                                             {% endif %}

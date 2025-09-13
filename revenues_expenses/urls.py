@@ -4,12 +4,16 @@ from . import views
 app_name = 'revenues_expenses'
 
 urlpatterns = [
+    path('categories/<int:category_id>/delete/', views.category_delete, name='category_delete'),
+    path('entries/<int:entry_id>/delete/', views.entry_delete, name='entry_delete'),
+    path('entries/<int:entry_id>/edit/', views.entry_edit, name='entry_edit'),
     # لوحة التحكم
     path('', views.revenue_expense_dashboard, name='dashboard'),
     
     # فئات الإيرادات والمصروفات
     path('categories/', views.category_list, name='category_list'),
     path('categories/create/', views.category_create, name='category_create'),
+    path('categories/<int:category_id>/edit/', views.category_edit, name='category_edit'),
     
     # قيود الإيرادات والمصروفات
     path('entries/', views.entry_list, name='entry_list'),

@@ -295,6 +295,13 @@ def create_purchase_return_account_transaction(return_invoice, user):
         pass
 
 class PurchaseInvoiceListView(LoginRequiredMixin, ListView):
+    def dispatch(self, request, *args, **kwargs):
+        if not (request.user.has_perm('purchases.can_view_purchases') or request.user.has_perm('purchases.view_purchaseinvoice') or request.user.is_superuser):
+            from django.contrib import messages
+            from django.shortcuts import redirect
+            messages.error(request, 'ليس لديك صلاحية لعرض فواتير المشتريات')
+            return redirect('/')
+        return super().dispatch(request, *args, **kwargs)
     model = PurchaseInvoice
     template_name = 'purchases/invoice_list.html'
     context_object_name = 'invoices'
@@ -553,6 +560,17 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
 
 
 class PurchaseDebitNoteListView(LoginRequiredMixin, ListView):
+    def dispatch(self, request, *args, **kwargs):
+        if not (
+            request.user.has_perm('purchases.can_view_debitnote') or
+            request.user.has_perm('purchases.view_purchasedebitnote') or
+            request.user.is_superuser
+        ):
+            from django.contrib import messages
+            from django.shortcuts import redirect
+            messages.error(request, _('ليس لديك صلاحية لعرض اشعارات المدين'))
+            return redirect('/')
+        return super().dispatch(request, *args, **kwargs)
     model = PurchaseDebitNote
     template_name = 'purchases/debitnote_list.html'
     context_object_name = 'debitnotes'
@@ -567,6 +585,15 @@ class PurchaseDebitNoteListView(LoginRequiredMixin, ListView):
 
 @login_required
 def purchase_debitnote_create(request):
+    if not (
+        request.user.has_perm('purchases.can_view_debitnote') or
+        request.user.has_perm('purchases.add_purchasedebitnote') or
+        request.user.is_superuser
+    ):
+        from django.contrib import messages
+        from django.shortcuts import redirect
+        messages.error(request, _('ليس لديك صلاحية لإنشاء مذكرة دين'))
+        return redirect('/')
     if request.method == 'POST':
         try:
             with transaction.atomic():
@@ -951,6 +978,13 @@ class PurchaseInvoiceDeleteView(LoginRequiredMixin, DeleteView):
 # =================== Purchase Returns Views ===================
 
 class PurchaseReturnListView(LoginRequiredMixin, ListView):
+    def dispatch(self, request, *args, **kwargs):
+        if not (request.user.has_perm('purchases.can_view_purchasereturn') or request.user.has_perm('purchases.view_purchasereturn') or request.user.is_superuser):
+            from django.contrib import messages
+            from django.shortcuts import redirect
+            messages.error(request, 'ليس لديك صلاحية لعرض مردودات المشتريات')
+            return redirect('/')
+        return super().dispatch(request, *args, **kwargs)
     model = PurchaseReturn
     template_name = 'purchases/return_list.html'
     context_object_name = 'returns'
@@ -1403,6 +1437,16 @@ class PurchaseReportView(LoginRequiredMixin, TemplateView):
 
 
 class PurchaseStatementView(LoginRequiredMixin, TemplateView):
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.has_perm('purchases.can_view_purchase_statement') and not request.user.is_superuser:
+            from django.contrib import messages
+            from django.shortcuts import redirect
+            messages.error(request, 'ليس لديك صلاحية لعرض كشف المشتريات')
+            return redirect('/')
+        # تسجيل الدخول إلى سجل الأنشطة عند عرض كشف المشتريات
+        from core.signals import log_activity
+        log_activity(request.user, 'VIEW', None, 'عرض كشف المشتريات', request)
+        return super().dispatch(request, *args, **kwargs)
     """عرض كشف المشتريات"""
     template_name = 'purchases/purchase_statement.html'
 

@@ -87,10 +87,12 @@
                         <i class="fas fa-print me-1"></i>
                         {% trans "Print Full Report" %}
                     </button>
+                    {% if perms.customers.can_add_customers_suppliers %}
                     <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
                         <i class="fas fa-plus me-2"></i>
                         {% trans "Add New Customer" %}
                     </button>
+                    {% endif %}
                     <a href="{% url 'customers:list' %}" class="btn btn-outline-light">
                         <i class="fas fa-arrow-left me-2"></i>
                         العودة للوحة التحكم
@@ -245,15 +247,19 @@
                                         {% if customer.is_active %}{% trans "Active" %}{% else %}غير {% trans "Active" %}{% endif %}
                                     </span>
                                     <div class="btn-group btn-group-sm">
+                                        {% if perms.customers.can_edit_customers_suppliers %}
                                         <a href="{% url 'customers:edit' customer.pk %}" class="btn btn-outline-warning" title="{% trans "Edit" %}">
                                             <i class="fas fa-edit"></i>
                                         </a>
+                                        {% endif %}
                                         <a href="{% url 'customers:transactions' customer.pk %}" class="btn btn-outline-info" title="كشف الحساب">
                                             <i class="fas fa-receipt"></i>
                                         </a>
+                                        {% if perms.customers.can_delete_customers_suppliers and perms.customers.can_add_customers_suppliers and perms.customers.can_edit_customers_suppliers and perms.customers.can_view_customers_suppliers %}
                                         <a href="{% url 'customers:delete' customer.pk %}" class="btn btn-outline-danger" title="{% trans "Delete" %}">
                                             <i class="fas fa-trash"></i>
                                         </a>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
@@ -296,15 +302,19 @@
                                     </td>
                                     <td>
                                         <div class="btn-group btn-group-sm">
+                                            {% if perms.customers.can_edit_customers_suppliers %}
                                             <a href="{% url 'customers:edit' customer.pk %}" class="btn btn-outline-warning" title="{% trans "Edit" %}">
                                                 <i class="fas fa-edit"></i>
                                             </a>
+                                            {% endif %}
                                             <a href="{% url 'customers:transactions' customer.pk %}" class="btn btn-outline-info" title="كشف الحساب">
                                                 <i class="fas fa-receipt"></i>
                                             </a>
+                                            {% if perms.customers.can_delete_customers_suppliers and perms.customers.can_add_customers_suppliers and perms.customers.can_edit_customers_suppliers and perms.customers.can_view_customers_suppliers %}
                                             <a href="{% url 'customers:delete' customer.pk %}" class="btn btn-outline-danger" title="{% trans "Delete" %}">
                                                 <i class="fas fa-trash"></i>
                                             </a>
+                                            {% endif %}
                                         </div>
                                     </td>
                                 </tr>

@@ -24,6 +24,7 @@ class Category(models.Model):
         permissions = [
             ('can_view_products', _('يمكن عرض الفئات والمنتجات')),
             ('can_add_products', _('يمكن إضافة المنتجات')),
+            ('can_edit_products', _('يمكن تعديل المنتجات')),
             ('can_add_categories', _('يمكن إضافة الفئات')),
             ('can_edit_categories', _('يمكن تعديل الفئات')),
             ('can_delete_categories', _('يمكن حذف الفئات')),
@@ -99,6 +100,7 @@ class Product(models.Model):
         permissions = [
             ('can_view_products', _('يمكن عرض الفئات والمنتجات')),
             ('can_add_products', _('يمكن إضافة المنتجات')),
+            ('can_edit_products', _('يمكن تعديل المنتجات')),
             ('can_add_categories', _('يمكن إضافة الفئات')),
             ('can_edit_categories', _('يمكن تعديل الفئات')),
             ('can_delete_categories', _('يمكن حذف الفئات')),

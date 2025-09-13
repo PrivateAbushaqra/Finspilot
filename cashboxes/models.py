@@ -19,13 +19,15 @@ class Cashbox(models.Model):
     updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
 
     class Meta:
-        verbose_name = _('صندوق نقدي')
-        verbose_name_plural = _('الصناديق النقدية')
+        verbose_name = _('Cash Box')
+        verbose_name_plural = _('Cash Boxes')
         ordering = ['name']
         permissions = [
+            ('can_view_cashboxes', _('يمكن عرض الصناديق النقدية')),
             ('can_add_cashboxes', _('يمكن إضافة الصناديق النقدية')),
             ('can_edit_cashboxes', _('يمكن تعديل الصناديق النقدية')),
             ('can_delete_cashboxes', _('يمكن حذف الصناديق النقدية')),
+            ('can_modify_cashbox', _('تعديل صندوق')),
         ]
 
     def __str__(self):

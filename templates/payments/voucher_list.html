@@ -15,9 +15,11 @@
                         <i class="mdi mdi-printer me-1"></i>
                         {% trans "Print Full Report" %}
                     </button>
+                    {% if perms.payments.add_paymentvoucher %}
                     <a href="{% url 'payments:voucher_create' %}" class="btn btn-primary">
                         <i class="mdi mdi-plus"></i> {% trans "Add New Payment Voucher" %}
                     </a>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -193,12 +195,14 @@
                                                 <i class="mdi mdi-eye"></i> {% trans "View" %}
                                             </a>
                                             {% if not voucher.is_reversed %}
+                                            {% if perms.payments.change_paymentvoucher %}
                                             <a href="{% url 'payments:voucher_edit' voucher.pk %}" 
                                                class="btn btn-sm btn-outline-warning" title="{% trans "Edit" %}">
                                                 <i class="mdi mdi-pencil"></i> {% trans "Edit" %}
                                             </a>
                                             {% endif %}
-                                            {% if user.is_superuser or user.is_staff %}
+                                            {% endif %}
+                                            {% if perms.payments.delete_paymentvoucher %}
                                             <button type="button" 
                                                     class="btn btn-sm btn-outline-danger" 
                                                     title="{% trans "Delete" %}"
@@ -215,9 +219,11 @@
                                         <div class="py-4">
                                             <i class="mdi mdi-file-document-outline font-48 text-muted"></i>
                                             <p class="text-muted mt-2">{% trans "No payment vouchers found" %}</p>
+                                            {% if perms.payments.add_paymentvoucher %}
                                             <a href="{% url 'payments:voucher_create' %}" class="btn btn-primary">
                                                 {% trans "Create New Payment Voucher" %}
                                             </a>
+                                            {% endif %}
                                         </div>
                                     </td>
                                 </tr>

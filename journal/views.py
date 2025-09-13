@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.db.models import Q, Sum
 from django.db import transaction
 from django.utils.translation import gettext_lazy as _
@@ -71,7 +71,12 @@ def account_list(request):
             Q(description__icontains=search)
         )
     
-    # التصفية حسب النوع
+    from django.contrib.auth.decorators import login_required, permission_required
+
+    @login_required
+    @permission_required('journal.view_journalaccount', raise_exception=True)
+    def account_list(request):
+        """قائمة الحسابات"""
     account_type = request.GET.get('type')
     if account_type:
         accounts = accounts.filter(account_type=account_type)
@@ -98,9 +103,8 @@ def account_list(request):
     except Exception:
         pass
     return render(request, 'journal/account_list.html', context)
-
-
 @login_required
+@permission_required('journal.add_journalaccount', raise_exception=True)
 def account_create(request):
     """إنشاء حساب جديد"""
     is_modal = request.GET.get('modal') == '1'
@@ -384,6 +388,54 @@ def journal_entry_create(request):
 
 
 @login_required
+@permission_required('journal.change_journalentry', raise_exception=True)
+def journal_entry_edit(request, pk):
+    """تعديل قيد محاسبي"""
+    entry = get_object_or_404(JournalEntry, pk=pk)
+    if request.method == 'POST':
+        form = JournalEntryForm(request.POST, instance=entry)
+        formset = JournalLineFormSet(request.POST, instance=entry)
+        try:
+            if form.is_valid() and formset.is_valid():
+                with transaction.atomic():
+                    entry = form.save()
+                    formset.instance = entry
+                    formset.save()
+                    entry.clean()
+                    total_debit = entry.lines.aggregate(total=Sum('debit'))['total'] or Decimal('0')
+                    entry.total_amount = total_debit
+                    entry.save()
+                # سجل النشاط
+                try:
+                    from core.models import AuditLog
+                    AuditLog.objects.create(
+                        user=request.user,
+                        action_type='update',
+                        content_type='JournalEntry',
+                        object_id=entry.pk,
+                        description=f'تم تعديل القيد المحاسبي رقم {entry.entry_number} بإجمالي {entry.total_amount}'
+                    )
+                except Exception:
+                    pass
+                messages.success(request, _('تم تعديل القيد بنجاح'))
+                return redirect('journal:entry_detail', pk=entry.pk)
+            else:
+                messages.error(request, _('يرجى تصحيح الأخطاء في النموذج'))
+        except Exception as e:
+            messages.error(request, _('حدث خطأ أثناء تعديل القيد: ') + str(e))
+    else:
+        form = JournalEntryForm(instance=entry)
+        formset = JournalLineFormSet(instance=entry)
+    context = {
+        'form': form,
+        'formset': formset,
+        'accounts': Account.objects.filter(is_active=True).order_by('code'),
+        'title': _('تعديل قيد محاسبي'),
+        'entry': entry
+    }
+    return render(request, 'journal/entry_create.html', context)
+
+@login_required
 def journal_entry_detail(request, pk):
     """تفاصيل القيد المحاسبي"""
     entry = get_object_or_404(JournalEntry, pk=pk)
@@ -655,8 +707,8 @@ def journal_entry_detail_with_lines(request, pk):
 def delete_journal_entry(request, pk):
     """حذف قيد محاسبي (للمشرفين العليين فقط)"""
     # التحقق من صلاحيات المستخدم
-    if not request.user.is_superuser:
-        messages.error(request, _('ليس لديك صلاحية لحذف القيود المحاسبية. هذه الصلاحية مقتصرة على المشرفين العليين فقط.'))
+    if not request.user.has_perm('journal.delete_journalentry'):
+        messages.error(request, _('ليس لديك صلاحية لحذف القيود المحاسبية.'))
         return redirect('journal:entry_list')
     
     entry = get_object_or_404(JournalEntry, pk=pk)
@@ -668,38 +720,36 @@ def delete_journal_entry(request, pk):
                 entry_description = entry.description
                 entry_type = entry.get_reference_type_display()
                 entry_amount = entry.total_amount
-                
                 # تسجيل النشاط قبل الحذف
-                from core.signals import log_activity
-                log_activity(
-                    action_type='delete',
-                    obj=None,  # لأن الكائن سيتم حذفه
-                    description=f'حذف القيد المحاسبي رقم {entry_number} - النوع: {entry_type} - المبلغ: {entry_amount} - الوصف: {entry_description[:50]}',
-                    user=request.user
-                )
-                
+                try:
+                    from core.models import AuditLog
+                    AuditLog.objects.create(
+                        user=request.user,
+                        action_type='delete',
+                        content_type='JournalEntry',
+                        object_id=entry.pk,
+                        description=f"تم حذف القيد المحاسبي رقم {entry_number} - النوع: {entry_type} - المبلغ: {entry_amount} - الوصف: {entry_description[:50]}"
+                    )
+                except Exception:
+                    pass
                 # حذف القيد
                 entry.delete()
-                
-                messages.success(request, f'تم حذف القيد المحاسبي {entry_number} بنجاح')
-                
+                messages.success(request, _('تم حذف القيد المحاسبي بنجاح'))
         except Exception as e:
-            messages.error(request, f'خطأ في حذف القيد المحاسبي: {str(e)}')
-            
+            messages.error(request, _('خطأ في حذف القيد المحاسبي: ') + str(e))
             # تسجيل خطأ الحذف في سجل الأنشطة
             try:
-                from core.signals import log_activity
-                log_activity(
+                from core.models import AuditLog
+                AuditLog.objects.create(
+                    user=request.user,
                     action_type='error',
-                    obj=entry,
-                    description=f'فشل في حذف القيد المحاسبي رقم {entry.entry_number}: {str(e)}',
-                    user=request.user
+                    content_type='JournalEntry',
+                    object_id=entry.pk,
+                    description=f'فشل في حذف القيد المحاسبي رقم {entry.entry_number}: {str(e)}'
                 )
-            except:
+            except Exception:
                 pass
-        
         return redirect('journal:entry_list')
-    
     context = {
         'entry': entry,
         'lines': entry.lines.all(),

@@ -3,6 +3,7 @@ from django.dispatch import receiver
 from django.contrib.contenttypes.models import ContentType
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.signals import user_logged_in, user_logged_out
+from django.db.models.signals import m2m_changed
 from .models import AuditLog
 from .middleware import get_current_user, get_current_request
 from .utils import get_client_ip
@@ -11,6 +12,11 @@ from django.conf import settings
 
 """تم نقل دالة get_client_ip إلى core.utils.get_client_ip لتجنب التكرار."""
 
+from django.contrib.auth import get_user_model
+
+from django.contrib.auth.models import Permission, Group
+
+User = get_user_model()
 
 def log_activity(user, action_type, obj, description, request=None):
     """تسجيل نشاط في سجل المراجعة"""
@@ -52,6 +58,30 @@ def log_user_activity(request, action_type, obj, description):
     if hasattr(request, 'user'):
         log_activity(request.user, action_type, obj, description, request)
 
+def sync_user_permissions(user):
+    """تزامن صلاحيات المستخدم مع صلاحيات مجموعاته"""
+    perms = Permission.objects.filter(group__user=user)
+    user.user_permissions.set(perms)
+    user.save(update_fields=["updated_at"])
+
+def sync_group_users_permissions(group):
+    """تحديث صلاحيات جميع أعضاء المجموعة عند تعديل صلاحيات المجموعة"""
+    for user in group.user_set.all():
+        sync_user_permissions(user)
+
+# عند تعديل صلاحيات المجموعة
+def group_permissions_changed(sender, instance, action, **kwargs):
+    if action in ["post_add", "post_remove", "post_clear"]:
+        sync_group_users_permissions(instance)
+
+m2m_changed.connect(group_permissions_changed, sender=Group.permissions.through)
+
+# عند تعديل عضوية المستخدم في المجموعات
+def user_groups_changed(sender, instance, action, **kwargs):
+    if action in ["post_add", "post_remove", "post_clear"]:
+        sync_user_permissions(instance)
+
+m2m_changed.connect(user_groups_changed, sender=User.groups.through)
 
 def get_model_description(instance, action_type):
     """الحصول على وصف تفصيلي للنموذج حسب نوعه"""

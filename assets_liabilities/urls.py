@@ -17,6 +17,9 @@ urlpatterns = [
     # إدارة الفئات
     path('categories/create-ajax/', views.category_create_ajax, name='category_create_ajax'),
     path('liability-categories/create-ajax/', views.liability_category_create_ajax, name='liability_category_create_ajax'),
+
+    # قيد الإهلاك
+    path('assets/<int:asset_id>/depreciation/create/', views.depreciation_create, name='depreciation_create'),
     
     # الخصوم
     path('liabilities/', views.liability_list, name='liability_list'),

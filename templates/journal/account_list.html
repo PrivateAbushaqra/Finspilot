@@ -11,9 +11,11 @@
         <div class="col-12">
             <div class="d-sm-flex align-items-center justify-content-between mb-4">
                 <h1 class="h3 mb-0 text-gray-800">{% if LANGUAGE_CODE == 'ar' %}قائمة الحسابات{% else %}{% trans "Accounts List" %}{% endif %}</h1>
+                {% if perms.journal.add_account %}
                 <a href="{% url 'journal:account_create' %}" class="btn btn-primary">
                     <i class="fas fa-plus"></i> {% if LANGUAGE_CODE == 'ar' %}حساب جديد{% else %}{% trans "New Account" %}{% endif %}
                 </a>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -103,16 +105,18 @@
                                            class="btn btn-sm btn-info" title="{% if LANGUAGE_CODE == 'ar' %}تفاصيل{% else %}{% trans "Details" %}{% endif %}">
                                             <i class="fas fa-eye"></i>
                                         </a>
+                                        {% if perms.journal.change_account %}
                                         <a href="{% url 'journal:account_edit' account.pk %}" 
                                            class="btn btn-sm btn-warning" title="{% if LANGUAGE_CODE == 'ar' %}تعديل{% else %}{% trans "Edit" %}{% endif %}">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        {% if user.is_superuser or perms.users.can_delete_accounts %}
-                    <button type="button" class="btn btn-sm btn-danger" 
-                        title="{% trans "حذف" %}"
-                        data-name="{{ account.name|escapejs }}"
-                        data-url="{% url 'journal:account_delete' account.pk %}"
-                        onclick="confirmDelete(this.dataset.name, this.dataset.url)">
+                                        {% endif %}
+                                        {% if perms.journal.delete_account %}
+                                        <button type="button" class="btn btn-sm btn-danger" 
+                                            title="{% if LANGUAGE_CODE == 'ar' %}حذف{% else %}{% trans "Delete" %}{% endif %}"
+                                            data-name="{{ account.name|escapejs }}"
+                                            data-url="{% url 'journal:account_delete' account.pk %}"
+                                            onclick="confirmDelete(this.dataset.name, this.dataset.url)">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                         {% endif %}
@@ -164,8 +168,11 @@
                     <h5>{% trans "لا توجد حسابات" %}</h5>
                     <p>{% if LANGUAGE_CODE == 'ar' %}لم يتم العثور على حسابات تطابق معايير البحث{% else %}{% trans "No accounts found matching the search criteria" %}{% endif %}</p>
                     <a href="{% url 'journal:account_create' %}" class="btn btn-primary">
-                        {% if LANGUAGE_CODE == 'ar' %}إنشاء حساب جديد{% else %}{% trans "Create New Account" %}{% endif %}
-                    </a>
+                        {% if perms.journal.add_journalaccount %}
+                        <a href="{% url 'journal:account_create' %}" class="btn btn-primary">
+                            {% if LANGUAGE_CODE == 'ar' %}إنشاء حساب جديد{% else %}{% trans "Create New Account" %}{% endif %}
+                        </a>
+                        {% endif %}
                 </div>
             {% endif %}
         </div>

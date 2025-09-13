@@ -316,7 +316,7 @@
                             <tr>
                                 <td>{{ product.code }}</td>
                                 <td>{{ product.name }}</td>
-                                <td>{{ product.description|truncatechars:50|default:"{% trans "No" %} يوجد وصف" }}</td>
+                                <td>{{ product.description|default:_("لا يوجد وصف")|truncatechars:50 }}</td>
                                 <td>
                                     {% if product.last_purchase_price > 0 %}
                                         {{ product.last_purchase_price|floatformat:2 }}

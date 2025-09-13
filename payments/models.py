@@ -83,6 +83,9 @@ class PaymentVoucher(models.Model):
         verbose_name = _('Payment Voucher')
         verbose_name_plural = _('Payment Vouchers')
         ordering = ['-date', '-voucher_number']
+        permissions = [
+            ('can_access_payments', _('يمكن الوصول إلى سندات الصرف')),
+        ]
 
     def __str__(self):
         beneficiary = self.supplier.name if self.supplier else self.beneficiary_name

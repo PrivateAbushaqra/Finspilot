@@ -225,6 +225,11 @@ class CustomerSupplierCreateView(LoginRequiredMixin, View):
     template_name = 'customers/add.html'
     
     def get(self, request, *args, **kwargs):
+        if not request.user.has_perm('customers.can_add_customers_suppliers'):
+            from core.signals import log_view_activity
+            log_view_activity(request, 'denied', None, _('محاولة دخول صفحة إضافة عميل/مورد بدون صلاحية'))
+            messages.error(request, _('ليس لديك صلاحية لإضافة عميل/مورد'))
+            return redirect('customers:customer_list')
         return render(request, self.template_name)
     
     def post(self, request, *args, **kwargs):

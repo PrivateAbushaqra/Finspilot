@@ -1,6 +1,5 @@
-{% load i18n %}
-{% load custom_i18n %}
-{% get_current_language as LANGUAGE_CODE %}
+                                    {% load i18n %}
+                                    {% load custom_i18n %}
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE }}" {% if LANGUAGE_CODE == 'ar' %}dir="rtl"{% else %}dir="ltr"{% endif %}>
 <head>
@@ -88,38 +87,13 @@
             }
             
             .container, .container-fluid {
-                width: 100% !important;
-                max-width: none !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-            
-            .row {
-                margin: 0 !important;
-            }
-            
-            .col, .col-12, [class*="col-"] {
-                padding: 0 !important;
-                width: 100% !important;
-            }
-            
-            .card {
-                border: none !important;
-                box-shadow: none !important;
-                page-break-inside: avoid;
-                margin: 0;
-                width: 100%;
-            }
-            
-            .card-header {
-                background-color: #f8f9fa !important;
-                color: black !important;
-                border: 2px solid #000 !important;
-                text-align: center;
-                padding: 8px 0;
-                margin-bottom: 15px;
-                font-weight: bold;
-                font-size: 12pt;
+                    width: 100% !important;
+                    max-width: none !important;
+                    margin: 0 !important;
+                    padding: 8px 0;
+                    margin-bottom: 15px;
+                    font-weight: bold;
+                    font-size: 12pt;
             }
             
             .card-title, h1, h2, h3, h4, h5, h6, .page-title {
@@ -705,7 +679,7 @@
                         {% endif %}
                         
                         <!-- Payment Vouchers -->
-                        {% if user.has_receipts_permission %}
+                        {% if perms.payments.can_access_payments %}
                         <li class="nav-item">
                             <a class="nav-link" data-bs-toggle="collapse" href="#paymentsMenu">
                                 <i class="fas fa-money-bill-wave me-2"></i>
@@ -713,9 +687,11 @@
                             </a>
                             <div class="collapse" id="paymentsMenu">
                                 <ul class="nav flex-column ms-3">
+                                    {% if perms.payments.add_paymentvoucher %}
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'payments' and 'voucher_create' in request.path %}active{% endif %}" href="{% url 'payments:voucher_create' %}">{% trans "Add Payment Voucher" %}</a>
                                     </li>
+                                    {% endif %}
                                         <li class="nav-item">
                                             <a class="nav-link {% if active_menu == 'payments' and 'voucher_list' in request.path %}active{% endif %}" href="{% url 'payments:voucher_list' %}">{% trans "Vouchers List" %}</a>
                                         </li>
@@ -725,7 +701,7 @@
                         {% endif %}
                         
                         <!-- Products & Categories -->
-                        {% if user.is_superuser or perms.products.can_view_products %}
+                        {% if user.has_products_permission %}
                         <li class="nav-item">
                             <a class="nav-link" data-bs-toggle="collapse" href="#productsMenu">
                                 <i class="fas fa-boxes me-2"></i>
@@ -755,6 +731,7 @@
                         {% endif %}
                         
                         <!-- Customers & Suppliers -->
+                        {% if user.is_superuser or user.is_admin or perms.customers.can_view_customers_suppliers %}
                         <li class="nav-item">
                             <a class="nav-link" data-bs-toggle="collapse" href="#customersMenu">
                                 <i class="fas fa-users me-2"></i>
@@ -762,9 +739,11 @@
                             </a>
                             <div class="collapse" id="customersMenu">
                                 <ul class="nav flex-column ms-3">
+                                    {% if perms.customers.can_add_customers_suppliers %}
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'customers' and 'add' in request.path %}active{% endif %}" href="{% url 'customers:add' %}">{% trans "Add Customer/Supplier" %}</a>
                                     </li>
+                                    {% endif %}
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'customers' and 'customer_list' in request.path %}active{% endif %}" href="{% url 'customers:customer_list' %}">{% trans "Customers List" %}</a>
                                     </li>
@@ -776,6 +755,7 @@
                                     </li>
                                 </ul>
                             </div>
+                            {% endif %}
                         </li>
                         
                         <!-- Purchases -->
@@ -787,27 +767,36 @@
                             </a>
                             <div class="collapse" id="purchasesMenu">
                                 <ul class="nav flex-column ms-3">
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'purchases' and 'invoice_add' in request.path %}active{% endif %}" href="{% url 'purchases:invoice_add' %}">{% trans "Create Purchase Invoice" %}</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'purchases' and 'return_add' in request.path %}active{% endif %}" href="{% url 'purchases:return_add' %}">{% trans "Create Purchase Return" %}</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'purchases' and 'invoice_list' in request.path %}active{% endif %}" href="{% url 'purchases:invoice_list' %}">{% trans "Purchase Invoices List" %}</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'purchases' and 'return_list' in request.path %}active{% endif %}" href="{% url 'purchases:return_list' %}">{% trans "Purchase Returns List" %}</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'purchases' and 'debitnote_list' in request.path %}active{% endif %}" href="{% url 'purchases:debitnote_list' %}">{% trans "Debit Notes" %}</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'purchases' and 'purchase_statement' in request.path %}active{% endif %}" href="{% url 'purchases:purchase_statement' %}">{% trans "Purchase Statement" %}</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'purchases' and 'purchase_return_statement' in request.path %}active{% endif %}" href="{% url 'purchases:purchase_return_statement' %}">{% trans "Purchase Return Statement" %}</a>
-                                    </li>
+                                        {% if perms.purchases.can_view_debitnote %}
+                                            <li class="nav-item">
+                                                <a class="nav-link {% if active_menu == 'purchases' and 'debitnote_list' in request.path %}active{% endif %}" href="{% url 'purchases:debitnote_list' %}">{% trans "Debit Notes" %}</a>
+                                            </li>
+                                        {% endif %}
+                                        {% if perms.purchases.can_view_purchasereturn or perms.purchases.view_purchasereturn or user.is_superuser %}
+                                                <li class="nav-item">
+                                                    <a class="nav-link {% if active_menu == 'purchases' and 'return_list' in request.path %}active{% endif %}" href="{% url 'purchases:return_list' %}">{% trans "Purchase Returns List" %}</a>
+                                                </li>
+                                        {% endif %}
+                                        {% if perms.purchases.add_purchaseinvoice or user.is_superuser %}
+                                            <li class="nav-item">
+                                                <a class="nav-link {% if active_menu == 'purchases' and 'invoice_add' in request.path %}active{% endif %}" href="{% url 'purchases:invoice_add' %}">{% trans "Add Purchase Invoice" %}</a>
+                                            </li>
+                                        {% endif %}
+                                        {% if perms.purchases.add_purchasereturn or user.is_superuser %}
+                                            <li class="nav-item">
+                                                <a class="nav-link {% if active_menu == 'purchases' and 'return_add' in request.path %}active{% endif %}" href="{% url 'purchases:return_add' %}">{% trans "Add Purchase Return" %}</a>
+                                            </li>
+                                        {% endif %}
+                                        {% if perms.purchases.view_purchaseinvoice or user.is_superuser %}
+                                            <li class="nav-item">
+                                                <a class="nav-link {% if active_menu == 'purchases' and 'invoice_list' in request.path %}active{% endif %}" href="{% url 'purchases:invoice_list' %}">{% trans "Purchases Invoice List" %}</a>
+                                            </li>
+                                        {% endif %}
+                                        {% if perms.purchases.can_view_purchase_statement or user.is_superuser %}
+                                            <li class="nav-item">
+                                                <a class="nav-link {% if active_menu == 'purchases' and 'purchase_statement' in request.path %}active{% endif %}" href="{% url 'purchases:purchase_statement' %}">{% trans "Purchase Statement" %}</a>
+                                            </li>
+                                        {% endif %}
                                 </ul>
                             </div>
                         </li>
@@ -882,6 +871,8 @@
                         </li>
                         {% endif %}
                         
+
+                        {% if user.has_revenues_expenses_permission %}
                         <!-- Revenues & Expenses -->
                         <li class="nav-item">
                             <a class="nav-link" data-bs-toggle="collapse" href="#revenuesExpensesMenu">
@@ -893,52 +884,91 @@
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'revenues_expenses' and 'dashboard' in request.path %}active{% endif %}" href="{% url 'revenues_expenses:dashboard' %}">{% trans "Dashboard" %}</a>
                                     </li>
+                                    {% if user.has_revenueexpensecategory_view_permission %}
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'revenues_expenses' and 'category_list' in request.path %}active{% endif %}" href="{% url 'revenues_expenses:category_list' %}">{% trans "Manage Categories" %}</a>
+                                        {% if user.has_revenueexpensecategory_view_permission %}
+                                            <a class="nav-link {% if active_menu == 'revenues_expenses' and 'category_list' in request.path %}active{% endif %}" href="{% url 'revenues_expenses:category_list' %}">{% trans "Manage Categories" %}</a>
+                                        {% else %}
+                                            <span class="nav-link disabled">{% trans "Manage Categories" %}</span>
+                                        {% endif %}
                                     </li>
+                                    {% endif %}
+                                    {% if user.has_revenueexpenseentry_view_permission %}
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'revenues_expenses' and 'entry_list' in request.path %}active{% endif %}" href="{% url 'revenues_expenses:entry_list' %}">{% trans "Entries List" %}</a>
                                     </li>
+                                    {% endif %}
+                                    {% if user.has_revenueexpenseentry_add_permission %}
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'revenues_expenses' and 'entry_create' in request.path %}active{% endif %}" href="{% url 'revenues_expenses:entry_create' %}">{% trans "Add New Entry" %}</a>
                                     </li>
+                                    {% endif %}
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'revenues_expenses' and 'recurring_list' in request.path %}active{% endif %}" href="{% url 'revenues_expenses:recurring_list' %}">{% trans "Recurring Revenue" %}</a>
                                     </li>
                                 </ul>
                             </div>
                         </li>
+                        {% endif %}
                         
-                        <!-- Journal Entries -->
+
+
+                        {% if perms.journal.view_journalentry or perms.journal.add_journalentry or perms.journal.change_journalentry or perms.journal.delete_journalentry or perms.journal.view_journalaccount or perms.journal.add_journalaccount or perms.journal.change_journalaccount or perms.journal.delete_journalaccount %}
+                        <!-- القيود اليومية -->
                         <li class="nav-item">
-                            <a class="nav-link" data-bs-toggle="collapse" href="#journalMenu">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#journalEntriesMenu">
                                 <i class="fas fa-book me-2"></i>
-                                {% trans "Journal Entries" %}
+                        {% trans "Journal Entries" %}
                             </a>
-                            <div class="collapse" id="journalMenu">
+                            <div class="collapse" id="journalEntriesMenu">
                                 <ul class="nav flex-column ms-3">
+                                    {% if perms.journal.view_journalentry %}
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'journal' and 'dashboard' in request.path %}active{% endif %}" href="{% url 'journal:dashboard' %}">{% trans "Dashboard" %}</a>
+                                        <a class="nav-link" href="{% url 'journal:entry_list' %}">{% trans "Journal Entries List" %}</a>
                                     </li>
+                                    {% endif %}
+                                    {% if perms.journal.view_account %}
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'journal' and 'entry_list' in request.path %}active{% endif %}" href="{% url 'journal:entry_list' %}">{% trans "All Entries" %}</a>
+                                        <a class="nav-link" href="{% url 'journal:account_list' %}">{% trans "Chart of Accounts" %}</a>
                                     </li>
+                                    {% endif %}
+                                    {% if perms.journal.add_journalentry %}
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'journal' and 'entries_by_type' in request.path %}active{% endif %}" href="{% url 'journal:entries_by_type' %}">{% trans "Entries by Type" %}</a>
+                                        <a class="nav-link" href="{% url 'journal:entry_create' %}">{% trans "Add Journal Entry" %}</a>
                                     </li>
+                                    {% endif %}
+                                    {# إصلاح: لا تظهر روابط التعديل والحذف بدون معرف صالح #}
+                                    {% if perms.journal.change_journalentry and journal_entry_id %}
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'journal' and 'entry_create' in request.path %}active{% endif %}" href="{% url 'journal:entry_create' %}">{% trans "Create Manual Entry" %}</a>
+                                        <a class="nav-link" href="{% url 'journal:entry_detail' journal_entry_id %}">{% trans "Edit Journal Entry" %}</a>
                                     </li>
+                                    {% endif %}
+                                    {% if perms.journal.delete_journalentry and journal_entry_id %}
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'journal' and 'account_list' in request.path %}active{% endif %}" href="{% url 'journal:account_list' %}">{% trans "Chart of Accounts" %}</a>
+                                        <a class="nav-link" href="{% url 'journal:entry_delete' journal_entry_id %}">{% trans "Delete Journal Entry" %}</a>
                                     </li>
+                                    {% endif %}
+                                    {% if perms.journal.add_account %}
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'journal' and 'trial_balance' in request.path %}active{% endif %}" href="{% url 'journal:trial_balance' %}">{% trans "Trial Balance" %}</a>
+                                        <a class="nav-link" href="{% url 'journal:account_create' %}">{% trans "Add Account" %}</a>
                                     </li>
+                                    {% endif %}
                                 </ul>
                             </div>
                         </li>
+                        {% endif %}
+
+                        {% if perms.journal.view_journalaccount %}
+                        <!-- دليل الحسابات -->
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'journal:account_list' %}">
+                                <i class="fas fa-book me-2"></i>
+                                {% trans "Chart of Accounts" %}
+                            </a>
+                        </li>
+                        {% endif %}
                         
+                        {% if perms.assets_liabilities.view_asset or perms.assets_liabilities.add_asset or perms.assets_liabilities.change_asset or perms.assets_liabilities.delete_asset or perms.assets_liabilities.view_liability or perms.assets_liabilities.add_liability or perms.assets_liabilities.change_liability or perms.assets_liabilities.delete_liability %}
                         <!-- Assets & Liabilities -->
                         <li class="nav-item">
                             <a class="nav-link" data-bs-toggle="collapse" href="#assetsLiabilitiesMenu">
@@ -947,18 +977,25 @@
                             </a>
                             <div class="collapse" id="assetsLiabilitiesMenu">
                                 <ul class="nav flex-column ms-3">
+                                    {% if perms.assets_liabilities.view_asset or perms.assets_liabilities.view_liability %}
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'assets_liabilities' and 'dashboard' in request.path %}active{% endif %}" href="{% url 'assets_liabilities:dashboard' %}">{% trans "Dashboard" %}</a>
                                     </li>
+                                    {% endif %}
+                                    {% if perms.assets_liabilities.view_asset %}
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'assets_liabilities' and 'asset_list' in request.path %}active{% endif %}" href="{% url 'assets_liabilities:asset_list' %}">{% trans "Assets List" %}</a>
                                     </li>
+                                    {% endif %}
+                                    {% if perms.assets_liabilities.view_liability %}
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'assets_liabilities' and 'liability_list' in request.path %}active{% endif %}" href="{% url 'assets_liabilities:liability_list' %}">{% trans "Liabilities List" %}</a>
                                     </li>
+                                    {% endif %}
                                 </ul>
                             </div>
                         </li>
+                        {% endif %}
 
                         <!-- Reports -->
                         {% if user.has_reports_permission %}

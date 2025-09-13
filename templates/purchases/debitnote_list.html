@@ -14,12 +14,16 @@
                         مذكرات الدين
                     </h3>
                     <div class="float-end">
+                        {% if perms.purchases.add_purchasedebitnote or user.is_superuser %}
                         <a href="{% url 'purchases:debitnote_add' %}" class="btn btn-success btn-sm">
                             <i class="fas fa-plus me-2"></i>إنشاء مذكرة دين
                         </a>
+                        {% endif %}
+                        {% if perms.purchases.add_purchasedebitnote or perms.purchases.change_purchasedebitnote or perms.purchases.delete_purchasedebitnote or user.is_superuser %}
                         <a href="{% url 'purchases:debitnote_report' %}" class="btn btn-info btn-sm">
                             <i class="fas fa-chart-line me-2"></i>كشف مذكرات الدين
                         </a>
+                        {% endif %}
                     </div>
                 </div>
                 
@@ -60,6 +64,7 @@
                                                title="عرض التفاصيل">
                                                 <i class="fas fa-eye"></i>
                                             </a>
+                                            {% if perms.purchases.change_purchasedebitnote or perms.purchases.delete_purchasedebitnote or user.is_superuser %}
                                             <a href="{% url 'purchases:debitnote_edit' debitnote.pk %}" 
                                                class="btn btn-sm btn-outline-warning"
                                                title="تحديث">
@@ -71,6 +76,7 @@
                                                onclick="return confirm('هل أنت متأكد من حذف هذه المذكرة؟')">
                                                 <i class="fas fa-trash"></i>
                                             </a>
+                                            {% endif %}
                                         </div>
                                     </td>
                                 </tr>
@@ -114,10 +120,12 @@
                     <div class="text-center py-5">
                         <i class="fas fa-file-invoice-dollar fa-3x text-muted mb-3"></i>
                         <h5 class="text-muted">لا توجد مذكرات دين</h5>
+                        {% if perms.purchases.add_purchasedebitnote or user.is_superuser %}
                         <p class="text-muted">يمكنك إنشاء مذكرة دين جديدة بالضغط على الزر أعلاه</p>
                         <a href="{% url 'purchases:debitnote_add' %}" class="btn btn-primary">
                             <i class="fas fa-plus me-2"></i>إنشاء أول مذكرة دين
                         </a>
+                        {% endif %}
                     </div>
                     {% endif %}
                 </div>
