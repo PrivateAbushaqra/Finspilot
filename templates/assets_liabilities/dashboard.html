@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load tax_tags %}
 
-{% block title %}{% trans "الأصول والخصوم" %}{% endblock %}
+{% block title %}{% trans "Assets and liabilities" %}{% endblock %}
 
 {% block extra_head %}
 <meta name="csrf-token" content="{{ csrf_token }}">
@@ -12,7 +12,7 @@
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">
         <i class="fas fa-balance-scale me-2"></i>
-        لوحة تحكم الأصول والخصوم
+        {% trans "Assets and Liabilities Dashboard" %}
     </h1>
 </div>
 
@@ -23,7 +23,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h5 class="card-title">إجمالي الأصول</h5>
+                        <h5 class="card-title">{% trans "Total Assets" %}</h5>
                         <h3>{{ total_assets|currency_format }}</h3>
                     </div>
                     <div class="align-self-center">
@@ -38,7 +38,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h5 class="card-title">إجمالي الخصوم</h5>
+                        <h5 class="card-title">{% trans "Total Liabilities" %}</h5>
                         <h3>{{ total_liabilities|currency_format }}</h3>
                     </div>
                     <div class="align-self-center">
@@ -53,7 +53,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h5 class="card-title">صافي الأصول</h5>
+                        <h5 class="card-title">{% trans "Net Assets" %}</h5>
                         <h3>{{ net_assets|currency_format }}</h3>
                     </div>
                     <div class="align-self-center">
@@ -68,7 +68,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h5 class="card-title">إجمالي البنود</h5>
+                        <h5 class="card-title">{% trans "Total Items" %}</h5>
                         <h3>{{ total_items }}</h3>
                     </div>
                     <div class="align-self-center">
@@ -114,15 +114,18 @@
                 <div class="list-group">
                     <a href="{% url 'assets_liabilities:asset_list' %}" class="list-group-item list-group-item-action">
                         <i class="fas fa-list me-2"></i>
-                        {% trans "View" %} جميع الأصول
+                        {% trans "View" %} 
+                        {% trans "All Assets" %}
                     </a>
                     <a href="#" class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#addAssetModal">
                         <i class="fas fa-plus me-2"></i>
-                        {% trans "Add" %} أصل {% trans "New" %}
+                        {% trans "Add" %} 
+                        {% trans "New Asset" %}
                     </a>
                     <a href="#" class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#depreciationModal">
                         <i class="fas fa-percentage me-2"></i>
-                        حساب الإه{% trans "No" %}ك
+                        {% trans "Add" %} 
+                        {% trans "Depreciation Entry" %}
                     </a>
                 </div>
             </div>
@@ -140,13 +143,15 @@
                     {% if perms.assets_liabilities.add_liability %}
                     <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#addDeductionModal">
                         <i class="fas fa-plus me-1"></i>
-                        {% trans "Add" %} {% trans "Liability" %}
+                        {% trans "Add" %} 
+                        {% trans "Liability" %}
                     </button>
                     {% endif %}
                     {% if perms.assets_liabilities.add_liabilitycategory %}
                     <a href="{% url 'assets_liabilities:liability_category_create_ajax' %}" class="btn btn-primary btn-sm">
                         <i class="fas fa-folder-plus me-1"></i>
-                        {% trans "Add" %} {% trans "Liability Category" %}
+                        {% trans "Add" %} 
+                        {% trans "Liability Category" %}
                     </a>
                     {% endif %}
                 </div>
@@ -155,15 +160,18 @@
                 <div class="list-group">
                     <a href="{% url 'assets_liabilities:liability_list' %}" class="list-group-item list-group-item-action">
                         <i class="fas fa-list me-2"></i>
-                        {% trans "View" %} جميع الخصوم
+                        {% trans "View" %} 
+                        {% trans "All Liabilities" %}
                     </a>
                     <a href="#" class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#addDeductionModal">
                         <i class="fas fa-plus me-2"></i>
-                        {% trans "Add" %} خصم {% trans "New" %}
+                        {% trans "Add" %} 
+                        {% trans "New Deduction" %}
                     </a>
                     <a href="#" class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#paymentTableModal">
                         <i class="fas fa-calendar me-2"></i>
-                        {% trans "Table" %}ة المدفوعات
+                        {% trans "Table" %} 
+                        {% trans "Payments" %}
                     </a>
                 </div>
             </div>
@@ -178,7 +186,7 @@
             <div class="card-header">
                 <h5 class="mb-0">
                     <i class="fas fa-chart-pie me-2"></i>
-                    توزيع الأصول
+                    {% trans "Asset allocation" %}
                 </h5>
             </div>
             <div class="card-body">
@@ -192,7 +200,7 @@
             <div class="card-header">
                 <h5 class="mb-0">
                     <i class="fas fa-chart-pie me-2"></i>
-                    توزيع الخصوم
+                    {% trans "Liability allocation" %}
                 </h5>
             </div>
             <div class="card-body">
@@ -209,7 +217,7 @@
             <div class="card-header">
                 <h5 class="mb-0">
                     <i class="fas fa-building me-2"></i>
-                    آخر الأصول المضافة
+                    {% trans "Recent Assets" %}
                 </h5>
             </div>
             <div class="card-body">
@@ -218,9 +226,9 @@
                     <table class="table table-sm">
                         <thead>
                             <tr>
-                                <th>اسم</th>
-                                <th>الفئة</th>
-                                <th>القيمة</th>
+                                <th>{% trans "Name" %}</th>
+                                <th>{% trans "Category" %}</th>
+                                <th>{% trans "Value" %}</th>
                                 <th>{% trans "Date" %}</th>
                             </tr>
                         </thead>
@@ -238,7 +246,7 @@
                 </div>
                 {% else %}
                 <div class="text-center py-3">
-                    <p class="text-muted">لا توجد أصول مضافة بعد</p>
+                    <p class="text-muted">{% trans "No assets added yet" %}</p>
                 </div>
                 {% endif %}
             </div>
@@ -250,7 +258,7 @@
             <div class="card-header">
                 <h5 class="mb-0">
                     <i class="fas fa-credit-card me-2"></i>
-                    آخر الخصوم المضافة
+                    {% trans "Recent Liabilities" %}
                 </h5>
             </div>
             <div class="card-body">
@@ -279,7 +287,7 @@
                 </div>
                 {% else %}
                 <div class="text-center py-3">
-                    <p class="text-muted">لا توجد خصوم مضافة بعد</p>
+                    <p class="text-muted">{% trans "No liabilities added yet" %}</p>
                 </div>
                 {% endif %}
             </div>

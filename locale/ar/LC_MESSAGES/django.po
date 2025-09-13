@@ -174,6 +174,7 @@ msgstr "رقم الحركة"
 #: .\templates\sales\sales_statement.html:138
 #: .\templates\search\search.html:344
 #: .\templates\settings\print_design.html:357
+#: .\templates\assets_liabilities\dashboard.html
 msgid "Date"
 msgstr "التاريخ"
 
@@ -868,8 +869,9 @@ msgid "قيود الإهلاك"
 msgstr ""
 
 #: .\assets_liabilities\views.py:64
-msgid "لوحة تحكم الأصول والخصوم"
-msgstr ""
+#: .\templates\assets_liabilities\dashboard.html:15
+msgid "Assets and Liabilities Dashboard"
+msgstr "لوحة تحكم الأصول والخصوم"
 
 #: .\assets_liabilities\views.py:527
 msgid "تم إنشاء الخصم بنجاح"
@@ -882,8 +884,8 @@ msgid "يرجى تصحيح الأخطاء في النموذج"
 msgstr ""
 
 #: .\assets_liabilities\views.py:536
-msgid "إضافة خصم جديد"
-msgstr ""
+msgid "Add a new Liability"
+msgstr "إضافة خصم جديد"
 
 #: .\assets_liabilities\views.py:548
 msgid "تفاصيل الخصم"
@@ -6464,6 +6466,7 @@ msgstr "اسم الأصل"
 #: .\templates\revenues_expenses\recurring_edit.html:76
 #: .\templates\revenues_expenses\recurring_list.html:160
 #: .\templates\revenues_expenses\recurring_list.html:251
+#: .\templates\assets_liabilities\dashboard.html:230
 msgid "Category"
 msgstr "الفئة"
 
@@ -6861,19 +6864,14 @@ msgstr ""
 msgid "Confirm Delete"
 msgstr "مكتمل"
 
-#: .\templates\assets_liabilities\asset_detail.html:347
-#, fuzzy
-#| msgid "Are you sure you want to delete"
-msgid "Are you sure you want to delete this asset?"
-msgstr "هل أنت متأكد من أنك تريد حذف"
-
 #: .\templates\assets_liabilities\asset_detail.html:349
 msgid "Asset"
 msgstr ""
 
 #: .\templates\assets_liabilities\asset_detail.html:351
+#: .\templates\assets_liabilities\dashboard.html:231
 msgid "Value"
-msgstr ""
+msgstr "القيمة"
 
 #: .\templates\assets_liabilities\asset_detail.html:355
 #: .\templates\banks\account_list.html:708
@@ -6925,8 +6923,13 @@ msgid "All Status"
 msgstr "جميع الحالات"
 
 #: .\templates\assets_liabilities\asset_list.html:87
+#: .\templates\assets_liabilities\dashboard.html:26
 msgid "Total Assets"
-msgstr ""
+msgstr "إجمالي الأصول"
+
+#: .\templates\assets_liabilities\dashboard.html:71
+msgid "Total Items"
+msgstr "إجمالي العناصر"
 
 #: .\templates\assets_liabilities\asset_list.html:104
 msgid "Total Value"
@@ -6948,6 +6951,7 @@ msgstr "قائمة الأصول"
 #: .\templates\revenues_expenses\recurring_create.html:62
 #: .\templates\revenues_expenses\recurring_detail.html:101
 #: .\templates\revenues_expenses\recurring_edit.html:68
+#: .\templates\assets_liabilities\dashboard.html:229
 msgid "Name"
 msgstr "الاسم"
 
@@ -7003,6 +7007,7 @@ msgstr ""
 msgid "Depreciation"
 msgstr "الاستهلاك"
 
+#: .\templates\assets_liabilities\asset_detail.html:347
 #: .\templates\assets_liabilities\asset_list.html:189
 msgid "Are you sure you want to delete this asset?"
 msgstr "هل أنت متأكد من حذف هذا الأصل؟"
@@ -7147,8 +7152,8 @@ msgid "Add First Asset"
 msgstr "إضافة الأصل الأول"
 
 #: .\templates\assets_liabilities\dashboard.html:5
-msgid "الأصول والخصوم"
-msgstr ""
+msgid "Assets and liabilities"
+msgstr "الأصول والخصوم"
 
 #: .\templates\assets_liabilities\dashboard.html:19
 #: .\templates\hr\department_detail.html:63
@@ -7756,8 +7761,65 @@ msgid "Liability number, name, or creditor"
 msgstr "رقم المسؤولية أو الاسم أو الدائن"
 
 #: .\templates\assets_liabilities\liability_list.html:87
+#\ .\templates\assets_liabilities\dashboard.html:41
 msgid "Total Liabilities"
-msgstr "إجمالي المطلوبات"
+msgstr "إجمالي الخصوم"
+
+#\ .\templates\assets_liabilities\dashboard.html:56
+msgid "Net Assets"
+msgstr "صافي الأصول"
+
+#\ .\templates\assets_liabilities\dashboard.html:71
+msgid "Total Item"
+msgstr "إجمالي البنود"
+
+#\ .\templates\assets_liabilities\dashboard.html:11
+msgid "All Assets"
+msgstr "جميع الأصول"
+
+#\ .\templates\assets_liabilities\dashboard.html:123
+msgid "New Asset"
+msgstr "أصل جديد"
+
+#\ .\templates\assets_liabilities\dashboard.html:128
+msgid "Depreciation Entry"
+msgstr "إدخال الاستهلاك"
+
+#\ .\templates\assets_liabilities\dashboard.html:164
+msgid "All Liabilities"
+msgstr "جميع المسؤولية"
+
+#\ .\templates\assets_liabilities\dashboard.html:169
+msgid "New Deduction"
+msgstr "خصم جديد"
+
+#\ .\templates\assets_liabilities\dashboard.html:147
+msgid "Payments"
+msgstr "المدفوعات"
+
+#\ .\templates\assets_liabilities\dashboard.html:189
+msgid "Asset allocation"
+msgstr " توزيع الأصول"
+
+#\ .\templates\assets_liabilities\dashboard.html:203
+msgid "Liability allocation"
+msgstr " توزيع الخصوم"
+
+#\ .\templates\assets_liabilities\dashboard.html:220
+msgid "Recent Assets"
+msgstr "أخر الأصول المضافة"
+
+#\ .\templates\assets_liabilities\dashboard.html:261
+msgid "Recent Liabilities"
+msgstr "أخر الخصوم المضافة"
+
+#\ .\templates\assets_liabilities\dashboard.html:290
+msgid "No liabilities added yet"
+msgstr "لا توجد خصوم مضافة"
+
+#\ .\templates\assets_liabilities\dashboard.html:249
+msgid "No assets added yet"
+msgstr "لا توجد أصول مضافة"
 
 #: .\templates\assets_liabilities\liability_list.html:105
 #: .\templates\base.html:946
@@ -7766,7 +7828,7 @@ msgstr "قائمة الالتزامات"
 
 #: .\templates\assets_liabilities\liability_list.html:116
 msgid "Creditor"
-msgstr ""
+msgstr "الدائن"
 
 #: .\templates\assets_liabilities\liability_list.html:142
 #: .\templates\assets_liabilities\liability_list.html:156
@@ -9756,23 +9818,23 @@ msgstr "إنشاء تحويل"
 
 #: .\templates\cashboxes\transfer_list.html:424
 msgid "Asset Value"
-msgstr ""
+msgstr "قيمة الأصول"
 
 #: .\templates\cashboxes\transfer_list.html:425
 msgid "Initial value of the asset"
-msgstr ""
+msgstr "القيمة الأولية للأصل"
 
 #: .\templates\cashboxes\transfer_list.html:431
 msgid "Remaining value after useful life"
-msgstr ""
+msgstr "القيمة المتبقية بعد العمر الإنتاجي"
 
 #: .\templates\cashboxes\transfer_list.html:439
 msgid "Useful Life"
-msgstr ""
+msgstr "العمر الإنتاجي"
 
 #: .\templates\cashboxes\transfer_list.html:440
 msgid "In years"
-msgstr ""
+msgstr "في السنوات"
 
 #: .\templates\cashboxes\transfer_list.html:447
 msgid "Straight Line"
@@ -14934,6 +14996,10 @@ msgstr "لم يتم إنشاء فئات الإيرادات والمصروفات 
 #: .\templates\revenues_expenses\category_list.html:85
 msgid "Add First Category"
 msgstr "أضف الفئة الأولى"
+
+#: .\templates\assets_liabilities\asset_list.html:37
+msgid "Add Asset Category"
+msgstr "إضافة فئة الأصول"
 
 #: .\templates\revenues_expenses\dashboard.html:7
 msgid "Revenues and Expenses"

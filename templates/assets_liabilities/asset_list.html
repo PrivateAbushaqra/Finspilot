@@ -24,11 +24,44 @@
                     </a>
                     {% endif %}
                     {% if perms.assets_liabilities.add_assetcategory %}
-                    <a href="{% url 'assets_liabilities:category_create_ajax' %}" class="btn btn-info">
-                        <i class="fas fa-folder-plus me-2"></i>{% trans "Add Asset Category" %}
-                    </a>
+                        <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                            <i class="fas fa-folder-plus me-2"></i>{% trans "Add Asset Category" %}
+                        </button>
                     {% endif %}
                 </div>
+<!-- Modal لإضافة فئة أصل جديدة -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCategoryModalLabel">{% trans "Add Asset Category" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addCategoryForm">
+                    <div class="mb-3">
+                        <label for="categoryName" class="form-label">{% trans "Category Name" %}</label>
+                        <input type="text" class="form-control" id="categoryName" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="categoryDescription" class="form-label">{% trans "Description" %}</label>
+                        <textarea class="form-control" id="categoryDescription" name="description"></textarea>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="categoryActive" name="is_active" checked>
+                        <label class="form-check-label" for="categoryActive">{% trans "Active" %}</label>
+                    </div>
+                    <div id="categoryError" class="alert alert-danger d-none"></div>
+                    <div id="categorySuccess" class="alert alert-success d-none"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
+                <button type="button" class="btn btn-primary" id="saveCategoryBtn">{% trans "Save" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
             </div>
         </div>
     </div>
@@ -42,6 +75,7 @@
                 </div>
                 <div class="card-body">
                     <form method="get" class="row g-3">
+                <!-- لا يوجد كود جافاسكريبت هنا، الكود في block extra_js بالأسفل -->
                         <div class="col-md-3">
                             <label class="form-label">{% trans "Search" %}</label>
                             <input type="text" name="search" class="form-control" 

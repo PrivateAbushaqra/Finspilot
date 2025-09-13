@@ -29,7 +29,7 @@ class AssetForm(forms.ModelForm):
                  'currency', 'purchase_date', 'supplier', 'invoice_number', 'warranty_expiry', 
                  'location', 'responsible_person', 'status', 'depreciation_method']
         widgets = {
-            'asset_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'سيتم توليده تلقائياً إذا ترك فارغاً'}),
+            'asset_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'It will be generated automatically if left blank.'}),
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'category': forms.Select(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),

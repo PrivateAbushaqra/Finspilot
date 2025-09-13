@@ -61,7 +61,7 @@ def assets_liabilities_dashboard(request):
     ).select_related('category', 'currency').order_by('due_date')[:5]
     
     context = {
-        'page_title': _('لوحة تحكم الأصول والخصوم'),
+        'page_title': _('Assets and Liabilities Dashboard'),
         'total_assets_cost': total_assets_cost,
         'total_depreciation': total_depreciation,
         'net_assets_value': net_assets_value,
@@ -249,7 +249,7 @@ def asset_create(request):
         'categories': categories,
         'currencies': currencies,
         'users': users,
-        'page_title': 'إضافة أصل جديد',
+        'page_title': _("Add New Asset"),
     }
     return render(request, 'assets_liabilities/asset_create.html', context)
 
@@ -520,7 +520,7 @@ def liability_create(request):
             log_activity(
                 action_type='create',
                 obj=liability,
-                description=f'إضافة خصم جديد: {liability.name}',
+                description=f'Add a new Liability: {liability.name}',
                 user=request.user
             )
             
@@ -533,7 +533,7 @@ def liability_create(request):
     
     context = {
         'form': form,
-        'page_title': _('إضافة خصم جديد'),
+        'page_title': _('Add a new Liability'),        
     }
     return render(request, 'assets_liabilities/liability_create.html', context)
 
@@ -589,13 +589,13 @@ def depreciation_create(request, asset_id):
     return render(request, 'assets_liabilities/depreciation_create.html', context)
 
 
+from django.http import JsonResponse
+import json
+
 @login_required
 def category_create_ajax(request):
     """إنشاء فئة أصل جديدة عبر AJAX"""
     if request.method == 'POST':
-        import json
-        from django.http import JsonResponse
-        
         try:
             data = json.loads(request.body)
             
