@@ -618,8 +618,13 @@ msgstr "قابل للإهلاك"
 #: .\templates\users\user_edit.html:375 .\templates\users\user_edit.html:386
 #: .\templates\users\user_list.html:130 .\users\views.py:67
 #: .\users\views.py:209
+#: .\templates\products\product_list.html:504
 msgid "Active"
 msgstr "نشط"
+
+#: .\templates\products\product_list.html:505
+msgid "Not Active"
+msgstr "غير نشط"
 
 #: .\assets_liabilities\models.py:32
 msgid "فئة الأصل"
@@ -1118,6 +1123,10 @@ msgstr ""
 msgid "Balance"
 msgstr "الرصيد"
 
+#: .\templates\customers\supplier_list.html:110
+msgid "Total Suppliers"
+msgstr "إجمالي الموردين"
+
 #: .\banks\models.py:16 .\templates\cashboxes\cashbox_list.html:148
 #: .\templates\customers\add.html:199
 #: .\templates\purchases\invoice_add.html:972
@@ -1410,7 +1419,7 @@ msgstr "نقدي"
 #: .\templates\receipts\receipt_add.html:55
 #: .\templates\receipts\receipt_list.html:48
 msgid "Check"
-msgstr ""
+msgstr "شيك"
 
 #: .\cashboxes\models.py:138 .\templates\cashboxes\transfer_list.html:306
 msgid "Deposit Document Number"
@@ -1729,6 +1738,7 @@ msgstr "الهاتف"
 #: .\templates\settings\superadmin_management.html:243
 #: .\templates\users\user_list.html:104 .\users\views.py:60
 #: .\users\views.py:202
+#: .\templates\customers\customer_list.html:234
 msgid "Email"
 msgstr "البريد الإلكتروني"
 
@@ -2544,6 +2554,7 @@ msgstr "تاريخ الإنهاء"
 #: .\templates\sales\return_add.html:237
 #: .\templates\settings\currency_list.html:34
 #: .\templates\users\user_list.html:107
+#: .\templates\products\product_list.html:510
 msgid "Status"
 msgstr "الحالة"
 
@@ -3693,6 +3704,7 @@ msgstr ""
 #: .\templates\search\search.html:267 .\templates\search\search.html:275
 #: .\templates\search\search.html:297 .\templates\search\search.html:298
 #: .\templates\search\search.html:402
+#: .\templates\customers\customer_list.html:183
 msgid "Search"
 msgstr "بحث"
 
@@ -4024,6 +4036,10 @@ msgstr ""
 #: .\templates\purchases\return_add.html:99
 msgid "Product Name"
 msgstr "اسم المنتج"
+
+#: .\templates\products\product_list.html:579
+msgid "Image"
+msgstr "الصورة"
 
 #: .\products\forms.py:20 .\templates\products\category_add.html:49
 #: .\templates\products\product_edit.html:54
@@ -6464,6 +6480,9 @@ msgstr "اسم الأصل"
 msgid "Category"
 msgstr "الفئة"
 
+msgid "Categories"
+msgstr "الفئات"
+
 #: .\templates\assets_liabilities\asset_create.html:133
 #: .\templates\assets_liabilities\liability_create.html:133
 msgid "Add Category First"
@@ -6884,8 +6903,19 @@ msgstr "أصول"
 
 #: .\templates\assets_liabilities\asset_list.html:19
 #: .\templates\assets_liabilities\liability_list.html:19
+#: .\templates\customers\customer_list.html:198
+#: .\templates\customers\supplier_list.html:98
 msgid "Back to Dashboard"
 msgstr "العودة الي اللوحة الرئيسية"
+
+#: .\templates\customers\supplier_list.html:116
+msgid "Active Suppliers"
+msgstr "الموردين النشطين"
+
+#: .\templates\customers\supplier_list.html:122
+#: .\templates\customers\customer_list.html:122
+msgid "Total Debt"
+msgstr "إجمالي المديونية"
 
 #: .\templates\assets_liabilities\asset_list.html:22
 #: .\templates\cashboxes\transfer_list.html:40
@@ -8656,6 +8686,10 @@ msgid "Reference"
 msgstr ""
 
 #: .\templates\banks\account_transactions.html:173
+#: .\templates\products\product_list.html:518
+#: .\templates\products\product_list.html:519
+#: .\templates\products\product_list.html:520
+#: .\templates\products\product_list.html:521
 msgid "By"
 msgstr "بـ"
 
@@ -9052,6 +9086,7 @@ msgstr "تصفية"
 #: .\templates\core\profit_loss_report.html:212
 #: .\templates\customers\add.html:242 .\templates\journal\entry_create.html:185
 #: .\templates\settings\partials\document_form.html:228
+#: .\templates\customers\customer_list.html:187
 msgid "Reset"
 msgstr "إعادة ضبط"
 
@@ -9272,6 +9307,50 @@ msgstr "إضافة عميل/مورد"
 #: .\templates\customers\customer_list.html:203
 msgid "Customers List"
 msgstr "قائمة العملاء"
+
+#: .\templates\customers\customer_list.html:174
+msgid "All Balances"
+msgstr "جميع الأرصدة"
+
+#: .\templates\customers\customer_list.html:175
+msgid "Positive Balance"
+msgstr "الأرصدة الموجبة"
+
+#: .\templates\customers\customer_list.html:176
+msgid "Negative Balance"
+msgstr "الأرصدة السالبة"
+
+#: .\templates\customers\customer_list.html:177
+msgid "Zero Balance"
+msgstr "الأرصدة الصفرية"
+
+#: .\templates\customers\customer_list.html:116
+#: .\templates\customers\customer_list.html:167
+msgid "Active Customers"
+msgstr "العملاء النشطون"
+
+#: .\templates\customers\customer_list.html:168
+msgid "Inactive Customers"
+msgstr "العملاء غير النشطين"
+
+#: .\templates\customers\customer_list.html:128
+#: .\templates\customers\supplier_list.html:128
+msgid "Credit Balances"
+msgstr "الأرصدة الدائنة"
+
+#: .\templates\customers\customer_list.html:134
+#: .\templates\customers\supplier_list.html:134
+msgid "Net Balance"
+msgstr "صافي الرصيد"
+
+#: .\templates\customers\customer_list.html:140
+#: .\templates\customers\supplier_list.html:140
+msgid "Average Balance"
+msgstr "متوسط الرصيد"
+
+#: .\templates\customers\customer_list.html:140
+msgid "Customers"
+msgstr "العملاء"
 
 #: .\templates\base.html:751
 msgid "Suppliers List"
@@ -10641,9 +10720,10 @@ msgstr ""
 msgid "Customers and Suppliers"
 msgstr ""
 
+#: .\templates\customers\customer_list.html:110
 #: .\templates\customers\list.html:145
 msgid "Total Customers"
-msgstr ""
+msgstr "إجمالي العملاء"
 
 #: .\templates\customers\supplier_list.html:568
 #: .\templates\products\product_edit.html:586
@@ -12925,8 +13005,9 @@ msgstr ""
 #: .\templates\inventory\low_stock.html:179
 #: .\templates\inventory\low_stock.html:292
 #: .\templates\products\product_list.html:445
+#: .\templates\products\product_list.html:513
 msgid "Out of Stock"
-msgstr "إنتهى من المخزن"
+msgstr "نفض من المخزن"
 
 #: .\templates\inventory\low_stock.html:181
 #: .\templates\inventory\low_stock.html:198
@@ -13955,6 +14036,7 @@ msgstr "البحث في الفئات"
 
 #: .\templates\products\category_list.html:245
 #: .\templates\receipts\check_list.html:31
+#: .\templates\products\product_list.html:503
 msgid "All Statuses"
 msgstr "جميع الحالات"
 

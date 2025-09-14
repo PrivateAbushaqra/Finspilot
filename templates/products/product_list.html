@@ -500,25 +500,25 @@
                         </div>
                         <div class="col-md-2">
                             <select class="form-select" id="filterStatus">
-                                <option value="">جميع الحا{% trans "No" %}ت</option>
+                                <option value="">{% trans "All Statuses" %}</option>
                                 <option value="active">{% trans "Active" %}</option>
-                                <option value="inactive">غير {% trans "Active" %}</option>
+                                <option value="inactive">{% trans "Not Active" %}</option>
                             </select>
                         </div>
                         <div class="col-md-2">
                             <select class="form-select" id="filterStock">
-                                <option value="">حالة {% trans "Warehouse" %}</option>
+                                <option value="">{% trans "Status" %} {% trans "Warehouse" %}</option>
                                 <option value="in_stock">{% trans "Available" %}</option>
                                 <option value="low_stock">{% trans "Low Stock" %}</option>
-                                <option value="out_of_stock">نفد</option>
+                                <option value="out_of_stock">{% trans "Out of Stock" %}</option>
                             </select>
                         </div>
                         <div class="col-md-2">
                             <select class="form-select" id="sortBy">
-                                <option value="name">{% trans "Sort" %} باسم</option>
-                                <option value="price">{% trans "Sort" %} ب{% trans "Price" %}</option>
-                                <option value="stock">{% trans "Sort by Stock" %}</option>
-                                <option value="created">{% trans "Sort" %} ب{% trans "Date" %}</option>
+                                <option value="name">{% trans "Sort" %} {% trans "by" %} {% trans "Name" %}</option>
+                                <option value="price">{% trans "Sort" %} {% trans "by" %} {% trans "Price" %}</option>
+                                <option value="stock">{% trans "Sort" %} {% trans "by" %} {% trans "Stock" %}</option>
+                                <option value="created">{% trans "Sort" %} {% trans "by" %} {% trans "Date" %}</option>
                             </select>
                         </div>
                     </div>
@@ -535,7 +535,7 @@
                         </h5>
                         <button type="button" onclick="printPage()" class="btn btn-warning btn-sm">
                             <i class="fas fa-print me-1"></i>
-                            {% trans "Print Report" %} الالكامل
+                            {% trans "Print Report" %}
                         </button>
                     </div>
                 </div>
@@ -576,7 +576,7 @@
                         <table class="table table-striped table-hover align-middle text-center">
                             <thead class="table-dark">
                                 <tr>
-                                    <th>الصورة</th>
+                                    <th>{% trans "Image" %}</th>
                                     <th>{% trans "Product Name" %}</th>
                                     <th>{% trans "Code" %}</th>
                                     <th>{% trans "Type" %}</th>

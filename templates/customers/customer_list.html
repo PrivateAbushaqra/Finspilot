@@ -95,7 +95,7 @@
                     {% endif %}
                     <a href="{% url 'customers:list' %}" class="btn btn-outline-light">
                         <i class="fas fa-arrow-left me-2"></i>
-                        العودة للوحة التحكم
+                        {% trans "Back to Dashboard" %}
                     </a>
                 </div>
             </div>
@@ -107,37 +107,37 @@
         <div class="col-md-2">
             <div class="stats-card text-center">
                 <h3 class="text-success">{{ total_customers }}</h3>
-                <p class="text-muted mb-0">إجمالي العملاء</p>
+                <p class="text-muted mb-0">{% trans "Total Customers" %}</p>
             </div>
         </div>
         <div class="col-md-2">
             <div class="stats-card text-center">
                 <h3 class="text-primary">{{ active_customers }}</h3>
-                <p class="text-muted mb-0">العملاء النشطون</p>
+                <p class="text-muted mb-0">{% trans "Active Customers" %}</p>
             </div>
         </div>
         <div class="col-md-2">
             <div class="stats-card text-center">
                 <h3 class="text-danger">{{ total_debt|floatformat:3 }}</h3>
-                <p class="text-muted mb-0">إجمالي المديونية</p>
+                <p class="text-muted mb-0">{% trans "Total Debt" %}</p>
             </div>
         </div>
         <div class="col-md-2">
             <div class="stats-card text-center">
                 <h3 class="text-success">{{ customer_credit|floatformat:3 }}</h3>
-                <p class="text-muted mb-0">الأرصدة الدائنة</p>
+                <p class="text-muted mb-0">{% trans "Credit Balances" %}</p>
             </div>
         </div>
         <div class="col-md-2">
             <div class="stats-card text-center">
                 <h3 class="text-info">{{ total_balance|floatformat:3 }}</h3>
-                <p class="text-muted mb-0">صافي الرصيد</p>
+                <p class="text-muted mb-0">{% trans "Net Balance" %}</p>
             </div>
         </div>
         <div class="col-md-2">
             <div class="stats-card text-center">
                 <h3 class="text-secondary">{{ average_balance|floatformat:3 }}</h3>
-                <p class="text-muted mb-0">متوسط الرصيد</p>
+                <p class="text-muted mb-0">{% trans "Average Balance" %}</p>
             </div>
         </div>
     </div>
@@ -149,7 +149,7 @@
                 <div class="card-header">
                     <h6 class="mb-0">
                         <i class="fas fa-filter me-2"></i>
-                        {% trans "Filter" %} العملاء
+                        {% trans "Filter" %} {% trans "Customers" %}
                     </h6>
                 </div>
                 <div class="card-body">
@@ -164,27 +164,27 @@
                             <label for="status" class="form-label">{% trans "Status" %}:</label>
                             <select class="form-select" id="status" name="status">
                                 <option value="">{% trans "All Customers" %}</option>
-                                <option value="active">النشطون</option>
-                                <option value="inactive">غير النشطين</option>
+                                <option value="active">{% trans "Active Customers" %}</option>
+                                <option value="inactive">{% trans "Inactive Customers" %}</option>
                             </select>
                         </div>
                         <div class="col-md-3">
                             <label for="balance" class="form-label">{% trans "Balance" %}:</label>
                             <select class="form-select" id="balance" name="balance">
-                                <option value="">جميع الأرصدة</option>
-                                <option value="positive">{% trans "Balance" %} موجب</option>
-                                <option value="negative">{% trans "Balance" %} سالب</option>
-                                <option value="zero">{% trans "Balance" %} صفر</option>
+                                <option value="">{% trans "All Balances" %}</option>
+                                <option value="positive">{% trans "Positive Balance" %}</option>
+                                <option value="negative">{% trans "Negative Balance" %}</option>
+                                <option value="zero">{% trans "Zero Balance" %}</option>
                             </select>
                         </div>
                         <div class="col-md-3 d-flex align-items-end">
                             <button type="submit" class="btn btn-primary me-2">
                                 <i class="fas fa-search me-1"></i>
-                                بحث
+                                {% trans "Search" %}
                             </button>
                             <a href="{% url 'customers:customer_list' %}" class="btn btn-outline-secondary">
                                 <i class="fas fa-undo me-1"></i>
-                                إعادة تعيين
+                                {% trans "Reset" %}
                             </a>
                         </div>
                     </form>
@@ -231,7 +231,7 @@
                                 </div>
                                 
                                 <div class="mb-2">
-                                    <small class="text-muted">البريد:</small>
+                                    <small class="text-muted">{% trans "Email" %}:</small>
                                     <span>{{ customer.email|default:"غير محدد" }}</span>
                                 </div>
                                 
