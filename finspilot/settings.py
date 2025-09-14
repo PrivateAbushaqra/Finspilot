@@ -18,7 +18,7 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'
 
 # السماح بالمضيفين مع قيمة افتراضية آمنة محلياً
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost').split(',')
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost,192.168.2.117').split(',')
 
 # Application definition
 INSTALLED_APPS = [

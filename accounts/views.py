@@ -1,5 +1,5 @@
 from django.contrib.auth import views as auth_views
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -9,6 +9,7 @@ from django.http import JsonResponse
 from datetime import datetime, date
 from customers.models import CustomerSupplier
 from .models import AccountTransaction
+from django.utils import translation
 
 
 class LoginView(auth_views.LoginView):
@@ -26,15 +27,41 @@ class LoginView(auth_views.LoginView):
         
         return context
     
+    def form_valid(self, form):
+        # حفظ اللغة المختارة في session
+        language = self.request.POST.get('language', 'ar')
+        if language in ['ar', 'en']:
+            self.request.session['django_language'] = language
+            translation.activate(language)
+            # تحديث اللغة في الـ request للتأثير على reverse
+            self.request.LANGUAGE_CODE = language
+            # حفظ اللغة لاستخدامها في get_success_url
+            self.selected_language = language
+        
+        response = super().form_valid(form)
+        
+        # تسجيل في سجل الأنشطة بعد تسجيل الدخول
+        if language in ['ar', 'en']:
+            from core.models import AuditLog
+            AuditLog.objects.create(
+                user=self.request.user,
+                action_type='update',
+                content_type='User Language',
+                description=f'تم تغيير اللغة إلى {language}',
+                ip_address=self.request.META.get('REMOTE_ADDR')
+            )
+        
+        return response
+    
     def get_success_url(self):
         # إذا كان المستخدم من نوع "مستخدم نقطة بيع"، توجيهه إلى شاشة نقطة البيع
         if (self.request.user.is_authenticated and 
             hasattr(self.request.user, 'user_type') and 
             self.request.user.user_type == 'pos_user'):
-            return reverse_lazy('sales:pos')
+            return reverse('sales:pos')
         
         # للمستخدمين العاديين، توجيهه إلى الصفحة الرئيسية
-        return reverse_lazy('core:dashboard')
+        return reverse('core:dashboard')
 
 
 @login_required

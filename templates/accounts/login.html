@@ -229,6 +229,17 @@
             <p>{% trans "Integrated Accounting System" %}</p>
         </div>
 
+        <div class="form-group">
+            <label for="id_language" class="form-label">
+                <i class="fas fa-globe me-1"></i>
+                {% trans "Language" %}
+            </label>
+            <select class="form-control" id="id_language" name="language" onchange="changeLanguage(this.value)">
+                <option value="ar" {% if LANGUAGE_CODE == 'ar' %}selected{% endif %}>{% trans "العربية" %}</option>
+                <option value="en" {% if LANGUAGE_CODE == 'en' %}selected{% endif %}>{% trans "English" %}</option>
+            </select>
+        </div>
+
         {% if form.errors %}
             <div class="error-message">
                 {% for field, errors in form.errors.items %}
@@ -325,6 +336,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+// Function to change language
+function changeLanguage(lang) {
+    const currentUrl = window.location.href;
+    const newUrl = currentUrl.replace(/\/(ar|en)\//, '/' + lang + '/');
+    window.location.href = newUrl;
+}
 </script>
 
 {% block extra_js %}
