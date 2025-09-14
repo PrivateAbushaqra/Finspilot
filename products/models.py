@@ -8,8 +8,8 @@ class Category(models.Model):
     """فئة المنتجات"""
     sequence_number = models.IntegerField(_('الرقم التسلسلي'), unique=True, null=True, blank=True)
     name = models.CharField(_('اسم الفئة'), max_length=100, unique=True)
-    name_en = models.CharField(_('الاسم بالإنجليزية'), max_length=100, blank=True)
-    code = models.CharField(_('رمز التصنيف'), max_length=20, blank=True, unique=True, null=True)
+    name_en = models.CharField(_('Name in English'), max_length=100, blank=True)
+    code = models.CharField(_('Classification code'), max_length=20, blank=True, unique=True, null=True)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, 
                               verbose_name=_('الفئة الأساسية'), related_name='subcategories')
     description = models.TextField(_('الوصف'), blank=True)
@@ -71,7 +71,7 @@ class Product(models.Model):
     
     code = models.CharField(_('رقم المنتج'), max_length=50, unique=True)
     name = models.CharField(_('اسم المنتج'), max_length=200)
-    name_en = models.CharField(_('الاسم بالإنجليزية'), max_length=200, blank=True)
+    name_en = models.CharField(_('Name in English'), max_length=200, blank=True)
     product_type = models.CharField(_('نوع المنتج'), max_length=20, choices=PRODUCT_TYPE_CHOICES, default='physical')
     barcode = models.CharField(_('الباركود'), max_length=100, blank=True)
     serial_number = models.CharField(_('الرقم التسلسلي'), max_length=100, blank=True, 

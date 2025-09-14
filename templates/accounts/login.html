@@ -3,7 +3,7 @@
 {% load i18n %}
 {% load static %}
 
-{% block title %}تسجيل الدخول - Finspilot{% endblock %}
+{% block title %}{% trans "Login  - Finspilot" %}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -289,7 +289,7 @@
             <div class="form-group">
                 <button type="submit" class="btn-login">
                     <i class="fas fa-sign-in-alt me-2"></i>
-                    تسجيل الدخول
+                    {% trans "Login" %}
                 </button>
             </div>
         </form>
