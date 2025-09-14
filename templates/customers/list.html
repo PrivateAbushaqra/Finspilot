@@ -109,9 +109,9 @@
                 <div>
                     <h1 class="mb-3">
                         <i class="fas fa-address-book me-3"></i>
-                        نظام إدارة العم{% trans "No" %}ء وال{% trans "Supplier" %}ين
+                        {% trans "Customer and Supplier Management System" %}
                     </h1>
-                    <p class="mb-0 fs-5">إدارة شاملة لجميع عم{% trans "No" %}ئك و{% trans "Supplier" %}ينك في مكان واحد</p>
+                    <p class="mb-0 fs-5">{% trans "Comprehensive management of all your customers and suppliers in one place" %}</p>
                 </div>
                 <button onclick="printPage()" class="btn btn-primary no-print">
                     <i class="fas fa-print me-1"></i>
@@ -125,10 +125,9 @@
     <div class="welcome-section">
         <div class="row align-items-center">
             <div class="col-md-8">
-                <h3 class="text-primary mb-3">مرحباً بك في نظام إدارة العم{% trans "No" %}ء وال{% trans "Supplier" %}ين</h3>
+                <h3 class="text-primary mb-3">{% trans "Welcome to the Customer and Supplier Management System" %}</h3>
                 <p class="text-muted mb-0">
-                    من هنا يمكنك إدارة جميع عم{% trans "No" %}ئك و{% trans "Supplier" %}ينك، متابعة أرصدتهم، وإنشاء التقارير المالية.
-                    استخدم الأزرار أدناه للوصول السريع إلى الميزات المختلفة.
+                    {% trans "From here you can manage all your customers and suppliers, track their balances, and generate financial reports. Use the buttons below for quick access to different features." %}
                 </p>
             </div>
             <div class="col-md-4 text-center">
@@ -148,31 +147,31 @@
         <div class="col-md-2">
             <div class="stats-card">
                 <h3 class="text-primary">{{ total_suppliers }}</h3>
-                <p class="text-muted mb-0">إجمالي ال{% trans "Supplier" %}ين</p>
+                <p class="text-muted mb-0">{% trans "Total Suppliers" %}</p>
             </div>
         </div>
         <div class="col-md-2">
             <div class="stats-card">
                 <h3 class="text-success">{{ customer_credit|floatformat:3 }}</h3>
-                <p class="text-muted mb-0">أرصدة العم{% trans "No" %}ء ال{% trans "Credit" %}ة</p>
+                <p class="text-muted mb-0">{% trans "Customer Credit Balances" %}</p>
             </div>
         </div>
         <div class="col-md-2">
             <div class="stats-card">
                 <h3 class="text-danger">{{ customer_debit|floatformat:3 }}</h3>
-                <p class="text-muted mb-0">مديونية العم{% trans "No" %}ء</p>
+                <p class="text-muted mb-0">{% trans "Customer Debt" %}</p>
             </div>
         </div>
         <div class="col-md-2">
             <div class="stats-card">
                 <h3 class="text-success">{{ supplier_credit|floatformat:3 }}</h3>
-                <p class="text-muted mb-0">أرصدة ال{% trans "Supplier" %}ين ال{% trans "Credit" %}ة</p>
+                <p class="text-muted mb-0">{% trans "Supplier Credit Balances" %}</p>
             </div>
         </div>
         <div class="col-md-2">
             <div class="stats-card">
                 <h3 class="text-danger">{{ supplier_debit|floatformat:3 }}</h3>
-                <p class="text-muted mb-0">مديونية ال{% trans "Supplier" %}ين</p>
+                <p class="text-muted mb-0">{% trans "Supplier Debt" %}</p>
             </div>
         </div>
     </div>
@@ -185,10 +184,9 @@
                     <div class="feature-icon customers-icon">
                         <i class="fas fa-users"></i>
                     </div>
-                    <h4 class="mb-3">إدارة العم{% trans "No" %}ء</h4>
+                    <h4 class="mb-3">{% trans "Customer Management" %}</h4>
                     <p class="text-muted">
-                        {% trans "View" %} وإدارة جميع عم{% trans "No" %}ئك، متابعة أرصدتهم، و{% trans "Add" %} عم{% trans "No" %}ء جدد.
-                        يمكنك {% trans "Filter" %} العم{% trans "No" %}ء حسب {% trans "Status" %} و{% trans "Balance" %}.
+                        {% trans "View and manage all your customers, track their balances, and add new customers. You can filter customers by status and balance." %}
                     </p>
                     <div class="mt-3">
                         <span class="badge bg-success">{{ total_customers }} {% trans "Customer" %}</span>
@@ -203,10 +201,9 @@
                     <div class="feature-icon suppliers-icon">
                         <i class="fas fa-truck"></i>
                     </div>
-                    <h4 class="mb-3">إدارة ال{% trans "Supplier" %}ين</h4>
+                    <h4 class="mb-3">{% trans "Supplier Management" %}</h4>
                     <p class="text-muted">
-                        {% trans "View" %} وإدارة جميع {% trans "Supplier" %}ينك، متابعة أرصدتهم، و{% trans "Add" %} {% trans "Supplier" %}ين جدد.
-                        يمكنك {% trans "Filter" %} ال{% trans "Supplier" %}ين حسب {% trans "Status" %} و{% trans "Balance" %}.
+                        {% trans "View and manage all your suppliers, track their balances, and add new suppliers. You can filter suppliers by status and balance." %}
                     </p>
                     <div class="mt-3">
                         <span class="badge bg-primary">{{ total_suppliers }} {% trans "Supplier" %}</span>
@@ -220,7 +217,7 @@
     <div class="quick-actions">
         <h5 class="mb-4">
             <i class="fas fa-bolt me-2"></i>
-            إجراءات سريعة
+            {% trans "Quick Actions" %}
         </h5>
         <div class="row">
             <div class="col-md-6">
@@ -229,7 +226,7 @@
                         <i class="fas fa-user-plus me-3 text-success"></i>
                         <div>
                             <h6 class="mb-1">{% trans "Add New Customer" %}</h6>
-                            <small class="text-muted">أضف {% trans "Customer" %} {% trans "New" %} إلى قاعدة البيانات</small>
+                            <small class="text-muted">{% trans "Add a new customer to the database" %}</small>
                         </div>
                     </div>
                 </a>
@@ -239,8 +236,8 @@
                     <div class="d-flex align-items-center">
                         <i class="fas fa-truck me-3 text-primary"></i>
                         <div>
-                            <h6 class="mb-1">{% trans "Add" %} {% trans "Supplier" %} {% trans "New" %}</h6>
-                            <small class="text-muted">أضف {% trans "Supplier" %} {% trans "New" %} إلى قاعدة البيانات</small>
+                            <h6 class="mb-1">{% trans "Add New Supplier" %}</h6>
+                            <small class="text-muted">{% trans "Add a new supplier to the database" %}</small>
                         </div>
                     </div>
                 </a>
@@ -252,8 +249,8 @@
                     <div class="d-flex align-items-center">
                         <i class="fas fa-file-alt me-3 text-warning"></i>
                         <div>
-                            <h6 class="mb-1">{% trans "Report" %} أرصدة العم{% trans "No" %}ء</h6>
-                            <small class="text-muted">{% trans "View" %} {% trans "Report" %} شامل لأرصدة العم{% trans "No" %}ء</small>
+                            <h6 class="mb-1">{% trans "Customer Balances Report" %}</h6>
+                            <small class="text-muted">{% trans "View a comprehensive report of customer balances" %}</small>
                         </div>
                     </div>
                 </a>
@@ -263,8 +260,8 @@
                     <div class="d-flex align-items-center">
                         <i class="fas fa-chart-bar me-3 text-info"></i>
                         <div>
-                            <h6 class="mb-1">{% trans "Report" %} أرصدة ال{% trans "Supplier" %}ين</h6>
-                            <small class="text-muted">{% trans "View" %} {% trans "Report" %} شامل لأرصدة ال{% trans "Supplier" %}ين</small>
+                            <h6 class="mb-1">{% trans "Supplier Balances Report" %}</h6>
+                            <small class="text-muted">{% trans "View a comprehensive report of supplier balances" %}</small>
                         </div>
                     </div>
                 </a>
@@ -279,7 +276,7 @@
                 <div class="card-header">
                     <h6 class="mb-0">
                         <i class="fas fa-clock me-2"></i>
-                        النشاطات {% trans "Last" %}ة
+                        {% trans "Recent Activities" %}
                     </h6>
                 </div>
                 <div class="card-body">
@@ -287,8 +284,8 @@
                         <div class="mb-3">
                             <i class="fas fa-history fa-3x text-muted"></i>
                         </div>
-                        <h6 class="text-muted">لا توجد نشاطات حديثة</h6>
-                        <p class="text-muted mb-0">ستظهر هنا آخر العمليات على العم{% trans "No" %}ء وال{% trans "Supplier" %}ين</p>
+                        <h6 class="text-muted">{% trans "No recent activities" %}</h6>
+                        <p class="text-muted mb-0">{% trans "Recent operations on customers and suppliers will appear here" %}</p>
                     </div>
                 </div>
             </div>

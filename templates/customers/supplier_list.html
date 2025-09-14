@@ -157,34 +157,34 @@
                         <div class="col-md-3">
                             <label for="search" class="form-label">{% trans "Search" %}:</label>
                             <input type="text" class="form-control" id="search" name="search" 
-                                   placeholder="اسم ال{% trans "Supplier" %} أو {% trans "Phone" %}..." 
+                                   placeholder="{% trans "Supplier name or phone" %}..." 
                                    value="{{ request.GET.search }}">
                         </div>
                         <div class="col-md-3">
                             <label for="status" class="form-label">{% trans "Status" %}:</label>
                             <select class="form-select" id="status" name="status">
-                                <option value="">جميع ال{% trans "Supplier" %}ين</option>
-                                <option value="active">ال{% trans "Active" %}ون</option>
-                                <option value="inactive">غير ال{% trans "Active" %}ين</option>
+                                <option value="">{% trans "All Suppliers" %}</option>
+                                <option value="active">{% trans "Active Suppliers" %}</option>
+                                <option value="inactive">{% trans "Inactive Suppliers" %}</option>
                             </select>
                         </div>
                         <div class="col-md-3">
                             <label for="balance" class="form-label">{% trans "Balance" %}:</label>
                             <select class="form-select" id="balance" name="balance">
-                                <option value="">جميع الأرصدة</option>
-                                <option value="positive">{% trans "Balance" %} موجب</option>
-                                <option value="negative">{% trans "Balance" %} سالب</option>
-                                <option value="zero">{% trans "Balance" %} صفر</option>
+                                <option value="">{% trans "All Balances" %}</option>
+                                <option value="positive">{% trans "Positive Balance" %}</option>
+                                <option value="negative">{% trans "Negative Balance" %}</option>
+                                <option value="zero">{% trans "Zero Balance" %}</option>
                             </select>
                         </div>
                         <div class="col-md-3 d-flex align-items-end">
                             <button type="submit" class="btn btn-primary me-2">
                                 <i class="fas fa-search me-1"></i>
-                                بحث
+                                {% trans "Search" %}
                             </button>
                             <a href="{% url 'customers:supplier_list' %}" class="btn btn-outline-secondary">
                                 <i class="fas fa-undo me-1"></i>
-                                إعادة تعيين
+                                {% trans "Reset" %}
                             </a>
                         </div>
                     </form>
@@ -200,7 +200,7 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h6 class="mb-0">
                         <i class="fas fa-list me-2"></i>
-                        {% trans "List" %} ال{% trans "Supplier" %}ين ({{ total_suppliers }} {% trans "Supplier" %})
+                        {% trans "List" %} {% trans "Suppliers" %} ({{ total_suppliers }} {% trans "Suppliers" %})
                     </h6>
                     <div class="btn-group btn-group-sm">
                         <button class="btn btn-outline-primary active" data-view="card">
@@ -272,7 +272,7 @@
                         <table class="table table-hover">
                             <thead class="table-light">
                                 <tr>
-                                    <th>اسم</th>
+                                    <th>{% trans "Name" %}</th>
                                     <th>{% trans "Type" %}</th>
                                     <th>{% trans "Phone" %}</th>
                                     <th>{% trans "Email" %}</th>
@@ -395,12 +395,12 @@
                     <!-- ال{% trans "Information" %} الأساسية -->
                     <div class="mb-4">
                         <h6 class="text-primary border-bottom pb-2 mb-3">
-                            <i class="fas fa-user me-2"></i>ال{% trans "Information" %} الأساسية
+                            <i class="fas fa-user me-2"></i>{% trans "Basic Information" %}
                         </h6>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">اسم ال{% trans "Supplier" %} *</label>
+                                    <label class="form-label">{% trans "Supplier Name" %} *</label>
                                     <input type="text" class="form-control" name="name" required>
                                 </div>
                             </div>
