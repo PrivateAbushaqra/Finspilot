@@ -19,7 +19,7 @@
                     <div>
                         <a href="{% url 'purchases:return_add' %}" class="btn btn-primary">
                             <i class="fas fa-plus me-2"></i>
-                            إنشاء مردود {% trans "New" %}
+                            {% trans "Create New Purchase Return" %}
                         </a>
                     </div>
                 </div>
@@ -41,7 +41,7 @@
                             <div class="d-flex justify-content-center align-items-center">
                                 <div class="text-center">
                                     <h4 class="text-danger mb-1">{{ total_amount|currency_format }}</h4>
-                                    <small class="text-muted">إجمالي قيمة المردودات</small>
+                                    <small class="text-muted">{% trans "Total Value of Returns" %}</small>
                                 </div>
                             </div>
                         </div>
@@ -193,11 +193,11 @@
                     {% else %}
                     <div class="text-center py-5">
                         <i class="fas fa-undo fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">لا توجد مردودات مشتريات</h5>
-                        <p class="text-muted">يمكنك إنشاء مردود {% trans "New" %} باستخدام الزر أع{% trans "No" %}ه</p>
+                        <h5 class="text-muted">{% trans "No Purchase Returns" %}</h5>
+                        <p class="text-muted">{% trans "You can create a new return by clicking the button above." %}</p>
                         <a href="{% url 'purchases:return_add' %}" class="btn btn-primary">
                             <i class="fas fa-plus me-2"></i>
-                            إنشاء مردود {% trans "New" %}
+                            {% trans "Create New Purchase Return" %}
                         </a>
                     </div>
                     {% endif %}

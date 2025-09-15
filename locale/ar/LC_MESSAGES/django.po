@@ -41,11 +41,6 @@ msgstr "مردود المبيعات"
 msgid "Purchase Return"
 msgstr "مردود مشتريات"
 
-#: .\accounts\models.py:17 .\settings\views.py:963 .\settings\views.py:1128
-#: .\templates\settings\document_sequence_add.html:103
-msgid "Debit Note"
-msgstr ""
-
 #: .\accounts\models.py:18 .\settings\views.py:962 .\settings\views.py:1127
 #: .\templates\settings\document_sequence_add.html:98
 msgid "Credit Note"
@@ -175,6 +170,7 @@ msgstr "رقم الحركة"
 #: .\templates\search\search.html:344
 #: .\templates\settings\print_design.html:357
 #: .\templates\assets_liabilities\dashboard.html
+#: .\templates\purchases\debitnote_list.html:37
 msgid "Date"
 msgstr "التاريخ"
 
@@ -1087,7 +1083,6 @@ msgstr ""
 #: .\templates\customers\customer_list.html:279
 #: .\templates\customers\delete.html:167 .\templates\customers\edit.html:194
 #: .\templates\customers\edit.html:200 .\templates\customers\edit.html:208
-#: .\templates\customers\list.html:191 .\templates\customers\list.html:209
 #: .\templates\customers\supplier_list.html:172
 #: .\templates\customers\supplier_list.html:175
 #: .\templates\customers\supplier_list.html:176
@@ -1123,6 +1118,7 @@ msgstr ""
 msgid "Balance"
 msgstr "الرصيد"
 
+#: .templates\customers\list.html:150
 #: .\templates\customers\supplier_list.html:110
 msgid "Total Suppliers"
 msgstr "إجمالي الموردين"
@@ -2005,12 +2001,6 @@ msgstr ""
 msgid "العملاء والموردون"
 msgstr "العملاء والموردون"
 
-msgid "Customer and Supplier Management System"
-msgstr "نظام إدارة العملاء والموردين"
-
-msgid "Comprehensive management of all your customers and suppliers in one place"
-msgstr "إدارة شاملة لجميع عملائك ومورديك في مكان واحد"
-
 msgid "Welcome to the Customer and Supplier Management System"
 msgstr "مرحباً بك في نظام إدارة العملاء والموردين"
 
@@ -2511,8 +2501,7 @@ msgstr "تاريخ الإنهاء"
 #: .\templates\banks\account_list.html:696
 #: .\templates\customers\customer_list.html:164
 #: .\templates\customers\customer_list.html:280
-#: .\templates\customers\delete.html:177 .\templates\customers\list.html:191
-#: .\templates\customers\list.html:209
+#: .\templates\customers\delete.html:177
 #: .\templates\customers\supplier_list.html:164
 #: .\templates\customers\supplier_list.html:280
 #: .\templates\hr\attendance_list.html:87
@@ -3861,10 +3850,7 @@ msgstr "تاريخ الايصال"
 #: .\templates\customers\delete.html:90 .\templates\customers\edit.html:93
 #: .\templates\customers\edit.html:147 .\templates\customers\edit.html:167
 #: .\templates\customers\edit.html:172 .\templates\customers\edit.html:280
-#: .\templates\customers\list.html:112 .\templates\customers\list.html:114
-#: .\templates\customers\list.html:128 .\templates\customers\list.html:130
-#: .\templates\customers\list.html:151 .\templates\customers\list.html:169
-#: .\templates\customers\list.html:175 .\templates\customers\list.html:206
+#: .\templates\customers\list.html:206
 #: .\templates\customers\list.html:208 .\templates\customers\list.html:209
 #: .\templates\customers\list.html:212 .\templates\customers\list.html:242
 #: .\templates\customers\list.html:243 .\templates\customers\list.html:266
@@ -3904,6 +3890,7 @@ msgstr "تاريخ الايصال"
 #: .\templates\purchases\return_list.html:69
 #: .\templates\purchases\return_list.html:71
 #: .\templates\purchases\return_list.html:104
+#: .\templates\purchases\debitnote_list.html:38
 msgid "Supplier"
 msgstr "مورد"
 
@@ -4376,8 +4363,26 @@ msgstr "معرف المرجع"
 #: .\purchases\models.py:119 .\templates\base.html:777
 #: .\templates\core\tax_report.html:182
 #: .\templates\purchases\return_list.html:7
+#: .\templates\purchases\return_list.html:17
 msgid "Purchase Returns List"
 msgstr "قائمة مردود مشتريات"
+
+#: .\templates\purchases\return_list.html:22
+#: .\templates\purchases\return_list.html:200
+msgid "Create New Purchase Return"
+msgstr "إنشاء مرتجع مشتريات جديد"
+
+#: .\templates\purchases\return_list.html:196
+msgid "No Purchase Returns"
+msgstr "لا توجد مردودات مشتريات"
+
+#: .\templates\purchases\return_list.html:196
+msgid "You can create a new return by clicking the button above."
+msgstr "يمكنك إنشاء مردود جديد بالنقر على الزر أعلاه."
+
+#: .\templates\purchases\return_list.html:44
+msgid "Total Value of Returns"
+msgstr "إجمالي قيمة المردودات"
 
 #: .\purchases\models.py:122
 msgid "Can view مردود مشتريات"
@@ -4844,7 +4849,6 @@ msgstr "مدين"
 #: .\templates\accounts\customer_statement.html:123
 #: .\templates\accounts\transaction_list.html:100
 #: .\templates\accounts\transaction_list.html:138
-#: .\templates\customers\list.html:157 .\templates\customers\list.html:169
 #: .\templates\customers\transactions.html:206
 #: .\templates\customers\transactions.html:312
 #: .\templates\financial_reports\trial_balance.html:86
@@ -4887,7 +4891,7 @@ msgstr "الرصيد الختامي"
 #: .\templates\customers\delete.html:5 .\templates\customers\delete.html:90
 #: .\templates\customers\edit.html:93 .\templates\customers\edit.html:131
 #: .\templates\customers\edit.html:167 .\templates\customers\edit.html:172
-#: .\templates\customers\edit.html:191 .\templates\customers\list.html:194
+#: .\templates\customers\edit.html:191
 #: .\templates\customers\list.html:232
 #: .\templates\customers\transactions.html:5
 #: .\templates\customers\transactions.html:139
@@ -4981,6 +4985,7 @@ msgstr ""
 #: .\templates\sales\creditnote_add.html:24
 #: .\templates\sales\creditnote_detail.html:124
 #: .\templates\sales\creditnote_edit.html:36
+#: .\templates\purchases\debitnote_list.html:39
 msgid "Subtotal"
 msgstr "المجموع الفرعي"
 
@@ -5014,6 +5019,7 @@ msgstr "مبلغ الخصم"
 #: .\templates\sales\creditnote_add.html:32
 #: .\templates\sales\creditnote_delete.html:29
 #: .\templates\sales\creditnote_edit.html:44
+#: .\templates\purchases\debitnote_list.html:41
 msgid "Total Amount"
 msgstr "المبلغ الإجمالي"
 
@@ -6016,7 +6022,6 @@ msgstr ""
 #: .\templates\purchases\invoice_edit.html:81
 #: .\templates\purchases\invoice_list.html:178
 #: .\templates\purchases\return_delete.html:158
-#: .\templates\purchases\return_list.html:17
 #: .\templates\revenues_expenses\category_create.html:17
 #: .\templates\sales\invoice_add.html:964
 #: .\templates\sales\invoice_delete.html:162
@@ -6147,11 +6152,7 @@ msgstr "طباعة"
 #: .\templates\core\notifications.html:295
 #: .\templates\customers\delete.html:148 .\templates\customers\edit.html:185
 #: .\templates\customers\edit.html:212 .\templates\customers\edit.html:216
-#: .\templates\customers\list.html:112 .\templates\customers\list.html:114
-#: .\templates\customers\list.html:128 .\templates\customers\list.html:130
-#: .\templates\customers\list.html:157 .\templates\customers\list.html:163
-#: .\templates\customers\list.html:188 .\templates\customers\list.html:190
-#: .\templates\customers\list.html:191 .\templates\customers\list.html:255
+#: .\templates\customers\list.html:255
 #: .\templates\customers\list.html:256 .\templates\customers\list.html:291
 #: .\templates\customers\supplier_list.html:332
 #: .\templates\customers\supplier_list.html:389
@@ -7025,6 +7026,7 @@ msgstr "اسم"
 #: .\templates\revenues_expenses\recurring_detail.html:294
 #: .\templates\settings\document_sequences.html:45
 #: .\templates\users\group_list.html:40 .\templates\users\user_list.html:109
+#: .\templates\purchases\debitnote_list.html:43
 msgid "Actions"
 msgstr "الإجراءات"
 
@@ -9084,7 +9086,7 @@ msgstr "حساب التوفير"
 
 #: .\templates\banks\transfer_list.html:386
 #: .\templates\customers\customer_list.html:152
-#: .\templates\customers\list.html:191 .\templates\customers\list.html:209
+#: .\templates\customers\list.html:191
 #: .\templates\customers\supplier_list.html:152
 #: .\templates\customers\transactions.html:224
 #: .\templates\hr\attendance_list.html:97
@@ -9384,7 +9386,12 @@ msgstr "جميع العملاء والموردين"
 msgid "Purchases"
 msgstr "المشتريات"
 
+
+#: .\accounts\models.py:17 .\settings\views.py:963 .\settings\views.py:1128
+#: .\templates\settings\document_sequence_add.html:103
 #: .\templates\base.html:772
+#: .\templates\purchases\debitnote_list.html:4
+#: .\templates\purchases\debitnote_list.html:14
 msgid "Debit Notes"
 msgstr "مذكرات الدائن"
 
@@ -10716,9 +10723,9 @@ msgstr "جاي الحفظ..."
 #: .\templates\customers\add.html:290
 #: .\templates\customers\customer_list.html:93
 #: .\templates\customers\customer_list.html:387
-#: .\templates\customers\list.html:231
+#: .\templates\customers\list.html:228
 msgid "Add New Customer"
-msgstr ""
+msgstr "إضافة عميل جديد"
 
 #: .\templates\customers\customer_list.html:160
 #: .\templates\customers\edit.html:147 .\templates\customers\edit.html:280
@@ -10728,20 +10735,96 @@ msgstr "اسم العميل"
 #: .\templates\customers\customer_list.html:166
 #: .\templates\receipts\receipt_list.html:32
 msgid "All Customers"
-msgstr ""
+msgstr "جميع العملاء"
 
 #: .\templates\customers\edit.html:6
 msgid "Edit Customer/Supplier"
-msgstr ""
+msgstr "تعديل العميل/المورد"
 
 #: .\templates\customers\list.html:5
 msgid "Customers and Suppliers"
-msgstr ""
+msgstr "العملاء والموردين"
 
 #: .\templates\customers\customer_list.html:110
-#: .\templates\customers\list.html:145
+#: .\templates\customers\list.html:144
 msgid "Total Customers"
 msgstr "إجمالي العملاء"
+
+#: .\templates\customers\list.html:156
+msgid "Customer Credit Balances"
+msgstr "أرصدة العملاء الدائنة"
+
+#: .\templates\customers\list.html:168
+msgid "Supplier Credit Balances"
+msgstr "أرصدة الموردين الدائنة"
+
+#: .\templates\customers\list.html:162
+msgid "Customer Debt"
+msgstr "ديون العملاء"
+
+#: .\templates\customers\list.html:174
+msgid "Supplier Debt"
+msgstr "ديون الموردوين"
+
+#: .\templates\customers\list.html:112
+msgid "Customer and Supplier Management System"
+msgstr "نظام إدارة العملاء والموردين"
+
+#: .\templates\customers\list.html:112
+msgid "Comprehensive management of all your customers and suppliers in one place"
+msgstr "إدارة شاملة لجميع عملائك ومورديك في مكان واحد"
+
+#: .\templates\customers\list.html:187
+msgid "Customer Management"
+msgstr "إدارة العملاء"
+
+#: .\templates\customers\list.html:204
+msgid "Supplier Management"
+msgstr "إدارة الموردون"
+
+#: .\templates\customers\list.html:189
+msgid "View and manage all your customers, track their balances, and add new customers. You can filter customers by status and balance."
+msgstr "اعرض جميع عملائك وأدرهم، وتتبع أرصدتهم، وأضف عملاء جدد. يمكنك تصفية العملاء حسب الحالة والرصيد."
+
+#: .\templates\customers\list.html:206
+msgid "View and manage all your suppliers, track their balances, and add new suppliers. You can filter suppliers by status and balance."
+msgstr "استعرض وأدر جميع مورديك، وتتبع أرصدتهم، وأضف موردين جددًا. يمكنك تصفية الموردين حسب الحالة والرصيد."
+
+#: .\templates\customers\list.html:229
+msgid "Add a new customer to the database"
+msgstr "إضافة عميل جديد إلى قاعدة البيانات"
+
+#: .\templates\customers\list.html:240
+msgid "Add a new supplier to the database"
+msgstr "إضافة مورد جديد إلى قاعدة البيانات"
+
+#: .\templates\customers\list.html:252
+msgid "Customer Balances Report"
+msgstr "تقرير أرصدة العملاء"
+
+#: .\templates\customers\list.html:253
+msgid "View a comprehensive report of customer balances"
+msgstr "اطلع على تقرير شامل لأرصدة العملاء"
+
+#: .\templates\customers\list.html:263
+msgid "Supplier Balances Report"
+msgstr "تقرير أرصدة الموردين"
+
+#: .\templates\customers\list.html:264
+msgid "View a comprehensive report of supplier balances"
+msgstr "اطلع على تقرير شامل لأرصدة الموردين"
+
+#: .\templates\customers\list.html:279
+msgid "Recent Activities"
+msgstr "الأنشطة الأخيرة"
+
+#: .\templates\customers\list.html:287
+msgid "No recent activities"
+msgstr "لا توجد أنشطة حديثة"
+
+#: .\templates\customers\list.html:288
+msgid "Recent operations on customers and suppliers will appear here"
+msgstr "ستظهر هنا العمليات الأخيرة للعملاء والموردين"
 
 #: .\templates\customers\supplier_list.html:568
 #: .\templates\products\product_edit.html:586
@@ -14552,8 +14635,33 @@ msgstr "خطأ: لم يتم تحديد حذف عنوان URL بشكل صحيح"
 
 #: .\templates\purchases\debitnote_add.html:3
 #: .\templates\purchases\debitnote_add.html:6
+#: .\templates\purchases\debitnote_list.html:19
 msgid "Create Debit Note"
-msgstr "إنشاء مذكرة خصم"
+msgstr "إنشاء مذكرة دائن"
+
+#: .\templates\purchases\debitnote_list.html:36
+msgid "Debit Note number"
+msgstr "رقم المذكرة"
+
+#: .\templates\purchases\debitnote_list.html:40
+msgid "TAX"
+msgstr "الضريبة"
+
+#: .\templates\purchases\debitnote_list.html:42
+msgid "Created by"
+msgstr "أنشئ بواسطة"
+
+#: .\templates\purchases\debitnote_list.html:122
+msgid "No Debit Notes"
+msgstr "لا توجد مذكرات مدين"
+
+#: .\templates\purchases\debitnote_list.html:124
+msgid "You can create a new debt note by clicking the button above."
+msgstr "يمكنك إنشاء مذكرة دين جديدة بالضغط على الزر أعلاه"
+
+#: .\templates\purchases\debitnote_list.html:126
+msgid "Create First Debit Note"
+msgstr "إنشاء أول إشعار مدين"
 
 #: .\templates\purchases\debitnote_add.html:14
 msgid "Type to search supplier"
@@ -17477,9 +17585,6 @@ msgstr "أدخل رقم السند يدويًا"
 
 #~ msgid "Debtor notification number"
 #~ msgstr "رقم اشعار مدين"
-
-#~ msgid "Total amount"
-#~ msgstr "المبلغ الاجمالي"
 
 #~ msgid "Full Name:"
 #~ msgstr "الاسم الكامل"
