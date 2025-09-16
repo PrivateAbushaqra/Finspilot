@@ -184,7 +184,7 @@ def revenue_expense_dashboard(request):
     ).select_related('category', 'currency').order_by('next_due_date')[:5]
     
     context = {
-        'page_title': _('لوحة تحكم الإيرادات والمصروفات'),
+        'page_title': _('Revenues and Expenses Dashboard'),
         'monthly_revenues': monthly_revenues,
         'monthly_expenses': monthly_expenses,
         'monthly_net': monthly_revenues - monthly_expenses,
@@ -250,7 +250,7 @@ def category_create(request):
         form = RevenueExpenseCategoryForm()
     context = {
         'form': form,
-        'page_title': _('إضافة فئة جديدة'),
+        'page_title': _('Add New Category'),
     }
     return render(request, 'revenues_expenses/category_create.html', context)
 

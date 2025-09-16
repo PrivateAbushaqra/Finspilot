@@ -10,18 +10,18 @@
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">
         <i class="fas fa-chart-line me-2"></i>
-        لوحة تحكم الإيرادات والمصروفات
+        {% trans "Revenues and Expenses Dashboard" %}
     </h1>
 </div>
 
-<!-- ال{% trans "Statistics" %} -->
+<!-- {% trans "Statistics" %} -->
 <div class="row mb-4">
     <div class="col-md-3">
         <div class="card stats-card text-white">
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h5 class="card-title">إجمالي الإيرادات</h5>
+                        <h5 class="card-title">{% trans "Total Revenues" %}</h5>
                         <h3>{{ total_revenues|currency_format }}</h3>
                     </div>
                     <div class="align-self-center">
@@ -36,7 +36,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h5 class="card-title">إجمالي المصروفات</h5>
+                        <h5 class="card-title">{% trans "Total Expenses" %}</h5>
                         <h3>{{ total_expenses|currency_format }}</h3>
                     </div>
                     <div class="align-self-center">
@@ -51,7 +51,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h5 class="card-title">صافي الربح</h5>
+                        <h5 class="card-title">{% trans "Net Profit" %}</h5>
                         <h3>{{ net_profit|currency_format }}</h3>
                     </div>
                     <div class="align-self-center">
@@ -66,7 +66,7 @@
             <div class="card-body">
                 <div class="d-flex justify-content-between">
                     <div>
-                        <h5 class="card-title">عدد القيود</h5>
+                        <h5 class="card-title">{% trans "Number of Entries" %}</h5>
                         <h3>{{ entries_count }}</h3>
                     </div>
                     <div class="align-self-center">
@@ -78,29 +78,29 @@
     </div>
 </div>
 
-<!-- القوائم السريعة -->
+<!-- {% trans "Quick Lists" %} -->
 <div class="row">
     <div class="col-md-6">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">
                     <i class="fas fa-tags me-2"></i>
-                    إدارة الفئات
+                    {% trans "Category Management" %}
                 </h5>
                 <a href="{% url 'revenues_expenses:category_create' %}" class="btn btn-primary btn-sm">
                     <i class="fas fa-plus me-1"></i>
-                    {% trans "Add" %} فئة {% trans "New" %}ة
+                    {% trans "Add New Category" %}
                 </a>
             </div>
             <div class="card-body">
                 <div class="list-group">
                     <a href="{% url 'revenues_expenses:category_list' %}" class="list-group-item list-group-item-action">
                         <i class="fas fa-list me-2"></i>
-                        {% trans "View" %} جميع الفئات
+                        {% trans "View All Categories" %}
                     </a>
                     <a href="{% url 'revenues_expenses:category_create' %}" class="list-group-item list-group-item-action">
                         <i class="fas fa-plus me-2"></i>
-                        {% trans "Add" %} فئة {% trans "New" %}ة
+                        {% trans "Add New Category" %}
                     </a>
                 </div>
             </div>
@@ -112,26 +112,26 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">
                     <i class="fas fa-file-invoice me-2"></i>
-                    إدارة القيود
+                    {% trans "Entry Management" %}
                 </h5>
                 <a href="{% url 'revenues_expenses:entry_create' %}" class="btn btn-primary btn-sm">
                     <i class="fas fa-plus me-1"></i>
-                    {% trans "Add" %} قيد {% trans "New" %}
+                    {% trans "Add New Entry" %}
                 </a>
             </div>
             <div class="card-body">
                 <div class="list-group">
                     <a href="{% url 'revenues_expenses:entry_list' %}" class="list-group-item list-group-item-action">
                         <i class="fas fa-list me-2"></i>
-                        {% trans "View" %} جميع القيود
+                        {% trans "View All Entries" %}
                     </a>
                     <a href="{% url 'revenues_expenses:entry_create' %}" class="list-group-item list-group-item-action">
                         <i class="fas fa-plus me-2"></i>
-                        {% trans "Add" %} قيد {% trans "New" %}
+                        {% trans "Add New Entry" %}
                     </a>
                     <a href="{% url 'revenues_expenses:recurring_list' %}" class="list-group-item list-group-item-action">
                         <i class="fas fa-redo me-2"></i>
-                        الإيرادات والمصروفات المتكررة
+                        {% trans "Recurring Revenues and Expenses" %}
                     </a>
                 </div>
             </div>
@@ -139,14 +139,14 @@
     </div>
 </div>
 
-<!-- آخر القيود -->
+<!-- {% trans "Latest Entries" %} -->
 <div class="row mt-4">
     <div class="col-12">
         <div class="card">
             <div class="card-header">
                 <h5 class="mb-0">
                     <i class="fas fa-clock me-2"></i>
-                    آخر القيود المضافة
+                    {% trans "Latest Added Entries" %}
                 </h5>
             </div>
             <div class="card-body">
@@ -157,11 +157,11 @@
                             <tr>
                                 <th>{% trans "Date" %}</th>
                                 <th>{% trans "Type" %}</th>
-                                <th>الفئة</th>
+                                <th>{% trans "Category" %}</th>
                                 <th>{% trans "Amount" %}</th>
                                 <th>{% trans "Description" %}</th>
                                 <th>{% trans "Status" %}</th>
-                                <th>الإجراءات</th>
+                                <th>{% trans "Actions" %}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -170,9 +170,9 @@
                                 <td>{{ entry.date|date:"Y-m-d" }}</td>
                                 <td>
                                     {% if entry.type == 'revenue' %}
-                                        <span class="badge bg-success">إيراد</span>
+                                        <span class="badge bg-success">{% trans "Revenue" %}</span>
                                     {% else %}
-                                        <span class="badge bg-danger">مصروف</span>
+                                        <span class="badge bg-danger">{% trans "Expense" %}</span>
                                     {% endif %}
                                 </td>
                                 <td>{{ entry.category.name }}</td>
@@ -180,9 +180,9 @@
                                 <td>{{ entry.description|truncatechars:50 }}</td>
                                 <td>
                                     {% if entry.is_approved %}
-                                        <span class="badge bg-success">معتمد</span>
+                                        <span class="badge bg-success">{% trans "Approved" %}</span>
                                     {% else %}
-                                        <span class="badge bg-warning">في ا{% trans "No" %}نتظار</span>
+                                        <span class="badge bg-warning">{% trans "Pending" %}</span>
                                     {% endif %}
                                 </td>
                                 <td>
@@ -198,10 +198,10 @@
                 {% else %}
                 <div class="text-center py-4">
                     <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                    <p class="text-muted">لا توجد قيود مضافة بعد</p>
+                    <p class="text-muted">{% trans "No entries added yet" %}</p>
                     <a href="{% url 'revenues_expenses:entry_create' %}" class="btn btn-primary">
                         <i class="fas fa-plus me-1"></i>
-                        {% trans "Add" %} أول قيد
+                        {% trans "Add First Entry" %}
                     </a>
                 </div>
                 {% endif %}

@@ -7,7 +7,7 @@
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">
         <i class="fas fa-plus-circle me-2"></i>
-        إضافة قيد إيرادات/مصروفات جديد
+        {% trans "Add New Revenue/Expense Entry" %}
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <a href="{% url 'revenues_expenses:entry_list' %}" class="btn btn-secondary">
@@ -32,7 +32,7 @@
             <div class="card-header">
                 <h5 class="card-title mb-0">
                     <i class="fas fa-file-invoice me-2"></i>
-                    بيانات القيد
+                    {% trans "Entry Data" %}
                 </h5>
             </div>
             <div class="card-body">
@@ -44,7 +44,7 @@
                         <div class="col-md-6 mb-3">
                             <label for="{{ form.type.id_for_label }}" class="form-label">
                                 <i class="fas fa-tag me-1"></i>
-                                نوع القيد <span class="text-danger">*</span>
+                                {% trans "Entry Type" %} <span class="text-danger">*</span>
                             </label>
                             {{ form.type }}
                             {% if form.type.errors %}
@@ -53,7 +53,7 @@
                                 </div>
                             {% endif %}
                             <small class="form-text text-muted">
-                                اختر ما إذا كان هذا إيراد أم مصروف
+                                {% trans "Choose whether this is a revenue or expense" %}
                             </small>
                         </div>
 
@@ -61,7 +61,7 @@
                         <div class="col-md-6 mb-3">
                             <label for="{{ form.category.id_for_label }}" class="form-label">
                                 <i class="fas fa-folder me-1"></i>
-                                الفئة <span class="text-danger">*</span>
+                                {% trans "Category" %} <span class="text-danger">*</span>
                             </label>
                             {{ form.category }}
                             {% if form.category.errors %}
@@ -70,7 +70,7 @@
                                 </div>
                             {% endif %}
                             <small class="form-text text-muted">
-                                سيتم تحديث الفئات حسب النوع المختار
+                                {% trans "Categories will be updated according to the selected type" %}
                             </small>
                         </div>
                     </div>
@@ -80,7 +80,7 @@
                         <div class="col-md-6 mb-3">
                             <label for="{{ form.amount.id_for_label }}" class="form-label">
                                 <i class="fas fa-money-bill me-1"></i>
-                                المبلغ <span class="text-danger">*</span>
+                                {% trans "Amount" %} <span class="text-danger">*</span>
                             </label>
                             <div class="input-group">
                                 {{ form.amount }}
@@ -94,7 +94,7 @@
                                 </div>
                             {% endif %}
                             <small class="form-text text-muted">
-                                أدخل المبلغ بدقة حتى 3 خانات عشرية
+                                {% trans "Enter the amount accurately up to 3 decimal places" %}
                             </small>
                         </div>
 
@@ -102,7 +102,7 @@
                         <div class="col-md-6 mb-3">
                             <label for="{{ form.currency.id_for_label }}" class="form-label">
                                 <i class="fas fa-coins me-1"></i>
-                                العملة <span class="text-danger">*</span>
+                                {% trans "Currency" %} <span class="text-danger">*</span>
                             </label>
                             {{ form.currency }}
                             {% if form.currency.errors %}
@@ -111,7 +111,7 @@
                                 </div>
                             {% endif %}
                             <small class="form-text text-muted">
-                                سيتم تعيين العملة الافتراضية تلقائياً
+                                {% trans "The default currency will be set automatically" %}
                             </small>
                         </div>
                     </div>
@@ -121,7 +121,7 @@
                         <div class="col-md-6 mb-3">
                             <label for="{{ form.payment_method.id_for_label }}" class="form-label">
                                 <i class="fas fa-credit-card me-1"></i>
-                                طريقة الدفع <span class="text-danger">*</span>
+                                {% trans "Payment Method" %} <span class="text-danger">*</span>
                             </label>
                             {{ form.payment_method }}
                             {% if form.payment_method.errors %}
@@ -130,7 +130,7 @@
                                 </div>
                             {% endif %}
                             <small class="form-text text-muted">
-                                ستؤثر على الحساب المحاسبي المستخدم
+                                {% trans "Will affect the accounting account used" %}
                             </small>
                         </div>
 
@@ -138,7 +138,7 @@
                         <div class="col-md-6 mb-3">
                             <label for="{{ form.reference_number.id_for_label }}" class="form-label">
                                 <i class="fas fa-hashtag me-1"></i>
-                                رقم المرجع
+                                {% trans "Reference Number" %}
                             </label>
                             {{ form.reference_number }}
                             {% if form.reference_number.errors %}
@@ -147,7 +147,7 @@
                                 </div>
                             {% endif %}
                             <small class="form-text text-muted">
-                                رقم الفاتورة أو الإيصال (اختياري)
+                                {% trans "Invoice or receipt number (optional)" %}
                             </small>
                         </div>
                     </div>
@@ -157,7 +157,7 @@
                         <div class="col-md-6 mb-3">
                             <label for="{{ form.date.id_for_label }}" class="form-label">
                                 <i class="fas fa-calendar me-1"></i>
-                                التاريخ <span class="text-danger">*</span>
+                                {% trans "Date" %} <span class="text-danger">*</span>
                             </label>
                             {{ form.date }}
                             {% if form.date.errors %}
@@ -166,7 +166,7 @@
                                 </div>
                             {% endif %}
                             <small class="form-text text-muted">
-                                سيؤثر على التقارير والإحصائيات
+                                {% trans "Will affect reports and statistics" %}
                             </small>
                         </div>
 
@@ -174,16 +174,16 @@
                         <div class="col-md-6 mb-3">
                             <label class="form-label">
                                 <i class="fas fa-number me-1"></i>
-                                رقم القيد
+                                {% trans "Entry Number" %}
                             </label>
                             <div class="form-control bg-light">
                                 <span class="text-muted">
                                     <i class="fas fa-magic me-1"></i>
-                                    سيتم إنشاؤه تلقائياً
+                                    {% trans "Will be created automatically" %}
                                 </span>
                             </div>
                             <small class="form-text text-muted">
-                                سيبدأ بـ RE للإيرادات أو EX للمصروفات
+                                {% trans "Will start with RE for revenues or EX for expenses" %}
                             </small>
                         </div>
                     </div>
@@ -192,7 +192,7 @@
                     <div class="mb-3">
                         <label for="{{ form.description.id_for_label }}" class="form-label">
                             <i class="fas fa-align-left me-1"></i>
-                            الوصف <span class="text-danger">*</span>
+                            {% trans "Description" %} <span class="text-danger">*</span>
                         </label>
                         {{ form.description }}
                         {% if form.description.errors %}
@@ -201,7 +201,7 @@
                             </div>
                         {% endif %}
                         <small class="form-text text-muted">
-                            وصف مفصل للقيد يساعد في التتبع واللتقارير
+                            {% trans "Detailed description of the entry that helps in tracking and reporting" %}
                         </small>
                     </div>
 
@@ -210,7 +210,7 @@
                         <div class="card-header bg-info text-white">
                             <h6 class="mb-0">
                                 <i class="fas fa-cogs me-1"></i>
-                                خيارات إضافية
+                                {% trans "Additional Options" %}
                             </h6>
                         </div>
                         <div class="card-body">
@@ -220,11 +220,11 @@
                                         <input class="form-check-input" type="checkbox" id="autoApprove">
                                         <label class="form-check-label" for="autoApprove">
                                             <i class="fas fa-check-circle me-1"></i>
-                                            اعتماد تلقائي للقيد
+                                            {% trans "Automatic approval of the entry" %}
                                         </label>
                                     </div>
                                     <small class="form-text text-muted">
-                                        سيتم اعتماد القيد تلقائياً بعد الحفظ
+                                        {% trans "The entry will be approved automatically after saving" %}
                                     </small>
                                 </div>
                                 <div class="col-md-6">
@@ -232,11 +232,11 @@
                                         <input class="form-check-input" type="checkbox" id="createJournal" checked>
                                         <label class="form-check-label" for="createJournal">
                                             <i class="fas fa-book me-1"></i>
-                                            إنشاء قيد محاسبي
+                                            {% trans "Create accounting entry" %}
                                         </label>
                                     </div>
                                     <small class="form-text text-muted">
-                                        سيتم إنشاء قيد محاسبي مقابل تلقائياً
+                                        {% trans "A corresponding accounting entry will be created automatically" %}
                                     </small>
                                 </div>
                             </div>
@@ -246,11 +246,11 @@
                     <div class="d-flex justify-content-between">
                         <a href="{% url 'revenues_expenses:entry_list' %}" class="btn btn-outline-secondary">
                             <i class="fas fa-times me-1"></i>
-                            إلغاء
+                            {% trans "Cancel" %}
                         </a>
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-save me-1"></i>
-                            حفظ القيد
+                            {% trans "Save Entry" %}
                         </button>
                     </div>
                 </form>
@@ -264,29 +264,29 @@
             <div class="card-header">
                 <h6 class="card-title mb-0">
                     <i class="fas fa-info-circle me-2"></i>
-                    معلومات مهمة
+                    {% trans "Important Information" %}
                 </h6>
             </div>
             <div class="card-body">
                 <div class="alert alert-info">
                     <h6 class="alert-heading">
                         <i class="fas fa-lightbulb me-1"></i>
-                        تلميحات
+                        {% trans "Tips" %}
                     </h6>
                     <small>
-                        • سيتم إنشاء رقم قيد تلقائياً<br>
-                        • يمكنك اعتماد القيد لاحقاً من صفحة التفاصيل<br>
-                        • جميع الحقول المطلوبة مميزة بـ <span class="text-danger">*</span>
+                        • {% trans "An entry number will be created automatically" %}<br>
+                        • {% trans "You can approve the entry later from the details page" %}<br>
+                        • {% trans "All required fields are marked with" %} <span class="text-danger">*</span>
                     </small>
                 </div>
                 
                 <div class="alert alert-warning">
                     <h6 class="alert-heading">
                         <i class="fas fa-exclamation-triangle me-1"></i>
-                        ملاحظة
+                        {% trans "Note" %}
                     </h6>
                     <small>
-                        تأكد من اختيار النوع والفئة الصحيحة قبل الحفظ
+                        {% trans "Make sure to select the correct type and category before saving" %}
                     </small>
                 </div>
             </div>
@@ -297,7 +297,7 @@
             <div class="card-header">
                 <h6 class="card-title mb-0">
                     <i class="fas fa-chart-line me-2"></i>
-                    إحصائيات اليوم
+                    {% trans "Today's Statistics" %}
                 </h6>
             </div>
             <div class="card-body">
@@ -305,19 +305,19 @@
                     <div class="col-4">
                         <div class="stat-item">
                             <h5 class="text-success" id="todayRevenues">--</h5>
-                            <small class="text-muted">إيرادات</small>
+                            <small class="text-muted">{% trans "Revenues" %}</small>
                         </div>
                     </div>
                     <div class="col-4">
                         <div class="stat-item">
                             <h5 class="text-danger" id="todayExpenses">--</h5>
-                            <small class="text-muted">مصروفات</small>
+                            <small class="text-muted">{% trans "Expenses" %}</small>
                         </div>
                     </div>
                     <div class="col-4">
                         <div class="stat-item">
                             <h5 class="text-primary" id="todayNet">--</h5>
-                            <small class="text-muted">الصافي</small>
+                            <small class="text-muted">{% trans "Net" %}</small>
                         </div>
                     </div>
                 </div>
@@ -325,7 +325,7 @@
                 <div class="text-center">
                     <small class="text-muted">
                         <i class="fas fa-sync-alt me-1"></i>
-                        يتم التحديث كل 30 ثانية
+                        {% trans "Updated every 30 seconds" %}
                     </small>
                 </div>
             </div>
@@ -336,26 +336,26 @@
             <div class="card-header">
                 <h6 class="card-title mb-0">
                     <i class="fas fa-link me-2"></i>
-                    روابط سريعة
+                    {% trans "Quick Links" %}
                 </h6>
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
                     <a href="{% url 'revenues_expenses:entry_list' %}" class="btn btn-outline-primary btn-sm">
                         <i class="fas fa-list me-1"></i>
-                        قائمة القيود
+                        {% trans "Entries List" %}
                     </a>
                     <a href="{% url 'revenues_expenses:category_list' %}" class="btn btn-outline-secondary btn-sm">
                         <i class="fas fa-folder me-1"></i>
-                        إدارة الفئات
+                        {% trans "Category Management" %}
                     </a>
                     <a href="{% url 'revenues_expenses:recurring_list' %}" class="btn btn-outline-info btn-sm">
                         <i class="fas fa-redo me-1"></i>
-                        القيود المتكررة
+                        {% trans "Recurring Entries" %}
                     </a>
                     <a href="{% url 'journal:entry_list' %}" class="btn btn-outline-success btn-sm">
                         <i class="fas fa-book me-1"></i>
-                        دفتر اليومية
+                        {% trans "Journal" %}
                     </a>
                 </div>
             </div>
@@ -372,7 +372,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const autoApproveField = document.getElementById('autoApprove');
     const createJournalField = document.getElementById('createJournal');
     
-    // إضافة hidden inputs للخيارات الإضافية
+    // {% trans "Add hidden inputs for additional options" %}
     const form = document.getElementById('entryForm');
     if (!document.getElementById('hiddenAutoApprove')) {
         const hiddenAutoApprove = document.createElement('input');
@@ -392,7 +392,7 @@ document.addEventListener('DOMContentLoaded', function() {
         form.appendChild(hiddenCreateJournal);
     }
     
-    // تحديث الخيارات المخفية
+    // {% trans "Update hidden options" %}
     autoApproveField.addEventListener('change', function() {
         document.getElementById('hiddenAutoApprove').value = this.checked ? 'true' : 'false';
     });
@@ -401,12 +401,12 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('hiddenCreateJournal').value = this.checked ? 'true' : 'false';
     });
     
-    // تحديث الفئات عند تغيير النوع
+    // {% trans "Update categories when type changes" %}
     typeField.addEventListener('change', function() {
         const selectedType = this.value;
         
         // مسح الفئات الحالية
-        categoryField.innerHTML = '<option value="">اختر الفئة...</option>';
+        categoryField.innerHTML = '<option value="">{% trans "Choose category..." %}</option>';
         
         if (selectedType) {
             // جلب الفئات المتاحة للنوع المحدد
@@ -421,11 +421,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                 })
                 .catch(error => {
-                    console.error('خطأ في جلب الفئات:', error);
+                    console.error('{% trans "Error fetching categories:" %}', error);
                 });
         }
         
-        // تحديث لون النوع
+        // {% trans "Update type color" %}
         if (selectedType === 'revenue') {
             typeField.className = typeField.className.replace(/border-\w+/, 'border-success');
         } else if (selectedType === 'expense') {
@@ -433,7 +433,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // تنسيق المبلغ أثناء الكتابة
+    // {% trans "Format amount while typing" %}
     amountField.addEventListener('input', function() {
         let value = this.value.replace(/[^\d.]/g, '');
         const parts = value.split('.');
@@ -443,17 +443,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         this.value = value;
         
-        // تحديث العرض
+        // {% trans "Update display" %}
         if (value) {
             const formatted = parseFloat(value).toLocaleString('ar', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 3
             });
-            this.title = `القيمة المنسقة: ${formatted}`;
+            this.title = `{% trans "Formatted value:" %} ${formatted}`;
         }
     });
     
-    // تحديث أيقونة طريقة الدفع
+    // {% trans "Update payment method icon" %}
     paymentMethodField.addEventListener('change', function() {
         const label = document.querySelector(`label[for="${this.id}"]`);
         const icon = label.querySelector('i');
@@ -476,37 +476,37 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // تعيين التاريخ الحالي كافتراضي إذا لم يكن محدداً
+    // {% trans "Set current date as default if not specified" %}
     const dateField = document.getElementById('{{ form.date.id_for_label }}');
     if (!dateField.value) {
         const today = new Date().toISOString().split('T')[0];
         dateField.value = today;
     }
     
-    // جلب إحصائيات اليوم
+    // {% trans "Load today's statistics" %}
     loadTodayStats();
     
-    // تحديث الإحصائيات كل 30 ثانية
+    // {% trans "Update statistics every 30 seconds" %}
     setInterval(loadTodayStats, 30000);
     
-    // تحقق من النموذج قبل الإرسال
+    // {% trans "Validate form before submission" %}
     form.addEventListener('submit', function(e) {
         let hasErrors = false;
         
-        // التحقق من المبلغ
+        // {% trans "Validate amount" %}
         if (!amountField.value || parseFloat(amountField.value) <= 0) {
-            showFieldError(amountField, 'يجب إدخال مبلغ صحيح أكبر من الصفر');
+            showFieldError(amountField, '{% trans "A valid amount greater than zero must be entered" %}');
             hasErrors = true;
         }
         
-        // التحقق من النوع والفئة
+        // {% trans "Validate type and category" %}
         if (!typeField.value) {
-            showFieldError(typeField, 'يجب اختيار نوع القيد');
+            showFieldError(typeField, '{% trans "Entry type must be selected" %}');
             hasErrors = true;
         }
         
         if (!categoryField.value) {
-            showFieldError(categoryField, 'يجب اختيار الفئة');
+            showFieldError(categoryField, '{% trans "Category must be selected" %}');
             hasErrors = true;
         }
         
@@ -515,13 +515,13 @@ document.addEventListener('DOMContentLoaded', function() {
             return false;
         }
         
-        // إظهار مؤشر التحميل
+        // {% trans "Show loading indicator" %}
         const submitBtn = form.querySelector('button[type="submit"]');
         const originalText = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>جاري الحفظ...';
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>{% trans "Saving..." %}';
         submitBtn.disabled = true;
         
-        // إعادة تفعيل الزر في حالة فشل الإرسال
+        // {% trans "Re-enable button in case of submission failure" %}
         setTimeout(() => {
             submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;
@@ -530,16 +530,16 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function showFieldError(field, message) {
-    // إزالة رسائل الخطأ السابقة
+    // {% trans "Remove previous error messages" %}
     const existingError = field.parentNode.querySelector('.field-error');
     if (existingError) {
         existingError.remove();
     }
     
-    // إضافة class خطأ
+    // {% trans "Add error class" %}
     field.classList.add('is-invalid');
     
-    // إضافة رسالة خطأ
+    // {% trans "Add error message" %}
     const errorDiv = document.createElement('div');
     errorDiv.className = 'field-error text-danger small mt-1';
     errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i>${message}`;
@@ -560,7 +560,7 @@ function loadTodayStats() {
             document.getElementById('todayRevenues').textContent = data.revenues || '0.00';
             document.getElementById('todayExpenses').textContent = data.expenses || '0.00';
             
-            // إضافة مؤشر الصافي
+            // {% trans "Add net indicator" %}
             const netElement = document.getElementById('todayNet');
             if (netElement) {
                 netElement.textContent = data.net || '0.00';
@@ -569,7 +569,7 @@ function loadTodayStats() {
             }
         })
         .catch(error => {
-            console.error('خطأ في جلب الإحصائيات:', error);
+            console.error('{% trans "Error fetching statistics:" %}', error);
         });
 }
 </script>

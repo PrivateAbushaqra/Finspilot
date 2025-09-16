@@ -148,20 +148,20 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2>
                     <i class="fas fa-warehouse me-2"></i>
-                    إدارة المستودعات
+                    {% trans "Warehouse Management" %}
                 </h2>
                 <div class="btn-group print-controls">
                     <button type="button" class="btn btn-outline-primary" onclick="printWarehouseReport()">
                         <i class="fas fa-print me-2"></i>
-                        {% trans "Print" %} {% trans "Report" %} المستودعات
+                        {% trans "Print" %} {% trans "Warehouse Report" %}
                     </button>
                     <a href="{% url 'inventory:warehouse_add' %}" class="btn btn-success">
                         <i class="fas fa-plus me-2"></i>
-                        {% trans "Add" %} مستودع {% trans "New" %}
+                        {% trans "Add New Warehouse" %}
                     </a>
                     <a href="{% url 'inventory:list' %}" class="btn btn-outline-primary">
                         <i class="fas fa-arrow-left me-2"></i>
-                        العودة للمخزون
+                        {% trans "Back to Inventory" %}
                     </a>
                 </div>
             </div>
@@ -175,9 +175,9 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1">
-                            <h6 class="mb-0">إجمالي المستودعات</h6>
+                            <h6 class="mb-0">{% trans "Total Warehouses" %}</h6>
                             <h3 class="mb-0">{{ total_warehouses|default:0 }}</h3>
-                            <small>مستودع</small>
+                            <small>{% trans "Warehouse" %}</small>
                         </div>
                         <div class="ms-3">
                             <i class="fas fa-warehouse fa-2x opacity-75"></i>
@@ -192,9 +192,9 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1">
-                            <h6 class="mb-0">المستودعات ال{% trans "Active" %}ة</h6>
+                            <h6 class="mb-0">{% trans "Active Warehouses" %}</h6>
                             <h3 class="mb-0">{{ active_warehouses|default:0 }}</h3>
-                            <small>مستودع</small>
+                            <small>{% trans "Warehouse" %}</small>
                         </div>
                         <div class="ms-3">
                             <i class="fas fa-check-circle fa-2x opacity-75"></i>
@@ -209,9 +209,9 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1">
-                            <h6 class="mb-0">المستودعات الفرعية</h6>
+                            <h6 class="mb-0">{% trans "Sub Warehouses" %}</h6>
                             <h3 class="mb-0">{{ sub_warehouses|default:0 }}</h3>
-                            <small>مستودع</small>
+                            <small>{% trans "Warehouse" %}</small>
                         </div>
                         <div class="ms-3">
                             <i class="fas fa-sitemap fa-2x opacity-75"></i>
@@ -226,9 +226,9 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1">
-                            <h6 class="mb-0">حركات {% trans "This Month" %}</h6>
+                            <h6 class="mb-0">{% trans "Movements This Month" %}</h6>
                             <h3 class="mb-0">{{ month_movements|default:0 }}</h3>
-                            <small>حركة</small>
+                            <small>{% trans "Movement" %}</small>
                         </div>
                         <div class="ms-3">
                             <i class="fas fa-exchange-alt fa-2x opacity-75"></i>
@@ -246,7 +246,7 @@
                 <div class="warehouse-header">
                     <h5 class="mb-0">
                         <i class="fas fa-list me-2"></i>
-                        {% trans "List" %} المستودعات
+                        {% trans "Warehouse List" %}
                     </h5>
                 </div>
                 
@@ -256,14 +256,14 @@
                             <table class="table table-striped table-hover">
                                 <thead class="table-dark">
                                     <tr>
-                                        <th><i class="fas fa-warehouse me-2"></i>المستودع</th>
-                                        <th>الرمز</th>
-                                        <th>المستودع الأساسي</th>
-                                        <th>المدير</th>
+                                        <th><i class="fas fa-warehouse me-2"></i>{% trans "Warehouse" %}</th>
+                                        <th>{% trans "Code" %}</th>
+                                        <th>{% trans "Parent Warehouse" %}</th>
+                                        <th>{% trans "Manager" %}</th>
                                         <th>{% trans "Status" %}</th>
-                                        <th>افتراضي</th>
+                                        <th>{% trans "Default" %}</th>
                                         <th>{% trans "Address" %}</th>
-                                        <th class="text-center">الإجراءات</th>
+                                        <th class="text-center">{% trans "Actions" %}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -280,20 +280,20 @@
                                         <td>
                                             <code>{{ warehouse.code }}</code>
                                         </td>
-                                        <td>{{ warehouse.parent.name|default:"رئيسي" }}</td>
-                                        <td>{{ warehouse.manager.get_full_name|default:"غير محدد" }}</td>
+                                        <td>{{ warehouse.parent.name|default:"{% trans 'Main' %}" }}</td>
+                                        <td>{{ warehouse.manager.get_full_name|default:"{% trans 'Not specified' %}" }}</td>
                                         <td>
                                             <span class="badge 
                                                 {% if warehouse.is_active %}bg-success
                                                 {% else %}bg-secondary{% endif %}">
                                                 {% if warehouse.is_active %}{% trans "Active" %}
-                                                {% else %}غير {% trans "Active" %}{% endif %}
+                                                {% else %}{% trans "Inactive" %}{% endif %}
                                             </span>
                                         </td>
                                         <td>
                                             {% if warehouse.is_default %}
                                                 <span class="badge bg-primary">
-                                                    <i class="fas fa-star me-1"></i>افتراضي
+                                                    <i class="fas fa-star me-1"></i>{% trans "Default" %}
                                                 </span>
                                             {% else %}
                                                 <span class="text-muted">-</span>
@@ -311,7 +311,7 @@
                                         </td>
                                         <td class="text-center">
                                             <div class="btn-group btn-group-sm">
-                                                <button class="btn btn-outline-primary" title="{% trans "View" %} ال{% trans "Details" %}" onclick="viewWarehouse({{ warehouse.id }})">
+                                                <button class="btn btn-outline-primary" title="{% trans "View Details" %}" onclick="viewWarehouse({{ warehouse.id }})">
                                                     <i class="fas fa-eye"></i>
                                                 </button>
                                                 <button class="btn btn-outline-warning" title="{% trans "Edit" %}" onclick="editWarehouse({{ warehouse.id }})">
@@ -332,11 +332,11 @@
                         <!-- Empty State -->
                         <div class="text-center py-5">
                             <i class="fas fa-warehouse fa-4x text-muted mb-3"></i>
-                            <h4>لا توجد مستودعات</h4>
-                            <p class="text-muted">لم يتم إنشاء أي مستودعات بعد.</p>
+                            <h4>{% trans "No warehouses" %}</h4>
+                            <p class="text-muted">{% trans "No warehouses have been created yet." %}</p>
                             <a href="{% url 'inventory:warehouse_add' %}" class="btn btn-success">
                                 <i class="fas fa-plus me-2"></i>
-                                {% trans "Add" %} مستودع {% trans "New" %}
+                                {% trans "Add New Warehouse" %}
                             </a>
                         </div>
                     {% endif %}
@@ -377,20 +377,20 @@ window.deleteWarehouse = function(warehouseId) {
 }
 
 window.printWarehouseReport = function() {
-    console.log('بدء {% trans "Print" %} {% trans "Report" %} المستودعات...');
+    console.log('{% trans "Starting warehouse report print..." %}');
     
     let warehouseHTML = `
         <div style="text-align: center; margin-bottom: 2rem;">
-            <h1>{% trans "Report" %} المستودعات</h1>
-            <p>تاريخ ال{% trans "Report" %}: ${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}</p>
+            <h1>{% trans "Warehouse Report" %}</h1>
+            <p>{% trans "Report Date" %}: ${new Date().getDate()}/${new Date().getMonth() + 1}/${new Date().getFullYear()}</p>
         </div>
         <table class="print-table">
             <thead>
                 <tr>
-                    <th>رمز المستودع</th>
-                    <th>اسم المستودع</th>
-                    <th>المستودع الأساسي</th>
-                    <th>المدير</th>
+                    <th>{% trans "Warehouse Code" %}</th>
+                    <th>{% trans "Warehouse Name" %}</th>
+                    <th>{% trans "Parent Warehouse" %}</th>
+                    <th>{% trans "Manager" %}</th>
                     <th>{% trans "Status" %}</th>
                     <th>{% trans "Address" %}</th>
                 </tr>
@@ -400,11 +400,11 @@ window.printWarehouseReport = function() {
     
     // Get warehouse data from the table
     const warehouseRows = document.querySelectorAll('tbody tr');
-    console.log('عدد صفوف المستودعات الموجودة:', warehouseRows.length);
+    console.log('{% trans "Number of existing warehouse rows" %}', warehouseRows.length);
     if (warehouseRows.length === 0) {
         warehouseHTML += `
             <tr>
-                <td colspan="6" style="text-align: center; padding: 20px;">لا توجد مستودعات لل{% trans "Print" %}</td>
+                <td colspan="6" style="text-align: center; padding: 20px;">{% trans "No warehouses to print" %}</td>
             </tr>
         `;
     } else {
@@ -419,7 +419,7 @@ window.printWarehouseReport = function() {
                     const status = cells[4].textContent.trim();
                     const address = cells[5].textContent.trim();
                     
-                    console.log('بيانات المستودع:', {name, code, parent, manager, status, address});
+                    console.log('{% trans "Warehouse data" %}', {name, code, parent, manager, status, address});
                     
                     warehouseHTML += `
                         <tr>
@@ -448,7 +448,7 @@ window.printWarehouseReport = function() {
     printWindow.document.write(`
         <html>
             <head>
-                <title>{% trans "Report المستودعات" %}</title>
+                <title>{% trans "Warehouse Report" %}</title>
                 <meta charset="UTF-8">
                 <style>
                     body { font-family: Arial, sans-serif; direction: rtl; }

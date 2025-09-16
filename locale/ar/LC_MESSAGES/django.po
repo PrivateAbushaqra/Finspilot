@@ -2703,6 +2703,8 @@ msgstr "اسم نوع الإجازة (بالإنجليزية)"
 #: .\templates\products\product_list.html:315
 #: .\templates\products\product_list.html:548
 #: .\templates\products\product_list.html:581
+#: .\templates\inventory\list.html:110
+#: .\templates\inventory\list.html:465
 msgid "Code"
 msgstr "الرمز"
 
@@ -3974,8 +3976,10 @@ msgstr "تم حذف إيصال الدفع بنجاح"
 #: .\templates\purchases\return_add.html:98
 #: .\templates\sales\invoice_add.html:322
 #: .\templates\sales\invoice_add.html:448
+#: .\templates\inventory\list.html:190
+#: .\templates\inventory\list.html:720
 msgid "Product Code"
-msgstr "نوع الدفع"
+msgstr "كود المنتج"
 
 #: .\products\forms.py:19 .\templates\inventory\list.html:726
 #: .\templates\inventory\low_stock.html:449
@@ -5119,32 +5123,29 @@ msgstr ""
 #: .\templates\users\group_edit.html:241 .\users\views.py:323
 #: .\users\views.py:355 .\users\views.py:387 .\users\views.py:802
 #: .\users\views.py:1030
-msgid "تعديل فئة إيراد/مصروف"
-msgstr ""
+msgid "Edit Revenue/Expense Category"
+msgstr "تعديل فئة إيراد/مصروف"
 
 #: .\revenues_expenses\views.py:187
-msgid "لوحة تحكم الإيرادات والمصروفات"
-msgstr ""
+#: .templates\revenues_expenses\dashboard.html:13
+msgid "Revenues and Expenses Dashboard"
+msgstr "لوحة تحكم الإيرادات والمصروفات"
 
 #: .\revenues_expenses\views.py:207
-msgid "ليس لديك صلاحية عرض فئة إيراد/مصروف"
-msgstr ""
+msgid "You do not have permission to view revenue/expense category"
+msgstr "ليس لديك صلاحية عرض فئة إيراد/مصروف"
 
 #: .\revenues_expenses\views.py:237
-msgid "ليس لديك صلاحية إضافة فئة إيراد/مصروف"
-msgstr ""
+msgid "You do not have permission to add revenue/expense category"
+msgstr "ليس لديك صلاحية إضافة فئة إيراد/مصروف"
 
 #: .\revenues_expenses\views.py:245
-msgid "تم إنشاء الفئة بنجاح"
-msgstr ""
-
-#: .\revenues_expenses\views.py:253
-msgid "إضافة فئة جديدة"
-msgstr ""
+msgid "Category created successfully"
+msgstr "تم إنشاء الفئة بنجاح"
 
 #: .\revenues_expenses\views.py:264
-msgid "ليس لديك صلاحية حذف فئة إيراد/مصروف"
-msgstr ""
+msgid "You do not have permission to delete revenue/expense category"
+msgstr "ليس لديك صلاحية حذف فئة إيراد/مصروف"
 
 #: .\revenues_expenses\views.py:269
 msgid "تم حذف الفئة بنجاح"
@@ -6404,7 +6405,7 @@ msgstr "الأخير"
 
 #: .\templates\assets_liabilities\asset_create.html:76
 msgid "Back to Assets List"
-msgstr ""
+msgstr "العودة إلى قائمة الأصول"
 
 #: .\templates\assets_liabilities\asset_create.html:89
 #: .\templates\assets_liabilities\asset_detail.html:93
@@ -6456,8 +6457,10 @@ msgstr ""
 #: .\templates\revenues_expenses\recurring_edit.html:76
 #: .\templates\revenues_expenses\recurring_list.html:160
 #: .\templates\revenues_expenses\recurring_list.html:251
+#: .\templates\inventory\list.html:195
+#: .\templates\inventory\list.html:650
 msgid "Category"
-msgstr ""
+msgstr "التصنيف"
 
 #: .\templates\assets_liabilities\asset_create.html:133
 #: .\templates\assets_liabilities\liability_create.html:133
@@ -6638,8 +6641,9 @@ msgstr "حفظ الأصول"
 #: .\templates\products\product_list.html:948
 #: .\templates\revenues_expenses\category_create.html:6
 #: .\templates\revenues_expenses\category_list.html:18
+#: .\revenues_expenses\views.py:253
 msgid "Add New Category"
-msgstr ""
+msgstr "إضافة فئة جديدة"
 
 #: .\templates\assets_liabilities\asset_create.html:419
 msgid "Enter a unique name for the new category"
@@ -6861,8 +6865,10 @@ msgstr ""
 
 #: .\templates\assets_liabilities\asset_detail.html:351
 #: .\templates\assets_liabilities\dashboard.html:231
+#: .\templates\inventory\list.html:120
+#: .\templates\inventory\list.html:468
 msgid "Value"
-msgstr ""
+msgstr "القيمة"
 
 #: .\templates\assets_liabilities\asset_detail.html:355
 #: .\templates\banks\account_list.html:708
@@ -6873,23 +6879,23 @@ msgstr ""
 #: .\templates\users\group_delete.html:243
 #: .\templates\users\user_delete.html:22 .\templates\users\user_delete.html:149
 msgid "This action cannot be undone!"
-msgstr ""
+msgstr "لا يمكن التراجع عن فعله!"
 
 #: .\templates\assets_liabilities\asset_list.html:15
 msgid "Assets"
-msgstr ""
+msgstr "أصول"
 
 #: .\templates\assets_liabilities\asset_list.html:19
 #: .\templates\assets_liabilities\liability_list.html:19
 #: .\templates\customers\customer_list.html:98
 #: .\templates\customers\supplier_list.html:98
 msgid "Back to Dashboard"
-msgstr ""
+msgstr "العودة إلى لوحة المعلومات"
 
 #: .\templates\assets_liabilities\asset_list.html:28
 #: .\templates\assets_liabilities\asset_list.html:37
 msgid "Add Asset Category"
-msgstr ""
+msgstr "إضافة فئة الأصول"
 
 #: .\templates\assets_liabilities\asset_list.html:59
 #: .\templates\cashboxes\transfer_list.html:534
@@ -6898,6 +6904,8 @@ msgstr ""
 #: .\templates\products\product_edit.html:460
 #: .\templates\purchases\invoice_list.html:313
 #: .\templates\settings\document_print_settings.html:967
+#: .\templates\inventory\list.html:175
+#: .\templates\inventory\list.html:567
 msgid "Close"
 msgstr "إغلاق"
 
@@ -7035,6 +7043,8 @@ msgstr ""
 #: .\templates\revenues_expenses\recurring_detail.html:294
 #: .\templates\settings\document_sequences.html:45
 #: .\templates\users\group_list.html:40 .\templates\users\user_list.html:109
+#: .\templates\inventory\list.html:125
+#: .\templates\inventory\list.html:470
 msgid "Actions"
 msgstr "الإجراءات"
 
@@ -7524,7 +7534,7 @@ msgstr ""
 #: .\templates\settings\currency_add.html:14
 #: .\templates\settings\currency_list.html:161
 msgid "New"
-msgstr ""
+msgstr "جديد"
 
 #: .\templates\assets_liabilities\dashboard.html:417
 #: .\templates\assets_liabilities\dashboard.html:730
@@ -7708,20 +7718,20 @@ msgstr ""
 
 #: .\templates\assets_liabilities\liability_create.html:76
 msgid "Back to Liabilities List"
-msgstr ""
+msgstr "العودة إلى قائمة الالتزامات"
 
 #: .\templates\assets_liabilities\liability_create.html:95
 #: .\templates\assets_liabilities\liability_list.html:117
 msgid "Liability Number"
-msgstr ""
+msgstr "رقم المسؤولية"
 
 #: .\templates\assets_liabilities\liability_create.html:111
 msgid "Liability Name"
-msgstr ""
+msgstr "اسم المسؤولية"
 
 #: .\templates\assets_liabilities\liability_create.html:184
 msgid "Original Amount"
-msgstr ""
+msgstr "المبلغ الأصلي"
 
 #: .\templates\assets_liabilities\liability_create.html:206
 #: .\templates\assets_liabilities\liability_list.html:121
@@ -9080,8 +9090,10 @@ msgstr ""
 #: .\templates\banks\transfer_list.html:723
 #: .\templates\inventory\low_stock.html:443
 #: .\templates\inventory\movement_list.html:522
+#: .\templates\inventory\list.html:220
+#: .\templates\inventory\list.html:715
 msgid "Report Date"
-msgstr ""
+msgstr "تاريخ التقرير"
 
 #: .\templates\banks\transfer_list.html:747
 msgid "No transfers to print"
@@ -9464,10 +9476,6 @@ msgstr ""
 
 #: .\templates\base.html:1135 .\templates\settings\index.html:108
 msgid "Backup"
-msgstr ""
-
-#: .\templates\base.html:1375 .\templates\journal\entry_create.html:214
-msgid "Loading..."
 msgstr ""
 
 #: .\templates\base.html:1589
@@ -11250,12 +11258,12 @@ msgstr ""
 #: .\templates\hr\contract_confirm_delete.html:22
 #: .\templates\hr\contract_confirm_delete.html:74
 msgid "Delete Contract"
-msgstr ""
+msgstr "حذف العقد"
 
 #: .\templates\hr\contract_confirm_delete.html:25
 #: .\templates\hr\contract_form.html:49
 msgid "Back to Contracts"
-msgstr ""
+msgstr "العودة إلى العقود"
 
 #: .\templates\hr\contract_confirm_delete.html:32
 #: .\templates\hr\department_confirm_delete.html:31
@@ -11263,7 +11271,7 @@ msgstr ""
 #: .\templates\hr\position_confirm_delete.html:33
 #: .\templates\users\user_delete.html:21
 msgid "Warning!"
-msgstr ""
+msgstr "تحذير"
 
 #: .\templates\hr\contract_confirm_delete.html:32
 msgid ""
@@ -11376,18 +11384,18 @@ msgstr ""
 
 #: .\templates\hr\contract_detail.html:301
 msgid "Back to Contracts List"
-msgstr ""
+msgstr "العودة إلى قائمة العقود"
 
 #: .\templates\hr\contract_form.html:5 .\templates\hr\contract_form.html:35
 #: .\templates\hr\contract_form.html:46
 msgid "Edit Contract"
-msgstr ""
+msgstr "تعديل العقد"
 
 #: .\templates\hr\contract_form.html:5 .\templates\hr\contract_form.html:37
 #: .\templates\hr\contract_form.html:46 .\templates\hr\contract_list.html:19
 #: .\templates\hr\contract_list.html:127
 msgid "Add Contract"
-msgstr ""
+msgstr "إضافة عقد"
 
 #: .\templates\hr\contract_form.html:102
 msgid "Contract Dates"
@@ -11535,7 +11543,7 @@ msgstr ""
 
 #: .\templates\hr\department_confirm_delete.html:24
 msgid "Back to Departments"
-msgstr ""
+msgstr "العودة إلى الأقسام"
 
 #: .\templates\hr\department_confirm_delete.html:31
 msgid ""
@@ -12002,7 +12010,7 @@ msgstr ""
 
 #: .\templates\hr\employee_form.html:50
 msgid "Back to Employees"
-msgstr ""
+msgstr "العودة إلى الموظفين"
 
 #: .\templates\hr\employee_form.html:140
 msgid "Unique identifier for the employee"
@@ -12557,8 +12565,9 @@ msgid "Turnover Report"
 msgstr ""
 
 #: .\templates\hr\reports.html:191
+#: .\templates\inventory\list.html:404
 msgid "Quick Statistics"
-msgstr ""
+msgstr "إحصائيات سريعة"
 
 #: .\templates\hr\reports.html:198
 #: .\templates\hr\reports\headcount_report.html:30
@@ -12609,7 +12618,7 @@ msgstr ""
 #: .\templates\hr\reports\turnover_report.html:18
 #: .\templates\hr\reports\upcoming_leaves_report.html:18
 msgid "Back to Reports"
-msgstr ""
+msgstr "العودة إلى التقارير"
 
 #: .\templates\hr\reports\anniversary_report.html:30
 msgid "Years of Service"
@@ -12839,7 +12848,7 @@ msgstr ""
 #: .\templates\products\product_add.html:249
 #: .\templates\products\product_edit.html:227
 msgid "Inventory Management"
-msgstr ""
+msgstr "إدارة المخزون"
 
 #: .\templates\inventory\list.html:270
 msgid "Inventory Transfer"
@@ -12905,37 +12914,30 @@ msgstr "تفاصيل المنتج"
 #: .\templates\products\product_list.html:854
 #: .\templates\sales\invoice_add.html:452
 msgid "Sale Price"
-msgstr ""
+msgstr "سعر البيع"
 
 #: .\templates\inventory\low_stock.html:148
 #: .\templates\inventory\low_stock.html:442
 #: .\templates\inventory\low_stock.html:513
 msgid "Low Stock Report"
-msgstr ""
+msgstr "تقرير انخفاض المخزون"
 
 #: .\templates\inventory\low_stock.html:153
 msgid "Print Low Stock Report"
-msgstr ""
+msgstr "طباعة تقرير المخزون المنخفض"
 
 #: .\templates\inventory\low_stock.html:157
 msgid "Replenish All"
-msgstr ""
+msgstr "تجديد الكل"
 
 #: .\templates\inventory\low_stock.html:161
 msgid "Export Report"
-msgstr ""
+msgstr "تقرير التصدير"
 
 #: .\templates\inventory\low_stock.html:165
 #: .\templates\inventory\movement_list.html:161
 msgid "Back to Inventory"
-msgstr ""
-
-#: .\templates\inventory\low_stock.html:179
-#: .\templates\inventory\low_stock.html:292
-#: .\templates\products\product_list.html:445
-#: .\templates\products\product_list.html:513
-msgid "Out of Stock"
-msgstr ""
+msgstr "العودة إلى المخزون"
 
 #: .\templates\inventory\low_stock.html:181
 #: .\templates\inventory\low_stock.html:198
@@ -12951,26 +12953,24 @@ msgstr ""
 #: .\templates\purchases\invoice_add.html:240
 #: .\templates\sales\invoice_add.html:314
 #: .\templates\sales\invoice_add.html:323
+#: .\templates\inventory\list.html:105
+#: .\templates\inventory\list.html:464
 msgid "Product"
-msgstr ""
-
-#: .\templates\inventory\low_stock.html:196
-msgid "Critical Stock"
-msgstr ""
+msgstr "المنتج"
 
 #: .\templates\inventory\low_stock.html:250
 msgid "Products That Need Replenishment"
-msgstr ""
+msgstr "المنتجات التي تحتاج إلى تجديد"
 
 #: .\templates\inventory\low_stock.html:272
 #: .\templates\inventory\low_stock.html:450
 msgid "Current Quantity"
-msgstr ""
+msgstr "الكمية الحالية"
 
 #: .\templates\inventory\low_stock.html:278
 #: .\templates\inventory\low_stock.html:451
 msgid "Minimum Quantity"
-msgstr ""
+msgstr "الحد الأدنى للكمية"
 
 #: .\templates\inventory\low_stock.html:282
 #: .\templates\inventory\low_stock.html:453
@@ -12980,8 +12980,10 @@ msgstr ""
 #: .\templates\inventory\movement_list.html:530
 #: .\templates\products\product_list.html:510
 #: .\templates\purchases\invoice_add.html:206
+#: .\templates\inventory\list.html:115
+#: .\templates\inventory\list.html:466
 msgid "Warehouse"
-msgstr ""
+msgstr "المستودع"
 
 #: .\templates\inventory\low_stock.html:286
 #: .\templates\inventory\low_stock.html:314
@@ -12995,48 +12997,48 @@ msgstr ""
 
 #: .\templates\inventory\low_stock.html:294
 msgid "Low"
-msgstr ""
+msgstr "قليل"
 
 #: .\templates\inventory\low_stock.html:300
 msgid "Replenish"
-msgstr ""
+msgstr "تجديد"
 
 #: .\templates\inventory\low_stock.html:337
 msgid "Last Movement"
-msgstr ""
+msgstr "الحركة الأخيرة"
 
 #: .\templates\inventory\low_stock.html:350
 msgid "All Products Are at Safe Levels"
-msgstr ""
+msgstr "جميع المنتجات في مستويات آمنة"
 
 #: .\templates\inventory\low_stock.html:351
 msgid "No products need replenishment at this time."
-msgstr ""
+msgstr "لا توجد منتجات تحتاج إلى تجديد في هذا الوقت."
 
 #: .\templates\inventory\low_stock.html:354
 msgid "Back to Inventory Management"
-msgstr ""
+msgstr "العودة إلى إدارة المخزون"
 
 #: .\templates\inventory\low_stock.html:369
 msgid "Replenish Stock"
-msgstr ""
+msgstr "تجديد المخزون"
 
 #: .\templates\inventory\low_stock.html:375
 msgid "Replenish Quantity"
-msgstr ""
+msgstr "تجديد الكمية"
 
 #: .\templates\inventory\low_stock.html:379
 #: .\templates\inventory\movement_list.html:475
 msgid "Unit Cost"
-msgstr ""
+msgstr "تكلفة الوحدة"
 
 #: .\templates\inventory\low_stock.html:391
 msgid "Add to Stock"
-msgstr ""
+msgstr "أضف إلى المخزون"
 
 #: .\templates\inventory\low_stock.html:420
 msgid "Do you want to replenish all low stock products?"
-msgstr ""
+msgstr "هل تريد تجديد جميع المنتجات ذات المخزون المنخفض؟"
 
 #: .\templates\inventory\low_stock.html:438
 msgid "Starting to print low stock report..."
@@ -13054,13 +13056,18 @@ msgstr ""
 #: .\templates\inventory\low_stock.html:479
 #: .\templates\inventory\low_stock.html:482
 #: .\templates\purchases\invoice_add.html:356
+#: .\templates\inventory\list.html:200
+#: .\templates\inventory\list.html:650
+#: .\templates\settings\superadmin_management.html:309
 msgid "Not specified"
-msgstr ""
+msgstr "غير محدد"
 
 #: .\templates\inventory\low_stock.html:483
 #: .\templates\products\category_list.html:253
+#: .\templates\inventory\list.html:130
+#: .\templates\inventory\list.html:484
 msgid "Main"
-msgstr ""
+msgstr "الرئيسي"
 
 #: .\templates\inventory\low_stock.html:485
 msgid "Low stock data"
@@ -13072,83 +13079,93 @@ msgstr ""
 
 #: .\templates\inventory\movement_list.html:4
 #: .\templates\inventory\movement_list.html:142
+#: .\templates\inventory\list.html:25
 msgid "Inventory Movements"
-msgstr ""
+msgstr "حركات المخزون"
+
+#: .\templates\inventory\low_stock.html:196
+#: .\templates\inventory\list.html:25
+#: .\templates\inventory\list.html:50
+#: .\templates\inventory\list.html:500
+msgid "Critical Stock"
+msgstr "مخزون حرج"
 
 #: .\templates\inventory\movement_list.html:147
 msgid "Print Movement Report"
-msgstr ""
+msgstr "تقرير حركة الطباعة"
 
 #: .\templates\inventory\movement_list.html:152
 #: .\templates\inventory\movement_list.html:425
 msgid "Add New Movement"
-msgstr ""
+msgstr "إضافة حركة جديدة"
 
 #: .\templates\inventory\movement_list.html:156
 msgid "Delete All Movements"
-msgstr ""
+msgstr "حذف جميع الحركات"
 
 #: .\templates\inventory\movement_list.html:174
 #: .\templates\inventory\movement_list.html:461
 #: .\templates\inventory\movement_list.html:531
 #: .\templates\receipts\receipt_detail.html:217
 msgid "Movement Type"
-msgstr ""
+msgstr "نوع الحركة"
 
 #: .\templates\inventory\movement_list.html:176
 msgid "All Movements"
-msgstr ""
+msgstr "جميع الحركات"
 
 #: .\templates\inventory\movement_list.html:177
 #: .\templates\inventory\movement_list.html:322
 #: .\templates\inventory\movement_list.html:464
 msgid "Inbound"
-msgstr ""
+msgstr "وارد"
 
 #: .\templates\inventory\movement_list.html:178
 #: .\templates\inventory\movement_list.html:325
 #: .\templates\inventory\movement_list.html:465
 msgid "Outbound"
-msgstr ""
+msgstr "الصادر"
 
 #: .\templates\inventory\movement_list.html:194
 msgid "All Warehouses"
-msgstr ""
+msgstr "جميع المستودعات"
 
 #: .\templates\inventory\movement_list.html:203
 msgid "Apply Filter"
-msgstr ""
+msgstr "تطبيق الفلتر"
 
 #: .\templates\inventory\movement_list.html:207
 msgid "Clear Filter"
-msgstr ""
+msgstr "مسح الفلتر"
 
 #: .\templates\inventory\movement_list.html:222
 msgid "Total Inbound"
-msgstr ""
+msgstr "إجمالي الوارد"
 
 #: .\templates\inventory\movement_list.html:224
 #: .\templates\inventory\movement_list.html:241
 #: .\templates\inventory\movement_list.html:336
 msgid "Unit"
-msgstr ""
+msgstr "وحدة"
 
 #: .\templates\inventory\movement_list.html:239
 msgid "Total Outbound"
-msgstr ""
+msgstr "إجمالي الصادر"
 
 #: .\templates\inventory\movement_list.html:256
 msgid "Transfers"
-msgstr ""
+msgstr "التحويلات"
 
 #: .\templates\inventory\movement_list.html:258
 #: .\templates\inventory\movement_list.html:275
+#: .\templates\inventory\list.html:345
 msgid "Movement"
-msgstr ""
+msgstr "حركة"
 
 #: .\templates\inventory\movement_list.html:273
+#: .\templates\inventory\list.html:343
 msgid "Today's Movements"
-msgstr ""
+msgstr "حركات اليوم"
 
 #: .\templates\inventory\movement_list.html:293
 msgid "Inventory Movement List"
@@ -14113,6 +14130,8 @@ msgstr "وحدة القياس"
 #: .\templates\products\product_add.html:163
 #: .\templates\products\product_edit.html:142
 #: .\templates\products\product_list.html:795
+#: .\templates\inventory\list.html:135
+#: .\templates\inventory\list.html:487
 msgid "Piece"
 msgstr "قطعة"
 
@@ -14351,6 +14370,8 @@ msgid "Tax Rate"
 msgstr "نسبة الضريبة"
 
 #: .\templates\products\product_edit.html:252
+#: .\templates\inventory\list.html:205
+#: .\templates\inventory\list.html:665
 msgid "Current Stock"
 msgstr "المخزون الحالي"
 
@@ -14359,12 +14380,10 @@ msgid "Calculated automatically"
 msgstr "يتم حسابها تلقائيا"
 
 #: .\templates\products\product_edit.html:259
+#: .\templates\inventory\list.html:65
+#: .\templates\inventory\list.html:377
 msgid "Incoming"
 msgstr "وارد"
-
-#: .\templates\products\product_edit.html:259
-msgid "Outgoing"
-msgstr "صادر"
 
 #: .\templates\products\product_edit.html:290
 msgid "Leave empty to keep current image"
@@ -17394,10 +17413,6 @@ msgstr "التحديث الأخير"
 msgid "Updated By"
 msgstr "تم التحديث بواسطة"
 
-#: .\templates\settings\superadmin_management.html:309
-msgid "Not Specified"
-msgstr "غير محدد"
-
 #: .\templates\settings\superadmin_management.html:392
 msgid "Save All Settings"
 msgstr "حفظ جميع الإعدادات"
@@ -18228,9 +18243,240 @@ msgstr ""
 msgid "High privileged users are hidden"
 msgstr "المستخدمون ذوي الصلاحيات العالية مخفيون"
 
-#: .\users\views.py:1126
-msgid "High privileged users are shown."
-msgstr "المستخدمون ذوي الصلاحيات العالية معروضون."
+#: .\templates\inventory\list.html:5
+msgid "Comprehensive overview of inventory and movements"
+msgstr "نظرة شاملة على المخزون والحركات"
+
+#: .\templates\inventory\list.html:15
+msgid "Quick Operations"
+msgstr "العمليات السريعة"
+
+#: .\templates\inventory\list.html:20
+msgid "Warehouse Management"
+msgstr "إدارة المستودعات"
+
+#: .\templates\inventory\list.html:35
+msgid "Active Warehouses"
+msgstr "المستودعات النشطة"
+
+#: .\templates\inventory\list.html:45
+#: .\templates\inventory\list.html:497
+msgid "Good Stock"
+msgstr "مخزون جيد"
+
+#: .\templates\inventory\low_stock.html:179
+#: .\templates\inventory\low_stock.html:292
+#: .\templates\products\product_list.html:445
+#: .\templates\products\product_list.html:513
+#: .\templates\inventory\list.html:55
+msgid "Out of Stock"
+msgstr "نفد المخزون"
+
+#: .\templates\inventory\list.html:60
+msgid "Latest Movements"
+msgstr "أحدث الحركات"
+
+#: .\templates\inventory\list.html:70
+#: .\templates\products\product_edit.html:259
+#: .\templates\inventory\list.html:380
+msgid "Outgoing"
+msgstr "صادر"
+
+#: .\templates\inventory\list.html:75
+msgid "No recent movements"
+msgstr "لا توجد حركات حديثة"
+
+#: .\templates\inventory\list.html:80
+#: .\templates\inventory\list.html:514
+msgid "Quick"
+msgstr "سريع"
+
+#: .\templates\inventory\list.html:85
+msgid "Incoming value (without tax)"
+msgstr "قيمة الوارد (بدون ضريبة)"
+
+#: .\templates\inventory\list.html:90
+msgid "Outgoing value (without tax)"
+msgstr "قيمة الصادر (بدون ضريبة)"
+
+#: .\templates\inventory\list.html:95
+msgid "Total inventory value (without tax)"
+msgstr "إجمالي قيمة المخزون (بدون ضريبة)"
+
+#: .\templates\inventory\list.html:100
+msgid "Inventory Overview"
+msgstr "نظرة عامة على المخزون"
+
+#: .\templates\inventory\list.html:140
+msgid "JOD"
+msgstr "د.أ"
+
+#: .\templates\inventory\list.html:145
+msgid "No inventory data"
+msgstr "لا توجد بيانات مخزون"
+
+#: .\templates\inventory\list.html:150
+msgid "No inventory data has been recorded yet."
+msgstr "لم يتم تسجيل أي بيانات مخزون بعد."
+
+#: .\templates\inventory\list.html:155
+msgid "Setup Warehouses"
+msgstr "إعداد المستودعات"
+
+#: .\templates\inventory\list.html:160
+msgid "in Inventory"
+msgstr "في المخزون"
+
+#: .\templates\inventory\list.html:165
+#: .\templates\base.html:1375 .\templates\journal\entry_create.html:214
+msgid "Loading..."
+msgstr "جاري التحميل..."
+
+#: .\templates\inventory\list.html:170
+msgid "Loading data..."
+msgstr "جاري تحميل البيانات..."
+
+#: .\templates\inventory\list.html:180
+msgid "Full"
+msgstr "كاملة"
+
+#: .\templates\inventory\list.html:185
+#: .\templates\inventory\list.html:620
+msgid "Failed to load data"
+msgstr "فشل في تحميل البيانات"
+
+#: .\templates\inventory\list.html:210
+msgid "Total Incoming"
+msgstr "إجمالي الوارد"
+
+#: .\templates\inventory\list.html:215
+msgid "Total Outgoing"
+msgstr "إجمالي الصادر"
+
+#: .\templates\inventory\list.html:225
+#: .\templates\inventory\list.html:735
+msgid "No inventory data for"
+msgstr "لا توجد بيانات مخزون لل"
+
+#: .\templates\inventory\list.html:570
+msgid "View Full Details"
+msgstr "عرض التفاصيل الكاملة"
+
+#: .\templates\inventory\list.html:630
+msgid "Error loading data"
+msgstr "خطأ في تحميل البيانات"
+
+#: .\templates\inventory\warehouse_list.html:10
+msgid "Total Warehouses"
+msgstr "إجمالي المستودعات"
+
+#: .\templates\inventory\warehouse_list.html:15
+msgid "Sub Warehouses"
+msgstr "المستودعات الفرعية"
+
+#: .\templates\inventory\warehouse_list.html:20
+msgid "Movements This Month"
+msgstr "الحركات هذا الشهر"
+
+#: .\templates\inventory\warehouse_list.html:25
+msgid "Add New Warehouse"
+msgstr "إضافة مستودع جديد"
+
+#: .\templates\inventory\warehouse_list.html:30
+msgid "Warehouse Name"
+msgstr "اسم المستودع"
+
+#: .\templates\inventory\warehouse_list.html:35
+msgid "No warehouses found"
+msgstr "لم يتم العثور على مستودعات"
+
+#: .\templates\inventory\warehouse_list.html:40
+msgid "Warehouse Details"
+msgstr "تفاصيل المستودع"
+
+#: .\templates\inventory\warehouse_list.html:50
+msgid "Starting warehouse report print..."
+msgstr "بدء طباعة تقرير المستودعات..."
+
+#: .\templates\inventory\warehouse_list.html:55
+msgid "Number of existing warehouse rows"
+msgstr "عدد صفوف المستودعات الموجودة"
+
+#: .\templates\inventory\warehouse_list.html:60
+msgid "Warehouse data"
+msgstr "بيانات المستودع"
+
+#: .\templates\revenues_expenses\dashboard.html:22
+msgid "Total Expenses"
+msgstr "إجمالي المصروفات"
+
+#: .\templates\revenues_expenses\dashboard.html:32
+msgid "Net Profit"
+msgstr "صافي الربح"
+
+#: .\templates\revenues_expenses\dashboard.html:42
+msgid "Number of Entries"
+msgstr "عدد القيود"
+
+#: .\templates\revenues_expenses\dashboard.html:55
+msgid "Category Management"
+msgstr "إدارة الفئات"
+
+#: .\templates\revenues_expenses\dashboard.html:60
+msgid "New Category"
+msgstr "فئة جديدة"
+
+#: .\templates\revenues_expenses\dashboard.html:85
+msgid "Entry Management"
+msgstr "إدارة القيود"
+
+#: .\templates\revenues_expenses\dashboard.html:90
+msgid "New Entry"
+msgstr "قيد جديد"
+
+#: .\templates\revenues_expenses\dashboard.html:140
+msgid "Latest Added Entries"
+msgstr "آخر القيود المضافة"
+
+#: .\templates\revenues_expenses\dashboard.html:200
+msgid "No entries added yet"
+msgstr "لا توجد قيود مضافة بعد"
+
+#: .\templates\revenues_expenses\dashboard.html:205
+msgid "First Entry"
+msgstr "أول قيد"
+
+#: .\templates\revenues_expenses\dashboard.html:17
+msgid "Quick Lists"
+msgstr "القوائم السريعة"
+
+#: .\templates\revenues_expenses\entry_list.html:10
+msgid "Revenue Entries"
+msgstr "قيود الإيرادات والمصروفات"
+
+#: .\templates\revenues_expenses\entry_list.html:135
+msgid "Edit Revenue/Expense Entry"
+msgstr "تعديل قيد إيراد/مصروف"
+
+#: .\templates\revenues_expenses\entry_list.html:140
+msgid "Delete Revenue/Expense Entry"
+msgstr "حذف قيد إيراد/مصروف"
+
+#: .\templates\revenues_expenses\entry_list.html:191
+msgid "No entries found"
+msgstr "لا توجد قيود"
+
+#: .\templates\revenues_expenses\entry_list.html:192
+msgid "No revenue and expense entries have been created yet"
+msgstr "لم يتم إنشاء أي قيود للإيرادات والمصروفات بعد"
+
+#: .\templates\revenues_expenses\entry_create.html:565
+msgid "Add net indicator"
+msgstr "إضافة مؤشر الصافي"
+
+#: .\templates\revenues_expenses\entry_create.html:575
+msgid "Error fetching statistics:"
+msgstr "خطأ في جلب الإحصائيات:"
 
 #~ msgid "ِAmount"
 #~ msgstr "الإجمالي"
