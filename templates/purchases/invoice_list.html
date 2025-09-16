@@ -104,7 +104,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1">
-                            <h6 class="mb-0">إجمالي الفواتير</h6>
+                            <h6 class="mb-0">{% trans "Total Invoices" %}</h6>
                             <h3 class="mb-0">{{ total_invoices|default:0 }}</h3>
                             <small>{% trans "Invoice" %}</small>
                         </div>
@@ -138,7 +138,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1">
-                            <h6 class="mb-0">فواتير {% trans "This Month" %}</h6>
+                            <h6 class="mb-0">{% trans "Invoices" %} {% trans "This Month" %}</h6>
                             <h3 class="mb-0">{{ month_invoices|default:0 }}</h3>
                             <small>{% trans "Invoice" %}</small>
                         </div>
@@ -155,9 +155,9 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1">
-                            <h6 class="mb-0">{% trans "Supplier" %}ون ال{% trans "Active" %}ون</h6>
+                            <h6 class="mb-0">{% trans "Active Suppliers" %}</h6>
                             <h3 class="mb-0">{{ active_suppliers|default:0 }}</h3>
-                            <small>مورد</small>
+                            <small>{% trans "Supplier" %}</small>
                         </div>
                         <div class="ms-3">
                             <i class="fas fa-truck fa-2x opacity-75"></i>
@@ -198,7 +198,7 @@
                                         <div>{{ invoice.date|date:"Y/m/d" }}</div>
                                     </div>
                                     <div class="col-md-2">
-                                        <small class="text-muted">المستودع:</small>
+                                        <small class="text-muted">{% trans "Warehouse:" %}</small>
                                         <div>
                                             {% if invoice.warehouse %}
                                                 <i class="fas fa-warehouse me-1 text-info"></i>
@@ -206,7 +206,7 @@
                                             {% else %}
                                                 <span class="text-muted">
                                                     <i class="fas fa-warehouse me-1"></i>
-                                                    ا{% trans "No" %}فتراضي
+                                                    {% trans "Default" %}
                                                 </span>
                                             {% endif %}
                                         </div>
@@ -217,8 +217,8 @@
                                             <span class="payment-badge 
                                                 {% if invoice.payment_type == 'cash' %}payment-cash
                                                 {% else %}payment-credit{% endif %}">
-                                                {% if invoice.payment_type == 'cash' %}كاش
-                                                {% else %}ذمم{% endif %}
+                                                {% if invoice.payment_type == 'cash' %}{% trans "Cash" %}
+                                                {% else %}{% trans "Credit" %}{% endif %}
                                             </span>
                                         </div>
                                     </div>
@@ -256,7 +256,7 @@
                         <!-- Pagination -->
                         {% if is_paginated %}
                         <div class="d-flex justify-content-center mt-4">
-                            <nav aria-label="تقسيم الصفحات">
+                            <nav aria-label="{% trans "Page Navigation" %}">
                                 <ul class="pagination">
                                     {% if page_obj.has_previous %}
                                         <li class="page-item">
@@ -290,8 +290,8 @@
                         <!-- Empty State -->
                         <div class="text-center py-5">
                             <i class="fas fa-file-invoice fa-4x text-muted mb-3"></i>
-                            <h4>{% trans "No invoices found" %} مشتريات</h4>
-                            <p class="text-muted">لم يتم تسجيل أي فواتير مشتريات بعد.</p>
+                            <h4>{% trans "No invoices found" %} {% trans "Purchase" %}</h4>
+                            <p class="text-muted">{% trans "No purchase invoices have been recorded yet." %}</p>
                             <a href="{% url 'purchases:invoice_add' %}" class="btn btn-success">
                                 <i class="fas fa-plus me-2"></i>
                                 {% trans "Add" %} {% trans "New Invoice" %}
@@ -309,8 +309,8 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="filterModalLabel">{% trans "Filter" %} الفواتير</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغ{% trans "No" %}ق"></button>
+                <h5 class="modal-title" id="filterModalLabel">{% trans "Filter" %} {% trans "Invoices" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans "Close" %}"></button>
             </div>
             <form method="get">
                 <div class="modal-body">
@@ -334,7 +334,7 @@
                         <div class="col-md-6 mt-3">
                             <label for="supplier" class="form-label">{% trans "Supplier" %}:</label>
                             <select class="form-select" id="supplier" name="supplier">
-                                <option value="">جميع {% trans "Supplier" %}ين</option>
+                                <option value="">{% trans "All Suppliers" %}</option>
                                 {% for supplier in suppliers %}
                                 <option value="{{ supplier.id }}">{{ supplier.name }}</option>
                                 {% endfor %}
@@ -343,8 +343,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                    <button type="submit" class="btn btn-primary">تطبيق ال{% trans "Filter" %}</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                    <button type="submit" class="btn btn-primary">{% trans "Apply" %} {% trans "Filter" %}</button>
                 </div>
             </form>
         </div>

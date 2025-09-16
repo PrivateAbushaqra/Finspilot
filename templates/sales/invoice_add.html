@@ -289,12 +289,12 @@
                                 {% trans "Payment Method" %} <span class="required-field">*</span>
                             </label>
                             <select class="form-select" id="id_payment_type" name="payment_type" required>
-                                <option value="">اختر طريقة ال{% trans "Payment" %}</option>
-                                <option value="cash">نقدي</option>
-                                <option value="credit">ذمم (آجل)</option>
-                                <option value="bank_transfer">{% trans "Transfer" %} بنكي</option>
-                                <option value="check">شيك</option>
-                                <option value="installment">تقسيط</option>
+                                <option value="">{% trans "Select Payment Method" %}</option>
+                                <option value="cash">{% trans "Cash" %}</option>
+                                <option value="credit">{% trans "Credit (Deferred)" %}</option>
+                                <option value="bank_transfer">{% trans "Bank Transfer" %}</option>
+                                <option value="check">{% trans "Check" %}</option>
+                                <option value="installment">{% trans "Installment" %}</option>
                             </select>
                         </div>
                     </div>
@@ -319,14 +319,14 @@
                     <table class="table table-bordered" id="productsTable">
                         <thead class="table-dark">
                             <tr>
-                                <th width="15%">رقم المنتج</th>
-                                <th width="20%">المنتج</th>
+                                <th width="15%">{% trans "Product Code" %}</th>
+                                <th width="20%">{% trans "Product" %}</th>
                                 <th width="10%">{% trans "Available Quantity" %}</th>
                                 <th width="10%">{% trans "Quantity" %}</th>
                                 <th width="12%">{% trans "Price" %}</th>
-                                <th width="8%">ضريبة %</th>
-                                <th width="12%">قيمة الضريبة</th>
-                                <th width="12%">الإجمالي</th>
+                                <th width="8%">{% trans "Tax %" %}</th>
+                                <th width="12%">{% trans "Tax Amount" %}</th>
+                                <th width="12%">{% trans "Total" %}</th>
                                 <th width="6%">{% trans "Delete" %}</th>
                             </tr>
                         </thead>
@@ -341,27 +341,27 @@
             <div class="form-section">
                 <h5>
                     <i class="fas fa-info-circle me-1"></i>
-                    {% trans "Information" %} إضافية
+                    {% trans "Additional Information" %}
                 </h5>
                 
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label for="id_discount" class="form-label">الخصم</label>
+                            <label for="id_discount" class="form-label">{% trans "Discount" %}</label>
                             <input type="number" class="form-control" id="id_discount" name="discount" 
                                    min="0" step="0.01" value="0">
                         </div>
                     </div>
                     
                     <div class="col-md-6">
-                        <!-- مساحة {% trans "Empty" %}ة للتوازن -->
+                        <!-- {% trans "Empty space for balance" %} -->
                     </div>
                 </div>
                 
                 <div class="mb-3">
                     <label for="id_notes" class="form-label">ملاحظات</label>
                     <textarea class="form-control" id="id_notes" name="notes" rows="3" 
-                              placeholder="أي ملاحظات إضافية..."></textarea>
+                              placeholder="{% trans 'Any additional notes...' %}"></textarea>
                 </div>
             </div>
 
@@ -369,7 +369,7 @@
             <div class="summary-section">
                 <div class="row">
                     <div class="col-md-8">
-                        <h5 class="mb-3">{% trans "Summary" %} ال{% trans "Invoice" %}</h5>
+                        <h5 class="mb-3">{% trans "Summary" %} {% trans "Invoice" %}</h5>
                     </div>
                     <div class="col-md-4">
                         <div class="form-check mb-2">
@@ -382,20 +382,20 @@
                         </div>
                         <div class="summary-details">
                             <div class="d-flex justify-content-between mb-2">
-                                <span>{% trans "Total" %} الفرعي:</span>
+                                <span>{% trans "Subtotal" %}:</span>
                                 <strong id="subtotalDisplay">0.00 {% get_currency_symbol %}</strong>
                             </div>
                             <div class="d-flex justify-content-between mb-2">
-                                <span>الخصم:</span>
+                                <span>{% trans "Discount" %}:</span>
                                 <strong id="discountDisplay">0.00 {% get_currency_symbol %}</strong>
                             </div>
                             <div class="d-flex justify-content-between mb-2">
-                                <span>الضريبة:</span>
+                                <span>{% trans "Tax" %}:</span>
                                 <strong id="taxDisplay">0.00 {% get_currency_symbol %}</strong>
                             </div>
                             <hr>
                             <div class="d-flex justify-content-between mb-0">
-                                <span class="h5">الإجمالي النهائي:</span>
+                                <span class="h5">{% trans "Final Total" %}:</span>
                                 <strong class="h5 text-warning" id="totalDisplay">0.00 {% get_currency_symbol %}</strong>
                             </div>
                         </div>
@@ -409,15 +409,15 @@
                     <div class="d-flex gap-3">
                         <button type="submit" name="action" value="save" class="btn btn-primary btn-lg">
                             <i class="fas fa-save me-2"></i>
-                            {% trans "Save" %} ال{% trans "Invoice" %}
+                            {% trans "Save Invoice" %}
                         </button>
                         <button type="submit" name="action" value="save_and_send" class="btn btn-success btn-lg">
                             <i class="fas fa-paper-plane me-2"></i>
-                            {% trans "Save" %} وإرسال
+                            {% trans "Save and Send" %}
                         </button>
                         <a href="{% url 'sales:invoice_list' %}" class="btn btn-secondary btn-lg">
                             <i class="fas fa-times me-2"></i>
-                            إلغاء
+                            {% trans "Cancel" %}
                         </a>
                     </div>
                 </div>
@@ -433,25 +433,25 @@
             <div class="modal-header">
                 <h5 class="modal-title" id="productModalLabel">
                     <i class="fas fa-search me-2"></i>
-                    اختيار منتج
+                    {% trans "Select Product" %}
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    <input type="text" class="form-control" id="productSearch" placeholder="ابحث عن منتج ب{% trans "Code" %} أو اسم...">
+                    <input type="text" class="form-control" id="productSearch" placeholder="{% trans 'Search for product by code or name...' %}">
                 </div>
                 <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
                     <table class="table table-hover">
                         <thead>
                             <tr>
-                                <th>رقم المنتج</th>
-                                <th>اسم المنتج</th>
+                                <th>{% trans "Product Code" %}</th>
+                                <th>{% trans "Product Name" %}</th>
                                 <th>{% trans "Description" %}</th>
-                                <th>{% trans "Quantity" %} المتوفرة</th>
-                                <th>سعر البيع</th>
-                                <th>نسبة الضريبة</th>
-                                <th>اختيار</th>
+                                <th>{% trans "Available Quantity" %}</th>
+                                <th>{% trans "Sale Price" %}</th>
+                                <th>{% trans "Tax Rate" %}</th>
+                                <th>{% trans "Select" %}</th>
                             </tr>
                         </thead>
                         <tbody id="productList">
@@ -619,11 +619,11 @@ setTimeout(function() {
 // Enhanced addProductRow function
 
 function addProductRow() {
-    console.log('بدء تنفيذ addProductRow...');
+    console.log('{% trans "Starting addProductRow execution..." %}');
     
     try {
         productRowCounter++;
-        console.log('عداد الصفوف:', productRowCounter);
+        console.log('{% trans "Row counter:" %}', productRowCounter);
         
         const tbody = document.getElementById('productsTableBody');
         if (!tbody) {
@@ -632,7 +632,7 @@ function addProductRow() {
             return;
         }
         
-        console.log('تم العثور على ال{% trans "Table" %}، إنشاء صف {% trans "New" %}...');
+        console.log('{% trans "Products table found, creating new row..." %}');
         
         const row = document.createElement('tr');
         row.id = `productRow${productRowCounter}`;
@@ -643,7 +643,7 @@ function addProductRow() {
             <input type="hidden" name="tax_amounts[]" class="tax-amount-hidden-input">
             <div class="d-flex align-items-center">
                 <input type="text" class="form-control me-2 product-code-input" 
-                       placeholder="رقم المنتج..." readonly>
+                       placeholder="{% trans 'Product code...' %}" readonly>
                 <button type="button" class="btn btn-outline-primary btn-sm" onclick="openProductModal(${productRowCounter})">
                     <i class="fas fa-search"></i>
                 </button>
@@ -651,7 +651,7 @@ function addProductRow() {
         </td>
         <td>
             <input type="text" class="form-control product-name-input" 
-                   placeholder="اسم المنتج..." readonly>
+                   placeholder="{% trans 'Product name...' %}" readonly>
         </td>
         <td>
             <input type="text" class="form-control text-center available-quantity-input" 
@@ -682,19 +682,19 @@ function addProductRow() {
         </td>
     `;
     
-    console.log('تم إنشاء محتوى الصف، إضافته لل{% trans "Table" %}...');
+    console.log('{% trans "Row content created, adding to table..." %}');
     tbody.appendChild(row);
-    console.log('تم {% trans "Add" %} الصف لل{% trans "Table" %} بنجاح');
+    console.log('{% trans "Row added to table successfully" %}');
     
     // Attach event listeners to the new row
-    console.log('ربط الأحداث بالصف ال{% trans "New" %}...');
+    console.log('{% trans "Attaching events to new row..." %}');
     attachRowEventListeners(row);
-    console.log('تم إكمال addProductRow بنجاح');
+    console.log('{% trans "addProductRow completed successfully" %}');
     
     } catch (error) {
-    console.error('{% trans "Error" %} في addProductRow:', error);
+    console.error('{% trans "Error in addProductRow:" %}', error);
     alert("{% trans 'Error while adding product row' %}: " + (error && error.message ? error.message : ''));
-        // استرجاع العداد في حالة ال{% trans "Error" %}
+        // {% trans "Restore counter in case of error" %}
         if (productRowCounter > 0) {
             productRowCounter--;
         }
@@ -779,30 +779,30 @@ function calculateRowTotal(row) {
     const price = parseFloat(row.querySelector('.price-input').value) || 0;
     const taxRate = parseFloat(row.querySelector('.tax-rate-input').value) || 0;
     
-    // التحقق من حالة "شامل ضريبة"
+    // {% trans "Check inclusive tax status" %}
     const isInclusiveTax = document.getElementById('id_inclusive_tax').checked;
     
     let taxAmount, total;
     
     if (isInclusiveTax) {
-        // إذا كانت الضريبة شاملة: المجموع = (الكمية × السعر) + ضريبة
-        // المجموع الأساسي = الكمية × السعر
+        // {% trans "If tax is inclusive: Total = (Quantity × Price) + Tax" %}
+        // {% trans "Base total = Quantity × Price" %}
         const baseTotal = quantity * price;
-        // الضريبة = المجموع الأساسي × نسبة الضريبة ÷ 100
+        // {% trans "Tax = Base total × Tax rate ÷ 100" %}
         taxAmount = baseTotal * (taxRate / 100);
-        // الإجمالي = المجموع الأساسي + الضريبة
+        // {% trans "Total = Base total + Tax" %}
         total = baseTotal + taxAmount;
     } else {
-        // إذا لم تكن الضريبة شاملة: لا توجد ضريبة
+        // {% trans "If tax is not inclusive: No tax" %}
         taxAmount = 0;
         total = quantity * price;
     }
     
-    // عرض النتائج
+    // {% trans "Display results" %}
     row.querySelector('.tax-amount-input').value = taxAmount.toFixed(2);
     row.querySelector('.total-input').value = total.toFixed(2);
     
-    // تحديث الحقول المخفية
+    // {% trans "Update hidden fields" %}
     row.querySelector('.tax-rate-hidden-input').value = taxRate;
     row.querySelector('.tax-amount-hidden-input').value = taxAmount.toFixed(2);
 }
@@ -811,10 +811,10 @@ function calculateGrandTotal() {
     let subtotal = 0;
     let totalTax = 0;
     
-    // التحقق من حالة "شامل ضريبة"
+    // {% trans "Check inclusive tax status" %}
     const isInclusiveTax = document.getElementById('id_inclusive_tax').checked;
     
-    // جمع المجاميع من جميع الصفوف
+    // {% trans "Sum totals from all rows" %}
     document.querySelectorAll('#productsTableBody tr').forEach(row => {
         const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
         const price = parseFloat(row.querySelector('.price-input').value) || 0;
@@ -822,28 +822,28 @@ function calculateGrandTotal() {
         
         if (quantity > 0 && price > 0) {
             if (isInclusiveTax) {
-                // إذا كانت الضريبة شاملة
+                // {% trans "If tax is inclusive" %}
                 const baseTotal = quantity * price;
                 const taxAmount = baseTotal * (taxRate / 100);
                 
                 subtotal += baseTotal;
                 totalTax += taxAmount;
             } else {
-                // إذا لم تكن الضريبة شاملة: لا توجد ضريبة
+                // {% trans "If tax is not inclusive: No tax" %}
                 const rowSubtotal = quantity * price;
                 
                 subtotal += rowSubtotal;
-                totalTax += 0; // لا توجد ضريبة في هذه الحالة
+                totalTax += 0; // {% trans "No tax in this case" %}
             }
         }
     });
     
     const discount = parseFloat(document.getElementById('id_discount').value) || 0;
     
-    // حساب الإجمالي النهائي
+    // {% trans "Calculate final total" %}
     const finalTotal = subtotal + totalTax - discount;
     
-    // تحديث العرض
+    // {% trans "Update display" %}
     document.getElementById('subtotalDisplay').textContent = subtotal.toFixed(2) + ' {% get_currency_symbol %}';
     document.getElementById('discountDisplay').textContent = discount.toFixed(2) + ' {% get_currency_symbol %}';
     document.getElementById('taxDisplay').textContent = totalTax.toFixed(2) + ' {% get_currency_symbol %}';
@@ -886,7 +886,7 @@ document.getElementById('salesInvoiceForm').addEventListener('submit', function(
     const productRows = document.querySelectorAll('#productsTableBody tr');
     let hasValidProducts = false;
     
-    // التحقق من وجود منتجات صالحة
+    // {% trans "Check for valid products" %}
     productRows.forEach(row => {
         const productId = row.querySelector('.product-id-input').value;
         const quantity = row.querySelector('.quantity-input').value;
@@ -903,7 +903,7 @@ document.getElementById('salesInvoiceForm').addEventListener('submit', function(
         return;
     }
     
-    // التحقق من العميل
+    // {% trans "Check customer" %}
     const customer = document.getElementById('id_customer').value;
     if (!customer) {
     e.preventDefault();
@@ -911,7 +911,7 @@ document.getElementById('salesInvoiceForm').addEventListener('submit', function(
         return;
     }
     
-    // التحقق من نوع ال{% trans "Payment" %}
+    // {% trans "Check payment type" %}
     const paymentType = document.getElementById('id_payment_type').value;
     if (!paymentType) {
     e.preventDefault();
@@ -919,7 +919,7 @@ document.getElementById('salesInvoiceForm').addEventListener('submit', function(
         return;
     }
     
-    // التحقق {% trans "From Date" %} ال{% trans "Invoice" %}
+    // {% trans "Check invoice date" %}
     const invoiceDate = document.getElementById('id_date').value;
     if (!invoiceDate) {
     e.preventDefault();
@@ -928,24 +928,24 @@ document.getElementById('salesInvoiceForm').addEventListener('submit', function(
     }
 });
 
-// دوال إدارة نافذة العميل ال{% trans "New" %}
+// {% trans "Customer window management functions" %}
 function openNewCustomerModal() {
-    console.log('{% trans "Open" %} نافذة العميل ال{% trans "New" %}');
+    console.log('{% trans "Open new customer window" %}');
     const modal = document.getElementById('newCustomerModal');
     const bootstrapModal = new bootstrap.Modal(modal);
     bootstrapModal.show();
 }
 
 function saveNewCustomer() {
-    console.log('بدء {% trans "Save" %} العميل ال{% trans "New" %}');
+    console.log('{% trans "Start saving new customer" %}');
     const form = document.getElementById('newCustomerForm');
     const formData = new FormData(form);
     
-    // {% trans "Add" %} CSRF token
+    // {% trans "Add CSRF token" %}
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
     formData.append('csrfmiddlewaretoken', csrfToken);
     
-    console.log('إرسال البيانات إلى الخادم...');
+    console.log('{% trans "Sending data to server..." %}');
     
     fetch('{% url "customers:ajax_add_customer" %}', {
         method: 'POST',
@@ -955,19 +955,19 @@ function saveNewCustomer() {
         }
     })
     .then(response => {
-        console.log('استجابة من الخادم:', response.status);
+        console.log('{% trans "Server response:" %}', response.status);
         return response.json();
     })
     .then(data => {
-        console.log('البيانات المستلمة:', data);
+        console.log('{% trans "Received data:" %}', data);
         if (data.success) {
-            // {% trans "Add" %} العميل ال{% trans "New" %} إلى ال{% trans "List" %}
+            // {% trans "Add new customer to list" %}
             const customerSelect = document.getElementById('id_customer');
             const newOption = new Option(data.customer.name, data.customer.id, true, true);
             customerSelect.add(newOption);
             customerSelect.value = data.customer.id;
             
-            // إغ{% trans "No" %}ق النافذة وإعادة تعيين النموذج
+            // {% trans "Close window and reset form" %}
             const modal = bootstrap.Modal.getInstance(document.getElementById('newCustomerModal'));
             modal.hide();
             form.reset();
@@ -975,17 +975,17 @@ function saveNewCustomer() {
             alert("{% trans 'Customer created successfully!' %}");
             console.log("{% trans 'Customer saved successfully' %}");
         } else {
-            console.error('{% trans "Error" %} من الخادم:', data.message);
-            alert('{% trans "Error" %}: ' + (data.message || 'حدث {% trans "Error" %} أثناء إنشاء العميل'));
+            console.error('{% trans "Server error:" %}', data.message);
+            alert('{% trans "Error" %}: ' + (data.message || '{% trans "An error occurred while creating the customer" %}'));
         }
     })
     .catch(error => {
-        console.error('{% trans "Error" %} في الشبكة:', error);
-        alert('حدث {% trans "Error" %} أثناء إنشاء العميل. {% trans "Please try again" %}.');
+        console.error('{% trans "Network error:" %}', error);
+        alert('{% trans "An error occurred while creating the customer. Please try again." %}');
         });
     }
 
-// وظيفة لتحديث {% trans "Balance" %} العميل
+// {% trans "Function to update customer balance" %}
 function updateCustomerBalance() {
     const customerSelect = document.getElementById('id_customer');
     const balanceInfo = document.getElementById('customer-balance-info');
@@ -996,30 +996,30 @@ function updateCustomerBalance() {
         return;
     }
     
-    // استدعاء API للحصول على {% trans "Information" %} العميل
+    // {% trans "Call API to get customer information" %}
     const apiUrl = `/customers/api/customer/${customerSelect.value}/`;
     
     fetch(apiUrl)
         .then(response => response.json())
         .then(data => {
             if (data.error) {
-                console.error('{% trans "Error" %} في الحصول على بيانات العميل:', data.error);
+                console.error('{% trans "Error getting customer data:" %}', data.error);
                 balanceInfo.style.display = 'none';
                 return;
             }
             
-            // الحصول على {% trans "Information" %} العملة من الشركة
+            // {% trans "Get currency information from company" %}
             fetch('/settings/api/currency/')
                 .then(currResponse => currResponse.json())
                 .then(currencyData => {
-                    // {% trans "View" %} ال{% trans "Balance" %} الحالي
+                    // {% trans "View current balance" %}
                     const balance = parseFloat(data.current_balance);
                     const balanceText = balance.toLocaleString('ar-SA', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2
                     });
                     
-                    // استخدام العملة من {% trans "Settings" %} الشركة
+                    // {% trans "Use company settings currency" %}
                     let currencyText = '';
                     if (currencyData.show_symbol && currencyData.symbol) {
                         currencyText = currencyData.symbol;
@@ -1029,7 +1029,7 @@ function updateCustomerBalance() {
                     
                     balanceAmount.textContent = balanceText + ' ' + currencyText;
                     
-                    // تغيير لون النص حسب ال{% trans "Balance" %}
+                    // {% trans "Change text color based on balance" %}
                     if (balance > 0) {
                         balanceAmount.className = 'fw-bold text-success';
                     } else if (balance < 0) {
@@ -1041,8 +1041,8 @@ function updateCustomerBalance() {
                     balanceInfo.style.display = 'block';
                 })
                 .catch(currError => {
-                    console.error('{% trans "Error" %} في الحصول على بيانات العملة:', currError);
-                    // في حالة {% trans "Failed" %} الحصول على العملة، استخدم العملة ا{% trans "No" %}فتراضية
+                    console.error('{% trans "Error getting currency data:" %}', currError);
+                    // {% trans "In case of failed currency retrieval, use default currency" %}
                     const balance = parseFloat(data.current_balance);
                     const balanceText = balance.toLocaleString('ar-SA', {
                         minimumFractionDigits: 2,
@@ -1063,12 +1063,12 @@ function updateCustomerBalance() {
                 });
         })
         .catch(error => {
-            console.error('{% trans "Error" %} في الشبكة:', error);
+            console.error('{% trans "Network error:" %}', error);
             balanceInfo.style.display = 'none';
         });
 }
 
-// ربط الحدث بتغيير العميل
+// {% trans "Link event to customer change" %}
 document.getElementById('id_customer').addEventListener('change', updateCustomerBalance);
 </script>
 
@@ -1078,7 +1078,7 @@ document.getElementById('id_customer').addEventListener('change', updateCustomer
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="newCustomerModalLabel">
-                    <i class="fas fa-plus me-2"></i>إنشاء عميل {% trans "New" %}
+                    <i class="fas fa-plus me-2"></i>{% trans "Create New Customer" %}
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -1089,18 +1089,18 @@ document.getElementById('id_customer').addEventListener('change', updateCustomer
                     <!-- ال{% trans "Information" %} الأساسية -->
                     <div class="mb-4">
                         <h6 class="text-primary border-bottom pb-2 mb-3">
-                            <i class="fas fa-user me-2"></i>ال{% trans "Information" %} الأساسية
+                            <i class="fas fa-user me-2"></i>{% trans "Basic Information" %}
                         </h6>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">اسم العميل *</label>
+                                    <label class="form-label">{% trans "Customer Name" %} *</label>
                                     <input type="text" class="form-control" name="name" required>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">رقم {% trans "Phone" %}</label>
+                                    <label class="form-label">{% trans "Phone Number" %}</label>
                                     <input type="text" class="form-control" name="phone">
                                 </div>
                             </div>
@@ -1108,13 +1108,13 @@ document.getElementById('id_customer').addEventListener('change', updateCustomer
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">البريد الإلكتروني</label>
+                                    <label class="form-label">{% trans "Email" %}</label>
                                     <input type="email" class="form-control" name="email">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">{% trans "Number" %} الضريبي</label>
+                                    <label class="form-label">{% trans "Tax Number" %}</label>
                                     <input type="text" class="form-control" name="tax_number">
                                 </div>
                             </div>
@@ -1132,29 +1132,29 @@ document.getElementById('id_customer').addEventListener('change', updateCustomer
                     <!-- ال{% trans "Information" %} المالية -->
                     <div class="mb-4">
                         <h6 class="text-success border-bottom pb-2 mb-3">
-                            <i class="fas fa-money-bill-wave me-2"></i>ال{% trans "Information" %} المالية
+                            <i class="fas fa-money-bill-wave me-2"></i>{% trans "Financial Information" %}
                         </h6>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">حد ا{% trans "No" %}ئتمان</label>
+                                    <label class="form-label">{% trans "Credit Limit" %}</label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" name="credit_limit" 
                                                value="0" step="0.001" min="0">
                                         <span class="input-group-text">{% get_currency_symbol %}</span>
                                     </div>
-                                    <div class="form-text">أقصى مبلغ يمكن للعميل أن يكون {% trans "Debit" %}اً به</div>
+                                    <div class="form-text">{% trans "Maximum amount the customer can be debited" %}</div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">ال{% trans "Balance" %} ا{% trans "No" %}بتدائي</label>
+                                    <label class="form-label">{% trans "Initial Balance" %}</label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" name="balance" 
                                                value="0" step="0.001">
                                         <span class="input-group-text">{% get_currency_symbol %}</span>
                                     </div>
-                                    <div class="form-text">ال{% trans "Balance" %} الحالي (موجب: له، سالب: عليه)</div>
+                                    <div class="form-text">{% trans "Current balance (positive: in favor, negative: owed)" %}</div>
                                 </div>
                             </div>
                         </div>
@@ -1163,19 +1163,19 @@ document.getElementById('id_customer').addEventListener('change', updateCustomer
                     <!-- {% trans "Information" %} إضافية -->
                     <div class="mb-3">
                         <h6 class="text-info border-bottom pb-2 mb-3">
-                            <i class="fas fa-sticky-note me-2"></i>{% trans "Information" %} إضافية
+                            <i class="fas fa-sticky-note me-2"></i>{% trans "Additional Information" %}
                         </h6>
                         <div class="mb-3">
-                            <label class="form-label">ملاحظات</label>
+                            <label class="form-label">{% trans "Notes" %}</label>
                             <textarea class="form-control" name="notes" rows="2"></textarea>
-                            <div class="form-text">أي ملاحظات أو {% trans "Information" %} إضافية</div>
+                            <div class="form-text">{% trans "Any additional notes or information" %}</div>
                         </div>
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" name="is_active" id="customerIsActive" checked>
                             <label class="form-check-label" for="customerIsActive">
-                                عميل {% trans "Active" %}
+                                {% trans "Active Customer" %}
                             </label>
-                            <div class="form-text">إلغاء التفعيل يخفي العميل من القوائم</div>
+                            <div class="form-text">{% trans "Deactivation hides the customer from lists" %}</div>
                         </div>
                     </div>
                     
@@ -1183,9 +1183,9 @@ document.getElementById('id_customer').addEventListener('change', updateCustomer
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
                 <button type="button" class="btn btn-success" onclick="saveNewCustomer()">
-                    <i class="fas fa-save me-2"></i>{% trans "Save" %} العميل
+                    <i class="fas fa-save me-2"></i>{% trans "Save Customer" %}
                 </button>
             </div>
         </div>

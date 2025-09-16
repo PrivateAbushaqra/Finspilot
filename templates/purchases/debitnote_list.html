@@ -121,7 +121,7 @@
                         <i class="fas fa-file-invoice-dollar fa-3x text-muted mb-3"></i>
                         <h5 class="text-muted">{% trans "No Debit Notes" %}</h5>
                         {% if perms.purchases.add_purchasedebitnote or user.is_superuser %}
-                        <p class="text-muted">{% trans "You can create a new debt note by clicking the button above." %}</p>
+                        <p class="text-muted">{% trans "You can create a new debit note by clicking the button above." %}</p>
                         <a href="{% url 'purchases:debitnote_add' %}" class="btn btn-primary">
                             <i class="fas fa-plus me-2"></i>{% trans "Create First Debit Note" %}
                         </a>

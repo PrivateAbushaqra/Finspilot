@@ -111,7 +111,7 @@ document.addEventListener('DOMContentLoaded', function() {
         'Create Purchase Return': 'إنشاء مرتجع شراء',
         'Purchase Invoices List': 'قائمة فواتير الشراء',
         'Purchase Returns List': 'قائمة مرتجعات الشراء',
-        'Debit Notes': 'سندات الخصم',
+        'Debit Notes': 'سندات المدين',
         'Purchase Statement': 'كشف الشراء',
         'Purchase Return Statement': 'كشف مرتجعات الشراء',
         'Purchase Reports': 'تقارير الشراء',

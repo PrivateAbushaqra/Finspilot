@@ -84,9 +84,9 @@
             <div>
                 <h2 class="mb-2">
                     <i class="fas fa-file-alt me-3"></i>
-                    كشف مشتريات
+                    {% trans "Purchase Statement" %}
                 </h2>
-                <p class="mb-0 opacity-75">{% trans "View" %} تفصيلي لجميع فواتير المشتريات مع {% trans "Balance" %} التراكمي</p>
+                <p class="mb-0 opacity-75">{% trans "Detailed" %} {% trans "View" %} {% trans "All Purchase Invoices" %} {% trans "with" %} {% trans "Balance" %} {% trans "Cumulative" %}</p>
             </div>
             <div class="text-end">
                 <i class="fas fa-shopping-cart" style="font-size: 3rem; opacity: 0.3;"></i>
@@ -119,7 +119,7 @@
                                 <i class="fas fa-search me-2"></i>{% trans "View" %}
                             </button>
                             <a href="{% url 'purchases:purchase_statement' %}" class="btn btn-outline-secondary">
-                                <i class="fas fa-refresh me-2"></i>إعادة تعيين
+                                <i class="fas fa-refresh me-2"></i>{% trans "Reset" %}
                             </a>
                         </div>
                     </form>
@@ -138,8 +138,8 @@
                         <thead>
                             <tr>
                                 <th width="15%">{% trans "Date" %}</th>
-                                <th width="20%">رقم المستند</th>
-                                <th width="25%">البيان</th>
+                                <th width="20%">{% trans "Document Number" %}</th>
+                                <th width="25%">{% trans "Description" %}</th>
                                 <th width="20%">{% trans "Debit" %}</th>
                                 <th width="20%">{% trans "Balance" %}</th>
                             </tr>
@@ -172,15 +172,15 @@
             <div class="summary-card">
                 <div class="row text-center">
                     <div class="col-md-4">
-                        <h5 class="mb-1">عدد الفواتير</h5>
+                        <h5 class="mb-1">{% trans "Number of Invoices" %}</h5>
                         <h3 class="mb-0">{{ statement_data|length }}</h3>
                     </div>
                     <div class="col-md-4">
-                        <h5 class="mb-1">إجمالي {% trans "Amount" %}</h5>
+                        <h5 class="mb-1">{% trans "Total" %} {% trans "Amount" %}</h5>
                         <h3 class="mb-0">{{ final_balance|floatformat:3 }} {% get_currency_symbol %}</h3>
                     </div>
                     <div class="col-md-4">
-                        <h5 class="mb-1">الفترة</h5>
+                        <h5 class="mb-1">{% trans "Period" %}</h5>
                         <h3 class="mb-0">{{ start_date|date:'d/m/Y' }} - {{ end_date|date:'d/m/Y' }}</h3>
                     </div>
                 </div>
@@ -189,10 +189,10 @@
             <div class="statement-table">
                 <div class="no-data">
                     <i class="fas fa-file-alt fa-3x mb-3"></i>
-                    <h4>لا توجد فواتير مشتريات</h4>
-                    <p class="text-muted">لا توجد فواتير مشتريات في الفترة المحددة</p>
+                    <h4>{% trans "No Purchase Invoices Found" %}</h4>
+                    <p class="text-muted">{% trans "No purchase invoices found for the selected period" %}</p>
                     <a href="{% url 'purchases:invoice_add' %}" class="btn btn-primary">
-                        <i class="fas fa-plus me-2"></i>{% trans "Add" %} {% trans "Invoice" %} مشتريات
+                        <i class="fas fa-plus me-2"></i>{% trans "Add" %} {% trans "Invoice" %} {% trans "Purchase" %}
                     </a>
                 </div>
             </div>
