@@ -160,7 +160,7 @@ class RecurringRevenueExpense(models.Model):
     
     class Meta:
         verbose_name = _('الإيراد/المصروف المتكرر')
-        verbose_name_plural = _('الإيرادات والمصروفات المتكررة')
+        verbose_name_plural = _('Recurring revenues and expenses')
         ordering = ['next_due_date']
     
     def __str__(self):

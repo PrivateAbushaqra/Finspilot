@@ -104,7 +104,7 @@ def create_journal_entry_for_revenue_expense(entry, user):
             credit_account = Account.objects.filter(code='1101').first()  # افتراضي صندوق
     
     if not debit_account or not credit_account:
-        raise Exception("لم يتم العثور على الحسابات المحاسبية المناسبة")
+        raise Exception(_('لم يتم العثور على الحسابات المحاسبية المناسبة'))
     
     # إنشاء القيد المحاسبي
     journal_entry = JournalEntry.objects.create(
@@ -138,7 +138,7 @@ def create_journal_entry_for_revenue_expense(entry, user):
 
 @login_required
 def revenue_expense_dashboard(request):
-    """لوحة تحكم الإيرادات والمصروفات"""
+    """{% trans "Revenues and Expenses Dashboard" %}"""
     # الحصول على العملة الأساسية
     company_settings = CompanySettings.objects.first()
     base_currency = company_settings.base_currency if company_settings else None
@@ -201,7 +201,7 @@ def revenue_expense_dashboard(request):
 
 @login_required
 def category_list(request):
-    """قائمة فئات الإيرادات والمصروفات"""
+    """{% trans "Revenue/Expense Categories List" %}"""
     # حماية الوصول حسب الصلاحية (دالة مخصصة)
     if not request.user.has_revenueexpensecategory_view_permission():
         messages.error(request, _('ليس لديك صلاحية عرض فئة إيراد/مصروف'))
@@ -231,7 +231,7 @@ def category_list(request):
 
 @login_required
 def category_create(request):
-    """إضافة فئة جديدة"""
+    """{% trans "Add New Category" %}"""
     # حماية الوصول حسب الصلاحية
     if not request.user.is_admin and not request.user.has_revenueexpensecategory_add_permission():
         messages.error(request, _('ليس لديك صلاحية إضافة فئة إيراد/مصروف'))
@@ -257,7 +257,7 @@ def category_create(request):
 
 @login_required
 def category_delete(request, category_id):
-    """حذف فئة الإيراد/المصروف"""
+    """{% trans "Delete Revenue/Expense Category" %}"""
     category = get_object_or_404(RevenueExpenseCategory, id=category_id)
     # حماية الوصول حسب الصلاحية
     if not request.user.is_admin and not request.user.has_perm('revenues_expenses.delete_revenueexpensecategory'):
@@ -277,7 +277,7 @@ def category_delete(request, category_id):
 
 @login_required
 def entry_create(request):
-    """إضافة قيد جديد"""
+    """{% trans "Add New Entry" %}"""
     # حماية الوصول حسب الصلاحية
     if not request.user.is_admin and not request.user.has_revenueexpenseentry_add_permission():
         messages.error(request, _('ليس لديك صلاحية إضافة قيد إيراد/مصروف'))
@@ -296,7 +296,7 @@ def entry_create(request):
         form = RevenueExpenseEntryForm()
     context = {
         'form': form,
-        'page_title': _('إضافة قيد جديد'),
+        'page_title': _('Add New Entry'),
     }
     return render(request, 'revenues_expenses/entry_create.html', context)
 
@@ -421,7 +421,7 @@ def recurring_list(request):
     ).count()
     
     context = {
-        'page_title': _('الإيرادات والمصروفات المتكررة'),
+        'page_title': _('Recurring revenues and expenses'),
         'recurring_items': recurring_items,
         'categories': categories,
         'frequency_choices': RecurringRevenueExpense.FREQUENCY_CHOICES,

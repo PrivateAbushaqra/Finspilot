@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load static %}
 
-{% block title %}{% trans "الإشعارات" %}{% endblock %}
+{% block title %}{% trans "Notifications" %}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -70,15 +70,15 @@
                 <div>
                     <h1 class="h3 mb-0">
                         <i class="fas fa-bell text-primary"></i>
-                        {% trans "الإشعارات" %}
+                        {% trans "Notifications" %}
                     </h1>
-                    <small class="text-muted">{% trans "إدارة إشعارات النظام" %}</small>
+                    <small class="text-muted">{% trans "System Notifications Management" %}</small>
                 </div>
                 <div>
                     {% if notifications %}
                     <button class="btn btn-outline-primary" id="markAllRead">
                         <i class="fas fa-check-double"></i>
-                        {% trans "وضع ع{% trans "No" %}مة قراءة على {% trans "All" %}" %}
+                        {% trans "Mark All as Read" %}
                     </button>
                     {% endif %}
                 </div>
@@ -94,7 +94,7 @@
                     <div class="d-flex justify-content-between">
                         <div>
                             <h4>{{ notifications|length }}</h4>
-                            <small>{% trans "إجمالي الإشعارات" %}</small>
+                            <small>{% trans "Total Notifications" %}</small>
                         </div>
                         <i class="fas fa-bell fa-2x opacity-75"></i>
                     </div>
@@ -107,7 +107,7 @@
                     <div class="d-flex justify-content-between">
                         <div>
                             <h4>{{ notifications|length }}</h4>
-                            <small>{% trans "غير المقروءة" %}</small>
+                            <small>{% trans "Unread" %}</small>
                         </div>
                         <i class="fas fa-envelope fa-2x opacity-75"></i>
                     </div>
@@ -120,7 +120,7 @@
                     <div class="d-flex justify-content-between">
                         <div>
                             <h4>0</h4>
-                            <small>{% trans "Alertات هامة" %}</small>
+                            <small>{% trans "Important Alerts" %}</small>
                         </div>
                         <i class="fas fa-exclamation-triangle fa-2x opacity-75"></i>
                     </div>
@@ -133,7 +133,7 @@
                     <div class="d-flex justify-content-between">
                         <div>
                             <h4>0</h4>
-                            <small>{% trans "إشعارات Today" %}</small>
+                            <small>{% trans "Today's Notifications" %}</small>
                         </div>
                         <i class="fas fa-calendar-day fa-2x opacity-75"></i>
                     </div>
@@ -149,7 +149,7 @@
                 <div class="card-header">
                     <h5 class="mb-0">
                         <i class="fas fa-list"></i>
-                        {% trans "List الإشعارات" %}
+                        {% trans "Notifications List" %}
                     </h5>
                 </div>
                 <div class="card-body p-0">
@@ -180,7 +180,7 @@
                                         {% if not notification.is_read %}
                                         <button class="btn btn-sm btn-outline-success read-btn" 
                                                 onclick="markAsRead({{ notification.id }})"
-                                                title="{% trans "وضع علامة قراءة" %}">
+                                                title="{% trans "Mark as Read" %}">
                                             <i class="fas fa-check"></i>
                                         </button>
                                         {% endif %}
@@ -199,8 +199,8 @@
                     {% else %}
                         <div class="text-center py-5">
                             <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
-                            <h5 class="text-muted">{% trans "لا توجد إشعارات" %}</h5>
-                            <p class="text-muted">{% trans "ستظهر هنا الإشعارات عند إنشائها" %}</p>
+                            <h5 class="text-muted">{% trans "No Notifications" %}</h5>
+                            <p class="text-muted">{% trans "Notifications will appear here when created" %}</p>
                         </div>
                     {% endif %}
                 </div>
@@ -212,11 +212,11 @@
     {% if is_paginated %}
     <div class="row mt-3">
         <div class="col-12">
-            <nav aria-label="{% trans 'تصفح الإشعارات' %}">
+                            <nav aria-label="{% trans 'Notifications Navigation' %}">
                 <ul class="pagination justify-content-center">
                     {% if page_obj.has_previous %}
                         <li class="page-item">
-                            <a class="page-link" href="?page=1">{% trans "Firstى" %}</a>
+                            <a class="page-link" href="?page=1">{% trans "First" %}</a>
                         </li>
                         <li class="page-item">
                             <a class="page-link" href="?page={{ page_obj.previous_page_number }}">{% trans "Previous" %}</a>
@@ -225,7 +225,7 @@
 
                     <li class="page-item active">
                         <span class="page-link">
-                            {% trans "صفحة" %} {{ page_obj.number }} {% trans "من" %} {{ page_obj.paginator.num_pages }}
+                            {% trans "Page" %} {{ page_obj.number }} {% trans "of" %} {{ page_obj.paginator.num_pages }}
                         </span>
                     </li>
 
@@ -234,7 +234,7 @@
                             <a class="page-link" href="?page={{ page_obj.next_page_number }}">{% trans "Next" %}</a>
                         </li>
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">{% trans "Lastة" %}</a>
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">{% trans "Last" %}</a>
                         </li>
                     {% endif %}
                 </ul>
@@ -270,13 +270,13 @@ function markAsRead(notificationId) {
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('{% trans "حدث {% trans "Error" %} أثناء وضع ع{% trans "No" %}مة القراءة" %}');
+        alert('{% trans "Error occurred while marking as read" %}');
     });
 }
 
 // وضع ع{% trans "No" %}مة قراءة على جميع الإشعارات
 document.getElementById('markAllRead')?.addEventListener('click', function() {
-    if (confirm('{% trans "هل أنت متأكد من وضع علامة قراءة على جميع الإشعارات؟" %}')) {
+    if (confirm('{% trans "Are you sure you want to mark all notifications as read?" %}')) {
         fetch('/ar/notifications/mark-all-read/', {
             method: 'POST',
             headers: {
@@ -292,7 +292,7 @@ document.getElementById('markAllRead')?.addEventListener('click', function() {
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('{% trans "حدث {% trans "Error" %} أثناء وضع ع{% trans "No" %}مة القراءة" %}');
+            alert('{% trans "Error occurred while marking as read" %}');
         });
     }
 });
