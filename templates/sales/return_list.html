@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load currency_tags %}
 
-{% block title %}مردود المبيعات - {{ block.super }}{% endblock %}
+{% block title %}{% trans "Sales Returns" %} - {{ block.super }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -42,14 +42,14 @@
         <div>
             <h2 class="mb-0">
                 <i class="fas fa-undo-alt text-success me-2"></i>
-                مردود المبيعات
+                {% trans "Sales Returns" %}
             </h2>
-            <p class="text-muted mb-0">إدارة جميع مردودات المبيعات</p>
+            <p class="text-muted mb-0">{% trans "Manage all sales returns" %}</p>
         </div>
         <div>
             <a href="{% url 'sales:return_add' %}" class="btn btn-success">
                 <i class="fas fa-plus me-1"></i>
-                مردود {% trans "New" %}
+                {% trans "Return" %} {% trans "New" %}
             </a>
         </div>
     </div>
@@ -61,7 +61,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1">
-                            <h6 class="mb-0">إجمالي المردودات</h6>
+                            <h6 class="mb-0">{% trans "Total Returns" %}</h6>
                             <h3 class="mb-0">{{ Total_Return|default:0 }}</h3>
                         </div>
                         <div class="ms-3">
@@ -77,7 +77,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1">
-                            <h6 class="mb-0">إجمالي قيمة المردودات</h6>
+                            <h6 class="mb-0">{% trans "Total Returns Value" %}</h6>
                             <h3 class="mb-0">{{ total_returns_amount|currency_format|default:"0.00" }}</h3>
                         </div>
                         <div class="ms-3">
@@ -93,7 +93,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1">
-                            <h6 class="mb-0">مردودات {% trans "This Month" %}</h6>
+                            <h6 class="mb-0">{% trans "Returns" %} {% trans "This Month" %}</h6>
                             <h3 class="mb-0">{{ monthly_returns|default:0 }}</h3>
                         </div>
                         <div class="ms-3">
@@ -109,7 +109,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1">
-                            <h6 class="mb-0">مردودات {% trans "Today" %}</h6>
+                            <h6 class="mb-0">{% trans "Returns" %} {% trans "Today" %}</h6>
                             <h3 class="mb-0">{{ daily_returns|default:0 }}</h3>
                         </div>
                         <div class="ms-3">
@@ -127,7 +127,7 @@
             <div class="col-md-3">
                 <label for="search" class="form-label">{% trans "Search" %}</label>
                 <input type="text" class="form-control" id="search" name="search" 
-                       value="{{ request.GET.search }}" placeholder="رقم المردود أو اسم {% trans "Customer" %}">
+                       value="{{ request.GET.search }}" placeholder="{% trans "Return number or customer name" %}">
             </div>
             
             <div class="col-md-2">
@@ -145,7 +145,7 @@
             <div class="col-md-3">
                 <label for="customer" class="form-label">{% trans "Customer" %}</label>
                 <select class="form-select" id="customer" name="customer">
-                    <option value="">جميع العم{% trans "No" %}ء</option>
+                    <option value="">{% trans "All customers" %}</option>
                     {% for customer in customers %}
                         <option value="{{ customer.id }}" 
                                 {% if request.GET.customer == customer.id|stringformat:"s" %}selected{% endif %}>
@@ -160,11 +160,11 @@
                 <div class="d-flex gap-2">
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-search"></i>
-                        بحث
+                        {% trans "Search" %}
                     </button>
                     <a href="{% url 'sales:return_list' %}" class="btn btn-outline-secondary">
                         <i class="fas fa-times"></i>
-                        إعادة تعيين
+                        {% trans "Reset" %}
                     </a>
                 </div>
             </div>
@@ -179,7 +179,7 @@
                     <div class="card-header">
                         <h5 class="mb-0">
                             <i class="fas fa-list me-2"></i>
-                            {% trans "List" %} مردود المبيعات
+                            {% trans "Sales Returns List" %}
                             <span class="badge bg-primary ms-2">{{ returns|length }}</span>
                         </h5>
                     </div>
@@ -188,13 +188,13 @@
                             <table class="table table-hover mb-0">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>رقم المردود</th>
+                                        <th>{% trans "Return Number" %}</th>
                                         <th>{% trans "Date" %}</th>
                                         <th>{% trans "Customer" %}</th>
-                                        <th>ال{% trans "Invoice" %} الأصلية</th>
+                                        <th>{% trans "Original Invoice" %}</th>
                                         <th>{% trans "Grand Total" %}</th>
-                                        <th>أنشئ بواسطة</th>
-                                        <th>الإجراءات</th>
+                                        <th>{% trans "Created by" %}</th>
+                                        <th>{% trans "Actions" %}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -266,7 +266,7 @@
                         {% endif %}
 
                         <li class="page-item active">
-                            <span class="page-link">{{ page_obj.number }} من {{ page_obj.paginator.num_pages }}</span>
+                            <span class="page-link">{{ page_obj.number }} {% trans "of" %} {{ page_obj.paginator.num_pages }}</span>
                         </li>
 
                         {% if page_obj.has_next %}
@@ -284,11 +284,11 @@
                 <div class="card">
                     <div class="card-body text-center py-5">
                         <i class="fas fa-undo-alt fa-3x text-muted mb-3"></i>
-                        <h4 class="text-muted">لا توجد مردودات مبيعات</h4>
-                        <p class="text-muted mb-3">لم يتم العثور على أي مردودات مبيعات</p>
+                        <h4 class="text-muted">{% trans "No sales returns found" %}</h4>
+                        <p class="text-muted mb-3">{% trans "No sales returns found" %}</p>
                         <a href="{% url 'sales:return_add' %}" class="btn btn-success">
                             <i class="fas fa-plus me-1"></i>
-                            {% trans "Add" %} مردود {% trans "New" %}
+                            {% trans "Add" %} {% trans "New" %} {% trans "Return" %}
                         </a>
                     </div>
                 </div>
@@ -319,7 +319,7 @@ $(document).ready(function() {
         var dateTo = $('#date_to').val();
         
         if (dateFrom && dateTo && dateFrom > dateTo) {
-            alert('تاريخ البداية يجب أن يكون أقل {% trans "From Date" %} النهاية');
+            alert('{% trans "Start date must be less than end date" %}');
             $(this).val('');
         }
     });

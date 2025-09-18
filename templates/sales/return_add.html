@@ -12,14 +12,14 @@
         background: #fff;
         border-radius: 8px;
         box-shadow: 0 2px 10px rgba(0,0,0,0.1);document.addEventListener('DOMContentLoaded', function() {
-    // تعيين التاريخ الحالي
+    // Set current date
     const today = new Date().toISOString().split('T')[0];
     const dateField = document.getElementById('id_return_date');
     if (dateField && !dateField.value) {
         dateField.value = today;
     }
     
-    // زر عرض جميع الفواتير
+    // Show all invoices button
     document.getElementById('showAllInvoices').addEventListener('click', function() {
         console.log('Show all invoices clicked');
         loadAllInvoices();
@@ -42,17 +42,17 @@ function loadAllInvoices() {
                 displaySearchResults(data.invoices);
                 document.getElementById('id_original_invoice_search').focus();
             } else {
-                console.error('خطأ في جلب الفواتير:', data.error);
-                alert('خطأ في تحميل الفواتير: ' + data.error);
+                console.error('Error fetching invoices:', data.error);
+                alert('Error loading invoices: ' + data.error);
             }
         })
         .catch(error => {
-            console.error('خطأ في الشبكة:', error);
-            alert('خطأ في الاتصال مع الخادم');
+            console.error('Network error:', error);
+            alert('Error connecting to server');
         });
 }
 
-// تخزين الفواتير المختارة
+// Store selected invoices
 let availableInvoices = [];
 let selectedInvoice = null;ding: 2rem;
         margin-bottom: 2rem;
@@ -139,12 +139,12 @@ let selectedInvoice = null;ding: 2rem;
                 <i class="fas fa-undo text-danger me-2"></i>
                 {% trans "Add Sales Return" %}
             </h2>
-            <p class="text-muted mb-0">إنشاء مرتجع مبيعات {% trans "New" %}</p>
+            <p class="text-muted mb-0">Create Sales Return {% trans "New" %}</p>
         </div>
         <div>
             <a href="{% url 'sales:return_list' %}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left me-1"></i>
-                العودة لل{% trans "List" %}
+                Back to {% trans "List" %}
             </a>
         </div>
     </div>
@@ -163,9 +163,9 @@ let selectedInvoice = null;ding: 2rem;
         <div class="form-header">
             <h3>
                 <i class="fas fa-undo text-danger me-2"></i>
-                بيانات مرتجع المبيعات
+                Sales Return Information
             </h3>
-            <p class="text-muted mb-0">يرجى ملء جميع الحقول المطلوبة</p>
+            <p class="text-muted mb-0">Please fill in all required fields</p>
         </div>
         
         <form method="post" id="salesReturnForm">
@@ -175,21 +175,21 @@ let selectedInvoice = null;ding: 2rem;
             <div class="form-section">
                 <h5>
                     <i class="fas fa-info-circle me-1"></i>
-                    {% trans "Information" %} مرتجع المبيعات
+                    {% trans "Information" %} Sales Return
                 </h5>
                 
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label for="id_return_number" class="form-label">
-                                رقم مرتجع المبيعات <span class="required-field">*</span>
+                                Sales Return Number <span class="required-field">*</span>
                             </label>
                             <input type="text" class="form-control" id="id_return_number" name="return_number" 
                                    value="{{ next_return_number }}" 
                                    {% if not can_edit_return_number %}readonly{% endif %}
-                                   placeholder="{% trans "Number" %} المتوقع: {{ next_return_number }}" required>
+                                   placeholder="{% trans "Number" %} Expected: {{ next_return_number }}" required>
                             {% if not can_edit_return_number %}
-                                <small class="form-text text-muted">سيتم توليد {% trans "Number" %} تلقائياً</small>
+                                <small class="form-text text-muted">{% trans "Number" %} will be generated automatically</small>
                             {% endif %}
                         </div>
                     </div>
@@ -203,7 +203,7 @@ let selectedInvoice = null;ding: 2rem;
                                    {% if not can_edit_date %}readonly{% endif %}
                                    required>
                             {% if not can_edit_date %}
-                                <small class="form-text text-muted">ليس لديك صلاحية {% trans "Edit" %} {% trans "Date" %}</small>
+                                <small class="form-text text-muted">You do not have permission to {% trans "Edit" %} {% trans "Date" %}</small>
                             {% endif %}
                         </div>
                     </div>
@@ -213,12 +213,12 @@ let selectedInvoice = null;ding: 2rem;
                     <div class="col-md-12">
                         <div class="mb-3">
                             <label for="id_original_invoice" class="form-label">
-                                الفاتورة الأصلية <span class="required-field">*</span>
+                                Original Invoice <span class="required-field">*</span>
                             </label>
                             <div class="invoice-search">
                                 <input type="text" class="form-control" id="id_original_invoice_search" 
-                                       placeholder="ابحث عن الفاتورة برقمها أو اسم العميل..." autocomplete="off" required>
-                                <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="showAllInvoices">عرض جميع الفواتير</button>
+                                       placeholder="Search for invoice by number or customer name..." autocomplete="off" required>
+                                <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="showAllInvoices">Show All Invoices</button>
                                 <input type="hidden" id="id_original_invoice" name="original_invoice">
                                 <div class="search-results" id="invoiceSearchResults"></div>
                             </div>
@@ -245,10 +245,10 @@ let selectedInvoice = null;ding: 2rem;
                     <div class="col-md-12">
                         <div class="mb-3">
                             <label for="id_customer" class="form-label">
-                                العميل <span class="required-field">*</span>
+                                Customer <span class="required-field">*</span>
                             </label>
                             <select class="form-control" id="id_customer" name="customer" required>
-                                <option value="">اختر العميل...</option>
+                                <option value="">Choose customer...</option>
                                 {% for customer in customers %}
                                 <option value="{{ customer.id }}">{{ customer.name }}</option>
                                 {% endfor %}
@@ -263,7 +263,7 @@ let selectedInvoice = null;ding: 2rem;
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5>
                         <i class="fas fa-box me-1"></i>
-                        المنتجات المرتجعة
+                        Return Items
                     </h5>
                 </div>
                 
@@ -271,7 +271,7 @@ let selectedInvoice = null;ding: 2rem;
                     <!-- Return items will be loaded here when invoice is selected -->
                     <div class="text-center text-muted py-4" id="noInvoiceMessage">
                         <i class="fas fa-search fa-2x mb-2"></i>
-                        <p>اختر الفاتورة الأصلية أولاً لعرض المنتجات المتاحة للإرجاع</p>
+                        <p>Select the original invoice first to display available products for return</p>
                     </div>
                 </div>
             </div>
@@ -280,34 +280,34 @@ let selectedInvoice = null;ding: 2rem;
             <div class="form-section">
                 <h5>
                     <i class="fas fa-comment me-1"></i>
-                    {% trans "Details" %} المرتجع
+                    {% trans "Details" %} Return
                 </h5>
                 
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label for="id_return_reason" class="form-label">
-                                سبب الإرجاع <span class="required-field">*</span>
+                                Return Reason <span class="required-field">*</span>
                             </label>
                             <select class="form-select" id="id_return_reason" name="return_reason" required>
-                                <option value="">اختر سبب الإرجاع</option>
-                                <option value="defective">منتج {% trans "Defective" %}</option>
-                                <option value="wrong_item">منتج خاطئ</option>
-                                <option value="customer_request">طلب {% trans "Customer" %}</option>
-                                <option value="damaged">منتج {% trans "Damaged" %}</option>
-                                <option value="other">أخرى</option>
+                                <option value="">Choose return reason</option>
+                                <option value="defective">{% trans "Defective" %} Product</option>
+                                <option value="wrong_item">Wrong Product</option>
+                                <option value="customer_request">{% trans "Customer" %} Request</option>
+                                <option value="damaged">{% trans "Damaged" %} Product</option>
+                                <option value="other">Other</option>
                             </select>
                         </div>
                     </div>
                     
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label for="id_refund_method" class="form-label">طريقة ا{% trans "No" %}سترداد</label>
+                            <label for="id_refund_method" class="form-label">Refund Method</label>
                             <select class="form-select" id="id_refund_method" name="refund_method">
                                 <option value="cash">{% trans "Cash" %}</option>
-                                <option value="bank_transfer">{% trans "Transfer" %} {% trans "Bank" %}ي</option>
-                                <option value="credit_note">إشعار {% trans "Credit" %}</option>
-                                <option value="exchange">استبدال</option>
+                                <option value="bank_transfer">{% trans "Bank" %} {% trans "Transfer" %}</option>
+                                <option value="credit_note">{% trans "Credit" %} Note</option>
+                                <option value="exchange">Exchange</option>
                             </select>
                         </div>
                     </div>
@@ -316,7 +316,7 @@ let selectedInvoice = null;ding: 2rem;
                 <div class="mb-3">
                     <label for="id_notes" class="form-label">{% trans "Notes" %}</label>
                     <textarea class="form-control" id="id_notes" name="notes" rows="3" 
-                              placeholder="أي {% trans "Notes" %} إضافية حول المرتجع..."></textarea>
+                              placeholder="Any additional {% trans "Notes" %} about the return..."></textarea>
                 </div>
             </div>
 
@@ -324,21 +324,21 @@ let selectedInvoice = null;ding: 2rem;
             <div class="summary-section" id="returnSummary" style="display: none;">
                 <div class="row">
                     <div class="col-md-8">
-                        <h5 class="mb-3">{% trans "Summary" %} المرتجع</h5>
+                        <h5 class="mb-3">{% trans "Summary" %} Return</h5>
                     </div>
                     <div class="col-md-4">
                         <div class="summary-details">
                             <div class="d-flex justify-content-between mb-2">
-                                <span>إجمالي المرتجع:</span>
+                                <span>Total Return:</span>
                                 <strong id="totalReturnDisplay">0.00 {% get_currency_symbol %}</strong>
                             </div>
                             <div class="d-flex justify-content-between mb-2">
-                                <span>رسوم الإرجاع:</span>
+                                <span>Return Fees:</span>
                                 <strong id="returnFeesDisplay">0.00 {% get_currency_symbol %}</strong>
                             </div>
                             <hr>
                             <div class="d-flex justify-content-between mb-0">
-                                <span class="h5">صافي ا{% trans "No" %}سترداد:</span>
+                                <span class="h5">Net Refund:</span>
                                 <strong class="h5 text-warning" id="netRefundDisplay">0.00 {% get_currency_symbol %}</strong>
                             </div>
                         </div>
@@ -352,15 +352,15 @@ let selectedInvoice = null;ding: 2rem;
                     <div class="d-flex gap-3">
                         <button type="submit" name="action" value="save" class="btn btn-danger btn-lg">
                             <i class="fas fa-save me-2"></i>
-                            {% trans "Save" %} المرتجع
+                            {% trans "Save" %} Return
                         </button>
                         <button type="submit" name="action" value="save_and_process" class="btn btn-warning btn-lg">
                             <i class="fas fa-check me-2"></i>
-                            {% trans "Save" %} ومعالجة
+                            {% trans "Save" %} and Process
                         </button>
                         <a href="{% url 'sales:return_list' %}" class="btn btn-secondary btn-lg">
                             <i class="fas fa-times me-2"></i>
-                            إلغاء
+                            Cancel
                         </a>
                     </div>
                 </div>
@@ -377,14 +377,14 @@ let selectedInvoice = null;
 
 // Load available invoices
 document.addEventListener('DOMContentLoaded', function() {
-    // تعيين التاريخ الحالي
+    // Set current date
     const today = new Date().toISOString().split('T')[0];
     const dateField = document.getElementById('id_return_date');
     if (dateField && !dateField.value) {
         dateField.value = today;
     }
     
-    // زر عرض جميع الفواتير
+    // Show all invoices button
     document.getElementById('showAllInvoices').addEventListener('click', function() {
         console.log('Show all invoices clicked');
         loadAllInvoices();
@@ -407,13 +407,13 @@ function loadAllInvoices() {
                 displaySearchResults(data.invoices);
                 document.getElementById('id_original_invoice_search').focus();
             } else {
-                console.error('خطأ في جلب الفواتير:', data.error);
-                alert('خطأ في تحميل الفواتير: ' + data.error);
+                console.error('Error fetching invoices:', data.error);
+                alert('Error loading invoices: ' + data.error);
             }
         })
         .catch(error => {
-            console.error('خطأ في الشبكة:', error);
-            alert('خطأ في الاتصال مع الخادم');
+            console.error('Network error:', error);
+            alert('Error connecting to server');
         });
 }
 
@@ -433,7 +433,7 @@ function performInvoiceSearch(searchTerm) {
         return;
     }
     
-    // استدعاء API لجلب الفواتير
+    // Call API to fetch invoices
     const apiUrl = `/ar/sales/api/invoices-for-returns/?search=${encodeURIComponent(searchTerm)}`;
     console.log('Making API call to:', apiUrl);
     
@@ -448,14 +448,14 @@ function performInvoiceSearch(searchTerm) {
                 availableInvoices = data.invoices;
                 displaySearchResults(data.invoices);
             } else {
-                console.error('خطأ في جلب الفواتير:', data.error);
-                resultsContainer.innerHTML = '<div class="search-result-item text-danger">حدث خطأ في البحث</div>';
+                console.error('Error fetching invoices:', data.error);
+                resultsContainer.innerHTML = '<div class="search-result-item text-danger">Search error occurred</div>';
                 resultsContainer.style.display = 'block';
             }
         })
         .catch(error => {
-            console.error('خطأ في الشبكة:', error);
-            resultsContainer.innerHTML = '<div class="search-result-item text-danger">خطأ في الاتصال</div>';
+            console.error('Network error:', error);
+            resultsContainer.innerHTML = '<div class="search-result-item text-danger">Connection error</div>';
             resultsContainer.style.display = 'block';
         });
 }
@@ -479,7 +479,7 @@ function displaySearchResults(invoices) {
         resultsContainer.style.display = 'block';
         console.log('Displayed', invoices.length, 'invoices');
     } else {
-        resultsContainer.innerHTML = '<div class="search-result-item text-muted">لا توجد فواتير مطابقة للبحث</div>';
+        resultsContainer.innerHTML = '<div class="search-result-item text-muted">No matching invoices found</div>';
         resultsContainer.style.display = 'block';
         console.log('No invoices found');
     }
@@ -493,7 +493,7 @@ function selectInvoice(invoice) {
     document.getElementById('id_original_invoice').value = invoice.id;
     document.getElementById('invoiceSearchResults').style.display = 'none';
     
-    // تحديث حقل العميل تلقائياً
+    // Auto-update customer field
     if (invoice.customer_id) {
         const customerSelect = document.getElementById('id_customer');
         if (customerSelect) {
@@ -506,7 +506,7 @@ function selectInvoice(invoice) {
     document.getElementById('selectedCustomer').textContent = invoice.customer;
     document.getElementById('selectedInvoiceDate').textContent = invoice.date;
     document.getElementById('selectedInvoiceTotal').textContent = invoice.total.toFixed(2) + ' {% get_currency_symbol %}';
-    document.getElementById('selectedInvoiceStatus').textContent = invoice.payment_type || 'مدفوعة';
+    document.getElementById('selectedInvoiceStatus').textContent = invoice.payment_type || 'Paid';
     document.getElementById('invoiceDetails').style.display = 'block';
     
     // Load return items
@@ -516,9 +516,9 @@ function selectInvoice(invoice) {
 function getStatusText(status) {
     const statusMap = {
         'paid': '{% trans "Paid" %}',
-        'pending': 'معلقة',
-        'draft': 'مسودة',
-        'cancelled': 'ملغاة'
+        'pending': 'Pending',
+        'draft': 'Draft',
+        'cancelled': 'Cancelled'
     };
     return statusMap[status] || status;
 }
@@ -539,11 +539,11 @@ function loadReturnItems(invoice) {
                     <small class="text-muted d-block">${item.product_code || ''}</small>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label">{% trans "Quantity" %} الأصلية</label>
+                    <label class="form-label">{% trans "Quantity" %} Original</label>
                     <input type="text" class="form-control" value="${item.quantity}" readonly>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label">كمية الإرجاع</label>
+                    <label class="form-label">Return Quantity</label>
                     <input type="number" class="form-control return-quantity" 
                            name="return_quantities[${item.product_id}]" 
                            min="0" max="${item.quantity}" value="0"
@@ -557,7 +557,7 @@ function loadReturnItems(invoice) {
                            data-product-id="${item.product_id}">
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label">{% trans "Amount" %} المرتجع</label>
+                    <label class="form-label">{% trans "Amount" %} Returned</label>
                     <input type="text" class="form-control return-amount" readonly value="0.00">
                 </div>
                 <div class="col-md-1">
@@ -565,7 +565,7 @@ function loadReturnItems(invoice) {
                         <input class="form-check-input return-checkbox" type="checkbox" 
                                id="return_${item.product_id}" data-product-id="${item.product_id}">
                         <label class="form-check-label" for="return_${item.product_id}">
-                            إرجاع
+                            Return
                         </label>
                     </div>
                 </div>
@@ -623,7 +623,7 @@ function calculateReturnTotals() {
         const price = parseFloat(priceInput.value) || 0;
         const productId = input.dataset.productId;
         
-        // {% trans "Search" %} عن معدل الضريبة من البيانات التجريبية
+        // Search for tax rate from sample data
         let taxRate = 0;
         if (selectedInvoice && selectedInvoice.items) {
             const item = selectedInvoice.items.find(item => item.product_id == productId);
@@ -644,7 +644,7 @@ function calculateReturnTotals() {
         totalTax += taxAmount;
     });
     
-    const returnFees = 0; // يمكن تخصيصها حسب سياسة الشركة
+    const returnFees = 0; // Can be customized according to company policy
     const grandTotal = totalReturn + totalTax;
     const netRefund = grandTotal - returnFees;
     
@@ -665,7 +665,7 @@ document.addEventListener('click', function(e) {
 document.getElementById('salesReturnForm').addEventListener('submit', function(e) {
     if (!selectedInvoice) {
         e.preventDefault();
-        alert('يجب اختيار ال{% trans "Invoice" %} الأصلية');
+        alert('You must select the original invoice');
         return;
     }
     
@@ -680,7 +680,7 @@ document.getElementById('salesReturnForm').addEventListener('submit', function(e
     
     if (!hasValidReturns) {
         e.preventDefault();
-        alert('يجب {% trans "Select" %} كمية إرجاع لمنتج واحد على الأقل');
+        alert('You must select a return quantity for at least one product');
     }
 });
 </script>

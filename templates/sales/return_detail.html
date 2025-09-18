@@ -57,14 +57,14 @@
         <div>
             <h2 class="mb-0">
                 <i class="fas fa-undo-alt text-success me-2"></i>
-                {% trans "Details" %} مردود المبيعات
+                {% trans "Details" %} {% trans "Sales Return" %}
             </h2>
-            <p class="text-muted mb-0">{% trans "View" %} {% trans "Details" %} مردود المبيعات رقم {{ return.return_number }}</p>
+            <p class="text-muted mb-0">{% trans "View" %} {% trans "Details" %} {% trans "Sales Return" %} {{ return.return_number }}</p>
         </div>
         <div>
             <a href="{% url 'sales:return_list' %}" class="btn btn-secondary me-2">
                 <i class="fas fa-arrow-right me-1"></i>
-                العودة لل{% trans "List" %}
+                {% trans "Back to" %} {% trans "List" %}
             </a>
             <div class="btn-group">
                 <a href="{% url 'sales:return_edit' return.pk %}" class="btn btn-warning">
@@ -87,13 +87,13 @@
                         <div class="col-md-6">
                             <h3 class="mb-0">
                                 <i class="fas fa-undo-alt me-2"></i>
-                                مردود المبيعات
+                                {% trans "Sales Return" %}
                             </h3>
-                            <p class="mb-0 opacity-75">رقم المردود: {{ return.return_number }}</p>
+                            <p class="mb-0 opacity-75">{% trans "Return Number" %}: {{ return.return_number }}</p>
                         </div>
                         <div class="col-md-6 text-end">
                             <h4 class="mb-0">{{ return.total_amount|currency_format }}</h4>
-                            <p class="mb-0 opacity-75">{% trans "Amount" %} الإجمالي</p>
+                            <p class="mb-0 opacity-75">{% trans "Total" %} {% trans "Amount" %}</p>
                         </div>
                     </div>
                 </div>
@@ -102,13 +102,13 @@
                 <div class="info-section">
                     <h5 class="mb-3">
                         <i class="fas fa-info-circle text-primary me-2"></i>
-                        ال{% trans "Information" %} الأساسية
+                        {% trans "Basic" %} {% trans "Information" %}
                     </h5>
                     
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label text-muted">رقم المردود</label>
+                                <label class="form-label text-muted">{% trans "Return Number" %}</label>
                                 <div class="fs-5 fw-bold text-primary">{{ return.return_number }}</div>
                             </div>
                         </div>
@@ -123,7 +123,7 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label text-muted">العميل</label>
+                                <label class="form-label text-muted">{% trans "Customer" %}</label>
                                 <div class="fs-5">
                                     <i class="fas fa-user text-muted me-2"></i>
                                     {{ return.customer.name }}
@@ -132,7 +132,7 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label text-muted">ال{% trans "Invoice" %} الأصلية</label>
+                                <label class="form-label text-muted">{% trans "Original" %} {% trans "Invoice" %}</label>
                                 <div class="fs-5">
                                     <a href="{% url 'sales:invoice_detail' return.original_invoice.pk %}" 
                                        class="text-decoration-none">
@@ -147,7 +147,7 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label text-muted">أنشئ بواسطة</label>
+                                <label class="form-label text-muted">{% trans "Created By" %}</label>
                                 <div class="fs-5">
                                     <i class="fas fa-user-tie text-muted me-2"></i>
                                     {{ return.created_by.get_full_name|default:return.created_by.username }}
@@ -156,7 +156,7 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label text-muted">تاريخ الإنشاء</label>
+                                <label class="form-label text-muted">{% trans "Creation Date" %}</label>
                                 <div class="fs-5">{{ return.created_at|date:"Y-m-d H:i" }}</div>
                             </div>
                         </div>
@@ -166,7 +166,7 @@
                     <div class="row">
                         <div class="col-12">
                             <div class="mb-0">
-                                <label class="form-label text-muted">ملاحظات</label>
+                                <label class="form-label text-muted">{% trans "Notes" %}</label>
                                 <div class="border rounded p-2 bg-light">{{ return.notes|linebreaks }}</div>
                             </div>
                         </div>
@@ -179,7 +179,7 @@
                 <div class="items-section">
                     <h5 class="mb-3">
                         <i class="fas fa-list text-primary me-2"></i>
-                        عناصر المردود
+                        {% trans "Return Items" %}
                         <span class="badge bg-primary ms-2">{{ return.items.count }}</span>
                     </h5>
                     
@@ -188,12 +188,12 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>#</th>
-                                    <th>المنتج</th>
+                                    <th>{% trans "Product" %}</th>
                                     <th>{% trans "Quantity" %}</th>
-                                    <th>سعر الوحدة</th>
-                                    <th>نسبة الضريبة</th>
-                                    <th>مبلغ الضريبة</th>
-                                    <th>الإجمالي</th>
+                                    <th>{% trans "Unit Price" %}</th>
+                                    <th>{% trans "Tax Rate" %}</th>
+                                    <th>{% trans "Tax Amount" %}</th>
+                                    <th>{% trans "Total" %}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -223,23 +223,23 @@
                 <div class="totals-section">
                     <h5 class="mb-3">
                         <i class="fas fa-calculator text-primary me-2"></i>
-                        المجاميع
+                        {% trans "Totals" %}
                     </h5>
                     
                     <div class="row">
                         <div class="col-md-6"></div>
                         <div class="col-md-6">
                             <div class="d-flex justify-content-between mb-2">
-                                <span>{% trans "Total" %} الفرعي:</span>
+                                <span>{% trans "Subtotal" %}:</span>
                                 <strong>{{ return.subtotal|currency_format }}</strong>
                             </div>
                             <div class="d-flex justify-content-between mb-2">
-                                <span>مبلغ الضريبة:</span>
+                                <span>{% trans "Tax Amount" %}:</span>
                                 <strong>{{ return.tax_amount|currency_format }}</strong>
                             </div>
                             <hr>
                             <div class="d-flex justify-content-between">
-                                <span class="h5">{% trans "Total" %} الإجمالي:</span>
+                                <span class="h5">{% trans "Total" %}:</span>
                                 <strong class="h5 text-success">{{ return.total_amount|currency_format }}</strong>
                             </div>
                         </div>
@@ -251,7 +251,7 @@
                     <div>
                         <a href="{% url 'sales:return_list' %}" class="btn btn-secondary">
                             <i class="fas fa-arrow-right me-1"></i>
-                            العودة لل{% trans "List" %}
+                            {% trans "Back to" %} {% trans "List" %}
                         </a>
                     </div>
                     <div>

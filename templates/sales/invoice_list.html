@@ -270,7 +270,7 @@
                 <i class="fas fa-file-invoice-dollar text-primary me-2"></i>
                 {% trans "Sales Invoices" %}
             </h2>
-            <p class="text-muted mb-0">إدارة جميع {% trans "Sales Invoices" %}</p>
+            <p class="text-muted mb-0">{% trans "Manage all" %} {% trans "Sales Invoices" %}</p>
         </div>
         <div>
             <a href="{% url 'sales:invoice_add' %}" class="btn btn-primary">
@@ -279,7 +279,7 @@
             </a>
             <button type="button" onclick="printPage()" class="btn btn-outline-secondary ms-2">
                 <i class="fas fa-print me-1"></i>
-                {% trans "Print" %} ال{% trans "List" %}
+                {% trans "Print" %} {% trans "the list" %}
             </button>
         </div>
     </div>
@@ -296,11 +296,11 @@
             <div class="col-md-2">
                 <label for="status" class="form-label">{% trans "Status" %}</label>
                 <select class="form-select" id="status" name="status">
-                    <option value="">جميع الحا{% trans "No" %}ت</option>
-                    <option value="draft" {% if request.GET.status == 'draft' %}selected{% endif %}>مسودة</option>
-                    <option value="sent" {% if request.GET.status == 'sent' %}selected{% endif %}>مرسلة</option>
+                    <option value="">{% trans "All statuses" %}</option>
+                    <option value="draft" {% if request.GET.status == 'draft' %}selected{% endif %}>{% trans "Draft" %}</option>
+                    <option value="sent" {% if request.GET.status == 'sent' %}selected{% endif %}>{% trans "Sent" %}</option>
                     <option value="paid" {% if request.GET.status == 'paid' %}selected{% endif %}>{% trans "Paid" %}</option>
-                    <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>ملغاة</option>
+                    <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>{% trans "Cancelled" %}</option>
                 </select>
             </div>
             
@@ -319,11 +319,11 @@
                 <div class="d-flex gap-2">
                     <button type="submit" class="btn btn-outline-primary">
                         <i class="fas fa-search me-1"></i>
-                        بحث
+                        {% trans "Search" %}
                     </button>
                     <a href="{% url 'sales:invoice_list' %}" class="btn btn-outline-secondary">
                         <i class="fas fa-undo me-1"></i>
-                        إعادة تعيين
+                        {% trans "Reset" %}
                     </a>
                 </div>
             </div>
@@ -346,7 +346,7 @@
                                 <th>{% trans "Date" %}</th>
                                 <th>{% trans "Grand Total" %}</th>
                                 <th>{% trans "Status" %}</th>
-                                <th>الإجراءات</th>
+                                <th>{% trans "Actions" %}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -355,7 +355,7 @@
                                 <td>
                                     <strong>{{ invoice.invoice_number }}</strong>
                                 </td>
-                                <td>{{ invoice.customer.name|default:"غير محدد" }}</td>
+                                <td>{{ invoice.customer.name|default:"{% trans 'Not specified' %}" }}</td>
                                 <td>{{ invoice.date|date:"Y-m-d" }}</td>
                                 <td>
                                     <strong>{{ invoice.total_amount|currency_format }}</strong>
@@ -364,13 +364,13 @@
                                     {% if invoice.status == 'paid' %}
                                         <span class="badge bg-success">{% trans "Paid" %}</span>
                                     {% elif invoice.status == 'sent' %}
-                                        <span class="badge bg-warning">مرسلة</span>
+                                        <span class="badge bg-warning">{% trans "Sent" %}</span>
                                     {% elif invoice.status == 'draft' %}
-                                        <span class="badge bg-secondary">مسودة</span>
+                                        <span class="badge bg-secondary">{% trans "Draft" %}</span>
                                     {% elif invoice.status == 'cancelled' %}
-                                        <span class="badge bg-danger">ملغاة</span>
+                                        <span class="badge bg-danger">{% trans "Cancelled" %}</span>
                                     {% else %}
-                                        <span class="badge bg-light text-dark">غير محدد</span>
+                                        <span class="badge bg-light text-dark">{% trans "Not specified" %}</span>
                                     {% endif %}
                                 </td>
                                 <td>
@@ -385,7 +385,7 @@
                                         </a>
                                         <a href="{% url 'sales:invoice_delete' invoice.pk %}" 
                                            class="btn btn-outline-danger" title="{% trans "Delete" %}"
-                                           onclick="return confirm('هل أنت متأكد من {% trans "Delete" %} هذه ال{% trans "Invoice" %}؟')">
+                                           onclick="return confirm('{% trans "Are you sure you want to delete this invoice?" %}')">
                                             <i class="fas fa-trash"></i>
                                         </a>
                                     </div>
@@ -429,8 +429,8 @@
             {% else %}
                 <div class="text-center py-5">
                     <i class="fas fa-file-invoice fa-3x text-muted mb-3"></i>
-                    <h5 class="text-muted">{% trans "No invoices found" %} مبيعات</h5>
-                    <p class="text-muted">ابدأ بإنشاء {% trans "Invoice" %} مبيعات {% trans "New" %}ة</p>
+                    <h5 class="text-muted">{% trans "No invoices found" %} {% trans "sales" %}</h5>
+                    <p class="text-muted">{% trans "Start by creating a new sales invoice" %}</p>
                     <a href="{% url 'sales:invoice_add' %}" class="btn btn-primary">
                         <i class="fas fa-plus me-1"></i>
                         {% trans "Add" %} {% trans "New Invoice" %}

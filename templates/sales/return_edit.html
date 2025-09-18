@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load currency_tags %}
 
-{% block title %}{% trans "Edit" %} مردود المبيعات - {{ block.super }}{% endblock %}
+{% block title %}{% trans "Edit" %} {% trans "Sales Return" %} - {{ block.super }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -55,16 +55,16 @@
                 <i class="fas fa-edit text-warning me-2"></i>
                 {% trans "Edit" %} مردود المبيعات
             </h2>
-            <p class="text-muted mb-0">{% trans "Edit" %} بيانات مردود المبيعات رقم {{ object.return_number }}</p>
+            <p class="text-muted mb-0">{% trans "Edit" %} {% trans "Sales Return Data" %} رقم {{ object.return_number }}</p>
         </div>
         <div>
             <a href="{% url 'sales:return_list' %}" class="btn btn-secondary me-2">
                 <i class="fas fa-arrow-right me-1"></i>
-                العودة لل{% trans "List" %}
+                {% trans "Back to" %} {% trans "List" %}
             </a>
             <a href="{% url 'sales:return_detail' object.pk %}" class="btn btn-info">
                 <i class="fas fa-eye me-1"></i>
-                {% trans "View" %} ال{% trans "Details" %}
+                {% trans "View" %} {% trans "The" %} {% trans "Details" %}
             </a>
         </div>
     </div>
@@ -77,11 +77,11 @@
                         <div class="col-md-6">
                             <h4 class="mb-0">
                                 <i class="fas fa-undo-alt me-2"></i>
-                                {% trans "Edit" %} مردود المبيعات
+                                {% trans "Edit" %} {% trans "Sales Return" %}
                             </h4>
                         </div>
                         <div class="col-md-6 text-end">
-                            <h5 class="mb-0">رقم المردود: {{ object.return_number }}</h5>
+                            <h5 class="mb-0">{% trans "Return Number" %}: {{ object.return_number }}</h5>
                         </div>
                     </div>
                 </div>
@@ -95,7 +95,7 @@
                             <div class="mb-3">
                                 <label for="{{ form.return_number.id_for_label }}" class="form-label">
                                     <i class="fas fa-hashtag text-primary me-1"></i>
-                                    رقم المردود
+                                    {% trans "Return Number" %}
                                 </label>
                                 {{ form.return_number }}
                                 {% if form.return_number.errors %}
@@ -127,7 +127,7 @@
                             <div class="mb-3">
                                 <label for="{{ form.original_invoice.id_for_label }}" class="form-label">
                                     <i class="fas fa-file-invoice text-primary me-1"></i>
-                                    ال{% trans "Invoice" %} الأصلية
+                                    {% trans "The" %} {% trans "Original" %} {% trans "Invoice" %}
                                 </label>
                                 {{ form.original_invoice }}
                                 {% if form.original_invoice.errors %}
@@ -176,19 +176,19 @@
                     <div class="return-items">
                         <h5 class="mb-3">
                             <i class="fas fa-list text-primary me-2"></i>
-                            عناصر المردود
+                            {% trans "Return Items" %}
                         </h5>
                         
                         <div class="table-responsive">
                             <table class="table table-hover">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>المنتج</th>
+                                        <th>{% trans "Product" %}</th>
                                         <th>{% trans "Quantity" %}</th>
                                         <th>{% trans "Unit Price" %}</th>
-                                        <th>نسبة الضريبة</th>
-                                        <th>مبلغ الضريبة</th>
-                                        <th>الإجمالي</th>
+                                        <th>{% trans "Tax Rate" %}</th>
+                                        <th>{% trans "Tax Amount" %}</th>
+                                        <th>{% trans "Total" %}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -212,16 +212,16 @@
                                 <div class="col-md-6"></div>
                                 <div class="col-md-6">
                                     <div class="d-flex justify-content-between mb-2">
-                                        <span>{% trans "Total" %} الفرعي:</span>
+                                        <span>{% trans "Subtotal" %}:</span>
                                         <strong>{{ object.subtotal|currency_format }}</strong>
                                     </div>
                                     <div class="d-flex justify-content-between mb-2">
-                                        <span>مبلغ الضريبة:</span>
+                                        <span>{% trans "Tax Amount" %}:</span>
                                         <strong>{{ object.tax_amount|currency_format }}</strong>
                                     </div>
                                     <hr>
                                     <div class="d-flex justify-content-between">
-                                        <span class="h5">{% trans "Total" %} الإجمالي:</span>
+                                        <span class="h5">{% trans "Total Amount" %}:</span>
                                         <strong class="h5 text-success">{{ object.total_amount|currency_format }}</strong>
                                     </div>
                                 </div>
@@ -234,11 +234,11 @@
                     <div class="d-flex justify-content-end mt-4">
                         <a href="{% url 'sales:return_detail' object.pk %}" class="btn btn-secondary me-2">
                             <i class="fas fa-times me-1"></i>
-                            إلغاء
+                            {% trans "Cancel" %}
                         </a>
                         <button type="submit" class="btn btn-success">
                             <i class="fas fa-save me-1"></i>
-                            {% trans "Save" %} التغييرات
+                            {% trans "Save" %} {% trans "Changes" %}
                         </button>
                     </div>
                 </form>

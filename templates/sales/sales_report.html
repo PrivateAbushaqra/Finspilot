@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load currency_tags %}
 
-{% block title %}{% trans "Report" %} المبيعات - {{ block.super }}{% endblock %}
+{% block title %}{% trans "Sales Report" %} - {{ block.super }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -50,9 +50,9 @@
         <div class="col-12">
             <!-- Header -->
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2><i class="fas fa-chart-line me-2"></i>{% trans "Report" %} المبيعات</h2>
+                <h2><i class="fas fa-chart-line me-2"></i>{% trans "Sales Report" %}</h2>
                 <button class="btn btn-primary" onclick="window.print()">
-                    <i class="fas fa-print me-2"></i>{% trans "Print" %} ال{% trans "Report" %}
+                    <i class="fas fa-print me-2"></i>{% trans "Print Report" %}
                 </button>
             </div>
             
@@ -70,7 +70,7 @@
                     <div class="col-md-4">
                         <label class="form-label">&nbsp;</label>
                         <button type="submit" class="btn btn-primary d-block">
-                            <i class="fas fa-search me-2"></i>{% trans "View" %} ال{% trans "Report" %}
+                            <i class="fas fa-search me-2"></i>{% trans "View Report" %}
                         </button>
                     </div>
                 </form>
@@ -82,7 +82,7 @@
                     <div class="stats-card">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="mb-1">إجمالي الفواتير</h6>
+                                <h6 class="mb-1">{% trans "Total Invoices" %}</h6>
                                 <h3 class="mb-0">{{ stats.total_invoices }}</h3>
                             </div>
                             <i class="fas fa-file-invoice stat-icon"></i>
@@ -93,7 +93,7 @@
                     <div class="stats-card">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="mb-1">إجمالي المبيعات</h6>
+                                <h6 class="mb-1">{% trans "Total Sales" %}</h6>
                                 <h3 class="mb-0">{{ stats.total_amount|currency_format }}</h3>
                             </div>
                             <i class="fas fa-money-bill-wave stat-icon"></i>
@@ -104,7 +104,7 @@
                     <div class="stats-card">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="mb-1">إجمالي الضرائب</h6>
+                                <h6 class="mb-1">{% trans "Total Tax" %}</h6>
                                 <h3 class="mb-0">{{ stats.total_tax|currency_format }}</h3>
                             </div>
                             <i class="fas fa-percentage stat-icon"></i>
@@ -115,7 +115,7 @@
                     <div class="stats-card">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="mb-1">إجمالي الخصومات</h6>
+                                <h6 class="mb-1">{% trans "Total Discounts" %}</h6>
                                 <h3 class="mb-0">{{ stats.total_discount|currency_format }}</h3>
                             </div>
                             <i class="fas fa-tags stat-icon"></i>
@@ -128,7 +128,7 @@
                 <!-- Customer Sales Chart -->
                 <div class="col-lg-6">
                     <div class="chart-container">
-                        <h5 class="mb-3">أفضل العم{% trans "No" %}ء</h5>
+                        <h5 class="mb-3">{% trans "Top Customers" %}</h5>
                         <canvas id="customerChart" height="300"></canvas>
                     </div>
                 </div>
@@ -136,7 +136,7 @@
                 <!-- Daily Sales Chart -->
                 <div class="col-lg-6">
                     <div class="chart-container">
-                        <h5 class="mb-3">المبيعات {% trans "Today" %}ية</h5>
+                        <h5 class="mb-3">{% trans "Daily Sales" %}</h5>
                         <canvas id="dailyChart" height="300"></canvas>
                     </div>
                 </div>
@@ -145,20 +145,20 @@
             <!-- Sales Table -->
             <div class="table-card mt-4">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">{% trans "Details" %} فواتير المبيعات</h5>
+                    <h5 class="mb-0">{% trans "Sales Invoice Details" %}</h5>
                 </div>
                 <div class="table-responsive">
                     <table class="table table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th>رقم ال{% trans "Invoice" %}</th>
+                                <th>{% trans "Invoice Number" %}</th>
                                 <th>{% trans "Date" %}</th>
-                                <th>العميل</th>
-                                <th>{% trans "Amount" %} الفرعي</th>
-                                <th>الضريبة</th>
-                                <th>الخصم</th>
+                                <th>{% trans "Customer" %}</th>
+                                <th>{% trans "Subtotal" %}</th>
+                                <th>{% trans "Tax" %}</th>
+                                <th>{% trans "Discount" %}</th>
                                 <th>{% trans "Total" %}</th>
-                                <th>نوع ال{% trans "Payment" %}</th>
+                                <th>{% trans "Payment Type" %}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -177,16 +177,16 @@
                                 <td><strong>{{ invoice.total_amount|currency_format }}</strong></td>
                                 <td>
                                     {% if invoice.payment_type == 'cash' %}
-                                        <span class="badge bg-success">نقدي</span>
+                                        <span class="badge bg-success">{% trans "Cash" %}</span>
                                     {% else %}
-                                        <span class="badge bg-warning">آجل</span>
+                                        <span class="badge bg-warning">{% trans "Credit" %}</span>
                                     {% endif %}
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
                                 <td colspan="8" class="text-center text-muted py-4">
-                                    لا توجد فواتير مبيعات في الفترة المحددة
+                                    {% trans "No sales invoices found for the selected period" %}
                                 </td>
                             </tr>
                             {% endfor %}
@@ -242,7 +242,7 @@ new Chart(dailyCtx, {
             {% endfor %}
         ],
         datasets: [{
-            label: 'المبيعات {% trans "Today" %}ية',
+            label: '{% trans "Daily Sales" %}',
             data: [
                 {% for day in daily_sales %}
                 {{ day.total_amount }}{% if not forloop.last %},{% endif %}
