@@ -135,7 +135,7 @@ class JournalLine(models.Model):
     account = models.ForeignKey(Account, on_delete=models.PROTECT, 
                                verbose_name=_('الحساب'), related_name='journal_lines')
     debit = models.DecimalField(_('مدين'), max_digits=15, decimal_places=3, default=0)
-    credit = models.DecimalField(_('دائن'), max_digits=15, decimal_places=3, default=0)
+    credit = models.DecimalField(_('creditor'), max_digits=15, decimal_places=3, default=0)
     line_description = models.TextField(_('تفاصيل البند'), blank=True)
     
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)

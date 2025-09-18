@@ -68,7 +68,7 @@ class InventoryMovement(models.Model):
         ('opening_balance', _('Opening Balance')),
     ]
 
-    movement_number = models.CharField(_('رقم الحركة'), max_length=50, unique=True)
+    movement_number = models.CharField(_('Movement Number'), max_length=50, unique=True)
     date = models.DateField(_('Date'))
     product = models.ForeignKey('products.Product', on_delete=models.PROTECT, verbose_name=_('المنتج'))
     warehouse = models.ForeignKey(Warehouse, on_delete=models.PROTECT, verbose_name=_('المستودع'))

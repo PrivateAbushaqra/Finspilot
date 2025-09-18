@@ -23,10 +23,10 @@ class AccountTransaction(models.Model):
     
     DIRECTION_TYPES = [
         ('debit', _('مدين')),
-        ('credit', _('دائن')),
+        ('credit', _('creditor')),
     ]
 
-    transaction_number = models.CharField(_('رقم الحركة'), max_length=50, unique=True)
+    transaction_number = models.CharField(_('Movement Number'), max_length=50, unique=True)
     date = models.DateField(_('Date'))
     customer_supplier = models.ForeignKey(CustomerSupplier, on_delete=models.PROTECT, 
                                         verbose_name=_('العميل/المورد'), related_name='transactions')
