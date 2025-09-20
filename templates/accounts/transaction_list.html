@@ -42,7 +42,7 @@
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <label for="direction" class="form-label">ا{% trans "No" %}تجاه</label>
+                            <label for="direction" class="form-label">{% trans "Direction" %}</label>
                             <select class="form-select" id="direction" name="direction">
                                 <option value="">{% trans "All" %}</option>
                                 {% for value, label in directions %}
@@ -64,10 +64,10 @@
                         </div>
                         <div class="col-md-2 d-flex align-items-end">
                             <button type="submit" class="btn btn-primary me-2">
-                                <i class="fas fa-search me-2"></i>بحث
+                                <i class="fas fa-search me-2"></i>{% trans "Search" %}
                             </button>
                             <a href="{% url 'accounts:transaction_list' %}" class="btn btn-outline-secondary">
-                                <i class="fas fa-times me-2"></i>إلغاء
+                                <i class="fas fa-times me-2"></i>{% trans "Cancel" %}
                             </a>
                         </div>
                     </form>
@@ -79,38 +79,38 @@
                 <div class="col-md-3">
                     <div class="card text-center h-100">
                         <div class="card-body">
-                            <h5 class="card-title">إجمالي المعام{% trans "No" %}ت</h5>
+                            <h5 class="card-title">{% trans "Total Transactions" %}</h5>
                             <h3 class="text-primary">{{ total_transactions }}</h3>
-                            <small class="text-muted">معاملة</small>
+                            <small class="text-muted">{% trans "Transaction" %}</small>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="card text-center h-100">
                         <div class="card-body">
-                            <h5 class="card-title text-danger">إجمالي ال{% trans "Debit" %}</h5>
+                            <h5 class="card-title text-danger">{% trans "Total Debit" %}</h5>
                             <h3 class="text-danger">{{ total_debit|floatformat:3 }}</h3>
-                            <small class="text-muted">{% if base_currency %}{{ base_currency.symbol }}{% else %}ريال{% endif %}</small>
+                            <small class="text-muted">{% if base_currency %}{{ base_currency.symbol }}{% else %}{% trans "SAR" %}{% endif %}</small>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="card text-center h-100">
                         <div class="card-body">
-                            <h5 class="card-title text-success">إجمالي ال{% trans "Credit" %}</h5>
+                            <h5 class="card-title text-success">{% trans "Total Credit" %}</h5>
                             <h3 class="text-success">{{ total_credit|floatformat:3 }}</h3>
-                            <small class="text-muted">{% if base_currency %}{{ base_currency.symbol }}{% else %}ريال{% endif %}</small>
+                            <small class="text-muted">{% if base_currency %}{{ base_currency.symbol }}{% else %}{% trans "SAR" %}{% endif %}</small>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="card text-center h-100">
                         <div class="card-body">
-                            <h5 class="card-title">الفرق</h5>
+                            <h5 class="card-title">{% trans "Difference" %}</h5>
                             <h3 class="{% if total_debit > total_credit %}text-danger{% elif total_credit > total_debit %}text-success{% else %}text-dark{% endif %}">
                                 {{ total_debit|sub:total_credit|floatformat:3 }}
                             </h3>
-                            <small class="text-muted">{% if base_currency %}{{ base_currency.symbol }}{% else %}ريال{% endif %}</small>
+                            <small class="text-muted">{% if base_currency %}{{ base_currency.symbol }}{% else %}{% trans "SAR" %}{% endif %}</small>
                         </div>
                     </div>
                 </div>
@@ -120,7 +120,7 @@
             <div class="card">
                 <div class="card-header">
                     <h5 class="card-title mb-0">
-                        <i class="fas fa-list me-2"></i>{% trans "List" %} المعام{% trans "No" %}ت
+                        <i class="fas fa-list me-2"></i>{% trans "Transactions List" %}
                     </h5>
                 </div>
                 <div class="card-body">
@@ -130,14 +130,14 @@
                                 <thead class="table-dark">
                                     <tr>
                                         <th>{% trans "Date" %}</th>
-                                        <th>رقم الحركة</th>
-                                        <th>العميل/المورد</th>
-                                        <th>نوع المعاملة</th>
+                                        <th>{% trans "Transaction Number" %}</th>
+                                        <th>{% trans "Customer/Supplier" %}</th>
+                                        <th>{% trans "Transaction Type" %}</th>
                                         <th>{% trans "Description" %}</th>
                                         <th class="text-center">{% trans "Debit" %}</th>
                                         <th class="text-center">{% trans "Credit" %}</th>
-                                        <th class="text-center">ال{% trans "Balance" %}</th>
-                                        <th class="text-center">إجراءات</th>
+                                        <th class="text-center">{% trans "Balance" %}</th>
+                                        <th class="text-center">{% trans "Actions" %}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -155,11 +155,11 @@
                                             <br>
                                             <small class="text-muted">
                                                 {% if transaction.customer_supplier.type == 'customer' %}
-                                                    عميل
+                                                    {% trans "Customer" %}
                                                 {% elif transaction.customer_supplier.type == 'supplier' %}
-                                                    مورد
+                                                    {% trans "Supplier" %}
                                                 {% else %}
-                                                    عميل ومورد
+                                                    {% trans "Customer and Supplier" %}
                                                 {% endif %}
                                             </small>
                                         </td>
@@ -205,11 +205,11 @@
                                         <td class="text-center">
                                             <div class="btn-group btn-group-sm">
                                                 <a href="{% url 'accounts:customer_statement' transaction.customer_supplier.id %}" 
-                                                   class="btn btn-outline-primary btn-sm" title="كشف الحساب">
+                                                   class="btn btn-outline-primary btn-sm" title="{% trans 'Account Statement' %}">
                                                     <i class="fas fa-file-invoice"></i>
                                                 </a>
                                                 {% if transaction.reference_type and transaction.reference_id %}
-                                                    <a href="#" class="btn btn-outline-info btn-sm" title="المرجع">
+                                                    <a href="#" class="btn btn-outline-info btn-sm" title="{% trans 'Reference' %}">
                                                         <i class="fas fa-link"></i>
                                                     </a>
                                                 {% endif %}
@@ -227,10 +227,10 @@
                                 <ul class="pagination justify-content-center">
                                     {% if page_obj.has_previous %}
                                         <li class="page-item">
-                                            <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{% trans "First" %}ى</a>
+                                            <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{% trans "First" %}</a>
                                         </li>
                                         <li class="page-item">
-                                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{% trans "Previous" %}ة</a>
+                                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{% trans "Previous" %}</a>
                                         </li>
                                     {% endif %}
 
@@ -240,10 +240,10 @@
 
                                     {% if page_obj.has_next %}
                                         <li class="page-item">
-                                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{% trans "Next" %}ة</a>
+                                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{% trans "Next" %}</a>
                                         </li>
                                         <li class="page-item">
-                                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{% trans "Last" %}ة</a>
+                                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{% trans "Last" %}</a>
                                         </li>
                                     {% endif %}
                                 </ul>
@@ -252,8 +252,8 @@
                     {% else %}
                         <div class="text-center py-5">
                             <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
-                            <h5 class="text-muted">لا توجد معام{% trans "No" %}ت</h5>
-                            <p class="text-muted">لم يتم العثور على أي معام{% trans "No" %}ت مالية</p>
+                            <h5 class="text-muted">{% trans "No transactions found" %}</h5>
+                            <p class="text-muted">{% trans "No financial transactions were found" %}</p>
                         </div>
                     {% endif %}
                 </div>
@@ -264,7 +264,7 @@
 
 <script>
 function createTransactionsForExistingInvoices() {
-    if (confirm('هل تريد إنشاء معام{% trans "No" %}ت حسابية لجميع الفواتير الموجودة؟')) {
+    if (confirm('{% trans "Do you want to create accounting transactions for all existing invoices?" %}')) {
         fetch('{% url "accounts:create_transactions" %}', {
             method: 'POST',
             headers: {
@@ -278,12 +278,12 @@ function createTransactionsForExistingInvoices() {
                 alert(data.message);
                 location.reload();
             } else {
-                alert('حدث {% trans "Error" %}: ' + data.message);
+                alert('{% trans "Error occurred" %}: ' + data.message);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('حدث {% trans "Error" %} في ا{% trans "No" %}تصال');
+            alert('{% trans "Connection error occurred" %}');
         });
     }
 }

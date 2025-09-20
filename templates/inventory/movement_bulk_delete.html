@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load i18n %}
 
-{% block title %}{% trans "Delete" %} جميع حركات المخزون - {{ block.super }}{% endblock %}
+{% block title %}{% trans "Delete" %} {% trans "All Inventory Movements" %} - {{ block.super }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -11,63 +11,63 @@
                 <div class="card-header bg-danger text-white">
                     <h5 class="mb-0">
                         <i class="fas fa-exclamation-triangle me-2"></i>
-                        {% trans "Confirmation" %} {% trans "Delete" %} جميع حركات المخزون
+                        {% trans "Confirmation" %} {% trans "Delete" %} {% trans "All Inventory Movements" %}
                     </h5>
                 </div>
                 <div class="card-body">
                     <div class="alert alert-danger">
                         <i class="fas fa-ban me-2"></i>
-                        <strong>{% trans "Warning" %} خطير:</strong> هذا الإجراء سي{% trans "Delete" %} جميع حركات المخزون نهائياً ولا يمكن التراجع عنه!
+                        <strong>{% trans "Warning" %} {% trans "Dangerous" %}:</strong> {% trans "This action will" %} {% trans "Delete" %} {% trans "all inventory movements permanently and cannot be undone" %}!
                     </div>
                     
                     <div class="row">
                         <div class="col-md-6">
-                            <h6>{% trans "Statistics" %} حركات المخزون الحالية:</h6>
+                            <h6>{% trans "Statistics" %} {% trans "Current Inventory Movements" %}:</h6>
                             <div class="bg-light p-3 rounded mb-3">
                                 <div class="row text-center">
                                     <div class="col-6 mb-2">
                                         <h4 class="text-primary">{{ total_movements }}</h4>
-                                        <small class="text-muted">إجمالي الحركات</small>
+                                        <small class="text-muted">{% trans "Total Movements" %}</small>
                                     </div>
                                     <div class="col-6 mb-2">
                                         <h4 class="text-success">{{ movements_by_type.in }}</h4>
-                                        <small class="text-muted">حركات وارد</small>
+                                        <small class="text-muted">{% trans "Incoming Movements" %}</small>
                                     </div>
                                     <div class="col-6 mb-2">
                                         <h4 class="text-danger">{{ movements_by_type.out }}</h4>
-                                        <small class="text-muted">حركات صادر</small>
+                                        <small class="text-muted">{% trans "Outgoing Movements" %}</small>
                                     </div>
                                     <div class="col-6 mb-2">
                                         <h4 class="text-info">{{ movements_by_type.transfer }}</h4>
-                                        <small class="text-muted">تحوي{% trans "No" %}ت</small>
+                                        <small class="text-muted">{% trans "Transfer Movements" %}</small>
                                     </div>
                                     <div class="col-12">
                                         <h4 class="text-warning">{{ movements_by_type.adjustment }}</h4>
-                                        <small class="text-muted">تسويات</small>
+                                        <small class="text-muted">{% trans "Adjustments" %}</small>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         
                         <div class="col-md-6">
-                            <h6>ما سيحدث عند الحذف:</h6>
+                            <h6>{% trans "What will happen when deleting" %}:</h6>
                             <div class="bg-danger bg-opacity-10 border border-danger p-3 rounded">
                                 <ul class="mb-0">
                                     <li class="mb-2">
                                         <i class="fas fa-times text-danger me-2"></i>
-                                        {% trans "Delete" %} جميع {{ total_movements }} حركة مخزون
+                                        {% trans "Delete" %} {% trans "all" %} {{ total_movements }} {% trans "inventory movement" %}
                                     </li>
                                     <li class="mb-2">
                                         <i class="fas fa-times text-danger me-2"></i>
-                                        فقدان جميع سج{% trans "No" %}ت الوارد والصادر
+                                        {% trans "Loss of all incoming and outgoing records" %}
                                     </li>
                                     <li class="mb-2">
                                         <i class="fas fa-times text-danger me-2"></i>
-                                        فقدان جميع سج{% trans "No" %}ت التحوي{% trans "No" %}ت والتسويات
+                                        {% trans "Loss of all transfer and adjustment records" %}
                                     </li>
                                     <li class="mb-0">
                                         <i class="fas fa-exclamation-triangle text-warning me-2"></i>
-                                        لا يمكن استرداد هذه البيانات
+                                        {% trans "This data cannot be recovered" %}
                                     </li>
                                 </ul>
                             </div>
@@ -76,14 +76,14 @@
                     
                     {% if total_movements > 0 %}
                     <div class="mt-4">
-                        <h6>للمتابعة، اكتب <code>DELETE_ALL_MOVEMENTS</code> في الحقل أدناه:</h6>
+                        <h6>{% trans "To continue, write" %} <code>DELETE_ALL_MOVEMENTS</code> {% trans "in the field below" %}:</h6>
                         <form method="post">
                             {% csrf_token %}
                             <div class="mb-3">
                                 <input type="text" 
                                        class="form-control" 
                                        name="confirm_delete" 
-                                       placeholder="اكتب DELETE_ALL_MOVEMENTS لل{% trans "Confirmation" %}"
+                                       placeholder="{% trans "Write DELETE_ALL_MOVEMENTS for" %} {% trans "Confirmation" %}"
                                        required
                                        autocomplete="off">
                             </div>
@@ -91,11 +91,11 @@
                             <div class="d-flex justify-content-end gap-2">
                                 <a href="{% url 'inventory:movement_list' %}" class="btn btn-secondary">
                                     <i class="fas fa-arrow-left me-2"></i>
-                                    إلغاء والعودة
+                                    {% trans "Cancel and return" %}
                                 </a>
                                 <button type="submit" class="btn btn-danger">
                                     <i class="fas fa-trash me-2"></i>
-                                    {% trans "Delete" %} جميع الحركات
+                                    {% trans "Delete" %} {% trans "All Movements" %}
                                 </button>
                             </div>
                         </form>
@@ -104,12 +104,12 @@
                     <div class="mt-4">
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle me-2"></i>
-                            لا توجد حركات مخزون لل{% trans "Delete" %}.
+                            {% trans "No inventory movements to" %} {% trans "Delete" %}.
                         </div>
                         <div class="d-flex justify-content-end">
                             <a href="{% url 'inventory:movement_list' %}" class="btn btn-primary">
                                 <i class="fas fa-arrow-left me-2"></i>
-                                العودة ل{% trans "List" %} الحركات
+                                {% trans "Return to" %} {% trans "List" %} {% trans "Movements" %}
                             </a>
                         </div>
                     </div>

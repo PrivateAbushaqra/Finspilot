@@ -2,13 +2,13 @@
 {% load i18n %}
 {% load tax_tags %}
 
-{% block title %}{% trans "List" %} الدخل - Triangle{% endblock %}
+{% block title %}{% trans "Income Statement - Triangle" %}{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">
         <i class="fas fa-chart-line me-2"></i>
-        {% trans "List" %} الدخل (الأرباح والخسائر)
+        {% trans "Income Statement (Profit and Loss)" %}
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <button class="btn btn-outline-secondary me-2" onclick="window.print()">
@@ -17,7 +17,7 @@
         </button>
         <button class="btn btn-outline-primary" onclick="exportToExcel()">
             <i class="fas fa-file-excel me-1"></i>
-            {% trans "Export" %} Excel
+            {% trans "Export to Excel" %}
         </button>
     </div>
 </div>
@@ -35,14 +35,14 @@
                 <input type="date" class="form-control" id="date_to" name="date_to" value="{{ request.GET.date_to|default:end_date }}">
             </div>
             <div class="col-md-3">
-                <label for="period" class="form-label">فترة محددة</label>
+                <label for="period" class="form-label">{% trans "Specific Period" %}</label>
                 <select class="form-select" id="period" name="period">
-                    <option value="">اختيار يدوي</option>
-                    <option value="current_month" {% if request.GET.period == 'current_month' %}selected{% endif %}>الشهر الحالي</option>
-                    <option value="last_month" {% if request.GET.period == 'last_month' %}selected{% endif %}>الشهر {% trans "Previous" %}</option>
-                    <option value="current_quarter" {% if request.GET.period == 'current_quarter' %}selected{% endif %}>الربع الحالي</option>
-                    <option value="current_year" {% if request.GET.period == 'current_year' %}selected{% endif %}>السنة الحالية</option>
-                    <option value="last_year" {% if request.GET.period == 'last_year' %}selected{% endif %}>السنة {% trans "Previous" %}ة</option>
+                    <option value="">{% trans "Manual Selection" %}</option>
+                    <option value="current_month" {% if request.GET.period == 'current_month' %}selected{% endif %}>{% trans "Current Month" %}</option>
+                    <option value="last_month" {% if request.GET.period == 'last_month' %}selected{% endif %}>{% trans "Previous Month" %}</option>
+                    <option value="current_quarter" {% if request.GET.period == 'current_quarter' %}selected{% endif %}>{% trans "Current Quarter" %}</option>
+                    <option value="current_year" {% if request.GET.period == 'current_year' %}selected{% endif %}>{% trans "Current Year" %}</option>
+                    <option value="last_year" {% if request.GET.period == 'last_year' %}selected{% endif %}>{% trans "Previous Year" %}</option>
                 </select>
             </div>
             <div class="col-md-3">
@@ -50,7 +50,7 @@
                 <div class="d-grid">
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-search me-1"></i>
-                        إنشاء ال{% trans "Report" %}
+                        {% trans "Generate Report" %}
                     </button>
                 </div>
             </div>
@@ -63,7 +63,7 @@
     <div class="card-header">
         <h5 class="mb-0">
             <i class="fas fa-chart-line me-2"></i>
-            {% trans "List" %} الدخل للفترة من {{ start_date|date:"Y-m-d" }} إلى {{ end_date|date:"Y-m-d" }}
+            {% trans "Income Statement for the period from" %} {{ start_date|date:"Y-m-d" }} {% trans "to" %} {{ end_date|date:"Y-m-d" }}
         </h5>
     </div>
     <div class="card-body">
@@ -75,7 +75,7 @@
                         <th colspan="2">
                             <h5 class="mb-0">
                                 <i class="fas fa-arrow-up me-2"></i>
-                                الإيرادات
+                                {% trans "Revenues" %}
                             </h5>
                         </th>
                     </tr>
@@ -88,7 +88,7 @@
                     </tr>
                     {% endfor %}
                     <tr class="table-success">
-                        <td><strong>إجمالي الإيرادات</strong></td>
+                        <td><strong>{% trans "Total Revenues" %}</strong></td>
                         <td class="text-end"><strong>{{ total_revenues|currency_format }}</strong></td>
                     </tr>
                 </tbody>
@@ -99,7 +99,7 @@
                         <th colspan="2">
                             <h5 class="mb-0">
                                 <i class="fas fa-arrow-down me-2"></i>
-                                المصروفات
+                                {% trans "Expenses" %}
                             </h5>
                         </th>
                     </tr>
@@ -112,7 +112,7 @@
                     </tr>
                     {% endfor %}
                     <tr class="table-danger">
-                        <td><strong>إجمالي المصروفات</strong></td>
+                        <td><strong>{% trans "Total Expenses" %}</strong></td>
                         <td class="text-end"><strong>{{ total_expenses|currency_format }}</strong></td>
                     </tr>
                 </tbody>
@@ -123,7 +123,7 @@
                         <th>
                             <h5 class="mb-0">
                                 <i class="fas fa-calculator me-2"></i>
-                                صافي الدخل (الربح/الخسارة)
+                                {% trans "Net Income (Profit/Loss)" %}
                             </h5>
                         </th>
                         <th class="text-end">
@@ -145,7 +145,7 @@
             <div class="card-header">
                 <h6 class="mb-0">
                     <i class="fas fa-chart-bar me-2"></i>
-                    مقارنة الإيرادات والمصروفات
+                    {% trans "Comparison of Revenues and Expenses" %}
                 </h6>
             </div>
             <div class="card-body">
@@ -159,7 +159,7 @@
             <div class="card-header">
                 <h6 class="mb-0">
                     <i class="fas fa-chart-pie me-2"></i>
-                    توزيع المصروفات
+                    {% trans "Expense Distribution" %}
                 </h6>
             </div>
             <div class="card-body">
@@ -174,16 +174,16 @@
     <div class="col-md-3">
         <div class="card text-center {% if net_income >= 0 %}border-success{% else %}border-danger{% endif %}">
             <div class="card-body">
-                <h5 class="card-title">نتيجة النشاط</h5>
+                <h5 class="card-title">{% trans "Activity Result" %}</h5>
                 {% if net_income >= 0 %}
                     <h3 class="text-success">
                         <i class="fas fa-arrow-up me-2"></i>
-                        ربح
+                        {% trans "Profit" %}
                     </h3>
                 {% else %}
                     <h3 class="text-danger">
                         <i class="fas fa-arrow-down me-2"></i>
-                        خسارة
+                        {% trans "Loss" %}
                     </h3>
                 {% endif %}
             </div>
@@ -193,7 +193,7 @@
     <div class="col-md-3">
         <div class="card text-center">
             <div class="card-body">
-                <h5 class="card-title">هامش الربح</h5>
+                <h5 class="card-title">{% trans "Profit Margin" %}</h5>
                 <h3 class="{% if profit_margin >= 0 %}text-success{% else %}text-danger{% endif %}">
                     {{ profit_margin|floatformat:1 }}%
                 </h3>
@@ -204,7 +204,7 @@
     <div class="col-md-3">
         <div class="card text-center">
             <div class="card-body">
-                <h5 class="card-title">نسبة المصروفات</h5>
+                <h5 class="card-title">{% trans "Expense Ratio" %}</h5>
                 <h3 class="text-info">
                     {{ expense_ratio|floatformat:1 }}%
                 </h3>
@@ -215,7 +215,7 @@
     <div class="col-md-3">
         <div class="card text-center">
             <div class="card-body">
-                <h5 class="card-title">نمو الإيرادات</h5>
+                <h5 class="card-title">{% trans "Revenue Growth" %}</h5>
                 <h3 class="{% if revenue_growth >= 0 %}text-success{% else %}text-danger{% endif %}">
                     {% if revenue_growth >= 0 %}+{% endif %}{{ revenue_growth|floatformat:1 }}%
                 </h3>
@@ -229,13 +229,13 @@
     <div class="card-body">
         <h6 class="card-title">
             <i class="fas fa-info-circle me-2"></i>
-            ملاحظات مهمة
+            {% trans "Important Notes" %}
         </h6>
         <ul class="mb-0">
-            <li>{% trans "List" %} الدخل ت{% trans "View" %} الإيرادات والمصروفات للفترة المحددة فقط</li>
-            <li>صافي الدخل = إجمالي الإيرادات - إجمالي المصروفات</li>
-            <li>هامش الربح = (صافي الدخل ÷ إجمالي الإيرادات) × 100</li>
-            <li>يتم تحديث البيانات تلقائياً عند {% trans "Add" %} قيود {% trans "New" %}ة</li>
+            <li>{% trans "The income statement shows revenues and expenses for the specified period only" %}</li>
+            <li>{% trans "Net Income = Total Revenues - Total Expenses" %}</li>
+            <li>{% trans "Profit Margin = (Net Income ÷ Total Revenues) × 100" %}</li>
+            <li>{% trans "Data is updated automatically when adding new entries" %}</li>
         </ul>
     </div>
 </div>
@@ -248,7 +248,7 @@ const revenueExpenseCtx = document.getElementById('revenueExpenseChart').getCont
 new Chart(revenueExpenseCtx, {
     type: 'bar',
     data: {
-        labels: ['الإيرادات', 'المصروفات', 'صافي الدخل'],
+        labels: ['{% trans "Revenues" %}', '{% trans "Expenses" %}', '{% trans "Net Income" %}'],
         datasets: [{
             data: [{{ total_revenues }}, {{ total_expenses }}, {{ net_income }}],
             backgroundColor: ['#28a745', '#dc3545', {% if net_income >= 0 %}'#28a745'{% else %}'#dc3545'{% endif %}]
@@ -296,7 +296,7 @@ new Chart(expenseBreakdownCtx, {
 function exportToExcel() {
     const table = document.getElementById('incomeStatementTable');
     const wb = XLSX.utils.table_to_book(table);
-    const fileName = '{% trans "List" %}_الدخل_' + new Date().toISOString().slice(0, 10) + '.xlsx';
+    const fileName = '{% trans "Income_Statement" %}_' + new Date().toISOString().slice(0, 10) + '.xlsx';
     XLSX.writeFile(wb, fileName);
 }
 

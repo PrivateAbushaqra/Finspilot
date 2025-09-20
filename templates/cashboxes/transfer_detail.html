@@ -79,7 +79,7 @@
                                             <td>{{ transfer.created_by.username }}</td>
                                         </tr>
                                         <tr>
-                                            <th>{% trans "تاريخ الإنشاء" %}:</th>
+                                            <th>{% trans "Creation Date" %}:</th>
                                             <td>{{ transfer.created_at|date:"Y-m-d H:i" }}</td>
                                         </tr>
                                     </table>
@@ -149,7 +149,7 @@
                                         </div>
                                     {% else %}
                                         <div class="text-center">
-                                            <p class="mb-0">{% trans "لا توجد حركات مرتبطة" %}</p>
+                                            <p class="mb-0">{% trans "No related transactions found" %}</p>
                                         </div>
                                     {% endif %}
                                 </div>

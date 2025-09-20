@@ -2,7 +2,7 @@
 {% load static %}
 {% load i18n %}
 
-{% block page_title %}كشف حساب - {{ customer.name }}{% endblock %}
+{% block page_title %}{% trans "Account Statement" %} - {{ customer.name }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -11,22 +11,22 @@
             <!-- Header -->
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h1 class="h3 mb-1">كشف حساب</h1>
+                    <h1 class="h3 mb-1">{% trans "Account Statement" %}</h1>
                     <h2 class="h4 text-muted mb-0">{{ customer.name }}</h2>
                     <p class="text-muted mb-0">
                         {% if customer.type == 'customer' %}
-                            عميل
+                            {% trans "Customer" %}
                         {% elif customer.type == 'supplier' %}
-                            مورد
+                            {% trans "Supplier" %}
                         {% else %}
-                            عميل ومورد
+                            {% trans "Customer and Supplier" %}
                         {% endif %}
                         | {% trans "Number" %}: {{ customer.id }}
                     </p>
                 </div>
                 <div class="text-left">
                     <a href="{% url 'customers:customer_list' %}" class="btn btn-outline-secondary">
-                        <i class="fas fa-arrow-right me-2"></i>العودة لل{% trans "List" %}
+                        <i class="fas fa-arrow-right me-2"></i>{% trans "Back to List" %}
                     </a>
                     <button class="btn btn-primary" onclick="window.print()">
                         <i class="fas fa-print me-2"></i>{% trans "Print" %}
@@ -50,10 +50,10 @@
                         </div>
                         <div class="col-md-4 d-flex align-items-end">
                             <button type="submit" class="btn btn-primary me-2">
-                                <i class="fas fa-filter me-2"></i>فلترة
+                                <i class="fas fa-filter me-2"></i>{% trans "Filter" %}
                             </button>
                             <a href="{% url 'accounts:customer_statement' customer.id %}" class="btn btn-outline-secondary">
-                                <i class="fas fa-times me-2"></i>إلغاء الفلتر
+                                <i class="fas fa-times me-2"></i>{% trans "Clear Filter" %}
                             </a>
                         </div>
                     </form>
@@ -65,38 +65,38 @@
                 <div class="col-md-3">
                     <div class="card text-center h-100">
                         <div class="card-body">
-                            <h5 class="card-title text-danger">إجمالي ال{% trans "Debit" %}</h5>
+                            <h5 class="card-title text-danger">{% trans "Total Debit" %}</h5>
                             <h3 class="text-danger">{{ total_debit|floatformat:3 }}</h3>
-                            <small class="text-muted">{% if base_currency %}{{ base_currency.symbol }}{% else %}ريال{% endif %}</small>
+                            <small class="text-muted">{% if base_currency %}{{ base_currency.symbol }}{% else %}{% trans "SAR" %}{% endif %}</small>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="card text-center h-100">
                         <div class="card-body">
-                            <h5 class="card-title text-success">إجمالي ال{% trans "Credit" %}</h5>
+                            <h5 class="card-title text-success">{% trans "Total Credit" %}</h5>
                             <h3 class="text-success">{{ total_credit|floatformat:3 }}</h3>
-                            <small class="text-muted">{% if base_currency %}{{ base_currency.symbol }}{% else %}ريال{% endif %}</small>
+                            <small class="text-muted">{% if base_currency %}{{ base_currency.symbol }}{% else %}{% trans "SAR" %}{% endif %}</small>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="card text-center h-100">
                         <div class="card-body">
-                            <h5 class="card-title">ال{% trans "Balance" %} الحالي</h5>
+                            <h5 class="card-title">{% trans "Current Balance" %}</h5>
                             <h3 class="{% if current_balance > 0 %}text-danger{% elif current_balance < 0 %}text-success{% else %}text-dark{% endif %}">
                                 {{ current_balance|floatformat:3 }}
                             </h3>
-                            <small class="text-muted">{% if base_currency %}{{ base_currency.symbol }}{% else %}ريال{% endif %}</small>
+                            <small class="text-muted">{% if base_currency %}{{ base_currency.symbol }}{% else %}{% trans "SAR" %}{% endif %}</small>
                         </div>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="card text-center h-100">
                         <div class="card-body">
-                            <h5 class="card-title">عدد المعام{% trans "No" %}ت</h5>
+                            <h5 class="card-title">{% trans "Number of Transactions" %}</h5>
                             <h3 class="text-info">{{ transactions.count }}</h3>
-                            <small class="text-muted">معاملة</small>
+                            <small class="text-muted">{% trans "Transaction" %}</small>
                         </div>
                     </div>
                 </div>
@@ -106,7 +106,7 @@
             <div class="card">
                 <div class="card-header">
                     <h5 class="card-title mb-0">
-                        <i class="fas fa-list me-2"></i>حركات الحساب
+                        <i class="fas fa-list me-2"></i>{% trans "Account Movements" %}
                     </h5>
                 </div>
                 <div class="card-body">
@@ -116,13 +116,13 @@
                                 <thead class="table-dark">
                                     <tr>
                                         <th>{% trans "Date" %}</th>
-                                        <th>رقم الحركة</th>
-                                        <th>نوع المعاملة</th>
+                                        <th>{% trans "Transaction Number" %}</th>
+                                        <th>{% trans "Transaction Type" %}</th>
                                         <th>{% trans "Description" %}</th>
                                         <th class="text-center">{% trans "Debit" %}</th>
                                         <th class="text-center">{% trans "Credit" %}</th>
-                                        <th class="text-center">ال{% trans "Balance" %}</th>
-                                        <th class="text-center">المرجع</th>
+                                        <th class="text-center">{% trans "Balance" %}</th>
+                                        <th class="text-center">{% trans "Reference" %}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -189,12 +189,12 @@
                     {% else %}
                         <div class="text-center py-5">
                             <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
-                            <h5 class="text-muted">لا توجد معام{% trans "No" %}ت</h5>
-                            <p class="text-muted">لم يتم العثور على أي معام{% trans "No" %}ت مالية لهذا العميل</p>
+                            <h5 class="text-muted">{% trans "No transactions found" %}</h5>
+                            <p class="text-muted">{% trans "No financial transactions found for this customer" %}</p>
                             
                             <!-- زر إنشاء المعام{% trans "No" %}ت للفواتير الموجودة -->
                             <button class="btn btn-primary" onclick="createTransactionsForExistingInvoices()">
-                                <i class="fas fa-plus me-2"></i>إنشاء معام{% trans "No" %}ت للفواتير الموجودة
+                                <i class="fas fa-plus me-2"></i>{% trans "Create transactions for existing invoices" %}
                             </button>
                         </div>
                     {% endif %}
@@ -222,7 +222,7 @@
 
 <script>
 function createTransactionsForExistingInvoices() {
-    if (confirm('هل تريد إنشاء معام{% trans "No" %}ت حسابية لجميع الفواتير الموجودة؟')) {
+    if (confirm('{% trans "Do you want to create accounting transactions for all existing invoices?" %}')) {
         fetch('{% url "accounts:create_transactions" %}', {
             method: 'POST',
             headers: {
@@ -236,12 +236,12 @@ function createTransactionsForExistingInvoices() {
                 alert(data.message);
                 location.reload();
             } else {
-                alert('حدث {% trans "Error" %}: ' + data.message);
+                alert('{% trans "Error occurred" %}: ' + data.message);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('حدث {% trans "Error" %} في ا{% trans "No" %}تصال');
+            alert('{% trans "Connection error occurred" %}');
         });
     }
 }

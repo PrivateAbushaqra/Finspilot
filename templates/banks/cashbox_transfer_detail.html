@@ -106,7 +106,7 @@
                     <nav aria-label="breadcrumb" class="mt-2">
                         <ol class="breadcrumb">
                             <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">{% trans "Dashboard" %}</a></li>
-                            <li class="breadcrumb-item"><a href="{% url 'banks:transfer_list' %}">التحوي{% trans "No" %}ت</a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'banks:transfer_list' %}">{% trans "Transfers" %}</a></li>
                             <li class="breadcrumb-item active">{{ transfer.transfer_number }}</li>
                         </ol>
                     </nav>
@@ -115,15 +115,15 @@
                     <div class="d-flex gap-2">
                         <button type="button" class="btn print-button text-white" onclick="printTransferDetail()">
                             <i class="fas fa-print me-2"></i>
-                            {% trans "Print" %} ال{% trans "Voucher" %}
+                            {% trans "Print" %} {% trans "Voucher" %}
                         </button>
                         <a href="{% url 'banks:cashbox_transfer_edit' transfer.id %}" class="btn btn-warning">
                             <i class="fas fa-edit me-2"></i>
-                            {% trans "Edit" %} ال{% trans "Transfer" %}
+                            {% trans "Edit" %} {% trans "Transfer" %}
                         </a>
                         <a href="{% url 'banks:transfer_list' %}" class="btn btn-secondary">
                             <i class="fas fa-arrow-right me-2"></i>
-                            العودة لل{% trans "List" %}
+                            {% trans "Back to" %} {% trans "List" %}
                         </a>
                     </div>
                 </div>
@@ -136,17 +136,17 @@
                         <div class="col-md-8">
                             <h4 class="mb-0">
                                 <i class="fas fa-money-check me-2"></i>
-                                {% trans "Voucher" %} {% trans "Transfer" %} بين {% if transfer.transfer_type == 'bank_to_cashbox' %}البنك والصندوق{% else %}الصندوق والبنك{% endif %} رقم: {{ transfer.transfer_number }}
+                                {% trans "Transfer" %} {% trans "Voucher" %} {% trans "between" %} {% if transfer.transfer_type == 'bank_to_cashbox' %}{% trans "Bank and Cashbox" %}{% else %}{% trans "Cashbox and Bank" %}{% endif %} {% trans "No" %}: {{ transfer.transfer_number }}
                             </h4>
                             <p class="mb-0 mt-2 opacity-75">
                                 <i class="fas fa-calendar me-1"></i>
-                                تاريخ ال{% trans "Transfer" %}: {{ transfer.date|date:"j/n/Y" }}
+                                {% trans "Transfer" %} {% trans "Date" %}: {{ transfer.date|date:"j/n/Y" }}
                             </p>
                         </div>
                         <div class="col-md-4 text-end">
                             <span class="badge {% if transfer.transfer_type == 'bank_to_cashbox' %}bg-success{% else %}bg-warning{% endif %} fs-6 p-2">
                                 <i class="fas fa-exchange-alt me-1"></i>
-                                {% if transfer.transfer_type == 'bank_to_cashbox' %}بنك → صندوق{% else %}صندوق → بنك{% endif %}
+                                {% if transfer.transfer_type == 'bank_to_cashbox' %}{% trans "Bank" %} → {% trans "Cashbox" %}{% else %}{% trans "Cashbox" %} → {% trans "Bank" %}{% endif %}
                             </span>
                         </div>
                     </div>
@@ -154,12 +154,12 @@
                 
                 <div class="p-4">
                     <div class="row">
-                        <!-- من الحساب/الصندوق -->
+                        <!-- From Account/Cashbox -->
                         <div class="col-md-6">
                             <div class="detail-row">
                                 <div class="detail-label">
                                     <i class="fas fa-arrow-circle-up text-danger me-2"></i>
-                                    {% if transfer.transfer_type == 'bank_to_cashbox' %}من البنك{% else %}من الصندوق{% endif %}
+                                    {% if transfer.transfer_type == 'bank_to_cashbox' %}{% trans "From Bank" %}{% else %}{% trans "From Cashbox" %}{% endif %}
                                 </div>
                                 <div class="detail-value">
                                     {% if transfer.transfer_type == 'bank_to_cashbox' %}
@@ -172,7 +172,7 @@
                                             <br>
                                             <small class="text-muted">
                                                 <i class="fas fa-credit-card me-1"></i>
-                                                رقم الحساب: {{ transfer.from_bank.account_number }}
+                                                {% trans "Account Number" %}: {{ transfer.from_bank.account_number }}
                                             </small>
                                         </div>
                                     {% else %}
@@ -180,7 +180,7 @@
                                         <div class="mt-2">
                                             <small class="text-muted">
                                                 <i class="fas fa-cash-register me-1"></i>
-                                                صندوق نقدي
+                                                {% trans "Cash Register" %}
                                             </small>
                                         </div>
                                     {% endif %}
@@ -188,12 +188,12 @@
                             </div>
                         </div>
                         
-                        <!-- إلى الحساب/الصندوق -->
+                        <!-- To Account/Cashbox -->
                         <div class="col-md-6">
                             <div class="detail-row">
                                 <div class="detail-label">
                                     <i class="fas fa-arrow-circle-down text-success me-2"></i>
-                                    {% if transfer.transfer_type == 'bank_to_cashbox' %}إلى الصندوق{% else %}إلى البنك{% endif %}
+                                    {% if transfer.transfer_type == 'bank_to_cashbox' %}{% trans "To Cashbox" %}{% else %}{% trans "To Bank" %}{% endif %}
                                 </div>
                                 <div class="detail-value">
                                     {% if transfer.transfer_type == 'bank_to_cashbox' %}
@@ -201,7 +201,7 @@
                                         <div class="mt-2">
                                             <small class="text-muted">
                                                 <i class="fas fa-cash-register me-1"></i>
-                                                صندوق نقدي
+                                                {% trans "Cash Register" %}
                                             </small>
                                         </div>
                                     {% else %}
@@ -214,7 +214,7 @@
                                             <br>
                                             <small class="text-muted">
                                                 <i class="fas fa-credit-card me-1"></i>
-                                                رقم الحساب: {{ transfer.to_bank.account_number }}
+                                                {% trans "Account Number" %}: {{ transfer.to_bank.account_number }}
                                             </small>
                                         </div>
                                     {% endif %}
@@ -224,12 +224,12 @@
                     </div>
                     
                     <div class="row">
-                        <!-- مبلغ ال{% trans "Transfer" %} -->
+                        <!-- Transfer Amount -->
                         <div class="col-md-4">
                             <div class="detail-row">
                                 <div class="detail-label">
                                     <i class="fas fa-money-bill-wave text-success me-2"></i>
-                                    مبلغ ال{% trans "Transfer" %}
+                                    {% trans "Transfer" %} {% trans "Amount" %}
                                 </div>
                                 <div class="detail-value amount-highlight">
                                     {{ transfer.amount|floatformat:3 }} {% get_currency_symbol %}
@@ -237,12 +237,12 @@
                             </div>
                         </div>
                         
-                        <!-- الرسوم -->
+                        <!-- Fees -->
                         <div class="col-md-4">
                             <div class="detail-row">
                                 <div class="detail-label">
                                     <i class="fas fa-receipt text-warning me-2"></i>
-                                    الرسوم
+                                    {% trans "Fees" %}
                                 </div>
                                 <div class="detail-value fees-highlight">
                                     {{ transfer.fees|floatformat:3 }} {% get_currency_symbol %}
@@ -255,7 +255,7 @@
                             <div class="detail-row">
                                 <div class="detail-label">
                                     <i class="fas fa-exchange-alt text-info me-2"></i>
-                                    سعر الصرف
+                                    {% trans "Exchange Rate" %}
                                 </div>
                                 <div class="detail-value">
                                     {{ transfer.exchange_rate|floatformat:4 }}
@@ -271,21 +271,21 @@
                             <div class="detail-row">
                                 <div class="detail-label">
                                     <i class="fas fa-money-check text-primary me-2"></i>
-                                    بيانات الشيك البنكي
+                                    {% trans "Bank Check Information" %}
                                 </div>
                                 <div class="detail-value">
                                     <div class="check-info">
                                         <div class="row">
                                             <div class="col-md-4">
-                                                <strong>رقم الشيك:</strong><br>
+                                                <strong>{% trans "Check Number" %}:</strong><br>
                                                 {{ transfer.check_number }}
                                             </div>
                                             <div class="col-md-4">
-                                                <strong>تاريخ الشيك:</strong><br>
+                                                <strong>{% trans "Check Date" %}:</strong><br>
                                                 {{ transfer.check_date|date:"j/n/Y" }}
                                             </div>
                                             <div class="col-md-4">
-                                                <strong>اسم البنك:</strong><br>
+                                                <strong>{% trans "Bank Name" %}:</strong><br>
                                                 {{ transfer.check_bank_name }}
                                             </div>
                                         </div>
@@ -296,7 +296,7 @@
                     </div>
                     {% endif %}
                     
-                    <!-- إجمالي {% trans "Amount" %} -->
+                    <!-- Total Amount -->
                     <div class="row">
                         <div class="col-12">
                             <div class="detail-row bg-light p-3 rounded">
@@ -304,7 +304,7 @@
                                     <div class="col-md-6">
                                         <div class="detail-label h5 mb-0">
                                             <i class="fas fa-calculator text-primary me-2"></i>
-                                            إجمالي {% trans "Amount" %} المحول
+                                            {% trans "Total" %} {% trans "Amount" %} {% trans "Transferred" %}
                                         </div>
                                     </div>
                                     <div class="col-md-6 text-end">
@@ -313,21 +313,21 @@
                                             {% widthratio transfer.fees 1 1 as fees_calc %}
                                             {{ amount_calc|add:fees_calc|floatformat:3 }} {% get_currency_symbol %}
                                         </div>
-                                        <small class="text-muted">({% trans "Amount" %} + الرسوم)</small>
+                                        <small class="text-muted">({% trans "Amount" %} + {% trans "Fees" %})</small>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- البيان -->
+                    <!-- Description -->
                     {% if transfer.description %}
                     <div class="row">
                         <div class="col-12">
                             <div class="detail-row">
                                 <div class="detail-label">
                                     <i class="fas fa-comment text-secondary me-2"></i>
-                                    البيان
+                                    {% trans "Description" %}
                                 </div>
                                 <div class="detail-value">
                                     {{ transfer.description }}
@@ -337,13 +337,13 @@
                     </div>
                     {% endif %}
                     
-                    <!-- {% trans "Information" %} التتبع -->
+                    <!-- Tracking Information -->
                     <div class="row">
                         <div class="col-md-6">
                             <div class="detail-row">
                                 <div class="detail-label">
                                     <i class="fas fa-user text-primary me-2"></i>
-                                    أنشأ بواسطة
+                                    {% trans "Created By" %}
                                 </div>
                                 <div class="detail-value">
                                     {{ transfer.created_by.get_full_name|default:transfer.created_by.username }}
@@ -355,7 +355,7 @@
                             <div class="detail-row">
                                 <div class="detail-label">
                                     <i class="fas fa-clock text-info me-2"></i>
-                                    تاريخ الإنشاء
+                                    {% trans "Creation Date" %}
                                 </div>
                                 <div class="detail-value">
                                     {{ transfer.created_at|date:"Y-m-d H:i" }}
@@ -375,8 +375,8 @@
 function printTransferDetail() {
     const transferHTML = `
         <div style="text-align: center; margin-bottom: 2rem; border-bottom: 2px solid #000; padding-bottom: 1rem;">
-            <h1>{% trans "Voucher" %} {% trans "Transfer" %} {% if transfer.transfer_type == 'bank_to_cashbox' %}من البنك إلى الصندوق{% else %}من الصندوق إلى البنك{% endif %}</h1>
-            <h2>رقم ال{% trans "Transfer" %}: {{ transfer.transfer_number }}</h2>
+            <h1>{% trans "Transfer" %} {% trans "Voucher" %} {% if transfer.transfer_type == 'bank_to_cashbox' %}{% trans "From Bank to Cashbox" %}{% else %}{% trans "From Cashbox to Bank" %}{% endif %}</h1>
+            <h2>{% trans "Transfer" %} {% trans "Number" %}: {{ transfer.transfer_number }}</h2>
             <p>{% trans "Date" %}: {{ transfer.date|date:"j/n/Y" }}</p>
         </div>
         
@@ -384,59 +384,59 @@ function printTransferDetail() {
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 1rem;">
                 {% if transfer.transfer_type == 'bank_to_cashbox' %}
                 <tr>
-                    <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">من البنك:</td>
+                    <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">{% trans "From Bank" %}:</td>
                     <td style="border: 1px solid #000; padding: 10px;">{{ transfer.from_bank.name }} - {{ transfer.from_bank.bank_name }}</td>
                 </tr>
                 <tr>
-                    <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">رقم الحساب:</td>
+                    <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">{% trans "Account Number" %}:</td>
                     <td style="border: 1px solid #000; padding: 10px;">{{ transfer.from_bank.account_number }}</td>
                 </tr>
                 <tr>
-                    <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">إلى الصندوق:</td>
+                    <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">{% trans "To Cashbox" %}:</td>
                     <td style="border: 1px solid #000; padding: 10px;">{{ transfer.to_cashbox.name }}</td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">من الصندوق:</td>
+                    <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">{% trans "From Cashbox" %}:</td>
                     <td style="border: 1px solid #000; padding: 10px;">{{ transfer.from_cashbox.name }}</td>
                 </tr>
                 <tr>
-                    <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">إلى البنك:</td>
+                    <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">{% trans "To Bank" %}:</td>
                     <td style="border: 1px solid #000; padding: 10px;">{{ transfer.to_bank.name }} - {{ transfer.to_bank.bank_name }}</td>
                 </tr>
                 <tr>
-                    <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">رقم الحساب:</td>
+                    <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">{% trans "Account Number" %}:</td>
                     <td style="border: 1px solid #000; padding: 10px;">{{ transfer.to_bank.account_number }}</td>
                 </tr>
                 {% endif %}
                 <tr>
-                    <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">مبلغ ال{% trans "Transfer" %}:</td>
+                    <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">{% trans "Transfer" %} {% trans "Amount" %}:</td>
                     <td style="border: 1px solid #000; padding: 10px; font-size: 1.2rem; color: #28a745;">{{ transfer.amount|floatformat:3 }} {% get_currency_symbol %}</td>
                 </tr>
                 <tr>
-                    <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">الرسوم:</td>
+                    <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">{% trans "Fees" %}:</td>
                     <td style="border: 1px solid #000; padding: 10px; color: #dc3545;">{{ transfer.fees|floatformat:3 }} {% get_currency_symbol %}</td>
                 </tr>
                 <tr>
-                    <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">سعر الصرف:</td>
+                    <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">{% trans "Exchange Rate" %}:</td>
                     <td style="border: 1px solid #000; padding: 10px;">{{ transfer.exchange_rate|floatformat:4 }}</td>
                 </tr>
                 {% if transfer.check_number %}
                 <tr>
-                    <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">رقم الشيك:</td>
+                    <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">{% trans "Check Number" %}:</td>
                     <td style="border: 1px solid #000; padding: 10px;">{{ transfer.check_number }}</td>
                 </tr>
                 <tr>
-                    <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">تاريخ الشيك:</td>
+                    <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">{% trans "Check Date" %}:</td>
                     <td style="border: 1px solid #000; padding: 10px;">{{ transfer.check_date|date:"j/n/Y" }}</td>
                 </tr>
                 <tr>
-                    <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">بنك الشيك:</td>
+                    <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">{% trans "Check Bank" %}:</td>
                     <td style="border: 1px solid #000; padding: 10px;">{{ transfer.check_bank_name }}</td>
                 </tr>
                 {% endif %}
                 <tr>
-                    <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">إجمالي {% trans "Amount" %}:</td>
+                    <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">{% trans "Total" %} {% trans "Amount" %}:</td>
                     <td style="border: 1px solid #000; padding: 10px; font-size: 1.3rem; font-weight: bold;">
                         {% widthratio transfer.amount 1 1 as amount_calc %}
                         {% widthratio transfer.fees 1 1 as fees_calc %}
@@ -445,12 +445,12 @@ function printTransferDetail() {
                 </tr>
                 {% if transfer.description %}
                 <tr>
-                    <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">البيان:</td>
+                    <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">{% trans "Description" %}:</td>
                     <td style="border: 1px solid #000; padding: 10px;">{{ transfer.description }}</td>
                 </tr>
                 {% endif %}
                 <tr>
-                    <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">أنشأ بواسطة:</td>
+                    <td style="border: 1px solid #000; padding: 10px; font-weight: bold; background-color: #f5f5f5;">{% trans "Created By" %}:</td>
                     <td style="border: 1px solid #000; padding: 10px;">{{ transfer.created_by.get_full_name|default:transfer.created_by.username }}</td>
                 </tr>
             </table>
@@ -458,13 +458,13 @@ function printTransferDetail() {
         
         <div style="margin-top: 4rem; display: flex; justify-content: space-between;">
             <div style="text-align: center; border-top: 1px solid #000; padding-top: 10px; width: 200px;">
-                <p>توقيع المحاسب</p>
+                <p>{% trans "Accountant Signature" %}</p>
             </div>
             <div style="text-align: center; border-top: 1px solid #000; padding-top: 10px; width: 200px;">
-                <p>توقيع المدير</p>
+                <p>{% trans "Manager Signature" %}</p>
             </div>
             <div style="text-align: center; border-top: 1px solid #000; padding-top: 10px; width: 200px;">
-                <p>ختم الشركة</p>
+                <p>{% trans "Company Stamp" %}</p>
             </div>
         </div>
     `;

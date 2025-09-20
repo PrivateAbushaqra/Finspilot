@@ -4,7 +4,7 @@
 {% load django_bootstrap5 %}
 
 {% block page_title %}
-    {% trans "تأكيد حذف الموظف" %}
+    {% trans "Confirm Employee Deletion" %}
 {% endblock %}
 
 {% block extra_css %}
@@ -114,14 +114,14 @@
                 <div>
                     <h1 class="h3 mb-0">
                         <i class="fas fa-user-times me-2"></i>
-                        {% trans "حذف الموظف" %}
+                        {% trans "Delete Employee" %}
                     </h1>
-                    <p class="text-muted mb-0">{% trans "تأكيد حذف بيانات الموظف من النظام" %}</p>
+                    <p class="text-muted mb-0">{% trans "Confirm deletion of employee data from the system" %}</p>
                 </div>
                 <div>
                     <a href="{% url 'hr:employee_list' %}" class="btn btn-outline-secondary">
                         <i class="fas fa-arrow-right me-1"></i>
-                        {% trans "العودة لقائمة الموظفين" %}
+                        {% trans "Back to Employee List" %}
                     </a>
                 </div>
             </div>
@@ -135,7 +135,7 @@
                 <div class="delete-header">
                     <h2>
                         <i class="fas fa-exclamation-triangle me-2"></i>
-                        {% trans "تأكيد حذف الموظف" %}
+                        {% trans "Confirm Employee Deletion" %}
                     </h2>
                 </div>
 
@@ -145,19 +145,19 @@
                         <div class="danger-icon">
                             <i class="fas fa-exclamation-triangle"></i>
                         </div>
-                        <h4 class="text-danger mb-3">{% trans "تحذير مهم!" %}</h4>
+                        <h4 class="text-danger mb-3">{% trans "Important Warning!" %}</h4>
                         <p class="confirm-text">
-                            {% trans "هل أنت متأكد من رغبتك في حذف هذا الموظف؟" %}
+                            {% trans "Are you sure you want to delete this employee?" %}
                         </p>
                     </div>
                     
                     <div class="mt-4">
-                        <strong class="text-danger">{% trans "تنبيه:" %}</strong>
+                        <strong class="text-danger">{% trans "Note:" %}</strong>
                         <ul class="warning-list mt-2">
-                            <li>{% trans "هذا الإجراء لا يمكن التراجع عنه" %}</li>
-                            <li>{% trans "ستفقد جميع بيانات الموظف نهائياً" %}</li>
-                            <li>{% trans "قد تتأثر البيانات المرتبطة بهذا الموظف" %}</li>
-                            <li>{% trans "يُنصح بعمل نسخة احتياطية قبل الحذف" %}</li>
+                            <li>{% trans "This action cannot be undone" %}</li>
+                            <li>{% trans "You will permanently lose all employee data" %}</li>
+                            <li>{% trans "Related data for this employee may be affected" %}</li>
+                            <li>{% trans "It is recommended to create a backup before deletion" %}</li>
                         </ul>
                     </div>
                 </div>
@@ -166,7 +166,7 @@
                 <div class="employee-details">
                     <h5 class="mb-3">
                         <i class="fas fa-user me-2"></i>
-                        {% trans "بيانات الموظف المراد حذفه:" %}
+                        {% trans "Employee data to be deleted:" %}
                     </h5>
                     
                     <div class="row">
@@ -179,50 +179,50 @@
                         <div class="col-md-10">
                             <div class="row">
                                 <div class="col-md-6">
-                                    <strong>{% trans "رقم الموظف:" %}</strong>
+                                    <strong>{% trans "Employee ID:" %}</strong>
                                     <span class="ms-2">{{ object.employee_id }}</span>
                                 </div>
                                 <div class="col-md-6">
-                                    <strong>{% trans "الاسم الكامل:" %}</strong>
+                                    <strong>{% trans "Full Name:" %}</strong>
                                     <span class="ms-2">{{ object.full_name }}</span>
                                 </div>
                             </div>
                             
                             <div class="row mt-2">
                                 <div class="col-md-6">
-                                    <strong>{% trans "القسم:" %}</strong>
+                                    <strong>{% trans "Department:" %}</strong>
                                     <span class="ms-2">{{ object.department.name|default:"غير محدد" }}</span>
                                 </div>
                                 <div class="col-md-6">
-                                    <strong>{% trans "المنصب:" %}</strong>
+                                    <strong>{% trans "Position:" %}</strong>
                                     <span class="ms-2">{{ object.position.title|default:"غير محدد" }}</span>
                                 </div>
                             </div>
                             
                             <div class="row mt-2">
                                 <div class="col-md-6">
-                                    <strong>{% trans "البريد الإلكتروني:" %}</strong>
+                                    <strong>{% trans "Email:" %}</strong>
                                     <span class="ms-2">{{ object.email|default:"غير محدد" }}</span>
                                 </div>
                                 <div class="col-md-6">
-                                    <strong>{% trans "رقم الهاتف:" %}</strong>
+                                    <strong>{% trans "Phone Number:" %}</strong>
                                     <span class="ms-2">{{ object.phone|default:"غير محدد" }}</span>
                                 </div>
                             </div>
                             
                             <div class="row mt-2">
                                 <div class="col-md-6">
-                                    <strong>{% trans "تاريخ التوظيف:" %}</strong>
+                                    <strong>{% trans "Hire Date:" %}</strong>
                                     <span class="ms-2">{{ object.hire_date|date:"d/m/Y"|default:"غير محدد" }}</span>
                                 </div>
                                 <div class="col-md-6">
-                                    <strong>{% trans "الحالة:" %}</strong>
+                                    <strong>{% trans "Status:" %}</strong>
                                     {% if object.status == 'active' %}
-                                        <span class="badge bg-success ms-2">{% trans "نشط" %}</span>
+                                        <span class="badge bg-success ms-2">{% trans "Active" %}</span>
                                     {% elif object.status == 'inactive' %}
-                                        <span class="badge bg-warning ms-2">{% trans "غير نشط" %}</span>
+                                        <span class="badge bg-warning ms-2">{% trans "Inactive" %}</span>
                                     {% elif object.status == 'terminated' %}
-                                        <span class="badge bg-danger ms-2">{% trans "منتهي الخدمة" %}</span>
+                                        <span class="badge bg-danger ms-2">{% trans "Terminated" %}</span>
                                     {% else %}
                                         <span class="badge bg-secondary ms-2">{{ object.get_status_display }}</span>
                                     {% endif %}
@@ -237,17 +237,17 @@
                     <div class="d-flex align-items-start">
                         <i class="fas fa-info-circle text-warning me-2 mt-1"></i>
                         <div>
-                            <strong>{% trans "البيانات المرتبطة:" %}</strong>
-                            <p class="mb-1 mt-2">{% trans "قد يكون لهذا الموظف بيانات مرتبطة في النظام مثل:" %}</p>
+                            <strong>{% trans "Related Data:" %}</strong>
+                            <p class="mb-1 mt-2">{% trans "This employee may have related data in the system such as:" %}</p>
                             <ul class="mb-0 mt-1">
-                                <li>{% trans "سجلات الحضور والانصراف" %}</li>
-                                <li>{% trans "طلبات الإجازات" %}</li>
-                                <li>{% trans "بيانات الرواتب" %}</li>
-                                <li>{% trans "تقييمات الأداء" %}</li>
-                                <li>{% trans "الوثائق والملفات" %}</li>
+                                <li>{% trans "Attendance records" %}</li>
+                                <li>{% trans "Leave requests" %}</li>
+                                <li>{% trans "Salary data" %}</li>
+                                <li>{% trans "Performance evaluations" %}</li>
+                                <li>{% trans "Documents and files" %}</li>
                             </ul>
                             <small class="text-muted mt-2 d-block">
-                                {% trans "تأكد من مراجعة هذه البيانات قبل الحذف أو قم بأرشفتها إذا لزم الأمر." %}
+                                {% trans "Make sure to review this data before deletion or archive it if necessary." %}
                             </small>
                         </div>
                     </div>
@@ -261,13 +261,13 @@
                     <div class="employee-info-box text-center">
                         <h6 class="text-danger mb-3">
                             <i class="fas fa-exclamation-circle me-2"></i>
-                            {% trans "للمتابعة، أكد أنك قرأت جميع التحذيرات أعلاه" %}
+                            {% trans "To proceed, confirm that you have read all the warnings above" %}
                         </h6>
                         
                         <div class="form-check d-flex justify-content-center">
                             <input class="form-check-input me-2" type="checkbox" id="confirmDelete" required>
                             <label class="form-check-label" for="confirmDelete">
-                                {% trans "أؤكد أنني قرأت التحذيرات وأريد المتابعة مع حذف الموظف" %}
+                                {% trans "I confirm that I have read the warnings and want to proceed with deleting the employee" %}
                             </label>
                         </div>
                     </div>
@@ -276,15 +276,15 @@
                     <div class="d-flex justify-content-center gap-3 border-top pt-4 mt-4">
                         <a href="{% url 'hr:employee_list' %}" class="btn btn-outline-secondary btn-action">
                             <i class="fas fa-times me-1"></i>
-                            {% trans "إلغاء" %}
+                            {% trans "Cancel" %}
                         </a>
                         <a href="{% url 'hr:employee_detail' object.pk %}" class="btn btn-info btn-action">
                             <i class="fas fa-eye me-1"></i>
-                            {% trans "عرض التفاصيل" %}
+                            {% trans "View Details" %}
                         </a>
                         <button type="submit" class="btn btn-danger btn-action" id="deleteBtn" disabled>
                             <i class="fas fa-trash-alt me-1"></i>
-                            {% trans "تأكيد الحذف" %}
+                            {% trans "Confirm Deletion" %}
                         </button>
                     </div>
                 </form>
@@ -315,13 +315,13 @@ document.addEventListener('DOMContentLoaded', function() {
     deleteForm.addEventListener('submit', function(e) {
         if (!confirmCheckbox.checked) {
             e.preventDefault();
-            alert('{% trans "يجب تأكيد قراءة التحذيرات أولاً" %}');
+            alert('{% trans "You must confirm reading the warnings first" %}');
             return false;
         }
 
         // تأكيد نهائي
         const employeeName = '{{ object.full_name|escapejs }}';
-        const confirmMessage = `{% trans "تأكيد أخير: هل أنت متأكد من حذف الموظف" %} "${employeeName}"؟\n\n{% trans "هذا الإجراء لا يمكن التراجع عنه!" %}`;
+        const confirmMessage = `{% trans "Final confirmation: Are you sure you want to delete the employee" %} "${employeeName}"؟\n\n{% trans "This action cannot be undone!" %}`;
         
         if (!confirm(confirmMessage)) {
             e.preventDefault();
@@ -330,7 +330,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // تعطيل الزر لمنع الضغط المتعدد
         deleteBtn.disabled = true;
-        deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>{% trans "جاري الحذف..." %}';
+        deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>{% trans "Deleting..." %}';
     });
 
     // تحذير عند محاولة مغادرة الصفحة أثناء عملية الحذف
@@ -342,7 +342,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     window.addEventListener('beforeunload', function(e) {
         if (deleteInProgress) {
-            const message = '{% trans "عملية الحذف قيد التنفيذ. هل أنت متأكد من مغادرة الصفحة؟" %}';
+            const message = '{% trans "Deletion in progress. Are you sure you want to leave the page?" %}';
             e.returnValue = message;
             return message;
         }

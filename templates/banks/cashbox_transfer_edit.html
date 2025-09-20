@@ -84,7 +84,7 @@
                     <nav aria-label="breadcrumb" class="mt-2">
                         <ol class="breadcrumb">
                             <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">{% trans "Dashboard" %}</a></li>
-                            <li class="breadcrumb-item"><a href="{% url 'banks:transfer_list' %}">التحوي{% trans "No" %}ت</a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'banks:transfer_list' %}">{% trans "Transfers" %}</a></li>
                             <li class="breadcrumb-item"><a href="{% url 'banks:cashbox_transfer_detail' transfer.id %}">{{ transfer.transfer_number }}</a></li>
                             <li class="breadcrumb-item active">{% trans "Edit" %}</li>
                         </ol>
@@ -93,7 +93,7 @@
                 <div>
                     <a href="{% url 'banks:cashbox_transfer_detail' transfer.id %}" class="btn btn-secondary">
                         <i class="fas fa-arrow-right me-2"></i>
-                        إلغاء التعديل
+                        {% trans "Cancel Edit" %}
                     </a>
                 </div>
             </div>
@@ -105,17 +105,17 @@
                         <div class="col-md-8">
                             <h4 class="mb-0">
                                 <i class="fas fa-edit me-2"></i>
-                                {% trans "Edit" %} بيانات ال{% trans "Transfer" %} بين البنك والصندوق
+                                {% trans "Edit" %} {% trans "Transfer" %} {% trans "Data" %} {% trans "between" %} {% trans "Bank" %} {% trans "and" %} {% trans "Cashbox" %}
                             </h4>
                             <p class="mb-0 mt-2 opacity-75">
                                 <i class="fas fa-info-circle me-1"></i>
-                                يرجى مراجعة جميع البيانات قبل ال{% trans "Save" %}
+                                {% trans "Please review all data before" %} {% trans "Save" %}
                             </p>
                         </div>
                         <div class="col-md-4 text-end">
                             <span class="badge {% if transfer.transfer_type == 'bank_to_cashbox' %}bg-success{% else %}bg-warning{% endif %} fs-6 p-2">
                                 <i class="fas fa-exchange-alt me-1"></i>
-                                {% if transfer.transfer_type == 'bank_to_cashbox' %}بنك → صندوق{% else %}صندوق → بنك{% endif %}
+                                {% if transfer.transfer_type == 'bank_to_cashbox' %}{% trans "Bank" %} → {% trans "Cashbox" %}{% else %}{% trans "Cashbox" %} → {% trans "Bank" %}{% endif %}
                             </span>
                         </div>
                     </div>
@@ -137,14 +137,14 @@
                         <div class="row">
                             <!-- {% trans "Date" %} -->
                             <div class="col-md-6 mb-3">
-                                <label for="date" class="form-label required-field">تاريخ ال{% trans "Transfer" %}</label>
+                                <label for="date" class="form-label required-field">{% trans "Transfer" %} {% trans "Date" %}</label>
                                 <input type="date" class="form-control" id="date" name="date" 
                                        value="{{ transfer.date|date:'Y-m-d' }}" required>
                             </div>
                             
                             <!-- رقم ال{% trans "Transfer" %} (لل{% trans "View" %} فقط) -->
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">رقم ال{% trans "Transfer" %}</label>
+                                <label class="form-label">{% trans "Transfer" %} {% trans "Number" %}</label>
                                 <input type="text" class="form-control" value="{{ transfer.transfer_number }}" readonly>
                             </div>
                         </div>
@@ -152,13 +152,13 @@
                         <!-- نوع ال{% trans "Transfer" %} -->
                         <div class="row">
                             <div class="col-md-12 mb-3">
-                                <label for="transfer_type" class="form-label required-field">نوع ال{% trans "Transfer" %}</label>
+                                <label for="transfer_type" class="form-label required-field">{% trans "Transfer" %} {% trans "Type" %}</label>
                                 <select class="form-select" id="transfer_type" name="transfer_type" required onchange="updateTransferType()">
                                     <option value="bank_to_cashbox" {% if transfer.transfer_type == 'bank_to_cashbox' %}selected{% endif %}>
-                                        من البنك إلى الصندوق
+                                        {% trans "From" %} {% trans "Bank" %} {% trans "To" %} {% trans "Cashbox" %}
                                     </option>
                                     <option value="cashbox_to_bank" {% if transfer.transfer_type == 'cashbox_to_bank' %}selected{% endif %}>
-                                        من الصندوق إلى البنك
+                                        {% trans "From" %} {% trans "Cashbox" %} {% trans "To" %} {% trans "Bank" %}
                                     </option>
                                 </select>
                             </div>
@@ -167,9 +167,9 @@
                         <div class="row">
                             <!-- البنك -->
                             <div class="col-md-6 mb-3">
-                                <label for="bank" class="form-label required-field">البنك</label>
+                                <label for="bank" class="form-label required-field">{% trans "Bank" %}</label>
                                 <select class="form-select" id="bank" name="bank" required onchange="updateBankInfo()">
-                                    <option value="">اختر البنك...</option>
+                                    <option value="">{% trans "Choose Bank" %}...</option>
                                     {% for bank in banks %}
                                         <option value="{{ bank.id }}" 
                                                 data-balance="{{ bank.balance|default_if_none:0|unlocalize }}"
@@ -188,7 +188,7 @@
                                             {{ transfer.from_bank.bank_name }}
                                             <br>
                                             <i class="fas fa-wallet me-1"></i>
-                                            ال{% trans "Balance" %} الحالي: <span class="fw-bold">{{ transfer.from_bank.balance|floatformat:3 }} {{ transfer.from_bank.currency }}</span>
+                                            {% trans "Current" %} {% trans "Balance" %}: <span class="fw-bold">{{ transfer.from_bank.balance|floatformat:3 }} {{ transfer.from_bank.currency }}</span>
                                         </small>
                                     {% else %}
                                         <small class="text-muted">
@@ -196,7 +196,7 @@
                                             {{ transfer.to_bank.bank_name }}
                                             <br>
                                             <i class="fas fa-wallet me-1"></i>
-                                            ال{% trans "Balance" %} الحالي: <span class="fw-bold">{{ transfer.to_bank.balance|floatformat:3 }} {{ transfer.to_bank.currency }}</span>
+                                            {% trans "Current" %} {% trans "Balance" %}: <span class="fw-bold">{{ transfer.to_bank.balance|floatformat:3 }} {{ transfer.to_bank.currency }}</span>
                                         </small>
                                     {% endif %}
                                 </div>
@@ -204,9 +204,9 @@
                             
                             <!-- الصندوق -->
                             <div class="col-md-6 mb-3">
-                                <label for="cashbox" class="form-label required-field">الصندوق</label>
+                                <label for="cashbox" class="form-label required-field">{% trans "Cashbox" %}</label>
                                 <select class="form-select" id="cashbox" name="cashbox" required onchange="updateCashboxInfo()">
-                                    <option value="">اختر الصندوق...</option>
+                                    <option value="">{% trans "Choose Cashbox" %}...</option>
                                     {% for cashbox in cashboxes %}
                                         <option value="{{ cashbox.id }}" 
                                                 data-balance="{{ cashbox.balance|default_if_none:0|unlocalize }}"
@@ -221,18 +221,18 @@
                                     {% if transfer.transfer_type == 'bank_to_cashbox' %}
                                         <small class="text-muted">
                                             <i class="fas fa-cash-register me-1"></i>
-                                            صندوق نقدي
+                                            {% trans "Cash Register" %}
                                             <br>
                                             <i class="fas fa-wallet me-1"></i>
-                                            ال{% trans "Balance" %} الحالي: <span class="fw-bold">{{ transfer.to_cashbox.balance|floatformat:3 }} {% get_currency_symbol %}</span>
+                                            {% trans "Current" %} {% trans "Balance" %}: <span class="fw-bold">{{ transfer.to_cashbox.balance|floatformat:3 }} {% get_currency_symbol %}</span>
                                         </small>
                                     {% else %}
                                         <small class="text-muted">
                                             <i class="fas fa-cash-register me-1"></i>
-                                            صندوق نقدي
+                                            {% trans "Cash Register" %}
                                             <br>
                                             <i class="fas fa-wallet me-1"></i>
-                                            ال{% trans "Balance" %} الحالي: <span class="fw-bold">{{ transfer.from_cashbox.balance|floatformat:3 }} {% get_currency_symbol %}</span>
+                                            {% trans "Current" %} {% trans "Balance" %}: <span class="fw-bold">{{ transfer.from_cashbox.balance|floatformat:3 }} {% get_currency_symbol %}</span>
                                         </small>
                                     {% endif %}
                                 </div>
@@ -242,7 +242,7 @@
                         <div class="row">
                             <!-- مبلغ ال{% trans "Transfer" %} -->
                             <div class="col-md-4 mb-3">
-                                <label for="amount" class="form-label required-field">مبلغ ال{% trans "Transfer" %}</label>
+                                <label for="amount" class="form-label required-field">{% trans "Transfer" %} {% trans "Amount" %}</label>
                                 <input type="number" class="form-control" id="amount" name="amount" 
                                        step="0.001" min="0.001" value="{{ transfer.amount }}" 
                                        required onchange="calculateTotal()">
@@ -250,7 +250,7 @@
                             
                             <!-- الرسوم -->
                             <div class="col-md-4 mb-3">
-                                <label for="fees" class="form-label">الرسوم</label>
+                                <label for="fees" class="form-label">{% trans "Fees" %}</label>
                                 <input type="number" class="form-control" id="fees" name="fees" 
                                        step="0.001" min="0" value="{{ transfer.fees|default:0 }}" 
                                        onchange="calculateTotal()">
@@ -258,7 +258,7 @@
                             
                             <!-- سعر الصرف -->
                             <div class="col-md-4 mb-3">
-                                <label for="exchange_rate" class="form-label">سعر الصرف</label>
+                                <label for="exchange_rate" class="form-label">{% trans "Exchange Rate" %}</label>
                                 <input type="number" class="form-control" id="exchange_rate" name="exchange_rate" 
                                        step="0.0001" min="0.0001" value="{{ transfer.exchange_rate|default:1 }}">
                             </div>
@@ -268,24 +268,24 @@
                         <div class="check-section">
                             <h6 class="mb-3">
                                 <i class="fas fa-money-check text-primary me-2"></i>
-                                بيانات الشيك البنكي
+                                {% trans "Bank Check Data" %}
                             </h6>
                             
                             <div class="row">
                                 <div class="col-md-4 mb-3">
-                                    <label for="check_number" class="form-label required-field">رقم الشيك</label>
+                                    <label for="check_number" class="form-label required-field">{% trans "Check Number" %}</label>
                                     <input type="text" class="form-control" id="check_number" name="check_number" 
                                            value="{{ transfer.check_number }}" required>
                                 </div>
                                 
                                 <div class="col-md-4 mb-3">
-                                    <label for="check_date" class="form-label required-field">تاريخ الشيك</label>
+                                    <label for="check_date" class="form-label required-field">{% trans "Check Date" %}</label>
                                     <input type="date" class="form-control" id="check_date" name="check_date" 
                                            value="{{ transfer.check_date|date:'Y-m-d' }}" required>
                                 </div>
                                 
                                 <div class="col-md-4 mb-3">
-                                    <label for="check_bank_name" class="form-label required-field">اسم البنك</label>
+                                    <label for="check_bank_name" class="form-label required-field">{% trans "Bank Name" %}</label>
                                     <input type="text" class="form-control" id="check_bank_name" name="check_bank_name" 
                                            value="{{ transfer.check_bank_name }}" required>
                                 </div>
@@ -297,7 +297,7 @@
                             <div class="col-12 mb-3">
                                 <div class="balance-warning" id="totalAmount">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <span><i class="fas fa-calculator me-2"></i>إجمالي {% trans "Amount" %} المطلوب:</span>
+                                        <span><i class="fas fa-calculator me-2"></i>{% trans "Total" %} {% trans "Amount" %} {% trans "Required" %}:</span>
                                         <strong id="totalAmountValue">{{ transfer.amount|add:transfer.fees|floatformat:3 }}</strong>
                                     </div>
                                 </div>
@@ -307,9 +307,9 @@
                         <!-- البيان -->
                         <div class="row">
                             <div class="col-12 mb-3">
-                                <label for="description" class="form-label">البيان</label>
+                                <label for="description" class="form-label">{% trans "Description" %}</label>
                                 <textarea class="form-control" id="description" name="description" 
-                                          rows="3" placeholder="وصف اختياري لل{% trans "Transfer" %}...">{{ transfer.description }}</textarea>
+                                          rows="3" placeholder="{% trans "Optional description for the" %} {% trans "Transfer" %}...">{{ transfer.description }}</textarea>
                             </div>
                         </div>
                         
@@ -319,11 +319,11 @@
                                 <div class="d-flex justify-content-end gap-2">
                                     <a href="{% url 'banks:cashbox_transfer_detail' transfer.id %}" class="btn btn-secondary">
                                         <i class="fas fa-times me-2"></i>
-                                        إلغاء
+                                        {% trans "Cancel" %}
                                     </a>
                                     <button type="submit" class="btn btn-save text-white">
                                         <i class="fas fa-save me-2"></i>
-                                        {% trans "Save" %} التعديلات
+                                        {% trans "Save" %} {% trans "Changes" %}
                                     </button>
                                 </div>
                             </div>
@@ -339,7 +339,7 @@
 {% block extra_js %}
 <script>
 function updateTransferType() {
-    // إعادة {% trans "Select" %} البيانات بناءً على نوع ال{% trans "Transfer" %}
+    // {% trans "Reset" %} {% trans "Select" %} {% trans "Data" %} {% trans "based on" %} {% trans "Transfer" %} {% trans "Type" %}
     updateBankInfo();
     updateCashboxInfo();
     calculateTotal();
@@ -366,7 +366,7 @@ function updateBankInfo() {
                 ${bankName}
                 <br>
                 <i class="fas fa-wallet me-1"></i>
-                ال{% trans "Balance" %} الحالي: <span class="fw-bold">${formattedBalance} ${currency || 'JOD'}</span>
+                {% trans "Current" %} {% trans "Balance" %}: <span class="fw-bold">${formattedBalance} ${currency || 'JOD'}</span>
             </small>
         `;
         bankInfoDiv.style.display = 'block';
@@ -394,10 +394,10 @@ function updateCashboxInfo() {
         cashboxInfoDiv.innerHTML = `
             <small class="text-muted">
                 <i class="fas fa-cash-register me-1"></i>
-                صندوق نقدي
+                {% trans "Cash Register" %}
                 <br>
                 <i class="fas fa-wallet me-1"></i>
-                ال{% trans "Balance" %} الحالي: <span class="fw-bold">${formattedBalance} ${currency || 'JOD'}</span>
+                {% trans "Current" %} {% trans "Balance" %}: <span class="fw-bold">${formattedBalance} ${currency || 'JOD'}</span>
             </small>
         `;
         cashboxInfoDiv.style.display = 'block';
@@ -436,7 +436,7 @@ function calculateTotal() {
             totalDiv.className = 'alert alert-danger';
             totalDiv.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center">
-                    <span><i class="fas fa-exclamation-triangle me-2"></i>{% trans "Warning" %}: {% trans "Amount" %} المطلوب أكبر من ال{% trans "Balance" %} ال{% trans "Available" %}!</span>
+                    <span><i class="fas fa-exclamation-triangle me-2"></i>{% trans "Warning" %}: {% trans "Amount" %} {% trans "Required" %} {% trans "greater than" %} {% trans "Balance" %} {% trans "Available" %}!</span>
                     <strong>${total.toFixed(3)}</strong>
                 </div>
             `;
@@ -444,7 +444,7 @@ function calculateTotal() {
             totalDiv.className = 'balance-warning';
             totalDiv.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center">
-                    <span><i class="fas fa-calculator me-2"></i>إجمالي {% trans "Amount" %} المطلوب:</span>
+                    <span><i class="fas fa-calculator me-2"></i>{% trans "Total" %} {% trans "Amount" %} {% trans "Required" %}:</span>
                     <strong>${total.toFixed(3)}</strong>
                 </div>
             `;
@@ -460,7 +460,7 @@ document.getElementById('transferEditForm').addEventListener('submit', function(
     
     if (!bankId || !cashboxId) {
         e.preventDefault();
-        alert('يجب اختيار البنك والصندوق!');
+        alert('{% trans "Must choose Bank and Cashbox" %}!');
         return false;
     }
     
@@ -482,7 +482,7 @@ document.getElementById('transferEditForm').addEventListener('submit', function(
         
         if (total > balance) {
             e.preventDefault();
-            alert('ال{% trans "Balance" %} غير كافي في المصدر!');
+            alert('{% trans "Balance" %} {% trans "not sufficient" %} {% trans "in" %} {% trans "Source" %}!');
             return false;
         }
     }
@@ -494,7 +494,7 @@ document.getElementById('transferEditForm').addEventListener('submit', function(
     
     if (!checkNumber || !checkDate || !checkBankName) {
         e.preventDefault();
-        alert('يجب إدخال بيانات الشيك البنكي الكاملة!');
+        alert('{% trans "Must enter complete bank check data" %}!');
         return false;
     }
 });

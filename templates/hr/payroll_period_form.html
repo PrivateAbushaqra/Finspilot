@@ -100,7 +100,7 @@
                 <div>
                     <a href="{% url 'hr:payroll_period_list' %}" class="btn btn-outline-secondary">
                         <i class="fas fa-arrow-right me-1"></i>
-                        {% trans "العودة للقائمة" %}
+                        {% trans "Back to List" %}
                     </a>
                 </div>
             </div>
@@ -115,9 +115,9 @@
                     <h2>
                         <i class="fas fa-money-bill-wave me-2"></i>
                         {% if object %}
-                            {% trans "تعديل بيانات فترة الرواتب" %}
+                            {% trans "Edit Payroll Period Data" %}
                         {% else %}
-                            {% trans "تسجيل فترة رواتب جديدة" %}
+                            {% trans "Register New Payroll Period" %}
                         {% endif %}
                     </h2>
                 </div>
@@ -129,14 +129,14 @@
                     <div class="form-section">
                         <h5>
                             <i class="fas fa-info-circle me-2"></i>
-                            {% trans "المعلومات الأساسية" %}
+                            {% trans "Basic Information" %}
                         </h5>
                         
                         <div class="row">
                             <div class="col-12 mb-3">
                                 <label for="{{ form.name.id_for_label }}" class="form-label">
                                     <i class="fas fa-tag me-1"></i>
-                                    {% trans "اسم الفترة" %} <span class="text-danger">*</span>
+                                    {% trans "Period Name" %} <span class="text-danger">*</span>
                                 </label>
                                 {{ form.name }}
                                 {% if form.name.errors %}
@@ -146,7 +146,7 @@
                                         {% endfor %}
                                     </div>
                                 {% endif %}
-                                <small class="text-muted">{% trans "مثال: رواتب شهر يناير 2025" %}</small>
+                                <small class="text-muted">{% trans "Example: Salaries for January 2025" %}</small>
                             </div>
                         </div>
                     </div>
@@ -155,14 +155,14 @@
                     <div class="form-section">
                         <h5>
                             <i class="fas fa-calendar-check me-2"></i>
-                            {% trans "نطاق التواريخ" %}
+                            {% trans "Date Range" %}
                         </h5>
                         
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="{{ form.start_date.id_for_label }}" class="form-label">
                                     <i class="fas fa-play me-1"></i>
-                                    {% trans "تاريخ البداية" %} <span class="text-danger">*</span>
+                                    {% trans "Start Date" %} <span class="text-danger">*</span>
                                 </label>
                                 {{ form.start_date }}
                                 {% if form.start_date.errors %}
@@ -177,7 +177,7 @@
                             <div class="col-md-6 mb-3">
                                 <label for="{{ form.end_date.id_for_label }}" class="form-label">
                                     <i class="fas fa-stop me-1"></i>
-                                    {% trans "تاريخ النهاية" %} <span class="text-danger">*</span>
+                                    {% trans "End Date" %} <span class="text-danger">*</span>
                                 </label>
                                 {{ form.end_date }}
                                 {% if form.end_date.errors %}
@@ -194,15 +194,15 @@
                         <div class="period-info-box">
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-clock text-success me-2"></i>
-                                <strong>{% trans "مدة الفترة:" %}</strong>
-                                <span id="periodDuration" class="ms-2">{% trans "سيتم حسابها تلقائياً" %}</span>
+                                <strong>{% trans "Period Duration:" %}</strong>
+                                <span id="periodDuration" class="ms-2">{% trans "Will be calculated automatically" %}</span>
                             </div>
                         </div>
 
                         <!-- Validation Warning -->
                         <div class="validation-warning">
                             <i class="fas fa-exclamation-triangle"></i>
-                            {% trans "تأكد من أن الفترة لا تتداخل مع فترات أخرى موجودة" %}
+                            {% trans "Make sure the period does not overlap with other existing periods" %}
                         </div>
                     </div>
 
@@ -210,13 +210,13 @@
                     <div class="form-section">
                         <h5>
                             <i class="fas fa-sticky-note me-2"></i>
-                            {% trans "ملاحظات إضافية" %}
+                            {% trans "Additional Notes" %}
                         </h5>
                         
                         <div class="mb-3">
                             <label for="{{ form.notes.id_for_label }}" class="form-label">
                                 <i class="fas fa-comment me-1"></i>
-                                {% trans "ملاحظات" %}
+                                {% trans "Notes" %}
                             </label>
                             {{ form.notes }}
                             {% if form.notes.errors %}
@@ -226,7 +226,7 @@
                                     {% endfor %}
                                 </div>
                             {% endif %}
-                            <small class="text-muted">{% trans "أي ملاحظات إضافية حول فترة الرواتب" %}</small>
+                            <small class="text-muted">{% trans "Any additional notes about the payroll period" %}</small>
                         </div>
                     </div>
 
@@ -235,29 +235,29 @@
                     <div class="form-section">
                         <h5>
                             <i class="fas fa-info me-2"></i>
-                            {% trans "حالة الفترة الحالية" %}
+                            {% trans "Current Period Status" %}
                         </h5>
                         
                         <div class="period-info-box">
                             <div class="row">
                                 <div class="col-md-6">
-                                    <strong>{% trans "حالة المعالجة:" %}</strong>
+                                    <strong>{% trans "Processing Status:" %}</strong>
                                     {% if object.is_processed %}
                                         <span class="badge bg-success ms-2">
                                             <i class="fas fa-check-circle me-1"></i>
-                                            {% trans "تمت المعالجة" %}
+                                            {% trans "Processed" %}
                                         </span>
                                     {% else %}
                                         <span class="badge bg-warning ms-2">
                                             <i class="fas fa-clock me-1"></i>
-                                            {% trans "في الانتظار" %}
+                                            {% trans "Pending" %}
                                         </span>
                                     {% endif %}
                                 </div>
                                 
                                 {% if object.processed_date %}
                                 <div class="col-md-6">
-                                    <strong>{% trans "تاريخ المعالجة:" %}</strong>
+                                    <strong>{% trans "Processing Date:" %}</strong>
                                     <span class="ms-2">{{ object.processed_date|date:"d/m/Y H:i" }}</span>
                                 </div>
                                 {% endif %}
@@ -265,7 +265,7 @@
                             
                             {% if object.processed_by %}
                             <div class="mt-2">
-                                <strong>{% trans "تمت المعالجة بواسطة:" %}</strong>
+                                <strong>{% trans "Processed By:" %}</strong>
                                 <span class="ms-2">{{ object.processed_by.get_full_name|default:object.processed_by.username }}</span>
                             </div>
                             {% endif %}
@@ -278,7 +278,7 @@
                         <div class="alert alert-danger" role="alert">
                             <h6 class="alert-heading">
                                 <i class="fas fa-exclamation-triangle me-2"></i>
-                                {% trans "خطأ في البيانات" %}
+                                {% trans "Data Error" %}
                             </h6>
                             {% for error in form.non_field_errors %}
                                 <p class="mb-0">{{ error }}</p>
@@ -290,14 +290,14 @@
                     <div class="d-flex justify-content-end gap-2 border-top pt-3">
                         <a href="{% url 'hr:payroll_period_list' %}" class="btn btn-outline-secondary btn-action">
                             <i class="fas fa-times me-1"></i>
-                            {% trans "إلغاء" %}
+                            {% trans "Cancel" %}
                         </a>
                         <button type="submit" class="btn btn-success btn-action">
                             <i class="fas fa-save me-1"></i>
                             {% if object %}
-                                {% trans "حفظ التعديلات" %}
+                                {% trans "Save Changes" %}
                             {% else %}
-                                {% trans "إضافة الفترة" %}
+                                {% trans "Add Period" %}
                             {% endif %}
                         </button>
                     </div>
@@ -326,29 +326,29 @@ document.addEventListener('DOMContentLoaded', function() {
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             
             if (diffDays <= 7) {
-                periodDurationSpan.textContent = `${diffDays} {% trans "أيام" %}`;
+                periodDurationSpan.textContent = `${diffDays} {% trans "days" %}`;
             } else if (diffDays <= 31) {
                 const weeks = Math.floor(diffDays / 7);
                 const remainingDays = diffDays % 7;
-                let text = `${weeks} {% trans "أسبوع" %}`;
+                let text = `${weeks} {% trans "week" %}`;
                 if (remainingDays > 0) {
-                    text += ` و ${remainingDays} {% trans "أيام" %}`;
+                    text += ` و ${remainingDays} {% trans "days" %}`;
                 }
                 periodDurationSpan.textContent = text;
             } else {
                 const months = Math.floor(diffDays / 30);
                 const remainingDays = diffDays % 30;
-                let text = `${months} {% trans "شهر" %}`;
+                let text = `${months} {% trans "month" %}`;
                 if (remainingDays > 0) {
-                    text += ` و ${remainingDays} {% trans "أيام" %}`;
+                    text += ` و ${remainingDays} {% trans "days" %}`;
                 }
                 periodDurationSpan.textContent = text;
             }
         } else if (endDate <= startDate) {
-            periodDurationSpan.textContent = '{% trans "تاريخ النهاية يجب أن يكون بعد تاريخ البداية" %}';
+            periodDurationSpan.textContent = '{% trans "End date must be after start date" %}';
             periodDurationSpan.style.color = '#dc3545';
         } else {
-            periodDurationSpan.textContent = '{% trans "سيتم حسابها تلقائياً" %}';
+            periodDurationSpan.textContent = '{% trans "Will be calculated automatically" %}';
             periodDurationSpan.style.color = '#6c757d';
         }
     }
@@ -387,13 +387,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (startDateInput.value && !nameInput.value) {
             const startDate = new Date(startDateInput.value);
             const monthNames = [
-                'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-                'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+                'January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'
             ];
             
             const monthName = monthNames[startDate.getMonth()];
             const year = startDate.getFullYear();
-            nameInput.value = `رواتب شهر ${monthName} ${year}`;
+            nameInput.value = `{% trans "Salaries for" %} ${monthName} ${year}`;
         }
     }
 
@@ -408,13 +408,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // التحقق من صحة التواريخ
         if (endDate <= startDate) {
             e.preventDefault();
-            alert('{% trans "تاريخ النهاية يجب أن يكون بعد تاريخ البداية" %}');
+            alert('{% trans "End date must be after start date" %}');
             return false;
         }
         
         // تأكيد الحفظ
-        const action = '{% if object %}{% trans "تعديل" %}{% else %}{% trans "إضافة" %}{% endif %}';
-        if (!confirm(`{% trans "هل أنت متأكد من" %} ${action} {% trans "فترة الرواتب؟" %}`)) {
+        const action = '{% if object %}{% trans "Edit" %}{% else %}{% trans "Add" %}{% endif %}';
+        if (!confirm(`{% trans "Are you sure you want to" %} ${action} {% trans "payroll period?" %}`)) {
             e.preventDefault();
             return false;
         }

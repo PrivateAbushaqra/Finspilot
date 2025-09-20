@@ -607,6 +607,13 @@ $(document).ready(function() {
     $('#saveCategoryBtn').on('click', function() {
         var formData = new FormData($('#categoryForm')[0]);
         
+        // Add CSRF token to form data
+        var csrfToken = $('input[name="csrfmiddlewaretoken"]').val();
+        if (!csrfToken) {
+            csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+        }
+        formData.append('csrfmiddlewaretoken', csrfToken);
+        
         // Show loading indicator
         var originalText = $(this).html();
         $(this).html('<i class="fas fa-spinner fa-spin me-2"></i>' + getTranslation('saving'));

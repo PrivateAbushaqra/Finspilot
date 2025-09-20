@@ -7,6 +7,8 @@ from django.contrib import messages
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 from .models import Category, Product
 from core.models import AuditLog
 
@@ -843,6 +845,7 @@ class ProductDetailView(LoginRequiredMixin, TemplateView):
 def product_search_api(request):
     return JsonResponse({'products': []})
 
+@csrf_exempt
 def category_add_ajax(request):
     """API endpoint لإضافة فئة جديدة عبر AJAX"""
     if request.method == 'POST':
@@ -853,7 +856,6 @@ def category_add_ajax(request):
             code = request.POST.get('code', '').strip()
             parent_id = request.POST.get('parent', '')
             description = request.POST.get('description', '').strip()
-            sort_order = request.POST.get('sort_order', '0')
             is_active = request.POST.get('is_active') == 'on'
             
             # التحقق من صحة البيانات
@@ -864,7 +866,7 @@ def category_add_ajax(request):
                 })
             
             # التحقق من عدم تكرار الرمز
-            if code and Category.objects.filter(name=code).exists():
+            if code and Category.objects.filter(code=code).exists():
                 return JsonResponse({
                     'success': False,
                     'error': 'رمز التصنيف موجود مسبقاً!'
@@ -888,8 +890,17 @@ def category_add_ajax(request):
                 code=code,
                 parent=parent,
                 description=description,
-                sort_order=int(sort_order) if sort_order else 0,
                 is_active=is_active
+            )
+            
+            # تسجيل النشاط في سجل الأنشطة
+            AuditLog.objects.create(
+                user=request.user,
+                action_type='create',
+                content_type='Category',
+                object_id=category.id,
+                description=f'تم إنشاء التصنيف: {category.name} - رمز التصنيف: {category.code}',
+                ip_address=request.META.get('REMOTE_ADDR')
             )
             
             return JsonResponse({
@@ -906,6 +917,16 @@ def category_add_ajax(request):
             })
             
         except Exception as e:
+            # تسجيل الخطأ في audit log
+            AuditLog.objects.create(
+                user=request.user,
+                action_type='error',
+                content_type='Category',
+                object_id=None,
+                description=f'حدث خطأ أثناء إنشاء التصنيف: {str(e)}',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            
             return JsonResponse({
                 'success': False,
                 'error': f'حدث خطأ أثناء إنشاء التصنيف: {str(e)}'

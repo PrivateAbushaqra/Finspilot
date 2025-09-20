@@ -5,9 +5,9 @@
 
 {% block page_title %}
     {% if object %}
-        {% trans "تعديل مستند الموظف" %}
+        {% trans "Edit Employee Document" %}
     {% else %}
-        {% trans "إضافة مستند جديد للموظف" %}
+        {% trans "Add New Employee Document" %}
     {% endif %}
 {% endblock %}
 
@@ -96,17 +96,17 @@
                     <h1 class="h3 mb-0">
                         <i class="fas fa-file-upload me-2"></i>
                         {% if object %}
-                            {% trans "تعديل مستند الموظف" %}
+                            {% trans "Edit Employee Document" %}
                         {% else %}
-                            {% trans "إضافة مستند جديد للموظف" %}
+                            {% trans "Add New Employee Document" %}
                         {% endif %}
                     </h1>
-                    <p class="text-muted mb-0">{% trans "إدارة مستندات الموظفين" %}</p>
+                    <p class="text-muted mb-0">{% trans "Manage Employee Documents" %}</p>
                 </div>
                 <div>
                     <a href="{% url 'hr:employee_document_list' %}" class="btn btn-outline-secondary">
                         <i class="fas fa-arrow-right me-1"></i>
-                        {% trans "العودة للقائمة" %}
+                        {% trans "Back to List" %}
                     </a>
                 </div>
             </div>
@@ -121,9 +121,9 @@
                     <h2>
                         <i class="fas fa-file-signature me-2"></i>
                         {% if object %}
-                            {% trans "تعديل بيانات المستند" %}
+                            {% trans "Edit Document Information" %}
                         {% else %}
-                            {% trans "رفع مستند جديد" %}
+                            {% trans "Upload New Document" %}
                         {% endif %}
                     </h2>
                 </div>
@@ -135,14 +135,14 @@
                     <div class="form-section">
                         <h5>
                             <i class="fas fa-user me-2"></i>
-                            {% trans "معلومات الموظف" %}
+                            {% trans "Employee Information" %}
                         </h5>
 
                         <div class="row">
                             <div class="col-md-12 mb-3">
                                 <label for="{{ form.employee.id_for_label }}" class="form-label">
                                     <i class="fas fa-user me-1"></i>
-                                    {% trans "الموظف" %} <span class="text-danger">*</span>
+                                    {% trans "Employee" %} <span class="text-danger">*</span>
                                 </label>
                                 {{ form.employee }}
                                 {% if form.employee.errors %}
@@ -160,14 +160,14 @@
                     <div class="form-section">
                         <h5>
                             <i class="fas fa-file-alt me-2"></i>
-                            {% trans "معلومات المستند" %}
+                            {% trans "Document Information" %}
                         </h5>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="{{ form.document_type.id_for_label }}" class="form-label">
                                     <i class="fas fa-tags me-1"></i>
-                                    {% trans "نوع المستند" %} <span class="text-danger">*</span>
+                                    {% trans "Document Type" %} <span class="text-danger">*</span>
                                 </label>
                                 {{ form.document_type }}
                                 {% if form.document_type.errors %}
@@ -182,7 +182,7 @@
                             <div class="col-md-6 mb-3">
                                 <label for="{{ form.title.id_for_label }}" class="form-label">
                                     <i class="fas fa-heading me-1"></i>
-                                    {% trans "عنوان المستند" %} <span class="text-danger">*</span>
+                                    {% trans "Document Title" %} <span class="text-danger">*</span>
                                 </label>
                                 {{ form.title }}
                                 {% if form.title.errors %}
@@ -198,7 +198,7 @@
                         <div class="mb-3">
                             <label for="{{ form.description.id_for_label }}" class="form-label">
                                 <i class="fas fa-comment me-1"></i>
-                                {% trans "وصف المستند" %}
+                                {% trans "Document Description" %}
                             </label>
                             {{ form.description }}
                             {% if form.description.errors %}
@@ -207,7 +207,7 @@
                                         {{ error }}
                                     {% endfor %}
                                 {% endif %}
-                            <small class="text-muted">{% trans "وصف تفصيلي للمستند (اختياري)" %}</small>
+                            <small class="text-muted">{% trans "Detailed description of the document (optional)" %}</small>
                         </div>
                     </div>
 
@@ -215,17 +215,17 @@
                     <div class="form-section">
                         <h5>
                             <i class="fas fa-upload me-2"></i>
-                            {% trans "رفع الملف" %}
+                            {% trans "File Upload" %}
                         </h5>
 
                         <div class="file-upload-area" id="fileUploadArea">
                             <div class="mb-3">
                                 <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
-                                <h5 class="mb-3">{% trans "اسحب وأفلت الملف هنا" %}</h5>
-                                <p class="text-muted mb-3">{% trans "أو" %}</p>
+                                <h5 class="mb-3">{% trans "Drag and drop the file here" %}</h5>
+                                <p class="text-muted mb-3">{% trans "or" %}</p>
                                 <label for="{{ form.file.id_for_label }}" class="btn btn-primary">
                                     <i class="fas fa-folder-open me-1"></i>
-                                    {% trans "اختر ملف" %}
+                                    {% trans "Choose File" %}
                                 </label>
                                 {{ form.file }}
                                 {% if form.file.errors %}
@@ -246,7 +246,7 @@
 
                         {% if object and object.file %}
                         <div class="mt-3">
-                            <h6>{% trans "الملف الحالي:" %}</h6>
+                            <h6>{% trans "Current File:" %}</h6>
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-file me-2"></i>
                                 <a href="{{ object.file.url }}" target="_blank" class="me-3">
@@ -265,7 +265,7 @@
                         <div class="alert alert-danger" role="alert">
                             <h6 class="alert-heading">
                                 <i class="fas fa-exclamation-triangle me-2"></i>
-                                {% trans "خطأ في البيانات" %}
+                                {% trans "Data Error" %}
                             </h6>
                             {% for error in form.non_field_errors %}
                                 <p class="mb-0">{{ error }}</p>
@@ -277,14 +277,14 @@
                     <div class="d-flex justify-content-end gap-2 border-top pt-3">
                         <a href="{% url 'hr:employee_document_list' %}" class="btn btn-outline-secondary btn-action">
                             <i class="fas fa-times me-1"></i>
-                            {% trans "إلغاء" %}
+                            {% trans "Cancel" %}
                         </a>
                         <button type="submit" class="btn btn-info btn-action">
                             <i class="fas fa-save me-1"></i>
                             {% if object %}
-                                {% trans "حفظ التعديلات" %}
+                                {% trans "Save Changes" %}
                             {% else %}
-                                {% trans "رفع المستند" %}
+                                {% trans "Upload Document" %}
                             {% endif %}
                         </button>
                     </div>
@@ -389,7 +389,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (!isValid) {
             e.preventDefault();
-            alert('{% trans "يرجى ملء جميع الحقول المطلوبة واختيار ملف" %}');
+            alert('{% trans "Please fill all required fields and select a file" %}');
         }
     });
 });

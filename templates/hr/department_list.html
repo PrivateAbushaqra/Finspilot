@@ -67,10 +67,11 @@
                                                    title="{% trans 'Edit' %}">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
+                                                {% trans "Are you sure you want to delete this department?" as confirm_msg %}
                                                 <a href="{% url 'hr:department_delete' department.pk %}" 
                                                    class="btn btn-sm btn-outline-danger" 
                                                    title="{% trans 'Delete' %}"
-                                                   onclick="return confirm('هل أنت متأكد من حذف هذا القسم؟')">
+                                                   onclick="return confirm('{{ confirm_msg }}')">
                                                     <i class="fas fa-trash"></i>
                                                 </a>
                                             </div>

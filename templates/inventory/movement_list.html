@@ -336,7 +336,7 @@
                                         <small class="text-muted">{% trans "Unit" %}</small>
                                     </td>
                                     <td>
-                                        <strong>{{ movement.warehouse.name|default:"غير محدد" }}</strong>
+                                        <strong>{{ movement.warehouse.name|default:"{% trans 'Not Specified' %}" }}</strong>
                                     </td>
                                     <td>
                                         <strong>{{ movement.created_at|date:"Y-m-d" }}</strong>
@@ -347,7 +347,7 @@
                                     <td>
                                         {% if movement.unit_cost %}
                                             <strong>{{ movement.unit_cost|floatformat:3 }}</strong>
-                                            <small class="text-muted">د.أ</small>
+                                            <small class="text-muted">{% trans "JOD" %}</small>
                                         {% else %}
                                             <span class="text-muted">-</span>
                                         {% endif %}
@@ -355,7 +355,7 @@
                                     <td>
                                         {% if movement.total_cost %}
                                             <strong>{{ movement.total_cost|floatformat:2 }}</strong>
-                                            <small class="text-muted">د.أ</small>
+                                            <small class="text-muted">{% trans "JOD" %}</small>
                                         {% else %}
                                             <span class="text-muted">-</span>
                                         {% endif %}
@@ -541,7 +541,7 @@ function printMovementReport() {
         const movementNumber = card.querySelector('.fw-bold').textContent;
         const date = card.querySelector('.text-muted').textContent;
         const product = card.querySelectorAll('.fw-bold')[1].textContent;
-        const warehouse = card.querySelector('div:contains("المستودع:")').nextElementSibling.textContent;
+        const warehouse = card.querySelector('div:contains("Warehouse:")').nextElementSibling.textContent;
         const type = card.querySelector('.movement-type-badge').textContent;
         const quantity = card.querySelectorAll('.fw-bold')[2].textContent;
         const cost = card.querySelector('.text-success').textContent;
@@ -579,7 +579,7 @@ function printMovementReport() {
 
 // دالة حذف حركة مخزون واحدة
 function deleteMovement(movementId, movementNumber) {
-    if (confirm(`هل أنت متأكد من حذف حركة المخزون رقم "${movementNumber}"؟\nهذا الإجراء لا يمكن التراجع عنه!`)) {
+    if (confirm(`{% trans "Are you sure you want to delete inventory movement number" %} "${movementNumber}"?\n{% trans "This action cannot be undone!" %}`)) {
         // إرسال طلب DELETE إلى الخادم
         fetch(`/ar/inventory/movements/${movementId}/delete/`, {
             method: 'POST',
@@ -596,12 +596,12 @@ function deleteMovement(movementId, movementNumber) {
                 alert(data.message);
                 location.reload();
             } else {
-                alert(data.message || 'حدث خطأ أثناء حذف الحركة. يرجى المحاولة مرة أخرى.');
+                alert(data.message || '{% trans "An error occurred while deleting the movement. Please try again." %}');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى.');
+            alert('{% trans "Connection error occurred. Please try again." %}');
         });
     }
 }

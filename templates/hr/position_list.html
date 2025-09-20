@@ -67,7 +67,7 @@
                                                 <a href="{% url 'hr:position_delete' position.pk %}" 
                                                    class="btn btn-sm btn-outline-danger" 
                                                    title="{% trans 'Delete' %}"
-                                                   onclick="return confirm('هل أنت متأكد من حذف هذا المنصب؟')">
+                                                   onclick="return confirm('{% trans &quot;Are you sure you want to delete this position?&quot; %}')">
                                                     <i class="fas fa-trash"></i>
                                                 </a>
                                             </div>

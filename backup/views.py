@@ -662,6 +662,21 @@ def perform_backup_task(user, timestamp, filename, filepath, format_type='json')
         except Exception as e:
             logger.warning(f"فشل في حصر ملفات الوسائط للنسخ الاحتياطي: {str(e)}")
         
+        # تضمين ملفات الترجمة
+        try:
+            locale_files = []
+            locale_dir = os.path.join(settings.BASE_DIR, 'locale')
+            if os.path.exists(locale_dir):
+                for root, dirs, files in os.walk(locale_dir):
+                    for fname in files:
+                        if fname.endswith('.po') or fname.endswith('.mo'):
+                            fpath = os.path.join(root, fname)
+                            rel = os.path.relpath(fpath, settings.BASE_DIR)
+                            locale_files.append(rel.replace('\\', '/'))
+            backup_content['locale_files'] = locale_files
+        except Exception as e:
+            logger.warning(f"فشل في حصر ملفات الترجمة للنسخ الاحتياطي: {str(e)}")
+        
         # متغيرات التتبع
         processed_tables = 0
         processed_records = 0
@@ -1839,6 +1854,17 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                 if AUDIT_AVAILABLE and user:
                     try:
                         log_audit(user, 'view', f'تحتوي النسخة على {len(backup_data["media_files"]) } ملف وسائط (system/*). يتطلب نقلها يدوياً إلى MEDIA_ROOT.')
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+        
+        # إذا كانت النسخة تحتوي على ملفات ترجمة، سجّل ذلك في سجل المراجعة لتوعية المسؤول
+        try:
+            if isinstance(backup_data, dict) and 'locale_files' in backup_data and backup_data['locale_files']:
+                if AUDIT_AVAILABLE and user:
+                    try:
+                        log_audit(user, 'view', f'تحتوي النسخة على {len(backup_data["locale_files"]) } ملف ترجمة. يتطلب نقلها يدوياً إلى مجلد locale.')
                     except Exception:
                         pass
         except Exception:

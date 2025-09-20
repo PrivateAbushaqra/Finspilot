@@ -82,7 +82,7 @@
                 <div class="card-header bg-info text-white">
                     <h4 class="mb-0">
                         <i class="fas fa-database me-2"></i>
-                        {% trans "إدارة النسخ الاحتياطية" %}
+                        {% trans "Backup Management" %}
                         <span class="badge bg-light text-dark ms-2">
                             النسخ المتوفرة: <span id="backupCount">{{ backups|length }}</span>
                         </span>
@@ -93,26 +93,26 @@
                     <div id="progressSection" class="progress-section">
                         <h5 class="mb-3">
                             <i class="fas fa-sync-alt fa-spin me-2"></i>
-                            جاري إنشاء النسخة الاحتياطية...
+                            {% trans "Creating backup..." %}
                         </h5>
                         
                         <!-- الإحصائيات العامة -->
                         <div class="backup-stats">
                             <div class="stat-item">
                                 <strong id="processedTables">0</strong><br>
-                                <small>جداول منتهية</small>
+                                <small>{% trans "Completed Tables" %}</small>
                             </div>
                             <div class="stat-item">
                                 <strong id="totalTables">0</strong><br>
-                                <small>إجمالي الجداول</small>
+                                <small>{% trans "Total Tables" %}</small>
                             </div>
                             <div class="stat-item">
                                 <strong id="processedRecords">0</strong><br>
-                                <small>السجلات المنتهية</small>
+                                <small>{% trans "Processed Records" %}</small>
                             </div>
                             <div class="stat-item">
                                 <strong id="totalRecords">0</strong><br>
-                                <small>إجمالي السجلات</small>
+                                <small>{% trans "Total Records" %}</small>
                             </div>
                         </div>
 
@@ -125,7 +125,7 @@
                         
                         <!-- معلومات الجدول الحالي -->
                         <div class="mb-3">
-                            <strong>الجدول الحالي: </strong>
+                            <strong>{% trans "Current Table:" %} </strong>
                             <span id="currentTableName" class="text-primary">...</span>
                         </div>
                         
@@ -138,7 +138,7 @@
                         <div class="text-center mt-3">
                             <button type="button" class="btn btn-danger" onclick="window.location.reload()">
                                 <i class="fas fa-times me-2"></i>
-                                إلغاء وإعادة تحميل الصفحة
+                                {% trans "Cancel and Reload Page" %}
                             </button>
                         </div>
                     </div>
@@ -148,15 +148,15 @@
                         <div class="col-md-6 mb-3">
                             <button type="button" onclick="createBackup('json')" class="btn btn-success backup-btn w-100 d-flex flex-column align-items-center justify-content-center p-4" id="jsonBackupBtn">
                                 <i class="fas fa-file-code fa-3x mb-3"></i>
-                                <h5 class="mb-2">إنشاء نسخة احتياطية JSON</h5>
-                                <small class="text-muted">تنسيق JSON للاستخدام العام</small>
+                                <h5 class="mb-2">{% trans "Create JSON Backup" %}</h5>
+                                <small class="text-muted">{% trans "JSON format for general use" %}</small>
                             </button>
                         </div>
                         <div class="col-md-6 mb-3">
                             <button type="button" onclick="createBackup('xlsx')" class="btn btn-primary backup-btn w-100 d-flex flex-column align-items-center justify-content-center p-4" id="xlsxBackupBtn">
                                 <i class="fas fa-file-excel fa-3x mb-3"></i>
-                                <h5 class="mb-2">إنشاء نسخة احتياطية XLSX</h5>
-                                <small class="text-muted">ملف Excel لسهولة التعامل</small>
+                                <h5 class="mb-2">{% trans "Create XLSX Backup" %}</h5>
+                                <small class="text-muted">{% trans "Excel file for easy handling" %}</small>
                             </button>
                         </div>
                     </div>
@@ -165,7 +165,7 @@
                     <div class="mt-4">
                         <h5>
                             <i class="fas fa-list me-2"></i>
-                            النسخ الاحتياطية المتوفرة
+                            {% trans "Available Backups" %}
                         </h5>
                         
                         {% if backups %}
@@ -173,11 +173,11 @@
                             <table class="table table-striped">
                                 <thead class="table-dark">
                                     <tr>
-                                        <th>اسم الملف</th>
-                                        <th>الحجم</th>
-                                        <th>تاريخ الإنشاء</th>
-                                        <th>النوع</th>
-                                        <th>الإجراءات</th>
+                                        <th>{% trans "File Name" %}</th>
+                                        <th>{% trans "Size" %}</th>
+                                        <th>{% trans "Creation Date" %}</th>
+                                        <th>{% trans "Type" %}</th>
+                                        <th>{% trans "Actions" %}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -192,20 +192,20 @@
                                             {% elif backup.type == 'XLSX' %}
                                                 <span class="badge bg-primary">XLSX</span>
                                             {% else %}
-                                                <span class="badge bg-secondary">غير معروف</span>
+                                                <span class="badge bg-secondary">{% trans "Unknown" %}</span>
                                             {% endif %}
                                         </td>
                                         <td>
                                             <a href="{% url 'backup:download_backup' backup.filename %}" 
                                                class="btn btn-sm btn-success me-2">
-                                                <i class="fas fa-download"></i> تحميل
+                                                <i class="fas fa-download"></i> {% trans "Download" %}
                                             </a>
                                             <form method="post" action="{% url 'backup:delete_backup' backup.filename %}" 
                                                   style="display: inline;" 
-                                                  onsubmit="return confirm('هل أنت متأكد من حذف النسخة الاحتياطية {{ backup.filename }}؟')">
+                                                  onsubmit="return confirm('{% trans "Are you sure you want to delete the backup" %} ' + '{{ backup.filename }}' + '?')">
                                                 {% csrf_token %}
                                                 <button type="submit" class="btn btn-sm btn-danger">
-                                                    <i class="fas fa-trash"></i> حذف
+                                                    <i class="fas fa-trash"></i> {% trans "Delete" %}
                                                 </button>
                                             </form>
                                         </td>
@@ -217,7 +217,7 @@
                         {% else %}
                         <div class="alert alert-warning">
                             <i class="fas fa-exclamation-triangle me-2"></i>
-                            لا توجد نسخ احتياطية متوفرة حالياً. قم بإنشاء نسخة احتياطية جديدة.
+                            {% trans "No backups available currently. Create a new backup." %}
                         </div>
                         {% endif %}
                     </div>
@@ -229,18 +229,18 @@
                             <div class="card-header bg-warning text-dark">
                                 <h5 class="mb-0">
                                     <i class="fas fa-upload me-2"></i>
-                                    استعادة النسخة الاحتياطية
+                                    {% trans "Restore Backup" %}
                                 </h5>
                             </div>
                             <div class="card-body">
                                 <div class="alert alert-danger">
-                                    <strong>تحذير:</strong> عملية الاستعادة ستستبدل جميع البيانات الحالية. تأكد من إنشاء نسخة احتياطية قبل المتابعة.
+                                    <strong>{% trans "Warning:" %}</strong> {% trans "The restore operation will replace all current data. Make sure to create a backup before proceeding." %}
                                 </div>
                                 
                                 <form method="post" enctype="multipart/form-data" action="{% url 'backup:restore_backup' %}">
                                     {% csrf_token %}
                                     <div class="mb-3">
-                                        <label for="backup_file" class="form-label">اختر ملف النسخة الاحتياطية</label>
+                                        <label for="backup_file" class="form-label">{% trans "Choose backup file" %}</label>
                                         <input type="file" class="form-control" id="backup_file" name="backup_file" 
                                                accept=".json,.xlsx" required>
                                     </div>
@@ -249,14 +249,14 @@
                                         <input class="form-check-input" type="checkbox" value="true" 
                                                id="clear_data" name="clear_data">
                                         <label class="form-check-label" for="clear_data">
-                                            مسح البيانات الموجودة قبل الاستعادة
+                                            {% trans "Clear existing data before restoration" %}
                                         </label>
                                     </div>
                                     
                                     <button type="submit" class="btn btn-warning" 
-                                            onclick="return confirm('هل أنت متأكد من استعادة هذه النسخة الاحتياطية؟ سيتم استبدال البيانات الحالية!')">
+                                            onclick="return confirm('{% trans "Are you sure you want to restore this backup? Current data will be replaced!" %}')">
                                         <i class="fas fa-upload me-2"></i>
-                                        استعادة النسخة الاحتياطية
+                                        {% trans "Restore Backup" %}
                                     </button>
                                 </form>
                             </div>
@@ -275,7 +275,7 @@
 let progressInterval;
 let isBackupRunning = false;
 
-// إنشاء نسخة احتياطية مع مراقبة التقدم
+// {% trans "Create backup with progress monitoring" %}
 function createBackup(format) {
     if (isBackupRunning) {
         alert('يتم بالفعل إنشاء نسخة احتياطية. يرجى الانتظار.');
@@ -440,6 +440,6 @@ function resetProgressView() {
     {% endfor %}
 {% endif %}
 
-console.log('✅ تم تحميل صفحة النسخ الاحتياطي مع نظام التقدم المحسن');
+console.log('✅ {% trans "Backup page loaded with enhanced progress system" %}');
 </script>
 {% endblock %}

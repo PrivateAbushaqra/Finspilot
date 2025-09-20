@@ -316,7 +316,7 @@
                                         </h5>
                                     </div>
                                     <div class="col-md-2 text-center">
-                                        <h6 class="text-muted mb-1">{% trans "Balance" %} الجاري</h6>
+                                        <h6 class="text-muted mb-1">{% trans "Balance" %} {% trans "Current" %}</h6>
                                         <h5 class="{% if transaction.balance_after > 0 %}text-success{% elif transaction.balance_after < 0 %}text-danger{% else %}text-muted{% endif %} mb-0">
                                             {{ transaction.balance_after|floatformat:3 }}
                                         </h5>
@@ -340,13 +340,13 @@
                                             {% else %}
                                             <small class="text-muted">
                                                 <i class="fas fa-info-circle me-1"></i>
-                                                لا يوجد مستند مرتبط
+                                                {% trans "No related document" %}
                                             </small>
                                             {% endif %}
                                             {% if user.is_superuser %}
                                             <button class="btn btn-sm btn-outline-danger" 
                                                     onclick="confirmDeleteTransaction({{ transaction.id }}, '{{ transaction.transaction_number|escapejs }}')"
-                                                    title="{% trans "Delete" %} الحركة"
+                                                    title="{% trans "Delete" %} {% trans "Transaction" %}"
                                                     data-bs-toggle="tooltip">
                                                 <i class="fas fa-trash"></i>
                                             </button>
@@ -369,8 +369,8 @@
                             <div class="mb-4">
                                 <i class="fas fa-receipt fa-5x text-muted"></i>
                             </div>
-                            <h5 class="text-muted">لا توجد معام{% trans "No" %}ت لهذا ال{% trans "Customer" %}/ال{% trans "Supplier" %}</h5>
-                            <p class="text-muted">سيتم {% trans "View" %} {% trans "Transactions" %} هنا عند {% trans "Add" %} فواتير أو مدفوعات لهذا الحساب</p>
+                            <h5 class="text-muted">{% trans "No transactions" %} {% trans "for this" %} {% trans "Customer" %}/{% trans "Supplier" %}</h5>
+                            <p class="text-muted">{% trans "Will be" %} {% trans "View" %} {% trans "Transactions" %} {% trans "here when" %} {% trans "Add" %} {% trans "invoices or payments for this account" %}</p>
                         </div>
                     {% endif %}
                 </div>
@@ -382,7 +382,7 @@
     {% if transactions and total_transactions > 0 %}
     <div class="row mt-4">
         <div class="col-12">
-            <nav aria-label="صفحات {% trans "Transactions" %}">
+            <nav aria-label="{% trans "Pages" %} {% trans "Transactions" %}">
                 <ul class="pagination justify-content-center">
                     <li class="page-item disabled">
                         <span class="page-link">{% trans "Previous" %}</span>
@@ -410,9 +410,9 @@
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="addTransactionModalLabel">
                     <i class="fas fa-plus me-2"></i>
-                    {% trans "Add Transaction" %} {% trans "New" %}ة
+                    {% trans "Add Transaction" %} {% trans "New" %}
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="إغ{% trans "No" %}ق"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="{% trans "Clos" %}e"></button>
             </div>
             <div class="modal-body">
                 <form id="transactionForm">
@@ -421,9 +421,9 @@
                         <div class="col-md-6 mb-3">
                             <label for="transactionType" class="form-label">{% trans "Transaction Type" %} *</label>
                             <select class="form-select" id="transactionType" name="type" required>
-                                <option value="">اختر {% trans "Transaction Type" %}</option>
-                                <option value="payment">{% trans "Payment" %}ة</option>
-                                <option value="adjustment">تسوية</option>
+                                <option value="">{% trans "Choose" %} {% trans "Transaction Type" %}</option>
+                                <option value="payment">{% trans "Payment" %}</option>
+                                <option value="adjustment">{% trans "Adjustment" %}</option>
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
@@ -436,21 +436,21 @@
                             <input type="date" class="form-control" id="transactionDate" name="date" required>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="transactionReference" class="form-label">رقم المرجع</label>
+                            <label for="transactionReference" class="form-label">{% trans "Reference Number" %}</label>
                             <input type="text" class="form-control" id="transactionReference" name="reference">
                         </div>
                         <div class="col-12 mb-3">
-                            <label for="transactionNotes" class="form-label">ملاحظات</label>
+                            <label for="transactionNotes" class="form-label">{% trans "Notes" %}</label>
                             <textarea class="form-control" id="transactionNotes" name="notes" rows="3"></textarea>
                         </div>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
                 <button type="button" class="btn btn-primary" onclick="saveTransaction()">
                     <i class="fas fa-save me-2"></i>
-                    {% trans "Save" %} المعاملة
+                    {% trans "Save" %} {% trans "Transaction" %}
                 </button>
             </div>
         </div>
@@ -468,12 +468,12 @@
         
         // Validate required fields
         if (!data.type || !data.amount || !data.date) {
-            alert('يرجى ملء جميع الحقول المطلوبة');
+            alert('{% trans "Please fill all required fields" %}');
             return;
         }
         
         console.log('Transaction data:', data);
-        alert('سيتم {% trans "Save" %} المعاملة عند ربط النموذج بالخادم');
+        alert('{% trans "Will be" %} {% trans "Save" %} {% trans "Transaction" %} {% trans "when connecting the form to the server" %}');
         
         // Close modal and reset form
         const modal = bootstrap.Modal.getInstance(document.getElementById('addTransactionModal'));
@@ -483,7 +483,7 @@
 
     // Export transactions
     function exportTransactions() {
-        alert('سيتم {% trans "Export" %} {% trans "Transactions" %} إلى ملف Excel');
+        alert('{% trans "Will be" %} {% trans "Export" %} {% trans "Transactions" %} {% trans "to Excel file" %}');
         console.log('Exporting transactions...');
     }
 
@@ -497,7 +497,7 @@
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('transactionDate').value = today;
         
-        // تفعيل tooltips
+        // {% trans "Enable tooltips" %}
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
         var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl)
@@ -513,13 +513,13 @@
 
     // Delete transaction functions
     function confirmDeleteTransaction(transactionId, transactionNumber) {
-        if (confirm(`هل أنت متأكد من {% trans "Delete" %} الحركة "${transactionNumber}"؟\n\n{% trans "Warning" %}: سيتم {% trans "Delete" %} الحركة نهائياً ولا يمكن التراجع عن هذا الإجراء.`)) {
+        if (confirm(`{% trans "Are you sure to" %} {% trans "Delete" %} {% trans "Transaction" %} "${transactionNumber}"?\n\n{% trans "Warning" %}: {% trans "Will be" %} {% trans "Delete" %} {% trans "Transaction" %} {% trans "permanently and cannot be undone" %}.`)) {
             deleteTransaction(transactionId);
         }
     }
 
     function deleteTransaction(transactionId) {
-        // إظهار مؤشر التحميل
+        // {% trans "Show loading indicator" %}
         const deleteBtn = document.querySelector(`button[onclick*="${transactionId}"]`);
         const originalContent = deleteBtn.innerHTML;
         deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
@@ -536,10 +536,10 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // إعادة تحميل الصفحة لتحديث ال{% trans "List" %}
+                // {% trans "Reload page to update the" %} {% trans "List" %}
                 window.location.reload();
             } else {
-                alert('{% trans "Error" %} في {% trans "Delete" %} الحركة: ' + (data.error || '{% trans "Error" %} غير معروف'));
+                alert('{% trans "Error" %} {% trans "in" %} {% trans "Delete" %} {% trans "Transaction" %}: ' + (data.error || '{% trans "Error" %} {% trans "unknown" %}'));
                 // استعادة الزر
                 deleteBtn.innerHTML = originalContent;
                 deleteBtn.disabled = false;
@@ -547,7 +547,7 @@
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('{% trans "Error" %} في ا{% trans "No" %}تصال بالخادم');
+            alert('{% trans "Error" %} {% trans "in co" %}nnecting to the server');
             // استعادة الزر
             deleteBtn.innerHTML = originalContent;
             deleteBtn.disabled = false;

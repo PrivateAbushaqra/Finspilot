@@ -3,11 +3,23 @@
 {% load i18n %}
 {% load django_bootstrap5 %}
 
-{% block page_title %}
-    {% if object %}
-        {% trans "تعديل طلب الإجازة" %}
+{% block page                <div>
+                    <h1 cla                        <h5>
+                            <i class="fas fa-user me-2"></i>
+                            {% trans "Employee and Leave Type Information" %}
+                        </h5>h3 mb-0">
+                        <i class="fas fa-calendar-plus me-2"></i>
+                        {% if object %}
+                            {% trans "Edit Leave Request" %}
+                        {% else %}
+                            {% trans "New Leave Request" %}
+                        {% endif %}
+                    </h1>
+                    <p class="text-muted mb-0">{% trans "Manage Leave and Permission Requests" %}</p>
+                </div>    {% if object %}
+        {% trans "Edit Leave Request" %}
     {% else %}
-        {% trans "طلب إجازة جديد" %}
+        {% trans "New Leave Request" %}
     {% endif %}
 {% endblock %}
 
@@ -110,17 +122,17 @@
                     <h1 class="h3 mb-0">
                         <i class="fas fa-calendar-times me-2"></i>
                         {% if object %}
-                            {% trans "تعديل طلب الإجازة" %}
+                            {% trans "Edit Leave Request" %}
                         {% else %}
-                            {% trans "طلب إجازة جديد" %}
+                            {% trans "New Leave Request" %}
                         {% endif %}
                     </h1>
-                    <p class="text-muted mb-0">{% trans "إدارة طلبات الإجازات والأذونات" %}</p>
+                    <p class="text-muted mb-0">{% trans "Manage Leave and Permission Requests" %}</p>
                 </div>
                 <div>
                     <a href="{% url 'hr:leave_request_list' %}" class="btn btn-outline-secondary">
                         <i class="fas fa-arrow-right me-1"></i>
-                        {% trans "العودة للقائمة" %}
+                        {% trans "Back to List" %}
                     </a>
                 </div>
             </div>
@@ -135,9 +147,9 @@
                     <h2>
                         <i class="fas fa-user-clock me-2"></i>
                         {% if object %}
-                            {% trans "تعديل بيانات طلب الإجازة" %}
+                            {% trans "Edit Leave Request Information" %}
                         {% else %}
-                            {% trans "تسجيل طلب إجازة جديد" %}
+                            {% trans "Register New Leave Request" %}
                         {% endif %}
                     </h2>
                 </div>
@@ -156,7 +168,7 @@
                             <div class="col-md-6 mb-3">
                                 <label for="{{ form.employee.id_for_label }}" class="form-label">
                                     <i class="fas fa-user me-1"></i>
-                                    {% trans "الموظف" %} <span class="text-danger">*</span>
+                                    {% trans "Employee" %} <span class="text-danger">*</span>
                                 </label>
                                 {{ form.employee }}
                                 {% if form.employee.errors %}
@@ -171,7 +183,7 @@
                             <div class="col-md-6 mb-3">
                                 <label for="{{ form.leave_type.id_for_label }}" class="form-label">
                                     <i class="fas fa-tags me-1"></i>
-                                    {% trans "نوع الإجازة" %} <span class="text-danger">*</span>
+                                    {% trans "Leave Type" %} <span class="text-danger">*</span>
                                 </label>
                                 {{ form.leave_type }}
                                 {% if form.leave_type.errors %}
@@ -189,7 +201,7 @@
                         <div id="balanceInfo" class="balance-info" style="display: none;">
                             <div class="d-flex align-items-center">
                                 <i class="fas fa-balance-scale text-success me-2"></i>
-                                <strong>{% trans "الرصيد المتاح:" %}</strong>
+                                <strong>{% trans "Available Balance:" %}</strong>
                                 <span id="availableBalance" class="ms-2"></span>
                             </div>
                         </div>
@@ -199,14 +211,14 @@
                     <div class="form-section">
                         <h5>
                             <i class="fas fa-calendar-alt me-2"></i>
-                            {% trans "فترة الإجازة" %}
+                            {% trans "Leave Period" %}
                         </h5>
                         
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="{{ form.start_date.id_for_label }}" class="form-label">
                                     <i class="fas fa-calendar-plus me-1"></i>
-                                    {% trans "تاريخ البداية" %} <span class="text-danger">*</span>
+                                    {% trans "Start Date" %} <span class="text-danger">*</span>
                                 </label>
                                 {{ form.start_date }}
                                 {% if form.start_date.errors %}
@@ -221,7 +233,7 @@
                             <div class="col-md-6 mb-3">
                                 <label for="{{ form.end_date.id_for_label }}" class="form-label">
                                     <i class="fas fa-calendar-minus me-1"></i>
-                                    {% trans "تاريخ النهاية" %} <span class="text-danger">*</span>
+                                    {% trans "End Date" %} <span class="text-danger">*</span>
                                 </label>
                                 {{ form.end_date }}
                                 {% if form.end_date.errors %}
@@ -240,8 +252,8 @@
                                 <div class="col-md-8">
                                     <div class="d-flex align-items-center">
                                         <i class="fas fa-clock text-info me-2"></i>
-                                        <strong>{% trans "مدة الإجازة:" %}</strong>
-                                        <span id="leaveDuration" class="ms-2">{% trans "سيتم حسابها تلقائياً" %}</span>
+                                        <strong>{% trans "Leave Duration:" %}</strong>
+                                        <span id="leaveDuration" class="ms-2">{% trans "Will be calculated automatically" %}</span>
                                     </div>
                                 </div>
                                 <div class="col-md-4 text-end">
@@ -253,7 +265,7 @@
                         <!-- Validation Info -->
                         <div class="validation-info">
                             <i class="fas fa-info-circle"></i>
-                            {% trans "سيتم تحديد عدد الأيام تلقائياً بناءً على التواريخ المحددة (شامل أيام العطل)" %}
+                            {% trans "The number of days will be determined automatically based on the specified dates (including holidays)" %}
                         </div>
                     </div>
 
@@ -261,13 +273,13 @@
                     <div class="form-section">
                         <h5>
                             <i class="fas fa-comment-alt me-2"></i>
-                            {% trans "سبب الإجازة" %}
+                            {% trans "Leave Reason" %}
                         </h5>
                         
                         <div class="mb-3">
                             <label for="{{ form.reason.id_for_label }}" class="form-label">
                                 <i class="fas fa-pencil-alt me-1"></i>
-                                {% trans "سبب طلب الإجازة" %} <span class="text-danger">*</span>
+                                {% trans "Reason for Leave Request" %} <span class="text-danger">*</span>
                             </label>
                             {{ form.reason }}
                             {% if form.reason.errors %}
@@ -277,7 +289,7 @@
                                     {% endfor %}
                                 </div>
                             {% endif %}
-                            <small class="text-muted">{% trans "اذكر السبب التفصيلي لطلب الإجازة" %}</small>
+                            <small class="text-muted">{% trans "Mention the detailed reason for the leave request" %}</small>
                         </div>
                     </div>
 
@@ -286,43 +298,43 @@
                     <div class="form-section">
                         <h5>
                             <i class="fas fa-info-circle me-2"></i>
-                            {% trans "حالة الطلب" %}
+                            {% trans "Request Status" %}
                         </h5>
                         
                         <div class="leave-summary-box">
                             <div class="row">
                                 <div class="col-md-4">
-                                    <strong>{% trans "الحالة:" %}</strong>
+                                    <strong>{% trans "Status:" %}</strong>
                                     {% if object.status == 'pending' %}
                                         <span class="badge bg-warning status-badge ms-2">
                                             <i class="fas fa-clock me-1"></i>
-                                            {% trans "في الانتظار" %}
+                                            {% trans "Pending" %}
                                         </span>
                                     {% elif object.status == 'approved' %}
                                         <span class="badge bg-success status-badge ms-2">
                                             <i class="fas fa-check-circle me-1"></i>
-                                            {% trans "موافق عليه" %}
+                                            {% trans "Approved" %}
                                         </span>
                                     {% elif object.status == 'rejected' %}
                                         <span class="badge bg-danger status-badge ms-2">
                                             <i class="fas fa-times-circle me-1"></i>
-                                            {% trans "مرفوض" %}
+                                            {% trans "Rejected" %}
                                         </span>
                                     {% elif object.status == 'cancelled' %}
                                         <span class="badge bg-secondary status-badge ms-2">
                                             <i class="fas fa-ban me-1"></i>
-                                            {% trans "ملغي" %}
+                                            {% trans "Cancelled" %}
                                         </span>
                                     {% endif %}
                                 </div>
                                 
                                 <div class="col-md-4">
-                                    <strong>{% trans "عدد الأيام:" %}</strong>
-                                    <span class="ms-2">{{ object.days_count }} {% trans "يوم" %}</span>
+                                    <strong>{% trans "Number of Days:" %}</strong>
+                                    <span class="ms-2">{{ object.days_count }} {% trans "day" %}</span>
                                 </div>
                                 
                                 <div class="col-md-4">
-                                    <strong>{% trans "تاريخ الإنشاء:" %}</strong>
+                                    <strong>{% trans "Creation Date:" %}</strong>
                                     <span class="ms-2">{{ object.created_at|date:"d/m/Y" }}</span>
                                 </div>
                             </div>
@@ -331,12 +343,12 @@
                             <div class="mt-2">
                                 <div class="row">
                                     <div class="col-md-6">
-                                        <strong>{% trans "تمت الموافقة بواسطة:" %}</strong>
+                                        <strong>{% trans "Approved By:" %}</strong>
                                         <span class="ms-2">{{ object.approved_by.get_full_name|default:object.approved_by.username }}</span>
                                     </div>
                                     {% if object.approval_date %}
                                     <div class="col-md-6">
-                                        <strong>{% trans "تاريخ الموافقة:" %}</strong>
+                                        <strong>{% trans "Approval Date:" %}</strong>
                                         <span class="ms-2">{{ object.approval_date|date:"d/m/Y H:i" }}</span>
                                     </div>
                                     {% endif %}
@@ -346,7 +358,7 @@
                             
                             {% if object.rejection_reason %}
                             <div class="mt-2">
-                                <strong>{% trans "سبب الرفض:" %}</strong>
+                                <strong>{% trans "Rejection Reason:" %}</strong>
                                 <div class="text-danger small mt-1">{{ object.rejection_reason }}</div>
                             </div>
                             {% endif %}
@@ -359,7 +371,7 @@
                         <div class="alert alert-danger" role="alert">
                             <h6 class="alert-heading">
                                 <i class="fas fa-exclamation-triangle me-2"></i>
-                                {% trans "خطأ في البيانات" %}
+                                {% trans "Data Error" %}
                             </h6>
                             {% for error in form.non_field_errors %}
                                 <p class="mb-0">{{ error }}</p>
@@ -371,15 +383,15 @@
                     <div class="d-flex justify-content-end gap-2 border-top pt-3">
                         <a href="{% url 'hr:leave_request_list' %}" class="btn btn-outline-secondary btn-action">
                             <i class="fas fa-times me-1"></i>
-                            {% trans "إلغاء" %}
+                            {% trans "Cancel" %}
                         </a>
                         {% if not object or object.status == 'pending' %}
                         <button type="submit" class="btn btn-info btn-action">
                             <i class="fas fa-paper-plane me-1"></i>
                             {% if object %}
-                                {% trans "حفظ التعديلات" %}
+                                {% trans "Save Changes" %}
                             {% else %}
-                                {% trans "إرسال الطلب" %}
+                                {% trans "Send Request" %}
                             {% endif %}
                         </button>
                         {% endif %}
@@ -512,28 +524,28 @@ document.addEventListener('DOMContentLoaded', function() {
         // التحقق من صحة التواريخ
         if (endDate < startDate) {
             e.preventDefault();
-            alert('{% trans "تاريخ النهاية يجب أن يكون بعد أو يساوي تاريخ البداية" %}');
+            alert('{% trans "End date must be after or equal to start date" %}');
             return false;
         }
         
         // التحقق من اختيار الموظف ونوع الإجازة
         if (!employeeSelect.value) {
             e.preventDefault();
-            alert('{% trans "يرجى اختيار الموظف" %}');
+            alert('{% trans "Please select an employee" %}');
             employeeSelect.focus();
             return false;
         }
         
         if (!leaveTypeSelect.value) {
             e.preventDefault();
-            alert('{% trans "يرجى اختيار نوع الإجازة" %}');
+            alert('{% trans "Please select leave type" %}');
             leaveTypeSelect.focus();
             return false;
         }
         
         // تأكيد الإرسال
-        const action = '{% if object %}{% trans "تعديل" %}{% else %}{% trans "إرسال" %}{% endif %}';
-        if (!confirm(`{% trans "هل أنت متأكد من" %} ${action} {% trans "طلب الإجازة؟" %}`)) {
+        const action = '{% if object %}{% trans "editing" %}{% else %}{% trans "sending" %}{% endif %}';
+        if (!confirm(`{% trans "Are you sure to" %} ${action} {% trans "the leave request?" %}`)) {
             e.preventDefault();
             return false;
         }
@@ -541,12 +553,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // تحسين تجربة المستخدم - إخفاء البيانات المحسوبة عند التغيير
     startDateInput.addEventListener('input', function() {
-        leaveDurationSpan.textContent = '{% trans "جاري الحساب..." %}';
+        leaveDurationSpan.textContent = '{% trans "Calculating..." %}';
         leaveDurationSpan.style.color = '#ffc107';
     });
     
     endDateInput.addEventListener('input', function() {
-        leaveDurationSpan.textContent = '{% trans "جاري الحساب..." %}';
+        leaveDurationSpan.textContent = '{% trans "Calculating..." %}';
         leaveDurationSpan.style.color = '#ffc107';
     });
 });

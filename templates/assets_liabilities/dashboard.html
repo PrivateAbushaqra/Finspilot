@@ -16,7 +16,7 @@
     </h1>
 </div>
 
-<!-- ال{% trans "Statistics" %} -->
+<!-- {% trans "Statistics" %} -->
 <div class="row mb-4">
     <div class="col-md-3">
         <div class="card stats-card text-white">
@@ -80,7 +80,7 @@
     </div>
 </div>
 
-<!-- القوائم السريعة -->
+<!-- {% trans "Quick Lists" %} -->
 <div class="row">
     <div class="col-md-6">
         <div class="card">
@@ -179,7 +179,7 @@
     </div>
 </div>
 
-<!-- الرسم البياني -->
+<!-- {% trans "Charts" %} -->
 <div class="row mt-4">
     <div class="col-md-6">
         <div class="card">
@@ -210,7 +210,7 @@
     </div>
 </div>
 
-<!-- {% trans "List" %} سريعة للأصول والخصوم -->
+<!-- {% trans "Quick List" %} {% trans "for" %} {% trans "Assets and Liabilities" %} -->
 <div class="row mt-4">
     <div class="col-md-6">
         <div class="card">
@@ -267,10 +267,10 @@
                     <table class="table table-sm">
                         <thead>
                             <tr>
-                                <th>اسم</th>
-                                <th>الفئة</th>
+                                <th>{% trans "Name" %}</th>
+                                <th>{% trans "Category" %}</th>
                                 <th>{% trans "Amount" %}</th>
-                                <th>تاريخ ا{% trans "No" %}ستحقاق</th>
+                                <th>{% trans "Due Date" %}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -295,14 +295,14 @@
     </div>
 </div>
 
-<!-- Modal {% trans "Add" %} خصم {% trans "New" %} -->
+<!-- Modal {% trans "Add" %} {% trans "New" %} {% trans "Deduction" %} -->
 <div class="modal fade" id="addDeductionModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
                     <i class="fas fa-minus-circle text-warning"></i>
-                    {% trans "Add" %} خصم {% trans "New" %}
+                    {% trans "Add" %} {% trans "New" %} {% trans "Deduction" %}
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
@@ -311,13 +311,13 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">اسم الخصم</label>
+                                <label class="form-label">{% trans "Deduction Name" %}</label>
                                 <input type="text" class="form-control" name="deduction_name" required>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">مبلغ الخصم</label>
+                                <label class="form-label">{% trans "Deduction Amount" %}</label>
                                 <input type="number" step="0.01" class="form-control" name="deduction_amount" required>
                             </div>
                         </div>
@@ -325,45 +325,45 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">نوع الخصم</label>
+                                <label class="form-label">{% trans "Deduction Type" %}</label>
                                 <select class="form-select" name="deduction_type" required>
-                                    <option value="">اختر نوع الخصم</option>
-                                    <option value="tax">ضريبة</option>
-                                    <option value="discount">خصم تجاري</option>
-                                    <option value="penalty">غرامة</option>
-                                    <option value="other">أخرى</option>
+                                    <option value="">{% trans "Choose deduction type" %}</option>
+                                    <option value="tax">{% trans "Tax" %}</option>
+                                    <option value="discount">{% trans "Commercial discount" %}</option>
+                                    <option value="penalty">{% trans "Penalty" %}</option>
+                                    <option value="other">{% trans "Other" %}</option>
                                 </select>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">تاريخ الخصم</label>
+                                <label class="form-label">{% trans "Deduction Date" %}</label>
                                 <input type="date" class="form-control" name="deduction_date" required>
                             </div>
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">وصف الخصم</label>
+                        <label class="form-label">{% trans "Deduction Description" %}</label>
                         <textarea class="form-control" name="deduction_description" rows="3"></textarea>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                <button type="button" class="btn btn-warning" onclick="saveDeduction()">{% trans "Save" %} الخصم</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" class="btn btn-warning" onclick="saveDeduction()">{% trans "Save" %} {% trans "Deduction" %}</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal {% trans "Table" %} المدفوعات -->
+<!-- Modal {% trans "Table" %} {% trans "Payments" %} -->
 <div class="modal fade" id="paymentTableModal" tabindex="-1">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
                     <i class="fas fa-table text-info"></i>
-                    {% trans "Table" %} المدفوعات
+                    {% trans "Table" %} {% trans "Payments" %}
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
@@ -378,17 +378,17 @@
                         <input type="date" class="form-control" id="paymentToDate">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">نوع المدفوعات</label>
+                        <label class="form-label">{% trans "Payment Type" %}</label>
                         <select class="form-select" id="paymentType">
-                            <option value="">جميع الأنواع</option>
-                            <option value="cash">نقدي</option>
-                            <option value="bank">بنكي</option>
-                            <option value="check">شيك</option>
+                            <option value="">{% trans "All Types" %}</option>
+                            <option value="cash">{% trans "Cash" %}</option>
+                            <option value="bank">{% trans "Bank" %}</option>
+                            <option value="check">{% trans "Check" %}</option>
                         </select>
                     </div>
                     <div class="col-md-3">
                         <button type="button" class="btn btn-info w-100" onclick="loadPaymentTable()" style="margin-top: 31px;">
-                            <i class="fas fa-search"></i> بحث
+                            <i class="fas fa-search"></i> {% trans "Search" %}
                         </button>
                     </div>
                 </div>
@@ -397,7 +397,7 @@
                         <thead class="table-dark">
                             <tr>
                                 <th>{% trans "Date" %}</th>
-                                <th>{% trans "Number" %} المرجعي</th>
+                                <th>{% trans "Reference Number" %}</th>
                                 <th>{% trans "Description" %}</th>
                                 <th>{% trans "Type" %}</th>
                                 <th>{% trans "Amount" %}</th>
@@ -406,28 +406,28 @@
                         </thead>
                         <tbody id="paymentsTableBody">
                             <tr>
-                                <td colspan="6" class="text-center text-muted">اختر المعايير وانقر بحث ل{% trans "View" %} المدفوعات</td>
+                                <td colspan="6" class="text-center text-muted">{% trans "Choose criteria and click search to view payments" %}</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغ{% trans "No" %}ق</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
                 <button type="button" class="btn btn-info" onclick="exportPaymentTable()">{% trans "Export" %} Excel</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal {% trans "Add" %} أصل {% trans "New" %} -->
+<!-- Modal {% trans "Add" %} {% trans "New" %} {% trans "Asset" %} -->
 <div class="modal fade" id="addAssetModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
                     <i class="fas fa-plus-circle text-success"></i>
-                    {% trans "Add" %} أصل {% trans "New" %}
+                    {% trans "Add" %} {% trans "New" %} {% trans "Asset" %}
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
@@ -436,23 +436,23 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">اسم الأصل</label>
+                                <label class="form-label">{% trans "Asset Name" %}</label>
                                 <input type="text" class="form-control" name="asset_name" required>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">فئة الأصل</label>
+                                <label class="form-label">{% trans "Asset Category" %}</label>
                                 <select class="form-select" name="asset_category" required>
-                                    <option value="">اختر فئة الأصل</option>
-                                    <option value="معدات الكمبيوتر">معدات الكمبيوتر</option>
-                                    <option value="الأثاث المكتبي">الأثاث المكتبي</option>
-                                    <option value="مركبات النقل">مركبات النقل</option>
-                                    <option value="معدات التشغيل">معدات التشغيل</option>
-                                    <option value="المباني والعقارات">المباني والعقارات</option>
-                                    <option value="البرمجيات والتراخيص">البرمجيات والتراخيص</option>
-                                    <option value="الأجهزة الطبية">الأجهزة الطبية</option>
-                                    <option value="أصول أخرى">أصول أخرى</option>
+                                    <option value="">{% trans "Choose asset category" %}</option>
+                                    <option value="معدات الكمبيوتر">{% trans "Computer Equipment" %}</option>
+                                    <option value="الأثاث المكتبي">{% trans "Office Furniture" %}</option>
+                                    <option value="مركبات النقل">{% trans "Transportation Vehicles" %}</option>
+                                    <option value="معدات التشغيل">{% trans "Operating Equipment" %}</option>
+                                    <option value="المباني والعقارات">{% trans "Buildings and Real Estate" %}</option>
+                                    <option value="البرمجيات والتراخيص">{% trans "Software and Licenses" %}</option>
+                                    <option value="الأجهزة الطبية">{% trans "Medical Equipment" %}</option>
+                                    <option value="أصول أخرى">{% trans "Other Assets" %}</option>
                                 </select>
                             </div>
                         </div>
@@ -460,13 +460,13 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">قيمة الأصل</label>
+                                <label class="form-label">{% trans "Asset Value" %}</label>
                                 <input type="number" step="0.01" class="form-control" name="asset_value" required>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">تاريخ الشراء</label>
+                                <label class="form-label">{% trans "Purchase Date" %}</label>
                                 <input type="date" class="form-control" name="purchase_date" required>
                             </div>
                         </div>
@@ -474,32 +474,32 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">العمر ا{% trans "No" %}فتراضي (بالسنوات)</label>
+                                <label class="form-label">{% trans "Useful Life" %} ({% trans "in years" %})</label>
                                 <input type="number" class="form-control" name="useful_life" min="1">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">القيمة المتبقية</label>
+                                <label class="form-label">{% trans "Salvage Value" %}</label>
                                 <input type="number" step="0.01" class="form-control" name="salvage_value" value="0">
                             </div>
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">وصف الأصل</label>
+                        <label class="form-label">{% trans "Asset Description" %}</label>
                         <textarea class="form-control" name="asset_description" rows="3"></textarea>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                <button type="button" class="btn btn-success" onclick="saveAsset()">{% trans "Save" %} الأصل</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" class="btn btn-success" onclick="saveAsset()">{% trans "Save" %} {% trans "Asset" %}</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modal حساب الإه{% trans "No" %}ك -->
+<!-- Modal {% trans "Calculate" %} {% trans "Depreciation" %} -->
 <div class="modal fade" id="depreciationModal" tabindex="-1">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
@@ -515,27 +515,27 @@
                     <div class="col-md-4">
                         <div class="card">
                             <div class="card-header">
-                                <h6 class="mb-0">{% trans "Settings" %} الحساب</h6>
+                                <h6 class="mb-0">{% trans "Calculation Settings" %}</h6>
                             </div>
                             <div class="card-body">
                                 <div class="mb-3">
-                                    <label class="form-label">اختر الأصل</label>
+                                    <label class="form-label">{% trans "Choose Asset" %}</label>
                                     <select class="form-select" id="assetSelect" onchange="loadAssetDetails()">
-                                        <option value="">اختر أصل</option>
-                                        <option value="1">أصل تجريبي 1</option>
-                                        <option value="2">أصل تجريبي 2</option>
+                                        <option value="">{% trans "Choose asset" %}</option>
+                                        <option value="1">{% trans "Test Asset" %} 1</option>
+                                        <option value="2">{% trans "Test Asset" %} 2</option>
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label">طريقة الإه{% trans "No" %}ك</label>
+                                    <label class="form-label">{% trans "Depreciation Method" %}</label>
                                     <select class="form-select" id="depreciationMethod" onchange="calculateDepreciation()">
-                                        <option value="straight">القسط الثابت</option>
-                                        <option value="declining">ال{% trans "Balance" %} المتناقص</option>
-                                        <option value="units">وحدات الإنتاج</option>
+                                        <option value="straight">{% trans "Straight Line" %}</option>
+                                        <option value="declining">{% trans "Declining Balance" %}</option>
+                                        <option value="units">{% trans "Units of Production" %}</option>
                                     </select>
                                 </div>
                                 <button type="button" class="btn btn-secondary w-100" onclick="calculateDepreciation()">
-                                    <i class="fas fa-calculator"></i> احسب الإه{% trans "No" %}ك
+                                    <i class="fas fa-calculator"></i> {% trans "Calculate Depreciation" %}
                                 </button>
                             </div>
                         </div>
@@ -543,13 +543,13 @@
                     <div class="col-md-8">
                         <div class="card">
                             <div class="card-header">
-                                <h6 class="mb-0">نتائج الحساب</h6>
+                                <h6 class="mb-0">{% trans "Calculation Results" %}</h6>
                             </div>
                             <div class="card-body">
                                 <div id="depreciationResults">
                                     <div class="text-center text-muted py-4">
                                         <i class="fas fa-calculator fa-2x mb-2"></i>
-                                        <p>اختر أصل وطريقة الإه{% trans "No" %}ك ل{% trans "View" %} النتائج</p>
+                                        <p>{% trans "Choose asset and depreciation method to view results" %}</p>
                                     </div>
                                 </div>
                             </div>
@@ -558,8 +558,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغ{% trans "No" %}ق</button>
-                <button type="button" class="btn btn-primary" onclick="saveDepreciationEntry()">{% trans "Save" %} قيد الإه{% trans "No" %}ك</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
+                <button type="button" class="btn btn-primary" onclick="saveDepreciationEntry()">{% trans "Save" %} {% trans "Depreciation Entry" %}</button>
             </div>
         </div>
     </div>

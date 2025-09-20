@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load i18n %}
 
-{% block title %}{% trans "Details" %} المنتج في المخزون - {{ block.super }}{% endblock %}
+{% block title %}{% trans "Details" %} {% trans "Product in Inventory" %} - {{ block.super }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -144,7 +144,7 @@
                 <p>{{ error }}</p>
                 <a href="{% url 'inventory:list' %}" class="btn btn-primary">
                     <i class="fas fa-arrow-left me-2"></i>
-                    العودة للمخزون
+                    {% trans "Back to Inventory" %}
                 </a>
             </div>
             {% else %}
@@ -153,18 +153,18 @@
                 <div>
                     <h1 class="h3 mb-0 text-gray-800">
                         <i class="fas fa-box text-primary me-2"></i>
-                        {% trans "Details" %} المنتج في المخزون
+                        {% trans "Details" %} {% trans "Product in Inventory" %}
                     </h1>
                     <p class="mb-0 text-muted">{{ product.name }}</p>
                 </div>
                 <div>
                     <a href="{% url 'inventory:list' %}" class="btn btn-outline-secondary">
                         <i class="fas fa-arrow-left me-2"></i>
-                        العودة للمخزون
+                        {% trans "Back to Inventory" %}
                     </a>
                     <a href="{% url 'products:product_detail' product.pk %}" class="btn btn-outline-primary">
                         <i class="fas fa-info-circle me-2"></i>
-                        {% trans "Details" %} المنتج
+                        {% trans "Details" %} {% trans "Product" %}
                     </a>
                 </div>
             </div>
@@ -177,12 +177,12 @@
                             <h2 class="mb-2">{{ product.name }}</h2>
                             <div class="row">
                                 <div class="col-md-6">
-                                    <p class="mb-1"><strong>كود المنتج:</strong> {{ product.code }}</p>
-                                    <p class="mb-1"><strong>التصنيف:</strong> {{ product.category.name|default:"غير محدد" }}</p>
+                                    <p class="mb-1"><strong>{% trans "Product Code" %}:</strong> {{ product.code }}</p>
+                                    <p class="mb-1"><strong>{% trans "Category" %}:</strong> {{ product.category.name|default:"{% trans 'Not Specified' %}" }}</p>
                                 </div>
                                 <div class="col-md-6">
-                                    <p class="mb-1"><strong>سعر البيع:</strong> {{ product.sale_price|floatformat:3 }} د.أ</p>
-                                    <p class="mb-1"><strong>الحد الأدنى:</strong> {{ product.minimum_quantity|floatformat:0 }}</p>
+                                    <p class="mb-1"><strong>{% trans "Sale Price" %}:</strong> {{ product.sale_price|floatformat:3 }} {% trans "JOD" %}</p>
+                                    <p class="mb-1"><strong>{% trans "Minimum Quantity" %}:</strong> {{ product.minimum_quantity|floatformat:0 }}</p>
                                 </div>
                             </div>
                         </div>
@@ -202,7 +202,7 @@
                     <div class="stat-card">
                         <i class="fas fa-boxes text-primary fa-2x mb-2"></i>
                         <h3 class="mb-1">{{ current_stock|floatformat:0 }}</h3>
-                        <small class="text-muted">المخزون الحالي</small>
+                        <small class="text-muted">{% trans "Current Stock" %}</small>
                     </div>
                 </div>
                 
@@ -210,7 +210,7 @@
                     <div class="stat-card">
                         <i class="fas fa-arrow-down text-success fa-2x mb-2"></i>
                         <h3 class="mb-1">{{ total_in|floatformat:0 }}</h3>
-                        <small class="text-muted">إجمالي الوارد</small>
+                        <small class="text-muted">{% trans "Total Inbound" %}</small>
                     </div>
                 </div>
                 
@@ -218,7 +218,7 @@
                     <div class="stat-card">
                         <i class="fas fa-arrow-up text-danger fa-2x mb-2"></i>
                         <h3 class="mb-1">{{ total_out|floatformat:0 }}</h3>
-                        <small class="text-muted">إجمالي الصادر</small>
+                        <small class="text-muted">{% trans "Total Outbound" %}</small>
                     </div>
                 </div>
                 
@@ -226,7 +226,7 @@
                     <div class="stat-card">
                         <i class="fas fa-dollar-sign text-info fa-2x mb-2"></i>
                         <h3 class="mb-1">{{ current_value|floatformat:2 }}</h3>
-                        <small class="text-muted">القيمة الحالية د.أ</small>
+                        <small class="text-muted">{% trans "Current Value" %} {% trans "JOD" %}</small>
                     </div>
                 </div>
             </div>
@@ -239,7 +239,7 @@
                         <div class="card-header">
                             <h5 class="mb-0">
                                 <i class="fas fa-warehouse me-2"></i>
-                                توزيع المستودعات
+                                {% trans "Warehouse Distribution" %}
                             </h5>
                         </div>
                         <div class="card-body">
@@ -253,7 +253,7 @@
                                         </div>
                                         <div class="text-end">
                                             <h5 class="mb-0 text-primary">{{ warehouse_data.quantity|floatformat:0 }}</h5>
-                                            <small class="text-muted">قطعة</small>
+                                            <small class="text-muted">{% trans "Piece" %}</small>
                                         </div>
                                     </div>
                                 </div>
@@ -261,8 +261,8 @@
                             {% else %}
                                 <div class="text-center text-muted py-4">
                                     <i class="fas fa-warehouse fa-3x mb-3"></i>
-                                    <h6>{% trans "No" %} يوجد مخزون</h6>
-                                    <p>{% trans "No" %} يوجد مخزون لهذا المنتج في أي مستودع</p>
+                                    <h6>{% trans "No" %} {% trans "Stock Available" %}</h6>
+                                    <p>{% trans "No" %} {% trans "Stock Available for this Product in any Warehouse" %}</p>
                                 </div>
                             {% endif %}
                         </div>
@@ -275,22 +275,22 @@
                         <div class="card-header">
                             <h5 class="mb-0">
                                 <i class="fas fa-bolt me-2"></i>
-                                عمليات سريعة
+                                {% trans "Quick Actions" %}
                             </h5>
                         </div>
                         <div class="card-body">
                             <div class="d-grid gap-2">
                                 <a href="{% url 'products:product_edit' product.pk %}" class="btn btn-outline-warning">
                                     <i class="fas fa-edit me-2"></i>
-                                    {% trans "Edit" %} المنتج
+                                    {% trans "Edit" %} {% trans "Product" %}
                                 </a>
                                 <a href="{% url 'inventory:movement_list' %}?product={{ product.id }}" class="btn btn-outline-info">
                                     <i class="fas fa-list me-2"></i>
-                                    {% trans "View" %} الحركات
+                                    {% trans "View" %} {% trans "Movements" %}
                                 </a>
                                 <button class="btn btn-outline-success" onclick="window.print()">
                                     <i class="fas fa-print me-2"></i>
-                                    {% trans "Print" %} ال{% trans "Report" %}
+                                    {% trans "Print" %} {% trans "Report" %}
                                 </button>
                             </div>
                         </div>
@@ -305,7 +305,7 @@
                         <div class="card-header">
                             <h5 class="mb-0">
                                 <i class="fas fa-history me-2"></i>
-                                آخر الحركات
+                                {% trans "Recent Movements" %}
                             </h5>
                         </div>
                         <div class="card-body">
@@ -316,12 +316,12 @@
                                             <tr>
                                                 <th>{% trans "Type" %}</th>
                                                 <th>{% trans "Quantity" %}</th>
-                                                <th>المستودع</th>
+                                                <th>{% trans "Warehouse" %}</th>
                                                 <th>{% trans "Date" %}</th>
                                                 <th>{% trans "Time" %}</th>
-                                                <th>سعر الوحدة</th>
-                                                <th>التكلفة</th>
-                                                <th>الملاحظات</th>
+                                                <th>{% trans "Unit Price" %}</th>
+                                                <th>{% trans "Total Cost" %}</th>
+                                                <th>{% trans "Notes" %}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -330,10 +330,10 @@
                                                 <td>
                                                     {% if movement.movement_type == 'in' %}
                                                         <i class="fas fa-arrow-down text-success me-1"></i>
-                                                        <span class="text-success fw-bold">وارد</span>
+                                                        <span class="text-success fw-bold">{% trans "Inbound" %}</span>
                                                     {% elif movement.movement_type == 'out' %}
                                                         <i class="fas fa-arrow-up text-danger me-1"></i>
-                                                        <span class="text-danger fw-bold">صادر</span>
+                                                        <span class="text-danger fw-bold">{% trans "Outbound" %}</span>
                                                     {% else %}
                                                         <i class="fas fa-exchange-alt text-info me-1"></i>
                                                         <span class="text-info fw-bold">{% trans "Transfer" %}</span>
@@ -341,10 +341,10 @@
                                                 </td>
                                                 <td>
                                                     <strong>{{ movement.quantity|floatformat:0 }}</strong>
-                                                    <small class="text-muted">قطعة</small>
+                                                    <small class="text-muted">{% trans "Piece" %}</small>
                                                 </td>
                                                 <td>
-                                                    <strong>{{ movement.warehouse.name|default:"غير محدد" }}</strong>
+                                                    <strong>{{ movement.warehouse.name|default:"{% trans 'Not Specified' %}" }}</strong>
                                                 </td>
                                                 <td>
                                                     <strong>{{ movement.created_at|date:"Y-m-d" }}</strong>
@@ -355,7 +355,7 @@
                                                 <td>
                                                     {% if movement.unit_cost %}
                                                         <strong>{{ movement.unit_cost|floatformat:3 }}</strong>
-                                                        <small class="text-muted">د.أ</small>
+                                                        <small class="text-muted">{% trans "JOD" %}</small>
                                                     {% else %}
                                                         <span class="text-muted">-</span>
                                                     {% endif %}
@@ -363,7 +363,7 @@
                                                 <td>
                                                     {% if movement.total_cost %}
                                                         <strong>{{ movement.total_cost|floatformat:2 }}</strong>
-                                                        <small class="text-muted">د.أ</small>
+                                                        <small class="text-muted">{% trans "JOD" %}</small>
                                                     {% else %}
                                                         <span class="text-muted">-</span>
                                                     {% endif %}
@@ -387,14 +387,14 @@
                                 <div class="text-center mt-3">
                                     <a href="{% url 'inventory:movement_list' %}?product={{ product.id }}" class="btn btn-outline-primary">
                                         <i class="fas fa-list me-2"></i>
-                                        {% trans "View" %} جميع الحركات
+                                        {% trans "View" %} {% trans "All Movements" %}
                                     </a>
                                 </div>
                             {% else %}
                                 <div class="text-center text-muted py-4">
                                     <i class="fas fa-history fa-3x mb-3"></i>
-                                    <h5>لا توجد حركات</h5>
-                                    <p>لم يتم تسجيل أي حركات لهذا المنتج بعد</p>
+                                    <h5>{% trans "No Movements Found" %}</h5>
+                                    <p>{% trans "No movements have been recorded for this product yet" %}</p>
                                 </div>
                             {% endif %}
                         </div>

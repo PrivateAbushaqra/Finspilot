@@ -90,12 +90,12 @@
             <div class="d-flex justify-content-between align-items-center">
                 <h2 class="mb-0">
                     <i class="fas fa-edit me-2"></i>
-                    {% trans "Edit" %} بيانات ال{% trans "Customer" %}/ال{% trans "Supplier" %}
+                    {% trans "Edit" %} {% trans "Customer" %}/{% trans "Supplier" %} {% trans "Data" %}
                 </h2>
                 <div class="btn-group">
                     <a href="{% url 'customers:list' %}" class="btn btn-outline-light">
                         <i class="fas fa-arrow-left me-2"></i>
-                        العودة لل{% trans "List" %}
+                        {% trans "Back to" %} {% trans "List" %}
                     </a>
                     <a href="#" class="btn btn-outline-light">
                         <i class="fas fa-eye me-2"></i>
@@ -111,8 +111,8 @@
         <div class="d-flex align-items-center">
             <i class="fas fa-info-circle text-primary me-3 fa-2x"></i>
             <div>
-                <h6 class="mb-1">{% trans "Edit" %} بيانات الحساب</h6>
-                <p class="mb-0 text-muted">يمكنك {% trans "Edit" %} جميع البيانات ما عدا نوع الحساب. في حالة الحاجة لتغيير {% trans "Type" %}، يرجى إنشاء حساب {% trans "New" %}.</p>
+                <h6 class="mb-1">{% trans "Edit" %} {% trans "Account Data" %}</h6>
+                <p class="mb-0 text-muted">{% trans "You can edit all data except account type. If you need to change the type, please create a new account." %}</p>
             </div>
         </div>
     </div>
@@ -125,51 +125,51 @@
                 
                 <!-- Current Type Display -->
                 <div class="type-display">
-                    <h5 class="mb-3">نوع الحساب الحالي:</h5>
+                    <h5 class="mb-3">{% trans "Current Account Type" %}:</h5>
                     <div class="current-type">
                         <i class="fas fa-user fa-2x d-block mb-2"></i>
                         {% trans "Customer" %}
                     </div>
                     <input type="hidden" name="type" value="customer">
-                    <p class="text-muted mt-3 mb-0">لا يمكن تغيير نوع الحساب بعد الإنشاء</p>
+                    <p class="text-muted mt-3 mb-0">{% trans "Account type cannot be changed after creation" %}</p>
                 </div>
 
                 <!-- Basic Information -->
                 <div class="form-section">
                     <h6 class="section-title">
                         <i class="fas fa-info-circle me-2"></i>
-                        ال{% trans "Information" %} الأساسية
+                        {% trans "Basic" %} {% trans "Information" %}
                     </h6>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="name" class="form-label">اسم الالكامل *</label>
+                            <label for="name" class="form-label">{% trans "Full Name" %} *</label>
                             <input type="text" class="form-control" id="name" name="name" value="{{ customer_supplier.name }}" required>
-                            <div class="form-text">{% trans "Customer Name" %} أو ال{% trans "Supplier" %} كما سيظهر في الفواتير</div>
+                            <div class="form-text">{% trans "Customer" %} {% trans "Name" %} {% trans "or" %} {% trans "Supplier" %} {% trans "as it will appear on invoices" %}</div>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="phone" class="form-label">{% trans "Phone Number" %}</label>
                             <input type="tel" class="form-control" id="phone" name="phone" value="{{ customer_supplier.phone }}">
-                            <div class="form-text">{% trans "Phone Number" %} الأساسي للتواصل</div>
+                            <div class="form-text">{% trans "Primary phone number for communication" %}</div>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="email" class="form-label">{% trans "Email" %}</label>
                             <input type="email" class="form-control" id="email" name="email" value="{{ customer_supplier.email }}">
-                            <div class="form-text">{% trans "Email" %} لإرسال الفواتير والتقارير</div>
+                            <div class="form-text">{% trans "Email for sending invoices and reports" %}</div>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="tax_number" class="form-label">{% trans "Number" %} الضريبي</label>
+                            <label for="tax_number" class="form-label">{% trans "Tax Number" %}</label>
                             <input type="text" class="form-control" id="tax_number" name="tax_number" value="{{ customer_supplier.tax_number }}">
-                            <div class="form-text">{% trans "Number" %} الضريبي المسجل للشركة أو الفرد</div>
+                            <div class="form-text">{% trans "Tax number registered for the company or individual" %}</div>
                         </div>
                         <div class="col-12 mb-3">
                             <label for="address" class="form-label">{% trans "Address" %}</label>
                             <textarea class="form-control" id="address" name="address" rows="3">{{ customer_supplier.address }}</textarea>
-                            <div class="form-text">{% trans "Address" %} الالكامل لل{% trans "Customer" %} أو ال{% trans "Supplier" %}</div>
+                            <div class="form-text">{% trans "Full address of the" %} {% trans "Customer" %} {% trans "or" %} {% trans "Supplier" %}</div>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="city" class="form-label">ال{% trans "Debit" %}ة <span class="text-danger">*</span></label>
+                            <label for="city" class="form-label">{% trans "City" %} <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="city" name="city" value="{{ customer_supplier.city }}" required>
-                            <div class="form-text">ال{% trans "Debit" %}ة التي يقع فيها ال{% trans "Customer" %} أو ال{% trans "Supplier" %}</div>
+                            <div class="form-text">{% trans "City where the" %} {% trans "Customer" %} {% trans "or" %} {% trans "Supplier" %} {% trans "is located" %}</div>
                         </div>
                     </div>
                 </div>
@@ -178,17 +178,17 @@
                 <div class="form-section">
                     <h6 class="section-title">
                         <i class="fas fa-money-bill-wave me-2"></i>
-                        ال{% trans "Information" %} المالية
+                        {% trans "Financial" %} {% trans "Information" %}
                     </h6>
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="credit_limit" class="form-label">حد ا{% trans "No" %}ئتمان</label>
+                            <label for="credit_limit" class="form-label">{% trans "Credit Limit" %}</label>
                             <div class="balance-input">
                                 <span class="currency-symbol">{% get_currency_symbol %}</span>
                                 <input type="number" class="form-control" id="credit_limit" name="credit_limit" 
                                        value="10000.000" step="0.001" min="0">
                             </div>
-                            <div class="form-text">أقصى مبلغ يمكن لل{% trans "Customer" %} أن يكون {% trans "Debit" %}اً به</div>
+                            <div class="form-text">{% trans "Maximum amount the" %} {% trans "Customer" %} {% trans "can be" %} {% trans "debited" %}</div>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="balance" class="form-label">{% trans "Balance" %} الحالي</label>
@@ -197,7 +197,7 @@
                                 <input type="number" class="form-control" id="balance" name="balance" 
                                        value="2500.000" step="0.001">
                             </div>
-                            <div class="form-text">{% trans "Balance" %} الحالي (موجب: له، سالب: عليه)</div>
+                            <div class="form-text">{% trans "Current balance (positive: in credit, negative: in debit)" %}</div>
                         </div>
                     </div>
                     
@@ -205,15 +205,15 @@
                     <div class="alert alert-info">
                         <div class="row text-center">
                             <div class="col-md-4">
-                                <h6 class="text-success">{% trans "Balance" %} الحالي</h6>
+                                <h6 class="text-success">{% trans "Current Balance" %}</h6>
                                 <h4 class="text-success">{{ customer_supplier.balance|currency_format }}</h4>
                             </div>
                             <div class="col-md-4">
-                                <h6 class="text-primary">حد ا{% trans "No" %}ئتمان</h6>
+                                <h6 class="text-primary">{% trans "Credit Limit" %}</h6>
                                 <h4 class="text-primary">{{ customer_supplier.credit_limit|currency_format }}</h4>
                             </div>
                             <div class="col-md-4">
-                                <h6 class="text-info">ا{% trans "No" %}ئتمان ال{% trans "Available" %}</h6>
+                                <h6 class="text-info">{% trans "Available Credit" %}</h6>
                                 <h4 class="text-info">{{ available_credit|currency_format }}</h4>
                             </div>
                         </div>
@@ -224,21 +224,21 @@
                 <div class="form-section">
                     <h6 class="section-title">
                         <i class="fas fa-sticky-note me-2"></i>
-                        {% trans "Information" %} إضافية
+                        {% trans "Additional" %} {% trans "Information" %}
                     </h6>
                     <div class="row">
                         <div class="col-12 mb-3">
-                            <label for="notes" class="form-label">ملاحظات</label>
+                            <label for="notes" class="form-label">{% trans "Notes" %}</label>
                             <textarea class="form-control" id="notes" name="notes" rows="3">{{ customer_supplier.notes }}</textarea>
-                            <div class="form-text">أي ملاحظات أو {% trans "Information" %} إضافية</div>
+                            <div class="form-text">{% trans "Any notes or additional" %} {% trans "Information" %}</div>
                         </div>
                         <div class="col-12">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="is_active" name="is_active" checked>
                                 <label class="form-check-label" for="is_active">
-                                    حساب {% trans "Active" %}
+                                    {% trans "Account" %} {% trans "Active" %}
                                 </label>
-                                <div class="form-text">إلغاء التفعيل يخفي الحساب من القوائم</div>
+                                <div class="form-text">{% trans "Deactivating hides the account from lists" %}</div>
                             </div>
                         </div>
                     </div>
@@ -248,15 +248,15 @@
                 <div class="d-flex justify-content-end gap-3 mb-4">
                     <a href="{% url 'customers:list' %}" class="btn btn-secondary">
                         <i class="fas fa-times me-2"></i>
-                        إلغاء
+                        {% trans "Cancel" %}
                     </a>
                     <button type="button" class="btn btn-danger" onclick="deleteCustomer()">
                         <i class="fas fa-trash me-2"></i>
-                        {% trans "Delete" %} الحساب
+                        {% trans "Delete" %} {% trans "Account" %}
                     </button>
                     <button type="submit" class="btn btn-warning">
                         <i class="fas fa-save me-2"></i>
-                        {% trans "Save" %} التعديلات
+                        {% trans "Save" %} {% trans "Changes" %}
                     </button>
                 </div>
             </form>
@@ -277,20 +277,20 @@
         
         // Validate required fields
         if (!data.name.trim()) {
-            alert('يرجى إدخال {% trans "Customer Name" %}/ال{% trans "Supplier" %}');
+            alert('{% trans "Please enter" %} {% trans "Customer Name" %}/{% trans "Supplier" %}');
             return;
         }
         
         // Show success message
-        alert('سيتم {% trans "Save" %} التعديلات عند ربط النموذج بالخادم\n\nالبيانات المحدثة:\n' + JSON.stringify(data, null, 2));
+        alert('{% trans "Changes will be saved when the form is connected to the server" %}\n\n{% trans "Updated data" %}:\n' + JSON.stringify(data, null, 2));
         
         console.log('Updated customer/supplier data:', data);
     });
 
     // Delete function
     function deleteCustomer() {
-        if (confirm('هل أنت متأكد من {% trans "Delete" %} هذا الحساب؟\n\nسيتم {% trans "Delete" %} جميع البيانات المرتبطة بهذا الحساب نهائياً.')) {
-            alert('سيتم تنفيذ الحذف عند ربط النموذج بالخادم');
+        if (confirm('{% trans "Are you sure you want to delete this account?" %}\n\n{% trans "All data related to this account will be permanently deleted." %}')) {
+            alert('{% trans "Deletion will be executed when the form is connected to the server" %}');
             // Redirect to delete confirmation page
             // window.location.href = "{% url 'customers:delete' pk=1 %}";
         }

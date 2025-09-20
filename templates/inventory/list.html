@@ -732,7 +732,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Get inventory items from the table
         const inventoryRows = document.querySelectorAll('tbody tr');
-        console.log('عدد صفوف المخزون الموجودة:', inventoryRows.length);
+        console.log('Number of inventory rows present:', inventoryRows.length);
         if (inventoryRows.length === 0) {
             inventoryHTML += `
                 <tr>
@@ -750,7 +750,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         const quantity = cells[3].querySelector('strong').textContent.trim();
                         const stockLevel = cells[4].textContent.trim();
                         
-                        console.log('بيانات المخزون:', {productCode, productName, warehouse, quantity, stockLevel});
+                        console.log('{% trans "Stock data:" %}', {productCode, productName, warehouse, quantity, stockLevel});
                         
                         inventoryHTML += `
                             <tr>

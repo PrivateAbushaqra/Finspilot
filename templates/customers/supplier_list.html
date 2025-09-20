@@ -227,12 +227,12 @@
                                 
                                 <div class="mb-2">
                                     <small class="text-muted">{% trans "Phone" %}:</small>
-                                    <span>{{ supplier.phone|default:"غير محدد" }}</span>
+                                    <span>{{ supplier.phone|default:"{% trans 'Not specified' %}" }}</span>
                                 </div>
                                 
                                 <div class="mb-2">
-                                    <small class="text-muted">البريد:</small>
-                                    <span>{{ supplier.email|default:"غير محدد" }}</span>
+                                    <small class="text-muted">{% trans "Email" %}:</small>
+                                    <span>{{ supplier.email|default:"{% trans 'Not specified' %}" }}</span>
                                 </div>
                                 
                                 <div class="mb-3">
@@ -244,7 +244,7 @@
                                 
                                 <div class="d-flex justify-content-between align-items-center">
                                     <span class="badge {% if supplier.is_active %}bg-success{% else %}bg-secondary{% endif %}">
-                                        {% if supplier.is_active %}{% trans "Active" %}{% else %}غير {% trans "Active" %}{% endif %}
+                                        {% if supplier.is_active %}{% trans "Active" %}{% else %}{% trans "Not" %} {% trans "Active" %}{% endif %}
                                     </span>
                                     <div class="btn-group btn-group-sm">
                                         {% if perms.customers.can_edit_customers_suppliers %}
@@ -252,7 +252,7 @@
                                             <i class="fas fa-edit"></i>
                                         </a>
                                         {% endif %}
-                                        <a href="{% url 'customers:transactions' supplier.pk %}" class="btn btn-outline-info" title="كشف الحساب">
+                                        <a href="{% url 'customers:transactions' supplier.pk %}" class="btn btn-outline-info" title="{% trans 'Account statement' %}">
                                             <i class="fas fa-receipt"></i>
                                         </a>
                                         {% if perms.customers.can_delete_customers_suppliers and perms.customers.can_add_customers_suppliers and perms.customers.can_edit_customers_suppliers and perms.customers.can_view_customers_suppliers %}
@@ -328,11 +328,11 @@
                         <div class="mb-4">
                             <i class="fas fa-truck fa-5x text-muted"></i>
                         </div>
-                        <h5 class="text-muted">لا توجد {% trans "Supplier" %}ين حالياً</h5>
-                        <p class="text-muted">يمكنك {% trans "Add" %} {% trans "Supplier" %} {% trans "New" %} من خ{% trans "No" %}ل الضغط على زر "{% trans "Add" %} {% trans "Supplier" %} {% trans "New" %}"</p>
+                        <h5 class="text-muted">{% trans "No" %} {% trans "Supplier" %}s {% trans "currently" %}</h5>
+                        <p class="text-muted">{% trans "You can" %} {% trans "Add" %} {% trans "Supplier" %} {% trans "New" %} {% trans "from" %} {% trans "No" %}l {% trans "by clicking on the button" %} "{% trans "Add" %} {% trans "Supplier" %} {% trans "New" %}"</p>
                         <a href="{% url 'customers:add' %}" class="btn btn-primary">
                             <i class="fas fa-plus me-2"></i>
-                            {% trans "Add" %} أول {% trans "Supplier" %}
+                            {% trans "Add" %} {% trans "first" %} {% trans "Supplier" %}
                         </a>
                     </div>
                     {% endif %}
@@ -345,29 +345,29 @@
     {% if is_paginated %}
     <div class="row mt-4">
         <div class="col-12">
-            <nav aria-label="صفحات ال{% trans "Supplier" %}ين">
+            <nav aria-label="{% trans 'Pages of' %} {% trans 'Supplier' %}s">
                 <ul class="pagination justify-content-center">
                     {% if page_obj.has_previous %}
                         <li class="page-item">
-                            <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.balance %}&balance={{ request.GET.balance }}{% endif %}">{% trans "First" %}ى</a>
+                            <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.balance %}&balance={{ request.GET.balance }}{% endif %}">{% trans "First" %}</a>
                         </li>
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.balance %}&balance={{ request.GET.balance }}{% endif %}">{% trans "Previous" %}ة</a>
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.balance %}&balance={{ request.GET.balance }}{% endif %}">{% trans "Previous" %}</a>
                         </li>
                     {% endif %}
                     
                     <li class="page-item active">
                         <span class="page-link">
-                            صفحة {{ page_obj.number }} من {{ page_obj.paginator.num_pages }}
+                            {% trans "Page" %} {{ page_obj.number }} {% trans "of" %} {{ page_obj.paginator.num_pages }}
                         </span>
                     </li>
                     
                     {% if page_obj.has_next %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.balance %}&balance={{ request.GET.balance }}{% endif %}">{% trans "Next" %}ة</a>
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.balance %}&balance={{ request.GET.balance }}{% endif %}">{% trans "Next" %}</a>
                         </li>
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.balance %}&balance={{ request.GET.balance }}{% endif %}">{% trans "Last" %}ة</a>
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.balance %}&balance={{ request.GET.balance }}{% endif %}">{% trans "Last" %}</a>
                         </li>
                     {% endif %}
                 </ul>
@@ -386,13 +386,13 @@
                     <i class="fas fa-truck me-2"></i>
                     {% trans "Add" %} {% trans "Supplier" %} {% trans "New" %}
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="إغ{% trans "No" %}ق"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
             </div>
             <div class="modal-body">
                 <form id="supplierForm">
                     {% csrf_token %}
                     
-                    <!-- ال{% trans "Information" %} الأساسية -->
+                    <!-- {% trans "The" %}{% trans "Information" %} الأساسية -->
                     <div class="mb-4">
                         <h6 class="text-primary border-bottom pb-2 mb-3">
                             <i class="fas fa-user me-2"></i>{% trans "Basic Information" %}
@@ -420,7 +420,7 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">{% trans "Number" %} الضريبي</label>
+                                    <label class="form-label">{% trans "Number" %} {% trans "Tax" %}</label>
                                     <input type="text" class="form-control" name="tax_number">
                                 </div>
                             </div>
@@ -430,37 +430,37 @@
                             <textarea class="form-control" name="address" rows="2"></textarea>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">ال{% trans "Debit" %}ة <span class="text-danger">*</span></label>
+                            <label class="form-label">{% trans "The" %}{% trans "Debit" %}{% trans "City" %} <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" name="city" required>
                         </div>
                     </div>
                     
-                    <!-- ال{% trans "Information" %} المالية -->
+                    <!-- {% trans "The" %}{% trans "Information" %} المالية -->
                     <div class="mb-4">
                         <h6 class="text-success border-bottom pb-2 mb-3">
-                            <i class="fas fa-money-bill-wave me-2"></i>ال{% trans "Information" %} المالية
+                            <i class="fas fa-money-bill-wave me-2"></i>{% trans "The" %}{% trans "Information" %} {% trans "Financial" %}
                         </h6>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">حد ا{% trans "No" %}ئتمان</label>
+                                    <label class="form-label">{% trans "Credit limit" %}</label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" name="credit_limit" 
                                                value="0" step="0.001" min="0">
                                         <span class="input-group-text">{% get_currency_symbol %}</span>
                                     </div>
-                                    <div class="form-text">أقصى مبلغ يمكن لل{% trans "Supplier" %} أن يكون {% trans "Debit" %}اً به</div>
+                                    <div class="form-text">{% trans "Maximum amount the" %} {% trans "Supplier" %} {% trans "can be" %} {% trans "Debit" %} {% trans "by it" %}</div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">{% trans "Balance" %} ا{% trans "No" %}بتدائي</label>
+                                    <label class="form-label">{% trans "Balance" %} {% trans "Initial" %}</label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" name="balance" 
                                                value="0" step="0.001">
                                         <span class="input-group-text">{% get_currency_symbol %}</span>
                                     </div>
-                                    <div class="form-text">{% trans "Balance" %} الحالي (موجب: له، سالب: عليه)</div>
+                                    <div class="form-text">{% trans "Balance" %} {% trans "Current" %} ({% trans "Positive: for him, negative: on him" %})</div>
                                 </div>
                             </div>
                         </div>
@@ -469,19 +469,19 @@
                     <!-- {% trans "Information" %} إضافية -->
                     <div class="mb-3">
                         <h6 class="text-info border-bottom pb-2 mb-3">
-                            <i class="fas fa-sticky-note me-2"></i>{% trans "Information" %} إضافية
+                            <i class="fas fa-sticky-note me-2"></i>{% trans "Information" %} {% trans "Additional" %}
                         </h6>
                         <div class="mb-3">
-                            <label class="form-label">ملاحظات</label>
+                            <label class="form-label">{% trans "Notes" %}</label>
                             <textarea class="form-control" name="notes" rows="2"></textarea>
-                            <div class="form-text">أي ملاحظات أو {% trans "Information" %} إضافية</div>
+                            <div class="form-text">{% trans "Any notes or" %} {% trans "Information" %} {% trans "additional" %}</div>
                         </div>
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" name="is_active" id="supplierIsActive" checked>
                             <label class="form-check-label" for="supplierIsActive">
                                 {% trans "Supplier" %} {% trans "Active" %}
                             </label>
-                            <div class="form-text">إلغاء التفعيل يخفي ال{% trans "Supplier" %} من القوائم</div>
+                            <div class="form-text">{% trans "Deactivation hides the" %} {% trans "Supplier" %} {% trans "from lists" %}</div>
                         </div>
                     </div>
                     
@@ -489,10 +489,10 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
                 <button type="button" class="btn btn-primary" onclick="saveSupplier()">
                     <i class="fas fa-save me-2"></i>
-                    {% trans "Save" %} ال{% trans "Supplier" %}
+                    {% trans "Save" %} {% trans "The" %}{% trans "Supplier" %}
                 </button>
             </div>
         </div>
@@ -524,7 +524,7 @@
 
     // Save supplier function
     function saveSupplier() {
-        console.log('بدء {% trans "Save" %} ال{% trans "Supplier" %} ال{% trans "New" %}');
+        console.log('{% trans "Start" %} {% trans "Save" %} {% trans "The" %}{% trans "Supplier" %} {% trans "New" %}');
         const form = document.getElementById('supplierForm');
         const formData = new FormData(form);
         
@@ -532,7 +532,7 @@
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
         formData.append('csrfmiddlewaretoken', csrfToken);
         
-        console.log('إرسال البيانات إلى الخادم...');
+        console.log('{% trans "Sending data to the server..." %}');
         
         fetch('{% url "customers:ajax_add_supplier" %}', {
             method: 'POST',
@@ -542,30 +542,30 @@
             }
         })
         .then(response => {
-            console.log('استجابة من الخادم:', response.status);
+            console.log('{% trans "Response from the server:" %}', response.status);
             return response.json();
         })
         .then(data => {
-            console.log('البيانات المستلمة:', data);
+            console.log('{% trans "Received data:" %}', data);
             if (data.success) {
-                // إغ{% trans "No" %}ق النافذة وإعادة تعيين النموذج
+                // {% trans "Close" %} {% trans "The" %} {% trans "window" %} {% trans "and" %} {% trans "reset" %} {% trans "The" %} {% trans "form" %}
                 const modal = bootstrap.Modal.getInstance(document.getElementById('addSupplierModal'));
                 modal.hide();
                 form.reset();
                 
-                alert('تم إنشاء ال{% trans "Supplier" %} بنجاح!');
-                console.log('تم {% trans "Save" %} ال{% trans "Supplier" %} بنجاح');
+                alert('{% trans "Done" %} {% trans "Created" %} {% trans "The" %}{% trans "Supplier" %} {% trans "successfully" %}!');
+                console.log('{% trans "Done" %} {% trans "Save" %} {% trans "The" %}{% trans "Supplier" %} {% trans "successfully" %}');
                 
-                // إعادة تحميل الصفحة ل{% trans "View" %} ال{% trans "Supplier" %} ال{% trans "New" %}
+                // {% trans "Reload" %} {% trans "The" %} {% trans "page" %} {% trans "to" %} {% trans "View" %} {% trans "The" %}{% trans "Supplier" %} {% trans "New" %}
                 location.reload();
             } else {
                 console.error('{% trans "Error" %} من الخادم:', data.message);
-                alert('{% trans "Error" %}: ' + (data.message || 'حدث {% trans "Error" %} أثناء إنشاء ال{% trans "Supplier" %}'));
+                alert('{% trans "Error" %}: ' + (data.message || '{% trans "Happened" %} {% trans "Error" %} {% trans "during" %} {% trans "creation" %} {% trans "The" %}{% trans "Supplier" %}'));
             }
         })
         .catch(error => {
             console.error('{% trans "Error" %} في الشبكة:', error);
-            alert('حدث {% trans "Error" %} أثناء إنشاء ال{% trans "Supplier" %}. {% trans "Please try again" %}.');
+            alert('{% trans "Happened" %} {% trans "Error" %} {% trans "during" %} {% trans "creation" %} {% trans "The" %}{% trans "Supplier" %}. {% trans "Try again" %}.');
         });
     }
 

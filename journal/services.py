@@ -535,3 +535,203 @@ class JournalService:
             )
             for entry in entries:
                 entry.delete()
+    
+    @staticmethod
+    def get_or_create_checks_in_transit_account():
+        """الحصول على حساب شيكات تحت التحصيل أو إنشاؤه"""
+        code = "1103"
+        account, created = Account.objects.get_or_create(
+            code=code,
+            defaults={
+                'name': 'شيكات تحت التحصيل',
+                'account_type': 'asset',
+                'description': 'حساب شيكات تحت التحصيل - IFRS 9'
+            }
+        )
+        return account
+    
+    @staticmethod
+    def get_or_create_accounts_receivable_account():
+        """الحصول على حساب ذمم مدينة أو إنشاؤه"""
+        code = "1104"
+        account, created = Account.objects.get_or_create(
+            code=code,
+            defaults={
+                'name': 'ذمم مدينة',
+                'account_type': 'asset',
+                'description': 'حساب ذمم مدينة - IFRS 9'
+            }
+        )
+        return account
+    
+    @staticmethod
+    def get_or_create_advance_from_customers_account():
+        """الحصول على حساب دفعات مقدمة من العملاء أو إنشاؤه"""
+        code = "2101"
+        account, created = Account.objects.get_or_create(
+            code=code,
+            defaults={
+                'name': 'دفعات مقدمة من العملاء',
+                'account_type': 'liability',
+                'description': 'حساب دفعات مقدمة من العملاء - IFRS 9'
+            }
+        )
+        return account
+    
+    @staticmethod
+    def create_check_bounced_entry(receipt, collection_date, user=None):
+        """إنشاء قيد يومية للشيك المرتد - IFRS 9 متوافق"""
+        lines_data = []
+        
+        # ذمم مدينة (مدين) - زيادة في الأصول
+        accounts_receivable = JournalService.get_or_create_accounts_receivable_account()
+        lines_data.append({
+            'account_id': accounts_receivable.id,
+            'debit': receipt.amount,
+            'credit': 0,
+            'description': f'ارتداد شيك رقم {receipt.check_number} - سند {receipt.receipt_number}'
+        })
+        
+        # شيكات تحت التحصيل (دائن) - نقص في الأصول
+        checks_in_transit = JournalService.get_or_create_checks_in_transit_account()
+        lines_data.append({
+            'account_id': checks_in_transit.id,
+            'debit': 0,
+            'credit': receipt.amount,
+            'description': f'ارتداد شيك رقم {receipt.check_number} - سند {receipt.receipt_number}'
+        })
+        
+        return JournalService.create_journal_entry(
+            entry_date=collection_date,
+            reference_type='check_bounced',
+            reference_id=receipt.id,
+            description=f'قيد ارتداد شيك رقم {receipt.check_number} - {receipt.customer.name}',
+            lines_data=lines_data,
+            user=user
+        )
+    
+    @staticmethod
+    def create_check_early_collection_entry(receipt, collection_date, is_invoice_complete=True, user=None):
+        """إنشاء قيد يومية للشيك المحصل مبكراً - IFRS 9 متوافق"""
+        lines_data = []
+        
+        if is_invoice_complete:
+            # الفاتورة مكتملة - اعتراف طبيعي بالإيراد
+            # حساب البنك (مدين)
+            bank_account = JournalService.get_or_create_bank_account(receipt.bank_name)
+            lines_data.append({
+                'account_id': bank_account.id,
+                'debit': receipt.amount,
+                'credit': 0,
+                'description': f'تحصيل مبكر لشيك رقم {receipt.check_number} - سند {receipt.receipt_number}'
+            })
+            
+            # شيكات تحت التحصيل (دائن)
+            checks_in_transit = JournalService.get_or_create_checks_in_transit_account()
+            lines_data.append({
+                'account_id': checks_in_transit.id,
+                'debit': 0,
+                'credit': receipt.amount,
+                'description': f'تحصيل مبكر لشيك رقم {receipt.check_number} - سند {receipt.receipt_number}'
+            })
+        else:
+            # الفاتورة غير مكتملة - تسجيل كدفعة مقدمة
+            # دفعات مقدمة من العملاء (مدين)
+            advance_account = JournalService.get_or_create_advance_from_customers_account()
+            lines_data.append({
+                'account_id': advance_account.id,
+                'debit': receipt.amount,
+                'credit': 0,
+                'description': f'دفعة مقدمة - تحصيل مبكر لشيك رقم {receipt.check_number} - سند {receipt.receipt_number}'
+            })
+            
+            # شيكات تحت التحصيل (دائن)
+            checks_in_transit = JournalService.get_or_create_checks_in_transit_account()
+            lines_data.append({
+                'account_id': checks_in_transit.id,
+                'debit': 0,
+                'credit': receipt.amount,
+                'description': f'دفعة مقدمة - تحصيل مبكر لشيك رقم {receipt.check_number} - سند {receipt.receipt_number}'
+            })
+        
+        return JournalService.create_journal_entry(
+            entry_date=collection_date,
+            reference_type='check_early_collection',
+            reference_id=receipt.id,
+            description=f'قيد تحصيل مبكر لشيك رقم {receipt.check_number} - {receipt.customer.name}',
+            lines_data=lines_data,
+            user=user
+        )
+    
+    @staticmethod
+    def process_bounced_check_automatically(receipt, bounce_reason, user=None):
+        """معالجة الشيك المرتد تلقائياً وفق IFRS 9"""
+        from datetime import datetime
+        
+        # تحديث سبب الارتداد في الشيك
+        receipt.bounce_reason = bounce_reason
+        receipt.save()
+        
+        # إنشاء قيد يومية للشيك المرتد
+        collection_date = datetime.now().date()
+        
+        JournalService.create_check_bounced_entry(
+            receipt, collection_date, user=user
+        )
+        
+        # إضافة تنبيه في السجل
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f'تم معالجة الشيك المرتد رقم {receipt.check_number} تلقائياً - سبب الارتداد: {bounce_reason}')
+        
+        return True
+    
+    @staticmethod
+    def process_check_warnings_automatically(receipt, collection_date, user=None):
+        """معالجة تحذيرات الشيكات تلقائياً"""
+        from datetime import datetime
+        
+        warnings_processed = []
+        
+        # فحص التحصيل المبكر
+        if collection_date < receipt.check_due_date:
+            # البحث عن الفاتورة المرتبطة
+            from sales.models import SalesInvoice
+            try:
+                invoice = SalesInvoice.objects.filter(
+                    customer=receipt.customer,
+                    total_amount=receipt.amount,
+                    date__lte=receipt.check_date
+                ).first()
+                
+                if invoice:
+                    # التحقق من حالة الفاتورة
+                    is_invoice_complete = getattr(invoice, 'is_completed', True)
+                    
+                    if not is_invoice_complete:
+                        # إنشاء قيد للدفعة المقدمة
+                        JournalService.create_check_early_collection_entry(
+                            receipt, collection_date, is_invoice_complete=False, user=user
+                        )
+                        warnings_processed.append("تم إنشاء قيد دفعة مقدمة من العملاء")
+                    else:
+                        # اعتراف طبيعي بالإيراد
+                        JournalService.create_check_early_collection_entry(
+                            receipt, collection_date, is_invoice_complete=True, user=user
+                        )
+                        warnings_processed.append("تم الاعتراف بالإيراد بشكل طبيعي")
+                else:
+                    # اعتراف طبيعي
+                    JournalService.create_check_early_collection_entry(
+                        receipt, collection_date, is_invoice_complete=True, user=user
+                    )
+                    warnings_processed.append("تم الاعتراف بالإيراد بشكل طبيعي")
+            except Exception as e:
+                print(f"خطأ في البحث عن الفاتورة المرتبطة: {e}")
+        
+        # فحص التحصيل المتأخر
+        elif collection_date > receipt.check_due_date:
+            days_late = (collection_date - receipt.check_due_date).days
+            warnings_processed.append(f"تم التحصيل بعد {days_late} يوم من تاريخ الاستحقاق")
+        
+        return warnings_processed

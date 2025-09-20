@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load i18n %}
 
-{% block title %}{% trans "Details" %} المستودع: {{ warehouse.name }} - {{ block.super }}{% endblock %}
+{% block title %}{% trans "Details" %} {% trans "Warehouse:" %} {{ warehouse.name }} - {{ block.super }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -96,7 +96,7 @@
                         </h2>
                         <p class="mb-0 opacity-75">
                             <i class="fas fa-barcode me-2"></i>
-                            كود المستودع: {{ warehouse.code }}
+                            {% trans "Warehouse Code:" %} {{ warehouse.code }}
                         </p>
                     </div>
                     <div class="text-end">
@@ -104,7 +104,7 @@
                             {% if warehouse.is_active %}
                                 <i class="fas fa-check-circle me-1"></i>{% trans "Active" %}
                             {% else %}
-                                <i class="fas fa-times-circle me-1"></i>غير {% trans "Active" %}
+                                <i class="fas fa-times-circle me-1"></i>{% trans "Inactive" %}
                             {% endif %}
                         </span>
                     </div>
@@ -123,7 +123,7 @@
                             </li>
                             <li class="breadcrumb-item">
                                 <a href="{% url 'inventory:warehouse_list' %}">
-                                    <i class="fas fa-warehouse"></i> المستودعات
+                                    <i class="fas fa-warehouse"></i> {% trans "Warehouses" %}
                                 </a>
                             </li>
                             <li class="breadcrumb-item active">{{ warehouse.name }}</li>
@@ -141,7 +141,7 @@
                         </a>
                         <a href="{% url 'inventory:warehouse_list' %}" class="btn btn-secondary">
                             <i class="fas fa-arrow-right me-1"></i>
-                            العودة
+                            {% trans "Back" %}
                         </a>
                     </div>
                 </div>
@@ -154,7 +154,7 @@
                     <div class="col-12 mb-4">
                         <h5 class="mb-3">
                             <i class="fas fa-chart-bar me-2"></i>
-                            {% trans "Statistics" %} المستودع
+                            {% trans "Warehouse Statistics" %}
                         </h5>
                         <div class="row">
                             <div class="col-md-3 mb-3">
@@ -164,7 +164,7 @@
                                             <i class="fas fa-exchange-alt fa-lg"></i>
                                         </div>
                                         <h4 class="mb-1">{{ stats.total_movements }}</h4>
-                                        <p class="text-muted mb-0">إجمالي الحركات</p>
+                                        <p class="text-muted mb-0">{% trans "Total Movements" %}</p>
                                     </div>
                                 </div>
                             </div>
@@ -175,7 +175,7 @@
                                             <i class="fas fa-arrow-down fa-lg"></i>
                                         </div>
                                         <h4 class="mb-1">{{ stats.in_movements }}</h4>
-                                        <p class="text-muted mb-0">حركات الإدخال</p>
+                                        <p class="text-muted mb-0">{% trans "Incoming Movements" %}</p>
                                     </div>
                                 </div>
                             </div>
@@ -186,7 +186,7 @@
                                             <i class="fas fa-arrow-up fa-lg"></i>
                                         </div>
                                         <h4 class="mb-1">{{ stats.out_movements }}</h4>
-                                        <p class="text-muted mb-0">حركات الإخراج</p>
+                                        <p class="text-muted mb-0">{% trans "Outgoing Movements" %}</p>
                                     </div>
                                 </div>
                             </div>
@@ -197,7 +197,7 @@
                                             <i class="fas fa-boxes fa-lg"></i>
                                         </div>
                                         <h4 class="mb-1">{{ stats.active_products }}</h4>
-                                        <p class="text-muted mb-0">المنتجات ال{% trans "Active" %}ة</p>
+                                        <p class="text-muted mb-0">{% trans "Active Products" %}</p>
                                     </div>
                                 </div>
                             </div>
@@ -210,19 +210,19 @@
                             <div class="card-header">
                                 <h6 class="mb-0">
                                     <i class="fas fa-info-circle me-2"></i>
-                                    {% trans "Information" %} المستودع
+                                    {% trans "Warehouse Information" %}
                                 </h6>
                             </div>
                             <div class="card-body">
                                 <div class="info-item">
                                     <div class="row">
-                                        <div class="col-4 text-muted">اسم المستودع:</div>
+                                        <div class="col-4 text-muted">{% trans "Warehouse Name:" %}</div>
                                         <div class="col-8 fw-medium">{{ warehouse.name }}</div>
                                     </div>
                                 </div>
                                 <div class="info-item">
                                     <div class="row">
-                                        <div class="col-4 text-muted">كود المستودع:</div>
+                                        <div class="col-4 text-muted">{% trans "Warehouse Code:" %}</div>
                                         <div class="col-8">
                                             <code>{{ warehouse.code }}</code>
                                         </div>
@@ -236,7 +236,7 @@
                                                 {% if warehouse.is_active %}
                                                     <i class="fas fa-check-circle me-1"></i>{% trans "Active" %}
                                                 {% else %}
-                                                    <i class="fas fa-times-circle me-1"></i>غير {% trans "Active" %}
+                                                    <i class="fas fa-times-circle me-1"></i>{% trans "Inactive" %}
                                                 {% endif %}
                                             </span>
                                         </div>
@@ -252,7 +252,7 @@
                                 {% endif %}
                                 <div class="info-item">
                                     <div class="row">
-                                        <div class="col-4 text-muted">تاريخ الإنشاء:</div>
+                                        <div class="col-4 text-muted">{% trans "Creation Date:" %}</div>
                                         <div class="col-8">{{ warehouse.created_at|date:"j/n/Y H:i" }}</div>
                                     </div>
                                 </div>
@@ -266,7 +266,7 @@
                             <div class="card-header">
                                 <h6 class="mb-0">
                                     <i class="fas fa-bolt me-2"></i>
-                                    إجراءات سريعة
+                                    {% trans "Quick Actions" %}
                                 </h6>
                             </div>
                             <div class="card-body">
@@ -275,8 +275,8 @@
                                        class="btn btn-outline-primary d-flex align-items-center">
                                         <i class="fas fa-exchange-alt me-2"></i>
                                         <div class="text-start">
-                                            <div class="fw-medium">{% trans "View" %} حركات المخزون</div>
-                                            <small class="text-muted">جميع الحركات الخاصة بهذا المستودع</small>
+                                            <div class="fw-medium">{% trans "View Inventory Movements" %}</div>
+                                            <small class="text-muted">{% trans "All movements related to this warehouse" %}</small>
                                         </div>
                                     </a>
                                     
@@ -284,8 +284,8 @@
                                        class="btn btn-outline-info d-flex align-items-center">
                                         <i class="fas fa-truck me-2"></i>
                                         <div class="text-start">
-                                            <div class="fw-medium">{% trans "View" %} التحوي{% trans "No" %}ت</div>
-                                            <small class="text-muted">التحوي{% trans "No" %}ت من وإلى هذا المستودع</small>
+                                            <div class="fw-medium">{% trans "View Transfers" %}</div>
+                                            <small class="text-muted">{% trans "Transfers from and to this warehouse" %}</small>
                                         </div>
                                     </a>
                                     
@@ -293,8 +293,8 @@
                                        class="btn btn-outline-success d-flex align-items-center">
                                         <i class="fas fa-boxes me-2"></i>
                                         <div class="text-start">
-                                            <div class="fw-medium">مخزون المنتجات</div>
-                                            <small class="text-muted">المنتجات الموجودة في هذا المستودع</small>
+                                            <div class="fw-medium">{% trans "Product Inventory" %}</div>
+                                            <small class="text-muted">{% trans "Products available in this warehouse" %}</small>
                                         </div>
                                     </a>
                                 </div>

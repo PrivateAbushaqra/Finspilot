@@ -1,14 +1,15 @@
 {% extends 'base.html' %}
+{% load i18n %}
 {% block content %}
 <div class="container mt-4">
     <h2>{{ page_title }}</h2>
     <div class="alert alert-warning">
-        هل أنت متأكد أنك تريد حذف الفئة: <strong>{{ category.name }}</strong>؟
+        {% trans "Are you sure you want to delete the category" %}: <strong>{{ category.name }}</strong>؟
     </div>
     <form method="post">
         {% csrf_token %}
-        <button type="submit" class="btn btn-danger">حذف</button>
-        <a href="{% url 'revenues_expenses:category_list' %}" class="btn btn-secondary">إلغاء</a>
+        <button type="submit" class="btn btn-danger">{% trans "Delete" %}</button>
+        <a href="{% url 'revenues_expenses:category_list' %}" class="btn btn-secondary">{% trans "Cancel" %}</a>
     </form>
 </div>
 {% endblock %}

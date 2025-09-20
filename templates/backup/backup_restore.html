@@ -104,7 +104,7 @@
                         <div class="card-header bg-secondary text-white">
                             <h5 class="mb-0">
                                 <i class="fas fa-table me-2"></i>
-                                معلومات الجداول وتتبع التقدم
+                                {% trans "Tables Information and Progress Tracking" %}
                             </h5>
                         </div>
                         <div class="card-body">
@@ -112,20 +112,20 @@
                             <div class="row mb-3">
                                 <div class="col-md-4">
                                     <div class="alert alert-info text-center">
-                                        <strong>إجمالي الجداول</strong><br>
+                                        <strong>{% trans "Total Tables" %}</strong><br>
                                         <span id="totalTables" class="h4">0</span>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="alert alert-info text-center">
-                                        <strong>إجمالي السجلات</strong><br>
+                                        <strong>{% trans "Total Records" %}</strong><br>
                                         <span id="totalRecords" class="h4">0</span>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="alert alert-success text-center">
-                                        <strong>الوقت المتبقي</strong><br>
-                                        <span id="estimatedTime" class="h4">حساب...</span>
+                                        <strong>{% trans "Remaining Time" %}</strong><br>
+                                        <span id="estimatedTime" class="h4">{% trans "Calculating..." %}</span>
                                     </div>
                                 </div>
                             </div>
@@ -141,13 +141,13 @@
 
                             <!-- حالة العملية الحالية -->
                             <div class="alert alert-primary" id="currentStatus">
-                                <strong>الحالة:</strong> <span id="currentTableText">جاري التحضير...</span>
+                                <strong>{% trans "Status:" %}</strong> <span id="currentTableText">{% trans "Preparing..." %}</span>
                             </div>
 
                             <!-- قائمة الجداول مع التقدم -->
                             <div class="row">
                                 <div class="col-12">
-                                    <h6 class="text-muted">تفاصيل الجداول:</h6>
+                                    <h6 class="text-muted">{% trans "Table Details:" %}</h6>
                                     <div id="tablesProgress" style="max-height: 400px; overflow-y: auto;">
                                         <!-- سيتم ملء هذا القسم بواسطة JavaScript -->
                                     </div>
@@ -476,7 +476,7 @@ function loadTablesInfo() {
     })
     .catch(error => {
         console.error('خطأ في جلب معلومات الجداول:', error);
-        alert('خطأ: ' + error.message + '\nيرجى تسجيل الدخول مرة أخرى');
+        alert('Error: ' + error.message + '\nPlease log in again');
         // إخفاء قسم معلومات الجداول في حالة الخطأ
         document.getElementById('tablesInfoCard').style.display = 'none';
     });
@@ -598,9 +598,9 @@ function startRestoreProgressMonitoring() {
                     clearInterval(restoreInterval);
                     restoreInterval = null;
                     if (p.status === 'completed') {
-                        setTimeout(() => alert('✅ تم إتمام الاستعادة بنجاح'), 500);
+                        setTimeout(() => alert('✅ Restore completed successfully'), 500);
                     } else if (p.status === 'error') {
-                        setTimeout(() => alert('❌ خطأ: ' + (p.error || 'حدث خطأ')), 500);
+                        setTimeout(() => alert('❌ Error: ' + (p.error || 'An error occurred')), 500);
                     }
                 }
             }
@@ -683,7 +683,7 @@ function createBackup(format) {
     
     var csrf = document.querySelector('[name=csrfmiddlewaretoken]');
     if (!csrf) {
-        alert('خطأ: لم يتم العثور على رمز الأمان - يرجى إعادة تحميل الصفحة');
+        alert('Error: CSRF token not found - please reload the page');
         button.disabled = false;
         button.innerHTML = originalContent;
         return;
@@ -751,7 +751,7 @@ function createBackup(format) {
         }
     })
     .catch(function(error) {
-        alert('❌ خطأ: ' + error.message);
+        alert('❌ Error: ' + error.message);
         document.getElementById('tablesInfoCard').style.display = 'none';
         // إعادة تفعيل جميع الأزرار في حالة الخطأ
         enableAllBackupButtons();
@@ -797,13 +797,13 @@ function startProgressMonitoring() {
                     
                     if (data.progress.status === 'completed') {
                         setTimeout(() => {
-                            alert('✅ تم إنشاء النسخة الاحتياطية بنجاح!');
+                            alert('✅ Backup created successfully!');
                             refreshBackupsList();
                             // إعادة تفعيل الأزرار بعد انتهاء العملية
                             enableAllBackupButtons();
                         }, 1000);
                     } else if (data.progress.status === 'error') {
-                        alert('❌ خطأ: ' + (data.progress.error || 'حدث خطأ غير معروف'));
+                        alert('❌ Error: ' + (data.progress.error || 'Unknown error occurred'));
                         // إعادة تفعيل الأزرار في حالة الخطأ
                         enableAllBackupButtons();
                     }
@@ -875,17 +875,17 @@ function handleDeleteClick(button) {
     
     var filename = button.getAttribute('data-filename');
     if (!filename) {
-        alert('خطأ: لم يتم العثور على اسم الملف');
+        alert('Error: File name not found');
         return;
     }
     
-    if (!confirm('هل تريد حذف النسخة الاحتياطية: ' + filename + '؟\n\n⚠️ هذا الإجراء لا يمكن التراجع عنه!')) {
+    if (!confirm('Do you want to delete the backup: ' + filename + '?\n\n⚠️ This action cannot be undone!')) {
         return;
     }
     
     var csrf = document.querySelector('[name=csrfmiddlewaretoken]');
     if (!csrf) {
-        alert('خطأ: لم يتم العثور على رمز الأمان');
+        alert('Error: CSRF token not found');
         return;
     }
     
@@ -920,7 +920,7 @@ function handleDeleteClick(button) {
     })
     .then(function(data) {
         if (data.success) {
-            alert('✅ تم حذف النسخة الاحتياطية بنجاح وتم تسجيل العملية في سجل الأنشطة!');
+            alert('✅ Backup deleted successfully and the operation has been logged in the activity log!');
             refreshBackupsList(); // تحديث القائمة مباشرة
         } else {
             throw new Error(data.error || 'خطأ غير معروف');
@@ -928,7 +928,7 @@ function handleDeleteClick(button) {
     })
     .catch(function(error) {
         console.error('💥 خطأ:', error);
-        alert('❌ خطأ: ' + error.message);
+        alert('❌ Error: ' + error.message);
         
         // إعادة تفعيل الزر
         button.disabled = false;
@@ -1009,11 +1009,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     modal.hide();
                     startRestoreProgressMonitoring();
                 } else {
-                    alert('❌ فشل بدء الاستعادة: ' + (data.error || 'غير معروف'));
+                    alert('❌ Failed to start restore: ' + (data.error || 'Unknown'));
                 }
             })
             .catch(err => {
-                alert('❌ خطأ في الاتصال: ' + err.message);
+                alert('❌ Connection error: ' + err.message);
             });
         });
     }
@@ -1287,7 +1287,7 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             var fileInput = restoreForm.querySelector('input[name="backup_file"]');
             if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-                alert('يرجى اختيار ملف النسخة الاحتياطية');
+                alert('Please select a backup file');
                 return;
             }
             var formData = new FormData(restoreForm);
@@ -1303,11 +1303,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('tablesInfoCard').style.display = 'block';
                     startRestoreProgressMonitoring();
                 } else {
-                    alert('❌ فشل بدء الاستعادة: ' + (data.error || 'غير معروف'));
+                    alert('❌ Failed to start restore: ' + (data.error || 'Unknown'));
                 }
             })
             .catch(err => {
-                alert('❌ خطأ في الاتصال: ' + err.message);
+                alert('❌ Connection error: ' + err.message);
             });
         });
     }

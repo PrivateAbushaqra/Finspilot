@@ -80,7 +80,7 @@
                     <div class="d-flex align-items-center">
                         <i class="fas fa-edit fa-2x me-3"></i>
                         <div>
-                            <h3 class="mb-1">{% trans "Edit" %} المستودع</h3>
+                            <h3 class="mb-1">{% trans "Edit Warehouse" %}</h3>
                             <p class="mb-0 opacity-75">{{ object.name }}</p>
                         </div>
                     </div>
@@ -97,7 +97,7 @@
                             </li>
                             <li class="breadcrumb-item">
                                 <a href="{% url 'inventory:warehouse_list' %}">
-                                    <i class="fas fa-warehouse"></i> المستودعات
+                                    <i class="fas fa-warehouse"></i> {% trans "Warehouses" %}
                                 </a>
                             </li>
                             <li class="breadcrumb-item">
@@ -118,13 +118,13 @@
                     <div class="form-section">
                         <h6>
                             <i class="fas fa-info-circle me-2"></i>
-                            ال{% trans "Information" %} الأساسية
+                            {% trans "Basic Information" %}
                         </h6>
                         
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="{{ form.name.id_for_label }}" class="form-label">
-                                    اسم المستودع <span class="text-danger">*</span>
+                                    {% trans "Warehouse Name" %} <span class="text-danger">*</span>
                                 </label>
                                 <input type="text" 
                                        class="form-control {% if form.name.errors %}is-invalid{% endif %}" 
@@ -135,12 +135,12 @@
                                 {% if form.name.errors %}
                                     <div class="invalid-feedback">{{ form.name.errors.0 }}</div>
                                 {% endif %}
-                                <div class="form-text">اسم واضح ومميز للمستودع</div>
+                                <div class="form-text">{% trans "Clear and distinctive name for the warehouse" %}</div>
                             </div>
                             
                             <div class="col-md-6 mb-3">
                                 <label for="{{ form.code.id_for_label }}" class="form-label">
-                                    كود المستودع <span class="text-danger">*</span>
+                                    {% trans "Warehouse Code" %} <span class="text-danger">*</span>
                                 </label>
                                 <input type="text" 
                                        class="form-control {% if form.code.errors %}is-invalid{% endif %}" 
@@ -151,7 +151,7 @@
                                 {% if form.code.errors %}
                                     <div class="invalid-feedback">{{ form.code.errors.0 }}</div>
                                 {% endif %}
-                                <div class="form-text">كود فريد للمستودع (أحرف وأرقام)</div>
+                                <div class="form-text">{% trans "Unique code for the warehouse (letters and numbers)" %}</div>
                             </div>
                         </div>
                         
@@ -167,7 +167,7 @@
                             {% if form.address.errors %}
                                 <div class="invalid-feedback">{{ form.address.errors.0 }}</div>
                             {% endif %}
-                            <div class="form-text">عنوان المستودع (اختياري)</div>
+                            <div class="form-text">{% trans "Warehouse address (optional)" %}</div>
                         </div>
                     </div>
                     
@@ -185,11 +185,11 @@
                                    name="{{ form.is_active.name }}"
                                    {% if form.is_active.value %}checked{% endif %}>
                             <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
-                                <strong>مستودع {% trans "Active" %}</strong>
+                                <strong>{% trans "Active Warehouse" %}</strong>
                                 <br>
                                 <small class="text-muted">
-                                    عند التفعيل: يمكن استخدام المستودع في العمليات<br>
-                                    عند الإلغاء: يتم {% trans "Hide" %} المستودع من القوائم
+                                    {% trans "When activated: the warehouse can be used in operations" %}<br>
+                                    {% trans "When deactivated: the warehouse will be hidden from lists" %}
                                 </small>
                             </label>
                         </div>
@@ -204,8 +204,8 @@
                                 <strong>{% trans "Default Warehouse" %}</strong>
                                 <br>
                                 <small class="text-muted">
-                                    عند التفعيل: سيتم اختيار هذا المستودع تلقائياً في جميع العمليات<br>
-                                    ملاحظة: يمكن أن يكون مستودع افتراضي واحد فقط
+                                    {% trans "When activated: this warehouse will be selected automatically in all operations" %}<br>
+                                    {% trans "Note: there can be only one default warehouse" %}
                                 </small>
                             </label>
                         </div>
@@ -215,12 +215,12 @@
                     <div class="form-section">
                         <div class="alert alert-info">
                             <i class="fas fa-lightbulb me-2"></i>
-                            <strong>نصائح مهمة:</strong>
+                            <strong>{% trans "Important Tips:" %}</strong>
                             <ul class="mb-0 mt-2">
-                                <li>تأكد من أن اسم المستودع واضح ومفهوم</li>
-                                <li>استخدم كود قصير وسهل التذكر للمستودع</li>
-                                <li>إلغاء تفعيل المستودع لن ي{% trans "Delete" %} البيانات المرتبطة به</li>
-                                <li>يمكن إعادة تفعيل المستودع في أي وقت</li>
+                                <li>{% trans "Make sure the warehouse name is clear and understandable" %}</li>
+                                <li>{% trans "Use a short and easy-to-remember code for the warehouse" %}</li>
+                                <li>{% trans "Deactivating the warehouse will not delete the associated data" %}</li>
+                                <li>{% trans "The warehouse can be reactivated at any time" %}</li>
                             </ul>
                         </div>
                     </div>
@@ -231,13 +231,13 @@
                             <div>
                                 <a href="{% url 'inventory:warehouse_detail' object.pk %}" class="btn btn-secondary">
                                     <i class="fas fa-arrow-right me-1"></i>
-                                    إلغاء
+                                    {% trans "Cancel" %}
                                 </a>
                             </div>
                             <div>
                                 <button type="submit" class="btn btn-save">
                                     <i class="fas fa-save me-2"></i>
-                                    {% trans "Save" %} التغييرات
+                                    {% trans "Save Changes" %}
                                 </button>
                             </div>
                         </div>

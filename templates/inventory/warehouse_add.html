@@ -11,11 +11,11 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2>
                     <i class="fas fa-plus-circle me-2"></i>
-                    {% trans "Addition" %} مستودع {% trans "New" %}
+                    {% trans "Addition" %} {% trans "Warehouse" %} {% trans "New" %}
                 </h2>
                 <a href="{% url 'inventory:warehouse_list' %}" class="btn btn-secondary">
                     <i class="fas fa-arrow-left me-2"></i>
-                    العودة لل{% trans "List" %}
+                    {% trans "Back to" %} {% trans "List" %}
                 </a>
             </div>
         </div>
@@ -30,13 +30,13 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">اسم المستودع <span class="text-danger">*</span></label>
+                                    <label class="form-label">{% trans "Warehouse Name" %} <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" name="name" required>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">رمز المستودع <span class="text-danger">*</span></label>
+                                    <label class="form-label">{% trans "Warehouse Code" %} <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" name="code" required>
                                 </div>
                             </div>
@@ -45,18 +45,18 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">المستودع الأساسي</label>
+                                    <label class="form-label">{% trans "Parent Warehouse" %}</label>
                                     <select class="form-select" name="parent">
-                                        <option value="">مستودع رئيسي</option>
+                                        <option value="">{% trans "Main Warehouse" %}</option>
                                         <!-- سيتم ملء هذا من قاعدة البيانات -->
                                     </select>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">مدير المستودع</label>
+                                    <label class="form-label">{% trans "Warehouse Manager" %}</label>
                                     <select class="form-select" name="manager">
-                                        <option value="">اختر المدير</option>
+                                        <option value="">{% trans "Choose Manager" %}</option>
                                         <!-- سيتم ملء هذا من قاعدة البيانات -->
                                     </select>
                                 </div>
@@ -65,14 +65,14 @@
                         
                         <div class="mb-3">
                             <label class="form-label">{% trans "Address" %}</label>
-                            <textarea class="form-control" name="address" rows="3" placeholder="عنوان المستودع..."></textarea>
+                            <textarea class="form-control" name="address" rows="3" placeholder="{% trans 'Warehouse Address...' %}"></textarea>
                         </div>
                         
                         <div class="mb-3">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" name="is_active" id="is_active" checked>
                                 <label class="form-check-label" for="is_active">
-                                    مستودع {% trans "Active" %}
+                                    {% trans "Warehouse" %} {% trans "Active" %}
                                 </label>
                             </div>
                         </div>
@@ -92,11 +92,11 @@
                         <div class="d-flex justify-content-end gap-2">
                             <a href="{% url 'inventory:warehouse_list' %}" class="btn btn-secondary">
                                 <i class="fas fa-times me-2"></i>
-                                إلغاء
+                                {% trans "Cancel" %}
                             </a>
                             <button type="submit" class="btn btn-success">
                                 <i class="fas fa-save me-2"></i>
-                                {% trans "Save" %} المستودع
+                                {% trans "Save" %} {% trans "Warehouse" %}
                             </button>
                         </div>
                     </form>

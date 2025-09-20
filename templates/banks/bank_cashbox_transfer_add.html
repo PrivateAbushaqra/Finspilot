@@ -3,7 +3,7 @@
 {% load currency_tags %}
 {% load l10n %}
 
-{% block title %}{% trans "Transfer" %} بين البنك والصندوق - {{ block.super }}{% endblock %}
+{% block title %}{% trans "Transfer" %} {% trans "Between Bank and Cashbox" %} - {{ block.super }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -150,18 +150,18 @@
                         <div class="col-md-6">
                             <h4 class="mb-0">
                                 <i class="fas fa-exchange-alt me-2"></i>
-                                {% trans "Transfer" %} بين البنك والصندوق
+                                {% trans "Transfer" %} {% trans "Between Bank and Cashbox" %}
                             </h4>
-                            <p class="mb-0 mt-2 opacity-75">إنشاء {% trans "Transfer" %} {% trans "New" %} بين الحساب البنكي والصناديق النقدية</p>
+                            <p class="mb-0 mt-2 opacity-75">{% trans "Create" %} {% trans "Transfer" %} {% trans "New" %} {% trans "Between Bank Account and Cashboxes" %}</p>
                         </div>
                         <div class="col-md-6 text-end">
                             <button type="button" class="btn btn-outline-light me-2" onclick="printTransferForm()">
                                 <i class="fas fa-print me-1"></i>
-                                {% trans "Print" %} النموذج
+                                {% trans "Print" %} {% trans "Form" %}
                             </button>
                             <a href="{% url 'banks:transfer_list' %}" class="btn btn-light">
                                 <i class="fas fa-arrow-right me-1"></i>
-                                العودة إلى ال{% trans "List" %}
+                                {% trans "Back to" %} {% trans "List" %}
                             </a>
                         </div>
                     </div>
@@ -184,29 +184,29 @@
                         <div class="form-section">
                             <h5 class="section-title">
                                 <i class="fas fa-info-circle me-2"></i>
-                                {% trans "Information" %} ال{% trans "Transfer" %} الأساسية
+                                {% trans "Information" %} {% trans "Transfer" %} {% trans "Basic" %}
                             </h5>
                             
                             <div class="row">
                                 <div class="col-md-3">
-                                    <label for="transfer_number" class="form-label">رقم ال{% trans "Transfer" %}</label>
+                                    <label for="transfer_number" class="form-label">{% trans "Transfer" %} {% trans "Number" %}</label>
                                     <input type="text" class="form-control" id="transfer_number" 
                                            {% if transfer_sequence %}value="{{ transfer_sequence.get_formatted_number }}"{% endif %}
                                            readonly style="background-color: #e9ecef;">
-                                    <div class="form-text">يتم توليده تلقائياً من نظام التسلسل</div>
+                                    <div class="form-text">{% trans "Generated automatically from the sequencing system" %}</div>
                                 </div>
                                 
                                 <div class="col-md-3">
-                                    <label for="date" class="form-label">تاريخ ال{% trans "Transfer" %} <span class="text-danger">*</span></label>
+                                    <label for="date" class="form-label">{% trans "Transfer" %} {% trans "Date" %} <span class="text-danger">*</span></label>
                                     <input type="date" class="form-control" id="date" name="date" required>
                                 </div>
                                 
                                 <div class="col-md-6">
-                                    <label for="transfer_type" class="form-label">نوع ال{% trans "Transfer" %} <span class="text-danger">*</span></label>
+                                    <label for="transfer_type" class="form-label">{% trans "Transfer" %} {% trans "Type" %} <span class="text-danger">*</span></label>
                                     <select class="form-select" id="transfer_type" name="transfer_type" required>
-                                        <option value="">اختر نوع ال{% trans "Transfer" %}</option>
-                                        <option value="bank_to_cashbox">من البنك إلى الصندوق</option>
-                                        <option value="cashbox_to_bank">من الصندوق إلى البنك</option>
+                                        <option value="">{% trans "Choose" %} {% trans "Transfer" %} {% trans "Type" %}</option>
+                                        <option value="bank_to_cashbox">{% trans "From Bank to Cashbox" %}</option>
+                                        <option value="cashbox_to_bank">{% trans "From Cashbox to Bank" %}</option>
                                     </select>
                                 </div>
                             </div>
@@ -216,14 +216,14 @@
                         <div class="form-section">
                             <h5 class="section-title">
                                 <i class="fas fa-university me-2"></i>
-                                اختيار البنك والصندوق
+                                {% trans "Choose Bank and Cashbox" %}
                             </h5>
                             
                             <div class="row">
                                 <div class="col-md-6">
-                                    <label for="bank" class="form-label">الحساب البنكي <span class="text-danger">*</span></label>
+                                    <label for="bank" class="form-label">{% trans "Bank Account" %} <span class="text-danger">*</span></label>
                                     <select class="form-select" id="bank" name="bank" required>
-                                        <option value="">اختر الحساب البنكي</option>
+                                        <option value="">{% trans "Choose Bank Account" %}</option>
                                         {% for bank in banks %}
                                             <option value="{{ bank.id }}" data-balance="{{ bank.balance|default_if_none:0|unlocalize }}" data-currency="{{ bank.currency|default:'JOD' }}" data-bank-name="{{ bank.bank_name }}">
                                                 {{ bank.name }} ({{ bank.bank_name }}) - {{ bank.account_number }}
@@ -232,14 +232,14 @@
                                     </select>
                                     <div id="bankBalance" class="balance-info d-none">
                                         <i class="fas fa-wallet me-1"></i>
-                                        ال{% trans "Balance" %} الحالي: <span class="balance-amount"></span>
+                                        {% trans "Current" %} {% trans "Balance" %}: <span class="balance-amount"></span>
                                     </div>
                                 </div>
                                 
                                 <div class="col-md-6">
-                                    <label for="cashbox" class="form-label">الصندوق النقدي <span class="text-danger">*</span></label>
+                                    <label for="cashbox" class="form-label">{% trans "Cashbox" %} <span class="text-danger">*</span></label>
                                     <select class="form-select" id="cashbox" name="cashbox" required>
-                                        <option value="">اختر الصندوق النقدي</option>
+                                        <option value="">{% trans "Choose Cashbox" %}</option>
                                         {% for cashbox in cashboxes %}
                                             <option value="{{ cashbox.id }}" data-balance="{{ cashbox.balance|default_if_none:0|unlocalize }}" data-currency="{{ cashbox.currency|default:'JOD' }}">
                                                 {{ cashbox.name }}
@@ -249,48 +249,48 @@
                                     </select>
                                     <div id="cashboxBalance" class="balance-info d-none">
                                         <i class="fas fa-cash-register me-1"></i>
-                                        ال{% trans "Balance" %} الحالي: <span class="balance-amount"></span>
+                                        {% trans "Current" %} {% trans "Balance" %}: <span class="balance-amount"></span>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         
-                        <!-- {% trans "Information" %} الشيك -->
+                        <!-- {% trans "Information" %} {% trans "Check" %} -->
                         <div class="form-section check-section">
                             <h5 class="section-title">
                                 <i class="fas fa-money-check me-2"></i>
-                                {% trans "Information" %} الشيك البنكي
+                                {% trans "Information" %} {% trans "Bank Check" %}
                             </h5>
                             
                             <div class="row">
                                 <div class="col-md-4">
-                                    <label for="check_number" class="form-label">رقم الشيك <span class="text-danger">*</span></label>
+                                    <label for="check_number" class="form-label">{% trans "Check Number" %} <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="check_number" name="check_number" required>
                                 </div>
                                 
                                 <div class="col-md-4">
-                                    <label for="check_date" class="form-label">تاريخ الشيك <span class="text-danger">*</span></label>
+                                    <label for="check_date" class="form-label">{% trans "Check Date" %} <span class="text-danger">*</span></label>
                                     <input type="date" class="form-control" id="check_date" name="check_date" required>
                                 </div>
                                 
                                 <div class="col-md-4" style="display: none;">
-                                    <label for="check_bank_name" class="form-label">اسم البنك للشيك <span class="text-danger">*</span></label>
+                                    <label for="check_bank_name" class="form-label">{% trans "Bank Name for Check" %} <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="check_bank_name" name="check_bank_name" required readonly>
-                                    <div class="form-text text-muted">يتم ملؤه تلقائياً بناءً على الحساب البنكي المختار</div>
+                                    <div class="form-text text-muted">{% trans "Filled automatically based on the selected bank account" %}</div>
                                 </div>
                             </div>
                         </div>
                         
-                        <!-- المبالغ -->
+                        <!-- {% trans "Amounts" %} -->
                         <div class="form-section">
                             <h5 class="section-title">
                                 <i class="fas fa-dollar-sign me-2"></i>
-                                {% trans "Details" %} المبالغ
+                                {% trans "Details" %} {% trans "Amounts" %}
                             </h5>
                             
                             <div class="row">
                                 <div class="col-md-4">
-                                    <label for="amount" class="form-label">مبلغ ال{% trans "Transfer" %} <span class="text-danger">*</span></label>
+                                    <label for="amount" class="form-label">{% trans "Transfer" %} {% trans "Amount" %} <span class="text-danger">*</span></label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="amount" name="amount" 
                                                step="0.001" min="0.001" required>
@@ -299,7 +299,7 @@
                                 </div>
                                 
                                 <div class="col-md-4">
-                                    <label for="fees" class="form-label">رسوم ال{% trans "Transfer" %}</label>
+                                    <label for="fees" class="form-label">{% trans "Transfer" %} {% trans "Fees" %}</label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="fees" name="fees" 
                                                step="0.001" min="0" value="0">
@@ -308,25 +308,25 @@
                                 </div>
                                 
                                 <div class="col-md-4">
-                                    <label for="exchange_rate" class="form-label">سعر الصرف</label>
+                                    <label for="exchange_rate" class="form-label">{% trans "Exchange Rate" %}</label>
                                     <input type="number" class="form-control" id="exchange_rate" name="exchange_rate" 
                                            step="0.0001" min="0.0001" value="1">
-                                    <div class="form-text">1.0000 للعملة نفسها</div>
+                                    <div class="form-text">1.0000 {% trans "for the same currency" %}</div>
                                 </div>
                             </div>
                             
                             <div class="transfer-preview d-none" id="transferPreview">
                                 <div class="row align-items-center">
                                     <div class="col-md-4 text-center">
-                                        <strong id="fromAccount">المرسل</strong>
-                                        <div class="text-muted">{% trans "Amount" %} المخصوم: <span id="deductedAmount">0.000</span></div>
+                                        <strong id="fromAccount">{% trans "Sender" %}</strong>
+                                        <div class="text-muted">{% trans "Amount" %} {% trans "Deducted" %}: <span id="deductedAmount">0.000</span></div>
                                     </div>
                                     <div class="col-md-4 text-center">
                                         <i class="fas fa-arrow-right arrow-icon"></i>
                                     </div>
                                     <div class="col-md-4 text-center">
-                                        <strong id="toAccount">المستقبل</strong>
-                                        <div class="text-muted">{% trans "Amount" %} المضاف: <span id="addedAmount">0.000</span></div>
+                                        <strong id="toAccount">{% trans "Receiver" %}</strong>
+                                        <div class="text-muted">{% trans "Amount" %} {% trans "Added" %}: <span id="addedAmount">0.000</span></div>
                                     </div>
                                 </div>
                             </div>
@@ -336,27 +336,27 @@
                         <div class="form-section">
                             <h5 class="section-title">
                                 <i class="fas fa-comment me-2"></i>
-                                {% trans "Description" %} والملاحظات
+                                {% trans "Description" %} {% trans "and Notes" %}
                             </h5>
                             
                             <div class="row">
                                 <div class="col-12">
-                                    <label for="description" class="form-label">وصف ال{% trans "Transfer" %} <span class="text-danger">*</span></label>
+                                    <label for="description" class="form-label">{% trans "Transfer" %} {% trans "Description" %} <span class="text-danger">*</span></label>
                                     <textarea class="form-control" id="description" name="description" rows="3" required
-                                              placeholder="أدخل وصفاً مفص{% trans "No" %}ً لسبب ال{% trans "Transfer" %}..."></textarea>
+                                              placeholder="{% trans "Enter a detailed description of the reason for the Transfer" %}..."></textarea>
                                 </div>
                             </div>
                         </div>
                         
-                        <!-- أزرار الإجراءات -->
+                        <!-- {% trans "Action Buttons" %} -->
                         <div class="text-center">
                             <button type="submit" class="btn btn-submit me-3">
                                 <i class="fas fa-save me-1"></i>
-                                إنشاء ال{% trans "Transfer" %}
+                                {% trans "Create" %} {% trans "Transfer" %}
                             </button>
                             <a href="{% url 'banks:transfer_list' %}" class="btn btn-secondary">
                                 <i class="fas fa-times me-1"></i>
-                                إلغاء
+                                {% trans "Cancel" %}
                             </a>
                         </div>
                     </form>
@@ -409,7 +409,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const balance = selectedOption.dataset.balance;
             const currency = selectedOption.dataset.currency;
             
-            // تحسين {% trans "View" %} ال{% trans "Balance" %} لتجنب فقدان الدقة والتعامل مع القيم ال{% trans "Empty" %}ة
+            // {% trans "Improve Balance View to avoid precision loss and handle Empty values" %}
             let formattedBalance = '0.000';
             if (balance && balance !== 'None' && balance !== 'null') {
                 const parsedBalance = parseFloat(balance);
@@ -424,7 +424,7 @@ document.addEventListener('DOMContentLoaded', function() {
             bankBalanceDiv.classList.add('d-none');
         }
         
-        // تحديث اسم البنك للشيك
+        // {% trans "Update check bank name" %}
         updateCheckBankName();
         updatePreview();
     });
@@ -435,7 +435,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const balance = selectedOption.dataset.balance;
             const currency = selectedOption.dataset.currency;
             
-            // تحسين {% trans "View" %} ال{% trans "Balance" %} لتجنب فقدان الدقة والتعامل مع القيم ال{% trans "Empty" %}ة
+            // {% trans "Improve Balance View to avoid precision loss and handle Empty values" %}
             let formattedBalance = '0.000';
             if (balance && balance !== 'None' && balance !== 'null') {
                 const parsedBalance = parseFloat(balance);
@@ -452,7 +452,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updatePreview();
     });
     
-    // تحديث معاينة ال{% trans "Transfer" %}
+    // {% trans "Update Transfer Preview" %}
     function updatePreview() {
         const transferType = document.getElementById('transfer_type').value;
         const bankOption = bankSelect.options[bankSelect.selectedIndex];
@@ -486,7 +486,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // ربط الأحداث لتحديث المعاينة
+    // {% trans "Bind events to update preview" %}
     document.getElementById('transfer_type').addEventListener('change', function() {
         updatePreview();
         updateCheckBankName();
@@ -495,9 +495,9 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('fees').addEventListener('input', updatePreview);
     document.getElementById('exchange_rate').addEventListener('input', updatePreview);
     
-    // التحقق من صحة النموذج قبل الإرسال
+    // {% trans "Validate form before submission" %}
     document.getElementById('transferForm').addEventListener('submit', function(e) {
-        // منع الإرسال المتكرر
+        // {% trans "Prevent duplicate submission" %}
         if (this.getAttribute('data-submitting') === 'true') {
             e.preventDefault();
             return false;
@@ -509,40 +509,40 @@ document.addEventListener('DOMContentLoaded', function() {
         const amount = parseFloat(document.getElementById('amount').value) || 0;
         const fees = parseFloat(document.getElementById('fees').value) || 0;
         
-        // التحقق من أن جميع الحقول المطلوبة مملوءة
+        // {% trans "Check that all required fields are filled" %}
         if (!transferType) {
             e.preventDefault();
-            alert('يرجى اختيار نوع ال{% trans "Transfer" %}');
+            alert('{% trans "Please choose Transfer type" %}');
             return false;
         }
         
         if (!bankSelect.value) {
             e.preventDefault();
-            alert('يرجى اختيار الحساب البنكي');
+            alert('{% trans "Please choose bank account" %}');
             return false;
         }
         
         if (!cashboxSelect.value) {
             e.preventDefault();
-            alert('يرجى اختيار الصندوق النقدي');
+            alert('{% trans "Please choose cashbox" %}');
             return false;
         }
         
         if (amount <= 0) {
             e.preventDefault();
-            alert('يرجى إدخال مبلغ صحيح أكبر من صفر');
+            alert('{% trans "Please enter a valid amount greater than zero" %}');
             return false;
         }
         
-        // التحقق من أن اسم البنك للشيك قد تم ملؤه
+        // {% trans "Check that the check bank name has been filled" %}
         const checkBankName = document.getElementById('check_bank_name').value.trim();
         if (!checkBankName) {
             e.preventDefault();
-            alert('اسم البنك للشيك مطلوب. يرجى اختيار الحساب البنكي أو{% trans "No" %}ً.');
+            alert('{% trans "Bank name for check is required. Please choose bank account first." %}');
             return false;
         }
         
-        // التحقق من كفاية ال{% trans "Balance" %}
+        // {% trans "Check sufficient Balance" %}
         let sourceBalance = 0;
         let sourceName = '';
         
@@ -564,48 +564,48 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const totalRequired = amount + fees;
         
-        // التحقق من أن المصدر محدد وال{% trans "Balance" %} صالح
+        // {% trans "Check that source is specified and Balance is valid" %}
         if (!sourceName) {
             e.preventDefault();
-            alert('يرجى اختيار مصدر ال{% trans "Transfer" %} أو{% trans "No" %}ً');
+            alert('{% trans "Please choose Transfer source first" %}');
             return false;
         }
         
-        // التحقق من أن ال{% trans "Balance" %} رقم صالح (يمكن أن يكون صفر)
+        // {% trans "Check that Balance is a valid number (can be zero)" %}
         if (isNaN(sourceBalance)) {
             e.preventDefault();
-            alert('{% trans "Error" %} في قراءة {% trans "Balance" %} المصدر. يرجى إعادة المحاولة.');
+            alert('{% trans "Error" %} {% trans "in reading source Balance. Please try again." %}');
             return false;
         }
         
         if (totalRequired > sourceBalance) {
             e.preventDefault();
-            alert(`{% trans "Balance" %} ${sourceName} غير كافي!\nال{% trans "Balance" %} الحالي: ${sourceBalance.toFixed(3)}\n{% trans "Amount" %} المطلوب: ${totalRequired.toFixed(3)}`);
+            alert(`{% trans "Balance" %} ${sourceName} {% trans "insufficient!" %}\n{% trans "Current Balance" %}: ${sourceBalance.toFixed(3)}\n{% trans "Required Amount" %}: ${totalRequired.toFixed(3)}`);
             return false;
         }
         
-        // تعيين حالة الإرسال لمنع الإرسال المتكرر
+        // {% trans "Set submission state to prevent duplicate submission" %}
         this.setAttribute('data-submitting', 'true');
         
-        // تعطيل زر الإرسال
+        // {% trans "Disable submit button" %}
         const submitButton = this.querySelector('button[type="submit"]');
         if (submitButton) {
             submitButton.disabled = true;
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> جاري الإرسال...';
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> {% trans "Sending..." %}';
         }
         
-        // إعادة تفعيل النموذج بعد 10 ثوان في حالة {% trans "Failed" %} الإرسال
+        // {% trans "Re-enable form after 10 seconds in case of Failed submission" %}
         setTimeout(() => {
             this.setAttribute('data-submitting', 'false');
             if (submitButton) {
                 submitButton.disabled = false;
-                submitButton.innerHTML = '<i class="fas fa-save me-1"></i> إنشاء ال{% trans "Transfer" %}';
+                submitButton.innerHTML = '<i class="fas fa-save me-1"></i> {% trans "Create Transfer" %}';
             }
         }, 10000);
     });
 });
 
-// Print Function
+// {% trans "Print Function" %}
 function printTransferForm() {
     window.print();
 }

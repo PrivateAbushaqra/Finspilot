@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load i18n %}
 
-{% block title %}{% trans "Delete" %} المستودع - {{ block.super }}{% endblock %}
+{% block title %}{% trans "Delete" %} {% trans "Warehouse" %} - {{ block.super }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -72,82 +72,82 @@
                 <div class="danger-header">
                     <div class="text-center">
                         <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
-                        <h3 class="mb-0">{% trans "Confirmation" %} {% trans "Delete" %} المستودع</h3>
+                        <h3 class="mb-0">{% trans "Confirmation" %} {% trans "Delete" %} {% trans "Warehouse" %}</h3>
                     </div>
                 </div>
 
                 <div class="text-center mb-4">
-                    <h5 class="text-danger">هل أنت متأكد من {% trans "Delete" %} هذا المستودع؟</h5>
-                    <p class="text-muted">هذا الإجراء لا يمكن التراجع عنه!</p>
+                    <h5 class="text-danger">{% trans "Are you sure you want to delete this warehouse?" %}</h5>
+                    <p class="text-muted">{% trans "This action cannot be undone!" %}</p>
                 </div>
 
                 <!-- {% trans "Information" %} المستودع -->
                 <div class="warehouse-info">
                     <div class="row">
                         <div class="col-md-6">
-                            <h6>{% trans "Information" %} المستودع:</h6>
-                            <p><strong>اسم:</strong> {{ warehouse.name }}</p>
-                            <p><strong>الرمز:</strong> {{ warehouse.code }}</p>
+                            <h6>{% trans "Information" %} {% trans "Warehouse" %}:</h6>
+                            <p><strong>{% trans "Name" %}:</strong> {{ warehouse.name }}</p>
+                            <p><strong>{% trans "Code" %}:</strong> {{ warehouse.code }}</p>
                             {% if warehouse.address %}
                                 <p><strong>{% trans "Address" %}:</strong> {{ warehouse.address }}</p>
                             {% endif %}
                             {% if warehouse.manager %}
-                                <p><strong>المدير:</strong> {{ warehouse.manager.get_full_name|default:warehouse.manager.username }}</p>
+                                <p><strong>{% trans "Manager" %}:</strong> {{ warehouse.manager.get_full_name|default:warehouse.manager.username }}</p>
                             {% endif %}
                             <p><strong>{% trans "Status" %}:</strong> 
                                 {% if warehouse.is_active %}
                                     <span class="badge bg-success">{% trans "Active" %}</span>
                                 {% else %}
-                                    <span class="badge bg-secondary">غير {% trans "Active" %}</span>
+                                    <span class="badge bg-secondary">{% trans "Not" %} {% trans "Active" %}</span>
                                 {% endif %}
                             </p>
-                            <p class="mb-0"><strong>تاريخ الإنشاء:</strong> {{ warehouse.created_at|date:"Y-m-d" }}</p>
+                            <p class="mb-0"><strong>{% trans "Creation Date" %}:</strong> {{ warehouse.created_at|date:"Y-m-d" }}</p>
                         </div>
                         
                         {% if related_data and not can_delete %}
                         <div class="col-md-6">
-                            <h6>البيانات المرتبطة:</h6>
+                            <h6>{% trans "Related Data" %}:</h6>
                             <div class="bg-danger bg-opacity-10 border border-danger p-3 rounded">
                                 {% if related_data.inventory_movements %}
                                     <div class="related-data-item">
                                         <i class="fas fa-warehouse text-danger me-2"></i>
-                                        <strong>حركات المخزون:</strong> {{ related_data.inventory_movements }} حركة
+                                        <strong>{% trans "Inventory Movements" %}:</strong> {{ related_data.inventory_movements }} {% trans "Movement" %}
                                     </div>
                                 {% endif %}
                                 
                                 {% if related_data.transfers_from %}
                                     <div class="related-data-item">
                                         <i class="fas fa-arrow-right text-warning me-2"></i>
-                                        <strong>تحوي{% trans "No" %}ت صادرة:</strong> {{ related_data.transfers_from }} {% trans "Transfer" %}
+                                        <strong>{% trans "Outgoing Transfers" %}:</strong> {{ related_data.transfers_from }} {% trans "Transfer" %}
                                     </div>
                                 {% endif %}
                                 
                                 {% if related_data.transfers_to %}
                                     <div class="related-data-item">
                                         <i class="fas fa-arrow-left text-info me-2"></i>
-                                        <strong>تحوي{% trans "No" %}ت واردة:</strong> {{ related_data.transfers_to }} {% trans "Transfer" %}
+                                        <strong>{% trans "Incoming Transfers" %}:</strong> {{ related_data.transfers_to }} {% trans "Transfer" %}
                                     </div>
                                 {% endif %}
                                 
                                 {% if related_data.active_products %}
                                     <div class="related-data-item">
                                         <i class="fas fa-box text-primary me-2"></i>
-                                        <strong>منتجات {% trans "Active" %}ة:</strong> {{ related_data.active_products }} منتج
+                                        <strong>{% trans "Active Products" %}:</strong> {{ related_data.active_products }} {% trans "Product" %}
                                     </div>
                                 {% endif %}
                                 
                                 {% if has_sub_warehouses %}
                                     <div class="related-data-item">
                                         <i class="fas fa-sitemap text-secondary me-2"></i>
-                                        <strong>مستودعات فرعية</strong>
+                                        <strong>{% trans "Sub-Warehouses" %}</strong>
                                     </div>
                                 {% endif %}
                             </div>
                             
                             <div class="alert alert-danger mt-3">
                                 <i class="fas fa-ban me-2"></i>
-                                <strong>لا يمكن الحذف!</strong><br>
-                                يجب {% trans "Delete" %} جميع البيانات المرتبطة أو{% trans "No" %}ً قبل {% trans "Delete" %} هذا المستودع.
+                                <strong>{% trans "Cannot Delete!" %}</strong><br>
+                                {% trans "Must delete all related data or move them before deleting this warehouse." %}
                             </div>
                         </div>
                         {% endif %}
@@ -156,17 +156,17 @@
 
                 {% if can_delete %}
                 <div class="warning-box">
-                    <h6><i class="fas fa-exclamation-triangle me-2"></i>{% trans "Warning" %} هام:</h6>
+                    <h6><i class="fas fa-exclamation-triangle me-2"></i>{% trans "Warning" %} {% trans "Important" %}:</h6>
                     <ul class="mb-0">
-                        <li>سيتم {% trans "Delete" %} المستودع نهائياً</li>
-                        <li>لا يمكن استرداد هذه البيانات بعد الحذف</li>
-                        <li>تأكد من أن هذا الإجراء مطلوب فع{% trans "No" %}ً</li>
+                        <li>{% trans "The warehouse will be permanently deleted" %}</li>
+                        <li>{% trans "This data cannot be recovered after deletion" %}</li>
+                        <li>{% trans "Make sure this action is really required" %}</li>
                     </ul>
                 </div>
 
                 <div class="mt-4">
                     <h6 class="text-center text-danger mb-4">
-                        للمتابعة، اكتب <code>DELETE</code> في الحقل أدناه:
+                        {% trans "To proceed, type" %} <code>DELETE</code> {% trans "in the field below" %}:
                     </h6>
                     
                     <form method="post">
@@ -176,7 +176,7 @@
                                 <input type="text" 
                                        class="form-control confirm-input" 
                                        name="confirm_delete" 
-                                       placeholder="اكتب DELETE لل{% trans "Confirmation" %}"
+                                       placeholder="{% trans "Type DELETE to confirm" %}"
                                        required
                                        autocomplete="off">
                             </div>
@@ -185,11 +185,11 @@
                         <div class="d-flex justify-content-center gap-3 mt-4">
                             <a href="{% url 'inventory:warehouse_list' %}" class="btn btn-secondary btn-lg">
                                 <i class="fas fa-arrow-left me-2"></i>
-                                إلغاء والعودة
+                                {% trans "Cancel and Return" %}
                             </a>
                             <button type="submit" class="btn btn-danger btn-lg">
                                 <i class="fas fa-trash me-2"></i>
-                                {% trans "Delete" %} المستودع نهائياً
+                                {% trans "Delete Warehouse Permanently" %}
                             </button>
                         </div>
                     </form>
@@ -198,7 +198,7 @@
                 <div class="d-flex justify-content-center mt-4">
                     <a href="{% url 'inventory:warehouse_list' %}" class="btn btn-primary btn-lg">
                         <i class="fas fa-arrow-left me-2"></i>
-                        العودة ل{% trans "List" %} المستودعات
+                        {% trans "Return to Warehouses List" %}
                     </a>
                 </div>
                 {% endif %}

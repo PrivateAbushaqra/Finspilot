@@ -87,11 +87,11 @@
             <div class="d-flex justify-content-between align-items-center">
                 <h2 class="mb-0">
                     <i class="fas fa-exclamation-triangle me-2"></i>
-                    {% trans "Delete" %} حساب ال{% trans "Customer" %}/ال{% trans "Supplier" %}
+                    {% trans "Delete" %} {% trans "Customer" %}/{% trans "Supplier" %} {% trans "Account" %}
                 </h2>
                 <a href="{% url 'customers:list' %}" class="btn btn-outline-light">
                     <i class="fas fa-arrow-left me-2"></i>
-                    العودة لل{% trans "List" %}
+                    {% trans "Back to List" %}
                 </a>
             </div>
         </div>
@@ -102,10 +102,9 @@
         <div class="d-flex align-items-center">
             <i class="fas fa-exclamation-triangle text-danger me-3 fa-3x"></i>
             <div>
-                <h4 class="text-danger mb-2">{% trans "Warning" %}: عملية {% trans "Delete" %} نهائية</h4>
+                <h4 class="text-danger mb-2">{% trans "Warning" %}: {% trans "Delete Operation is Final" %}</h4>
                 <p class="mb-0">
-                    هذا الإجراء سي{% trans "Delete" %} الحساب وجميع البيانات المرتبطة به نهائياً ولا يمكن التراجع عنه.
-                    يرجى التأكد من رغبتك في المتابعة قبل {% trans "Confirmation" %} الحذف.
+                    {% trans "This action will delete the account and all associated data permanently and cannot be undone. Please confirm your intention to proceed before confirming the deletion." %}
                 </p>
             </div>
         </div>
@@ -117,10 +116,10 @@
             <div class="customer-info">
                 <h5 class="mb-3">
                     <i class="fas fa-user me-2"></i>
-                    بيانات الحساب المراد {% trans "Delete" %}ه
+                    {% trans "Account Data to be Deleted" %}
                 </h5>
                 <div class="info-item">
-                    <span class="info-label">اسم:</span>
+                    <span class="info-label">{% trans "Name" %}:</span>
                     <span class="info-value">{{ customer_supplier.name }}</span>
                 </div>
                 <div class="info-item">
@@ -139,45 +138,45 @@
                 {% endif %}
                 {% if customer_supplier.tax_number %}
                 <div class="info-item">
-                    <span class="info-label">{% trans "Number" %} الضريبي:</span>
+                    <span class="info-label">{% trans "Tax Number" %}:</span>
                     <span class="info-value">{{ customer_supplier.tax_number }}</span>
                 </div>
                 {% endif %}
                 {% if customer_supplier.credit_limit > 0 %}
                 <div class="info-item">
-                    <span class="info-label">حد ا{% trans "No" %}ئتمان:</span>
+                    <span class="info-label">{% trans "Credit Limit" %}:</span>
                     <span class="info-value">{{ customer_supplier.credit_limit|currency_format }}</span>
                 </div>
                 {% endif %}
                 {% if customer_supplier.notes %}
                 <div class="info-item">
-                    <span class="info-label">الملاحظات:</span>
+                    <span class="info-label">{% trans "Notes" %}:</span>
                     <span class="info-value">{{ customer_supplier.notes|truncatewords:10 }}</span>
                 </div>
                 {% endif %}
                 <div class="info-item">
                     <span class="info-label">{% trans "Phone" %}:</span>
-                    <span class="info-value">{{ customer_supplier.phone|default:"غير محدد" }}</span>
+                    <span class="info-value">{{ customer_supplier.phone|default:"{% trans 'Not Specified' %}" }}</span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">{% trans "Email" %}:</span>
-                    <span class="info-value">{{ customer_supplier.email|default:"غير محدد" }}</span>
+                    <span class="info-value">{{ customer_supplier.email|default:"{% trans 'Not Specified' %}" }}</span>
                 </div>
                 <div class="info-item">
-                    <span class="info-label">{% trans "Balance" %} الحالي:</span>
+                    <span class="info-label">{% trans "Current Balance" %}:</span>
                     <span class="info-value {% if customer_supplier.balance > 0 %}text-success{% elif customer_supplier.balance < 0 %}text-danger{% endif %}">
                         {{ customer_supplier.balance|currency_format }}
                     </span>
                 </div>
                 <div class="info-item">
-                    <span class="info-label">تاريخ الإنشاء:</span>
+                    <span class="info-label">{% trans "Creation Date" %}:</span>
                     <span class="info-value">{{ customer_supplier.created_at|date:"Y-m-d" }}</span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">{% trans "Status" %}:</span>
                     <span class="info-value">
                         <span class="badge {% if customer_supplier.is_active %}bg-success{% else %}bg-secondary{% endif %}">
-                            {% if customer_supplier.is_active %}{% trans "Active" %}{% else %}غير {% trans "Active" %}{% endif %}
+                            {% if customer_supplier.is_active %}{% trans "Active" %}{% else %}{% trans "Inactive" %}{% endif %}
                     </span>
                 </div>
             </div>
@@ -187,28 +186,28 @@
             <div class="related-data">
                 <h5 class="text-warning mb-3">
                     <i class="fas fa-link me-2"></i>
-                    البيانات المرتبطة التي ست{% trans "Delete" %}
+                    {% trans "Related Data to be Deleted" %}
                 </h5>
                 <div class="row text-center">
                     <div class="col-md-4 mb-3">
                         <div class="p-3">
                             <i class="fas fa-receipt fa-2x text-primary mb-2"></i>
-                            <h6>الفواتير</h6>
+                            <h6>{% trans "Invoices" %}</h6>
                             <p class="text-muted mb-0">{{ related_data.invoices }} {% trans "Invoice" %}</p>
                         </div>
                     </div>
                     <div class="col-md-4 mb-3">
                         <div class="p-3">
                             <i class="fas fa-money-bill fa-2x text-success mb-2"></i>
-                            <h6>المدفوعات</h6>
-                            <p class="text-muted mb-0">{{ related_data.payments }} مدفوعة</p>
+                            <h6>{% trans "Payments" %}</h6>
+                            <p class="text-muted mb-0">{{ related_data.payments }} {% trans "Paid" %}</p>
                         </div>
                     </div>
                     <div class="col-md-4 mb-3">
                         <div class="p-3">
                             <i class="fas fa-chart-line fa-2x text-info mb-2"></i>
                             <h6>{% trans "Transactions" %}</h6>
-                            <p class="text-muted mb-0">{{ related_data.transactions }} معاملة</p>
+                            <p class="text-muted mb-0">{{ related_data.transactions }} {% trans "Transaction" %}</p>
                         </div>
                     </div>
                 </div>
@@ -216,12 +215,12 @@
                 {% if related_data.invoices > 0 or related_data.payments > 0 or related_data.transactions > 0 %}
                 <div class="alert alert-warning mt-3 mb-0">
                     <i class="fas fa-info-circle me-2"></i>
-                    <strong>ملاحظة:</strong> جميع هذه البيانات ست{% trans "Delete" %} نهائياً مع {% trans "Delete" %} الحساب.
+                    <strong>{% trans "Note" %}:</strong> {% trans "All this data will be deleted permanently along with the account deletion." %}
                 </div>
                 {% else %}
                 <div class="alert alert-info mt-3 mb-0">
                     <i class="fas fa-check-circle me-2"></i>
-                    <strong>لا توجد بيانات مرتبطة:</strong> يمكن {% trans "Delete" %} هذا الحساب بأمان.
+                    <strong>{% trans "No Related Data" %}:</strong> {% trans "This account can be deleted safely." %}
                 </div>
                 {% endif %}
             </div>
@@ -231,10 +230,10 @@
             <div class="danger-zone">
                 <h4 class="text-danger mb-3">
                     <i class="fas fa-skull-crossbones me-2"></i>
-                    منطقة الخطر
+                    {% trans "Danger Zone" %}
                 </h4>
                 <p class="text-danger mb-4">
-                    ل{% trans "Confirmation" %} الحذف، اكتب <strong>"DELETE"</strong> في الحقل أدناه:
+                    {% trans "To confirm deletion, type \"DELETE\" in the field below:" %}
                 </p>
                 
                 <form id="deleteForm" method="post">
@@ -244,7 +243,7 @@
                                class="form-control text-center" 
                                id="confirmText" 
                                name="confirm_delete"
-                               placeholder="اكتب DELETE لل{% trans "Confirmation" %}"
+                               placeholder="{% trans 'Type DELETE to confirm' %}"
                                autocomplete="off"
                                required>
                     </div>
@@ -252,11 +251,11 @@
                     <div class="mt-4">
                         <a href="{% url 'customers:list' %}" class="btn btn-secondary me-3">
                             <i class="fas fa-arrow-left me-2"></i>
-                            إلغاء والعودة
+                            {% trans "Cancel and Return" %}
                         </a>
                         <button type="submit" class="btn btn-danger" id="deleteButton" disabled>
                             <i class="fas fa-trash me-2"></i>
-                            {% trans "Delete" %} الحساب نهائياً
+                            {% trans "Delete Account Permanently" %}
                         </button>
                     </div>
                 </form>
@@ -264,7 +263,7 @@
                 <div class="mt-4">
                     <small class="text-muted">
                         <i class="fas fa-shield-alt me-1"></i>
-                        هذا الإجراء محمي ولا يمكن التراجع عنه
+                        {% trans "This action is protected and cannot be undone" %}
                     </small>
                 </div>
             </div>
@@ -297,12 +296,12 @@
         
         if (confirmText !== 'DELETE') {
             e.preventDefault();
-            alert('يجب كتابة "DELETE" بالضبط لل{% trans "Confirmation" %}');
+            alert('{% trans "You must type \\"DELETE\\" exactly to confirm" %}');
             return;
         }
         
         // Final confirmation
-        if (!confirm('هل أنت متأكد تماماً من {% trans "Delete" %} هذا الحساب؟\n\nهذا الإجراء لا يمكن التراجع عنه!')) {
+        if (!confirm('{% trans "Are you absolutely sure you want to delete this account?\\n\\nThis action cannot be undone!" %}')) {
             e.preventDefault();
             return;
         }

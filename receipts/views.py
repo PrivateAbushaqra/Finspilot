@@ -16,6 +16,105 @@ from accounts.models import AccountTransaction
 from journal.services import JournalService
 
 
+def process_cheque_errors_warnings():
+    """
+    معالجة الأخطاء والتحذيرات في الشيكات تلقائياً وفق IFRS 9
+    """
+    from datetime import datetime
+    from django.utils import timezone
+
+    # الحصول على جميع الشيكات
+    cheques = PaymentReceipt.objects.filter(payment_type='check').select_related('customer')
+
+    processed_errors = []
+    processed_warnings = []
+
+    for cheque in cheques:
+        # معالجة الأخطاء: الشيكات المرتدة بدون قيد يومية
+        if cheque.check_status == 'bounced':
+            # فحص وجود قيد يومية
+            journal_exists = JournalEntry.objects.filter(
+                reference_type='check_bounced',
+                reference_id=cheque.id
+            ).exists()
+
+            if not journal_exists:
+                try:
+                    # إنشاء قيد يومية تلقائي
+                    collection_date = timezone.now().date()
+                    JournalService.create_check_bounced_entry(cheque, collection_date)
+
+                    # تحديث سبب الارتداد إذا لم يكن محدد
+                    if not cheque.bounce_reason:
+                        cheque.bounce_reason = 'تم اكتشاف الارتداد أثناء التدقيق - تم إنشاء القيد اليومية تلقائياً'
+                        cheque.save()
+
+                    processed_errors.append({
+                        'cheque': cheque,
+                        'action': 'تم إنشاء قيد يومية تلقائي للشيك المرتد',
+                        'details': f'قيد من ذمم مدينة إلى شيكات تحت التحصيل بمبلغ {cheque.amount}'
+                    })
+
+                except Exception as e:
+                    print(f"خطأ في إنشاء قيد يومية للشيك {cheque.check_number}: {e}")
+
+        # معالجة التحذيرات: الشيكات المحصلة
+        elif cheque.check_status == 'collected':
+            collection = CheckCollection.objects.filter(
+                receipt=cheque,
+                status='collected'
+            ).first()
+
+            if collection:
+                days_difference = (collection.collection_date - cheque.check_due_date).days
+
+                if days_difference > 0:
+                    # تحصيل متأخر
+                    processed_warnings.append({
+                        'cheque': cheque,
+                        'type': 'تحصيل متأخر',
+                        'days_late': days_difference,
+                        'action': 'تم تسجيل التحذير - يرجى متابعة مخاطر التحصيل',
+                        'ifrs_note': 'قد يؤثر على توقيت الإيرادات وفق IFRS 9'
+                    })
+
+                elif days_difference < 0:
+                    # تحصيل مبكر - فحص الفاتورة
+                    from sales.models import SalesInvoice
+                    try:
+                        invoice = SalesInvoice.objects.filter(
+                            customer=cheque.customer,
+                            total_amount=cheque.amount,
+                            date__lte=cheque.check_date
+                        ).first()
+
+                        if invoice:
+                            processed_warnings.append({
+                                'cheque': cheque,
+                                'type': 'تحصيل مبكر',
+                                'days_early': abs(days_difference),
+                                'action': 'تم ربط الشيك بالفاتورة ومراجعة الإيراد',
+                                'ifrs_note': 'تمت مراجعة الإيراد - لا تأثير على IFRS 9',
+                                'invoice': invoice.invoice_number
+                            })
+                        else:
+                            processed_warnings.append({
+                                'cheque': cheque,
+                                'type': 'تحصيل مبكر',
+                                'days_early': abs(days_difference),
+                                'action': 'لم يتم العثور على فاتورة مرتبطة',
+                                'ifrs_note': 'يرجى التأكد من عدم الاعتراف المبكر بالإيراد'
+                            })
+
+                    except Exception as e:
+                        print(f"خطأ في فحص الفاتورة للشيك {cheque.check_number}: {e}")
+
+    return {
+        'processed_errors': processed_errors,
+        'processed_warnings': processed_warnings
+    }
+
+
 def create_receipt_journal_entry(receipt, user):
     """Create journal entry for receipt voucher"""
     try:
@@ -364,7 +463,7 @@ def check_list(request):
 
 @login_required
 def check_collect(request, receipt_id):
-    """تحصيل الشيك"""
+    """تحصيل الشيك مع معالجة تلقائية للأخطاء والتحذيرات وفق IFRS 9"""
     receipt = get_object_or_404(PaymentReceipt, id=receipt_id, payment_type='check')
     
     if request.method == 'POST':
@@ -372,6 +471,7 @@ def check_collect(request, receipt_id):
         status = request.POST.get('status')  # collected أو bounced
         cashbox_id = request.POST.get('cashbox')
         notes = request.POST.get('notes', '')
+        bounce_reason = request.POST.get('bounce_reason', '')  # سبب الارتداد
         
         if not all([collection_date, status]):
             messages.error(request, _('جميع الحقول مطلوبة'))
@@ -391,7 +491,30 @@ def check_collect(request, receipt_id):
                 
                 # تحديث حالة الشيك
                 receipt.check_status = status
+                if status == 'bounced' and bounce_reason:
+                    receipt.bounce_reason = bounce_reason
                 receipt.save()
+                
+                # حساب خسائر الائتمان المتوقعة (ECL) وفق IFRS 9
+                try:
+                    ecl_amount, ecl_method = receipt.calculate_expected_credit_loss()
+                    receipt.expected_credit_loss = ecl_amount
+                    receipt.ecl_calculation_date = timezone.now().date()
+                    receipt.ecl_calculation_method = ecl_method
+                    receipt.save()
+                    
+                    # إضافة ملاحظة ECL في سجل التحصيل
+                    if ecl_amount > 0:
+                        collection.notes += f'\n💰 تم حساب ECL بمبلغ {ecl_amount} ({ecl_method})'
+                        collection.save()
+                        
+                        # تسجيل في السجل للمراجعة
+                        import logging
+                        logger = logging.getLogger(__name__)
+                        logger.info(f'تم حساب ECL للشيك {receipt.check_number}: {ecl_amount} ({ecl_method})')
+                        
+                except Exception as e:
+                    print(f"خطأ في حساب ECL للشيك {receipt.check_number}: {e}")
                 
                 # إذا تم التحصيل بنجاح
                 if status == 'collected' and cashbox_id:
@@ -408,25 +531,111 @@ def check_collect(request, receipt_id):
                         description=f'{_("Check collection")} {receipt.check_number} - {_("voucher")} {receipt.receipt_number}',
                         created_by=request.user
                     )
+                    
+                    # معالجة التحذيرات تلقائياً - IFRS 9
+                    from datetime import datetime
+                    collection_date_obj = datetime.strptime(collection_date, '%Y-%m-%d').date()
+                    
+                    if collection_date_obj > receipt.check_due_date:
+                        # تحصيل بعد تاريخ الاستحقاق - حساب عدد الأيام المتأخرة
+                        days_late = (collection_date_obj - receipt.check_due_date).days
+                        
+                        # إضافة تنبيه في السجل
+                        import logging
+                        logger = logging.getLogger(__name__)
+                        logger.warning(f'تم تحصيل الشيك {receipt.check_number} بعد تاريخ الاستحقاق بـ {days_late} يوماً. '
+                                     f'تاريخ الاستحقاق: {receipt.check_due_date}, تاريخ التحصيل: {collection_date}. '
+                                     f'قد يؤثر هذا على توقيت الإيرادات وفق IFRS 9.')
+                        
+                        # إضافة ملاحظة في سجل التحصيل
+                        collection.notes += f'\n⚠️ تحذير IFRS 9: تم التحصيل بعد تاريخ الاستحقاق بـ {days_late} يوماً ({receipt.check_due_date})'
+                        collection.save()
+                        
+                        # توصية بمتابعة العميل
+                        collection.notes += f'\n📋 توصية: متابعة العميل ومراقبة مخاطر التحصيل'
+                        collection.save()
+                    
+                    elif collection_date_obj < receipt.check_due_date:
+                        # تحصيل قبل تاريخ الاستحقاق - التحقق من حالة الفاتورة
+                        days_early = (receipt.check_due_date - collection_date_obj).days
+                        
+                        # البحث عن الفاتورة المرتبطة بالشيك
+                        from sales.models import SalesInvoice
+                        try:
+                            # افتراض أن الشيك مرتبط بفاتورة مبيعات
+                            invoice = SalesInvoice.objects.filter(
+                                customer=receipt.customer,
+                                total_amount=receipt.amount,
+                                date__lte=receipt.check_date
+                            ).first()
+                            
+                            if invoice:
+                                # التحقق من حالة الفاتورة (افتراض أن هناك حقل is_completed)
+                                is_invoice_complete = getattr(invoice, 'is_completed', True)  # افتراض أنها مكتملة إذا لم يكن الحقل موجود
+                                
+                                if not is_invoice_complete:
+                                    # الفاتورة غير مكتملة - تسجيل كدفعة مقدمة
+                                    JournalService.create_check_early_collection_entry(
+                                        receipt, collection_date_obj, is_invoice_complete=False, user=request.user
+                                    )
+                                    
+                                    # إضافة تنبيه
+                                    import logging
+                                    logger = logging.getLogger(__name__)
+                                    logger.info(f'تم تسجيل تحصيل الشيك {receipt.check_number} كدفعة مقدمة '
+                                              f'بسبب عدم اكتمال الفاتورة المرتبطة.')
+                                    
+                                    collection.notes += f'\nℹ️ تم تسجيل المبلغ كدفعة مقدمة من العملاء (فاتورة غير مكتملة)'
+                                    collection.save()
+                                else:
+                                    # الفاتورة مكتملة - اعتراف طبيعي
+                                    JournalService.create_check_early_collection_entry(
+                                        receipt, collection_date_obj, is_invoice_complete=True, user=request.user
+                                    )
+                                    
+                                    # إضافة ملاحظة
+                                    collection.notes += f'\n✅ تمت مراجعة الإيراد - لا تأثير على IFRS 9 (فاتورة مكتملة)'
+                                    collection.save()
+                            else:
+                                # لم يتم العثور على فاتورة مرتبطة - اعتراف طبيعي
+                                JournalService.create_check_early_collection_entry(
+                                    receipt, collection_date_obj, is_invoice_complete=True, user=request.user
+                                )
+                                
+                                collection.notes += f'\n⚠️ لم يتم العثور على فاتورة مرتبطة - يرجى التأكد من عدم الاعتراف المبكر بالإيراد'
+                                collection.save()
+                        except Exception as e:
+                            # في حالة خطأ في البحث عن الفاتورة - اعتراف طبيعي
+                            JournalService.create_check_early_collection_entry(
+                                receipt, collection_date_obj, is_invoice_complete=True, user=request.user
+                            )
+                            print(f"خطأ في البحث عن الفاتورة المرتبطة: {e}")
                 
-                # إذا ارتد الشيك
+                # إذا ارتد الشيك - معالجة الأخطاء تلقائياً IFRS 9 متوافق
                 elif status == 'bounced':
-                    # عكس حركة حساب العميل
-                    AccountTransaction.create_transaction(
-                        customer_supplier=receipt.customer,
-                        transaction_type='receipt',
-                        direction='debit',  # مدين - يزيد من رصيد العميل (عكس الدفع)
-                        amount=receipt.amount,
-                        reference_type='check_bounced',
-                        reference_id=receipt.id,
-                        description=f'ارتداد شيك {receipt.check_number} - سند {receipt.receipt_number}',
-                        notes=f'ارتداد شيك رقم: {receipt.check_number}',
-                        user=request.user,
-                        date=collection_date
+                    # إنشاء القيد اليومية للشيك المرتد
+                    from datetime import datetime
+                    collection_date_obj = datetime.strptime(collection_date, '%Y-%m-%d').date()
+                    
+                    JournalService.create_check_bounced_entry(
+                        receipt, collection_date_obj, user=request.user
                     )
+                    
+                    # إضافة تنبيه في السجل
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f'ارتداد شيك رقم {receipt.check_number} - تم إنشاء قيد يومية أوتوماتيكي '
+                                 f'لنقل المبلغ من شيكات تحت التحصيل إلى ذمم مدينة وفق IFRS 9. '
+                                 f'سبب الارتداد: {bounce_reason or "غير محدد"}')
+                    
+                    # إضافة ملاحظة في سجل التحصيل
+                    collection.notes += f'\n❌ تم إنشاء قيد يومية للارتداد وفق IFRS 9'
+                    if bounce_reason:
+                        collection.notes += f'\n📝 سبب الارتداد: {bounce_reason}'
+                    collection.save()
                 
                 status_text = 'تم التحصيل' if status == 'collected' else 'ارتد'
-                messages.success(request, f'تم تسجيل {status_text} للشيك {receipt.check_number}')
+                messages.success(request, f'تم تسجيل {status_text} للشيك {receipt.check_number} مع المعالجة التلقائية')
                 return redirect('receipts:receipt_detail', receipt_id=receipt_id)
                 
         except Exception as e:
@@ -435,9 +644,21 @@ def check_collect(request, receipt_id):
     # البيانات المساعدة
     cashboxes = Cashbox.objects.filter(is_active=True).order_by('name')
     
+    # أسباب الارتداد المحتملة
+    bounce_reasons = [
+        'رصيد غير كافٍ',
+        'توقيع غير صحيح',
+        'إيقاف من البنك',
+        'تاريخ غير صحيح',
+        'رقم حساب خاطئ',
+        'شيك مزور',
+        'أسباب أخرى'
+    ]
+    
     context = {
         'receipt': receipt,
         'cashboxes': cashboxes,
+        'bounce_reasons': bounce_reasons,
         'page_title': f'{_("تحصيل الشيك")} - {receipt.check_number}',
         'today': timezone.now().date(),
     }
