@@ -436,11 +436,61 @@ class PayrollEntry(models.Model):
         return f"{self.employee.full_name} - {self.payroll_period.name}"
 
     def save(self, *args, **kwargs):
+        # إذا لم يكن payroll_period محدد، أنشئ واحد تلقائياً
+        if not self.payroll_period_id:
+            self.payroll_period = self.get_or_create_current_payroll_period()
+        
         # حساب الإجماليات تلقائياً
         self.gross_salary = self.basic_salary + self.allowances + self.overtime_amount + self.bonuses
         self.total_deductions = self.deductions + self.social_security_deduction + self.income_tax + self.unpaid_leave_deduction
         self.net_salary = self.gross_salary - self.total_deductions
         super().save(*args, **kwargs)
+
+    @classmethod
+    def get_or_create_current_payroll_period(cls, user=None):
+        """الحصول على فترة الرواتب الحالية أو إنشاء واحدة جديدة"""
+        from calendar import monthrange
+        from django.utils import timezone
+        
+        today = timezone.now().date()
+        # بداية الشهر الحالي
+        start_date = today.replace(day=1)
+        # نهاية الشهر الحالي
+        _, last_day = monthrange(today.year, today.month)
+        end_date = today.replace(day=last_day)
+        
+        # البحث عن فترة موجودة
+        existing_period = PayrollPeriod.objects.filter(
+            start_date=start_date,
+            end_date=end_date
+        ).first()
+        
+        if existing_period:
+            return existing_period
+        
+        # إنشاء فترة جديدة
+        period_name = f"رواتب {today.strftime('%B %Y')}"
+        if user:
+            created_by = user
+        else:
+            # استخدم أول مستخدم superuser إذا لم يكن محدد
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            created_by = User.objects.filter(is_superuser=True).first()
+            if not created_by:
+                created_by = User.objects.filter(is_staff=True).first()
+        
+        if not created_by:
+            raise ValueError(_("لا يمكن إنشاء فترة رواتب بدون مستخدم"))
+        
+        new_period = PayrollPeriod.objects.create(
+            name=period_name,
+            start_date=start_date,
+            end_date=end_date,
+            created_by=created_by
+        )
+        
+        return new_period
 
     def calculate_social_security(self):
         """حساب الضمان الاجتماعي"""
