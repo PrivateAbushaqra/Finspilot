@@ -83,13 +83,13 @@ def create_cashbox_transaction_for_sales(sender, instance, created, **kwargs):
             
             # إنشاء معاملة إيداع في الصندوق
             if cashbox:
+                # CashboxTransaction model does not have reference_type/reference_id fields
+                # (we avoid adding DB fields for now). Store invoice identity in the description
                 transaction = CashboxTransaction.objects.create(
                     cashbox=cashbox,
                     transaction_type='deposit',
                     amount=instance.total_amount,
                     date=instance.date,
-                    reference_type='sales_invoice',
-                    reference_id=instance.id,
                     description=f'مبيعات نقدية - فاتورة رقم {instance.invoice_number}',
                     created_by=instance.created_by
                 )
@@ -132,12 +132,14 @@ def update_cashbox_transaction_on_invoice_change(sender, instance, created, **kw
         
         # إذا لم تكن الفاتورة جديدة وكانت نقدية
         if not created and instance.payment_type == 'cash':
-            # البحث عن المعاملة المرتبطة بالفاتورة
-            transaction = CashboxTransaction.objects.filter(
-                reference_type='sales_invoice',
-                reference_id=instance.id,
-                transaction_type='deposit'
-            ).first()
+            # البحث عن المعاملة المرتبطة بالفاتورة: نطابق وصف المعاملة الذي يحتوي رقم الفاتورة
+            try:
+                transaction = CashboxTransaction.objects.filter(
+                    transaction_type='deposit',
+                    description__icontains=str(instance.invoice_number)
+                ).first()
+            except Exception:
+                transaction = None
             
             if transaction:
                 # حساب الفرق في المبلغ

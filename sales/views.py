@@ -242,6 +242,28 @@ def sales_invoice_create(request):
     """إنشاء فاتورة مبيعات جديدة"""
     if request.method == 'POST':
         try:
+            # helper to robustly parse decimals from various client locales (commas, arabic separators, spaces)
+            def parse_decimal_input(val, name='value', default=Decimal('0')):
+                try:
+                    if val is None or val == '':
+                        return default
+                    s = str(val).strip()
+                    # Arabic decimal separators and common comma thousands
+                    s = s.replace('\u066b', '.')  # Arabic decimal separator if present
+                    s = s.replace('\u066c', ',')  # Arabic thousands separator if present
+                    # Replace comma with dot for decimal point, remove spaces
+                    s = s.replace(',', '.')
+                    s = s.replace(' ', '')
+                    return Decimal(s)
+                except Exception:
+                    # Log parsing error in AuditLog for visibility
+                    try:
+                        from core.signals import log_user_activity
+                        dummy = SalesInvoice()
+                        log_user_activity(request, 'error', dummy, _('فشل تحليل قيمة رقمية للحقل %(name)s: %(val)s') % {'name': name, 'val': val})
+                    except Exception:
+                        pass
+                    return default
             # سنحاول عدة مرات لتجنب تعارض الأرقام في حال السباق
             max_attempts = 5
             attempt = 0
@@ -286,6 +308,19 @@ def sales_invoice_create(request):
 
                         # التحقق من البيانات المطلوبة
                         if not customer_id or not payment_type:
+                            # سجل محاولة فاشلة في سجل النشاط لتتبع أخطاء الإدخال
+                            try:
+                                from core.signals import log_user_activity
+                                dummy = SalesInvoice()
+                                log_user_activity(
+                                    request,
+                                    'error',
+                                    dummy,
+                                    _('فشل إنشاء فاتورة: الحقول المطلوبة مفقودة (العميل أو طريقة الدفع)')
+                                )
+                            except Exception:
+                                pass
+
                             messages.error(request, _('يرجى تعبئة جميع الحقول المطلوبة'))
                             return redirect('sales:invoice_add')
 
@@ -300,6 +335,19 @@ def sales_invoice_create(request):
 
                         # التحقق من وجود منتجات
                         if not products or not any(p for p in products if p):
+                            # سجل محاولة فاشلة في سجل النشاط لتتبع أخطاء الإدخال
+                            try:
+                                from core.signals import log_user_activity
+                                dummy = SalesInvoice()
+                                log_user_activity(
+                                    request,
+                                    'error',
+                                    dummy,
+                                    _('فشل إنشاء فاتورة: لا توجد عناصر مضافة')
+                                )
+                            except Exception:
+                                pass
+
                             messages.error(request, _('يرجى إضافة منتج واحد على الأقل'))
                             return redirect('sales:invoice_add')
 
@@ -361,9 +409,49 @@ def sales_invoice_create(request):
                             if product_id and i < len(quantities) and i < len(prices):
                                 try:
                                     product = Product.objects.get(id=product_id)
-                                    quantity = Decimal(quantities[i])
-                                    unit_price = Decimal(prices[i])
-                                    tax_rate = Decimal(tax_rates[i]) if i < len(tax_rates) and tax_rates[i] else Decimal('0')
+                                    # parse quantity/price/tax robustly to accept '1.5' or '1,5' etc.
+                                    quantity = parse_decimal_input(quantities[i], name='quantity', default=Decimal('0'))
+                                    unit_price = parse_decimal_input(prices[i], name='price', default=Decimal('0'))
+                                    tax_rate = parse_decimal_input(tax_rates[i], name='tax_rate', default=Decimal('0')) if i < len(tax_rates) and tax_rates[i] else Decimal('0')
+
+                                    # Safeguard: if submitted unit_price differs from product.sale_price
+                                    # and appears to be a cost/last-purchase/zero value, prefer product.sale_price
+                                    try:
+                                        submitted_price = unit_price
+                                        product_sale = Decimal(str(product.sale_price))
+                                        product_cost = Decimal(str(product.cost_price)) if product.cost_price is not None else None
+                                        last_purchase = Decimal(str(product.get_last_purchase_price() or 0))
+
+                                        # If submitted price is 0 or equals cost or equals last purchase price
+                                        # but differs from the official sale price, correct it to sale_price.
+                                        suspicious = False
+                                        if submitted_price == 0:
+                                            suspicious = True
+                                        elif product_cost is not None and submitted_price == product_cost and submitted_price != product_sale:
+                                            suspicious = True
+                                        elif last_purchase is not None and submitted_price == last_purchase and submitted_price != product_sale:
+                                            suspicious = True
+
+                                        if suspicious and submitted_price != product_sale:
+                                            # Log this correction to the AuditLog (via helper)
+                                            try:
+                                                from core.signals import log_user_activity
+                                                # create a small description with field change
+                                                desc = _('تغيير سعر الوحدة لمنتج %(code)s أثناء إنشاء الفاتورة: من %(old)s إلى سعر البيع الرسمي %(new)s') % {
+                                                    'code': product.code,
+                                                    'old': str(submitted_price),
+                                                    'new': str(product_sale)
+                                                }
+                                                # attach note to invoice instance for logging context
+                                                log_user_activity(request, 'update', product, desc)
+                                            except Exception:
+                                                pass
+
+                                            # enforce sale price
+                                            unit_price = product_sale
+                                    except Exception:
+                                        # if any error in price checks, proceed with submitted price
+                                        pass
 
                                     # حساب مبلغ الضريبة لهذا السطر
                                     line_subtotal = quantity * unit_price

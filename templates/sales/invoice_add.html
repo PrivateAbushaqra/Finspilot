@@ -175,7 +175,7 @@
             <p class="text-muted mb-0">{% trans "Please fill all required fields" %}</p>
         </div>
         
-        <form method="post" id="salesInvoiceForm">
+    <form method="post" id="salesInvoiceForm" novalidate>
             {% csrf_token %}
             <input type="hidden" name="inclusive_tax" value="0">
             
@@ -426,6 +426,58 @@
     </div>
 </div>
 
+<script>
+// Client-side pre-submit validation to show errors inline
+document.getElementById('salesInvoiceForm').addEventListener('submit', function(e){
+    try{
+        // Clear previous alerts
+        document.querySelectorAll('.client-validation-alert').forEach(el=>el.remove());
+
+        const customer = document.getElementById('id_customer') ? document.getElementById('id_customer').value : '';
+        const productsExist = document.querySelectorAll('#productsTableBody tr').length > 0;
+        if(!customer){
+            e.preventDefault();
+            const container = document.querySelector('.form-container');
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-danger client-validation-alert';
+            alert.textContent = "{% trans 'يرجى اختيار عميل قبل الحفظ' %}";
+            container.insertBefore(alert, container.firstChild);
+            alert.scrollIntoView({behavior: 'smooth', block: 'center'});
+            return false;
+        }
+        if(!productsExist){
+            e.preventDefault();
+            const container = document.querySelector('.form-container');
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-danger client-validation-alert';
+            alert.textContent = "{% trans 'يرجى إضافة منتج واحد على الأقل' %}";
+            container.insertBefore(alert, container.firstChild);
+            alert.scrollIntoView({behavior: 'smooth', block: 'center'});
+            return false;
+        }
+    }catch(err){
+        console.error('Client-side validation error', err);
+    }
+});
+</script>
+
+{% get_base_currency as base_currency %}
+<script>
+// Use template-provided base currency decimal places (server-side truth)
+const currencyDecimalPlaces = {% if base_currency %}{{ base_currency.decimal_places }}{% else %}2{% endif %};
+
+function formatCurrency(value, overridePlaces){
+    try{
+        const places = (typeof overridePlaces === 'number') ? overridePlaces : currencyDecimalPlaces;
+        if (value === null || value === undefined || isNaN(Number(value))) return (0).toFixed(places);
+        return Number(value).toFixed(places);
+    }catch(e){
+        console.error('formatCurrency error', e);
+        return (Number(value) || 0).toFixed(currencyDecimalPlaces);
+    }
+}
+</script>
+
 <!-- Product Selection Modal -->
 <div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -486,6 +538,8 @@
 
 {% block extra_js %}
 <script>
+// Price hook removed (debug instrumentation cleaned up)
+
 let productRowCounter = 0;
 let currentRow = null;
 let buttonClickCount = 0; // لتتبع عدد النقرات على الزر
@@ -659,11 +713,11 @@ function addProductRow() {
         </td>
         <td>
             <input type="number" class="form-control quantity-input" 
-                   name="quantities[]" min="1" value="1" step="1">
+                   name="quantities[]" min="0.001" value="1.000" step="0.001">
         </td>
         <td>
             <input type="number" class="form-control price-input" 
-                   name="prices[]" min="0" step="0.01">
+                   name="prices[]" min="0" step="0.001">
         </td>
         <td>
             <input type="number" class="form-control tax-rate-input" 
@@ -723,32 +777,123 @@ function openProductModal(rowId) {
 }
 
 function selectProduct(productId, productCode, productName, salePrice, taxRate, availableQuantity) {
-    if (currentRow) {
+    // Use POS product endpoint as authoritative source for sale price when available.
+    try {
+        if (!currentRow) return;
         const row = document.getElementById(`productRow${currentRow}`);
+        if (!row) return;
+
         const productIdInput = row.querySelector('.product-id-input');
         const codeInput = row.querySelector('.product-code-input');
         const nameInput = row.querySelector('.product-name-input');
         const availableQuantityInput = row.querySelector('.available-quantity-input');
         const priceInput = row.querySelector('.price-input');
         const taxRateInput = row.querySelector('.tax-rate-input');
-        
-        // Fill the product information
+
+        // Fill the product basic information first
         productIdInput.value = productId;
         codeInput.value = productCode;
         nameInput.value = productName;
         if (availableQuantityInput) {
-            availableQuantityInput.value = parseFloat(availableQuantity || 0).toFixed(3);
+            availableQuantityInput.value = formatCurrency(parseFloat(availableQuantity || 0), 3);
         }
-        priceInput.value = parseFloat(salePrice).toFixed(2);
-        taxRateInput.value = parseFloat(taxRate);
-        
-        // Close the modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('productModal'));
-        modal.hide();
-        
-        // Calculate totals
-        calculateRowTotal(row);
-        calculateGrandTotal();
+
+        // Helper to apply a numeric price into the input with attributes
+        function applyPrice(numPrice, source) {
+            const valid = (numPrice === null || numPrice === undefined || numPrice === '') ? NaN : Number(numPrice);
+            const finalVal = Number.isFinite(valid) ? valid : 0;
+            priceInput.value = formatCurrency(finalVal, 3);
+            priceInput.setAttribute('data-original-price', priceInput.value);
+            if (source) priceInput.setAttribute('data-price-source', source);
+        }
+
+        // First use the salePrice passed from the template as an immediate fallback so the UI is responsive
+        applyPrice(salePrice, 'template');
+
+        // Then try to fetch authoritative product data from POS endpoint
+        try {
+            const endpoint = `/sales/pos/product/${encodeURIComponent(productId)}/`;
+            fetch(endpoint, { credentials: 'same-origin' })
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.success && data.product) {
+                        const posPrice = parseFloat(data.product.price);
+                        if (Number.isFinite(posPrice)) {
+                            // If POS price differs from current by more than a tiny delta, use POS price
+                            const current = parseFloat(priceInput.value) || 0;
+                            if (Math.abs(current - posPrice) > 0.0001) {
+                                applyPrice(posPrice, 'pos');
+                                console.info(`selectProduct: price for product ${productId} taken from POS endpoint: ${posPrice}`);
+                            } else {
+                                // still mark source
+                                priceInput.setAttribute('data-price-source', 'pos');
+                            }
+                        } else {
+                            console.warn('{% trans "POS endpoint returned invalid price for product" %}', productId, data.product.price);
+                        }
+
+                        // tax rate from POS if available, otherwise use template value
+                        taxRateInput.value = parseFloat(data.product.tax_rate || taxRate) || 0;
+                    } else {
+                        // POS endpoint did not return product data; fall back to passed values
+                        taxRateInput.value = parseFloat(taxRate) || 0;
+                        console.warn('{% trans "POS product endpoint did not return product data, using template values" %}', productId);
+                    }
+
+                    // Close modal and recalc totals
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('productModal'));
+                    if (modal) modal.hide();
+                    calculateRowTotal(row);
+                    calculateGrandTotal();
+                })
+                .catch(err => {
+                    // On network error or other fetch failure, keep template price and log warning
+                    taxRateInput.value = parseFloat(taxRate) || 0;
+                    console.warn('{% trans "Failed to fetch POS product data, using template sale price" %}', err);
+
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('productModal'));
+                    if (modal) modal.hide();
+                    calculateRowTotal(row);
+                    calculateGrandTotal();
+                });
+        } catch (e) {
+            // If constructing/fetching fails, ensure we still close modal and calculate totals
+            taxRateInput.value = parseFloat(taxRate) || 0;
+            const modal = bootstrap.Modal.getInstance(document.getElementById('productModal'));
+            if (modal) modal.hide();
+            calculateRowTotal(row);
+            calculateGrandTotal();
+        }
+
+        // Defensive check after a short delay: if something else overwrote the price programmatically, revert
+        setTimeout(() => {
+            try {
+                const currentPrice = parseFloat(priceInput.value) || 0;
+                const original = parseFloat(priceInput.getAttribute('data-original-price')) || 0;
+                if (Math.abs(currentPrice - original) > 0.0001) {
+                    console.warn(`Price for product ${productId} at row ${currentRow} was changed programmatically from ${original} to ${currentPrice}`);
+                    setTimeout(() => {
+                        try {
+                                if (document.activeElement !== priceInput) {
+                                priceInput.value = formatCurrency(original, 3);
+                                calculateRowTotal(row);
+                                calculateGrandTotal();
+                                console.info(`Price at row ${currentRow} reverted to original sale price ${original}`);
+                            } else {
+                                console.info(`User is editing price at row ${currentRow}, not reverting`);
+                            }
+                        } catch (err) {
+                            console.error('Error during price revert check:', err);
+                        }
+                    }, 150);
+                }
+            } catch (err) {
+                console.error('Error verifying price overwrite:', err);
+            }
+        }, 250);
+
+    } catch (e) {
+        console.error('selectProduct error:', e);
     }
 }
 
@@ -799,12 +944,12 @@ function calculateRowTotal(row) {
     }
     
     // {% trans "Display results" %}
-    row.querySelector('.tax-amount-input').value = taxAmount.toFixed(2);
-    row.querySelector('.total-input').value = total.toFixed(2);
+    row.querySelector('.tax-amount-input').value = formatCurrency(taxAmount);
+    row.querySelector('.total-input').value = formatCurrency(total);
     
     // {% trans "Update hidden fields" %}
     row.querySelector('.tax-rate-hidden-input').value = taxRate;
-    row.querySelector('.tax-amount-hidden-input').value = taxAmount.toFixed(2);
+    row.querySelector('.tax-amount-hidden-input').value = formatCurrency(taxAmount);
 }
 
 function calculateGrandTotal() {
@@ -844,10 +989,10 @@ function calculateGrandTotal() {
     const finalTotal = subtotal + totalTax - discount;
     
     // {% trans "Update display" %}
-    document.getElementById('subtotalDisplay').textContent = subtotal.toFixed(2) + ' {% get_currency_symbol %}';
-    document.getElementById('discountDisplay').textContent = discount.toFixed(2) + ' {% get_currency_symbol %}';
-    document.getElementById('taxDisplay').textContent = totalTax.toFixed(2) + ' {% get_currency_symbol %}';
-    document.getElementById('totalDisplay').textContent = finalTotal.toFixed(2) + ' {% get_currency_symbol %}';
+    document.getElementById('subtotalDisplay').textContent = formatCurrency(subtotal) + ' {% get_currency_symbol %}';
+    document.getElementById('discountDisplay').textContent = formatCurrency(discount) + ' {% get_currency_symbol %}';
+    document.getElementById('taxDisplay').textContent = formatCurrency(totalTax) + ' {% get_currency_symbol %}';
+    document.getElementById('totalDisplay').textContent = formatCurrency(finalTotal) + ' {% get_currency_symbol %}';
 }
 
 // Search in products modal
