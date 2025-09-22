@@ -299,9 +299,9 @@ class DocumentPrintSettings(models.Model):
 
 class JoFotaraSettings(models.Model):
     """إعدادات الربط الإلكتروني مع دائرة ضريبة الدخل والمبيعات (JoFotara)"""
-    api_url = models.URLField(_('API URL'), help_text=_('رابط API لنظام JoFotara'))
-    client_id = models.CharField(_('Client ID'), max_length=255, help_text=_('معرف العميل'))
-    client_secret = models.CharField(_('Client Secret'), max_length=255, help_text=_('سر العميل'))
+    api_url = models.URLField(_('API URL'), blank=True, null=True, default='', help_text=_('رابط API لنظام JoFotara'))
+    client_id = models.CharField(_('Client ID'), max_length=255, blank=True, default='', help_text=_('معرف العميل'))
+    client_secret = models.CharField(_('Client Secret'), max_length=255, blank=True, default='', help_text=_('سر العميل'))
     is_active = models.BooleanField(_('نشط'), default=False, help_text=_('تفعيل الربط مع JoFotara'))
     use_mock_api = models.BooleanField(_('استخدام Mock API'), default=True, help_text=_('استخدام API وهمي للاختبار'))
     created_at = models.DateTimeField(_('تاريخ الإنشاء'), auto_now_add=True)

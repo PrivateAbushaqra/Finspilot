@@ -54,14 +54,12 @@ class LoginView(auth_views.LoginView):
         return response
     
     def get_success_url(self):
-        # إذا كان المستخدم من نوع "مستخدم نقطة بيع"، توجيهه إلى شاشة نقطة البيع
-        if (self.request.user.is_authenticated and 
-            hasattr(self.request.user, 'user_type') and 
-            self.request.user.user_type == 'pos_user'):
-            return reverse('sales:pos')
-        
-        # للمستخدمين العاديين، توجيهه إلى الصفحة الرئيسية
-        return reverse('core:dashboard')
+        # توجيه المستخدم بناءً على اللغة المختارة
+        language = getattr(self, 'selected_language', 'ar')
+        if language == 'ar':
+            return '/ar/'
+        else:
+            return '/en/'
 
 
 @login_required

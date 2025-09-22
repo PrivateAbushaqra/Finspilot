@@ -1264,6 +1264,14 @@ class JoFotaraSettingsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView
         settings = JoFotaraSettings.objects.first()
         if not settings:
             settings = JoFotaraSettings()
+        else:
+            # التأكد من أن الحقول ليست None
+            if settings.api_url is None:
+                settings.api_url = ''
+            if settings.client_id is None:
+                settings.client_id = ''
+            if settings.client_secret is None:
+                settings.client_secret = ''
         context['jofotara_settings'] = settings
         
         return context
@@ -1316,7 +1324,7 @@ class JoFotaraSettingsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView
             
             else:
                 # في حالة عدم وجود action أو action غير معروف
-                messages.warning(request, 'لم يتم تحديد العملية المطلوبة')
+                messages.warning(request, _('لم يتم تحديد العملية المطلوبة'))
                 return redirect('settings:jofotara_settings')
         
         except Exception as e:
