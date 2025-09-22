@@ -49,6 +49,12 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         for group in user_groups:
             sections = group.dashboard_sections.split(',') if group.dashboard_sections else []
             dashboard_sections.update(sections)
+        
+        # إضافة الأقسام تلقائياً للمستخدمين ذوي الصلاحيات العالية
+        if self.request.user.is_superuser or getattr(self.request.user, 'user_type', None) in ['superadmin', 'admin']:
+            privileged_sections = ['sales_stats', 'purchases_stats', 'banks_balances', 'quick_links', 'sales_purchases_distribution', 'monthly_performance']
+            dashboard_sections.update(privileged_sections)
+        
         context['dashboard_sections'] = list(dashboard_sections)
         
         # تواريخ مختلفة للإحصائيات

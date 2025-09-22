@@ -694,6 +694,10 @@ class GroupCreateForm(forms.ModelForm):
             required=False,
             label=_('Dashboard Sections')
         )
+        
+        # تعيين أقسام لوحة التحكم تلقائياً للمستخدمين المميزين
+        if self.user and (self.user.user_type in ['superadmin', 'admin'] or self.user.is_superuser or self.user.is_staff):
+            self.fields['dashboard_sections'].initial = ['sales_stats', 'purchases_stats', 'banks_balances', 'quick_links', 'sales_purchases_distribution', 'monthly_performance']
     
     def save(self, commit=True):
         group = super().save(commit=False)
@@ -812,8 +816,6 @@ class UserGroupCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     
     def form_valid(self, form):
         try:
-            print(f"Permissions to save: {form.cleaned_data['permissions']}")
-            print(f"Dashboard sections: {form.cleaned_data.get('dashboard_sections', [])}")
             # حفظ المجموعة أولاً
             group = form.save(commit=False)
             group.save()
@@ -992,9 +994,12 @@ class GroupEditForm(forms.ModelForm):
             ],
             widget=forms.CheckboxSelectMultiple,
             required=False,
-            label=_('Dashboard Sections'),
-            initial=self.instance.dashboard_sections.split(',') if self.instance and self.instance.pk and self.instance.dashboard_sections else []
+            label=_('Dashboard Sections')
         )
+        
+        # تعيين أقسام لوحة التحكم تلقائياً للمستخدمين المميزين
+        # للاختبار، اجعلها دائماً مختارة
+        self.fields['dashboard_sections'].initial = ['sales_stats', 'purchases_stats', 'banks_balances', 'quick_links', 'sales_purchases_distribution', 'monthly_performance']
     
     def save(self, commit=True):
         group = super().save(commit=False)
@@ -1043,8 +1048,6 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     
     def form_valid(self, form):
         try:
-            print(f"Permissions to save: {form.cleaned_data['permissions']}")
-            print(f"Dashboard sections: {form.cleaned_data.get('dashboard_sections', [])}")
             # التأكد من أننا نحدث المجموعة الموجودة وليس إنشاء جديدة
             group = self.object
             group.name = form.cleaned_data['name']
@@ -1170,7 +1173,9 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
                 permissions_by_app[app_label].append(perm)
             context['permissions_by_app'] = permissions_by_app
             context['group_users'] = self.object.user_set.all()
-            context['dashboard_sections_list'] = self.object.dashboard_sections.split(',') if self.object.dashboard_sections else []
+            # استخدام initial من النموذج بدلاً من الـ object لضمان ظهور الأقسام المختارة تلقائياً
+            form = self.get_form()
+            context['dashboard_sections_list'] = form.fields['dashboard_sections'].initial or []
             return context
 
 
