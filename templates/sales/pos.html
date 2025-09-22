@@ -905,8 +905,8 @@
             <div class="pos-title">
                 <i class="fas fa-cash-register"></i>
                 <div>
-                    <h4>نقطة البيع</h4>
-                    <small>مرحباً {{ user_name }}</small>
+                    <h4>{% trans "Point of Sale" %}</h4>
+                    <small>{% trans "Welcome" %} {{ user_name }}</small>
                 </div>
             </div>
             <div class="pos-time-info">
@@ -920,11 +920,12 @@
         <!-- Products Section -->
         <div class="products-section">
             <div class="products-header">
-                <h5><i class="fas fa-boxes"></i> المنتجات</h5>
+                <h5><i class="fas fa-boxes"></i> {% trans "Products" %}</h5>
                 <div class="search-container">
                     <i class="fas fa-search search-icon"></i>
-                    <input type="text" class="search-input" id="product-search" 
-                           placeholder="ابحث عن المنتجات باسم أو الباركود...">
+                    <input type="text" class="search-input" id="product-search" placeholder="Search for products by name or barcode...">
+                           <!--placeholder={% trans "Search for products by name or barcode..." %}>-->
+                           <!--placeholder="ابحث عن المنتجات باسم أو الباركود..."> -->
                     <button class="clear-search" type="button" onclick="clearSearch()">
                         <i class="fas fa-times"></i>
                     </button>
@@ -932,11 +933,11 @@
             </div>
             
             <div class="products-grid-container">
-                <!-- المنتجات المتوفرة -->
+                <!-- {% trans "Available Products" %} -->
                 <div class="available-products-section">
                     <h6 class="section-title">
                         <i class="fas fa-check-circle text-success"></i>
-                        المنتجات المتوفرة
+                        {% trans "Available Products" %}
                         <span class="product-count" id="available-count">0</span>
                     </h6>
                     <div class="product-grid" id="available-products">
@@ -951,9 +952,9 @@
                                 <div class="product-price">{{ product.sale_price }} {% if base_currency %}{{ base_currency.symbol }}{% else %}ريال{% endif %}</div>
                                 <div class="product-stock">
                                     {% if product.current_stock <= 5 %}
-                                        <span class="stock-warning">مخزون منخفض: {{ product.current_stock }}</span>
+                                        <span class="stock-warning">{% trans "Low Stock" %}: {{ product.current_stock }}</span>
                                     {% else %}
-                                        <span class="stock-good">المخزون: {{ product.current_stock }}</span>
+                                        <span class="stock-good">{% trans "Stock" %}: {{ product.current_stock }}</span>
                                     {% endif %}
                                 </div>
                                 {% if product.barcode %}
@@ -965,11 +966,11 @@
                     </div>
                 </div>
 
-                <!-- المنتجات النافدة -->
+                <!-- {% trans "Out of Stock Products" %} -->
                 <div class="out-of-stock-section">
                     <h6 class="section-title">
                         <i class="fas fa-times-circle text-danger"></i>
-                        المنتجات النافدة
+                        {% trans "Out of Stock Products" %}
                         <span class="product-count" id="outofstock-count">0</span>
                     </h6>
                     <div class="product-grid" id="outofstock-products">
@@ -998,13 +999,13 @@
         <!-- Cart Section -->
         <div class="cart-section">
             <div class="cart-header">
-                <h5><i class="fas fa-shopping-cart"></i> سلة المشتريات</h5>
+                <h5><i class="fas fa-shopping-cart"></i>{% trans "Shopping cart" %}</h5>
             </div>
             
             <div class="cart-items" id="cart-items">
                 <div class="empty-cart">
                     <i class="fas fa-shopping-cart fa-3x"></i>
-                    <p>السلة {% trans "Empty" %}<br>أضف منتجات لبدء البيع</p>
+                    <p>{% trans "The cart is Empty" %}<br>{% trans "Add products to start selling" %}</p>
                 </div>
             </div>
             
@@ -1012,10 +1013,10 @@
                 <!-- Customer Selection -->
                 <div class="form-group">
                     <label for="customer-select" class="form-label">
-                        <i class="fas fa-user"></i> العميل
+                        <i class="fas fa-user"></i> {% trans "Customer" %}
                     </label>
                     <select class="form-select" id="customer-select">
-                        <option value="">عميل نقدي</option>
+                        <option value="">{% trans "Cash Customer" %}</option>
                         {% for customer in customers %}
                         <option value="{{ customer.id }}">{{ customer.name }}</option>
                         {% endfor %}
@@ -1025,7 +1026,7 @@
                 <!-- Payment Type -->
                 <div class="form-group">
                     <label for="payment-type" class="form-label">
-                        <i class="fas fa-credit-card"></i> طريقة ال{% trans "Payment" %}
+                        <i class="fas fa-credit-card"></i> {% trans "Payment method" %}
                     </label>
                     <select class="form-select" id="payment-type">
                         {% for value, label in payment_types %}
@@ -1037,15 +1038,15 @@
                 <!-- Totals -->
                 <div class="totals" id="cart-totals" style="display: none;">
                     <div class="total-row">
-                        <span><i class="fas fa-calculator"></i> {% trans "Total" %} الفرعي:</span>
+                        <span><i class="fas fa-calculator"></i> {% trans "Subtotal:" %}</span>
                         <span id="subtotal">0.00</span>
                     </div>
                     <div class="total-row">
-                        <span><i class="fas fa-percentage"></i> الضريبة:</span>
+                        <span><i class="fas fa-percentage"></i>{% trans "Tax:" %}</span>
                         <span id="tax-amount">0.00</span>
                     </div>
                     <div class="total-row grand-total">
-                        <span><i class="fas fa-money-bill-wave"></i> الإجمالي:</span>
+                        <span><i class="fas fa-money-bill-wave"></i> {% trans "Total:" %}</span>
                         <span id="total">0.00 {% if base_currency %}{{ base_currency.symbol }}{% else %}ريال{% endif %}</span>
                     </div>
                 </div>
@@ -1053,13 +1054,13 @@
                 <!-- Checkout Button -->
                 <button class="btn-checkout" id="checkout-btn" onclick="checkout()" disabled>
                     <i class="fas fa-cash-register"></i>
-                    إتمام البيع
+                    {% trans "Completing the sale" %}
                 </button>
                 
                 <!-- Clear Cart Button -->
                 <button class="btn-clear" onclick="clearCart()">
                     <i class="fas fa-trash"></i>
-                    مسح السلة
+                    {% trans "Clear Cart" %}
                 </button>
             </div>
         </div>
@@ -1073,22 +1074,22 @@
             <div class="modal-header">
                 <h5 class="modal-title">
                     <i class="fas fa-check-circle"></i>
-                    تم البيع بنجاح
+                    {% trans "Sold successfully" %}
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body text-center">
                 <i class="fas fa-check-circle fa-4x success-icon mb-4"></i>
-                <h4 class="mb-3">تم إتمام عملية البيع بنجاح</h4>
+                <h4 class="mb-3">The sale process was completed successfully.</h4>
                 <div id="success-message" class="alert alert-success"></div>
                 <div class="d-grid gap-2 mt-4">
                     <button class="btn btn-primary btn-lg" onclick="printInvoice()" id="print-btn">
                         <i class="fas fa-print me-2"></i>
-                        {% trans "Print" %} ال{% trans "Invoice" %}
+                        {% trans "Print the Invoice" %}
                     </button>
                     <button class="btn btn-success btn-lg" onclick="newSale()" data-bs-dismiss="modal">
                         <i class="fas fa-plus me-2"></i>
-                        بيع {% trans "New" %}
+                        {% trans "New Sale" %}
                     </button>
                 </div>
             </div>
@@ -1116,7 +1117,7 @@ updateTime();
 function addToCart(productId) {
     const productCard = document.querySelector(`[data-product-id="${productId}"]`);
     if (productCard.classList.contains('out-of-stock')) {
-        alert('هذا المنتج نفد من المخزون');
+        alert_('This product is out of stock.');
         return;
     }
     
@@ -1128,7 +1129,7 @@ function addToCart(productId) {
                 
                 // التحقق من المخزون
                 if (product.stock <= 0) {
-                    alert('هذا المنتج نفد من المخزون');
+                    alert_('This product is out of stock.');
                     return;
                 }
                 
@@ -1138,7 +1139,7 @@ function addToCart(productId) {
                 if (existingItem) {
                     // زيادة {% trans "Quantity" %}
                     if (existingItem.quantity >= product.stock) {
-                        alert(`لا يمكن {% trans "Add" %} أكثر من ${product.stock} وحدة`);
+                        alert(`{% trans "Cannot Add more than" %} ${product.stock} {% trans "units" %}`);
                         return;
                     }
                     existingItem.quantity++;
@@ -1156,12 +1157,12 @@ function addToCart(productId) {
                 
                 updateCartDisplay();
             } else {
-                alert(data.message || 'حدث {% trans "Error" %} في {% trans "Add" %} المنتج');
+                alert(data.message || '{% trans "An Error occurred in Add the product" %}');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('حدث {% trans "Error" %} في {% trans "Add" %} المنتج');
+            alert('{% trans "An Error occurred in Add the product" %}');
         });
 }
 
@@ -1175,7 +1176,7 @@ function updateCartDisplay() {
         cartItems.innerHTML = `
             <div class="empty-cart">
                 <i class="fas fa-shopping-cart fa-3x"></i>
-                <p>السلة {% trans "Empty" %}ة<br>أضف منتجات لبدء البيع</p>
+                <p>{% trans "The cart is Empty" %}<br>{% trans "Add products to start selling" %}</p>
             </div>
         `;
         cartTotals.style.display = 'none';

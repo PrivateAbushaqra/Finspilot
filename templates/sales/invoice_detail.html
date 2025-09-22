@@ -197,7 +197,7 @@
                 <div class="col-md-6">
                     <table class="table table-sm">
                         <tr>
-                            <td><strong>{% trans "Total" %} الفرعي:</strong></td>
+                            <td><strong>{% trans "Subtotal:" %}</strong></td>
                             <td class="text-end">{{ invoice.subtotal|floatformat:2 }} {% get_currency_symbol %}</td>
                         </tr>
                         <tr>
@@ -224,7 +224,7 @@
             <div class="d-flex gap-3">
                 <a href="{% url 'sales:invoice_edit' invoice.pk %}" class="btn btn-primary">
                     <i class="fas fa-edit me-2"></i>
-                    {% trans "Edit" %} ال{% trans "Invoice" %}
+                    {% trans "Edit" %} {% trans "Invoice" %}
                 </a>
                 <button class="btn btn-success" onclick="window.print()">
                     <i class="fas fa-print me-2"></i>

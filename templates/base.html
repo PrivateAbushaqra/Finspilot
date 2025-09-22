@@ -770,16 +770,6 @@
                             </a>
                             <div class="collapse" id="purchasesMenu">
                                 <ul class="nav flex-column ms-3">
-                                        {% if perms.purchases.can_view_debitnote %}
-                                            <li class="nav-item">
-                                                <a class="nav-link {% if active_menu == 'purchases' and 'debitnote_list' in request.path %}active{% endif %}" href="{% url 'purchases:debitnote_list' %}">{% trans "Debit Notes" %}</a>
-                                            </li>
-                                        {% endif %}
-                                        {% if perms.purchases.can_view_purchasereturn or perms.purchases.view_purchasereturn or user.is_superuser %}
-                                                <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'purchases' and 'return_list' in request.path %}active{% endif %}" href="{% url 'purchases:return_list' %}">{% trans "Purchase Returns List" %}</a>
-                                                </li>
-                                        {% endif %}
                                         {% if perms.purchases.add_purchaseinvoice or user.is_superuser %}
                                             <li class="nav-item">
                                                 <a class="nav-link {% if active_menu == 'purchases' and 'invoice_add' in request.path %}active{% endif %}" href="{% url 'purchases:invoice_add' %}">{% trans "Add Purchase Invoice" %}</a>
@@ -790,9 +780,19 @@
                                                 <a class="nav-link {% if active_menu == 'purchases' and 'return_add' in request.path %}active{% endif %}" href="{% url 'purchases:return_add' %}">{% trans "Add Purchase Return" %}</a>
                                             </li>
                                         {% endif %}
-                                        {% if perms.purchases.view_purchaseinvoice or user.is_superuser %}
+                                                                                {% if perms.purchases.view_purchaseinvoice or user.is_superuser %}
                                             <li class="nav-item">
                                                 <a class="nav-link {% if active_menu == 'purchases' and 'invoice_list' in request.path %}active{% endif %}" href="{% url 'purchases:invoice_list' %}">{% trans "Purchases Invoice List" %}</a>
+                                            </li>
+                                        {% endif %}
+                                        {% if perms.purchases.can_view_purchasereturn or perms.purchases.view_purchasereturn or user.is_superuser %}
+                                                <li class="nav-item">
+                                                    <a class="nav-link {% if active_menu == 'purchases' and 'return_list' in request.path %}active{% endif %}" href="{% url 'purchases:return_list' %}">{% trans "Purchase Returns List" %}</a>
+                                                </li>
+                                        {% endif %}
+                                        {% if perms.purchases.can_view_debitnote %}
+                                            <li class="nav-item">
+                                                <a class="nav-link {% if active_menu == 'purchases' and 'debitnote_list' in request.path %}active{% endif %}" href="{% url 'purchases:debitnote_list' %}">{% trans "Debit Notes" %}</a>
                                             </li>
                                         {% endif %}
                                         {% if perms.purchases.can_view_purchase_statement or user.is_superuser %}

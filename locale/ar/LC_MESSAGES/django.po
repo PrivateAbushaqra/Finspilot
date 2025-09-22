@@ -5031,6 +5031,7 @@ msgstr "الرصيد الختامي"
 #: .\templates\sales\return_list.html:146
 #: .\templates\sales\return_list.html:193
 #: .\templates\sales\sales_report.html:156
+#: .\templates\sales\pos.html:1016
 msgid "Customer"
 msgstr "العميل"
 
@@ -5068,6 +5069,7 @@ msgid "Viewing customer statement page"
 msgstr "عرض صفحة كشف حساب العميل"
 
 #: .\reports\views.py:307 .\reports\views.py:321
+#: .\templates\sales\pos.html:1019
 msgid "Cash Customer"
 msgstr "عميل نقدي"
 
@@ -7909,6 +7911,7 @@ msgstr "اختر نوع الخصم"
 #: .\templates\sales\invoice_add.html:393
 #: .\templates\sales\invoice_detail.html:208
 #: .\templates\sales\sales_report.html:158
+#: .\templates\sales\pos.html:1045
 msgid "Tax"
 msgstr "ضريبة"
 
@@ -10019,6 +10022,7 @@ msgstr "معلومات شيك البنك"
 #: .\templates\sales\sales_statement.html:177
 #: .\templates\settings\document_print_settings.html:1036
 #: .\templates\settings\print_design.html:429
+#: .\templates\sales\pos.html:1049
 msgid "Total"
 msgstr "الإجمالي"
 
@@ -10591,7 +10595,7 @@ msgstr "المشتريات"
 #: .\templates\base.html:775 .\templates\purchases\debitnote_list.html:4
 #: .\templates\purchases\debitnote_list.html:14
 msgid "Debit Notes"
-msgstr "إشعارات الخصم"
+msgstr "إشعارات مدين"
 
 #: .\templates\base.html:785 .\templates\purchases\invoice_add.html:7
 msgid "Add Purchase Invoice"
@@ -10649,6 +10653,10 @@ msgstr "كشف مرتجعات المبيعات"
 #: .\templates\base.html:843 .\templates\sales\pos.html:9
 msgid "Point of Sale"
 msgstr "نقطة البيع"
+
+#.\templates\sales\pos.html:927
+msgid "Search for products by name or barcode..."
+msgstr "ابحث عن المنتجات باسم أو الباركود..."
 
 #: .\templates\base.html:856 .\templates\products\product_list.html:871
 #: .\templates\users\group_add.html:128 .\templates\users\group_edit.html:138
@@ -14644,6 +14652,7 @@ msgstr "نقل الجرد"
 #: .\templates\inventory\low_stock.html:213
 #: .\templates\products\product_list.html:428
 #: .\templates\products\product_list.html:512
+#: .\templates\sales\pos.html:955
 msgid "Low Stock"
 msgstr "مخزون منخفض"
 
@@ -16767,6 +16776,7 @@ msgstr "بواسطة"
 #: .\templates\products\product_list.html:520
 #: .\templates\products\product_list.html:554
 #: .\templates\products\product_list.html:586
+#: .\templates\sales\pos.html:957
 msgid "Stock"
 msgstr "المخزون"
 
@@ -16841,7 +16851,7 @@ msgstr "خطأ: لم يتم تحديد عنوان URL الحذف بشكل صحي
 #: .\templates\purchases\debitnote_add.html:6
 #: .\templates\purchases\debitnote_list.html:19
 msgid "Create Debit Note"
-msgstr "إنشاء مذكرة خصم"
+msgstr "إنشاء مذكرة مدين"
 
 #: .\templates\purchases\debitnote_add.html:14
 msgid "Type to search supplier"
@@ -16854,7 +16864,7 @@ msgstr "ابدأ الكتابة لتصفية الموردين، ثم اختر م
 #: .\templates\purchases\debitnote_detail.html:5
 #: .\templates\purchases\debitnote_detail.html:14
 msgid "Debit Note Details"
-msgstr "تفاصيل مذكرة الخصم"
+msgstr "تفاصيل مذكرة مدين"
 
 #: .\templates\purchases\debitnote_detail.html:16
 #: .\templates\purchases\debitnote_detail.html:37
@@ -16866,7 +16876,7 @@ msgstr "رقم المذكرة"
 
 #: .\templates\purchases\debitnote_detail.html:29
 msgid "Debit Note Data"
-msgstr "بيانات مذكرة الخصم"
+msgstr "بيانات مذكرة مدين"
 
 #: .\templates\purchases\debitnote_detail.html:34
 msgid "Debit Note Information"
@@ -16874,11 +16884,11 @@ msgstr "معلومات مذكرة الخصم"
 
 #: .\templates\purchases\debitnote_list.html:24
 msgid "Debit Note Report"
-msgstr "تقرير مذكرة الخصم"
+msgstr "تقرير مذكرة مدين"
 
 #: .\templates\purchases\debitnote_list.html:36
 msgid "Debit Note number"
-msgstr "رقم مذكرة الخصم"
+msgstr "رقم مذكرة مدين"
 
 #: .\templates\purchases\debitnote_list.html:40
 msgid "TAX"
@@ -16886,15 +16896,15 @@ msgstr "الضريبة"
 
 #: .\templates\purchases\debitnote_list.html:122
 msgid "No Debit Notes"
-msgstr "لا توجد مذكرات خصم"
+msgstr "لا توجد مذكرات مدين"
 
 #: .\templates\purchases\debitnote_list.html:124
 msgid "You can create a new debit note by clicking the button above."
-msgstr "يمكنك إنشاء مذكرة خصم جديدة بالنقر على الزر أعلاه."
+msgstr "يمكنك إنشاء مذكرة مدين جديدة بالنقر على الزر أعلاه."
 
 #: .\templates\purchases\debitnote_list.html:126
 msgid "Create First Debit Note"
-msgstr "إنشاء أول مذكرة خصم"
+msgstr "إنشاء أول مذكرة مدين"
 
 #: .\templates\purchases\invoice_add.html:10
 msgid "Critical CSS - Load First"
@@ -17374,11 +17384,11 @@ msgstr "معلومات المورد الأساسية"
 
 #: .\templates\purchases\invoice_add.html:967
 msgid "Maximum amount the supplier can be debited"
-msgstr "المبلغ الأقصى الذي يمكن خصمه من المورد"
+msgstr "المبلغ الأقصى الذي يمكن أن يكون مدين من المورد"
 
 #: .\templates\purchases\invoice_add.html:978
 msgid "Current Balance (positive: credit, negative: debit)"
-msgstr "الرصيد الحالي (إيجابي: ائتمان، سلبي: خصم)"
+msgstr "الرصيد الحالي (إيجابي: ائتمان، سلبي: مدين)"
 
 #: .\templates\purchases\invoice_add.html:992
 #: .\templates\sales\invoice_add.html:1316
@@ -21132,3 +21142,77 @@ msgstr "المستخدمون ذوي الصلاحيات العالية مخفيو
 #: .\users\views.py:1126
 msgid "High privileged users are shown."
 msgstr "المستخدمون ذوي الصلاحيات العالية معروضون."
+
+#: .\templates\sales\pos.html:1008
+msgid "The cart is Empty"
+msgstr "السلة فارغة"
+
+#: .\templates\sales\pos.html:1008
+msgid "Add products to start selling"
+msgstr "أضف منتجات لبدء البيع"
+
+#: .\templates\sales\pos.html:1029
+msgid "Payment method"
+msgstr "طريقة الدفع"
+
+#: .\templates\sales\invoice_detail.html:200
+#: .\templates\sales\pos.html:1041
+msgid "Subtotal:"
+msgstr "المجموع الفرعي:"
+
+#: .\templates\sales\pos.html:1088
+msgid "Print the Invoice"
+msgstr "طباعة الفاتورة"
+
+#: .\templates\sales\pos.html:1092
+msgid "New Sale"
+msgstr "بيع جديد"
+
+#: .\templates\sales\pos.html:1142
+msgid "Cannot Add more than"
+msgstr "لا يمكن إضافة أكثر من"
+
+#: .\templates\sales\pos.html:1142
+msgid "units"
+msgstr "وحدة"
+
+#: .\templates\sales\pos.html:1160
+msgid "An Error occurred in Add the product"
+msgstr "حدث خطأ في إضافة المنتج"
+
+#: .\templates\sales\pos.html:940
+msgid "Available Products"
+msgstr "المنتجات المتوفرة"
+
+#: .\templates\sales\pos.html:973
+msgid "Out of Stock Products"
+msgstr "المنتجات النافدة"
+
+#: .\templates\sales\pos.html:909
+msgid "Welcome"
+msgstr "مرحباً"
+
+#: .\templates\sales\pos.html:1002
+msgid "Shopping cart"
+msgstr "سلة المشتريات"
+
+#: .\templates\sales\pos.html:1057
+msgid "Completing the sale"
+msgstr "إتمام البيع"
+
+#: .\templates\sales\pos.html:1063
+msgid "Clear Cart"
+msgstr "مسح السلة"
+
+#: .\templates\sales\pos.html:1077
+msgid "Sold successfully"
+msgstr "تم البيع بنجاح"
+
+#: .\templates\sales\pos.html:1083
+msgid "The sale process was completed successfully."
+msgstr "تم إتمام عملية البيع بنجاح"
+
+#: .\templates\sales\pos.html:1120
+#: .\templates\sales\pos.html:1132
+msgid "This product is out of stock."
+msgstr "هذا المنتج نفد من المخزون"
