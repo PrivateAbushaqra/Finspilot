@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -7,7 +8,14 @@ class User(AbstractUser):
     def has_revenueexpenseentry_view_permission(self):
         """
         تعيد True إذا كان لدى المستخدم صلاحية عرض قيد إيراد/مصروف
-        سواء من دجانغو أو من المجموعات المخصصة
+        سواء من دجانغو أو من الclass UserGroup(models.Model):
+    
+    name = models.CharField(_('Group Name'), max_length=100, unique=True)
+    description = models.TextField(_('Description'), blank=True)
+    permissions = models.JSONField(_('Permissions'), default=dict)
+    dashboard_sections = models.JSONField(_('Dashboard Sections'), default=list, help_text=_('List of dashboard sections to display for this group'))
+    created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
+    updated_at = models.DateTimeField(_('Updated At'), auto_now=True) المخصصة
         """
         if self.is_admin:
             return True
@@ -364,3 +372,8 @@ class UserGroupMembership(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.group.name}"
+
+
+# إضافة حقل dashboard_sections إلى Group
+from django.contrib.auth.models import Group
+Group.add_to_class('dashboard_sections', models.TextField(default='', blank=True, help_text=_('List of dashboard sections to display for this group')))

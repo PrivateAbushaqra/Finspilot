@@ -10,7 +10,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
-from .models import User, UserGroup
+from .models import User, UserGroup, UserGroupMembership
 from core.signals import log_user_activity
 
 
@@ -649,7 +649,7 @@ class GroupCreateForm(forms.ModelForm):
     
     class Meta:
         model = Group
-        fields = ['name', 'permissions']
+        fields = ['name', 'permissions', 'dashboard_sections']
         labels = {
             'name': _('Group Name'),
         }
@@ -679,14 +679,119 @@ class GroupCreateForm(forms.ModelForm):
         # دمج جميع صلاحيات purchases مع باقي الصلاحيات
         all_perms = list({perm.id: perm for perm in list(queryset) + list(purchases_permissions)}.values())
         self.fields['permissions'].queryset = Permission.objects.filter(id__in=[perm.id for perm in all_perms]).order_by('content_type__app_label', 'name')
+        
+        # إضافة حقل dashboard_sections
+        self.fields['dashboard_sections'] = forms.MultipleChoiceField(
+            choices=[
+                ('sales_stats', _('إحصائيات المبيعات')),
+                ('purchases_stats', _('إحصائيات المشتريات')),
+                ('banks_balances', _('أرصدة البنوك والصناديق النقدية')),
+                ('quick_links', _('روابط سريعة')),
+                ('sales_purchases_distribution', _('توزيع المبيعات والمشتريات (الشهر الحالي)')),
+                ('monthly_performance', _('الأداء الشهري')),
+            ],
+            widget=forms.CheckboxSelectMultiple,
+            required=False,
+            label=_('Dashboard Sections')
+        )
     
     def save(self, commit=True):
         group = super().save(commit=False)
         if commit:
             group.save()
-            # حفظ الصلاحيات
-            self.save_m2m()
+            # حفظ dashboard_sections
+            group.dashboard_sections = ','.join(self.cleaned_data.get('dashboard_sections', []))
+            group.save()
         return group
+
+
+class UserGroupCreateForm(forms.ModelForm):
+    """نموذج إنشاء مجموعة مستخدمين مخصصة جديدة"""
+    
+    dashboard_sections = forms.MultipleChoiceField(
+        choices=[
+            ('sales_stats', _('إحصائيات المبيعات')),
+            ('purchases_stats', _('إحصائيات المشتريات')),
+            ('banks_balances', _('أرصدة البنوك والصناديق النقدية')),
+            ('quick_links', _('روابط سريعة')),
+            ('sales_purchases_distribution', _('توزيع المبيعات والمشتريات (الشهر الحالي)')),
+            ('monthly_performance', _('الأداء الشهري')),
+        ],
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+        label=_('Dashboard Sections')
+    )
+    
+    class Meta:
+        model = UserGroup
+        fields = ['name', 'description', 'permissions', 'dashboard_sections']
+        labels = {
+            'name': _('Group Name'),
+            'description': _('Description'),
+        }
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': _('Enter the group name')
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': _('Enter the group description')
+            }),
+            'permissions': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 5,
+                'placeholder': _('Enter permissions as JSON')
+            }),
+        }
+
+
+class UserGroupEditForm(forms.ModelForm):
+    """نموذج تعديل مجموعة مستخدمين مخصصة"""
+    
+    dashboard_sections = forms.MultipleChoiceField(
+        choices=[
+            ('sales_stats', _('إحصائيات المبيعات')),
+            ('purchases_stats', _('إحصائيات المشتريات')),
+            ('banks_balances', _('أرصدة البنوك والصناديق النقدية')),
+            ('quick_links', _('روابط سريعة')),
+            ('sales_purchases_distribution', _('توزيع المبيعات والمشتريات (الشهر الحالي)')),
+            ('monthly_performance', _('الأداء الشهري')),
+        ],
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+        label=_('Dashboard Sections')
+    )
+    
+    class Meta:
+        model = UserGroup
+        fields = ['name', 'description', 'permissions', 'dashboard_sections']
+        labels = {
+            'name': _('Group Name'),
+            'description': _('Description'),
+        }
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': _('Enter the group name')
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': _('Enter the group description')
+            }),
+            'permissions': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 5,
+                'placeholder': _('Enter permissions as JSON')
+            }),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            self.fields['dashboard_sections'].initial = self.instance.dashboard_sections or []
 
 
 class UserGroupCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
@@ -707,6 +812,8 @@ class UserGroupCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     
     def form_valid(self, form):
         try:
+            print(f"Permissions to save: {form.cleaned_data['permissions']}")
+            print(f"Dashboard sections: {form.cleaned_data.get('dashboard_sections', [])}")
             # حفظ المجموعة أولاً
             group = form.save(commit=False)
             group.save()
@@ -716,12 +823,16 @@ class UserGroupCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
             for permission in form.cleaned_data['permissions']:
                 group.permissions.add(permission)
             
+            # حفظ dashboard_sections
+            group.dashboard_sections = ','.join(form.cleaned_data.get('dashboard_sections', []))
+            group.save()
+            
             # تسجيل النشاط في سجل الأنشطة
             log_user_activity(
                 self.request, 
                 'create', 
                 group, 
-                f'إنشاء مجموعة مستخدمين جديدة: {group.name}'
+                f'إنشاء مجموعة مستخدمين جديدة: {group.name} مع {len(form.cleaned_data["permissions"])} صلاحية وأقسام لوحة التحكم: {", ".join(form.cleaned_data.get("dashboard_sections", []))}'
             )
             
             messages.success(self.request, _('تم إنشاء المجموعة بنجاح'))
@@ -825,7 +936,7 @@ class GroupEditForm(forms.ModelForm):
     
     class Meta:
         model = Group
-        fields = ['name', 'permissions']
+        fields = ['name', 'permissions', 'dashboard_sections']
         labels = {
             'name': _('Group Name'),
         }
@@ -867,38 +978,32 @@ class GroupEditForm(forms.ModelForm):
                         'can_backup_system'
                     ]
                 )
-            self.fields['permissions'].initial = current_permissions
+            self.fields['permissions'].initial = list(current_permissions.values_list('pk', flat=True))
+        
+        # إضافة حقل dashboard_sections
+        self.fields['dashboard_sections'] = forms.MultipleChoiceField(
+            choices=[
+                ('sales_stats', _('إحصائيات المبيعات')),
+                ('purchases_stats', _('إحصائيات المشتريات')),
+                ('banks_balances', _('أرصدة البنوك والصناديق النقدية')),
+                ('quick_links', _('روابط سريعة')),
+                ('sales_purchases_distribution', _('توزيع المبيعات والمشتريات (الشهر الحالي)')),
+                ('monthly_performance', _('الأداء الشهري')),
+            ],
+            widget=forms.CheckboxSelectMultiple,
+            required=False,
+            label=_('Dashboard Sections'),
+            initial=self.instance.dashboard_sections.split(',') if self.instance and self.instance.pk and self.instance.dashboard_sections else []
+        )
     
     def save(self, commit=True):
         group = super().save(commit=False)
         if commit:
             group.save()
             
-            # إذا لم يكن المستخدم superadmin، نحتفظ بصلاحيات superadmin الموجودة
-            if self.user and not (self.user.user_type == 'superadmin' or self.user.is_superuser):
-                # الحصول على صلاحيات superadmin الموجودة حالياً في المجموعة
-                existing_superadmin_permissions = group.permissions.filter(
-                    codename__in=[
-                        'can_access_system_management',
-                        'can_manage_users', 
-                        'can_view_audit_logs',
-                        'can_backup_system'
-                    ]
-                )
-                
-                # مسح كل الصلاحيات وإضافة الجديدة
-                group.permissions.clear()
-                for permission in self.cleaned_data['permissions']:
-                    group.permissions.add(permission)
-                    
-                # إعادة إضافة صلاحيات superadmin الموجودة
-                for permission in existing_superadmin_permissions:
-                    group.permissions.add(permission)
-            else:
-                # للسوبر أدمين، يمكنه تعديل كل الصلاحيات
-                group.permissions.clear()
-                for permission in self.cleaned_data['permissions']:
-                    group.permissions.add(permission)
+            # حفظ dashboard_sections
+            group.dashboard_sections = ','.join(self.cleaned_data.get('dashboard_sections', []))
+            group.save()
         return group
 
 
@@ -938,22 +1043,50 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     
     def form_valid(self, form):
         try:
+            print(f"Permissions to save: {form.cleaned_data['permissions']}")
+            print(f"Dashboard sections: {form.cleaned_data.get('dashboard_sections', [])}")
             # التأكد من أننا نحدث المجموعة الموجودة وليس إنشاء جديدة
             group = self.object
             group.name = form.cleaned_data['name']
             group.save()
             
             # تحديث الصلاحيات (signals ستتولى تنظيف cache)
-            group.permissions.clear()
-            for permission in form.cleaned_data['permissions']:
-                group.permissions.add(permission)
+            # إذا لم يكن المستخدم superadmin، نحتفظ بصلاحيات superadmin الموجودة
+            if self.request.user and not (getattr(self.request.user, 'user_type', None) == 'superadmin' or self.request.user.is_superuser):
+                # الحصول على صلاحيات superadmin الموجودة حالياً في المجموعة
+                existing_superadmin_permissions = group.permissions.filter(
+                    codename__in=[
+                        'can_access_system_management',
+                        'can_manage_users', 
+                        'can_view_audit_logs',
+                        'can_backup_system'
+                    ]
+                )
+                
+                # مسح كل الصلاحيات وإضافة الجديدة
+                group.permissions.clear()
+                for permission in form.cleaned_data['permissions']:
+                    group.permissions.add(permission)
+                    
+                # إعادة إضافة صلاحيات superadmin الموجودة
+                for permission in existing_superadmin_permissions:
+                    group.permissions.add(permission)
+            else:
+                # للسوبر أدمين، يمكنه تعديل كل الصلاحيات
+                group.permissions.clear()
+                for permission in form.cleaned_data['permissions']:
+                    group.permissions.add(permission)
+            
+            # حفظ dashboard_sections
+            group.dashboard_sections = ','.join(form.cleaned_data.get('dashboard_sections', []))
+            group.save()
             
             # تسجيل النشاط في سجل الأنشطة
             log_user_activity(
                 self.request, 
                 'update', 
                 group, 
-                f'تحديث مجموعة مستخدمين: {group.name}'
+                f'تحديث مجموعة مستخدمين: {group.name} مع {len(form.cleaned_data["permissions"])} صلاحية وأقسام لوحة التحكم: {", ".join(form.cleaned_data.get("dashboard_sections", []))}'
             )
             
             messages.success(self.request, _('تم تحديث المجموعة بنجاح'))
@@ -1037,6 +1170,7 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
                 permissions_by_app[app_label].append(perm)
             context['permissions_by_app'] = permissions_by_app
             context['group_users'] = self.object.user_set.all()
+            context['dashboard_sections_list'] = self.object.dashboard_sections.split(',') if self.object.dashboard_sections else []
             return context
 
 

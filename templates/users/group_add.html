@@ -54,6 +54,23 @@
                                                 {% trans 'Choose a descriptive name for the group (e.g., Managers, Accountants, Storekeepers)' %}
                                             </small>
                                         </div>
+                                        <div class="mb-3">
+                                            <label for="{{ form.description.id_for_label }}" class="form-label">
+                                                <i class="fas fa-align-left me-1"></i>
+                                                {{ form.description.label }}
+                                            </label>
+                                            {{ form.description }}
+                                            {% if form.description.errors %}
+                                                <div class="text-danger small mt-1">
+                                                    {% for error in form.description.errors %}
+                                                        <div>{{ error }}</div>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                            <small class="form-text text-muted">
+                                                {% trans 'Optional description for the group' %}
+                                            </small>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -85,6 +102,49 @@
                                                 {% trans "Users will inherit the group's permissions" %}
                                             </li>
                                         </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Dashboard Sections -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card border-warning">
+                                    <div class="card-header bg-warning text-dark">
+                                        <h5 class="mb-0">
+                                            <i class="fas fa-tachometer-alt me-2"></i>
+                                            {% trans "Dashboard Sections" %}
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted mb-3">
+                                            {% trans "Select the dashboard sections that will be visible to users in this group on the home page." %}
+                                        </p>
+                                        <div class="row">
+                                            {% for value, label in form.dashboard_sections.field.choices %}
+                                                <div class="col-md-6 col-lg-4 mb-3">
+                                                    <div class="form-check">
+                                                        <input type="checkbox" 
+                                                               class="form-check-input" 
+                                                               id="id_dashboard_sections_{{ forloop.counter }}" 
+                                                               name="dashboard_sections" 
+                                                               value="{{ value }}"
+                                                               {% if value in form.dashboard_sections.value %}checked{% endif %}>
+                                                        <label class="form-check-label" for="id_dashboard_sections_{{ forloop.counter }}">
+                                                            {{ label }}
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                        {% if form.dashboard_sections.errors %}
+                                            <div class="text-danger small mt-2">
+                                                {% for error in form.dashboard_sections.errors %}
+                                                    <div>{{ error }}</div>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
@@ -275,6 +335,53 @@
                             </div>
                         </div>
                         
+                        <!-- Dashboard Sections -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="card border-success">
+                                    <div class="card-header bg-success text-white">
+                                        <h5 class="mb-0">
+                                            <i class="fas fa-tachometer-alt me-2"></i>
+                                            {% trans "Dashboard Sections" %}
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted mb-3">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            {% trans "Select which dashboard sections will be visible to users in this group" %}
+                                        </p>
+                                        <div class="row">
+                                            {% for value, label in form.dashboard_sections.field.choices %}
+                                            <div class="col-md-6 mb-2">
+                                                <div class="form-check">
+                                                    <input class="form-check-input dashboard-section-checkbox" type="checkbox" 
+                                                           name="dashboard_sections" value="{{ value }}" id="id_dashboard_sections_{{ forloop.counter }}">
+                                                    <label class="form-check-label" for="id_dashboard_sections_{{ forloop.counter }}">
+                                                        {{ label }}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                        <div class="mt-3">
+                                            <button type="button" class="btn btn-sm btn-success me-2" onclick="selectAllDashboardSections(true)">
+                                                <i class="fas fa-check-square me-1"></i>
+                                                {% trans "Select All" %}
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-success" onclick="selectAllDashboardSections(false)">
+                                                <i class="fas fa-square me-1"></i>
+                                                {% trans "Deselect All" %}
+                                            </button>
+                                        </div>
+                                        <div class="alert alert-info mt-3">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            {% trans "You can modify the dashboard sections at any time after creating the group" %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <!-- أزرار الحفظ -->
                         <div class="d-flex justify-content-between mt-4">
                             <a href="{% url 'users:group_list' %}" class="btn btn-secondary">
@@ -348,5 +455,12 @@ document.addEventListener('DOMContentLoaded', function() {
         submitBtn.disabled = true;
     });
 });
+
+function selectAllDashboardSections(select) {
+    const checkboxes = document.querySelectorAll('.dashboard-section-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = select;
+    });
+}
 </script>
 {% endblock %}

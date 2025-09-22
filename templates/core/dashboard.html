@@ -136,6 +136,7 @@
 
 <!-- Statistics Cards -->
 <div class="row mb-4">
+    {% if 'sales_stats' in dashboard_sections %}
     <!-- Sales Statistics -->
     <div class="col-xl-6 col-lg-12 mb-4">
         <div class="card">
@@ -186,7 +187,9 @@
             </div>
         </div>
     </div>
+    {% endif %}
 
+    {% if 'purchases_stats' in dashboard_sections %}
     <!-- Purchase Statistics -->
     <div class="col-xl-6 col-lg-12 mb-4">
         <div class="card">
@@ -237,8 +240,10 @@
             </div>
         </div>
     </div>
+    {% endif %}
 </div>
 
+{% if 'banks_balances' in dashboard_sections %}
 <!-- Bank Balance & Quick Links -->
 <div class="row mb-4">
     <!-- {% trans "Bank and Cashbox Balances" %} -->
@@ -266,14 +271,7 @@
                             <i class="fas fa-university fa-2x text-primary mb-2"></i>
                             <h6 class="mb-1">{% trans "Banks" %}</h6>
                             <small class="text-muted">
-                                {% if bank_balances %}
-                                    {% for currency, accounts in bank_balances.items %}
-                                        {{ accounts|length }}{% if not forloop.last %} + {% endif %}
-                                    {% endfor %}
-                                    {% trans "Account" %}
-                                {% else %}
-                                    0 {% trans "Account" %}
-                                {% endif %}
+                                {% if not forloop.last %}{{ accounts|length }} + {% else %}{{ accounts|length }}{% endif %}
                             </small>
                         </div>
                     </div>
@@ -282,14 +280,7 @@
                             <i class="fas fa-cash-register fa-2x text-success mb-2"></i>
                             <h6 class="mb-1">{% trans "Cashboxes" %}</h6>
                             <small class="text-muted">
-                                {% if cashbox_balances %}
-                                    {% for currency, cashboxes in cashbox_balances.items %}
-                                        {{ cashboxes|length }}{% if not forloop.last %} + {% endif %}
-                                    {% endfor %}
-                                    {% trans "Cashbox" %}
-                                {% else %}
-                                    0 {% trans "Cashbox" %}
-                                {% endif %}
+                                {% if not forloop.last %}{{ cashboxes|length }} + {% else %}{{ cashboxes|length }}{% endif %}
                             </small>
                         </div>
                     </div>
@@ -298,14 +289,7 @@
                             <i class="fas fa-money-check fa-2x text-warning mb-2"></i>
                             <h6 class="mb-1">{% trans "Pending Checks" %}</h6>
                             <small class="text-muted">
-                                {% if pending_checks_by_currency %}
-                                    {% for currency, checks_data in pending_checks_by_currency.items %}
-                                        {{ checks_data.count }}{% if not forloop.last %} + {% endif %}
-                                    {% endfor %}
-                                    {% trans "Check" %}
-                                {% else %}
-                                    0 {% trans "Check" %}
-                                {% endif %}
+                                {% if not forloop.last %}{{ checks_data.count }} + {% else %}{{ checks_data.count }}{% endif %}
                             </small>
                         </div>
                     </div>
@@ -433,7 +417,9 @@
             </div>
         </div>
     </div>
+    {% endif %}
 
+    {% if 'quick_links' in dashboard_sections %}
     <!-- Quick Links -->
     <div class="col-md-6 mb-4">
         <div class="card">
@@ -477,8 +463,10 @@
             </div>
         </div>
     </div>
+    {% endif %}
 </div>
 
+{% if 'sales_purchases_distribution' in dashboard_sections %}
 <!-- Charts Section -->
 <div class="row">
     <div class="col-lg-6 mb-4">
@@ -495,6 +483,7 @@
         </div>
     </div>
     
+    {% if 'monthly_performance' in dashboard_sections %}
     <div class="col-lg-6 mb-4">
         <div class="card">
             <div class="card-header">
@@ -508,7 +497,9 @@
             </div>
         </div>
     </div>
+    {% endif %}
 </div>
+{% endif %}
 
 {% endblock %}
 

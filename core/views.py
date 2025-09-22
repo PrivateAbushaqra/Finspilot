@@ -43,6 +43,14 @@ class DashboardView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
+        # جمع dashboard_sections من مجموعات المستخدم
+        user_groups = self.request.user.groups.all()
+        dashboard_sections = set()
+        for group in user_groups:
+            sections = group.dashboard_sections.split(',') if group.dashboard_sections else []
+            dashboard_sections.update(sections)
+        context['dashboard_sections'] = list(dashboard_sections)
+        
         # تواريخ مختلفة للإحصائيات
         today = django_timezone.now().date()
         start_of_month = today.replace(day=1)
