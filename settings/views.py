@@ -34,7 +34,7 @@ class CompanySettingsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView)
     
     def test_func(self):
         """التحقق من أن المستخدم لديه صلاحية الوصول لإعدادات الشركة"""
-        return self.request.user.has_system_management_permission()
+        return self.request.user.has_settings_permission()
     
     def handle_no_permission(self):
         """في حالة عدم وجود صلاحية، إعادة توجيه للصفحة الرئيسية مع رسالة خطأ"""
@@ -700,8 +700,8 @@ class SuperadminManagementView(LoginRequiredMixin, UserPassesTestMixin, Template
         # السماح للسوبر يوزر دائماً
         if user.is_superuser:
             return True
-        # السماح فقط لمن لديه الإذن الصريح
-        return user.has_perm('users.can_access_system_management')
+        # السماح فقط لمن لديه صلاحية الإعدادات
+        return user.has_settings_permission()
 
     def handle_no_permission(self):
         """في حالة عدم وجود صلاحية، إعادة توجيه للصفحة الرئيسية مع رسالة خطأ"""
@@ -941,7 +941,7 @@ class DocumentPrintSettingsView(LoginRequiredMixin, UserPassesTestMixin, Templat
     
     def test_func(self):
         """التحقق من صلاحيات المستخدم"""
-        return self.request.user.has_system_management_permission()
+        return self.request.user.has_settings_permission()
     
     def handle_no_permission(self):
         messages.error(self.request, _('ليس لديك صلاحية للوصول لإعدادات الطباعة.'))
@@ -1080,9 +1080,7 @@ class PrintDesignView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     def test_func(self):
         """التحقق من صلاحيات المستخدم"""
         # المستخدمون الذين يمكنهم الوصول: Superadmin, Admin, أو من لديه صلاحية محددة
-        return (self.request.user.user_type in ['superadmin', 'admin'] or 
-                self.request.user.is_superuser or 
-                self.request.user.has_perm('settings.can_access_print_design'))
+        return self.request.user.has_settings_permission()
     
     def handle_no_permission(self):
         # تسجيل محاولة الوصول المرفوضة في سجل الأنشطة

@@ -7,14 +7,14 @@ User = get_user_model()
 
 class Cashbox(models.Model):
     """الصندوق النقدي"""
-    name = models.CharField(_('اسم الصندوق'), max_length=200)
+    name = models.CharField(_('Cash Box Name'), max_length=200)
     description = models.TextField(_('Description'), blank=True)
     balance = models.DecimalField(_('Balance'), max_digits=15, decimal_places=3, default=0)
     currency = models.CharField(_('Currency'), max_length=10, blank=True)
     is_active = models.BooleanField(_('Active'), default=True)
-    location = models.CharField(_('الموقع'), max_length=200, blank=True)
+    location = models.CharField(_('Location'), max_length=200, blank=True)
     responsible_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
-                                       verbose_name=_('المسؤول عن الصندوق'))
+                                       verbose_name=_('Responsible User'))
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
     updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
 
@@ -23,11 +23,11 @@ class Cashbox(models.Model):
         verbose_name_plural = _('Cash Boxes')
         ordering = ['name']
         permissions = [
-            ('can_view_cashboxes', _('يمكن عرض الصناديق النقدية')),
-            ('can_add_cashboxes', _('يمكن إضافة الصناديق النقدية')),
-            ('can_edit_cashboxes', _('يمكن تعديل الصناديق النقدية')),
-            ('can_delete_cashboxes', _('يمكن حذف الصناديق النقدية')),
-            ('can_modify_cashbox', _('تعديل صندوق')),
+            ('can_view_cashboxes', _('Cash boxes can be displayed')),
+            ('can_add_cashboxes', _('Cash boxes can be added')),
+            ('can_edit_cashboxes', _('Cash boxes can be edited')),
+            ('can_delete_cashboxes', _('Cash boxes can be deleted')),
+            ('can_modify_cashbox', _('Cash box can be modified')),
         ]
 
     def __str__(self):

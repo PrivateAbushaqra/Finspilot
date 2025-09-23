@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView, View, DetailView
 from django.db.models import Sum, Count, Q
 from django.utils import timezone
@@ -10,8 +10,11 @@ from django.urls import reverse_lazy
 from .models import Warehouse, InventoryMovement, WarehouseTransfer
 from products.models import Product
 
-class InventoryListView(LoginRequiredMixin, TemplateView):
+class InventoryListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     template_name = 'inventory/list.html'
+    
+    def test_func(self):
+        return self.request.user.has_inventory_permission()
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -179,10 +182,13 @@ class InventoryListView(LoginRequiredMixin, TemplateView):
 
         return context
 
-class WarehouseListView(LoginRequiredMixin, ListView):
+class WarehouseListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     model = Warehouse
     template_name = 'inventory/warehouse_list.html'
     context_object_name = 'warehouses'
+    
+    def test_func(self):
+        return self.request.user.has_inventory_permission()
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -202,11 +208,14 @@ class WarehouseListView(LoginRequiredMixin, ListView):
         
         return context
 
-class WarehouseCreateView(LoginRequiredMixin, CreateView):
+class WarehouseCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     model = Warehouse
     template_name = 'inventory/warehouse_add.html'
     fields = ['name', 'code', 'address', 'parent', 'manager', 'is_active', 'is_default']
     success_url = reverse_lazy('inventory:warehouse_list')
+    
+    def test_func(self):
+        return self.request.user.has_inventory_permission()
     
     def form_valid(self, form):
         # تسجيل النشاط
@@ -221,8 +230,11 @@ class WarehouseCreateView(LoginRequiredMixin, CreateView):
         messages.success(self.request, 'تم إنشاء المستودع بنجاح')
         return super().form_valid(form)
 
-class WarehouseDeleteView(LoginRequiredMixin, View):
+class WarehouseDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
     template_name = 'inventory/warehouse_delete.html'
+    
+    def test_func(self):
+        return self.request.user.has_inventory_permission()
     
     def get(self, request, pk, *args, **kwargs):
         warehouse = get_object_or_404(Warehouse, pk=pk)
@@ -317,12 +329,15 @@ class WarehouseDeleteView(LoginRequiredMixin, View):
             messages.error(request, f'حدث خطأ أثناء حذف المستودع: {str(e)}')
             return redirect('inventory:warehouse_delete', pk=pk)
 
-class MovementListView(LoginRequiredMixin, ListView):
+class MovementListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     model = InventoryMovement
     template_name = 'inventory/movement_list.html'
     context_object_name = 'movements'
     paginate_by = 20
     ordering = ['-date', '-created_at']
+    
+    def test_func(self):
+        return self.request.user.has_inventory_permission()
     
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -722,11 +737,14 @@ class WarehouseDetailView(LoginRequiredMixin, DetailView):
         return context
 
 
-class WarehouseEditView(LoginRequiredMixin, UpdateView):
+class WarehouseEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Warehouse
     fields = ['name', 'code', 'address', 'is_active', 'is_default']
     template_name = 'inventory/warehouse_edit.html'
     success_url = '/ar/inventory/warehouses/'
+    
+    def test_func(self):
+        return self.request.user.has_inventory_permission()
     
     def form_valid(self, form):
         # تسجيل النشاط
@@ -746,18 +764,14 @@ class WarehouseEditView(LoginRequiredMixin, UpdateView):
         return super().form_invalid(form)
 
 
-class MovementDeleteView(LoginRequiredMixin, View):
+class MovementDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
     """حذف حركة مخزون واحدة"""
+    
+    def test_func(self):
+        return self.request.user.has_inventory_permission()
     
     def post(self, request, pk, *args, **kwargs):
         """حذف حركة المخزون"""
-        # التحقق من الصلاحيات
-        if not (request.user.user_type == 'superadmin' or request.user.is_superuser):
-            return JsonResponse({
-                'success': False, 
-                'message': 'ليس لديك صلاحية لحذف حركات المخزون'
-            }, status=403)
-        
         try:
             # الحصول على الحركة
             movement = get_object_or_404(InventoryMovement, pk=pk)

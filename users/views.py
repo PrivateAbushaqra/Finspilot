@@ -997,9 +997,12 @@ class GroupEditForm(forms.ModelForm):
             label=_('Dashboard Sections')
         )
         
-        # تعيين أقسام لوحة التحكم تلقائياً للمستخدمين المميزين
-        # للاختبار، اجعلها دائماً مختارة
-        self.fields['dashboard_sections'].initial = ['sales_stats', 'purchases_stats', 'banks_balances', 'quick_links', 'sales_purchases_distribution', 'monthly_performance']
+        # تعيين أقسام لوحة التحكم من البيانات المحفوظة أو الافتراضية
+        if self.instance and self.instance.pk:
+            self.fields['dashboard_sections'].initial = self.instance.dashboard_sections.split(',') if self.instance.dashboard_sections else []
+        else:
+            # تعيين أقسام لوحة التحكم تلقائياً للمستخدمين المميزين
+            self.fields['dashboard_sections'].initial = ['sales_stats', 'purchases_stats', 'banks_balances', 'quick_links', 'sales_purchases_distribution', 'monthly_performance']
     
     def save(self, commit=True):
         group = super().save(commit=False)

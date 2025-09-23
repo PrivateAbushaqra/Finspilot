@@ -35,7 +35,7 @@ def customer_statement(request):
     has_perm = (
         getattr(user, 'is_superuser', False) or
         getattr(user, 'user_type', None) in ['superadmin', 'admin'] or
-        user.has_perm('reports.can_view_customer_statement')
+        user.has_reports_permission()
     )
     if not has_perm:
         raise PermissionDenied
@@ -48,21 +48,9 @@ def customer_statement(request):
     default_end = today
 
     customer_id = request.GET.get('customer')
-    """
-    Customer Statement report: select customer and date range, view transactions with opening/closing balances.
-    Supports export to CSV/XLSX (XLSX best-effort; falls back to CSV if libs missing).
-    """
-    # Permission gate: allow superuser or user_type admin/superadmin implicitly; else require explicit permission
-    user = request.user
-    has_perm = (
-        getattr(user, 'is_superuser', False) or
-        getattr(user, 'user_type', None) in ['superadmin', 'admin'] or
-        user.has_perm('reports.can_view_customer_statement')
-    )
-    if not has_perm:
-        raise PermissionDenied
-
-    customers = CustomerSupplier.objects.filter(type__in=['customer', 'both'], is_active=True).order_by('name')
+    start_raw = request.GET.get('start_date')
+    end_raw = request.GET.get('end_date')
+    export = request.GET.get('export')  # csv or xlsx
 
     # Defaults: last 30 days
     today = date.today()
@@ -239,7 +227,7 @@ def sales_by_salesperson(request):
     has_perm = (
         getattr(user, 'is_superuser', False) or
         getattr(user, 'user_type', None) in ['superadmin', 'admin'] or
-        user.has_perm('reports.can_view_customer_statement')  # Using same permission for simplicity
+        user.has_reports_permission()
     )
     if not has_perm:
         raise PermissionDenied

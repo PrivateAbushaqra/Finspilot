@@ -24,7 +24,7 @@ class Warehouse(models.Model):
         verbose_name_plural = _('المستودعات')
         ordering = ['name']
         permissions = [
-            ('can_view_inventory', _('يمكن عرض المخزون')),
+            ('can_view_inventory', _('Can access inventory')),
         ]
 
     def __str__(self):
@@ -87,7 +87,7 @@ class InventoryMovement(models.Model):
         verbose_name_plural = _('حركات المخزون')
         ordering = ['-date', '-movement_number']
         permissions = [
-            ('can_view_inventory', _('يمكن عرض المخزون')),
+            ('can_view_inventory', _('Can access inventory')),
         ]
 
     def __str__(self):

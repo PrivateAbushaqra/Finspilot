@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods, require_POST
@@ -178,11 +178,14 @@ def create_sales_return_inventory_movements(return_invoice, user):
         pass
 
 
-class SalesInvoiceListView(LoginRequiredMixin, ListView):
+class SalesInvoiceListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     model = SalesInvoice
     template_name = 'sales/invoice_list.html'
     context_object_name = 'invoices'
     paginate_by = 10
+    
+    def test_func(self):
+        return self.request.user.has_sales_permission()
     
     def get_queryset(self):
         queryset = SalesInvoice.objects.all()
@@ -816,11 +819,14 @@ class SalesInvoiceDeleteView(LoginRequiredMixin, DeleteView):
         return super().delete(request, *args, **kwargs)
 
 
-class SalesReturnListView(LoginRequiredMixin, ListView):
+class SalesReturnListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     model = SalesReturn
     template_name = 'sales/return_list.html'
     context_object_name = 'returns'
     paginate_by = 10
+    
+    def test_func(self):
+        return self.request.user.has_sales_permission()
     
     def get_queryset(self):
         queryset = SalesReturn.objects.all()
@@ -1107,11 +1113,14 @@ class SalesReturnUpdateView(LoginRequiredMixin, UpdateView):
         return context
 
 
-class SalesCreditNoteListView(LoginRequiredMixin, ListView):
+class SalesCreditNoteListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     model = SalesCreditNote
     template_name = 'sales/creditnote_list.html'
     context_object_name = 'creditnotes'
     paginate_by = 10
+    
+    def test_func(self):
+        return self.request.user.has_sales_permission()
 
     def get_queryset(self):
         queryset = SalesCreditNote.objects.all()
@@ -1707,8 +1716,11 @@ def pos_search_products(request):
         return JsonResponse({'success': False, 'message': f'حدث خطأ في البحث: {str(e)}'})
 
 
-class SalesReportView(LoginRequiredMixin, TemplateView):
+class SalesReportView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     template_name = 'sales/sales_report.html'
+    
+    def test_func(self):
+        return self.request.user.has_sales_permission()
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1770,9 +1782,12 @@ class SalesReportView(LoginRequiredMixin, TemplateView):
         return context
 
 
-class SalesStatementView(LoginRequiredMixin, TemplateView):
+class SalesStatementView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     """عرض كشف المبيعات"""
     template_name = 'sales/sales_statement.html'
+    
+    def test_func(self):
+        return self.request.user.has_sales_permission()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1821,9 +1836,12 @@ class SalesStatementView(LoginRequiredMixin, TemplateView):
         return context
 
 
-class SalesReturnStatementView(LoginRequiredMixin, TemplateView):
+class SalesReturnStatementView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     """عرض كشف مردودات المبيعات"""
     template_name = 'sales/sales_return_statement.html'
+    
+    def test_func(self):
+        return self.request.user.has_sales_permission()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -2031,12 +2049,15 @@ def get_invoices_for_returns(request):
         })
 
 
-class SalesCreditNoteReportView(LoginRequiredMixin, ListView):
+class SalesCreditNoteReportView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     """كشف مذكرات الدائن"""
     model = SalesCreditNote
     template_name = 'sales/creditnote_report.html'
     context_object_name = 'creditnotes'
     paginate_by = 50
+    
+    def test_func(self):
+        return self.request.user.has_sales_permission()
     
     def get(self, request, *args, **kwargs):
         # تسجيل النشاط

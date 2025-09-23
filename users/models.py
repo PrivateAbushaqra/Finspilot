@@ -132,11 +132,11 @@ class User(AbstractUser):
             ('can_backup_system', _('System backup')),
             
             # صلاحيات الوصول للأقسام
-                ('can_access_sales', _('Can access sales')),
+            ('can_access_sales', _('Can access sales')),
             ('can_access_inventory', _('Can access inventory')),
             ('can_access_products', _('Can access products')),
             ('can_access_banks', _('Can access banks')),
-            ('can_access_cashboxes', _('Can access cashboxes')),
+            #('can_access_cashboxes', _('Can access cashboxes')),
             ('can_access_pos', _('Can access POS')),
             ('can_access_company_settings', _('Can access company settings')),
             
@@ -165,7 +165,38 @@ class User(AbstractUser):
         return self.user_type in ['superadmin', 'admin', 'manager'] or self.is_superuser
 
     def has_sales_permission(self):
-        return self.is_admin or self.has_perm('users.can_access_sales')
+        """
+        تعيد True إذا كان لدى المستخدم صلاحية الوصول إلى المبيعات
+        سواء كانت الصلاحية مباشرة أو من خلال المجموعات الافتراضية أو المجموعات المخصصة (UserGroup).
+        """
+        if self.is_admin:
+            return True
+        # تحقق من صلاحيات sales المفصلة
+        from django.contrib.auth.models import Permission
+        from django.contrib.contenttypes.models import ContentType
+        try:
+            cts = ContentType.objects.filter(app_label='sales')
+            sales_perms = set()
+            for ct in cts:
+                sales_perms.update(f'sales.{codename}' for codename in Permission.objects.filter(content_type=ct).values_list('codename', flat=True))
+        except Exception:
+            sales_perms = set()
+        user_perms = set(self.get_all_permissions())
+        if user_perms.intersection(sales_perms):
+            return True
+        # تحقق من صلاحيات المجموعات المخصصة
+        try:
+            from users.models import UserGroupMembership
+            group_ids = UserGroupMembership.objects.filter(user=self).values_list('group_id', flat=True)
+            from users.models import UserGroup
+            for group in UserGroup.objects.filter(id__in=group_ids):
+                group_perms = group.permissions or {}
+                for perms_list in group_perms.values():
+                    if 'view_sales' in perms_list or 'add_salesinvoice' in perms_list or 'change_salesinvoice' in perms_list or 'delete_salesinvoice' in perms_list or 'view_salesreturn' in perms_list or 'add_salesreturn' in perms_list or 'change_salesreturn' in perms_list or 'delete_salesreturn' in perms_list or 'view_salescreditnote' in perms_list or 'add_salescreditnote' in perms_list or 'change_salescreditnote' in perms_list or 'delete_salescreditnote' in perms_list:
+                        return True
+        except Exception:
+            pass
+        return False
 
     def has_purchases_permission(self):
         return (
@@ -180,7 +211,40 @@ class User(AbstractUser):
         )
 
     def has_inventory_permission(self):
-        return self.is_admin or self.has_perm('users.can_access_inventory')
+        """
+        تعيد True إذا كان لدى المستخدم صلاحية الوصول إلى المخزون
+        سواء كانت الصلاحية مباشرة أو من خلال المجموعات الافتراضية أو المجموعات المخصصة (UserGroup).
+        """
+        if self.is_admin:
+            return True
+        if self.has_perm('users.can_access_inventory'):
+            return True
+        # تحقق من صلاحيات inventory المفصلة
+        from django.contrib.auth.models import Permission
+        from django.contrib.contenttypes.models import ContentType
+        try:
+            cts = ContentType.objects.filter(app_label='inventory')
+            inventory_perms = set()
+            for ct in cts:
+                inventory_perms.update(f'inventory.{codename}' for codename in Permission.objects.filter(content_type=ct).values_list('codename', flat=True))
+        except Exception:
+            inventory_perms = set()
+        user_perms = set(self.get_all_permissions())
+        if user_perms.intersection(inventory_perms):
+            return True
+        # تحقق من صلاحيات المجموعات المخصصة
+        try:
+            from users.models import UserGroupMembership
+            group_ids = UserGroupMembership.objects.filter(user=self).values_list('group_id', flat=True)
+            from users.models import UserGroup
+            for group in UserGroup.objects.filter(id__in=group_ids):
+                group_perms = group.permissions or {}
+                for perms_list in group_perms.values():
+                    if 'view_inventory' in perms_list or 'add_warehouse' in perms_list or 'change_warehouse' in perms_list or 'delete_warehouse' in perms_list or 'view_inventorymovement' in perms_list or 'add_inventorymovement' in perms_list or 'change_inventorymovement' in perms_list or 'delete_inventorymovement' in perms_list:
+                        return True
+        except Exception:
+            pass
+        return False
 
     def has_products_permission(self):
         return (
@@ -210,7 +274,72 @@ class User(AbstractUser):
         return self.is_superadmin or self.user_type == 'admin' or self.has_perm('receipts.can_access_receipts')
 
     def has_reports_permission(self):
-        return self.is_admin or self.has_perm('users.can_access_reports')
+        """
+        تعيد True إذا كان لدى المستخدم صلاحية الوصول إلى التقارير
+        سواء كانت الصلاحية مباشرة أو من خلال المجموعات الافتراضية أو المجموعات المخصصة (UserGroup).
+        """
+        if self.is_admin:
+            return True
+        # تحقق من صلاحيات reports المفصلة
+        from django.contrib.auth.models import Permission
+        from django.contrib.contenttypes.models import ContentType
+        try:
+            cts = ContentType.objects.filter(app_label='reports')
+            reports_perms = set()
+            for ct in cts:
+                reports_perms.update(f'reports.{codename}' for codename in Permission.objects.filter(content_type=ct).values_list('codename', flat=True))
+        except Exception:
+            reports_perms = set()
+        user_perms = set(self.get_all_permissions())
+        if user_perms.intersection(reports_perms):
+            return True
+        # تحقق من صلاحيات المجموعات المخصصة
+        try:
+            from users.models import UserGroupMembership
+            group_ids = UserGroupMembership.objects.filter(user=self).values_list('group_id', flat=True)
+            from users.models import UserGroup
+            for group in UserGroup.objects.filter(id__in=group_ids):
+                group_perms = group.permissions or {}
+                for perms_list in group_perms.values():
+                    if 'view_reports' in perms_list or 'add_reportaccesscontrol' in perms_list or 'change_reportaccesscontrol' in perms_list or 'delete_reportaccesscontrol' in perms_list:
+                        return True
+        except Exception:
+            pass
+        return False
+
+    def has_settings_permission(self):
+        """
+        تعيد True إذا كان لدى المستخدم صلاحية الوصول إلى الإعدادات
+        سواء كانت الصلاحية مباشرة أو من خلال المجموعات الافتراضية أو المجموعات المخصصة (UserGroup).
+        """
+        if self.is_admin:
+            return True
+        # تحقق من صلاحيات settings المفصلة
+        from django.contrib.auth.models import Permission
+        from django.contrib.contenttypes.models import ContentType
+        try:
+            cts = ContentType.objects.filter(app_label='settings')
+            settings_perms = set()
+            for ct in cts:
+                settings_perms.update(f'settings.{codename}' for codename in Permission.objects.filter(content_type=ct).values_list('codename', flat=True))
+        except Exception:
+            settings_perms = set()
+        user_perms = set(self.get_all_permissions())
+        if user_perms.intersection(settings_perms):
+            return True
+        # تحقق من صلاحيات المجموعات المخصصة
+        try:
+            from users.models import UserGroupMembership
+            group_ids = UserGroupMembership.objects.filter(user=self).values_list('group_id', flat=True)
+            from users.models import UserGroup
+            for group in UserGroup.objects.filter(id__in=group_ids):
+                group_perms = group.permissions or {}
+                for perms_list in group_perms.values():
+                    if 'view_settings' in perms_list or 'add_currency' in perms_list or 'change_currency' in perms_list or 'delete_currency' in perms_list or 'add_companysettings' in perms_list or 'change_companysettings' in perms_list or 'delete_companysettings' in perms_list:
+                        return True
+        except Exception:
+            pass
+        return False
 
     def can_delete_invoice(self):
         return self.is_admin or self.has_perm('users.can_delete_invoices')
@@ -230,10 +359,11 @@ class User(AbstractUser):
     def has_company_settings_permission(self):
         return (self.user_type in ['superadmin', 'user'] or 
                 self.is_superuser or 
-                self.has_perm('users.can_access_company_settings'))
+                self.has_perm('users.can_access_company_settings') or
+                self.has_settings_permission())
 
     def has_system_management_permission(self):
-        return self.is_admin or self.has_perm('users.can_access_system_management')
+        return self.is_admin or self.has_perm('users.can_access_system_management') or self.has_settings_permission()
 
     def has_revenues_expenses_permission(self):
         """
