@@ -214,10 +214,12 @@
                                         {% trans "Save Settings" %}
                                     </button>
                                     
+                                    {% if jofotara_settings.use_mock_api %}
                                     <button type="button" id="testConnectionBtn" class="btn btn-test">
                                         <i class="fas fa-plug me-2"></i>
                                         {% trans "Test Connection" %}
                                     </button>
+                                    {% endif %}
                                     
                                     <a href="{% url 'settings:index' %}" class="btn btn-secondary">
                                         <i class="fas fa-arrow-left me-2"></i>
@@ -257,15 +259,24 @@ document.addEventListener('DOMContentLoaded', function() {
     // تبديل رؤية قسم API تجريبي
     const useMockApiCheckbox = document.getElementById('use_mock_api');
     const mockApiSection = document.getElementById('mockApiSection');
+    const testConnectionBtn = document.getElementById('testConnectionBtn');
     
     if (useMockApiCheckbox && mockApiSection) {
-        useMockApiCheckbox.addEventListener('change', function() {
-            if (this.checked) {
+        // دالة للتحكم في الظهور
+        function toggleElements() {
+            if (useMockApiCheckbox.checked) {
                 mockApiSection.style.display = 'block';
+                if (testConnectionBtn) testConnectionBtn.style.display = 'inline-block';
             } else {
                 mockApiSection.style.display = 'none';
+                if (testConnectionBtn) testConnectionBtn.style.display = 'none';
             }
-        });
+        }
+        
+        useMockApiCheckbox.addEventListener('change', toggleElements);
+        
+        // التحكم الأولي عند تحميل الصفحة
+        toggleElements();
     }
     
     // تحديث مؤشر الحالة

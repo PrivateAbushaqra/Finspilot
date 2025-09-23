@@ -34,7 +34,7 @@ class JoFotaraAPI:
 
             # Real API test
             headers = self._get_headers()
-            test_url = f"{self.settings.api_url.rstrip('/')}/test"
+            test_url = f"{self.settings.api_url.rstrip('/')}/config"
 
             response = requests.get(test_url, headers=headers, timeout=30)
 
@@ -66,6 +66,13 @@ class JoFotaraAPI:
     def send_invoice(self, invoice_data, invoice_type='sales'):
         """Send invoice to JoFotara API"""
         try:
+            # Check if JoFotara integration is enabled
+            if not self.settings.is_active:
+                return {
+                    'success': False,
+                    'error': 'تكامل JoFotara غير مفعل. يرجى تفعيله في إعدادات JoFotara.'
+                }
+
             # Generate JSON data
             json_data = self.generate_invoice_json(invoice_data, invoice_type)
 
