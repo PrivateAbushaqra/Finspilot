@@ -207,7 +207,7 @@ class User(AbstractUser):
         )
 
     def has_receipts_permission(self):
-        return self.is_admin or self.has_perm('receipts.can_access_receipts')
+        return self.is_superadmin or self.user_type == 'admin' or self.has_perm('receipts.can_access_receipts')
 
     def has_reports_permission(self):
         return self.is_admin or self.has_perm('users.can_access_reports')

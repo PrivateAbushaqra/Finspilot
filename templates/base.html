@@ -682,7 +682,7 @@
                         {% endif %}
                         
                         <!-- Payment Vouchers -->
-                        {% if perms.payments.can_access_payments %}
+                        {% if user.is_superadmin or user.user_type == 'admin' or perms.payments.can_access_payments %}
                         <li class="nav-item">
                             <a class="nav-link" data-bs-toggle="collapse" href="#paymentsMenu">
                                 <i class="fas fa-money-bill-wave me-2"></i>
@@ -971,7 +971,7 @@
                         </li>
                         {% endif %}
                         
-                        {% if perms.assets_liabilities.view_asset or perms.assets_liabilities.add_asset or perms.assets_liabilities.change_asset or perms.assets_liabilities.delete_asset or perms.assets_liabilities.view_liability or perms.assets_liabilities.add_liability or perms.assets_liabilities.change_liability or perms.assets_liabilities.delete_liability %}
+                        {% if user.is_superadmin or user.user_type == 'admin' or perms.assets_liabilities.view_asset or perms.assets_liabilities.add_asset or perms.assets_liabilities.change_asset or perms.assets_liabilities.delete_asset or perms.assets_liabilities.view_liability or perms.assets_liabilities.add_liability or perms.assets_liabilities.change_liability or perms.assets_liabilities.delete_liability %}
                         <!-- Assets & Liabilities -->
                         <li class="nav-item">
                             <a class="nav-link" data-bs-toggle="collapse" href="#assetsLiabilitiesMenu">
@@ -1033,7 +1033,7 @@
                         {% endif %}
                         
                         <!-- Human Resources -->
-                        {% if user.is_superuser or perms.hr.can_view_hr %}
+                        {% if user.is_superadmin or user.user_type == 'admin' or perms.hr.can_view_hr %}
                         <li class="nav-item">
                             <a class="nav-link" data-bs-toggle="collapse" href="#hrMenu">
                                 <i class="fas fa-users-cog me-2"></i>
@@ -1113,6 +1113,7 @@
                                     </li>
                                     
                                     <!-- Print Design Settings -->
+                                    {% if user.user_type == 'superadmin' or user.is_superuser or user.has_company_settings_permission %}
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'settings' and 'print_design' in request.path %}active{% endif %}" href="{% url 'settings:print_design' %}">
                                             <i class="fas fa-paint-brush me-2 text-success"></i>
@@ -1127,6 +1128,7 @@
                                             {% trans "JoFotara Settings" %}
                                         </a>
                                     </li>
+                                    {% endif %}
                                     
                                     <!-- Backup and Restore -->
                                     <li class="nav-item">
