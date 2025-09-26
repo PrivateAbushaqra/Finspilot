@@ -33,4 +33,7 @@ urlpatterns = [
     # API endpoints
     path('api/categories/<str:entry_type>/', views.get_categories_by_type, name='api_categories_by_type'),
     path('api/today-stats/', views.get_today_stats, name='api_today_stats'),
+    
+    # تحليل القطاعات
+    path('sector-analysis/', views.sector_analysis, name='sector_analysis'),
 ]

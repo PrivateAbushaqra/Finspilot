@@ -21,6 +21,8 @@ class SalesInvoice(models.Model):
     customer = models.ForeignKey(CustomerSupplier, on_delete=models.PROTECT, 
                                verbose_name=_('العميل'), limit_choices_to={'type__in': ['customer', 'both']},
                                null=True, blank=True)
+    warehouse = models.ForeignKey('inventory.Warehouse', on_delete=models.PROTECT, 
+                                verbose_name=_('المستودع'), null=True, blank=True)
     payment_type = models.CharField(_('نوع الدفع'), max_length=20, choices=PAYMENT_TYPES)
     cashbox = models.ForeignKey('cashboxes.Cashbox', on_delete=models.SET_NULL, 
                                verbose_name=_('الصندوق'), null=True, blank=True,

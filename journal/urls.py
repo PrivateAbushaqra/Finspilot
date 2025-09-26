@@ -27,6 +27,9 @@ urlpatterns = [
     # التقارير
     path('trial-balance/', views.trial_balance, name='trial_balance'),
     
+    # الإقفال السنوي
+    path('year-end-closing/', views.year_end_closing, name='year_end_closing'),
+    
     # APIs
     path('api/accounts/', views.accounts_api, name='accounts_api'),
     path('api/accounts/<int:account_id>/balance/', views.get_account_balance, name='account_balance_api'),

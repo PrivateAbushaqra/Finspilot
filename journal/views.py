@@ -811,3 +811,110 @@ def account_ledger(request, pk):
         'final_balance': running_balance,
     }
     return render(request, 'journal/account_ledger.html', context)
+
+
+@login_required
+def year_end_closing(request):
+    """إقفال السنة المالية"""
+    user = request.user
+    has_perm = (
+        getattr(user, 'is_superuser', False) or
+        getattr(user, 'user_type', None) in ['superadmin', 'admin'] or
+        user.has_perm('journal.can_perform_year_end_closing')
+    )
+    if not has_perm:
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied
+
+    from .models import YearEndClosing
+    from django import forms
+
+    class YearEndClosingForm(forms.Form):
+        year = forms.IntegerField(
+            label=_('السنة المالية'),
+            initial=datetime.now().year,
+            min_value=2000,
+            max_value=datetime.now().year
+        )
+        closing_date = forms.DateField(
+            label=_('تاريخ الإقفال'),
+            initial=date.today(),
+            widget=forms.DateInput(attrs={'type': 'date'})
+        )
+        confirm = forms.BooleanField(
+            label=_('أؤكد إجراء الإقفال السنوي'),
+            required=True
+        )
+
+    if request.method == 'POST':
+        form = YearEndClosingForm(request.POST)
+        if form.is_valid():
+            year = form.cleaned_data['year']
+            closing_date = form.cleaned_data['closing_date']
+            
+            # التحقق من عدم وجود إقفال سابق لنفس السنة
+            if YearEndClosing.objects.filter(year=year).exists():
+                messages.error(request, _('تم إجراء الإقفال لهذه السنة مسبقاً'))
+                return redirect('journal:year_end_closing')
+            
+            # إنشاء سجل الإقفال
+            closing = YearEndClosing.objects.create(
+                year=year,
+                closing_date=closing_date,
+                created_by=request.user
+            )
+            
+            # إجراء الإقفال
+            success, message = closing.perform_closing()
+            
+            if success:
+                messages.success(request, message)
+                
+                # تسجيل النشاط
+                try:
+                    from core.signals import log_view_activity
+                    class ClosingObj:
+                        id = closing.id
+                        pk = closing.pk
+                        def __str__(self):
+                            return str(_('إقفال سنوي'))
+                    log_view_activity(request, 'add', ClosingObj(), 
+                                    f"إقفال السنة المالية {year} - صافي الربح: {closing.net_profit}")
+                except Exception:
+                    pass
+                
+                return redirect('journal:year_end_closing')
+            else:
+                messages.error(request, message)
+                closing.delete()  # حذف السجل إذا فشل
+    else:
+        form = YearEndClosingForm()
+
+    # عرض الإقفالات السابقة
+    closings = YearEndClosing.objects.all().order_by('-year')[:10]
+    
+    # حساب صافي الربح المقدر للسنة الحالية
+    current_year = datetime.now().year
+    estimated_closing = YearEndClosing(year=current_year, closing_date=date.today())
+    estimated_profit = estimated_closing.calculate_net_profit()
+    
+    context = {
+        'form': form,
+        'closings': closings,
+        'estimated_profit': estimated_profit,
+        'current_year': current_year,
+    }
+    
+    # تسجيل عرض الصفحة
+    try:
+        from core.signals import log_view_activity
+        class PageObj:
+            id = 0
+            pk = 0
+            def __str__(self):
+                return str(_('صفحة الإقفال السنوي'))
+        log_view_activity(request, 'view', PageObj(), str(_('عرض صفحة الإقفال السنوي')))
+    except Exception:
+        pass
+    
+    return render(request, 'journal/year_end_closing.html', context)

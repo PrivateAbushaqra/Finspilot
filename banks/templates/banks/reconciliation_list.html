@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+{% load custom_filters %}
+
+{% block title %}{% trans "Bank Reconciliations" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">{% trans "Bank Reconciliations" %}</h3>
+                    <div class="card-tools">
+                        <a href="{% url 'banks:reconciliation_add' %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus"></i> {% trans "Add Reconciliation" %}
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="card-body">
+                    <form method="get" class="mb-4">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label for="bank_account">{% trans "Bank Account" %}</label>
+                                <select name="bank_account" id="bank_account" class="form-control">
+                                    <option value="">{% trans "All Accounts" %}</option>
+                                    {% for account in bank_accounts %}
+                                    <option value="{{ account.id }}" {% if request.GET.bank_account == account.id|stringformat:'s' %}selected{% endif %}>
+                                        {{ account.name }} - {{ account.bank_name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="status">{% trans "Status" %}</label>
+                                <select name="status" id="status" class="form-control">
+                                    <option value="">{% trans "All Status" %}</option>
+                                    {% for status_value, status_label in status_choices %}
+                                    <option value="{{ status_value }}" {% if request.GET.status == status_value %}selected{% endif %}>
+                                        {{ status_label }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="date_from">{% trans "From Date" %}</label>
+                                <input type="date" name="date_from" id="date_from" class="form-control" value="{{ request.GET.date_from }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label for="date_to">{% trans "To Date" %}</label>
+                                <input type="date" name="date_to" id="date_to" class="form-control" value="{{ request.GET.date_to }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label>&nbsp;</label>
+                                <div>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-search"></i> {% trans "Filter" %}
+                                    </button>
+                                    <a href="{% url 'banks:reconciliation_list' %}" class="btn btn-secondary">
+                                        <i class="fas fa-times"></i> {% trans "Clear" %}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Reconciliations Table -->
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>{% trans "Bank Account" %}</th>
+                                    <th>{% trans "Statement Date" %}</th>
+                                    <th>{% trans "Book Balance" %}</th>
+                                    <th>{% trans "Statement Balance" %}</th>
+                                    <th>{% trans "Difference" %}</th>
+                                    <th>{% trans "Status" %}</th>
+                                    <th>{% trans "Actions" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for reconciliation in reconciliations %}
+                                <tr>
+                                    <td>{{ reconciliation.bank_account.name }} - {{ reconciliation.bank_account.bank_name }}</td>
+                                    <td>{{ reconciliation.statement_date|date:"Y-m-d" }}</td>
+                                    <td class="text-end">{{ reconciliation.book_balance|floatformat:2 }}</td>
+                                    <td class="text-end">{{ reconciliation.statement_balance|floatformat:2 }}</td>
+                                    <td class="text-end {% if reconciliation.difference != 0 %}text-danger{% else %}text-success{% endif %}">
+                                        {{ reconciliation.difference|floatformat:2 }}
+                                    </td>
+                                    <td>
+                                        <span class="badge {% if reconciliation.status == 'completed' %}bg-success{% elif reconciliation.status == 'draft' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                            {{ reconciliation.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'banks:reconciliation_detail' reconciliation.pk %}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if reconciliation.status != 'completed' %}
+                                        <a href="{% url 'banks:reconciliation_edit' reconciliation.pk %}" class="btn btn-sm btn-warning">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center">{% trans "No reconciliations found." %}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if is_paginated %}
+                    <div class="d-flex justify-content-center mt-3">
+                        <nav aria-label="Reconciliations pagination">
+                            <ul class="pagination">
+                                {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{% trans "Previous" %}</a>
+                                </li>
+                                {% endif %}
+
+                                {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <a class="page-link" href="#">{{ num }}</a>
+                                </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                                </li>
+                                {% endif %}
+                                {% endfor %}
+
+                                {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{% trans "Next" %}</a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

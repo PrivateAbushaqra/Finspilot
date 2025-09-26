@@ -5,6 +5,23 @@ from decimal import Decimal
 from django.core.validators import MinValueValidator
 
 
+class Sector(models.Model):
+    """القطاعات أو الباكدجات لتصنيف الإيرادات والمصاريف"""
+    name = models.CharField(max_length=200, verbose_name=_('اسم القطاع'))
+    description = models.TextField(blank=True, null=True, verbose_name=_('Description'))
+    is_active = models.BooleanField(default=True, verbose_name=_('Active'))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Created At'))
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name=_('Created By'))
+    
+    class Meta:
+        verbose_name = _('قطاع')
+        verbose_name_plural = _('القطاعات')
+        ordering = ['name']
+    
+    def __str__(self):
+        return self.name
+
+
 class RevenueExpenseCategory(models.Model):
     """فئات الإيرادات والمصروفات"""
     CATEGORY_TYPES = [
@@ -45,6 +62,7 @@ class RevenueExpenseEntry(models.Model):
     entry_number = models.CharField(max_length=50, unique=True, verbose_name=_('رقم القيد'))
     type = models.CharField(max_length=20, choices=ENTRY_TYPES, verbose_name=_('نوع القيد'))
     category = models.ForeignKey(RevenueExpenseCategory, on_delete=models.CASCADE, verbose_name=_('الفئة'))
+    sector = models.ForeignKey(Sector, on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('القطاع'))
     amount = models.DecimalField(max_digits=15, decimal_places=3, validators=[MinValueValidator(Decimal('0.001'))], verbose_name=_('Amount'))
     
     # إضافة حقل العملة
@@ -139,6 +157,7 @@ class RecurringRevenueExpense(models.Model):
     
     name = models.CharField(max_length=200, verbose_name=_('اسم الإيراد/المصروف المتكرر'))
     category = models.ForeignKey(RevenueExpenseCategory, on_delete=models.CASCADE, verbose_name=_('الفئة'))
+    sector = models.ForeignKey(Sector, on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('القطاع'))
     amount = models.DecimalField(max_digits=15, decimal_places=3, validators=[MinValueValidator(Decimal('0.001'))], verbose_name=_('Amount'))
     
     # إضافة حقل العملة

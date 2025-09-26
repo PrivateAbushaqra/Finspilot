@@ -1095,10 +1095,10 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
                 f'تحديث مجموعة مستخدمين: {group.name} مع {len(form.cleaned_data["permissions"])} صلاحية وأقسام لوحة التحكم: {", ".join(form.cleaned_data.get("dashboard_sections", []))}'
             )
             
-            messages.success(self.request, _('تم تحديث المجموعة بنجاح'))
+            messages.success(self.request, _('The group has been updated successfully.'))
             return redirect(self.success_url)
         except Exception as e:
-            messages.error(self.request, _('حدث خطأ أثناء تحديث المجموعة: {}').format(str(e)))
+            messages.error(self.request, _('An error occurred while updating the group: {}').format(str(e)))
             return self.form_invalid(form)
     
     def get_context_data(self, **kwargs):

@@ -633,6 +633,12 @@
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'banks' and 'transfer_list' in request.path %}active{% endif %}" href="{% url 'banks:transfer_list' %}">{% trans "Transfers List" %}</a>
                                     </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if active_menu == 'banks' and 'reconciliation_list' in request.path %}active{% endif %}" href="{% url 'banks:reconciliation_list' %}">{% trans "Bank Reconciliations" %}</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if active_menu == 'banks' and 'statement_list' in request.path %}active{% endif %}" href="{% url 'banks:statement_list' %}">{% trans "Bank Statements" %}</a>
+                                    </li>
                                 </ul>
                             </div>
                         </li>
@@ -971,6 +977,16 @@
                         </li>
                         {% endif %}
                         
+                        {% if user.is_superadmin or user.user_type == 'admin' or perms.journal.can_perform_year_end_closing %}
+                        <!-- الإقفال السنوي -->
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_menu == 'journal' and 'year_end_closing' in request.path %}active{% endif %}" href="{% url 'journal:year_end_closing' %}">
+                                <i class="fas fa-calendar-check me-2"></i>
+                                {% trans "إقفال السنة المالية" %}
+                            </a>
+                        </li>
+                        {% endif %}
+                        
                         {% if user.is_superadmin or user.user_type == 'admin' or perms.assets_liabilities.view_asset or perms.assets_liabilities.add_asset or perms.assets_liabilities.change_asset or perms.assets_liabilities.delete_asset or perms.assets_liabilities.view_liability or perms.assets_liabilities.add_liability or perms.assets_liabilities.change_liability or perms.assets_liabilities.delete_liability %}
                         <!-- Assets & Liabilities -->
                         <li class="nav-item">
@@ -1026,6 +1042,30 @@
                                     </li>
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'reports' and 'customer_statement' in request.path %}active{% endif %}" href="{% url 'reports:customer_statement' %}">{% trans "Customer Statement" %}</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if active_menu == 'reports' and 'trial_balance' in request.path %}active{% endif %}" href="{% url 'reports:trial_balance' %}">{% trans "Trial Balance" %}</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if active_menu == 'reports' and 'balance_sheet' in request.path %}active{% endif %}" href="{% url 'reports:balance_sheet' %}">{% trans "Balance Sheet" %}</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if active_menu == 'reports' and 'income_statement' in request.path %}active{% endif %}" href="{% url 'reports:income_statement' %}">{% trans "Income Statement" %}</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if active_menu == 'reports' and 'cash_flow' in request.path %}active{% endif %}" href="{% url 'reports:cash_flow' %}">{% trans "Cash Flow Statement" %}</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if active_menu == 'reports' and 'aging_report' in request.path %}active{% endif %}" href="{% url 'reports:aging_report' %}">{% trans "تقرير أعمار الذمم" %}</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if active_menu == 'reports' and 'inventory_report' in request.path %}active{% endif %}" href="{% url 'reports:inventory_report' %}">{% trans "تقرير أرصدة المخزون" %}</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if active_menu == 'reports' and 'financial_ratios' in request.path %}active{% endif %}" href="{% url 'reports:financial_ratios' %}">{% trans "Financial Ratios" %}</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if active_menu == 'documents' and 'report' in request.path %}active{% endif %}" href="{% url 'documents:report' %}">{% trans "تقرير المستندات" %}</a>
                                     </li>
                                 </ul>
                             </div>

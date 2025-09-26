@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Bank Statements" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">{% trans "Bank Statements" %}</h3>
+                    <div class="card-tools">
+                        <a href="{% url 'banks:statement_add' %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus"></i> {% trans "Add Statement" %}
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="card-body">
+                    <form method="get" class="mb-4">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label for="bank_account">{% trans "Bank Account" %}</label>
+                                <select name="bank_account" id="bank_account" class="form-control">
+                                    <option value="">{% trans "All Accounts" %}</option>
+                                    {% for account in bank_accounts %}
+                                    <option value="{{ account.id }}" {% if request.GET.bank_account == account.id|stringformat:'s' %}selected{% endif %}>
+                                        {{ account.name }} - {{ account.bank_name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="reconciled">{% trans "Reconciled" %}</label>
+                                <select name="reconciled" id="reconciled" class="form-control">
+                                    <option value="">{% trans "All" %}</option>
+                                    <option value="yes" {% if request.GET.reconciled == 'yes' %}selected{% endif %}>{% trans "Yes" %}</option>
+                                    <option value="no" {% if request.GET.reconciled == 'no' %}selected{% endif %}>{% trans "No" %}</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="date_from">{% trans "From Date" %}</label>
+                                <input type="date" name="date_from" id="date_from" class="form-control" value="{{ request.GET.date_from }}">
+                            </div>
+                            <div class="col-md-2">
+                                <label for="date_to">{% trans "To Date" %}</label>
+                                <input type="date" name="date_to" id="date_to" class="form-control" value="{{ request.GET.date_to }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label>&nbsp;</label>
+                                <div>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-search"></i> {% trans "Filter" %}
+                                    </button>
+                                    <a href="{% url 'banks:statement_list' %}" class="btn btn-secondary">
+                                        <i class="fas fa-times"></i> {% trans "Clear" %}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Statements Table -->
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>{% trans "Bank Account" %}</th>
+                                    <th>{% trans "Date" %}</th>
+                                    <th>{% trans "Description" %}</th>
+                                    <th>{% trans "Reference" %}</th>
+                                    <th>{% trans "Debit" %}</th>
+                                    <th>{% trans "Credit" %}</th>
+                                    <th>{% trans "Balance" %}</th>
+                                    <th>{% trans "Reconciled" %}</th>
+                                    <th>{% trans "Actions" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for statement in statements %}
+                                <tr>
+                                    <td>{{ statement.bank_account.name }} - {{ statement.bank_account.bank_name }}</td>
+                                    <td>{{ statement.date|date:"Y-m-d" }}</td>
+                                    <td>{{ statement.description }}</td>
+                                    <td>{{ statement.reference }}</td>
+                                    <td class="text-end">{{ statement.debit|floatformat:2 }}</td>
+                                    <td class="text-end">{{ statement.credit|floatformat:2 }}</td>
+                                    <td class="text-end">{{ statement.balance|floatformat:2 }}</td>
+                                    <td class="text-center">
+                                        {% if statement.is_reconciled %}
+                                        <i class="fas fa-check text-success"></i>
+                                        {% else %}
+                                        <i class="fas fa-times text-danger"></i>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'banks:statement_edit' statement.pk %}" class="btn btn-sm btn-warning">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="9" class="text-center">{% trans "No statements found." %}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if is_paginated %}
+                    <div class="d-flex justify-content-center mt-3">
+                        <nav aria-label="Statements pagination">
+                            <ul class="pagination">
+                                {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{% trans "Previous" %}</a>
+                                </li>
+                                {% endif %}
+
+                                {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <a class="page-link" href="#">{{ num }}</a>
+                                </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                                </li>
+                                {% endif %}
+                                {% endfor %}
+
+                                {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key,value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{% trans "Next" %}</a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

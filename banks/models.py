@@ -156,3 +156,77 @@ class BankTransaction(models.Model):
         """Update bank account balance"""
         # Use sync_balance instead of manual calculation
         self.bank.sync_balance()
+
+
+class BankStatement(models.Model):
+    """Bank Statement Entry"""
+    bank_account = models.ForeignKey(BankAccount, on_delete=models.CASCADE, 
+                                   verbose_name=_('Bank Account'), related_name='statements')
+    date = models.DateField(_('Statement Date'))
+    description = models.CharField(_('Description'), max_length=255)
+    reference = models.CharField(_('Reference Number'), max_length=100, blank=True)
+    debit = models.DecimalField(_('Debit'), max_digits=15, decimal_places=3, default=0)
+    credit = models.DecimalField(_('Credit'), max_digits=15, decimal_places=3, default=0)
+    balance = models.DecimalField(_('Balance'), max_digits=15, decimal_places=3)
+    is_reconciled = models.BooleanField(_('Reconciled'), default=False)
+    reconciled_date = models.DateTimeField(_('Reconciled Date'), null=True, blank=True)
+    notes = models.TextField(_('Notes'), blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name=_('Created By'))
+    created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
+    updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
+
+    class Meta:
+        verbose_name = _('Bank Statement')
+        verbose_name_plural = _('Bank Statements')
+        ordering = ['-date', '-created_at']
+        unique_together = ['bank_account', 'date', 'reference']
+
+    def __str__(self):
+        return f"{self.bank_account.name} - {self.date} - {self.description}"
+
+    @property
+    def amount(self):
+        """Net amount (credit - debit)"""
+        return self.credit - self.debit
+
+
+class BankReconciliation(models.Model):
+    """Bank Reconciliation"""
+    bank_account = models.ForeignKey(BankAccount, on_delete=models.CASCADE, 
+                                   verbose_name=_('Bank Account'), related_name='reconciliations')
+    statement_date = models.DateField(_('Statement Date'))
+    book_balance = models.DecimalField(_('Book Balance'), max_digits=15, decimal_places=3)
+    statement_balance = models.DecimalField(_('Statement Balance'), max_digits=15, decimal_places=3)
+    reconciled_balance = models.DecimalField(_('Reconciled Balance'), max_digits=15, decimal_places=3)
+    difference = models.DecimalField(_('Difference'), max_digits=15, decimal_places=3)
+    status = models.CharField(_('Status'), max_length=20, choices=[
+        ('draft', _('Draft')),
+        ('completed', _('Completed')),
+        ('cancelled', _('Cancelled'))
+    ], default='draft')
+    
+    # Reconciliation details
+    deposits_in_transit = models.DecimalField(_('Deposits in Transit'), max_digits=15, decimal_places=3, default=0)
+    outstanding_checks = models.DecimalField(_('Outstanding Checks'), max_digits=15, decimal_places=3, default=0)
+    bank_charges = models.DecimalField(_('Bank Charges'), max_digits=15, decimal_places=3, default=0)
+    interest_earned = models.DecimalField(_('Interest Earned'), max_digits=15, decimal_places=3, default=0)
+    other_adjustments = models.DecimalField(_('Other Adjustments'), max_digits=15, decimal_places=3, default=0)
+    
+    notes = models.TextField(_('Notes'), blank=True)
+    created_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name=_('Created By'))
+    created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
+    updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
+
+    class Meta:
+        verbose_name = _('Bank Reconciliation')
+        verbose_name_plural = _('Bank Reconciliations')
+        ordering = ['-statement_date', '-created_at']
+
+    def __str__(self):
+        return f"{self.bank_account.name} - {self.statement_date}"
+
+    def save(self, *args, **kwargs):
+        # Calculate reconciled balance and difference
+        self.reconciled_balance = self.book_balance + self.deposits_in_transit - self.outstanding_checks + self.bank_charges + self.interest_earned + self.other_adjustments
+        self.difference = self.statement_balance - self.reconciled_balance
+        super().save(*args, **kwargs)

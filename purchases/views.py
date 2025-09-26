@@ -18,6 +18,7 @@ from customers.models import CustomerSupplier
 from products.models import Product
 from inventory.models import InventoryMovement, Warehouse
 from accounts.services import create_purchase_invoice_transaction, create_purchase_return_transaction, delete_transaction_by_reference
+from journal.models import JournalEntry
 from journal.services import JournalService
 from core.models import DocumentSequence
 from .models import PurchaseDebitNote
@@ -714,6 +715,7 @@ class PurchaseInvoiceDetailView(LoginRequiredMixin, TemplateView):
                 'invoice': invoice,
                 'invoice_items': invoice_items,
                 'items_count': invoice_items.count(),
+                'journal_entries': JournalEntry.objects.filter(purchase_invoice=invoice).select_related('created_by'),
             })
             
         except PurchaseInvoice.DoesNotExist:

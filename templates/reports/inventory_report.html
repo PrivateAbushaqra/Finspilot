@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load i18n custom_filters %}
+
+{% block title %}{% trans "تقرير أرصدة المخزون" %} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">
+                <i class="fas fa-warehouse text-primary me-2"></i>
+                {% trans "تقرير أرصدة المخزون" %}
+            </h2>
+            <p class="text-muted mb-0">{% trans "حتى تاريخ" %}: {{ as_of_date|date:"Y-m-d" }}</p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="as_of_date" class="form-label">{% trans "التاريخ" %}</label>
+                    <input type="date" class="form-control" id="as_of_date" name="as_of_date"
+                           value="{{ as_of_date|date:'Y-m-d' }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="warehouse" class="form-label">{% trans "المستودع" %}</label>
+                    <select class="form-select" id="warehouse" name="warehouse">
+                        <option value="">{% trans "الكل" %}</option>
+                        {% for warehouse in warehouses %}
+                        <option value="{{ warehouse.id }}" {% if warehouse_filter == warehouse.id|stringformat:"s" %}selected{% endif %}>{{ warehouse.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="product" class="form-label">{% trans "المنتج" %}</label>
+                    <select class="form-select" id="product" name="product">
+                        <option value="">{% trans "الكل" %}</option>
+                        {% for product in products %}
+                        <option value="{{ product.id }}" {% if product_filter == product.id|stringformat:"s" %}selected{% endif %}>{{ product.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i>
+                        {% trans "عرض" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">{% trans "إجمالي المنتجات" %}</h5>
+                    <h3>{{ total_products }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">{% trans "إجمالي القيمة" %}</h5>
+                    <h3>{{ total_value|floatformat:3 }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inventory Report -->
+    {% if inventory_data %}
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">{% trans "أرصدة المخزون" %}</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>{% trans "المنتج" %}</th>
+                            <th>{% trans "الكود" %}</th>
+                            {% for warehouse in warehouses %}
+                            <th class="text-center">{{ warehouse.name }}</th>
+                            {% endfor %}
+                            <th class="text-center">{% trans "الإجمالي" %}</th>
+                            <th class="text-center">{% trans "القيمة" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for data in inventory_data %}
+                        <tr>
+                            <td>{{ data.product.name }}</td>
+                            <td>{{ data.product.code }}</td>
+                            {% for warehouse in warehouses %}
+                            <td class="text-center">
+                                {% if warehouse.name in data.warehouses %}
+                                {{ data.warehouses|get_item:warehouse.name|get_item:"stock"|floatformat:3 }}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                            <td class="text-center">{{ data.total_stock|floatformat:3 }}</td>
+                            <td class="text-center">{{ data.total_value|floatformat:3 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        {% trans "لا توجد منتجات في المخزون في الفترة المحددة" %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

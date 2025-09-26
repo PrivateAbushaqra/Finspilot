@@ -725,6 +725,10 @@ class SalesInvoiceDetailView(LoginRequiredMixin, DetailView):
         # إضافة عناصر الفاتورة إلى السياق
         context['invoice_items'] = self.object.items.select_related('product__category').all()
         
+        # إضافة القيود المحاسبية المرتبطة
+        from journal.models import JournalEntry
+        context['journal_entries'] = JournalEntry.objects.filter(sales_invoice=self.object).select_related('created_by')
+        
         # Currency settings
         try:
             company_settings = CompanySettings.objects.first()

@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Bank Reconciliation Details" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">{% trans "Bank Reconciliation Details" %}</h3>
+                    <div class="card-tools">
+                        {% if reconciliation.status != 'completed' %}
+                        <a href="{% url 'banks:reconciliation_edit' reconciliation.pk %}" class="btn btn-warning btn-sm">
+                            <i class="fas fa-edit"></i> {% trans "Edit" %}
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'banks:reconciliation_list' %}" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-list"></i> {% trans "Back to List" %}
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th>{% trans "Bank Account" %}</th>
+                                    <td>{{ reconciliation.bank_account.name }} - {{ reconciliation.bank_account.bank_name }}</td>
+                                </tr>
+                                <tr>
+                                    <th>{% trans "Statement Date" %}</th>
+                                    <td>{{ reconciliation.statement_date|date:"Y-m-d" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>{% trans "Status" %}</th>
+                                    <td>
+                                        <span class="badge {% if reconciliation.status == 'completed' %}bg-success{% elif reconciliation.status == 'draft' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                            {{ reconciliation.get_status_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th>{% trans "Book Balance" %}</th>
+                                    <td class="text-end">{{ reconciliation.book_balance|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <th>{% trans "Statement Balance" %}</th>
+                                    <td class="text-end">{{ reconciliation.statement_balance|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <th>{% trans "Reconciled Balance" %}</th>
+                                    <td class="text-end">{{ reconciliation.reconciled_balance|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <th>{% trans "Difference" %}</th>
+                                    <td class="text-end {% if reconciliation.difference != 0 %}text-danger{% else %}text-success{% endif %}">
+                                        {{ reconciliation.difference|floatformat:2 }}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>{% trans "Adjustments" %}</h5>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td>{% trans "Deposits in Transit" %}</td>
+                                    <td class="text-end">{{ reconciliation.deposits_in_transit|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{% trans "Outstanding Checks" %}</td>
+                                    <td class="text-end">{{ reconciliation.outstanding_checks|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{% trans "Bank Charges" %}</td>
+                                    <td class="text-end">{{ reconciliation.bank_charges|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{% trans "Interest Earned" %}</td>
+                                    <td class="text-end">{{ reconciliation.interest_earned|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <td>{% trans "Other Adjustments" %}</td>
+                                    <td class="text-end">{{ reconciliation.other_adjustments|floatformat:2 }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            {% if reconciliation.notes %}
+                            <h5>{% trans "Notes" %}</h5>
+                            <p>{{ reconciliation.notes }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if unreconciled_statements %}
+                    <hr>
+                    <h5>{% trans "Unreconciled Bank Statements" %}</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>{% trans "Date" %}</th>
+                                    <th>{% trans "Description" %}</th>
+                                    <th>{% trans "Reference" %}</th>
+                                    <th>{% trans "Debit" %}</th>
+                                    <th>{% trans "Credit" %}</th>
+                                    <th>{% trans "Balance" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for statement in unreconciled_statements %}
+                                <tr>
+                                    <td>{{ statement.date|date:"Y-m-d" }}</td>
+                                    <td>{{ statement.description }}</td>
+                                    <td>{{ statement.reference }}</td>
+                                    <td class="text-end">{{ statement.debit|floatformat:2 }}</td>
+                                    <td class="text-end">{{ statement.credit|floatformat:2 }}</td>
+                                    <td class="text-end">{{ statement.balance|floatformat:2 }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

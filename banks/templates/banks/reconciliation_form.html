@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% if object %}{% trans "Edit Bank Reconciliation" %}{% else %}{% trans "Add Bank Reconciliation" %}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        {% if object %}{% trans "Edit Bank Reconciliation" %}{% else %}{% trans "Add Bank Reconciliation" %}{% endif %}
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="row">
+                            {% if not object %}
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.bank_account.id_for_label }}">{% trans "Bank Account" %}</label>
+                                    {{ form.bank_account }}
+                                    {% if form.bank_account.errors %}
+                                        <div class="text-danger">{{ form.bank_account.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>{% trans "Bank Account" %}</label>
+                                    <p class="form-control-plaintext">{{ object.bank_account.name }} - {{ object.bank_account.bank_name }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.statement_date.id_for_label }}">{% trans "Statement Date" %}</label>
+                                    {{ form.statement_date }}
+                                    {% if form.statement_date.errors %}
+                                        <div class="text-danger">{{ form.statement_date.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            {% if not object %}
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>{% trans "Book Balance" %}</label>
+                                    <p class="form-control-plaintext" id="book_balance">
+                                        {% if bank_account %}{{ book_balance|floatformat:2 }}{% else %}0.00{% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>{% trans "Book Balance" %}</label>
+                                    <p class="form-control-plaintext">{{ object.book_balance|floatformat:2 }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.statement_balance.id_for_label }}">{% trans "Statement Balance" %}</label>
+                                    {{ form.statement_balance }}
+                                    {% if form.statement_balance.errors %}
+                                        <div class="text-danger">{{ form.statement_balance.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.deposits_in_transit.id_for_label }}">{% trans "Deposits in Transit" %}</label>
+                                    {{ form.deposits_in_transit }}
+                                    {% if form.deposits_in_transit.errors %}
+                                        <div class="text-danger">{{ form.deposits_in_transit.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.outstanding_checks.id_for_label }}">{% trans "Outstanding Checks" %}</label>
+                                    {{ form.outstanding_checks }}
+                                    {% if form.outstanding_checks.errors %}
+                                        <div class="text-danger">{{ form.outstanding_checks.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.bank_charges.id_for_label }}">{% trans "Bank Charges" %}</label>
+                                    {{ form.bank_charges }}
+                                    {% if form.bank_charges.errors %}
+                                        <div class="text-danger">{{ form.bank_charges.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.interest_earned.id_for_label }}">{% trans "Interest Earned" %}</label>
+                                    {{ form.interest_earned }}
+                                    {% if form.interest_earned.errors %}
+                                        <div class="text-danger">{{ form.interest_earned.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.other_adjustments.id_for_label }}">{% trans "Other Adjustments" %}</label>
+                                    {{ form.other_adjustments }}
+                                    {% if form.other_adjustments.errors %}
+                                        <div class="text-danger">{{ form.other_adjustments.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% if object %}
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.status.id_for_label }}">{% trans "Status" %}</label>
+                                    {{ form.status }}
+                                    {% if form.status.errors %}
+                                        <div class="text-danger">{{ form.status.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="{{ form.notes.id_for_label }}">{% trans "Notes" %}</label>
+                                    {{ form.notes }}
+                                    {% if form.notes.errors %}
+                                        <div class="text-danger">{{ form.notes.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Calculated Fields Preview -->
+                        {% if object %}
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>{% trans "Reconciled Balance" %}</label>
+                                    <p class="form-control-plaintext">{{ object.reconciled_balance|floatformat:2 }}</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>{% trans "Difference" %}</label>
+                                    <p class="form-control-plaintext {% if object.difference != 0 %}text-danger{% else %}text-success{% endif %}">
+                                        {{ object.difference|floatformat:2 }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">
+                                    {% if object %}{% trans "Update Reconciliation" %}{% else %}{% trans "Create Reconciliation" %}{% endif %}
+                                </button>
+                                <a href="{% url 'banks:reconciliation_list' %}" class="btn btn-secondary">{% trans "Cancel" %}</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if not object %}
+<script>
+document.getElementById('{{ form.bank_account.id_for_label }}').addEventListener('change', function() {
+    var bankAccountId = this.value;
+    if (bankAccountId) {
+        // Fetch book balance via AJAX
+        fetch(`/banks/accounts/${bankAccountId}/balance/`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('book_balance').textContent = data.balance;
+            })
+            .catch(error => console.error('Error fetching balance:', error));
+    } else {
+        document.getElementById('book_balance').textContent = '0.00';
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

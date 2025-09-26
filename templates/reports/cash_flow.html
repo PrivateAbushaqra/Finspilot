@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load currency_tags %}
+
+{% block title %}{% trans "التدفقات النقدية" %} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">
+                <i class="fas fa-cash-register text-primary me-2"></i>
+                {% trans "قائمة التدفقات النقدية" %}
+            </h2>
+            <p class="text-muted mb-0">{% trans "من" %} {{ start_date|date:"Y-m-d" }} {% trans "إلى" %} {{ end_date|date:"Y-m-d" }}</p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="start_date" class="form-label">{% trans "تاريخ البداية" %}</label>
+                    <input type="date" class="form-control" id="start_date" name="start_date"
+                           value="{{ start_date|date:'Y-m-d' }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="end_date" class="form-label">{% trans "تاريخ النهاية" %}</label>
+                    <input type="date" class="form-control" id="end_date" name="end_date"
+                           value="{{ end_date|date:'Y-m-d' }}">
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i>
+                        {% trans "عرض" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Cash Flow Statement -->
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-striped">
+                <!-- Operating Activities -->
+                <thead>
+                    <tr class="table-success">
+                        <th colspan="2">{% trans "التدفقات النقدية من الأنشطة التشغيلية" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{% trans "صافي الربح" %}</td>
+                        <td class="text-end">{{ operating_cash_flow|floatformat:3 }}</td>
+                    </tr>
+                    <tr class="table-secondary">
+                        <th>{% trans "صافي التدفقات النقدية من الأنشطة التشغيلية" %}</th>
+                        <th class="text-end">{{ operating_cash_flow|floatformat:3 }}</th>
+                    </tr>
+                </tbody>
+
+                <!-- Investing Activities -->
+                <thead>
+                    <tr class="table-warning">
+                        <th colspan="2">{% trans "التدفقات النقدية من الأنشطة الاستثمارية" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="table-secondary">
+                        <th>{% trans "صافي التدفقات النقدية من الأنشطة الاستثمارية" %}</th>
+                        <th class="text-end">{{ investment_cash_flow|floatformat:3 }}</th>
+                    </tr>
+                </tbody>
+
+                <!-- Financing Activities -->
+                <thead>
+                    <tr class="table-info">
+                        <th colspan="2">{% trans "التدفقات النقدية من الأنشطة التمويلية" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="table-secondary">
+                        <th>{% trans "صافي التدفقات النقدية من الأنشطة التمويلية" %}</th>
+                        <th class="text-end">{{ financing_cash_flow|floatformat:3 }}</th>
+                    </tr>
+                </tbody>
+
+                <!-- Net Cash Flow -->
+                <tfoot>
+                    <tr class="table-primary">
+                        <th>{% trans "صافي التدفق النقدي" %}</th>
+                        <th class="text-end">{{ net_cash_flow|floatformat:3 }}</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

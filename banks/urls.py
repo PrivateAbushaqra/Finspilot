@@ -24,4 +24,13 @@ urlpatterns = [
     path('transfers/bank-cashbox/view/<int:pk>/', views.CashboxTransferDetailView.as_view(), name='cashbox_transfer_detail'),
     path('transfers/bank-cashbox/edit/<int:pk>/', views.CashboxTransferUpdateView.as_view(), name='cashbox_transfer_edit'),
     path('transfers/bank-cashbox/delete/<int:pk>/', views.CashboxTransferDeleteView.as_view(), name='cashbox_transfer_delete'),
+    # Bank Reconciliation URLs
+    path('reconciliations/', views.BankReconciliationListView.as_view(), name='reconciliation_list'),
+    path('reconciliations/add/', views.BankReconciliationCreateView.as_view(), name='reconciliation_add'),
+    path('reconciliations/view/<int:pk>/', views.BankReconciliationDetailView.as_view(), name='reconciliation_detail'),
+    path('reconciliations/edit/<int:pk>/', views.BankReconciliationUpdateView.as_view(), name='reconciliation_edit'),
+    # Bank Statement URLs
+    path('statements/', views.BankStatementListView.as_view(), name='statement_list'),
+    path('statements/add/', views.BankStatementCreateView.as_view(), name='statement_add'),
+    path('statements/edit/<int:pk>/', views.BankStatementUpdateView.as_view(), name='statement_edit'),
 ]

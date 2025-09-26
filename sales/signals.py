@@ -161,3 +161,66 @@ def update_cashbox_transaction_on_invoice_change(sender, instance, created, **kw
     except Exception as e:
         print(f"خطأ في تحديث معاملة الصندوق للفاتورة {instance.invoice_number}: {e}")
         pass
+
+
+@receiver(post_save, sender=SalesInvoice)
+def update_inventory_on_sales_invoice(sender, instance, created, **kwargs):
+    """تحديث المخزون عند إنشاء أو تعديل فاتورة مبيعات"""
+    try:
+        from inventory.models import InventoryMovement, Warehouse
+        
+        # تحديد المستودع
+        warehouse = instance.warehouse
+        if not warehouse:
+            warehouse = Warehouse.get_default_warehouse()
+            if warehouse:
+                instance.warehouse = warehouse
+                instance.save(update_fields=['warehouse'])
+        
+        if not warehouse:
+            print(f"لا يوجد مستودع افتراضي لفاتورة المبيعات {instance.invoice_number}")
+            return
+        
+        # للفواتير الجديدة، إنشاء حركات مخزون صادرة
+        if created:
+            for item in instance.items.all():
+                if item.product.product_type == 'physical':
+                    InventoryMovement.objects.create(
+                        date=instance.date,
+                        product=item.product,
+                        warehouse=warehouse,
+                        movement_type='out',
+                        reference_type='sales_invoice',
+                        reference_id=instance.id,
+                        quantity=item.quantity,
+                        unit_cost=item.product.calculate_weighted_average_cost(),
+                        notes=f'مبيعات - فاتورة رقم {instance.invoice_number}',
+                        created_by=instance.created_by
+                    )
+        else:
+            # للتعديلات، حذف الحركات القديمة وإنشاء جديدة
+            InventoryMovement.objects.filter(
+                reference_type='sales_invoice',
+                reference_id=instance.id
+            ).delete()
+            
+            for item in instance.items.all():
+                if item.product.product_type == 'physical':
+                    InventoryMovement.objects.create(
+                        date=instance.date,
+                        product=item.product,
+                        warehouse=warehouse,
+                        movement_type='out',
+                        reference_type='sales_invoice',
+                        reference_id=instance.id,
+                        quantity=item.quantity,
+                        unit_cost=item.product.calculate_weighted_average_cost(),
+                        notes=f'مبيعات - فاتورة رقم {instance.invoice_number}',
+                        created_by=instance.created_by
+                    )
+        
+        print(f"تم تحديث المخزون لفاتورة المبيعات {instance.invoice_number}")
+        
+    except Exception as e:
+        print(f"خطأ في تحديث المخزون لفاتورة المبيعات {instance.invoice_number}: {e}")
+        pass

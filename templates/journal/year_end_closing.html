@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "إقفال السنة المالية" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-calendar-check"></i>
+                        {% trans "إقفال السنة المالية" %}
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- نموذج الإقفال -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">{% trans "إجراء الإقفال السنوي" %}</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form method="post">
+                                        {% csrf_token %}
+                                        
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle"></i>
+                                            {% trans "سيتم إقفال جميع حسابات الإيرادات والمصروفات ونقل صافي الربح/الخسارة إلى رأس المال" %}
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="{{ form.year.id_for_label }}">{% trans "السنة المالية" %}</label>
+                                            {{ form.year }}
+                                            {% if form.year.errors %}
+                                                <div class="text-danger">{{ form.year.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="{{ form.closing_date.id_for_label }}">{% trans "تاريخ الإقفال" %}</label>
+                                            {{ form.closing_date }}
+                                            {% if form.closing_date.errors %}
+                                                <div class="text-danger">{{ form.closing_date.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <div class="form-group form-check">
+                                            {{ form.confirm }}
+                                            <label class="form-check-label" for="{{ form.confirm.id_for_label }}">
+                                                {% trans "أؤكد إجراء الإقفال السنوي" %}
+                                            </label>
+                                            {% if form.confirm.errors %}
+                                                <div class="text-danger">{{ form.confirm.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-check"></i>
+                                            {% trans "إجراء الإقفال" %}
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- معلومات تقديرية -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">{% trans "تقدير صافي الربح للسنة الحالية" %}</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <h4 class="text-center">
+                                                <span class="{% if estimated_profit >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                                    {{ estimated_profit|floatformat:2 }}
+                                                </span>
+                                                <small class="text-muted">ريال</small>
+                                            </h4>
+                                            <p class="text-center">
+                                                {% if estimated_profit >= 0 %}
+                                                    {% trans "ربح متوقع" %}
+                                                {% else %}
+                                                    {% trans "خسارة متوقعة" %}
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card mt-3">
+                                <div class="card-header">
+                                    <h5 class="card-title">{% trans "ملاحظات مهمة" %}</h5>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-exclamation-triangle text-warning"></i> {% trans "لا يمكن التراجع عن الإقفال بعد تنفيذه" %}</li>
+                                        <li><i class="fas fa-info-circle text-info"></i> {% trans "تأكد من إغلاق جميع القيود قبل الإقفال" %}</li>
+                                        <li><i class="fas fa-check-circle text-success"></i> {% trans "سيتم إنشاء قيد محاسبي تلقائياً" %}</li>
+                                        <li><i class="fas fa-file-alt text-primary"></i> {% trans "سيتم تسجيل العملية في سجل الأنشطة" %}</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- الإقفالات السابقة -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title">{% trans "الإقفالات السابقة" %}</h5>
+                                </div>
+                                <div class="card-body">
+                                    {% if closings %}
+                                        <div class="table-responsive">
+                                            <table class="table table-striped">
+                                                <thead>
+                                                    <tr>
+                                                        <th>{% trans "السنة" %}</th>
+                                                        <th>{% trans "تاريخ الإقفال" %}</th>
+                                                        <th>{% trans "صافي الربح/الخسارة" %}</th>
+                                                        <th>{% trans "الحالة" %}</th>
+                                                        <th>{% trans "التفاصيل" %}</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for closing in closings %}
+                                                        <tr>
+                                                            <td>{{ closing.year }}</td>
+                                                            <td>{{ closing.closing_date|date:"d/m/Y" }}</td>
+                                                            <td class="{% if closing.net_profit >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                                                {{ closing.net_profit|floatformat:2 }}
+                                                            </td>
+                                                            <td>
+                                                                <span class="badge {% if closing.status == 'completed' %}badge-success{% elif closing.status == 'pending' %}badge-warning{% else %}badge-danger{% endif %}">
+                                                                    {{ closing.get_status_display }}
+                                                                </span>
+                                                            </td>
+                                                            <td>
+                                                                {% if closing.closing_entry %}
+                                                                    <a href="{% url 'journal:entry_detail' closing.closing_entry.pk %}" class="btn btn-sm btn-info">
+                                                                        <i class="fas fa-eye"></i> {% trans "عرض القيد" %}
+                                                                    </a>
+                                                                {% endif %}
+                                                            </td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    {% else %}
+                                        <p class="text-muted text-center">{% trans "لا توجد إقفالات سابقة" %}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // تأكيد الإقفال
+    $('form').on('submit', function(e) {
+        if (!confirm('{% trans "هل أنت متأكد من إجراء الإقفال السنوي؟ لا يمكن التراجع عن هذا الإجراء." %}')) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

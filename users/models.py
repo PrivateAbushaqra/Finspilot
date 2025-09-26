@@ -136,7 +136,7 @@ class User(AbstractUser):
             ('can_access_inventory', _('Can access inventory')),
             ('can_access_products', _('Can access products')),
             ('can_access_banks', _('Can access banks')),
-            #('can_access_cashboxes', _('Can access cashboxes')),
+            ('can_access_cashboxes', _('Can access cashboxes')),
             ('can_access_pos', _('Can access POS')),
             ('can_access_company_settings', _('Can access company settings')),
             

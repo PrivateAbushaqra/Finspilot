@@ -502,6 +502,50 @@
     {% endif %}
 </div>
 
+<!-- Journal Entries Section -->
+<div class="card mt-4">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0">
+            <i class="fas fa-book text-white me-2"></i>
+            {% trans "القيود المحاسبية المرتبطة" %}
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if journal_entries %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>{% trans "رقم القيد" %}</th>
+                            <th>{% trans "تاريخ القيد" %}</th>
+                            <th>{% trans "الوصف" %}</th>
+                            <th>{% trans "إجمالي المبلغ" %}</th>
+                            <th>{% trans "الإجراءات" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in journal_entries %}
+                        <tr>
+                            <td>{{ entry.entry_number }}</td>
+                            <td>{{ entry.entry_date|date:"Y-m-d" }}</td>
+                            <td>{{ entry.description }}</td>
+                            <td>{{ entry.total_amount|floatformat:3 }}</td>
+                            <td>
+                                <a href="{% url 'journal:entry_detail' entry.pk %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i> {% trans "عرض" %}
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted">{% trans "لا توجد قيود محاسبية مرتبطة بهذه الفاتورة" %}</p>
+        {% endif %}
+    </div>
+</div>
+
 <!-- Document Creator Information -->
 {% include 'partials/document_creator_info.html' with document=invoice %}
 

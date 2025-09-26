@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "تقرير أعمار الذمم" %} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">
+                <i class="fas fa-clock text-primary me-2"></i>
+                {% trans "تقرير أعمار الذمم" %}
+            </h2>
+            <p class="text-muted mb-0">{% trans "حتى تاريخ" %}: {{ end_date|date:"Y-m-d" }}</p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="start_date" class="form-label">{% trans "من تاريخ" %}</label>
+                    <input type="date" class="form-control" id="start_date" name="start_date"
+                           value="{{ start_date|date:'Y-m-d' }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="end_date" class="form-label">{% trans "إلى تاريخ" %}</label>
+                    <input type="date" class="form-control" id="end_date" name="end_date"
+                           value="{{ end_date|date:'Y-m-d' }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="customer" class="form-label">{% trans "العميل" %}</label>
+                    <select class="form-select" id="customer" name="customer">
+                        <option value="">{% trans "الكل" %}</option>
+                        {% for customer in customers %}
+                        <option value="{{ customer.id }}" {% if customer_filter == customer.id|stringformat:"s" %}selected{% endif %}>{{ customer.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="supplier" class="form-label">{% trans "المورد" %}</label>
+                    <select class="form-select" id="supplier" name="supplier">
+                        <option value="">{% trans "الكل" %}</option>
+                        {% for supplier in suppliers %}
+                        <option value="{{ supplier.id }}" {% if supplier_filter == supplier.id|stringformat:"s" %}selected{% endif %}>{{ supplier.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i>
+                        {% trans "عرض" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Customers Aging -->
+    {% if customers_data %}
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">{% trans "مديونيات العملاء" %}</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>{% trans "العميل" %}</th>
+                            <th class="text-end">{% trans "الإجمالي" %}</th>
+                            <th class="text-end">0-30 {% trans "يوم" %}</th>
+                            <th class="text-end">31-60 {% trans "يوم" %}</th>
+                            <th class="text-end">61-90 {% trans "يوم" %}</th>
+                            <th class="text-end">{% trans "أكثر من 90 يوم" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for data in customers_data %}
+                        <tr>
+                            <td>{{ data.customer.name }}</td>
+                            <td class="text-end">{{ data.outstanding|floatformat:3 }}</td>
+                            <td class="text-end">{{ data.aging_0_30|floatformat:3 }}</td>
+                            <td class="text-end">{{ data.aging_31_60|floatformat:3 }}</td>
+                            <td class="text-end">{{ data.aging_61_90|floatformat:3 }}</td>
+                            <td class="text-end">{{ data.aging_over_90|floatformat:3 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-primary">
+                            <th>{% trans "الإجمالي" %}</th>
+                            <th class="text-end">{{ total_customers_outstanding|floatformat:3 }}</th>
+                            <th class="text-end">{{ total_customers_aging_0_30|floatformat:3 }}</th>
+                            <th class="text-end">{{ total_customers_aging_31_60|floatformat:3 }}</th>
+                            <th class="text-end">{{ total_customers_aging_61_90|floatformat:3 }}</th>
+                            <th class="text-end">{{ total_customers_aging_over_90|floatformat:3 }}</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Suppliers Aging -->
+    {% if suppliers_data %}
+    <div class="card mb-4">
+        <div class="card-header bg-warning text-white">
+            <h5 class="mb-0">{% trans "مديونيات الموردين" %}</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>{% trans "المورد" %}</th>
+                            <th class="text-end">{% trans "الإجمالي" %}</th>
+                            <th class="text-end">0-30 {% trans "يوم" %}</th>
+                            <th class="text-end">31-60 {% trans "يوم" %}</th>
+                            <th class="text-end">61-90 {% trans "يوم" %}</th>
+                            <th class="text-end">{% trans "أكثر من 90 يوم" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for data in suppliers_data %}
+                        <tr>
+                            <td>{{ data.supplier.name }}</td>
+                            <td class="text-end">{{ data.outstanding|floatformat:3 }}</td>
+                            <td class="text-end">{{ data.aging_0_30|floatformat:3 }}</td>
+                            <td class="text-end">{{ data.aging_31_60|floatformat:3 }}</td>
+                            <td class="text-end">{{ data.aging_61_90|floatformat:3 }}</td>
+                            <td class="text-end">{{ data.aging_over_90|floatformat:3 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-warning">
+                            <th>{% trans "الإجمالي" %}</th>
+                            <th class="text-end">{{ total_suppliers_outstanding|floatformat:3 }}</th>
+                            <th class="text-end">{{ total_suppliers_aging_0_30|floatformat:3 }}</th>
+                            <th class="text-end">{{ total_suppliers_aging_31_60|floatformat:3 }}</th>
+                            <th class="text-end">{{ total_suppliers_aging_61_90|floatformat:3 }}</th>
+                            <th class="text-end">{{ total_suppliers_aging_over_90|floatformat:3 }}</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if not customers_data and not suppliers_data %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        {% trans "لا توجد مديونيات في الفترة المحددة" %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "المستندات المرتبطة" %} - {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">
+                <i class="fas fa-file-alt text-primary me-2"></i>
+                {% trans "المستندات المرتبطة" %}
+            </h2>
+            <p class="text-muted mb-0">{% trans "للكائن" %}: {{ object }}</p>
+        </div>
+        <a href="{% url 'documents:upload' content_type.id object.pk %}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i>
+            {% trans "رفع مستند جديد" %}
+        </a>
+    </div>
+
+    {% if documents %}
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>{% trans "العنوان" %}</th>
+                            <th>{% trans "الملف" %}</th>
+                            <th>{% trans "رفع بواسطة" %}</th>
+                            <th>{% trans "تاريخ الرفع" %}</th>
+                            <th>{% trans "الإجراءات" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for document in documents %}
+                        <tr>
+                            <td>{{ document.title }}</td>
+                            <td>
+                                <a href="{{ document.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-download me-1"></i>
+                                    {% trans "تحميل" %}
+                                </a>
+                            </td>
+                            <td>{{ document.uploaded_by.get_full_name|default:document.uploaded_by.username }}</td>
+                            <td>{{ document.uploaded_at|date:"Y-m-d H:i" }}</td>
+                            <td>
+                                <form method="post" action="{% url 'documents:delete' document.id %}" class="d-inline" onsubmit="return confirm('هل أنت متأكد من حذف هذا المستند؟')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash me-1"></i>
+                                        {% trans "حذف" %}
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        {% trans "لا توجد مستندات مرتبطة بهذا الكائن" %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

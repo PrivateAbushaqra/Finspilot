@@ -339,8 +339,32 @@ class TaxReportView(LoginRequiredMixin, TemplateView):
     """تقرير الضرائب للمبيعات والمشتريات ومردوداتهما"""
     template_name = 'core/tax_report.html'
     
+    def dispatch(self, request, *args, **kwargs):
+        if request.GET.get('export') == 'excel':
+            return self.export_excel(request)
+        elif request.GET.get('export') == 'pdf':
+            return self.export_pdf(request)
+        return super().dispatch(request, *args, **kwargs)
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        
+        # معالجة الفلاتر
+        start_date = self.request.GET.get('start_date')
+        end_date = self.request.GET.get('end_date')
+        tax_rate_filter = self.request.GET.get('tax_rate')
+        customer_supplier_filter = self.request.GET.get('customer_supplier')
+        document_type_filter = self.request.GET.get('document_type')
+        
+        # تحويل التواريخ
+        if start_date:
+            start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+        else:
+            start_date_obj = None
+        if end_date:
+            end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
+        else:
+            end_date_obj = None
         
         # جمع جميع المستندات مع الضرائب
         tax_data = []
@@ -349,9 +373,17 @@ class TaxReportView(LoginRequiredMixin, TemplateView):
         try:
             from sales.models import SalesInvoice, SalesInvoiceItem
             sales_invoices = SalesInvoice.objects.all().select_related('customer')
+            if start_date_obj:
+                sales_invoices = sales_invoices.filter(date__gte=start_date_obj)
+            if end_date_obj:
+                sales_invoices = sales_invoices.filter(date__lte=end_date_obj)
+            if customer_supplier_filter:
+                sales_invoices = sales_invoices.filter(customer__name__icontains=customer_supplier_filter)
             
             for invoice in sales_invoices:
                 items = SalesInvoiceItem.objects.filter(invoice=invoice, tax_rate__gt=0)
+                if tax_rate_filter:
+                    items = items.filter(tax_rate=float(tax_rate_filter))
                 tax_breakdown = {}
                 total_tax = 0
                 
@@ -385,9 +417,17 @@ class TaxReportView(LoginRequiredMixin, TemplateView):
         try:
             from purchases.models import PurchaseInvoice, PurchaseInvoiceItem
             purchase_invoices = PurchaseInvoice.objects.all().select_related('supplier')
+            if start_date_obj:
+                purchase_invoices = purchase_invoices.filter(date__gte=start_date_obj)
+            if end_date_obj:
+                purchase_invoices = purchase_invoices.filter(date__lte=end_date_obj)
+            if customer_supplier_filter:
+                purchase_invoices = purchase_invoices.filter(supplier__name__icontains=customer_supplier_filter)
             
             for invoice in purchase_invoices:
                 items = PurchaseInvoiceItem.objects.filter(invoice=invoice, tax_rate__gt=0)
+                if tax_rate_filter:
+                    items = items.filter(tax_rate=float(tax_rate_filter))
                 tax_breakdown = {}
                 total_tax = 0
                 
@@ -419,9 +459,22 @@ class TaxReportView(LoginRequiredMixin, TemplateView):
         try:
             from sales.models import SalesReturn, SalesReturnItem
             sales_returns = SalesReturn.objects.all().select_related('customer')
+            if start_date_obj:
+                sales_returns = sales_returns.filter(date__gte=start_date_obj)
+            if end_date_obj:
+                sales_returns = sales_returns.filter(date__lte=end_date_obj)
+            if customer_supplier_filter:
+                sales_returns = sales_returns.filter(customer__name__icontains=customer_supplier_filter)
+            if document_type_filter and document_type_filter != 'all':
+                if document_type_filter == 'sales_return':
+                    pass  # لا حاجة لفلتر إضافي
+                else:
+                    sales_returns = sales_returns.none()  # لا تطابق
             
             for return_invoice in sales_returns:
                 items = SalesReturnItem.objects.filter(return_invoice=return_invoice, tax_rate__gt=0)
+                if tax_rate_filter:
+                    items = items.filter(tax_rate=float(tax_rate_filter))
                 tax_breakdown = {}
                 total_tax = 0
                 
@@ -453,9 +506,22 @@ class TaxReportView(LoginRequiredMixin, TemplateView):
         try:
             from purchases.models import PurchaseReturn, PurchaseReturnItem
             purchase_returns = PurchaseReturn.objects.all().select_related('original_invoice__supplier')
+            if start_date_obj:
+                purchase_returns = purchase_returns.filter(date__gte=start_date_obj)
+            if end_date_obj:
+                purchase_returns = purchase_returns.filter(date__lte=end_date_obj)
+            if customer_supplier_filter:
+                purchase_returns = purchase_returns.filter(original_invoice__supplier__name__icontains=customer_supplier_filter)
+            if document_type_filter and document_type_filter != 'all':
+                if document_type_filter == 'purchase_return':
+                    pass
+                else:
+                    purchase_returns = purchase_returns.none()
             
             for return_invoice in purchase_returns:
                 items = PurchaseReturnItem.objects.filter(return_invoice=return_invoice, tax_rate__gt=0)
+                if tax_rate_filter:
+                    items = items.filter(tax_rate=float(tax_rate_filter))
                 tax_breakdown = {}
                 total_tax = 0
                 
@@ -522,10 +588,163 @@ class TaxReportView(LoginRequiredMixin, TemplateView):
             'total_negative': total_negative,
             'net_tax': net_tax,
             'grand_total_tax': grand_total_tax,
-            'total_amount_before_tax': total_amount_before_tax
+            'total_amount_before_tax': total_amount_before_tax,
+            'start_date': start_date,
+            'end_date': end_date,
+            'tax_rate_filter': tax_rate_filter,
+            'customer_supplier_filter': customer_supplier_filter,
+            'document_type_filter': document_type_filter
         })
         
         return context
+
+    def export_excel(self, request):
+        """تصدير التقرير إلى Excel"""
+        context = self.get_context_data()
+        tax_data = context['tax_data']
+        all_tax_rates = context['all_tax_rates']
+        column_totals = context['column_totals']
+        total_positive = context['total_positive']
+        total_negative = context['total_negative']
+        net_tax = context['net_tax']
+        grand_total_tax = context['grand_total_tax']
+        total_amount_before_tax = context['total_amount_before_tax']
+
+        if not OPENPYXL_AVAILABLE:
+            return HttpResponse("OpenPyXL غير متوفر", status=500)
+
+        wb = Workbook()
+        ws = wb.active
+        ws.title = _('Tax Report')
+
+        # Headers
+        headers = [_('Document Number'), _('Document Type'), _('Customer/Supplier'), _('Date'), _('Amount Before Tax')]
+        for rate in all_tax_rates:
+            headers.append(f"{_('Tax')} {rate}%")
+        headers.append(_('Total Tax'))
+
+        for col_num, header in enumerate(headers, 1):
+            ws.cell(row=1, column=col_num, value=header)
+
+        # Data
+        row = 2
+        for item in tax_data:
+            ws.cell(row=row, column=1, value=item['document_number'])
+            ws.cell(row=row, column=2, value=item['document_type'])
+            ws.cell(row=row, column=3, value=item['customer_supplier'])
+            ws.cell(row=row, column=4, value=item['date'].strftime('%Y-%m-%d'))
+            ws.cell(row=row, column=5, value=item['amount_before_tax'])
+            col = 6
+            for rate in all_tax_rates:
+                ws.cell(row=row, column=col, value=item['tax_breakdown'].get(rate, 0))
+                col += 1
+            ws.cell(row=row, column=col, value=item['total_tax'])
+            row += 1
+
+        # Totals
+        ws.cell(row=row, column=4, value=_('Totals'))
+        ws.cell(row=row, column=5, value=total_amount_before_tax)
+        col = 6
+        for rate in all_tax_rates:
+            ws.cell(row=row, column=col, value=column_totals.get(rate, 0))
+            col += 1
+        ws.cell(row=row, column=col, value=grand_total_tax)
+
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = f'attachment; filename="tax_report_{django_timezone.now().date()}.xlsx"'
+        
+        wb.save(response)
+        
+        # تسجيل النشاط
+        try:
+            from core.signals import log_export_activity
+            log_export_activity(request, str(_('Tax Report')), f'tax_report_{django_timezone.now().date()}.xlsx', 'Excel')
+        except Exception:
+            pass
+        
+        return response
+
+    def export_pdf(self, request):
+        """تصدير التقرير إلى PDF"""
+        context = self.get_context_data()
+        tax_data = context['tax_data']
+        all_tax_rates = context['all_tax_rates']
+        column_totals = context['column_totals']
+        total_positive = context['total_positive']
+        total_negative = context['total_negative']
+        net_tax = context['net_tax']
+        grand_total_tax = context['grand_total_tax']
+        total_amount_before_tax = context['total_amount_before_tax']
+
+        try:
+            from reportlab.lib import colors
+            from reportlab.lib.pagesizes import letter, landscape
+            from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+            from reportlab.lib.styles import getSampleStyleSheet
+            from io import BytesIO
+
+            buffer = BytesIO()
+            doc = SimpleDocTemplate(buffer, pagesize=landscape(letter))
+            elements = []
+
+            styles = getSampleStyleSheet()
+            elements.append(Paragraph(_('Tax Report'), styles['Heading1']))
+            elements.append(Spacer(1, 12))
+
+            # Data for table
+            data = [[_('Document Number'), _('Document Type'), _('Customer/Supplier'), _('Date'), _('Amount Before Tax')]]
+            for rate in all_tax_rates:
+                data[0].append(f"{_('Tax')} {rate}%")
+            data[0].append(_('Total Tax'))
+
+            for item in tax_data:
+                row = [
+                    item['document_number'],
+                    item['document_type'],
+                    item['customer_supplier'],
+                    item['date'].strftime('%Y-%m-%d'),
+                    f"{item['amount_before_tax']:.2f}"
+                ]
+                for rate in all_tax_rates:
+                    row.append(f"{item['tax_breakdown'].get(rate, 0):.2f}")
+                row.append(f"{item['total_tax']:.2f}")
+                data.append(row)
+
+            # Totals row
+            totals_row = ['', '', '', _('Totals'), f"{total_amount_before_tax:.2f}"]
+            for rate in all_tax_rates:
+                totals_row.append(f"{column_totals.get(rate, 0):.2f}")
+            totals_row.append(f"{grand_total_tax:.2f}")
+            data.append(totals_row)
+
+            table = Table(data)
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 10),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                ('GRID', (0, 0), (-1, -1), 1, colors.black),
+            ]))
+            elements.append(table)
+
+            doc.build(elements)
+            buffer.seek(0)
+            response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+            response['Content-Disposition'] = f'attachment; filename="tax_report_{django_timezone.now().date()}.pdf"'
+            
+            # تسجيل النشاط
+            try:
+                from core.signals import log_export_activity
+                log_export_activity(request, str(_('Tax Report')), f'tax_report_{django_timezone.now().date()}.pdf', 'PDF')
+            except Exception:
+                pass
+            
+            return response
+        except ImportError:
+            return HttpResponse("ReportLab غير متوفر", status=500)
 
 
 class ProfitLossReportView(LoginRequiredMixin, TemplateView):

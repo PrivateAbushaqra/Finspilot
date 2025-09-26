@@ -1,5 +1,3 @@
-
-
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -869,3 +867,105 @@ def entry_list(request):
     }
     
     return render(request, 'revenues_expenses/entry_list.html', context)
+
+
+@login_required
+def sector_analysis(request):
+    """تحليل الإيرادات والمصاريف حسب القطاع"""
+    user = request.user
+    has_perm = (
+        getattr(user, 'is_superuser', False) or
+        getattr(user, 'user_type', None) in ['superadmin', 'admin'] or
+        user.has_revenues_expenses_permission()
+    )
+    if not has_perm:
+        messages.error(request, _('ليس لديك صلاحية عرض تحليل القطاعات'))
+        return redirect('revenues_expenses:dashboard')
+
+    from datetime import date, timedelta
+    from .models import Sector
+
+    # فلاتر التاريخ
+    today = date.today()
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    sector_filter = request.GET.get('sector')
+
+    if not start_date:
+        start_date = today.replace(day=1)  # بداية الشهر الحالي
+    else:
+        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+
+    if not end_date:
+        end_date = today
+    else:
+        end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+
+    # تحليل حسب القطاع
+    sectors = Sector.objects.filter(is_active=True)
+    if sector_filter:
+        sectors = sectors.filter(id=sector_filter)
+
+    analysis_data = []
+    total_revenue = Decimal('0')
+    total_expense = Decimal('0')
+
+    for sector in sectors:
+        # إيرادات القطاع
+        sector_revenue = RevenueExpenseEntry.objects.filter(
+            sector=sector,
+            type='revenue',
+            date__gte=start_date,
+            date__lte=end_date,
+            is_approved=True
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+
+        # مصاريف القطاع
+        sector_expense = RevenueExpenseEntry.objects.filter(
+            sector=sector,
+            type='expense',
+            date__gte=start_date,
+            date__lte=end_date,
+            is_approved=True
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+
+        # صافي الربح للقطاع
+        sector_profit = sector_revenue - sector_expense
+
+        analysis_data.append({
+            'sector': sector,
+            'revenue': sector_revenue,
+            'expense': sector_expense,
+            'profit': sector_profit,
+        })
+
+        total_revenue += sector_revenue
+        total_expense += sector_expense
+
+    total_profit = total_revenue - total_expense
+
+    # تسجيل النشاط
+    try:
+        from core.signals import log_view_activity
+        class ReportObj:
+            id = 0
+            pk = 0
+            def __str__(self):
+                return str(_('تحليل الإيرادات والمصاريف حسب القطاع'))
+        log_view_activity(request, 'view', ReportObj(), str(_('عرض تحليل القطاعات')))
+    except Exception:
+        pass
+
+    context = {
+        'page_title': _('تحليل الإيرادات والمصاريف حسب القطاع'),
+        'analysis_data': analysis_data,
+        'start_date': start_date,
+        'end_date': end_date,
+        'sector_filter': sector_filter,
+        'total_revenue': total_revenue,
+        'total_expense': total_expense,
+        'total_profit': total_profit,
+        'sectors': Sector.objects.filter(is_active=True),
+    }
+
+    return render(request, 'revenues_expenses/sector_analysis.html', context)

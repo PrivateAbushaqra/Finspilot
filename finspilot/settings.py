@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'cashboxes',
     'journal',
     'reports',
+    'documents',
     'users',
     'settings',
     'receipts',
@@ -56,6 +57,7 @@ INSTALLED_APPS = [
     'assets_liabilities',
     'backup',
     'hr',
+    'provisions',
 ]
 
 MIDDLEWARE = [

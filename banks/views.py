@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from decimal import Decimal
-from .models import BankAccount, BankTransfer, BankTransaction
+from .models import BankAccount, BankTransfer, BankTransaction, BankReconciliation, BankStatement
 from settings.models import Currency, CompanySettings
 from core.signals import log_user_activity
 
@@ -1434,8 +1434,6 @@ class BankAccountForceDeleteView(LoginRequiredMixin, View):
                 
                 messages.success(request, f'تم حذف الحساب البنكي "{account_name}" بنجاح!')
             
-            return redirect('banks:account_list')
-            
         except BankAccount.DoesNotExist:
             messages.error(request, 'الحساب البنكي غير موجود!')
             return redirect('banks:account_list')
@@ -1523,3 +1521,227 @@ class ClearAccountTransactionsView(LoginRequiredMixin, View):
             messages.error(request, f'حدث خطأ أثناء حذف الحركات: {str(e)}')
         
         return redirect('banks:account_list')
+
+
+# Bank Reconciliation Views
+class BankReconciliationListView(LoginRequiredMixin, BanksViewPermissionMixin, ListView):
+    model = BankReconciliation
+    template_name = 'banks/reconciliation_list.html'
+    context_object_name = 'reconciliations'
+    paginate_by = 25
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        bank_account = self.request.GET.get('bank_account')
+        status = self.request.GET.get('status')
+        date_from = self.request.GET.get('date_from')
+        date_to = self.request.GET.get('date_to')
+
+        if bank_account:
+            queryset = queryset.filter(bank_account_id=bank_account)
+        if status:
+            queryset = queryset.filter(status=status)
+        if date_from:
+            queryset = queryset.filter(statement_date__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(statement_date__lte=date_to)
+
+        return queryset.order_by('-statement_date')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['bank_accounts'] = BankAccount.objects.filter(is_active=True)
+        context['status_choices'] = BankReconciliation._meta.get_field('status').choices
+
+        # تسجيل النشاط
+        log_user_activity(
+            self.request,
+            'ACCESS',
+            None,
+            _('تم الوصول إلى قائمة المطابقات البنكية')
+        )
+
+        return context
+
+
+class BankReconciliationCreateView(LoginRequiredMixin, BanksViewPermissionMixin, CreateView):
+    model = BankReconciliation
+    template_name = 'banks/reconciliation_form.html'
+    fields = ['bank_account', 'statement_date', 'statement_balance', 'deposits_in_transit',
+             'outstanding_checks', 'bank_charges', 'interest_earned', 'other_adjustments', 'notes']
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        bank_account_id = self.request.GET.get('bank_account')
+        if bank_account_id:
+            try:
+                bank_account = BankAccount.objects.get(id=bank_account_id)
+                context['bank_account'] = bank_account
+                # Calculate book balance
+                context['book_balance'] = bank_account.calculate_actual_balance()
+            except BankAccount.DoesNotExist:
+                pass
+        return context
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        # Calculate book balance
+        bank_account = form.cleaned_data['bank_account']
+        form.instance.book_balance = bank_account.calculate_actual_balance()
+
+        response = super().form_valid(form)
+
+        # تسجيل النشاط
+        log_user_activity(
+            self.request,
+            'CREATE',
+            form.instance,
+            _('تم إنشاء مطابقة بنكية جديدة: {}').format(form.instance)
+        )
+
+        messages.success(self.request, _('Bank reconciliation created successfully.'))
+        return response
+
+    def get_success_url(self):
+        return reverse_lazy('banks:reconciliation_detail', kwargs={'pk': self.object.pk})
+
+
+class BankReconciliationDetailView(LoginRequiredMixin, BanksViewPermissionMixin, DetailView):
+    model = BankReconciliation
+    template_name = 'banks/reconciliation_detail.html'
+    context_object_name = 'reconciliation'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        reconciliation = self.object
+
+        # Get unreconciled statements for this bank account up to statement date
+        context['unreconciled_statements'] = BankStatement.objects.filter(
+            bank_account=reconciliation.bank_account,
+            date__lte=reconciliation.statement_date,
+            is_reconciled=False
+        ).order_by('date')
+
+        # تسجيل النشاط
+        log_user_activity(
+            self.request,
+            'ACCESS',
+            reconciliation,
+            _('تم عرض تفاصيل المطابقة البنكية: {}').format(reconciliation)
+        )
+
+        return context
+
+
+class BankReconciliationUpdateView(LoginRequiredMixin, BanksViewPermissionMixin, UpdateView):
+    model = BankReconciliation
+    template_name = 'banks/reconciliation_form.html'
+    fields = ['statement_balance', 'deposits_in_transit', 'outstanding_checks',
+             'bank_charges', 'interest_earned', 'other_adjustments', 'status', 'notes']
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+
+        # تسجيل النشاط
+        log_user_activity(
+            self.request,
+            'UPDATE',
+            form.instance,
+            _('تم تحديث المطابقة البنكية: {}').format(form.instance)
+        )
+
+        messages.success(self.request, _('Bank reconciliation updated successfully.'))
+        return response
+
+    def get_success_url(self):
+        return reverse_lazy('banks:reconciliation_detail', kwargs={'pk': self.object.pk})
+
+
+# Bank Statement Views
+class BankStatementListView(LoginRequiredMixin, BanksViewPermissionMixin, ListView):
+    model = BankStatement
+    template_name = 'banks/statement_list.html'
+    context_object_name = 'statements'
+    paginate_by = 50
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        bank_account = self.request.GET.get('bank_account')
+        reconciled = self.request.GET.get('reconciled')
+        date_from = self.request.GET.get('date_from')
+        date_to = self.request.GET.get('date_to')
+
+        if bank_account:
+            queryset = queryset.filter(bank_account_id=bank_account)
+        if reconciled is not None:
+            if reconciled == 'yes':
+                queryset = queryset.filter(is_reconciled=True)
+            elif reconciled == 'no':
+                queryset = queryset.filter(is_reconciled=False)
+        if date_from:
+            queryset = queryset.filter(date__gte=date_from)
+        if date_to:
+            queryset = queryset.filter(date__lte=date_to)
+
+        return queryset.order_by('-date')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['bank_accounts'] = BankAccount.objects.filter(is_active=True)
+
+        # تسجيل النشاط
+        log_user_activity(
+            self.request,
+            'ACCESS',
+            None,
+            _('تم الوصول إلى قائمة كشوفات البنك')
+        )
+
+        return context
+
+
+class BankStatementCreateView(LoginRequiredMixin, BanksViewPermissionMixin, CreateView):
+    model = BankStatement
+    template_name = 'banks/statement_form.html'
+    fields = ['bank_account', 'date', 'description', 'reference', 'debit', 'credit', 'balance', 'notes']
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        response = super().form_valid(form)
+
+        # تسجيل النشاط
+        log_user_activity(
+            self.request,
+            'CREATE',
+            form.instance,
+            _('تم إنشاء كشف بنكي جديد: {}').format(form.instance)
+        )
+
+        messages.success(self.request, _('Bank statement created successfully.'))
+        return response
+
+    def get_success_url(self):
+        return reverse_lazy('banks:statement_list')
+
+
+class BankStatementUpdateView(LoginRequiredMixin, BanksViewPermissionMixin, UpdateView):
+    model = BankStatement
+    template_name = 'banks/statement_form.html'
+    fields = ['description', 'reference', 'debit', 'credit', 'balance', 'is_reconciled', 'notes']
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+
+        # تسجيل النشاط
+        log_user_activity(
+            self.request,
+            'UPDATE',
+            form.instance,
+            _('تم تحديث الكشف البنكي: {}').format(form.instance)
+        )
+
+        messages.success(self.request, _('Bank statement updated successfully.'))
+        return response
+
+    def get_success_url(self):
+        return reverse_lazy('banks:statement_list')

@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block page_title %}{% trans "Provisions Management" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-1">{% trans "Provisions Management" %}</h1>
+                    <p class="text-muted mb-0">{% trans "Manage accounting provisions and their entries" %}</p>
+                </div>
+                <div>
+                    <a href="{% url 'provisions:provision_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>{% trans "Add Provision" %}
+                    </a>
+                    <a href="{% url 'provisions:provision_report' %}" class="btn btn-info ms-2">
+                        <i class="fas fa-chart-bar me-2"></i>{% trans "Reports" %}
+                    </a>
+                </div>
+            </div>
+
+            <!-- Provisions Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">{% trans "Active Provisions" %}</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{% trans "Name" %}</th>
+                                    <th>{% trans "Type" %}</th>
+                                    <th>{% trans "Related Account" %}</th>
+                                    <th>{% trans "Provision Account" %}</th>
+                                    <th>{% trans "Amount" %}</th>
+                                    <th>{% trans "Fiscal Year" %}</th>
+                                    <th>{% trans "Start Date" %}</th>
+                                    <th>{% trans "End Date" %}</th>
+                                    <th>{% trans "Actions" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for provision in provisions %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'provisions:provision_detail' provision.pk %}" class="text-decoration-none">
+                                            {{ provision.name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ provision.provision_type.name }}</td>
+                                    <td>{{ provision.related_account.name }}</td>
+                                    <td>{{ provision.provision_account.name }}</td>
+                                    <td class="text-end">{{ provision.amount|floatformat:3 }}</td>
+                                    <td>{{ provision.fiscal_year }}</td>
+                                    <td>{{ provision.start_date|date:"Y-m-d" }}</td>
+                                    <td>{{ provision.end_date|date:"Y-m-d" }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'provisions:provision_detail' provision.pk %}" class="btn btn-sm btn-outline-primary" title="{% trans 'View Details' %}">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'provisions:provision_update' provision.pk %}" class="btn btn-sm btn-outline-secondary" title="{% trans 'Edit' %}">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'provisions:provision_delete' provision.pk %}" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="9" class="text-center text-muted">
+                                        {% trans "No provisions found." %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if is_paginated %}
+                    <nav aria-label="Provisions pagination" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">{% trans "Previous" %}</a>
+                            </li>
+                            {% endif %}
+
+                            {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                            {% endif %}
+                            {% endfor %}
+
+                            {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}">{% trans "Next" %}</a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

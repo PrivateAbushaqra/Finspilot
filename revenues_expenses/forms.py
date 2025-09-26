@@ -1,6 +1,6 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
-from .models import RevenueExpenseCategory, RevenueExpenseEntry, RecurringRevenueExpense
+from .models import RevenueExpenseCategory, RevenueExpenseEntry, RecurringRevenueExpense, Sector
 from settings.models import Currency, CompanySettings
 
 
@@ -19,7 +19,7 @@ class RevenueExpenseCategoryForm(forms.ModelForm):
 class RevenueExpenseEntryForm(forms.ModelForm):
     class Meta:
         model = RevenueExpenseEntry
-        fields = ['type', 'category', 'amount', 'currency', 'description', 'payment_method', 'reference_number', 'date']
+        fields = ['type', 'category', 'sector', 'amount', 'currency', 'description', 'payment_method', 'reference_number', 'date']
         widgets = {
             'type': forms.Select(attrs={
                 'class': 'form-control', 
@@ -30,6 +30,10 @@ class RevenueExpenseEntryForm(forms.ModelForm):
                 'class': 'form-control', 
                 'required': True,
                 'data-placeholder': 'اختر الفئة'
+            }),
+            'sector': forms.Select(attrs={
+                'class': 'form-control',
+                'data-placeholder': 'اختر القطاع (اختياري)'
             }),
             'amount': forms.NumberInput(attrs={
                 'class': 'form-control', 
@@ -144,11 +148,12 @@ class RevenueExpenseEntryForm(forms.ModelForm):
 class RecurringRevenueExpenseForm(forms.ModelForm):
     class Meta:
         model = RecurringRevenueExpense
-        fields = ['name', 'category', 'amount', 'currency', 'frequency', 'start_date', 'end_date', 
+        fields = ['name', 'category', 'sector', 'amount', 'currency', 'frequency', 'start_date', 'end_date', 
                  'description', 'payment_method', 'is_active', 'auto_generate']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'category': forms.Select(attrs={'class': 'form-control'}),
+            'sector': forms.Select(attrs={'class': 'form-control'}),
             'amount': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001', 'min': '0.001'}),
             'currency': forms.Select(attrs={'class': 'form-control'}),
             'frequency': forms.Select(attrs={'class': 'form-control'}),
