@@ -185,7 +185,7 @@ class PurchaseDebitNote(models.Model):
     """اشعار مدين للمشتريات"""
     note_number = models.CharField(_('رقم اشعار مدين'), max_length=50, unique=True)
     date = models.DateField(_('Date'))
-    supplier = models.ForeignKey(CustomerSupplier, on_delete=models.PROTECT, verbose_name=_('المورد'))
+    supplier = models.ForeignKey(CustomerSupplier, on_delete=models.PROTECT, verbose_name=_('Supplier'))
     subtotal = models.DecimalField(_('المجموع الفرعي'), max_digits=15, decimal_places=3, default=0)
     tax_amount = models.DecimalField(_('مبلغ الضريبة'), max_digits=15, decimal_places=3, default=0)
     total_amount = models.DecimalField(_('المبلغ الاجمالي'), max_digits=15, decimal_places=3, default=0)

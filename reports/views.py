@@ -996,7 +996,7 @@ def financial_ratios(request):
 @login_required
 def aging_report(request):
     """
-    تقرير أعمار الذمم: عرض المديونيات المصنفة حسب الفترات الزمنية
+    Accounts Receivable Aging Report: Display receivables classified by aging periods
     """
     # Permission gate: allow superuser or user_type admin/superadmin implicitly; else require explicit permission
     user = request.user
@@ -1170,8 +1170,8 @@ def aging_report(request):
             id = 0
             pk = 0
             def __str__(self):
-                return str(_('تقرير أعمار الذمم'))
-        log_view_activity(request, 'view', ReportObj(), str(_('عرض تقرير أعمار الذمم')))
+                return str(_('Accounts Receivable Aging Report'))
+        log_view_activity(request, 'view', ReportObj(), str(_('Accounts Receivable Aging Report')))
     except Exception:
         pass
 

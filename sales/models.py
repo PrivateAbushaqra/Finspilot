@@ -19,7 +19,7 @@ class SalesInvoice(models.Model):
     invoice_number = models.CharField(_('رقم الفاتورة'), max_length=50, unique=True)
     date = models.DateField(_('Date'))
     customer = models.ForeignKey(CustomerSupplier, on_delete=models.PROTECT, 
-                               verbose_name=_('العميل'), limit_choices_to={'type__in': ['customer', 'both']},
+                               verbose_name=_('Customer'), limit_choices_to={'type__in': ['customer', 'both']},
                                null=True, blank=True)
     warehouse = models.ForeignKey('inventory.Warehouse', on_delete=models.PROTECT, 
                                 verbose_name=_('المستودع'), null=True, blank=True)
@@ -98,7 +98,7 @@ class SalesReturn(models.Model):
     date = models.DateField(_('Date'))
     original_invoice = models.ForeignKey(SalesInvoice, on_delete=models.PROTECT, 
                                        verbose_name=_('الفاتورة الأصلية'))
-    customer = models.ForeignKey(CustomerSupplier, on_delete=models.PROTECT, verbose_name=_('العميل'))
+    customer = models.ForeignKey(CustomerSupplier, on_delete=models.PROTECT, verbose_name=_('Customer'))
     subtotal = models.DecimalField(_('المجموع الفرعي'), max_digits=15, decimal_places=3, default=0)
     tax_amount = models.DecimalField(_('مبلغ الضريبة'), max_digits=15, decimal_places=3, default=0)
     total_amount = models.DecimalField(_('المبلغ الإجمالي'), max_digits=15, decimal_places=3, default=0)
@@ -151,7 +151,7 @@ class SalesCreditNote(models.Model):
     """اشعار دائن لمبيعات"""
     note_number = models.CharField(_('رقم إشعار دائن'), max_length=50, unique=True)
     date = models.DateField(_('Date'))
-    customer = models.ForeignKey(CustomerSupplier, on_delete=models.PROTECT, verbose_name=_('العميل'))
+    customer = models.ForeignKey(CustomerSupplier, on_delete=models.PROTECT, verbose_name=_('Customer'))
     subtotal = models.DecimalField(_('المجموع الفرعي'), max_digits=15, decimal_places=3, default=0)
     tax_amount = models.DecimalField(_('مبلغ الضريبة'), max_digits=15, decimal_places=3, default=0)
     total_amount = models.DecimalField(_('المبلغ الإجمالي'), max_digits=15, decimal_places=3, default=0)

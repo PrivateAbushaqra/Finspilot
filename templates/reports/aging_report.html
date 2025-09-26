@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load i18n %}
 
-{% block title %}{% trans "تقرير أعمار الذمم" %} - {{ block.super }}{% endblock %}
+{% block title %}{% trans "Accounts Receivable Aging Report" %} - {{ block.super }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -10,9 +10,9 @@
         <div>
             <h2 class="mb-0">
                 <i class="fas fa-clock text-primary me-2"></i>
-                {% trans "تقرير أعمار الذمم" %}
+                {% trans "Accounts Receivable Aging Report" %}
             </h2>
-            <p class="text-muted mb-0">{% trans "حتى تاريخ" %}: {{ end_date|date:"Y-m-d" }}</p>
+            <p class="text-muted mb-0">{% trans "As of Date" %}: {{ end_date|date:"Y-m-d" }}</p>
         </div>
     </div>
 
@@ -21,28 +21,28 @@
         <div class="card-body">
             <form method="get" class="row g-3">
                 <div class="col-md-3">
-                    <label for="start_date" class="form-label">{% trans "من تاريخ" %}</label>
+                    <label for="start_date" class="form-label">{% trans "From Date" %}</label>
                     <input type="date" class="form-control" id="start_date" name="start_date"
                            value="{{ start_date|date:'Y-m-d' }}">
                 </div>
                 <div class="col-md-3">
-                    <label for="end_date" class="form-label">{% trans "إلى تاريخ" %}</label>
+                    <label for="end_date" class="form-label">{% trans "To Date" %}</label>
                     <input type="date" class="form-control" id="end_date" name="end_date"
                            value="{{ end_date|date:'Y-m-d' }}">
                 </div>
                 <div class="col-md-3">
-                    <label for="customer" class="form-label">{% trans "العميل" %}</label>
+                    <label for="customer" class="form-label">{% trans "Customer" %}</label>
                     <select class="form-select" id="customer" name="customer">
-                        <option value="">{% trans "الكل" %}</option>
+                        <option value="">{% trans "All" %}</option>
                         {% for customer in customers %}
                         <option value="{{ customer.id }}" {% if customer_filter == customer.id|stringformat:"s" %}selected{% endif %}>{{ customer.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label for="supplier" class="form-label">{% trans "المورد" %}</label>
+                    <label for="supplier" class="form-label">{% trans "Supplier" %}</label>
                     <select class="form-select" id="supplier" name="supplier">
-                        <option value="">{% trans "الكل" %}</option>
+                        <option value="">{% trans "All" %}</option>
                         {% for supplier in suppliers %}
                         <option value="{{ supplier.id }}" {% if supplier_filter == supplier.id|stringformat:"s" %}selected{% endif %}>{{ supplier.name }}</option>
                         {% endfor %}
@@ -51,7 +51,7 @@
                 <div class="col-md-4 d-flex align-items-end">
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-search me-1"></i>
-                        {% trans "عرض" %}
+                        {% trans "View" %}
                     </button>
                 </div>
             </form>
@@ -69,7 +69,7 @@
                 <table class="table table-striped">
                     <thead>
                         <tr>
-                            <th>{% trans "العميل" %}</th>
+                            <th>{% trans "Customer" %}</th>
                             <th class="text-end">{% trans "الإجمالي" %}</th>
                             <th class="text-end">0-30 {% trans "يوم" %}</th>
                             <th class="text-end">31-60 {% trans "يوم" %}</th>
@@ -116,7 +116,7 @@
                 <table class="table table-striped">
                     <thead>
                         <tr>
-                            <th>{% trans "المورد" %}</th>
+                            <th>{% trans "Supplier" %}</th>
                             <th class="text-end">{% trans "الإجمالي" %}</th>
                             <th class="text-end">0-30 {% trans "يوم" %}</th>
                             <th class="text-end">31-60 {% trans "يوم" %}</th>
@@ -155,7 +155,7 @@
     {% if not customers_data and not suppliers_data %}
     <div class="alert alert-info">
         <i class="fas fa-info-circle me-2"></i>
-        {% trans "لا توجد مديونيات في الفترة المحددة" %}
+        {% trans "No Debts in the Specified Period" %}
     </div>
     {% endif %}
 </div>

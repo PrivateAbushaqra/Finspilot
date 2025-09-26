@@ -72,18 +72,18 @@ JournalLineFormSet = inlineformset_factory(
 class JournalSearchForm(forms.Form):
     """نموذج البحث في القيود"""
     date_from = forms.DateField(
-        label=_('من تاريخ'),
+        label=_('From Date'),
         required=False,
         widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'})
     )
     date_to = forms.DateField(
-        label=_('إلى تاريخ'),
+        label=_('To Date'),
         required=False,
         widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'})
     )
     reference_type = forms.ChoiceField(
         label=_('نوع العملية'),
-        choices=[('', _('الكل'))] + JournalEntry.REFERENCE_TYPES,
+        choices=[('', _('All'))] + JournalEntry.REFERENCE_TYPES,
         required=False,
         widget=forms.Select(attrs={'class': 'form-control'})
     )
@@ -104,11 +104,11 @@ class JournalSearchForm(forms.Form):
 class TrialBalanceForm(forms.Form):
     """نموذج ميزان المراجعة"""
     date_from = forms.DateField(
-        label=_('من تاريخ'),
+        label=_('From Date'),
         widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'})
     )
     date_to = forms.DateField(
-        label=_('إلى تاريخ'),
+        label=_('To Date'),
         widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'})
     )
     account_type = forms.ChoiceField(

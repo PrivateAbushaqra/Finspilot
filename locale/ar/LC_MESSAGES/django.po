@@ -734,12 +734,6 @@ msgstr "العملة"
 msgid "تاريخ الشراء"
 msgstr ""
 
-#: .\assets_liabilities\models.py:65 .\purchases\models.py:20
-#: .\purchases\models.py:188 .\templates\reports\aging_report.html:43
-#: .\templates\reports\aging_report.html:119
-msgid "المورد"
-msgstr ""
-
 #: .\assets_liabilities\models.py:66 .\purchases\models.py:16
 #: .\sales\models.py:19
 msgid "رقم الفاتورة"
@@ -1931,17 +1925,6 @@ msgstr ""
 #: .\core\models.py:255 .\templates\documents\delete.html:27
 #: .\templates\documents\list.html:53 .\templates\journal\account_list.html:206
 msgid "حذف"
-msgstr ""
-
-#: .\core\models.py:256 .\templates\purchases\invoice_detail.html:535
-#: .\templates\reports\aging_report.html:54
-#: .\templates\reports\balance_sheet.html:32
-#: .\templates\reports\cash_flow.html:37
-#: .\templates\reports\financial_ratios.html:32
-#: .\templates\reports\income_statement.html:37
-#: .\templates\reports\inventory_report.html:49
-#: .\templates\sales\invoice_detail.html:277
-msgid "عرض"
 msgstr ""
 
 #: .\core\models.py:257
@@ -3556,25 +3539,6 @@ msgstr ""
 msgid "معلومات النظام"
 msgstr ""
 
-#: .\journal\forms.py:75 .\journal\forms.py:107
-#: .\templates\journal\account_detail.html:94
-#: .\templates\reports\aging_report.html:24
-msgid "من تاريخ"
-msgstr ""
-
-#: .\journal\forms.py:80 .\journal\forms.py:111
-#: .\templates\journal\account_detail.html:98
-#: .\templates\reports\aging_report.html:29
-msgid "إلى تاريخ"
-msgstr ""
-
-#: .\journal\forms.py:86 .\templates\reports\aging_report.html:36
-#: .\templates\reports\aging_report.html:45
-#: .\templates\reports\inventory_report.html:31
-#: .\templates\reports\inventory_report.html:40
-msgid "الكل"
-msgstr ""
-
 #: .\journal\forms.py:91 .\journal\models.py:155
 #: .\templates\journal\entry_detail.html:118
 #: .\templates\reports\balance_sheet.html:51
@@ -4046,6 +4010,11 @@ msgstr "نوع الدفع"
 #: .\templates\purchases\return_list.html:65
 #: .\templates\receipts\receipt_list.html:43
 #: .\templates\receipts\receipt_list.html:63
+
+#: .\journal\forms.py:86 .\templates\reports\aging_report.html:36
+#: .\templates\reports\aging_report.html:45
+#: .\templates\reports\inventory_report.html:31
+#: .\templates\reports\inventory_report.html:40
 msgid "All"
 msgstr "الكل"
 
@@ -4086,6 +4055,10 @@ msgstr "نوع السند"
 #: .\templates\sales\sales_report.html:63
 #: .\templates\sales\sales_return_statement.html:103
 #: .\templates\sales\sales_statement.html:103
+#: .\templates\journal\account_detail.html:98
+#: .\journal\forms.py:75 .\journal\forms.py:107
+#: .\templates\journal\account_detail.html:94
+#: .\templates\reports\aging_report.html:24
 msgid "From Date"
 msgstr "من تاريخ"
 
@@ -4199,6 +4172,9 @@ msgstr "تاريخ السند"
 #: .\templates\purchases\return_add.html:221
 #: .\templates\purchases\return_list.html:71
 #: .\templates\purchases\return_list.html:106
+#: .\assets_liabilities\models.py:65 .\purchases\models.py:20
+#: .\purchases\models.py:188 .\templates\reports\aging_report.html:43
+#: .\templates\reports\aging_report.html:119
 msgid "Supplier"
 msgstr "المورد"
 
@@ -4793,12 +4769,6 @@ msgstr ""
 msgid "تاريخ السند"
 msgstr ""
 
-#: .\receipts\models.py:30 .\sales\models.py:22 .\sales\models.py:101
-#: .\sales\models.py:154 .\templates\reports\aging_report.html:34
-#: .\templates\reports\aging_report.html:72
-msgid "العميل"
-msgstr ""
-
 #: .\receipts\models.py:36 .\receipts\models.py:247
 msgid "الصندوق النقدي"
 msgstr ""
@@ -5209,6 +5179,9 @@ msgstr "الرصيد الختامي"
 #: .\templates\sales\return_list.html:146
 #: .\templates\sales\return_list.html:193
 #: .\templates\sales\sales_report.html:156
+#: .\receipts\models.py:30 .\sales\models.py:22 .\sales\models.py:101
+#: .\sales\models.py:154 .\templates\reports\aging_report.html:34
+#: .\templates\reports\aging_report.html:72
 msgid "Customer"
 msgstr "العميل"
 
@@ -5368,6 +5341,7 @@ msgstr "تقرير الميزان المراجعة"
 
 #: .\reports\views.py:532 .\reports\views.py:578
 #: .\templates\reports\trial_balance.html:27
+#: .\templates\reports\aging_report.html:15
 msgid "As of Date"
 msgstr "حتى تاريخ"
 
@@ -5492,11 +5466,11 @@ msgstr "تقرير مالي"
 msgid "Viewing financial ratios report"
 msgstr "تم عرض تقرير فترة التجربة"
 
-#: .\reports\views.py:1147 .\templates\base.html:1053
+#: .\reports\views.py:1173 .\templates\base.html:1053
 #: .\templates\reports\aging_report.html:4
 #: .\templates\reports\aging_report.html:13
-msgid "تقرير أعمار الذمم"
-msgstr ""
+msgid "Accounts Receivable Aging Report"
+msgstr "تقرير أعمار الذمم"
 
 #: .\reports\views.py:1148
 #, fuzzy
@@ -8031,6 +8005,15 @@ msgstr "قيد الإهلاك"
 #: .\templates\settings\currency_edit.html:49
 #: .\templates\settings\currency_edit.html:78
 #: .\templates\settings\document_sequence_edit.html:164
+#: .\templates\reports\aging_report.html:54
+
+#: .\core\models.py:256 .\templates\purchases\invoice_detail.html:535
+#: .\templates\reports\balance_sheet.html:32
+#: .\templates\reports\cash_flow.html:37
+#: .\templates\reports\financial_ratios.html:32
+#: .\templates\reports\income_statement.html:37
+#: .\templates\reports\inventory_report.html:49
+#: .\templates\sales\invoice_detail.html:277
 msgid "View"
 msgstr "عرض"
 
@@ -18299,7 +18282,6 @@ msgstr "النظام"
 msgid "Accounts Management"
 msgstr "إدارة الحسابات"
 
-#: .\templates\reports\aging_report.html:15
 #: .\templates\reports\balance_sheet.html:16
 #: .\templates\reports\financial_ratios.html:16
 #: .\templates\reports\inventory_report.html:15
@@ -18320,8 +18302,8 @@ msgid "مديونيات الموردين"
 msgstr ""
 
 #: .\templates\reports\aging_report.html:158
-msgid "لا توجد مديونيات في الفترة المحددة"
-msgstr ""
+msgid "No Debts in the Specified Period"
+msgstr "لا توجد مديونيات في الفترة المحددة"
 
 #: .\templates\reports\balance_sheet.html:5
 #: .\templates\reports\balance_sheet.html:14

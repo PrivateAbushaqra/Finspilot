@@ -27,7 +27,7 @@ class PaymentReceipt(models.Model):
     receipt_number = models.CharField(_('رقم السند'), max_length=50, unique=True)
     date = models.DateField(_('تاريخ السند'))
     customer = models.ForeignKey(CustomerSupplier, on_delete=models.PROTECT, 
-                               verbose_name=_('العميل'), related_name='payment_receipts')
+                               verbose_name=_('Customer'), related_name='payment_receipts')
     payment_type = models.CharField(_('نوع الدفع'), max_length=10, choices=PAYMENT_TYPES)
     amount = models.DecimalField(_('Amount'), max_digits=15, decimal_places=3)
     

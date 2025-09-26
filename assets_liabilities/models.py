@@ -62,7 +62,7 @@ class Asset(models.Model):
     
     # معلومات الشراء
     purchase_date = models.DateField(verbose_name=_('تاريخ الشراء'))
-    supplier = models.CharField(max_length=200, blank=True, null=True, verbose_name=_('المورد'))
+    supplier = models.CharField(max_length=200, blank=True, null=True, verbose_name=_('Supplier'))
     invoice_number = models.CharField(max_length=100, blank=True, null=True, verbose_name=_('رقم الفاتورة'))
     warranty_expiry = models.DateField(blank=True, null=True, verbose_name=_('انتهاء الضمان'))
     

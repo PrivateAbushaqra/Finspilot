@@ -253,7 +253,7 @@ class AuditLog(models.Model):
         ('create', _('إنشاء')),
         ('update', _('تحديث')),
         ('delete', _('حذف')),
-        ('view', _('عرض')),
+        ('view', _('View')),
         ('export', _('تصدير')),
         ('import', _('استيراد')),
         ('reset', _('إعادة تعيين')),

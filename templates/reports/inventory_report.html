@@ -28,7 +28,7 @@
                 <div class="col-md-3">
                     <label for="warehouse" class="form-label">{% trans "المستودع" %}</label>
                     <select class="form-select" id="warehouse" name="warehouse">
-                        <option value="">{% trans "الكل" %}</option>
+                        <option value="">{% trans "All" %}</option>
                         {% for warehouse in warehouses %}
                         <option value="{{ warehouse.id }}" {% if warehouse_filter == warehouse.id|stringformat:"s" %}selected{% endif %}>{{ warehouse.name }}</option>
                         {% endfor %}
@@ -37,7 +37,7 @@
                 <div class="col-md-3">
                     <label for="product" class="form-label">{% trans "المنتج" %}</label>
                     <select class="form-select" id="product" name="product">
-                        <option value="">{% trans "الكل" %}</option>
+                        <option value="">{% trans "All" %}</option>
                         {% for product in products %}
                         <option value="{{ product.id }}" {% if product_filter == product.id|stringformat:"s" %}selected{% endif %}>{{ product.name }}</option>
                         {% endfor %}
@@ -46,7 +46,7 @@
                 <div class="col-md-3 d-flex align-items-end">
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-search me-1"></i>
-                        {% trans "عرض" %}
+                        {% trans "View" %}
                     </button>
                 </div>
             </form>
