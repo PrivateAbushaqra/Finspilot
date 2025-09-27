@@ -158,7 +158,13 @@
                                             <i class="fas fa-user-plus me-1"></i> {% trans "New" %}
                                         </button>
                                     </label>
-                                    <select class="form-select" name="supplier" id="supplierSelect" required>
+                                    <div class="position-relative">
+                                        <input type="text" class="form-control" id="supplier_search" placeholder="{% trans 'Type supplier name...' %}" autocomplete="off">
+                                        <div id="supplier-dropdown" class="dropdown-menu w-100" style="display: none; max-height: 200px; overflow-y: auto;">
+                                            <!-- Supplier options will be populated here -->
+                                        </div>
+                                    </div>
+                                    <select class="form-select d-none" name="supplier" id="supplierSelect" required>
                                         <option value="">{% trans "Choose Supplier" %}</option>
                                         {% for supplier in suppliers %}
                                         <option value="{{ supplier.id }}">{{ supplier.name }}</option>
@@ -269,16 +275,16 @@
                                             <h6 class="card-title"><i class="fas fa-calculator me-2"></i> {% trans "Invoice Summary" %}</h6>
                                             <div class="d-flex justify-content-between mb-2">
                                                 <span>{% trans "Subtotal" %}:</span>
-                                                <strong id="subtotalDisplay">0.00 {% get_currency_symbol %}</strong>
+                                                <strong id="subtotalDisplay">0.000 {% get_currency_symbol %}</strong>
                                             </div>
                                             <div class="d-flex justify-content-between mb-2">
                                                 <span>{% trans "Tax Amount" %}:</span>
-                                                <strong id="taxDisplay">0.00 {% get_currency_symbol %}</strong>
+                                                <strong id="taxDisplay">0.000 {% get_currency_symbol %}</strong>
                                             </div>
                                             <hr>
                                             <div class="d-flex justify-content-between">
                                                 <strong>{% trans "Total Amount" %}:</strong>
-                                                <strong class="text-success" id="totalDisplay">0.00 {% get_currency_symbol %}</strong>
+                                                <strong class="text-success" id="totalDisplay">0.000 {% get_currency_symbol %}</strong>
                                             </div>
                                         </div>
                                     </div>
@@ -292,9 +298,10 @@
                                 <i class="fas fa-times me-2"></i>
                                 {% trans "Cancel" %}
                             </a>
-                            <button type="submit" class="btn btn-success">
+                            <button type="submit" class="btn btn-success" title="حفظ الفاتورة (Ctrl+S)">
                                 <i class="fas fa-save me-2"></i>
                                 {% trans "Save Invoice" %}
+                                <small class="ms-1 text-muted">(Ctrl+S)</small>
                             </button>
                         </div>
                     </form>
@@ -393,6 +400,42 @@
 let productRowCount = 0;
 let currentRow = null;
 
+// Global currency settings
+let currencySettings = {
+    decimalPlaces: 2, // Default value
+    symbol: '{% get_currency_symbol %}',
+    showSymbol: true
+};
+
+// Load currency settings from API
+function loadCurrencySettings() {
+    fetch('/settings/api/currency/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.decimal_places !== undefined) {
+                currencySettings.decimalPlaces = data.decimal_places;
+                currencySettings.symbol = data.symbol || '{% get_currency_symbol %}';
+                currencySettings.showSymbol = data.show_symbol;
+                console.log('Currency settings loaded:', currencySettings);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading currency settings:', error);
+            // Keep default values
+        });
+}
+
+// Format currency using current settings
+function formatCurrency(value) {
+    try {
+        const num = Number(value) || 0;
+        return num.toFixed(currencySettings.decimalPlaces);
+    } catch (e) {
+        console.error('formatCurrency error', e);
+        return (Number(value) || 0).toFixed(currencySettings.decimalPlaces);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // التأكد من تحميل Bootstrap
     if (typeof bootstrap === 'undefined') {
@@ -400,6 +443,9 @@ document.addEventListener('DOMContentLoaded', function() {
         alert('{% trans "Error" %}: {% trans "Bootstrap library is not loaded. Please reload the page." %}');
         return;
     }
+    
+    // Load currency settings first
+    loadCurrencySettings();
     
     // {% trans "Set current date" %}
     const dateInput = document.querySelector('input[name="date"]');
@@ -444,12 +490,12 @@ function addProductRow() {
         let taxCells = `
             <td>
                 <input type="number" class="form-control" name="tax_rate[]" id="taxRate${productRowCount}" 
-                       min="0" step="0.01" placeholder="0.00" onchange="calculateRowTotal(${productRowCount})">
+                       min="0" step="0.01" placeholder="0.000" onchange="calculateRowTotal(${productRowCount})">
             </td>`;
         
         let taxAmountCells = `
             <td>
-                <input type="text" class="form-control" id="rowTax${productRowCount}" readonly placeholder="0.00">
+                <input type="text" class="form-control" id="rowTax${productRowCount}" readonly placeholder="0.000">
             </td>`;
         
         row.innerHTML = `
@@ -465,7 +511,13 @@ function addProductRow() {
                 </div>
             </td>
             <td>
-                <input type="text" class="form-control" id="productName${productRowCount}" placeholder="{% trans 'Product name...' %}" readonly>
+                <div class="position-relative">
+                    <input type="text" class="form-control product-name-input" 
+                           placeholder="{% trans 'Type product name...' %}" autocomplete="off">
+                    <div class="product-dropdown dropdown-menu w-100" style="display: none; max-height: 200px; overflow-y: auto;">
+                        <!-- Product options will be populated here -->
+                    </div>
+                </div>
             </td>
             <td>
                 <input type="text" class="form-control text-center" id="availableQuantity${productRowCount}" 
@@ -477,11 +529,11 @@ function addProductRow() {
             </td>
             <td>
                 <input type="number" class="form-control" name="unit_price[]" id="unitPrice${productRowCount}" 
-                       min="0" step="0.001" placeholder="0.00" onchange="calculateRowTotal(${productRowCount})">
+                       min="0" step="0.001" placeholder="0.000" onchange="calculateRowTotal(${productRowCount})">
             </td>
             ${taxCells}
             <td>
-                <input type="text" class="form-control" id="rowTotal${productRowCount}" readonly placeholder="0.00">
+                <input type="text" class="form-control" id="rowTotal${productRowCount}" readonly placeholder="0.000" style="background-color: #e9ecef;">
             </td>
             ${taxAmountCells}
             <td class="text-center">
@@ -642,21 +694,21 @@ function calculateRowTotal(rowId) {
     // {% trans "Update subtotal field" %}
     const rowTotalElement = document.getElementById(`rowTotal${rowId}`);
     if (rowTotalElement) {
-        rowTotalElement.value = subtotal.toFixed(2);
+        rowTotalElement.value = subtotal.toFixed(currencySettings.decimalPlaces);
     }
     
     // {% trans "Update tax field if exists" %}
     const rowTaxElement = document.getElementById(`rowTax${rowId}`);
     if (rowTaxElement) {
-        rowTaxElement.value = taxAmount.toFixed(2);
-        console.log('{% trans "Visible tax field updated" %}:', taxAmount.toFixed(2));
+        rowTaxElement.value = taxAmount.toFixed(currencySettings.decimalPlaces);
+        console.log('{% trans "Visible tax field updated" %}:', taxAmount.toFixed(currencySettings.decimalPlaces));
     }
     
     // {% trans "Update hidden tax field" %}
     const hiddenTaxField = document.getElementById(`hiddenRowTax${rowId}`);
     if (hiddenTaxField) {
-        hiddenTaxField.value = taxAmount.toFixed(2);
-        console.log('{% trans "Hidden tax field updated" %}:', taxAmount.toFixed(2));
+        hiddenTaxField.value = taxAmount.toFixed(currencySettings.decimalPlaces);
+        console.log('{% trans "Hidden tax field updated" %}:', taxAmount.toFixed(currencySettings.decimalPlaces));
     }
     
     calculateTotals();
@@ -688,10 +740,11 @@ function calculateTotals() {
     
     const total = subtotal + totalTax;
     
-    // {% trans "Update display" %}
-    document.getElementById('subtotalDisplay').textContent = subtotal.toFixed(2) + ' {% get_currency_symbol %}';
-    document.getElementById('taxDisplay').textContent = totalTax.toFixed(2) + ' {% get_currency_symbol %}';
-    document.getElementById('totalDisplay').textContent = total.toFixed(2) + ' {% get_currency_symbol %}';
+    // {% trans "Update display using currency settings" %}
+    const decimalPlaces = currencySettings.decimalPlaces;
+    document.getElementById('subtotalDisplay').textContent = subtotal.toFixed(decimalPlaces) + ' ' + currencySettings.symbol;
+    document.getElementById('taxDisplay').textContent = totalTax.toFixed(decimalPlaces) + ' ' + currencySettings.symbol;
+    document.getElementById('totalDisplay').textContent = total.toFixed(decimalPlaces) + ' ' + currencySettings.symbol;
 }
 
 // {% trans "Search in products" %}
@@ -784,9 +837,32 @@ function saveNewSupplier() {
         if (data.success) {
             // {% trans "Add new supplier to list" %}
             const supplierSelect = document.getElementById('supplierSelect');
+            const supplierDropdown = document.getElementById('supplier-dropdown');
+            const supplierSearch = document.getElementById('supplier_search');
+            
             const newOption = new Option(data.supplier.name, data.supplier.id, true, true);
             supplierSelect.add(newOption);
             supplierSelect.value = data.supplier.id;
+            
+            // Add to dropdown
+            const newDropdownOption = document.createElement('button');
+            newDropdownOption.type = 'button';
+            newDropdownOption.className = 'dropdown-item';
+            newDropdownOption.textContent = data.supplier.name;
+            newDropdownOption.setAttribute('data-id', data.supplier.id);
+            
+            newDropdownOption.addEventListener('click', function() {
+                supplierSearch.value = data.supplier.name;
+                supplierSelect.value = data.supplier.id;
+                supplierDropdown.style.display = 'none';
+                // Trigger change event for balance update
+                supplierSelect.dispatchEvent(new Event('change'));
+            });
+            
+            supplierDropdown.appendChild(newDropdownOption);
+            
+            // Update search input
+            supplierSearch.value = data.supplier.name;
             
             // {% trans "Close modal and reset form" %}
             const modal = bootstrap.Modal.getInstance(document.getElementById('newSupplierModal'));
@@ -833,17 +909,24 @@ function updateSupplierBalance() {
             fetch('/settings/api/currency/')
                 .then(currResponse => currResponse.json())
                 .then(currencyData => {
+                    // Update global currency settings
+                    if (currencyData.decimal_places !== undefined) {
+                        currencySettings.decimalPlaces = currencyData.decimal_places;
+                        currencySettings.symbol = currencyData.symbol || '{% get_currency_symbol %}';
+                        currencySettings.showSymbol = currencyData.show_symbol;
+                    }
+                    
                     // {% trans "View current balance" %}
                     const balance = parseFloat(data.current_balance);
                     const balanceText = balance.toLocaleString('ar-SA', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
+                        minimumFractionDigits: currencySettings.decimalPlaces,
+                        maximumFractionDigits: currencySettings.decimalPlaces
                     });
                     
                     // {% trans "Use currency from company settings" %}
                     let currencyText = '';
-                    if (currencyData.show_symbol && currencyData.symbol) {
-                        currencyText = currencyData.symbol;
+                    if (currencySettings.showSymbol && currencySettings.symbol) {
+                        currencyText = currencySettings.symbol;
                     } else {
                         currencyText = currencyData.code || 'ر.س';
                     }
@@ -866,11 +949,11 @@ function updateSupplierBalance() {
                     // {% trans "In case of failure to get currency, use default currency" %}
                     const balance = parseFloat(data.current_balance);
                     const balanceText = balance.toLocaleString('ar-SA', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
+                        minimumFractionDigits: currencySettings.decimalPlaces,
+                        maximumFractionDigits: currencySettings.decimalPlaces
                     });
                     
-                    balanceAmount.textContent = balanceText + ' ر.س';
+                    balanceAmount.textContent = balanceText + ' ' + currencySettings.symbol;
                     
                     if (balance > 0) {
                         balanceAmount.className = 'fw-bold text-success';
@@ -1194,6 +1277,349 @@ setInterval(function() {
 }, 3000);
 
 console.log('🚀 {% trans "Purchase Invoice Critical JavaScript loaded and monitoring started" %}');
+</script>
+
+<!-- Supplier Search and Filter JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const supplierSearch = document.getElementById('supplier_search');
+    const supplierSelect = document.getElementById('supplierSelect');
+    const supplierDropdown = document.getElementById('supplier-dropdown');
+    
+    // Store supplier data
+    const suppliers = [
+        {% for supplier in suppliers %}
+        {id: {{ supplier.id }}, name: "{{ supplier.name|escapejs }}"},
+        {% endfor %}
+    ];
+    
+    if (supplierSearch && supplierSelect && supplierDropdown) {
+        // Function to filter and show suppliers
+        function filterSuppliers() {
+            const searchTerm = supplierSearch.value.toLowerCase().trim();
+            
+            if (searchTerm === '') {
+                supplierDropdown.style.display = 'none';
+                return;
+            }
+            
+            // Clear previous options
+            supplierDropdown.innerHTML = '';
+            
+            // Filter suppliers
+            const filteredSuppliers = suppliers.filter(supplier => 
+                supplier.name.toLowerCase().includes(searchTerm)
+            );
+            
+            if (filteredSuppliers.length === 0) {
+                supplierDropdown.style.display = 'none';
+                return;
+            }
+            
+            // Create dropdown options
+            filteredSuppliers.forEach(supplier => {
+                const option = document.createElement('button');
+                option.type = 'button';
+                option.className = 'dropdown-item';
+                option.textContent = supplier.name;
+                option.setAttribute('data-id', supplier.id);
+                
+                option.addEventListener('click', function() {
+                    supplierSearch.value = supplier.name;
+                    supplierSelect.value = supplier.id;
+                    supplierDropdown.style.display = 'none';
+                    // Trigger change event for balance update
+                    supplierSelect.dispatchEvent(new Event('change'));
+                });
+                
+                supplierDropdown.appendChild(option);
+            });
+            
+            supplierDropdown.style.display = 'block';
+        }
+        
+        // Handle input changes
+        supplierSearch.addEventListener('input', filterSuppliers);
+        
+        // Handle focus to show all suppliers if empty
+        supplierSearch.addEventListener('focus', function() {
+            if (supplierSearch.value.trim() === '') {
+                // Show all suppliers
+                supplierDropdown.innerHTML = '';
+                suppliers.forEach(supplier => {
+                    const option = document.createElement('button');
+                    option.type = 'button';
+                    option.className = 'dropdown-item';
+                    option.textContent = supplier.name;
+                    option.setAttribute('data-id', supplier.id);
+                    
+                    option.addEventListener('click', function() {
+                        supplierSearch.value = supplier.name;
+                        supplierSelect.value = supplier.id;
+                        supplierDropdown.style.display = 'none';
+                        // Trigger change event for balance update
+                        supplierSelect.dispatchEvent(new Event('change'));
+                    });
+                    
+                    supplierDropdown.appendChild(option);
+                });
+                supplierDropdown.style.display = 'block';
+            }
+        });
+        
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!supplierSearch.contains(e.target) && !supplierDropdown.contains(e.target)) {
+                supplierDropdown.style.display = 'none';
+            }
+        });
+        
+        // Handle blur with delay to allow click on dropdown items
+        supplierSearch.addEventListener('blur', function() {
+            setTimeout(() => {
+                if (supplierSearch.value && !supplierSelect.value) {
+                    // If user typed something but didn't select from dropdown, clear it
+                    supplierSearch.value = '';
+                    supplierSelect.value = '';
+                }
+            }, 200);
+        });
+        
+        // Update search input when select changes (e.g., from new supplier modal)
+        supplierSelect.addEventListener('change', function() {
+            if (supplierSelect.value) {
+                const selectedOption = supplierSelect.querySelector('option[value="' + supplierSelect.value + '"]');
+                if (selectedOption) {
+                    supplierSearch.value = selectedOption.textContent;
+                }
+            } else {
+                supplierSearch.value = '';
+            }
+        });
+    }
+});
+</script>
+
+<!-- Product Name Search and Filter JavaScript -->
+<script>
+// Format currency function
+function formatCurrency(value, overridePlaces) {
+    try {
+        const places = (typeof overridePlaces === 'number') ? overridePlaces : 2;
+        if (value === null || value === undefined || isNaN(Number(value))) return (0).toFixed(places);
+        return Number(value).toFixed(places);
+    } catch(e) {
+        console.error('formatCurrency error', e);
+        return (Number(value) || 0).toFixed(2);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Store product data
+    const products = [
+        {% for product in products %}
+        {
+            id: '{{ product.id }}',
+            code: '{{ product.code|escapejs }}',
+            name: '{{ product.name|escapejs }}',
+            description: '{{ product.description|escapejs|truncatechars:40|default:"No description available"|escapejs }}',
+            last_purchase_price: '{{ product.last_purchase_price|default:0 }}',
+            tax_rate: '{{ product.tax_rate }}',
+            current_stock: '{{ product.current_stock }}'
+        },
+        {% endfor %}
+    ];
+
+    // Function to handle product search for each row
+    function setupProductSearch(row) {
+        const nameInput = row.querySelector('.product-name-input');
+        const dropdown = row.querySelector('.product-dropdown');
+        const productIdInput = row.querySelector('input[name="product_id[]"]');
+        const codeInput = row.querySelector('input[id^="productCode"]');
+        const availableQuantityInput = row.querySelector('input[id^="availableQuantity"]');
+        const priceInput = row.querySelector('input[name="unit_price[]"]');
+        const taxRateInput = row.querySelector('input[name="tax_rate[]"]');
+
+        if (!nameInput || !dropdown) return;
+
+        // Function to filter and show products
+        function filterProducts() {
+            const searchTerm = nameInput.value.toLowerCase().trim();
+
+            if (searchTerm === '') {
+                dropdown.style.display = 'none';
+                return;
+            }
+
+            // Clear previous options
+            dropdown.innerHTML = '';
+
+            // Filter products
+            const filteredProducts = products.filter(product =>
+                product.name.toLowerCase().includes(searchTerm) ||
+                product.code.toLowerCase().includes(searchTerm)
+            );
+
+            if (filteredProducts.length === 0) {
+                dropdown.style.display = 'none';
+                return;
+            }
+
+            // Create dropdown options
+            filteredProducts.forEach(product => {
+                const option = document.createElement('button');
+                option.type = 'button';
+                option.className = 'dropdown-item';
+                option.innerHTML = `<strong>${product.name}</strong> (${product.code}) - ${product.current_stock} available`;
+                option.setAttribute('data-product', JSON.stringify(product));
+
+                option.addEventListener('click', function() {
+                    // Fill all product fields
+                    productIdInput.value = product.id;
+                    codeInput.value = product.code;
+                    nameInput.value = product.name;
+                    if (availableQuantityInput) {
+                        availableQuantityInput.value = formatCurrency(parseFloat(product.current_stock || 0), 3);
+                    }
+                    priceInput.value = formatCurrency(parseFloat(product.last_purchase_price || 0), 3);
+                    taxRateInput.value = parseFloat(product.tax_rate) || 0;
+
+                    dropdown.style.display = 'none';
+
+                    // Calculate row total
+                    const row = nameInput.closest('tr');
+                    if (row && typeof calculateRowTotal === 'function') {
+                        // Extract row number from row id
+                        const rowId = row.id.replace('productRow', '');
+                        calculateRowTotal(rowId);
+                        calculateGrandTotal();
+                    }
+                });
+
+                dropdown.appendChild(option);
+            });
+
+            dropdown.style.display = 'block';
+        }
+
+        // Handle input changes
+        nameInput.addEventListener('input', filterProducts);
+
+        // Handle focus to show all products if empty
+        nameInput.addEventListener('focus', function() {
+            if (nameInput.value.trim() === '') {
+                // Show all products
+                dropdown.innerHTML = '';
+                products.slice(0, 10).forEach(product => { // Show first 10 products
+                    const option = document.createElement('button');
+                    option.type = 'button';
+                    option.className = 'dropdown-item';
+                    option.innerHTML = `<strong>${product.name}</strong> (${product.code}) - ${product.current_stock} available`;
+                    option.setAttribute('data-product', JSON.stringify(product));
+
+                    option.addEventListener('click', function() {
+                        // Fill all product fields
+                        productIdInput.value = product.id;
+                        codeInput.value = product.code;
+                        nameInput.value = product.name;
+                        if (availableQuantityInput) {
+                            availableQuantityInput.value = formatCurrency(parseFloat(product.current_stock || 0), 3);
+                        }
+                        priceInput.value = formatCurrency(parseFloat(product.last_purchase_price || 0), 3);
+                        taxRateInput.value = parseFloat(product.tax_rate) || 0;
+
+                        dropdown.style.display = 'none';
+
+                        // Calculate row total
+                        const row = nameInput.closest('tr');
+                        if (row && typeof calculateRowTotal === 'function') {
+                            // Extract row number from row id
+                            const rowId = row.id.replace('productRow', '');
+                            calculateRowTotal(rowId);
+                            calculateGrandTotal();
+                        }
+                    });
+
+                    dropdown.appendChild(option);
+                });
+                dropdown.style.display = 'block';
+            }
+        });
+
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!nameInput.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+
+        // Handle blur with delay to allow click on dropdown items
+        nameInput.addEventListener('blur', function() {
+            setTimeout(() => {
+                if (nameInput.value && !productIdInput.value) {
+                    // If user typed something but didn't select from dropdown, clear it
+                    nameInput.value = '';
+                }
+            }, 200);
+        });
+    }
+
+    // Setup product search for existing rows and new rows
+    function setupAllProductSearches() {
+        document.querySelectorAll('#productsTableBody tr').forEach(row => {
+            if (!row.hasAttribute('data-product-search-setup')) {
+                setupProductSearch(row);
+                row.setAttribute('data-product-search-setup', 'true');
+            }
+        });
+    }
+
+    // Initial setup
+    setupAllProductSearches();
+
+    // Setup for new rows when added
+    const originalAddProductRow = window.addProductRow;
+    window.addProductRow = function() {
+        originalAddProductRow();
+        // Small delay to ensure DOM is updated
+        setTimeout(setupAllProductSearches, 100);
+    };
+});
+
+// Keyboard shortcuts for invoice management
+document.addEventListener('keydown', function(e) {
+    // Ctrl+S to save invoice
+    if (e.ctrlKey && e.key === 's') {
+        e.preventDefault(); // Prevent browser save dialog
+        
+        const saveButton = document.querySelector('button[type="submit"][class*="btn-success"]');
+        if (saveButton) {
+            saveButton.click();
+            console.log('Invoice save triggered via Ctrl+S shortcut');
+        }
+    }
+    
+    // Show shortcut hint on Ctrl+? or Ctrl+H
+    if (e.ctrlKey && (e.key === '?' || e.key === 'h' || e.key.toLowerCase() === 'h')) {
+        e.preventDefault();
+        showKeyboardShortcuts();
+    }
+});
+
+// Function to show keyboard shortcuts help
+function showKeyboardShortcuts() {
+    const shortcuts = [
+        { key: 'Ctrl+S', description: 'حفظ الفاتورة' },
+        { key: 'Ctrl+H or Ctrl+?', description: 'عرض اختصارات لوحة المفاتيح' }
+    ];
+    
+    let message = 'اختصارات لوحة المفاتيح:\n\n';
+    shortcuts.forEach(shortcut => {
+        message += `${shortcut.key}: ${shortcut.description}\n`;
+    });
+    
+    alert(message);
+}
 </script>
 
 {% endblock %}

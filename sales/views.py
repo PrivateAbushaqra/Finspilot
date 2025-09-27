@@ -278,6 +278,7 @@ def sales_invoice_create(request):
                         # معالجة بيانات الفاتورة الأساسية
                         user = request.user
                         customer_id = request.POST.get('customer')
+                        warehouse_id = request.POST.get('warehouse')
                         payment_type = request.POST.get('payment_type')
                         notes = request.POST.get('notes', '')
                         discount_amount = Decimal(request.POST.get('discount', '0'))
@@ -329,6 +330,15 @@ def sales_invoice_create(request):
 
                         customer = get_object_or_404(CustomerSupplier, id=customer_id)
 
+                        # الحصول على المستودع إذا تم تحديده
+                        warehouse = None
+                        if warehouse_id:
+                            try:
+                                from inventory.models import Warehouse
+                                warehouse = Warehouse.objects.get(id=warehouse_id)
+                            except (ImportError, Warehouse.DoesNotExist):
+                                warehouse = None
+
                         # معالجة بيانات المنتجات
                         products = request.POST.getlist('products[]')
                         quantities = request.POST.getlist('quantities[]')
@@ -369,6 +379,7 @@ def sales_invoice_create(request):
                             invoice_number=invoice_number,
                             date=invoice_date,
                             customer=customer,
+                            warehouse=warehouse,
                             payment_type=payment_type,
                             discount_amount=discount_amount,
                             notes=notes,
@@ -477,15 +488,17 @@ def sales_invoice_create(request):
                                         from inventory.models import InventoryMovement, Warehouse
                                         import uuid
 
-                                        # الحصول على المستودع الافتراضي
-                                        default_warehouse = Warehouse.objects.filter(is_active=True).first()
-                                        if not default_warehouse:
-                                            # إنشاء مستودع افتراضي إذا لم يكن موجوداً
-                                            default_warehouse = Warehouse.objects.create(
-                                                name='المستودع الرئيسي',
-                                                code='MAIN',
-                                                is_active=True
-                                            )
+                                        # استخدام المستودع المحدد في الفاتورة أو الافتراضي
+                                        movement_warehouse = warehouse
+                                        if not movement_warehouse:
+                                            movement_warehouse = Warehouse.objects.filter(is_active=True).first()
+                                            if not movement_warehouse:
+                                                # إنشاء مستودع افتراضي إذا لم يكن موجوداً
+                                                movement_warehouse = Warehouse.objects.create(
+                                                    name='المستودع الرئيسي',
+                                                    code='MAIN',
+                                                    is_active=True
+                                                )
 
                                         # توليد رقم الحركة
                                         movement_number = f"SALE-OUT-{uuid.uuid4().hex[:8].upper()}"
@@ -494,7 +507,7 @@ def sales_invoice_create(request):
                                             movement_number=movement_number,
                                             date=invoice_date,
                                             product=product,
-                                            warehouse=default_warehouse,
+                                            warehouse=movement_warehouse,
                                             movement_type='out',
                                             reference_type='sales_invoice',
                                             reference_id=invoice.id,
@@ -603,6 +616,13 @@ def sales_invoice_create(request):
             'customers': CustomerSupplier.objects.filter(type__in=['customer', 'both']),
             'today_date': date.today().isoformat(),
         }
+
+        # إضافة المستودعات
+        try:
+            from inventory.models import Warehouse
+            context['warehouses'] = Warehouse.objects.filter(is_active=True)
+        except ImportError:
+            context['warehouses'] = []
 
         # إضافة بيانات المنتجات بتنسيق JSON للبحث
         products = Product.objects.filter(is_active=True).select_related('category')
@@ -750,7 +770,23 @@ class SalesInvoiceUpdateView(LoginRequiredMixin, UpdateView):
     def get_success_url(self):
         return reverse_lazy('sales:invoice_detail', kwargs={'pk': self.object.pk})
     
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from inventory.models import Warehouse
+        context['warehouses'] = Warehouse.objects.filter(is_active=True)
+        return context
+    
     def form_valid(self, form):
+        # Handle warehouse selection
+        warehouse_id = self.request.POST.get('warehouse')
+        if warehouse_id:
+            from inventory.models import Warehouse
+            try:
+                warehouse = Warehouse.objects.get(id=warehouse_id, is_active=True)
+                form.instance.warehouse = warehouse
+            except Warehouse.DoesNotExist:
+                pass  # Keep existing warehouse if invalid
+        
         # detect change to inclusive_tax and log activity
         try:
             old = SalesInvoice.objects.get(pk=form.instance.pk)

@@ -157,6 +157,28 @@
                         </div>
                     </div>
 
+                    <!-- صف المستودع -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label"><i class="fas fa-warehouse me-1"></i> المستودع</label>
+                                <select class="form-select" name="warehouse">
+                                    <option value="">{% trans "Select Warehouse" %}</option>
+                                    {% for warehouse in warehouses %}
+                                    <option value="{{ warehouse.id }}" {% if object.warehouse and warehouse.id == object.warehouse.id %}selected{% endif %}>
+                                        {{ warehouse.name }} - {{ warehouse.code }}
+                                        {% if warehouse.is_default %} (افتراضي){% endif %}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">{% trans "Select the warehouse from which products will be sold." %}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <!-- مساحة فارغة للتوازن -->
+                        </div>
+                    </div>
+
                     <div class="row">
                         <div class="col-12">
                             <div class="mb-3">

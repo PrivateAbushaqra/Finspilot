@@ -6,7 +6,7 @@ from django.http import JsonResponse
 from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 from .models import Currency
-from core.models import CompanySettings
+from .models import CompanySettings
 import json
 
 class SettingsView(LoginRequiredMixin, TemplateView):
@@ -682,6 +682,7 @@ def get_company_currency_ajax(request):
             'name': currency.name,
             'symbol': currency.symbol,
             'show_symbol': company_settings.show_currency_symbol,
+            'decimal_places': currency.decimal_places,
         }
         
         return JsonResponse(data)

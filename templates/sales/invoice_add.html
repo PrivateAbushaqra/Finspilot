@@ -244,13 +244,19 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label for="id_customer" class="form-label">
+                            <label for="customer_search" class="form-label">
                                 {% trans "Customer" %} <span class="required-field">*</span>
                                 <button type="button" class="btn btn-sm btn-outline-success ms-2" onclick="openNewCustomerModal()" title="{% trans 'Create new customer' %}">
                                     <i class="fas fa-user-plus me-1"></i> {% trans "New" %}
                                 </button>
                             </label>
-                            <select class="form-select" id="id_customer" name="customer" required>
+                            <div class="position-relative">
+                                <input type="text" class="form-control" id="customer_search" placeholder="{% trans 'Type customer name...' %}" autocomplete="off">
+                                <div id="customer-dropdown" class="dropdown-menu w-100" style="display: none; max-height: 200px; overflow-y: auto;">
+                                    <!-- Customer options will be populated here -->
+                                </div>
+                            </div>
+                            <select class="form-select d-none" id="id_customer" name="customer" required>
                                 <option value="">{% trans "Select Customer" %}</option>
                                 {% for customer in customers %}
                                     <option value="{{ customer.id }}">{{ customer.name }}</option>
@@ -282,7 +288,31 @@
                             {% endif %}
                         </div>
                     </div>
-
+                </div>
+                
+                <!-- {% trans "Warehouse Row" %} -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label"><i class="fas fa-warehouse me-1"></i> {% trans "Warehouse" %}</label>
+                            <select class="form-select" name="warehouse">
+                                <option value="">{% trans "Select Warehouse" %}</option>
+                                {% for warehouse in warehouses %}
+                                <option value="{{ warehouse.id }}" {% if warehouse.is_default %}selected{% endif %}>
+                                    {{ warehouse.name }} - {{ warehouse.code }}
+                                    {% if warehouse.is_default %} ({% trans "Default" %}){% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">{% trans "Select the warehouse from which products will be issued. If not specified, no warehouse will be assigned." %}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <!-- {% trans "Empty space for balance" %} -->
+                    </div>
+                </div>
+                
+                <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label for="id_payment_type" class="form-label">
@@ -407,9 +437,10 @@
             <div class="row mt-4">
                 <div class="col-12">
                     <div class="d-flex gap-3">
-                        <button type="submit" name="action" value="save" class="btn btn-primary btn-lg">
+                        <button type="submit" name="action" value="save" class="btn btn-primary btn-lg" title="حفظ الفاتورة (Ctrl+S)">
                             <i class="fas fa-save me-2"></i>
                             {% trans "Save Invoice" %}
+                            <small class="ms-1 text-muted">(Ctrl+S)</small>
                         </button>
                         <button type="submit" name="action" value="save_and_send" class="btn btn-success btn-lg">
                             <i class="fas fa-paper-plane me-2"></i>
@@ -704,8 +735,13 @@ function addProductRow() {
             </div>
         </td>
         <td>
-            <input type="text" class="form-control product-name-input" 
-                   placeholder="{% trans 'Product name...' %}" readonly>
+            <div class="position-relative">
+                <input type="text" class="form-control product-name-input" 
+                       placeholder="{% trans 'Type product name...' %}" autocomplete="off">
+                <div class="product-dropdown dropdown-menu w-100" style="display: none; max-height: 200px; overflow-y: auto;">
+                    <!-- Product options will be populated here -->
+                </div>
+            </div>
         </td>
         <td>
             <input type="text" class="form-control text-center available-quantity-input" 
@@ -721,13 +757,13 @@ function addProductRow() {
         </td>
         <td>
             <input type="number" class="form-control tax-rate-input" 
-                   min="0" max="100" step="0.01" value="0">
+                   min="0" max="100" step="0.01" value="0" style="background-color: #e9ecef;">
         </td>
         <td>
-            <input type="text" class="form-control tax-amount-input" readonly>
+            <input type="text" class="form-control tax-amount-input" readonly style="background-color: #e9ecef;">
         </td>
         <td>
-            <input type="text" class="form-control total-input" readonly>
+            <input type="text" class="form-control total-input" readonly style="background-color: #e9ecef;">
         </td>
         <td class="text-center">
             <button type="button" class="btn btn-remove-product" onclick="removeProductRow(${productRowCounter})" title="{% trans "Delete" %}">
@@ -1108,9 +1144,21 @@ function saveNewCustomer() {
         if (data.success) {
             // {% trans "Add new customer to list" %}
             const customerSelect = document.getElementById('id_customer');
+            const customerDatalist = document.getElementById('customer_list');
+            const customerSearch = document.getElementById('customer_search');
+            
             const newOption = new Option(data.customer.name, data.customer.id, true, true);
             customerSelect.add(newOption);
             customerSelect.value = data.customer.id;
+            
+            // Add to datalist
+            const newDatalistOption = document.createElement('option');
+            newDatalistOption.value = data.customer.name;
+            newDatalistOption.setAttribute('data-id', data.customer.id);
+            customerDatalist.appendChild(newDatalistOption);
+            
+            // Update search input
+            customerSearch.value = data.customer.name;
             
             // {% trans "Close window and reset form" %}
             const modal = bootstrap.Modal.getInstance(document.getElementById('newCustomerModal'));
@@ -1401,6 +1449,333 @@ setInterval(function() {
 }, 2000);
 
 console.log('🚀 Critical JavaScript loaded and monitoring started');
+</script>
+
+<!-- Customer Search and Filter JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const customerSearch = document.getElementById('customer_search');
+    const customerSelect = document.getElementById('id_customer');
+    const customerDropdown = document.getElementById('customer-dropdown');
+    
+    // Store customer data
+    const customers = [
+        {% for customer in customers %}
+        {id: {{ customer.id }}, name: "{{ customer.name|escapejs }}"},
+        {% endfor %}
+    ];
+    
+    if (customerSearch && customerSelect && customerDropdown) {
+        // Function to filter and show customers
+        function filterCustomers() {
+            const searchTerm = customerSearch.value.toLowerCase().trim();
+            
+            if (searchTerm === '') {
+                customerDropdown.style.display = 'none';
+                return;
+            }
+            
+            // Clear previous options
+            customerDropdown.innerHTML = '';
+            
+            // Filter customers
+            const filteredCustomers = customers.filter(customer => 
+                customer.name.toLowerCase().includes(searchTerm)
+            );
+            
+            if (filteredCustomers.length === 0) {
+                customerDropdown.style.display = 'none';
+                return;
+            }
+            
+            // Create dropdown options
+            filteredCustomers.forEach(customer => {
+                const option = document.createElement('button');
+                option.type = 'button';
+                option.className = 'dropdown-item';
+                option.textContent = customer.name;
+                option.setAttribute('data-id', customer.id);
+                
+                option.addEventListener('click', function() {
+                    customerSearch.value = customer.name;
+                    customerSelect.value = customer.id;
+                    customerDropdown.style.display = 'none';
+                    // Trigger change event for balance update
+                    customerSelect.dispatchEvent(new Event('change'));
+                });
+                
+                customerDropdown.appendChild(option);
+            });
+            
+            customerDropdown.style.display = 'block';
+        }
+        
+        // Handle input changes
+        customerSearch.addEventListener('input', filterCustomers);
+        
+        // Handle focus to show all customers if empty
+        customerSearch.addEventListener('focus', function() {
+            if (customerSearch.value.trim() === '') {
+                // Show all customers
+                customerDropdown.innerHTML = '';
+                customers.forEach(customer => {
+                    const option = document.createElement('button');
+                    option.type = 'button';
+                    option.className = 'dropdown-item';
+                    option.textContent = customer.name;
+                    option.setAttribute('data-id', customer.id);
+                    
+                    option.addEventListener('click', function() {
+                        customerSearch.value = customer.name;
+                        customerSelect.value = customer.id;
+                        customerDropdown.style.display = 'none';
+                        // Trigger change event for balance update
+                        customerSelect.dispatchEvent(new Event('change'));
+                    });
+                    
+                    customerDropdown.appendChild(option);
+                });
+                customerDropdown.style.display = 'block';
+            }
+        });
+        
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!customerSearch.contains(e.target) && !customerDropdown.contains(e.target)) {
+                customerDropdown.style.display = 'none';
+            }
+        });
+        
+        // Handle blur with delay to allow click on dropdown items
+        customerSearch.addEventListener('blur', function() {
+            setTimeout(() => {
+                if (customerSearch.value && !customerSelect.value) {
+                    // If user typed something but didn't select from dropdown, clear it
+                    customerSearch.value = '';
+                    customerSelect.value = '';
+                }
+            }, 200);
+        });
+        
+        // Update search input when select changes (e.g., from new customer modal)
+        customerSelect.addEventListener('change', function() {
+            if (customerSelect.value) {
+                const selectedOption = customerSelect.querySelector('option[value="' + customerSelect.value + '"]');
+                if (selectedOption) {
+                    customerSearch.value = selectedOption.textContent;
+                }
+            } else {
+                customerSearch.value = '';
+            }
+        });
+    }
+});
+</script>
+
+<!-- Product Name Search and Filter JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Store product data
+    const products = [
+        {% for product in products %}
+        {
+            id: '{{ product.id }}',
+            code: '{{ product.code|escapejs }}',
+            name: '{{ product.name|escapejs }}',
+            description: '{{ product.description|escapejs|truncatechars:50|default:"No description available"|escapejs }}',
+            sale_price: '{{ product.sale_price }}',
+            tax_rate: '{{ product.tax_rate }}',
+            current_stock: '{{ product.current_stock }}'
+        },
+        {% endfor %}
+    ];
+
+    // Function to handle product search for each row
+    function setupProductSearch(row) {
+        const nameInput = row.querySelector('.product-name-input');
+        const dropdown = row.querySelector('.product-dropdown');
+        const productIdInput = row.querySelector('.product-id-input');
+        const codeInput = row.querySelector('.product-code-input');
+        const availableQuantityInput = row.querySelector('.available-quantity-input');
+        const priceInput = row.querySelector('.price-input');
+        const taxRateInput = row.querySelector('.tax-rate-input');
+
+        if (!nameInput || !dropdown) return;
+
+        // Function to filter and show products
+        function filterProducts() {
+            const searchTerm = nameInput.value.toLowerCase().trim();
+
+            if (searchTerm === '') {
+                dropdown.style.display = 'none';
+                return;
+            }
+
+            // Clear previous options
+            dropdown.innerHTML = '';
+
+            // Filter products
+            const filteredProducts = products.filter(product =>
+                product.name.toLowerCase().includes(searchTerm) ||
+                product.code.toLowerCase().includes(searchTerm)
+            );
+
+            if (filteredProducts.length === 0) {
+                dropdown.style.display = 'none';
+                return;
+            }
+
+            // Create dropdown options
+            filteredProducts.forEach(product => {
+                const option = document.createElement('button');
+                option.type = 'button';
+                option.className = 'dropdown-item';
+                option.innerHTML = `<strong>${product.name}</strong> (${product.code}) - ${product.current_stock} available`;
+                option.setAttribute('data-product', JSON.stringify(product));
+
+                option.addEventListener('click', function() {
+                    // Fill all product fields
+                    productIdInput.value = product.id;
+                    codeInput.value = product.code;
+                    nameInput.value = product.name;
+                    if (availableQuantityInput) {
+                        availableQuantityInput.value = formatCurrency(parseFloat(product.current_stock || 0), 3);
+                    }
+                    priceInput.value = formatCurrency(parseFloat(product.sale_price || 0), 3);
+                    taxRateInput.value = parseFloat(product.tax_rate) || 0;
+
+                    dropdown.style.display = 'none';
+
+                    // Calculate row total
+                    const row = nameInput.closest('tr');
+                    if (row) {
+                        calculateRowTotal(row);
+                        calculateGrandTotal();
+                    }
+                });
+
+                dropdown.appendChild(option);
+            });
+
+            dropdown.style.display = 'block';
+        }
+
+        // Handle input changes
+        nameInput.addEventListener('input', filterProducts);
+
+        // Handle focus to show all products if empty
+        nameInput.addEventListener('focus', function() {
+            if (nameInput.value.trim() === '') {
+                // Show all products
+                dropdown.innerHTML = '';
+                products.slice(0, 10).forEach(product => { // Show first 10 products
+                    const option = document.createElement('button');
+                    option.type = 'button';
+                    option.className = 'dropdown-item';
+                    option.innerHTML = `<strong>${product.name}</strong> (${product.code}) - ${product.current_stock} available`;
+                    option.setAttribute('data-product', JSON.stringify(product));
+
+                    option.addEventListener('click', function() {
+                        // Fill all product fields
+                        productIdInput.value = product.id;
+                        codeInput.value = product.code;
+                        nameInput.value = product.name;
+                        if (availableQuantityInput) {
+                            availableQuantityInput.value = formatCurrency(parseFloat(product.current_stock || 0), 3);
+                        }
+                        priceInput.value = formatCurrency(parseFloat(product.sale_price || 0), 3);
+                        taxRateInput.value = parseFloat(product.tax_rate) || 0;
+
+                        dropdown.style.display = 'none';
+
+                        // Calculate row total
+                        const row = nameInput.closest('tr');
+                        if (row) {
+                            calculateRowTotal(row);
+                            calculateGrandTotal();
+                        }
+                    });
+
+                    dropdown.appendChild(option);
+                });
+                dropdown.style.display = 'block';
+            }
+        });
+
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!nameInput.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+
+        // Handle blur with delay to allow click on dropdown items
+        nameInput.addEventListener('blur', function() {
+            setTimeout(() => {
+                if (nameInput.value && !productIdInput.value) {
+                    // If user typed something but didn't select from dropdown, clear it
+                    nameInput.value = '';
+                }
+            }, 200);
+        });
+    }
+
+    // Setup product search for existing rows and new rows
+    function setupAllProductSearches() {
+        document.querySelectorAll('#productsTableBody tr').forEach(row => {
+            if (!row.hasAttribute('data-product-search-setup')) {
+                setupProductSearch(row);
+                row.setAttribute('data-product-search-setup', 'true');
+            }
+        });
+    }
+
+    // Initial setup
+    setupAllProductSearches();
+
+    // Setup for new rows when added
+    const originalAddProductRow = window.addProductRow;
+    window.addProductRow = function() {
+        originalAddProductRow();
+        // Small delay to ensure DOM is updated
+        setTimeout(setupAllProductSearches, 100);
+    };
+});
+
+// Keyboard shortcuts for invoice management
+document.addEventListener('keydown', function(e) {
+    // Ctrl+S to save invoice
+    if (e.ctrlKey && e.key === 's') {
+        e.preventDefault(); // Prevent browser save dialog
+        
+        const saveButton = document.querySelector('button[type="submit"][name="action"][value="save"]');
+        if (saveButton) {
+            saveButton.click();
+            console.log('Invoice save triggered via Ctrl+S shortcut');
+        }
+    }
+    
+    // Show shortcut hint on Ctrl+? or Ctrl+H
+    if (e.ctrlKey && (e.key === '?' || e.key === 'h' || e.key.toLowerCase() === 'h')) {
+        e.preventDefault();
+        showKeyboardShortcuts();
+    }
+});
+
+// Function to show keyboard shortcuts help
+function showKeyboardShortcuts() {
+    const shortcuts = [
+        { key: 'Ctrl+S', description: 'حفظ الفاتورة' },
+        { key: 'Ctrl+H or Ctrl+?', description: 'عرض اختصارات لوحة المفاتيح' }
+    ];
+    
+    let message = 'اختصارات لوحة المفاتيح:\n\n';
+    shortcuts.forEach(shortcut => {
+        message += `${shortcut.key}: ${shortcut.description}\n`;
+    });
+    
+    alert(message);
+}
 </script>
 
 {% endblock %}
