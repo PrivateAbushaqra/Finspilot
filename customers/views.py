@@ -154,6 +154,19 @@ class CustomerListView(LoginRequiredMixin, ListView):
             'average_balance': total_balance / all_customers.count() if all_customers.count() > 0 else 0,
         })
         
+        # تسجيل النشاط في سجل المراجعة
+        try:
+            from core.signals import log_view_activity
+            class CustomerListObj:
+                def __init__(self):
+                    self.id = 0
+                    self.pk = 0
+                def __str__(self):
+                    return str(_('Customer List'))
+            log_view_activity(self.request, 'view', CustomerListObj(), _('عرض قائمة العملاء'))
+        except Exception:
+            pass
+        
         return context
 
 class SupplierListView(LoginRequiredMixin, ListView):

@@ -276,12 +276,10 @@
             page-break-inside: avoid !important;
             break-inside: avoid !important;
         }
-    }
         
         .page-break {
             page-break-before: always;
         }
-    }
 </style>
 {% endblock %}
 
@@ -712,6 +710,199 @@ document.addEventListener('click', function(e) {
         }
     }
 });
+
+// Print functionality - convert cards to table for printing
+function printPage() {
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank');
+    
+    // Get current date and time
+    const now = new Date();
+    const dateString = now.toLocaleDateString('ar-SA');
+    const timeString = now.toLocaleTimeString('ar-SA');
+    
+    // Build the printable content
+    let printContent = `
+        <!DOCTYPE html>
+        <html lang="ar" dir="rtl">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>{% trans "Bank Transfers Report" %}</title>
+            <style>
+                body {
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    margin: 20px;
+                    direction: rtl;
+                }
+                .header {
+                    text-align: center;
+                    margin-bottom: 30px;
+                    border-bottom: 2px solid #333;
+                    padding-bottom: 20px;
+                }
+                .header h1 {
+                    color: #333;
+                    margin: 0;
+                    font-size: 24px;
+                }
+                .header p {
+                    color: #666;
+                    margin: 5px 0;
+                    font-size: 14px;
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 20px;
+                    font-size: 12px;
+                }
+                th, td {
+                    border: 1px solid #ddd;
+                    padding: 8px;
+                    text-align: right;
+                }
+                th {
+                    background-color: #f8f9fa;
+                    font-weight: bold;
+                    color: #333;
+                }
+                tr:nth-child(even) {
+                    background-color: #f9f9f9;
+                }
+                .transfer-amount {
+                    color: #28a745;
+                    font-weight: bold;
+                }
+                .transfer-fees {
+                    color: #dc3545;
+                    font-size: 10px;
+                }
+                .summary {
+                    margin-top: 30px;
+                    padding: 15px;
+                    background-color: #f8f9fa;
+                    border-radius: 5px;
+                }
+                .summary h3 {
+                    margin: 0 0 10px 0;
+                    color: #333;
+                }
+                .summary-row {
+                    display: flex;
+                    justify-content: space-around;
+                    margin-bottom: 10px;
+                }
+                .summary-item {
+                    text-align: center;
+                }
+                .summary-value {
+                    font-size: 18px;
+                    font-weight: bold;
+                    color: #007bff;
+                }
+                .footer {
+                    margin-top: 50px;
+                    text-align: center;
+                    font-size: 14px;
+                    color: #666;
+                    border-top: 1px solid #ddd;
+                    padding-top: 20px;
+                }
+                @media print {
+                    body { margin: 0; }
+                    .header { page-break-after: avoid; }
+                    table { page-break-inside: auto; }
+                    tr { page-break-inside: avoid; page-break-after: auto; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>{% trans "Bank Transfers Report" %}</h1>
+                <p>{% trans "Generated on" %}: ${dateString} {% trans "at" %} ${timeString}</p>
+                <p>{% trans "Total Transfers" %}: {{ total_transfers|default:0 }}</p>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>{% trans "Transfer Number" %}</th>
+                        <th>{% trans "Date" %}</th>
+                        <th>{% trans "From Account" %}</th>
+                        <th>{% trans "To Account" %}</th>
+                        <th>{% trans "Amount" %}</th>
+                        <th>{% trans "Fees" %}</th>
+                        <th>{% trans "Description" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    // Get all transfer cards and convert to table rows
+    const transferCards = document.querySelectorAll('.transfer-card:not(.d-none)');
+    transferCards.forEach(card => {
+        const transferNumber = card.querySelector('.fw-bold')?.textContent?.trim() || '';
+        const transferDate = card.querySelector('.transfer-date')?.textContent?.trim() || '';
+        const fromAccount = card.querySelectorAll('.account-badge')[0]?.textContent?.trim() || '';
+        const toAccount = card.querySelectorAll('.account-badge')[1]?.textContent?.trim() || '';
+        const amount = card.querySelector('.transfer-amount')?.textContent?.trim() || '0.000';
+        const feesElement = card.querySelector('.transfer-fees');
+        const fees = feesElement ? feesElement.textContent.replace('{% trans "Fees" %}: ', '').trim() : '0.000';
+        const description = card.querySelector('.text-muted')?.textContent?.trim() || '';
+        
+        printContent += `
+            <tr>
+                <td>${transferNumber}</td>
+                <td>${transferDate}</td>
+                <td>${fromAccount}</td>
+                <td>${toAccount}</td>
+                <td class="transfer-amount">${amount}</td>
+                <td class="transfer-fees">${fees}</td>
+                <td>${description}</td>
+            </tr>
+        `;
+    });
+    
+    printContent += `
+                </tbody>
+            </table>
+            
+            <div class="summary">
+                <h3>{% trans "Summary" %}</h3>
+                <div class="summary-row">
+                    <div class="summary-item">
+                        <div>{% trans "Total Transfers" %}</div>
+                        <div class="summary-value">{{ total_transfers|default:0 }}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div>{% trans "Bank Transfers" %}</div>
+                        <div class="summary-value">{{ bank_transfers|length }}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div>{% trans "Cashbox Transfers" %}</div>
+                        <div class="summary-value">{{ bank_cashbox_transfers|length }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer">
+                <p class="text-center">{% trans "FinsPilot Software" %}</p>
+            </div>
+        </body>
+        </html>
+    `;
+    
+    // Write content to print window
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    
+    // Wait for content to load then print
+    printWindow.onload = function() {
+        printWindow.print();
+        printWindow.close();
+    };
+}
 
 // Print Function
 window.printTransferReport = function() {

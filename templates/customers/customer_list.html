@@ -69,6 +69,23 @@
         padding: 1.5rem;
         margin-bottom: 2rem;
     }
+
+    /* Print styles */
+    @media print {
+        .print-only-table {
+            display: table;
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .print-only-table th, .print-only-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        .print-only-table th {
+            background-color: #f2f2f2;
+            color: #333;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -576,5 +593,149 @@
             setTimeout(() => searchInput.focus(), 100);
         }
     });
+
+    // Translated strings for print function
+    const translatedStrings = {
+        customersReport: '{% trans "Customers Report" %}',
+        name: '{% trans "Name" %}',
+        type: '{% trans "Type" %}',
+        phone: '{% trans "Phone" %}',
+        email: '{% trans "Email" %}',
+        balance: '{% trans "Balance" %}',
+        status: '{% trans "Status" %}',
+        finsPilotSoftware: '{% trans "FinsPilot Software" %}'
+    };
+
+    // Custom print function for customers report
+    function printPage() {
+        try {
+            // إنشاء نافذة طباعة جديدة
+            var printWindow = window.open('', '_blank');
+            
+            // الحصول على البيانات من الجدول المخفي
+            var table = document.querySelector('.print-only-table');
+            if (!table) {
+                alert('جدول البيانات غير موجود');
+                return;
+            }
+            
+            var rows = table.querySelectorAll('tbody tr');
+            if (rows.length === 0) {
+                alert('لا توجد بيانات للطباعة');
+                printWindow.close();
+                return;
+            }
+            
+            // إنشاء محتوى الطباعة
+            var printContent = `
+                <html>
+                <head>
+                    <title>` + translatedStrings.customersReport + `</title>
+                    <style>
+                        body {
+                            font-family: Arial, sans-serif;
+                            direction: rtl;
+                            margin: 20px;
+                        }
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-bottom: 20px;
+                        }
+                        th, td {
+                            border: 1px solid #ddd;
+                            padding: 8px;
+                            text-align: center;
+                        }
+                        th {
+                            background-color: #f2f2f2;
+                            font-weight: bold;
+                        }
+                        .footer {
+                            text-align: center;
+                            margin-top: 20px;
+                            font-size: 12px;
+                            color: #666;
+                        }
+                        @media print {
+                            body { margin: 0; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h2 style="text-align: center;">` + translatedStrings.customersReport + `</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>` + translatedStrings.name + `</th>
+                                <th>` + translatedStrings.type + `</th>
+                                <th>` + translatedStrings.phone + `</th>
+                                <th>` + translatedStrings.email + `</th>
+                                <th>` + translatedStrings.balance + `</th>
+                                <th>` + translatedStrings.status + `</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+            
+            // إضافة صفوف البيانات
+            rows.forEach(function(row) {
+                var cells = row.querySelectorAll('td');
+                printContent += '<tr>';
+                for (var i = 0; i < cells.length; i++) {
+                    var cellText = cells[i].textContent.trim();
+                    printContent += '<td>' + cellText + '</td>';
+                }
+                printContent += '</tr>';
+            });
+            
+            printContent += `
+                        </tbody>
+                    </table>
+                    <div class="footer">
+                        ` + translatedStrings.finsPilotSoftware + `
+                    </div>
+                </body>
+                </html>`;
+            
+            // كتابة المحتوى في نافذة الطباعة
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            
+            // انتظار تحميل المحتوى ثم الطباعة
+            printWindow.onload = function() {
+                printWindow.print();
+                printWindow.close();
+            };
+        } catch (error) {
+            alert('حدث خطأ أثناء الطباعة: ' + error.message);
+            console.error('Print error:', error);
+        }
+    }
 </script>
+
+<!-- Hidden table for printing -->
+<table class="print-only-table" style="display: none;">
+    <thead>
+        <tr>
+            <th>{% trans "Name" %}</th>
+            <th>{% trans "Type" %}</th>
+            <th>{% trans "Phone" %}</th>
+            <th>{% trans "Email" %}</th>
+            <th>{% trans "Balance" %}</th>
+            <th>{% trans "Status" %}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for customer in customers %}
+        <tr>
+            <td>{{ customer.name }}</td>
+            <td>{{ customer.get_type_display }}</td>
+            <td>{{ customer.phone|default:"غير محدد" }}</td>
+            <td>{{ customer.email|default:"غير محدد" }}</td>
+            <td>{{ customer.current_balance|currency_format }}</td>
+            <td>{% if customer.is_active %}{% trans "Active" %}{% else %}{% trans "Inactive" %}{% endif %}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 {% endblock %}

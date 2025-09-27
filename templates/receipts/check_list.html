@@ -162,3 +162,101 @@
     </div>
 </div>
 {% endblock %}
+
+<script>
+function printPage() {
+    // إنشاء نافذة طباعة جديدة
+    var printWindow = window.open('', '_blank');
+    
+    // الحصول على البيانات من الجدول
+    var table = document.querySelector('.table');
+    var rows = table.querySelectorAll('tbody tr');
+    
+    // إنشاء محتوى الطباعة
+    var printContent = `
+        <html>
+        <head>
+            <title>{% trans "Checks Report" %}</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    direction: rtl;
+                    margin: 20px;
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-bottom: 20px;
+                }
+                th, td {
+                    border: 1px solid #ddd;
+                    padding: 8px;
+                    text-align: center;
+                }
+                th {
+                    background-color: #f2f2f2;
+                    font-weight: bold;
+                }
+                .footer {
+                    text-align: center;
+                    margin-top: 20px;
+                    font-size: 12px;
+                    color: #666;
+                }
+                @media print {
+                    body { margin: 0; }
+                }
+            </style>
+        </head>
+        <body>
+            <h2 style="text-align: center;">{% trans "Checks Report" %}</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>{% trans "Voucher Number" %}</th>
+                        <th>{% trans "Check Number" %}</th>
+                        <th>{% trans "Customer" %}</th>
+                        <th>{% trans "Amount" %}</th>
+                        <th>{% trans "Check Date" %}</th>
+                        <th>{% trans "Due Date" %}</th>
+                        <th>{% trans "Bank" %}</th>
+                        <th>{% trans "Status" %}</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+    
+    // إضافة صفوف البيانات
+    rows.forEach(function(row) {
+        var cells = row.querySelectorAll('td');
+        if (cells.length >= 8) {  // التأكد من وجود 8 خلايا على الأقل
+            printContent += '<tr>';
+            for (var i = 0; i < 8; i++) {  // أول 8 خلايا (بدون عمود الأفعال)
+                var cellText = cells[i].textContent.trim();
+                // إزالة الشارات والروابط
+                cellText = cellText.replace(/[\u00A0-\u9999<>\&]/g, ''); // إزالة HTML
+                printContent += '<td>' + cellText + '</td>';
+            }
+            printContent += '</tr>';
+        }
+    });
+    
+    printContent += `
+                </tbody>
+            </table>
+            <div class="footer">
+                {% trans "FinsPilot Software" %}
+            </div>
+        </body>
+        </html>`;
+    
+    // كتابة المحتوى في نافذة الطباعة
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    
+    // انتظار تحميل المحتوى ثم الطباعة
+    printWindow.onload = function() {
+        printWindow.print();
+        printWindow.close();
+    };
+}
+</script>

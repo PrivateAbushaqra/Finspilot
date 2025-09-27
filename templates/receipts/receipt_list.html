@@ -182,4 +182,109 @@
         </div>
     </div>
 </div>
+
+<script>
+function printPage() {
+    // إنشاء نافذة طباعة جديدة
+    var printWindow = window.open('', '_blank');
+    
+    // إنشاء محتوى الطباعة
+    var printContent = `
+        <!DOCTYPE html>
+        <html dir="rtl" lang="ar">
+        <head>
+            <meta charset="UTF-8">
+            <title>{% trans "Receipt Vouchers Report" %}</title>
+            <style>
+                @media print {
+                    body { font-family: 'Arial', sans-serif; direction: rtl; margin: 20px; }
+                    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+                    th { background-color: #f8f9fa; font-weight: bold; }
+                    .header { text-align: center; margin-bottom: 20px; }
+                    .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
+                    .no-print { display: none; }
+                    .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+                    .bg-success { background-color: #d4edda; color: #155724; }
+                    .bg-info { background-color: #d1ecf1; color: #0c5460; }
+                    .bg-warning { background-color: #fff3cd; color: #856404; }
+                    .bg-danger { background-color: #f8d7da; color: #721c24; }
+                    .table-danger { background-color: #f8d7da; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h2>{% trans "Receipt Vouchers Report" %}</h2>
+                <p>{% trans "Generated on" %} ${new Date().toLocaleDateString('ar-SA')}</p>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>{% trans "Voucher Number" %}</th>
+                        <th>{% trans "Date" %}</th>
+                        <th>{% trans "Customer" %}</th>
+                        <th>{% trans "Payment Type" %}</th>
+                        <th>{% trans "Amount" %}</th>
+                        <th>{% trans "Status" %}</th>
+                        <th>{% trans "Created By" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    // جمع البيانات من الجدول الحالي
+    var table = document.querySelector('table.table');
+    if (table) {
+        var rows = table.querySelectorAll('tbody tr');
+        rows.forEach(function(row) {
+            var cells = row.querySelectorAll('td');
+            if (cells.length >= 7) { // تأكد من وجود 7 أعمدة على الأقل
+                var voucherNumber = cells[0].textContent.trim();
+                var date = cells[1].textContent.trim();
+                var customer = cells[2].textContent.trim();
+                var paymentType = cells[3].textContent.trim();
+                var amount = cells[4].textContent.trim();
+                var status = cells[5].textContent.trim();
+                var createdBy = cells[6].textContent.trim();
+                
+                printContent += `
+                    <tr class="${row.classList.contains('table-danger') ? 'table-danger' : ''}">
+                        <td>${voucherNumber}</td>
+                        <td>${date}</td>
+                        <td>${customer}</td>
+                        <td>${paymentType}</td>
+                        <td>${amount}</td>
+                        <td>${status}</td>
+                        <td>${createdBy}</td>
+                    </tr>
+                `;
+            }
+        });
+    }
+    
+    printContent += `
+                </tbody>
+            </table>
+            
+            <div class="footer">
+                <p>{% trans "FinsPilot Software" %}</p>
+            </div>
+        </body>
+        </html>
+    `;
+    
+    // كتابة المحتوى في نافذة الطباعة
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    
+    // انتظار تحميل المحتوى ثم الطباعة
+    printWindow.onload = function() {
+        printWindow.print();
+        printWindow.close();
+    };
+}
+</script>
+
 {% endblock %}

@@ -650,5 +650,220 @@ function saveDepreciation() {
     alert('{% trans "Depreciation results will be saved to the assets system" %}');
     // Here you can add code to save the results to the database
 }
+
+function printPage() {
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank');
+    
+    // Get current date and time
+    const now = new Date();
+    const dateString = now.toLocaleDateString('ar-SA');
+    const timeString = now.toLocaleTimeString('ar-SA');
+    
+    // Build the printable content
+    let printContent = `
+        <!DOCTYPE html>
+        <html lang="ar" dir="rtl">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>{% trans "Cashbox Transfers Report" %}</title>
+            <style>
+                body {
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    margin: 20px;
+                    direction: rtl;
+                }
+                .header {
+                    text-align: center;
+                    margin-bottom: 30px;
+                    border-bottom: 2px solid #333;
+                    padding-bottom: 20px;
+                }
+                .header h1 {
+                    color: #333;
+                    margin: 0;
+                    font-size: 24px;
+                }
+                .header p {
+                    color: #666;
+                    margin: 5px 0;
+                    font-size: 14px;
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 20px;
+                    font-size: 12px;
+                }
+                th, td {
+                    border: 1px solid #ddd;
+                    padding: 8px;
+                    text-align: right;
+                }
+                th {
+                    background-color: #f8f9fa;
+                    font-weight: bold;
+                    color: #333;
+                }
+                tr:nth-child(even) {
+                    background-color: #f9f9f9;
+                }
+                .transfer-amount {
+                    color: #28a745;
+                    font-weight: bold;
+                }
+                .transfer-fees {
+                    color: #dc3545;
+                    font-size: 10px;
+                }
+                .badge {
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    font-size: 10px;
+                    font-weight: bold;
+                }
+                .badge-info {
+                    background-color: #17a2b8;
+                    color: white;
+                }
+                .badge-warning {
+                    background-color: #ffc107;
+                    color: black;
+                }
+                .badge-success {
+                    background-color: #28a745;
+                    color: white;
+                }
+                .summary {
+                    margin-top: 30px;
+                    padding: 15px;
+                    background-color: #f8f9fa;
+                    border-radius: 5px;
+                }
+                .summary h3 {
+                    margin: 0 0 10px 0;
+                    color: #333;
+                }
+                .summary-row {
+                    display: flex;
+                    justify-content: space-around;
+                    margin-bottom: 10px;
+                }
+                .summary-item {
+                    text-align: center;
+                }
+                .summary-value {
+                    font-size: 18px;
+                    font-weight: bold;
+                    color: #007bff;
+                }
+                .footer {
+                    margin-top: 50px;
+                    text-align: center;
+                    font-size: 14px;
+                    color: #666;
+                    border-top: 1px solid #ddd;
+                    padding-top: 20px;
+                }
+                @media print {
+                    body { margin: 0; }
+                    .header { page-break-after: avoid; }
+                    table { page-break-inside: auto; }
+                    tr { page-break-inside: avoid; page-break-after: auto; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>{% trans "Cashbox Transfers Report" %}</h1>
+                <p>{% trans "Generated on" %}: ${dateString} {% trans "at" %} ${timeString}</p>
+                <p>{% trans "Total Transfers" %}: {{ transfers|length }}</p>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>{% trans "Transfer Number" %}</th>
+                        <th>{% trans "Date" %}</th>
+                        <th>{% trans "Transfer Type" %}</th>
+                        <th>{% trans "From" %}</th>
+                        <th>{% trans "To" %}</th>
+                        <th>{% trans "Amount" %}</th>
+                        <th>{% trans "Fees" %}</th>
+                        <th>{% trans "Created By" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    // Get all table rows and convert to table rows
+    const tableRows = document.querySelectorAll('tbody tr');
+    tableRows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length >= 8) {
+            const transferNumber = cells[0].textContent.trim();
+            const date = cells[1].textContent.trim();
+            const transferType = cells[2].textContent.trim();
+            const from = cells[3].textContent.trim();
+            const to = cells[4].textContent.trim();
+            const amount = cells[5].textContent.trim();
+            const fees = cells[6].textContent.trim();
+            const createdBy = cells[7].textContent.trim();
+            
+            printContent += `
+                <tr>
+                    <td>${transferNumber}</td>
+                    <td>${date}</td>
+                    <td>${transferType}</td>
+                    <td>${from}</td>
+                    <td>${to}</td>
+                    <td class="transfer-amount">${amount}</td>
+                    <td class="transfer-fees">${fees}</td>
+                    <td>${createdBy}</td>
+                </tr>
+            `;
+        }
+    });
+    
+    printContent += `
+                </tbody>
+            </table>
+            
+            <div class="summary">
+                <h3>{% trans "Summary" %}</h3>
+                <div class="summary-row">
+                    <div class="summary-item">
+                        <div>{% trans "Total Transfers" %}</div>
+                        <div class="summary-value">{{ transfers|length }}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div>{% trans "Cashbox to Cashbox" %}</div>
+                        <div class="summary-value">{{ transfers|length }}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div>{% trans "Cashbox to Bank" %}</div>
+                        <div class="summary-value">0</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer">
+                <p class="text-center">{% trans "FinsPilot Software" %}</p>
+            </div>
+        </body>
+        </html>
+    `;
+    
+    // Write content to print window
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    
+    // Wait for content to load then print
+    printWindow.onload = function() {
+        printWindow.print();
+        printWindow.close();
+    };
+}
 </script>
 {% endblock %}
