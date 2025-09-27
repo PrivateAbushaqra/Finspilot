@@ -2,12 +2,7 @@
 {% load i18n %}
 {% load currency_tags %}
 
-{% b                                                <a href="{% url 'hr:payroll_period_process' period.pk %}" 
-                                                   class="btn btn-sm btn-outline-success" 
-                                                   title="{% trans 'Process Payroll' %}"
-                                                   onclick="return confirm('{% trans &quot;Are you sure you want to process the payroll for this period?&quot; %}')">
-                                                    <i class="fas fa-play"></i>
-                                                </a>itle %}{% trans "Payroll Periods" %} - {{ block.super }}{% endblock %}
+{% block title %}{% trans "Payroll Periods" %} - {{ block.super }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -89,7 +84,7 @@
                                                 <a href="{% url 'hr:payroll_period_delete' period.pk %}" 
                                                    class="btn btn-sm btn-outline-danger" 
                                                    title="{% trans 'Delete' %}"
-                                                   onclick="return confirm('{% trans &quot;Are you sure you want to delete this period?&quot; %}')">
+                                                   onclick="return confirm('{% trans "Are you sure you want to delete this period?" %}')">
                                                     <i class="fas fa-trash"></i>
                                                 </a>
                                             </div>

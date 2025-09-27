@@ -1,0 +1,85 @@
+[
+{
+  "model": "core.companysettings",
+  "pk": 1,
+  "fields": {
+    "company_name": "Finspilot - برنامج محاسبي",
+    "logo": "company/test_Yxox2Jz.png",
+    "currency": "JOD",
+    "address": "",
+    "phone": "795186811",
+    "email": "",
+    "tax_number": "987654258",
+    "session_timeout_minutes": 30,
+    "enable_session_timeout": true,
+    "logout_on_browser_close": true,
+    "created_at": "2025-09-27T06:32:10.806Z",
+    "updated_at": "2025-09-27T06:32:10.806Z"
+  }
+},
+{
+  "model": "products.category",
+  "pk": 1,
+  "fields": {
+    "sequence_number": 10000,
+    "name": "فئة اختبار",
+    "name_en": "Test Category",
+    "code": null,
+    "parent": null,
+    "description": "",
+    "is_active": true,
+    "created_at": "2025-09-26T08:48:11.800Z",
+    "updated_at": "2025-09-27T06:34:01.792Z"
+  }
+},
+{
+  "model": "customers.customersupplier",
+  "pk": 2,
+  "fields": {
+    "sequence_number": 20000,
+    "name": "مورد اختبار",
+    "type": "supplier",
+    "email": "",
+    "phone": "987654321",
+    "address": "عنوان المورد",
+    "city": "",
+    "tax_number": "",
+    "credit_limit": "0.000",
+    "balance": "0.000",
+    "is_active": true,
+    "notes": "",
+    "created_at": "2025-09-26T08:47:31.510Z",
+    "updated_at": "2025-09-27T06:34:01.795Z"
+  }
+},
+{
+  "model": "inventory.warehouse",
+  "pk": 1,
+  "fields": {
+    "name": "مستودع رئيسي",
+    "code": "MAIN",
+    "parent": null,
+    "address": "الموقع الرئيسي",
+    "manager": null,
+    "is_active": true,
+    "is_default": true,
+    "created_at": "2025-09-26T08:48:34.864Z",
+    "updated_at": "2025-09-27T06:34:01.803Z"
+  }
+},
+{
+  "model": "settings.currency",
+  "pk": 1,
+  "fields": {
+    "code": "JOD",
+    "name": "الدينار الأردني",
+    "symbol": "د.أ",
+    "exchange_rate": "1.0000",
+    "is_base_currency": true,
+    "is_active": true,
+    "decimal_places": 3,
+    "created_at": "2025-09-24T09:26:59.703Z",
+    "updated_at": "2025-09-27T06:34:02.626Z"
+  }
+}
+]

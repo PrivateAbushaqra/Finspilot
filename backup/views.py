@@ -155,6 +155,10 @@ def get_deletable_tables(request):
         # جمع المعلومات لكل نموذج
         for app_config, model in all_models:
             try:
+                # تخطي النماذج التي لا تدير جداول في قاعدة البيانات (managed = False)
+                if not model._meta.managed:
+                    continue
+                    
                 label = f"{app_config.name}.{model._meta.model_name}"
                 display = model._meta.verbose_name or label
                 count = model.objects.count()
@@ -481,7 +485,7 @@ def clear_backup_cache(request):
         cache.delete('backup_progress')
         cache.delete('backup_last_update')
         
-        log_audit(request.user, 'delete', 'تم مسح كاش النسخ الاحتياطي يدوياً')
+        log_audit(request.user, 'delete', 'تم مسح كاش النسخ الاحتياطية يدوياً')
         
         return JsonResponse({
             'success': True,
@@ -520,6 +524,10 @@ def get_backup_tables_info():
                 continue
                 
             for model in app_config.get_models():
+                # تجاهل النماذج التي لا تنشئ جداول (managed = False)
+                if getattr(model._meta, 'managed', True) is False:
+                    continue
+                    
                 try:
                     record_count = model.objects.count()
                     tables_info.append({
@@ -533,17 +541,9 @@ def get_backup_tables_info():
                         'error': None
                     })
                 except Exception as e:
-                    logger.warning(f"تعذر الحصول على عدد السجلات للجدول {model._meta.model_name}: {str(e)}")
-                    tables_info.append({
-                        'app_name': app_config.name,
-                        'model_name': model._meta.model_name,
-                        'display_name': model._meta.verbose_name or f"{app_config.verbose_name} - {model._meta.model_name}",
-                        'record_count': 0,
-                        'status': 'pending',
-                        'progress': 0,
-                        'actual_records': 0,
-                        'error': str(e)
-                    })
+                    # تجاهل النماذج التي تسبب أخطاء (مثل الجداول غير الموجودة)
+                    logger.warning(f"تجاهل النموذج {model._meta.model_name} بسبب خطأ: {str(e)}")
+                    continue
         
         return tables_info
         
@@ -723,10 +723,27 @@ def perform_backup_task(user, timestamp, filename, filepath, format_type='json')
                 
                 # نسخ البيانات مع معالجة خاصة للحقول الإشكالية
                 queryset = model.objects.all()
+                
+                # تحسين الاستعلامات للنماذج ذات العلاقات
+                if hasattr(model, '_meta'):
+                    # إضافة select_related للعلاقات الأجنبية المباشرة
+                    foreign_keys = [f.name for f in model._meta.fields if hasattr(f, 'related_model') and f.related_model]
+                    if foreign_keys:
+                        queryset = queryset.select_related(*foreign_keys)
+                    
+                    # إضافة prefetch_related للعلاقات العكسية المهمة
+                    reverse_relations = []
+                    for related in model._meta.related_objects:
+                        if related.one_to_many or related.many_to_many:
+                            reverse_relations.append(related.get_accessor_name())
+                    if reverse_relations:
+                        queryset = queryset.prefetch_related(*reverse_relations)
+                
                 actual_records = queryset.count()
                 
                 if actual_records > 0:
-                    chunk_size = max(1, actual_records // 10)
+                    # زيادة عدد الأجزاء لتسريع المعالجة (من 10 إلى 50 جزء)
+                    chunk_size = max(100, actual_records // 50)  # حد أدنى 100 سجل لكل جزء
                     processed_in_table = 0
                     
                     all_data = []
@@ -1395,6 +1412,52 @@ def load_backup_from_xlsx(file_obj, user=None):
         raise Exception(f"خطأ في قراءة ملف Excel: {str(e)}")
 
 
+def convert_field_value(field, value):
+    """تحويل قيمة الحقل إلى النوع الصحيح"""
+    if value is None or value == '':
+        return value
+    
+    try:
+        field_type = field.get_internal_type()
+        
+        if field_type in ['DecimalField']:
+            if isinstance(value, str):
+                return Decimal(value)
+            return Decimal(str(value))
+        elif field_type in ['IntegerField', 'BigIntegerField', 'SmallIntegerField', 'PositiveIntegerField']:
+            if isinstance(value, str):
+                return int(float(value)) if '.' in value else int(value)
+            return int(value)
+        elif field_type in ['FloatField']:
+            if isinstance(value, str):
+                return float(value)
+            return float(value)
+        elif field_type in ['BooleanField']:
+            if isinstance(value, str):
+                return value.lower() in ('true', '1', 'yes', 'on')
+            return bool(value)
+        elif field_type in ['DateTimeField']:
+            if isinstance(value, str):
+                from django.utils.dateparse import parse_datetime
+                return parse_datetime(value)
+            return value
+        elif field_type in ['DateField']:
+            if isinstance(value, str):
+                from django.utils.dateparse import parse_date
+                return parse_date(value)
+            return value
+        elif field_type in ['TimeField']:
+            if isinstance(value, str):
+                from django.utils.dateparse import parse_time
+                return parse_time(value)
+            return value
+        else:
+            return value
+    except Exception:
+        # في حالة فشل التحويل، أعد القيمة الأصلية
+        return value
+
+
 def perform_backup_restore(backup_data, clear_data=False, user=None):
     """تنفيذ عملية الاستعادة الفعلية"""
     try:
@@ -1445,32 +1508,143 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
         # مسح البيانات الموجودة إذا طُلب ذلك
         if clear_data:
             logger.info("مسح البيانات الموجودة...")
+            
             # تجاهل التطبيقات الأساسية للنظام (contenttypes, auth, admin, sessions)
-            skip_labels = {'contenttypes', 'auth', 'admin', 'sessions'}
-            all_models = []
+            skip_apps = {'contenttypes', 'auth', 'admin', 'sessions'}
+            
+            # بناء خريطة التبعية بين النماذج
+            dep_map = {}
+            model_map = {}
             for app_config in apps.get_app_configs():
-                try:
-                    if app_config.label in skip_labels:
-                        continue
-                except Exception:
-                    # كحالة افتراضية: استمر
-                    pass
+                if app_config.name in skip_apps:
+                    continue
+                    
                 for model in app_config.get_models():
-                    all_models.append(model)
+                    # تجاهل النماذج التي لا تنشئ جداول
+                    if not model._meta.managed:
+                        continue
+                        
+                    label = f"{app_config.name}.{model._meta.model_name}"
+                    dep_map[label] = set()
+                    model_map[label] = model
 
-            # حاول إجراء الحذف داخل معاملة لزيادة الاتساق؛ في حالة فشل سيتم التراجع
+            logger.info(f"تم العثور على {len(model_map)} نموذج قابل للمسح")
+            
+            # ملء خريطة التبعيات
+            for label, model in list(model_map.items()):
+                for field in model._meta.get_fields():
+                    try:
+                        if field.is_relation and (field.many_to_one or field.one_to_one) and field.related_model is not None:
+                            rel = field.related_model
+                            rel_label = f"{rel._meta.app_label}.{rel._meta.model_name}"
+                            if rel_label in dep_map:
+                                dep_map[rel_label].add(label)
+                    except Exception:
+                        continue
+
+            # حساب ترتيب الحذف بحيث تُحذف التبعيات أولاً (post-order traversal)
+            visited = set()
+            delete_order = []
+            def dfs(label):
+                if label in visited:
+                    return
+                visited.add(label)
+                for dep in dep_map.get(label, set()):
+                    dfs(dep)
+                delete_order.append(label)
+
+            for label in list(model_map.keys()):
+                dfs(label)
+            
+            logger.info(f"تم حساب ترتيب الحذف: {len(delete_order)} نموذج")
+            
+            # تنفيذ الحذف داخل معاملة وبترتيب آمن
+            deleted_stats = []
+            failed_deletions = []
+            total_deleted_records = 0
+            
             try:
                 with transaction.atomic():
-                    for model in all_models:
+                    for i, label in enumerate(delete_order):
+                        model = model_map.get(label)
+                        if model is None:
+                            continue
+                            
                         try:
-                            model.objects.all().delete()
-                            logger.debug(f"تم مسح بيانات {model._meta.label}")
-                        except Exception as model_error:
-                            logger.warning(f"تعذر مسح بيانات {model._meta.label}: {str(model_error)}")
+                            # معالجة خاصة لنموذج User
+                            UserModel = None
+                            try:
+                                from django.contrib.auth import get_user_model
+                                UserModel = get_user_model()
+                            except Exception:
+                                UserModel = None
+
+                            if UserModel is not None and getattr(model, '__name__', '').lower() == getattr(UserModel, '__name__', '').lower():
+                                # إنشاء مستخدم احتياطي إذا لم يكن موجوداً
+                                fallback_username = '__deleted_user__'
+                                fallback = UserModel.objects.filter(username=fallback_username).first()
+                                if not fallback:
+                                    fallback = UserModel.objects.create(username=fallback_username, is_active=False)
+
+                                # إعادة توجيه مراجعات المستخدمين المراد حذفها
+                                try:
+                                    user_ids = list(model.objects.exclude(pk=fallback.pk).values_list('pk', flat=True))
+                                    from core.models import AuditLog as _AuditLog
+                                    if user_ids:
+                                        _AuditLog.objects.filter(user_id__in=user_ids).update(user_id=fallback.pk)
+                                except Exception as reassign_err:
+                                    logger.warning(f"فشل في إعادة توجيه مراجعات المستخدمين: {reassign_err}")
+
+                                # حذف جميع المستخدمين عدا المستخدم الاحتياطي
+                                qs = model.objects.exclude(pk=fallback.pk)
+                                count = qs.count()
+                                qs.delete()
+                                deleted_stats.append({'table': label, 'deleted': count})
+                                total_deleted_records += count
+                                logger.debug(f"تم مسح {count} مستخدم من {label} ({i+1}/{len(delete_order)})")
+                                continue
+
+                            # الحذف العادي للنماذج الأخرى
+                            count = model.objects.all().count()
+                            if count > 0:  # فقط إذا كان هناك بيانات
+                                model.objects.all().delete()
+                                deleted_stats.append({'table': label, 'deleted': count})
+                                total_deleted_records += count
+                                logger.debug(f"تم مسح {count} سجل من {label} ({i+1}/{len(delete_order)})")
+                            
+                        except ProtectedError as p_err:
+                            # تسجيل النماذج التي فشل حذفها بسبب علاقات محمية
+                            failed_deletions.append({
+                                'table': label,
+                                'error': 'ProtectedError',
+                                'details': str(p_err)
+                            })
+                            logger.warning(f"تعذر مسح {label} بسبب علاقات محمية: {str(p_err)}")
+                            continue
+                            
+                        except Exception as del_exc:
+                            # تسجيل النماذج التي فشل حذفها لأسباب أخرى
+                            failed_deletions.append({
+                                'table': label,
+                                'error': str(type(del_exc).__name__),
+                                'details': str(del_exc)
+                            })
+                            logger.warning(f"تعذر مسح {label}: {str(del_exc)}")
+                            continue
+                    
+                # تسجيل نتائج مسح البيانات
+                logger.info(f"تم مسح البيانات بنجاح - إجمالي السجلات الممسوحة: {total_deleted_records}")
+                log_audit(user, 'delete', f'تم مسح البيانات الموجودة قبل الاستعادة - تم مسح {total_deleted_records} سجل من {len(deleted_stats)} جدول')
+                
+                if failed_deletions:
+                    failed_count = len(failed_deletions)
+                    log_audit(user, 'warning', f'فشل مسح {failed_count} جدول بسبب علاقات محمية أو أخطاء أخرى')
+                    logger.warning(f"فشل مسح {failed_count} جدول: {[f['table'] for f in failed_deletions]}")
+                    
             except Exception as tx_error:
-                logger.error(f"فشل أثناء محاولة مسح البيانات داخل معاملة: {str(tx_error)}")
-            if AUDIT_AVAILABLE and user:
-                log_audit(user, 'delete', 'تم مسح البيانات الموجودة قبل الاستعادة')
+                logger.error(f"فشل في مسح البيانات داخل المعاملة: {str(tx_error)}")
+                log_audit(user, 'error', f'فشل في مسح البيانات قبل الاستعادة: {str(tx_error)}')
+                # لا نرمي استثناء هنا للسماح بمتابعة الاستعادة
         # استعادة البيانات
         if 'data' in backup_data:
             total_records = 0
@@ -1682,7 +1856,9 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                                                 except Exception:
                                                     pass
                                         else:
-                                            setattr(obj, fname, val)
+                                            # تحويل القيمة إلى النوع الصحيح قبل التعيين
+                                            converted_val = convert_field_value(field, val)
+                                            setattr(obj, fname, converted_val)
                                 # تجاهل الحقول غير الموجودة في النموذج
                                 for field_name in fields.keys():
                                     if field_name not in model_field_names:
@@ -1778,37 +1954,19 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                                 overall_percentage = 0
                                 # استخدم total_records_expected المحسوب في البداية بدلاً من total_records المتغير
                                 if total_records_expected > 0:
-                                    overall_percentage = min(100, int((processed_records / total_records_expected) * 100))
+                                    overall_percentage = int((processed_records / total_records_expected) * 100)
+                                
                                 pd.update({
+                                    'processed_tables': processed_tables,
                                     'processed_records': processed_records,
                                     'percentage': overall_percentage,
-                                    'tables_status': ts,
-                                    'current_table': f'{app_name}.{model_name}: {processed_in_table}/{expected_in_table} ({ts[table_index]["progress"] if table_index < len(ts) else 0}%)'
+                                    'tables_status': ts
                                 })
                                 set_restore_progress_data(pd)
-                            except Exception as obj_error:
-                                error_msg = f"تعذر استعادة سجل {model_label}: {str(obj_error)}"
-                                logger.warning(error_msg)
-                                errors.append(error_msg)
-                            total_records += 1
-                        # اكتمال هذا الجدول
-                        processed_tables += 1
-                        pd = get_restore_progress_data()
-                        ts = pd.get('tables_status', [])
-                        if table_index < len(ts):
-                            ts[table_index]['status'] = 'completed'
-                            ts[table_index]['progress'] = 100 if expected_in_table == 0 else ts[table_index]['progress']
-                        
-                        # حساب النسبة العامة بناءً على الجداول المكتملة
-                        overall_percentage = min(100, int((processed_tables / len(flat_tables)) * 90)) if len(flat_tables) > 0 else 90
-                        
-                        pd.update({
-                            'processed_tables': processed_tables,
-                            'percentage': overall_percentage,
-                            'tables_status': ts,
-                            'current_table': f'اكتمل {app_name}.{model_name} ✅ ({processed_in_table} سجل)'
-                        })
-                        set_restore_progress_data(pd)
+                            except Exception as record_error:
+                                logger.warning(f"فشل في استعادة سجل في {app_name}.{model_name}: {str(record_error)}")
+                                errors.append(f"فشل في استعادة سجل في {app_name}.{model_name}: {str(record_error)}")
+                                continue
             logger.info(f"تم استعادة {restored_count} من {total_records} سجل")
             if AUDIT_AVAILABLE and user:
                 try:
