@@ -3,24 +3,12 @@
 {% load i18n %}
 {% load django_bootstrap5 %}
 
-{% block page                <div>
-                    <h1 cla                        <h5>
-                            <i class="fas fa-user me-2"></i>
-                            {% trans "Employee and Leave Type Information" %}
-                        </h5>h3 mb-0">
-                        <i class="fas fa-calendar-plus me-2"></i>
-                        {% if object %}
-                            {% trans "Edit Leave Request" %}
-                        {% else %}
-                            {% trans "New Leave Request" %}
-                        {% endif %}
-                    </h1>
-                    <p class="text-muted mb-0">{% trans "Manage Leave and Permission Requests" %}</p>
-                </div>    {% if object %}
+{% block title %}
+    {% if object %}
         {% trans "Edit Leave Request" %}
     {% else %}
         {% trans "New Leave Request" %}
-    {% endif %}
+    {% endif %} - {{ block.super }}
 {% endblock %}
 
 {% block extra_css %}
@@ -33,23 +21,23 @@
         padding: 30px;
         margin-top: 20px;
     }
-    
+
     .form-header {
         border-bottom: 2px solid #17a2b8;
         padding-bottom: 15px;
         margin-bottom: 30px;
     }
-    
+
     .form-header h2 {
         color: #17a2b8;
         font-weight: 600;
         margin: 0;
     }
-    
+
     .form-section {
         margin-bottom: 25px;
     }
-    
+
     .form-section h5 {
         color: #495057;
         border-bottom: 1px solid #dee2e6;
@@ -57,57 +45,18 @@
         margin-bottom: 20px;
         font-weight: 500;
     }
-    
+
     .btn-action {
         min-width: 120px;
         margin: 0 5px;
     }
-    
+
     .leave-summary-box {
         background: #f8f9fa;
         border-left: 4px solid #17a2b8;
         padding: 15px;
         margin: 15px 0;
         border-radius: 5px;
-    }
-    
-    .leave-duration {
-        font-size: 0.9em;
-        color: #6c757d;
-        margin-top: 5px;
-    }
-    
-    .validation-info {
-        background: #d1ecf1;
-        border: 1px solid #bee5eb;
-        color: #0c5460;
-        padding: 10px;
-        border-radius: 5px;
-        margin: 10px 0;
-    }
-    
-    .validation-info i {
-        margin-right: 8px;
-    }
-    
-    .balance-info {
-        background: #d4edda;
-        border: 1px solid #c3e6cb;
-        color: #155724;
-        padding: 10px;
-        border-radius: 5px;
-        margin: 10px 0;
-    }
-    
-    .leave-type-info {
-        font-size: 0.85em;
-        color: #6c757d;
-        margin-top: 5px;
-    }
-    
-    .status-badge {
-        font-size: 0.8em;
-        padding: 4px 8px;
     }
 </style>
 {% endblock %}
@@ -143,258 +92,88 @@
     <div class="row justify-content-center">
         <div class="col-lg-10 col-md-12">
             <div class="leave-form-container">
-                <div class="form-header">
-                    <h2>
-                        <i class="fas fa-user-clock me-2"></i>
-                        {% if object %}
-                            {% trans "Edit Leave Request Information" %}
-                        {% else %}
-                            {% trans "Register New Leave Request" %}
-                        {% endif %}
-                    </h2>
-                </div>
-
                 <form method="post" id="leaveRequestForm">
                     {% csrf_token %}
-                    
-                    <!-- Employee and Leave Type Section -->
+
+                    <!-- Employee and Leave Type Information -->
                     <div class="form-section">
                         <h5>
-                            <i class="fas fa-user-tag me-2"></i>
-                            {% trans "معلومات الموظف ونوع الإجازة" %}
+                            <i class="fas fa-user me-2"></i>
+                            {% trans "Employee and Leave Type Information" %}
                         </h5>
-                        
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.employee.id_for_label }}" class="form-label">
-                                    <i class="fas fa-user me-1"></i>
-                                    {% trans "Employee" %} <span class="text-danger">*</span>
-                                </label>
-                                {{ form.employee }}
-                                {% if form.employee.errors %}
-                                    <div class="text-danger small mt-1">
-                                        {% for error in form.employee.errors %}
-                                            {{ error }}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
+                            <div class="col-md-6">
+                                {% bootstrap_field form.employee %}
                             </div>
-                            
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.leave_type.id_for_label }}" class="form-label">
-                                    <i class="fas fa-tags me-1"></i>
-                                    {% trans "Leave Type" %} <span class="text-danger">*</span>
-                                </label>
-                                {{ form.leave_type }}
-                                {% if form.leave_type.errors %}
-                                    <div class="text-danger small mt-1">
-                                        {% for error in form.leave_type.errors %}
-                                            {{ error }}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                                <div id="leaveTypeInfo" class="leave-type-info"></div>
-                            </div>
-                        </div>
-                        
-                        <!-- Employee Balance Info -->
-                        <div id="balanceInfo" class="balance-info" style="display: none;">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-balance-scale text-success me-2"></i>
-                                <strong>{% trans "Available Balance:" %}</strong>
-                                <span id="availableBalance" class="ms-2"></span>
+                            <div class="col-md-6">
+                                {% bootstrap_field form.leave_type %}
                             </div>
                         </div>
                     </div>
 
-                    <!-- Date Range Section -->
+                    <!-- Leave Dates -->
                     <div class="form-section">
                         <h5>
-                            <i class="fas fa-calendar-alt me-2"></i>
-                            {% trans "Leave Period" %}
+                            <i class="fas fa-calendar me-2"></i>
+                            {% trans "Leave Dates" %}
                         </h5>
-                        
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.start_date.id_for_label }}" class="form-label">
-                                    <i class="fas fa-calendar-plus me-1"></i>
-                                    {% trans "Start Date" %} <span class="text-danger">*</span>
-                                </label>
-                                {{ form.start_date }}
-                                {% if form.start_date.errors %}
-                                    <div class="text-danger small mt-1">
-                                        {% for error in form.start_date.errors %}
-                                            {{ error }}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
+                            <div class="col-md-6">
+                                {% bootstrap_field form.start_date %}
                             </div>
-                            
-                            <div class="col-md-6 mb-3">
-                                <label for="{{ form.end_date.id_for_label }}" class="form-label">
-                                    <i class="fas fa-calendar-minus me-1"></i>
-                                    {% trans "End Date" %} <span class="text-danger">*</span>
-                                </label>
-                                {{ form.end_date }}
-                                {% if form.end_date.errors %}
-                                    <div class="text-danger small mt-1">
-                                        {% for error in form.end_date.errors %}
-                                            {{ error }}
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
+                            <div class="col-md-6">
+                                {% bootstrap_field form.end_date %}
                             </div>
                         </div>
 
-                        <!-- Leave Duration Display -->
-                        <div class="leave-summary-box">
-                            <div class="row">
-                                <div class="col-md-8">
-                                    <div class="d-flex align-items-center">
-                                        <i class="fas fa-clock text-info me-2"></i>
-                                        <strong>{% trans "Leave Duration:" %}</strong>
-                                        <span id="leaveDuration" class="ms-2">{% trans "Will be calculated automatically" %}</span>
-                                    </div>
-                                </div>
-                                <div class="col-md-4 text-end">
-                                    <div id="weekendInfo" class="text-muted small"></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Validation Info -->
-                        <div class="validation-info">
-                            <i class="fas fa-info-circle"></i>
-                            {% trans "The number of days will be determined automatically based on the specified dates (including holidays)" %}
-                        </div>
-                    </div>
-
-                    <!-- Reason Section -->
-                    <div class="form-section">
-                        <h5>
-                            <i class="fas fa-comment-alt me-2"></i>
-                            {% trans "Leave Reason" %}
-                        </h5>
-                        
-                        <div class="mb-3">
-                            <label for="{{ form.reason.id_for_label }}" class="form-label">
-                                <i class="fas fa-pencil-alt me-1"></i>
-                                {% trans "Reason for Leave Request" %} <span class="text-danger">*</span>
-                            </label>
-                            {{ form.reason }}
-                            {% if form.reason.errors %}
-                                <div class="text-danger small mt-1">
-                                    {% for error in form.reason.errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                            <small class="text-muted">{% trans "Mention the detailed reason for the leave request" %}</small>
-                        </div>
-                    </div>
-
-                    <!-- Current Request Status (for edit mode) -->
-                    {% if object %}
-                    <div class="form-section">
-                        <h5>
-                            <i class="fas fa-info-circle me-2"></i>
-                            {% trans "Request Status" %}
-                        </h5>
-                        
-                        <div class="leave-summary-box">
+                        <!-- Leave Duration Summary -->
+                        <div class="leave-summary-box" id="leaveSummary" style="display: none;">
                             <div class="row">
                                 <div class="col-md-4">
-                                    <strong>{% trans "Status:" %}</strong>
-                                    {% if object.status == 'pending' %}
-                                        <span class="badge bg-warning status-badge ms-2">
-                                            <i class="fas fa-clock me-1"></i>
-                                            {% trans "Pending" %}
-                                        </span>
-                                    {% elif object.status == 'approved' %}
-                                        <span class="badge bg-success status-badge ms-2">
-                                            <i class="fas fa-check-circle me-1"></i>
-                                            {% trans "Approved" %}
-                                        </span>
-                                    {% elif object.status == 'rejected' %}
-                                        <span class="badge bg-danger status-badge ms-2">
-                                            <i class="fas fa-times-circle me-1"></i>
-                                            {% trans "Rejected" %}
-                                        </span>
-                                    {% elif object.status == 'cancelled' %}
-                                        <span class="badge bg-secondary status-badge ms-2">
-                                            <i class="fas fa-ban me-1"></i>
-                                            {% trans "Cancelled" %}
-                                        </span>
-                                    {% endif %}
+                                    <strong>{% trans "Total Days" %}:</strong>
+                                    <span id="totalDays">0</span>
                                 </div>
-                                
                                 <div class="col-md-4">
-                                    <strong>{% trans "Number of Days:" %}</strong>
-                                    <span class="ms-2">{{ object.days_count }} {% trans "day" %}</span>
+                                    <strong>{% trans "Working Days" %}:</strong>
+                                    <span id="workingDays">0</span>
                                 </div>
-                                
                                 <div class="col-md-4">
-                                    <strong>{% trans "Creation Date:" %}</strong>
-                                    <span class="ms-2">{{ object.created_at|date:"d/m/Y" }}</span>
+                                    <strong>{% trans "Leave Balance" %}:</strong>
+                                    <span id="leaveBalance">0</span>
                                 </div>
                             </div>
-                            
-                            {% if object.approved_by %}
-                            <div class="mt-2">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <strong>{% trans "Approved By:" %}</strong>
-                                        <span class="ms-2">{{ object.approved_by.get_full_name|default:object.approved_by.username }}</span>
-                                    </div>
-                                    {% if object.approval_date %}
-                                    <div class="col-md-6">
-                                        <strong>{% trans "Approval Date:" %}</strong>
-                                        <span class="ms-2">{{ object.approval_date|date:"d/m/Y H:i" }}</span>
-                                    </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            {% endif %}
-                            
-                            {% if object.rejection_reason %}
-                            <div class="mt-2">
-                                <strong>{% trans "Rejection Reason:" %}</strong>
-                                <div class="text-danger small mt-1">{{ object.rejection_reason }}</div>
-                            </div>
-                            {% endif %}
                         </div>
                     </div>
-                    {% endif %}
 
-                    <!-- Form Errors -->
-                    {% if form.non_field_errors %}
-                        <div class="alert alert-danger" role="alert">
-                            <h6 class="alert-heading">
-                                <i class="fas fa-exclamation-triangle me-2"></i>
-                                {% trans "Data Error" %}
-                            </h6>
-                            {% for error in form.non_field_errors %}
-                                <p class="mb-0">{{ error }}</p>
-                            {% endfor %}
+                    <!-- Reason and Notes -->
+                    <div class="form-section">
+                        <h5>
+                            <i class="fas fa-comment me-2"></i>
+                            {% trans "Reason and Notes" %}
+                        </h5>
+                        <div class="row">
+                            <div class="col-12">
+                                {% bootstrap_field form.reason %}
+                            </div>
                         </div>
-                    {% endif %}
+                    </div>
 
-                    <!-- Action Buttons -->
-                    <div class="d-flex justify-content-end gap-2 border-top pt-3">
-                        <a href="{% url 'hr:leave_request_list' %}" class="btn btn-outline-secondary btn-action">
-                            <i class="fas fa-times me-1"></i>
-                            {% trans "Cancel" %}
-                        </a>
-                        {% if not object or object.status == 'pending' %}
-                        <button type="submit" class="btn btn-info btn-action">
-                            <i class="fas fa-paper-plane me-1"></i>
-                            {% if object %}
-                                {% trans "Save Changes" %}
-                            {% else %}
-                                {% trans "Send Request" %}
-                            {% endif %}
-                        </button>
-                        {% endif %}
+                    <!-- Form Actions -->
+                    <div class="form-section">
+                        <div class="d-flex justify-content-center">
+                            <button type="submit" class="btn btn-primary btn-action">
+                                <i class="fas fa-save me-1"></i>
+                                {% if object %}
+                                    {% trans "Update Leave Request" %}
+                                {% else %}
+                                    {% trans "Submit Leave Request" %}
+                                {% endif %}
+                            </button>
+                            <a href="{% url 'hr:leave_request_list' %}" class="btn btn-secondary btn-action">
+                                <i class="fas fa-times me-1"></i>
+                                {% trans "Cancel" %}
+                            </a>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -405,161 +184,55 @@
 
 {% block extra_js %}
 <script src="{% static 'js/bootstrap-datepicker.min.js' %}"></script>
+<script src="{% static 'js/bootstrap-datepicker.ar.min.js' %}"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const startDateInput = document.getElementById('id_start_date');
-    const endDateInput = document.getElementById('id_end_date');
-    const leaveDurationSpan = document.getElementById('leaveDuration');
-    const weekendInfoDiv = document.getElementById('weekendInfo');
-    const employeeSelect = document.getElementById('id_employee');
-    const leaveTypeSelect = document.getElementById('id_leave_type');
-    const leaveTypeInfoDiv = document.getElementById('leaveTypeInfo');
-    const balanceInfoDiv = document.getElementById('balanceInfo');
-    const availableBalanceSpan = document.getElementById('availableBalance');
+$(document).ready(function() {
+    // Initialize datepickers
+    $('.datepicker').datepicker({
+        format: 'yyyy-mm-dd',
+        language: 'ar',
+        autoclose: true,
+        todayHighlight: true
+    });
 
-    // حساب مدة الإجازة
+    // Calculate leave duration when dates change
     function calculateLeaveDuration() {
-        const startDate = new Date(startDateInput.value);
-        const endDate = new Date(endDateInput.value);
-        
-        if (startDate && endDate && endDate >= startDate) {
-            const diffTime = Math.abs(endDate - startDate);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 لتشمل اليوم الأخير
-            
-            leaveDurationSpan.textContent = `${diffDays} {% trans "يوم" %}`;
-            leaveDurationSpan.style.color = '#28a745';
-            
-            // حساب أيام العطل
-            let weekendDays = 0;
-            const currentDate = new Date(startDate);
-            while (currentDate <= endDate) {
-                const dayOfWeek = currentDate.getDay();
-                if (dayOfWeek === 5 || dayOfWeek === 6) { // الجمعة والسبت
-                    weekendDays++;
-                }
-                currentDate.setDate(currentDate.getDate() + 1);
+        var startDate = $('#id_start_date').val();
+        var endDate = $('#id_end_date').val();
+
+        if (startDate && endDate) {
+            // Simple calculation - you might want to exclude weekends/holidays
+            var start = new Date(startDate);
+            var end = new Date(endDate);
+            var timeDiff = end.getTime() - start.getTime();
+            var daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
+
+            if (daysDiff > 0) {
+                $('#totalDays').text(daysDiff);
+                $('#workingDays').text(daysDiff); // Simplified - should exclude weekends
+                $('#leaveSummary').show();
             }
-            
-            if (weekendDays > 0) {
-                weekendInfoDiv.textContent = `{% trans "متضمن" %} ${weekendDays} {% trans "يوم عطلة" %}`;
-            } else {
-                weekendInfoDiv.textContent = '';
+        }
+    }
+
+    // Bind date change events
+    $('#id_start_date, #id_end_date').change(calculateLeaveDuration);
+
+    // Form validation
+    $('#leaveRequestForm').submit(function(e) {
+        var startDate = $('#id_start_date').val();
+        var endDate = $('#id_end_date').val();
+
+        if (startDate && endDate) {
+            var start = new Date(startDate);
+            var end = new Date(endDate);
+
+            if (end < start) {
+                e.preventDefault();
+                alert('{% trans "End date must be after start date" %}');
+                return false;
             }
-            
-        } else if (endDate < startDate) {
-            leaveDurationSpan.textContent = '{% trans "تاريخ النهاية يجب أن يكون بعد أو يساوي تاريخ البداية" %}';
-            leaveDurationSpan.style.color = '#dc3545';
-            weekendInfoDiv.textContent = '';
-        } else {
-            leaveDurationSpan.textContent = '{% trans "سيتم حسابها تلقائياً" %}';
-            leaveDurationSpan.style.color = '#6c757d';
-            weekendInfoDiv.textContent = '';
         }
-    }
-
-    // عرض معلومات نوع الإجازة
-    function updateLeaveTypeInfo() {
-        const selectedOption = leaveTypeSelect.options[leaveTypeSelect.selectedIndex];
-        if (selectedOption && selectedOption.value) {
-            // هنا يمكن إضافة استدعاء AJAX للحصول على تفاصيل نوع الإجازة
-            leaveTypeInfoDiv.innerHTML = '<i class="fas fa-info-circle text-info me-1"></i>{% trans "تم اختيار نوع الإجازة" %}';
-        } else {
-            leaveTypeInfoDiv.innerHTML = '';
-        }
-    }
-
-    // عرض رصيد الموظف
-    function updateEmployeeBalance() {
-        if (employeeSelect.value && leaveTypeSelect.value) {
-            // هنا يمكن إضافة استدعاء AJAX للحصول على رصيد الموظف
-            balanceInfoDiv.style.display = 'block';
-            availableBalanceSpan.textContent = '{% trans "جاري التحديث..." %}';
-            
-            // مثال على القيم الثابتة - يمكن استبدالها بـ AJAX
-            setTimeout(() => {
-                availableBalanceSpan.textContent = '{% trans "30 يوم متاح" %}';
-            }, 500);
-        } else {
-            balanceInfoDiv.style.display = 'none';
-        }
-    }
-
-    // إضافة مستمعين للأحداث
-    startDateInput.addEventListener('change', calculateLeaveDuration);
-    endDateInput.addEventListener('change', calculateLeaveDuration);
-    leaveTypeSelect.addEventListener('change', function() {
-        updateLeaveTypeInfo();
-        updateEmployeeBalance();
-    });
-    employeeSelect.addEventListener('change', updateEmployeeBalance);
-
-    // حساب المدة عند تحميل الصفحة
-    if (startDateInput.value && endDateInput.value) {
-        calculateLeaveDuration();
-    }
-
-    // تحديث معلومات نوع الإجازة عند التحميل
-    if (leaveTypeSelect.value) {
-        updateLeaveTypeInfo();
-    }
-
-    // تحديث رصيد الموظف عند التحميل
-    if (employeeSelect.value && leaveTypeSelect.value) {
-        updateEmployeeBalance();
-    }
-
-    // تعيين تاريخ افتراضي للبداية (غداً)
-    if (!startDateInput.value) {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        startDateInput.value = tomorrow.toISOString().split('T')[0];
-    }
-
-    // تأكيد قبل الإرسال
-    const form = document.getElementById('leaveRequestForm');
-    form.addEventListener('submit', function(e) {
-        const startDate = new Date(startDateInput.value);
-        const endDate = new Date(endDateInput.value);
-        
-        // التحقق من صحة التواريخ
-        if (endDate < startDate) {
-            e.preventDefault();
-            alert('{% trans "End date must be after or equal to start date" %}');
-            return false;
-        }
-        
-        // التحقق من اختيار الموظف ونوع الإجازة
-        if (!employeeSelect.value) {
-            e.preventDefault();
-            alert('{% trans "Please select an employee" %}');
-            employeeSelect.focus();
-            return false;
-        }
-        
-        if (!leaveTypeSelect.value) {
-            e.preventDefault();
-            alert('{% trans "Please select leave type" %}');
-            leaveTypeSelect.focus();
-            return false;
-        }
-        
-        // تأكيد الإرسال
-        const action = '{% if object %}{% trans "editing" %}{% else %}{% trans "sending" %}{% endif %}';
-        if (!confirm(`{% trans "Are you sure to" %} ${action} {% trans "the leave request?" %}`)) {
-            e.preventDefault();
-            return false;
-        }
-    });
-
-    // تحسين تجربة المستخدم - إخفاء البيانات المحسوبة عند التغيير
-    startDateInput.addEventListener('input', function() {
-        leaveDurationSpan.textContent = '{% trans "Calculating..." %}';
-        leaveDurationSpan.style.color = '#ffc107';
-    });
-    
-    endDateInput.addEventListener('input', function() {
-        leaveDurationSpan.textContent = '{% trans "Calculating..." %}';
-        leaveDurationSpan.style.color = '#ffc107';
     });
 });
 </script>

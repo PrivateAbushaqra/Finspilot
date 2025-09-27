@@ -1,13 +1,7 @@
 {% extends 'base.html' %}
 {% load i18n %}
 
-{% block title %}{                                                {% trans "Are you sure you want to approve this request?" as approve_msg %}
-                                                <a href="{% url 'hr:leave_request_approve' request.pk %}" 
-                                                   class="btn btn-sm btn-outline-success" 
-                                                   title="{% trans 'Approve' %}"
-                                                   onclick="return confirm('{{ approve_msg }}')">
-                                                    <i class="fas fa-check"></i>
-                                                </a>s "Leave Requests" %} - {{ block.super }}{% endblock %}
+{% block title %}{% trans "Leave Requests" %} - {{ block.super }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -68,7 +62,7 @@
                                                     <i class="fas fa-eye"></i>
                                                 </a>
                                                 {% if request.status == 'pending' %}
-                                                    <a href="{% url 'hr:leave_request_approve' request.pk %}" 
+                                                <a href="{% url 'hr:approve_leave_request' request.pk %}" 
                                                        class="btn btn-sm btn-outline-success" 
                                                        title="{% trans 'Approve' %}"
                                                        onclick="return confirm('هل تريد الموافقة على هذا الطلب؟')">

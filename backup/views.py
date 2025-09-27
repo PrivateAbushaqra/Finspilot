@@ -1607,10 +1607,20 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                             # الحذف العادي للنماذج الأخرى
                             count = model.objects.all().count()
                             if count > 0:  # فقط إذا كان هناك بيانات
-                                model.objects.all().delete()
-                                deleted_stats.append({'table': label, 'deleted': count})
-                                total_deleted_records += count
-                                logger.debug(f"تم مسح {count} سجل من {label} ({i+1}/{len(delete_order)})")
+                                # محاولة الحذف مع إعادة المحاولة في حالة فشل
+                                max_retries = 3
+                                for attempt in range(max_retries):
+                                    try:
+                                        model.objects.all().delete()
+                                        deleted_stats.append({'table': label, 'deleted': count})
+                                        total_deleted_records += count
+                                        logger.debug(f"تم مسح {count} سجل من {label} (المحاولة {attempt + 1})")
+                                        break
+                                    except Exception as delete_attempt_error:
+                                        if attempt == max_retries - 1:
+                                            raise delete_attempt_error
+                                        logger.warning(f"فشلت المحاولة {attempt + 1} لحذف {label}: {str(delete_attempt_error)}")
+                                        time.sleep(0.5)  # انتظار قصير قبل إعادة المحاولة
                             
                         except ProtectedError as p_err:
                             # تسجيل النماذج التي فشل حذفها بسبب علاقات محمية
@@ -1659,314 +1669,381 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                     if isinstance(model_records, list):
                         table_index += 1
                         expected_in_table = len(model_records)
-                        # تحديث حالة الجدول الجاري
-                        pd = get_restore_progress_data()
-                        ts = pd.get('tables_status', [])
-                        if table_index < len(ts):
-                            ts[table_index]['status'] = 'processing'
-                            ts[table_index]['progress'] = 0
-                        pd.update({
-                            'status': 'processing',
-                            'current_table': f'استعادة {app_name}.{model_name}...',
-                            'tables_status': ts
-                        })
-                        set_restore_progress_data(pd)
 
-                        processed_in_table = 0
-                        for record in model_records:
-                            try:
-                                # تصحيح أسماء التطبيقات والنماذج القديمة
-                                original_app_name = app_name
-                                original_model_name = model_name
-                                
-                                if app_name == 'revenues':
-                                    app_name = 'revenues_expenses'
-                                elif app_name == 'assets':
-                                    app_name = 'assets_liabilities'
-                                elif app_name == 'expenses':
-                                    app_name = 'revenues_expenses'
-                                elif app_name == 'liabilities':
-                                    app_name = 'assets_liabilities'
-                                
-                                model_label = f"{app_name}.{model_name.lower()}"
-                                
-                                # معالجة خاصة لـ AuditLog - تصحيح الحقول القديمة
-                                if model_label == 'core.auditlog':
-                                    fields = record.get('fields', {})
-                                    if 'action' in fields and 'action_type' not in fields:
-                                        fields['action_type'] = fields.pop('action')
-                                    if 'details' in fields and 'description' not in fields:
-                                        fields['description'] = fields.pop('details')
-                                
-                                model = apps.get_model(model_label)
-                                fields = record.get('fields', {})
-                                # تحويلات توافقية لحقول قديمة قبل إنشاء الكائن
+                        try:
+                            # تحديث حالة الجدول الجاري
+                            pd = get_restore_progress_data()
+                            ts = pd.get('tables_status', [])
+                            if table_index < len(ts):
+                                ts[table_index]['status'] = 'processing'
+                                ts[table_index]['progress'] = 0
+                            pd.update({
+                                'status': 'processing',
+                                'current_table': f'استعادة {app_name}.{model_name}...',
+                                'tables_status': ts
+                            })
+                            set_restore_progress_data(pd)
+
+                            processed_in_table = 0
+                            table_errors = []
+
+                            # معالجة السجلات في الجدول
+                            for record in model_records:
                                 try:
-                                    # المنتجات: تحويل is_service القديم إلى product_type الجديد
-                                    if model_label == 'products.product' and 'is_service' in fields and 'product_type' not in fields:
-                                        is_service_val = fields.get('is_service')
-                                        fields['product_type'] = 'service' if bool(is_service_val) else 'physical'
-                                        if AUDIT_AVAILABLE and user:
-                                            try:
-                                                log_audit(user, 'import', 'تم تحويل الحقل القديم "is_service" إلى "product_type" أثناء الاستعادة')
-                                            except Exception:
-                                                pass
-                                    # حركات المخزون: تحويل total_amount القديم إلى total_cost
-                                    if model_label == 'inventory.inventorymovement' and 'total_amount' in fields and 'total_cost' not in fields:
-                                        fields['total_cost'] = fields.get('total_amount')
-                                        if AUDIT_AVAILABLE and user:
-                                            try:
-                                                log_audit(user, 'import', 'تم تحويل الحقل القديم "total_amount" إلى "total_cost" في حركة المخزون أثناء الاستعادة')
-                                            except Exception:
-                                                pass
-                                except Exception:
-                                    # تجاهل أي خطأ غير متوقع في التحويلات التوافقية
-                                    pass
-                                pk = record.get('pk', None)
-                                obj = model()
-                                # معالجة الحقول الإلزامية الفارغة وحقول العلاقات
-                                m2m_fields = {}
-                                model_field_names = [f.name for f in model._meta.get_fields()]
-                                for field in model._meta.get_fields():
-                                    fname = field.name
-                                    # اعتبر الحقل إلزامياً إذا كان null=False فقط (blank خاص بالنماذج وليس قاعدة البيانات)
-                                    is_required = (getattr(field, 'null', True) is False) and not getattr(field, 'auto_created', False) and fname != 'id'
-                                    # معالجة الحقول الخارجية ForeignKey و OneToOne
-                                    if field.is_relation and (field.many_to_one or field.one_to_one):
-                                        rel_model = field.related_model
-                                        rel_value = fields.get(fname)
-                                        if rel_value not in [None, '']:
-                                            try:
-                                                rel_obj = rel_model.objects.filter(pk=rel_value).first()
-                                                setattr(obj, fname, rel_obj)
-                                                if rel_obj is None:
-                                                    # إذا كان الحقل FK لمستخدم ومطلوب وقيمة المعرف غير موجودة، عيّن المستخدم الحالي
-                                                    try:
-                                                        from django.contrib.auth import get_user_model
-                                                        UserModel = get_user_model()
-                                                    except Exception:
-                                                        UserModel = None
-                                                    if is_required and UserModel and user and isinstance(user, UserModel) and (rel_model == UserModel or issubclass(rel_model, UserModel)):
-                                                        setattr(obj, fname, user)
-                                                        if AUDIT_AVAILABLE and user:
-                                                            log_audit(user, 'import', f'تم تعيين المستخدم الحالي كقيمة افتراضية للحقل "{fname}" (مرجع غير موجود) في النموذج {model_label}')
-                                                    elif AUDIT_AVAILABLE and user:
-                                                        AuditLog.objects.create(
-                                                            user=user,
-                                                            action='backup_restore_fk_missing',
-                                                            details=f'لم يتم العثور على الكائن المرتبط للحقل "{fname}" في النموذج {model_label} أثناء الاستعادة. تم تعيين None.'
-                                                        )
-                                            except Exception as fk_error:
-                                                setattr(obj, fname, None)
-                                                if AUDIT_AVAILABLE and user:
-                                                    AuditLog.objects.create(
-                                                        user=user,
-                                                        action='backup_restore_fk_error',
-                                                        details=f'خطأ في جلب الكائن المرتبط للحقل "{fname}" في النموذج {model_label}: {str(fk_error)}'
-                                                    )
-                                        else:
-                                            # إذا كان الحقل FK لمستخدم ومطلوب وقيمته مفقودة، عيّن المستخدم الحالي كمقدار افتراضي
-                                            try:
-                                                from django.contrib.auth import get_user_model
-                                                UserModel = get_user_model()
-                                            except Exception:
-                                                UserModel = None
-                                            if is_required and UserModel and user and isinstance(user, UserModel) and (rel_model == UserModel or issubclass(rel_model, UserModel)):
-                                                try:
-                                                    setattr(obj, fname, user)
-                                                    if AUDIT_AVAILABLE and user:
-                                                        log_audit(user, 'import', f'تم تعيين المستخدم الحالي كقيمة افتراضية للحقل "{fname}" المطلوب في النموذج {model_label}')
-                                                except Exception:
-                                                    setattr(obj, fname, None)
-                                            else:
-                                                setattr(obj, fname, None)
-                                    # معالجة الحقول ManyToMany
-                                    elif field.many_to_many:
-                                        rel_model = field.related_model
-                                        rel_values = fields.get(fname)
-                                        if rel_values:
-                                            m2m_fields[fname] = rel_values
-                                    # الحقول الإلزامية الفارغة
-                                    elif is_required and (fname not in fields or fields[fname] in [None, '']):
-                                        if getattr(field, 'default', models.NOT_PROVIDED) is not models.NOT_PROVIDED:
-                                            try:
-                                                setattr(obj, fname, field.get_default())
-                                            except Exception:
-                                                setattr(obj, fname, getattr(field, 'default', None))
-                                        elif getattr(field, 'get_internal_type', lambda: None)() in ['CharField', 'TextField']:
-                                            setattr(obj, fname, '')
-                                        elif getattr(field, 'get_internal_type', lambda: None)() == 'BooleanField':
-                                            setattr(obj, fname, False)
-                                        elif getattr(field, 'get_internal_type', lambda: None)() in ['IntegerField', 'BigIntegerField', 'SmallIntegerField', 'PositiveIntegerField']:
-                                            setattr(obj, fname, 0)
-                                        elif getattr(field, 'get_internal_type', lambda: None)() in ['FloatField']:
-                                            setattr(obj, fname, 0.0)
-                                        elif getattr(field, 'get_internal_type', lambda: None)() in ['DecimalField']:
-                                            setattr(obj, fname, Decimal('0'))
-                                        elif getattr(field, 'get_internal_type', lambda: None)() == 'DateTimeField':
-                                            from django.utils import timezone
-                                            setattr(obj, fname, timezone.now())
-                                        elif getattr(field, 'get_internal_type', lambda: None)() == 'DateField':
-                                            from django.utils import timezone
-                                            setattr(obj, fname, timezone.now().date())
-                                        else:
-                                            setattr(obj, fname, None)
-                                        if AUDIT_AVAILABLE and user:
-                                            try:
-                                                AuditLog.objects.create(
-                                                    user=user,
-                                                    action='backup_restore_field_fix',
-                                                    details=f'تم تعيين قيمة افتراضية للحقل الإلزامي "{fname}" في النموذج {model_label} أثناء الاستعادة.'
-                                                )
-                                            except Exception:
-                                                pass
-                                    # الحقول العادية
-                                    elif fname in fields:
-                                        # إذا كانت القيمة None وحقل غير قابل لـ null فقم بضبط قيمة افتراضية آمنة
-                                        val = fields[fname]
-                                        if (val is None) and (getattr(field, 'null', True) is False) and not field.is_relation and not field.many_to_many:
-                                            internal = getattr(field, 'get_internal_type', lambda: None)()
-                                            if getattr(field, 'default', models.NOT_PROVIDED) is not models.NOT_PROVIDED:
-                                                try:
-                                                    safe_val = field.get_default()
-                                                except Exception:
-                                                    safe_val = getattr(field, 'default', None)
-                                            elif internal in ['CharField', 'TextField']:
-                                                safe_val = ''
-                                            elif internal == 'BooleanField':
-                                                safe_val = False
-                                            elif internal in ['IntegerField', 'BigIntegerField', 'SmallIntegerField', 'PositiveIntegerField']:
-                                                safe_val = 0
-                                            elif internal == 'FloatField':
-                                                safe_val = 0.0
-                                            elif internal == 'DecimalField':
-                                                safe_val = Decimal('0')
-                                            elif internal == 'DateTimeField':
-                                                from django.utils import timezone
-                                                safe_val = timezone.now()
-                                            elif internal == 'DateField':
-                                                from django.utils import timezone
-                                                safe_val = timezone.now().date()
-                                            else:
-                                                safe_val = ''
-                                            setattr(obj, fname, safe_val)
+                                    # تصحيح أسماء التطبيقات والنماذج القديمة
+                                    original_app_name = app_name
+                                    original_model_name = model_name
+
+                                    if app_name == 'revenues':
+                                        app_name = 'revenues_expenses'
+                                    elif app_name == 'assets':
+                                        app_name = 'assets_liabilities'
+                                    elif app_name == 'expenses':
+                                        app_name = 'revenues_expenses'
+                                    elif app_name == 'liabilities':
+                                        app_name = 'assets_liabilities'
+
+                                    model_label = f"{app_name}.{model_name.lower()}"
+
+                                    # معالجة خاصة لـ AuditLog - تصحيح الحقول القديمة
+                                    if model_label == 'core.auditlog':
+                                        fields = record.get('fields', {})
+                                        if 'action' in fields and 'action_type' not in fields:
+                                            fields['action_type'] = fields.pop('action')
+                                        if 'details' in fields and 'description' not in fields:
+                                            fields['description'] = fields.pop('details')
+
+                                    model = apps.get_model(model_label)
+                                    fields = record.get('fields', {})
+
+                                    # تحويلات توافقية لحقول قديمة قبل إنشاء الكائن
+                                    try:
+                                        # المنتجات: تحويل is_service القديم إلى product_type الجديد
+                                        if model_label == 'products.product' and 'is_service' in fields and 'product_type' not in fields:
+                                            is_service_val = fields.get('is_service')
+                                            fields['product_type'] = 'service' if bool(is_service_val) else 'physical'
                                             if AUDIT_AVAILABLE and user:
                                                 try:
-                                                    log_audit(user, 'update', f'تم استبدال قيمة None بقيمة افتراضية للحقل الإلزامي "{fname}" في النموذج {model_label}.')
+                                                    log_audit(user, 'import', 'تم تحويل الحقل القديم "is_service" إلى "product_type" أثناء الاستعادة')
                                                 except Exception:
                                                     pass
-                                        else:
-                                            # تحويل القيمة إلى النوع الصحيح قبل التعيين
-                                            converted_val = convert_field_value(field, val)
-                                            setattr(obj, fname, converted_val)
-                                # تجاهل الحقول غير الموجودة في النموذج
-                                for field_name in fields.keys():
-                                    if field_name not in model_field_names:
-                                        if AUDIT_AVAILABLE and user:
-                                            try:
-                                                log_audit(user, 'view', f'تم تجاهل الحقل غير الموجود "{field_name}" في النموذج {model_label} أثناء الاستعادة.')
-                                            except Exception:
-                                                pass
-                                if pk:
-                                    obj.pk = pk
-                                try:
-                                    obj.save()
-                                except Exception as save_error:
-                                    # معالجة أخطاء التكرار والقيود
-                                    error_msg = str(save_error).lower()
-                                    if 'duplicate key' in error_msg or 'unique constraint' in error_msg:
-                                        # في حالة التكرار، حاول التحديث بدلاً من الإدراج
-                                        try:
-                                            if pk:
-                                                existing_obj = model.objects.filter(pk=pk).first()
-                                                if existing_obj:
-                                                    # تحديث الكائن الموجود
-                                                    for fname, val in fields.items():
-                                                        if hasattr(existing_obj, fname) and fname != 'id':
-                                                            setattr(existing_obj, fname, val)
-                                                    existing_obj.save()
+                                        # حركات المخزون: تحويل total_amount القديم إلى total_cost
+                                        if model_label == 'inventory.inventorymovement' and 'total_amount' in fields and 'total_cost' not in fields:
+                                            fields['total_cost'] = fields.get('total_amount')
+                                            if AUDIT_AVAILABLE and user:
+                                                try:
+                                                    log_audit(user, 'import', 'تم تحويل الحقل القديم "total_amount" إلى "total_cost" في حركة المخزون أثناء الاستعادة')
+                                                except Exception:
+                                                    pass
+                                    except Exception:
+                                        # تجاهل أي خطأ غير متوقع في التحويلات التوافقية
+                                        pass
+
+                                    pk = record.get('pk', None)
+                                    obj = model()
+
+                                    # معالجة الحقول الإلزامية الفارغة وحقول العلاقات
+                                    m2m_fields = {}
+                                    model_field_names = [f.name for f in model._meta.get_fields()]
+
+                                    for field in model._meta.get_fields():
+                                        fname = field.name
+                                        # اعتبر الحقل إلزامياً إذا كان null=False فقط (blank خاص بالنماذج وليس قاعدة البيانات)
+                                        is_required = (getattr(field, 'null', True) is False) and not getattr(field, 'auto_created', False) and fname != 'id'
+
+                                        # معالجة الحقول الخارجية ForeignKey و OneToOne
+                                        if field.is_relation and (field.many_to_one or field.one_to_one):
+                                            rel_model = field.related_model
+                                            rel_value = fields.get(fname)
+                                            if rel_value not in [None, '']:
+                                                try:
+                                                    rel_obj = rel_model.objects.filter(pk=rel_value).first()
+                                                    setattr(obj, fname, rel_obj)
+                                                    if rel_obj is None:
+                                                        # إذا كان الحقل FK لمستخدم ومطلوب وقيمة المعرف غير موجودة، عيّن المستخدم الحالي
+                                                        try:
+                                                            from django.contrib.auth import get_user_model
+                                                            UserModel = get_user_model()
+                                                        except Exception:
+                                                            UserModel = None
+                                                        if is_required and UserModel and user and isinstance(user, UserModel) and (rel_model == UserModel or issubclass(rel_model, UserModel)):
+                                                            setattr(obj, fname, user)
+                                                            if AUDIT_AVAILABLE and user:
+                                                                log_audit(user, 'import', f'تم تعيين المستخدم الحالي كقيمة افتراضية للحقل "{fname}" (مرجع غير موجود) في النموذج {model_label}')
+                                                        elif AUDIT_AVAILABLE and user:
+                                                            AuditLog.objects.create(
+                                                                user=user,
+                                                                action='backup_restore_fk_missing',
+                                                                details=f'لم يتم العثور على الكائن المرتبط للحقل "{fname}" في النموذج {model_label} أثناء الاستعادة. تم تعيين None.'
+                                                            )
+                                                except Exception as fk_error:
+                                                    setattr(obj, fname, None)
                                                     if AUDIT_AVAILABLE and user:
-                                                        log_audit(user, 'update', f'تم تحديث سجل موجود في {model_label} بدلاً من إنشاء مكرر')
+                                                        AuditLog.objects.create(
+                                                            user=user,
+                                                            action='backup_restore_fk_error',
+                                                            details=f'خطأ في جلب الكائن المرتبط للحقل "{fname}" في النموذج {model_label}: {str(fk_error)}'
+                                                        )
+                                            else:
+                                                # إذا كان الحقل FK لمستخدم ومطلوب وقيمته مفقودة، عيّن المستخدم الحالي كمقدار افتراضي
+                                                try:
+                                                    from django.contrib.auth import get_user_model
+                                                    UserModel = get_user_model()
+                                                except Exception:
+                                                    UserModel = None
+                                                if is_required and UserModel and user and isinstance(user, UserModel) and (rel_model == UserModel or issubclass(rel_model, UserModel)):
+                                                    try:
+                                                        setattr(obj, fname, user)
+                                                        if AUDIT_AVAILABLE and user:
+                                                            log_audit(user, 'import', f'تم تعيين المستخدم الحالي كقيمة افتراضية للحقل "{fname}" المطلوب في النموذج {model_label}')
+                                                    except Exception:
+                                                        setattr(obj, fname, None)
                                                 else:
-                                                    # إذا لم يوجد بالـ PK، جرب بدون PK
+                                                    setattr(obj, fname, None)
+
+                                        # معالجة الحقول ManyToMany
+                                        elif field.many_to_many:
+                                            rel_model = field.related_model
+                                            rel_values = fields.get(fname)
+                                            if rel_values:
+                                                m2m_fields[fname] = rel_values
+
+                                        # الحقول الإلزامية الفارغة
+                                        elif is_required and (fname not in fields or fields[fname] in [None, '']):
+                                            if getattr(field, 'default', models.NOT_PROVIDED) is not models.NOT_PROVIDED:
+                                                try:
+                                                    setattr(obj, fname, field.get_default())
+                                                except Exception:
+                                                    setattr(obj, fname, getattr(field, 'default', None))
+                                            elif getattr(field, 'get_internal_type', lambda: None)() in ['CharField', 'TextField']:
+                                                setattr(obj, fname, '')
+                                            elif getattr(field, 'get_internal_type', lambda: None)() == 'BooleanField':
+                                                setattr(obj, fname, False)
+                                            elif getattr(field, 'get_internal_type', lambda: None)() in ['IntegerField', 'BigIntegerField', 'SmallIntegerField', 'PositiveIntegerField']:
+                                                setattr(obj, fname, 0)
+                                            elif getattr(field, 'get_internal_type', lambda: None)() in ['FloatField']:
+                                                setattr(obj, fname, 0.0)
+                                            elif getattr(field, 'get_internal_type', lambda: None)() in ['DecimalField']:
+                                                setattr(obj, fname, Decimal('0'))
+                                            elif getattr(field, 'get_internal_type', lambda: None)() == 'DateTimeField':
+                                                from django.utils import timezone
+                                                setattr(obj, fname, timezone.now())
+                                            elif getattr(field, 'get_internal_type', lambda: None)() == 'DateField':
+                                                from django.utils import timezone
+                                                setattr(obj, fname, timezone.now().date())
+                                            else:
+                                                setattr(obj, fname, None)
+                                            if AUDIT_AVAILABLE and user:
+                                                try:
+                                                    AuditLog.objects.create(
+                                                        user=user,
+                                                        action='backup_restore_field_fix',
+                                                        details=f'تم تعيين قيمة افتراضية للحقل الإلزامي "{fname}" في النموذج {model_label} أثناء الاستعادة.'
+                                                    )
+                                                except Exception:
+                                                    pass
+
+                                        # الحقول العادية
+                                        elif fname in fields:
+                                            # إذا كانت القيمة None وحقل غير قابل لـ null فقم بضبط قيمة افتراضية آمنة
+                                            val = fields[fname]
+                                            if (val is None) and (getattr(field, 'null', True) is False) and not field.is_relation and not field.many_to_many:
+                                                internal = getattr(field, 'get_internal_type', lambda: None)()
+                                                if getattr(field, 'default', models.NOT_PROVIDED) is not models.NOT_PROVIDED:
+                                                    try:
+                                                        safe_val = field.get_default()
+                                                    except Exception:
+                                                        safe_val = getattr(field, 'default', None)
+                                                elif internal in ['CharField', 'TextField']:
+                                                    safe_val = ''
+                                                elif internal == 'BooleanField':
+                                                    safe_val = False
+                                                elif internal in ['IntegerField', 'BigIntegerField', 'SmallIntegerField', 'PositiveIntegerField']:
+                                                    safe_val = 0
+                                                elif internal == 'FloatField':
+                                                    safe_val = 0.0
+                                                elif internal == 'DecimalField':
+                                                    safe_val = Decimal('0')
+                                                elif internal == 'DateTimeField':
+                                                    from django.utils import timezone
+                                                    safe_val = timezone.now()
+                                                elif internal == 'DateField':
+                                                    from django.utils import timezone
+                                                    safe_val = timezone.now().date()
+                                                else:
+                                                    safe_val = ''
+                                                setattr(obj, fname, safe_val)
+                                                if AUDIT_AVAILABLE and user:
+                                                    try:
+                                                        log_audit(user, 'update', f'تم استبدال قيمة None بقيمة افتراضية للحقل الإلزامي "{fname}" في النموذج {model_label}.')
+                                                    except Exception:
+                                                        pass
+                                            else:
+                                                # تحويل القيمة إلى النوع الصحيح قبل التعيين
+                                                converted_val = convert_field_value(field, val)
+                                                setattr(obj, fname, converted_val)
+
+                                    # تجاهل الحقول غير الموجودة في النموذج
+                                    for field_name in fields.keys():
+                                        if field_name not in model_field_names:
+                                            if AUDIT_AVAILABLE and user:
+                                                try:
+                                                    log_audit(user, 'view', f'تم تجاهل الحقل غير الموجود "{field_name}" في النموذج {model_label} أثناء الاستعادة.')
+                                                except Exception:
+                                                    pass
+
+                                    if pk:
+                                        obj.pk = pk
+
+                                    try:
+                                        obj.save()
+                                    except Exception as save_error:
+                                        # معالجة أخطاء التكرار والقيود
+                                        error_msg = str(save_error).lower()
+                                        if 'duplicate key' in error_msg or 'unique constraint' in error_msg:
+                                            # في حالة التكرار، حاول التحديث بدلاً من الإدراج
+                                            try:
+                                                if pk:
+                                                    existing_obj = model.objects.filter(pk=pk).first()
+                                                    if existing_obj:
+                                                        # تحديث الكائن الموجود
+                                                        for fname, val in fields.items():
+                                                            if hasattr(existing_obj, fname) and fname != 'id':
+                                                                setattr(existing_obj, fname, val)
+                                                        existing_obj.save()
+                                                        if AUDIT_AVAILABLE and user:
+                                                            log_audit(user, 'update', f'تم تحديث سجل موجود في {model_label} بدلاً من إنشاء مكرر')
+                                                    else:
+                                                        # إذا لم يوجد بالـ PK، جرب بدون PK
+                                                        obj.pk = None
+                                                        obj.save()
+                                                else:
+                                                    # جرب حفظ بدون PK
                                                     obj.pk = None
                                                     obj.save()
-                                            else:
-                                                # جرب حفظ بدون PK
-                                                obj.pk = None
-                                                obj.save()
-                                        except Exception as retry_error:
-                                            # إذا فشل كل شيء، تجاهل هذا السجل
-                                            logger.warning(f"تعذر استعادة سجل {model_label} بسبب تكرار: {str(retry_error)}")
+                                            except Exception as retry_error:
+                                                # إذا فشل كل شيء، تجاهل هذا السجل
+                                                logger.warning(f"تعذر استعادة سجل {model_label} بسبب تكرار: {str(retry_error)}")
+                                                if AUDIT_AVAILABLE and user:
+                                                    log_audit(user, 'error', f'تم تجاهل سجل مكرر في {model_label}: {str(retry_error)}')
+                                                total_records += 1
+                                                continue
+                                        else:
+                                            # خطأ آخر غير التكرار
+                                            raise save_error
+
+                                    # تعيين الحقول ManyToMany بعد الحفظ
+                                    for m2m_name, m2m_values in m2m_fields.items():
+                                        try:
+                                            # إذا كانت القيمة نصية، حاول تحويلها لقائمة أرقام
+                                            if isinstance(m2m_values, str):
+                                                v = m2m_values.strip()
+                                                try:
+                                                    if (v.startswith('[') and v.endswith(']')):
+                                                        m2m_values = json.loads(v)
+                                                    else:
+                                                        tokens = [p.strip() for p in v.split(',') if p.strip()]
+                                                        if tokens and all(t.replace('.', '', 1).isdigit() for t in tokens):
+                                                            m2m_values = [int(t) if t.isdigit() else float(t) for t in tokens]
+                                                except Exception:
+                                                    pass
+                                            # تأكد أن العناصر أعداد صحيحة قدر الإمكان
+                                            if isinstance(m2m_values, list):
+                                                norm_values = []
+                                                for vv in m2m_values:
+                                                    if isinstance(vv, float) and float(vv).is_integer():
+                                                        norm_values.append(int(vv))
+                                                    elif isinstance(vv, (int,)):
+                                                        norm_values.append(vv)
+                                                    elif isinstance(vv, str) and vv.isdigit():
+                                                        norm_values.append(int(vv))
+                                                    else:
+                                                        # اترك القيمة كما هي إذا لم يمكن تحويلها
+                                                        norm_values.append(vv)
+                                                m2m_values = norm_values
+                                            m2m_manager = getattr(obj, m2m_name)
+                                            m2m_manager.set(m2m_values)
+                                        except Exception as m2m_error:
                                             if AUDIT_AVAILABLE and user:
-                                                log_audit(user, 'error', f'تم تجاهل سجل مكرر في {model_label}: {str(retry_error)}')
-                                            total_records += 1
-                                            continue
-                                    else:
-                                        # خطأ آخر غير التكرار
-                                        raise save_error
-                                # تعيين الحقول ManyToMany بعد الحفظ
-                                for m2m_name, m2m_values in m2m_fields.items():
-                                    try:
-                                        # إذا كانت القيمة نصية، حاول تحويلها لقائمة أرقام
-                                        if isinstance(m2m_values, str):
-                                            v = m2m_values.strip()
-                                            try:
-                                                if (v.startswith('[') and v.endswith(']')):
-                                                    m2m_values = json.loads(v)
-                                                else:
-                                                    tokens = [p.strip() for p in v.split(',') if p.strip()]
-                                                    if tokens and all(t.replace('.', '', 1).isdigit() for t in tokens):
-                                                        m2m_values = [int(t) if t.isdigit() else float(t) for t in tokens]
-                                            except Exception:
-                                                pass
-                                        # تأكد أن العناصر أعداد صحيحة قدر الإمكان
-                                        if isinstance(m2m_values, list):
-                                            norm_values = []
-                                            for vv in m2m_values:
-                                                if isinstance(vv, float) and float(vv).is_integer():
-                                                    norm_values.append(int(vv))
-                                                elif isinstance(vv, (int,)):
-                                                    norm_values.append(vv)
-                                                elif isinstance(vv, str) and vv.isdigit():
-                                                    norm_values.append(int(vv))
-                                                else:
-                                                    # اترك القيمة كما هي إذا لم يمكن تحويلها
-                                                    norm_values.append(vv)
-                                            m2m_values = norm_values
-                                        m2m_manager = getattr(obj, m2m_name)
-                                        m2m_manager.set(m2m_values)
-                                    except Exception as m2m_error:
-                                        if AUDIT_AVAILABLE and user:
-                                            log_audit(user, 'error', f'خطأ في تعيين الحقل ManyToMany "{m2m_name}" في النموذج {model_label}: {str(m2m_error)}')
-                                restored_count += 1
-                                processed_in_table += 1
-                                processed_records += 1
-                                # تحديث تقدم الجدول والتقدم العام
-                                pd = get_restore_progress_data()
-                                ts = pd.get('tables_status', [])
-                                if table_index < len(ts) and expected_in_table > 0:
-                                    table_progress = int((processed_in_table / expected_in_table) * 100)
-                                    ts[table_index]['progress'] = table_progress
+                                                log_audit(user, 'error', f'خطأ في تعيين الحقل ManyToMany "{m2m_name}" في النموذج {model_label}: {str(m2m_error)}')
+
+                                    # تحديث الإحصائيات بعد كل سجل ناجح
+                                    restored_count += 1
+                                    processed_in_table += 1
+                                    processed_records += 1
+
+                                    # تحديث تقدم الجدول والتقدم العام
+                                    pd = get_restore_progress_data()
+                                    ts = pd.get('tables_status', [])
+                                    if table_index < len(ts) and expected_in_table > 0:
+                                        table_progress = int((processed_in_table / expected_in_table) * 100)
+                                        ts[table_index]['progress'] = table_progress
+                                        ts[table_index]['actual_records'] = processed_in_table
+                                    # تقدير الوقت والكنترول العام
+                                    elapsed = time.time() - start_time
+                                    overall_percentage = 0
+                                    # استخدم total_records_expected المحسوب في البداية بدلاً من total_records المتغير
+                                    if total_records_expected > 0:
+                                        overall_percentage = int((processed_records / total_records_expected) * 100)
+
+                                    pd.update({
+                                        'processed_tables': processed_tables,
+                                        'processed_records': processed_records,
+                                        'percentage': overall_percentage,
+                                        'tables_status': ts
+                                    })
+                                    set_restore_progress_data(pd)
+
+                                except Exception as record_error:
+                                    logger.warning(f"فشل في استعادة سجل في {app_name}.{model_name}: {str(record_error)}")
+                                    table_errors.append(f"فشل في استعادة سجل: {str(record_error)}")
+                                    # لا نتوقف عن معالجة باقي السجلات في نفس الجدول
+                                    continue
+
+                            # انتهاء معالجة الجدول
+                            processed_tables += 1
+
+                            # تحديث حالة الجدول النهائية
+                            pd = get_restore_progress_data()
+                            ts = pd.get('tables_status', [])
+                            if table_index < len(ts):
+                                if table_errors:
+                                    ts[table_index]['status'] = 'error'
+                                    ts[table_index]['error'] = f'فشل في {len(table_errors)} سجل'
+                                else:
+                                    ts[table_index]['status'] = 'completed'
+                                    ts[table_index]['progress'] = 100
                                     ts[table_index]['actual_records'] = processed_in_table
-                                # تقدير الوقت والكنترول العام
-                                elapsed = time.time() - start_time
-                                overall_percentage = 0
-                                # استخدم total_records_expected المحسوب في البداية بدلاً من total_records المتغير
-                                if total_records_expected > 0:
-                                    overall_percentage = int((processed_records / total_records_expected) * 100)
-                                
-                                pd.update({
-                                    'processed_tables': processed_tables,
-                                    'processed_records': processed_records,
-                                    'percentage': overall_percentage,
-                                    'tables_status': ts
-                                })
-                                set_restore_progress_data(pd)
-                            except Exception as record_error:
-                                logger.warning(f"فشل في استعادة سجل في {app_name}.{model_name}: {str(record_error)}")
-                                errors.append(f"فشل في استعادة سجل في {app_name}.{model_name}: {str(record_error)}")
-                                continue
+                            pd.update({
+                                'tables_status': ts
+                            })
+                            set_restore_progress_data(pd)
+
+                            # تسجيل أخطاء الجدول إذا وجدت
+                            if table_errors:
+                                errors.extend([f"{app_name}.{model_name}: {err}" for err in table_errors])
+                                logger.warning(f"تم إكمال جدول {app_name}.{model_name} مع {len(table_errors)} خطأ")
+                            else:
+                                logger.info(f"تم إكمال جدول {app_name}.{model_name} بنجاح - {processed_in_table} سجل")
+
+                        except Exception as table_error:
+                            # خطأ على مستوى الجدول بالكامل
+                            logger.error(f"فشل في معالجة جدول {app_name}.{model_name}: {str(table_error)}")
+                            errors.append(f"فشل في معالجة جدول {app_name}.{model_name}: {str(table_error)}")
+
+                            # تحديث حالة الجدول كفاشل
+                            pd = get_restore_progress_data()
+                            ts = pd.get('tables_status', [])
+                            if table_index < len(ts):
+                                ts[table_index]['status'] = 'error'
+                                ts[table_index]['error'] = str(table_error)
+                            pd.update({
+                                'tables_status': ts
+                            })
+                            set_restore_progress_data(pd)
+
+                            processed_tables += 1
+                            continue
             logger.info(f"تم استعادة {restored_count} من {total_records} سجل")
             if AUDIT_AVAILABLE and user:
                 try:
@@ -1993,7 +2070,7 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                 'status': 'completed',
                 'is_running': False,
                 'percentage': 100,
-                'processed_records': total_records_expected,  # تأكد من المطابقة الكاملة
+                'processed_records': processed_records,  # استخدام العدد الفعلي المستعاد بدلاً من total_records_expected
                 'current_table': 'تم إتمام الاستعادة بنجاح! ✅',
                 'estimated_time': 'اكتمل',
                 'tables_status': ts
@@ -2477,6 +2554,24 @@ def get_restore_progress(request):
     """الحصول على حالة تقدم الاستعادة"""
     try:
         progress_data = get_restore_progress_data()
+
+        # التحقق من أن progress_data هو dictionary صحيح
+        if not isinstance(progress_data, dict):
+            logger.warning(f"بيانات التقدم تالفة: {type(progress_data)}")
+            progress_data = {
+                'is_running': False,
+                'current_table': '',
+                'processed_tables': 0,
+                'total_tables': 0,
+                'processed_records': 0,
+                'total_records': 0,
+                'percentage': 0,
+                'status': 'idle',
+                'error': 'بيانات التقدم تالفة',
+                'tables_status': [],
+                'estimated_time': ''
+            }
+
         # التحقق من العمليات المعلقة
         if progress_data.get('is_running', False):
             import time
@@ -2486,13 +2581,36 @@ def get_restore_progress(request):
                 cache.delete('restore_progress')
                 cache.delete('restore_last_update')
                 log_audit(request.user, 'delete', 'تم إلغاء عملية الاستعادة المعلقة تلقائياً')
+                progress_data = {
+                    'is_running': False,
+                    'current_table': '',
+                    'processed_tables': 0,
+                    'total_tables': 0,
+                    'processed_records': 0,
+                    'total_records': 0,
+                    'percentage': 0,
+                    'status': 'idle',
+                    'error': None,
+                    'tables_status': [],
+                    'estimated_time': ''
+                }
+
         return JsonResponse({
             'success': True,
             'progress': progress_data
         })
     except Exception as e:
         logger.error(f"خطأ في جلب تقدم الاستعادة: {str(e)}")
-        return JsonResponse({'success': False, 'error': str(e)})
+        # إرجاع response افتراضي في حالة الخطأ
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+            'progress': {
+                'is_running': False,
+                'status': 'error',
+                'error': str(e)
+            }
+        })
 
 
 @login_required
