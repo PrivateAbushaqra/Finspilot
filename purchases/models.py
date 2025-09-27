@@ -19,7 +19,7 @@ class PurchaseInvoice(models.Model):
     supplier = models.ForeignKey(CustomerSupplier, on_delete=models.PROTECT, 
                                verbose_name=_('المورد'), limit_choices_to={'type__in': ['supplier', 'both']})
     warehouse = models.ForeignKey('inventory.Warehouse', on_delete=models.PROTECT, 
-                                verbose_name=_('المستودع'), null=True, blank=True)
+                                verbose_name=_('Warehouse'), null=True, blank=True)
     payment_type = models.CharField(_('نوع الدفع'), max_length=20, choices=PAYMENT_TYPES)
     is_tax_inclusive = models.BooleanField(_('شامل ضريبة'), default=True, 
                                          help_text=_('عند الاختيار، ستكون الأسعار شاملة للضريبة'))
@@ -49,7 +49,7 @@ class PurchaseInvoiceItem(models.Model):
     """عنصر فاتورة المشتريات"""
     invoice = models.ForeignKey(PurchaseInvoice, on_delete=models.CASCADE, 
                               verbose_name=_('الفاتورة'), related_name='items')
-    product = models.ForeignKey('products.Product', on_delete=models.PROTECT, verbose_name=_('المنتج'))
+    product = models.ForeignKey('products.Product', on_delete=models.PROTECT, verbose_name=_('Product'))
     quantity = models.DecimalField(_('الكمية'), max_digits=10, decimal_places=3)
     unit_price = models.DecimalField(_('سعر الوحدة'), max_digits=15, decimal_places=3)
     tax_rate = models.DecimalField(_('نسبة الضريبة'), max_digits=5, decimal_places=2, default=0)
@@ -136,7 +136,7 @@ class PurchaseReturnItem(models.Model):
                                      verbose_name=_('مردود المشتريات'), related_name='items')
     original_item = models.ForeignKey(PurchaseInvoiceItem, on_delete=models.PROTECT, 
                                     verbose_name=_('العنصر الأصلي'))
-    product = models.ForeignKey('products.Product', on_delete=models.PROTECT, verbose_name=_('المنتج'))
+    product = models.ForeignKey('products.Product', on_delete=models.PROTECT, verbose_name=_('Product'))
     returned_quantity = models.DecimalField(_('الكمية المرتجعة'), max_digits=10, decimal_places=3)
     unit_price = models.DecimalField(_('سعر الوحدة'), max_digits=15, decimal_places=3)
     tax_rate = models.DecimalField(_('نسبة الضريبة'), max_digits=5, decimal_places=2, default=0)

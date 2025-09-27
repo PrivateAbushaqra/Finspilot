@@ -75,7 +75,7 @@ class RevenueExpenseEntryForm(forms.ModelForm):
             'description': _('الوصف'),
             'payment_method': _('طريقة الدفع'),
             'reference_number': _('رقم المرجع'),
-            'date': _('التاريخ'),
+            'date': _('Date'),
         }
     
     def __init__(self, *args, **kwargs):

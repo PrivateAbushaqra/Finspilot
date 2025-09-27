@@ -70,8 +70,8 @@ class InventoryMovement(models.Model):
 
     movement_number = models.CharField(_('Movement Number'), max_length=50, unique=True)
     date = models.DateField(_('Date'))
-    product = models.ForeignKey('products.Product', on_delete=models.PROTECT, verbose_name=_('المنتج'))
-    warehouse = models.ForeignKey(Warehouse, on_delete=models.PROTECT, verbose_name=_('المستودع'))
+    product = models.ForeignKey('products.Product', on_delete=models.PROTECT, verbose_name=_('Product'))
+    warehouse = models.ForeignKey(Warehouse, on_delete=models.PROTECT, verbose_name=_('Warehouse'))
     movement_type = models.CharField(_('Transaction Type'), max_length=20, choices=MOVEMENT_TYPES)
     reference_type = models.CharField(_('نوع المرجع'), max_length=30, choices=REFERENCE_TYPES)
     reference_id = models.PositiveIntegerField(_('معرف المرجع'))
@@ -141,7 +141,7 @@ class WarehouseTransferItem(models.Model):
     """عنصر تحويل المستودع"""
     transfer = models.ForeignKey(WarehouseTransfer, on_delete=models.CASCADE, 
                                verbose_name=_('التحويل'), related_name='items')
-    product = models.ForeignKey('products.Product', on_delete=models.PROTECT, verbose_name=_('المنتج'))
+    product = models.ForeignKey('products.Product', on_delete=models.PROTECT, verbose_name=_('Product'))
     quantity = models.DecimalField(_('الكمية'), max_digits=10, decimal_places=3)
     unit_cost = models.DecimalField(_('تكلفة الوحدة'), max_digits=15, decimal_places=3, default=0)
     total_cost = models.DecimalField(_('التكلفة الإجمالية'), max_digits=15, decimal_places=3, default=0)

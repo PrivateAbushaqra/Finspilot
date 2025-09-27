@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load i18n custom_filters %}
 
-{% block title %}{% trans "تقرير أرصدة المخزون" %} - {{ block.super }}{% endblock %}
+{% block title %}{% trans "Inventory Balances Report" %} - {{ block.super }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -10,9 +10,9 @@
         <div>
             <h2 class="mb-0">
                 <i class="fas fa-warehouse text-primary me-2"></i>
-                {% trans "تقرير أرصدة المخزون" %}
+                {% trans "Inventory Balances Report" %}
             </h2>
-            <p class="text-muted mb-0">{% trans "حتى تاريخ" %}: {{ as_of_date|date:"Y-m-d" }}</p>
+            <p class="text-muted mb-0">{% trans "As of Date" %}: {{ as_of_date|date:"Y-m-d" }}</p>
         </div>
     </div>
 
@@ -21,12 +21,12 @@
         <div class="card-body">
             <form method="get" class="row g-3">
                 <div class="col-md-3">
-                    <label for="as_of_date" class="form-label">{% trans "التاريخ" %}</label>
+                    <label for="as_of_date" class="form-label">{% trans "Date" %}</label>
                     <input type="date" class="form-control" id="as_of_date" name="as_of_date"
                            value="{{ as_of_date|date:'Y-m-d' }}">
                 </div>
                 <div class="col-md-3">
-                    <label for="warehouse" class="form-label">{% trans "المستودع" %}</label>
+                    <label for="warehouse" class="form-label">{% trans "Warehouse" %}</label>
                     <select class="form-select" id="warehouse" name="warehouse">
                         <option value="">{% trans "All" %}</option>
                         {% for warehouse in warehouses %}
@@ -35,7 +35,7 @@
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label for="product" class="form-label">{% trans "المنتج" %}</label>
+                    <label for="product" class="form-label">{% trans "Product" %}</label>
                     <select class="form-select" id="product" name="product">
                         <option value="">{% trans "All" %}</option>
                         {% for product in products %}
@@ -58,7 +58,7 @@
         <div class="col-md-4">
             <div class="card bg-primary text-white">
                 <div class="card-body">
-                    <h5 class="card-title">{% trans "إجمالي المنتجات" %}</h5>
+                    <h5 class="card-title">{% trans "Total Products" %}</h5>
                     <h3>{{ total_products }}</h3>
                 </div>
             </div>
@@ -66,7 +66,7 @@
         <div class="col-md-4">
             <div class="card bg-success text-white">
                 <div class="card-body">
-                    <h5 class="card-title">{% trans "إجمالي القيمة" %}</h5>
+                    <h5 class="card-title">{% trans "Total Value" %}</h5>
                     <h3>{{ total_value|floatformat:3 }}</h3>
                 </div>
             </div>
@@ -77,19 +77,19 @@
     {% if inventory_data %}
     <div class="card">
         <div class="card-header">
-            <h5 class="mb-0">{% trans "أرصدة المخزون" %}</h5>
+            <h5 class="mb-0">{% trans "Inventory Balances" %}</h5>
         </div>
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-striped">
                     <thead>
                         <tr>
-                            <th>{% trans "المنتج" %}</th>
+                            <th>{% trans "Product" %}</th>
                             <th>{% trans "الكود" %}</th>
                             {% for warehouse in warehouses %}
                             <th class="text-center">{{ warehouse.name }}</th>
                             {% endfor %}
-                            <th class="text-center">{% trans "الإجمالي" %}</th>
+                            <th class="text-center">{% trans "Total" %}</th>
                             <th class="text-center">{% trans "القيمة" %}</th>
                         </tr>
                     </thead>

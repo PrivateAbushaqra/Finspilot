@@ -982,7 +982,7 @@
                         <li class="nav-item">
                             <a class="nav-link {% if active_menu == 'journal' and 'year_end_closing' in request.path %}active{% endif %}" href="{% url 'journal:year_end_closing' %}">
                                 <i class="fas fa-calendar-check me-2"></i>
-                                {% trans "إقفال السنة المالية" %}
+                                {% trans "Closing the Fiscal Year" %}
                             </a>
                         </li>
                         {% endif %}
@@ -1056,16 +1056,16 @@
                                         <a class="nav-link {% if active_menu == 'reports' and 'cash_flow' in request.path %}active{% endif %}" href="{% url 'reports:cash_flow' %}">{% trans "Cash Flow Statement" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'aging_report' in request.path %}active{% endif %}" href="{% url 'reports:aging_report' %}">{% trans "تقرير أعمار الذمم" %}</a>
+                                        <a class="nav-link {% if active_menu == 'reports' and 'aging_report' in request.path %}active{% endif %}" href="{% url 'reports:aging_report' %}">{% trans "Accounts Receivable Aging Report" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'inventory_report' in request.path %}active{% endif %}" href="{% url 'reports:inventory_report' %}">{% trans "تقرير أرصدة المخزون" %}</a>
+                                        <a class="nav-link {% if active_menu == 'reports' and 'inventory_report' in request.path %}active{% endif %}" href="{% url 'reports:inventory_report' %}">{% trans "Inventory Balances Report" %}</a>
                                     </li>
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'reports' and 'financial_ratios' in request.path %}active{% endif %}" href="{% url 'reports:financial_ratios' %}">{% trans "Financial Ratios" %}</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'documents' and 'report' in request.path %}active{% endif %}" href="{% url 'documents:report' %}">{% trans "تقرير المستندات" %}</a>
+                                        <a class="nav-link {% if active_menu == 'documents' and 'report' in request.path %}active{% endif %}" href="{% url 'documents:report' %}">{% trans "Documents Report" %}</a>
                                     </li>
                                 </ul>
                             </div>

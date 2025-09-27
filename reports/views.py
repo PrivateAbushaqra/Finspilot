@@ -1282,8 +1282,8 @@ def inventory_report(request):
             id = 0
             pk = 0
             def __str__(self):
-                return str(_('تقرير أرصدة المخزون'))
-        log_view_activity(request, 'view', ReportObj(), str(_('عرض تقرير أرصدة المخزون')))
+                return str(_('Inventory Balances Report'))
+        log_view_activity(request, 'view', ReportObj(), str(_('View Inventory Ralance Report')))
     except Exception:
         pass
 

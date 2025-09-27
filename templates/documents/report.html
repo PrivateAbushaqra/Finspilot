@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load i18n %}
 
-{% block title %}{% trans "تقرير المستندات" %} - {{ block.super }}{% endblock %}
+{% block title %}{% trans "Documents Report" %} - {{ block.super }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -9,7 +9,7 @@
         <div>
             <h2 class="mb-0">
                 <i class="fas fa-file-alt text-primary me-2"></i>
-                {% trans "تقرير المستندات" %}
+                {% trans "Documents Report" %}
             </h2>
         </div>
     </div>
@@ -55,7 +55,7 @@
     {% else %}
     <div class="alert alert-info">
         <i class="fas fa-info-circle me-2"></i>
-        {% trans "لا توجد مستندات" %}
+        {% trans "No documents" %}
     </div>
     {% endif %}
 </div>

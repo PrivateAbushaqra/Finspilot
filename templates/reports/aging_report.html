@@ -70,7 +70,7 @@
                     <thead>
                         <tr>
                             <th>{% trans "Customer" %}</th>
-                            <th class="text-end">{% trans "الإجمالي" %}</th>
+                            <th class="text-end">{% trans "Total" %}</th>
                             <th class="text-end">0-30 {% trans "يوم" %}</th>
                             <th class="text-end">31-60 {% trans "يوم" %}</th>
                             <th class="text-end">61-90 {% trans "يوم" %}</th>
@@ -91,7 +91,7 @@
                     </tbody>
                     <tfoot>
                         <tr class="table-primary">
-                            <th>{% trans "الإجمالي" %}</th>
+                            <th>{% trans "Total" %}</th>
                             <th class="text-end">{{ total_customers_outstanding|floatformat:3 }}</th>
                             <th class="text-end">{{ total_customers_aging_0_30|floatformat:3 }}</th>
                             <th class="text-end">{{ total_customers_aging_31_60|floatformat:3 }}</th>
@@ -117,7 +117,7 @@
                     <thead>
                         <tr>
                             <th>{% trans "Supplier" %}</th>
-                            <th class="text-end">{% trans "الإجمالي" %}</th>
+                            <th class="text-end">{% trans "Total" %}</th>
                             <th class="text-end">0-30 {% trans "يوم" %}</th>
                             <th class="text-end">31-60 {% trans "يوم" %}</th>
                             <th class="text-end">61-90 {% trans "يوم" %}</th>
@@ -138,7 +138,7 @@
                     </tbody>
                     <tfoot>
                         <tr class="table-warning">
-                            <th>{% trans "الإجمالي" %}</th>
+                            <th>{% trans "Total" %}</th>
                             <th class="text-end">{{ total_suppliers_outstanding|floatformat:3 }}</th>
                             <th class="text-end">{{ total_suppliers_aging_0_30|floatformat:3 }}</th>
                             <th class="text-end">{{ total_suppliers_aging_31_60|floatformat:3 }}</th>
