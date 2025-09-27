@@ -471,6 +471,15 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // {% trans "Set focus on supplier field" %}
+    setTimeout(() => {
+        const supplierSearch = document.getElementById('supplier_search');
+        if (supplierSearch) {
+            supplierSearch.focus();
+            console.log('✅ Focus set on supplier search field');
+        }
+    }, 200);
+    
     console.log('{% trans "Purchase invoice add page loaded" %}');
 });
 

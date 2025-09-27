@@ -622,6 +622,15 @@ function initializePage() {
     
     // Strategy 3: Setup button event listeners
     setupAddProductButton();
+    
+    // Strategy 4: Set focus on customer field
+    setTimeout(() => {
+        const customerSearch = document.getElementById('customer_search');
+        if (customerSearch) {
+            customerSearch.focus();
+            console.log('✅ Focus set on customer search field');
+        }
+    }, 200);
 }
 
 // Enhanced button setup with multiple fallbacks
