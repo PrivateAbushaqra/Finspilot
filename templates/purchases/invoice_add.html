@@ -120,6 +120,14 @@
                     </h5>
                 </div>
                 
+                <!-- Hidden elements for translations -->
+                <div id="unsaved-changes-translations" style="display: none;">
+                    <span id="trans-unsaved-changes">{% trans "Unsaved Changes" context "unsaved_changes" %}</span>
+                    <span id="trans-unsaved-message">{% trans "Are you sure you want to leave this page? You have unsaved changes." context "unsaved_changes" %}</span>
+                    <span id="trans-cancel">{% trans "Cancel" context "unsaved_changes" %}</span>
+                    <span id="trans-leave">{% trans "Leave" context "unsaved_changes" %}</span>
+                </div>
+                
                 <div class="p-4">
                     <form method="post" id="invoiceForm">
                         {% csrf_token %}
@@ -555,6 +563,9 @@ function addProductRow() {
         tbody.appendChild(row);
         
         console.log(`تم إضافة صف منتج جديد: productRow${productRowCount}`);
+        
+        // Mark as having unsaved changes
+        hasUnsavedChanges = true;
         
     } catch (error) {
         console.error('{% trans "Error adding product row" %}:', error);
@@ -1628,6 +1639,91 @@ function showKeyboardShortcuts() {
     });
     
     alert(message);
+}
+
+// Unsaved changes warning
+let hasUnsavedChanges = false;
+
+// Track form changes
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('invoiceForm');
+    if (form) {
+        const inputs = form.querySelectorAll('input, select, textarea');
+        inputs.forEach(input => {
+            input.addEventListener('change', function() {
+                hasUnsavedChanges = true;
+            });
+        });
+    }
+});
+
+// Show confirmation modal when leaving the page
+window.addEventListener('beforeunload', function(e) {
+    if (hasUnsavedChanges) {
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+    }
+});
+
+// Intercept navigation links
+document.addEventListener('click', function(e) {
+    console.log('Click event detected, hasUnsavedChanges:', hasUnsavedChanges);
+    if (hasUnsavedChanges && e.target.closest('a')) {
+        const link = e.target.closest('a');
+        const href = link.getAttribute('href');
+        console.log('Link clicked:', href, 'has data-bs-toggle:', link.hasAttribute('data-bs-toggle'));
+        if (href && !href.startsWith('#') && !href.startsWith('javascript:') && !link.hasAttribute('data-bs-toggle')) {
+            e.preventDefault();
+            console.log('Preventing default and showing modal for:', href);
+            showUnsavedChangesModal(href);
+        }
+    }
+});
+
+// Function to show unsaved changes modal
+function showUnsavedChangesModal(targetUrl) {
+    console.log('showUnsavedChangesModal called with URL:', targetUrl);
+    const transTitle = document.getElementById('trans-unsaved-changes').textContent;
+    const transMessage = document.getElementById('trans-unsaved-message').textContent;
+    const transCancel = document.getElementById('trans-cancel').textContent;
+    const transLeave = document.getElementById('trans-leave').textContent;
+    
+    console.log('Translations:', {transTitle, transMessage, transCancel, transLeave});
+    
+    const modalHtml = `
+        <div class="modal fade" id="unsavedChangesModal" tabindex="-1" aria-labelledby="unsavedChangesModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="unsavedChangesModalLabel">${transTitle}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        ${transMessage}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">${transCancel}</button>
+                        <button type="button" class="btn btn-primary" onclick="proceedToUrl('${targetUrl}')">${transLeave}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    const modal = new bootstrap.Modal(document.getElementById('unsavedChangesModal'));
+    modal.show();
+    
+    // Remove modal from DOM after hiding
+    document.getElementById('unsavedChangesModal').addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
+}
+
+// Function to proceed to URL
+function proceedToUrl(url) {
+    window.location.href = url;
 }
 </script>
 
