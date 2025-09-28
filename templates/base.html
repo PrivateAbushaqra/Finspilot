@@ -638,6 +638,7 @@
                                         <a class="nav-link {% if active_menu == 'banks' %}active{% endif %}" data-bs-toggle="collapse" href="#banksMenu">
                                             <i class="fas fa-university me-2"></i>
                                             {% trans "Bank Accounts" %}
+                                            <i class="fas fa-chevron-down small"></i>
                                         </a>
                                         <div class="collapse" id="banksMenu">
                                             <ul class="nav flex-column ms-3">
@@ -668,6 +669,7 @@
                                         <a class="nav-link" data-bs-toggle="collapse" href="#cashboxesMenu">
                                             <i class="fas fa-cash-register me-2"></i>
                                             {% trans "Cash Boxes" %}
+                                            <i class="fas fa-chevron-down small"></i>
                                         </a>
                                         <div class="collapse" id="cashboxesMenu">
                                             <ul class="nav flex-column ms-3">
@@ -687,6 +689,7 @@
                                         <a class="nav-link" data-bs-toggle="collapse" href="#receiptsMenu">
                                             <i class="fas fa-receipt me-2"></i>
                                             {% trans "Payment Receipts" %}
+                                            <i class="fas fa-chevron-down small"></i>
                                         </a>
                                         <div class="collapse" id="receiptsMenu">
                                             <ul class="nav flex-column ms-3">
@@ -710,6 +713,7 @@
                                         <a class="nav-link" data-bs-toggle="collapse" href="#paymentsMenu">
                                             <i class="fas fa-money-bill-wave me-2"></i>
                                             {% trans "Payment Vouchers" %}
+                                            <i class="fas fa-chevron-down small"></i>
                                         </a>
                                         <div class="collapse" id="paymentsMenu">
                                             <ul class="nav flex-column ms-3">
@@ -730,7 +734,8 @@
                                     <li class="nav-item">
                                         <a class="nav-link" data-bs-toggle="collapse" href="#journalEntriesMenu">
                                             <i class="fas fa-book me-2"></i>
-                                    {% trans "Journal Entries" %}
+                                            {% trans "Journal Entries" %}
+                                            <i class="fas fa-chevron-down small"></i>
                                         </a>
                                         <div class="collapse" id="journalEntriesMenu">
                                             <ul class="nav flex-column ms-3">
@@ -775,6 +780,7 @@
                                         <a class="nav-link" data-bs-toggle="collapse" href="#revenuesExpensesMenu">
                                             <i class="fas fa-chart-line me-2"></i>
                                             {% trans "Revenues & Expenses" %}
+                                            <i class="fas fa-chevron-down small"></i>
                                         </a>
                                         <div class="collapse" id="revenuesExpensesMenu">
                                             <ul class="nav flex-column ms-3">
@@ -813,6 +819,7 @@
                                         <a class="nav-link" data-bs-toggle="collapse" href="#assetsLiabilitiesMenu">
                                             <i class="fas fa-balance-scale me-2"></i>
                                             {% trans "Assets & Liabilities" %}
+                                            <i class="fas fa-chevron-down small"></i>
                                         </a>
                                         <div class="collapse" id="assetsLiabilitiesMenu">
                                             <ul class="nav flex-column ms-3">
@@ -872,6 +879,7 @@
                             <a class="nav-link {% if active_menu == 'banks' %}active{% endif %}" data-bs-toggle="collapse" href="#banksMenu">
                                 <i class="fas fa-university me-2"></i>
                                 {% trans "Bank Accounts" %}
+                                <i class="fas fa-chevron-down small"></i>
                             </a>
                             <div class="collapse" id="banksMenu">
                                 <ul class="nav flex-column ms-3">
@@ -986,6 +994,7 @@
                                         <a class="nav-link" data-bs-toggle="collapse" href="#purchasesMenu">
                                             <i class="fas fa-shopping-cart me-2"></i>
                                             {% trans "Purchases" %}
+                                            <i class="fas fa-chevron-down small"></i>
                                         </a>
                                         <div class="collapse" id="purchasesMenu">
                                             <ul class="nav flex-column ms-3">
@@ -999,7 +1008,7 @@
                                                             <a class="nav-link {% if active_menu == 'purchases' and 'return_add' in request.path %}active{% endif %}" href="{% url 'purchases:return_add' %}">{% trans "Add Purchase Return" %}</a>
                                                         </li>
                                                     {% endif %}
-                                                                                            {% if perms.purchases.view_purchaseinvoice or user.is_superuser %}
+                                                         {% if perms.purchases.view_purchaseinvoice or user.is_superuser %}
                                                         <li class="nav-item">
                                                             <a class="nav-link {% if active_menu == 'purchases' and 'invoice_list' in request.path %}active{% endif %}" href="{% url 'purchases:invoice_list' %}">{% trans "Purchases Invoice List" %}</a>
                                                         </li>
@@ -1029,6 +1038,7 @@
                                         <a class="nav-link" data-bs-toggle="collapse" href="#salesMenu">
                                             <i class="fas fa-cash-register me-2"></i>
                                             {% trans "Sales" %}
+                                            <i class="fas fa-chevron-down small"></i>
                                         </a>
                                         <div class="collapse" id="salesMenu">
                                             <ul class="nav flex-column ms-3">
@@ -1071,6 +1081,7 @@
                                         <a class="nav-link" data-bs-toggle="collapse" href="#customersMenu">
                                             <i class="fas fa-users me-2"></i>
                                             {% trans "Customers & Suppliers" %}
+                                            <i class="fas fa-chevron-down small"></i>
                                         </a>
                                         <div class="collapse" id="customersMenu">
                                             <ul class="nav flex-column ms-3">
@@ -1120,6 +1131,7 @@
                                         <a class="nav-link" data-bs-toggle="collapse" href="#productsMenu">
                                             <i class="fas fa-boxes me-2"></i>
                                             {% trans "Categories & Products" %}
+                                            <i class="fas fa-chevron-down small"></i>
                                         </a>
                                         <div class="collapse" id="productsMenu">
                                             <ul class="nav flex-column ms-3">
@@ -1149,6 +1161,7 @@
                                         <a class="nav-link" data-bs-toggle="collapse" href="#inventoryMenu">
                                             <i class="fas fa-warehouse me-2"></i>
                                             {% trans "Inventory" %}
+                                            <i class="fas fa-chevron-down small"></i>
                                         </a>
                                         <div class="collapse" id="inventoryMenu">
                                             <ul class="nav flex-column ms-3">
@@ -1485,6 +1498,7 @@
                             <a class="nav-link" data-bs-toggle="collapse" href="#reportsMenu">
                                 <i class="fas fa-chart-bar me-2"></i>
                                 {% trans "Reports" %}
+                                <i class="fas fa-chevron-down small"></i>
                             </a>
                             <div class="collapse" id="reportsMenu">
                                 <ul class="nav flex-column ms-3">
@@ -1541,6 +1555,7 @@
                             <a class="nav-link" data-bs-toggle="collapse" href="#hrMenu">
                                 <i class="fas fa-users-cog me-2"></i>
                                 {% trans "Human Resources" %}
+                                <i class="fas fa-chevron-down small"></i>
                             </a>
                             <div class="collapse" id="hrMenu">
                                 <ul class="nav flex-column ms-3">
@@ -1579,6 +1594,7 @@
                             <a class="nav-link" data-bs-toggle="collapse" href="#systemMenu">
                                 <i class="fas fa-cogs me-2"></i>
                                 {% trans "System Management" %}
+                                <i class="fas fa-chevron-down small"></i>
                             </a>
                             <div class="collapse" id="systemMenu">
                                 <ul class="nav flex-column ms-3">
