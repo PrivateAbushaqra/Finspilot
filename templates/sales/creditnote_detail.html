@@ -120,17 +120,12 @@
                 </div>
                 <div class="col-md-6">
                     <table class="table table-sm">
-                        <tr>
-                            <td><strong>{% trans "Subtotal" %}:</strong></td>
-                            <td class="text-end">{{ creditnote.subtotal|floatformat:2 }} {% get_currency_symbol %}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>{% trans "Tax" %}:</strong></td>
-                            <td class="text-end">{{ creditnote.tax_amount|floatformat:2 }} {% get_currency_symbol %}</td>
-                        </tr>
                         <tr class="table-active">
-                            <td><strong>{% trans "Total" %}:</strong></td>
+                            <td><strong>{% trans "Total Amount" %}:</strong></td>
                             <td class="text-end"><strong>{{ creditnote.total_amount|floatformat:2 }} {% get_currency_symbol %}</strong></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" class="text-muted small">{% trans "No tax is applied to credit notes as per accounting rules" %}</td>
                         </tr>
                     </table>
                 </div>

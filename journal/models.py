@@ -118,26 +118,51 @@ class JournalEntry(models.Model):
         super().save(*args, **kwargs)
 
     def generate_entry_number(self):
-        """توليد رقم القيد"""
+        """توليد رقم القيد مع ضمان الفرادة"""
         from datetime import datetime
         
-        # البحث عن آخر قيد في نفس السنة
         current_year = datetime.now().year
-        last_entry = JournalEntry.objects.filter(
-            entry_date__year=current_year
-        ).order_by('-id').first()
+        base_pattern = f"JE-{current_year}-"
         
-        if last_entry and last_entry.entry_number:
-            # استخراج الرقم من آخر قيد
+        # محاولة عدة مرات لتجنب السباق
+        max_attempts = 10
+        for attempt in range(max_attempts):
             try:
-                last_number = int(last_entry.entry_number.split('-')[-1])
-                new_number = last_number + 1
-            except (ValueError, IndexError):
+                # البحث عن جميع الأرقام المستخدمة في نفس السنة
+                existing_entries = JournalEntry.objects.filter(
+                    entry_date__year=current_year,
+                    entry_number__startswith=base_pattern
+                ).values_list('entry_number', flat=True)
+                
+                # استخراج الأرقام المستخدمة
+                used_numbers = set()
+                for entry_num in existing_entries:
+                    try:
+                        num_part = entry_num.split('-')[-1]
+                        if num_part.isdigit():
+                            used_numbers.add(int(num_part))
+                    except (ValueError, IndexError):
+                        continue
+                
+                # البحث عن أصغر رقم متاح
                 new_number = 1
-        else:
-            new_number = 1
+                while new_number in used_numbers:
+                    new_number += 1
+                
+                # التحقق من أن الرقم لا يزال متاحاً (قد يكون تم استخدامه في سباق)
+                candidate_number = f"{base_pattern}{new_number:04d}"
+                if not JournalEntry.objects.filter(entry_number=candidate_number).exists():
+                    return candidate_number
+                    
+            except Exception:
+                continue
         
-        return f"JE-{current_year}-{new_number:04d}"
+        # إذا فشلت جميع المحاولات، استخدم timestamp مع UUID
+        import time
+        import uuid
+        timestamp = str(int(time.time() * 1000000))[-8:]  # microsecond precision
+        unique_part = str(uuid.uuid4().hex)[:4].upper()
+        return f"{base_pattern}{timestamp}-{unique_part}"
 
     def clean(self):
         """التحقق من توازن القيد"""

@@ -187,8 +187,7 @@ class PurchaseDebitNote(models.Model):
     date = models.DateField(_('Date'))
     supplier = models.ForeignKey(CustomerSupplier, on_delete=models.PROTECT, verbose_name=_('Supplier'))
     subtotal = models.DecimalField(_('المجموع الفرعي'), max_digits=15, decimal_places=3, default=0)
-    tax_amount = models.DecimalField(_('مبلغ الضريبة'), max_digits=15, decimal_places=3, default=0)
-    total_amount = models.DecimalField(_('المبلغ الاجمالي'), max_digits=15, decimal_places=3, default=0)
+    total_amount = models.DecimalField(_('المبلغ الإجمالي'), max_digits=15, decimal_places=3, default=0)
     notes = models.TextField(_('ملاحظات'), blank=True)
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name=_('Created By'))
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
@@ -209,5 +208,7 @@ class PurchaseDebitNote(models.Model):
             ('can_view_debitnote', _('Can view اشعار مدين')),
         )
 
-    def __str__(self):
-        return f"{self.note_number} - {self.supplier.name}"
+    def save(self, *args, **kwargs):
+        # في إشعار الخصم، لا يوجد ضريبة - المبلغ الإجمالي = المجموع الفرعي
+        self.total_amount = self.subtotal
+        super().save(*args, **kwargs)

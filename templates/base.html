@@ -980,7 +980,7 @@
                                     <!-- ضع هنا أكواد البنود الخاصة بالمبيعات -->
                                     <!-- ضع هنا أكواد البنود الخاصة بالمشتريات -->
                                     <!-- ضع هنا أكواد البنود الخاصة بالعملاء والموردين -->
-                        <!-- Purchases -->
+                                    <!-- Purchases -->
                                     {% if user.has_purchases_permission %}
                                     <li class="nav-item">
                                         <a class="nav-link" data-bs-toggle="collapse" href="#purchasesMenu">
@@ -1023,7 +1023,7 @@
                                         </div>
                                     </li>
                                     {% endif %}
-                        <!-- Sales -->
+                                    <!-- Sales -->
                                     {% if user.has_sales_permission %}
                                     <li class="nav-item">
                                         <a class="nav-link" data-bs-toggle="collapse" href="#salesMenu">
@@ -1065,7 +1065,7 @@
                                         </div>
                                     </li>
                                     {% endif %}
-                        <!-- Customers & Suppliers -->
+                                    <!-- Customers & Suppliers -->
                                     {% if user.is_superuser or user.is_admin or perms.customers.can_view_customers_suppliers %}
                                     <li class="nav-item">
                                         <a class="nav-link" data-bs-toggle="collapse" href="#customersMenu">

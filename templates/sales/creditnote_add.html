@@ -21,16 +21,9 @@
       <input type="date" name="date" class="form-control" value="{{ today_date }}">
     </div>
     <div class="mb-3">
-      <label class="form-label">{% trans "Subtotal" %}</label>
+      <label class="form-label">{% trans "Amount" %}</label>
       <input name="subtotal" class="form-control" value="0">
-    </div>
-    <div class="mb-3">
-      <label class="form-label">{% trans "Tax Amount" %}</label>
-      <input name="tax_amount" class="form-control" value="0">
-    </div>
-    <div class="mb-3">
-      <label class="form-label">{% trans "Total Amount" %}</label>
-      <input name="total_amount" class="form-control" value="0">
+      <small class="form-text text-muted">{% trans "The credit note amount (no tax is applied as per accounting rules)" %}</small>
     </div>
     <div class="mb-3">
       <label class="form-label">{% trans "Notes" %}</label>

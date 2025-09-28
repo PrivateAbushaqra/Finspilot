@@ -30,6 +30,13 @@ from core.models import CompanySettings
 
 def create_purchase_invoice_journal_entry(invoice, user):
     """إنشاء قيد محاسبي لفاتورة المشتريات"""
+    try:
+        # إنشاء القيد المحاسبي باستخدام JournalService
+        JournalService.create_purchase_invoice_entry(invoice, user)
+    except Exception as e:
+        print(f"خطأ في إنشاء القيد المحاسبي لفاتورة المشتريات: {e}")
+        # لا نوقف العملية في حالة فشل إنشاء القيد المحاسبي
+        pass
 
 
 def create_debit_note_journal_entry(debit_note, user):
@@ -619,8 +626,6 @@ def purchase_debitnote_create(request):
                     date=request.POST.get('date', date.today()),
                     supplier=supplier,
                     subtotal=Decimal(request.POST.get('subtotal', '0') or '0'),
-                    tax_amount=Decimal(request.POST.get('tax_amount', '0') or '0'),
-                    total_amount=Decimal(request.POST.get('total_amount', '0') or '0'),
                     notes=request.POST.get('notes', ''),
                     created_by=request.user
                 )

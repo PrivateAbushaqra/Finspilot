@@ -1215,8 +1215,6 @@ def sales_creditnote_create(request):
                     date=request.POST.get('date', date.today()),
                     customer=customer,
                     subtotal=Decimal(request.POST.get('subtotal', '0') or '0'),
-                    tax_amount=Decimal(request.POST.get('tax_amount', '0') or '0'),
-                    total_amount=Decimal(request.POST.get('total_amount', '0') or '0'),
                     notes=notes,
                     created_by=user
                 )

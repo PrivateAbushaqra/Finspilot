@@ -120,17 +120,15 @@
                 </div>
                 <div class="col-md-6">
                     <table class="table table-sm">
-                        <tr>
-                            <td><strong>{% trans "Subtotal" %}:</strong></td>
-                            <td class="text-end">{{ debitnote.subtotal|floatformat:2 }} {% get_currency_symbol %}</td>
-                        </tr>
-                        <tr>
-                            <td><strong>الضريبة:</strong></td>
-                            <td class="text-end">{{ debitnote.tax_amount|floatformat:2 }} {% get_currency_symbol %}</td>
-                        </tr>
                         <tr class="table-active">
-                            <td><strong>الإجمالي:</strong></td>
+                            <td><strong>{% trans "Amount" %}:</strong></td>
                             <td class="text-end"><strong>{{ debitnote.total_amount|floatformat:2 }} {% get_currency_symbol %}</strong></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" class="text-muted small">
+                                <i class="fas fa-info-circle me-1"></i>
+                                {% trans "Note: No tax is applied to debit notes" %}
+                            </td>
                         </tr>
                     </table>
                 </div>

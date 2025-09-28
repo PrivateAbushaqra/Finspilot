@@ -153,7 +153,6 @@ class SalesCreditNote(models.Model):
     date = models.DateField(_('Date'))
     customer = models.ForeignKey(CustomerSupplier, on_delete=models.PROTECT, verbose_name=_('Customer'))
     subtotal = models.DecimalField(_('المجموع الفرعي'), max_digits=15, decimal_places=3, default=0)
-    tax_amount = models.DecimalField(_('مبلغ الضريبة'), max_digits=15, decimal_places=3, default=0)
     total_amount = models.DecimalField(_('المبلغ الإجمالي'), max_digits=15, decimal_places=3, default=0)
     notes = models.TextField(_('ملاحظات'), blank=True)
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name=_('Created By'))
@@ -173,6 +172,11 @@ class SalesCreditNote(models.Model):
         permissions = (
             ('can_send_to_jofotara', 'Can send credit notes to JoFotara'),
         )
+
+    def save(self, *args, **kwargs):
+        # الإجمالي يساوي المجموع الفرعي (بدون ضريبة)
+        self.total_amount = self.subtotal
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.note_number} - {self.customer.name}"

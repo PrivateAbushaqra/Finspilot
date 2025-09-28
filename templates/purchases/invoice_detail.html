@@ -302,6 +302,10 @@
                     {% trans "Details" %} {% trans "Invoice" %} المشتريات رقم {{ invoice.invoice_number }}
                 </h2>
                 <div class="btn-group">
+                    <a href="{% url 'purchases:invoice_add' %}" class="btn btn-success">
+                        <i class="fas fa-plus me-2"></i>
+                        {% trans "Create Purchase Invoice" %}
+                    </a>
                     <a href="{% url 'purchases:invoice_list' %}" class="btn btn-secondary">
                         <i class="fas fa-arrow-right me-2"></i>
                         العودة لل{% trans "List" %}

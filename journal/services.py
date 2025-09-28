@@ -61,14 +61,25 @@ class JournalService:
         """إنشاء قيد فاتورة المبيعات"""
         lines_data = []
         
-        # حساب العميل (مدين)
-        customer_account = JournalService.get_or_create_customer_account(invoice.customer)
-        lines_data.append({
-            'account_id': customer_account.id,
-            'debit': invoice.total_amount,
-            'credit': 0,
-            'description': f'فاتورة مبيعات رقم {invoice.invoice_number}'
-        })
+        # تحديد الحساب المدين حسب نوع الدفع
+        if invoice.payment_type == 'cash':
+            # البيع النقدي: حساب النقد/الصندوق (مدين)
+            cash_account = JournalService.get_cash_account()
+            lines_data.append({
+                'account_id': cash_account.id,
+                'debit': invoice.total_amount,
+                'credit': 0,
+                'description': f'نقد - فاتورة مبيعات رقم {invoice.invoice_number}'
+            })
+        else:
+            # البيع الآجل: حساب العميل (مدين)
+            customer_account = JournalService.get_or_create_customer_account(invoice.customer)
+            lines_data.append({
+                'account_id': customer_account.id,
+                'debit': invoice.total_amount,
+                'credit': 0,
+                'description': f'فاتورة مبيعات رقم {invoice.invoice_number}'
+            })
         
         # حساب المبيعات (دائن)
         sales_account = JournalService.get_sales_account()
@@ -93,7 +104,56 @@ class JournalService:
             entry_date=invoice.date,
             reference_type='sales_invoice',
             reference_id=invoice.id,
-            description=f'فاتورة مبيعات رقم {invoice.invoice_number} - {invoice.customer.name}',
+            description=f'فاتورة مبيعات رقم {invoice.invoice_number} - {invoice.customer.name if invoice.customer else "نقدي"}',
+            lines_data=lines_data,
+            user=user
+        )
+    
+    @staticmethod
+    def create_cogs_entry(invoice, user=None):
+        """إنشاء قيد تكلفة البضاعة المباعة"""
+        from inventory.models import InventoryMovement
+        from decimal import Decimal
+        
+        # حساب إجمالي تكلفة البضاعة المباعة من حركات المخزون
+        movements = InventoryMovement.objects.filter(
+            reference_type='sales_invoice',
+            reference_id=invoice.id,
+            movement_type='out'
+        )
+        
+        total_cogs = Decimal('0')
+        for movement in movements:
+            total_cogs += movement.total_cost
+        
+        if total_cogs <= 0:
+            return None  # لا يوجد تكلفة للتسجيل
+        
+        lines_data = []
+        
+        # حساب تكلفة البضاعة المباعة (مدين)
+        cogs_account = JournalService.get_cogs_account()
+        lines_data.append({
+            'account_id': cogs_account.id,
+            'debit': total_cogs,
+            'credit': 0,
+            'description': f'تكلفة البضاعة المباعة - فاتورة رقم {invoice.invoice_number}'
+        })
+        
+        # حساب المخزون (دائن)
+        inventory_account = JournalService.get_inventory_account()
+        lines_data.append({
+            'account_id': inventory_account.id,
+            'debit': 0,
+            'credit': total_cogs,
+            'description': f'انقاص المخزون - فاتورة رقم {invoice.invoice_number}'
+        })
+        
+        return JournalService.create_journal_entry(
+            entry_date=invoice.date,
+            reference_type='sales_invoice_cogs',
+            reference_id=invoice.id,
+            description=f'تكلفة البضاعة المباعة - فاتورة مبيعات رقم {invoice.invoice_number}',
             lines_data=lines_data,
             user=user
         )
@@ -103,16 +163,16 @@ class JournalService:
         """إنشاء قيد فاتورة المشتريات"""
         lines_data = []
         
-        # حساب المشتريات (مدين)
-        purchases_account = JournalService.get_purchases_account()
+        # حساب المخزون (مدين) - بقيمة المشتريات
+        inventory_account = JournalService.get_inventory_account()
         lines_data.append({
-            'account_id': purchases_account.id,
+            'account_id': inventory_account.id,
             'debit': invoice.subtotal,
             'credit': 0,
-            'description': f'مشتريات - فاتورة رقم {invoice.invoice_number}'
+            'description': f'زيادة المخزون - فاتورة مشتريات رقم {invoice.invoice_number}'
         })
         
-        # حساب الضريبة إذا وجدت
+        # حساب الضريبة إذا وجدت (مدين)
         if invoice.tax_amount > 0:
             tax_account = JournalService.get_tax_receivable_account()
             lines_data.append({
@@ -122,14 +182,25 @@ class JournalService:
                 'description': f'ضريبة مشتريات - فاتورة رقم {invoice.invoice_number}'
             })
         
-        # حساب المورد (دائن)
-        supplier_account = JournalService.get_or_create_supplier_account(invoice.supplier)
-        lines_data.append({
-            'account_id': supplier_account.id,
-            'debit': 0,
-            'credit': invoice.total_amount,
-            'description': f'فاتورة مشتريات رقم {invoice.invoice_number}'
-        })
+        # حسب نوع الدفع
+        if invoice.payment_type == 'cash':
+            # للدفع النقدي: دائن للصندوق أو البنك
+            cash_account = JournalService.get_cash_account()
+            lines_data.append({
+                'account_id': cash_account.id,
+                'debit': 0,
+                'credit': invoice.total_amount,
+                'description': f'دفع نقدي لفاتورة مشتريات رقم {invoice.invoice_number}'
+            })
+        else:
+            # للدفع الائتماني: دائن للمورد
+            supplier_account = JournalService.get_or_create_supplier_account(invoice.supplier)
+            lines_data.append({
+                'account_id': supplier_account.id,
+                'debit': 0,
+                'credit': invoice.total_amount,
+                'description': f'فاتورة مشتريات رقم {invoice.invoice_number}'
+            })
         
         return JournalService.create_journal_entry(
             entry_date=invoice.date,
@@ -299,6 +370,32 @@ class JournalService:
         return account
     
     @staticmethod
+    def get_inventory_account():
+        """الحصول على حساب المخزون"""
+        account, created = Account.objects.get_or_create(
+            code='1020',
+            defaults={
+                'name': 'المخزون',
+                'account_type': 'asset',
+                'description': 'حساب المخزون السلعي'
+            }
+        )
+        return account
+    
+    @staticmethod
+    def get_cogs_account():
+        """الحصول على حساب تكلفة البضاعة المباعة"""
+        account, created = Account.objects.get_or_create(
+            code='5001',
+            defaults={
+                'name': 'تكلفة البضاعة المباعة',
+                'account_type': 'expense',
+                'description': 'تكلفة البضاعة المباعة (COGS)'
+            }
+        )
+        return account
+    
+    @staticmethod
     def get_or_create_customer_account(customer):
         """الحصول على حساب العميل أو إنشاؤه"""
         code = f"1050{customer.id:04d}"
@@ -380,33 +477,44 @@ class JournalService:
         """إنشاء قيد مردود المبيعات"""
         lines_data = []
         
-        # حساب مردود المبيعات (مدين)
-        sales_return_account = JournalService.get_sales_return_account()
+        # حساب المبيعات (مدين) - تخفيض المبيعات
+        sales_account = JournalService.get_sales_account()
         lines_data.append({
-            'account_id': sales_return_account.id,
+            'account_id': sales_account.id,
             'debit': sales_return.subtotal,
             'credit': 0,
-            'description': f'مردود مبيعات - فاتورة رقم {sales_return.return_number}'
+            'description': f'مردود مبيعات - تخفيض مبيعات رقم {sales_return.return_number}'
         })
         
-        # حساب الضريبة إذا وجدت (مدين)
+        # حساب الضريبة إذا وجدت (مدين) - تخفيض الضريبة
         if sales_return.tax_amount > 0:
             tax_account = JournalService.get_tax_payable_account()
             lines_data.append({
                 'account_id': tax_account.id,
                 'debit': sales_return.tax_amount,
                 'credit': 0,
-                'description': f'ضريبة مردود مبيعات - فاتورة رقم {sales_return.return_number}'
+                'description': f'مردود مبيعات - تخفيض ضريبة رقم {sales_return.return_number}'
             })
         
-        # حساب العميل (دائن)
-        customer_account = JournalService.get_or_create_customer_account(sales_return.customer)
-        lines_data.append({
-            'account_id': customer_account.id,
-            'debit': 0,
-            'credit': sales_return.total_amount,
-            'description': f'مردود مبيعات رقم {sales_return.return_number}'
-        })
+        # حسب نوع الدفع في الفاتورة الأصلية
+        if sales_return.original_invoice.payment_type == 'cash':
+            # للدفع النقدي: دائن للصندوق أو البنك
+            cash_account = JournalService.get_cash_account()
+            lines_data.append({
+                'account_id': cash_account.id,
+                'debit': 0,
+                'credit': sales_return.total_amount,
+                'description': f'دفع نقدي لمردود مبيعات رقم {sales_return.return_number}'
+            })
+        else:
+            # للدفع الائتماني: دائن للعميل
+            customer_account = JournalService.get_or_create_customer_account(sales_return.customer)
+            lines_data.append({
+                'account_id': customer_account.id,
+                'debit': 0,
+                'credit': sales_return.total_amount,
+                'description': f'مردود مبيعات رقم {sales_return.return_number}'
+            })
         
         return JournalService.create_journal_entry(
             entry_date=sales_return.date,
@@ -418,11 +526,60 @@ class JournalService:
         )
     
     @staticmethod
+    def create_sales_return_cogs_entry(sales_return, user=None):
+        """إنشاء قيد تكلفة البضاعة المسترجعة (عكس COGS)"""
+        from inventory.models import InventoryMovement
+        from decimal import Decimal
+        
+        # حساب إجمالي تكلفة البضاعة المسترجعة من حركات المخزون
+        movements = InventoryMovement.objects.filter(
+            reference_type='sales_return',
+            reference_id=sales_return.id,
+            movement_type='in'
+        )
+        
+        total_cogs = Decimal('0')
+        for movement in movements:
+            total_cogs += movement.total_cost
+        
+        if total_cogs <= 0:
+            return None  # لا يوجد تكلفة للتسجيل
+        
+        lines_data = []
+        
+        # حساب المخزون (مدين) - زيادة المخزون
+        inventory_account = JournalService.get_inventory_account()
+        lines_data.append({
+            'account_id': inventory_account.id,
+            'debit': total_cogs,
+            'credit': 0,
+            'description': f'زيادة المخزون - مردود مبيعات رقم {sales_return.return_number}'
+        })
+        
+        # حساب تكلفة البضاعة المباعة (دائن) - تخفيض COGS
+        cogs_account = JournalService.get_cogs_account()
+        lines_data.append({
+            'account_id': cogs_account.id,
+            'debit': 0,
+            'credit': total_cogs,
+            'description': f'تخفيض تكلفة البضاعة المباعة - مردود رقم {sales_return.return_number}'
+        })
+        
+        return JournalService.create_journal_entry(
+            entry_date=sales_return.date,
+            reference_type='sales_return_cogs',
+            reference_id=sales_return.id,
+            description=f'تكلفة البضاعة المسترجعة - مردود مبيعات رقم {sales_return.return_number}',
+            lines_data=lines_data,
+            user=user
+        )
+    
+    @staticmethod
     def create_purchase_return_entry(purchase_return, user=None):
         """إنشاء قيد مردود المشتريات"""
         lines_data = []
         
-        # حساب المورد (مدين)
+        # حساب المورد (مدين) - بقيمة المردود
         supplier_account = JournalService.get_or_create_supplier_account(purchase_return.supplier)
         lines_data.append({
             'account_id': supplier_account.id,
@@ -431,13 +588,13 @@ class JournalService:
             'description': f'مردود مشتريات رقم {purchase_return.return_number}'
         })
         
-        # حساب مردود المشتريات (دائن)
-        purchases_return_account = JournalService.get_purchases_return_account()
+        # حساب المخزون (دائن) - بنقص المخزون
+        inventory_account = JournalService.get_inventory_account()
         lines_data.append({
-            'account_id': purchases_return_account.id,
+            'account_id': inventory_account.id,
             'debit': 0,
             'credit': purchase_return.subtotal,
-            'description': f'مردود مشتريات - فاتورة رقم {purchase_return.return_number}'
+            'description': f'انقاص المخزون - مردود مشتريات رقم {purchase_return.return_number}'
         })
         
         # حساب الضريبة إذا وجدت (دائن)
@@ -455,6 +612,59 @@ class JournalService:
             reference_type='purchase_return',
             reference_id=purchase_return.id,
             description=f'مردود مشتريات رقم {purchase_return.return_number} - {purchase_return.supplier.name}',
+            lines_data=lines_data,
+            user=user
+        )
+    
+    @staticmethod
+    def create_purchase_debit_note_entry(debit_note, user=None):
+        """إنشاء قيد إشعار مدين للمشتريات"""
+        lines_data = []
+        
+        # حساب المورد (مدين) - بقيمة الخصم
+        supplier_account = JournalService.get_or_create_supplier_account(debit_note.supplier)
+        lines_data.append({
+            'account_id': supplier_account.id,
+            'debit': debit_note.total_amount,
+            'credit': 0,
+            'description': f'إشعار مدين رقم {debit_note.note_number}'
+        })
+        
+        # حسب نوع الخصم - إذا كان خصم نقدي أو مصروف
+        if debit_note.notes and ('نقدي' in debit_note.notes or 'cash' in debit_note.notes.lower()):
+            # خصم نقدي: دائن للصندوق
+            cash_account = JournalService.get_cash_account()
+            lines_data.append({
+                'account_id': cash_account.id,
+                'debit': 0,
+                'credit': debit_note.subtotal,
+                'description': f'خصم نقدي - إشعار مدين رقم {debit_note.note_number}'
+            })
+        else:
+            # خصم كمصروف: دائن للمصروفات
+            expense_account = JournalService.get_or_create_expense_account('خصومات مستلمة')
+            lines_data.append({
+                'account_id': expense_account.id,
+                'debit': 0,
+                'credit': debit_note.subtotal,
+                'description': f'خصم كمصروف - إشعار مدين رقم {debit_note.note_number}'
+            })
+        
+        # حساب الضريبة إذا وجدت (دائن)
+        if debit_note.tax_amount > 0:
+            tax_account = JournalService.get_tax_receivable_account()
+            lines_data.append({
+                'account_id': tax_account.id,
+                'debit': 0,
+                'credit': debit_note.tax_amount,
+                'description': f'ضريبة إشعار مدين - رقم {debit_note.note_number}'
+            })
+        
+        return JournalService.create_journal_entry(
+            entry_date=debit_note.date,
+            reference_type='purchase_debit_note',
+            reference_id=debit_note.id,
+            description=f'إشعار مدين رقم {debit_note.note_number} - {debit_note.supplier.name}',
             lines_data=lines_data,
             user=user
         )
@@ -735,3 +945,45 @@ class JournalService:
             warnings_processed.append(f"تم التحصيل بعد {days_late} يوم من تاريخ الاستحقاق")
         
         return warnings_processed
+    
+    @staticmethod
+    def create_sales_credit_note_entry(credit_note, user=None):
+        """إنشاء قيد إشعار دائن للمبيعات"""
+        lines_data = []
+        
+        # حساب المبيعات (مدين) - تخفيض المبيعات
+        sales_account = JournalService.get_sales_account()
+        lines_data.append({
+            'account_id': sales_account.id,
+            'debit': credit_note.subtotal,
+            'credit': 0,
+            'description': f'إشعار دائن - تخفيض مبيعات رقم {credit_note.note_number}'
+        })
+        
+        # حساب الضريبة إذا وجدت (مدين) - تخفيض الضريبة
+        if credit_note.tax_amount > 0:
+            tax_account = JournalService.get_tax_payable_account()
+            lines_data.append({
+                'account_id': tax_account.id,
+                'debit': credit_note.tax_amount,
+                'credit': 0,
+                'description': f'إشعار دائن - تخفيض ضريبة رقم {credit_note.note_number}'
+            })
+        
+        # حساب العميل (دائن) - تخفيض الذمم
+        customer_account = JournalService.get_or_create_customer_account(credit_note.customer)
+        lines_data.append({
+            'account_id': customer_account.id,
+            'debit': 0,
+            'credit': credit_note.total_amount,
+            'description': f'إشعار دائن رقم {credit_note.note_number}'
+        })
+        
+        return JournalService.create_journal_entry(
+            entry_date=credit_note.date,
+            reference_type='sales_credit_note',
+            reference_id=credit_note.id,
+            description=f'إشعار دائن للمبيعات رقم {credit_note.note_number} - {credit_note.customer.name}',
+            lines_data=lines_data,
+            user=user
+        )

@@ -521,7 +521,13 @@ function addProductRow() {
                 <input type="hidden" name="row_tax[]" id="hiddenRowTax${productRowCount}">
                 <input type="hidden" name="tax_rate_hidden[]" id="hiddenTaxRate${productRowCount}">
                 <div class="d-flex align-items-center">
-                    <input type="text" class="form-control me-2" id="productCode${productRowCount}" placeholder="{% trans 'Product code...' %}" readonly>
+                    <div class="position-relative flex-grow-1 me-2">
+                        <input type="text" class="form-control product-code-input" id="productCode${productRowCount}" 
+                               placeholder="{% trans 'Product code...' %}" autocomplete="off">
+                        <div class="product-code-dropdown dropdown-menu w-100" style="display: none; max-height: 200px; overflow-y: auto;">
+                            <!-- Product code options will be populated here -->
+                        </div>
+                    </div>
                     <button type="button" class="btn btn-outline-primary btn-sm" onclick="openProductModal(${productRowCount})" title="{% trans 'Select product' %}">
                         <i class="fas fa-search"></i>
                     </button>
@@ -1584,11 +1590,111 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Function to handle product code search for each row
+    function setupProductCodeSearch(row) {
+        const codeInput = row.querySelector('.product-code-input');
+        const dropdown = row.querySelector('.product-code-dropdown');
+        const productIdInput = row.querySelector('input[name="product_id[]"]');
+        const nameInput = row.querySelector('.product-name-input');
+        const availableQuantityInput = row.querySelector('input[id^="availableQuantity"]');
+        const priceInput = row.querySelector('input[name="unit_price[]"]');
+        const taxRateInput = row.querySelector('input[name="tax_rate[]"]');
+
+        if (!codeInput || !dropdown) return;
+
+        // Function to filter and show products by code
+        function filterProductsByCode() {
+            const searchTerm = codeInput.value.toLowerCase().trim();
+
+            if (searchTerm === '') {
+                dropdown.style.display = 'none';
+                return;
+            }
+
+            // Clear previous options
+            dropdown.innerHTML = '';
+
+            // Filter products by code
+            const filteredProducts = products.filter(product =>
+                product.code.toLowerCase().includes(searchTerm)
+            );
+
+            if (filteredProducts.length === 0) {
+                dropdown.style.display = 'none';
+                return;
+            }
+
+            // Create dropdown options
+            filteredProducts.forEach(product => {
+                const option = document.createElement('button');
+                option.type = 'button';
+                option.className = 'dropdown-item';
+                option.innerHTML = `<strong>${product.code}</strong> - ${product.name} (${product.current_stock} available)`;
+                option.setAttribute('data-product', JSON.stringify(product));
+
+                option.addEventListener('click', function() {
+                    // Fill all product fields
+                    productIdInput.value = product.id;
+                    codeInput.value = product.code;
+                    nameInput.value = product.name;
+                    if (availableQuantityInput) {
+                        availableQuantityInput.value = formatCurrency(parseFloat(product.current_stock || 0), 3);
+                    }
+                    priceInput.value = formatCurrency(parseFloat(product.last_purchase_price || 0), 3);
+                    taxRateInput.value = parseFloat(product.tax_rate) || 0;
+
+                    dropdown.style.display = 'none';
+
+                    // Calculate row total
+                    const row = codeInput.closest('tr');
+                    if (row && typeof calculateRowTotal === 'function') {
+                        // Extract row number from row id
+                        const rowId = row.id.replace('productRow', '');
+                        calculateRowTotal(rowId);
+                        calculateGrandTotal();
+                    }
+                });
+
+                dropdown.appendChild(option);
+            });
+
+            dropdown.style.display = 'block';
+        }
+
+        // Handle input changes
+        codeInput.addEventListener('input', filterProductsByCode);
+
+        // Handle focus to show matching products if not empty
+        codeInput.addEventListener('focus', function() {
+            if (codeInput.value.trim() !== '') {
+                filterProductsByCode();
+            }
+        });
+
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!codeInput.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.style.display = 'none';
+            }
+        });
+
+        // Handle blur with delay to allow click on dropdown items
+        codeInput.addEventListener('blur', function() {
+            setTimeout(() => {
+                if (codeInput.value && !productIdInput.value) {
+                    // If user typed something but didn't select from dropdown, clear it
+                    codeInput.value = '';
+                }
+            }, 200);
+        });
+    }
+
     // Setup product search for existing rows and new rows
     function setupAllProductSearches() {
         document.querySelectorAll('#productsTableBody tr').forEach(row => {
             if (!row.hasAttribute('data-product-search-setup')) {
                 setupProductSearch(row);
+                setupProductCodeSearch(row);
                 row.setAttribute('data-product-search-setup', 'true');
             }
         });

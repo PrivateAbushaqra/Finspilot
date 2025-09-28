@@ -16,10 +16,13 @@ def create_sales_invoice_journal_entry(sender, instance, created, **kwargs):
             # البحث عن المستخدم الذي أنشأ الفاتورة
             user = getattr(instance, 'created_by', None)
             if user:
+                # إنشاء قيد الإيرادات
                 JournalService.create_sales_invoice_entry(instance, user)
-                logger.info(f"تم إنشاء قيد محاسبي تلقائياً لفاتورة المبيعات {instance.invoice_number}")
+                # إنشاء قيد تكلفة البضاعة المباعة
+                JournalService.create_cogs_entry(instance, user)
+                logger.info(f"تم إنشاء القيود المحاسبية تلقائياً لفاتورة المبيعات {instance.invoice_number}")
         except Exception as e:
-            logger.error(f"خطأ في إنشاء القيد المحاسبي لفاتورة المبيعات {instance.invoice_number}: {e}")
+            logger.error(f"خطأ في إنشاء القيود المحاسبية لفاتورة المبيعات {instance.invoice_number}: {e}")
 
 
 @receiver(post_save, sender='purchases.PurchaseInvoice')
@@ -61,18 +64,6 @@ def create_payment_voucher_journal_entry(sender, instance, created, **kwargs):
             logger.error(f"خطأ في إنشاء القيد المحاسبي لسند الصرف {instance.voucher_number}: {e}")
 
 
-@receiver(post_save, sender='sales.SalesReturn')
-def create_sales_return_journal_entry(sender, instance, created, **kwargs):
-    """إنشاء قيد محاسبي تلقائياً عند إنشاء مردود مبيعات"""
-    if created and instance.id:
-        try:
-            user = getattr(instance, 'created_by', None)
-            if user:
-                JournalService.create_sales_return_entry(instance, user)
-                logger.info(f"تم إنشاء قيد محاسبي تلقائياً لمردود المبيعات {instance.return_number}")
-        except Exception as e:
-            logger.error(f"خطأ في إنشاء القيد المحاسبي لمردود المبيعات {instance.return_number}: {e}")
-
 
 @receiver(post_save, sender='purchases.PurchaseReturn')
 def create_purchase_return_journal_entry(sender, instance, created, **kwargs):
@@ -85,6 +76,19 @@ def create_purchase_return_journal_entry(sender, instance, created, **kwargs):
                 logger.info(f"تم إنشاء قيد محاسبي تلقائياً لمردود المشتريات {instance.return_number}")
         except Exception as e:
             logger.error(f"خطأ في إنشاء القيد المحاسبي لمردود المشتريات {instance.return_number}: {e}")
+
+
+@receiver(post_save, sender='purchases.PurchaseDebitNote')
+def create_purchase_debit_note_journal_entry(sender, instance, created, **kwargs):
+    """إنشاء قيد محاسبي تلقائياً عند إنشاء إشعار مدين للمشتريات"""
+    if created and instance.id:
+        try:
+            user = getattr(instance, 'created_by', None)
+            if user:
+                JournalService.create_purchase_debit_note_entry(instance, user)
+                logger.info(f"تم إنشاء قيد محاسبي تلقائياً لإشعار المدين {instance.note_number}")
+        except Exception as e:
+            logger.error(f"خطأ في إنشاء القيد المحاسبي لإشعار المدين {instance.note_number}: {e}")
 
 
 @receiver(post_delete, sender='sales.SalesInvoice')
