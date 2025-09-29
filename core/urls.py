@@ -16,4 +16,6 @@ urlpatterns = [
     path('api/extend-session/', views.extend_session_api, name='extend_session_api'),
     # Alias لمعالجة POST /logout/ القادم من sendBeacon لمنع 404
     path('logout/', views.logout_alias, name='logout_alias'),
+    # صفحة إثبات استخدام PostgreSQL
+    path('database-info/', views.database_info_view, name='database_info'),
 ]

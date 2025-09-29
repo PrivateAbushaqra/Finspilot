@@ -106,11 +106,12 @@ TEMPLATES = [
 WSGI_APPLICATION = 'finspilot.wsgi.application'
 
 # ===== قاعدة البيانات =====
-# تهيئة مرنة: تفضيل DATABASE_URL إن وُجد (Render), ثم متغيرات PG_*, ثم DB_*
+# تهيئة مرنة: تفضيل DATABASE_URL إن وُجد (Render), ثم متغيرات PG_*, ثم PostgreSQL محلي, ثم SQLite
 DATABASES = {}
 
 DATABASE_URL = config('DATABASE_URL', default=None)
 IS_RENDER = config('RENDER', default=False, cast=bool)
+USE_LOCAL_POSTGRES = config('USE_LOCAL_POSTGRES', default=False, cast=bool)
 
 if DATABASE_URL:
     # Render يوفر connection string مباشرة
@@ -131,6 +132,16 @@ if DATABASE_URL:
         conn_max_age=600,
         ssl_require=ssl_required
     )
+elif USE_LOCAL_POSTGRES:
+    # استخدام PostgreSQL محلي للتطوير
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': config('LOCAL_PG_NAME', default='finspilot_local'),
+        'USER': config('LOCAL_PG_USER', default='postgres'),
+        'PASSWORD': config('LOCAL_PG_PASSWORD', default=''),
+        'HOST': config('LOCAL_PG_HOST', default='localhost'),
+        'PORT': config('LOCAL_PG_PORT', default='5432'),
+    }
 else:
     pg_name = config('PG_NAME', default=config('DB_NAME', default=None))
     pg_user = config('PG_USER', default=config('DB_USER', default=None))
@@ -156,17 +167,22 @@ else:
         DATABASES['default'] = {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
-            'OPTIONS': {
-                'charset': 'utf8',
-                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            },
         }
 # المتغيرات المطلوبة في ملف .env:
+# للإنتاج على Render:
 # PG_NAME=اسم_قاعدة_البيانات
 # PG_USER=اسم_المستخدم
 # PG_PASSWORD=كلمة_المرور
 # PG_HOST=العنوان
 # PG_PORT=المنفذ
+#
+# للتطوير المحلي مع PostgreSQL:
+# USE_LOCAL_POSTGRES=True
+# LOCAL_PG_NAME=finspilot_local
+# LOCAL_PG_USER=postgres
+# LOCAL_PG_PASSWORD=كلمة_مرور_PostgreSQL
+# LOCAL_PG_HOST=localhost
+# LOCAL_PG_PORT=5432
 
 # ===== كلمات المرور =====
 AUTH_PASSWORD_VALIDATORS = [

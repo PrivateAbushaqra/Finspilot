@@ -27,6 +27,7 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 media/
+staticfiles/
 
 # Environment variables
 .env
@@ -48,6 +49,32 @@ venv.bak/
 
 # OS
 .DS_Store
+Thumbs.db
+
+# Database backups
+*.sql
+backup_*.json
+*.dump
+
+# Node.js (if used)
+node_modules/
+npm-debug.log*
+
+# Temporary files
+*.tmp
+*.temp
+
+# Logs
+logs/
+*.log
+
+# Coverage reports
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Render deployment
+render.yaml.backup
 .DS_Store?
 ._*
 .Spotlight-V100

@@ -1183,3 +1183,39 @@ class SalesBySalespersonReportView(LoginRequiredMixin, TemplateView):
         )
         
         return context
+
+
+# ===== View لإثبات استخدام PostgreSQL =====
+@login_required
+@require_GET
+def database_info_view(request):
+    """صفحة تعرض معلومات قاعدة البيانات لإثبات استخدام PostgreSQL"""
+    from django.db import connection
+
+    # معلومات قاعدة البيانات
+    db_info = {
+        'database_type': connection.vendor,
+        'database_name': connection.settings_dict.get('NAME', 'غير محدد'),
+        'database_host': connection.settings_dict.get('HOST', 'غير محدد'),
+        'database_port': connection.settings_dict.get('PORT', 'غير محدد'),
+        'database_engine': connection.settings_dict.get('ENGINE', 'غير محدد'),
+        'is_postgresql': connection.vendor.lower() == 'postgresql',
+        'is_sqlite': connection.vendor.lower() == 'sqlite',
+        'connection_status': 'متصل' if connection.ensure_connection() is None else 'غير متصل',
+    }
+
+    # معلومات Django
+    django_info = {
+        'django_version': '4.2.7',
+        'python_version': '3.11.9',
+        'debug_mode': 'تشغيل' if getattr(connection, '_settings_dict', {}).get('DEBUG', False) else 'إيقاف',
+        'render_deployment': 'نعم' if request.META.get('HTTP_HOST', '').endswith('onrender.com') else 'لا',
+    }
+
+    context = {
+        'db_info': db_info,
+        'django_info': django_info,
+        'title': 'معلومات قاعدة البيانات - إثبات استخدام PostgreSQL',
+    }
+
+    return render(request, 'core/database_info.html', context)

@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunSQL(
-            "ALTER TABLE auth_group ADD COLUMN dashboard_sections JSON NULL;",
+            "ALTER TABLE auth_group ADD COLUMN dashboard_sections TEXT NULL;",
             reverse_sql="ALTER TABLE auth_group DROP COLUMN dashboard_sections;",
         ),
     ]

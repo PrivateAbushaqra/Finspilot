@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-database"></i>
+                        {{ title }}
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- معلومات قاعدة البيانات -->
+                        <div class="col-md-6">
+                            <h4 class="text-primary">
+                                <i class="fas fa-server"></i>
+                                معلومات قاعدة البيانات
+                            </h4>
+                            <table class="table table-striped">
+                                <tbody>
+                                    <tr>
+                                        <th>نوع قاعدة البيانات:</th>
+                                        <td>
+                                            {% if db_info.is_postgresql %}
+                                                <span class="badge badge-success">
+                                                    <i class="fas fa-check-circle"></i>
+                                                    PostgreSQL
+                                                </span>
+                                            {% elif db_info.is_sqlite %}
+                                                <span class="badge badge-warning">
+                                                    <i class="fas fa-exclamation-triangle"></i>
+                                                    SQLite (تطوير فقط)
+                                                </span>
+                                            {% else %}
+                                                <span class="badge badge-info">{{ db_info.database_type }}</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>اسم قاعدة البيانات:</th>
+                                        <td>{{ db_info.database_name }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>المضيف:</th>
+                                        <td>{{ db_info.database_host }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>المنفذ:</th>
+                                        <td>{{ db_info.database_port }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>محرك قاعدة البيانات:</th>
+                                        <td><code>{{ db_info.database_engine }}</code></td>
+                                    </tr>
+                                    <tr>
+                                        <th>حالة الاتصال:</th>
+                                        <td>
+                                            {% if db_info.connection_status == 'متصل' %}
+                                                <span class="text-success">
+                                                    <i class="fas fa-check-circle"></i>
+                                                    {{ db_info.connection_status }}
+                                                </span>
+                                            {% else %}
+                                                <span class="text-danger">
+                                                    <i class="fas fa-times-circle"></i>
+                                                    {{ db_info.connection_status }}
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- معلومات Django -->
+                        <div class="col-md-6">
+                            <h4 class="text-info">
+                                <i class="fab fa-python"></i>
+                                معلومات النظام
+                            </h4>
+                            <table class="table table-striped">
+                                <tbody>
+                                    <tr>
+                                        <th>إصدار Django:</th>
+                                        <td>{{ django_info.django_version }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>إصدار Python:</th>
+                                        <td>{{ django_info.python_version }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>وضع Debug:</th>
+                                        <td>
+                                            {% if django_info.debug_mode == 'تشغيل' %}
+                                                <span class="badge badge-warning">
+                                                    <i class="fas fa-bug"></i>
+                                                    {{ django_info.debug_mode }}
+                                                </span>
+                                            {% else %}
+                                                <span class="badge badge-success">
+                                                    <i class="fas fa-shield-alt"></i>
+                                                    {{ django_info.debug_mode }}
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>نشر على Render:</th>
+                                        <td>
+                                            {% if django_info.render_deployment == 'نعم' %}
+                                                <span class="badge badge-success">
+                                                    <i class="fas fa-cloud"></i>
+                                                    {{ django_info.render_deployment }}
+                                                </span>
+                                            {% else %}
+                                                <span class="badge badge-info">
+                                                    <i class="fas fa-desktop"></i>
+                                                    محلي
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- إثبات PostgreSQL -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <h5>
+                                    <i class="fas fa-certificate"></i>
+                                    إثبات استخدام PostgreSQL
+                                </h5>
+                                {% if db_info.is_postgresql %}
+                                    <p class="mb-0">
+                                        ✅ <strong>مؤكد:</strong> التطبيق يعمل حالياً على قاعدة بيانات PostgreSQL وليس SQLite.
+                                        هذا يعني أن النشر على Render.com سيكون مع PostgreSQL أيضاً.
+                                    </p>
+                                {% else %}
+                                    <p class="mb-0 text-warning">
+                                        ⚠️ <strong>تحذير:</strong> التطبيق لا يستخدم PostgreSQL حالياً.
+                                        يرجى التحقق من إعدادات قاعدة البيانات.
+                                    </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- معلومات إضافية -->
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-info-circle"></i>
+                                        معلومات إضافية
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-unstyled">
+                                        <li>
+                                            <i class="fas fa-check text-success"></i>
+                                            تم تكوين Django للعمل مع PostgreSQL محلياً و على Render.com
+                                        </li>
+                                        <li>
+                                            <i class="fas fa-check text-success"></i>
+                                            تم إعداد متغيرات البيئة للإنتاج (PG_*)
+                                        </li>
+                                        <li>
+                                            <i class="fas fa-check text-success"></i>
+                                            تم تكوين SSL وإعدادات الأمان للإنتاج
+                                        </li>
+                                        <li>
+                                            <i class="fas fa-check text-success"></i>
+                                            تم إعداد Gunicorn كخادم WSGI للإنتاج
+                                        </li>
+                                        <li>
+                                            <i class="fas fa-check text-success"></i>
+                                            تم إعداد WhiteNoise للملفات الثابتة
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
