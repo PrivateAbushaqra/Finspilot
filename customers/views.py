@@ -297,6 +297,9 @@ class CustomerSupplierCreateView(LoginRequiredMixin, View):
                 is_active=is_active
             )
             
+            # تسجيل النشاط
+            log_view_activity(request, 'create', customer_supplier, _('Created customer/supplier: %(name)s') % {'name': name})
+            
             # رسالة نجاح
             type_display = customer_supplier.get_type_display()
             
@@ -394,6 +397,9 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
             customer_supplier.notes = notes
             customer_supplier.is_active = is_active
             customer_supplier.save()
+            
+            # تسجيل النشاط
+            log_view_activity(request, 'update', customer_supplier, _('Updated customer/supplier: %(name)s') % {'name': name})
             
             # رسالة نجاح
             type_display = customer_supplier.get_type_display()

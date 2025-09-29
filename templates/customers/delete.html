@@ -156,11 +156,11 @@
                 {% endif %}
                 <div class="info-item">
                     <span class="info-label">{% trans "Phone" %}:</span>
-                    <span class="info-value">{{ customer_supplier.phone|default:"{% trans 'Not Specified' %}" }}</span>
+                    <span class="info-value">{% if customer_supplier.phone %}{{ customer_supplier.phone }}{% else %}{% trans "Not Specified" %}{% endif %}</span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">{% trans "Email" %}:</span>
-                    <span class="info-value">{{ customer_supplier.email|default:"{% trans 'Not Specified' %}" }}</span>
+                    <span class="info-value">{% if customer_supplier.email %}{{ customer_supplier.email }}{% else %}{% trans "Not Specified" %}{% endif %}</span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">{% trans "Current Balance" %}:</span>
@@ -236,7 +236,9 @@
                     {% trans "To confirm deletion, type \"DELETE\" in the field below:" %}
                 </p>
                 
-                <form id="deleteForm" method="post">
+                <form id="deleteForm" method="post"
+                      data-confirm-message="{% trans 'You must type "DELETE" exactly to confirm' %}"
+                      data-final-confirm="{% trans 'Are you absolutely sure you want to delete this account?\n\nThis action cannot be undone!' %}">
                     {% csrf_token %}
                     <div class="confirmation-input">
                         <input type="text" 
@@ -293,15 +295,18 @@
     // Handle form submission
     document.getElementById('deleteForm').addEventListener('submit', function(e) {
         const confirmText = document.getElementById('confirmText').value.trim();
+        const form = document.getElementById('deleteForm');
+        const confirmMessage = form.dataset.confirmMessage;
+        const finalConfirm = form.dataset.finalConfirm;
         
         if (confirmText !== 'DELETE') {
             e.preventDefault();
-            alert('{% trans "You must type \\"DELETE\\" exactly to confirm" %}');
+            alert(confirmMessage);
             return;
         }
         
         // Final confirmation
-        if (!confirm('{% trans "Are you absolutely sure you want to delete this account?\\n\\nThis action cannot be undone!" %}')) {
+        if (!confirm(finalConfirm)) {
             e.preventDefault();
             return;
         }

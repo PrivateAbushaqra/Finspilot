@@ -519,6 +519,101 @@
 
 {% block extra_js %}
 <script>
+    // Debounce function to limit API calls
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // Real-time search functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('search');
+        const statusSelect = document.getElementById('status');
+        const balanceSelect = document.getElementById('balance');
+        const filterForm = document.querySelector('form[method="get"]');
+
+        // Debounced search function
+        const debouncedSearch = debounce(function() {
+            // Update URL parameters without page reload
+            const searchValue = searchInput.value.trim();
+            const statusValue = statusSelect.value;
+            const balanceValue = balanceSelect.value;
+
+            // Build query string
+            const params = new URLSearchParams(window.location.search);
+            if (searchValue) {
+                params.set('search', searchValue);
+            } else {
+                params.delete('search');
+            }
+            if (statusValue) {
+                params.set('status', statusValue);
+            } else {
+                params.delete('status');
+            }
+            if (balanceValue) {
+                params.set('balance', balanceValue);
+            } else {
+                params.delete('balance');
+            }
+
+            // Reset to page 1 when searching
+            params.delete('page');
+
+            // Update URL without reload
+            const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+            window.location.href = newUrl;
+        }, 500); // Wait 500ms after user stops typing
+
+        // Add event listeners
+        searchInput.addEventListener('input', debouncedSearch);
+        statusSelect.addEventListener('change', function() {
+            // Immediate update for select changes
+            const searchValue = searchInput.value.trim();
+            const statusValue = this.value;
+            const balanceValue = balanceSelect.value;
+
+            const params = new URLSearchParams(window.location.search);
+            if (searchValue) params.set('search', searchValue); else params.delete('search');
+            if (statusValue) params.set('status', statusValue); else params.delete('status');
+            if (balanceValue) params.set('balance', balanceValue); else params.delete('balance');
+            params.delete('page');
+
+            const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+            window.location.href = newUrl;
+        });
+
+        balanceSelect.addEventListener('change', function() {
+            // Immediate update for select changes
+            const searchValue = searchInput.value.trim();
+            const statusValue = statusSelect.value;
+            const balanceValue = this.value;
+
+            const params = new URLSearchParams(window.location.search);
+            if (searchValue) params.set('search', searchValue); else params.delete('search');
+            if (statusValue) params.set('status', statusValue); else params.delete('status');
+            if (balanceValue) params.set('balance', balanceValue); else params.delete('balance');
+            params.delete('page');
+
+            const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+            window.location.href = newUrl;
+        });
+
+        // Focus on search input if it has a value (after filtering)
+        if (searchInput.value.trim()) {
+            searchInput.focus();
+            // Move cursor to the end of the text
+            searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+        }
+    });
+
     // View toggle functionality
     document.querySelectorAll('[data-view]').forEach(btn => {
         btn.addEventListener('click', function() {

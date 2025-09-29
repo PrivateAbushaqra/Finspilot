@@ -502,6 +502,101 @@
 
 {% block extra_js %}
 <script>
+    // Debounce function to limit API calls
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // Real-time search functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('search');
+        const statusSelect = document.getElementById('status');
+        const balanceSelect = document.getElementById('balance');
+        const filterForm = document.querySelector('form[method="get"]');
+
+        // Debounced search function
+        const debouncedSearch = debounce(function() {
+            // Update URL parameters without page reload
+            const searchValue = searchInput.value.trim();
+            const statusValue = statusSelect.value;
+            const balanceValue = balanceSelect.value;
+
+            // Build query string
+            const params = new URLSearchParams(window.location.search);
+            if (searchValue) {
+                params.set('search', searchValue);
+            } else {
+                params.delete('search');
+            }
+            if (statusValue) {
+                params.set('status', statusValue);
+            } else {
+                params.delete('status');
+            }
+            if (balanceValue) {
+                params.set('balance', balanceValue);
+            } else {
+                params.delete('balance');
+            }
+
+            // Reset to page 1 when searching
+            params.delete('page');
+
+            // Update URL without reload
+            const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+            window.location.href = newUrl;
+        }, 500); // Wait 500ms after user stops typing
+
+        // Add event listeners
+        searchInput.addEventListener('input', debouncedSearch);
+        statusSelect.addEventListener('change', function() {
+            // Immediate update for select changes
+            const searchValue = searchInput.value.trim();
+            const statusValue = this.value;
+            const balanceValue = balanceSelect.value;
+
+            const params = new URLSearchParams(window.location.search);
+            if (searchValue) params.set('search', searchValue); else params.delete('search');
+            if (statusValue) params.set('status', statusValue); else params.delete('status');
+            if (balanceValue) params.set('balance', balanceValue); else params.delete('balance');
+            params.delete('page');
+
+            const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+            window.location.href = newUrl;
+        });
+
+        balanceSelect.addEventListener('change', function() {
+            // Immediate update for select changes
+            const searchValue = searchInput.value.trim();
+            const statusValue = statusSelect.value;
+            const balanceValue = this.value;
+
+            const params = new URLSearchParams(window.location.search);
+            if (searchValue) params.set('search', searchValue); else params.delete('search');
+            if (statusValue) params.set('status', statusValue); else params.delete('status');
+            if (balanceValue) params.set('balance', balanceValue); else params.delete('balance');
+            params.delete('page');
+
+            const newUrl = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+            window.location.href = newUrl;
+        });
+
+        // Focus on search input if it has a value (after filtering)
+        if (searchInput.value.trim()) {
+            searchInput.focus();
+            // Move cursor to the end of the text
+            searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+        }
+    });
+
     // View toggle functionality
     document.querySelectorAll('[data-view]').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -569,6 +664,124 @@
         });
     }
 
+    // Translated strings for print function
+    const translatedStrings = {
+        suppliersReport: '{% trans "Suppliers Report" %}',
+        name: '{% trans "Name" %}',
+        type: '{% trans "Type" %}',
+        phone: '{% trans "Phone" %}',
+        email: '{% trans "Email" %}',
+        balance: '{% trans "Balance" %}',
+        status: '{% trans "Status" %}',
+        finsPilotSoftware: '{% trans "FinsPilot Software" %}'
+    };
+
+    // Custom print function for suppliers report
+    function printPage() {
+        try {
+            // إنشاء نافذة طباعة جديدة
+            var printWindow = window.open('', '_blank');
+            
+            // الحصول على البيانات من الجدول المخفي
+            var table = document.querySelector('.print-only-table');
+            if (!table) {
+                alert('جدول البيانات غير موجود');
+                return;
+            }
+            
+            var rows = table.querySelectorAll('tbody tr');
+            if (rows.length === 0) {
+                alert('لا توجد بيانات للطباعة');
+                printWindow.close();
+                return;
+            }
+            
+            // إنشاء محتوى الطباعة
+            var printContent = `
+                <html>
+                <head>
+                    <title>` + translatedStrings.suppliersReport + `</title>
+                    <style>
+                        body {
+                            font-family: Arial, sans-serif;
+                            direction: rtl;
+                            margin: 20px;
+                        }
+                        table {
+                            width: 100%;
+                            border-collapse: collapse;
+                            margin-bottom: 20px;
+                        }
+                        th, td {
+                            border: 1px solid #ddd;
+                            padding: 8px;
+                            text-align: center;
+                        }
+                        th {
+                            background-color: #f2f2f2;
+                            font-weight: bold;
+                        }
+                        .footer {
+                            text-align: center;
+                            margin-top: 20px;
+                            font-size: 12px;
+                            color: #666;
+                        }
+                        @media print {
+                            body { margin: 0; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h2 style="text-align: center;">` + translatedStrings.suppliersReport + `</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>` + translatedStrings.name + `</th>
+                                <th>` + translatedStrings.type + `</th>
+                                <th>` + translatedStrings.phone + `</th>
+                                <th>` + translatedStrings.email + `</th>
+                                <th>` + translatedStrings.balance + `</th>
+                                <th>` + translatedStrings.status + `</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+            
+            // إضافة صفوف البيانات
+            rows.forEach(function(row) {
+                var cells = row.querySelectorAll('td');
+                printContent += '<tr>';
+                for (var i = 0; i < cells.length; i++) {
+                    var cellText = cells[i].textContent.trim();
+                    printContent += '<td>' + cellText + '</td>';
+                }
+                printContent += '</tr>';
+            });
+            
+            printContent += `
+                        </tbody>
+                    </table>
+                    <div class="footer">
+                        ` + translatedStrings.finsPilotSoftware + `
+                    </div>
+                </body>
+                </html>`;
+            
+            // كتابة المحتوى في نافذة الطباعة
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            
+            // انتظار تحميل المحتوى ثم الطباعة
+            printWindow.onload = function() {
+                printWindow.print();
+                printWindow.close();
+            };
+        } catch (error) {
+            alert('حدث خطأ أثناء الطباعة: ' + error.message);
+            console.error('Print error:', error);
+        }
+    }
+
     // Auto-focus on search input when page loads
     document.addEventListener('DOMContentLoaded', function() {
         const searchInput = document.getElementById('search');
@@ -577,4 +790,30 @@
         }
     });
 </script>
+
+<!-- Hidden table for printing -->
+<table class="print-only-table" style="display: none;">
+    <thead>
+        <tr>
+            <th>{% trans "Name" %}</th>
+            <th>{% trans "Type" %}</th>
+            <th>{% trans "Phone" %}</th>
+            <th>{% trans "Email" %}</th>
+            <th>{% trans "Balance" %}</th>
+            <th>{% trans "Status" %}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for supplier in suppliers %}
+        <tr>
+            <td>{{ supplier.name }}</td>
+            <td>{{ supplier.get_type_display }}</td>
+            <td>{{ supplier.phone|default:"غير محدد" }}</td>
+            <td>{{ supplier.email|default:"غير محدد" }}</td>
+            <td>{{ supplier.current_balance|currency_format }}</td>
+            <td>{% if supplier.is_active %}{% trans "Active" %}{% else %}{% trans "Inactive" %}{% endif %}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 {% endblock %}

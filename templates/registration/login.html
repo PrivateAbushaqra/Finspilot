@@ -80,6 +80,28 @@
         </div>
         <h2 class="mb-0">{% trans "Finspilot - Accounting System" %}</h2>
         <p class="mb-0 mt-2">{% trans "Welcome, please login" %}</p>
+        
+        <!-- اختيار اللغة -->
+        <div class="mt-3">
+            <div class="btn-group btn-group-sm" role="group" aria-label="اختيار اللغة">
+                <form method="post" action="/language-switch/" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="language" value="ar">
+                    <input type="hidden" name="next" value="/ar/">
+                    <button type="submit" class="btn btn-outline-light {% if LANGUAGE_CODE == 'ar' %}active{% endif %}">
+                        <i class="fas fa-language me-1"></i>العربية
+                    </button>
+                </form>
+                <form method="post" action="/language-switch/" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="language" value="en">
+                    <input type="hidden" name="next" value="/en/">
+                    <button type="submit" class="btn btn-outline-light {% if LANGUAGE_CODE == 'en' %}active{% endif %}">
+                        <i class="fas fa-language me-1"></i>English
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
     
     <div class="login-body">

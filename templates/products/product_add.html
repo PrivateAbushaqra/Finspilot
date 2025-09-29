@@ -84,9 +84,9 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="sku" class="form-label">{% trans "Product Code (SKU)" %}</label>
+                                    <label for="sku" class="form-label">{% trans "Product Code (SKU)" %} <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="sku" name="sku" placeholder="{% trans "Example: PROD-001" %}" 
-                                           autocomplete="off" data-form-type="other" spellcheck="false">
+                                           autocomplete="off" data-form-type="other" spellcheck="false" required>
                                 </div>
                             </div>
                         </div>
@@ -123,9 +123,9 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="category" class="form-label">{% trans "Category" %}</label>
+                                    <label for="category" class="form-label">{% trans "Category" %} <span class="text-danger">*</span></label>
                                     <div class="input-group">
-                                        <select class="form-select" id="category" name="category">
+                                        <select class="form-select" id="category" name="category" required>
                                             <option value="">{% trans "Select Category" %}</option>
                                             {% for category in categories %}
                                                 <option value="{{ category.id }}">{{ category.name }}</option>
@@ -158,8 +158,8 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="unit" class="form-label">{% trans "Unit of Measurement" %}</label>
-                                    <select class="form-select" id="unit" name="unit">
+                                    <label for="unit" class="form-label">{% trans "Unit of Measurement" %} <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="unit" name="unit" required>
                                         <option value="piece">{% trans "Piece" %}</option>
                                         <option value="service">{% trans "Service" %}</option>
                                         <option value="kg">{% trans "Kilogram" %}</option>
@@ -201,12 +201,12 @@
                                 <div class="mb-3">
                                     <label for="tax_rate" class="form-label">
                                         <i class="fas fa-percentage text-primary me-1"></i>
-                                        {% trans "Tax Rate %" %}
+                                        {% trans "Tax Rate %" %} <span class="text-danger">*</span>
                                     </label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="tax_rate" name="tax_rate" 
                                                step="0.01" min="0" max="100" value="0" 
-                                               placeholder="{% trans "Example: 15" %}">
+                                               placeholder="{% trans "Example: 15" %}" required>
                                         <span class="input-group-text">%</span>
                                     </div>
                                     <small class="form-text text-muted">

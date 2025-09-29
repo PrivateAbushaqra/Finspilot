@@ -275,11 +275,11 @@ def sales_invoice_create(request):
                 attempt += 1
                 try:
                     with transaction.atomic():
-                        # معالجة بيانات الفاتورة الأساسية
                         user = request.user
                         customer_id = request.POST.get('customer')
                         warehouse_id = request.POST.get('warehouse')
                         payment_type = request.POST.get('payment_type')
+                        cashbox_id = request.POST.get('cashbox') if payment_type == 'cash' else None
                         notes = request.POST.get('notes', '')
                         discount_amount = Decimal(request.POST.get('discount', '0'))
 
@@ -339,7 +339,16 @@ def sales_invoice_create(request):
                             except (ImportError, Warehouse.DoesNotExist):
                                 warehouse = None
 
-                        # معالجة بيانات المنتجات
+                        # الحصول على الصندوق النقدي إذا كان الدفع نقدي
+                        cashbox = None
+                        if payment_type == 'cash' and cashbox_id:
+                            try:
+                                from cashboxes.models import Cashbox
+                                cashbox = Cashbox.objects.get(id=cashbox_id, is_active=True)
+                            except (ImportError, Cashbox.DoesNotExist):
+                                # إذا لم يتم العثور على الصندوق، نبلغ عن خطأ
+                                messages.error(request, _('الصندوق النقدي المحدد غير موجود أو غير نشط'))
+                                return redirect('sales:invoice_add')
                         products = request.POST.getlist('products[]')
                         quantities = request.POST.getlist('quantities[]')
                         prices = request.POST.getlist('prices[]')
@@ -381,6 +390,7 @@ def sales_invoice_create(request):
                             customer=customer,
                             warehouse=warehouse,
                             payment_type=payment_type,
+                            cashbox=cashbox,
                             discount_amount=discount_amount,
                             notes=notes,
                             created_by=user,
@@ -540,6 +550,46 @@ def sales_invoice_create(request):
                         else:
                             invoice.tax_amount = Decimal('0').quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
                             invoice.total_amount = (subtotal - discount_amount).quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+
+                        # فحص الحد الائتماني قبل الحفظ
+                        if payment_type == 'credit' and customer and customer.credit_limit > 0:
+                            # حساب الرصيد الحالي للعميل
+                            current_balance = customer.current_balance
+                            # إذا كان الرصيد سالباً (مدين)، فهذا يعني أن العميل لديه ديون
+                            # الحد الائتماني المتاح = الحد الائتماني - الرصيد المدين
+                            available_credit = customer.credit_limit - abs(current_balance) if current_balance < 0 else customer.credit_limit
+                            
+                            if invoice.total_amount > available_credit:
+                                # حذف الفاتورة المؤقتة وإلغاء العملية
+                                invoice.delete()
+                                
+                                # رسالة خطأ مع اقتراحات
+                                error_message = _(
+                                    'Cannot create invoice because total amount (%(total)s) exceeds customer\'s available credit limit (%(available)s).\n\nSuggestions:\n1. Increase customer\'s credit limit\n2. Collect outstanding debts from customer\n3. Convert invoice to cash payment'
+                                ) % {
+                                    'total': f"{invoice.total_amount:.3f}",
+                                    'available': f"{available_credit:.3f}"
+                                }
+                                
+                                messages.error(request, error_message)
+                                
+                                # تسجيل المحاولة الفاشلة في سجل الأنشطة
+                                try:
+                                    from core.signals import log_user_activity
+                                    log_user_activity(
+                                        request,
+                                        'error',
+                                        customer,
+                                        _('Failed to create sales invoice: Credit limit exceeded - Amount %(total)s > Available %(available)s') % {
+                                            'total': f"{invoice.total_amount:.3f}",
+                                            'available': f"{available_credit:.3f}"
+                                        }
+                                    )
+                                except Exception:
+                                    pass
+                                
+                                return redirect('sales:invoice_add')
+
                         invoice.save()
 
                         # إذا تم إدخال رقم يدوي يطابق البادئة، نقوم بدفع عداد التسلسل للأمام لتجنب التكرار لاحقاً
@@ -562,11 +612,14 @@ def sales_invoice_create(request):
                         # تسجيل نشاط صريح لإنشاء الفاتورة (بالإضافة للإشارات العامة)
                         try:
                             from core.signals import log_user_activity
+                            activity_desc = _('إنشاء فاتورة مبيعات رقم %(number)s') % {'number': invoice.invoice_number}
+                            if payment_type == 'cash' and cashbox:
+                                activity_desc += _(' - دفع نقدي من الصندوق: %(cashbox)s') % {'cashbox': cashbox.name}
                             log_user_activity(
                                 request,
                                 'create',
                                 invoice,
-                                _('إنشاء فاتورة مبيعات رقم %(number)s') % {'number': invoice.invoice_number}
+                                activity_desc
                             )
                         except Exception:
                             pass
@@ -624,7 +677,12 @@ def sales_invoice_create(request):
         except ImportError:
             context['warehouses'] = []
 
-        # إضافة بيانات المنتجات بتنسيق JSON للبحث
+        # إضافة الصناديق النقدية
+        try:
+            from cashboxes.models import Cashbox
+            context['cashboxes'] = Cashbox.objects.filter(is_active=True)
+        except ImportError:
+            context['cashboxes'] = []
         products = Product.objects.filter(is_active=True).select_related('category')
         products_data = []
         for product in products:

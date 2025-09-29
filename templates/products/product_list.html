@@ -745,8 +745,8 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="productSku" class="form-label">{% trans "Product Code (SKU)" %}</label>
-                                <input type="text" class="form-control" id="productSku" name="sku" placeholder="{% trans 'Example: PROD-001' %}">
+                                <label for="productSku" class="form-label">{% trans "Product Code (SKU)" %} <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="productSku" name="sku" placeholder="{% trans 'Example: PROD-001' %}" required>
                             </div>
                         </div>
                     </div>
@@ -781,8 +781,8 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="productCategory" class="form-label">{% trans "Category" %}</label>
-                                <select class="form-select" id="productCategory" name="category">
+                                <label for="productCategory" class="form-label">{% trans "Category" %} <span class="text-danger">*</span></label>
+                                <select class="form-select" id="productCategory" name="category" required>
                                     <option value="">{% trans "Choose Category" %}</option>
                                     <!-- Options will be loaded dynamically -->
                                 </select>
@@ -790,8 +790,8 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="productUnit" class="form-label">{% trans "Unit of Measurement" %}</label>
-                                <select class="form-select" id="productUnit" name="unit">
+                                <label for="productUnit" class="form-label">{% trans "Unit of Measurement" %} <span class="text-danger">*</span></label>
+                                <select class="form-select" id="productUnit" name="unit" required>
                                     <option value="piece">{% trans "Piece" %}</option>
                                     <option value="kg">{% trans "Kilogram" %}</option>
                                     <option value="liter">{% trans "Liter" %}</option>
@@ -831,11 +831,11 @@
                             <div class="mb-3">
                                 <label for="productTaxRate" class="form-label">
                                     <i class="fas fa-percentage text-primary me-1"></i>
-                                    {% trans "Tax Rate" %} %
+                                    {% trans "Tax Rate" %} % <span class="text-danger">*</span>
                                 </label>
                                 <div class="input-group">
                                     <input type="number" class="form-control" id="productTaxRate" name="tax_rate" 
-                                           step="0.01" min="0" max="100" value="0" placeholder="{% trans 'Example: 15' %}">
+                                           step="0.01" min="0" max="100" value="0" placeholder="{% trans 'Example: 15' %}" required>
                                     <span class="input-group-text">%</span>
                                 </div>
                                 <small class="form-text text-muted">

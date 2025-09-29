@@ -336,6 +336,19 @@
                             </select>
                         </div>
                     </div>
+                    <div class="col-md-6">
+                        <div class="mb-3" id="cashbox_container" style="display: none;">
+                            <label for="id_cashbox" class="form-label">
+                                {% trans "Cash Box" %} <span class="required-field">*</span>
+                            </label>
+                            <select class="form-select" id="id_cashbox" name="cashbox">
+                                <option value="">{% trans "Select Cash Box" %}</option>
+                                {% for cashbox in cashboxes %}
+                                <option value="{{ cashbox.id }}">{{ cashbox.name }} ({{ cashbox.balance|currency_format:cashbox.currency }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -445,10 +458,10 @@
             <div class="row mt-4">
                 <div class="col-12">
                     <div class="d-flex gap-3">
-                        <button type="submit" name="action" value="save" class="btn btn-primary btn-lg" title="حفظ الفاتورة (Ctrl+S)">
+                        <button type="submit" name="action" value="save" class="btn btn-primary btn-lg" title="حفظ الفاتورة (Ctrl+Enter)">
                             <i class="fas fa-save me-2"></i>
                             {% trans "Save Invoice" %}
-                            <small class="ms-1 text-muted">(Ctrl+S)</small>
+                            <small class="ms-1 text-muted">(Ctrl+Enter)</small>
                         </button>
                         <button type="submit" name="action" value="save_and_send" class="btn btn-success btn-lg">
                             <i class="fas fa-paper-plane me-2"></i>
@@ -1123,6 +1136,16 @@ document.getElementById('salesInvoiceForm').addEventListener('submit', function(
     e.preventDefault();
     alert("{% trans 'Please select a payment method' %}");
         return;
+    }
+    
+    // {% trans "Check cashbox for cash payments" %}
+    if (paymentType === 'cash') {
+        const cashbox = document.getElementById('id_cashbox').value;
+        if (!cashbox) {
+            e.preventDefault();
+            alert("{% trans 'Cash Box is required for cash payments' %}");
+            return;
+        }
     }
     
     // {% trans "Check invoice date" %}
@@ -1867,14 +1890,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Keyboard shortcuts for invoice management
 document.addEventListener('keydown', function(e) {
-    // Ctrl+S to save invoice
-    if (e.ctrlKey && e.key === 's') {
-        e.preventDefault(); // Prevent browser save dialog
+    // Ctrl+Enter to save invoice
+    if (e.ctrlKey && e.key === 'Enter') {
+        e.preventDefault(); // Prevent default behavior
         
         const saveButton = document.querySelector('button[type="submit"][name="action"][value="save"]');
         if (saveButton) {
             saveButton.click();
-            console.log('Invoice save triggered via Ctrl+S shortcut');
+            console.log('Invoice save triggered via Ctrl+Enter shortcut');
         }
     }
     
@@ -1888,7 +1911,7 @@ document.addEventListener('keydown', function(e) {
 // Function to show keyboard shortcuts help
 function showKeyboardShortcuts() {
     const shortcuts = [
-        { key: 'Ctrl+S', description: 'حفظ الفاتورة' },
+        { key: 'Ctrl+Enter', description: 'حفظ الفاتورة' },
         { key: 'Ctrl+H or Ctrl+?', description: 'عرض اختصارات لوحة المفاتيح' }
     ];
     
@@ -1913,15 +1936,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 hasUnsavedChanges = true;
             });
         });
-    }
-});
-
-// Show confirmation modal when leaving the page
-window.addEventListener('beforeunload', function(e) {
-    if (hasUnsavedChanges) {
-        e.preventDefault();
-        e.returnValue = '';
-        return '';
     }
 });
 
@@ -1984,6 +1998,22 @@ function showUnsavedChangesModal(targetUrl) {
 function proceedToUrl(url) {
     window.location.href = url;
 }
+
+// Payment type change handler
+document.getElementById('id_payment_type').addEventListener('change', function() {
+    const paymentType = this.value;
+    const cashboxContainer = document.getElementById('cashbox_container');
+    const cashboxSelect = document.getElementById('id_cashbox');
+    
+    if (paymentType === 'cash') {
+        cashboxContainer.style.display = 'block';
+        cashboxSelect.required = true;
+    } else {
+        cashboxContainer.style.display = 'none';
+        cashboxSelect.required = false;
+        cashboxSelect.value = '';
+    }
+});
 </script>
 
 {% endblock %}

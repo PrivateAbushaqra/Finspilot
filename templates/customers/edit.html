@@ -120,7 +120,10 @@
     <!-- Edit Form -->
     <div class="row justify-content-center">
         <div class="col-md-10">
-            <form id="editCustomerSupplierForm">
+            <form id="editCustomerSupplierForm" method="post"
+                  data-delete-confirm="{% trans 'Are you sure you want to delete this account?' %}"
+                  data-delete-message="{% trans 'All data related to this account will be permanently deleted.' %}"
+                  data-deletion-note="{% trans 'Deletion will be executed when the form is connected to the server' %}">
                 {% csrf_token %}
                 
                 <!-- Current Type Display -->
@@ -186,7 +189,7 @@
                             <div class="balance-input">
                                 <span class="currency-symbol">{% get_currency_symbol %}</span>
                                 <input type="number" class="form-control" id="credit_limit" name="credit_limit" 
-                                       value="10000.000" step="0.001" min="0">
+                                       value="{{ customer_supplier.credit_limit }}" step="0.001" min="0">
                             </div>
                             <div class="form-text">{% trans "Maximum amount the" %} {% trans "Customer" %} {% trans "can be" %} {% trans "debited" %}</div>
                         </div>
@@ -195,7 +198,7 @@
                             <div class="balance-input">
                                 <span class="currency-symbol">{% get_currency_symbol %}</span>
                                 <input type="number" class="form-control" id="balance" name="balance" 
-                                       value="2500.000" step="0.001">
+                                       value="{{ customer_supplier.balance }}" step="0.001">
                             </div>
                             <div class="form-text">{% trans "Current balance (positive: in credit, negative: in debit)" %}</div>
                         </div>
@@ -267,30 +270,15 @@
 
 {% block extra_js %}
 <script>
-    // Form handling
-    document.getElementById('editCustomerSupplierForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        // Get form data
-        const formData = new FormData(this);
-        const data = Object.fromEntries(formData);
-        
-        // Validate required fields
-        if (!data.name.trim()) {
-            alert('{% trans "Please enter" %} {% trans "Customer Name" %}/{% trans "Supplier" %}');
-            return;
-        }
-        
-        // Show success message
-        alert('{% trans "Changes will be saved when the form is connected to the server" %}\n\n{% trans "Updated data" %}:\n' + JSON.stringify(data, null, 2));
-        
-        console.log('Updated customer/supplier data:', data);
-    });
-
     // Delete function
     function deleteCustomer() {
-        if (confirm('{% trans "Are you sure you want to delete this account?" %}\n\n{% trans "All data related to this account will be permanently deleted." %}')) {
-            alert('{% trans "Deletion will be executed when the form is connected to the server" %}');
+        const form = document.getElementById('editCustomerSupplierForm');
+        const deleteConfirm = form.dataset.deleteConfirm;
+        const deleteMessage = form.dataset.deleteMessage;
+        const deletionNote = form.dataset.deletionNote;
+        
+        if (confirm(deleteConfirm + '\n\n' + deleteMessage)) {
+            alert(deletionNote);
             // Redirect to delete confirmation page
             // window.location.href = "{% url 'customers:delete' pk=1 %}";
         }

@@ -219,7 +219,7 @@
                                                         {% endfor %}
                                                     {% elif app == 'purchases' %}
                                                         {% for perm in perms %}
-                                                            {% if perm.codename == 'add_purchasedebitnote' or perm.codename == 'change_purchasedebitnote' or perm.codename == 'delete_purchasedebitnote' or perm.codename == 'view_purchasedebitnote' or perm.codename == 'can_view_debitnote' or perm.codename == 'can_send_to_jofotara' %}
+                                                            {% if perm.codename == 'add_purchasedebitnote' or perm.codename == 'change_purchasedebitnote' or perm.codename == 'delete_purchasedebitnote' or perm.codename == 'view_purchasedebitnote' or perm.codename == 'can_view_debitnote' or perm.codename == 'can_send_to_jofotara' or perm.codename == 'can_add_products' %}
                                                                 <div class="form-check">
                                                                     <input type="checkbox"
                                                                            class="form-check-input permission-checkbox app-{{ app }}"
@@ -232,6 +232,7 @@
                                                                         {% if perm.codename == 'delete_purchasedebitnote' %}{% trans "حذف اشعار مدين" %}{% endif %}
                                                                         {% if perm.codename == 'view_purchasedebitnote' or perm.codename == 'can_view_debitnote' %}{% trans "عرض اشعار مدين" %}{% endif %}
                                                                         {% if perm.codename == 'can_send_to_jofotara' %}{% trans "إرسال إلى جوفوتارا" %}{% endif %}
+                                                                        {% if perm.codename == 'can_add_products' %}{% trans "إضافة منتجات جديدة" %}{% endif %}
                                                                     </label>
                                                                 </div>
                                                             {% endif %}

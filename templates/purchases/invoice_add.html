@@ -239,11 +239,19 @@
                         <div class="mb-4">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h6><i class="fas fa-box me-2"></i> {% trans "Invoice Products" %}</h6>
-                                <button type="button" class="btn btn-add-product text-white" id="addProductBtn" 
-                                        title="{% trans "Click here to add a new product" %}" data-action="add-product">
-                                    <i class="fas fa-plus me-1"></i>
-                                    {% trans "Add Product" %}
-                                </button>
+                                <div>
+                                    {% if user.is_superuser or user.user_type in 'superadmin,admin' or perms.products.can_add_products %}
+                                    <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                                        <i class="fas fa-plus me-2"></i>
+                                        {% trans "Add New Product" %}
+                                    </button>
+                                    {% endif %}
+                                    <button type="button" class="btn btn-add-product text-white" id="addProductBtn" 
+                                            title="{% trans "Click here to add a new product" %}" data-action="add-product">
+                                        <i class="fas fa-plus me-1"></i>
+                                        {% trans "Add Product" %}
+                                    </button>
+                                </div>
                             </div>
                             
                             <div class="table-responsive products-table">
@@ -306,10 +314,10 @@
                                 <i class="fas fa-times me-2"></i>
                                 {% trans "Cancel" %}
                             </a>
-                            <button type="submit" class="btn btn-success" title="حفظ الفاتورة (Ctrl+S)">
+                            <button type="submit" class="btn btn-success" title="حفظ الفاتورة (Ctrl+Enter)">
                                 <i class="fas fa-save me-2"></i>
                                 {% trans "Save Invoice" %}
-                                <small class="ms-1 text-muted">(Ctrl+S)</small>
+                                <small class="ms-1 text-muted">(Ctrl+Enter)</small>
                             </button>
                         </div>
                     </form>
@@ -1714,14 +1722,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Keyboard shortcuts for invoice management
 document.addEventListener('keydown', function(e) {
-    // Ctrl+S to save invoice
+    // Ctrl+Enter to save invoice
     if (e.ctrlKey && e.key === 's') {
         e.preventDefault(); // Prevent browser save dialog
         
         const saveButton = document.querySelector('button[type="submit"][class*="btn-success"]');
         if (saveButton) {
             saveButton.click();
-            console.log('Invoice save triggered via Ctrl+S shortcut');
+            console.log('Invoice save triggered via Ctrl+Enter shortcut');
         }
     }
     
@@ -1735,7 +1743,7 @@ document.addEventListener('keydown', function(e) {
 // Function to show keyboard shortcuts help
 function showKeyboardShortcuts() {
     const shortcuts = [
-        { key: 'Ctrl+S', description: 'حفظ الفاتورة' },
+        { key: 'Ctrl+Enter', description: 'حفظ الفاتورة' },
         { key: 'Ctrl+H or Ctrl+?', description: 'عرض اختصارات لوحة المفاتيح' }
     ];
     
@@ -1760,15 +1768,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 hasUnsavedChanges = true;
             });
         });
-    }
-});
-
-// Show confirmation modal when leaving the page
-window.addEventListener('beforeunload', function(e) {
-    if (hasUnsavedChanges) {
-        e.preventDefault();
-        e.returnValue = '';
-        return '';
     }
 });
 
@@ -1831,6 +1830,419 @@ function showUnsavedChangesModal(targetUrl) {
 function proceedToUrl(url) {
     window.location.href = url;
 }
+
+// JavaScript للتعامل مع نافذة إضافة المنتج
+const addProductModal = document.getElementById('addProductModal');
+const addProductForm = document.getElementById('addProductForm');
+const saveProductBtn = document.getElementById('saveProductBtn');
+const productCategorySelect = document.getElementById('productCategory');
+
+// تحميل قائمة الفئات عند فتح النافذة
+if (addProductModal) {
+    addProductModal.addEventListener('show.bs.modal', function() {
+        // تحميل قائمة الفئات
+        fetch('{% url "products:product_add_ajax" %}', {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Clear previous options
+            productCategorySelect.innerHTML = '<option value="">اختر الفئة</option>';
+
+            // Add new categories
+            if (data.categories) {
+                data.categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category.id;
+                    option.textContent = category.name;
+                    productCategorySelect.appendChild(option);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('خطأ في تحميل الفئات:', error);
+        });
+    });
+
+    // مسح النموذج عند إغلاق النافذة
+    addProductModal.addEventListener('hidden.bs.modal', function() {
+        addProductForm.reset();
+        // إخفاء حساب الضريبة
+        document.getElementById('productTaxCalculation').style.display = 'none';
+        document.getElementById('productSerialNumberRow').style.display = 'none';
+        // إزالة رسائل الخطأ
+        const errorElements = addProductForm.querySelectorAll('.is-invalid');
+        errorElements.forEach(element => {
+            element.classList.remove('is-invalid');
+        });
+        const errorMessages = addProductForm.querySelectorAll('.invalid-feedback');
+        errorMessages.forEach(element => {
+            element.remove();
+        });
+    });
+}
+
+// معالجة إرسال نموذج المنتج
+if (addProductForm) {
+    addProductForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        // تعطيل الزر وإظهار التحميل
+        const spinner = saveProductBtn.querySelector('.spinner-border');
+        const btnText = saveProductBtn.querySelector('.btn-text');
+        const icon = saveProductBtn.querySelector('.fas');
+
+        saveProductBtn.disabled = true;
+        spinner.classList.remove('d-none');
+        btnText.textContent = 'جاري الحفظ...';
+        icon.style.display = 'none';
+
+        // إرسال البيانات
+        const formData = new FormData(addProductForm);
+
+        fetch('{% url "products:product_add_ajax" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // إظهار رسالة نجاح
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                alertDiv.innerHTML = `
+                    <i class="fas fa-check-circle me-2"></i>
+                    ${data.message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+
+                // إدراج الرسالة في أعلى الصفحة
+                const container = document.querySelector('.container-fluid');
+                container.insertBefore(alertDiv, container.firstChild);
+
+                // إغلاق النافذة
+                const modal = bootstrap.Modal.getInstance(addProductModal);
+                modal.hide();
+
+                // تحديث قائمة المنتجات المتاحة
+                loadAvailableProducts();
+
+            } else {
+                // إظهار رسالة خطأ
+                alert('خطأ: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('خطأ:', error);
+            alert('حدث خطأ في الشبكة. يرجى المحاولة مرة أخرى.');
+        })
+        .finally(() => {
+            // إعادة تفعيل الزر
+            saveProductBtn.disabled = false;
+            spinner.classList.add('d-none');
+            btnText.textContent = 'حفظ المنتج';
+            icon.style.display = 'inline';
+        });
+    });
+}
+
+// تحكم في عرض حقل الرقم التسلسلي
+function toggleProductSerialNumberField() {
+    const productType = document.getElementById('productType').value;
+    const serialNumberRow = document.getElementById('productSerialNumberRow');
+
+    if (productType === 'physical') {
+        serialNumberRow.style.display = 'block';
+    } else {
+        serialNumberRow.style.display = 'none';
+        document.getElementById('productSerialNumber').value = '';
+    }
+}
+
+// حساب الضريبة
+function calculateProductTax() {
+    const sellingPrice = parseFloat(document.getElementById('productSellingPrice').value) || 0;
+    const taxRate = parseFloat(document.getElementById('productTaxRate').value) || 0;
+
+    if (sellingPrice > 0 && taxRate > 0) {
+        const taxAmount = sellingPrice * (taxRate / 100);
+        const priceWithTax = sellingPrice + taxAmount;
+
+        document.getElementById('productBasePrice').textContent = sellingPrice.toFixed(3);
+        document.getElementById('productTaxAmount').textContent = taxAmount.toFixed(3);
+        document.getElementById('productPriceWithTax').textContent = priceWithTax.toFixed(3);
+        document.getElementById('productTaxCalculation').style.display = 'block';
+    } else {
+        document.getElementById('productTaxCalculation').style.display = 'none';
+    }
+}
+
+// إضافة مستمعي الأحداث
+document.addEventListener('DOMContentLoaded', function() {
+    // تحكم في حقل الرقم التسلسلي
+    const productTypeSelect = document.getElementById('productType');
+    if (productTypeSelect) {
+        productTypeSelect.addEventListener('change', toggleProductSerialNumberField);
+    }
+
+    // حساب الضريبة
+    const sellingPriceInput = document.getElementById('productSellingPrice');
+    const taxRateInput = document.getElementById('productTaxRate');
+
+    if (sellingPriceInput) {
+        sellingPriceInput.addEventListener('input', calculateProductTax);
+    }
+    if (taxRateInput) {
+        taxRateInput.addEventListener('input', calculateProductTax);
+    }
+
+    // تطبيق التحكم عند تحميل الصفحة
+    toggleProductSerialNumberField();
+});
 </script>
+
+<!-- نافذة إضافة منتج منبثقة -->
+<div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addProductModalLabel">
+                    <i class="fas fa-plus text-primary me-2"></i>
+                    {% trans "Add New Product" %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="addProductForm">
+                <div class="modal-body">
+                    {% csrf_token %}
+
+                    <!-- Basic Information -->
+                    <h6 class="mb-3"><i class="fas fa-info-circle me-2"></i>المعلومات الأساسية</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="productName" class="form-label">اسم المنتج <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="productName" name="name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="productNameEn" class="form-label">اسم بالإنجليزية</label>
+                                <input type="text" class="form-control" id="productNameEn" name="name_en">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="productType" class="form-label">نوع المنتج <span class="text-danger">*</span></label>
+                                <select class="form-control" id="productType" name="product_type" required>
+                                    <option value="physical">منتج مادي</option>
+                                    <option value="service">خدمة</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="productSku" class="form-label">رمز المنتج (SKU) <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="productSku" name="sku" placeholder="مثال: PROD-001" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="productBarcode" class="form-label">الباركود</label>
+                                <input type="text" class="form-control" id="productBarcode" name="barcode">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Serial Number field for pieces only -->
+                    <div class="row" id="productSerialNumberRow" style="display: none;">
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label for="productSerialNumber" class="form-label">
+                                    الرقم التسلسلي
+                                    <small class="text-muted">- للضمان</small>
+                                </label>
+                                <input type="text" class="form-control" id="productSerialNumber" name="serial_number"
+                                       placeholder="مثال: SN123456789">
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    هذا الحقل للمنتجات المباعة بالقطعة التي تحتاج ضمان (اختياري)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="productCategory" class="form-label">الفئة <span class="text-danger">*</span></label>
+                                <select class="form-select" id="productCategory" name="category" required>
+                                    <option value="">اختر الفئة</option>
+                                    <!-- Options will be loaded dynamically -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="productUnit" class="form-label">وحدة القياس <span class="text-danger">*</span></label>
+                                <select class="form-select" id="productUnit" name="unit" required>
+                                    <option value="piece">قطعة</option>
+                                    <option value="kg">كيلوغرام</option>
+                                    <option value="liter">لتر</option>
+                                    <option value="meter">متر</option>
+                                    <option value="box">صندوق</option>
+                                    <option value="pack">حزمة</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pricing -->
+                    <h6 class="mt-4 mb-3"><i class="fas fa-dollar-sign me-2"></i>التسعير</h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="productCostPrice" class="form-label">سعر الشراء</label>
+                                <input type="number" class="form-control" id="productCostPrice" name="cost_price" step="0.001" min="0">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="productSellingPrice" class="form-label">سعر البيع <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="productSellingPrice" name="selling_price" step="0.001" min="0" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="productWholesalePrice" class="form-label">سعر الجملة</label>
+                                <input type="number" class="form-control" id="productWholesalePrice" name="wholesale_price" step="0.001" min="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="productTaxRate" class="form-label">
+                                    <i class="fas fa-percentage text-primary me-1"></i>
+                                    نسبة الضريبة % <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="productTaxRate" name="tax_rate"
+                                           step="0.01" min="0" max="100" value="0" placeholder="مثال: 15" required>
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    سيتم احتسابها تلقائياً في الفواتير
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="alert alert-info" style="display: none;" id="productTaxCalculation">
+                                <h6 class="alert-heading">
+                                    <i class="fas fa-calculator me-2"></i>
+                                    حساب الضريبة
+                                </h6>
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>سعر البيع:</span>
+                                    <span id="productBasePrice">0.00</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>مبلغ الضريبة:</span>
+                                    <span id="productTaxAmount">0.00</span>
+                                </div>
+                                <hr class="my-2">
+                                <div class="d-flex justify-content-between fw-bold">
+                                    <span>السعر شامل الضريبة:</span>
+                                    <span id="productPriceWithTax">0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Inventory -->
+                    <h6 class="mt-4 mb-3"><i class="fas fa-warehouse me-2"></i>المخزون</h6>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="productOpeningBalance" class="form-label">
+                                    <i class="fas fa-balance-scale text-success me-1"></i>
+                                    الرصيد الافتتاحي
+                                </label>
+                                <input type="number" class="form-control" id="productOpeningBalance" name="opening_balance" step="0.001" min="0" value="0">
+                                <small class="form-text text-muted">المخزون الأولي عند بدء استخدام النظام</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="productMinStock" class="form-label">الحد الأدنى للمخزون</label>
+                                <input type="number" class="form-control" id="productMinStock" name="min_stock" min="0" value="0">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="productMaxStock" class="form-label">الحد الأقصى للمخزون</label>
+                                <input type="number" class="form-control" id="productMaxStock" name="max_stock" min="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Description and Settings -->
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="productDescription" class="form-label">الوصف</label>
+                                <textarea class="form-control" id="productDescription" name="description" rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="productIsActive" name="is_active" checked>
+                                    <label class="form-check-label" for="productIsActive">
+                                        نشط
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="productTrackStock" name="track_stock" checked>
+                                    <label class="form-check-label" for="productTrackStock">
+                                        تتبع المخزون
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>
+                        إلغاء
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="saveProductBtn">
+                        <span class="spinner-border spinner-border-sm d-none me-2" role="status" aria-hidden="true"></span>
+                        <i class="fas fa-save me-2"></i>
+                        <span class="btn-text">حفظ المنتج</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 {% endblock %}
