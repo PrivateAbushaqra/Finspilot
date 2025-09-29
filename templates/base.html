@@ -308,9 +308,9 @@
         }
         
         :root {
-            --sidebar-active-bg: rgba(255,255,255,0.18);
-            --sidebar-active-text: #ffffff;
-            --sidebar-active-border: #16a34a; /* green accent for better visibility */
+            --sidebar-active-bg: rgba(37, 206, 18, 0.871);
+            --sidebar-active-text: #0f0d0d;
+            --sidebar-active-border: #ffffff; /* green accent for better visibility */
             --sidebar-active-check-size: 1.1rem; /* adjustable checkmark size */
         }
 
@@ -622,7 +622,7 @@
                                 </span>
                                 <i class="fas fa-chevron-down small"></i>
                             </a>
-                            <div class="collapse" id="financeMenu">
+                            <div class="collapse {% if active_menu == 'banks' or active_menu == 'cashboxes' or active_menu == 'receipts' or active_menu == 'payments' or active_menu == 'journal' or active_menu == 'revenues_expenses' or active_menu == 'assets_liabilities' %}show{% endif %}" id="financeMenu">
                                 <ul class="nav flex-column ms-3">
                                     <!-- ضع هنا أكواد البنود الخاصة بالمالية مثل:
                                         Bank Accounts
@@ -640,7 +640,7 @@
                                             {% trans "Bank Accounts" %}
                                             <i class="fas fa-chevron-down small"></i>
                                         </a>
-                                        <div class="collapse" id="banksMenu">
+                                        <div class="collapse {% if active_menu == 'banks' %}show{% endif %}" id="banksMenu">
                                             <ul class="nav flex-column ms-3">
                                                 {% if perms.banks.add_bankaccount or perms.banks.can_add_banks_account %}
                                                 <li class="nav-item">
@@ -671,7 +671,7 @@
                                             {% trans "Cash Boxes" %}
                                             <i class="fas fa-chevron-down small"></i>
                                         </a>
-                                        <div class="collapse" id="cashboxesMenu">
+                                        <div class="collapse {% if active_menu == 'cashboxes' %}show{% endif %}" id="cashboxesMenu">
                                             <ul class="nav flex-column ms-3">
                                                 <li class="nav-item">
                                                     <a class="nav-link {% if active_menu == 'cashboxes' and 'cashbox_list' in request.path %}active{% endif %}" href="{% url 'cashboxes:cashbox_list' %}">{% trans "Cashboxes List" %}</a>
@@ -691,7 +691,7 @@
                                             {% trans "Payment Receipts" %}
                                             <i class="fas fa-chevron-down small"></i>
                                         </a>
-                                        <div class="collapse" id="receiptsMenu">
+                                        <div class="collapse {% if active_menu == 'receipts' %}show{% endif %}" id="receiptsMenu">
                                             <ul class="nav flex-column ms-3">
                                                 <li class="nav-item">
                                                     <a class="nav-link {% if active_menu == 'receipts' and 'receipt_add' in request.path %}active{% endif %}" href="{% url 'receipts:receipt_add' %}">{% trans "Add Payment Receipt" %}</a>
@@ -715,7 +715,7 @@
                                             {% trans "Payment Vouchers" %}
                                             <i class="fas fa-chevron-down small"></i>
                                         </a>
-                                        <div class="collapse" id="paymentsMenu">
+                                        <div class="collapse {% if active_menu == 'payments' %}show{% endif %}" id="paymentsMenu">
                                             <ul class="nav flex-column ms-3">
                                                 {% if perms.payments.add_paymentvoucher %}
                                                 <li class="nav-item">
@@ -737,7 +737,7 @@
                                             {% trans "Journal Entries" %}
                                             <i class="fas fa-chevron-down small"></i>
                                         </a>
-                                        <div class="collapse" id="journalEntriesMenu">
+                                        <div class="collapse {% if active_menu == 'journal' %}show{% endif %}" id="journalEntriesMenu">
                                             <ul class="nav flex-column ms-3">
                                                 {% if perms.journal.view_journalentry %}
                                                 <li class="nav-item">
@@ -782,7 +782,7 @@
                                             {% trans "Revenues & Expenses" %}
                                             <i class="fas fa-chevron-down small"></i>
                                         </a>
-                                        <div class="collapse" id="revenuesExpensesMenu">
+                                        <div class="collapse {% if active_menu == 'revenues_expenses' %}show{% endif %}" id="revenuesExpensesMenu">
                                             <ul class="nav flex-column ms-3">
                                                 <li class="nav-item">
                                                     <a class="nav-link {% if active_menu == 'revenues_expenses' and 'dashboard' in request.path %}active{% endif %}" href="{% url 'revenues_expenses:dashboard' %}">{% trans "Dashboard" %}</a>
@@ -821,7 +821,7 @@
                                             {% trans "Assets & Liabilities" %}
                                             <i class="fas fa-chevron-down small"></i>
                                         </a>
-                                        <div class="collapse" id="assetsLiabilitiesMenu">
+                                        <div class="collapse {% if active_menu == 'assets_liabilities' %}show{% endif %}" id="assetsLiabilitiesMenu">
                                             <ul class="nav flex-column ms-3">
                                                 {% if perms.assets_liabilities.view_asset or perms.assets_liabilities.view_liability %}
                                                 <li class="nav-item">
@@ -843,14 +843,14 @@
                                     </li>
                                     {% endif %}
                                     {% if perms.journal.view_journalaccount %}
-                                    <!-- دليل الحسابات -->
+                                    <!-- دليل الحسابات
                                     <li class="nav-item">
                                         <a class="nav-link" href="{% url 'journal:account_list' %}">
                                             <i class="fas fa-book me-2"></i>
                                             {% trans "Chart of Accounts" %}
                                         </a>
                                     </li>
-                                    {% endif %}
+                                    {% endif %}-->
                                     
                                     {% if user.is_superadmin or user.user_type == 'admin' or perms.journal.can_perform_year_end_closing %}
                                     <!-- الإقفال السنوي -->
@@ -983,7 +983,7 @@
                                 </span>
                                 <i class="fas fa-chevron-down small"></i>
                             </a>
-                            <div class="collapse" id="salesPurchasesMenu">
+                            <div class="collapse {% if active_menu == 'purchases' or active_menu == 'sales' or active_menu == 'customers' %}show{% endif %}" id="salesPurchasesMenu">
                                 <ul class="nav flex-column ms-3">
                                     <!-- ضع هنا أكواد البنود الخاصة بالمبيعات -->
                                     <!-- ضع هنا أكواد البنود الخاصة بالمشتريات -->
@@ -996,7 +996,7 @@
                                             {% trans "Purchases" %}
                                             <i class="fas fa-chevron-down small"></i>
                                         </a>
-                                        <div class="collapse" id="purchasesMenu">
+                                        <div class="collapse {% if active_menu == 'purchases' %}show{% endif %}" id="purchasesMenu">
                                             <ul class="nav flex-column ms-3">
                                                     {% if perms.purchases.add_purchaseinvoice or user.is_superuser %}
                                                         <li class="nav-item">
@@ -1040,7 +1040,7 @@
                                             {% trans "Sales" %}
                                             <i class="fas fa-chevron-down small"></i>
                                         </a>
-                                        <div class="collapse" id="salesMenu">
+                                        <div class="collapse {% if active_menu == 'sales' %}show{% endif %}" id="salesMenu">
                                             <ul class="nav flex-column ms-3">
                                                 <li class="nav-item">
                                                     <a class="nav-link {% if active_menu == 'sales' and 'invoice_add' in request.path %}active{% endif %}" href="{% url 'sales:invoice_add' %}">{% trans "Create Sales Invoice" %}</a>
@@ -1083,7 +1083,7 @@
                                             {% trans "Customers & Suppliers" %}
                                             <i class="fas fa-chevron-down small"></i>
                                         </a>
-                                        <div class="collapse" id="customersMenu">
+                                        <div class="collapse {% if active_menu == 'customers' %}show{% endif %}" id="customersMenu">
                                             <ul class="nav flex-column ms-3">
                                                 {% if perms.customers.can_add_customers_suppliers %}
                                                 <li class="nav-item">
@@ -1120,7 +1120,7 @@
                                 </span>
                                 <i class="fas fa-chevron-down small"></i>
                             </a>
-                            <div class="collapse" id="inventoryRevenuesMenu">
+                            <div class="collapse {% if active_menu == 'products' or active_menu == 'inventory' %}show{% endif %}" id="inventoryRevenuesMenu">
                                 <ul class="nav flex-column ms-3">
                                     <!-- ضع هنا أكواد البنود الخاصة بالمخزون -->
                                     <!-- ضع هنا أكواد البنود الخاصة بالفئات والمنتجات -->
@@ -1133,7 +1133,7 @@
                                             {% trans "Categories & Products" %}
                                             <i class="fas fa-chevron-down small"></i>
                                         </a>
-                                        <div class="collapse" id="productsMenu">
+                                        <div class="collapse {% if active_menu == 'products' %}show{% endif %}" id="productsMenu">
                                             <ul class="nav flex-column ms-3">
                                                 {% if user.is_superuser or user.user_type in 'superadmin,admin' or perms.products.can_add_categories %}
                                                 <li class="nav-item">
@@ -1163,7 +1163,7 @@
                                             {% trans "Inventory" %}
                                             <i class="fas fa-chevron-down small"></i>
                                         </a>
-                                        <div class="collapse" id="inventoryMenu">
+                                        <div class="collapse {% if active_menu == 'inventory' %}show{% endif %}" id="inventoryMenu">
                                             <ul class="nav flex-column ms-3">
                                                 <li class="nav-item">
                                                     <a class="nav-link {% if active_menu == 'inventory' and 'list' in request.path and 'warehouse_list' not in request.path and 'movement_list' not in request.path %}active{% endif %}" href="{% url 'inventory:list' %}">{% trans "View Inventory" %}</a>
@@ -1500,7 +1500,7 @@
                                 {% trans "Reports" %}
                                 <i class="fas fa-chevron-down small"></i>
                             </a>
-                            <div class="collapse" id="reportsMenu">
+                            <div class="collapse {% if active_menu == 'reports' %}show{% endif %}" id="reportsMenu">
                                 <ul class="nav flex-column ms-3">
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'reports' and 'sales_report' in request.path %}active{% endif %}" href="{% url 'sales:sales_report' %}">{% trans "Sales Reports" %}</a>
@@ -1557,7 +1557,7 @@
                                 {% trans "Human Resources" %}
                                 <i class="fas fa-chevron-down small"></i>
                             </a>
-                            <div class="collapse" id="hrMenu">
+                            <div class="collapse {% if active_menu == 'hr' %}show{% endif %}" id="hrMenu">
                                 <ul class="nav flex-column ms-3">
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'hr' and 'dashboard' in request.path %}active{% endif %}" href="{% url 'hr:dashboard' %}">{% trans "HR Dashboard" %}</a>
@@ -1596,7 +1596,7 @@
                                 {% trans "System Management" %}
                                 <i class="fas fa-chevron-down small"></i>
                             </a>
-                            <div class="collapse" id="systemMenu">
+                            <div class="collapse {% if active_menu == 'users' or active_menu == 'audit_log' or active_menu == 'settings' %}show{% endif %}" id="systemMenu">
                                 <ul class="nav flex-column ms-3">
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'users' and 'add' in request.path %}active{% endif %}" href="{% url 'users:user_add' %}">{% trans "Add User" %}</a>

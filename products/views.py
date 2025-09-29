@@ -73,12 +73,31 @@ class CategoryCreateView(LoginRequiredMixin, View):
                 is_active=is_active
             )
             
+            # تسجيل النشاط في سجل المراجعة
+            AuditLog.objects.create(
+                user=request.user,
+                action_type='create',
+                content_type='Category',
+                object_id=category.id,
+                description=f'تم إنشاء فئة جديدة: {category.name}',
+                ip_address=self.get_client_ip(request)
+            )
+            
             messages.success(request, f'تم إنشاء التصنيف "{category.name}" بنجاح!')
             return redirect('products:category_list')
             
         except Exception as e:
             messages.error(request, f'حدث خطأ أثناء إنشاء التصنيف: {str(e)}')
             return self.get(request)
+    
+    def get_client_ip(self, request):
+        """الحصول على عنوان IP للعميل"""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
 
 class CategoryUpdateView(LoginRequiredMixin, View):
     template_name = 'products/category_edit.html'

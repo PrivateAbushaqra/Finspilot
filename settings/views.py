@@ -106,6 +106,8 @@ class CompanySettingsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView)
                         base_currency = Currency.objects.get(id=base_currency_id)
                         # تحديث حقل currency في إعدادات الشركة برمز العملة
                         company_settings.currency = base_currency.code
+                        # تحديث حقل base_currency في إعدادات الشركة
+                        company_settings.base_currency = base_currency
                         # تحديث العملة الأساسية في نموذج العملة أيضاً
                         Currency.objects.filter(is_base_currency=True).update(is_base_currency=False)
                         base_currency.is_base_currency = True

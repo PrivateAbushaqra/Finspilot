@@ -6,6 +6,12 @@
 {% block title %}{% trans "تفاصيل القيد" %} - {{ entry.entry_number }}{% endblock %}
 
 {% block content %}
+<div class="print-info" style="display: none;">
+    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 20px;">
+        <span>تاريخ الإنشاء: {{ entry.created_at|date:"H:i Y/m/d" }}</span>
+        <span>أنشئ بواسطة: {{ entry.created_by.get_full_name|default:entry.created_by.username }}</span>
+    </div>
+</div>
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
@@ -264,6 +270,9 @@
         }
         .card-body {
             padding: 0 !important;
+        }
+        .print-info {
+            display: block !important;
         }
     }
 </style>

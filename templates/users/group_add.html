@@ -240,7 +240,7 @@
                                                     {% elif app == 'products' %}
                                                         {% with unique_perms=perms|unique_permissions %}
                                                             {% for perm in unique_perms %}
-                                                                {% if perm.codename == 'can_view_products' or perm.codename == 'can_add_products' or perm.codename == 'can_edit_products' or perm.codename == 'can_add_categories' or perm.codename == 'can_edit_categories' or perm.codename == 'can_delete_categories' or perm.codename == 'can_delete_products' %}
+                                                                {% if perm.codename == 'can_view_products' or perm.codename == 'can_add_products' or perm.codename == 'can_edit_products' or perm.codename == 'can_add_categories' or perm.codename == 'can_add_categories_inline' or perm.codename == 'can_edit_categories' or perm.codename == 'can_delete_categories' or perm.codename == 'can_delete_products' %}
                                                                     <div class="form-check">
                                                                         <input type="checkbox"
                                                                                class="form-check-input permission-checkbox app-{{ app }}"

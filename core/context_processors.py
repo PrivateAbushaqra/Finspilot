@@ -47,9 +47,9 @@ def active_menu_context(request):
     # تحديد القائمة النشطة بناءً على المسار (ترتيب مهم - من الأطول للأقصر)
     if '/audit-log/' in path:
         active_menu = 'audit_log'
-    elif '/revenues_expenses/' in path:
+    elif '/revenues-expenses/' in path:
         active_menu = 'revenues_expenses'
-    elif '/assets_liabilities/' in path:
+    elif '/assets-liabilities/' in path:
         active_menu = 'assets_liabilities'
     elif '/customers/suppliers/' in path:
         active_menu = 'customers'
@@ -103,10 +103,10 @@ def active_menu_context(request):
         active_menu = 'reports'
     elif '/journal/' in path:
         active_menu = 'journal'
-    elif '/accounts/' in path:
-        active_menu = 'accounts'
     elif '/banks/' in path:
         active_menu = 'banks'
+    elif '/accounts/' in path:
+        active_menu = 'accounts'
     elif '/hr/' in path:
         active_menu = 'hr'
     elif '/tools/' in path:

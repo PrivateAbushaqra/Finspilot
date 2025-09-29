@@ -10,7 +10,7 @@
                         <div class="col-md-6">
                             <small class="text-muted d-flex align-items-center">
                                 <i class="fas fa-user-tie me-2 text-primary"></i>
-                                <strong>{% trans 'أنشئ بواسطة:' %}</strong>
+                                <strong>{% trans "Created by:" %}</strong>
                                 <span class="ms-2">
                                     {% if document.created_by.get_full_name %}
                                         {{ document.created_by.get_full_name }}
@@ -24,7 +24,7 @@
                         <div class="col-md-6 text-md-end">
                             <small class="text-muted d-flex align-items-center justify-content-md-end">
                                 <i class="fas fa-calendar-alt me-2 text-success"></i>
-                                <strong>{% trans 'تاريخ الإنشاء:' %}</strong>
+                                <strong>{% trans "Creation Date:" %}</strong>
                                 <span class="ms-2">{{ document.created_at|date:"Y/m/d H:i" }}</span>
                             </small>
                         </div>
@@ -33,10 +33,10 @@
                     {% if document.updated_at and document.updated_at != document.created_at %}
                     <div class="row mt-2">
                         <div class="col-12">
-                            <hr class="my-2">
+                            <!--<hr class="my-2">-->
                             <small class="text-muted d-flex align-items-center">
                                 <i class="fas fa-edit me-2 text-warning"></i>
-                                <strong>{% trans "آخر Update:" %}</strong>
+                                <strong>{% trans "Last Update:" %}</strong>
                                 <span class="ms-2">{{ document.updated_at|date:"Y/m/d H:i" }}</span>
                             </small>
                         </div>

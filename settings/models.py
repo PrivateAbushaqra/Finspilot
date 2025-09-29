@@ -70,6 +70,10 @@ class Currency(models.Model):
     @classmethod
     def get_base_currency(cls):
         """الحصول على العملة الأساسية"""
+        from .models import CompanySettings
+        company_settings = CompanySettings.objects.first()
+        if company_settings and company_settings.base_currency:
+            return company_settings.base_currency
         return cls.objects.filter(is_base_currency=True).first()
 
     @classmethod
@@ -92,9 +96,11 @@ class CompanySettings(models.Model):
                            help_text=_('شعار الشركة الذي يظهر في المستندات المطبوعة'))
     
     # إعدادات العملة
-    base_currency = models.ForeignKey(Currency, on_delete=models.PROTECT, 
-                                    verbose_name=_('العملة الأساسية'),
-                                    help_text=_('العملة الأساسية للنظام'))
+    currency = models.CharField(_('العملة الأساسية'), max_length=3, default='JOD',
+                              help_text=_('رمز العملة الأساسية للنظام (مثل JOD, USD)'))
+    base_currency = models.ForeignKey('Currency', on_delete=models.SET_NULL, null=True, blank=True,
+                                     verbose_name=_('العملة الأساسية'),
+                                     help_text=_('العملة الأساسية للنظام'))
     show_currency_symbol = models.BooleanField(_('إظهار رمز العملة'), default=True)
     
     # إعدادات التاريخ والوقت
@@ -132,6 +138,14 @@ class CompanySettings(models.Model):
         # منع إنشاء إعدادات شركة متعددة - السماح فقط بإعداد واحد
         if not self.pk and CompanySettings.objects.exists():
             return  # منع إنشاء record جديد إذا كان هناك record موجود
+        
+        # تحديث العملة الأساسية إذا تم تغيير base_currency
+        if self.base_currency:
+            self.currency = self.base_currency.code
+            # تحديث Currency.is_base_currency للعملة المختارة
+            Currency.objects.filter(is_base_currency=True).update(is_base_currency=False)
+            self.base_currency.is_base_currency = True
+            self.base_currency.save()
         
         # التحقق من صحة قيم الجلسة
         if self.session_timeout_minutes is not None:

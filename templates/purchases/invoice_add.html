@@ -2024,18 +2024,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     {% csrf_token %}
 
                     <!-- Basic Information -->
-                    <h6 class="mb-3"><i class="fas fa-info-circle me-2"></i>المعلومات الأساسية</h6>
+                    <h6 class="mb-3"><i class="fas fa-info-circle me-2"></i>{% trans "Basic Information" %}</h6>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="productName" class="form-label">اسم المنتج <span class="text-danger">*</span></label>
+                                <label for="productName" class="form-label">{% trans "Product Name" %} <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="productName" name="name" required>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="productNameEn" class="form-label">اسم بالإنجليزية</label>
-                                <input type="text" class="form-control" id="productNameEn" name="name_en">
+                                <label for="productNameEn" class="form-label">{% trans "English Name" %} <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="productNameEn" name="name_en" required>
                             </div>
                         </div>
                     </div>
@@ -2043,16 +2043,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="productType" class="form-label">نوع المنتج <span class="text-danger">*</span></label>
+                                <label for="productType" class="form-label">{% trans "Product Type" %} <span class="text-danger">*</span></label>
                                 <select class="form-control" id="productType" name="product_type" required>
-                                    <option value="physical">منتج مادي</option>
-                                    <option value="service">خدمة</option>
+                                    <option value="physical">{% trans "Physical Product" %}</option>
+                                    <option value="service">{% trans "Service" %}</option>
                                 </select>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="productSku" class="form-label">رمز المنتج (SKU) <span class="text-danger">*</span></label>
+                                <label for="productSku" class="form-label">{% trans "Product Code (SKU)" %} <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="productSku" name="sku" placeholder="مثال: PROD-001" required>
                             </div>
                         </div>
@@ -2061,7 +2061,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="productBarcode" class="form-label">الباركود</label>
+                                <label for="productBarcode" class="form-label">{% trans "Barcode" %}</label>
                                 <input type="text" class="form-control" id="productBarcode" name="barcode">
                             </div>
                         </div>
@@ -2072,19 +2072,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="col-md-12">
                             <div class="mb-3">
                                 <label for="productSerialNumber" class="form-label">
-                                    الرقم التسلسلي
-                                    <small class="text-muted">- للضمان</small>
+                                    {% trans "Serial Number" %}
+                                    <small class="text-muted">{% trans "- For Warranty" %}</small>
                                 </label>
                                 <input type="text" class="form-control" id="productSerialNumber" name="serial_number"
                                        placeholder="مثال: SN123456789">
                                 <div class="form-text">
                                     <i class="fas fa-info-circle me-1"></i>
-                                    هذا الحقل للمنتجات المباعة بالقطعة التي تحتاج ضمان (اختياري)
+                                    {% trans "This field is for products sold per piece that need warranty (optional)" %}
                                 </div>
                             </div>
                         </div>
                     </div>
-
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
@@ -2214,7 +2213,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="productIsActive" name="is_active" checked>
                                     <label class="form-check-label" for="productIsActive">
-                                        نشط
+                                        {% trans "Active" %}
                                     </label>
                                 </div>
                             </div>
@@ -2222,7 +2221,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="productTrackStock" name="track_stock" checked>
                                     <label class="form-check-label" for="productTrackStock">
-                                        تتبع المخزون
+                                        {% trans "Track Stock" %}
                                     </label>
                                 </div>
                             </div>
@@ -2232,12 +2231,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         <i class="fas fa-times me-2"></i>
-                        إلغاء
+                        {% trans "Cancel" %}
                     </button>
                     <button type="submit" class="btn btn-primary" id="saveProductBtn">
                         <span class="spinner-border spinner-border-sm d-none me-2" role="status" aria-hidden="true"></span>
                         <i class="fas fa-save me-2"></i>
-                        <span class="btn-text">حفظ المنتج</span>
+                        <span class="btn-text">{% trans "Save Product" %}</span>
                     </button>
                 </div>
             </form>

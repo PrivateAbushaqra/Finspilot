@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load i18n %}
+{% load custom_filters %}
 
 
 
@@ -131,10 +132,11 @@
                                                 <option value="{{ category.id }}">{{ category.name }}</option>
                                             {% endfor %}
                                         </select>
-                                        <button type="button" class="btn btn-outline-primary" id="addCategoryBtn" title="{% trans "Add New Category" %}">
-                                            <i class="fas fa-plus"></i>
-                                            {% trans "Add Category" %}
-                                        </button>
+        <button type="button" class="btn btn-outline-primary" id="addCategoryBtn" title="{% trans "Add New Category" %}" 
+                data-has-permission="{% if user.is_superuser or user.user_type == 'superadmin' or perms.products.can_add_categories_inline %}true{% else %}false{% endif %}">
+            <i class="fas fa-plus"></i>
+            {% trans "Add Category" %}
+        </button>
                                     </div>
                                 </div>
                             </div>
@@ -526,40 +528,58 @@ $(document).ready(function() {
                 <form id="categoryForm">
                     {% csrf_token %}
                     <div class="row">
-                        <div class="col-md-8">
+                        <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="categoryName" class="form-label">{% trans "Category Name" %} <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="categoryName" name="name" required autocomplete="off" 
                                        data-form-type="other" spellcheck="false">
                             </div>
                         </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="categoryNameEn" class="form-label">{% trans "English Name" %}</label>
+                                <input type="text" class="form-control" id="categoryNameEn" name="name_en" autocomplete="off" 
+                                       data-form-type="other" spellcheck="false">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="categoryCode" class="form-label">{% trans "Category Code" %}</label>
+                                <input type="text" class="form-control" id="categoryCode" name="code" placeholder="{% trans 'Example: ELECTRONICS' %}" 
+                                       autocomplete="off" data-form-type="other" spellcheck="false">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="categoryParent" class="form-label">{% trans "Parent Category" %}</label>
+                                <select class="form-select" id="categoryParent" name="parent">
+                                    <option value="">{% trans "Main Category" %}</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="categoryDescription" class="form-label">{% trans "Description" %}</label>
+                                <textarea class="form-control" id="categoryDescription" name="description" rows="3" 
+                                          autocomplete="off" data-form-type="other" spellcheck="false"></textarea>
+                            </div>
+                        </div>
                         <div class="col-md-4">
-                            <div class="mb-3 mt-4">
+                            <div class="mb-3">
+                                <label for="categorySortOrder" class="form-label">{% trans "Sort Order" %}</label>
+                                <input type="number" class="form-control" id="categorySortOrder" name="sort_order" value="0">
+                            </div>
+                            <div class="mb-3">
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="categoryIsActive" name="is_active" checked>
                                     <label class="form-check-label" for="categoryIsActive">
                                         {% trans "Active" %}
                                     </label>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="mb-3">
-                                <label for="categoryParent" class="form-label">{% trans "Parent Category" %}</label>
-                                <select class="form-select" id="categoryParent" name="parent">
-                                    <option value="">{% trans "No parent category" %}</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-12">
-                            <div class="mb-3">
-                                <label for="categoryDescription" class="form-label">{% trans "Description" %}</label>
-                                <textarea class="form-control" id="categoryDescription" name="description" rows="3" 
-                                          autocomplete="off" data-form-type="other" spellcheck="false"></textarea>
                             </div>
                         </div>
                     </div>
@@ -582,11 +602,22 @@ $(document).ready(function() {
 <script>
 // Category management
 $(document).ready(function() {
-    // Open modal popup
-    $('#addCategoryBtn').on('click', function() {
-        $('#categoryModal').modal('show');
-        loadParentCategories();
-    });
+    // Check if user has permission to add categories inline
+    var hasPermission = $('#addCategoryBtn').data('has-permission') === 'true';
+    
+    if (hasPermission) {
+        // Show add category button
+        $('#addCategoryBtn').show();
+        
+        // Open modal popup
+        $('#addCategoryBtn').on('click', function() {
+            $('#categoryModal').modal('show');
+            loadParentCategories();
+        });
+    } else {
+        // Hide add category button if no permission
+        $('#addCategoryBtn').hide();
+    }
     
     // Load parent categories list
     function loadParentCategories() {

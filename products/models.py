@@ -26,6 +26,7 @@ class Category(models.Model):
             ('can_add_products', _('يمكن إضافة المنتجات')),
             ('can_edit_products', _('يمكن تعديل المنتجات')),
             ('can_add_categories', _('يمكن إضافة الفئات')),
+            ('can_add_categories_inline', _('يمكن إضافة الفئات من خلال النوافذ المنبثقة')),
             ('can_edit_categories', _('يمكن تعديل الفئات')),
             ('can_delete_categories', _('يمكن حذف الفئات')),
             ('can_delete_products', _('يمكن حذف المنتجات')),
