@@ -12,6 +12,7 @@ from django.db import transaction, IntegrityError
 from django.utils import timezone
 from decimal import Decimal, ROUND_HALF_UP
 from datetime import date, datetime
+import json
 from .models import SalesInvoice, SalesInvoiceItem, SalesReturn
 from .models import SalesCreditNote
 from products.models import Product
@@ -243,7 +244,154 @@ class SalesInvoiceListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
 @login_required
 def sales_invoice_create(request):
     """إنشاء فاتورة مبيعات جديدة"""
+    
+    def get_invoice_create_context(request, form_data=None):
+        """إعداد سياق صفحة إنشاء الفاتورة مع البيانات المُدخلة إن وجدت"""
+        user = request.user
+        context = {
+            'customers': CustomerSupplier.objects.filter(type__in=['customer', 'both']),
+            'today_date': date.today().isoformat(),
+        }
+        
+        # إضافة البيانات المُدخلة إذا كانت موجودة
+        if form_data:
+            context.update(form_data)
+            # إنشاء قائمة المنتجات الموجودة لعرضها في القالب
+            existing_products = []
+            products = form_data.get('products', [])
+            quantities = form_data.get('quantities', [])
+            prices = form_data.get('prices', [])
+            tax_rates = form_data.get('tax_rates', [])
+            for i, product_id in enumerate(products):
+                if product_id:
+                    try:
+                        product = Product.objects.get(id=product_id)
+                        existing_products.append({
+                            'id': product.id,
+                            'code': product.code,
+                            'name': product.name,
+                            'quantity': quantities[i] if i < len(quantities) else '',
+                            'price': prices[i] if i < len(prices) else '',
+                            'tax_rate': tax_rates[i] if i < len(tax_rates) else '',
+                            'current_stock': product.current_stock,
+                            'sale_price': product.sale_price,
+                        })
+                    except Product.DoesNotExist:
+                        pass
+            context['existing_products'] = existing_products
+            context['form_data_json'] = json.dumps(form_data)
+        
+        # إضافة المستودعات
+        try:
+            from inventory.models import Warehouse
+            context['warehouses'] = Warehouse.objects.filter(is_active=True)
+            # إضافة المستودع الافتراضي للمستخدم
+            context['default_warehouse'] = user.default_sales_warehouse
+        except ImportError:
+            context['warehouses'] = []
+            context['default_warehouse'] = None
+
+        # إضافة الصناديق النقدية
+        try:
+            from cashboxes.models import Cashbox
+            context['cashboxes'] = Cashbox.objects.filter(is_active=True)
+            # إضافة الصندوق النقدي الافتراضي للمستخدم
+            context['default_cashbox'] = user.default_cashbox
+        except ImportError:
+            context['cashboxes'] = []
+            context['default_cashbox'] = None
+        
+        products = Product.objects.filter(is_active=True).select_related('category')
+        products_data = []
+        for product in products:
+            products_data.append({
+                'id': product.id,
+                'code': product.code,
+                'name': product.name,
+                'price': float(product.sale_price),
+                'tax_rate': float(product.tax_rate),
+                'category': product.category.name if product.category else ''
+            })
+
+        context['products_json'] = json.dumps(products_data)
+        context['products'] = products  # إضافة المنتجات للـ modal
+
+        # التحقق من صلاحيات المستخدم
+        context['can_edit_invoice_number'] = user.is_superuser or user.is_staff or user.has_perm('sales.change_salesinvoice_number')
+        context['can_edit_date'] = user.is_superuser or user.is_staff or user.has_perm('sales.change_salesinvoice_date')
+        # صلاحية تعديل خيار شمول الضريبة - استخدم في القالب لتجنّب استدعاءات دوال داخل قوالب
+        context['can_toggle_invoice_tax'] = user.is_superuser or user.has_perm('sales.can_toggle_invoice_tax')
+
+        # اسم المستخدم المنشئ (الاسم الأول + الاسم الأخير) لعرضه في القالب
+        try:
+            creator_full = f"{user.first_name or ''} {user.last_name or ''}".strip()
+        except Exception:
+            creator_full = user.username
+        context['creator_full_name'] = creator_full
+        # صلاحية تغيير منشئ الفاتورة وقائمة المستخدمين
+        try:
+            can_change_creator = user.is_superuser or user.has_perm('sales.can_change_invoice_creator')
+        except Exception:
+            can_change_creator = False
+        context['can_change_creator'] = can_change_creator
+        if can_change_creator:
+            try:
+                from django.contrib.auth import get_user_model
+                U = get_user_model()
+                context['all_users'] = U.objects.all()
+            except Exception:
+                context['all_users'] = []
+
+        # إضافة رقم الفاتورة المتوقع للعرض
+        try:
+            sequence = DocumentSequence.objects.get(document_type='sales_invoice')
+            # استخدم معاينة الرقم التالي لتعكس أعلى رقم مستخدم فعلياً
+            if hasattr(sequence, 'peek_next_number'):
+                context['next_invoice_number'] = sequence.peek_next_number()
+            else:
+                context['next_invoice_number'] = sequence.get_formatted_number()
+        except DocumentSequence.DoesNotExist:
+            last_invoice = SalesInvoice.objects.order_by('-id').first()
+            if last_invoice:
+                number = int(last_invoice.invoice_number.split('-')[-1]) + 1 if '-' in last_invoice.invoice_number else int(last_invoice.invoice_number) + 1
+            else:
+                number = 1
+            context['next_invoice_number'] = f"SALES-{number:06d}"
+
+        # Currency settings
+        try:
+            company_settings = CompanySettings.objects.first()
+            if company_settings and company_settings.base_currency:
+                context['base_currency'] = company_settings.base_currency
+            else:
+                context['base_currency'] = Currency.objects.filter(is_active=True).first()
+        except:
+            pass
+
+        return context
+    
     if request.method == 'POST':
+        # جمع جميع البيانات المُدخلة لإعادة عرضها في حالة الأخطاء
+        form_data = {
+            'customer_id': request.POST.get('customer'),
+            'warehouse_id': request.POST.get('warehouse'),
+            'payment_type': request.POST.get('payment_type'),
+            'cashbox_id': request.POST.get('cashbox'),
+            'notes': request.POST.get('notes', ''),
+            'discount_amount': request.POST.get('discount', '0'),
+            'manual_invoice': request.POST.get('invoice_number'),
+            'invoice_date': request.POST.get('date', date.today().isoformat()),
+            'inclusive_tax': 'inclusive_tax' in request.POST,
+            'creator_user_id': request.POST.get('creator_user'),
+            'set_default_warehouse': request.POST.get('set_default_warehouse') == 'on',
+            'set_default_cashbox': request.POST.get('set_default_cashbox') == 'on',
+            'products': request.POST.getlist('products[]'),
+            'quantities': request.POST.getlist('quantities[]'),
+            'prices': request.POST.getlist('prices[]'),
+            'tax_rates': request.POST.getlist('tax_rates[]'),
+            'tax_amounts': request.POST.getlist('tax_amounts[]'),
+        }
+        
         try:
             # helper to robustly parse decimals from various client locales (commas, arabic separators, spaces)
             def parse_decimal_input(val, name='value', default=Decimal('0')):
@@ -280,6 +428,7 @@ def sales_invoice_create(request):
                         warehouse_id = request.POST.get('warehouse')
                         payment_type = request.POST.get('payment_type')
                         cashbox_id = request.POST.get('cashbox') if payment_type == 'cash' else None
+                        set_default_cashbox = request.POST.get('set_default_cashbox') == 'on' and payment_type == 'cash'
                         notes = request.POST.get('notes', '')
                         discount_amount = Decimal(request.POST.get('discount', '0'))
 
@@ -311,7 +460,15 @@ def sales_invoice_create(request):
                             invoice_date = date.today()
 
                         # التحقق من البيانات المطلوبة
-                        if not customer_id or not payment_type:
+                        errors = []
+                        if not customer_id:
+                            errors.append(_('يرجى اختيار العميل'))
+                        if not payment_type:
+                            errors.append(_('يرجى اختيار طريقة الدفع'))
+                        if not warehouse_id:
+                            errors.append(_('يرجى اختيار المستودع'))
+                        
+                        if errors:
                             # سجل محاولة فاشلة في سجل النشاط لتتبع أخطاء الإدخال
                             try:
                                 from core.signals import log_user_activity
@@ -320,13 +477,26 @@ def sales_invoice_create(request):
                                     request,
                                     'error',
                                     dummy,
-                                    _('فشل إنشاء فاتورة: الحقول المطلوبة مفقودة (العميل أو طريقة الدفع)')
+                                    _('فشل إنشاء فاتورة: الحقول المطلوبة مفقودة')
                                 )
                             except Exception:
                                 pass
 
-                            messages.error(request, _('يرجى تعبئة جميع الحقول المطلوبة'))
-                            return redirect('sales:invoice_add')
+                            for error in errors:
+                                messages.error(request, error)
+                            # جمع البيانات المُدخلة لإعادة عرضها
+                            form_data = {
+                                'customer_id': customer_id,
+                                'warehouse_id': warehouse_id,
+                                'payment_type': payment_type,
+                                'cashbox_id': cashbox_id,
+                                'notes': notes,
+                                'discount_amount': str(discount_amount) if discount_amount else '',
+                                'manual_invoice': manual_invoice,
+                                'invoice_date': invoice_date.isoformat() if hasattr(invoice_date, 'isoformat') else invoice_date,
+                            }
+                            context = get_invoice_create_context(request, form_data)
+                            return render(request, 'sales/invoice_add.html', context)
 
                         customer = get_object_or_404(CustomerSupplier, id=customer_id)
 
@@ -348,7 +518,8 @@ def sales_invoice_create(request):
                             except (ImportError, Cashbox.DoesNotExist):
                                 # إذا لم يتم العثور على الصندوق، نبلغ عن خطأ
                                 messages.error(request, _('الصندوق النقدي المحدد غير موجود أو غير نشط'))
-                                return redirect('sales:invoice_add')
+                                context = get_invoice_create_context(request, form_data)
+                                return render(request, 'sales/invoice_add.html', context)
                         products = request.POST.getlist('products[]')
                         quantities = request.POST.getlist('quantities[]')
                         prices = request.POST.getlist('prices[]')
@@ -371,7 +542,8 @@ def sales_invoice_create(request):
                                 pass
 
                             messages.error(request, _('يرجى إضافة منتج واحد على الأقل'))
-                            return redirect('sales:invoice_add')
+                            context = get_invoice_create_context(request, form_data)
+                            return render(request, 'sales/invoice_add.html', context)
 
                         # حساب المجاميع
                         subtotal = Decimal('0')
@@ -588,9 +760,32 @@ def sales_invoice_create(request):
                                 except Exception:
                                     pass
                                 
-                                return redirect('sales:invoice_add')
+                                context = get_invoice_create_context(request, form_data)
+                                return render(request, 'sales/invoice_add.html', context)
 
                         invoice.save()
+
+                        # حفظ المستودع الافتراضي إذا تم تحديده
+                        set_default_warehouse = request.POST.get('set_default_warehouse')
+                        if set_default_warehouse and warehouse:
+                            old_default = user.default_sales_warehouse
+                            user.default_sales_warehouse = warehouse
+                            user.save()
+                            
+                            # تسجيل التغيير في سجل الأنشطة
+                            try:
+                                from core.signals import log_user_activity
+                                log_user_activity(
+                                    request,
+                                    'update',
+                                    user,
+                                    _('تم تحديث المستودع الافتراضي للمبيعات من %(old)s إلى %(new)s') % {
+                                        'old': old_default.name if old_default else _('غير محدد'),
+                                        'new': warehouse.name
+                                    }
+                                )
+                            except Exception:
+                                pass
 
                         # إذا تم إدخال رقم يدوي يطابق البادئة، نقوم بدفع عداد التسلسل للأمام لتجنب التكرار لاحقاً
                         try:
@@ -608,6 +803,27 @@ def sales_invoice_create(request):
 
                         # إنشاء القيد المحاسبي
                         create_sales_invoice_journal_entry(invoice, request.user)
+
+                        # حفظ الصندوق النقدي كافتراضي إذا تم طلب ذلك
+                        if set_default_cashbox and cashbox:
+                            old_default = user.default_cashbox
+                            user.default_cashbox = cashbox
+                            user.save()
+                            
+                            # تسجيل التغيير في سجل الأنشطة
+                            try:
+                                from core.signals import log_user_activity
+                                log_user_activity(
+                                    request,
+                                    'update',
+                                    user,
+                                    _('تم تحديث الصندوق النقدي الافتراضي من %(old)s إلى %(new)s') % {
+                                        'old': old_default.name if old_default else _('غير محدد'),
+                                        'new': cashbox.name
+                                    }
+                                )
+                            except Exception:
+                                pass
 
                         # تسجيل نشاط صريح لإنشاء الفاتورة (بالإضافة للإشارات العامة)
                         try:
@@ -658,73 +874,17 @@ def sales_invoice_create(request):
 
             # إذا وصلنا هنا ولم نرجع، نبلغ عن فشل عام
             messages.error(request, _('تعذر إنشاء الفاتورة بعد محاولات متعددة، يرجى المحاولة لاحقاً'))
-            return redirect('sales:invoice_add')
+            context = get_invoice_create_context(request, form_data)
+            return render(request, 'sales/invoice_add.html', context)
         except Exception as e:
             messages.error(request, _('حدث خطأ أثناء حفظ الفاتورة: %(error)s') % {'error': str(e)})
-            return redirect('sales:invoice_add')
+            context = get_invoice_create_context(request, form_data)
+            return render(request, 'sales/invoice_add.html', context)
     
     # GET request - عرض نموذج إنشاء الفاتورة
     try:
-        context = {
-            'customers': CustomerSupplier.objects.filter(type__in=['customer', 'both']),
-            'today_date': date.today().isoformat(),
-        }
-
-        # إضافة المستودعات
-        try:
-            from inventory.models import Warehouse
-            context['warehouses'] = Warehouse.objects.filter(is_active=True)
-        except ImportError:
-            context['warehouses'] = []
-
-        # إضافة الصناديق النقدية
-        try:
-            from cashboxes.models import Cashbox
-            context['cashboxes'] = Cashbox.objects.filter(is_active=True)
-        except ImportError:
-            context['cashboxes'] = []
-        products = Product.objects.filter(is_active=True).select_related('category')
-        products_data = []
-        for product in products:
-            products_data.append({
-                'id': product.id,
-                'code': product.code,
-                'name': product.name,
-                'price': float(product.sale_price),
-                'tax_rate': float(product.tax_rate),
-                'category': product.category.name if product.category else ''
-            })
-
-        context['products_json'] = json.dumps(products_data)
-        context['products'] = products  # إضافة المنتجات للـ modal
-
-        # التحقق من صلاحيات المستخدم
-        user = request.user
-        context['can_edit_invoice_number'] = user.is_superuser or user.is_staff or user.has_perm('sales.change_salesinvoice_number')
-        context['can_edit_date'] = user.is_superuser or user.is_staff or user.has_perm('sales.change_salesinvoice_date')
-        # صلاحية تعديل خيار شمول الضريبة - استخدم في القالب لتجنّب استدعاءات دوال داخل قوالب
-        context['can_toggle_invoice_tax'] = user.is_superuser or user.has_perm('sales.can_toggle_invoice_tax')
-
-        # اسم المستخدم المنشئ (الاسم الأول + الاسم الأخير) لعرضه في القالب
-        try:
-            creator_full = f"{user.first_name or ''} {user.last_name or ''}".strip()
-        except Exception:
-            creator_full = user.username
-        context['creator_full_name'] = creator_full
-        # صلاحية تغيير منشئ الفاتورة وقائمة المستخدمين
-        try:
-            can_change_creator = user.is_superuser or user.has_perm('sales.can_change_invoice_creator')
-        except Exception:
-            can_change_creator = False
-        context['can_change_creator'] = can_change_creator
-        if can_change_creator:
-            try:
-                from django.contrib.auth import get_user_model
-                U = get_user_model()
-                context['all_users'] = U.objects.all()
-            except Exception:
-                context['all_users'] = []
-
+        context = get_invoice_create_context(request)
+        
         # سجل عرض صفحة إنشاء الفاتورة في سجل النشاط
         try:
             from core.signals import log_user_activity
@@ -736,32 +896,6 @@ def sales_invoice_create(request):
                 _('Viewed sales invoice creation page')
             )
         except Exception:
-            pass
-
-        # إضافة رقم الفاتورة المتوقع للعرض
-        try:
-            sequence = DocumentSequence.objects.get(document_type='sales_invoice')
-            # استخدم معاينة الرقم التالي لتعكس أعلى رقم مستخدم فعلياً
-            if hasattr(sequence, 'peek_next_number'):
-                context['next_invoice_number'] = sequence.peek_next_number()
-            else:
-                context['next_invoice_number'] = sequence.get_formatted_number()
-        except DocumentSequence.DoesNotExist:
-            last_invoice = SalesInvoice.objects.order_by('-id').first()
-            if last_invoice:
-                number = int(last_invoice.invoice_number.split('-')[-1]) + 1 if '-' in last_invoice.invoice_number else int(last_invoice.invoice_number) + 1
-            else:
-                number = 1
-            context['next_invoice_number'] = f"SALES-{number:06d}"
-
-        # Currency settings
-        try:
-            company_settings = CompanySettings.objects.first()
-            if company_settings and company_settings.base_currency:
-                context['base_currency'] = company_settings.base_currency
-            else:
-                context['base_currency'] = Currency.objects.filter(is_active=True).first()
-        except:
             pass
 
         return render(request, 'sales/invoice_add.html', context)

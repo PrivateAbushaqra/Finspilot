@@ -94,6 +94,17 @@
                                             {% trans "Restore Backup" %}
                                         </button>
                                     </form>
+                                    <hr class="my-3">
+                                    {% if user.is_superuser %}
+                                    <div class="text-center">
+                                        <p class="text-muted small mb-2">{% trans "Clear all data from database" %}</p>
+                                        <button type="button" class="btn btn-outline-danger w-100 clear-data-btn" onclick="clearAllData()">
+                                            <i class="fas fa-trash-alt me-2"></i>
+                                            {% trans "Clear All Data" %}
+                                            <br><small class="text-muted">{% trans "This will delete all records from all tables" %}</small>
+                                        </button>
+                                    </div>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -593,7 +604,7 @@ function startRestoreProgressMonitoring() {
                     }));
                     updateTablesDisplay({ total_tables: tables.length, total_records: (p.total_records||0), tables });
                 }
-                updateBackupProgress(p);
+                updateBackupProgress(p, 'restore');
                 if (!p.is_running) {
                     clearInterval(restoreInterval);
                     restoreInterval = null;
@@ -643,6 +654,97 @@ function checkRestoreInProgress() {
                 updateTablesDisplay({ total_tables: tables.length, total_records: (p.total_records||0), tables });
             }
             startRestoreProgressMonitoring();
+        }
+    })
+    .catch(() => {});
+}
+
+// متغيرات عامة للمسح
+var clearInterval = null;
+
+// بدء مراقبة تقدم المسح
+function startClearProgressMonitoring() {
+    if (clearInterval) {
+        clearInterval(clearInterval);
+    }
+    // إظهار بطاقة التتبع وإعادة ضبطها
+    document.getElementById('tablesInfoCard').style.display = 'block';
+    clearInterval = setInterval(function() {
+        fetch('{% url "backup:clear_progress" %}', {
+            method: 'GET',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            const ct = r.headers.get('content-type');
+            if (!ct || !ct.includes('application/json')) throw new Error('استجابة غير متوقعة');
+            return r.json();
+        })
+        .then(data => {
+            if (data.success && data.progress) {
+                const p = data.progress;
+                // عند أول مرة إن لم تكن الجداول مرسومة، ارسمها من tables_status
+                if (p.tables_status && Array.isArray(p.tables_status)) {
+                    const tables = p.tables_status.map(t => ({
+                        app_name: t.app_name,
+                        model_name: t.model_name,
+                        display_name: t.display_name || (t.app_name + '.' + t.model_name),
+                        record_count: t.record_count || 0,
+                        status: t.status || 'pending',
+                        progress: t.progress || 0
+                    }));
+                    updateTablesDisplay({ total_tables: tables.length, total_records: (p.total_records||0), tables });
+                }
+                updateBackupProgress(p);
+                if (!p.is_running) {
+                    clearInterval(clearInterval);
+                    clearInterval = null;
+                    if (p.status === 'completed') {
+                        setTimeout(() => alert('✅ Clear completed successfully'), 500);
+                    } else if (p.status === 'error') {
+                        setTimeout(() => alert('❌ Error: ' + (p.error || 'An error occurred')), 500);
+                    }
+                }
+            }
+        })
+        .catch(err => {
+            console.warn('خطأ في مراقبة تقدم المسح:', err);
+            clearInterval(clearInterval);
+            clearInterval = null;
+        });
+    }, 1000);
+}
+
+// فحص تلقائي عند تحميل الصفحة إذا كانت هناك عملية مسح قيد التنفيذ
+function checkClearInProgress() {
+    fetch('{% url "backup:clear_progress" %}', {
+        method: 'GET',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+    .then(r => {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        const ct = r.headers.get('content-type');
+        if (!ct || !ct.includes('application/json')) throw new Error('استجابة غير متوقعة');
+        return r.json();
+    })
+    .then(data => {
+        if (data.success && data.progress && data.progress.is_running) {
+            // أرسم الجداول إن توفرت وأبدأ المراقبة
+            const p = data.progress;
+            if (p.tables_status && Array.isArray(p.tables_status)) {
+                const tables = p.tables_status.map(t => ({
+                    app_name: t.app_name,
+                    model_name: t.model_name,
+                    display_name: t.display_name || (t.app_name + '.' + t.model_name),
+                    record_count: t.record_count || 0,
+                    status: t.status || 'pending',
+                    progress: t.progress || 0
+                }));
+                // إظهار البطاقة ورسم الجداول
+                document.getElementById('tablesInfoCard').style.display = 'block';
+                updateTablesDisplay({ total_tables: tables.length, total_records: (p.total_records||0), tables });
+            }
+            startClearProgressMonitoring();
         }
     })
     .catch(() => {});
@@ -823,7 +925,7 @@ function startProgressMonitoring() {
 }
 
 // دالة لتحديث عرض التقدم
-function updateBackupProgress(progressData) {
+function updateBackupProgress(progressData, operation = 'backup') {
     // تحديث شريط التقدم العام
     var overallProgress = document.getElementById('overallProgress');
     var progressText = document.getElementById('progressText');
@@ -860,10 +962,18 @@ function updateBackupProgress(progressData) {
     // تحديث شريط التقدم حسب الحالة
     if (progressData.status === 'completed') {
         overallProgress.className = 'progress-bar bg-success';
-        currentTableText.textContent = 'تم إكمال النسخ الاحتياطي بنجاح!';
+        if (operation === 'restore') {
+            currentTableText.textContent = 'تم إكمال الاستعادة بنجاح!';
+        } else {
+            currentTableText.textContent = 'تم إكمال النسخ الاحتياطي بنجاح!';
+        }
     } else if (progressData.status === 'error') {
         overallProgress.className = 'progress-bar bg-danger';
-        currentTableText.textContent = 'حدث خطأ أثناء النسخ الاحتياطي';
+        if (operation === 'restore') {
+            currentTableText.textContent = 'حدث خطأ أثناء الاستعادة';
+        } else {
+            currentTableText.textContent = 'حدث خطأ أثناء النسخ الاحتياطي';
+        }
     } else if (progressData.status === 'processing') {
         overallProgress.className = 'progress-bar progress-bar-striped progress-bar-animated bg-primary';
     }
@@ -980,6 +1090,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // تفعيل أزرار الاستعادة الحالية
     initializeRestoreButtons();
+    
     // تهيئة ربط إدارة حذف الجداول
     try { initDeletableBindings(); } catch(e){ console.warn('initDeletableBindings not ready', e); }
     
@@ -1024,6 +1135,8 @@ document.addEventListener('DOMContentLoaded', function() {
         checkAuthenticationAndLoadData();
     // فحص إن كان هناك استعادة قيد التنفيذ وإظهار التقدم
     checkRestoreInProgress();
+    // فحص إن كان هناك مسح قيد التنفيذ وإظهار التقدم
+    checkClearInProgress();
     }, 500);
 });
 
@@ -1312,6 +1425,45 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// دالة مسح جميع البيانات
+function clearAllData() {
+    if (!confirm('{% trans "Are you sure you want to clear all data from the database? This action cannot be undone!" %}')) {
+        return;
+    }
+    
+    if (!confirm('{% trans "This will permanently delete ALL records from ALL tables. Are you absolutely sure?" %}')) {
+        return;
+    }
+    
+    // إرسال طلب POST لمسح البيانات
+    fetch('{% url "backup:clear_all_data" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (response.redirected) {
+            window.location.href = response.url;
+        } else {
+            return response.json();
+        }
+    })
+    .then(data => {
+        if (data && data.success === false) {
+            alert('❌ Error: ' + (data.error || 'Unknown error'));
+        } else {
+            // إظهار بطاقة التقدم والبدء بالمراقبة
+            document.getElementById('tablesInfoCard').style.display = 'block';
+            startClearProgressMonitoring();
+        }
+    })
+    .catch(err => {
+        alert('❌ Connection error: ' + err.message);
+    });
+}
 
 console.log('✅ تم تحميل نظام النسخ الاحتياطي بنجاح');
 </script>

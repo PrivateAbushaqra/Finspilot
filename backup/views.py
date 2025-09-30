@@ -79,6 +79,32 @@ def set_backup_progress_data(data):
         cache.set('backup_last_percentage', data['percentage'], timeout=3600)
 
 
+def get_clear_progress_data():
+    """الحصول على بيانات تقدم المسح من cache"""
+    return cache.get('clear_progress', {
+        'is_running': False,
+        'current_table': '',
+        'processed_tables': 0,
+        'total_tables': 0,
+        'processed_records': 0,
+        'total_records': 0,
+        'percentage': 0,
+        'status': 'idle',
+        'error': None,
+        'tables_status': [],
+        'estimated_time': ''
+    })
+
+def set_clear_progress_data(data):
+    """تحديث بيانات تقدم المسح في cache"""
+    import time
+    current_time = time.time()
+    cache.set('clear_progress', data, timeout=3600)
+    cache.set('clear_last_update', current_time, timeout=3600)
+    if 'percentage' in data:
+        cache.set('clear_last_percentage', data['percentage'], timeout=3600)
+
+
 def get_restore_progress_data():
     """الحصول على بيانات تقدم الاستعادة من cache"""
     return cache.get('restore_progress', {
@@ -433,7 +459,9 @@ class BackupRestoreView(LoginRequiredMixin, TemplateView):
         backups.sort(key=lambda x: x['created_at'], reverse=True)
 
         context['backups'] = backups
+        context['latest_backup'] = backups[0] if backups else None
         context['is_superuser'] = self.request.user.is_superuser
+        context['can_restore_backup'] = self.request.user.has_perm('backup.can_restore_backup')
         return context
 
 
@@ -507,6 +535,7 @@ def get_backup_tables_info():
     # قائمة التطبيقات المستثناة من النسخ الاحتياطي (تطبيقات Django الأساسية فقط)
     excluded_apps = [
         'django.contrib.admin',
+        'django.contrib.auth',
         'django.contrib.contenttypes', 
         'django.contrib.sessions',
         'django.contrib.messages',
@@ -521,11 +550,20 @@ def get_backup_tables_info():
     try:
         for app_config in apps.get_app_configs():
             if app_config.name in excluded_apps:
-                continue
+                # استثناء خاص للمجموعات من auth
+                if app_config.name == 'django.contrib.auth':
+                    # نسخ المجموعات فقط من auth
+                    pass
+                else:
+                    continue
                 
             for model in app_config.get_models():
                 # تجاهل النماذج التي لا تنشئ جداول (managed = False)
                 if getattr(model._meta, 'managed', True) is False:
+                    continue
+                
+                # استثناء المستخدمين والصلاحيات من auth، لكن نسخ المجموعات
+                if app_config.name == 'django.contrib.auth' and model._meta.model_name in ['user', 'permission']:
                     continue
                     
                 try:
@@ -1466,6 +1504,328 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
         # تسجيل بداية العملية في سجل الأنشطة
         log_audit(user, 'create', _('بدء عملية استعادة النسخة الاحتياطية'))
 
+        start_time = time.time()
+
+        # تهيئة تتبع التقدم
+        flat_tables = []
+        total_records_expected = 0
+        if isinstance(backup_data, dict) and 'data' in backup_data:
+            for app_name, app_data in backup_data['data'].items():
+                for model_name, model_records in app_data.items():
+                    if isinstance(model_records, list):
+                        rec_count = len(model_records)
+                        total_records_expected += rec_count
+                        flat_tables.append({
+                            'app_name': app_name,
+                            'model_name': model_name,
+                            'display_name': f"{app_name}.{model_name}",
+                            'record_count': rec_count,
+                            'status': 'pending',
+                            'progress': 0,
+                            'actual_records': 0,
+                            'error': None
+                        })
+
+        progress_data = get_restore_progress_data()
+        progress_data.update({
+            'is_running': True,
+            'status': 'starting',
+            'error': None,
+            'percentage': 0,
+            'current_table': 'بدء عملية الاستعادة...',
+            'processed_tables': 0,
+            'total_tables': len(flat_tables),
+            'processed_records': 0,
+            'total_records': total_records_expected,
+            'estimated_time': 'جاري الحساب...',
+            'tables_status': flat_tables
+        })
+        set_restore_progress_data(progress_data)
+        
+        # مسح البيانات الموجودة إذا طُلب ذلك
+        if clear_data:
+            logger.info("مسح البيانات الموجودة...")
+            perform_clear_all_data(user)
+        
+        # استعادة البيانات
+        processed_tables = 0
+        processed_records = 0
+        
+        try:
+            with transaction.atomic():
+                for i, table_info in enumerate(flat_tables):
+                    app_name = table_info['app_name']
+                    model_name = table_info['model_name']
+                    
+                    progress_data['current_table'] = table_info['display_name']
+                    progress_data['processed_tables'] = i
+                    
+                    # حساب الوقت المتوقع
+                    elapsed = time.time() - start_time
+                    if processed_tables > 0:
+                        avg_time_per_table = elapsed / processed_tables
+                        remaining_tables = len(flat_tables) - processed_tables
+                        estimated_seconds = avg_time_per_table * remaining_tables
+                        progress_data['estimated_time'] = f"{int(estimated_seconds)} ثانية متبقية"
+                    else:
+                        progress_data['estimated_time'] = 'جاري الحساب...'
+                    
+                    set_restore_progress_data(progress_data)
+                    
+                    try:
+                        # الحصول على النموذج
+                        app_config = apps.get_app_config(app_name)
+                        model = app_config.get_model(model_name)
+                        
+                        if model and 'data' in backup_data and app_name in backup_data['data'] and model_name in backup_data['data'][app_name]:
+                            records = backup_data['data'][app_name][model_name]
+                            if isinstance(records, list):
+                                for record_data in records:
+                                    try:
+                                        # تنظيف البيانات للنماذج التي تغيرت هيكلها
+                                        if model._meta.label == 'core.AuditLog':
+                                            # إزالة الحقول القديمة التي لم تعد موجودة
+                                            record_data = {k: v for k, v in record_data.items() if k in ['pk', 'user', 'action_type', 'content_type', 'object_id', 'description', 'ip_address', 'timestamp']}
+                                            # تجاهل السجلات التي لها user_id null أو غير موجود
+                                            if not record_data.get('user'):
+                                                continue
+                                        elif model._meta.label == 'core.CompanySettings':
+                                            # إزالة الحقول القديمة
+                                            record_data = {k: v for k, v in record_data.items() if k in ['pk', 'company_name', 'logo', 'currency', 'address', 'phone', 'email', 'tax_number', 'session_timeout_minutes', 'enable_session_timeout', 'logout_on_browser_close', 'created_at', 'updated_at']}
+                                        elif model._meta.label == 'core.DocumentSequence':
+                                            # إزالة الحقول القديمة
+                                            record_data = {k: v for k, v in record_data.items() if k in ['pk', 'document_type', 'prefix', 'digits', 'current_number', 'created_at', 'updated_at']}
+                                        
+                                        # إنشاء أو تحديث السجل
+                                        obj, created = model.objects.get_or_create(
+                                            pk=record_data.get('pk') if 'pk' in record_data else None,
+                                            defaults=record_data
+                                        )
+                                        if not created:
+                                            for key, value in record_data.items():
+                                                setattr(obj, key, value)
+                                            obj.save()
+                                        processed_records += 1
+                                    except Exception as rec_err:
+                                        logger.warning(f"فشل في استعادة سجل في {table_info['display_name']}: {rec_err}")
+                                        continue
+                        
+                        processed_tables += 1
+                        percentage = int((processed_tables / len(flat_tables)) * 100) if flat_tables else 100
+                        progress_data['percentage'] = percentage
+                        progress_data['processed_tables'] = processed_tables
+                        progress_data['processed_records'] = processed_records
+                        progress_data['tables_status'][i]['status'] = 'completed'
+                        set_restore_progress_data(progress_data)
+                        
+                    except Exception as e:
+                        logger.warning(f"فشل في استعادة جدول {table_info['display_name']}: {str(e)}")
+                        progress_data['tables_status'][i]['status'] = 'error'
+                        progress_data['tables_status'][i]['error'] = str(e)
+                        set_restore_progress_data(progress_data)
+                        continue
+                
+                # إكمال التقدم
+                progress_data.update({
+                    'is_running': False,
+                    'status': 'completed',
+                    'percentage': 100,
+                    'current_table': 'تم إكمال الاستعادة بنجاح!',
+                    'processed_tables': processed_tables,
+                    'processed_records': processed_records,
+                    'estimated_time': '0 ثانية متبقية'
+                })
+                set_restore_progress_data(progress_data)
+                
+                log_audit(user, 'create', f'اكتمل استعادة النسخة الاحتياطية: {processed_records} سجل من {processed_tables} جدول')
+                
+        except Exception as e:
+            logger.error(f"خطأ في استعادة البيانات: {str(e)}")
+            progress_data.update({
+                'is_running': False,
+                'status': 'error',
+                'error': str(e)
+            })
+            set_restore_progress_data(progress_data)
+            raise e
+            
+    except Exception as e:
+        logger.error(f"خطأ في تنفيذ استعادة النسخة الاحتياطية: {str(e)}")
+        progress_data = get_restore_progress_data()
+        progress_data.update({
+            'is_running': False,
+            'status': 'error',
+            'error': str(e)
+        })
+        set_restore_progress_data(progress_data)
+        raise e
+
+def perform_clear_all_data(user):
+    """تنفيذ عملية مسح البيانات الفعلية"""
+    try:
+        logger.info("بدء تنفيذ عملية مسح البيانات")
+        
+        # تسجيل بداية العملية في سجل الأنشطة
+        log_audit(user, 'delete', _('بدء عملية مسح جميع البيانات'))
+
+        # تهيئة تتبع التقدم
+        flat_tables = []
+        total_records_expected = 0
+        if isinstance(backup_data, dict) and 'data' in backup_data:
+            for app_name, app_data in backup_data['data'].items():
+                for model_name, model_records in app_data.items():
+                    if isinstance(model_records, list):
+                        rec_count = len(model_records)
+                        total_records_expected += rec_count
+                        flat_tables.append({
+                            'app_name': app_name,
+                            'model_name': model_name,
+                            'display_name': f"{app_name}.{model_name}",
+                            'record_count': rec_count,
+                            'status': 'pending',
+                            'progress': 0,
+                            'actual_records': 0,
+                            'error': None
+                        })
+
+        # قائمة التطبيقات المستثناة من المسح
+        excluded_apps = [
+            'django.contrib.admin',
+            'django.contrib.contenttypes', 
+            'django.contrib.sessions',
+            'django.contrib.messages',
+            'django.contrib.staticfiles',
+            'corsheaders',
+            'rest_framework',
+            'django_bootstrap5',
+            'crispy_forms',
+            'crispy_bootstrap5',
+        ]
+        
+        # بناء قائمة الجداول
+        tables_to_clear = []
+        for app_config in apps.get_app_configs():
+            if app_config.name in excluded_apps:
+                continue
+                
+            for model in app_config.get_models():
+                if getattr(model._meta, 'managed', True) is False:
+                    continue
+                
+                label = f"{app_config.name}.{model._meta.model_name}"
+                record_count = model.objects.count()
+                tables_to_clear.append({
+                    'label': label,
+                    'model': model,
+                    'record_count': record_count,
+                    'display_name': model._meta.verbose_name or label,
+                    'status': 'pending',
+                    'progress': 0
+                })
+        
+        total_tables = len(tables_to_clear)
+        total_records = sum(t['record_count'] for t in tables_to_clear)
+        
+        progress_data = get_clear_progress_data()
+        progress_data.update({
+            'is_running': True,
+            'status': 'starting',
+            'error': None,
+            'percentage': 0,
+            'current_table': 'بدء عملية المسح...',
+            'processed_tables': 0,
+            'total_tables': total_tables,
+            'processed_records': 0,
+            'total_records': total_records,
+            'estimated_time': 'جاري الحساب...',
+            'tables_status': tables_to_clear
+        })
+        set_clear_progress_data(progress_data)
+        
+        # تنفيذ المسح داخل معاملة
+        processed_tables = 0
+        processed_records = 0
+        
+        try:
+            with transaction.atomic():
+                for i, table_info in enumerate(tables_to_clear):
+                    model = table_info['model']
+                    label = table_info['label']
+                    
+                    progress_data['current_table'] = table_info['display_name']
+                    progress_data['processed_tables'] = i
+                    set_clear_progress_data(progress_data)
+                    
+                    try:
+                        if model._meta.label == 'auth.User':
+                            # مسح المستخدمين غير Superuser فقط
+                            non_superuser_count = model.objects.filter(is_superuser=False).count()
+                            if non_superuser_count > 0:
+                                model.objects.filter(is_superuser=False).delete()
+                                processed_records += non_superuser_count
+                                log_audit(user, 'delete', f'تم مسح {non_superuser_count} مستخدم غير Superuser')
+                        else:
+                            record_count = table_info['record_count']
+                            if record_count > 0:
+                                model.objects.all().delete()
+                                processed_records += record_count
+                                log_audit(user, 'delete', f'تم مسح {record_count} سجل من جدول {table_info["display_name"]}')
+                        
+                        processed_tables += 1
+                        percentage = int((processed_tables / total_tables) * 100) if total_tables > 0 else 100
+                        progress_data['percentage'] = percentage
+                        progress_data['processed_tables'] = processed_tables
+                        progress_data['processed_records'] = processed_records
+                        progress_data['tables_status'][i]['status'] = 'completed'
+                        set_clear_progress_data(progress_data)
+                        
+                    except Exception as e:
+                        logger.warning(f"فشل في مسح جدول {label}: {str(e)}")
+                        progress_data['tables_status'][i]['status'] = 'error'
+                        progress_data['tables_status'][i]['error'] = str(e)
+                        set_clear_progress_data(progress_data)
+                        continue
+                
+                # إكمال التقدم
+                progress_data.update({
+                    'is_running': False,
+                    'status': 'completed',
+                    'percentage': 100,
+                    'current_table': 'تم إكمال المسح بنجاح!',
+                    'processed_tables': processed_tables,
+                    'processed_records': processed_records
+                })
+                set_clear_progress_data(progress_data)
+                
+                log_audit(user, 'delete', f'اكتمل مسح جميع البيانات: {processed_records} سجل من {processed_tables} جدول')
+                
+        except Exception as e:
+            logger.error(f"خطأ في مسح البيانات: {str(e)}")
+            progress_data.update({
+                'is_running': False,
+                'status': 'error',
+                'error': str(e)
+            })
+            set_clear_progress_data(progress_data)
+            raise e
+            
+    except Exception as e:
+        logger.error(f"خطأ في تنفيذ مسح البيانات: {str(e)}")
+        progress_data = get_clear_progress_data()
+        progress_data.update({
+            'is_running': False,
+            'status': 'error',
+            'error': str(e)
+        })
+        set_clear_progress_data(progress_data)
+        raise e
+    """تنفيذ عملية الاستعادة الفعلية"""
+    try:
+        logger.info("بدء تنفيذ عملية الاستعادة")
+        
+        # تسجيل بداية العملية في سجل الأنشطة
+        log_audit(user, 'create', _('بدء عملية استعادة النسخة الاحتياطية'))
+
         # تهيئة تتبع التقدم
         flat_tables = []
         total_records_expected = 0
@@ -1509,22 +1869,22 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
         if clear_data:
             logger.info("مسح البيانات الموجودة...")
             
-            # تجاهل التطبيقات الأساسية للنظام (contenttypes, auth, admin, sessions)
-            skip_apps = {'contenttypes', 'auth', 'admin', 'sessions'}
+            # النماذج المستثناة من المسح (المستخدمين والمجموعات والصلاحيات)
+            skip_models = {'auth.User', 'auth.Group', 'auth.Permission'}
             
             # بناء خريطة التبعية بين النماذج
             dep_map = {}
             model_map = {}
             for app_config in apps.get_app_configs():
-                if app_config.name in skip_apps:
-                    continue
-                    
                 for model in app_config.get_models():
                     # تجاهل النماذج التي لا تنشئ جداول
                     if not model._meta.managed:
                         continue
                         
                     label = f"{app_config.name}.{model._meta.model_name}"
+                    if label in skip_models:
+                        continue  # استثناء النماذج المحددة
+                    
                     dep_map[label] = set()
                     model_map[label] = model
 
@@ -1571,40 +1931,7 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                             continue
                             
                         try:
-                            # معالجة خاصة لنموذج User
-                            UserModel = None
-                            try:
-                                from django.contrib.auth import get_user_model
-                                UserModel = get_user_model()
-                            except Exception:
-                                UserModel = None
-
-                            if UserModel is not None and getattr(model, '__name__', '').lower() == getattr(UserModel, '__name__', '').lower():
-                                # إنشاء مستخدم احتياطي إذا لم يكن موجوداً
-                                fallback_username = '__deleted_user__'
-                                fallback = UserModel.objects.filter(username=fallback_username).first()
-                                if not fallback:
-                                    fallback = UserModel.objects.create(username=fallback_username, is_active=False)
-
-                                # إعادة توجيه مراجعات المستخدمين المراد حذفها
-                                try:
-                                    user_ids = list(model.objects.exclude(pk=fallback.pk).values_list('pk', flat=True))
-                                    from core.models import AuditLog as _AuditLog
-                                    if user_ids:
-                                        _AuditLog.objects.filter(user_id__in=user_ids).update(user_id=fallback.pk)
-                                except Exception as reassign_err:
-                                    logger.warning(f"فشل في إعادة توجيه مراجعات المستخدمين: {reassign_err}")
-
-                                # حذف جميع المستخدمين عدا المستخدم الاحتياطي
-                                qs = model.objects.exclude(pk=fallback.pk)
-                                count = qs.count()
-                                qs.delete()
-                                deleted_stats.append({'table': label, 'deleted': count})
-                                total_deleted_records += count
-                                logger.debug(f"تم مسح {count} مستخدم من {label} ({i+1}/{len(delete_order)})")
-                                continue
-
-                            # الحذف العادي للنماذج الأخرى
+                            # الحذف العادي للنماذج
                             count = model.objects.all().count()
                             if count > 0:  # فقط إذا كان هناك بيانات
                                 # محاولة الحذف مع إعادة المحاولة في حالة فشل
@@ -2595,6 +2922,107 @@ def get_restore_progress(request):
                     'estimated_time': ''
                 }
 
+        return JsonResponse({'success': True, 'progress': progress_data})
+
+    except Exception as e:
+        logger.error(f"خطأ في الحصول على تقدم الاستعادة: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required
+def get_clear_progress(request):
+    """الحصول على حالة تقدم المسح"""
+    try:
+        progress_data = get_clear_progress_data()
+
+        # التحقق من أن progress_data هو dictionary صحيح
+        if not isinstance(progress_data, dict):
+            logger.warning(f"بيانات التقدم تالفة: {type(progress_data)}")
+            progress_data = {
+                'is_running': False,
+                'current_table': '',
+                'processed_tables': 0,
+                'total_tables': 0,
+                'processed_records': 0,
+                'total_records': 0,
+                'percentage': 0,
+                'status': 'idle',
+                'error': 'بيانات التقدم تالفة',
+                'tables_status': [],
+                'estimated_time': ''
+            }
+
+        # التحقق من العمليات المعلقة
+        if progress_data.get('is_running', False):
+            import time
+            current_time = time.time()
+            last_update = cache.get('clear_last_update', current_time)
+            if current_time - last_update > 600:
+                cache.delete('clear_progress')
+                cache.delete('clear_last_update')
+                log_audit(request.user, 'delete', 'تم إلغاء عملية المسح المعلقة تلقائياً')
+                progress_data = {
+                    'is_running': False,
+                    'current_table': '',
+                    'processed_tables': 0,
+                    'total_tables': 0,
+                    'processed_records': 0,
+                    'total_records': 0,
+                    'percentage': 0,
+                    'status': 'idle',
+                    'error': None,
+                    'tables_status': [],
+                    'estimated_time': ''
+                }
+
+        return JsonResponse({'success': True, 'progress': progress_data})
+
+    except Exception as e:
+        logger.error(f"خطأ في الحصول على تقدم المسح: {str(e)}")
+        return JsonResponse({'success': False, 'error': str(e)})
+    """الحصول على حالة تقدم الاستعادة"""
+    try:
+        progress_data = get_restore_progress_data()
+
+        # التحقق من أن progress_data هو dictionary صحيح
+        if not isinstance(progress_data, dict):
+            logger.warning(f"بيانات التقدم تالفة: {type(progress_data)}")
+            progress_data = {
+                'is_running': False,
+                'current_table': '',
+                'processed_tables': 0,
+                'total_tables': 0,
+                'processed_records': 0,
+                'total_records': 0,
+                'percentage': 0,
+                'status': 'idle',
+                'error': 'بيانات التقدم تالفة',
+                'tables_status': [],
+                'estimated_time': ''
+            }
+
+        # التحقق من العمليات المعلقة
+        if progress_data.get('is_running', False):
+            import time
+            current_time = time.time()
+            last_update = cache.get('restore_last_update', current_time)
+            if current_time - last_update > 600:
+                cache.delete('restore_progress')
+                cache.delete('restore_last_update')
+                log_audit(request.user, 'delete', 'تم إلغاء عملية الاستعادة المعلقة تلقائياً')
+                progress_data = {
+                    'is_running': False,
+                    'current_table': '',
+                    'processed_tables': 0,
+                    'total_tables': 0,
+                    'processed_records': 0,
+                    'total_records': 0,
+                    'percentage': 0,
+                    'status': 'idle',
+                    'error': None,
+                    'tables_status': [],
+                    'estimated_time': ''
+                }
+
         return JsonResponse({
             'success': True,
             'progress': progress_data
@@ -2655,3 +3083,61 @@ def list_backups(request):
             'success': False,
             'error': str(e)
         })
+
+
+@login_required
+@permission_required('backup.can_restore_backup', raise_exception=True)
+@login_required
+def clear_all_data(request):
+    """مسح جميع البيانات من قاعدة البيانات (للاستخدام المنفصل)"""
+    if not request.user.is_superuser:
+        messages.error(request, 'ليس لديك صلاحية لمسح البيانات.')
+        return redirect('backup:backup_restore')
+    
+    if request.method != 'POST':
+        return redirect('backup:backup_restore')
+    
+    # تحقق من عدم وجود عملية مسح قيد التشغيل
+    progress_data = get_clear_progress_data()
+    if progress_data.get('is_running', False):
+        messages.error(request, 'عملية مسح أخرى قيد التشغيل بالفعل.')
+        return redirect('backup:backup_restore')
+    
+    # تشغيل عملية المسح في خيط منفصل وتحديث التقدم عبر الكاش
+    def start_clear_task():
+        try:
+            perform_clear_all_data(request.user)
+            # عند النجاح، سجّل في السجل
+            if AUDIT_AVAILABLE:
+                try:
+                    AuditLog.objects.create(
+                        user=request.user,
+                        action='clear_all_data_complete',
+                        details='تم إتمام مسح جميع البيانات بنجاح'
+                    )
+                except Exception:
+                    pass
+        except Exception as clear_error:
+            logger.error(f"خطأ في تنفيذ المسح (خلفية): {str(clear_error)}")
+            if AUDIT_AVAILABLE:
+                try:
+                    AuditLog.objects.create(
+                        user=request.user,
+                        action='clear_all_data_failed',
+                        details=f'فشل في مسح البيانات: {str(clear_error)}'
+                    )
+                except Exception:
+                    pass
+
+    thread = threading.Thread(target=start_clear_task, daemon=True)
+    thread.start()
+
+    # الاستجابة حسب نوع الطلب
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({
+            'success': True,
+            'message': _('تم بدء عملية المسح في الخلفية')
+        })
+    else:
+        messages.info(request, _("تم بدء عملية المسح في الخلفية، يمكن متابعة التقدم على هذه الصفحة"))
+        return redirect('backup:backup_restore')

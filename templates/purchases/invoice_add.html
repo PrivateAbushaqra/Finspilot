@@ -146,7 +146,7 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label"><i class="fas fa-receipt me-1"></i> {% trans "Supplier Invoice Number" %} *</label>
-                                    <input type="text" class="form-control" name="supplier_invoice_number" required>
+                                    <input type="text" class="form-control" name="supplier_invoice_number" value="{{ form_data.supplier_invoice_number|default:'' }}" required>
                                 </div>
                             </div>
                         </div>
@@ -155,7 +155,7 @@
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label class="form-label"><i class="fas fa-calendar me-1"></i> {% trans "Date" %} *</label>
-                                    <input type="date" class="form-control" name="date" required>
+                                    <input type="date" class="form-control" name="date" value="{{ form_data.date|default:'' }}" required>
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -175,7 +175,7 @@
                                     <select class="form-select d-none" name="supplier" id="supplierSelect" required>
                                         <option value="">{% trans "Choose Supplier" %}</option>
                                         {% for supplier in suppliers %}
-                                        <option value="{{ supplier.id }}">{{ supplier.name }}</option>
+                                        <option value="{{ supplier.id }}" {% if form_data.supplier_id and form_data.supplier_id == supplier.id|stringformat:"s" %}selected{% endif %}>{{ supplier.name }}</option>
                                         {% endfor %}
                                     </select>
                                     <div id="supplier-balance-info" class="mt-2" style="display: none;">
@@ -189,10 +189,10 @@
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label class="form-label"><i class="fas fa-money-bill me-1"></i> {% trans "Payment Type" %} *</label>
-                                    <select class="form-select" name="payment_type" required>
+                                    <select class="form-select" name="payment_type" id="id_payment_type" required>
                                         <option value="">{% trans "Select Payment Type" %}</option>
-                                        <option value="cash">{% trans "Cash" %}</option>
-                                        <option value="credit">{% trans "Credit" %}</option>
+                                        <option value="cash" {% if form_data.payment_type == 'cash' %}selected{% endif %}>{% trans "Cash" %}</option>
+                                        <option value="credit" {% if form_data.payment_type == 'credit' %}selected{% endif %}>{% trans "Credit" %}</option>
                                     </select>
                                 </div>
                             </div>
@@ -200,7 +200,7 @@
                                 <div class="mb-3">
                                     <label class="form-label"><i class="fas fa-percentage me-1"></i> {% trans "Tax Settings" %}</label>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" name="is_tax_inclusive" id="is_tax_inclusive" checked>
+                                        <input class="form-check-input" type="checkbox" name="is_tax_inclusive" id="is_tax_inclusive" {% if form_data.is_tax_inclusive %}checked{% endif %}>
                                         <label class="form-check-label" for="is_tax_inclusive">
                                             {% trans "Tax Inclusive" %}
                                         </label>
@@ -217,17 +217,22 @@
                         <div class="row mb-4">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label"><i class="fas fa-warehouse me-1"></i> {% trans "Warehouse" %}</label>
-                                    <select class="form-select" name="warehouse">
+                                    <label class="form-label"><i class="fas fa-warehouse me-1"></i> {% trans "Warehouse" %} <span class="required-field">*</span></label>
+                                    <select class="form-select" name="warehouse" id="id_warehouse" required>
                                         <option value="">{% trans "Select Warehouse" %}</option>
                                         {% for warehouse in warehouses %}
-                                        <option value="{{ warehouse.id }}" {% if warehouse.is_default %}selected{% endif %}>
+                                        <option value="{{ warehouse.id }}" {% if form_data.warehouse_id and form_data.warehouse_id == warehouse.id|stringformat:"s" %}selected{% elif not form_data.warehouse_id and default_warehouse and warehouse.id == default_warehouse.id %}selected{% endif %}>
                                             {{ warehouse.name }} - {{ warehouse.code }}
-                                            {% if warehouse.is_default %} ({% trans "Default" %}){% endif %}
                                         </option>
                                         {% endfor %}
                                     </select>
-                                    <div class="form-text">{% trans "Select the warehouse where products will be stored. If not specified, no warehouse will be assigned." %}</div>
+                                    <div class="form-check mt-2">
+                                        <input class="form-check-input" type="checkbox" name="set_default_warehouse" id="set_default_warehouse">
+                                        <label class="form-check-label" for="set_default_warehouse">
+                                            {% trans "Set as default purchase warehouse" %}
+                                        </label>
+                                    </div>
+                                    <div class="form-text">{% trans "Select the warehouse where products will be stored." %}</div>
                                 </div>
                             </div>
                             <div class="col-md-6">
@@ -282,7 +287,7 @@
                                 <div class="col-md-6">
                                     <div class="mb-3">
                                         <label class="form-label"><i class="fas fa-sticky-note me-1"></i> {% trans "Notes" %}</label>
-                                        <textarea class="form-control" name="notes" rows="3" placeholder="{% trans 'Enter any additional notes...' %}"></textarea>
+                                        <textarea class="form-control" name="notes" rows="3" placeholder="{% trans 'Enter any additional notes...' %}">{{ form_data.notes|default:'' }}</textarea>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -382,8 +387,8 @@
                                 <td><small>{{ product.tax_rate|floatformat:2 }}%</small></td>
                                 <td>
                                     <button type="button" class="btn btn-sm btn-primary" 
-                                            onclick="selectProduct('{{ product.id }}', '{{ product.code }}', '{{ product.name }}', '{{ product.last_purchase_price|default:0 }}', '{{ product.tax_rate }}', '0')"
-                                            title="{% trans "Select" %} {{ product.name }}">
+                                            onclick="selectProduct('{{ product.id|escapejs }}', '{{ product.code|escapejs }}', '{{ product.name|escapejs }}', '{{ product.last_purchase_price|default:0 }}', '{{ product.tax_rate }}', '{{ product.current_stock }}')"
+                                            title="{% trans "Select" %} {{ product.name|escapejs }}">
                                         <i class="fas fa-plus"></i>
                                     </button>
                                 </td>
@@ -515,12 +520,12 @@ function addProductRow() {
         let taxCells = `
             <td>
                 <input type="number" class="form-control" name="tax_rate[]" id="taxRate${productRowCount}" 
-                       min="0" step="0.01" placeholder="0.000" onchange="calculateRowTotal(${productRowCount})">
+                       min="0" step="0.01" placeholder="0.000" readonly style="background-color: #e9ecef;" onchange="calculateRowTotal(${productRowCount})">
             </td>`;
         
         let taxAmountCells = `
             <td>
-                <input type="text" class="form-control" id="rowTax${productRowCount}" readonly placeholder="0.000">
+                <input type="text" class="form-control tax-amount-input" id="rowTax${productRowCount}" readonly placeholder="0.000" style="background-color: #e9ecef;">
             </td>`;
         
         row.innerHTML = `
@@ -564,7 +569,7 @@ function addProductRow() {
             </td>
             ${taxCells}
             <td>
-                <input type="text" class="form-control" id="rowTotal${productRowCount}" readonly placeholder="0.000" style="background-color: #e9ecef;">
+                <input type="text" class="form-control total-input" id="rowTotal${productRowCount}" readonly placeholder="0.000" style="background-color: #e9ecef;">
             </td>
             ${taxAmountCells}
             <td class="text-center">
@@ -622,13 +627,19 @@ function selectProduct(productId, productCode, productName, lastPurchasePrice, t
     }
     
     try {
-        const productIdInput = document.getElementById(`productId${currentRow}`);
-        const productCodeInput = document.getElementById(`productCode${currentRow}`);
-        const productNameInput = document.getElementById(`productName${currentRow}`);
-        const availableQuantityInput = document.getElementById(`availableQuantity${currentRow}`);
-        const unitPriceInput = document.getElementById(`unitPrice${currentRow}`);
-        const taxRateInput = document.getElementById(`taxRate${currentRow}`);
-        const hiddenTaxRateInput = document.getElementById(`hiddenTaxRate${currentRow}`);
+        const row = document.getElementById(`productRow${currentRow}`);
+        if (!row) {
+            console.error('{% trans "Product row not found" %}', currentRow);
+            return;
+        }
+        
+        const productIdInput = row.querySelector(`#productId${currentRow}`);
+        const productCodeInput = row.querySelector(`#productCode${currentRow}`);
+        const productNameInput = row.querySelector('.product-name-input');
+        const availableQuantityInput = row.querySelector(`#availableQuantity${currentRow}`);
+        const unitPriceInput = row.querySelector(`#unitPrice${currentRow}`);
+        const taxRateInput = row.querySelector(`#taxRate${currentRow}`);
+        const hiddenTaxRateInput = row.querySelector(`#hiddenTaxRate${currentRow}`);
         
         if (!productIdInput || !productCodeInput || !productNameInput) {
             console.error('{% trans "Product fields not found in row" %}', currentRow);
@@ -677,9 +688,20 @@ function selectProduct(productId, productCode, productName, lastPurchasePrice, t
         }
         
         // {% trans "Focus on quantity field" %}
-        const quantityInput = document.getElementById(`quantity${currentRow}`);
+        const quantityInput = row.querySelector(`#quantity${currentRow}`);
         if (quantityInput) {
             quantityInput.focus();
+        }
+        
+        // {% trans "Add Tab listener to tax amount field" %}
+        const taxAmountInput = row.querySelector('.tax-amount-input');
+        if (taxAmountInput) {
+            taxAmountInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Tab') {
+                    e.preventDefault();
+                    addProductRow();
+                }
+            });
         }
         
     } catch (error) {
@@ -811,6 +833,30 @@ document.getElementById('productSearch').addEventListener('input', function() {
 
 // {% trans "Validate form before submission" %}
 document.getElementById('invoiceForm').addEventListener('submit', function(e) {
+    // التحقق من المورد
+    const supplierSelect = document.getElementById('supplierSelect');
+    if (!supplierSelect || !supplierSelect.value) {
+        e.preventDefault();
+        alert('{% trans "يرجى اختيار المورد" %}');
+        return false;
+    }
+    
+    // التحقق من طريقة الدفع
+    const paymentTypeSelect = document.getElementById('id_payment_type');
+    if (!paymentTypeSelect || !paymentTypeSelect.value) {
+        e.preventDefault();
+        alert('{% trans "يرجى اختيار طريقة الدفع" %}');
+        return false;
+    }
+    
+    // التحقق من المستودع
+    const warehouseSelect = document.getElementById('id_warehouse');
+    if (!warehouseSelect || !warehouseSelect.value) {
+        e.preventDefault();
+        alert('{% trans "يرجى اختيار المستودع" %}');
+        return false;
+    }
+    
     const rows = document.querySelectorAll('#productsTableBody tr');
     let hasProducts = false;
     

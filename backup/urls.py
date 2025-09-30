@@ -17,4 +17,6 @@ urlpatterns = [
     path('download-backup/<str:filename>/', views.download_backup, name='download_backup'),
     path('delete-backup/<str:filename>/', views.delete_backup, name='delete_backup'),
     path('list-backups/', views.list_backups, name='list_backups'),
+    path('clear-all-data/', views.clear_all_data, name='clear_all_data'),
+    path('clear-progress/', views.get_clear_progress, name='clear_progress'),
 ]

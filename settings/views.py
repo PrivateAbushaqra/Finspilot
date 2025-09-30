@@ -6,7 +6,7 @@ from django.http import JsonResponse
 from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 from .models import Currency
-from .models import CompanySettings
+from core.models import CompanySettings
 import json
 
 class SettingsView(LoginRequiredMixin, TemplateView):

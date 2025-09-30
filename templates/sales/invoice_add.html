@@ -206,11 +206,11 @@
                                 </span>
                                 {% if can_edit_invoice_number %}
                                     <input type="text" class="form-control" id="id_invoice_number" name="invoice_number"
-                                           value="{{ next_invoice_number }}" 
+                                           value="{% if manual_invoice %}{{ manual_invoice }}{% else %}{{ next_invoice_number }}{% endif %}" 
                                            title="{% trans 'You can edit the invoice number or leave the field for automatic generation' %}">
                                 {% else %}
                                     <input type="text" class="form-control bg-light" 
-                                           value="{{ next_invoice_number }}" 
+                                           value="{% if manual_invoice %}{{ manual_invoice }}{% else %}{{ next_invoice_number }}{% endif %}" 
                                            readonly
                                            title="{% trans 'Invoice number will be automatically generated from the document numbering system' %}">
                                 {% endif %}
@@ -232,14 +232,14 @@
                             </label>
                             {% if can_edit_date %}
                                 <input type="date" class="form-control" id="id_date" name="date" 
-                                       value="{{ today_date }}" required
+                                       value="{% if invoice_date %}{{ invoice_date }}{% else %}{{ today_date }}{% endif %}" required
                                        title="{% trans 'You can edit the invoice date' %}">
                                 <small class="form-text text-muted">
                                     {% trans "You can edit the invoice date as needed" %}
                                 </small>
                             {% else %}
                                 <input type="date" class="form-control bg-light" id="id_date" name="date" 
-                                       value="{{ today_date }}" readonly
+                                       value="{% if invoice_date %}{{ invoice_date }}{% else %}{{ today_date }}{% endif %}" readonly
                                        title="{% trans 'Today date (you do not have permission to edit date)' %}">
                                 <small class="form-text text-muted">
                                     {% trans "Invoice date is fixed to today's date (you do not have permission to edit date)" %}
@@ -267,7 +267,7 @@
                             <select class="form-select d-none" id="id_customer" name="customer" required>
                                 <option value="">{% trans "Select Customer" %}</option>
                                 {% for customer in customers %}
-                                    <option value="{{ customer.id }}">{{ customer.name }}</option>
+                                    <option value="{{ customer.id }}" {% if customer_id and customer.id|stringformat:"s" == customer_id %}selected{% endif %}>{{ customer.name }}</option>
                                 {% endfor %}
                             </select>
                             <div id="customer-balance-info" class="mt-2" style="display: none;">
@@ -302,17 +302,22 @@
                 <div class="row mb-4">
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label class="form-label"><i class="fas fa-warehouse me-1"></i> {% trans "Warehouse" %}</label>
-                            <select class="form-select" name="warehouse">
+                            <label class="form-label"><i class="fas fa-warehouse me-1"></i> {% trans "Warehouse" %} <span class="required-field">*</span></label>
+                            <select class="form-select" id="id_warehouse" name="warehouse" required>
                                 <option value="">{% trans "Select Warehouse" %}</option>
                                 {% for warehouse in warehouses %}
-                                <option value="{{ warehouse.id }}" {% if warehouse.is_default %}selected{% endif %}>
+                                <option value="{{ warehouse.id }}" {% if warehouse_id and warehouse.id|stringformat:"s" == warehouse_id %}selected{% elif not warehouse_id and default_warehouse and warehouse.id == default_warehouse.id %}selected{% endif %}>
                                     {{ warehouse.name }} - {{ warehouse.code }}
-                                    {% if warehouse.is_default %} ({% trans "Default" %}){% endif %}
                                 </option>
                                 {% endfor %}
                             </select>
-                            <div class="form-text">{% trans "Select the warehouse from which products will be issued. If not specified, no warehouse will be assigned." %}</div>
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" name="set_default_warehouse" id="set_default_warehouse">
+                                <label class="form-check-label" for="set_default_warehouse">
+                                    {% trans "Set as default sales warehouse" %}
+                                </label>
+                            </div>
+                            <div class="form-text">{% trans "Select the warehouse from which products will be issued." %}</div>
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -328,11 +333,11 @@
                             </label>
                             <select class="form-select" id="id_payment_type" name="payment_type" required>
                                 <option value="">{% trans "Select Payment Method" %}</option>
-                                <option value="cash">{% trans "Cash" %}</option>
-                                <option value="credit">{% trans "Credit (Deferred)" %}</option>
-                                <option value="bank_transfer">{% trans "Bank Transfer" %}</option>
-                                <option value="check">{% trans "Check" %}</option>
-                                <option value="installment">{% trans "Installment" %}</option>
+                                <option value="cash" {% if payment_type == "cash" %}selected{% endif %}>{% trans "Cash" %}</option>
+                                <option value="credit" {% if payment_type == "credit" %}selected{% endif %}>{% trans "Credit (Deferred)" %}</option>
+                                <option value="bank_transfer" {% if payment_type == "bank_transfer" %}selected{% endif %}>{% trans "Bank Transfer" %}</option>
+                                <option value="check" {% if payment_type == "check" %}selected{% endif %}>{% trans "Check" %}</option>
+                                <option value="installment" {% if payment_type == "installment" %}selected{% endif %}>{% trans "Installment" %}</option>
                             </select>
                         </div>
                     </div>
@@ -344,9 +349,15 @@
                             <select class="form-select" id="id_cashbox" name="cashbox">
                                 <option value="">{% trans "Select Cash Box" %}</option>
                                 {% for cashbox in cashboxes %}
-                                <option value="{{ cashbox.id }}">{{ cashbox.name }} ({{ cashbox.balance|currency_format:cashbox.currency }})</option>
+                                <option value="{{ cashbox.id }}" {% if cashbox_id and cashbox.id|stringformat:"s" == cashbox_id %}selected{% elif not cashbox_id and default_cashbox and cashbox.id == default_cashbox.id %}selected{% endif %}>{{ cashbox.name }} <!--({{ cashbox.balance|currency_format:cashbox.currency }})--></option>
                                 {% endfor %}
                             </select>
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" id="id_set_default_cashbox" name="set_default_cashbox">
+                                <label class="form-check-label" for="id_set_default_cashbox">
+                                    {% trans "Set as default cash box" %}
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -382,6 +393,63 @@
                             </tr>
                         </thead>
                         <tbody id="productsTableBody">
+                            {% for item in existing_products %}
+                            <tr class="product-row" id="productRow{{ forloop.counter }}">
+                                <td>
+                                    <input type="hidden" name="products[]" class="product-id-input" value="{{ item.id }}">
+                                    <input type="hidden" name="tax_rates[]" class="tax-rate-hidden-input" value="{{ item.tax_rate }}">
+                                    <input type="hidden" name="tax_amounts[]" class="tax-amount-hidden-input">
+                                    <div class="d-flex align-items-center">
+                                        <div class="position-relative flex-grow-1 me-2">
+                                            <input type="text" class="form-control product-code-input" 
+                                                   placeholder="{% trans 'Product code...' %}" autocomplete="off" value="{{ item.code }}">
+                                            <div class="product-code-dropdown dropdown-menu w-100" style="display: none; max-height: 200px; overflow-y: auto;">
+                                                <!-- Product code options will be populated here -->
+                                            </div>
+                                        </div>
+                                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="openProductModal({{ forloop.counter }})">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="position-relative">
+                                        <input type="text" class="form-control product-name-input" 
+                                               placeholder="{% trans 'Type product name...' %}" autocomplete="off" value="{{ item.name }}">
+                                        <div class="product-dropdown dropdown-menu w-100" style="display: none; max-height: 200px; overflow-y: auto;">
+                                            <!-- Product options will be populated here -->
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control text-center available-quantity-input" 
+                                           placeholder="0.000" readonly style="background-color: #e9ecef;" value="{{ item.current_stock|floatformat:3 }}">
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control quantity-input" 
+                                           name="quantities[]" min="0.001" value="{{ item.quantity }}" step="0.001">
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control price-input" 
+                                           name="prices[]" min="0" value="{{ item.price }}" step="0.001">
+                                </td>
+                                <td>
+                                    <input type="number" class="form-control tax-rate-input" 
+                                           min="0" max="100" step="0.01" value="{{ item.tax_rate }}" style="background-color: #e9ecef;">
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control tax-amount-input" readonly style="background-color: #e9ecef;">
+                                </td>
+                                <td>
+                                    <input type="text" class="form-control total-input" readonly style="background-color: #e9ecef;">
+                                </td>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-remove-product" onclick="removeProductRow({{ forloop.counter }})" title="{% trans 'Delete' %}">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
                             <!-- {% trans "Product rows will be added here by JavaScript" %} -->
                         </tbody>
                     </table>
@@ -400,7 +468,7 @@
                         <div class="mb-3">
                             <label for="id_discount" class="form-label">{% trans "Discount" %}</label>
                             <input type="number" class="form-control" id="id_discount" name="discount" 
-                                   min="0" step="0.01" value="0">
+                                   min="0" step="0.01" value="{% if discount_amount %}{{ discount_amount }}{% else %}0{% endif %}">
                         </div>
                     </div>
                     
@@ -412,7 +480,7 @@
                 <div class="mb-3">
                     <label for="id_notes" class="form-label">ملاحظات</label>
                     <textarea class="form-control" id="id_notes" name="notes" rows="3" 
-                              placeholder="{% trans 'Any additional notes...' %}"></textarea>
+                              placeholder="{% trans 'Any additional notes...' %}">{% if notes %}{{ notes }}{% endif %}</textarea>
                 </div>
             </div>
 
@@ -486,6 +554,8 @@ document.getElementById('salesInvoiceForm').addEventListener('submit', function(
         document.querySelectorAll('.client-validation-alert').forEach(el=>el.remove());
 
         const customer = document.getElementById('id_customer') ? document.getElementById('id_customer').value : '';
+        const paymentType = document.getElementById('id_payment_type') ? document.getElementById('id_payment_type').value : '';
+        const warehouse = document.getElementById('id_warehouse') ? document.getElementById('id_warehouse').value : '';
         const productsExist = document.querySelectorAll('#productsTableBody tr').length > 0;
         if(!customer){
             e.preventDefault();
@@ -493,6 +563,26 @@ document.getElementById('salesInvoiceForm').addEventListener('submit', function(
             const alert = document.createElement('div');
             alert.className = 'alert alert-danger client-validation-alert';
             alert.textContent = "{% trans 'يرجى اختيار عميل قبل الحفظ' %}";
+            container.insertBefore(alert, container.firstChild);
+            alert.scrollIntoView({behavior: 'smooth', block: 'center'});
+            return false;
+        }
+        if(!paymentType){
+            e.preventDefault();
+            const container = document.querySelector('.form-container');
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-danger client-validation-alert';
+            alert.textContent = "{% trans 'يرجى اختيار طريقة الدفع' %}";
+            container.insertBefore(alert, container.firstChild);
+            alert.scrollIntoView({behavior: 'smooth', block: 'center'});
+            return false;
+        }
+        if(!warehouse){
+            e.preventDefault();
+            const container = document.querySelector('.form-container');
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-danger client-validation-alert';
+            alert.textContent = "{% trans 'يرجى اختيار المستودع' %}";
             container.insertBefore(alert, container.firstChild);
             alert.scrollIntoView({behavior: 'smooth', block: 'center'});
             return false;
@@ -592,7 +682,7 @@ function formatCurrency(value, overridePlaces){
 <script>
 // Price hook removed (debug instrumentation cleaned up)
 
-let productRowCounter = 0;
+let productRowCounter = {{ existing_products|length|default:0 }};
 let currentRow = null;
 let buttonClickCount = 0; // لتتبع عدد النقرات على الزر
 let isPageReady = false;
@@ -919,6 +1009,12 @@ function selectProduct(productId, productCode, productName, salePrice, taxRate, 
                     if (modal) modal.hide();
                     calculateRowTotal(row);
                     calculateGrandTotal();
+                    
+                    // Focus on quantity input
+                    const quantityInput = row.querySelector('.quantity-input');
+                    if (quantityInput) {
+                        quantityInput.focus();
+                    }
                 })
                 .catch(err => {
                     // On network error or other fetch failure, keep template price and log warning
@@ -975,6 +1071,7 @@ function attachRowEventListeners(row) {
     const quantityInput = row.querySelector('.quantity-input');
     const priceInput = row.querySelector('.price-input');
     const taxRateInput = row.querySelector('.tax-rate-input');
+    const totalInput = row.querySelector('.total-input');
     
     // Calculate totals on quantity/price/tax rate change
     quantityInput.addEventListener('input', function() {
@@ -991,6 +1088,16 @@ function attachRowEventListeners(row) {
         calculateRowTotal(row);
         calculateGrandTotal();
     });
+    
+    // Add new row when Tab is pressed on total input
+    if (totalInput) {
+        totalInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                addProductRow();
+            }
+        });
+    }
 }
 
 function calculateRowTotal(row) {
@@ -2013,6 +2120,136 @@ document.getElementById('id_payment_type').addEventListener('change', function()
         cashboxSelect.required = false;
         cashboxSelect.value = '';
     }
+});
+</script>
+
+<!-- Script to repopulate form data on page load -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Repopulate form fields with previously entered data
+    {% if form_data_json %}
+    const formData = JSON.parse({{ form_data_json|safe }});
+    
+    // Repopulate customer
+    if (formData.customer_id) {
+        document.getElementById('id_customer').value = formData.customer_id;
+        // Trigger customer selection to update balance info
+        const customerSelect = document.getElementById('id_customer');
+        if (customerSelect) {
+            const event = new Event('change', { bubbles: true });
+            customerSelect.dispatchEvent(event);
+        }
+    }
+    
+    // Repopulate payment type
+    if (formData.payment_type) {
+        document.getElementById('id_payment_type').value = formData.payment_type;
+        // Trigger payment type change
+        const paymentTypeSelect = document.getElementById('id_payment_type');
+        if (paymentTypeSelect) {
+            const event = new Event('change', { bubbles: true });
+            paymentTypeSelect.dispatchEvent(event);
+        }
+    }
+    
+    // Repopulate warehouse
+    if (formData.warehouse_id) {
+        document.getElementById('id_warehouse').value = formData.warehouse_id;
+    }
+    
+    // Repopulate cashbox
+    if (formData.cashbox_id) {
+        document.getElementById('id_cashbox').value = formData.cashbox_id;
+    }
+    
+    // Repopulate notes
+    if (formData.notes) {
+        document.getElementById('id_notes').value = formData.notes;
+    }
+    
+    // Repopulate discount
+    if (formData.discount_amount) {
+        document.getElementById('id_discount').value = formData.discount_amount;
+    }
+    
+    // Repopulate invoice number
+    if (formData.manual_invoice) {
+        document.getElementById('id_invoice_number').value = formData.manual_invoice;
+    }
+    
+    // Repopulate date
+    if (formData.invoice_date) {
+        document.getElementById('id_date').value = formData.invoice_date;
+    }
+    
+    // Repopulate inclusive tax checkbox
+    if (formData.inclusive_tax) {
+        document.getElementById('id_inclusive_tax').checked = true;
+    }
+    
+    // Repopulate products
+    if (formData.products && formData.products.length > 0) {
+        for (let i = 0; i < formData.products.length; i++) {
+            if (formData.products[i]) {
+                // Add product row if not the first one
+                if (i > 0) {
+                    addProduct();  // Call the function directly instead of click
+                }
+                
+                // Wait a bit for the row to be added
+                setTimeout(() => {
+                    const rows = document.querySelectorAll('.product-row');
+                    if (rows[i]) {
+                        const row = rows[i];
+                        const productIdInput = row.querySelector('.product-id-input');
+                        const quantityInput = row.querySelector('.quantity-input');
+                        const priceInput = row.querySelector('.price-input');
+                        const taxRateInput = row.querySelector('.tax-rate-input');
+                        
+                        if (productIdInput) productIdInput.value = formData.products[i];
+                        if (quantityInput && formData.quantities && formData.quantities[i]) quantityInput.value = formData.quantities[i];
+                        if (priceInput && formData.prices && formData.prices[i]) priceInput.value = formData.prices[i];
+                        if (taxRateInput && formData.tax_rates && formData.tax_rates[i]) taxRateInput.value = formData.tax_rates[i];
+                        
+                        // Trigger product selection to fill other fields
+                        if (productIdInput && productIdInput.value) {
+                            // Find the product in the products array and fill the fields
+                            const product = products.find(p => p.id == productIdInput.value);
+                            if (product) {
+                                const codeInput = row.querySelector('.product-code-input');
+                                const nameInput = row.querySelector('.product-name-input');
+                                const availableQuantityInput = row.querySelector('.available-quantity-input');
+                                
+                                if (codeInput) codeInput.value = product.code;
+                                if (nameInput) nameInput.value = product.name;
+                                if (availableQuantityInput) availableQuantityInput.value = product.current_stock;
+                                if (taxRateInput && !taxRateInput.value) taxRateInput.value = product.tax_rate;
+                                if (priceInput && !priceInput.value) priceInput.value = product.sale_price;
+                            }
+                        }
+                        
+                        // Trigger calculation
+                        if (quantityInput) {
+                            const event = new Event('input', { bubbles: true });
+                            quantityInput.dispatchEvent(event);
+                        }
+                        if (priceInput) {
+                            const event = new Event('input', { bubbles: true });
+                            priceInput.dispatchEvent(event);
+                        }
+                    }
+                }, 200 * (i + 1));  // Increased timeout
+            }
+        }
+    }
+    {% endif %}
+    
+    // Attach event listeners to existing product rows
+    {% if existing_products %}
+    document.querySelectorAll('.product-row').forEach(row => {
+        attachRowEventListeners(row);
+    });
+    {% endif %}
 });
 </script>
 

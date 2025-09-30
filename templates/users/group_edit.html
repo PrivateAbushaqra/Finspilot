@@ -57,6 +57,19 @@
                                                 </div>
                                             {% endif %}
                                         </div>
+                                        {% if form.is_system_group %}
+                                        <div class="mb-3">
+                                            <div class="form-check">
+                                                {{ form.is_system_group }}
+                                                <label for="{{ form.is_system_group.id_for_label }}" class="form-check-label">
+                                                    {{ form.is_system_group.label }}
+                                                </label>
+                                            </div>
+                                            {% if form.is_system_group.help_text %}
+                                                <small class="form-text text-muted">{{ form.is_system_group.help_text }}</small>
+                                            {% endif %}
+                                        </div>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
@@ -100,7 +113,7 @@
                             </div>
                         </div>
                         
-                        <!-- Permissions -->
+                        <!-- Group Permissions -->
                         <div class="card border-success">
                             <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
                                 <h5 class="mb-0">
@@ -139,29 +152,29 @@
                                                         {% elif app == 'reports' %}
                                                             {% trans 'Reports' %}
                                                         {% elif app == 'cashboxes' %}
-                                                            {% trans 'الصناديق النقدية' %}
+                                                            {% trans 'Cash Boxes' %}
                                                         {% else %}
                                                             {{ app|title }}
                                                         {% endif %}
-                                                        <button type="button" 
-                                                                class="btn btn-sm btn-outline-primary float-end" 
+                                                        <button type="button"
+                                                                class="btn btn-sm btn-outline-primary float-end"
                                                                 onclick="toggleAppPermissions('{{ app }}')">
                                                             {% trans 'Toggle' %}
                                                         </button>
                                                     </h6>
                                                 </div>
                                                 <div class="card-body p-2">
-                                                    {# في قسم البنوك، إظهار صلاحية العرض المخصصة فقط وإخفاء بقية الصلاحيات الافتراضية #}
                                                     {% if app == 'banks' %}
+                                                        {# عرض صلاحيات البنوك المخصصة فقط في صفحة الإضافة (عرض/إضافة/تعديل/حذف) #}
                                                         {% for perm in perms %}
                                                             {% if perm.codename == 'can_add_banks_account' or perm.codename == 'can_view_banks_account' or perm.codename == 'can_edit_banks_account' or perm.codename == 'can_delete_banks_account' %}
                                                                 <div class="form-check">
-                                                                    <input type="checkbox" 
-                                                                           class="form-check-input permission-checkbox app-{{ app }}" 
-                                                                           name="permissions" 
-                                                                           value="{{ perm.pk }}" 
+                                                                    <input type="checkbox"
+                                                                           class="form-check-input permission-checkbox app-{{ app }}"
+                                                                           name="permissions"
+                                                                           value="{{ perm.pk }}"
                                                                            id="perm_{{ perm.pk }}"
-                                                                           {% if perm in object.permissions.all %}checked{% endif %}>
+                                                                           {% if perm.pk in current_permissions %}checked{% endif %}>
                                                                     <label class="form-check-label small" for="perm_{{ perm.pk }}">
                                                                         {% trans perm.name %}
                                                                     </label>
@@ -169,33 +182,22 @@
                                                             {% endif %}
                                                         {% endfor %}
                                                     {% elif app == 'purchases' %}
-                                                        {% regroup perms by translated_name as grouped_perms %}
-                                                        {% for group in grouped_perms %}
-                                                            {% with perm=group.list.0 %}
-                                                                <div class="form-check">
-                                                                    <input type="checkbox"
-                                                                           class="form-check-input permission-checkbox app-{{ app }}"
-                                                                           name="permissions"
-                                                                           value="{{ perm.pk }}"
-                                                                           id="perm_{{ perm.pk }}"
-                                                                           {% if perm in object.permissions.all %}checked{% endif %}>
-                                                                    <label class="form-check-label small" for="perm_{{ perm.pk }}">
-                                                                        {{ group.grouper }}
-                                                                    </label>
-                                                                </div>
-                                                            {% endwith %}
-                                                        {% endfor %}
                                                         {% for perm in perms %}
-                                                            {% if perm.codename == 'can_add_products' %}
+                                                            {% if perm.codename == 'add_purchasedebitnote' or perm.codename == 'change_purchasedebitnote' or perm.codename == 'delete_purchasedebitnote' or perm.codename == 'view_purchasedebitnote' or perm.codename == 'can_view_debitnote' or perm.codename == 'can_send_to_jofotara' or perm.codename == 'can_add_products' %}
                                                                 <div class="form-check">
                                                                     <input type="checkbox"
                                                                            class="form-check-input permission-checkbox app-{{ app }}"
                                                                            name="permissions"
                                                                            value="{{ perm.pk }}"
                                                                            id="perm_{{ perm.pk }}"
-                                                                           {% if perm in object.permissions.all %}checked{% endif %}>
+                                                                           {% if perm.pk in current_permissions %}checked{% endif %}>
                                                                     <label class="form-check-label small" for="perm_{{ perm.pk }}">
-                                                                        إضافة منتجات جديدة
+                                                                        {% if perm.codename == 'add_purchasedebitnote' %}{% trans "إضافة اشعار مدين" %}{% endif %}
+                                                                        {% if perm.codename == 'change_purchasedebitnote' %}{% trans "تعديل اشعار مدين" %}{% endif %}
+                                                                        {% if perm.codename == 'delete_purchasedebitnote' %}{% trans "حذف اشعار مدين" %}{% endif %}
+                                                                        {% if perm.codename == 'view_purchasedebitnote' or perm.codename == 'can_view_debitnote' %}{% trans "عرض اشعار مدين" %}{% endif %}
+                                                                        {% if perm.codename == 'can_send_to_jofotara' %}{% trans "إرسال إلى جوفوتارا" %}{% endif %}
+                                                                        {% if perm.codename == 'can_add_products' %}{% trans "إضافة منتجات جديدة" %}{% endif %}
                                                                     </label>
                                                                 </div>
                                                             {% endif %}
@@ -205,12 +207,12 @@
                                                             {% for perm in unique_perms %}
                                                                 {% if perm.codename == 'can_view_products' or perm.codename == 'can_add_products' or perm.codename == 'can_edit_products' or perm.codename == 'can_add_categories' or perm.codename == 'can_add_categories_inline' or perm.codename == 'can_edit_categories' or perm.codename == 'can_delete_categories' or perm.codename == 'can_delete_products' %}
                                                                     <div class="form-check">
-                                                                        <input type="checkbox" 
-                                                                               class="form-check-input permission-checkbox app-{{ app }}" 
-                                                                               name="permissions" 
-                                                                               value="{{ perm.pk }}" 
+                                                                        <input type="checkbox"
+                                                                               class="form-check-input permission-checkbox app-{{ app }}"
+                                                                               name="permissions"
+                                                                               value="{{ perm.pk }}"
                                                                                id="perm_{{ perm.pk }}"
-                                                                               {% if perm in object.permissions.all %}checked{% endif %}>
+                                                                               {% if perm.pk in current_permissions %}checked{% endif %}>
                                                                         <label class="form-check-label small" for="perm_{{ perm.pk }}">
                                                                             {% trans perm.name %}
                                                                         </label>
@@ -219,24 +221,27 @@
                                                             {% endfor %}
                                                         {% endwith %}
                                                     {# في قسم الصناديق النقدية، إظهار صلاحية الإضافة والتعديل والحذف #}
-                                                    {% elif app == 'cashboxes' %}
-                                                        {% with unique_perms=perms|unique_permissions %}
-                                                            {% for perm in unique_perms %}
-                                                                {% if perm.codename == 'can_view_cashboxes' or perm.codename == 'can_add_cashboxes' or perm.codename == 'can_edit_cashboxes' or perm.codename == 'can_delete_cashboxes' %}
+                                                    {% elif app == 'customers' %}
+                                                        {% if user.is_superuser or user.user_type == 'superadmin' %}
+                                                            {% for perm in perms %}
+                                                                {% if perm.codename == 'can_view_customers_suppliers' or perm.codename == 'can_add_customers_suppliers' or perm.codename == 'can_edit_customers_suppliers' or perm.codename == 'can_delete_customers_suppliers' %}
                                                                     <div class="form-check">
-                                                                        <input type="checkbox" 
-                                                                               class="form-check-input permission-checkbox app-{{ app }}" 
-                                                                               name="permissions" 
-                                                                               value="{{ perm.pk }}" 
+                                                                        <input type="checkbox"
+                                                                               class="form-check-input permission-checkbox app-{{ app }}"
+                                                                               name="permissions"
+                                                                               value="{{ perm.pk }}"
                                                                                id="perm_{{ perm.pk }}"
-                                                                               {% if perm in object.permissions.all %}checked{% endif %}>
+                                                                               {% if perm.pk in current_permissions %}checked{% endif %}>
                                                                         <label class="form-check-label small" for="perm_{{ perm.pk }}">
-                                                                            {% trans perm.name %}
+                                                                            {% if perm.codename == 'can_view_customers_suppliers' %}{% trans "can view customers suppliers" %}{% endif %}
+                                                                            {% if perm.codename == 'can_add_customers_suppliers' %}{% trans "يمكن إضافة عميل/مورد" %}{% endif %}
+                                                                            {% if perm.codename == 'can_edit_customers_suppliers' %}{% trans "يمكن تعديل عميل/مورد" %}{% endif %}
+                                                                            {% if perm.codename == 'can_delete_customers_suppliers' %}{% trans "يمكن حذف عميل/مورد" %}{% endif %}
                                                                         </label>
                                                                     </div>
                                                                 {% endif %}
                                                             {% endfor %}
-                                                        {% endwith %}
+                                                        {% endif %}
                                                     {% elif app == 'revenues_expenses' %}
                                                         {% for perm in perms %}
                                                             {% if perm.codename == 'add_revenueexpenseentry' or perm.codename == 'change_revenueexpenseentry' or perm.codename == 'delete_revenueexpenseentry' or perm.codename == 'view_revenueexpenseentry' or perm.codename == 'add_revenueexpensecategory' or perm.codename == 'change_revenueexpensecategory' or perm.codename == 'delete_revenueexpensecategory' or perm.codename == 'view_revenueexpensecategory' %}
@@ -246,7 +251,7 @@
                                                                            name="permissions"
                                                                            value="{{ perm.pk }}"
                                                                            id="perm_{{ perm.pk }}"
-                                                                           {% if perm in object.permissions.all %}checked{% endif %}>
+                                                                           {% if perm.pk in current_permissions %}checked{% endif %}>
                                                                     <label class="form-check-label small" for="perm_{{ perm.pk }}">
                                                                         {% if perm.codename == 'add_revenueexpenseentry' %}{% trans "إضافة قيد إيراد/مصروف" %}{% endif %}
                                                                         {% if perm.codename == 'change_revenueexpenseentry' %}{% trans "تعديل قيد إيراد/مصروف" %}{% endif %}
@@ -264,26 +269,26 @@
                                                         {% for perm in perms %}
                                                             {% if not app == 'users' %}
                                                                 <div class="form-check">
-                                                                    <input type="checkbox" 
-                                                                           class="form-check-input permission-checkbox app-{{ app }}" 
-                                                                           name="permissions" 
-                                                                           value="{{ perm.pk }}" 
+                                                                    <input type="checkbox"
+                                                                           class="form-check-input permission-checkbox app-{{ app }}"
+                                                                           name="permissions"
+                                                                           value="{{ perm.pk }}"
                                                                            id="perm_{{ perm.pk }}"
-                                                                           {% if perm in object.permissions.all %}checked{% endif %}>
+                                                                           {% if perm.pk in current_permissions %}checked{% endif %}>
                                                                     <label class="form-check-label small" for="perm_{{ perm.pk }}">
-                                                                        {{ perm.name }}
+                                                                        {% trans perm.name %}
                                                                     </label>
                                                                 </div>
                                                             {% elif 'bank_' not in perm.codename and 'bank' not in perm.codename %}
                                                                 <div class="form-check">
-                                                                    <input type="checkbox" 
-                                                                           class="form-check-input permission-checkbox app-{{ app }}" 
-                                                                           name="permissions" 
-                                                                           value="{{ perm.pk }}" 
+                                                                    <input type="checkbox"
+                                                                           class="form-check-input permission-checkbox app-{{ app }}"
+                                                                           name="permissions"
+                                                                           value="{{ perm.pk }}"
                                                                            id="perm_{{ perm.pk }}"
-                                                                           {% if perm in object.permissions.all %}checked{% endif %}>
+                                                                           {% if perm.pk in current_permissions %}checked{% endif %}>
                                                                     <label class="form-check-label small" for="perm_{{ perm.pk }}">
-                                                                        {{ perm.name }}
+                                                                        {% trans perm.name %}
                                                                     </label>
                                                                 </div>
                                                             {% endif %}
@@ -296,19 +301,18 @@
                                 </div>
                                 <div class="alert alert-info mt-3">
                                     <i class="fas fa-info-circle me-2"></i>
-                                    {% trans "Changes to permissions will affect all group members" %}
+                                    {% trans "You can modify the permissions at any time after creating the group" %}
                                 </div>
                             </div>
                         </div>
                         
-                        <!-- Dashboard Sections -->
-                        <div class="row mb-4">
+                        <!-- Dashboard Sections (First Instance) -->
                             <div class="col-12">
                                 <div class="card border-success">
                                     <div class="card-header bg-success text-white">
                                         <h5 class="mb-0">
                                             <i class="fas fa-tachometer-alt me-2"></i>
-                                            {% trans "Dashboard Sections" %}
+                                            {% trans "أقسام لوحة التحكم" %}
                                         </h5>
                                     </div>
                                     <div class="card-body">
@@ -348,6 +352,7 @@
                                 </div>
                             </div>
                         </div>
+
                         
                         <!-- أزرار الحفظ -->
                         <div class="d-flex justify-content-between mt-4">
@@ -356,7 +361,7 @@
                                 {% trans 'Cancel' %}
                             </a>
                 <div>
-                                {% if object.name|lower not in 'superadmin,admin,staff' %}
+                                {% if user.user_type == 'superadmin' or object.name|lower not in 'superadmin,admin,staff' %}
                     {% trans "Are you sure you want to delete this group?" as confirm_group_delete %}
                                                 <a href="{% url 'users:group_delete' object.pk %}" 
                                                     class="btn btn-danger me-2"

@@ -368,7 +368,8 @@ class PurchaseInvoiceListView(LoginRequiredMixin, ListView):
 class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
     template_name = 'purchases/invoice_add.html'
     
-    def get(self, request, *args, **kwargs):
+    def get_invoice_create_context(self, request, form_data=None):
+        """إعداد سياق صفحة إنشاء الفاتورة مع البيانات المُدخلة إن وجدت"""
         products = Product.objects.filter(is_active=True).order_by('name')
         
         # إضافة آخر سعر شراء لكل منتج
@@ -400,10 +401,19 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
             ).exclude(
                 code__in=['MAIN', 'DEFAULT', 'SYSTEM', '1000']  # استبعاد المستودعات النظامية/الافتراضية
             ).order_by('name'),
-            'default_warehouse': Warehouse.get_default_warehouse(),
+            'default_warehouse': request.user.default_purchase_warehouse,
             'products': products_with_prices,
             'next_invoice_number': next_invoice_number
         }
+        
+        # إضافة البيانات المُدخلة إذا كانت موجودة
+        if form_data:
+            context.update(form_data)
+        
+        return context
+    
+    def get(self, request, *args, **kwargs):
+        context = self.get_invoice_create_context(request)
         return render(request, self.template_name, context)
     
     def post(self, request, *args, **kwargs):
@@ -431,17 +441,42 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
             is_tax_inclusive = request.POST.get('is_tax_inclusive') == 'on'  # checkbox value
             notes = request.POST.get('notes', '').strip()
             
+            # جمع البيانات المُدخلة لإعادة عرضها في حالة الأخطاء
+            form_data = {
+                'supplier_invoice_number': supplier_invoice_number,
+                'date': date,
+                'supplier_id': supplier_id,
+                'warehouse_id': warehouse_id,
+                'payment_type': payment_type,
+                'is_tax_inclusive': is_tax_inclusive,
+                'notes': notes,
+            }
+            
             # التحقق من صحة البيانات
-            if not all([supplier_invoice_number, date, supplier_id, payment_type]):
+            if not all([supplier_invoice_number, date, supplier_id, warehouse_id, payment_type]):
+                # سجل محاولة فاشلة في سجل النشاط لتتبع أخطاء الإدخال
+                try:
+                    from core.signals import log_user_activity
+                    dummy = PurchaseInvoice()
+                    log_user_activity(
+                        request,
+                        'error',
+                        dummy,
+                        _('فشل إنشاء فاتورة شراء: الحقول المطلوبة مفقودة (رقم فاتورة المورد أو التاريخ أو المورد أو المستودع أو طريقة الدفع)')
+                    )
+                except Exception:
+                    pass
                 messages.error(request, 'جميع الحقول الأساسية مطلوبة!')
-                return self.get(request)
+                context = self.get_invoice_create_context(request, form_data)
+                return render(request, self.template_name, context)
             
             # الحصول على المورد
             try:
                 supplier = CustomerSupplier.objects.get(id=supplier_id)
             except CustomerSupplier.DoesNotExist:
                 messages.error(request, 'المورد المحدد غير موجود!')
-                return self.get(request)
+                context = self.get_invoice_create_context(request, form_data)
+                return render(request, self.template_name, context)
             
             # الحصول على المستودع (اختياري)
             warehouse = None
@@ -450,7 +485,8 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
                     warehouse = Warehouse.objects.get(id=warehouse_id, is_active=True)
                 except Warehouse.DoesNotExist:
                     messages.error(request, 'المستودع المحدد غير موجود!')
-                    return self.get(request)
+                    context = self.get_invoice_create_context(request, form_data)
+                    return render(request, self.template_name, context)
             
             # الحصول على المستخدم الحالي
             created_by = request.user
@@ -541,9 +577,13 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
                             continue
                 
                 # تحديث مجاميع الفاتورة
-                invoice.subtotal = subtotal
-                invoice.tax_amount = total_tax
-                invoice.total_amount = subtotal + total_tax
+                invoice.subtotal = subtotal.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+                if invoice.is_tax_inclusive:
+                    invoice.tax_amount = total_tax.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+                    invoice.total_amount = (subtotal + total_tax).quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+                else:
+                    invoice.tax_amount = Decimal('0').quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+                    invoice.total_amount = subtotal.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
                 invoice.save()
                 
                 # إنشاء حركة حساب للمورد
@@ -551,6 +591,25 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
                 
                 # إنشاء القيد المحاسبي
                 create_purchase_invoice_journal_entry(invoice, request.user)
+            
+            # حفظ المستودع الافتراضي إذا تم تحديده
+            set_default_warehouse = request.POST.get('set_default_warehouse')
+            if set_default_warehouse and warehouse:
+                old_default = request.user.default_purchase_warehouse
+                request.user.default_purchase_warehouse = warehouse
+                request.user.save()
+                
+                # تسجيل التغيير في سجل الأنشطة
+                try:
+                    log_activity(
+                        request.user,
+                        'UPDATE',
+                        request.user,
+                        f'تم تحديث المستودع الافتراضي للمشتريات من {old_default.name if old_default else "غير محدد"} إلى {warehouse.name}',
+                        request
+                    )
+                except Exception:
+                    pass
             
             # تسجيل النشاط
             try:

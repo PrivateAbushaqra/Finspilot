@@ -254,11 +254,33 @@
                                     </div>
                                     
                                     <button type="submit" class="btn btn-warning" 
-                                            onclick="return confirm('{% trans "Are you sure you want to restore this backup? Current data will be replaced!" %}')">
+                                            onclick="return confirm('هل أنت متأكد من أنك تريد استعادة هذه النسخة الاحتياطية؟ سيتم استبدال البيانات الحالية!')">
                                         <i class="fas fa-upload me-2"></i>
                                         {% trans "Restore Backup" %}
                                     </button>
                                 </form>
+                                
+                                <hr class="my-4">
+                                
+                                <h6 class="text-danger mb-3">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    {% trans "Danger Zone" %}
+                                </h6>
+                                
+                                {% if can_restore_backup %}
+                                <form method="post" action="{% url 'backup:clear_all_data' %}">
+                                    {% csrf_token %}
+                                    <div class="alert alert-danger">
+                                        <strong>{% trans "Warning:" %}</strong> {% trans "This action will permanently delete ALL data from the database. This cannot be undone!" %}
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-danger" 
+                                            onclick="return confirm('هل أنت متأكد تماماً من أنك تريد حذف جميع البيانات؟ هذا الإجراء لا يمكن التراجع عنه!')">
+                                        <i class="fas fa-trash-alt me-2"></i>
+                                        {% trans "Clear All Data" %}
+                                    </button>
+                                </form>
+                                {% endif %}
                             </div>
                         </div>
                     </div>

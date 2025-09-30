@@ -117,7 +117,20 @@ class User(AbstractUser):
     department = models.CharField(_('Department'), max_length=100, blank=True)
     pos_warehouse = models.ForeignKey('inventory.Warehouse', on_delete=models.SET_NULL, 
                                     null=True, blank=True, verbose_name=_('POS Warehouse'),
-                                    help_text=_('Dedicated warehouse for POS user to issue invoices from'))
+                                    help_text=_('Dedicated warehouse for POS user to issue invoices from'),
+                                    related_name='pos_users')
+    default_sales_warehouse = models.ForeignKey('inventory.Warehouse', on_delete=models.SET_NULL, 
+                                              null=True, blank=True, verbose_name=_('Default Sales Warehouse'),
+                                              help_text=_('Default warehouse for sales invoices'),
+                                              related_name='default_sales_users')
+    default_purchase_warehouse = models.ForeignKey('inventory.Warehouse', on_delete=models.SET_NULL, 
+                                                 null=True, blank=True, verbose_name=_('Default Purchase Warehouse'),
+                                                 help_text=_('Default warehouse for purchase invoices'),
+                                                 related_name='default_purchase_users')
+    default_cashbox = models.ForeignKey('cashboxes.Cashbox', on_delete=models.SET_NULL, 
+                                       null=True, blank=True, verbose_name=_('Default Cash Box'),
+                                       help_text=_('Default cash box for cash payments in invoices'),
+                                       related_name='default_users')
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
     updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
 
@@ -507,3 +520,4 @@ class UserGroupMembership(models.Model):
 # إضافة حقل dashboard_sections إلى Group
 from django.contrib.auth.models import Group
 Group.add_to_class('dashboard_sections', models.TextField(default='', blank=True, help_text=_('List of dashboard sections to display for this group')))
+Group.add_to_class('is_system_group', models.BooleanField(default=False, help_text=_('Whether this is a system-protected group')))

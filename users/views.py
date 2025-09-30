@@ -649,7 +649,7 @@ class GroupCreateForm(forms.ModelForm):
     
     class Meta:
         model = Group
-        fields = ['name', 'permissions', 'dashboard_sections']
+        fields = ['name', 'permissions', 'dashboard_sections', 'is_system_group']
         labels = {
             'name': _('Group Name'),
         }
@@ -663,6 +663,20 @@ class GroupCreateForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
+        
+        # إضافة حقل is_system_group فقط للسوبر أدمين
+        if self.user and (getattr(self.user, 'user_type', None) == 'superadmin' or self.user.is_superuser):
+            self.fields['is_system_group'] = forms.BooleanField(
+                required=False,
+                label=_('مجموعة نظام محمية'),
+                help_text=_('إذا تم تفعيل هذا الخيار، ستكون المجموعة محمية من الحذف إلا للسوبر أدمين'),
+                widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+            )
+        else:
+            # إزالة الحقل من fields إذا لم يكن سوبر أدمين
+            if 'is_system_group' in self.fields:
+                del self.fields['is_system_group']
+        
         # جلب جميع الصلاحيات المرتبطة بقسم Purchases (بما فيها المخصصة)
         purchases_content_types = ContentType.objects.filter(app_label='purchases')
         purchases_permissions = Permission.objects.filter(content_type__in=purchases_content_types)
@@ -827,6 +841,11 @@ class UserGroupCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
             
             # حفظ dashboard_sections
             group.dashboard_sections = ','.join(form.cleaned_data.get('dashboard_sections', []))
+            
+            # حفظ is_system_group إذا كان متوفراً
+            if 'is_system_group' in form.cleaned_data:
+                group.is_system_group = form.cleaned_data['is_system_group']
+            
             group.save()
             
             # تسجيل النشاط في سجل الأنشطة
@@ -848,7 +867,7 @@ class UserGroupCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
             permissions_by_app = {}
             queryset = Permission.objects.select_related('content_type').order_by('content_type__app_label', 'name')
             # تصفية صلاحيات superadmin
-            if not (self.request.user.user_type == 'superadmin' or self.request.user.is_superuser):
+            if not (getattr(self.request.user, 'user_type', None) in ['superadmin', 'admin'] or self.request.user.is_superuser):
                 queryset = queryset.exclude(
                     codename__in=[
                         'can_access_system_management',
@@ -938,7 +957,7 @@ class GroupEditForm(forms.ModelForm):
     
     class Meta:
         model = Group
-        fields = ['name', 'permissions', 'dashboard_sections']
+        fields = ['name', 'permissions', 'dashboard_sections', 'is_system_group']
         labels = {
             'name': _('Group Name'),
         }
@@ -952,11 +971,25 @@ class GroupEditForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
+        
+        # إضافة حقل is_system_group فقط للسوبر أدمين
+        if self.user and (getattr(self.user, 'user_type', None) == 'superadmin' or self.user.is_superuser):
+            self.fields['is_system_group'] = forms.BooleanField(
+                required=False,
+                label=_('مجموعة نظام محمية'),
+                help_text=_('إذا تم تفعيل هذا الخيار، ستكون المجموعة محمية من الحذف إلا للسوبر أدمين'),
+                widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+            )
+        else:
+            # إزالة الحقل من fields إذا لم يكن سوبر أدمين
+            if 'is_system_group' in self.fields:
+                del self.fields['is_system_group']
+        
         # جلب جميع الصلاحيات المرتبطة بقسم Purchases (بما فيها المخصصة)
         purchases_content_types = ContentType.objects.filter(app_label='purchases')
         purchases_permissions = Permission.objects.filter(content_type__in=purchases_content_types)
         queryset = Permission.objects.select_related('content_type').order_by('content_type__app_label', 'name')
-        if self.user and not (self.user.user_type == 'superadmin' or self.user.is_superuser):
+        if self.user and not (self.user.user_type in ['superadmin', 'admin'] or self.user.is_superuser):
             queryset = queryset.exclude(
                 codename__in=[
                     'can_access_system_management',
@@ -971,7 +1004,7 @@ class GroupEditForm(forms.ModelForm):
         # تعيين الصلاحيات الحالية للمجموعة إذا كانت موجودة
         if self.instance and self.instance.pk:
             current_permissions = self.instance.permissions.all()
-            if self.user and not (self.user.user_type == 'superadmin' or self.user.is_superuser):
+            if self.user and not (self.user.user_type in ['superadmin', 'admin'] or self.user.is_superuser):
                 current_permissions = current_permissions.exclude(
                     codename__in=[
                         'can_access_system_management',
@@ -1085,6 +1118,20 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
             
             # حفظ dashboard_sections
             group.dashboard_sections = ','.join(form.cleaned_data.get('dashboard_sections', []))
+            
+            # حفظ is_system_group إذا كان متوفراً
+            if 'is_system_group' in form.cleaned_data:
+                old_protected = getattr(group, 'is_system_group', False)
+                group.is_system_group = form.cleaned_data['is_system_group']
+                if old_protected != group.is_system_group:
+                    protection_status = "محمية" if group.is_system_group else "غير محمية"
+                    log_user_activity(
+                        self.request,
+                        'update',
+                        group,
+                        f'تغيير حالة الحماية للمجموعة إلى: {protection_status}'
+                    )
+            
             group.save()
             
             # تسجيل النشاط في سجل الأنشطة
@@ -1105,7 +1152,8 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
             context = super().get_context_data(**kwargs)
             permissions_by_app = {}
             queryset = Permission.objects.select_related('content_type').order_by('content_type__app_label', 'name')
-            if not (self.request.user.is_authenticated and (getattr(self.request.user, 'user_type', None) == 'superadmin' or self.request.user.is_superuser)):
+            # تصفية صلاحيات superadmin
+            if not (getattr(self.request.user, 'user_type', None) in ['superadmin', 'admin'] or self.request.user.is_superuser):
                 queryset = queryset.exclude(
                     codename__in=[
                         'can_access_system_management',
@@ -1122,6 +1170,7 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
                 model_name = perm.content_type.model
                 if app_label not in permissions_by_app:
                     permissions_by_app[app_label] = []
+                # ترجمة ديناميكية
                 if perm.codename == 'add_journalentry':
                     verbose = _('إضافة قيد يومية')
                 elif perm.codename == 'change_journalentry':
@@ -1134,6 +1183,7 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
                     verbose = perm.name
                 perm.translated_name = verbose
                 permissions_by_app[app_label].append(perm)
+            # باقي الصلاحيات كما هي
             purchases_content_types = ContentType.objects.filter(app_label='purchases')
             purchases_permissions = Permission.objects.filter(content_type__in=purchases_content_types)
             for perm in purchases_permissions:
@@ -1149,6 +1199,7 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
                     permissions_by_app[app_label] = []
                 permission.translated_name = permission.name
                 permissions_by_app[app_label].append(permission)
+            # صلاحيات الإيرادات والمصروفات
             revenues_content_types = ContentType.objects.filter(app_label='revenues_expenses')
             revenues_permissions = Permission.objects.filter(content_type__in=revenues_content_types)
             for perm in revenues_permissions:
@@ -1179,6 +1230,9 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
             # استخدام initial من النموذج بدلاً من الـ object لضمان ظهور الأقسام المختارة تلقائياً
             form = self.get_form()
             context['dashboard_sections_list'] = form.fields['dashboard_sections'].initial or []
+            context['current_permissions'] = list(self.object.permissions.values_list('pk', flat=True))
+            from django.contrib.auth.context_processors import PermWrapper
+            context['perms'] = PermWrapper(self.request.user)
             return context
 
 
@@ -1194,10 +1248,9 @@ class UserGroupDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     def dispatch(self, request, *args, **kwargs):
         self.object = self.get_object()
         
-        # منع حذف مجموعات النظام الأساسية
-        system_groups = ['superadmin', 'admin', 'staff']
-        if self.object.name.lower() in system_groups:
-            messages.error(request, _('Primary system groups cannot be deleted.'))
+        # منع حذف مجموعات النظام المحمية إلا للسوبر أدمين
+        if getattr(self.object, 'is_system_group', False) and not (getattr(request.user, 'user_type', None) == 'superadmin' or request.user.is_superuser):
+            messages.error(request, _('هذه المجموعة محمية من الحذف. يمكن للسوبر أدمين فقط حذفها.'))
             return redirect('users:group_list')
         
         # منع المستخدمين غير superadmin من حذف المجموعات التي تحتوي على صلاحيات superadmin
