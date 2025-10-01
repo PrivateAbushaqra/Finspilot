@@ -45,9 +45,51 @@ try:
         except Exception as e:
             logger.warning(f"فشل في إعادة تعيين sequence للـ AuditLog: {e}")
     
+    def reset_all_sequences():
+        """إعادة تعيين جميع sequences في قاعدة البيانات بعد استعادة النسخة الاحتياطية"""
+        try:
+            with connection.cursor() as cursor:
+                logger.info("بدء إعادة تعيين جميع sequences...")
+                sequences_reset = 0
+                
+                # جلب جميع sequences في قاعدة البيانات
+                cursor.execute("""
+                    SELECT sequence_name, table_name, column_name 
+                    FROM information_schema.sequences s
+                    LEFT JOIN information_schema.columns c ON c.column_default LIKE '%' || s.sequence_name || '%'
+                    WHERE s.sequence_schema = 'public'
+                """)
+                
+                sequences = cursor.fetchall()
+                
+                for seq_name, table_name, column_name in sequences:
+                    try:
+                        if table_name and column_name:
+                            # البحث عن أعلى ID في الجدول
+                            cursor.execute(f"SELECT MAX({column_name}) FROM {table_name}")
+                            max_id = cursor.fetchone()[0] or 0
+                            
+                            # إعادة تعيين sequence
+                            cursor.execute(f"SELECT setval('{seq_name}', {max_id + 1}, false)")
+                            sequences_reset += 1
+                            logger.debug(f"تم إعادة تعيين {seq_name} إلى {max_id + 1}")
+                            
+                    except Exception as seq_error:
+                        logger.warning(f"فشل في إعادة تعيين {seq_name}: {seq_error}")
+                        continue
+                
+                logger.info(f"تم إعادة تعيين {sequences_reset} sequence بنجاح")
+                return sequences_reset
+                
+        except Exception as e:
+            logger.error(f"فشل في إعادة تعيين sequences: {e}")
+            return 0
+    
 except ImportError:
     AUDIT_AVAILABLE = False
     def reset_audit_sequence_if_needed():
+        pass
+    def reset_all_sequences():
         pass
 
 logger = logging.getLogger(__name__)
@@ -1827,6 +1869,16 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                         set_restore_progress_data(progress_data)
                         continue
                 
+                # إعادة تعيين جميع sequences لتجنب تضارب IDs في المستقبل
+                progress_data.update({
+                    'current_table': 'إعادة تعيين sequences قاعدة البيانات...',
+                    'percentage': 95
+                })
+                set_restore_progress_data(progress_data)
+                
+                sequences_reset = reset_all_sequences()
+                logger.info(f"تم إعادة تعيين {sequences_reset} sequence بعد الاستعادة")
+                
                 # إكمال التقدم
                 progress_data.update({
                     'is_running': False,
@@ -1839,7 +1891,7 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                 })
                 set_restore_progress_data(progress_data)
                 
-                log_audit(user, 'create', f'اكتمل استعادة النسخة الاحتياطية: {processed_records} سجل من {processed_tables} جدول')
+                log_audit(user, 'create', f'اكتمل استعادة النسخة الاحتياطية: {processed_records} سجل من {processed_tables} جدول، تم إعادة تعيين {sequences_reset} sequence')
                 
         except Exception as e:
             logger.error(f"خطأ في استعادة البيانات: {str(e)}")
