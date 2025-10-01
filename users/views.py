@@ -941,86 +941,124 @@ class UserGroupCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
             return self.form_invalid(form)
     
     def get_context_data(self, **kwargs):
-            context = super().get_context_data(**kwargs)
-            permissions_by_app = {}
-            queryset = Permission.objects.select_related('content_type').order_by('content_type__app_label', 'name')
-            # تصفية صلاحيات superadmin
-            if not (getattr(self.request.user, 'user_type', None) in ['superadmin', 'admin'] or self.request.user.is_superuser):
-                queryset = queryset.exclude(
-                    codename__in=[
-                        'can_access_system_management',
-                        'can_manage_users',
-                        'can_view_audit_logs',
-                        'can_backup_system'
-                    ]
-                )
-            # صلاحيات القيود اليومية (journal)
-            journal_content_types = ContentType.objects.filter(app_label='journal')
-            journal_permissions = Permission.objects.filter(content_type__in=journal_content_types)
-            for perm in journal_permissions:
-                app_label = perm.content_type.app_label
-                model_name = perm.content_type.model
-                if app_label not in permissions_by_app:
-                    permissions_by_app[app_label] = []
-                # ترجمة ديناميكية
-                if perm.codename == 'add_journalentry':
-                    verbose = _('إضافة قيد يومية')
-                elif perm.codename == 'change_journalentry':
-                    verbose = _('تعديل قيد يومية')
-                elif perm.codename == 'delete_journalentry':
-                    verbose = _('حذف قيد يومية')
-                elif perm.codename == 'view_journalentry':
-                    verbose = _('عرض قيد يومية')
-                else:
-                    verbose = perm.name
-                perm.translated_name = verbose
-                permissions_by_app[app_label].append(perm)
-            # باقي الصلاحيات كما هي
-            purchases_content_types = ContentType.objects.filter(app_label='purchases')
-            purchases_permissions = Permission.objects.filter(content_type__in=purchases_content_types)
-            for perm in purchases_permissions:
-                app_label = perm.content_type.app_label
-                model_name = perm.content_type.model
-                if app_label not in permissions_by_app:
-                    permissions_by_app[app_label] = []
-                perm.translated_name = perm.name
-                permissions_by_app[app_label].append(perm)
-            for permission in queryset:
-                app_label = permission.content_type.app_label
-                if app_label not in permissions_by_app:
-                    permissions_by_app[app_label] = []
-                permission.translated_name = permission.name
-                permissions_by_app[app_label].append(permission)
+        context = super().get_context_data(**kwargs)
+        
+        # الحصول على جميع الصلاحيات
+        queryset = Permission.objects.select_related('content_type').order_by('content_type__app_label', 'name')
+        
+        # تصفية صلاحيات superadmin إذا لم يكن المستخدم superadmin أو admin
+        if not (getattr(self.request.user, 'user_type', None) in ['superadmin', 'admin'] or self.request.user.is_superuser):
+            queryset = queryset.exclude(
+                codename__in=[
+                    'can_access_system_management',
+                    'can_manage_users',
+                    'can_view_audit_logs'
+                ]
+            )
+        
+        # تنظيم الصلاحيات حسب التطبيق
+        permissions_by_app = {}
+        for permission in queryset:
+            app_label = permission.content_type.app_label
+            if app_label not in permissions_by_app:
+                permissions_by_app[app_label] = []
+            
+            # إضافة ترجمة للصلاحية
+            permission.translated_name = self._get_permission_translation(permission)
+            permissions_by_app[app_label].append(permission)
+        
+        context['permissions_by_app'] = permissions_by_app
+        
+        # إضافة أسماء التطبيقات المترجمة
+        context['app_names'] = self._get_app_names()
+        
+        # إضافة wrapper للصلاحيات
+        from django.contrib.auth.context_processors import PermWrapper
+        context['perms'] = PermWrapper(self.request.user)
+        
+        return context
+    
+    def _get_permission_translation(self, permission):
+        """ترجمة اسم الصلاحية"""
+        translations = {
+            # صلاحيات القيود اليومية
+            'add_journalentry': _('إضافة قيد يومية'),
+            'change_journalentry': _('تعديل قيد يومية'),
+            'delete_journalentry': _('حذف قيد يومية'),
+            'view_journalentry': _('عرض قيد يومية'),
+            'add_account': _('إضافة حساب'),
+            'change_account': _('تعديل حساب'),
+            'delete_account': _('حذف حساب'),
+            'view_account': _('عرض حساب'),
+            
             # صلاحيات الإيرادات والمصروفات
-            revenues_content_types = ContentType.objects.filter(app_label='revenues_expenses')
-            revenues_permissions = Permission.objects.filter(content_type__in=revenues_content_types)
-            for perm in revenues_permissions:
-                app_label = perm.content_type.app_label
-                if app_label not in permissions_by_app:
-                    permissions_by_app[app_label] = []
-                if perm.codename == 'add_revenueexpenseentry':
-                    perm.translated_name = _('إضافة قيد إيراد/مصروف')
-                elif perm.codename == 'change_revenueexpenseentry':
-                    perm.translated_name = _('تعديل قيد إيراد/مصروف')
-                elif perm.codename == 'delete_revenueexpenseentry':
-                    perm.translated_name = _('حذف قيد إيراد/مصروف')
-                elif perm.codename == 'view_revenueexpenseentry':
-                    perm.translated_name = _('عرض قيد إيراد/مصروف')
-                elif perm.codename == 'add_revenueexpensecategory':
-                    perm.translated_name = _('إضافة فئة إيراد/مصروف')
-                elif perm.codename == 'change_revenueexpensecategory':
-                    perm.translated_name = _('تعديل فئة إيراد/مصروف')
-                elif perm.codename == 'delete_revenueexpensecategory':
-                    perm.translated_name = _('حذف فئة إيراد/مصروف')
-                elif perm.codename == 'view_revenueexpensecategory':
-                    perm.translated_name = _('عرض فئة إيراد/مصروف')
-                else:
-                    perm.translated_name = perm.name
-                permissions_by_app[app_label].append(perm)
-            context['permissions_by_app'] = permissions_by_app
-            from django.contrib.auth.context_processors import PermWrapper
-            context['perms'] = PermWrapper(self.request.user)
-            return context
+            'add_revenueexpenseentry': _('إضافة قيد إيراد/مصروف'),
+            'change_revenueexpenseentry': _('تعديل قيد إيراد/مصروف'),
+            'delete_revenueexpenseentry': _('حذف قيد إيراد/مصروف'),
+            'view_revenueexpenseentry': _('عرض قيد إيراد/مصروف'),
+            'add_revenueexpensecategory': _('إضافة فئة إيراد/مصروف'),
+            'change_revenueexpensecategory': _('تعديل فئة إيراد/مصروف'),
+            'delete_revenueexpensecategory': _('حذف فئة إيراد/مصروف'),
+            'view_revenueexpensecategory': _('عرض فئة إيراد/مصروف'),
+            
+            # صلاحيات المبيعات
+            'add_salesinvoice': _('إضافة فاتورة مبيعات'),
+            'change_salesinvoice': _('تعديل فاتورة مبيعات'),
+            'delete_salesinvoice': _('حذف فاتورة مبيعات'),
+            'view_salesinvoice': _('عرض فاتورة مبيعات'),
+            
+            # صلاحيات المشتريات
+            'add_purchaseinvoice': _('إضافة فاتورة مشتريات'),
+            'change_purchaseinvoice': _('تعديل فاتورة مشتريات'),
+            'delete_purchaseinvoice': _('حذف فاتورة مشتريات'),
+            'view_purchaseinvoice': _('عرض فاتورة مشتريات'),
+            
+            # صلاحيات العملاء والموردين
+            'add_customersupplier': _('إضافة عميل/مورد'),
+            'change_customersupplier': _('تعديل عميل/مورد'),
+            'delete_customersupplier': _('حذف عميل/مورد'),
+            'view_customersupplier': _('عرض عميل/مورد'),
+            
+            # صلاحيات المنتجات
+            'add_product': _('إضافة منتج'),
+            'change_product': _('تعديل منتج'),
+            'delete_product': _('حذف منتج'),
+            'view_product': _('عرض منتج'),
+            'add_category': _('إضافة فئة منتج'),
+            'change_category': _('تعديل فئة منتج'),
+            'delete_category': _('حذف فئة منتج'),
+            'view_category': _('عرض فئة منتج'),
+            
+            # صلاحيات النسخ الاحتياطية
+            'can_restore_backup': _('استعادة النسخ الاحتياطية'),
+            'delete_backup': _('حذف ملفات النسخ الاحتياطية'),
+            'can_delete_advanced_data': _('حذف البيانات المتقدمة'),
+            'can_backup_system': _('إنشاء نسخ احتياطية للنظام'),
+        }
+        
+        return translations.get(permission.codename, permission.name)
+    
+    def _get_app_names(self):
+        """أسماء التطبيقات المترجمة"""
+        return {
+            'journal': _('القيود اليومية'),
+            'sales': _('المبيعات'),
+            'purchases': _('المشتريات'),
+            'customers': _('العملاء والموردون'),
+            'products': _('المنتجات'),
+            'inventory': _('المخزون'),
+            'revenues_expenses': _('الإيرادات والمصروفات'),
+            'banks': _('البنوك'),
+            'cashboxes': _('الصناديق'),
+            'payments': _('المدفوعات'),
+            'receipts': _('المقبوضات'),
+            'users': _('المستخدمون'),
+            'core': _('النظام الأساسي'),
+            'backup': _('النسخ الاحتياطية'),
+            'hr': _('الموارد البشرية'),
+            'reports': _('التقارير'),
+            'settings': _('الإعدادات'),
+        }
 
 
 class GroupEditForm(forms.ModelForm):
@@ -1142,6 +1180,52 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         kwargs['user'] = self.request.user
         return kwargs
     
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # الحصول على جميع الصلاحيات
+        queryset = Permission.objects.select_related('content_type').order_by('content_type__app_label', 'name')
+        
+        # تصفية صلاحيات superadmin إذا لم يكن المستخدم superadmin أو admin
+        if not (getattr(self.request.user, 'user_type', None) in ['superadmin', 'admin'] or self.request.user.is_superuser):
+            queryset = queryset.exclude(
+                codename__in=[
+                    'can_access_system_management',
+                    'can_manage_users',
+                    'can_view_audit_logs'
+                ]
+            )
+        
+        # تنظيم الصلاحيات حسب التطبيق
+        permissions_by_app = {}
+        for permission in queryset:
+            app_label = permission.content_type.app_label
+            if app_label not in permissions_by_app:
+                permissions_by_app[app_label] = []
+            
+            # إضافة ترجمة للصلاحية
+            permission.translated_name = self._get_permission_translation(permission)
+            permissions_by_app[app_label].append(permission)
+        
+        context['permissions_by_app'] = permissions_by_app
+        
+        # إضافة أسماء التطبيقات المترجمة  
+        context['app_names'] = self._get_app_names()
+        
+        # إضافة معلومات إضافية مطلوبة للقالب
+        context['group_users'] = self.object.user_set.all()
+        context['current_permissions'] = list(self.object.permissions.values_list('pk', flat=True))
+        
+        # استخدام initial من النموذج لضمان ظهور الأقسام المختارة تلقائياً
+        form = self.get_form()
+        context['dashboard_sections_list'] = form.fields['dashboard_sections'].initial or []
+        
+        # إضافة wrapper للصلاحيات
+        from django.contrib.auth.context_processors import PermWrapper
+        context['perms'] = PermWrapper(self.request.user)
+        
+        return context
+    
     def dispatch(self, request, *args, **kwargs):
         """منع تعديل المجموعات التي تحتوي على صلاحيات superadmin للمستخدمين غير superadmin"""
         self.object = self.get_object()
@@ -1226,92 +1310,87 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
             messages.error(self.request, _('An error occurred while updating the group: {}').format(str(e)))
             return self.form_invalid(form)
     
-    def get_context_data(self, **kwargs):
-            context = super().get_context_data(**kwargs)
-            permissions_by_app = {}
-            queryset = Permission.objects.select_related('content_type').order_by('content_type__app_label', 'name')
-            # تصفية صلاحيات superadmin
-            if not (getattr(self.request.user, 'user_type', None) in ['superadmin', 'admin'] or self.request.user.is_superuser):
-                queryset = queryset.exclude(
-                    codename__in=[
-                        'can_access_system_management',
-                        'can_manage_users',
-                        'can_view_audit_logs',
-                        'can_backup_system'
-                    ]
-                )
-            # صلاحيات القيود اليومية (journal)
-            journal_content_types = ContentType.objects.filter(app_label='journal')
-            journal_permissions = Permission.objects.filter(content_type__in=journal_content_types)
-            for perm in journal_permissions:
-                app_label = perm.content_type.app_label
-                model_name = perm.content_type.model
-                if app_label not in permissions_by_app:
-                    permissions_by_app[app_label] = []
-                # ترجمة ديناميكية
-                if perm.codename == 'add_journalentry':
-                    verbose = _('إضافة قيد يومية')
-                elif perm.codename == 'change_journalentry':
-                    verbose = _('تعديل قيد يومية')
-                elif perm.codename == 'delete_journalentry':
-                    verbose = _('حذف قيد يومية')
-                elif perm.codename == 'view_journalentry':
-                    verbose = _('عرض قيد يومية')
-                else:
-                    verbose = perm.name
-                perm.translated_name = verbose
-                permissions_by_app[app_label].append(perm)
-            # باقي الصلاحيات كما هي
-            purchases_content_types = ContentType.objects.filter(app_label='purchases')
-            purchases_permissions = Permission.objects.filter(content_type__in=purchases_content_types)
-            for perm in purchases_permissions:
-                app_label = perm.content_type.app_label
-                model_name = perm.content_type.model
-                if app_label not in permissions_by_app:
-                    permissions_by_app[app_label] = []
-                perm.translated_name = perm.name
-                permissions_by_app[app_label].append(perm)
-            for permission in queryset:
-                app_label = permission.content_type.app_label
-                if app_label not in permissions_by_app:
-                    permissions_by_app[app_label] = []
-                permission.translated_name = permission.name
-                permissions_by_app[app_label].append(permission)
+    def _get_permission_translation(self, permission):
+        """ترجمة اسم الصلاحية"""
+        translations = {
+            # صلاحيات القيود اليومية
+            'add_journalentry': _('إضافة قيد يومية'),
+            'change_journalentry': _('تعديل قيد يومية'),
+            'delete_journalentry': _('حذف قيد يومية'),
+            'view_journalentry': _('عرض قيد يومية'),
+            'add_account': _('إضافة حساب'),
+            'change_account': _('تعديل حساب'),
+            'delete_account': _('حذف حساب'),
+            'view_account': _('عرض حساب'),
+            
             # صلاحيات الإيرادات والمصروفات
-            revenues_content_types = ContentType.objects.filter(app_label='revenues_expenses')
-            revenues_permissions = Permission.objects.filter(content_type__in=revenues_content_types)
-            for perm in revenues_permissions:
-                app_label = perm.content_type.app_label
-                if app_label not in permissions_by_app:
-                    permissions_by_app[app_label] = []
-                if perm.codename == 'add_revenueexpenseentry':
-                    perm.translated_name = _('إضافة قيد إيراد/مصروف')
-                elif perm.codename == 'change_revenueexpenseentry':
-                    perm.translated_name = _('تعديل قيد إيراد/مصروف')
-                elif perm.codename == 'delete_revenueexpenseentry':
-                    perm.translated_name = _('حذف قيد إيراد/مصروف')
-                elif perm.codename == 'view_revenueexpenseentry':
-                    perm.translated_name = _('عرض قيد إيراد/مصروف')
-                elif perm.codename == 'add_revenueexpensecategory':
-                    perm.translated_name = _('إضافة فئة إيراد/مصروف')
-                elif perm.codename == 'change_revenueexpensecategory':
-                    perm.translated_name = _('تعديل فئة إيراد/مصروف')
-                elif perm.codename == 'delete_revenueexpensecategory':
-                    perm.translated_name = _('حذف فئة إيراد/مصروف')
-                elif perm.codename == 'view_revenueexpensecategory':
-                    perm.translated_name = _('عرض فئة إيراد/مصروف')
-                else:
-                    perm.translated_name = perm.name
-                permissions_by_app[app_label].append(perm)
-            context['permissions_by_app'] = permissions_by_app
-            context['group_users'] = self.object.user_set.all()
-            # استخدام initial من النموذج بدلاً من الـ object لضمان ظهور الأقسام المختارة تلقائياً
-            form = self.get_form()
-            context['dashboard_sections_list'] = form.fields['dashboard_sections'].initial or []
-            context['current_permissions'] = list(self.object.permissions.values_list('pk', flat=True))
-            from django.contrib.auth.context_processors import PermWrapper
-            context['perms'] = PermWrapper(self.request.user)
-            return context
+            'add_revenueexpenseentry': _('إضافة قيد إيراد/مصروف'),
+            'change_revenueexpenseentry': _('تعديل قيد إيراد/مصروف'),
+            'delete_revenueexpenseentry': _('حذف قيد إيراد/مصروف'),
+            'view_revenueexpenseentry': _('عرض قيد إيراد/مصروف'),
+            'add_revenueexpensecategory': _('إضافة فئة إيراد/مصروف'),
+            'change_revenueexpensecategory': _('تعديل فئة إيراد/مصروف'),
+            'delete_revenueexpensecategory': _('حذف فئة إيراد/مصروف'),
+            'view_revenueexpensecategory': _('عرض فئة إيراد/مصروف'),
+            
+            # صلاحيات المبيعات
+            'add_salesinvoice': _('إضافة فاتورة مبيعات'),
+            'change_salesinvoice': _('تعديل فاتورة مبيعات'),
+            'delete_salesinvoice': _('حذف فاتورة مبيعات'),
+            'view_salesinvoice': _('عرض فاتورة مبيعات'),
+            
+            # صلاحيات المشتريات
+            'add_purchaseinvoice': _('إضافة فاتورة مشتريات'),
+            'change_purchaseinvoice': _('تعديل فاتورة مشتريات'),
+            'delete_purchaseinvoice': _('حذف فاتورة مشتريات'),
+            'view_purchaseinvoice': _('عرض فاتورة مشتريات'),
+            
+            # صلاحيات العملاء والموردين
+            'add_customersupplier': _('إضافة عميل/مورد'),
+            'change_customersupplier': _('تعديل عميل/مورد'),
+            'delete_customersupplier': _('حذف عميل/مورد'),
+            'view_customersupplier': _('عرض عميل/مورد'),
+            
+            # صلاحيات المنتجات
+            'add_product': _('إضافة منتج'),
+            'change_product': _('تعديل منتج'),
+            'delete_product': _('حذف منتج'),
+            'view_product': _('عرض منتج'),
+            'add_category': _('إضافة فئة منتج'),
+            'change_category': _('تعديل فئة منتج'),
+            'delete_category': _('حذف فئة منتج'),
+            'view_category': _('عرض فئة منتج'),
+            
+            # صلاحيات النسخ الاحتياطية
+            'can_restore_backup': _('استعادة النسخ الاحتياطية'),
+            'delete_backup': _('حذف ملفات النسخ الاحتياطية'),
+            'can_delete_advanced_data': _('حذف البيانات المتقدمة'),
+            'can_backup_system': _('إنشاء نسخ احتياطية للنظام'),
+        }
+        
+        return translations.get(permission.codename, permission.name)
+    
+    def _get_app_names(self):
+        """أسماء التطبيقات المترجمة"""
+        return {
+            'journal': _('القيود اليومية'),
+            'sales': _('المبيعات'),
+            'purchases': _('المشتريات'),
+            'customers': _('العملاء والموردون'),
+            'products': _('المنتجات'),
+            'inventory': _('المخزون'),
+            'revenues_expenses': _('الإيرادات والمصروفات'),
+            'banks': _('البنوك'),
+            'cashboxes': _('الصناديق'),
+            'payments': _('المدفوعات'),
+            'receipts': _('المقبوضات'),
+            'users': _('المستخدمون'),
+            'core': _('النظام الأساسي'),
+            'backup': _('النسخ الاحتياطية'),
+            'hr': _('الموارد البشرية'),
+            'reports': _('التقارير'),
+            'settings': _('الإعدادات'),
+        }
 
 
 class UserGroupDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):

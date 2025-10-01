@@ -22,3 +22,12 @@ def get_item(dictionary, key):
     Get an item from a dictionary using a key
     """
     return dictionary.get(key, None)
+
+@register.filter
+def dict_lookup(dictionary, key):
+    """
+    Get value from dictionary using key
+    """
+    if dictionary and key:
+        return dictionary.get(key, key)
+    return key

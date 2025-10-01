@@ -19,6 +19,7 @@
                 
                 <div class="card-body">
                     <!-- إنشاء نسخة احتياطية -->
+                    {% if perms.users.can_backup_system %}
                     <div class="row mb-4">
                         <div class="col-md-6">
                             <div class="card border-success">
@@ -109,6 +110,16 @@
                             </div>
                         </div>
                     </div>
+                    {% else %}
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                {% trans "You don't have permission to create backups. Contact your administrator to get 'System backup' permission." %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
 
                     <!-- تفاصيل الجداول والتقدم -->
                     <div class="card mb-4" id="tablesInfoCard" style="display: none;">
