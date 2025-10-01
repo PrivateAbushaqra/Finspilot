@@ -660,16 +660,16 @@ function checkRestoreInProgress() {
 }
 
 // متغيرات عامة للمسح
-var clearInterval = null;
+var clearProgressInterval = null;
 
 // بدء مراقبة تقدم المسح
 function startClearProgressMonitoring() {
-    if (clearInterval) {
-        clearInterval(clearInterval);
+    if (clearProgressInterval) {
+        clearInterval(clearProgressInterval);
     }
     // إظهار بطاقة التتبع وإعادة ضبطها
     document.getElementById('tablesInfoCard').style.display = 'block';
-    clearInterval = setInterval(function() {
+    clearProgressInterval = setInterval(function() {
         fetch('{% url "backup:clear_progress" %}', {
             method: 'GET',
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
@@ -695,22 +695,26 @@ function startClearProgressMonitoring() {
                     }));
                     updateTablesDisplay({ total_tables: tables.length, total_records: (p.total_records||0), tables });
                 }
-                updateBackupProgress(p);
+                updateBackupProgress(p, 'clear');
                 if (!p.is_running) {
-                    clearInterval(clearInterval);
-                    clearInterval = null;
+                    clearInterval(clearProgressInterval);
+                    clearProgressInterval = null;
+                    // إعادة تفعيل الزر
+                    const clearBtn = document.querySelector('.clear-data-btn');
+                    clearBtn.disabled = false;
+                    clearBtn.innerHTML = '<i class="fas fa-trash-alt me-2"></i>{% trans "Clear All Data" %}<br><small class="text-muted">{% trans "This will delete all records from all tables" %}</small>';
                     if (p.status === 'completed') {
-                        setTimeout(() => alert('✅ Clear completed successfully'), 500);
+                        setTimeout(() => alert('✅ تم إكمال مسح البيانات بنجاح!'), 500);
                     } else if (p.status === 'error') {
-                        setTimeout(() => alert('❌ Error: ' + (p.error || 'An error occurred')), 500);
+                        setTimeout(() => alert('❌ خطأ: ' + (p.error || 'حدث خطأ غير معروف')), 500);
                     }
                 }
             }
         })
         .catch(err => {
             console.warn('خطأ في مراقبة تقدم المسح:', err);
-            clearInterval(clearInterval);
-            clearInterval = null;
+            clearInterval(clearProgressInterval);
+            clearProgressInterval = null;
         });
     }, 1000);
 }
@@ -964,6 +968,8 @@ function updateBackupProgress(progressData, operation = 'backup') {
         overallProgress.className = 'progress-bar bg-success';
         if (operation === 'restore') {
             currentTableText.textContent = 'تم إكمال الاستعادة بنجاح!';
+        } else if (operation === 'clear') {
+            currentTableText.textContent = 'تم إكمال مسح البيانات بنجاح!';
         } else {
             currentTableText.textContent = 'تم إكمال النسخ الاحتياطي بنجاح!';
         }
@@ -971,6 +977,8 @@ function updateBackupProgress(progressData, operation = 'backup') {
         overallProgress.className = 'progress-bar bg-danger';
         if (operation === 'restore') {
             currentTableText.textContent = 'حدث خطأ أثناء الاستعادة';
+        } else if (operation === 'clear') {
+            currentTableText.textContent = 'حدث خطأ أثناء مسح البيانات';
         } else {
             currentTableText.textContent = 'حدث خطأ أثناء النسخ الاحتياطي';
         }
@@ -1436,6 +1444,15 @@ function clearAllData() {
         return;
     }
     
+    // تعطيل الزر وإظهار رسالة
+    const clearBtn = document.querySelector('.clear-data-btn');
+    clearBtn.disabled = true;
+    clearBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>{% trans "Starting clear process..." %}';
+    
+    // إظهار بطاقة التقدم فوراً
+    document.getElementById('tablesInfoCard').style.display = 'block';
+    document.getElementById('currentTableText').textContent = '{% trans "Initializing clear process..." %}';
+    
     // إرسال طلب POST لمسح البيانات
     fetch('{% url "backup:clear_all_data" %}', {
         method: 'POST',
@@ -1454,14 +1471,21 @@ function clearAllData() {
     .then(data => {
         if (data && data.success === false) {
             alert('❌ Error: ' + (data.error || 'Unknown error'));
+            // إعادة تفعيل الزر
+            clearBtn.disabled = false;
+            clearBtn.innerHTML = '<i class="fas fa-trash-alt me-2"></i>{% trans "Clear All Data" %}<br><small class="text-muted">{% trans "This will delete all records from all tables" %}</small>';
+            document.getElementById('tablesInfoCard').style.display = 'none';
         } else {
-            // إظهار بطاقة التقدم والبدء بالمراقبة
-            document.getElementById('tablesInfoCard').style.display = 'block';
+            // البدء بالمراقبة
             startClearProgressMonitoring();
         }
     })
     .catch(err => {
         alert('❌ Connection error: ' + err.message);
+        // إعادة تفعيل الزر
+        clearBtn.disabled = false;
+        clearBtn.innerHTML = '<i class="fas fa-trash-alt me-2"></i>{% trans "Clear All Data" %}<br><small class="text-muted">{% trans "This will delete all records from all tables" %}</small>';
+        document.getElementById('tablesInfoCard').style.display = 'none';
     });
 }
 
