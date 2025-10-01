@@ -24,12 +24,31 @@ from datetime import datetime as dt_module
 from openpyxl import Workbook
 from decimal import Decimal
 
-# إضافة AuditLog import
+# إضافة AuditLog import مع حماية من تضارب الـ IDs
 try:
     from core.models import AuditLog
     AUDIT_AVAILABLE = True
+    
+    # تحقق من وجود تضارب في الـ IDs
+    from django.db import connection
+    def reset_audit_sequence_if_needed():
+        """إعادة تعيين sequence إذا كان هناك تضارب في IDs"""
+        try:
+            with connection.cursor() as cursor:
+                # البحث عن أعلى ID موجود
+                cursor.execute("SELECT MAX(id) FROM core_auditlog")
+                max_id = cursor.fetchone()[0] or 0
+                
+                # إعادة تعيين sequence
+                cursor.execute(f"SELECT setval('core_auditlog_id_seq', {max_id + 1}, false)")
+                
+        except Exception as e:
+            logger.warning(f"فشل في إعادة تعيين sequence للـ AuditLog: {e}")
+    
 except ImportError:
     AUDIT_AVAILABLE = False
+    def reset_audit_sequence_if_needed():
+        pass
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +67,22 @@ def log_audit(user, action, description, obj_id=None):
             description=description
         )
     except Exception as e:
-        logger.warning(f"فشل في تسجيل الحدث في سجل المراجعة: {str(e)}")
+        # إذا كان الخطأ متعلق بـ primary key constraint
+        if 'duplicate key' in str(e).lower() or 'unique constraint' in str(e).lower():
+            try:
+                reset_audit_sequence_if_needed()
+                # محاولة مرة أخرى
+                AuditLog.objects.create(
+                    user=user,
+                    action_type=action,
+                    content_type='backup_system',
+                    object_id=obj_id,
+                    description=description
+                )
+            except Exception as retry_e:
+                logger.warning(f"فشل في تسجيل الحدث في سجل المراجعة حتى بعد إعادة التعيين: {retry_e}")
+        else:
+            logger.warning(f"فشل في تسجيل الحدث في سجل المراجعة: {str(e)}")
 
 
 def get_backup_progress_data():
@@ -965,11 +999,12 @@ def perform_backup_task(user, timestamp, filename, filepath, format_type='json')
                     try:
                         AuditLog.objects.create(
                             user=user,
-                            action='backup_table_error',
-                            details=f'خطأ في نسخ الجدول: {display_name} - {str(e)}'
+                            action_type='backup_table_error',
+                            content_type='backup_system',
+                            description=f'خطأ في نسخ الجدول: {display_name} - {str(e)}'
                         )
-                    except Exception:
-                        pass
+                    except Exception as audit_e:
+                        logger.warning(f"فشل في تسجيل خطأ النسخ الاحتياطي في AuditLog: {audit_e}")
                 
                 processed_tables += 1
                 time.sleep(1)
@@ -992,22 +1027,24 @@ def perform_backup_task(user, timestamp, filename, filepath, format_type='json')
                     try:
                         AuditLog.objects.create(
                             user=user,
-                            action='backup_saving_xlsx',
-                            details=f'بدء حفظ النسخة الاحتياطية بصيغة XLSX: {filename}'
+                            action_type='backup_saving_xlsx',
+                            content_type='backup_system',
+                            description=f'بدء حفظ النسخة الاحتياطية بصيغة XLSX: {filename}'
                         )
-                    except Exception:
-                        pass
+                    except Exception as audit_e:
+                        logger.warning(f"فشل في تسجيل حفظ XLSX في AuditLog: {audit_e}")
                 save_backup_as_xlsx(backup_content, filepath)
             else:
                 if AUDIT_AVAILABLE:
                     try:
                         AuditLog.objects.create(
                             user=user,
-                            action='backup_saving_json',
-                            details=f'بدء حفظ النسخة الاحتياطية بصيغة JSON: {filename}'
+                            action_type='backup_saving_json',
+                            content_type='backup_system',
+                            description=f'بدء حفظ النسخة الاحتياطية بصيغة JSON: {filename}'
                         )
-                    except Exception:
-                        pass
+                    except Exception as audit_e:
+                        logger.warning(f"فشل في تسجيل حفظ JSON في AuditLog: {audit_e}")
                 with open(filepath, 'w', encoding='utf-8') as f:
                     json.dump(backup_content, f, ensure_ascii=False, indent=2)
             
@@ -1028,11 +1065,12 @@ def perform_backup_task(user, timestamp, filename, filepath, format_type='json')
                 try:
                     AuditLog.objects.create(
                         user=user,
-                        action='backup_save_error',
-                        details=f'خطأ في حفظ النسخة الاحتياطية: {filename} - خطأ: {str(save_error)}'
+                        action_type='backup_save_error',
+                        content_type='backup_system',
+                        description=f'خطأ في حفظ النسخة الاحتياطية: {filename} - خطأ: {str(save_error)}'
                     )
-                except Exception:
-                    pass
+                except Exception as audit_e:
+                    logger.warning(f"فشل في تسجيل خطأ الحفظ في AuditLog: {audit_e}")
             
             raise save_error
         
@@ -1246,15 +1284,16 @@ def save_backup_as_xlsx(backup_content, filepath):
                     except Exception as e:
                         logger.warning(f"خطأ في إنشاء ورقة العمل {app_name}_{model_name}: {str(e)}")
                         # تسجيل الخطأ في audit log إذا كان متاحاً
-                        try:
-                            from core.models import AuditLog
-                            AuditLog.objects.create(
-                                user=None,  # سيتم تعيينه لاحقاً بواسطة المستخدم الذي أنشأ النسخة
-                                action='backup_xlsx_sheet_error',
-                                details=f'خطأ في إنشاء ورقة عمل {app_name}_{model_name}: {str(e)}'
-                            )
-                        except Exception:
-                            pass
+                        if AUDIT_AVAILABLE:
+                            try:
+                                AuditLog.objects.create(
+                                    user=None,  # سيتم تعيينه لاحقاً بواسطة المستخدم الذي أنشأ النسخة
+                                    action_type='backup_xlsx_sheet_error',
+                                    content_type='backup_system',
+                                    description=f'خطأ في إنشاء ورقة عمل {app_name}_{model_name}: {str(e)}'
+                                )
+                            except Exception as audit_e:
+                                logger.warning(f"فشل في تسجيل خطأ النسخ الاحتياطي في AuditLog: {audit_e}")
                         continue
         
         # حفظ الملف
