@@ -10,6 +10,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
+from django.db.models.deletion import ProtectedError
 from .models import User, UserGroup, UserGroupMembership
 from core.signals import log_user_activity
 
@@ -551,11 +552,39 @@ class UserDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         }
         
         # التحقق من إمكانية الحذف
-        context['can_delete'] = (
+        can_delete_basic = (
             user_to_delete.username != 'superadmin' and 
             user_to_delete != self.request.user and
             not user_to_delete.is_superuser
         )
+        
+        # فحص السجلات المرتبطة
+        related_objects = {}
+        has_protected_relations = False
+        
+        if can_delete_basic:
+            try:
+                # فحص قيود اليومية
+                from journal.models import JournalEntry
+                journal_count = JournalEntry.objects.filter(created_by=user_to_delete).count()
+                if journal_count > 0:
+                    related_objects['قيود اليومية'] = journal_count
+                    has_protected_relations = True
+                
+                # فحص سجلات المراجعة
+                from core.models import AuditLog
+                audit_count = AuditLog.objects.filter(user=user_to_delete).count()
+                if audit_count > 0:
+                    related_objects['سجلات المراجعة'] = audit_count
+                
+                # يمكن إضافة فحوصات أخرى هنا للنماذج الأخرى
+                
+            except Exception:
+                # في حالة حدوث خطأ في الفحص، نفترض وجود علاقات محمية
+                has_protected_relations = True
+        
+        context['can_delete'] = can_delete_basic and not has_protected_relations
+        context['related_objects'] = related_objects
         
         # أسباب عدم إمكانية الحذف
         context['delete_warnings'] = []
@@ -565,11 +594,15 @@ class UserDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
             context['delete_warnings'].append('لا يمكن للمستخدم حذف حسابه الخاص')
         if user_to_delete.is_superuser:
             context['delete_warnings'].append('لا يمكن حذف المستخدمين ذوي صلاحيات Superuser')
+        if has_protected_relations and related_objects:
+            relations_text = "، ".join([f"{count} {name}" for name, count in related_objects.items()])
+            context['delete_warnings'].append(f'المستخدم مرتبط بـ: {relations_text}')
+            context['delete_warnings'].append('يمكنك إلغاء تفعيل المستخدم بدلاً من الحذف')
             
         return context
     
     def delete(self, request, *args, **kwargs):
-        """حذف المستخدم مع التحقق من القيود"""
+        """حذف المستخدم مع التحقق من القيود والحماية من ProtectedError"""
         user = self.get_object()
         # منع حذف المستخدم الحالي
         if user == request.user:
@@ -583,17 +616,62 @@ class UserDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         if user.is_superuser:
             messages.error(request, _('لا يمكن حذف المستخدمين ذوي صلاحيات Superuser'))
             return self.get(request, *args, **kwargs)
+        
         username = user.username
-        messages.success(request, _('تم حذف المستخدم "{}" بنجاح').format(username))
-        # تسجيل النشاط في سجل الأنشطة
-        from core.signals import log_view_activity
-        log_view_activity(
-            request,
-            'delete',
-            user,
-            _('تم حذف المستخدم: {}').format(username)
-        )
-        return super().delete(request, *args, **kwargs)
+        
+        try:
+            # تسجيل النشاط في سجل الأنشطة قبل الحذف
+            from core.signals import log_view_activity
+            log_view_activity(
+                request,
+                'delete',
+                user,
+                _('تم حذف المستخدم: {}').format(username)
+            )
+            
+            # محاولة حذف المستخدم
+            result = super().delete(request, *args, **kwargs)
+            messages.success(request, _('تم حذف المستخدم "{}" بنجاح').format(username))
+            return result
+            
+        except ProtectedError as e:
+            # معالجة خطأ الحماية - المستخدم مرتبط بسجلات أخرى
+            protected_objects = e.args[1] if len(e.args) > 1 else set()
+            
+            # تحليل نوع السجلات المحمية
+            protected_types = {}
+            for obj in protected_objects:
+                model_name = obj.__class__.__name__
+                if model_name not in protected_types:
+                    protected_types[model_name] = 0
+                protected_types[model_name] += 1
+            
+            # بناء رسالة خطأ مفهومة
+            error_parts = []
+            for model_name, count in protected_types.items():
+                if model_name == 'JournalEntry':
+                    error_parts.append(f"{count} قيد يومية")
+                elif model_name == 'AuditLog':
+                    error_parts.append(f"{count} سجل مراجعة")
+                elif model_name == 'Invoice':
+                    error_parts.append(f"{count} فاتورة")
+                else:
+                    error_parts.append(f"{count} {model_name}")
+            
+            error_message = _('لا يمكن حذف المستخدم "{}" لأنه مرتبط بـ: {}').format(
+                username, 
+                "، ".join(error_parts)
+            )
+            
+            messages.error(request, error_message)
+            messages.info(request, _('يمكنك إلغاء تفعيل المستخدم بدلاً من حذفه للاحتفاظ بالسجلات التاريخية'))
+            
+            return self.get(request, *args, **kwargs)
+        
+        except Exception as e:
+            # معالجة أي أخطاء أخرى
+            messages.error(request, _('حدث خطأ أثناء حذف المستخدم: {}').format(str(e)))
+            return self.get(request, *args, **kwargs)
 
 class UserGroupListView(LoginRequiredMixin, ListView):
     """عرض قائمة مجموعات المستخدمين"""
