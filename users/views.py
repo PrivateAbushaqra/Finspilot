@@ -727,7 +727,7 @@ class GroupCreateForm(forms.ModelForm):
     
     class Meta:
         model = Group
-        fields = ['name', 'permissions', 'dashboard_sections', 'is_system_group']
+        fields = ['name', 'permissions', 'dashboard_sections']
         labels = {
             'name': _('Group Name'),
         }
@@ -750,10 +750,6 @@ class GroupCreateForm(forms.ModelForm):
                 help_text=_('إذا تم تفعيل هذا الخيار، ستكون المجموعة محمية من الحذف إلا للسوبر أدمين'),
                 widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
             )
-        else:
-            # إزالة الحقل من fields إذا لم يكن سوبر أدمين
-            if 'is_system_group' in self.fields:
-                del self.fields['is_system_group']
         
         # جلب جميع الصلاحيات المرتبطة بقسم Purchases (بما فيها المخصصة)
         purchases_content_types = ContentType.objects.filter(app_label='purchases')
@@ -920,9 +916,12 @@ class UserGroupCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
             # حفظ dashboard_sections
             group.dashboard_sections = ','.join(form.cleaned_data.get('dashboard_sections', []))
             
-            # حفظ is_system_group إذا كان متوفراً
-            if 'is_system_group' in form.cleaned_data:
+            # حفظ is_system_group إذا كان متوفراً ومسموح للمستخدم الحالي
+            if 'is_system_group' in form.cleaned_data and (getattr(self.request.user, 'user_type', None) == 'superadmin' or self.request.user.is_superuser):
                 group.is_system_group = form.cleaned_data['is_system_group']
+            else:
+                # التأكد من أن is_system_group = False للمستخدمين غير المعتمدين
+                group.is_system_group = False
             
             group.save()
             
@@ -1073,7 +1072,7 @@ class GroupEditForm(forms.ModelForm):
     
     class Meta:
         model = Group
-        fields = ['name', 'permissions', 'dashboard_sections', 'is_system_group']
+        fields = ['name', 'permissions', 'dashboard_sections']
         labels = {
             'name': _('Group Name'),
         }
@@ -1096,10 +1095,9 @@ class GroupEditForm(forms.ModelForm):
                 help_text=_('إذا تم تفعيل هذا الخيار، ستكون المجموعة محمية من الحذف إلا للسوبر أدمين'),
                 widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
             )
-        else:
-            # إزالة الحقل من fields إذا لم يكن سوبر أدمين
-            if 'is_system_group' in self.fields:
-                del self.fields['is_system_group']
+            # تعيين القيمة الأولية من المجموعة الحالية
+            if self.instance and self.instance.pk:
+                self.fields['is_system_group'].initial = self.instance.is_system_group
         
         # جلب جميع الصلاحيات المرتبطة بقسم Purchases (بما فيها المخصصة)
         purchases_content_types = ContentType.objects.filter(app_label='purchases')
@@ -1156,6 +1154,9 @@ class GroupEditForm(forms.ModelForm):
     def save(self, commit=True):
         group = super().save(commit=False)
         if commit:
+            # حفظ is_system_group إذا كان الحقل موجوداً
+            if 'is_system_group' in self.cleaned_data:
+                group.is_system_group = self.cleaned_data['is_system_group']
             group.save()
             
             # حفظ dashboard_sections
@@ -1281,8 +1282,8 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
             # حفظ dashboard_sections
             group.dashboard_sections = ','.join(form.cleaned_data.get('dashboard_sections', []))
             
-            # حفظ is_system_group إذا كان متوفراً
-            if 'is_system_group' in form.cleaned_data:
+            # حفظ is_system_group إذا كان متوفراً ومسموح للمستخدم الحالي
+            if 'is_system_group' in form.cleaned_data and (getattr(self.request.user, 'user_type', None) == 'superadmin' or self.request.user.is_superuser):
                 old_protected = getattr(group, 'is_system_group', False)
                 group.is_system_group = form.cleaned_data['is_system_group']
                 if old_protected != group.is_system_group:
@@ -1422,7 +1423,7 @@ class UserGroupDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
             )
             
             if superadmin_permissions_in_group.exists():
-                messages.error(request, _('You cannot delete this group - it has permissions reserved for super admins only.'))
+                messages.error(request, _('لا يمكنك حذف هذه المجموعة - تحتوي على صلاحيات محجوزة للسوبر أدمين فقط.'))
                 return redirect('users:group_list')
         
         return super().dispatch(request, *args, **kwargs)
