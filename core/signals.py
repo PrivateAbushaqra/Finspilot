@@ -36,7 +36,7 @@ def log_activity(user, action_type, obj, description, request=None):
         if request:
             ip_address = get_client_ip(request)
         
-        # إنشاء سجل المراجعة
+        # إنشاء سجل المراجعة مع حماية من تضارب IDs
         AuditLog.objects.create(
             user=user,
             action_type=action_type,
@@ -46,10 +46,35 @@ def log_activity(user, action_type, obj, description, request=None):
             ip_address=ip_address
         )
     except Exception as e:
-        # في حالة حدوث خطأ، لا نريد أن يتوقف النظام
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"Error logging activity: {e}")
+        # إذا كان الخطأ متعلق بـ primary key constraint
+        if 'duplicate key' in str(e).lower() or 'unique constraint' in str(e).lower():
+            try:
+                # إعادة تعيين sequence AuditLog
+                from django.db import connection
+                with connection.cursor() as cursor:
+                    cursor.execute("SELECT MAX(id) FROM core_auditlog")
+                    max_id = cursor.fetchone()[0] or 0
+                    cursor.execute(f"SELECT setval('core_auditlog_id_seq', {max_id + 1}, false)")
+                
+                # محاولة مرة أخرى
+                AuditLog.objects.create(
+                    user=user,
+                    action_type=action_type,
+                    content_type=content_type,
+                    object_id=object_id,
+                    description=description,
+                    ip_address=ip_address
+                )
+            except Exception as retry_e:
+                # في حالة حدوث خطأ، لا نريد أن يتوقف النظام
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"فشل في تسجيل نشاط المستخدم حتى بعد إعادة تعيين sequence: {retry_e}")
+        else:
+            # في حالة حدوث خطأ، لا نريد أن يتوقف النظام
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error logging activity: {e}")
 
 
 # دالة مساعدة لتسجيل الأنشطة من الـ Views
