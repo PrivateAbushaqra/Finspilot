@@ -2,14 +2,14 @@
 {% load i18n %}
 {% load humanize %}
 
-{% block title %}{% trans "{% trans "Details" %} {% trans "Voucher" %} الصرف" %} - {{ voucher.voucher_number }}{% endblock %}
+{% block title %}{% trans "Details Voucher الصرف" %} - {{ voucher.voucher_number }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
             <div class="page-title-box">
-                <h4 class="page-title">{% trans "{% trans "Details" %} {% trans "Voucher" %} الصرف" %} - {{ voucher.voucher_number }}</h4>
+                <h4 class="page-title">{% trans "Details Voucher الصرف" %} - {{ voucher.voucher_number }}</h4>
                 <div class="page-title-right">
                     <a href="{% url 'payments:voucher_list' %}" class="btn btn-secondary me-2">
                         <i class="mdi mdi-arrow-left"></i> {% trans "العودة للList" %}
@@ -37,7 +37,7 @@
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">{% trans "{% trans "Information" %} ال{% trans "Voucher" %}" %}</h5>
+                    <h5 class="card-title mb-0">{% trans "Information الVoucher" %}</h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
@@ -141,7 +141,7 @@
         <div class="col-md-4">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">{% trans "{% trans "Details" %} ال{% trans "Payment" %}" %}</h5>
+                    <h5 class="card-title mb-0">{% trans "Details الPayment" %}</h5>
                 </div>
                 <div class="card-body">
                     {% if voucher.payment_type == 'cash' %}
@@ -257,7 +257,7 @@
                     {% csrf_token %}
                     <div class="alert alert-warning">
                         <i class="mdi mdi-alert-triangle"></i>
-                        {% trans "{% trans "Warning" %}: عكس ال{% trans "Voucher" %} سيؤدي إلى إلغاء تأثيره على الحسابات والصناديق. هذا الإجراء لا يمكن التراجع عنه." %}
+                        {% trans "Warning: عكس الVoucher سيؤدي إلى إلغاء تأثيره على الحسابات والصناديق. هذا الإجراء لا يمكن التراجع عنه." %}
                     </div>
                     <div class="mb-3">
                         <label for="reason" class="form-label">{% trans "سبب العكس" %} <span class="text-danger">*</span></label>
@@ -283,7 +283,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="deleteModalLabel">{% trans "{% trans "Confirmation" %} الحذف" %}</h5>
+                <h5 class="modal-title" id="deleteModalLabel">{% trans "Confirmation الحذف" %}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="post" action="{% url 'payments:voucher_delete' voucher.pk %}">
@@ -291,14 +291,14 @@
                 <div class="modal-body">
                     <div class="alert alert-danger">
                         <i class="mdi mdi-alert"></i>
-                        {% trans "{% trans "Warning" %}: {% trans "Delete" %} ال{% trans "Voucher" %} سيؤدي إلى تعطيله نهائياً وعكس تأثيره على الحسابات. هذا الإجراء لا يمكن التراجع عنه." %}
+                        {% trans "Warning: Delete الVoucher سيؤدي إلى تعطيله نهائياً وعكس تأثيره على الحسابات. هذا الإجراء لا يمكن التراجع عنه." %}
                     </div>
                     <p>{% trans "هل أنت متأكد من {% trans "Delete" %} {% trans "Voucher" %} الصرف رقم" %} <strong>{{ voucher.voucher_number }}</strong>؟</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
                     <button type="submit" class="btn btn-danger">
-                        <i class="mdi mdi-delete"></i> {% trans "{% trans "Delete" %} ال{% trans "Voucher" %}" %}
+                        <i class="mdi mdi-delete"></i> {% trans "Delete الVoucher" %}
                     </button>
                 </div>
             </form>

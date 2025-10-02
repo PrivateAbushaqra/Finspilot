@@ -17,8 +17,8 @@ def create_cashbox_transaction_for_sales(sender, instance, created, **kwargs):
             # تحديد الصندوق المناسب
             cashbox = None
             
-            # إذا كان المستخدم من نوع pos_user، استخدم صندوقه الخاص
-            if instance.created_by.user_type == 'pos_user':
+            # إذا كان المستخدم يستطيع الوصول لنقطة البيع، استخدم صندوقه الخاص
+            if instance.created_by.has_perm('users.can_access_pos'):
                 from cashboxes.models import Cashbox
                 cashbox = Cashbox.objects.filter(responsible_user=instance.created_by).first()
                 

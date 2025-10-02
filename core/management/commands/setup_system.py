@@ -12,24 +12,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.stdout.write(self.style.SUCCESS('=== بدء إعداد البيانات الأساسية للنظام ==='))
         
-        # إنشاء مستودع "Main" إذا لم يكن موجوداً
-        if not Warehouse.objects.filter(name='Main').exists():
-            try:
-                main_warehouse = Warehouse.objects.create(
-                    name='Main',
-                    code='MAIN',
-                    address='الموقع الرئيسي',
-                    is_active=True,
-                )
-                self.stdout.write(
-                    self.style.SUCCESS(f'✅ تم إنشاء المستودع الرئيسي: {main_warehouse.name}')
-                )
-            except Exception as e:
-                self.stdout.write(
-                    self.style.ERROR(f'❌ خطأ في إنشاء المستودع الرئيسي: {e}')
-                )
-        else:
-            self.stdout.write(self.style.WARNING('⚠️  المستودع الرئيسي "Main" موجود بالفعل'))
+        # تم تعطيل إنشاء المستودع الافتراضي
+        self.stdout.write(self.style.WARNING('تم تخطي إنشاء المستودع الافتراضي'))
         
         # إنشاء Document Sequences إذا لم تكن موجودة
         sequences = [

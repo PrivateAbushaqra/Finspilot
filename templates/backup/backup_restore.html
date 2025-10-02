@@ -1121,29 +1121,43 @@ document.addEventListener('DOMContentLoaded', function() {
             
             var clearData = document.getElementById('modalClearExisting').checked;
             // إرسال عبر AJAX لبدء الاستعادة بالخلفية
+            var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+            if (!csrfToken) {
+                alert('خطأ في العثور على رمز الحماية CSRF. يرجى إعادة تحميل الصفحة.');
+                return;
+            }
+            
             fetch('{% url "backup:restore_backup" %}', {
                 method: 'POST',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'X-CSRFToken': csrfToken.value,
                     'Content-Type': 'application/x-www-form-urlencoded'
                 },
                 body: new URLSearchParams({ filename: selectedFilename, clear_data: clearData ? 'true' : 'false' }).toString()
             })
-            .then(r => r.json())
+            .then(r => {
+                if (!r.ok) {
+                    throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+                }
+                return r.json();
+            })
             .then(data => {
                 if (data.success) {
                     // أغلق المودال وابدأ مراقبة التقدم
                     const modalEl = document.getElementById('restoreModal');
                     const modal = bootstrap.Modal.getInstance(modalEl);
                     modal.hide();
+                    // إظهار بطاقة التقدم
+                    document.getElementById('tablesInfoCard').style.display = 'block';
                     startRestoreProgressMonitoring();
                 } else {
-                    alert('❌ Failed to start restore: ' + (data.error || 'Unknown'));
+                    alert('❌ فشل في بدء الاستعادة: ' + (data.error || 'خطأ غير معروف'));
                 }
             })
             .catch(err => {
-                alert('❌ Connection error: ' + err.message);
+                console.error('خطأ في الاتصال:', err);
+                alert('❌ خطأ في الاتصال: ' + err.message);
             });
         });
     }
@@ -1428,18 +1442,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 headers: { 'X-Requested-With': 'XMLHttpRequest' },
                 body: formData
             })
-            .then(r => r.json())
+            .then(r => {
+                if (!r.ok) {
+                    throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+                }
+                return r.json();
+            })
             .then(data => {
                 if (data.success) {
                     // إظهار بطاقة التقدم والبدء بالمراقبة
                     document.getElementById('tablesInfoCard').style.display = 'block';
                     startRestoreProgressMonitoring();
                 } else {
-                    alert('❌ Failed to start restore: ' + (data.error || 'Unknown'));
+                    alert('❌ فشل في بدء الاستعادة: ' + (data.error || 'خطأ غير معروف'));
                 }
             })
             .catch(err => {
-                alert('❌ Connection error: ' + err.message);
+                console.error('خطأ في الاتصال:', err);
+                alert('❌ خطأ في الاتصال: ' + err.message);
             });
         });
     }

@@ -342,6 +342,7 @@
                         </div>
                     </div>
                     <div class="col-md-6">
+                        {% if can_change_cashbox %}
                         <div class="mb-3" id="cashbox_container" style="display: none;">
                             <label for="id_cashbox" class="form-label">
                                 {% trans "Cash Box" %} <span class="required-field">*</span>
@@ -359,6 +360,7 @@
                                 </label>
                             </div>
                         </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -680,6 +682,16 @@ function formatCurrency(value, overridePlaces){
 
 {% block extra_js %}
 <script>
+// إخفاء حقل الصندوق للمستخدمين ذوي صلاحية POS
+{% if not can_change_cashbox %}
+document.addEventListener('DOMContentLoaded', function() {
+    const cashboxContainer = document.getElementById('cashbox_container');
+    if (cashboxContainer) {
+        cashboxContainer.style.display = 'none';
+    }
+});
+{% endif %}
+
 // Price hook removed (debug instrumentation cleaned up)
 
 let productRowCounter = {{ existing_products|length|default:0 }};
@@ -2112,6 +2124,8 @@ document.getElementById('id_payment_type').addEventListener('change', function()
     const cashboxContainer = document.getElementById('cashbox_container');
     const cashboxSelect = document.getElementById('id_cashbox');
     
+    // لا نعرض حقل الصندوق للمستخدمين ذوي صلاحية POS
+    {% if can_change_cashbox %}
     if (paymentType === 'cash') {
         cashboxContainer.style.display = 'block';
         cashboxSelect.required = true;
@@ -2120,6 +2134,11 @@ document.getElementById('id_payment_type').addEventListener('change', function()
         cashboxSelect.required = false;
         cashboxSelect.value = '';
     }
+    {% else %}
+    // للمستخدمين ذوي صلاحية POS، الحقل مخفي دائماً
+    cashboxContainer.style.display = 'none';
+    cashboxSelect.required = false;
+    {% endif %}
 });
 </script>
 

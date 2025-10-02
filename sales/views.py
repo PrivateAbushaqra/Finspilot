@@ -321,6 +321,11 @@ def sales_invoice_create(request):
         context['can_edit_date'] = user.is_superuser or user.is_staff or user.has_perm('sales.change_salesinvoice_date')
         # صلاحية تعديل خيار شمول الضريبة - استخدم في القالب لتجنّب استدعاءات دوال داخل قوالب
         context['can_toggle_invoice_tax'] = user.is_superuser or user.has_perm('sales.can_toggle_invoice_tax')
+        
+        # التحقق من صلاحية الوصول لنقطة البيع
+        context['has_pos_access'] = user.has_perm('users.can_access_pos')
+        # إذا كان المستخدم يمكنه الوصول لنقطة البيع، لا يمكنه تغيير الصندوق
+        context['can_change_cashbox'] = not user.has_perm('users.can_access_pos')
 
         # اسم المستخدم المنشئ (الاسم الأول + الاسم الأخير) لعرضه في القالب
         try:
@@ -511,15 +516,27 @@ def sales_invoice_create(request):
 
                         # الحصول على الصندوق النقدي إذا كان الدفع نقدي
                         cashbox = None
-                        if payment_type == 'cash' and cashbox_id:
-                            try:
-                                from cashboxes.models import Cashbox
-                                cashbox = Cashbox.objects.get(id=cashbox_id, is_active=True)
-                            except (ImportError, Cashbox.DoesNotExist):
-                                # إذا لم يتم العثور على الصندوق، نبلغ عن خطأ
-                                messages.error(request, _('الصندوق النقدي المحدد غير موجود أو غير نشط'))
-                                context = get_invoice_create_context(request, form_data)
-                                return render(request, 'sales/invoice_add.html', context)
+                        if payment_type == 'cash':
+                            # إذا كان المستخدم يمكنه الوصول لنقطة البيع، استخدم صندوقه الخاص تلقائياً
+                            if user.has_perm('users.can_access_pos'):
+                                try:
+                                    from cashboxes.models import Cashbox
+                                    cashbox = Cashbox.objects.filter(responsible_user=user).first()
+                                    if not cashbox:
+                                        # إذا لم يكن له صندوق، سيتم إنشاؤه تلقائياً في signals.py
+                                        pass
+                                except ImportError:
+                                    pass
+                            elif cashbox_id:
+                                # للمستخدمين العاديين، استخدم الصندوق المحدد
+                                try:
+                                    from cashboxes.models import Cashbox
+                                    cashbox = Cashbox.objects.get(id=cashbox_id, is_active=True)
+                                except (ImportError, Cashbox.DoesNotExist):
+                                    # إذا لم يتم العثور على الصندوق، نبلغ عن خطأ
+                                    messages.error(request, _('الصندوق النقدي المحدد غير موجود أو غير نشط'))
+                                    context = get_invoice_create_context(request, form_data)
+                                    return render(request, 'sales/invoice_add.html', context)
                         products = request.POST.getlist('products[]')
                         quantities = request.POST.getlist('quantities[]')
                         prices = request.POST.getlist('prices[]')

@@ -74,7 +74,7 @@
                                                        title="{% trans 'Edit' %}">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
-                                                    <a href="{% url 'hr:payroll_period_process' period.pk %}" 
+                                                    <a href="{% url 'hr:process_payroll' period.pk %}" 
                                                        class="btn btn-sm btn-outline-success" 
                                                        title="{% trans 'Process Payroll' %}"
                                                        onclick="return confirm('هل تريد معالجة كشف الراتب لهذه الفترة؟')">

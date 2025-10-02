@@ -716,6 +716,16 @@ def cashbox_delete(request, cashbox_id):
                     messages.error(request, _('Cannot delete the cashbox because the balance is not zero'))
                     return redirect('cashboxes:cashbox_detail', cashbox_id=cashbox_id)
                 
+                # تسجيل العملية في سجل الأنشطة قبل الحذف
+                AuditLog.objects.create(
+                    user=request.user,
+                    action_type='delete',
+                    content_type='Cashbox',
+                    object_id=cashbox_id,
+                    description=_('Deleted cashbox: {}').format(cashbox.name),
+                    ip_address=request.META.get('REMOTE_ADDR')
+                )
+                
                 # الآن احذف الصندوق - التحويلات ستصبح تلقائياً بمرجع NULL
                 cashbox_name = cashbox.name
                 cashbox.delete()

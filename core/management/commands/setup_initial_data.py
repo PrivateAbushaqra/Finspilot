@@ -23,55 +23,12 @@ class Command(BaseCommand):
         )
 
     def create_default_users(self):
-        """إنشاء المستخدمين الافتراضيين"""
-        # Super Admin
-        if not User.objects.filter(username='superadmin').exists():
-            superadmin = User.objects.create_user(
-                username='superadmin',
-                email='superadmin@triangle.com',
-                first_name='Super',
-                last_name='Admin',
-                user_type='superadmin',
-                is_superuser=True,
-                is_staff=True,
-                can_access_sales=True,
-                can_access_purchases=True,
-                can_access_inventory=True,
-                can_access_banks=True,
-                can_access_reports=True,
-                can_delete_invoices=True,
-                can_edit_dates=True,
-                can_edit_invoice_numbers=True,
-                can_see_low_stock_alerts=True,
-            )
-            # تعيين كلمة المرور بشكل صحيح
-            superadmin.set_password('password')
-            superadmin.save()
-            self.stdout.write(f'تم إنشاء المستخدم: {superadmin.username}')
+        """إنشاء المستخدمين الافتراضيين - معطل"""
+        # تم تعطيل إنشاء المستخدمين الافتراضيين
+        self.stdout.write(self.style.WARNING('تم تخطي إنشاء المستخدمين الافتراضيين'))
+        return
 
-        # Admin
-        if not User.objects.filter(username='admin').exists():
-            admin = User.objects.create_user(
-                username='admin',
-                email='admin@triangle.com',
-                first_name='Admin',
-                last_name='User',
-                user_type='admin',
-                is_staff=True,
-                can_access_sales=True,
-                can_access_purchases=True,
-                can_access_inventory=True,
-                can_access_banks=True,
-                can_access_reports=True,
-                can_delete_invoices=True,
-                can_edit_dates=True,
-                can_edit_invoice_numbers=True,
-                can_see_low_stock_alerts=True,
-            )
-            # تعيين كلمة المرور بشكل صحيح
-            admin.set_password('admin')
-            admin.save()
-            self.stdout.write(f'تم إنشاء المستخدم: {admin.username}')
+
 
     def create_document_sequences(self):
         """إنشاء تسلسل أرقام المستندات"""

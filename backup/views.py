@@ -642,10 +642,17 @@ def get_backup_tables_info():
                 if app_config.name == 'django.contrib.auth' and model._meta.model_name in ['user', 'permission']:
                     continue
                     
+                # تصحيح اسم التطبيق للمجموعات
+                if app_config.name == 'django.contrib.auth' and model._meta.model_name == 'group':
+                    # استخدام اسم التطبيق الصحيح
+                    app_name_to_use = 'auth'
+                else:
+                    app_name_to_use = app_config.name
+                    
                 try:
                     record_count = model.objects.count()
                     tables_info.append({
-                        'app_name': app_config.name,
+                        'app_name': app_name_to_use,
                         'model_name': model._meta.model_name,
                         'display_name': model._meta.verbose_name or f"{app_config.verbose_name} - {model._meta.model_name}",
                         'record_count': record_count,
@@ -1991,7 +1998,7 @@ def perform_clear_all_data(user):
         })
         set_clear_progress_data(progress_data)
         
-        # تنفيذ المسح داخل معاملة
+        # تنفيذ المسح داخل معاملة مع ترتيب صحيح للمفاتيح الخارجية
         processed_tables = 0
         processed_records = 0
         
@@ -2007,25 +2014,141 @@ def perform_clear_all_data(user):
                     except Exception as e:
                         logger.warning(f"فشل في مسح سجل الأنشطة: {str(e)}")
                 
+                # ترتيب المسح بحسب التبعيات (التفاصيل أولاً ثم الجداول الرئيسية)
+                deletion_order = [
+                    # 1. عناصر الفواتير والتفاصيل أولاً
+                    'sales.salesinvoiceitem',
+                    'purchases.purchaseinvoiceitem', 
+                    'sales.salesreturnitem',
+                    'purchases.purchasereturnitem',
+                    'hr.payrollentry',
+                    'hr.attendance',
+                    'hr.leaverequest',
+                    'hr.employeedocument',
+                    'inventory.warehousetransferitem',
+                    'receipts.checkcollection',
+                    'receipts.receiptreversal',
+                    
+                    # 2. الفواتير والمردودات والمستندات
+                    'sales.salesinvoice',
+                    'purchases.purchaseinvoice',
+                    'sales.salesreturn', 
+                    'purchases.purchasereturn',
+                    'sales.salescreditnote',
+                    'purchases.purchasedebitnote',
+                    
+                    # 3. المعاملات والحركات
+                    'receipts.paymentreceipt',
+                    'payments.paymentvoucher',
+                    'banks.banktransaction',
+                    'banks.banktransfer',
+                    'banks.bankreconciliation',
+                    'banks.bankstatement',
+                    'cashboxes.cashboxtransaction',
+                    'cashboxes.cashboxtransfer',
+                    'inventory.inventorymovement',
+                    'inventory.warehousetransfer',
+                    'accounts.accounttransaction',
+                    'journal.journalline',
+                    'journal.journalentry',
+                    'journal.yearendclosing',
+                    'revenues_expenses.revenueexpenseentry',
+                    'revenues_expenses.recurringrevenueexpense',
+                    'assets_liabilities.depreciationentry',
+                    'provisions.provisionentry',
+                    
+                    # 4. الموظفين والعقود
+                    'hr.contract',
+                    'hr.employee',
+                    'hr.payrollperiod',
+                    
+                    # 5. البيانات الأساسية
+                    'customers.customersupplier',
+                    'products.product',
+                    'products.category',
+                    'inventory.warehouse',
+                    'banks.bankaccount',
+                    'cashboxes.cashbox',
+                    'hr.department',
+                    'hr.position',
+                    'hr.leavetype',
+                    'journal.account',
+                    'assets_liabilities.asset',
+                    'assets_liabilities.liability',
+                    'assets_liabilities.assetcategory',
+                    'assets_liabilities.liabilitycategory',
+                    'provisions.provision',
+                    'provisions.provisiontype',
+                    'revenues_expenses.revenueexpensecategory',
+                    'revenues_expenses.sector',
+                    'documents.document',
+                    'settings.currency',
+                    'settings.companysettings',
+                    'settings.documentprintsettings',
+                    'settings.jofotarasettings',
+                    'core.companysettings',
+                    'core.documentsequence',
+                    'core.systemnotification',
+                    'reports.reportaccesscontrol',
+                ]
+                
+                # إنشاء قاموس للوصول السريع للجداول
+                table_dict = {table_info['label']: table_info for table_info in tables_to_clear}
+                
+                # مسح الجداول بالترتيب المحدد أولاً
+                for ordered_label in deletion_order:
+                    if ordered_label in table_dict:
+                        table_info = table_dict[ordered_label]
+                        model = table_info['model']
+                        
+                        progress_data['current_table'] = table_info['display_name']
+                        set_clear_progress_data(progress_data)
+                        
+                        try:
+                            record_count = table_info['record_count']
+                            if record_count > 0:
+                                model.objects.all().delete()
+                                processed_records += record_count
+                                logger.info(f'تم مسح {record_count} سجل من جدول {table_info["display_name"]}')
+                            
+                            processed_tables += 1
+                            percentage = int((processed_tables / total_tables) * 100) if total_tables > 0 else 100
+                            progress_data['percentage'] = percentage
+                            progress_data['processed_tables'] = processed_tables
+                            progress_data['processed_records'] = processed_records
+                            
+                            # العثور على الفهرس في القائمة الأصلية
+                            for i, original_table in enumerate(tables_to_clear):
+                                if original_table['label'] == ordered_label:
+                                    progress_data['tables_status'][i]['status'] = 'completed'
+                                    break
+                            
+                            set_clear_progress_data(progress_data)
+                            
+                        except Exception as e:
+                            logger.warning(f"فشل في مسح جدول {ordered_label}: {str(e)}")
+                            # العثور على الفهرس في القائمة الأصلية لتسجيل الخطأ
+                            for i, original_table in enumerate(tables_to_clear):
+                                if original_table['label'] == ordered_label:
+                                    progress_data['tables_status'][i]['status'] = 'error'
+                                    progress_data['tables_status'][i]['error'] = str(e)
+                                    break
+                            set_clear_progress_data(progress_data)
+                
+                # مسح باقي الجداول التي لم تُمسح بعد
                 for i, table_info in enumerate(tables_to_clear):
                     model = table_info['model']
                     label = table_info['label']
+                    
+                    # تخطي الجداول التي تم مسحها بالفعل
+                    if label in deletion_order or label == 'core.auditlog':
+                        continue
                     
                     progress_data['current_table'] = table_info['display_name']
                     progress_data['processed_tables'] = i
                     set_clear_progress_data(progress_data)
                     
                     try:
-                        # تجاهل مسح AuditLog لأننا مسحناه بالفعل
-                        if label == 'core.auditlog':
-                            processed_tables += 1
-                            percentage = int((processed_tables / total_tables) * 100) if total_tables > 0 else 100
-                            progress_data['percentage'] = percentage
-                            progress_data['processed_tables'] = processed_tables
-                            progress_data['tables_status'][i]['status'] = 'completed'
-                            set_clear_progress_data(progress_data)
-                            continue
-                        
                         if model._meta.label == 'users.User':
                             # مسح المستخدمين غير Superuser فقط
                             non_superuser_count = model.objects.filter(is_superuser=False).count()
@@ -2055,18 +2178,53 @@ def perform_clear_all_data(user):
                         set_clear_progress_data(progress_data)
                         continue
                 
+                # تقرير نهائي للتحقق من نجاح المسح
+                final_verification = []
+                remaining_data_found = False
+                
+                # فحص الجداول المهمة للتأكد من المسح الكامل
+                critical_tables = [
+                    'customers.customersupplier',
+                    'products.product', 
+                    'sales.salesinvoice',
+                    'purchases.purchaseinvoice',
+                    'inventory.warehouse'
+                ]
+                
+                for critical_label in critical_tables:
+                    if critical_label in table_dict:
+                        model = table_dict[critical_label]['model']
+                        remaining_count = model.objects.count()
+                        if remaining_count > 0:
+                            remaining_data_found = True
+                            final_verification.append(f"{critical_label}: {remaining_count} سجل متبقي")
+                            logger.warning(f"بيانات متبقية في {critical_label}: {remaining_count} سجل")
+                        else:
+                            final_verification.append(f"{critical_label}: تم مسحه بالكامل ✅")
+                
                 # إكمال التقدم
+                final_status = 'completed' if not remaining_data_found else 'completed_with_warnings'
+                final_message = 'تم إكمال المسح بنجاح!' if not remaining_data_found else 'تم إكمال المسح مع تحذيرات'
+                
                 progress_data.update({
                     'is_running': False,
-                    'status': 'completed',
+                    'status': final_status,
                     'percentage': 100,
-                    'current_table': 'تم إكمال المسح بنجاح!',
+                    'current_table': final_message,
                     'processed_tables': processed_tables,
-                    'processed_records': processed_records
+                    'processed_records': processed_records,
+                    'final_verification': final_verification,
+                    'remaining_data_found': remaining_data_found
                 })
                 set_clear_progress_data(progress_data)
                 
                 logger.info(f'اكتمل مسح جميع البيانات: {processed_records} سجل من {processed_tables} جدول')
+                
+                # تسجيل التقرير النهائي
+                if final_verification:
+                    logger.info("تقرير التحقق النهائي:")
+                    for verification_line in final_verification:
+                        logger.info(f"  {verification_line}")
                 
         except Exception as e:
             logger.error(f"خطأ في مسح البيانات: {str(e)}")
@@ -2503,11 +2661,36 @@ def restore_backup(request):
             messages.info(request, _("تم بدء عملية الاستعادة في الخلفية، يمكن متابعة التقدم على هذه الصفحة"))
             return redirect('backup:backup_restore')
         
-    except json.JSONDecodeError:
-        messages.error(request, _("ملف JSON غير صحيح"))
+    except json.JSONDecodeError as e:
+        error_msg = _("ملف JSON غير صحيح")
+        logger.error(f"خطأ في تحليل JSON: {str(e)}")
+        if AUDIT_AVAILABLE:
+            try:
+                AuditLog.objects.create(
+                    user=request.user,
+                    action='backup_restore_json_error',
+                    details=f'خطأ في تحليل ملف JSON: {str(e)}'
+                )
+            except Exception:
+                pass
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'error': error_msg})
+        messages.error(request, error_msg)
     except Exception as e:
+        error_msg = f"حدث خطأ في الاستعادة: {str(e)}"
         logger.error(f"خطأ في استعادة النسخة الاحتياطية: {str(e)}")
-        messages.error(request, _(f"حدث خطأ في الاستعادة: {str(e)}"))
+        if AUDIT_AVAILABLE:
+            try:
+                AuditLog.objects.create(
+                    user=request.user,
+                    action='backup_restore_general_error',
+                    details=f'خطأ عام في الاستعادة: {str(e)}'
+                )
+            except Exception:
+                pass
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'error': error_msg})
+        messages.error(request, _(error_msg))
     
     return redirect('backup:backup_restore')
 

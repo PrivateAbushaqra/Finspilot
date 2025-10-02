@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-01 22:44+0300\n"
+"POT-Creation-Date: 2025-10-02 00:04+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1110,49 +1110,49 @@ msgstr ""
 msgid "بدء عملية مسح جميع البيانات"
 msgstr ""
 
-#: .\backup\views.py:2107 .\backup\views.py:2375
+#: .\backup\views.py:2258 .\backup\views.py:2526
 msgid "طريقة طلب غير صحيحة"
 msgstr ""
 
-#: .\backup\views.py:2147
+#: .\backup\views.py:2298
 msgid "عملية نسخ احتياطي قيد التشغيل بالفعل"
 msgstr ""
 
-#: .\backup\views.py:2379
+#: .\backup\views.py:2530
 msgid "غير مسموح لك بإجراء هذه العملية"
 msgstr ""
 
-#: .\backup\views.py:2383
+#: .\backup\views.py:2534
 msgid "يرجى اختيار ملف النسخة الاحتياطية"
 msgstr ""
 
-#: .\backup\views.py:2404
+#: .\backup\views.py:2555
 msgid "الملف غير موجود"
 msgstr ""
 
-#: .\backup\views.py:2416 .\backup\views.py:2454
+#: .\backup\views.py:2567 .\backup\views.py:2605
 msgid "نوع الملف غير مدعوم"
 msgstr ""
 
-#: .\backup\views.py:2500
+#: .\backup\views.py:2651
 msgid "تم بدء عملية الاستعادة في الخلفية"
 msgstr ""
 
-#: .\backup\views.py:2503
+#: .\backup\views.py:2654
 msgid "تم بدء عملية الاستعادة في الخلفية، يمكن متابعة التقدم على هذه الصفحة"
 msgstr ""
 
-#: .\backup\views.py:2507
+#: .\backup\views.py:2658
 msgid "ملف JSON غير صحيح"
 msgstr ""
 
-#: .\backup\views.py:2775
+#: .\backup\views.py:2926
 #, fuzzy
 #| msgid "لم يتم تحديد العملية المطلوبة"
 msgid "تم بدء عملية المسح في الخلفية"
 msgstr "لم يتم تحديد العملية المطلوبة"
 
-#: .\backup\views.py:2778
+#: .\backup\views.py:2929
 msgid "تم بدء عملية المسح في الخلفية، يمكن متابعة التقدم على هذه الصفحة"
 msgstr ""
 
@@ -2882,17 +2882,21 @@ msgstr "ليس لديك صلاحية لحذف الصناديق النقدية"
 msgid "Cannot delete the cashbox because the balance is not zero"
 msgstr "لا يمكن حذف الصندوق النقدي لأن الرصيد ليس صفراً"
 
-#: .\cashboxes\views.py:722
+#: .\cashboxes\views.py:725
+msgid "Deleted cashbox: {}"
+msgstr "تم حذف الصندوق: {}"
+
+#: .\cashboxes\views.py:732
 msgid ""
 "Cashbox \"{}\" was deleted successfully while preserving transfers and "
 "balances in other cashboxes"
 msgstr ""
 
-#: .\cashboxes\views.py:726
+#: .\cashboxes\views.py:736
 msgid "Cannot delete the cashbox due to protected related transactions"
 msgstr "لا يمكن حذف الصندوق النقدي بسبب معاملات ذات صلة محمية"
 
-#: .\cashboxes\views.py:728
+#: .\cashboxes\views.py:738
 msgid "An error occurred while deleting the cashbox: {}"
 msgstr "حدث خطأ أثناء حذف الصندوق النقدي: {}"
 
@@ -3370,7 +3374,7 @@ msgstr ""
 msgid "عميل/مورد"
 msgstr ""
 
-#: .\customers\models.py:31 .\users\views.py:1046 .\users\views.py:1374
+#: .\customers\models.py:31 .\users\views.py:1046 .\users\views.py:1380
 msgid "العملاء والموردون"
 msgstr ""
 
@@ -5623,7 +5627,7 @@ msgstr ""
 msgid "منتج"
 msgstr ""
 
-#: .\products\models.py:99 .\users\views.py:1047 .\users\views.py:1375
+#: .\products\models.py:99 .\users\views.py:1047 .\users\views.py:1381
 msgid "المنتجات"
 msgstr ""
 
@@ -6347,7 +6351,7 @@ msgstr "سند"
 msgid "تحصيل الشيك"
 msgstr ""
 
-#: .\reports\apps.py:8 .\users\views.py:1058 .\users\views.py:1386
+#: .\reports\apps.py:8 .\users\views.py:1058 .\users\views.py:1392
 msgid "التقارير"
 msgstr ""
 
@@ -6899,7 +6903,7 @@ msgid "تم تعديل الفئة بنجاح"
 msgstr ""
 
 #: .\revenues_expenses\views.py:38 .\users\views.py:324 .\users\views.py:356
-#: .\users\views.py:388 .\users\views.py:999 .\users\views.py:1327
+#: .\users\views.py:388 .\users\views.py:999 .\users\views.py:1333
 msgid "تعديل فئة إيراد/مصروف"
 msgstr ""
 
@@ -6984,7 +6988,7 @@ msgid "ليس لديك صلاحية تعديل قيد إيراد/مصروف"
 msgstr ""
 
 #: .\revenues_expenses\views.py:340 .\users\views.py:312 .\users\views.py:344
-#: .\users\views.py:380 .\users\views.py:995 .\users\views.py:1323
+#: .\users\views.py:380 .\users\views.py:995 .\users\views.py:1329
 msgid "تعديل قيد إيراد/مصروف"
 msgstr ""
 
@@ -22539,7 +22543,7 @@ msgid "You can modify the permissions at any time after creating the group"
 msgstr "يمكنك تعديل الصلاحيات في أي وقت بعد إنشاء المجموعة"
 
 #: .\templates\users\group_add.html:189 .\users\views.py:783
-#: .\users\views.py:814 .\users\views.py:856 .\users\views.py:1141
+#: .\users\views.py:814 .\users\views.py:856 .\users\views.py:1144
 msgid "Dashboard Sections"
 msgstr "أقسام لوحة التحكم"
 
@@ -23172,32 +23176,32 @@ msgid "كلمتا المرور غير متطابقتين"
 msgstr ""
 
 #: .\users\views.py:309 .\users\views.py:341 .\users\views.py:378
-#: .\users\views.py:994 .\users\views.py:1322
+#: .\users\views.py:994 .\users\views.py:1328
 msgid "إضافة قيد إيراد/مصروف"
 msgstr ""
 
 #: .\users\views.py:315 .\users\views.py:347 .\users\views.py:382
-#: .\users\views.py:996 .\users\views.py:1324
+#: .\users\views.py:996 .\users\views.py:1330
 msgid "حذف قيد إيراد/مصروف"
 msgstr ""
 
 #: .\users\views.py:318 .\users\views.py:350 .\users\views.py:384
-#: .\users\views.py:997 .\users\views.py:1325
+#: .\users\views.py:997 .\users\views.py:1331
 msgid "عرض قيد إيراد/مصروف"
 msgstr ""
 
 #: .\users\views.py:321 .\users\views.py:353 .\users\views.py:386
-#: .\users\views.py:998 .\users\views.py:1326
+#: .\users\views.py:998 .\users\views.py:1332
 msgid "إضافة فئة إيراد/مصروف"
 msgstr ""
 
 #: .\users\views.py:327 .\users\views.py:359 .\users\views.py:390
-#: .\users\views.py:1000 .\users\views.py:1328
+#: .\users\views.py:1000 .\users\views.py:1334
 msgid "حذف فئة إيراد/مصروف"
 msgstr ""
 
 #: .\users\views.py:330 .\users\views.py:362 .\users\views.py:392
-#: .\users\views.py:1001 .\users\views.py:1329
+#: .\users\views.py:1001 .\users\views.py:1335
 msgid "عرض فئة إيراد/مصروف"
 msgstr ""
 
@@ -23277,32 +23281,32 @@ msgstr ""
 "إذا تم تفعيل هذا الخيار، ستكون المجموعة محمية من الحذف إلا للسوبر أدمين"
 
 #: .\users\views.py:774 .\users\views.py:805 .\users\views.py:847
-#: .\users\views.py:1132
+#: .\users\views.py:1135
 msgid "إحصائيات المبيعات"
 msgstr "إحصائيات المبيعات"
 
 #: .\users\views.py:775 .\users\views.py:806 .\users\views.py:848
-#: .\users\views.py:1133
+#: .\users\views.py:1136
 msgid "إحصائيات المشتريات"
 msgstr "إحصائيات المشتريات"
 
 #: .\users\views.py:776 .\users\views.py:807 .\users\views.py:849
-#: .\users\views.py:1134
+#: .\users\views.py:1137
 msgid "أرصدة البنوك والصناديق النقدية"
 msgstr "أرصدة البنوك والصناديق النقدية"
 
 #: .\users\views.py:777 .\users\views.py:808 .\users\views.py:850
-#: .\users\views.py:1135
+#: .\users\views.py:1138
 msgid "روابط سريعة"
 msgstr "روابط سريعة"
 
 #: .\users\views.py:778 .\users\views.py:809 .\users\views.py:851
-#: .\users\views.py:1136
+#: .\users\views.py:1139
 msgid "توزيع المبيعات والمشتريات (الشهر الحالي)"
 msgstr "توزيع المبيعات والمشتريات (الشهر الحالي)"
 
 #: .\users\views.py:779 .\users\views.py:810 .\users\views.py:852
-#: .\users\views.py:1137
+#: .\users\views.py:1140
 msgid "الأداء الشهري"
 msgstr "الأداء الشهري"
 
@@ -23324,225 +23328,225 @@ msgstr ""
 msgid "حدث خطأ أثناء إنشاء المجموعة: {}"
 msgstr ""
 
-#: .\users\views.py:984 .\users\views.py:1312
+#: .\users\views.py:984 .\users\views.py:1318
 msgid "إضافة قيد يومية"
 msgstr ""
 
-#: .\users\views.py:985 .\users\views.py:1313
+#: .\users\views.py:985 .\users\views.py:1319
 msgid "تعديل قيد يومية"
 msgstr ""
 
-#: .\users\views.py:986 .\users\views.py:1314
+#: .\users\views.py:986 .\users\views.py:1320
 msgid "حذف قيد يومية"
 msgstr ""
 
-#: .\users\views.py:987 .\users\views.py:1315
+#: .\users\views.py:987 .\users\views.py:1321
 msgid "عرض قيد يومية"
 msgstr ""
 
-#: .\users\views.py:988 .\users\views.py:1316
+#: .\users\views.py:988 .\users\views.py:1322
 msgid "إضافة حساب"
 msgstr ""
 
-#: .\users\views.py:989 .\users\views.py:1317
+#: .\users\views.py:989 .\users\views.py:1323
 msgid "تعديل حساب"
 msgstr ""
 
-#: .\users\views.py:990 .\users\views.py:1318
+#: .\users\views.py:990 .\users\views.py:1324
 msgid "حذف حساب"
 msgstr ""
 
-#: .\users\views.py:991 .\users\views.py:1319
+#: .\users\views.py:991 .\users\views.py:1325
 #, fuzzy
 #| msgid "إحصائيات المبيعات"
 msgid "عرض حساب"
 msgstr "إحصائيات المبيعات"
 
-#: .\users\views.py:1004 .\users\views.py:1332
+#: .\users\views.py:1004 .\users\views.py:1338
 #, fuzzy
 #| msgid "إحصائيات المبيعات"
 msgid "إضافة فاتورة مبيعات"
 msgstr "إحصائيات المبيعات"
 
-#: .\users\views.py:1005 .\users\views.py:1333
+#: .\users\views.py:1005 .\users\views.py:1339
 #, fuzzy
 #| msgid "إحصائيات المبيعات"
 msgid "تعديل فاتورة مبيعات"
 msgstr "إحصائيات المبيعات"
 
-#: .\users\views.py:1006 .\users\views.py:1334
+#: .\users\views.py:1006 .\users\views.py:1340
 #, fuzzy
 #| msgid "إحصائيات المبيعات"
 msgid "حذف فاتورة مبيعات"
 msgstr "إحصائيات المبيعات"
 
-#: .\users\views.py:1007 .\users\views.py:1335
+#: .\users\views.py:1007 .\users\views.py:1341
 #, fuzzy
 #| msgid "إحصائيات المبيعات"
 msgid "عرض فاتورة مبيعات"
 msgstr "إحصائيات المبيعات"
 
-#: .\users\views.py:1010 .\users\views.py:1338
+#: .\users\views.py:1010 .\users\views.py:1344
 #, fuzzy
 #| msgid "إحصائيات المشتريات"
 msgid "إضافة فاتورة مشتريات"
 msgstr "إحصائيات المشتريات"
 
-#: .\users\views.py:1011 .\users\views.py:1339
+#: .\users\views.py:1011 .\users\views.py:1345
 #, fuzzy
 #| msgid "إحصائيات المشتريات"
 msgid "تعديل فاتورة مشتريات"
 msgstr "إحصائيات المشتريات"
 
-#: .\users\views.py:1012 .\users\views.py:1340
+#: .\users\views.py:1012 .\users\views.py:1346
 #, fuzzy
 #| msgid "إحصائيات المشتريات"
 msgid "حذف فاتورة مشتريات"
 msgstr "إحصائيات المشتريات"
 
-#: .\users\views.py:1013 .\users\views.py:1341
+#: .\users\views.py:1013 .\users\views.py:1347
 #, fuzzy
 #| msgid "إحصائيات المشتريات"
 msgid "عرض فاتورة مشتريات"
 msgstr "إحصائيات المشتريات"
 
-#: .\users\views.py:1016 .\users\views.py:1344
+#: .\users\views.py:1016 .\users\views.py:1350
 msgid "إضافة عميل/مورد"
 msgstr ""
 
-#: .\users\views.py:1017 .\users\views.py:1345
+#: .\users\views.py:1017 .\users\views.py:1351
 msgid "تعديل عميل/مورد"
 msgstr ""
 
-#: .\users\views.py:1018 .\users\views.py:1346
+#: .\users\views.py:1018 .\users\views.py:1352
 msgid "حذف عميل/مورد"
 msgstr ""
 
-#: .\users\views.py:1019 .\users\views.py:1347
+#: .\users\views.py:1019 .\users\views.py:1353
 #, fuzzy
 #| msgid "إحصائيات المبيعات"
 msgid "عرض عميل/مورد"
 msgstr "إحصائيات المبيعات"
 
-#: .\users\views.py:1022 .\users\views.py:1350
+#: .\users\views.py:1022 .\users\views.py:1356
 msgid "إضافة منتج"
 msgstr ""
 
-#: .\users\views.py:1023 .\users\views.py:1351
+#: .\users\views.py:1023 .\users\views.py:1357
 msgid "تعديل منتج"
 msgstr ""
 
-#: .\users\views.py:1024 .\users\views.py:1352
+#: .\users\views.py:1024 .\users\views.py:1358
 msgid "حذف منتج"
 msgstr ""
 
-#: .\users\views.py:1025 .\users\views.py:1353
+#: .\users\views.py:1025 .\users\views.py:1359
 #, fuzzy
 #| msgid "إحصائيات المبيعات"
 msgid "عرض منتج"
 msgstr "إحصائيات المبيعات"
 
-#: .\users\views.py:1026 .\users\views.py:1354
+#: .\users\views.py:1026 .\users\views.py:1360
 msgid "إضافة فئة منتج"
 msgstr ""
 
-#: .\users\views.py:1027 .\users\views.py:1355
+#: .\users\views.py:1027 .\users\views.py:1361
 msgid "تعديل فئة منتج"
 msgstr ""
 
-#: .\users\views.py:1028 .\users\views.py:1356
+#: .\users\views.py:1028 .\users\views.py:1362
 msgid "حذف فئة منتج"
 msgstr ""
 
-#: .\users\views.py:1029 .\users\views.py:1357
+#: .\users\views.py:1029 .\users\views.py:1363
 #, fuzzy
 #| msgid "إحصائيات المبيعات"
 msgid "عرض فئة منتج"
 msgstr "إحصائيات المبيعات"
 
-#: .\users\views.py:1032 .\users\views.py:1360
+#: .\users\views.py:1032 .\users\views.py:1366
 #, fuzzy
 #| msgid "أرصدة البنوك والصناديق النقدية"
 msgid "استعادة النسخ الاحتياطية"
 msgstr "أرصدة البنوك والصناديق النقدية"
 
-#: .\users\views.py:1033 .\users\views.py:1361
+#: .\users\views.py:1033 .\users\views.py:1367
 msgid "حذف ملفات النسخ الاحتياطية"
 msgstr ""
 
-#: .\users\views.py:1034 .\users\views.py:1362
+#: .\users\views.py:1034 .\users\views.py:1368
 #, fuzzy
 #| msgid "أرصدة البنوك والصناديق النقدية"
 msgid "حذف البيانات المتقدمة"
 msgstr "أرصدة البنوك والصناديق النقدية"
 
-#: .\users\views.py:1035 .\users\views.py:1363
+#: .\users\views.py:1035 .\users\views.py:1369
 msgid "إنشاء نسخ احتياطية للنظام"
 msgstr ""
 
-#: .\users\views.py:1043 .\users\views.py:1371
+#: .\users\views.py:1043 .\users\views.py:1377
 #, fuzzy
 #| msgid "لم يتم تحديد العملية المطلوبة"
 msgid "القيود اليومية"
 msgstr "لم يتم تحديد العملية المطلوبة"
 
-#: .\users\views.py:1044 .\users\views.py:1372
+#: .\users\views.py:1044 .\users\views.py:1378
 #, fuzzy
 #| msgid "إحصائيات المبيعات"
 msgid "المبيعات"
 msgstr "إحصائيات المبيعات"
 
-#: .\users\views.py:1045 .\users\views.py:1373
+#: .\users\views.py:1045 .\users\views.py:1379
 #, fuzzy
 #| msgid "إحصائيات المشتريات"
 msgid "المشتريات"
 msgstr "إحصائيات المشتريات"
 
-#: .\users\views.py:1048 .\users\views.py:1376
+#: .\users\views.py:1048 .\users\views.py:1382
 #, fuzzy
 #| msgid "أرصدة البنوك والصناديق النقدية"
 msgid "المخزون"
 msgstr "أرصدة البنوك والصناديق النقدية"
 
-#: .\users\views.py:1049 .\users\views.py:1377
+#: .\users\views.py:1049 .\users\views.py:1383
 #, fuzzy
 #| msgid "توزيع المبيعات والمشتريات (الشهر الحالي)"
 msgid "الإيرادات والمصروفات"
 msgstr "توزيع المبيعات والمشتريات (الشهر الحالي)"
 
-#: .\users\views.py:1050 .\users\views.py:1378
+#: .\users\views.py:1050 .\users\views.py:1384
 msgid "البنوك"
 msgstr ""
 
-#: .\users\views.py:1051 .\users\views.py:1379
+#: .\users\views.py:1051 .\users\views.py:1385
 msgid "الصناديق"
 msgstr ""
 
-#: .\users\views.py:1052 .\users\views.py:1380
+#: .\users\views.py:1052 .\users\views.py:1386
 msgid "المدفوعات"
 msgstr ""
 
-#: .\users\views.py:1053 .\users\views.py:1381
+#: .\users\views.py:1053 .\users\views.py:1387
 msgid "المقبوضات"
 msgstr ""
 
-#: .\users\views.py:1054 .\users\views.py:1382
+#: .\users\views.py:1054 .\users\views.py:1388
 msgid "المستخدمون"
 msgstr ""
 
-#: .\users\views.py:1055 .\users\views.py:1383
+#: .\users\views.py:1055 .\users\views.py:1389
 msgid "النظام الأساسي"
 msgstr ""
 
-#: .\users\views.py:1056 .\users\views.py:1384
+#: .\users\views.py:1056 .\users\views.py:1390
 msgid "النسخ الاحتياطية"
 msgstr ""
 
-#: .\users\views.py:1057 .\users\views.py:1385
+#: .\users\views.py:1057 .\users\views.py:1391
 msgid "الموارد البشرية"
 msgstr ""
 
-#: .\users\views.py:1059 .\users\views.py:1387
+#: .\users\views.py:1059 .\users\views.py:1393
 #, fuzzy
 #| msgid "إحصائيات المشتريات"
 msgid "الإعدادات"
@@ -23552,45 +23556,45 @@ msgstr "إحصائيات المشتريات"
 msgid "أدخل اسم المجموعة"
 msgstr ""
 
-#: .\users\views.py:1238
+#: .\users\views.py:1244
 msgid "لا يمكنك تعديل هذه المجموعة - تحتوي على صلاحيات مخصصة للسوبر أدمين فقط"
 msgstr ""
 
-#: .\users\views.py:1302
+#: .\users\views.py:1308
 msgid "The group has been updated successfully."
 msgstr "تم تحديث المجموعة بنجاح"
 
-#: .\users\views.py:1305
+#: .\users\views.py:1311
 msgid "An error occurred while updating the group: {}"
 msgstr "حدث خطأ أثناء تحديث المجموعة: {}"
 
-#: .\users\views.py:1405
+#: .\users\views.py:1411
 msgid "هذه المجموعة محمية من الحذف. يمكن للسوبر أدمين فقط حذفها."
 msgstr ""
 
-#: .\users\views.py:1420
+#: .\users\views.py:1426
 msgid "لا يمكنك حذف هذه المجموعة - تحتوي على صلاحيات محجوزة للسوبر أدمين فقط."
 msgstr "لا يمكنك حذف هذه المجموعة - تحتوي على صلاحيات محجوزة للسوبر أدمين فقط."
 
-#: .\users\views.py:1431
+#: .\users\views.py:1437
 msgid "تحذير: هذه المجموعة تحتوي على {} مستخدم سيفقدون صلاحيات المجموعة"
 msgstr "تحذير: هذه المجموعة تحتوي على {} مستخدم سيفقدون صلاحيات المجموعة"
 
-#: .\users\views.py:1442
+#: .\users\views.py:1448
 #, fuzzy
 #| msgid "تم حذف المجموعة بنجاح"
 msgid "تم حذف المجموعة \"{}\" بنجاح"
 msgstr "The group has been successfully deleted."
 
-#: .\users\views.py:1445
+#: .\users\views.py:1451
 msgid "حدث خطأ أثناء حذف المجموعة: {}"
 msgstr "An error occurred while deleting the group: {}"
 
-#: .\users\views.py:1473
+#: .\users\views.py:1479
 msgid "High privileged users are hidden"
 msgstr "المستخدمون ذوي الصلاحيات العالية مخفيون"
 
-#: .\users\views.py:1473
+#: .\users\views.py:1479
 msgid "High privileged users are shown."
 msgstr "المستخدمون ذوي الصلاحيات العالية معروضون."
 

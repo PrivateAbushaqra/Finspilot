@@ -16,39 +16,11 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        force = options['force']
-        
-        # إنشاء المستخدم الإداري العام
-        superadmin_username = 'superadmin'
-        superadmin_password = 'password'
-        
-        if User.objects.filter(username=superadmin_username).exists():
-            if force:
-                User.objects.filter(username=superadmin_username).delete()
-                self.stdout.write(
-                    self.style.WARNING(f'تم حذف المستخدم الموجود: {superadmin_username}')
-                )
-            else:
-                self.stdout.write(
-                    self.style.WARNING(f'المستخدم {superadmin_username} موجود بالفعل. استخدم --force لإعادة الإنشاء')
-                )
-        
-        if not User.objects.filter(username=superadmin_username).exists():
-            superadmin = User.objects.create_user(
-                username=superadmin_username,
-                password=superadmin_password,
-                email='superadmin@finspilot.com',
-                first_name='Super',
-                last_name='Admin',
-                user_type='superadmin',
-                is_staff=True,
-                is_superuser=True,
-                is_active=True
-            )
-            self.stdout.write(
-                self.style.SUCCESS(f'تم إنشاء المستخدم الإداري العام: {superadmin_username}')
-            )
-            self.stdout.write(f'كلمة المرور: {superadmin_password}')
+        # تم تعطيل إنشاء المستخدمين الافتراضيين
+        self.stdout.write(
+            self.style.WARNING('تم تعطيل إنشاء المستخدمين الافتراضيين - يجب إنشاؤهم يدوياً من خلال واجهة الإدارة')
+        )
+        return
         
         # إنشاء المستخدم العادي
         user_username = 'user'
