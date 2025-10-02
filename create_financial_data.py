@@ -343,7 +343,7 @@ def create_receipts(sales_invoices, cashboxes, bank_accounts, users):
         # تحديد الصندوق أو الحساب البنكي
         cashbox = None
         bank_account = None
-        check_number = None
+        check_number = ''
         check_date = None
 
         if payment_type == 'cash':
@@ -366,8 +366,9 @@ def create_receipts(sales_invoices, cashboxes, bank_accounts, users):
             cashbox=cashbox,
             check_number=check_number,
             check_date=check_date,
-            bank_name=bank_account.name if bank_account else None,
-            check_cashbox=bank_account,  # استخدام الحساب البنكي كـ check_cashbox
+            check_due_date=check_date + timedelta(days=30) if check_date else None,  # استحقاق بعد 30 يوم
+            bank_name=bank_account.name if bank_account else '',
+            check_cashbox=cashbox,  # استخدام نفس الصندوق للشيكات
             created_by=user
         )
 
@@ -420,11 +421,12 @@ def create_payments(purchase_invoices, cashboxes, bank_accounts, users):
         voucher = PaymentVoucher.objects.create(
             voucher_number=voucher_number,
             date=payment_date,
+            voucher_type='supplier',
             supplier=invoice.supplier,
             payment_type=payment_type,
             amount=invoice.total_amount,
             cashbox=cashbox,
-            bank_account=bank_account,
+            bank=bank_account,
             description=f'دفع فاتورة مشتريات رقم {invoice.invoice_number}',
             created_by=user
         )
@@ -466,10 +468,11 @@ def create_payments(purchase_invoices, cashboxes, bank_accounts, users):
         voucher = PaymentVoucher.objects.create(
             voucher_number=voucher_number,
             date=payment_date,
+            voucher_type='expense',
             payment_type=payment_type,
             amount=amount,
             cashbox=cashbox,
-            bank_account=bank_account,
+            bank=bank_account,
             description=f'{expense_type} - شهر {payment_date.strftime("%B %Y")}',
             created_by=user
         )
@@ -509,9 +512,10 @@ def create_additional_journal_entries(users):
 
             # إنشاء القيد
             journal_entry = JournalEntry.objects.create(
-                entry_number=entry_number,
-                date=entry_date,
+                entry_date=entry_date,
+                reference_type='revenue_expense',
                 description=f'{expense["description"]} - شهر {month}/2025',
+                total_amount=Decimal(str(expense['amount'])),
                 created_by=user
             )
 
@@ -519,7 +523,7 @@ def create_additional_journal_entries(users):
             JournalLine.objects.create(
                 journal_entry=journal_entry,
                 account_id=5001,  # افتراضي - حساب مصاريف إدارية
-                description=f'{expense["description"]}',
+                line_description=f'{expense["description"]}',
                 debit=Decimal(str(expense['amount'])),
                 credit=Decimal('0')
             )
@@ -528,7 +532,7 @@ def create_additional_journal_entries(users):
             JournalLine.objects.create(
                 journal_entry=journal_entry,
                 account_id=1001,  # افتراضي - حساب نقدي
-                description=f'دفع {expense["description"]}',
+                line_description=f'دفع {expense["description"]}',
                 debit=Decimal('0'),
                 credit=Decimal(str(expense['amount']))
             )
@@ -550,9 +554,10 @@ def create_additional_journal_entries(users):
         depreciation_amount = Decimal(str(random.randint(500, 2000)))
 
         journal_entry = JournalEntry.objects.create(
-            entry_number=entry_number,
-            date=entry_date,
+            entry_date=entry_date,
+            reference_type='asset_depreciation',
             description=f'قيد إهلاك شهري - أصول ثابتة',
+            total_amount=depreciation_amount,
             created_by=user
         )
 
@@ -560,7 +565,7 @@ def create_additional_journal_entries(users):
         JournalLine.objects.create(
             journal_entry=journal_entry,
             account_id=6001,  # حساب إهلاك
-            description='إهلاك الأصول الثابتة',
+            line_description='إهلاك الأصول الثابتة',
             debit=depreciation_amount,
             credit=Decimal('0')
         )
@@ -569,7 +574,7 @@ def create_additional_journal_entries(users):
         JournalLine.objects.create(
             journal_entry=journal_entry,
             account_id=1501,  # حساب تراكمي إهلاك
-            description='تراكمي إهلاك الأصول',
+            line_description='تراكمي إهلاك الأصول',
             debit=Decimal('0'),
             credit=depreciation_amount
         )
