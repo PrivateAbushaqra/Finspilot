@@ -709,7 +709,8 @@ def get_backup_tables(request):
 def perform_backup_task(user, timestamp, filename, filepath, format_type='json'):
     """تنفيذ مهمة النسخ الاحتياطي في خيط منفصل مع تتبع مفصل"""
     
-    logger.info(f"🎯 دخول perform_backup_task: user={user.username}, filename={filename}, format={format_type}")
+    user_name = user.username if user else 'system'
+    logger.info(f"🎯 دخول perform_backup_task: user={user_name}, filename={filename}, format={format_type}")
     
     try:
         log_audit(user, 'create', f'بدء إنشاء النسخة الاحتياطية: {filename} - النوع: {format_type.upper()}')
@@ -763,7 +764,7 @@ def perform_backup_task(user, timestamp, filename, filepath, format_type='json')
             'metadata': {
                 'backup_name': f'نسخة احتياطية {timestamp}',
                 'created_at': timezone.now().isoformat(),
-                'created_by': user.username,
+                'created_by': user.username if user else 'system',
                 'system_version': '1.0',
                 'total_tables': total_tables,
                 'total_records': total_records,
