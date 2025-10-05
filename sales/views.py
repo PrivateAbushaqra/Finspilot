@@ -1980,10 +1980,11 @@ class SalesReportView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         start_date = self.request.GET.get('start_date')
         end_date = self.request.GET.get('end_date')
         
-        # التواريخ الافتراضية (الشهر الحالي)
+        # التواريخ الافتراضية (بداية السنة الحالية إلى اليوم)
         today = timezone.now().date()
         if not start_date:
-            start_date = today.replace(day=1).strftime('%Y-%m-%d')
+            # بداية السنة الحالية
+            start_date = today.replace(month=1, day=1).strftime('%Y-%m-%d')
         if not end_date:
             end_date = today.strftime('%Y-%m-%d')
             
