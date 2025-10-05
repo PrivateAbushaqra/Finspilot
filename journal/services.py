@@ -961,7 +961,8 @@ class JournalService:
         })
         
         # حساب الضريبة إذا وجدت (مدين) - تخفيض الضريبة
-        if credit_note.tax_amount > 0:
+        # 🔧 تحقق من وجود حقل tax_amount أولاً
+        if hasattr(credit_note, 'tax_amount') and credit_note.tax_amount > 0:
             tax_account = JournalService.get_tax_payable_account()
             lines_data.append({
                 'account_id': tax_account.id,

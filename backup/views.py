@@ -1587,8 +1587,12 @@ def convert_field_value(field, value):
 
 def perform_backup_restore(backup_data, clear_data=False, user=None):
     """تنفيذ عملية الاستعادة الفعلية"""
+    from .restore_context import set_restoring
+    
     try:
-        logger.info("بدء تنفيذ عملية الاستعادة")
+        # 🔧 تفعيل وضع الاستعادة لتعطيل السيجنالات
+        set_restoring(True)
+        logger.info("بدء تنفيذ عملية الاستعادة (السيجنالات مُعطّلة)")
         
         # تسجيل بداية العملية في سجل الأنشطة
         log_audit(user, 'create', _('بدء عملية استعادة النسخة الاحتياطية'))
@@ -2180,6 +2184,11 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
         })
         set_restore_progress_data(progress_data)
         raise e
+    finally:
+        # 🔧 إيقاف وضع الاستعادة (إعادة تفعيل السيجنالات)
+        from .restore_context import set_restoring
+        set_restoring(False)
+        logger.info("انتهت عملية الاستعادة (السيجنالات مُفعّلة)")
 
 def perform_clear_all_data(user):
     """تنفيذ عملية مسح البيانات الفعلية"""

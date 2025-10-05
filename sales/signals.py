@@ -8,6 +8,14 @@ from .models import SalesInvoice, SalesReturn, SalesCreditNote, SalesInvoiceItem
 @receiver(post_save, sender=SalesInvoice)
 def create_cashbox_transaction_for_sales(sender, instance, created, **kwargs):
     """إنشاء معاملة صندوق تلقائياً عند إنشاء فاتورة مبيعات نقدية"""
+    # 🔧 تجاهل أثناء استعادة النسخة الاحتياطية
+    try:
+        from backup.restore_context import is_restoring
+        if is_restoring():
+            return
+    except ImportError:
+        pass
+    
     try:
         from cashboxes.models import CashboxTransaction
         from core.models import AuditLog
@@ -129,6 +137,14 @@ def create_cashbox_transaction_for_sales(sender, instance, created, **kwargs):
 @receiver(post_save, sender=SalesInvoice)
 def create_payment_receipt_for_cash_sales(sender, instance, created, **kwargs):
     """إنشاء سند قبض تلقائياً عند إنشاء فاتورة مبيعات نقدية"""
+    # 🔧 تجاهل أثناء استعادة النسخة الاحتياطية
+    try:
+        from backup.restore_context import is_restoring
+        if is_restoring():
+            return
+    except ImportError:
+        pass
+    
     try:
         from receipts.models import PaymentReceipt
         from core.models import DocumentSequence
@@ -184,6 +200,14 @@ def create_payment_receipt_for_cash_sales(sender, instance, created, **kwargs):
 @receiver(post_save, sender=SalesInvoice)
 def update_cashbox_transaction_on_invoice_change(sender, instance, created, **kwargs):
     """تحديث معاملة الصندوق عند تعديل الفاتورة"""
+    # 🔧 تجاهل أثناء استعادة النسخة الاحتياطية
+    try:
+        from backup.restore_context import is_restoring
+        if is_restoring():
+            return
+    except ImportError:
+        pass
+    
     try:
         from cashboxes.models import CashboxTransaction
         
@@ -223,6 +247,14 @@ def update_cashbox_transaction_on_invoice_change(sender, instance, created, **kw
 @receiver(post_save, sender=SalesInvoice)
 def update_inventory_on_sales_invoice(sender, instance, created, **kwargs):
     """تحديث المخزون عند إنشاء أو تعديل فاتورة مبيعات"""
+    # 🔧 تجاهل أثناء استعادة النسخة الاحتياطية
+    try:
+        from backup.restore_context import is_restoring
+        if is_restoring():
+            return
+    except ImportError:
+        pass
+    
     try:
         from inventory.models import InventoryMovement, Warehouse
         
@@ -302,6 +334,14 @@ def update_inventory_on_sales_invoice(sender, instance, created, **kwargs):
 @receiver(post_save, sender=SalesReturn)
 def create_sales_return_journal_entry(sender, instance, created, **kwargs):
     """إنشاء قيد محاسبي لمردود المبيعات"""
+    # 🔧 تجاهل أثناء استعادة النسخة الاحتياطية
+    try:
+        from backup.restore_context import is_restoring
+        if is_restoring():
+            return
+    except ImportError:
+        pass
+    
     try:
         if created:
             from journal.services import JournalService
@@ -316,6 +356,14 @@ def create_sales_return_journal_entry(sender, instance, created, **kwargs):
 @receiver(post_save, sender=SalesReturn)
 def update_inventory_on_sales_return(sender, instance, created, **kwargs):
     """تحديث المخزون عند إنشاء مردود المبيعات"""
+    # 🔧 تجاهل أثناء استعادة النسخة الاحتياطية
+    try:
+        from backup.restore_context import is_restoring
+        if is_restoring():
+            return
+    except ImportError:
+        pass
+    
     try:
         from inventory.models import InventoryMovement
         
@@ -375,6 +423,14 @@ def update_inventory_on_sales_return(sender, instance, created, **kwargs):
 @receiver(post_save, sender=SalesCreditNote)
 def create_sales_credit_note_journal_entry(sender, instance, created, **kwargs):
     """إنشاء قيد محاسبي لإشعار الدائن"""
+    # 🔧 تجاهل أثناء استعادة النسخة الاحتياطية
+    try:
+        from backup.restore_context import is_restoring
+        if is_restoring():
+            return
+    except ImportError:
+        pass
+    
     try:
         if created:
             from journal.services import JournalService
@@ -389,6 +445,14 @@ def create_sales_credit_note_journal_entry(sender, instance, created, **kwargs):
 @receiver(post_save, sender=SalesInvoiceItem)
 def update_inventory_on_sales_invoice_item(sender, instance, created, **kwargs):
     """تحديث المخزون عند إضافة/تعديل عنصر فاتورة مبيعات"""
+    # 🔧 تجاهل أثناء استعادة النسخة الاحتياطية
+    try:
+        from backup.restore_context import is_restoring
+        if is_restoring():
+            return
+    except ImportError:
+        pass
+    
     try:
         from inventory.models import InventoryMovement, Warehouse
 
@@ -436,6 +500,14 @@ def update_inventory_on_sales_invoice_item(sender, instance, created, **kwargs):
 @receiver(post_save, sender=SalesInvoiceItem)
 def create_cogs_entry_for_sales_invoice_item(sender, instance, created, **kwargs):
     """إنشاء قيد تكلفة البضاعة المباعة عند إضافة عنصر فاتورة مبيعات"""
+    # 🔧 تجاهل أثناء استعادة النسخة الاحتياطية
+    try:
+        from backup.restore_context import is_restoring
+        if is_restoring():
+            return
+    except ImportError:
+        pass
+    
     try:
         if created and instance.product.product_type == 'physical':
             from time import sleep
