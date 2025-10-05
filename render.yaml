@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: finspilot
+    runtime: python3
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn finspilot.wsgi:application --bind 0.0.0.0:$PORT
+    envVars:
+      - key: DEBUG
+        value: False
+      - key: SECRET_KEY
+        generateValue: true
+      - key: RENDER
+        value: True
+      - key: USE_LOCAL_POSTGRES
+        value: False
+      - key: DEFAULT_CURRENCY
+        value: JOD
+      - key: ALLOWED_HOSTS
+        fromService:
+          type: web
+          name: finspilot
+          property: host
+      - key: RENDER_EXTERNAL_URL
+        fromService:
+          type: web
+          name: finspilot
+          property: host
+    autoDeploy: false
+
+  - type: pserv
+    name: finspilot-db
+    runtime: postgres
+    envVars:
+      - key: POSTGRES_DB
+        value: finspilot_prod
+      - key: POSTGRES_USER
+        value: finspilot_user
+      - key: POSTGRES_PASSWORD
+        generateValue: true

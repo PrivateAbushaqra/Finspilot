@@ -580,7 +580,7 @@ class JournalService:
         lines_data = []
         
         # حساب المورد (مدين) - بقيمة المردود
-        supplier_account = JournalService.get_or_create_supplier_account(purchase_return.supplier)
+        supplier_account = JournalService.get_or_create_supplier_account(purchase_return.original_invoice.supplier)
         lines_data.append({
             'account_id': supplier_account.id,
             'debit': purchase_return.total_amount,
@@ -611,7 +611,7 @@ class JournalService:
             entry_date=purchase_return.date,
             reference_type='purchase_return',
             reference_id=purchase_return.id,
-            description=f'مردود مشتريات رقم {purchase_return.return_number} - {purchase_return.supplier.name}',
+            description=f'مردود مشتريات رقم {purchase_return.return_number} - {purchase_return.original_invoice.supplier.name}',
             lines_data=lines_data,
             user=user
         )

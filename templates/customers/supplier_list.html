@@ -214,7 +214,7 @@
                 <div class="card-body">
                     {% if suppliers %}
                     <!-- Suppliers Cards View -->
-                    <div id="suppliers-container" class="row">
+                    <div id="suppliers-container" class="row" style="display: none;">
                         {% for supplier in suppliers %}
                         <div class="col-md-6 col-lg-4 mb-4">
                             <div class="supplier-card p-3">
@@ -268,7 +268,8 @@
                     </div>
 
                     <!-- Suppliers Table View -->
-                    <div id="suppliers-table" class="table-responsive" style="display: none;">
+                    <div id="suppliers-table" class="table-responsive">
+                    <!--<div id="suppliers-table" class="table-responsive" style="display: none;">  -->
                         <table class="table table-hover">
                             <thead class="table-light">
                                 <tr>

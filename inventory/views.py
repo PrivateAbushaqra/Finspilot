@@ -68,7 +68,7 @@ class InventoryListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         
         # Get inventory items with current stock levels
         inventory_items = []
-        for product in products[:10]:  # Show first 10 products
+        for product in products:  # Show all products
             # Calculate current stock for this product
             in_movements = InventoryMovement.objects.filter(
                 product=product,

@@ -67,6 +67,27 @@
                                         </tr>
                                         {% endif %}
                                         
+                                        {% if receipt.payment_type == 'bank_transfer' %}
+                                        <tr>
+                                            <th>{% trans "Bank Account" %}:</th>
+                                            <td>{{ receipt.bank_account.name }} - {{ receipt.bank_account.bank_name }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans "Transfer Reference Number" %}:</th>
+                                            <td>{{ receipt.bank_transfer_reference }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans "Transfer Date" %}:</th>
+                                            <td>{{ receipt.bank_transfer_date|date:"Y-m-d" }}</td>
+                                        </tr>
+                                        {% if receipt.bank_transfer_notes %}
+                                        <tr>
+                                            <th>{% trans "Transfer Notes" %}:</th>
+                                            <td>{{ receipt.bank_transfer_notes }}</td>
+                                        </tr>
+                                        {% endif %}
+                                        {% endif %}
+                                        
                                         {% if receipt.payment_type == 'check' %}
                                         <tr>
                                             <th>{% trans "Check Number" %}:</th>

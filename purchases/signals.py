@@ -1,6 +1,62 @@
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from .models import PurchaseInvoice, PurchaseInvoiceItem, PurchaseReturn, PurchaseReturnItem, PurchaseDebitNote
+from django.db import transaction
+
+
+@receiver(post_save, sender=PurchaseInvoice)
+def create_journal_entry_for_purchase_invoice(sender, instance, created, **kwargs):
+    """إنشاء القيد المحاسبي تلقائياً عند إنشاء أو تحديث فاتورة مشتريات"""
+    try:
+        from journal.models import JournalEntry
+        from journal.services import JournalService
+        
+        # التحقق من وجود عناصر وعدم وجود قيد محاسبي مسبقاً
+        if instance.items.count() > 0:
+            existing_entry = JournalEntry.objects.filter(
+                reference_type='purchase_invoice',
+                reference_id=instance.id
+            ).first()
+            
+            # إنشاء القيد فقط إذا لم يكن موجوداً من قبل
+            if not existing_entry:
+                JournalService.create_purchase_invoice_entry(instance, instance.created_by)
+    except Exception as e:
+        print(f"خطأ في إنشاء القيد المحاسبي لفاتورة المشتريات {instance.invoice_number}: {e}")
+
+
+@receiver(post_save, sender=PurchaseInvoice)
+def create_supplier_account_transaction(sender, instance, created, **kwargs):
+    """إنشاء معاملة حساب المورد تلقائياً"""
+    if instance.payment_type == 'credit' and instance.items.count() > 0 and instance.total_amount > 0:
+        try:
+            from accounts.models import AccountTransaction
+            import uuid
+            
+            # التحقق من عدم وجود معاملة مسبقاً
+            existing_transaction = AccountTransaction.objects.filter(
+                reference_type='purchase_invoice',
+                reference_id=instance.id
+            ).first()
+            
+            # إنشاء المعاملة فقط إذا لم تكن موجودة من قبل
+            if not existing_transaction:
+                transaction_number = f"PT-{uuid.uuid4().hex[:8].upper()}"
+                AccountTransaction.objects.create(
+                    transaction_number=transaction_number,
+                    date=instance.date,
+                    customer_supplier=instance.supplier,
+                    transaction_type='purchase_invoice',
+                    direction='credit',  # دائن (نحن ندين للمورد)
+                    amount=instance.total_amount,
+                    reference_type='purchase_invoice',
+                    reference_id=instance.id,
+                    description=f'فاتورة مشتريات رقم {instance.invoice_number}',
+                    notes=instance.notes or '',
+                    created_by=instance.created_by
+                )
+        except Exception as e:
+            print(f"خطأ في إنشاء معاملة حساب المورد للفاتورة {instance.invoice_number}: {e}")
 
 
 @receiver(post_save, sender=PurchaseInvoice)
@@ -78,6 +134,61 @@ def update_inventory_on_purchase_invoice(sender, instance, created, **kwargs):
     except Exception as e:
         print(f"خطأ في تحديث المخزون لفاتورة الشراء {instance.invoice_number}: {e}")
         pass
+
+
+@receiver(post_save, sender=PurchaseReturn)
+def create_journal_entry_for_purchase_return(sender, instance, created, **kwargs):
+    """إنشاء القيد المحاسبي تلقائياً عند إنشاء أو تحديث مردود مشتريات"""
+    try:
+        from journal.models import JournalEntry
+        from journal.services import JournalService
+        
+        # التحقق من وجود عناصر وعدم وجود قيد محاسبي مسبقاً
+        if instance.items.count() > 0:
+            existing_entry = JournalEntry.objects.filter(
+                reference_type='purchase_return',
+                reference_id=instance.id
+            ).first()
+            
+            # إنشاء القيد فقط إذا لم يكن موجوداً من قبل
+            if not existing_entry:
+                JournalService.create_purchase_return_entry(instance, instance.created_by)
+    except Exception as e:
+        print(f"خطأ في إنشاء القيد المحاسبي لمردود المشتريات {instance.return_number}: {e}")
+
+
+@receiver(post_save, sender=PurchaseReturn)
+def create_supplier_account_transaction_for_return(sender, instance, created, **kwargs):
+    """إنشاء معاملة حساب المورد للمردود تلقائياً"""
+    if instance.items.count() > 0 and instance.total_amount > 0:
+        try:
+            from accounts.models import AccountTransaction
+            import uuid
+            
+            # التحقق من عدم وجود معاملة مسبقاً
+            existing_transaction = AccountTransaction.objects.filter(
+                reference_type='purchase_return',
+                reference_id=instance.id
+            ).first()
+            
+            # إنشاء المعاملة فقط إذا لم تكن موجودة من قبل
+            if not existing_transaction:
+                transaction_number = f"RTN-{uuid.uuid4().hex[:8].upper()}"
+                AccountTransaction.objects.create(
+                    transaction_number=transaction_number,
+                    date=instance.date,
+                    customer_supplier=instance.original_invoice.supplier,
+                    transaction_type='purchase_return',
+                    direction='debit',  # مدين (تقليل دين المورد)
+                    amount=instance.total_amount,
+                    reference_type='purchase_return',
+                    reference_id=instance.id,
+                    description=f'مردود مشتريات رقم {instance.return_number}',
+                    notes=instance.notes or '',
+                    created_by=instance.created_by
+                )
+        except Exception as e:
+            print(f"خطأ في إنشاء معاملة حساب المورد للمردود {instance.return_number}: {e}")
 
 
 @receiver(post_save, sender=PurchaseReturn)

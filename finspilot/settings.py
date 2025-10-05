@@ -1,7 +1,7 @@
 import os
 import sys
 from pathlib import Path
-from decouple import config
+from decouple import config, Csv
 import dj_database_url
 
 # Set UTF-8 encoding
@@ -10,8 +10,14 @@ os.environ.setdefault('PYTHONIOENCODING', 'utf-8')
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = config('SECRET_KEY')
+# تحميل ملف .env تلقائياً
+from dotenv import load_dotenv
+load_dotenv(os.path.join(BASE_DIR, '.env'))
 
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-default-key-change-in-production')
+
+# تعريف متغيرات البيئة المبكرة
+IS_RENDER = config('RENDER', default=False, cast=bool)
 DEBUG = config('DEBUG', default=False, cast=bool)
 
 # Detect when running tests so we can relax some production-only settings
@@ -19,6 +25,13 @@ TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'
 
 # السماح بالمضيفين مع قيمة افتراضية آمنة محلياً
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='127.0.0.1,localhost,192.168.2.117').split(',')
+
+# إضافة نطاق Render تلقائياً إذا كان متاحاً في البيئة
+if IS_RENDER:
+    # في بيئة Render، أضف النطاق الحالي
+    current_host = config('RENDER_EXTERNAL_URL', default='').replace('https://', '').replace('http://', '')
+    if current_host and current_host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(current_host)
 
 # Application definition
 INSTALLED_APPS = [
@@ -110,7 +123,6 @@ WSGI_APPLICATION = 'finspilot.wsgi.application'
 DATABASES = {}
 
 DATABASE_URL = config('DATABASE_URL', default=None)
-IS_RENDER = config('RENDER', default=False, cast=bool)
 USE_LOCAL_POSTGRES = config('USE_LOCAL_POSTGRES', default=False, cast=bool)
 
 if DATABASE_URL:

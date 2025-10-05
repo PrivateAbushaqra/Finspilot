@@ -53,6 +53,7 @@
                                                 <option value="">{% trans "Select Payment Type" %}</option>
                                                 <option value="cash">{% trans "Cash" %}</option>
                                                 <option value="check">{% trans "Check" %}</option>
+                                                <option value="bank_transfer">{% trans "Bank Transfer" %}</option>
                                             </select>
                                         </div>
                                         
@@ -126,6 +127,39 @@
                                         </div>
                                     </div>
                                 </div>
+                                
+                                <!-- Bank Transfer Details -->
+                                <div class="card d-none" id="bankTransferCard">
+                                    <div class="card-header">
+                                        <h5 class="card-title">{% trans "Bank Transfer Details" %}</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">{% trans "Bank Account" %} *</label>
+                                            <select name="bank_account" class="form-select">
+                                                <option value="">{% trans "Select Bank Account" %}</option>
+                                                {% for account in bank_accounts %}
+                                                <option value="{{ account.id }}">{{ account.name }} - {{ account.bank_name }} ({{ account.balance|floatformat:3 }})</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">{% trans "Transfer Reference Number" %} *</label>
+                                            <input type="text" name="bank_transfer_reference" class="form-control" placeholder="{% trans 'Bank transaction reference number' %}">
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">{% trans "Transfer Date" %} *</label>
+                                            <input type="date" name="bank_transfer_date" class="form-control" value="{{ today|date:'Y-m-d' }}">
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">{% trans "Transfer Notes" %}</label>
+                                            <textarea name="bank_transfer_notes" class="form-control" rows="2" placeholder="{% trans 'Additional notes about the transfer' %}"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         
@@ -180,6 +214,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const paymentTypeSelect = document.getElementById('paymentTypeSelect');
     const cashPaymentCard = document.getElementById('cashPaymentCard');
     const checkPaymentCard = document.getElementById('checkPaymentCard');
+    const bankTransferCard = document.getElementById('bankTransferCard');
     const customerSelect = document.getElementById('customerSelect');
     const customerBalance = document.getElementById('customerBalance');
     
@@ -187,6 +222,7 @@ document.addEventListener('DOMContentLoaded', function() {
         paymentTypeSelect: !!paymentTypeSelect,
         cashPaymentCard: !!cashPaymentCard,
         checkPaymentCard: !!checkPaymentCard,
+        bankTransferCard: !!bankTransferCard,
         customerSelect: !!customerSelect,
         customerBalance: !!customerBalance
     });
@@ -206,21 +242,33 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
     
+    if (!bankTransferCard) {
+        console.error('bankTransferCard not found!');
+        return;
+    }
+    
     // Payment type change
     paymentTypeSelect.addEventListener('change', function() {
         console.log('Payment type changed to:', this.value);
         
         cashPaymentCard.classList.add('d-none');
         checkPaymentCard.classList.add('d-none');
+        bankTransferCard.classList.add('d-none');
+        
+        // Clear all requirements first
+        const cashboxSelect = cashPaymentCard.querySelector('select[name="cashbox"]');
+        if (cashboxSelect) cashboxSelect.required = false;
+        checkPaymentCard.querySelectorAll('input').forEach(input => input.required = false);
+        checkPaymentCard.querySelectorAll('select').forEach(select => select.required = false);
+        bankTransferCard.querySelectorAll('input').forEach(input => input.required = false);
+        bankTransferCard.querySelectorAll('select').forEach(select => select.required = false);
+        bankTransferCard.querySelectorAll('textarea').forEach(textarea => textarea.required = false);
         
         if (this.value === 'cash') {
             console.log('Showing cash payment card');
             cashPaymentCard.classList.remove('d-none');
             // Make cashbox required
-            const cashboxSelect = cashPaymentCard.querySelector('select[name="cashbox"]');
             if (cashboxSelect) cashboxSelect.required = true;
-            // Cancel check requirements
-            checkPaymentCard.querySelectorAll('input').forEach(input => input.required = false);
         } else if (this.value === 'check') {
             console.log('Showing check payment card');
             checkPaymentCard.classList.remove('d-none');
@@ -229,9 +277,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (input.name !== 'notes') input.required = true;
             });
             checkPaymentCard.querySelectorAll('select').forEach(select => select.required = true);
-            // Cancel cashbox requirements
-            const cashboxSelect = cashPaymentCard.querySelector('select[name="cashbox"]');
-            if (cashboxSelect) cashboxSelect.required = false;
+        } else if (this.value === 'bank_transfer') {
+            console.log('Showing bank transfer card');
+            bankTransferCard.classList.remove('d-none');
+            // Make bank transfer fields required
+            const bankAccountSelect = bankTransferCard.querySelector('select[name="bank_account"]');
+            const transferReference = bankTransferCard.querySelector('input[name="bank_transfer_reference"]');
+            const transferDate = bankTransferCard.querySelector('input[name="bank_transfer_date"]');
+            if (bankAccountSelect) bankAccountSelect.required = true;
+            if (transferReference) transferReference.required = true;
+            if (transferDate) transferDate.required = true;
         }
     });
     

@@ -48,7 +48,7 @@
                                             <button type="button" class="btn btn-primary w-100 backup-btn" data-format="xlsx">
                                                 <i class="fas fa-file-excel me-2"></i>
                                                 {% trans "Excel Backup" %}
-                                                <small class="d-block mt-1">{% trans "For data analysis" %}</small>
+                                                <small class="d-block mt-1">{% trans "For data analysis (excludes large tables)" %}</small>
                                             </button>
                                         </div>
                                     </div>
@@ -582,10 +582,15 @@ function updateTablesProgress(progressData) {
 }
 
 // بدء مراقبة تقدم الاستعادة
+var restoreCompletedShown = false; // علم لمنع تكرار الرسالة
+
 function startRestoreProgressMonitoring() {
     if (restoreInterval) {
         clearInterval(restoreInterval);
     }
+    
+    restoreCompletedShown = false; // إعادة تعيين العلم
+    
     // إظهار بطاقة التتبع وإعادة ضبطها
     document.getElementById('tablesInfoCard').style.display = 'block';
     // لا نعرف التوزيع قبل القراءة؛ سنعتمد على بيانات progress
@@ -619,9 +624,11 @@ function startRestoreProgressMonitoring() {
                 if (!p.is_running) {
                     clearInterval(restoreInterval);
                     restoreInterval = null;
-                    if (p.status === 'completed') {
+                    if (p.status === 'completed' && !restoreCompletedShown) {
+                        restoreCompletedShown = true; // تعيين العلم لمنع التكرار
                         setTimeout(() => alert('✅ Restore completed successfully'), 500);
-                    } else if (p.status === 'error') {
+                    } else if (p.status === 'error' && !restoreCompletedShown) {
+                        restoreCompletedShown = true; // تعيين العلم لمنع التكرار
                         setTimeout(() => alert('❌ Error: ' + (p.error || 'An error occurred')), 500);
                     }
                 }
@@ -672,12 +679,16 @@ function checkRestoreInProgress() {
 
 // متغيرات عامة للمسح
 var clearProgressInterval = null;
+var clearCompletedShown = false; // علم لمنع تكرار الرسالة
 
 // بدء مراقبة تقدم المسح
 function startClearProgressMonitoring() {
     if (clearProgressInterval) {
         clearInterval(clearProgressInterval);
     }
+    
+    clearCompletedShown = false; // إعادة تعيين العلم
+    
     // إظهار بطاقة التتبع وإعادة ضبطها
     document.getElementById('tablesInfoCard').style.display = 'block';
     clearProgressInterval = setInterval(function() {
@@ -714,9 +725,11 @@ function startClearProgressMonitoring() {
                     const clearBtn = document.querySelector('.clear-data-btn');
                     clearBtn.disabled = false;
                     clearBtn.innerHTML = '<i class="fas fa-trash-alt me-2"></i>{% trans "Clear All Data" %}<br><small class="text-muted">{% trans "This will delete all records from all tables" %}</small>';
-                    if (p.status === 'completed') {
+                    if (p.status === 'completed' && !clearCompletedShown) {
+                        clearCompletedShown = true; // تعيين العلم لمنع التكرار
                         setTimeout(() => alert('✅ تم إكمال مسح البيانات بنجاح!'), 500);
-                    } else if (p.status === 'error') {
+                    } else if (p.status === 'error' && !clearCompletedShown) {
+                        clearCompletedShown = true; // تعيين العلم لمنع التكرار
                         setTimeout(() => alert('❌ خطأ: ' + (p.error || 'حدث خطأ غير معروف')), 500);
                     }
                 }
@@ -880,10 +893,14 @@ function createBackup(format) {
 }
 
 // دالة لمراقبة تقدم النسخ الاحتياطي
+var backupCompletedShown = false; // علم لمنع تكرار الرسالة
+
 function startProgressMonitoring() {
     if (backupInterval) {
         clearInterval(backupInterval);
     }
+    
+    backupCompletedShown = false; // إعادة تعيين العلم
     
     backupInterval = setInterval(function() {
         fetch('{% url "backup:backup_progress" %}', {
@@ -912,14 +929,16 @@ function startProgressMonitoring() {
                     clearInterval(backupInterval);
                     backupInterval = null;
                     
-                    if (data.progress.status === 'completed') {
+                    if (data.progress.status === 'completed' && !backupCompletedShown) {
+                        backupCompletedShown = true; // تعيين العلم لمنع التكرار
                         setTimeout(() => {
                             alert('✅ Backup created successfully!');
                             refreshBackupsList();
                             // إعادة تفعيل الأزرار بعد انتهاء العملية
                             enableAllBackupButtons();
                         }, 1000);
-                    } else if (data.progress.status === 'error') {
+                    } else if (data.progress.status === 'error' && !backupCompletedShown) {
+                        backupCompletedShown = true; // تعيين العلم لمنع التكرار
                         alert('❌ Error: ' + (data.progress.error || 'Unknown error occurred'));
                         // إعادة تفعيل الأزرار في حالة الخطأ
                         enableAllBackupButtons();

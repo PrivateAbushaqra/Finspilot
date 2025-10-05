@@ -15,6 +15,7 @@ class PaymentReceipt(models.Model):
     PAYMENT_TYPES = [
         ('cash', _('نقدي')),
         ('check', _('شيك')),
+        ('bank_transfer', _('تحويل بنكي')),
     ]
     
     CHECK_STATUS = [
@@ -28,12 +29,20 @@ class PaymentReceipt(models.Model):
     date = models.DateField(_('تاريخ السند'))
     customer = models.ForeignKey(CustomerSupplier, on_delete=models.PROTECT, 
                                verbose_name=_('Customer'), related_name='payment_receipts')
-    payment_type = models.CharField(_('نوع الدفع'), max_length=10, choices=PAYMENT_TYPES)
+    payment_type = models.CharField(_('نوع الدفع'), max_length=20, choices=PAYMENT_TYPES)
     amount = models.DecimalField(_('Amount'), max_digits=15, decimal_places=3)
     
     # للدفع النقدي
     cashbox = models.ForeignKey(Cashbox, on_delete=models.PROTECT, null=True, blank=True,
                               verbose_name=_('الصندوق النقدي'), related_name='payment_receipts')
+    
+    # للتحويل البنكي
+    bank_account = models.ForeignKey('banks.BankAccount', on_delete=models.PROTECT, null=True, blank=True,
+                                   verbose_name=_('الحساب البنكي'), related_name='payment_receipts')
+    bank_transfer_reference = models.CharField(_('رقم مرجع التحويل'), max_length=100, blank=True,
+                                             help_text=_('رقم مرجع التحويل البنكي أو رقم العملية'))
+    bank_transfer_date = models.DateField(_('تاريخ التحويل البنكي'), null=True, blank=True)
+    bank_transfer_notes = models.TextField(_('ملاحظات التحويل البنكي'), blank=True)
     
     # للشيكات
     check_number = models.CharField(_('رقم الشيك'), max_length=50, blank=True)
@@ -86,6 +95,14 @@ class PaymentReceipt(models.Model):
         """التحقق من صحة البيانات"""
         if self.payment_type == 'cash' and not self.cashbox:
             raise ValidationError(_('يجب تحديد الصندوق النقدي للدفع النقدي'))
+        
+        if self.payment_type == 'bank_transfer':
+            if not self.bank_account:
+                raise ValidationError(_('يجب تحديد الحساب البنكي للتحويل البنكي'))
+            if not self.bank_transfer_reference:
+                raise ValidationError(_('رقم مرجع التحويل مطلوب'))
+            if not self.bank_transfer_date:
+                raise ValidationError(_('تاريخ التحويل البنكي مطلوب'))
         
         if self.payment_type == 'check':
             if not self.check_number:

@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('inventory', '0010_alter_inventorymovement_product_and_more'),
-        ('users', '0020_add_is_system_group_to_group'),
+        ('users', '0017_alter_user_options'),
     ]
 
     operations = [

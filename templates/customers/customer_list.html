@@ -220,10 +220,10 @@
                         {% trans "Customers List" %} ({{ total_customers }} {% trans "Customer" %})
                     </h6>
                     <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-primary active" data-view="card">
+                        <button class="btn btn-outline-primary" data-view="card">
                             <i class="fas fa-th-large"></i>
                         </button>
-                        <button class="btn btn-outline-primary" data-view="table">
+                        <button class="btn btn-outline-primary active" data-view="table">
                             <i class="fas fa-table"></i>
                         </button>
                     </div>
@@ -231,9 +231,9 @@
                 <div class="card-body">
                     {% if customers %}
                     <!-- Customers Cards View -->
-                    <div id="customers-container" class="row">
+                    <div id="customers-container" class="row" style="display: none;">
                         {% for customer in customers %}
-                        <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="col-12 col-sm-6 col-lg-4 mb-4">
                             <div class="customer-card p-3">
                                 <div class="d-flex justify-content-between align-items-start mb-3">
                                     <h6 class="card-title mb-0">{{ customer.name }}</h6>
@@ -285,7 +285,7 @@
                     </div>
 
                     <!-- Customers Table View -->
-                    <div id="customers-table" class="table-responsive" style="display: none;">
+                    <div id="customers-table" class="table-responsive" style="display: block;">
                         <table class="table table-hover">
                             <thead class="table-light">
                                 <tr>

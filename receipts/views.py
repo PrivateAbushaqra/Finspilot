@@ -14,6 +14,7 @@ from customers.models import CustomerSupplier
 from cashboxes.models import Cashbox, CashboxTransaction
 from accounts.models import AccountTransaction
 from journal.services import JournalService
+from journal.models import JournalEntry
 
 
 def process_cheque_errors_warnings():
@@ -192,6 +193,12 @@ def receipt_add(request):
         # Cash box data for cash payment
         cashbox_id = request.POST.get('cashbox')
         
+        # Bank transfer data
+        bank_account_id = request.POST.get('bank_account')
+        bank_transfer_reference = request.POST.get('bank_transfer_reference', '')
+        bank_transfer_date = request.POST.get('bank_transfer_date')
+        bank_transfer_notes = request.POST.get('bank_transfer_notes', '')
+        
         # Check data
         check_number = request.POST.get('check_number', '')
         check_date = request.POST.get('check_date')
@@ -232,6 +239,10 @@ def receipt_add(request):
                     description=description,
                     notes=notes,
                     cashbox_id=cashbox_id if payment_type == 'cash' else None,
+                    bank_account_id=bank_account_id if payment_type == 'bank_transfer' else None,
+                    bank_transfer_reference=bank_transfer_reference if payment_type == 'bank_transfer' else '',
+                    bank_transfer_date=bank_transfer_date if payment_type == 'bank_transfer' else None,
+                    bank_transfer_notes=bank_transfer_notes if payment_type == 'bank_transfer' else '',
                     check_number=check_number if payment_type == 'check' else '',
                     check_date=check_date if payment_type == 'check' else None,
                     check_due_date=check_due_date if payment_type == 'check' else None,
@@ -270,6 +281,38 @@ def receipt_add(request):
                         created_by=request.user
                     )
                 
+                # For bank transfer: add amount to bank account
+                if payment_type == 'bank_transfer' and bank_account_id:
+                    from banks.models import BankAccount, BankTransaction
+                    bank_account = get_object_or_404(BankAccount, id=bank_account_id)
+                    
+                    # Add bank transaction
+                    BankTransaction.objects.create(
+                        bank=bank_account,
+                        transaction_type='deposit',
+                        date=bank_transfer_date if bank_transfer_date else date,
+                        amount=amount,
+                        reference_number=bank_transfer_reference,
+                        description=f'{_("Receipt voucher")} {receipt.receipt_number} {_("from")} {customer.name} - {bank_transfer_notes}',
+                        created_by=request.user
+                    )
+                    
+                    # تسجيل النشاط
+                    try:
+                        from core.signals import log_user_activity
+                        log_user_activity(
+                            request,
+                            'create',
+                            receipt,
+                            _('تحويل بنكي لسند قبض رقم %(number)s - الحساب البنكي: %(account)s - المبلغ: %(amount)s') % {
+                                'number': receipt.receipt_number,
+                                'account': bank_account.name,
+                                'amount': amount
+                            }
+                        )
+                    except Exception:
+                        pass
+                
                 # For checks: update check status
                 if payment_type == 'check':
                     receipt.check_status = 'pending'
@@ -291,9 +334,14 @@ def receipt_add(request):
     ).order_by('name')
     cashboxes = Cashbox.objects.filter(is_active=True).order_by('name')
     
+    # Get bank accounts
+    from banks.models import BankAccount
+    bank_accounts = BankAccount.objects.filter(is_active=True).order_by('name')
+    
     context = {
         'customers': customers,
         'cashboxes': cashboxes,
+        'bank_accounts': bank_accounts,
         'page_title': _('Add Receipt Voucher'),
         'today': timezone.now().date(),
     }

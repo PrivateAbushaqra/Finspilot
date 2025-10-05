@@ -1607,21 +1607,9 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
             'settings.documentprintsettings',
             'settings.companysettings',
             'settings.currency',
-            'settings.superadminsettings',  # ⭐ إعدادات المدير العام
             
             # ════════════════════════════════════════════════════════
-            # المستوى 1: المستخدمين والصلاحيات (أول شيء!)
-            # ════════════════════════════════════════════════════════
-            'auth.group',  # ⭐ المجموعات قبل المستخدمين
-            'auth.permission',  # ⭐ الصلاحيات
-            'auth.user',  # ⭐ auth.user من Django
-            'users.user',  # ⭐ ⭐ users.user من نظامنا - حاسم جداً!
-            'users.usergroup',  # ⭐ مجموعات المستخدمين
-            'users.usergroupmembership',  # ⭐ عضويات المجموعات
-            'users.userprofile',  # ⭐ بعد المستخدمين
-            
-            # ════════════════════════════════════════════════════════
-            # المستوى 2: الجداول الأساسية المرجعية (بدون FK خارجية)
+            # المستوى 1: الجداول الأساسية المرجعية (بدون FK خارجية)
             # ════════════════════════════════════════════════════════
             'revenues_expenses.sector',
             'revenues_expenses.revenueexpensecategory',
@@ -1629,15 +1617,11 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
             'assets_liabilities.liabilitycategory',
             'assets_liabilities.assetcategory',
             'journal.account',  # ⭐ الحسابات قبل كل شيء يستخدمها
-            'accounts.costcenter',  # ⭐ مراكز التكلفة
             'hr.leavetype',
             'hr.position',
             'hr.department',
             'products.category',
-            'products.unit',  # ⭐ وحدات القياس قبل المنتجات
-            'customers.customercategory',  # ⭐ فئات العملاء قبل العملاء
             'customers.customersupplier',  # ⭐ العملاء/الموردين قبل الفواتير
-            'customers.customer',  # ⭐ العملاء المنفصلين
             
             # ════════════════════════════════════════════════════════
             # المستوى 2: البيانات الأساسية المشار إليها كثيراً
@@ -1710,7 +1694,6 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
             # ════════════════════════════════════════════════════════
             'receipts.receiptreversal',
             'core.systemnotification',
-            'core.auditlog',  # ⭐ سجل المراجعة - آخر شيء
         ]
 
         # تهيئة تتبع التقدم
@@ -1956,18 +1939,8 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                                                                 if related_obj:
                                                                     cleaned_data[key] = related_obj
                                                                 elif not field.null:
-                                                                    # 🔧 محاولة استخدام أول سجل متاح كحل بديل
-                                                                    first_available = field.related_model.objects.first()
-                                                                    if first_available:
-                                                                        cleaned_data[key] = first_available
-                                                                        logger.warning(f"⚠️ استخدام FK بديل لـ {key}: {first_available.pk} بدلاً من {value}")
-                                                                    else:
-                                                                        # إذا لم يوجد أي سجل، يجب التخطي
-                                                                        raise ValueError(f"FK_NOT_FOUND:{key}={value} (لا يوجد سجلات بديلة في {field.related_model.__name__})")
-                                                                else:
-                                                                    # الحقل nullable، يمكن تركه None
-                                                                    cleaned_data[key] = None
-                                                                    logger.debug(f"FK مفقود {key}={value}، تم تعيين None")
+                                                                    # إذا لم يوجد الكائن والحقل مطلوب، تخطي هذا السجل (بصمت)
+                                                                    raise ValueError(f"FK_NOT_FOUND:{key}={value}")
                                                             else:
                                                                 cleaned_data[key] = value
                                                         except ValueError as ve:
@@ -2065,26 +2038,10 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                                                 pass
                                         
                                         processed_records += 1
-                                        table_info['actual_records'] += 1
-                                        logger.debug(f"✅ استعادة سجل {table_info['display_name']}[{pk_value}]")
                                     except Exception as rec_err:
-                                        error_msg = str(rec_err)
-                                        # 🔧 تحسين: محاولة الاستعادة مع قيم افتراضية في حالة FK مفقودة
-                                        if error_msg.startswith("FK_NOT_FOUND:"):
-                                            logger.warning(f"⚠️ FK مفقود في {table_info['display_name']}: {error_msg}")
-                                            # يمكن هنا إضافة منطق لمحاولة استخدام FK افتراضي
-                                        elif error_msg.startswith("Required field"):
-                                            logger.warning(f"⚠️ حقل مطلوب مفقود في {table_info['display_name']}: {error_msg}")
-                                        else:
-                                            logger.warning(f"⚠️ فشل في استعادة سجل في {table_info['display_name']}: {rec_err}")
-                                        
-                                        # تسجيل الخطأ في تفاصيل الجدول
-                                        if not table_info.get('errors'):
-                                            table_info['errors'] = []
-                                        table_info['errors'].append({
-                                            'record': pk_value if 'pk_value' in locals() else 'unknown',
-                                            'error': error_msg
-                                        })
+                                        # تخطي بصمت إذا كان خطأ FK غير موجود
+                                        if not str(rec_err).startswith("FK_NOT_FOUND:"):
+                                            logger.warning(f"فشل في استعادة سجل في {table_info['display_name']}: {rec_err}")
                                         continue
                         
                         processed_tables += 1
@@ -2112,36 +2069,6 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                 sequences_reset = reset_all_sequences()
                 logger.info(f"تم إعادة تعيين {sequences_reset} sequence بعد الاستعادة")
                 
-                # 📊 إنشاء تقرير مفصل
-                total_errors = sum(1 for t in flat_tables if t.get('errors'))
-                total_restored = sum(t.get('actual_records', 0) for t in flat_tables)
-                total_skipped = total_records_expected - total_restored
-                
-                elapsed_time = time.time() - start_time
-                
-                # طباعة ملخص نهائي في السجل
-                logger.info("\n" + "="*80)
-                logger.info("📊 تقرير الاستعادة النهائي")
-                logger.info("="*80)
-                logger.info(f"⏱️  المدة الإجمالية: {elapsed_time:.2f} ثانية")
-                logger.info(f"📈 الإحصائيات:")
-                logger.info(f"  • إجمالي السجلات المتوقعة: {total_records_expected}")
-                logger.info(f"  • السجلات المستعادة: ✅ {total_restored}")
-                logger.info(f"  • السجلات المتخطاة: ⚠️ {total_skipped}")
-                logger.info(f"  • الجداول المعالجة: {processed_tables}/{len(flat_tables)}")
-                logger.info(f"  • عدد الجداول التي بها أخطاء: ❌ {total_errors}")
-                logger.info(f"  • Sequences المعاد تعيينها: {sequences_reset}")
-                
-                if total_errors > 0:
-                    logger.info(f"\n⚠️  الجداول التي بها مشاكل:")
-                    for table in flat_tables:
-                        if table.get('errors'):
-                            logger.info(f"  • {table['display_name']}: {len(table['errors'])} خطأ")
-                            for error in table['errors'][:3]:  # أول 3 أخطاء فقط
-                                logger.info(f"    - {error}")
-                
-                logger.info("="*80)
-                
                 # إكمال التقدم
                 progress_data.update({
                     'is_running': False,
@@ -2149,16 +2076,12 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                     'percentage': 100,
                     'current_table': 'تم إكمال الاستعادة بنجاح!',
                     'processed_tables': processed_tables,
-                    'processed_records': total_restored,
-                    'total_records': total_records_expected,
-                    'records_skipped': total_skipped,
-                    'tables_with_errors': total_errors,
-                    'elapsed_time': f'{elapsed_time:.2f} ثانية',
+                    'processed_records': processed_records,
                     'estimated_time': '0 ثانية متبقية'
                 })
                 set_restore_progress_data(progress_data)
                 
-                log_audit(user, 'create', f'اكتمل استعادة النسخة الاحتياطية: {total_restored}/{total_records_expected} سجل من {processed_tables} جدول ({total_skipped} متخطى)، تم إعادة تعيين {sequences_reset} sequence')
+                log_audit(user, 'create', f'اكتمل استعادة النسخة الاحتياطية: {processed_records} سجل من {processed_tables} جدول، تم إعادة تعيين {sequences_reset} sequence')
                 
         except Exception as e:
             logger.error(f"خطأ في استعادة البيانات: {str(e)}")
