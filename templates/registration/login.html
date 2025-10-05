@@ -87,7 +87,7 @@
                 <form method="post" action="/language-switch/" style="display: inline;">
                     {% csrf_token %}
                     <input type="hidden" name="language" value="ar">
-                    <input type="hidden" name="next" value="/ar/">
+                    <input type="hidden" name="next" value="/ar/auth/login/">
                     <button type="submit" class="btn btn-outline-light {% if LANGUAGE_CODE == 'ar' %}active{% endif %}">
                         <i class="fas fa-language me-1"></i>العربية
                     </button>
@@ -95,7 +95,7 @@
                 <form method="post" action="/language-switch/" style="display: inline;">
                     {% csrf_token %}
                     <input type="hidden" name="language" value="en">
-                    <input type="hidden" name="next" value="/en/">
+                    <input type="hidden" name="next" value="/en/auth/login/">
                     <button type="submit" class="btn btn-outline-light {% if LANGUAGE_CODE == 'en' %}active{% endif %}">
                         <i class="fas fa-language me-1"></i>English
                     </button>

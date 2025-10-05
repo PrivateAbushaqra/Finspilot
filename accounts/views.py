@@ -28,38 +28,37 @@ class LoginView(auth_views.LoginView):
         return context
     
     def form_valid(self, form):
-        # حفظ اللغة المختارة في session
-        language = self.request.POST.get('language', 'ar')
-        if language in ['ar', 'en']:
-            self.request.session['django_language'] = language
-            translation.activate(language)
-            # تحديث اللغة في الـ request للتأثير على reverse
-            self.request.LANGUAGE_CODE = language
-            # حفظ اللغة لاستخدامها في get_success_url
-            self.selected_language = language
-        
         response = super().form_valid(form)
         
+        # قراءة اللغة الحالية من session (تم تعيينها بواسطة language_switch_view)
+        language = self.request.session.get('_language', 'ar')
+        
         # تسجيل في سجل الأنشطة بعد تسجيل الدخول
-        if language in ['ar', 'en']:
-            from core.models import AuditLog
-            AuditLog.objects.create(
-                user=self.request.user,
-                action_type='update',
-                content_type='User Language',
-                description=f'تم تغيير اللغة إلى {language}',
-                ip_address=self.request.META.get('REMOTE_ADDR')
-            )
+        from core.models import AuditLog
+        AuditLog.objects.create(
+            user=self.request.user,
+            action_type='login',
+            content_type='User',
+            description=f'تسجيل الدخول - اللغة: {language}',
+            ip_address=self.request.META.get('REMOTE_ADDR')
+        )
         
         return response
     
     def get_success_url(self):
-        # توجيه المستخدم بناءً على اللغة المختارة
-        language = getattr(self, 'selected_language', 'ar')
-        if language == 'ar':
-            return '/ar/'
-        else:
+        # توجيه المستخدم بناءً على اللغة المحفوظة في session
+        language = self.request.session.get('_language', 'ar')
+        
+        # التحقق من وجود next parameter
+        next_url = self.request.GET.get('next') or self.request.POST.get('next')
+        if next_url:
+            return next_url
+        
+        # إعادة التوجيه حسب اللغة
+        if language == 'en':
             return '/en/'
+        else:
+            return '/ar/'
 
 
 @login_required

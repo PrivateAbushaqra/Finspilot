@@ -1224,19 +1224,18 @@ def database_info_view(request):
 def language_switch_view(request):
     """تبديل اللغة وإعادة التوجيه حسب اللغة المختارة"""
     from django.utils.translation import activate
-    from django.utils import translation
     from django.shortcuts import redirect
 
     if request.method == 'POST':
         language = request.POST.get('language', 'ar')
-        next_url = request.POST.get('next', '/')
+        next_url = request.POST.get('next', None)
     else:
         language = request.GET.get('language', 'ar')
-        next_url = request.GET.get('next', '/')
+        next_url = request.GET.get('next', None)
 
     # تفعيل اللغة الجديدة
     activate(language)
-    request.session[translation.LANGUAGE_SESSION_KEY] = language
+    request.session['_language'] = language
 
     # تسجيل النشاط في سجل المراجعة فقط إذا كان المستخدم مسجل دخول
     if request.user.is_authenticated:
@@ -1248,10 +1247,10 @@ def language_switch_view(request):
             f'تبديل اللغة إلى: {language}'
         )
 
-    # إعادة التوجيه حسب اللغة - استخدام redirect مع URL كامل
-    if language == 'ar':
-        return redirect('http://127.0.0.1:8000/ar/')
+    # إعادة التوجيه - استخدام next_url إذا كان موجوداً، وإلا حسب اللغة
+    if next_url:
+        return redirect(next_url)
     elif language == 'en':
-        return redirect('http://127.0.0.1:8000/en/')
+        return redirect('/en/')
     else:
-        return redirect(f'http://127.0.0.1:8000{next_url}')
+        return redirect('/ar/')

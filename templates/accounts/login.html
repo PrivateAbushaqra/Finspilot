@@ -339,9 +339,36 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Function to change language
 function changeLanguage(lang) {
-    const currentUrl = window.location.href;
-    const newUrl = currentUrl.replace(/\/(ar|en)\//, '/' + lang + '/');
-    window.location.href = newUrl;
+    // إنشاء form لإرسال طلب تغيير اللغة
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/language-switch/';
+    
+    // إضافة CSRF token
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrfmiddlewaretoken';
+    csrfInput.value = csrfToken;
+    form.appendChild(csrfInput);
+    
+    // إضافة اللغة المختارة
+    const langInput = document.createElement('input');
+    langInput.type = 'hidden';
+    langInput.name = 'language';
+    langInput.value = lang;
+    form.appendChild(langInput);
+    
+    // إضافة next URL لصفحة تسجيل الدخول الصحيحة
+    const nextInput = document.createElement('input');
+    nextInput.type = 'hidden';
+    nextInput.name = 'next';
+    nextInput.value = '/' + lang + '/auth/login/';
+    form.appendChild(nextInput);
+    
+    // إضافة الفورم للصفحة وإرساله
+    document.body.appendChild(form);
+    form.submit();
 }
 </script>
 
