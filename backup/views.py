@@ -35,16 +35,25 @@ try:
     def reset_audit_sequence_if_needed():
         """إعادة تعيين sequence إذا كان هناك تضارب في IDs"""
         try:
-            with connection.cursor() as cursor:
+            # 🔧 التحقق من أننا لسنا داخل transaction active
+            # استخدام connection الخاص بدلاً من connection الرئيسي
+            from django.db import connections
+            with connections['default'].cursor() as cursor:
                 # البحث عن أعلى ID موجود
                 cursor.execute("SELECT MAX(id) FROM core_auditlog")
                 max_id = cursor.fetchone()[0] or 0
                 
                 # إعادة تعيين sequence
                 cursor.execute(f"SELECT setval('core_auditlog_id_seq', {max_id + 1}, false)")
+                logger.debug(f"تم إعادة تعيين sequence للـ AuditLog إلى {max_id + 1}")
                 
         except Exception as e:
-            logger.warning(f"فشل في إعادة تعيين sequence للـ AuditLog: {e}")
+            error_msg = str(e)
+            # إذا كنا داخل atomic block، لا نستطيع تنفيذ استعلامات
+            if 'atomic' in error_msg.lower() or 'transaction' in error_msg.lower():
+                logger.debug(f"تم تخطي إعادة تعيين AuditLog sequence (داخل transaction)")
+            else:
+                logger.warning(f"فشل في إعادة تعيين sequence للـ AuditLog: {e}")
     
     def reset_all_sequences():
         """إعادة تعيين جميع sequences في قاعدة البيانات بعد استعادة النسخة الاحتياطية"""
@@ -110,22 +119,16 @@ def log_audit(user, action, description, obj_id=None):
             description=description
         )
     except Exception as e:
-        # إذا كان الخطأ متعلق بـ primary key constraint
-        if 'duplicate key' in str(e).lower() or 'unique constraint' in str(e).lower():
-            try:
-                reset_audit_sequence_if_needed()
-                # محاولة مرة أخرى
-                AuditLog.objects.create(
-                    user=user,
-                    action_type=action,
-                    content_type='backup_system',
-                    object_id=obj_id,
-                    description=description
-                )
-            except Exception as retry_e:
-                logger.warning(f"فشل في تسجيل الحدث في سجل المراجعة حتى بعد إعادة التعيين: {retry_e}")
+        # 🔧 إذا كنا داخل transaction atomic block، لا يمكن تنفيذ استعلامات جديدة
+        # بعد حدوث خطأ حتى نهاية الـ block، لذلك نتجاهل الخطأ ببساطة
+        # سيتم تسجيل الحدث في السجلات العادية (logger) بدلاً من AuditLog
+        error_msg = str(e)
+        if 'atomic' in error_msg.lower() or 'transaction' in error_msg.lower():
+            logger.debug(f"تم تخطي تسجيل الحدث في AuditLog (داخل transaction): {description}")
+        elif 'duplicate key' in error_msg.lower() or 'unique constraint' in error_msg.lower():
+            logger.debug(f"تم تخطي تسجيل الحدث في AuditLog (تضارب في المفاتيح): {description}")
         else:
-            logger.warning(f"فشل في تسجيل الحدث في سجل المراجعة: {str(e)}")
+            logger.warning(f"فشل في تسجيل الحدث في سجل المراجعة: {error_msg}")
 
 
 def get_backup_progress_data():

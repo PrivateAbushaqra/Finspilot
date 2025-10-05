@@ -8,6 +8,11 @@ from django.db import transaction
 def create_journal_entry_for_purchase_invoice(sender, instance, created, **kwargs):
     """إنشاء القيد المحاسبي تلقائياً عند إنشاء أو تحديث فاتورة مشتريات"""
     try:
+        # 🔧 تعطيل السيجنال أثناء عملية استعادة النسخة الاحتياطية
+        from backup.restore_context import is_restoring
+        if is_restoring():
+            return
+        
         from journal.models import JournalEntry
         from journal.services import JournalService
         
@@ -28,6 +33,14 @@ def create_journal_entry_for_purchase_invoice(sender, instance, created, **kwarg
 @receiver(post_save, sender=PurchaseInvoice)
 def create_supplier_account_transaction(sender, instance, created, **kwargs):
     """إنشاء معاملة حساب المورد تلقائياً"""
+    # 🔧 تعطيل السيجنال أثناء عملية استعادة النسخة الاحتياطية
+    try:
+        from backup.restore_context import is_restoring
+        if is_restoring():
+            return
+    except ImportError:
+        pass
+    
     if instance.payment_type == 'credit' and instance.items.count() > 0 and instance.total_amount > 0:
         try:
             from accounts.models import AccountTransaction
@@ -63,6 +76,11 @@ def create_supplier_account_transaction(sender, instance, created, **kwargs):
 def update_inventory_on_purchase_invoice(sender, instance, created, **kwargs):
     """تحديث المخزون عند إنشاء أو تعديل فاتورة شراء"""
     try:
+        # 🔧 تعطيل السيجنال أثناء عملية استعادة النسخة الاحتياطية
+        from backup.restore_context import is_restoring
+        if is_restoring():
+            return
+        
         from inventory.models import InventoryMovement
         from core.models import AuditLog
         
@@ -140,6 +158,11 @@ def update_inventory_on_purchase_invoice(sender, instance, created, **kwargs):
 def create_journal_entry_for_purchase_return(sender, instance, created, **kwargs):
     """إنشاء القيد المحاسبي تلقائياً عند إنشاء أو تحديث مردود مشتريات"""
     try:
+        # 🔧 تعطيل السيجنال أثناء عملية استعادة النسخة الاحتياطية
+        from backup.restore_context import is_restoring
+        if is_restoring():
+            return
+        
         from journal.models import JournalEntry
         from journal.services import JournalService
         
@@ -160,6 +183,14 @@ def create_journal_entry_for_purchase_return(sender, instance, created, **kwargs
 @receiver(post_save, sender=PurchaseReturn)
 def create_supplier_account_transaction_for_return(sender, instance, created, **kwargs):
     """إنشاء معاملة حساب المورد للمردود تلقائياً"""
+    # 🔧 تعطيل السيجنال أثناء عملية استعادة النسخة الاحتياطية
+    try:
+        from backup.restore_context import is_restoring
+        if is_restoring():
+            return
+    except ImportError:
+        pass
+    
     if instance.items.count() > 0 and instance.total_amount > 0:
         try:
             from accounts.models import AccountTransaction
@@ -195,6 +226,11 @@ def create_supplier_account_transaction_for_return(sender, instance, created, **
 def update_inventory_on_purchase_return(sender, instance, created, **kwargs):
     """تحديث المخزون عند إنشاء أو تعديل مردود مشتريات"""
     try:
+        # 🔧 تعطيل السيجنال أثناء عملية استعادة النسخة الاحتياطية
+        from backup.restore_context import is_restoring
+        if is_restoring():
+            return
+        
         from inventory.models import InventoryMovement
         
         warehouse = instance.original_invoice.warehouse
@@ -272,6 +308,11 @@ def update_inventory_on_purchase_return(sender, instance, created, **kwargs):
 def update_inventory_on_purchase_invoice_item(sender, instance, created, **kwargs):
     """تحديث المخزون عند إضافة/تعديل عنصر فاتورة شراء"""
     try:
+        # 🔧 تعطيل السيجنال أثناء عملية استعادة النسخة الاحتياطية
+        from backup.restore_context import is_restoring
+        if is_restoring():
+            return
+        
         from inventory.models import InventoryMovement
         
         invoice = instance.invoice
@@ -320,6 +361,11 @@ def update_inventory_on_purchase_invoice_item(sender, instance, created, **kwarg
 def update_inventory_on_purchase_return_item(sender, instance, created, **kwargs):
     """تحديث المخزون عند إضافة/تعديل عنصر مردود المشتريات"""
     try:
+        # 🔧 تعطيل السيجنال أثناء عملية استعادة النسخة الاحتياطية
+        from backup.restore_context import is_restoring
+        if is_restoring():
+            return
+        
         from inventory.models import InventoryMovement
         
         return_invoice = instance.return_invoice
@@ -355,67 +401,4 @@ def update_inventory_on_purchase_return_item(sender, instance, created, **kwargs
         
     except Exception as e:
         print(f"خطأ في تحديث المخزون لمردود المشتريات {return_invoice.return_number}: {e}")
-        pass
-
-
-@receiver(post_save, sender=PurchaseReturn)
-def update_inventory_on_purchase_return(sender, instance, created, **kwargs):
-    """تحديث المخزون عند إنشاء أو تعديل مردود مشتريات"""
-    try:
-        from inventory.models import InventoryMovement
-        
-        warehouse = instance.original_invoice.warehouse
-        if not warehouse:
-            from inventory.models import Warehouse
-            warehouse = Warehouse.get_default_warehouse()
-            if warehouse:
-                instance.original_invoice.warehouse = warehouse
-                instance.original_invoice.save(update_fields=['warehouse'])
-        
-        if not warehouse:
-            print(f"لا يوجد مستودع لمردود المشتريات {instance.return_number}")
-            return
-        
-        # للمردودات الجديدة، إنشاء حركات مخزون صادرة
-        if created:
-            for item in instance.items.all():
-                if item.product.product_type == 'physical':
-                    InventoryMovement.objects.create(
-                        date=instance.date,
-                        product=item.product,
-                        warehouse=warehouse,
-                        movement_type='out',
-                        reference_type='purchase_return',
-                        reference_id=instance.id,
-                        quantity=item.returned_quantity,
-                        unit_cost=item.unit_price,
-                        notes=f'مردود مشتريات - رقم {instance.return_number}',
-                        created_by=instance.created_by
-                    )
-        else:
-            # للتعديلات، حذف الحركات القديمة وإنشاء جديدة
-            InventoryMovement.objects.filter(
-                reference_type='purchase_return',
-                reference_id=instance.id
-            ).delete()
-            
-            for item in instance.items.all():
-                if item.product.product_type == 'physical':
-                    InventoryMovement.objects.create(
-                        date=instance.date,
-                        product=item.product,
-                        warehouse=warehouse,
-                        movement_type='out',
-                        reference_type='purchase_return',
-                        reference_id=instance.id,
-                        quantity=item.returned_quantity,
-                        unit_cost=item.unit_price,
-                        notes=f'مردود مشتريات - رقم {instance.return_number}',
-                        created_by=instance.created_by
-                    )
-        
-        print(f"تم تحديث المخزون لمردود المشتريات {instance.return_number}")
-        
-    except Exception as e:
-        print(f"خطأ في تحديث المخزون لمردود المشتريات {instance.return_number}: {e}")
         pass
