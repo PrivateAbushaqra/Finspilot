@@ -114,15 +114,156 @@
         color: #6c757d;
     }
     
+    /* تنسيقات الطباعة */
     @media print {
-        .btn, .filter-section {
+        /* إخفاء العناصر غير المطلوبة */
+        .btn,
+        .btn-toolbar,
+        .btn-group,
+        .filter-section,
+        .sidebar,
+        .navbar,
+        footer,
+        .no-print {
             display: none !important;
         }
         
+        /* تحسين عرض الحاوية الرئيسية */
         .profit-loss-container {
-            box-shadow: none;
-            border: 1px solid #ddd;
+            box-shadow: none !important;
+            border: 1px solid #dee2e6 !important;
+            padding: 1rem !important;
+            page-break-inside: avoid;
         }
+        
+        /* تحسين عرض رأس التقرير */
+        .report-header {
+            border-bottom: 2px solid #000 !important;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        h1, h2 {
+            font-size: 18px !important;
+            margin-bottom: 0.5rem !important;
+        }
+        
+        /* تحسين عرض بطاقة الملخص */
+        .summary-card {
+            background: #f8f9fa !important;
+            color: #000 !important;
+            border: 1px solid #dee2e6 !important;
+            box-shadow: none !important;
+            page-break-inside: avoid;
+            margin-bottom: 1rem;
+            padding: 1rem;
+        }
+        
+        .summary-item h5 {
+            font-size: 12px !important;
+            color: #000 !important;
+            opacity: 1 !important;
+        }
+        
+        .summary-item h3 {
+            font-size: 16px !important;
+            color: #000 !important;
+        }
+        
+        .summary-item small {
+            font-size: 10px !important;
+            color: #666 !important;
+            opacity: 1 !important;
+        }
+        
+        /* تحسين عرض الجدول */
+        .profit-loss-table {
+            font-size: 11px !important;
+            width: 100% !important;
+        }
+        
+        .profit-loss-table th {
+            background-color: #f8f9fa !important;
+            color: #000 !important;
+            border: 1px solid #000 !important;
+            font-weight: bold;
+            padding: 8px !important;
+        }
+        
+        .profit-loss-table td {
+            border: 1px solid #000 !important;
+            padding: 6px 10px !important;
+            color: #000 !important;
+        }
+        
+        .profit-loss-table .category-header {
+            background-color: #e3e3e3 !important;
+            color: #000 !important;
+            font-weight: bold;
+        }
+        
+        .profit-loss-table .total-row {
+            background-color: #f0f0f0 !important;
+            color: #000 !important;
+            font-weight: bold;
+            border-top: 2px solid #000 !important;
+        }
+        
+        .profit-loss-table .final-total {
+            background-color: #d4edda !important;
+            color: #000 !important;
+            font-weight: bold;
+            border: 2px solid #000 !important;
+        }
+        
+        .profit-loss-table .loss-total {
+            background-color: #f8d7da !important;
+            color: #000 !important;
+        }
+        
+        /* تحسين عرض الألوان */
+        .positive-amount,
+        .negative-amount,
+        .neutral-amount {
+            color: #000 !important;
+            font-weight: bold;
+        }
+        
+        /* منع تقسيم الصفحات داخل الصفوف */
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+        
+        /* منع تقسيم الأقسام */
+        .category-header {
+            page-break-after: avoid;
+        }
+        
+        /* إضافة هوامش للصفحة */
+        @page {
+            margin: 1.5cm;
+        }
+        
+        /* رأس الطباعة */
+        .print-header {
+            display: block !important;
+            text-align: center;
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            border: 1px solid #dee2e6;
+            background: #f8f9fa;
+        }
+        
+        /* الحاوية الرئيسية */
+        .container-fluid {
+            padding: 0 !important;
+        }
+    }
+    
+    /* إخفاء رأس الطباعة في الشاشة */
+    .print-header {
+        display: none;
     }
 </style>
 {% endblock %}
@@ -139,16 +280,23 @@
             </h1>
             <div class="btn-toolbar mb-2 mb-md-0">
                 <div class="btn-group me-2">
-                    <button type="button" class="btn btn-outline-primary" onclick="window.print()">
+                    <button type="button" class="btn btn-outline-primary no-print" onclick="window.print()">
                         <i class="fas fa-print me-1"></i>
                         {% trans "Print" %}
                     </button>
-                    <button type="button" class="btn btn-outline-success" onclick="exportToExcel()">
+                    <button type="button" class="btn btn-outline-success no-print" onclick="exportToExcel()">
                         <i class="fas fa-file-excel me-1"></i>
                         {% trans "Excel" %}
                     </button>
                 </div>
             </div>
+        </div>
+
+        <!-- معلومات الطباعة (تظهر فقط عند الطباعة) -->
+        <div class="print-header">
+            <h3 style="margin: 0 0 0.5rem 0;">تقرير الأرباح والخسائر</h3>
+            <p style="margin: 0;">الفترة: <strong>من {{ start_date|default:"بداية السنة" }} إلى {{ end_date|default:"اليوم" }}</strong></p>
+            <p style="margin: 0.25rem 0 0 0;">تاريخ الطباعة: <strong>{% now "Y-m-d H:i" %}</strong></p>
         </div>
 
         <!-- Summary Section -->

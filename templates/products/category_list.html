@@ -59,8 +59,32 @@
         font-weight: 600;
     }
     
+    /* Print header styling */
+    .print-header {
+        display: none;
+    }
+    
     /* CSS for Print - Table format */
     @media print {
+        .print-header {
+            display: block !important;
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #000;
+        }
+        
+        .print-header h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .print-header p {
+            margin: 5px 0;
+            font-size: 12px;
+        }
+        
         .container-fluid {
             max-width: none !important;
             width: 100% !important;
@@ -69,7 +93,7 @@
         /* Hide unnecessary elements for print */
         .breadcrumb, .btn-add, .search-section, .no-print,
         .btn-group, .alert, .pagination, .categories-header .btn,
-        .filter-controls {
+        .filter-controls, .card.mb-4 {
             display: none !important;
         }
         
@@ -136,6 +160,12 @@
     <div class="row">
         <div class="col-12">
             <!-- Page Header -->
+            <!-- Print Header (hidden on screen) -->
+            <div class="print-header">
+                <h3>{% trans "قائمة فئات المنتجات" %}</h3>
+                <p>{% trans "تاريخ الطباعة" %}: {% now "Y-m-d H:i" %}</p>
+            </div>
+            
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h1 class="h3 mb-0 text-gray-800">
@@ -144,10 +174,14 @@
                     </h1>
                     <p class="mb-0 text-muted">{% trans "Manage and organize product categories" %}</p>
                 </div>
-                <div>
-                    <button type="button" onclick="printPage()" class="btn btn-warning btn-sm me-2">
-                        <i class="mdi mdi-printer me-1"></i>
-                        {% trans "Print Complete Report" %}
+                <div class="no-print">
+                    <button onclick="window.print()" class="btn btn-primary me-2">
+                        <i class="fas fa-print me-1"></i>
+                        {% trans "طباعة" %}
+                    </button>
+                    <button onclick="exportToExcel()" class="btn btn-success me-2">
+                        <i class="fas fa-file-excel me-1"></i>
+                        {% trans "تصدير Excel" %}
                     </button>
                     <a href="{% url 'products:category_add' %}" class="btn btn-add text-white">
                         <i class="fas fa-plus me-2"></i>
@@ -275,13 +309,25 @@
                 
                 <div class="table-responsive" id="categoriesList">
                     {% if categories %}
-                        <table class="table table-striped table-hover">
+                        <table class="table table-striped table-hover" id="categoriesTable">
                             <thead class="table-dark">
                                 <tr>
-                                    <th style="width: 10%;">{% trans "Sequence Number" %}</th>
-                                    <th style="width: 20%;">{% trans "Category Name" %}</th>
-                                    <th style="width: 15%;">{% trans "Name in English" %}</th>
-                                    <th style="width: 10%;">{% trans "Classification Code" %}</th>
+                                    <th class="sortable" data-column="0" style="width: 10%; cursor: pointer;">
+                                        {% trans "Sequence Number" %}
+                                        <i class="fas fa-sort ms-1"></i>
+                                    </th>
+                                    <th class="sortable" data-column="1" style="width: 20%; cursor: pointer;">
+                                        {% trans "Category Name" %}
+                                        <i class="fas fa-sort ms-1"></i>
+                                    </th>
+                                    <th class="sortable" data-column="2" style="width: 15%; cursor: pointer;">
+                                        {% trans "Name in English" %}
+                                        <i class="fas fa-sort ms-1"></i>
+                                    </th>
+                                    <th class="sortable" data-column="3" style="width: 10%; cursor: pointer;">
+                                        {% trans "Classification Code" %}
+                                        <i class="fas fa-sort ms-1"></i>
+                                    </th>
                                     <th style="width: 25%;">{% trans "Description" %}</th>
                                     <th style="width: 10%;" class="text-center">{% trans "Status" %}</th>
                                     <th style="width: 10%;" class="text-center">{% trans "Actions" %}</th>
@@ -365,7 +411,69 @@
 
 {% block extra_js %}
 <script>
+// Table sorting functionality
+function initTableSorting() {
+    const table = document.getElementById('categoriesTable');
+    if (!table) return;
+    
+    const headers = table.querySelectorAll('th.sortable');
+    let sortDirection = {};
+    
+    headers.forEach(header => {
+        const column = header.dataset.column;
+        sortDirection[column] = 'asc';
+        
+        header.addEventListener('click', function() {
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr.category-row'));
+            const columnIndex = parseInt(this.dataset.column);
+            const isNumeric = columnIndex === 0; // عمود الرقم التسلسلي فقط رقمي
+            
+            // تحديث اتجاه الترتيب
+            const currentDirection = sortDirection[column];
+            const newDirection = currentDirection === 'asc' ? 'desc' : 'asc';
+            sortDirection[column] = newDirection;
+            
+            // إزالة أيقونات الترتيب من جميع العناوين
+            headers.forEach(h => {
+                const icon = h.querySelector('i');
+                if (icon) icon.className = 'fas fa-sort ms-1';
+            });
+            
+            // تحديث أيقونة العمود الحالي
+            const icon = this.querySelector('i');
+            if (icon) {
+                icon.className = newDirection === 'asc' ? 'fas fa-sort-up ms-1' : 'fas fa-sort-down ms-1';
+            }
+            
+            // ترتيب الصفوف
+            rows.sort((a, b) => {
+                let aValue = a.cells[columnIndex].textContent.trim();
+                let bValue = b.cells[columnIndex].textContent.trim();
+                
+                if (isNumeric) {
+                    aValue = parseFloat(aValue.replace(/,/g, '')) || 0;
+                    bValue = parseFloat(bValue.replace(/,/g, '')) || 0;
+                    return newDirection === 'asc' ? aValue - bValue : bValue - aValue;
+                } else {
+                    if (newDirection === 'asc') {
+                        return aValue.localeCompare(bValue, 'ar');
+                    } else {
+                        return bValue.localeCompare(aValue, 'ar');
+                    }
+                }
+            });
+            
+            // إعادة إضافة الصفوف المرتبة
+            rows.forEach(row => tbody.appendChild(row));
+        });
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize sorting
+    initTableSorting();
+    
     // Search functionality
     const searchInput = document.getElementById('searchCategories');
     const filterStatus = document.getElementById('filterStatus');
@@ -387,6 +495,63 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function printPage() {
     window.print();
+}
+
+// Excel export function
+function exportToExcel() {
+    const table = document.getElementById('categoriesTable');
+    if (!table) {
+        alert('{% trans "No data to export" %}');
+        return;
+    }
+    
+    let html = '<html xmlns:x="urn:schemas-microsoft-com:office:excel">';
+    html += '<head><meta charset="UTF-8"><style>';
+    html += 'table { border-collapse: collapse; width: 100%; }';
+    html += 'th, td { border: 1px solid #000; padding: 8px; text-align: right; }';
+    html += 'th { background-color: #4472C4; color: white; font-weight: bold; }';
+    html += '</style></head><body>';
+    html += '<h2>{% trans "قائمة فئات المنتجات" %}</h2>';
+    html += '<p>{% trans "تاريخ التصدير" %}: ' + new Date().toLocaleString('ar-EG') + '</p>';
+    
+    // Get table headers
+    const headers = table.querySelectorAll('thead th');
+    html += '<table><thead><tr>';
+    headers.forEach((header, index) => {
+        // Skip Actions column (last column)
+        if (index < headers.length - 1) {
+            html += '<th>' + header.textContent.replace(/\s+/g, ' ').trim() + '</th>';
+        }
+    });
+    html += '</tr></thead><tbody>';
+    
+    // Get table rows
+    const rows = table.querySelectorAll('tbody tr.category-row');
+    rows.forEach(row => {
+        html += '<tr>';
+        const cells = row.querySelectorAll('td');
+        cells.forEach((cell, index) => {
+            // Skip Actions column (last column)
+            if (index < cells.length - 1) {
+                let cellText = cell.textContent.replace(/\s+/g, ' ').trim();
+                html += '<td>' + cellText + '</td>';
+            }
+        });
+        html += '</tr>';
+    });
+    
+    html += '</tbody></table></body></html>';
+    
+    // Create download
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'categories_' + new Date().getTime() + '.xls';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
 }
 </script>
 {% endblock %}

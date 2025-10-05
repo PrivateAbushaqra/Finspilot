@@ -4,8 +4,124 @@
 
 {% block title %}{% trans "المؤشرات المالية" %} - {{ block.super }}{% endblock %}
 
+{% block extra_css %}
+<style>
+@media print {
+    .filter-card, .btn, .no-print, .sidebar, .navbar, .card .card-header .btn {
+        display: none !important;
+    }
+    
+    .print-header {
+        display: block !important;
+        text-align: center;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #000;
+    }
+    
+    .print-header h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: bold;
+    }
+    
+    .print-header p {
+        margin: 5px 0;
+        font-size: 12px;
+    }
+    
+    body {
+        background: white !important;
+    }
+    
+    .card {
+        border: 1px solid #000 !important;
+        box-shadow: none !important;
+        page-break-inside: avoid;
+    }
+    
+    .card-header {
+        background-color: #e3e3e3 !important;
+        color: #000 !important;
+        border: 1px solid #000 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    
+    .card-body {
+        padding: 10px !important;
+    }
+    
+    .ratio-item {
+        padding: 10px !important;
+        border: 1px solid #000 !important;
+        margin-bottom: 10px !important;
+        background-color: #f8f9fa !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    
+    .ratio-item h6 {
+        font-size: 12px !important;
+        margin-bottom: 5px !important;
+    }
+    
+    .ratio-item .h4 {
+        font-size: 16px !important;
+        margin: 5px 0 !important;
+    }
+    
+    .ratio-item small {
+        font-size: 10px !important;
+    }
+    
+    .badge {
+        border: 1px solid #000 !important;
+        padding: 3px 6px !important;
+        font-size: 10px !important;
+    }
+    
+    @page {
+        margin: 1.5cm;
+    }
+    
+    .container-fluid {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+    }
+    
+    .row {
+        display: block !important;
+    }
+    
+    .col-md-6 {
+        width: 48% !important;
+        float: left !important;
+        margin-right: 2% !important;
+        page-break-inside: avoid;
+    }
+    
+    .col-md-6:last-child {
+        margin-right: 0 !important;
+    }
+}
+
+.print-header {
+    display: none;
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
+    <!-- Print Header (hidden on screen) -->
+    <div class="print-header">
+        <h3>{% trans "المؤشرات المالية" %}</h3>
+        <p>{% trans "كما في تاريخ" %}: {{ as_of_date|date:"Y-m-d" }}</p>
+        <p>{% trans "تاريخ الطباعة" %}: {% now "Y-m-d H:i" %}</p>
+    </div>
+    
     <!-- Page Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -15,10 +131,20 @@
             </h2>
             <p class="text-muted mb-0">{% trans "As of Date" %}: {{ as_of_date|date:"Y-m-d" }}</p>
         </div>
+        <div class="no-print">
+            <button onclick="window.print()" class="btn btn-primary me-2">
+                <i class="fas fa-print me-1"></i>
+                {% trans "طباعة" %}
+            </button>
+            <a href="?{{ request.GET.urlencode }}&export=excel" class="btn btn-success">
+                <i class="fas fa-file-excel me-1"></i>
+                {% trans "تصدير Excel" %}
+            </a>
+        </div>
     </div>
 
     <!-- Filters -->
-    <div class="card mb-4">
+    <div class="card mb-4 filter-card">
         <div class="card-body">
             <form method="get" class="row g-3">
                 <div class="col-md-4">

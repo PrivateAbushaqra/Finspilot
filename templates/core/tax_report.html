@@ -110,6 +110,158 @@
         padding: 1rem;
         margin-bottom: 2rem;
     }
+    
+    /* تنسيقات الطباعة */
+    @media print {
+        /* إخفاء العناصر غير المطلوبة */
+        .filter-section,
+        .btn,
+        .btn-toolbar,
+        .btn-group,
+        .sidebar,
+        .navbar,
+        footer,
+        .no-print {
+            display: none !important;
+        }
+        
+        /* تحسين عرض الحاوية الرئيسية */
+        .tax-report-container {
+            box-shadow: none !important;
+            border: 1px solid #dee2e6 !important;
+            padding: 1rem !important;
+            page-break-inside: avoid;
+        }
+        
+        /* تحسين عرض رأس التقرير */
+        .report-header {
+            border-bottom: 2px solid #000 !important;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        h1, h2 {
+            font-size: 18px !important;
+            margin-bottom: 0.5rem !important;
+        }
+        
+        /* تحسين عرض بطاقة الملخص */
+        .summary-card {
+            background: #f8f9fa !important;
+            color: #000 !important;
+            border: 1px solid #dee2e6 !important;
+            box-shadow: none !important;
+            page-break-inside: avoid;
+            margin-bottom: 1rem;
+            padding: 1rem;
+        }
+        
+        .summary-item h5 {
+            font-size: 12px !important;
+            color: #000 !important;
+            opacity: 1 !important;
+        }
+        
+        .summary-item h3 {
+            font-size: 16px !important;
+            color: #000 !important;
+        }
+        
+        .summary-item small {
+            font-size: 10px !important;
+            color: #666 !important;
+            opacity: 1 !important;
+        }
+        
+        /* تحسين عرض الجدول */
+        .tax-table {
+            font-size: 10px !important;
+            width: 100% !important;
+        }
+        
+        .tax-table th {
+            background-color: #f8f9fa !important;
+            color: #000 !important;
+            border: 1px solid #000 !important;
+            font-weight: bold;
+            padding: 6px 4px !important;
+        }
+        
+        .tax-table td {
+            border: 1px solid #000 !important;
+            padding: 4px !important;
+            color: #000 !important;
+        }
+        
+        .tax-table tbody tr:nth-of-type(even) {
+            background-color: #f8f9fa !important;
+        }
+        
+        .tax-table tfoot td {
+            border: 2px solid #000 !important;
+            background-color: #e9ecef !important;
+            color: #000 !important;
+            font-weight: bold;
+        }
+        
+        /* تحسين عرض الألوان */
+        .positive-tax {
+            color: #000 !important;
+            font-weight: bold;
+        }
+        
+        .negative-tax {
+            color: #000 !important;
+            font-weight: bold;
+        }
+        
+        /* تحسين عرض الشارات */
+        .document-type-badge {
+            border: 1px solid #000 !important;
+            background: #fff !important;
+            color: #000 !important;
+        }
+        
+        .badge-sales,
+        .badge-purchase,
+        .badge-sales-return,
+        .badge-purchase-return {
+            background: #fff !important;
+            color: #000 !important;
+            border: 1px solid #000 !important;
+        }
+        
+        /* منع تقسيم الصفحات داخل الصفوف */
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+        
+        /* إضافة هوامش للصفحة */
+        @page {
+            margin: 1.5cm;
+        }
+        
+        /* رأس الطباعة */
+        .print-header {
+            display: block !important;
+            text-align: center;
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            border: 1px solid #dee2e6;
+            background: #f8f9fa;
+        }
+        
+        /* الحاوية الرئيسية */
+        .container-fluid {
+            padding: 0 !important;
+        }
+    }
+    
+    /* إخفاء رأس الطباعة في الشاشة */
+    .print-header {
+        display: none;
+    }
 </style>
 {% endblock %}
 
@@ -121,16 +273,23 @@
     </h1>
     <div class="btn-toolbar mb-2 mb-md-0">
         <div class="btn-group me-2">
-            <button type="button" class="btn btn-outline-primary" onclick="window.print()">
+            <button type="button" class="btn btn-outline-primary no-print" onclick="window.print()">
                 <i class="fas fa-print me-1"></i>
                 {% trans "Print" %}
             </button>
-            <button type="button" class="btn btn-outline-success" onclick="exportToExcel()">
+            <button type="button" class="btn btn-outline-success no-print" onclick="exportToExcel()">
                 <i class="fas fa-file-excel me-1"></i>
                 {% trans "Excel" %}
             </button>
         </div>
     </div>
+</div>
+
+<!-- معلومات الطباعة (تظهر فقط عند الطباعة) -->
+<div class="print-header">
+    <h3 style="margin: 0 0 0.5rem 0;">تقرير الضرائب</h3>
+    <p style="margin: 0;">الفترة: <strong>من {{ start_date|default:"بداية السنة" }} إلى {{ end_date|default:"اليوم" }}</strong></p>
+    <p style="margin: 0.25rem 0 0 0;">تاريخ الطباعة: <strong>{% now "Y-m-d H:i" %}</strong></p>
 </div>
 
 <!-- Summary Section -->

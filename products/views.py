@@ -223,14 +223,15 @@ class ProductListView(LoginRequiredMixin, ListView):
     model = Product
     template_name = 'products/product_list.html'
     context_object_name = 'products'
-    paginate_by = 20
+    paginate_by = 30  # عدد مناسب لطباعة A4 (حوالي 30 سطر في الصفحة)
     
     def get_queryset(self):
-        queryset = Product.objects.all().select_related('category').order_by('-created_at')
+        queryset = Product.objects.all().select_related('category').order_by('name')
         
-        # الحصول على معاملات البحث
+        # الحصول على معاملات البحث والفلترة
         search_query = self.request.GET.get('search', '')
         category_filter = self.request.GET.get('category', '')
+        status_filter = self.request.GET.get('status', '')
         
         # تطبيق البحث
         if search_query:
@@ -245,23 +246,34 @@ class ProductListView(LoginRequiredMixin, ListView):
         if category_filter:
             queryset = queryset.filter(category_id=category_filter)
         
+        # تطبيق فلتر الحالة
+        if status_filter == 'active':
+            queryset = queryset.filter(is_active=True)
+        elif status_filter == 'inactive':
+            queryset = queryset.filter(is_active=False)
+        
         return queryset
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        # إضافة إحصائيات
+        # إضافة إحصائيات لجميع المنتجات
         all_products = Product.objects.all()
         context['total_products'] = all_products.count()
         context['active_products'] = all_products.filter(is_active=True).count()
         context['inactive_products'] = all_products.filter(is_active=False).count()
         
+        # إحصائيات المنتجات المفلترة
+        filtered_products = self.get_queryset()
+        context['filtered_count'] = filtered_products.count()
+        
         # إضافة التصنيفات للفلترة
         context['categories'] = Category.objects.filter(is_active=True).order_by('name')
         
-        # إضافة معاملات البحث
+        # إضافة معاملات البحث والفلترة
         context['search_query'] = self.request.GET.get('search', '')
         context['selected_category'] = self.request.GET.get('category', '')
+        context['selected_status'] = self.request.GET.get('status', '')
         
         return context
 
