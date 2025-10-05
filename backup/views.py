@@ -1916,6 +1916,17 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                                             # إضافة قيمة افتراضية لـ system_subtitle
                                             if not record_data.get('system_subtitle'):
                                                 record_data['system_subtitle'] = ''
+                                        elif model._meta.label == 'journal.JournalEntry':
+                                            # 🔧 حل مشكلة تكرار entry_number
+                                            # إذا كان entry_number موجود مسبقاً، نولّد رقم جديد
+                                            entry_number = record_data.get('entry_number')
+                                            if entry_number:
+                                                # التحقق من وجود القيد
+                                                from journal.models import JournalEntry
+                                                if JournalEntry.objects.filter(entry_number=entry_number).exists():
+                                                    # الرقم موجود، نحذفه ونترك النظام يولد رقم جديد
+                                                    logger.debug(f"⚠️ entry_number مكرر: {entry_number}، سيتم توليد رقم جديد")
+                                                    record_data.pop('entry_number', None)
                                         
                                         # تنظيف البيانات من الحقول غير الموجودة في النموذج
                                         model_field_names = [f.name for f in model._meta.get_fields()]
@@ -2042,7 +2053,25 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                                         
                                         # إنشاء أو تحديث السجل
                                         pk_value = cleaned_data.get('pk')
-                                        if pk_value:
+                                        
+                                        # 🔧 معالجة خاصة لـ JournalEntry لحل مشكلة entry_number المكرر
+                                        if model._meta.label == 'journal.JournalEntry' and pk_value:
+                                            # محاولة الحصول على القيد الموجود
+                                            try:
+                                                obj = model.objects.get(pk=pk_value)
+                                                # تحديث الحقول
+                                                for k, v in cleaned_data.items():
+                                                    if k != 'pk' and k != 'entry_number':  # لا نحدث entry_number
+                                                        setattr(obj, k, v)
+                                                obj.save()
+                                                created = False
+                                            except model.DoesNotExist:
+                                                # القيد غير موجود، ننشئ واحد جديد
+                                                data_without_entry_number = {k: v for k, v in cleaned_data.items() if k not in ['pk', 'entry_number']}
+                                                obj = model(**data_without_entry_number)
+                                                obj.save()  # سيولد entry_number تلقائياً
+                                                created = True
+                                        elif pk_value:
                                             obj, created = model.objects.update_or_create(
                                                 pk=pk_value,
                                                 defaults={k: v for k, v in cleaned_data.items() if k != 'pk'}
