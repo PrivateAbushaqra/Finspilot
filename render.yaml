@@ -1,39 +1,34 @@
+databases:
+  - name: finspilot-db
+    databaseName: finspilot_prod
+    user: finspilot_user
+    plan: free
+
 services:
   - type: web
     name: finspilot
-    runtime: python3
+    env: python
+    plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn finspilot.wsgi:application --bind 0.0.0.0:$PORT
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
       - key: DEBUG
-        value: False
+        value: false
       - key: SECRET_KEY
         generateValue: true
       - key: RENDER
-        value: True
+        value: true
       - key: USE_LOCAL_POSTGRES
-        value: False
+        value: false
       - key: DEFAULT_CURRENCY
         value: JOD
+      - key: DATABASE_URL
+        fromDatabase:
+          name: finspilot-db
+          property: connectionString
       - key: ALLOWED_HOSTS
-        fromService:
-          type: web
-          name: finspilot
-          property: host
+        sync: false
       - key: RENDER_EXTERNAL_URL
-        fromService:
-          type: web
-          name: finspilot
-          property: host
-    autoDeploy: false
-
-  - type: pserv
-    name: finspilot-db
-    runtime: postgres
-    envVars:
-      - key: POSTGRES_DB
-        value: finspilot_prod
-      - key: POSTGRES_USER
-        value: finspilot_user
-      - key: POSTGRES_PASSWORD
-        generateValue: true
+        sync: false
