@@ -70,8 +70,15 @@
         }
         
         /* {% trans "Hide" %} بعض الأعمدة على الشاشات الصغيرة */
+        /* إخفاء عمود التاريخ */
         .table th:nth-child(3),
         .table td:nth-child(3) {
+            display: none;
+        }
+        
+        /* إخفاء عمود الصندوق */
+        .table th:nth-child(6),
+        .table td:nth-child(6) {
             display: none;
         }
         
@@ -294,6 +301,29 @@
             </div>
             
             <div class="col-md-2">
+                <label for="payment_type" class="form-label">{% trans "Payment Type" %}</label>
+                <select class="form-select" id="payment_type" name="payment_type">
+                    <option value="">{% trans "All types" %}</option>
+                    <option value="cash" {% if request.GET.payment_type == 'cash' %}selected{% endif %}>{% trans "Cash" %}</option>
+                    <option value="credit" {% if request.GET.payment_type == 'credit' %}selected{% endif %}>{% trans "Credit" %}</option>
+                    <option value="check" {% if request.GET.payment_type == 'check' %}selected{% endif %}>{% trans "Check" %}</option>
+                    <option value="installment" {% if request.GET.payment_type == 'installment' %}selected{% endif %}>{% trans "Installment" %}</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label for="cashbox" class="form-label">{% trans "Cash Box" %}</label>
+                <select class="form-select" id="cashbox" name="cashbox">
+                    <option value="">{% trans "All cash boxes" %}</option>
+                    {% for cashbox in cashboxes %}
+                        <option value="{{ cashbox.id }}" {% if request.GET.cashbox == cashbox.id|stringformat:"s" %}selected{% endif %}>
+                            {{ cashbox.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-2">
                 <label for="status" class="form-label">{% trans "Status" %}</label>
                 <select class="form-select" id="status" name="status">
                     <option value="">{% trans "All statuses" %}</option>
@@ -345,6 +375,8 @@
                                 <th>{% trans "Customer" %}</th>
                                 <th>{% trans "Date" %}</th>
                                 <th>{% trans "Grand Total" %}</th>
+                                <th>{% trans "Payment Type" %}</th>
+                                <th>{% trans "Cash Box" %}</th>
                                 <th>{% trans "Status" %}</th>
                                 <th>{% trans "Actions" %}</th>
                             </tr>
@@ -359,6 +391,40 @@
                                 <td>{{ invoice.date|date:"Y-m-d" }}</td>
                                 <td>
                                     <strong>{{ invoice.total_amount|currency_format }}</strong>
+                                </td>
+                                <td>
+                                    {% if invoice.payment_type == 'cash' %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-money-bill-wave"></i> {% trans "Cash" %}
+                                        </span>
+                                    {% elif invoice.payment_type == 'credit' %}
+                                        <span class="badge bg-warning">
+                                            <i class="fas fa-credit-card"></i> {% trans "Credit" %}
+                                        </span>
+                                    {% elif invoice.payment_type == 'check' %}
+                                        <span class="badge bg-info">
+                                            <i class="fas fa-money-check"></i> {% trans "Check" %}
+                                        </span>
+                                    {% elif invoice.payment_type == 'installment' %}
+                                        <span class="badge bg-primary">
+                                            <i class="fas fa-calendar-alt"></i> {% trans "Installment" %}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{% trans "Not specified" %}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if invoice.payment_type == 'cash' and invoice.cashbox %}
+                                        <span class="badge bg-primary">
+                                            <i class="fas fa-box"></i> {{ invoice.cashbox.name }}
+                                        </span>
+                                    {% elif invoice.payment_type == 'cash' and not invoice.cashbox %}
+                                        <span class="text-danger">
+                                            <i class="fas fa-exclamation-triangle"></i> {% trans "Not specified" %}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
                                 </td>
                                 <td>
                                     {% if invoice.status == 'paid' %}

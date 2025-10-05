@@ -458,3 +458,478 @@ def create_cogs_entry_for_sales_invoice_item(sender, instance, created, **kwargs
     except Exception as e:
         print(f"خطأ في إنشاء قيد COGS لفاتورة المبيعات {instance.invoice.invoice_number}: {e}")
         pass
+
+
+@receiver(post_save, sender=SalesInvoice)
+def update_cashbox_transaction_on_invoice_change(sender, instance, created, **kwargs):
+    """تحديث معاملة الصندوق عند تعديل الفاتورة"""
+    try:
+        from cashboxes.models import CashboxTransaction
+        
+        # إذا لم تكن الفاتورة جديدة وكانت نقدية
+        if not created and instance.payment_type == 'cash':
+            # البحث عن المعاملة المرتبطة بالفاتورة: نطابق وصف المعاملة الذي يحتوي رقم الفاتورة
+            try:
+                transaction = CashboxTransaction.objects.filter(
+                    transaction_type='deposit',
+                    description__icontains=str(instance.invoice_number)
+                ).first()
+            except Exception:
+                transaction = None
+            
+            if transaction:
+                # حساب الفرق في المبلغ
+                amount_difference = instance.total_amount - transaction.amount
+                
+                if amount_difference != 0:
+                    # تحديث مبلغ المعاملة
+                    transaction.amount = instance.total_amount
+                    transaction.description = f'مبيعات نقدية - فاتورة رقم {instance.invoice_number} (محدثة)'
+                    transaction.save()
+                    
+                    # تحديث رصيد الصندوق
+                    if transaction.cashbox:
+                        transaction.cashbox.balance += amount_difference
+                        transaction.cashbox.save(update_fields=['balance'])
+                        
+                        print(f"تم تحديث معاملة الصندوق للفاتورة {instance.invoice_number}")
+                        
+    except Exception as e:
+        print(f"خطأ في تحديث معاملة الصندوق للفاتورة {instance.invoice_number}: {e}")
+        pass
+
+
+@receiver(post_save, sender=SalesInvoice)
+def update_inventory_on_sales_invoice(sender, instance, created, **kwargs):
+    """تحديث المخزون عند إنشاء أو تعديل فاتورة مبيعات"""
+    try:
+        from inventory.models import InventoryMovement, Warehouse
+        
+        # تحديد المستودع
+        warehouse = instance.warehouse
+        if not warehouse:
+            warehouse = Warehouse.get_default_warehouse()
+            if warehouse:
+                instance.warehouse = warehouse
+                instance.save(update_fields=['warehouse'])
+        
+        if not warehouse:
+            print(f"لا يوجد مستودع افتراضي لفاتورة المبيعات {instance.invoice_number}")
+            return
+        
+        # للفواتير الجديدة، إنشاء حركات مخزون صادرة
+        if created:
+            for item in instance.items.all():
+                if item.product.product_type == 'physical':
+                    InventoryMovement.objects.create(
+                        date=instance.date,
+                        product=item.product,
+                        warehouse=warehouse,
+                        movement_type='out',
+                        reference_type='sales_invoice',
+                        reference_id=instance.id,
+                        quantity=item.quantity,
+                        unit_cost=item.product.calculate_weighted_average_cost(),
+                        notes=f'مبيعات - فاتورة رقم {instance.invoice_number}',
+                        created_by=instance.created_by
+                    )
+        else:
+            # للتعديلات، حذف الحركات القديمة وإنشاء جديدة
+            InventoryMovement.objects.filter(
+                reference_type='sales_invoice',
+                reference_id=instance.id
+            ).delete()
+            
+            for item in instance.items.all():
+                if item.product.product_type == 'physical':
+                    InventoryMovement.objects.create(
+                        date=instance.date,
+                        product=item.product,
+                        warehouse=warehouse,
+                        movement_type='out',
+                        reference_type='sales_invoice',
+                        reference_id=instance.id,
+                        quantity=item.quantity,
+                        unit_cost=item.product.calculate_weighted_average_cost(),
+                        notes=f'مبيعات - فاتورة رقم {instance.invoice_number}',
+                        created_by=instance.created_by
+                    )
+        
+        print(f"تم تحديث المخزون لفاتورة المبيعات {instance.invoice_number}")
+        
+        # إنشاء قيد تكلفة البضاعة المباعة بعد تحديث المخزون
+        if created:
+            # انتظار لحظة للتأكد من حفظ حركات المخزون
+            from time import sleep
+            sleep(1.0)  # زيادة الوقت
+            
+            try:
+                from journal.services import JournalService
+                cogs_entry = JournalService.create_cogs_entry(instance, instance.created_by)
+                if cogs_entry:
+                    print(f"تم إنشاء قيد COGS {cogs_entry.entry_number} لفاتورة المبيعات {instance.invoice_number}")
+                else:
+                    print(f"لم يتم إنشاء قيد COGS لفاتورة المبيعات {instance.invoice_number}")
+            except Exception as cogs_error:
+                print(f"خطأ في إنشاء قيد COGS: {cogs_error}")
+        
+    except Exception as e:
+        print(f"خطأ في تحديث المخزون لفاتورة المبيعات {instance.invoice_number}: {e}")
+        pass
+
+
+receiver(post_save, sender=SalesReturn)
+def update_inventory_on_sales_return(sender, instance, created, **kwargs):
+    """تحديث المخزون عند إنشاء مردود المبيعات"""
+    try:
+        from inventory.models import InventoryMovement
+        
+        warehouse = instance.original_invoice.warehouse
+        if not warehouse:
+            from inventory.models import Warehouse
+            warehouse = Warehouse.get_default_warehouse()
+        
+        if not warehouse:
+            print(f"لا يوجد مستودع لمردود المبيعات {instance.return_number}")
+            return
+        
+        if created:
+            for item in instance.items.all():
+                if item.product.product_type == 'physical':
+                    InventoryMovement.objects.create(
+                        date=instance.date,
+                        product=item.product,
+                        warehouse=warehouse,
+                        movement_type='in',
+                        reference_type='sales_return',
+                        reference_id=instance.id,
+                        quantity=item.returned_quantity,
+                        unit_cost=item.unit_price,
+                        notes=f'مردود مبيعات - رقم {instance.return_number}',
+                        created_by=instance.created_by
+                    )
+        else:
+            # للتعديلات، حذف الحركات القديمة وإنشاء جديدة
+            InventoryMovement.objects.filter(
+                reference_type='sales_return',
+                reference_id=instance.id
+            ).delete()
+            
+            for item in instance.items.all():
+                if item.product.product_type == 'physical':
+                    InventoryMovement.objects.create(
+                        date=instance.date,
+                        product=item.product,
+                        warehouse=warehouse,
+                        movement_type='in',
+                        reference_type='sales_return',
+                        reference_id=instance.id,
+                        quantity=item.returned_quantity,
+                        unit_cost=item.unit_price,
+                        notes=f'مردود مبيعات - رقم {instance.return_number}',
+                        created_by=instance.created_by
+                    )
+        
+        print(f"تم تحديث المخزون لمردود المبيعات {instance.return_number}")
+        
+    except Exception as e:
+        print(f"خطأ في تحديث المخزون لمردود المبيعات {instance.return_number}: {e}")
+        pass
+
+
+receiver(post_save, sender=SalesInvoiceItem)
+def update_inventory_on_sales_invoice_item(sender, instance, created, **kwargs):
+    """تحديث المخزون عند إضافة/تعديل عنصر فاتورة مبيعات"""
+    try:
+        from inventory.models import InventoryMovement, Warehouse
+
+        invoice = instance.invoice
+        warehouse = invoice.warehouse
+        if not warehouse:
+            warehouse = Warehouse.get_default_warehouse()
+            if warehouse:
+                invoice.warehouse = warehouse
+                invoice.save(update_fields=['warehouse'])
+
+        if not warehouse:
+            print(f"لا يوجد مستودع افتراضي لفاتورة المبيعات {invoice.invoice_number}")
+            return
+
+        # حذف الحركات القديمة لهذا العنصر
+        InventoryMovement.objects.filter(
+            reference_type='sales_invoice',
+            reference_id=invoice.id,
+            product=instance.product
+        ).delete()
+
+        # إنشاء حركة مخزون صادرة
+        if instance.product.product_type == 'physical':
+            InventoryMovement.objects.create(
+                date=invoice.date,
+                product=instance.product,
+                warehouse=warehouse,
+                movement_type='out',
+                reference_type='sales_invoice',
+                reference_id=invoice.id,
+                quantity=instance.quantity,
+                unit_cost=instance.product.calculate_weighted_average_cost(),
+                notes=f'مبيعات - فاتورة رقم {invoice.invoice_number}',
+                created_by=invoice.created_by
+            )
+
+        print(f"تم تحديث المخزون لفاتورة المبيعات {invoice.invoice_number}")
+
+    except Exception as e:
+        print(f"خطأ في تحديث المخزون لفاتورة المبيعات {invoice.invoice_number}: {e}")
+        pass
+
+
+@receiver(post_save, sender=SalesInvoiceItem)
+def create_cogs_entry_for_sales_invoice_item(sender, instance, created, **kwargs):
+    """إنشاء قيد تكلفة البضاعة المباعة عند إضافة عنصر فاتورة مبيعات"""
+    try:
+        if created and instance.product.product_type == 'physical':
+            from time import sleep
+            sleep(0.5)  # انتظار لحفظ حركات المخزون
+            
+            # التحقق من عدم وجود قيد COGS مسبقاً
+            from journal.models import JournalEntry
+            existing_cogs = JournalEntry.objects.filter(
+                reference_type='sales_invoice_cogs',
+                reference_id=instance.invoice.id
+            ).exists()
+            
+            if not existing_cogs:
+                from journal.services import JournalService
+                cogs_entry = JournalService.create_cogs_entry(instance.invoice, instance.invoice.created_by)
+                if cogs_entry:
+                    print(f"تم إنشاء قيد COGS {cogs_entry.entry_number} لفاتورة المبيعات {instance.invoice.invoice_number}")
+                else:
+                    print(f"لم يتم إنشاء قيد COGS لفاتورة المبيعات {instance.invoice.invoice_number}")
+    except Exception as e:
+        print(f"خطأ في إنشاء قيد COGS لفاتورة المبيعات {instance.invoice.invoice_number}: {e}")
+        pass
+
+
+@receiver(post_save, sender=SalesInvoice)
+def update_cashbox_transaction_on_invoice_change(sender, instance, created, **kwargs):
+    """تحديث معاملة الصندوق عند تعديل الفاتورة"""
+    try:
+        from cashboxes.models import CashboxTransaction
+        
+        # إذا لم تكن الفاتورة جديدة وكانت نقدية
+        if not created and instance.payment_type == 'cash':
+            # البحث عن المعاملة المرتبطة بالفاتورة: نطابق وصف المعاملة الذي يحتوي رقم الفاتورة
+            try:
+                transaction = CashboxTransaction.objects.filter(
+                    transaction_type='deposit',
+                    description__icontains=str(instance.invoice_number)
+                ).first()
+            except Exception:
+                transaction = None
+            
+            if transaction:
+                # حساب الفرق في المبلغ
+                amount_difference = instance.total_amount - transaction.amount
+                
+                if amount_difference != 0:
+                    # تحديث مبلغ المعاملة
+                    transaction.amount = instance.total_amount
+                    transaction.description = f'مبيعات نقدية - فاتورة رقم {instance.invoice_number} (محدثة)'
+                    transaction.save()
+                    
+                    # تحديث رصيد الصندوق
+                    if transaction.cashbox:
+                        transaction.cashbox.balance += amount_difference
+                        transaction.cashbox.save(update_fields=['balance'])
+                        
+                        print(f"تم تحديث معاملة الصندوق للفاتورة {instance.invoice_number}")
+                        
+    except Exception as e:
+        print(f"خطأ في تحديث معاملة الصندوق للفاتورة {instance.invoice_number}: {e}")
+        pass
+
+
+@receiver(post_save, sender=SalesInvoice)
+def update_inventory_on_sales_invoice(sender, instance, created, **kwargs):
+    """تحديث المخزون عند إنشاء أو تعديل فاتورة مبيعات"""
+    try:
+        from inventory.models import InventoryMovement, Warehouse
+        
+        # تحديد المستودع
+        warehouse = instance.warehouse
+        if not warehouse:
+            warehouse = Warehouse.get_default_warehouse()
+            if warehouse:
+                instance.warehouse = warehouse
+                instance.save(update_fields=['warehouse'])
+        
+        if not warehouse:
+            print(f"لا يوجد مستودع افتراضي لفاتورة المبيعات {instance.invoice_number}")
+            return
+        
+        # للفواتير الجديدة، إنشاء حركات مخزون صادرة
+        if created:
+            for item in instance.items.all():
+                if item.product.product_type == 'physical':
+                    InventoryMovement.objects.create(
+                        date=instance.date,
+                        product=item.product,
+                        warehouse=warehouse,
+                        movement_type='out',
+                        reference_type='sales_invoice',
+                        reference_id=instance.id,
+                        quantity=item.quantity,
+                        unit_cost=item.product.calculate_weighted_average_cost(),
+                        notes=f'مبيعات - فاتورة رقم {instance.invoice_number}',
+                        created_by=instance.created_by
+                    )
+        else:
+            # للتعديلات، حذف الحركات القديمة وإنشاء جديدة
+            InventoryMovement.objects.filter(
+                reference_type='sales_invoice',
+                reference_id=instance.id
+            ).delete()
+            
+            for item in instance.items.all():
+                if item.product.product_type == 'physical':
+                    InventoryMovement.objects.create(
+                        date=instance.date,
+                        product=item.product,
+                        warehouse=warehouse,
+                        movement_type='out',
+                        reference_type='sales_invoice',
+                        reference_id=instance.id,
+                        quantity=item.quantity,
+                        unit_cost=item.product.calculate_weighted_average_cost(),
+                        notes=f'مبيعات - فاتورة رقم {instance.invoice_number}',
+                        created_by=instance.created_by
+                    )
+        
+        print(f"تم تحديث المخزون لفاتورة المبيعات {instance.invoice_number}")
+        
+        # إنشاء قيد تكلفة البضاعة المباعة بعد تحديث المخزون
+        if created:
+            # انتظار لحظة للتأكد من حفظ حركات المخزون
+            from time import sleep
+            sleep(1.0)  # زيادة الوقت
+            
+            try:
+                from journal.services import JournalService
+                cogs_entry = JournalService.create_cogs_entry(instance, instance.created_by)
+                if cogs_entry:
+                    print(f"تم إنشاء قيد COGS {cogs_entry.entry_number} لفاتورة المبيعات {instance.invoice_number}")
+                else:
+                    print(f"لم يتم إنشاء قيد COGS لفاتورة المبيعات {instance.invoice_number}")
+            except Exception as cogs_error:
+                print(f"خطأ في إنشاء قيد COGS: {cogs_error}")
+        
+    except Exception as e:
+        print(f"خطأ في تحديث المخزون لفاتورة المبيعات {instance.invoice_number}: {e}")
+        pass
+
+
+receiver(post_save, sender=SalesReturn)
+def update_inventory_on_sales_return(sender, instance, created, **kwargs):
+    """تحديث المخزون عند إنشاء مردود المبيعات"""
+    try:
+        from inventory.models import InventoryMovement
+        
+        warehouse = instance.original_invoice.warehouse
+        if not warehouse:
+            from inventory.models import Warehouse
+            warehouse = Warehouse.get_default_warehouse()
+        
+        if not warehouse:
+            print(f"لا يوجد مستودع لمردود المبيعات {instance.return_number}")
+            return
+        
+        if created:
+            for item in instance.items.all():
+                if item.product.product_type == 'physical':
+                    InventoryMovement.objects.create(
+                        date=instance.date,
+                        product=item.product,
+                        warehouse=warehouse,
+                        movement_type='in',
+                        reference_type='sales_return',
+                        reference_id=instance.id,
+                        quantity=item.returned_quantity,
+                        unit_cost=item.unit_price,
+                        notes=f'مردود مبيعات - رقم {instance.return_number}',
+                        created_by=instance.created_by
+                    )
+        else:
+            # للتعديلات، حذف الحركات القديمة وإنشاء جديدة
+            InventoryMovement.objects.filter(
+                reference_type='sales_return',
+                reference_id=instance.id
+            ).delete()
+            
+            for item in instance.items.all():
+                if item.product.product_type == 'physical':
+                    InventoryMovement.objects.create(
+                        date=instance.date,
+                        product=item.product,
+                        warehouse=warehouse,
+                        movement_type='in',
+                        reference_type='sales_return',
+                        reference_id=instance.id,
+                        quantity=item.returned_quantity,
+                        unit_cost=item.unit_price,
+                        notes=f'مردود مبيعات - رقم {instance.return_number}',
+                        created_by=instance.created_by
+                    )
+        
+        print(f"تم تحديث المخزون لمردود المبيعات {instance.return_number}")
+        
+    except Exception as e:
+        print(f"خطأ في تحديث المخزون لمردود المبيعات {instance.return_number}: {e}")
+        pass
+
+
+@receiver(post_save, sender=SalesReturnItem)
+def update_inventory_on_sales_return_item(sender, instance, created, **kwargs):
+    """تحديث المخزون عند إضافة/تعديل عنصر مردود المبيعات"""
+    try:
+        from inventory.models import InventoryMovement
+
+        return_invoice = instance.return_invoice
+        warehouse = return_invoice.original_invoice.warehouse
+        if not warehouse:
+            from inventory.models import Warehouse
+            warehouse = Warehouse.get_default_warehouse()
+        
+        if not warehouse:
+            print(f"لا يوجد مستودع لمردود المبيعات {return_invoice.return_number}")
+            return
+
+        # حذف الحركات القديمة لهذا العنصر
+        InventoryMovement.objects.filter(
+            reference_type='sales_return',
+            reference_id=return_invoice.id,
+            product=instance.product
+        ).delete()
+
+        # إنشاء حركة مخزون واردة
+        if instance.product.product_type == 'physical':
+            InventoryMovement.objects.create(
+                date=return_invoice.date,
+                product=instance.product,
+                warehouse=warehouse,
+                movement_type='in',
+                reference_type='sales_return',
+                reference_id=return_invoice.id,
+                quantity=instance.quantity,
+                unit_cost=instance.unit_price,
+                notes=f'مردود مبيعات - رقم {return_invoice.return_number}',
+                created_by=return_invoice.created_by
+            )
+
+        print(f"تم تحديث المخزون لمردود المبيعات {return_invoice.return_number}")
+
+    except Exception as e:
+        print(f"خطأ في تحديث المخزون لمردود المبيعات {return_invoice.return_number}: {e}")
+        pass
+
+

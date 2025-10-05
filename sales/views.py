@@ -199,6 +199,11 @@ class SalesInvoiceListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
                 Q(customer__name__icontains=search)
             )
         
+        # Status filter
+        status = self.request.GET.get('status')
+        if status:
+            queryset = queryset.filter(status=status)
+        
         # Date filter
         date_from = self.request.GET.get('date_from')
         date_to = self.request.GET.get('date_to')
@@ -212,7 +217,12 @@ class SalesInvoiceListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         if payment_type:
             queryset = queryset.filter(payment_type=payment_type)
         
-        return queryset.select_related('customer', 'created_by')
+        # Cashbox filter (للفواتير النقدية فقط)
+        cashbox_id = self.request.GET.get('cashbox')
+        if cashbox_id:
+            queryset = queryset.filter(cashbox_id=cashbox_id)
+        
+        return queryset.select_related('customer', 'created_by', 'cashbox')
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -225,6 +235,13 @@ class SalesInvoiceListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         context['total_sales_amount'] = invoices.aggregate(
             total=Sum('total_amount')
         )['total'] or 0
+        
+        # Cashboxes list for filter
+        try:
+            from cashboxes.models import Cashbox
+            context['cashboxes'] = Cashbox.objects.filter(is_active=True).order_by('name')
+        except ImportError:
+            context['cashboxes'] = []
         
         # Currency and company settings
         try:
@@ -295,8 +312,15 @@ def sales_invoice_create(request):
         try:
             from cashboxes.models import Cashbox
             context['cashboxes'] = Cashbox.objects.filter(is_active=True)
-            # إضافة الصندوق النقدي الافتراضي للمستخدم
-            context['default_cashbox'] = user.default_cashbox
+            
+            # تحديد الصندوق الافتراضي حسب نوع المستخدم
+            if user.has_perm('users.can_access_pos'):
+                # مستخدم POS: استخدام الصندوق المرتبط به (responsible_user)
+                pos_cashbox = Cashbox.objects.filter(responsible_user=user, is_active=True).first()
+                context['default_cashbox'] = pos_cashbox or user.default_cashbox
+            else:
+                # مستخدم عادي: استخدام الصندوق الافتراضي المحفوظ
+                context['default_cashbox'] = user.default_cashbox
         except ImportError:
             context['cashboxes'] = []
             context['default_cashbox'] = None
@@ -432,6 +456,7 @@ def sales_invoice_create(request):
                         customer_id = request.POST.get('customer')
                         warehouse_id = request.POST.get('warehouse')
                         payment_type = request.POST.get('payment_type')
+                        # الحصول على الصندوق فقط للدفع النقدي (الشيكات تُعالج من خلال سند القبض)
                         cashbox_id = request.POST.get('cashbox') if payment_type == 'cash' else None
                         set_default_cashbox = request.POST.get('set_default_cashbox') == 'on' and payment_type == 'cash'
                         notes = request.POST.get('notes', '')
@@ -514,11 +539,20 @@ def sales_invoice_create(request):
                             except (ImportError, Warehouse.DoesNotExist):
                                 warehouse = None
 
-                        # الحصول على الصندوق النقدي إذا كان الدفع نقدي
+                        # الحصول على الصندوق فقط للدفع النقدي (الشيكات تُعالج من خلال سند القبض)
                         cashbox = None
                         if payment_type == 'cash':
-                            # إذا كان المستخدم يمكنه الوصول لنقطة البيع، استخدم صندوقه الخاص تلقائياً
-                            if user.has_perm('users.can_access_pos'):
+                            # 🔧 إعطاء الأولوية للصندوق المُختار من المستخدم
+                            if cashbox_id:
+                                try:
+                                    from cashboxes.models import Cashbox
+                                    cashbox = Cashbox.objects.get(id=cashbox_id, is_active=True)
+                                except (ImportError, Cashbox.DoesNotExist):
+                                    messages.error(request, _('الصندوق النقدي المحدد غير موجود أو غير نشط'))
+                                    context = get_invoice_create_context(request, form_data)
+                                    return render(request, 'sales/invoice_add.html', context)
+                            # إذا لم يتم اختيار صندوق، استخدم صندوق المستخدم التلقائي (POS)
+                            elif user.has_perm('users.can_access_pos'):
                                 try:
                                     from cashboxes.models import Cashbox
                                     cashbox = Cashbox.objects.filter(responsible_user=user).first()
@@ -527,16 +561,6 @@ def sales_invoice_create(request):
                                         pass
                                 except ImportError:
                                     pass
-                            elif cashbox_id:
-                                # للمستخدمين العاديين، استخدم الصندوق المحدد
-                                try:
-                                    from cashboxes.models import Cashbox
-                                    cashbox = Cashbox.objects.get(id=cashbox_id, is_active=True)
-                                except (ImportError, Cashbox.DoesNotExist):
-                                    # إذا لم يتم العثور على الصندوق، نبلغ عن خطأ
-                                    messages.error(request, _('الصندوق النقدي المحدد غير موجود أو غير نشط'))
-                                    context = get_invoice_create_context(request, form_data)
-                                    return render(request, 'sales/invoice_add.html', context)
                         products = request.POST.getlist('products[]')
                         quantities = request.POST.getlist('quantities[]')
                         prices = request.POST.getlist('prices[]')

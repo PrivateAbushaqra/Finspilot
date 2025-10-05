@@ -335,14 +335,15 @@
                                 <option value="">{% trans "Select Payment Method" %}</option>
                                 <option value="cash" {% if payment_type == "cash" %}selected{% endif %}>{% trans "Cash" %}</option>
                                 <option value="credit" {% if payment_type == "credit" %}selected{% endif %}>{% trans "Credit (Deferred)" %}</option>
+                                <!--<option value="check" {% if payment_type == "check" %}selected{% endif %}>{% trans "Check" %}</option>
                                 <option value="bank_transfer" {% if payment_type == "bank_transfer" %}selected{% endif %}>{% trans "Bank Transfer" %}</option>
-                                <option value="check" {% if payment_type == "check" %}selected{% endif %}>{% trans "Check" %}</option>
-                                <option value="installment" {% if payment_type == "installment" %}selected{% endif %}>{% trans "Installment" %}</option>
+                                <option value="installment" {% if payment_type == "installment" %}selected{% endif %}>{% trans "Installment" %}</option>-->
                             </select>
                         </div>
                     </div>
                     <div class="col-md-6">
-                        {% if can_change_cashbox %}
+                        <!-- قائمة الصناديق: تظهر لجميع المستخدمين عند اختيار "نقداً" فقط -->
+                        <!-- الشيكات تُعالج من خلال سند القبض -->
                         <div class="mb-3" id="cashbox_container" style="display: none;">
                             <label for="id_cashbox" class="form-label">
                                 {% trans "Cash Box" %} <span class="required-field">*</span>
@@ -350,7 +351,14 @@
                             <select class="form-select" id="id_cashbox" name="cashbox">
                                 <option value="">{% trans "Select Cash Box" %}</option>
                                 {% for cashbox in cashboxes %}
-                                <option value="{{ cashbox.id }}" {% if cashbox_id and cashbox.id|stringformat:"s" == cashbox_id %}selected{% elif not cashbox_id and default_cashbox and cashbox.id == default_cashbox.id %}selected{% endif %}>{{ cashbox.name }} <!--({{ cashbox.balance|currency_format:cashbox.currency }})--></option>
+                                <option value="{{ cashbox.id }}" 
+                                    {% if cashbox_id and cashbox.id|stringformat:"s" == cashbox_id %}
+                                        selected
+                                    {% elif not cashbox_id and default_cashbox and cashbox.id == default_cashbox.id %}
+                                        selected
+                                    {% endif %}>
+                                    {{ cashbox.name }}
+                                </option>
                                 {% endfor %}
                             </select>
                             <div class="form-check mt-2">
@@ -360,7 +368,6 @@
                                 </label>
                             </div>
                         </div>
-                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -682,16 +689,6 @@ function formatCurrency(value, overridePlaces){
 
 {% block extra_js %}
 <script>
-// إخفاء حقل الصندوق للمستخدمين ذوي صلاحية POS
-{% if not can_change_cashbox %}
-document.addEventListener('DOMContentLoaded', function() {
-    const cashboxContainer = document.getElementById('cashbox_container');
-    if (cashboxContainer) {
-        cashboxContainer.style.display = 'none';
-    }
-});
-{% endif %}
-
 // Price hook removed (debug instrumentation cleaned up)
 
 let productRowCounter = {{ existing_products|length|default:0 }};
@@ -2124,27 +2121,43 @@ document.getElementById('id_payment_type').addEventListener('change', function()
     const cashboxContainer = document.getElementById('cashbox_container');
     const cashboxSelect = document.getElementById('id_cashbox');
     
-    // لا نعرض حقل الصندوق للمستخدمين ذوي صلاحية POS
-    {% if can_change_cashbox %}
+    // إظهار حقل الصندوق فقط عند اختيار "نقداً"
+    // الشيكات تُعالج من خلال سند القبض
     if (paymentType === 'cash') {
         cashboxContainer.style.display = 'block';
-        cashboxSelect.required = true;
+        if (cashboxSelect) {
+            cashboxSelect.required = true;
+        }
     } else {
         cashboxContainer.style.display = 'none';
-        cashboxSelect.required = false;
-        cashboxSelect.value = '';
+        if (cashboxSelect) {
+            cashboxSelect.required = false;
+            cashboxSelect.value = '';
+        }
     }
-    {% else %}
-    // للمستخدمين ذوي صلاحية POS، الحقل مخفي دائماً
-    cashboxContainer.style.display = 'none';
-    cashboxSelect.required = false;
-    {% endif %}
 });
 </script>
 
 <!-- Script to repopulate form data on page load -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // إظهار الصندوق تلقائياً إذا كان نوع الدفع "نقداً"
+    const paymentTypeSelect = document.getElementById('id_payment_type');
+    const cashboxContainer = document.getElementById('cashbox_container');
+    
+    if (paymentTypeSelect && cashboxContainer) {
+        const currentPaymentType = paymentTypeSelect.value;
+        // إظهار الصندوق فقط إذا كان نوع الدفع "نقداً"
+        // الشيكات تُعالج من خلال سند القبض
+        if (currentPaymentType === 'cash') {
+            cashboxContainer.style.display = 'block';
+            const cashboxSelect = document.getElementById('id_cashbox');
+            if (cashboxSelect) {
+                cashboxSelect.required = true;
+            }
+        }
+    }
+    
     // Repopulate form fields with previously entered data
     {% if form_data_json %}
     const formData = JSON.parse({{ form_data_json|safe }});
