@@ -1829,320 +1829,320 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
         processed_tables = 0
         processed_records = 0
         
+        # 🔧 تم إزالة transaction.atomic() - كان يسبب rollback كامل عند أي خطأ
         try:
-            with transaction.atomic():
-                for i, table_info in enumerate(flat_tables):
-                    app_name = table_info['app_name']
-                    model_name = table_info['model_name']
-                    
-                    progress_data['current_table'] = table_info['display_name']
-                    progress_data['processed_tables'] = i
-                    
-                    # حساب الوقت المتوقع
-                    elapsed = time.time() - start_time
-                    if processed_tables > 0:
-                        avg_time_per_table = elapsed / processed_tables
-                        remaining_tables = len(flat_tables) - processed_tables
-                        estimated_seconds = avg_time_per_table * remaining_tables
-                        progress_data['estimated_time'] = f"{int(estimated_seconds)} ثانية متبقية"
-                    else:
-                        progress_data['estimated_time'] = 'جاري الحساب...'
-                    
-                    set_restore_progress_data(progress_data)
-                    
-                    try:
-                        # الحصول على النموذج
-                        app_config = apps.get_app_config(app_name)
-                        model = app_config.get_model(model_name)
-                        
-                        if model and 'data' in backup_data and app_name in backup_data['data'] and model_name in backup_data['data'][app_name]:
-                            records = backup_data['data'][app_name][model_name]
-                            if isinstance(records, list):
-                                for record_item in records:
-                                    try:
-                                        # تحويل من تنسيق Django fixtures إلى البيانات المباشرة
-                                        if isinstance(record_item, dict):
-                                            if 'fields' in record_item and 'pk' in record_item:
-                                                # تنسيق Django fixtures: {'model': 'app.model', 'pk': 1, 'fields': {...}}
-                                                record_data = record_item['fields'].copy()
-                                                record_data['pk'] = record_item['pk']
-                                            else:
-                                                # تنسيق البيانات المباشرة
-                                                record_data = record_item.copy()
-                                        else:
-                                            continue
-                                        
-                                        # تنظيف البيانات للنماذج التي تغيرت هيكلها
-                                        if model._meta.label == 'core.AuditLog':
-                                            # إزالة الحقول القديمة التي لم تعد موجودة
-                                            valid_fields = ['pk', 'user', 'action_type', 'content_type', 'object_id', 'description', 'ip_address', 'timestamp']
-                                            record_data = {k: v for k, v in record_data.items() if k in valid_fields}
-                                            # تجاهل السجلات التي لها user_id null أو غير موجود
-                                            user_id = record_data.get('user')
-                                            if user_id:
-                                                # التحقق من وجود المستخدم في قاعدة البيانات
-                                                from users.models import User
-                                                if not User.objects.filter(pk=user_id).exists():
-                                                    # المستخدم غير موجود، تخطي هذا السجل
-                                                    continue
-                                            else:
-                                                # user_id مفقود، تخطي السجل
-                                                continue
-                                        elif model._meta.label == 'core.CompanySettings':
-                                            # إزالة الحقول القديمة
-                                            valid_fields = ['pk', 'company_name', 'logo', 'currency', 'address', 'phone', 'email', 'tax_number', 'session_timeout_minutes', 'enable_session_timeout', 'logout_on_browser_close', 'created_at', 'updated_at']
-                                            record_data = {k: v for k, v in record_data.items() if k in valid_fields}
-                                        elif model._meta.label == 'core.DocumentSequence':
-                                            # إزالة الحقول القديمة
-                                            valid_fields = ['pk', 'document_type', 'prefix', 'digits', 'current_number', 'created_at', 'updated_at']
-                                            record_data = {k: v for k, v in record_data.items() if k in valid_fields}
-                                        elif model._meta.label == 'auth.Group':
-                                            # إضافة قيمة افتراضية لـ dashboard_sections إذا كانت null
-                                            if not record_data.get('dashboard_sections'):
-                                                record_data['dashboard_sections'] = []
-                                        elif model._meta.label == 'users.User':
-                                            # إضافة قيم افتراضية للحقول المطلوبة
-                                            if not record_data.get('phone'):
-                                                record_data['phone'] = '000000000'
-                                            if not record_data.get('last_name'):
-                                                record_data['last_name'] = 'غير محدد'
-                                            # إضافة قيمة افتراضية لـ department (CharField with blank=True needs empty string)
-                                            if 'department' not in record_data or record_data.get('department') in [None, 'null']:
-                                                record_data['department'] = ''
-                                            # إضافة قيمة افتراضية لـ groups (ManyToMany field)
-                                            if 'groups' not in record_data or record_data.get('groups') in [None, 'null']:
-                                                record_data['groups'] = []
-                                        elif model._meta.label == 'settings.SuperAdminSettings':
-                                            # إضافة قيمة افتراضية لـ system_subtitle
-                                            if not record_data.get('system_subtitle'):
-                                                record_data['system_subtitle'] = ''
-                                        elif model._meta.label == 'journal.JournalEntry':
-                                            # 🔧 حل مشكلة تكرار entry_number
-                                            # إذا كان entry_number موجود مسبقاً، نولّد رقم جديد
-                                            entry_number = record_data.get('entry_number')
-                                            if entry_number:
-                                                # التحقق من وجود القيد
-                                                from journal.models import JournalEntry
-                                                if JournalEntry.objects.filter(entry_number=entry_number).exists():
-                                                    # الرقم موجود، نحذفه ونترك النظام يولد رقم جديد
-                                                    logger.debug(f"⚠️ entry_number مكرر: {entry_number}، سيتم توليد رقم جديد")
-                                                    record_data.pop('entry_number', None)
-                                        
-                                        # تنظيف البيانات من الحقول غير الموجودة في النموذج
-                                        model_field_names = [f.name for f in model._meta.get_fields()]
-                                        cleaned_data = {}
-                                        many_to_many_data = {}
-                                        
-                                        for key, value in record_data.items():
-                                            if key in model_field_names or key == 'pk':
-                                                # التحقق من نوع الحقل
-                                                field = None
-                                                for f in model._meta.get_fields():
-                                                    if f.name == key:
-                                                        field = f
-                                                        break
-                                                
-                                                # Debug logging for groups field
-                                                if key == 'groups':
-                                                    logger.info(f'Processing groups field: field={field}, value={value}, field_type={field.__class__.__name__ if field else None}')
-                                                    if field:
-                                                        logger.info(f'  hasattr many_to_many: {hasattr(field, "many_to_many")}')
-                                                        if hasattr(field, 'many_to_many'):
-                                                            logger.info(f'  many_to_many value: {field.many_to_many}')
-                                                        logger.info(f'  isinstance list: {isinstance(value, list)}')
-                                                
-                                                if field:
-                                                    # معالجة Many-to-Many fields أولاً (قبل Foreign Key)
-                                                    if (hasattr(field, 'many_to_many') and field.many_to_many) or field.__class__.__name__ == 'ManyToManyField':
-                                                        if isinstance(value, list):
-                                                            many_to_many_data[key] = value
+            for i, table_info in enumerate(flat_tables):
+                app_name = table_info['app_name']
+                model_name = table_info['model_name']
                 
-                                                        # تجاهل Many-to-Many في البيانات الأساسية
-                                                    # معالجة Foreign Key (لكن ليس Many-to-Many)
-                                                    elif hasattr(field, 'related_model') and field.related_model and not (hasattr(field, 'many_to_many') and field.many_to_many):
-                                                        try:
-                                                            if value is None or str(value) == 'null':
-                                                                # إذا كان الحقل مطلوب ولكن القيمة null، تخطي هذا السجل
-                                                                if not field.null:
-                                                                    # لا نستطيع استعادة سجل بدون قيمة لحقل مطلوب
-                                                                    logger.warning(f"تخطي استعادة سجل في {model._meta.label}: الحقل {key} مطلوب لكن القيمة null")
-                                                                    raise ValueError(f"Required field {key} has null value")
-                                                                else:
-                                                                    cleaned_data[key] = None
-                                                            elif isinstance(value, (int, str)) and str(value).isdigit():
-                                                                # البحث عن الكائن المرتبط
-                                                                related_obj = field.related_model.objects.filter(pk=int(value)).first()
-                                                                if related_obj:
-                                                                    cleaned_data[key] = related_obj
-                                                                elif not field.null:
-                                                                    # 🔧 محاولة استخدام أول سجل متاح كحل بديل
-                                                                    first_available = field.related_model.objects.first()
-                                                                    if first_available:
-                                                                        cleaned_data[key] = first_available
-                                                                        logger.warning(f"⚠️ استخدام FK بديل لـ {key}: {first_available.pk} بدلاً من {value}")
-                                                                    else:
-                                                                        # إذا لم يوجد أي سجل، يجب التخطي
-                                                                        raise ValueError(f"FK_NOT_FOUND:{key}={value} (لا يوجد سجلات بديلة في {field.related_model.__name__})")
-                                                                else:
-                                                                    # الحقل nullable، يمكن تركه None
-                                                                    cleaned_data[key] = None
-                                                                    logger.debug(f"FK مفقود {key}={value}، تم تعيين None")
+                progress_data['current_table'] = table_info['display_name']
+                progress_data['processed_tables'] = i
+                
+                # حساب الوقت المتوقع
+                elapsed = time.time() - start_time
+                if processed_tables > 0:
+                    avg_time_per_table = elapsed / processed_tables
+                    remaining_tables = len(flat_tables) - processed_tables
+                    estimated_seconds = avg_time_per_table * remaining_tables
+                    progress_data['estimated_time'] = f"{int(estimated_seconds)} ثانية متبقية"
+                else:
+                    progress_data['estimated_time'] = 'جاري الحساب...'
+                
+                set_restore_progress_data(progress_data)
+                
+                try:
+                    # الحصول على النموذج
+                    app_config = apps.get_app_config(app_name)
+                    model = app_config.get_model(model_name)
+                    
+                    if model and 'data' in backup_data and app_name in backup_data['data'] and model_name in backup_data['data'][app_name]:
+                        records = backup_data['data'][app_name][model_name]
+                        if isinstance(records, list):
+                            for record_item in records:
+                                try:
+                                    # تحويل من تنسيق Django fixtures إلى البيانات المباشرة
+                                    if isinstance(record_item, dict):
+                                        if 'fields' in record_item and 'pk' in record_item:
+                                            # تنسيق Django fixtures: {'model': 'app.model', 'pk': 1, 'fields': {...}}
+                                            record_data = record_item['fields'].copy()
+                                            record_data['pk'] = record_item['pk']
+                                        else:
+                                            # تنسيق البيانات المباشرة
+                                            record_data = record_item.copy()
+                                    else:
+                                        continue
+                                    
+                                    # تنظيف البيانات للنماذج التي تغيرت هيكلها
+                                    if model._meta.label == 'core.AuditLog':
+                                        # إزالة الحقول القديمة التي لم تعد موجودة
+                                        valid_fields = ['pk', 'user', 'action_type', 'content_type', 'object_id', 'description', 'ip_address', 'timestamp']
+                                        record_data = {k: v for k, v in record_data.items() if k in valid_fields}
+                                        # تجاهل السجلات التي لها user_id null أو غير موجود
+                                        user_id = record_data.get('user')
+                                        if user_id:
+                                            # التحقق من وجود المستخدم في قاعدة البيانات
+                                            from users.models import User
+                                            if not User.objects.filter(pk=user_id).exists():
+                                                # المستخدم غير موجود، تخطي هذا السجل
+                                                continue
+                                        else:
+                                            # user_id مفقود، تخطي السجل
+                                            continue
+                                    elif model._meta.label == 'core.CompanySettings':
+                                        # إزالة الحقول القديمة
+                                        valid_fields = ['pk', 'company_name', 'logo', 'currency', 'address', 'phone', 'email', 'tax_number', 'session_timeout_minutes', 'enable_session_timeout', 'logout_on_browser_close', 'created_at', 'updated_at']
+                                        record_data = {k: v for k, v in record_data.items() if k in valid_fields}
+                                    elif model._meta.label == 'core.DocumentSequence':
+                                        # إزالة الحقول القديمة
+                                        valid_fields = ['pk', 'document_type', 'prefix', 'digits', 'current_number', 'created_at', 'updated_at']
+                                        record_data = {k: v for k, v in record_data.items() if k in valid_fields}
+                                    elif model._meta.label == 'auth.Group':
+                                        # إضافة قيمة افتراضية لـ dashboard_sections إذا كانت null
+                                        if not record_data.get('dashboard_sections'):
+                                            record_data['dashboard_sections'] = []
+                                    elif model._meta.label == 'users.User':
+                                        # إضافة قيم افتراضية للحقول المطلوبة
+                                        if not record_data.get('phone'):
+                                            record_data['phone'] = '000000000'
+                                        if not record_data.get('last_name'):
+                                            record_data['last_name'] = 'غير محدد'
+                                        # إضافة قيمة افتراضية لـ department (CharField with blank=True needs empty string)
+                                        if 'department' not in record_data or record_data.get('department') in [None, 'null']:
+                                            record_data['department'] = ''
+                                        # إضافة قيمة افتراضية لـ groups (ManyToMany field)
+                                        if 'groups' not in record_data or record_data.get('groups') in [None, 'null']:
+                                            record_data['groups'] = []
+                                    elif model._meta.label == 'settings.SuperAdminSettings':
+                                        # إضافة قيمة افتراضية لـ system_subtitle
+                                        if not record_data.get('system_subtitle'):
+                                            record_data['system_subtitle'] = ''
+                                    elif model._meta.label == 'journal.JournalEntry':
+                                        # 🔧 حل مشكلة تكرار entry_number
+                                        # إذا كان entry_number موجود مسبقاً، نولّد رقم جديد
+                                        entry_number = record_data.get('entry_number')
+                                        if entry_number:
+                                            # التحقق من وجود القيد
+                                            from journal.models import JournalEntry
+                                            if JournalEntry.objects.filter(entry_number=entry_number).exists():
+                                                # الرقم موجود، نحذفه ونترك النظام يولد رقم جديد
+                                                logger.debug(f"⚠️ entry_number مكرر: {entry_number}، سيتم توليد رقم جديد")
+                                                record_data.pop('entry_number', None)
+                                    
+                                    # تنظيف البيانات من الحقول غير الموجودة في النموذج
+                                    model_field_names = [f.name for f in model._meta.get_fields()]
+                                    cleaned_data = {}
+                                    many_to_many_data = {}
+                                    
+                                    for key, value in record_data.items():
+                                        if key in model_field_names or key == 'pk':
+                                            # التحقق من نوع الحقل
+                                            field = None
+                                            for f in model._meta.get_fields():
+                                                if f.name == key:
+                                                    field = f
+                                                    break
+                                            
+                                            # Debug logging for groups field
+                                            if key == 'groups':
+                                                logger.info(f'Processing groups field: field={field}, value={value}, field_type={field.__class__.__name__ if field else None}')
+                                                if field:
+                                                    logger.info(f'  hasattr many_to_many: {hasattr(field, "many_to_many")}')
+                                                    if hasattr(field, 'many_to_many'):
+                                                        logger.info(f'  many_to_many value: {field.many_to_many}')
+                                                    logger.info(f'  isinstance list: {isinstance(value, list)}')
+                                            
+                                            if field:
+                                                # معالجة Many-to-Many fields أولاً (قبل Foreign Key)
+                                                if (hasattr(field, 'many_to_many') and field.many_to_many) or field.__class__.__name__ == 'ManyToManyField':
+                                                    if isinstance(value, list):
+                                                        many_to_many_data[key] = value
+                
+                                                    # تجاهل Many-to-Many في البيانات الأساسية
+                                                # معالجة Foreign Key (لكن ليس Many-to-Many)
+                                                elif hasattr(field, 'related_model') and field.related_model and not (hasattr(field, 'many_to_many') and field.many_to_many):
+                                                    try:
+                                                        if value is None or str(value) == 'null':
+                                                            # إذا كان الحقل مطلوب ولكن القيمة null، تخطي هذا السجل
+                                                            if not field.null:
+                                                                # لا نستطيع استعادة سجل بدون قيمة لحقل مطلوب
+                                                                logger.warning(f"تخطي استعادة سجل في {model._meta.label}: الحقل {key} مطلوب لكن القيمة null")
+                                                                raise ValueError(f"Required field {key} has null value")
                                                             else:
-                                                                cleaned_data[key] = value
-                                                        except ValueError as ve:
-                                                            # إعادة رفع ValueError للتخطي
-                                                            raise ve
-                                                        except Exception:
-                                                            # في حالة الخطأ الآخر، تجاهل هذا الحقل
-                                                            pass
-                                                    # معالجة الحقول الرقمية لتجنب أخطاء التحويل
-                                                    elif field.__class__.__name__ in ['DecimalField', 'FloatField', 'IntegerField', 'PositiveIntegerField']:
-                                                        try:
-                                                            if value is None or value == '':
-                                                                cleaned_data[key] = None if field.null else (0 if field.__class__.__name__ in ['IntegerField', 'PositiveIntegerField'] else 0.0)
-                                                            elif isinstance(value, str):
-                                                                # تنظيف النص وتحويله لرقم
-                                                                numeric_value = value.replace(',', '').strip()
-                                                                if field.__class__.__name__ in ['IntegerField', 'PositiveIntegerField']:
-                                                                    cleaned_data[key] = int(float(numeric_value)) if numeric_value else 0
-                                                                elif field.__class__.__name__ == 'DecimalField':
-                                                                    # استخدام Decimal للحقول من نوع DecimalField
-                                                                    from decimal import Decimal
-                                                                    cleaned_data[key] = Decimal(str(numeric_value)) if numeric_value else Decimal('0.0')
+                                                                cleaned_data[key] = None
+                                                        elif isinstance(value, (int, str)) and str(value).isdigit():
+                                                            # البحث عن الكائن المرتبط
+                                                            related_obj = field.related_model.objects.filter(pk=int(value)).first()
+                                                            if related_obj:
+                                                                cleaned_data[key] = related_obj
+                                                            elif not field.null:
+                                                                # 🔧 محاولة استخدام أول سجل متاح كحل بديل
+                                                                first_available = field.related_model.objects.first()
+                                                                if first_available:
+                                                                    cleaned_data[key] = first_available
+                                                                    logger.warning(f"⚠️ استخدام FK بديل لـ {key}: {first_available.pk} بدلاً من {value}")
                                                                 else:
-                                                                    cleaned_data[key] = float(numeric_value) if numeric_value else 0.0
-                                                            elif isinstance(value, (int, float)):
-                                                                if field.__class__.__name__ in ['IntegerField', 'PositiveIntegerField']:
-                                                                    cleaned_data[key] = int(value)
-                                                                elif field.__class__.__name__ == 'DecimalField':
-                                                                    from decimal import Decimal
-                                                                    cleaned_data[key] = Decimal(str(value))
-                                                                else:
-                                                                    cleaned_data[key] = float(value)
+                                                                    # إذا لم يوجد أي سجل، يجب التخطي
+                                                                    raise ValueError(f"FK_NOT_FOUND:{key}={value} (لا يوجد سجلات بديلة في {field.related_model.__name__})")
                                                             else:
-                                                                cleaned_data[key] = value
-                                                        except (ValueError, TypeError):
+                                                                # الحقل nullable، يمكن تركه None
+                                                                cleaned_data[key] = None
+                                                                logger.debug(f"FK مفقود {key}={value}، تم تعيين None")
+                                                        else:
+                                                            cleaned_data[key] = value
+                                                    except ValueError as ve:
+                                                        # إعادة رفع ValueError للتخطي
+                                                        raise ve
+                                                    except Exception:
+                                                        # في حالة الخطأ الآخر، تجاهل هذا الحقل
+                                                        pass
+                                                # معالجة الحقول الرقمية لتجنب أخطاء التحويل
+                                                elif field.__class__.__name__ in ['DecimalField', 'FloatField', 'IntegerField', 'PositiveIntegerField']:
+                                                    try:
+                                                        if value is None or value == '':
+                                                            cleaned_data[key] = None if field.null else (0 if field.__class__.__name__ in ['IntegerField', 'PositiveIntegerField'] else 0.0)
+                                                        elif isinstance(value, str):
+                                                            # تنظيف النص وتحويله لرقم
+                                                            numeric_value = value.replace(',', '').strip()
                                                             if field.__class__.__name__ in ['IntegerField', 'PositiveIntegerField']:
-                                                                cleaned_data[key] = 0
+                                                                cleaned_data[key] = int(float(numeric_value)) if numeric_value else 0
+                                                            elif field.__class__.__name__ == 'DecimalField':
+                                                                # استخدام Decimal للحقول من نوع DecimalField
+                                                                from decimal import Decimal
+                                                                cleaned_data[key] = Decimal(str(numeric_value)) if numeric_value else Decimal('0.0')
+                                                            else:
+                                                                cleaned_data[key] = float(numeric_value) if numeric_value else 0.0
+                                                        elif isinstance(value, (int, float)):
+                                                            if field.__class__.__name__ in ['IntegerField', 'PositiveIntegerField']:
+                                                                cleaned_data[key] = int(value)
                                                             elif field.__class__.__name__ == 'DecimalField':
                                                                 from decimal import Decimal
-                                                                cleaned_data[key] = Decimal('0.0')
+                                                                cleaned_data[key] = Decimal(str(value))
                                                             else:
-                                                                cleaned_data[key] = 0.0
-                                                    else:
-                                                        if key == 'groups':
-                                                            logger.warning(f'groups field being treated as regular field! value: {value}, field type: {field.__class__.__name__}')
-                                                        cleaned_data[key] = value
+                                                                cleaned_data[key] = float(value)
+                                                        else:
+                                                            cleaned_data[key] = value
+                                                    except (ValueError, TypeError):
+                                                        if field.__class__.__name__ in ['IntegerField', 'PositiveIntegerField']:
+                                                            cleaned_data[key] = 0
+                                                        elif field.__class__.__name__ == 'DecimalField':
+                                                            from decimal import Decimal
+                                                            cleaned_data[key] = Decimal('0.0')
+                                                        else:
+                                                            cleaned_data[key] = 0.0
                                                 else:
+                                                    if key == 'groups':
+                                                        logger.warning(f'groups field being treated as regular field! value: {value}, field type: {field.__class__.__name__}')
                                                     cleaned_data[key] = value
-                                        
-                                        # التحقق من أن جميع الحقول المطلوبة موجودة
-                                        for f in model._meta.get_fields():
-                                            # تخطي ManyToMany fields (سيتم معالجتها لاحقاً)
-                                            if hasattr(f, 'many_to_many') and f.many_to_many:
-                                                continue
-                                            # تخطي OneToOne reverse relations
-                                            if f.__class__.__name__ == 'OneToOneRel':
-                                                continue
-                                            # التحقق من الحقول المطلوبة
-                                            if hasattr(f, 'null') and not f.null and f.name != 'id':
-                                                if f.name not in cleaned_data or cleaned_data[f.name] is None:
-                                                    # تخطي هذا السجل - حقل مطلوب مفقود
-                                                    logger.warning(f"تخطي سجل في {model._meta.label}: الحقل المطلوب '{f.name}' مفقود أو null")
-                                                    raise ValueError(f"Required field {f.name} is missing or null")
-                                        
-                                        # إنشاء أو تحديث السجل
-                                        pk_value = cleaned_data.get('pk')
-                                        
-                                        # 🔧 معالجة خاصة لـ JournalEntry لحل مشكلة entry_number المكرر
-                                        if model._meta.label == 'journal.JournalEntry' and pk_value:
-                                            # محاولة الحصول على القيد الموجود
-                                            try:
-                                                obj = model.objects.get(pk=pk_value)
-                                                # تحديث الحقول
-                                                for k, v in cleaned_data.items():
-                                                    if k != 'pk' and k != 'entry_number':  # لا نحدث entry_number
-                                                        setattr(obj, k, v)
-                                                obj.save()
-                                                created = False
-                                            except model.DoesNotExist:
-                                                # القيد غير موجود، ننشئ واحد جديد
-                                                data_without_entry_number = {k: v for k, v in cleaned_data.items() if k not in ['pk', 'entry_number']}
-                                                obj = model(**data_without_entry_number)
-                                                obj.save()  # سيولد entry_number تلقائياً
-                                                created = True
-                                        elif pk_value:
-                                            obj, created = model.objects.update_or_create(
-                                                pk=pk_value,
-                                                defaults={k: v for k, v in cleaned_data.items() if k != 'pk'}
-                                            )
-                                        else:
-                                            obj = model.objects.create(**{k: v for k, v in cleaned_data.items() if k != 'pk'})
+                                            else:
+                                                cleaned_data[key] = value
+                                    
+                                    # التحقق من أن جميع الحقول المطلوبة موجودة
+                                    for f in model._meta.get_fields():
+                                        # تخطي ManyToMany fields (سيتم معالجتها لاحقاً)
+                                        if hasattr(f, 'many_to_many') and f.many_to_many:
+                                            continue
+                                        # تخطي OneToOne reverse relations
+                                        if f.__class__.__name__ == 'OneToOneRel':
+                                            continue
+                                        # التحقق من الحقول المطلوبة
+                                        if hasattr(f, 'null') and not f.null and f.name != 'id':
+                                            if f.name not in cleaned_data or cleaned_data[f.name] is None:
+                                                # تخطي هذا السجل - حقل مطلوب مفقود
+                                                logger.warning(f"تخطي سجل في {model._meta.label}: الحقل المطلوب '{f.name}' مفقود أو null")
+                                                raise ValueError(f"Required field {f.name} is missing or null")
+                                    
+                                    # إنشاء أو تحديث السجل
+                                    pk_value = cleaned_data.get('pk')
+                                    
+                                    # 🔧 معالجة خاصة لـ JournalEntry لحل مشكلة entry_number المكرر
+                                    if model._meta.label == 'journal.JournalEntry' and pk_value:
+                                        # محاولة الحصول على القيد الموجود
+                                        try:
+                                            obj = model.objects.get(pk=pk_value)
+                                            # تحديث الحقول
+                                            for k, v in cleaned_data.items():
+                                                if k != 'pk' and k != 'entry_number':  # لا نحدث entry_number
+                                                    setattr(obj, k, v)
+                                            obj.save()
+                                            created = False
+                                        except model.DoesNotExist:
+                                            # القيد غير موجود، ننشئ واحد جديد
+                                            data_without_entry_number = {k: v for k, v in cleaned_data.items() if k not in ['pk', 'entry_number']}
+                                            obj = model(**data_without_entry_number)
+                                            obj.save()  # سيولد entry_number تلقائياً
                                             created = True
-                                        
-                                        # معالجة Many-to-Many fields بعد إنشاء الكائن
-                                        for field_name, related_ids in many_to_many_data.items():
-                                            try:
-                                                # الحصول على ManyToManyManager
-                                                field_manager = getattr(obj, field_name)
-                                                if hasattr(field_manager, 'set'):
-                                                    if isinstance(related_ids, list):
-                                                        # التحقق من وجود الكائنات المرتبطة وتحويل الـ IDs
-                                                        valid_ids = []
-                                                        for rel_id in related_ids:
-                                                            if isinstance(rel_id, (int, str)) and str(rel_id).isdigit():
-                                                                valid_ids.append(int(rel_id))
-                                                        field_manager.set(valid_ids)
-                                                    else:
-                                                        # إذا لم تكن list، قم بمسح العلاقات
-                                                        field_manager.clear()
-                                            except Exception as m2m_err:
-                                                # تجاهل أخطاء Many-to-Many
-                                                logger.warning(f"خطأ في معالجة Many-to-Many field {field_name}: {m2m_err}")
-                                                pass
-                                        
-                                        processed_records += 1
-                                        table_info['actual_records'] += 1
-                                        logger.debug(f"✅ استعادة سجل {table_info['display_name']}[{pk_value}]")
-                                    except Exception as rec_err:
-                                        error_msg = str(rec_err)
-                                        # 🔧 تحسين: محاولة الاستعادة مع قيم افتراضية في حالة FK مفقودة
-                                        if error_msg.startswith("FK_NOT_FOUND:"):
-                                            logger.warning(f"⚠️ FK مفقود في {table_info['display_name']}: {error_msg}")
-                                            # يمكن هنا إضافة منطق لمحاولة استخدام FK افتراضي
-                                        elif error_msg.startswith("Required field"):
-                                            logger.warning(f"⚠️ حقل مطلوب مفقود في {table_info['display_name']}: {error_msg}")
-                                        else:
-                                            logger.warning(f"⚠️ فشل في استعادة سجل في {table_info['display_name']}: {rec_err}")
-                                        
-                                        # تسجيل الخطأ في تفاصيل الجدول
-                                        if not table_info.get('errors'):
-                                            table_info['errors'] = []
-                                        table_info['errors'].append({
-                                            'record': pk_value if 'pk_value' in locals() else 'unknown',
-                                            'error': error_msg
-                                        })
-                                        continue
-                        
-                        processed_tables += 1
-                        percentage = int((processed_tables / len(flat_tables)) * 100) if flat_tables else 100
-                        progress_data['percentage'] = percentage
-                        progress_data['processed_tables'] = processed_tables
-                        progress_data['processed_records'] = processed_records
-                        progress_data['tables_status'][i]['status'] = 'completed'
-                        set_restore_progress_data(progress_data)
-                        
-                    except Exception as e:
-                        logger.warning(f"فشل في استعادة جدول {table_info['display_name']}: {str(e)}")
-                        progress_data['tables_status'][i]['status'] = 'error'
-                        progress_data['tables_status'][i]['error'] = str(e)
-                        set_restore_progress_data(progress_data)
-                        continue
+                                    elif pk_value:
+                                        obj, created = model.objects.update_or_create(
+                                            pk=pk_value,
+                                            defaults={k: v for k, v in cleaned_data.items() if k != 'pk'}
+                                        )
+                                    else:
+                                        obj = model.objects.create(**{k: v for k, v in cleaned_data.items() if k != 'pk'})
+                                        created = True
+                                    
+                                    # معالجة Many-to-Many fields بعد إنشاء الكائن
+                                    for field_name, related_ids in many_to_many_data.items():
+                                        try:
+                                            # الحصول على ManyToManyManager
+                                            field_manager = getattr(obj, field_name)
+                                            if hasattr(field_manager, 'set'):
+                                                if isinstance(related_ids, list):
+                                                    # التحقق من وجود الكائنات المرتبطة وتحويل الـ IDs
+                                                    valid_ids = []
+                                                    for rel_id in related_ids:
+                                                        if isinstance(rel_id, (int, str)) and str(rel_id).isdigit():
+                                                            valid_ids.append(int(rel_id))
+                                                    field_manager.set(valid_ids)
+                                                else:
+                                                    # إذا لم تكن list، قم بمسح العلاقات
+                                                    field_manager.clear()
+                                        except Exception as m2m_err:
+                                            # تجاهل أخطاء Many-to-Many
+                                            logger.warning(f"خطأ في معالجة Many-to-Many field {field_name}: {m2m_err}")
+                                            pass
+                                    
+                                    processed_records += 1
+                                    table_info['actual_records'] += 1
+                                    logger.debug(f"✅ استعادة سجل {table_info['display_name']}[{pk_value}]")
+                                except Exception as rec_err:
+                                    error_msg = str(rec_err)
+                                    # 🔧 تحسين: محاولة الاستعادة مع قيم افتراضية في حالة FK مفقودة
+                                    if error_msg.startswith("FK_NOT_FOUND:"):
+                                        logger.warning(f"⚠️ FK مفقود في {table_info['display_name']}: {error_msg}")
+                                        # يمكن هنا إضافة منطق لمحاولة استخدام FK افتراضي
+                                    elif error_msg.startswith("Required field"):
+                                        logger.warning(f"⚠️ حقل مطلوب مفقود في {table_info['display_name']}: {error_msg}")
+                                    else:
+                                        logger.warning(f"⚠️ فشل في استعادة سجل في {table_info['display_name']}: {rec_err}")
+                                    
+                                    # تسجيل الخطأ في تفاصيل الجدول
+                                    if not table_info.get('errors'):
+                                        table_info['errors'] = []
+                                    table_info['errors'].append({
+                                        'record': pk_value if 'pk_value' in locals() else 'unknown',
+                                        'error': error_msg
+                                    })
+                                    continue
+                    
+                    processed_tables += 1
+                    percentage = int((processed_tables / len(flat_tables)) * 100) if flat_tables else 100
+                    progress_data['percentage'] = percentage
+                    progress_data['processed_tables'] = processed_tables
+                    progress_data['processed_records'] = processed_records
+                    progress_data['tables_status'][i]['status'] = 'completed'
+                    set_restore_progress_data(progress_data)
+                    
+                except Exception as e:
+                    logger.warning(f"فشل في استعادة جدول {table_info['display_name']}: {str(e)}")
+                    progress_data['tables_status'][i]['status'] = 'error'
+                    progress_data['tables_status'][i]['error'] = str(e)
+                    set_restore_progress_data(progress_data)
+                    continue
                 
                 # إعادة تعيين جميع sequences لتجنب تضارب IDs في المستقبل
                 progress_data.update({
-                    'current_table': 'إعادة تعيين sequences قاعدة البيانات...',
-                    'percentage': 95
+                'current_table': 'إعادة تعيين sequences قاعدة البيانات...',
+                'percentage': 95
                 })
                 set_restore_progress_data(progress_data)
                 
@@ -2181,42 +2181,42 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                 
                 # إكمال التقدم
                 progress_data.update({
-                    'is_running': False,
-                    'status': 'completed',
-                    'percentage': 100,
-                    'current_table': 'تم إكمال الاستعادة بنجاح!',
-                    'processed_tables': processed_tables,
-                    'processed_records': total_restored,
-                    'total_records': total_records_expected,
-                    'records_skipped': total_skipped,
-                    'tables_with_errors': total_errors,
-                    'elapsed_time': f'{elapsed_time:.2f} ثانية',
-                    'estimated_time': '0 ثانية متبقية'
+                'is_running': False,
+                'status': 'completed',
+                'percentage': 100,
+                'current_table': 'تم إكمال الاستعادة بنجاح!',
+                'processed_tables': processed_tables,
+                'processed_records': total_restored,
+                'total_records': total_records_expected,
+                'records_skipped': total_skipped,
+                'tables_with_errors': total_errors,
+                'elapsed_time': f'{elapsed_time:.2f} ثانية',
+                'estimated_time': '0 ثانية متبقية'
                 })
                 set_restore_progress_data(progress_data)
                 
                 log_audit(user, 'create', f'اكتمل استعادة النسخة الاحتياطية: {total_restored}/{total_records_expected} سجل من {processed_tables} جدول ({total_skipped} متخطى)، تم إعادة تعيين {sequences_reset} sequence')
                 
         except Exception as e:
+            # 🔧 لا نرفع الخطأ - نسجله فقط للسماح بالاستعادة الجزئية
             logger.error(f"خطأ في استعادة البيانات: {str(e)}")
             progress_data.update({
                 'is_running': False,
-                'status': 'error',
+                'status': 'completed_with_errors',
                 'error': str(e)
             })
             set_restore_progress_data(progress_data)
-            raise e
             
     except Exception as e:
+        # 🔧 لا نرفع الخطأ - نسجله فقط للسماح بالاستعادة الجزئية
         logger.error(f"خطأ في تنفيذ استعادة النسخة الاحتياطية: {str(e)}")
         progress_data = get_restore_progress_data()
         progress_data.update({
             'is_running': False,
-            'status': 'error',
+            'status': 'completed_with_errors',
             'error': str(e)
         })
         set_restore_progress_data(progress_data)
-        raise e
     finally:
         # 🔧 إيقاف وضع الاستعادة (إعادة تفعيل السيجنالات)
         from .restore_context import set_restoring
