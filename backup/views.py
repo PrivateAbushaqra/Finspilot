@@ -62,33 +62,52 @@ try:
                 logger.info("بدء إعادة تعيين جميع sequences...")
                 sequences_reset = 0
                 
-                # جلب جميع sequences في قاعدة البيانات
+                # استخدام استعلام محسّن للحصول على العلاقة بين sequence والجدول
                 cursor.execute("""
-                    SELECT sequence_name, table_name, column_name 
-                    FROM information_schema.sequences s
-                    LEFT JOIN information_schema.columns c ON c.column_default LIKE '%' || s.sequence_name || '%'
-                    WHERE s.sequence_schema = 'public'
+                    SELECT 
+                        c.relname as table_name,
+                        s.relname as sequence_name
+                    FROM pg_class s
+                    JOIN pg_depend d ON d.objid = s.oid
+                    JOIN pg_class c ON d.refobjid = c.oid
+                    WHERE s.relkind = 'S'
+                    AND c.relkind = 'r'
+                    AND s.relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
+                    ORDER BY c.relname;
                 """)
                 
                 sequences = cursor.fetchall()
                 
-                for seq_name, table_name, column_name in sequences:
+                for table_name, seq_name in sequences:
                     try:
-                        if table_name and column_name:
-                            # البحث عن أعلى ID في الجدول
-                            cursor.execute(f"SELECT MAX({column_name}) FROM {table_name}")
-                            max_id = cursor.fetchone()[0] or 0
+                        # افتراض أن العمود هو 'id' (المعيار في Django)
+                        column_name = 'id'
+                        
+                        # جلب أعلى قيمة في الجدول
+                        cursor.execute(f"SELECT MAX({column_name}) FROM {table_name}")
+                        max_id = cursor.fetchone()[0]
+                        
+                        if max_id is not None:
+                            # جلب قيمة sequence الحالية
+                            cursor.execute(f"SELECT last_value FROM {seq_name}")
+                            seq_value = cursor.fetchone()[0]
                             
-                            # إعادة تعيين sequence
-                            cursor.execute(f"SELECT setval('{seq_name}', {max_id + 1}, false)")
+                            # إعادة تعيين sequence فقط إذا كان أقل من max_id
+                            if seq_value <= max_id:
+                                cursor.execute(f"SELECT setval('{seq_name}', {max_id + 1}, false)")
+                                sequences_reset += 1
+                                logger.debug(f"تم إعادة تعيين {seq_name} من {seq_value} إلى {max_id + 1}")
+                        else:
+                            # الجدول فارغ، تأكد من أن sequence عند 1
+                            cursor.execute(f"SELECT setval('{seq_name}', 1, false)")
                             sequences_reset += 1
-                            logger.debug(f"تم إعادة تعيين {seq_name} إلى {max_id + 1}")
+                            logger.debug(f"تم إعادة تعيين {seq_name} إلى 1 (جدول فارغ)")
                             
                     except Exception as seq_error:
                         logger.warning(f"فشل في إعادة تعيين {seq_name}: {seq_error}")
                         continue
                 
-                logger.info(f"تم إعادة تعيين {sequences_reset} sequence بنجاح")
+                logger.info(f"تم إعادة تعيين {sequences_reset} sequence بنجاح من أصل {len(sequences)}")
                 return sequences_reset
                 
         except Exception as e:
