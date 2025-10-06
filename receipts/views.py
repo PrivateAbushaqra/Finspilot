@@ -313,10 +313,43 @@ def receipt_add(request):
                     except Exception:
                         pass
                 
-                # For checks: update check status
+                # For checks: update check status and add to cashbox
                 if payment_type == 'check':
                     receipt.check_status = 'pending'
                     receipt.save()
+                    
+                    # إضافة الشيك إلى الصندوق المحدد
+                    if check_cashbox_id:
+                        check_cashbox = get_object_or_404(Cashbox, id=check_cashbox_id)
+                        check_cashbox.balance += amount
+                        check_cashbox.save()
+                        
+                        # إضافة حركة صندوق للشيك
+                        CashboxTransaction.objects.create(
+                            cashbox=check_cashbox,
+                            transaction_type='deposit',
+                            date=date,
+                            amount=amount,
+                            description=f'{_("شيك قيد التحصيل")} - {_("سند قبض")} {receipt.receipt_number} {_("من")} {customer.name} - {_("رقم الشيك")}: {check_number}',
+                            created_by=request.user
+                        )
+                        
+                        # تسجيل النشاط
+                        try:
+                            from core.signals import log_user_activity
+                            log_user_activity(
+                                request,
+                                'create',
+                                receipt,
+                                _('إيداع شيك في الصندوق - سند قبض رقم %(number)s - الصندوق: %(cashbox)s - المبلغ: %(amount)s - رقم الشيك: %(check)s') % {
+                                    'number': receipt.receipt_number,
+                                    'cashbox': check_cashbox.name,
+                                    'amount': amount,
+                                    'check': check_number
+                                }
+                            )
+                        except Exception:
+                            pass
                 
                 # إنشاء القيد المحاسبي
                 create_receipt_journal_entry(receipt, request.user)
