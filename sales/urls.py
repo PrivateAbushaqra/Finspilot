@@ -12,6 +12,11 @@ urlpatterns = [
     path('invoices/delete/<int:pk>/', views.SalesInvoiceDeleteView.as_view(), name='invoice_delete'),
     path('invoices/<int:pk>/send-to-jofotara/', views.send_invoice_to_jofotara, name='send_invoice_to_jofotara'),
     
+    # Invoice Item Management (AJAX)
+    path('invoices/<int:invoice_id>/items/add/', views.invoice_add_item, name='invoice_add_item'),
+    path('invoices/<int:invoice_id>/items/<int:item_id>/update/', views.invoice_update_item, name='invoice_update_item'),
+    path('invoices/<int:invoice_id>/items/<int:item_id>/delete/', views.invoice_delete_item, name='invoice_delete_item'),
+    
     # Sales Returns
     path('returns/', views.SalesReturnListView.as_view(), name='return_list'),
     path('returns/add/', views.SalesReturnCreateView.as_view(), name='return_add'),

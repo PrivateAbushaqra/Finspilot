@@ -59,6 +59,16 @@ class JournalService:
     @staticmethod
     def create_sales_invoice_entry(invoice, user=None):
         """إنشاء قيد فاتورة المبيعات"""
+        # التحقق من عدم وجود قيد سابق لهذه الفاتورة
+        existing_entry = JournalEntry.objects.filter(
+            reference_type='sales_invoice',
+            reference_id=invoice.id
+        ).first()
+        
+        if existing_entry:
+            print(f"قيد المبيعات موجود بالفعل للفاتورة {invoice.invoice_number}: {existing_entry.entry_number}")
+            return existing_entry
+        
         lines_data = []
         
         # تحديد الحساب المدين حسب نوع الدفع
@@ -112,6 +122,16 @@ class JournalService:
     @staticmethod
     def create_cogs_entry(invoice, user=None):
         """إنشاء قيد تكلفة البضاعة المباعة"""
+        # التحقق من عدم وجود قيد COGS سابق لهذه الفاتورة
+        existing_cogs = JournalEntry.objects.filter(
+            reference_type='sales_invoice_cogs',
+            reference_id=invoice.id
+        ).first()
+        
+        if existing_cogs:
+            print(f"قيد COGS موجود بالفعل للفاتورة {invoice.invoice_number}: {existing_cogs.entry_number}")
+            return existing_cogs
+        
         from inventory.models import InventoryMovement
         from decimal import Decimal
         

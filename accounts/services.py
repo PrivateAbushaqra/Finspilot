@@ -8,18 +8,20 @@ from .models import AccountTransaction
 
 def create_sales_invoice_transaction(invoice, user):
     """إنشاء حركة حساب لفاتورة مبيعات"""
-    if not invoice.customer:
-        return None  # لا نسجل حركة للعملاء النقديين
+    # لا نسجل حركة حساب للفواتير النقدية (مدفوعة فوراً)
+    # أو للفواتير بدون عميل
+    if not invoice.customer or invoice.payment_type == 'cash':
+        return None
     
-    # تحديد الاتجاه حسب نوع الدفع
+    # فقط الفواتير الآجلة تُسجّل كذمم على العميل
     if invoice.payment_type == 'credit':
         # ذمم - العميل مدين (عليه دين)
         direction = 'debit'
-        description = f'فاتورة مبيعات ذمم رقم {invoice.invoice_number}'
+        description = f'فاتورة مبيعات آجلة رقم {invoice.invoice_number}'
     else:
-        # كاش - العميل دائن (دفع نقدي)
-        direction = 'credit'
-        description = f'فاتورة مبيعات نقدي رقم {invoice.invoice_number}'
+        # أي نوع دفع آخر غير نقدي وآجل
+        direction = 'debit'
+        description = f'فاتورة مبيعات رقم {invoice.invoice_number}'
     
     return AccountTransaction.create_transaction(
         customer_supplier=invoice.customer,
@@ -37,15 +39,19 @@ def create_sales_invoice_transaction(invoice, user):
 
 def create_purchase_invoice_transaction(invoice, user):
     """إنشاء حركة حساب لفاتورة مشتريات"""
-    # تحديد الاتجاه حسب نوع الدفع
+    # لا نسجل حركة حساب للفواتير النقدية (مدفوعة فوراً)
+    if invoice.payment_type == 'cash':
+        return None
+    
+    # فقط الفواتير الآجلة تُسجّل كذمم على المورد
     if invoice.payment_type == 'credit':
         # ذمم - المورد دائن (له دين علينا)
         direction = 'credit'
-        description = f'فاتورة مشتريات ذمم رقم {invoice.invoice_number}'
+        description = f'فاتورة مشتريات آجلة رقم {invoice.invoice_number}'
     else:
-        # كاش - المورد مدين (دفع نقدي له)
-        direction = 'debit'
-        description = f'فاتورة مشتريات نقدي رقم {invoice.invoice_number}'
+        # أي نوع دفع آخر غير نقدي وآجل
+        direction = 'credit'
+        description = f'فاتورة مشتريات رقم {invoice.invoice_number}'
     
     return AccountTransaction.create_transaction(
         customer_supplier=invoice.supplier,

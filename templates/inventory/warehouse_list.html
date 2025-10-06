@@ -280,8 +280,8 @@
                                         <td>
                                             <code>{{ warehouse.code }}</code>
                                         </td>
-                                        <td>{{ warehouse.parent.name|default:"{% trans 'Main' %}" }}</td>
-                                        <td>{{ warehouse.manager.get_full_name|default:"{% trans 'Not specified' %}" }}</td>
+                                        <td>{{ warehouse.parent.name|default:_("Main") }}</td>
+                                        <td>{{ warehouse.manager.get_full_name|default:_("Not specified") }}</td>
                                         <td>
                                             <span class="badge 
                                                 {% if warehouse.is_active %}bg-success

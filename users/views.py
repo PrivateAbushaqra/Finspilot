@@ -942,38 +942,44 @@ class UserGroupCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        # الحصول على جميع الصلاحيات
-        queryset = Permission.objects.select_related('content_type').order_by('content_type__app_label', 'name')
-        
-        # تصفية صلاحيات superadmin إذا لم يكن المستخدم superadmin أو admin
-        if not (getattr(self.request.user, 'user_type', None) in ['superadmin', 'admin'] or self.request.user.is_superuser):
-            queryset = queryset.exclude(
-                codename__in=[
-                    'can_access_system_management',
-                    'can_manage_users',
-                    'can_view_audit_logs'
-                ]
-            )
-        
-        # تنظيم الصلاحيات حسب التطبيق
-        permissions_by_app = {}
-        for permission in queryset:
-            app_label = permission.content_type.app_label
-            if app_label not in permissions_by_app:
-                permissions_by_app[app_label] = []
+        try:
+            # الحصول على جميع الصلاحيات
+            queryset = Permission.objects.select_related('content_type').order_by('content_type__app_label', 'name')
             
-            # إضافة ترجمة للصلاحية
-            permission.translated_name = self._get_permission_translation(permission)
-            permissions_by_app[app_label].append(permission)
-        
-        context['permissions_by_app'] = permissions_by_app
-        
-        # إضافة أسماء التطبيقات المترجمة
-        context['app_names'] = self._get_app_names()
-        
-        # إضافة wrapper للصلاحيات
-        from django.contrib.auth.context_processors import PermWrapper
-        context['perms'] = PermWrapper(self.request.user)
+            # تصفية صلاحيات superadmin إذا لم يكن المستخدم superadmin أو admin
+            if not (getattr(self.request.user, 'user_type', None) in ['superadmin', 'admin'] or self.request.user.is_superuser):
+                queryset = queryset.exclude(
+                    codename__in=[
+                        'can_access_system_management',
+                        'can_manage_users',
+                        'can_view_audit_logs'
+                    ]
+                )
+            
+            # تنظيم الصلاحيات حسب التطبيق
+            permissions_by_app = {}
+            for permission in queryset:
+                app_label = permission.content_type.app_label
+                if app_label not in permissions_by_app:
+                    permissions_by_app[app_label] = []
+                
+                # إضافة ترجمة للصلاحية
+                permission.translated_name = self._get_permission_translation(permission)
+                permissions_by_app[app_label].append(permission)
+            
+            context['permissions_by_app'] = permissions_by_app
+            
+            # إضافة أسماء التطبيقات المترجمة
+            context['app_names'] = self._get_app_names()
+            
+            # إضافة wrapper للصلاحيات
+            from django.contrib.auth.context_processors import PermWrapper
+            context['perms'] = PermWrapper(self.request.user)
+            
+        except Exception as e:
+            # في حالة وجود خطأ، إضافة سياق فارغ
+            context['permissions_by_app'] = {}
+            context['app_names'] = {}
         
         return context
     
@@ -985,6 +991,7 @@ class UserGroupCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
             'change_journalentry': _('تعديل قيد يومية'),
             'delete_journalentry': _('حذف قيد يومية'),
             'view_journalentry': _('عرض قيد يومية'),
+            'change_journalentry_entry_number': _('تعديل رقم القيد'),
             'add_account': _('إضافة حساب'),
             'change_account': _('تعديل حساب'),
             'delete_account': _('حذف حساب'),
@@ -1005,12 +1012,20 @@ class UserGroupCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
             'change_salesinvoice': _('تعديل فاتورة مبيعات'),
             'delete_salesinvoice': _('حذف فاتورة مبيعات'),
             'view_salesinvoice': _('عرض فاتورة مبيعات'),
+            'add_salesinvoiceitem': _('إضافة عنصر فاتورة مبيعات'),
+            'change_salesinvoiceitem': _('تعديل عنصر فاتورة مبيعات'),
+            'delete_salesinvoiceitem': _('حذف عنصر فاتورة مبيعات'),
+            'view_salesinvoiceitem': _('عرض عنصر فاتورة مبيعات'),
             
             # صلاحيات المشتريات
             'add_purchaseinvoice': _('إضافة فاتورة مشتريات'),
             'change_purchaseinvoice': _('تعديل فاتورة مشتريات'),
             'delete_purchaseinvoice': _('حذف فاتورة مشتريات'),
             'view_purchaseinvoice': _('عرض فاتورة مشتريات'),
+            'add_purchaseinvoiceitem': _('إضافة عنصر فاتورة مشتريات'),
+            'change_purchaseinvoiceitem': _('تعديل عنصر فاتورة مشتريات'),
+            'delete_purchaseinvoiceitem': _('حذف عنصر فاتورة مشتريات'),
+            'view_purchaseinvoiceitem': _('عرض عنصر فاتورة مشتريات'),
             
             # صلاحيات العملاء والموردين
             'add_customersupplier': _('إضافة عميل/مورد'),
@@ -1023,10 +1038,66 @@ class UserGroupCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
             'change_product': _('تعديل منتج'),
             'delete_product': _('حذف منتج'),
             'view_product': _('عرض منتج'),
-            'add_category': _('إضافة فئة منتج'),
-            'change_category': _('تعديل فئة منتج'),
-            'delete_category': _('حذف فئة منتج'),
-            'view_category': _('عرض فئة منتج'),
+            'add_category': _('إضافة تصنيف'),
+            'change_category': _('تعديل تصنيف'),
+            'delete_category': _('حذف تصنيف'),
+            'view_category': _('عرض تصنيف'),
+            
+            # صلاحيات المخزون
+            'add_warehouse': _('إضافة مستودع'),
+            'change_warehouse': _('تعديل مستودع'),
+            'delete_warehouse': _('حذف مستودع'),
+            'view_warehouse': _('عرض مستودع'),
+            'add_inventorymovement': _('إضافة حركة مخزون'),
+            'change_inventorymovement': _('تعديل حركة مخزون'),
+            'delete_inventorymovement': _('حذف حركة مخزون'),
+            'view_inventorymovement': _('عرض حركة مخزون'),
+            
+            # صلاحيات البنوك
+            'add_bank': _('إضافة بنك'),
+            'change_bank': _('تعديل بنك'),
+            'delete_bank': _('حذف بنك'),
+            'view_bank': _('عرض بنك'),
+            'add_bankaccount': _('إضافة حساب بنكي'),
+            'change_bankaccount': _('تعديل حساب بنكي'),
+            'delete_bankaccount': _('حذف حساب بنكي'),
+            'view_bankaccount': _('عرض حساب بنكي'),
+            
+            # صلاحيات الصناديق
+            'add_cashbox': _('إضافة صندوق'),
+            'change_cashbox': _('تعديل صندوق'),
+            'delete_cashbox': _('حذف صندوق'),
+            'view_cashbox': _('عرض صندوق'),
+            
+            # صلاحيات المدفوعات والمقبوضات
+            'add_payment': _('إضافة دفعة'),
+            'change_payment': _('تعديل دفعة'),
+            'delete_payment': _('حذف دفعة'),
+            'view_payment': _('عرض دفعة'),
+            'add_receipt': _('إضافة مقبوضة'),
+            'change_receipt': _('تعديل مقبوضة'),
+            'delete_receipt': _('حذف مقبوضة'),
+            'view_receipt': _('عرض مقبوضة'),
+            
+            # صلاحيات المستخدمين
+            'add_user': _('إضافة مستخدم'),
+            'change_user': _('تعديل مستخدم'),
+            'delete_user': _('حذف مستخدم'),
+            'view_user': _('عرض مستخدم'),
+            'add_group': _('إضافة مجموعة'),
+            'change_group': _('تعديل مجموعة'),
+            'delete_group': _('حذف مجموعة'),
+            'view_group': _('عرض مجموعة'),
+            
+            # صلاحيات النظام الأساسي
+            'add_companysettings': _('إضافة إعدادات الشركة'),
+            'change_companysettings': _('تعديل إعدادات الشركة'),
+            'delete_companysettings': _('حذف إعدادات الشركة'),
+            'view_companysettings': _('عرض إعدادات الشركة'),
+            'add_auditlog': _('إضافة سجل مراجعة'),
+            'change_auditlog': _('تعديل سجل مراجعة'),
+            'delete_auditlog': _('حذف سجل مراجعة'),
+            'view_auditlog': _('عرض سجل مراجعة'),
             
             # صلاحيات النسخ الاحتياطية
             'can_restore_backup': _('استعادة النسخ الاحتياطية'),
@@ -1319,6 +1390,7 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
             'change_journalentry': _('تعديل قيد يومية'),
             'delete_journalentry': _('حذف قيد يومية'),
             'view_journalentry': _('عرض قيد يومية'),
+            'change_journalentry_entry_number': _('تعديل رقم القيد'),
             'add_account': _('إضافة حساب'),
             'change_account': _('تعديل حساب'),
             'delete_account': _('حذف حساب'),
@@ -1339,12 +1411,20 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
             'change_salesinvoice': _('تعديل فاتورة مبيعات'),
             'delete_salesinvoice': _('حذف فاتورة مبيعات'),
             'view_salesinvoice': _('عرض فاتورة مبيعات'),
+            'add_salesinvoiceitem': _('إضافة عنصر فاتورة مبيعات'),
+            'change_salesinvoiceitem': _('تعديل عنصر فاتورة مبيعات'),
+            'delete_salesinvoiceitem': _('حذف عنصر فاتورة مبيعات'),
+            'view_salesinvoiceitem': _('عرض عنصر فاتورة مبيعات'),
             
             # صلاحيات المشتريات
             'add_purchaseinvoice': _('إضافة فاتورة مشتريات'),
             'change_purchaseinvoice': _('تعديل فاتورة مشتريات'),
             'delete_purchaseinvoice': _('حذف فاتورة مشتريات'),
             'view_purchaseinvoice': _('عرض فاتورة مشتريات'),
+            'add_purchaseinvoiceitem': _('إضافة عنصر فاتورة مشتريات'),
+            'change_purchaseinvoiceitem': _('تعديل عنصر فاتورة مشتريات'),
+            'delete_purchaseinvoiceitem': _('حذف عنصر فاتورة مشتريات'),
+            'view_purchaseinvoiceitem': _('عرض عنصر فاتورة مشتريات'),
             
             # صلاحيات العملاء والموردين
             'add_customersupplier': _('إضافة عميل/مورد'),
@@ -1357,10 +1437,66 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
             'change_product': _('تعديل منتج'),
             'delete_product': _('حذف منتج'),
             'view_product': _('عرض منتج'),
-            'add_category': _('إضافة فئة منتج'),
-            'change_category': _('تعديل فئة منتج'),
-            'delete_category': _('حذف فئة منتج'),
-            'view_category': _('عرض فئة منتج'),
+            'add_category': _('إضافة تصنيف'),
+            'change_category': _('تعديل تصنيف'),
+            'delete_category': _('حذف تصنيف'),
+            'view_category': _('عرض تصنيف'),
+            
+            # صلاحيات المخزون
+            'add_warehouse': _('إضافة مستودع'),
+            'change_warehouse': _('تعديل مستودع'),
+            'delete_warehouse': _('حذف مستودع'),
+            'view_warehouse': _('عرض مستودع'),
+            'add_inventorymovement': _('إضافة حركة مخزون'),
+            'change_inventorymovement': _('تعديل حركة مخزون'),
+            'delete_inventorymovement': _('حذف حركة مخزون'),
+            'view_inventorymovement': _('عرض حركة مخزون'),
+            
+            # صلاحيات البنوك
+            'add_bank': _('إضافة بنك'),
+            'change_bank': _('تعديل بنك'),
+            'delete_bank': _('حذف بنك'),
+            'view_bank': _('عرض بنك'),
+            'add_bankaccount': _('إضافة حساب بنكي'),
+            'change_bankaccount': _('تعديل حساب بنكي'),
+            'delete_bankaccount': _('حذف حساب بنكي'),
+            'view_bankaccount': _('عرض حساب بنكي'),
+            
+            # صلاحيات الصناديق
+            'add_cashbox': _('إضافة صندوق'),
+            'change_cashbox': _('تعديل صندوق'),
+            'delete_cashbox': _('حذف صندوق'),
+            'view_cashbox': _('عرض صندوق'),
+            
+            # صلاحيات المدفوعات والمقبوضات
+            'add_payment': _('إضافة دفعة'),
+            'change_payment': _('تعديل دفعة'),
+            'delete_payment': _('حذف دفعة'),
+            'view_payment': _('عرض دفعة'),
+            'add_receipt': _('إضافة مقبوضة'),
+            'change_receipt': _('تعديل مقبوضة'),
+            'delete_receipt': _('حذف مقبوضة'),
+            'view_receipt': _('عرض مقبوضة'),
+            
+            # صلاحيات المستخدمين
+            'add_user': _('إضافة مستخدم'),
+            'change_user': _('تعديل مستخدم'),
+            'delete_user': _('حذف مستخدم'),
+            'view_user': _('عرض مستخدم'),
+            'add_group': _('إضافة مجموعة'),
+            'change_group': _('تعديل مجموعة'),
+            'delete_group': _('حذف مجموعة'),
+            'view_group': _('عرض مجموعة'),
+            
+            # صلاحيات النظام الأساسي
+            'add_companysettings': _('إضافة إعدادات الشركة'),
+            'change_companysettings': _('تعديل إعدادات الشركة'),
+            'delete_companysettings': _('حذف إعدادات الشركة'),
+            'view_companysettings': _('عرض إعدادات الشركة'),
+            'add_auditlog': _('إضافة سجل مراجعة'),
+            'change_auditlog': _('تعديل سجل مراجعة'),
+            'delete_auditlog': _('حذف سجل مراجعة'),
+            'view_auditlog': _('عرض سجل مراجعة'),
             
             # صلاحيات النسخ الاحتياطية
             'can_restore_backup': _('استعادة النسخ الاحتياطية'),

@@ -987,7 +987,7 @@ def product_add_ajax(request):
             selling_price = request.POST.get('selling_price', '0')
             wholesale_price = request.POST.get('wholesale_price', '0')
             tax_rate = request.POST.get('tax_rate', '0')
-            current_stock = request.POST.get('current_stock', '0')
+            opening_balance = request.POST.get('opening_balance', '0')
             min_stock = request.POST.get('min_stock', '0')
             max_stock = request.POST.get('max_stock', '0')
             description = request.POST.get('description', '').strip()
@@ -1008,15 +1008,19 @@ def product_add_ajax(request):
                 })
             
             # التحقق من التصنيف
-            category = None
-            if category_id:
-                try:
-                    category = Category.objects.get(id=category_id)
-                except Category.DoesNotExist:
-                    return JsonResponse({
-                        'success': False,
-                        'error': 'التصنيف المحدد غير موجود!'
-                    })
+            if not category_id:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'التصنيف مطلوب!'
+                })
+            
+            try:
+                category = Category.objects.get(id=category_id)
+            except Category.DoesNotExist:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'التصنيف المحدد غير موجود!'
+                })
             
             # التحقق من عدم تكرار رمز المنتج
             if sku and Product.objects.filter(code=sku).exists():
@@ -1054,12 +1058,20 @@ def product_add_ajax(request):
                 selling_price = float(selling_price)
                 wholesale_price = float(wholesale_price) if wholesale_price else 0
                 tax_rate = float(tax_rate) if tax_rate else 0
+                opening_balance = float(opening_balance) if opening_balance else 0
                 
                 # التحقق من صحة نسبة الضريبة
                 if tax_rate < 0 or tax_rate > 100:
                     return JsonResponse({
                         'success': False,
                         'error': 'نسبة الضريبة يجب أن تكون بين 0 و 100!'
+                    })
+                
+                # التحقق من صحة رصيد بداية المدة
+                if opening_balance < 0:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'رصيد بداية المدة يجب أن يكون صفر أو أكبر!'
                     })
                     
             except ValueError:
@@ -1078,11 +1090,61 @@ def product_add_ajax(request):
                 serial_number=serial_number,
                 category=category,
                 description=description,
+                cost_price=cost_price,
                 minimum_quantity=float(min_stock) if min_stock else 0,
                 sale_price=selling_price,
                 wholesale_price=wholesale_price,
                 tax_rate=tax_rate,
                 is_active=is_active
+            )
+            
+            # إنشاء حركة مخزون للرصيد الافتتاحي إذا كان أكبر من صفر
+            if opening_balance and float(opening_balance) > 0:
+                try:
+                    from inventory.models import InventoryMovement, Warehouse
+                    
+                    # الحصول على المستودع الافتراضي أو إنشاؤه
+                    default_warehouse, created = Warehouse.objects.get_or_create(
+                        code='MAIN',
+                        defaults={
+                            'name': 'المستودع الرئيسي',
+                            'address': 'المستودع الافتراضي للنظام',
+                            'is_active': True
+                        }
+                    )
+                    
+                    InventoryMovement.objects.create(
+                        product=product,
+                        warehouse=default_warehouse,
+                        movement_type='in',
+                        quantity=float(opening_balance),
+                        unit_cost=cost_price,
+                        total_cost=float(opening_balance) * cost_price,
+                        reference_type='opening_balance',
+                        reference_id=product.id,
+                        notes=f'الرصيد الافتتاحي للمنتج {product.name}',
+                        created_by=request.user,
+                        date=product.created_at.date()
+                    )
+                except Exception as e:
+                    # تسجيل تحذير في حالة فشل إنشاء حركة المخزون
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f"فشل في إنشاء حركة المخزون للرصيد الافتتاحي للمنتج {product.id}: {str(e)}")
+            
+            # معالجة رفع الصورة
+            if 'image' in request.FILES:
+                product.image = request.FILES['image']
+                product.save()
+            
+            # تسجيل النشاط في سجل الأنشطة
+            AuditLog.objects.create(
+                user=request.user,
+                action_type='create',
+                content_type='Product',
+                object_id=product.id,
+                description=f'تم إنشاء المنتج: {product.name} - رمز المنتج: {product.code} - سعر البيع: {product.sale_price}',
+                ip_address=request.META.get('REMOTE_ADDR')
             )
             
             # رسالة نجاح مع تفاصيل الضريبة
@@ -1109,6 +1171,20 @@ def product_add_ajax(request):
             })
             
         except Exception as e:
+            # تسجيل الخطأ في audit log
+            AuditLog.objects.create(
+                user=request.user,
+                action_type='error',
+                content_type='Product',
+                object_id=None,
+                description=f'حدث خطأ أثناء إنشاء المنتج: {str(e)}',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"خطأ في إنشاء المنتج: {str(e)}")
+            
             return JsonResponse({
                 'success': False,
                 'error': f'حدث خطأ أثناء إنشاء المنتج: {str(e)}'

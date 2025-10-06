@@ -157,6 +157,11 @@ def update_inventory_on_purchase_invoice(sender, instance, created, **kwargs):
 @receiver(post_save, sender=PurchaseReturn)
 def create_journal_entry_for_purchase_return(sender, instance, created, **kwargs):
     """إنشاء القيد المحاسبي تلقائياً عند إنشاء أو تحديث مردود مشتريات"""
+    # 🔧 تم تعطيل هذه الإشارة لتجنب إنشاء قيد مكرر
+    # القيد المحاسبي يتم إنشاؤه الآن من خلال الـ View فقط
+    # purchases/views.py -> PurchaseReturnCreateView -> create_purchase_return_journal_entry()
+    return
+    
     try:
         # 🔧 تعطيل السيجنال أثناء عملية استعادة النسخة الاحتياطية
         from backup.restore_context import is_restoring
@@ -225,14 +230,18 @@ def create_supplier_account_transaction_for_return(sender, instance, created, **
 @receiver(post_save, sender=PurchaseReturn)
 def update_inventory_on_purchase_return(sender, instance, created, **kwargs):
     """تحديث المخزون عند إنشاء أو تعديل مردود مشتريات"""
+    # 🔧 تم تعطيل هذه الإشارة لتجنب التكرار مع create_inventory_movements في PurchaseReturnCreateView
+    # حركات المخزون تُنشأ يدوياً في PurchaseReturnCreateView.create_inventory_movements()
+    return
+
     try:
         # 🔧 تعطيل السيجنال أثناء عملية استعادة النسخة الاحتياطية
         from backup.restore_context import is_restoring
         if is_restoring():
             return
-        
+
         from inventory.models import InventoryMovement
-        
+
         warehouse = instance.original_invoice.warehouse
         if not warehouse:
             from inventory.models import Warehouse
@@ -240,11 +249,11 @@ def update_inventory_on_purchase_return(sender, instance, created, **kwargs):
             if warehouse:
                 instance.original_invoice.warehouse = warehouse
                 instance.original_invoice.save(update_fields=['warehouse'])
-        
+
         if not warehouse:
             print(f"لا يوجد مستودع لمردود المشتريات {instance.return_number}")
             return
-        
+
         # للمردودات الجديدة، إنشاء حركات مخزون صادرة
         if created:
             for item in instance.items.all():
@@ -267,7 +276,7 @@ def update_inventory_on_purchase_return(sender, instance, created, **kwargs):
                 reference_type='purchase_return',
                 reference_id=instance.id
             ).delete()
-            
+
             for item in instance.items.all():
                 if item.product.product_type == 'physical':
                     InventoryMovement.objects.create(
@@ -360,6 +369,10 @@ def update_inventory_on_purchase_invoice_item(sender, instance, created, **kwarg
 @receiver(post_save, sender=PurchaseReturnItem)
 def update_inventory_on_purchase_return_item(sender, instance, created, **kwargs):
     """تحديث المخزون عند إضافة/تعديل عنصر مردود المشتريات"""
+    # 🔧 تم تعطيل هذه الإشارة لتجنب التكرار مع create_inventory_movements في PurchaseReturnCreateView
+    # حركات المخزون تُنشأ يدوياً في PurchaseReturnCreateView.create_inventory_movements()
+    return
+
     try:
         # 🔧 تعطيل السيجنال أثناء عملية استعادة النسخة الاحتياطية
         from backup.restore_context import is_restoring

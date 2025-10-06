@@ -491,23 +491,7 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
             # الحصول على المستخدم الحالي
             created_by = request.user
             
-            # إنشاء الفاتورة
-            invoice = PurchaseInvoice.objects.create(
-                invoice_number=invoice_number,
-                supplier_invoice_number=supplier_invoice_number,
-                date=date,
-                supplier=supplier,
-                warehouse=warehouse,
-                payment_type=payment_type,
-                is_tax_inclusive=is_tax_inclusive,
-                notes=notes,
-                created_by=created_by,
-                subtotal=0,
-                tax_amount=0,
-                total_amount=0
-            )
-            
-            # معالجة المنتجات
+            # معالجة المنتجات أولاً للتحقق من صحة البيانات قبل إنشاء أي شيء
             products_data = []
             product_ids = request.POST.getlist('product_id[]')
             quantities = request.POST.getlist('quantity[]')
@@ -515,13 +499,116 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
             tax_rates = request.POST.getlist('tax_rate[]')
             row_taxes = request.POST.getlist('row_tax[]')
             
+            # التحقق من وجود منتجات قبل إنشاء الفاتورة
+            if not product_ids or not quantities or not unit_prices or not any(p for p in product_ids if p):
+                try:
+                    from core.signals import log_user_activity
+                    dummy = PurchaseInvoice()
+                    log_user_activity(
+                        request,
+                        'error',
+                        dummy,
+                        _('فشل إنشاء فاتورة شراء: لا توجد منتجات مضافة')
+                    )
+                except Exception:
+                    pass
+                messages.error(request, 'يجب إضافة منتج واحد على الأقل!')
+                context = self.get_invoice_create_context(request, form_data)
+                return render(request, self.template_name, context)
+            
+            # حساب المجاميع مسبقاً للتحقق من صحة البيانات
             if product_ids and quantities and unit_prices:
-                subtotal = 0
-                total_tax = 0
+                from decimal import Decimal
+                subtotal = Decimal('0')
+                total_tax = Decimal('0')
+                
+                # حساب المجاميع مؤقتاً للتحقق من صحة البيانات
                 for i, product_id in enumerate(product_ids):
                     if product_id and i < len(quantities) and i < len(unit_prices):
                         try:
-                            from decimal import Decimal
+                            product = Product.objects.get(id=product_id)
+                            quantity = Decimal(str(quantities[i]))
+                            unit_price = Decimal(str(unit_prices[i]))
+                            
+                            # حساب المجموع الفرعي للمنتج
+                            row_subtotal = quantity * unit_price
+                            
+                            # الحصول على نسبة الضريبة وقيمة الضريبة
+                            tax_rate = Decimal(str(tax_rates[i])) if i < len(tax_rates) and tax_rates[i] else Decimal('0')
+                            tax_amount = Decimal(str(row_taxes[i])) if i < len(row_taxes) and row_taxes[i] else Decimal('0')
+                            
+                            subtotal += row_subtotal
+                            total_tax += tax_amount
+                            
+                        except (Product.DoesNotExist, ValueError):
+                            continue
+                
+                # حساب الإجمالي النهائي
+                if is_tax_inclusive:
+                    final_total = (subtotal + total_tax).quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+                else:
+                    final_total = subtotal.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+                
+                # التحقق من الحد الائتماني للمورد (إذا كان الدفع آجل)
+                if payment_type == 'credit' and supplier and supplier.credit_limit > 0:
+                    current_balance = supplier.current_balance
+                    # الحد الائتماني المتاح = الحد الائتماني - الرصيد الدائن
+                    available_credit = supplier.credit_limit - abs(current_balance) if current_balance > 0 else supplier.credit_limit
+                    
+                    if final_total > available_credit:
+                        error_message = _(
+                            'لا يمكن إنشاء الفاتورة لأن المبلغ الإجمالي (%(total)s) يتجاوز الحد الائتماني المتاح للمورد (%(available)s).\n\nاقتراحات:\n1. زيادة الحد الائتماني للمورد\n2. تسديد المستحقات المتأخرة للمورد\n3. تحويل الفاتورة إلى دفع نقدي'
+                        ) % {
+                            'total': f"{final_total:.3f}",
+                            'available': f"{available_credit:.3f}"
+                        }
+                        
+                        existing_messages = [msg for msg in messages.get_messages(request) if msg.message == error_message]
+                        if not existing_messages:
+                            messages.warning(request, error_message)
+                        
+                        try:
+                            from core.signals import log_user_activity
+                            log_user_activity(
+                                request,
+                                'error',
+                                supplier,
+                                _('فشل في إنشاء فاتورة شراء: تجاوز الحد الائتماني - المبلغ %(total)s > المتاح %(available)s') % {
+                                    'total': f"{final_total:.3f}",
+                                    'available': f"{available_credit:.3f}"
+                                }
+                            )
+                        except Exception:
+                            pass
+                        
+                        context = self.get_invoice_create_context(request, form_data)
+                        return render(request, self.template_name, context)
+                
+                # إذا وصلنا هنا، يمكننا إنشاء الفاتورة بأمان
+                # إنشاء الفاتورة
+                invoice = PurchaseInvoice.objects.create(
+                    invoice_number=invoice_number,
+                    supplier_invoice_number=supplier_invoice_number,
+                    date=date,
+                    supplier=supplier,
+                    warehouse=warehouse,
+                    payment_type=payment_type,
+                    is_tax_inclusive=is_tax_inclusive,
+                    notes=notes,
+                    created_by=created_by,
+                    subtotal=subtotal.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP),
+                    tax_amount=total_tax.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP) if is_tax_inclusive else Decimal('0'),
+                    total_amount=final_total
+                )
+                
+                # إعادة تعيين المجاميع للحساب الفعلي
+                subtotal = Decimal('0')
+                total_tax = Decimal('0')
+                
+                # إنشاء عناصر الفاتورة وحركات المخزون
+                for i, product_id in enumerate(product_ids):
+                    if product_id and i < len(quantities) and i < len(unit_prices):
+                        try:
                             product = Product.objects.get(id=product_id)
                             quantity = Decimal(str(quantities[i]))
                             unit_price = Decimal(str(unit_prices[i]))
@@ -550,13 +637,13 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
                             # إنشاء حركة مخزون (إضافة الكمية المشتراة)
                             try:
                                 # استخدام المستودع المحدد في الفاتورة أو المستودع الافتراضي
-                                warehouse = invoice.warehouse if invoice.warehouse else Warehouse.objects.filter(is_active=True).first()
-                                if warehouse:
+                                inv_warehouse = invoice.warehouse if invoice.warehouse else Warehouse.objects.filter(is_active=True).first()
+                                if inv_warehouse:
                                     InventoryMovement.objects.create(
                                         movement_number=f"PUR-{invoice.invoice_number}-{i+1}",
                                         date=invoice.date,
                                         product=product,
-                                        warehouse=warehouse,
+                                        warehouse=inv_warehouse,
                                         movement_type='in',
                                         reference_type='purchase_invoice',
                                         reference_id=invoice.id,
@@ -575,16 +662,6 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
                             
                         except (Product.DoesNotExist, ValueError):
                             continue
-                
-                # تحديث مجاميع الفاتورة
-                invoice.subtotal = subtotal.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
-                if invoice.is_tax_inclusive:
-                    invoice.tax_amount = total_tax.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
-                    invoice.total_amount = (subtotal + total_tax).quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
-                else:
-                    invoice.tax_amount = Decimal('0').quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
-                    invoice.total_amount = subtotal.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
-                invoice.save()
                 
                 # إنشاء حركة حساب للمورد
                 create_purchase_invoice_account_transaction(invoice, request.user)
@@ -1233,6 +1310,8 @@ class PurchaseReturnCreateView(LoginRequiredMixin, CreateView):
         self.object.tax_amount = tax_amount
         self.object.total_amount = total_amount
         self.object.save()
+        # 🔧 إعادة تحميل الكائن من قاعدة البيانات لضمان استخدام القيم المحدثة في القيد المحاسبي
+        self.object.refresh_from_db()
     
     def create_inventory_movements(self):
         """إنشاء حركات المخزون للمردود (طرح)"""

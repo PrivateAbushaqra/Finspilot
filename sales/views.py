@@ -29,20 +29,27 @@ from django.utils.translation import gettext_lazy as _
 def create_sales_invoice_journal_entry(invoice, user):
     """إنشاء قيد محاسبي لفاتورة المبيعات"""
     try:
-        # إنشاء القيد المحاسبي باستخدام JournalService
+        # إنشاء قيد الإيراد (المبيعات)
         JournalService.create_sales_invoice_entry(invoice, user)
+        
+        # إنشاء قيد تكلفة البضاعة المباعة (COGS)
+        # يتم إنشاؤه هنا مرة واحدة فقط بعد حفظ الفاتورة وعناصرها
+        JournalService.create_cogs_entry(invoice, user)
     except Exception as e:
         print(f"خطأ في إنشاء القيد المحاسبي لفاتورة المبيعات: {e}")
         # لا نوقف العملية في حالة فشل إنشاء القيد المحاسبي
         pass
 
 def create_sales_return_journal_entry(sales_return, user):
-    """إنشاء قيد محاسبي لمردود المبيعات"""
+    """إنشاء قيود محاسبية لمردود المبيعات"""
     try:
-        # إنشاء القيد المحاسبي باستخدام JournalService
+        # القيد الأول: عكس قيد الإيراد
         JournalService.create_sales_return_entry(sales_return, user)
+        
+        # القيد الثاني: عكس قيد COGS (إرجاع البضاعة للمخزون)
+        JournalService.create_sales_return_cogs_entry(sales_return, user)
     except Exception as e:
-        print(f"خطأ في إنشاء القيد المحاسبي لمردود المبيعات: {e}")
+        print(f"خطأ في إنشاء القيود المحاسبية لمردود المبيعات: {e}")
         # لا نوقف العملية في حالة فشل إنشاء القيد المحاسبي
         pass
 
@@ -586,17 +593,85 @@ def sales_invoice_create(request):
                             context = get_invoice_create_context(request, form_data)
                             return render(request, 'sales/invoice_add.html', context)
 
-                        # حساب المجاميع
+                        # حساب المجاميع أولاً قبل إنشاء أي شيء (للتحقق من الحد الائتماني)
                         subtotal = Decimal('0')
                         total_tax_amount = Decimal('0')
-
-                        # إنشاء الفاتورة
-                        # determine inclusive_tax flag: default True; if user has permission, use presence of checkbox
+                        
+                        # determine inclusive_tax flag
                         if user.is_superuser or user.has_perm('sales.can_toggle_invoice_tax'):
                             inclusive_tax_flag = 'inclusive_tax' in request.POST
                         else:
                             inclusive_tax_flag = True
 
+                        # حساب المجاميع المؤقتة
+                        for i, product_id in enumerate(products):
+                            if product_id and i < len(quantities) and i < len(prices):
+                                try:
+                                    product = Product.objects.get(id=product_id)
+                                    quantity = parse_decimal_input(quantities[i], name='quantity', default=Decimal('0'))
+                                    unit_price = parse_decimal_input(prices[i], name='price', default=Decimal('0'))
+                                    tax_rate = parse_decimal_input(tax_rates[i] if i < len(tax_rates) else '0', name='tax_rate', default=Decimal('0'))
+
+                                    if quantity <= 0 or unit_price < 0:
+                                        continue
+
+                                    line_subtotal = quantity * unit_price
+                                    line_tax_amount = line_subtotal * (tax_rate / 100) if tax_rate > 0 else Decimal('0')
+                                    
+                                    subtotal += line_subtotal
+                                    total_tax_amount += line_tax_amount
+                                except (Product.DoesNotExist, ValueError, TypeError):
+                                    continue
+
+                        # حساب الإجمالي النهائي
+                        if inclusive_tax_flag:
+                            final_total = (subtotal + total_tax_amount - discount_amount).quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+                        else:
+                            final_total = (subtotal - discount_amount).quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+
+                        # فحص الحد الائتماني قبل إنشاء أي شيء
+                        if payment_type == 'credit' and customer and customer.credit_limit > 0:
+                            current_balance = customer.current_balance
+                            available_credit = customer.credit_limit - abs(current_balance) if current_balance < 0 else customer.credit_limit
+                            
+                            if final_total > available_credit:
+                                # رسالة تحذير مع اقتراحات
+                                error_message = _(
+                                    'لا يمكن إنشاء الفاتورة لأن المبلغ الإجمالي (%(total)s) يتجاوز الحد الائتماني المتاح للعميل (%(available)s).\n\nاقتراحات:\n1. زيادة الحد الائتماني للعميل\n2. تحصيل المستحقات المتأخرة من العميل\n3. تحويل الفاتورة إلى دفع نقدي'
+                                ) % {
+                                    'total': f"{final_total:.3f}",
+                                    'available': f"{available_credit:.3f}"
+                                }
+                                
+                                # التأكد من عدم وجود رسائل سابقة من نفس النوع
+                                existing_messages = [msg for msg in messages.get_messages(request) if msg.message == error_message]
+                                if not existing_messages:
+                                    messages.warning(request, error_message)
+                                
+                                # تسجيل المحاولة الفاشلة في سجل الأنشطة
+                                try:
+                                    from core.signals import log_user_activity
+                                    log_user_activity(
+                                        request,
+                                        'error',
+                                        customer,
+                                        _('فشل في إنشاء فاتورة مبيعات: تجاوز الحد الائتماني - المبلغ %(total)s > المتاح %(available)s') % {
+                                            'total': f"{final_total:.3f}",
+                                            'available': f"{available_credit:.3f}"
+                                        }
+                                    )
+                                except Exception:
+                                    pass
+                                
+                                context = get_invoice_create_context(request, form_data)
+                                return render(request, 'sales/invoice_add.html', context)
+
+                        # إذا وصلنا هنا، الحد الائتماني مسموح - يمكننا إنشاء الفاتورة
+                        # إعادة تعيين المجاميع لإعادة الحساب أثناء الإنشاء الفعلي
+                        subtotal = Decimal('0')
+                        total_tax_amount = Decimal('0')
+
+                        # إنشاء الفاتورة
                         invoice = SalesInvoice.objects.create(
                             invoice_number=invoice_number,
                             date=invoice_date,
@@ -764,46 +839,7 @@ def sales_invoice_create(request):
                             invoice.tax_amount = Decimal('0').quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
                             invoice.total_amount = (subtotal - discount_amount).quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
 
-                        # فحص الحد الائتماني قبل الحفظ
-                        if payment_type == 'credit' and customer and customer.credit_limit > 0:
-                            # حساب الرصيد الحالي للعميل
-                            current_balance = customer.current_balance
-                            # إذا كان الرصيد سالباً (مدين)، فهذا يعني أن العميل لديه ديون
-                            # الحد الائتماني المتاح = الحد الائتماني - الرصيد المدين
-                            available_credit = customer.credit_limit - abs(current_balance) if current_balance < 0 else customer.credit_limit
-                            
-                            if invoice.total_amount > available_credit:
-                                # حذف الفاتورة المؤقتة وإلغاء العملية
-                                invoice.delete()
-                                
-                                # رسالة خطأ مع اقتراحات
-                                error_message = _(
-                                    'Cannot create invoice because total amount (%(total)s) exceeds customer\'s available credit limit (%(available)s).\n\nSuggestions:\n1. Increase customer\'s credit limit\n2. Collect outstanding debts from customer\n3. Convert invoice to cash payment'
-                                ) % {
-                                    'total': f"{invoice.total_amount:.3f}",
-                                    'available': f"{available_credit:.3f}"
-                                }
-                                
-                                messages.error(request, error_message)
-                                
-                                # تسجيل المحاولة الفاشلة في سجل الأنشطة
-                                try:
-                                    from core.signals import log_user_activity
-                                    log_user_activity(
-                                        request,
-                                        'error',
-                                        customer,
-                                        _('Failed to create sales invoice: Credit limit exceeded - Amount %(total)s > Available %(available)s') % {
-                                            'total': f"{invoice.total_amount:.3f}",
-                                            'available': f"{available_credit:.3f}"
-                                        }
-                                    )
-                                except Exception:
-                                    pass
-                                
-                                context = get_invoice_create_context(request, form_data)
-                                return render(request, 'sales/invoice_add.html', context)
-
+                        # حفظ الفاتورة (تم فحص الحد الائتماني مسبقاً)
                         invoice.save()
 
                         # حفظ المستودع الافتراضي إذا تم تحديده
@@ -1007,6 +1043,14 @@ class SalesInvoiceUpdateView(LoginRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         from inventory.models import Warehouse
         context['warehouses'] = Warehouse.objects.filter(is_active=True)
+        
+        # Add products for item addition
+        from products.models import Product
+        context['products'] = Product.objects.filter(
+            is_active=True, 
+            product_type__in=['physical', 'service']
+        ).select_related('category').order_by('name')
+        
         return context
     
     def form_valid(self, form):
@@ -1267,6 +1311,8 @@ class SalesReturnCreateView(LoginRequiredMixin, CreateView):
                 self.object.tax_amount = total_tax
                 self.object.total_amount = subtotal + total_tax
                 self.object.save()
+                # 🔧 إعادة تحميل الكائن من قاعدة البيانات لضمان استخدام القيم المحدثة في القيد المحاسبي
+                self.object.refresh_from_db()
                 
                 # إنشاء حركة حساب للعميل
                 create_sales_return_account_transaction(self.object, self.request.user)
@@ -2395,3 +2441,183 @@ class SalesCreditNoteReportView(LoginRequiredMixin, UserPassesTestMixin, ListVie
             pass
             
         return context
+
+
+# AJAX Views for Invoice Item Management
+@login_required
+@require_POST
+def invoice_add_item(request, invoice_id):
+    """إضافة عنصر جديد لفاتورة المبيعات عبر AJAX"""
+    try:
+        invoice = get_object_or_404(SalesInvoice, pk=invoice_id)
+        
+        # Check permissions
+        if not request.user.has_sales_permission():
+            return JsonResponse({'success': False, 'message': 'ليس لديك صلاحية لتعديل فواتير المبيعات'})
+        
+        product_id = request.POST.get('product_id')
+        quantity = request.POST.get('quantity')
+        unit_price = request.POST.get('unit_price')
+        tax_rate = request.POST.get('tax_rate')
+        
+        if not all([product_id, quantity, unit_price, tax_rate]):
+            return JsonResponse({'success': False, 'message': 'جميع الحقول مطلوبة'})
+        
+        product = get_object_or_404(Product, pk=product_id)
+        
+        quantity = Decimal(quantity)
+        unit_price = Decimal(unit_price)
+        tax_rate = Decimal(tax_rate)
+        
+        # Calculate amounts
+        line_subtotal = quantity * unit_price
+        line_tax_amount = line_subtotal * (tax_rate / Decimal('100'))
+        line_total = line_subtotal + line_tax_amount
+        
+        # Create the item
+        item = SalesInvoiceItem.objects.create(
+            invoice=invoice,
+            product=product,
+            quantity=quantity,
+            unit_price=unit_price,
+            tax_rate=tax_rate,
+            tax_amount=line_tax_amount.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP),
+            total_amount=line_total.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+        )
+        
+        # Update invoice totals
+        invoice.update_totals()
+        
+        # Log activity
+        try:
+            from core.signals import log_user_activity
+            log_user_activity(
+                request,
+                'create',
+                item,
+                f'إضافة منتج {product.name} لفاتورة المبيعات {invoice.invoice_number}'
+            )
+        except Exception:
+            pass
+        
+        return JsonResponse({
+            'success': True, 
+            'message': 'تم إضافة المنتج بنجاح',
+            'item': {
+                'id': item.id,
+                'product_name': product.name,
+                'quantity': float(item.quantity),
+                'unit_price': float(item.unit_price),
+                'tax_rate': float(item.tax_rate),
+                'tax_amount': float(item.tax_amount),
+                'total_amount': float(item.total_amount)
+            }
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'خطأ: {str(e)}'})
+
+
+@login_required
+@require_POST
+def invoice_update_item(request, invoice_id, item_id):
+    """تحديث عنصر فاتورة المبيعات عبر AJAX"""
+    try:
+        invoice = get_object_or_404(SalesInvoice, pk=invoice_id)
+        item = get_object_or_404(SalesInvoiceItem, pk=item_id, invoice=invoice)
+        
+        # Check permissions
+        if not request.user.has_sales_permission():
+            return JsonResponse({'success': False, 'message': 'ليس لديك صلاحية لتعديل فواتير المبيعات'})
+        
+        quantity = request.POST.get('quantity')
+        unit_price = request.POST.get('unit_price')
+        
+        if not all([quantity, unit_price]):
+            return JsonResponse({'success': False, 'message': 'الكمية وسعر الوحدة مطلوبان'})
+        
+        old_quantity = item.quantity
+        old_price = item.unit_price
+        
+        quantity = Decimal(quantity)
+        unit_price = Decimal(unit_price)
+        
+        # Calculate new amounts
+        line_subtotal = quantity * unit_price
+        line_tax_amount = line_subtotal * (item.tax_rate / Decimal('100'))
+        line_total = line_subtotal + line_tax_amount
+        
+        # Update the item
+        item.quantity = quantity
+        item.unit_price = unit_price
+        item.tax_amount = line_tax_amount.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+        item.total_amount = line_total.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+        item.save()
+        
+        # Update invoice totals
+        invoice.update_totals()
+        
+        # Log activity
+        try:
+            from core.signals import log_user_activity
+            log_user_activity(
+                request,
+                'update',
+                item,
+                f'تحديث عنصر {item.product.name} في فاتورة المبيعات {invoice.invoice_number}: الكمية {old_quantity} → {quantity}, السعر {old_price} → {unit_price}'
+            )
+        except Exception:
+            pass
+        
+        return JsonResponse({
+            'success': True, 
+            'message': 'تم تحديث العنصر بنجاح',
+            'item': {
+                'tax_amount': float(item.tax_amount),
+                'total_amount': float(item.total_amount)
+            }
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'خطأ: {str(e)}'})
+
+
+@login_required
+@require_POST
+def invoice_delete_item(request, invoice_id, item_id):
+    """حذف عنصر من فاتورة المبيعات عبر AJAX"""
+    try:
+        invoice = get_object_or_404(SalesInvoice, pk=invoice_id)
+        item = get_object_or_404(SalesInvoiceItem, pk=item_id, invoice=invoice)
+        
+        # Check permissions
+        if not request.user.has_sales_permission():
+            return JsonResponse({'success': False, 'message': 'ليس لديك صلاحية لتعديل فواتير المبيعات'})
+        
+        product_name = item.product.name
+        
+        # Delete the item
+        item.delete()
+        
+        # Update invoice totals
+        invoice.update_totals()
+        
+        # Log activity
+        try:
+            from core.signals import log_user_activity
+            log_user_activity(
+                request,
+                'delete',
+                invoice,
+                f'حذف منتج {product_name} من فاتورة المبيعات {invoice.invoice_number}'
+            )
+        except Exception:
+            pass
+        
+        return JsonResponse({
+            'success': True, 
+            'message': 'تم حذف العنصر بنجاح'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'خطأ: {str(e)}'})

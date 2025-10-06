@@ -111,12 +111,11 @@ def cashbox_create(request):
                 # تسجيل النشاط في سجل الأنشطة
                 AuditLog.objects.create(
                     user=request.user,
-                    action='CREATE',
-                    model_name='Cashbox',
+                    action_type='create',
+                    content_type='Cashbox',
                     object_id=cashbox.id,
-                    details=f'إنشاء صندوق نقدي جديد: {name}',
-                    ip_address=request.META.get('REMOTE_ADDR'),
-                    user_agent=request.META.get('HTTP_USER_AGENT')
+                    description=f'إنشاء صندوق نقدي جديد: {name}',
+                    ip_address=request.META.get('REMOTE_ADDR')
                 )
                 
                 messages.success(request, _('Cashbox created successfully'))
@@ -154,12 +153,11 @@ def cashbox_edit(request, cashbox_id):
             # تسجيل النشاط في سجل الأنشطة
             AuditLog.objects.create(
                 user=request.user,
-                action='UPDATE',
-                model_name='Cashbox',
+                action_type='update',
+                content_type='Cashbox',
                 object_id=cashbox_id,
-                details=f'تعديل الصندوق: {name}',
-                ip_address=request.META.get('REMOTE_ADDR'),
-                user_agent=request.META.get('HTTP_USER_AGENT')
+                description=f'تعديل الصندوق: {name}',
+                ip_address=request.META.get('REMOTE_ADDR')
             )
             
             messages.success(request, _('Cashbox updated successfully'))
@@ -247,12 +245,10 @@ def transfer_create(request):
                     # استخدام الرقم المُدخل
                     final_transfer_number = transfer_number
                 else:
-                    # توليد رقم جديد بناءً على آخر رقم مُستخدم فعلياً
+                    # معاينة الرقم التالي دون حجزه
                     try:
                         sequence = DocumentSequence.objects.get(document_type='cashbox_transfer')
-                        final_transfer_number = sequence.get_next_number()
-                        # تحديث التسلسل إذا لزم الأمر
-                        sequence.save()
+                        final_transfer_number = sequence.peek_next_number()
                     except DocumentSequence.DoesNotExist:
                         # استخدام الطريقة القديمة
                         from django.utils import timezone
@@ -384,6 +380,29 @@ def transfer_create(request):
                     )
                 
                 messages.success(request, _('Transfer created successfully'))
+                
+                # تسجيل النشاط
+                try:
+                    from core.signals import log_user_activity
+                    log_user_activity(
+                        request,
+                        'create',
+                        transfer,
+                        f'إنشاء تحويل {transfer.transfer_number} من {transfer.get_from_display()} إلى {transfer.get_to_display()}'
+                    )
+                except Exception:
+                    pass
+                
+                # تحديث التسلسل بعد نجاح التحويل
+                if not transfer_number:  # فقط إذا تم توليد الرقم تلقائياً
+                    try:
+                        sequence = DocumentSequence.objects.get(document_type='cashbox_transfer')
+                        # استخراج الرقم من نهاية الرقم المُستخدم
+                        used_number = int(final_transfer_number[len(sequence.prefix):])
+                        sequence.advance_to_at_least(used_number)
+                    except (DocumentSequence.DoesNotExist, ValueError, IndexError):
+                        pass  # تجاهل الأخطاء في تحديث التسلسل
+                
                 return redirect('cashboxes:transfer_detail', transfer_id=transfer.id)
         
         except Exception as e:

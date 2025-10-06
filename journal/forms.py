@@ -31,13 +31,43 @@ class AccountForm(forms.ModelForm):
 class JournalEntryForm(forms.ModelForm):
     class Meta:
         model = JournalEntry
-        fields = ['entry_date', 'reference_type', 'reference_id', 'description']
+        fields = ['entry_number', 'entry_date', 'reference_type', 'reference_id', 'description']
         widgets = {
+            'entry_number': forms.TextInput(attrs={'class': 'form-control'}),
             'entry_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'reference_type': forms.Select(attrs={'class': 'form-control'}),
             'reference_id': forms.NumberInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        
+        # إذا كان التعديل وليس إنشاء جديد
+        if self.instance and self.instance.pk:
+            # تحقق من صلاحية تعديل رقم القيد
+            if self.user and not self.user.has_perm('journal.change_entry_number'):
+                # إذا لم يكن لديه الصلاحية، اجعل الحقل غير قابل للتعديل
+                self.fields['entry_number'].widget.attrs['readonly'] = True
+                self.fields['entry_number'].help_text = _('لا تملك صلاحية تعديل رقم القيد')
+        else:
+            # إنشاء جديد - توليد رقم القيد من تسلسل المستندات
+            try:
+                from core.models import DocumentSequence
+                seq = DocumentSequence.objects.get(document_type='journal_entry')
+                self.fields['entry_number'].initial = seq.get_next_number()
+            except DocumentSequence.DoesNotExist:
+                pass  # سيتم توليد رقم افتراضي في النموذج
+    
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if not instance.entry_number:
+            # توليد رقم إذا لم يكن محدداً
+            instance.entry_number = instance.generate_entry_number()
+        if commit:
+            instance.save()
+        return instance
 
 
 class JournalLineForm(forms.ModelForm):

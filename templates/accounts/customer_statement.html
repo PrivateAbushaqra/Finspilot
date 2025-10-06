@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load i18n %}
+{% load account_filters %}
 
 {% block page_title %}{% trans "Account Statement" %} - {{ customer.name }}{% endblock %}
 
@@ -102,17 +103,97 @@
                 </div>
             </div>
 
-            <!-- Transactions Table -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-list me-2"></i>{% trans "Account Movements" %}
-                    </h5>
+            <!-- Documents Summary -->
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-file-invoice me-2"></i>{% trans "Documents Summary" %}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-md-2">
+                                    <div class="p-3 border rounded">
+                                        <h6 class="text-muted mb-2">{% trans "Sales Invoices" %}</h6>
+                                        <h4 class="text-primary">{{ sales_invoices.count }}</h4>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="p-3 border rounded">
+                                        <h6 class="text-muted mb-2">{% trans "Purchase Invoices" %}</h6>
+                                        <h4 class="text-success">{{ purchase_invoices.count }}</h4>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="p-3 border rounded">
+                                        <h6 class="text-muted mb-2">{% trans "Receipt Vouchers" %}</h6>
+                                        <h4 class="text-info">{{ receipts.count }}</h4>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="p-3 border rounded">
+                                        <h6 class="text-muted mb-2">{% trans "Payment Vouchers" %}</h6>
+                                        <h4 class="text-warning">{{ payments.count }}</h4>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="p-3 border rounded">
+                                        <h6 class="text-muted mb-2">{% trans "Account Movements" %}</h6>
+                                        <h4 class="text-secondary">{{ transactions.count }}</h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    {% if transactions %}
-                        <div class="table-responsive">
-                            <table class="table table-striped table-hover">
+            </div>
+
+            <!-- Detailed Documents Tables -->
+            <!-- Tab Navigation -->
+            <ul class="nav nav-tabs mb-3" id="statementTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="transactions-tab" data-bs-toggle="tab" data-bs-target="#transactions-content" type="button" role="tab">
+                        <i class="fas fa-list me-2"></i>{% trans "Account Movements" %}
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="sales-tab" data-bs-toggle="tab" data-bs-target="#sales-content" type="button" role="tab">
+                        <i class="fas fa-file-invoice me-2"></i>{% trans "Sales Invoices" %}
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="purchases-tab" data-bs-toggle="tab" data-bs-target="#purchases-content" type="button" role="tab">
+                        <i class="fas fa-shopping-cart me-2"></i>{% trans "Purchase Invoices" %}
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="receipts-tab" data-bs-toggle="tab" data-bs-target="#receipts-content" type="button" role="tab">
+                        <i class="fas fa-money-bill-wave me-2"></i>{% trans "Receipt Vouchers" %}
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="payments-tab" data-bs-toggle="tab" data-bs-target="#payments-content" type="button" role="tab">
+                        <i class="fas fa-hand-holding-usd me-2"></i>{% trans "Payment Vouchers" %}
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Tab Content -->
+            <div class="tab-content" id="statementTabsContent">
+                <!-- Account Transactions Tab -->
+                <div class="tab-pane fade show active" id="transactions-content" role="tabpanel">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-list me-2"></i>{% trans "Account Movements" %}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if transactions %}
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover">
                                 <thead class="table-dark">
                                     <tr>
                                         <th>{% trans "Date" %}</th>
@@ -191,13 +272,266 @@
                             <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
                             <h5 class="text-muted">{% trans "No transactions found" %}</h5>
                             <p class="text-muted">{% trans "No financial transactions found for this customer" %}</p>
-                            
-                            <!-- زر إنشاء المعام{% trans "No" %}ت للفواتير الموجودة -->
-                            <button class="btn btn-primary" onclick="createTransactionsForExistingInvoices()">
-                                <i class="fas fa-plus me-2"></i>{% trans "Create transactions for existing invoices" %}
-                            </button>
                         </div>
                     {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sales Invoices Tab -->
+                <div class="tab-pane fade" id="sales-content" role="tabpanel">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-file-invoice me-2"></i>{% trans "Sales Invoices" %}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if sales_invoices %}
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>{% trans "Invoice Number" %}</th>
+                                                <th>{% trans "Date" %}</th>
+                                                <th>{% trans "Payment Type" %}</th>
+                                                <th class="text-end">{% trans "Subtotal" %}</th>
+                                                <th class="text-end">{% trans "Tax" %}</th>
+                                                <th class="text-end">{% trans "Discount" %}</th>
+                                                <th class="text-end">{% trans "Total" %}</th>
+                                                <th class="text-center">{% trans "Actions" %}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for invoice in sales_invoices %}
+                                            <tr>
+                                                <td><strong>{{ invoice.invoice_number }}</strong></td>
+                                                <td>{{ invoice.date|date:"Y/m/d" }}</td>
+                                                <td>
+                                                    <span class="badge {% if invoice.payment_type == 'cash' %}bg-success{% else %}bg-warning{% endif %}">
+                                                        {{ invoice.get_payment_type_display }}
+                                                    </span>
+                                                </td>
+                                                <td class="text-end">{{ invoice.subtotal|floatformat:3 }}</td>
+                                                <td class="text-end">{{ invoice.tax_amount|floatformat:3 }}</td>
+                                                <td class="text-end">{{ invoice.discount_amount|floatformat:3 }}</td>
+                                                <td class="text-end"><strong>{{ invoice.total_amount|floatformat:3 }}</strong></td>
+                                                <td class="text-center">
+                                                    <a href="{% url 'sales:invoice_detail' invoice.id %}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                        <tfoot class="table-secondary">
+                                            <tr>
+                                                <td colspan="6" class="text-end"><strong>{% trans "Total" %}:</strong></td>
+                                                <td class="text-end"><strong>{{ sales_invoices|sum_attr:'total_amount'|floatformat:3 }}</strong></td>
+                                                <td></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-5">
+                                    <i class="fas fa-file-invoice fa-3x text-muted mb-3"></i>
+                                    <h5 class="text-muted">{% trans "No sales invoices found" %}</h5>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Purchase Invoices Tab -->
+                <div class="tab-pane fade" id="purchases-content" role="tabpanel">
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-shopping-cart me-2"></i>{% trans "Purchase Invoices" %}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if purchase_invoices %}
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>{% trans "Invoice Number" %}</th>
+                                                <th>{% trans "Date" %}</th>
+                                                <th>{% trans "Payment Type" %}</th>
+                                                <th class="text-end">{% trans "Subtotal" %}</th>
+                                                <th class="text-end">{% trans "Tax" %}</th>
+                                                <th class="text-end">{% trans "Total" %}</th>
+                                                <th class="text-center">{% trans "Actions" %}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for invoice in purchase_invoices %}
+                                            <tr>
+                                                <td><strong>{{ invoice.invoice_number }}</strong></td>
+                                                <td>{{ invoice.date|date:"Y/m/d" }}</td>
+                                                <td>
+                                                    <span class="badge {% if invoice.payment_type == 'cash' %}bg-success{% else %}bg-warning{% endif %}">
+                                                        {{ invoice.get_payment_type_display }}
+                                                    </span>
+                                                </td>
+                                                <td class="text-end">{{ invoice.subtotal|floatformat:3 }}</td>
+                                                <td class="text-end">{{ invoice.tax_amount|floatformat:3 }}</td>
+                                                <td class="text-end"><strong>{{ invoice.total_amount|floatformat:3 }}</strong></td>
+                                                <td class="text-center">
+                                                    <a href="{% url 'purchases:invoice_detail' invoice.id %}" class="btn btn-sm btn-outline-success" target="_blank">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                        <tfoot class="table-secondary">
+                                            <tr>
+                                                <td colspan="5" class="text-end"><strong>{% trans "Total" %}:</strong></td>
+                                                <td class="text-end"><strong>{{ purchase_invoices|sum_attr:'total_amount'|floatformat:3 }}</strong></td>
+                                                <td></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-5">
+                                    <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                                    <h5 class="text-muted">{% trans "No purchase invoices found" %}</h5>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Receipt Vouchers Tab -->
+                <div class="tab-pane fade" id="receipts-content" role="tabpanel">
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-money-bill-wave me-2"></i>{% trans "Receipt Vouchers" %}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if receipts %}
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>{% trans "Receipt Number" %}</th>
+                                                <th>{% trans "Date" %}</th>
+                                                <th>{% trans "Payment Type" %}</th>
+                                                <th>{% trans "Description" %}</th>
+                                                <th class="text-end">{% trans "Amount" %}</th>
+                                                <th class="text-center">{% trans "Actions" %}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for receipt in receipts %}
+                                            <tr>
+                                                <td><strong>{{ receipt.receipt_number }}</strong></td>
+                                                <td>{{ receipt.date|date:"Y/m/d" }}</td>
+                                                <td>
+                                                    <span class="badge 
+                                                        {% if receipt.payment_type == 'cash' %}bg-success
+                                                        {% elif receipt.payment_type == 'check' %}bg-warning
+                                                        {% else %}bg-info{% endif %}">
+                                                        {{ receipt.get_payment_type_display }}
+                                                    </span>
+                                                </td>
+                                                <td>{{ receipt.description|truncatewords:10 }}</td>
+                                                <td class="text-end"><strong>{{ receipt.amount|floatformat:3 }}</strong></td>
+                                                <td class="text-center">
+                                                    <a href="{% url 'receipts:receipt_detail' receipt.id %}" class="btn btn-sm btn-outline-info" target="_blank">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                        <tfoot class="table-secondary">
+                                            <tr>
+                                                <td colspan="4" class="text-end"><strong>{% trans "Total" %}:</strong></td>
+                                                <td class="text-end"><strong>{{ receipts|sum_attr:'amount'|floatformat:3 }}</strong></td>
+                                                <td></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-5">
+                                    <i class="fas fa-money-bill-wave fa-3x text-muted mb-3"></i>
+                                    <h5 class="text-muted">{% trans "No receipt vouchers found" %}</h5>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Vouchers Tab -->
+                <div class="tab-pane fade" id="payments-content" role="tabpanel">
+                    <div class="card">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-hand-holding-usd me-2"></i>{% trans "Payment Vouchers" %}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if payments %}
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>{% trans "Payment Number" %}</th>
+                                                <th>{% trans "Date" %}</th>
+                                                <th>{% trans "Payment Type" %}</th>
+                                                <th>{% trans "Description" %}</th>
+                                                <th class="text-end">{% trans "Amount" %}</th>
+                                                <th class="text-center">{% trans "Actions" %}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for payment in payments %}
+                                            <tr>
+                                                <td><strong>{{ payment.voucher_number }}</strong></td>
+                                                <td>{{ payment.date|date:"Y/m/d" }}</td>
+                                                <td>
+                                                    <span class="badge 
+                                                        {% if payment.payment_type == 'cash' %}bg-success
+                                                        {% elif payment.payment_type == 'check' %}bg-warning
+                                                        {% else %}bg-info{% endif %}">
+                                                        {{ payment.get_payment_type_display }}
+                                                    </span>
+                                                </td>
+                                                <td>{{ payment.description|truncatewords:10 }}</td>
+                                                <td class="text-end"><strong>{{ payment.amount|floatformat:3 }}</strong></td>
+                                                <td class="text-center">
+                                                    <a href="{% url 'payments:payment_detail' payment.id %}" class="btn btn-sm btn-outline-warning" target="_blank">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                        <tfoot class="table-secondary">
+                                            <tr>
+                                                <td colspan="4" class="text-end"><strong>{% trans "Total" %}:</strong></td>
+                                                <td class="text-end"><strong>{{ payments|sum_attr:'amount'|floatformat:3 }}</strong></td>
+                                                <td></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-5">
+                                    <i class="fas fa-hand-holding-usd fa-3x text-muted mb-3"></i>
+                                    <h5 class="text-muted">{% trans "No payment vouchers found" %}</h5>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -207,7 +541,7 @@
 <!-- Print Styles -->
 <style>
 @media print {
-    .btn, .card-header, .navbar, .sidebar {
+    .btn, .nav-tabs, .navbar, .sidebar {
         display: none !important;
     }
     .card {
@@ -217,33 +551,14 @@
     .container-fluid {
         padding: 0 !important;
     }
+    .tab-content {
+        display: block !important;
+    }
+    .tab-pane {
+        display: block !important;
+        opacity: 1 !important;
+    }
 }
 </style>
 
-<script>
-function createTransactionsForExistingInvoices() {
-    if (confirm('{% trans "Do you want to create accounting transactions for all existing invoices?" %}')) {
-        fetch('{% url "accounts:create_transactions" %}', {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                'Content-Type': 'application/json',
-            },
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert(data.message);
-                location.reload();
-            } else {
-                alert('{% trans "Error occurred" %}: ' + data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('{% trans "Connection error occurred" %}');
-        });
-    }
-}
-</script>
 {% endblock %}

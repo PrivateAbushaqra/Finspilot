@@ -424,7 +424,7 @@ def journal_entry_edit(request, pk):
         except Exception as e:
             messages.error(request, _('حدث خطأ أثناء تعديل القيد: ') + str(e))
     else:
-        form = JournalEntryForm(instance=entry)
+        form = JournalEntryForm(instance=entry, user=request.user)
         formset = JournalLineFormSet(instance=entry)
     context = {
         'form': form,

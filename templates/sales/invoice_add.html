@@ -511,15 +511,15 @@
                         <div class="summary-details">
                             <div class="d-flex justify-content-between mb-2">
                                 <span>{% trans "Subtotal" %}:</span>
-                                <strong id="subtotalDisplay">0.00 {% get_currency_symbol %}</strong>
+                                <strong id="subtotalDisplay">0.000 {% get_currency_symbol %}</strong>
                             </div>
                             <div class="d-flex justify-content-between mb-2">
                                 <span>{% trans "Discount" %}:</span>
-                                <strong id="discountDisplay">0.00 {% get_currency_symbol %}</strong>
+                                <strong id="discountDisplay">0.000 {% get_currency_symbol %}</strong>
                             </div>
                             <div class="d-flex justify-content-between mb-2">
                                 <span>{% trans "Tax" %}:</span>
-                                <strong id="taxDisplay">0.00 {% get_currency_symbol %}</strong>
+                                <strong id="taxDisplay">0.000 {% get_currency_symbol %}</strong>
                             </div>
                             <hr>
                             <div class="d-flex justify-content-between mb-0">
@@ -1381,7 +1381,7 @@ function updateCustomerBalance() {
                     if (currencyData.show_symbol && currencyData.symbol) {
                         currencyText = currencyData.symbol;
                     } else {
-                        currencyText = currencyData.code || 'ر.س';
+                        currencyText = currencyData.code || '{% get_currency_symbol %}';
                     }
                     
                     balanceAmount.textContent = balanceText + ' ' + currencyText;

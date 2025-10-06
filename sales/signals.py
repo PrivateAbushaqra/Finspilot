@@ -1,4 +1,4 @@
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 from decimal import Decimal
@@ -7,7 +7,7 @@ from .models import SalesInvoice, SalesReturn, SalesCreditNote, SalesInvoiceItem
 
 @receiver(post_save, sender=SalesInvoice)
 def create_cashbox_transaction_for_sales(sender, instance, created, **kwargs):
-    """إنشاء معاملة صندوق تلقائياً عند إنشاء فاتورة مبيعات نقدية"""
+    """إنشاء معاملة صندوق تلقائياً عند إنشاء أو تحديث فاتورة مبيعات نقدية"""
     # 🔧 تجاهل أثناء استعادة النسخة الاحتياطية
     try:
         from backup.restore_context import is_restoring
@@ -20,8 +20,17 @@ def create_cashbox_transaction_for_sales(sender, instance, created, **kwargs):
         from cashboxes.models import CashboxTransaction
         from core.models import AuditLog
         
-        # التحقق من أن الفاتورة جديدة ونقدية
-        if created and instance.payment_type == 'cash' and instance.total_amount > 0:
+        # التحقق من أن الفاتورة نقدية ولديها مبلغ
+        if instance.payment_type == 'cash' and instance.total_amount > 0:
+            # التحقق من عدم وجود معاملة صندوق مسبقاً (لتجنب التكرار)
+            existing_transaction = CashboxTransaction.objects.filter(
+                description__contains=instance.invoice_number,
+                amount=instance.total_amount
+            ).first()
+            
+            # إنشاء المعاملة فقط إذا لم تكن موجودة
+            if existing_transaction:
+                return
             # 🔧 استخدام الصندوق المحدد في الفاتورة أولاً (إن وُجد)
             cashbox = instance.cashbox
             
@@ -60,11 +69,13 @@ def create_cashbox_transaction_for_sales(sender, instance, created, **kwargs):
                         try:
                             AuditLog.objects.create(
                                 user=instance.created_by,
-                                action='create',
-                                model_name='Cashbox',
+                                action_type='create',
+                                content_type='Cashbox',
                                 object_id=cashbox.id,
-                                object_repr=str(cashbox),
-                                description=_('تم إنشاء صندوق تلقائياً لمستخدم نقطة البيع: %(username)s') % {'username': instance.created_by.username},
+                                description=_('تم إنشاء صندوق تلقائياً لمستخدم نقطة البيع: %(username)s - %(cashbox)s') % {
+                                    'username': instance.created_by.username,
+                                    'cashbox': str(cashbox)
+                                },
                                 ip_address='127.0.0.1'
                             )
                         except Exception as log_error:
@@ -112,14 +123,14 @@ def create_cashbox_transaction_for_sales(sender, instance, created, **kwargs):
                 try:
                     AuditLog.objects.create(
                         user=instance.created_by,
-                        action='create',
-                        model_name='CashboxTransaction',
+                        action_type='create',
+                        content_type='CashboxTransaction',
                         object_id=transaction.id,
-                        object_repr=str(transaction),
-                        description=_('تم إيداع %(amount)s في الصندوق %(cashbox)s من فاتورة مبيعات رقم %(invoice)s') % {
+                        description=_('تم إيداع %(amount)s في الصندوق %(cashbox)s من فاتورة مبيعات رقم %(invoice)s - %(transaction)s') % {
                             'amount': instance.total_amount,
                             'cashbox': cashbox.name,
-                            'invoice': instance.invoice_number
+                            'invoice': instance.invoice_number,
+                            'transaction': str(transaction)
                         },
                         ip_address='127.0.0.1'
                     )
@@ -131,6 +142,45 @@ def create_cashbox_transaction_for_sales(sender, instance, created, **kwargs):
     except Exception as e:
         print(f"خطأ في إنشاء معاملة الصندوق لفاتورة {instance.invoice_number}: {e}")
         # لا نوقف عملية إنشاء الفاتورة في حالة فشل إنشاء معاملة الصندوق
+        pass
+
+
+@receiver(pre_delete, sender=SalesInvoice)
+def delete_cashbox_transaction_for_sales(sender, instance, **kwargs):
+    """حذف معاملة الصندوق وتحديث الرصيد عند حذف فاتورة مبيعات نقدية"""
+    # 🔧 تجاهل أثناء استعادة النسخة الاحتياطية
+    try:
+        from backup.restore_context import is_restoring
+        if is_restoring():
+            return
+    except ImportError:
+        pass
+    
+    try:
+        from cashboxes.models import CashboxTransaction
+        
+        # التحقق من أن الفاتورة نقدية ولها صندوق
+        if instance.payment_type == 'cash' and instance.cashbox and instance.total_amount > 0:
+            # البحث عن معاملة الصندوق
+            transactions = CashboxTransaction.objects.filter(
+                cashbox=instance.cashbox,
+                transaction_type='deposit',
+                amount=instance.total_amount,
+                description__contains=instance.invoice_number
+            )
+            
+            for transaction in transactions:
+                # خصم المبلغ من رصيد الصندوق
+                instance.cashbox.balance -= transaction.amount
+                instance.cashbox.save(update_fields=['balance'])
+                
+                # حذف المعاملة
+                transaction.delete()
+                
+                print(f"تم خصم {transaction.amount} من {instance.cashbox.name} عند حذف فاتورة {instance.invoice_number}")
+                
+    except Exception as e:
+        print(f"خطأ في حذف معاملة الصندوق لفاتورة {instance.invoice_number}: {e}")
         pass
 
 
@@ -176,13 +226,13 @@ def create_payment_receipt_for_cash_sales(sender, instance, created, **kwargs):
             try:
                 AuditLog.objects.create(
                     user=instance.created_by,
-                    action='create',
-                    model_name='PaymentReceipt',
+                    action_type='create',
+                    content_type='PaymentReceipt',
                     object_id=receipt.id,
-                    object_repr=str(receipt),
-                    description=_('تم إنشاء سند قبض تلقائياً رقم %(receipt)s لفاتورة المبيعات النقدية %(invoice)s') % {
+                    description=_('تم إنشاء سند قبض تلقائياً رقم %(receipt)s لفاتورة المبيعات النقدية %(invoice)s - %(receipt_str)s') % {
                         'receipt': receipt_number,
-                        'invoice': instance.invoice_number
+                        'invoice': instance.invoice_number,
+                        'receipt_str': str(receipt)
                     },
                     ip_address='127.0.0.1'
                 )
@@ -310,21 +360,8 @@ def update_inventory_on_sales_invoice(sender, instance, created, **kwargs):
         
         print(f"تم تحديث المخزون لفاتورة المبيعات {instance.invoice_number}")
         
-        # إنشاء قيد تكلفة البضاعة المباعة بعد تحديث المخزون
-        if created:
-            # انتظار لحظة للتأكد من حفظ حركات المخزون
-            from time import sleep
-            sleep(1.0)  # زيادة الوقت
-            
-            try:
-                from journal.services import JournalService
-                cogs_entry = JournalService.create_cogs_entry(instance, instance.created_by)
-                if cogs_entry:
-                    print(f"تم إنشاء قيد COGS {cogs_entry.entry_number} لفاتورة المبيعات {instance.invoice_number}")
-                else:
-                    print(f"لم يتم إنشاء قيد COGS لفاتورة المبيعات {instance.invoice_number}")
-            except Exception as cogs_error:
-                print(f"خطأ في إنشاء قيد COGS: {cogs_error}")
+        # ملاحظة: قيد COGS يتم إنشاؤه من views.py بعد حفظ الفاتورة وعناصرها
+        # لتجنب التكرار، لا نقوم بإنشائه هنا
         
     except Exception as e:
         print(f"خطأ في تحديث المخزون لفاتورة المبيعات {instance.invoice_number}: {e}")
@@ -334,6 +371,11 @@ def update_inventory_on_sales_invoice(sender, instance, created, **kwargs):
 @receiver(post_save, sender=SalesReturn)
 def create_sales_return_journal_entry(sender, instance, created, **kwargs):
     """إنشاء قيد محاسبي لمردود المبيعات"""
+    # 🔧 تم تعطيل هذه الإشارة لتجنب إنشاء قيد مكرر
+    # القيد المحاسبي يتم إنشاؤه الآن من خلال الـ View فقط
+    # sales/views.py -> SalesReturnCreateView -> create_sales_return_journal_entry()
+    return
+    
     # 🔧 تجاهل أثناء استعادة النسخة الاحتياطية
     try:
         from backup.restore_context import is_restoring
@@ -499,7 +541,14 @@ def update_inventory_on_sales_invoice_item(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=SalesInvoiceItem)
 def create_cogs_entry_for_sales_invoice_item(sender, instance, created, **kwargs):
-    """إنشاء قيد تكلفة البضاعة المباعة عند إضافة عنصر فاتورة مبيعات"""
+    """
+    ملاحظة: تم تعطيل إنشاء قيد COGS من هنا لتجنب التكرار.
+    قيد COGS يتم إنشاؤه الآن من views.py بعد حفظ الفاتورة وجميع عناصرها.
+    هذا يضمن:
+    1. إنشاء قيد COGS واحد فقط لكل فاتورة (متوافق مع IFRS)
+    2. حساب التكلفة بشكل صحيح بعد حفظ جميع العناصر
+    3. تجنب التكرار والقيود المتعددة
+    """
     # 🔧 تجاهل أثناء استعادة النسخة الاحتياطية
     try:
         from backup.restore_context import is_restoring
@@ -508,25 +557,5 @@ def create_cogs_entry_for_sales_invoice_item(sender, instance, created, **kwargs
     except ImportError:
         pass
     
-    try:
-        if created and instance.product.product_type == 'physical':
-            from time import sleep
-            sleep(0.5)  # انتظار لحفظ حركات المخزون
-            
-            # التحقق من عدم وجود قيد COGS مسبقاً
-            from journal.models import JournalEntry
-            existing_cogs = JournalEntry.objects.filter(
-                reference_type='sales_invoice_cogs',
-                reference_id=instance.invoice.id
-            ).exists()
-            
-            if not existing_cogs:
-                from journal.services import JournalService
-                cogs_entry = JournalService.create_cogs_entry(instance.invoice, instance.invoice.created_by)
-                if cogs_entry:
-                    print(f"تم إنشاء قيد COGS {cogs_entry.entry_number} لفاتورة المبيعات {instance.invoice.invoice_number}")
-                else:
-                    print(f"لم يتم إنشاء قيد COGS لفاتورة المبيعات {instance.invoice.invoice_number}")
-    except Exception as e:
-        print(f"خطأ في إنشاء قيد COGS لفاتورة المبيعات {instance.invoice.invoice_number}: {e}")
-        pass
+    # تم تعطيل إنشاء COGS من هنا
+    pass

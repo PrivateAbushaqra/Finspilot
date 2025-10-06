@@ -197,15 +197,20 @@
                     </div>
 
                     <!-- Invoice Items Display -->
-                    {% if object.items.exists %}
                     <div class="invoice-items">
-                        <h5 class="mb-3">
-                            <i class="fas fa-list text-primary me-2"></i>
-                            عناصر ال{% trans "Invoice" %}
-                        </h5>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">
+                                <i class="fas fa-list text-primary me-2"></i>
+                                عناصر ال{% trans "Invoice" %}
+                            </h5>
+                            <button type="button" class="btn btn-success btn-sm" id="add-item-btn">
+                                <i class="fas fa-plus me-1"></i>
+                                إضافة منتج
+                            </button>
+                        </div>
                         
                         <div class="table-responsive">
-                            <table class="table table-hover">
+                            <table class="table table-hover" id="invoice-items-table">
                                 <thead class="table-light">
                                     <tr>
                                         <th>المنتج</th>
@@ -214,24 +219,100 @@
                                         <th>نسبة الضريبة</th>
                                         <th>مبلغ الضريبة</th>
                                         <th>الإجمالي</th>
+                                        <th>الإجراءات</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {% for item in object.items.all %}
-                                    <tr>
-                                        <td>{{ item.product.name }}</td>
-                                        <td>{{ item.quantity }}</td>
-                                        <td>{{ item.unit_price|currency_format }}</td>
+                                    <tr data-item-id="{{ item.id }}">
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <span class="product-name">{{ item.product.name }}</span>
+                                                <small class="text-muted ms-2">({{ item.product.code }})</small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <input type="number" class="form-control form-control-sm quantity-input" 
+                                                   value="{{ item.quantity }}" min="0.01" step="0.01" 
+                                                   data-item-id="{{ item.id }}">
+                                        </td>
+                                        <td>
+                                            <input type="number" class="form-control form-control-sm price-input" 
+                                                   value="{{ item.unit_price }}" min="0" step="0.01" 
+                                                   data-item-id="{{ item.id }}">
+                                        </td>
                                         <td>{{ item.tax_rate }}%</td>
-                                        <td>{{ item.tax_amount|currency_format }}</td>
-                                        <td><strong>{{ item.total_amount|currency_format }}</strong></td>
+                                        <td class="tax-amount">{{ item.tax_amount|currency_format }}</td>
+                                        <td class="total-amount"><strong>{{ item.total_amount|currency_format }}</strong></td>
+                                        <td>
+                                            <button type="button" class="btn btn-warning btn-sm edit-item-btn" 
+                                                    data-item-id="{{ item.id }}">
+                                                <i class="fas fa-save"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-danger btn-sm delete-item-btn" 
+                                                    data-item-id="{{ item.id }}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
                             </table>
                         </div>
                         
-                        <!-- Totals -->
+                        <!-- Add New Item Form -->
+                        <div id="add-item-form" class="mt-3" style="display: none;">
+                            <div class="card border-success">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-plus me-2"></i>
+                                        إضافة منتج جديد
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <label class="form-label">المنتج</label>
+                                            <select class="form-select" id="new-product-select" required>
+                                                <option value="">اختر المنتج...</option>
+                                                {% for product in products %}
+                                                <option value="{{ product.id }}" data-code="{{ product.code }}" 
+                                                        data-price="{{ product.sale_price }}" 
+                                                        data-tax="{{ product.tax_rate }}">
+                                                    {{ product.name }} ({{ product.code }})
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">الكمية</label>
+                                            <input type="number" class="form-control" id="new-quantity" 
+                                                   min="0.01" step="0.01" placeholder="0.00" required>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">سعر الوحدة</label>
+                                            <input type="number" class="form-control" id="new-price" 
+                                                   min="0" step="0.01" placeholder="0.00" required>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">نسبة الضريبة</label>
+                                            <input type="number" class="form-control" id="new-tax-rate" 
+                                                   min="0" max="100" step="0.01" placeholder="0.00" required>
+                                        </div>
+                                        <div class="col-md-2 d-flex align-items-end">
+                                            <button type="button" class="btn btn-success me-2" id="save-new-item-btn">
+                                                <i class="fas fa-save me-1"></i>
+                                                حفظ
+                                            </button>
+                                            <button type="button" class="btn btn-secondary" id="cancel-add-item-btn">
+                                                <i class="fas fa-times me-1"></i>
+                                                إلغاء
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="totals-section">
                             <div class="row">
                                 <div class="col-md-6"></div>
@@ -264,7 +345,6 @@
                             </div>
                         </div>
                     </div>
-                    {% endif %}
 
                     <!-- Action Buttons -->
                     <div class="d-flex justify-content-end mt-4">
@@ -292,6 +372,165 @@ $(document).ready(function() {
     
     // Date input styling
     $('input[type="date"]').addClass('form-control');
+
+    // CSRF token setup for AJAX
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    // Add item button click
+    $('#add-item-btn').click(function() {
+        $('#add-item-form').slideDown();
+        $('#new-product-select').focus();
+    });
+
+    // Cancel add item
+    $('#cancel-add-item-btn').click(function() {
+        $('#add-item-form').slideUp();
+        $('#add-item-form input, #add-item-form select').val('');
+    });
+
+    // Product selection change
+    $('#new-product-select').change(function() {
+        const selectedOption = $(this).find('option:selected');
+        const price = selectedOption.data('price');
+        const taxRate = selectedOption.data('tax');
+        
+        if (price) {
+            $('#new-price').val(price);
+        }
+        if (taxRate) {
+            $('#new-tax-rate').val(taxRate);
+        }
+    });
+
+    // Save new item
+    $('#save-new-item-btn').click(function() {
+        const productId = $('#new-product-select').val();
+        const quantity = parseFloat($('#new-quantity').val());
+        const price = parseFloat($('#new-price').val());
+        const taxRate = parseFloat($('#new-tax-rate').val());
+
+        if (!productId || !quantity || !price || taxRate === null) {
+            alert('يرجى ملء جميع الحقول');
+            return;
+        }
+
+        $.ajax({
+            url: `/ar/sales/invoices/${object.pk}/items/add/`,
+            type: 'POST',
+            data: {
+                csrfmiddlewaretoken: csrftoken,
+                product_id: productId,
+                quantity: quantity,
+                unit_price: price,
+                tax_rate: taxRate
+            },
+            success: function(response) {
+                if (response.success) {
+                    location.reload(); // Reload to show updated items
+                } else {
+                    alert('خطأ: ' + response.message);
+                }
+            },
+            error: function() {
+                alert('حدث خطأ أثناء إضافة المنتج');
+            }
+        });
+    });
+
+    // Edit item buttons
+    $('.edit-item-btn').click(function() {
+        const itemId = $(this).data('item-id');
+        const row = $(this).closest('tr');
+        const quantity = row.find('.quantity-input').val();
+        const price = row.find('.price-input').val();
+
+        $.ajax({
+            url: `/ar/sales/invoices/${object.pk}/items/${itemId}/update/`,
+            type: 'POST',
+            data: {
+                csrfmiddlewaretoken: csrftoken,
+                quantity: quantity,
+                unit_price: price
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Update the display values
+                    const taxAmount = response.item.tax_amount;
+                    const totalAmount = response.item.total_amount;
+                    
+                    row.find('.tax-amount').html('{{ base_currency.symbol }}' + taxAmount.toFixed(3));
+                    row.find('.total-amount strong').html('{{ base_currency.symbol }}' + totalAmount.toFixed(3));
+                    
+                    // Show success message
+                    showMessage('تم تحديث العنصر بنجاح', 'success');
+                } else {
+                    alert('خطأ: ' + response.message);
+                }
+            },
+            error: function() {
+                alert('حدث خطأ أثناء تحديث العنصر');
+            }
+        });
+    });
+
+    // Delete item buttons
+    $('.delete-item-btn').click(function() {
+        if (!confirm('هل أنت متأكد من حذف هذا العنصر؟')) {
+            return;
+        }
+
+        const itemId = $(this).data('item-id');
+
+        $.ajax({
+            url: `/ar/sales/invoices/${object.pk}/items/${itemId}/delete/`,
+            type: 'POST',
+            data: {
+                csrfmiddlewaretoken: csrftoken
+            },
+            success: function(response) {
+                if (response.success) {
+                    location.reload(); // Reload to show updated items
+                } else {
+                    alert('خطأ: ' + response.message);
+                }
+            },
+            error: function() {
+                alert('حدث خطأ أثناء حذف العنصر');
+            }
+        });
+    });
+
+    // Function to show messages
+    function showMessage(message, type) {
+        const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+        const alertHtml = `
+            <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+        
+        $('.container-fluid').prepend(alertHtml);
+        
+        // Auto hide after 3 seconds
+        setTimeout(function() {
+            $('.alert').fadeOut();
+        }, 3000);
+    }
 });
 </script>
 {% endblock %}

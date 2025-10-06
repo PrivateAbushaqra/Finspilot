@@ -29,7 +29,22 @@
                     </div>
                     <div class="card-body">
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ form.entry_number.id_for_label }}" class="form-label">
+                                        {{ form.entry_number.label }}
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.entry_number }}
+                                    {% if form.entry_number.errors %}
+                                        <div class="text-danger">{{ form.entry_number.errors.0 }}</div>
+                                    {% endif %}
+                                    {% if form.entry_number.help_text %}
+                                        <small class="form-text text-muted">{{ form.entry_number.help_text }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="{{ form.entry_date.id_for_label }}" class="form-label">
                                         {{ form.entry_date.label }}
@@ -41,7 +56,7 @@
                                     {% endif %}
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="mb-3">
                                     <label for="{{ form.reference_type.id_for_label }}" class="form-label">
                                         {{ form.reference_type.label }}
@@ -50,6 +65,17 @@
                                     {{ form.reference_type }}
                                     {% if form.reference_type.errors %}
                                         <div class="text-danger">{{ form.reference_type.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ form.reference_id.id_for_label }}" class="form-label">
+                                        {{ form.reference_id.label }}
+                                    </label>
+                                    {{ form.reference_id }}
+                                    {% if form.reference_id.errors %}
+                                        <div class="text-danger">{{ form.reference_id.errors.0 }}</div>
                                     {% endif %}
                                 </div>
                             </div>

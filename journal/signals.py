@@ -28,6 +28,9 @@ def create_sales_invoice_journal_entry(sender, instance, created, **kwargs):
 @receiver(post_save, sender='purchases.PurchaseInvoice')
 def create_purchase_invoice_journal_entry(sender, instance, created, **kwargs):
     """إنشاء قيد محاسبي تلقائياً عند إنشاء فاتورة مشتريات"""
+    # ⚠️ تم تعطيل هذه الإشارة لتجنب التداخل مع purchases/signals.py
+    # القيود المحاسبية لفواتير المشتريات تُدار من purchases/signals.py
+    return
     if created and instance.id:
         try:
             user = getattr(instance, 'created_by', None)
@@ -68,6 +71,11 @@ def create_payment_voucher_journal_entry(sender, instance, created, **kwargs):
 @receiver(post_save, sender='purchases.PurchaseReturn')
 def create_purchase_return_journal_entry(sender, instance, created, **kwargs):
     """إنشاء قيد محاسبي تلقائياً عند إنشاء مردود مشتريات"""
+    # 🔧 تم تعطيل هذه الإشارة لأن القيد يتم إنشاؤه يدوياً في View بعد تحديث المجاميع
+    # المشكلة: هذه الإشارة تُنشئ القيد فوراً عند save() قبل إضافة العناصر وتحديث المجاميع
+    # الحل: القيد يُنشأ في purchases/views.py -> PurchaseReturnCreateView.form_valid()
+    return
+    
     if created and instance.id:
         try:
             user = getattr(instance, 'created_by', None)

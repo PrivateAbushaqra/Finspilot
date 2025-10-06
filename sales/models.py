@@ -58,6 +58,20 @@ class SalesInvoice(models.Model):
         customer_name = self.customer.name if self.customer else 'عميل نقدي'
         return f"{self.invoice_number} - {customer_name}"
 
+    def update_totals(self):
+        """تحديث مجاميع الفاتورة بناءً على العناصر"""
+        from decimal import Decimal
+        
+        items = self.items.all()
+        subtotal = sum(item.quantity * item.unit_price for item in items)
+        tax_amount = sum(item.tax_amount for item in items)
+        total_amount = subtotal + tax_amount
+        
+        self.subtotal = subtotal.quantize(Decimal('0.001'))
+        self.tax_amount = tax_amount.quantize(Decimal('0.001'))
+        self.total_amount = total_amount.quantize(Decimal('0.001'))
+        self.save(update_fields=['subtotal', 'tax_amount', 'total_amount'])
+
 
 class SalesInvoiceItem(models.Model):
     """عنصر فاتورة المبيعات"""

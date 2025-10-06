@@ -66,28 +66,73 @@ def customer_account_statement(request, customer_id):
     """كشف حساب العميل/المورد"""
     customer = get_object_or_404(CustomerSupplier, id=customer_id)
     
-    # الحصول على جميع المعاملات
-    transactions = AccountTransaction.objects.filter(
-        customer_supplier=customer
-    ).order_by('date', 'created_at')
-    
     # فلترة حسب التاريخ إذا تم تحديدها
     date_from = request.GET.get('date_from')
     date_to = request.GET.get('date_to')
     
+    date_from_obj = None
+    date_to_obj = None
+    
     if date_from:
         try:
-            date_from = datetime.strptime(date_from, '%Y-%m-%d').date()
-            transactions = transactions.filter(date__gte=date_from)
+            date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
         except ValueError:
             pass
     
     if date_to:
         try:
-            date_to = datetime.strptime(date_to, '%Y-%m-%d').date()
-            transactions = transactions.filter(date__lte=date_to)
+            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
         except ValueError:
             pass
+    
+    # الحصول على جميع المعاملات من AccountTransaction
+    transactions = AccountTransaction.objects.filter(
+        customer_supplier=customer
+    )
+    
+    if date_from_obj:
+        transactions = transactions.filter(date__gte=date_from_obj)
+    if date_to_obj:
+        transactions = transactions.filter(date__lte=date_to_obj)
+    
+    transactions = transactions.order_by('date', 'created_at')
+    
+    # الحصول على المستندات الأصلية (للعرض الموسع)
+    from sales.models import SalesInvoice
+    from purchases.models import PurchaseInvoice
+    from receipts.models import PaymentReceipt
+    from payments.models import PaymentVoucher
+    
+    # فواتير المبيعات الآجلة
+    sales_invoices = SalesInvoice.objects.filter(
+        customer=customer,
+        payment_type='credit'
+    )
+    
+    # فواتير المشتريات الآجلة (إذا كان العميل أيضاً مورد)
+    purchase_invoices = PurchaseInvoice.objects.filter(
+        supplier=customer,
+        payment_type='credit'
+    )
+    
+    # سندات القبض
+    receipts = PaymentReceipt.objects.filter(customer=customer)
+    
+    # سندات الصرف
+    payments = PaymentVoucher.objects.filter(supplier=customer)
+    
+    # تطبيق فلتر التاريخ
+    if date_from_obj:
+        sales_invoices = sales_invoices.filter(date__gte=date_from_obj)
+        purchase_invoices = purchase_invoices.filter(date__gte=date_from_obj)
+        receipts = receipts.filter(date__gte=date_from_obj)
+        payments = payments.filter(date__gte=date_from_obj)
+    
+    if date_to_obj:
+        sales_invoices = sales_invoices.filter(date__lte=date_to_obj)
+        purchase_invoices = purchase_invoices.filter(date__lte=date_to_obj)
+        receipts = receipts.filter(date__lte=date_to_obj)
+        payments = payments.filter(date__lte=date_to_obj)
     
     # حساب الإحصائيات
     total_debit = transactions.filter(direction='debit').aggregate(
@@ -100,11 +145,15 @@ def customer_account_statement(request, customer_id):
     context = {
         'customer': customer,
         'transactions': transactions,
+        'sales_invoices': sales_invoices.order_by('date'),
+        'purchase_invoices': purchase_invoices.order_by('date'),
+        'receipts': receipts.order_by('date'),
+        'payments': payments.order_by('date'),
         'total_debit': total_debit,
         'total_credit': total_credit,
         'current_balance': current_balance,
-        'date_from': date_from,
-        'date_to': date_to,
+        'date_from': date_from_obj,
+        'date_to': date_to_obj,
     }
     
     return render(request, 'accounts/customer_statement.html', context)

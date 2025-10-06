@@ -93,6 +93,10 @@ class JournalEntry(models.Model):
         verbose_name = _('قيد محاسبي')
         verbose_name_plural = _('القيود المحاسبية')
         ordering = ['-entry_date', '-created_at']
+        default_permissions = ('add', 'change', 'delete', 'view')
+        permissions = [
+            ('change_entry_number', _('تعديل رقم القيد')),
+        ]
 
     def __str__(self):
         return f"{self.entry_number} - {self.description}"
@@ -118,51 +122,57 @@ class JournalEntry(models.Model):
         super().save(*args, **kwargs)
 
     def generate_entry_number(self):
-        """توليد رقم القيد مع ضمان الفرادة"""
-        from datetime import datetime
-        
-        current_year = datetime.now().year
-        base_pattern = f"JE-{current_year}-"
-        
-        # محاولة عدة مرات لتجنب السباق
-        max_attempts = 10
-        for attempt in range(max_attempts):
-            try:
-                # البحث عن جميع الأرقام المستخدمة في نفس السنة
-                existing_entries = JournalEntry.objects.filter(
-                    entry_date__year=current_year,
-                    entry_number__startswith=base_pattern
-                ).values_list('entry_number', flat=True)
-                
-                # استخراج الأرقام المستخدمة
-                used_numbers = set()
-                for entry_num in existing_entries:
-                    try:
-                        num_part = entry_num.split('-')[-1]
-                        if num_part.isdigit():
-                            used_numbers.add(int(num_part))
-                    except (ValueError, IndexError):
-                        continue
-                
-                # البحث عن أصغر رقم متاح
-                new_number = 1
-                while new_number in used_numbers:
-                    new_number += 1
-                
-                # التحقق من أن الرقم لا يزال متاحاً (قد يكون تم استخدامه في سباق)
-                candidate_number = f"{base_pattern}{new_number:04d}"
-                if not JournalEntry.objects.filter(entry_number=candidate_number).exists():
-                    return candidate_number
+        """توليد رقم القيد من تسلسل المستندات"""
+        try:
+            from core.models import DocumentSequence
+            seq = DocumentSequence.objects.get(document_type='journal_entry')
+            return seq.get_next_number()
+        except DocumentSequence.DoesNotExist:
+            # إذا لم يكن هناك تسلسل، استخدم الطريقة القديمة
+            from datetime import datetime
+            
+            current_year = datetime.now().year
+            base_pattern = f"JE-{current_year}-"
+            
+            # محاولة عدة مرات لتجنب السباق
+            max_attempts = 10
+            for attempt in range(max_attempts):
+                try:
+                    # البحث عن جميع الأرقام المستخدمة في نفس السنة
+                    existing_entries = JournalEntry.objects.filter(
+                        entry_date__year=current_year,
+                        entry_number__startswith=base_pattern
+                    ).values_list('entry_number', flat=True)
                     
-            except Exception:
-                continue
-        
-        # إذا فشلت جميع المحاولات، استخدم timestamp مع UUID
-        import time
-        import uuid
-        timestamp = str(int(time.time() * 1000000))[-8:]  # microsecond precision
-        unique_part = str(uuid.uuid4().hex)[:4].upper()
-        return f"{base_pattern}{timestamp}-{unique_part}"
+                    # استخراج الأرقام المستخدمة
+                    used_numbers = set()
+                    for entry_num in existing_entries:
+                        try:
+                            num_part = entry_num.split('-')[-1]
+                            if num_part.isdigit():
+                                used_numbers.add(int(num_part))
+                        except (ValueError, IndexError):
+                            continue
+                    
+                    # البحث عن أصغر رقم متاح
+                    new_number = 1
+                    while new_number in used_numbers:
+                        new_number += 1
+                    
+                    # التحقق من أن الرقم لا يزال متاحاً (قد يكون تم استخدامه في سباق)
+                    candidate_number = f"{base_pattern}{new_number:04d}"
+                    if not JournalEntry.objects.filter(entry_number=candidate_number).exists():
+                        return candidate_number
+                        
+                except Exception:
+                    continue
+            
+            # إذا فشلت جميع المحاولات، استخدم timestamp مع UUID
+            import time
+            import uuid
+            timestamp = str(int(time.time() * 1000000))[-8:]  # microsecond precision
+            unique_part = str(uuid.uuid4().hex)[:4].upper()
+            return f"{base_pattern}{timestamp}-{unique_part}"
 
     def clean(self):
         """التحقق من توازن القيد"""
