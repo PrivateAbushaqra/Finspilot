@@ -334,12 +334,40 @@ class ComprehensiveBackupTest:
                 self.log(f"خطأ في قراءة النسخة: {e}", 'error')
                 return False
             
+            # الخطوة 3.5: التأكد من وجود مستخدم superadmin محمي
+            self.log("الخطوة 3.5: التأكد من وجود مستخدم superadmin محمي...", 'step')
+            try:
+                from django.contrib.auth import get_user_model
+                User = get_user_model()
+                
+                # البحث عن superuser موجود
+                superusers = User.objects.filter(is_superuser=True)
+                if superusers.exists():
+                    test_user = superusers.first()
+                    self.log(f"✅ وجدنا superuser: {test_user.username}", 'success')
+                else:
+                    # إنشاء superuser جديد للاختبار
+                    test_user = User.objects.create_superuser(
+                        username='test_admin',
+                        email='test@test.com',
+                        password='test123',
+                        phone='0000000000'
+                    )
+                    self.log(f"✅ تم إنشاء superuser للاختبار: {test_user.username}", 'success')
+                
+                self.log(f"🛡️ المستخدم المحمي: {test_user.username} (ID: {test_user.id})", 'info')
+                
+            except Exception as e:
+                self.log(f"خطأ في إعداد المستخدم المحمي: {e}", 'error')
+                test_user = None
+            
             # الخطوة 4: مسح جميع البيانات
             self.log("الخطوة 4: مسح جميع البيانات... 🔥", 'important')
             self.log("هذه الخطوة خطيرة جداً!", 'warning')
+            self.log(f"🛡️ سيتم حماية المستخدم: {test_user.username if test_user else 'لا يوجد'}", 'important')
             
             try:
-                perform_clear_all_data(user=None)
+                perform_clear_all_data(user=test_user)
                 self.log("تم مسح جميع البيانات", 'success')
             except Exception as e:
                 self.log(f"خطأ في المسح: {e}", 'error')
@@ -354,8 +382,68 @@ class ComprehensiveBackupTest:
             
             # الخطوة 5: التحقق من المسح
             self.log("الخطوة 5: التحقق من المسح...", 'step')
-            total_after_clear, _ = self.count_all_data()
+            total_after_clear, records_after_clear = self.count_all_data()
             self.log(f"السجلات المتبقية بعد المسح: {total_after_clear:,}", 'info')
+            
+            # 🛡️ التحقق من بقاء المستخدم الذي قام بالمسح فقط
+            self.log("التحقق من حماية المستخدم الحالي...", 'step')
+            try:
+                from django.contrib.auth import get_user_model
+                User = get_user_model()
+                
+                remaining_users = User.objects.all()
+                user_count = remaining_users.count()
+                
+                if user_count == 0:
+                    self.log("❌ خطأ: تم مسح جميع المستخدمين بما في ذلك المستخدم الحالي!", 'error')
+                    raise Exception("تم مسح المستخدم الحالي!")
+                elif user_count == 1:
+                    sole_user = remaining_users.first()
+                    self.log(f"✅ ممتاز: بقي مستخدم واحد فقط: {sole_user.username} (Superuser: {sole_user.is_superuser})", 'success')
+                else:
+                    superuser_count = User.objects.filter(is_superuser=True).count()
+                    regular_count = User.objects.filter(is_superuser=False).count()
+                    self.log(f"⚠️ يوجد {user_count} مستخدم متبقي: {superuser_count} Superuser + {regular_count} عادي", 'warning')
+                    
+                    # عرض المستخدمين المتبقين
+                    for u in remaining_users:
+                        self.log(f"  - {u.username} (Superuser: {u.is_superuser}, Active: {u.is_active})", 'info')
+            except Exception as e:
+                self.log(f"خطأ في فحص المستخدمين: {e}", 'error')
+            
+            # 📊 التحقق من الجداول الحرجة
+            self.log("التحقق من الجداول الحرجة...", 'step')
+            critical_tables_check = {
+                'customers.customersupplier': 0,
+                'products.product': 0,
+                'sales.salesinvoice': 0,
+                'purchases.purchaseinvoice': 0,
+                'journal.journalentry': 0,
+                'journal.account': 0,
+            }
+            
+            for label in critical_tables_check:
+                if label in records_after_clear:
+                    count = records_after_clear[label]
+                    critical_tables_check[label] = count
+                    if count > 0:
+                        self.log(f"  ⚠️ {label}: {count} سجل متبقي!", 'warning')
+                    else:
+                        self.log(f"  ✅ {label}: تم مسحه بالكامل", 'info')
+            
+            # 🎯 تقييم نجاح المسح
+            # نتوقع: جداول Django + المستخدمين المحميين فقط
+            expected_remaining = 50  # جداول Django الأساسية + المستخدم المحمي
+            
+            if total_after_clear > expected_remaining:
+                self.log(f"⚠️ تحذير: يوجد {total_after_clear} سجل متبقي (المتوقع: ~{expected_remaining})", 'warning')
+                self.log("عرض أكبر 10 جداول متبقية:", 'info')
+                top_remaining = sorted(records_after_clear.items(), key=lambda x: x[1], reverse=True)[:10]
+                for label, count in top_remaining:
+                    if count > 0:
+                        self.log(f"  - {label}: {count} سجل", 'info')
+            else:
+                self.log(f"✅ المسح ناجح: فقط {total_after_clear} سجل متبقي (جداول النظام + المستخدم المحمي)", 'success')
             
             if total_after_clear > 100:
                 self.log(f"تحذير: لا تزال هناك {total_after_clear:,} سجل!", 'warning')
@@ -392,8 +480,15 @@ class ComprehensiveBackupTest:
             self.log("📊 النتيجة النهائية", 'step')
             print("="*80)
             
+            # 📊 ملخص عملية المسح
+            self.log("📋 ملخص عملية المسح:", 'step')
+            self.log(f"  قبل المسح: {total_before:,} سجل", 'info')
+            self.log(f"  بعد المسح: {total_after_clear:,} سجل (تم حماية المستخدمين Superusers)", 'info')
+            deleted_count = total_before - total_after_clear
+            self.log(f"  تم مسح: {deleted_count:,} سجل ({deleted_count/total_before*100:.2f}%)", 'info')
+            
             recovery_rate = (total_after / total_before * 100) if total_before > 0 else 0
-            self.log(f"معدل الاستعادة: {recovery_rate:.2f}%", 'info')
+            self.log(f"\n🔄 معدل الاستعادة: {recovery_rate:.2f}%", 'important')
             
             if recovery_rate >= 99 and len(issues) == 0:
                 self.log("✅✅✅ الاختبار نجح بنسبة 100%!", 'success')
