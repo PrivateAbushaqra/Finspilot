@@ -393,7 +393,7 @@
                     </button>
                     <button type="button" class="btn btn-add text-white" data-bs-toggle="modal" data-bs-target="#addProductModal">
                         <i class="fas fa-plus me-2"></i>
-                        {% trans "Add New Product" %}
+                        {% trans "Create New Product" %}
                     </button>
                 </div>
             </div>
@@ -743,10 +743,10 @@
                         <div class="empty-state">
                             <i class="fas fa-box"></i>
                             <h4>{% trans "No products found" %}</h4>
-                            <p>{% trans "No products have been created yet. Click" %} "{% trans "Add New Product" %}" {% trans "to start creating products" %}.</p>
+                            <p>{% trans "No products have been created yet. Click" %} "{% trans "Create New Product" %}" {% trans "to start creating products" %}.</p>
                             <a href="{% url 'products:product_add' %}" class="btn btn-primary">
                                 <i class="fas fa-plus me-2"></i>
-                                {% trans "Add New Product" %}
+                                {% trans "Create New Product" %}
                             </a>
                         </div>
                     {% endif %}
@@ -797,7 +797,7 @@
             <div class="modal-header">
                 <h5 class="modal-title" id="addProductModalLabel">
                     <i class="fas fa-plus text-primary me-2"></i>
-                    {% trans "Add New Product" %}
+                    {% trans "Create New Product" %}
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>

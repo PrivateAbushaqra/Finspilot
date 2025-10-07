@@ -432,7 +432,7 @@
                                 </td>
                                 <td>
                                     <input type="text" class="form-control text-center available-quantity-input" 
-                                           placeholder="0.000" readonly style="background-color: #e9ecef;" value="{{ item.current_stock|floatformat:3 }}">
+                                           placeholder="0.000" readonly style="background-color: #e9ecef;" tabindex="-1" value="{{ item.current_stock|floatformat:3 }}">
                                 </td>
                                 <td>
                                     <input type="number" class="form-control quantity-input" 
@@ -444,13 +444,13 @@
                                 </td>
                                 <td>
                                     <input type="number" class="form-control tax-rate-input" 
-                                           min="0" max="100" step="0.01" value="{{ item.tax_rate }}" style="background-color: #e9ecef;">
+                                           min="0" max="100" step="0.01" value="{{ item.tax_rate }}" readonly style="background-color: #e9ecef;" tabindex="-1">
                                 </td>
                                 <td>
-                                    <input type="text" class="form-control tax-amount-input" readonly style="background-color: #e9ecef;">
+                                    <input type="text" class="form-control tax-amount-input" readonly style="background-color: #e9ecef;" tabindex="-1">
                                 </td>
                                 <td>
-                                    <input type="text" class="form-control total-input" readonly style="background-color: #e9ecef;">
+                                    <input type="text" class="form-control total-input" readonly style="background-color: #e9ecef;" tabindex="-1">
                                 </td>
                                 <td class="text-center">
                                     <button type="button" class="btn btn-remove-product" onclick="removeProductRow({{ forloop.counter }})" title="{% trans 'Delete' %}">
@@ -879,7 +879,7 @@ function addProductRow() {
         </td>
         <td>
             <input type="text" class="form-control text-center available-quantity-input" 
-                   placeholder="0.000" readonly style="background-color: #e9ecef;">
+                   placeholder="0.000" readonly style="background-color: #e9ecef;" tabindex="-1">
         </td>
         <td>
             <input type="number" class="form-control quantity-input" 
@@ -891,13 +891,13 @@ function addProductRow() {
         </td>
         <td>
             <input type="number" class="form-control tax-rate-input" 
-                   min="0" max="100" step="0.01" value="0" style="background-color: #e9ecef;">
+                   min="0" max="100" step="0.01" value="0" readonly style="background-color: #e9ecef;" tabindex="-1">
         </td>
         <td>
-            <input type="text" class="form-control tax-amount-input" readonly style="background-color: #e9ecef;">
+            <input type="text" class="form-control tax-amount-input" readonly style="background-color: #e9ecef;" tabindex="-1">
         </td>
         <td>
-            <input type="text" class="form-control total-input" readonly style="background-color: #e9ecef;">
+            <input type="text" class="form-control total-input" readonly style="background-color: #e9ecef;" tabindex="-1">
         </td>
         <td class="text-center">
             <button type="button" class="btn btn-remove-product" onclick="removeProductRow(${productRowCounter})" title="{% trans "Delete" %}">
@@ -972,16 +972,23 @@ function selectProduct(productId, productCode, productName, salePrice, taxRate, 
         }
 
         // Helper to apply a numeric price into the input with attributes
-        function applyPrice(numPrice, source) {
-            const valid = (numPrice === null || numPrice === undefined || numPrice === '') ? NaN : Number(numPrice);
+        function applyPrice(displayedPrice, source) {
+            const valid = (displayedPrice === null || displayedPrice === undefined || displayedPrice === '') ? NaN : Number(displayedPrice);
             const finalVal = Number.isFinite(valid) ? valid : 0;
             priceInput.value = formatCurrency(finalVal, 3);
             priceInput.setAttribute('data-original-price', priceInput.value);
             if (source) priceInput.setAttribute('data-price-source', source);
         }
 
-        // First use the salePrice passed from the template as an immediate fallback so the UI is responsive
-        applyPrice(salePrice, 'template');
+        // Calculate displayed price for template salePrice
+        const templateDisplayedPrice = (() => {
+            const price = parseFloat(salePrice) || 0;
+            const currentTaxRate = parseFloat(taxRate) || 0;
+            return currentTaxRate > 0 ? price / (1 + currentTaxRate / 100) : price;
+        })();
+
+        // First use the calculated displayed price from template
+        applyPrice(templateDisplayedPrice, 'template');
 
         // Then try to fetch authoritative product data from POS endpoint
         try {
@@ -1098,9 +1105,9 @@ function attachRowEventListeners(row) {
         calculateGrandTotal();
     });
     
-    // Add new row when Tab is pressed on total input
-    if (totalInput) {
-        totalInput.addEventListener('keydown', function(e) {
+    // Add new row when Tab is pressed on price input
+    if (priceInput) {
+        priceInput.addEventListener('keydown', function(e) {
             if (e.key === 'Tab') {
                 e.preventDefault();
                 addProductRow();
@@ -1300,37 +1307,69 @@ function saveNewCustomer() {
         }
     })
     .then(response => {
-        console.log('{% trans "Server response:" %}', response.status);
-        return response.json();
+        console.log('{% trans "Server response:" %}', response.status, response.statusText);
+        console.log('{% trans "Response headers:" %}', response.headers);
+        return response.text().then(text => {
+            console.log('{% trans "Raw response text:" %}', text);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText} - ${text}`);
+            }
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                throw new Error(`Invalid JSON response: ${text}`);
+            }
+        });
     })
     .then(data => {
-        console.log('{% trans "Received data:" %}', data);
+        console.log('{% trans "Parsed data:" %}', data);
         if (data.success) {
-            // {% trans "Add new customer to list" %}
-            const customerSelect = document.getElementById('id_customer');
-            const customerDatalist = document.getElementById('customer_list');
-            const customerSearch = document.getElementById('customer_search');
-            
-            const newOption = new Option(data.customer.name, data.customer.id, true, true);
-            customerSelect.add(newOption);
-            customerSelect.value = data.customer.id;
-            
-            // Add to datalist
-            const newDatalistOption = document.createElement('option');
-            newDatalistOption.value = data.customer.name;
-            newDatalistOption.setAttribute('data-id', data.customer.id);
-            customerDatalist.appendChild(newDatalistOption);
-            
-            // Update search input
-            customerSearch.value = data.customer.name;
-            
-            // {% trans "Close window and reset form" %}
-            const modal = bootstrap.Modal.getInstance(document.getElementById('newCustomerModal'));
-            modal.hide();
-            form.reset();
-            
-            alert("{% trans 'Customer created successfully!' %}");
-            console.log("{% trans 'Customer saved successfully' %}");
+            console.log('{% trans "Success: Customer created" %}', data.customer);
+            try {
+                // {% trans "Add new customer to list" %}
+                const customerSelect = document.getElementById('id_customer');
+                const customerSearch = document.getElementById('customer_search');
+                
+                if (!customerSelect) {
+                    console.error('{% trans "Customer select not found" %}');
+                    return;
+                }
+                
+                // Add to select dropdown
+                const newOption = new Option(data.customer.name, data.customer.id, true, true);
+                customerSelect.add(newOption);
+                customerSelect.value = data.customer.id;
+                
+                // Add to customers array for search functionality
+                if (typeof customers !== 'undefined') {
+                    customers.push({
+                        id: data.customer.id,
+                        name: data.customer.name
+                    });
+                    console.log('{% trans "Customer added to search array" %}', customers.length, 'customers');
+                }
+                
+                // Update search input
+                if (customerSearch) {
+                    customerSearch.value = data.customer.name;
+                }
+                
+                // Trigger change event for balance update
+                customerSelect.dispatchEvent(new Event('change'));
+                
+                // {% trans "Close window and reset form" %}
+                const modal = bootstrap.Modal.getInstance(document.getElementById('newCustomerModal'));
+                if (modal) {
+                    modal.hide();
+                }
+                form.reset();
+                
+                alert("{% trans 'Customer created successfully!' %}");
+                console.log("{% trans 'Customer saved successfully' %}");
+            } catch (jsError) {
+                console.error('{% trans "JavaScript error after success:" %}', jsError);
+                alert("{% trans 'Customer created but there was an error updating the form. Please refresh the page.' %}");
+            }
         } else {
             console.error('{% trans "Server error:" %}', data.message);
             alert('{% trans "Error" %}: ' + (data.message || '{% trans "An error occurred while creating the customer" %}'));
@@ -1338,8 +1377,17 @@ function saveNewCustomer() {
     })
     .catch(error => {
         console.error('{% trans "Network error:" %}', error);
-        alert('{% trans "An error occurred while creating the customer. Please try again." %}');
-        });
+        // Try to parse error response if it's JSON
+        if (error.response && error.response.json) {
+            error.response.json().then(errData => {
+                alert('{% trans "Error" %}: ' + (errData.message || '{% trans "An error occurred while creating the customer" %}'));
+            }).catch(() => {
+                alert('{% trans "An error occurred while creating the customer. Please try again." %}');
+            });
+        } else {
+            alert('{% trans "An error occurred while creating the customer. Please try again." %}');
+        }
+    });
     }
 
 // {% trans "Function to update customer balance" %}
@@ -1805,7 +1853,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (availableQuantityInput) {
                         availableQuantityInput.value = formatCurrency(parseFloat(product.current_stock || 0), 3);
                     }
-                    priceInput.value = formatCurrency(parseFloat(product.sale_price || 0), 3);
+                    
+                    // Calculate displayed price as sale_price / (1 + tax_rate/100)
+                    const salePrice = parseFloat(product.sale_price || 0);
+                    const taxRate = parseFloat(product.tax_rate || 0);
+                    const displayedPrice = taxRate > 0 ? salePrice / (1 + taxRate / 100) : salePrice;
+                    
+                    priceInput.value = formatCurrency(displayedPrice, 3);
                     taxRateInput.value = parseFloat(product.tax_rate) || 0;
 
                     dropdown.style.display = 'none';
@@ -1934,7 +1988,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (availableQuantityInput) {
                         availableQuantityInput.value = formatCurrency(parseFloat(product.current_stock || 0), 3);
                     }
-                    priceInput.value = formatCurrency(parseFloat(product.sale_price || 0), 3);
+                    
+                    // Calculate displayed price as sale_price / (1 + tax_rate/100)
+                    const salePrice = parseFloat(product.sale_price || 0);
+                    const taxRate = parseFloat(product.tax_rate || 0);
+                    const displayedPrice = taxRate > 0 ? salePrice / (1 + taxRate / 100) : salePrice;
+                    
+                    priceInput.value = formatCurrency(displayedPrice, 3);
                     taxRateInput.value = parseFloat(product.tax_rate) || 0;
 
                     dropdown.style.display = 'none';

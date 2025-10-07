@@ -85,7 +85,7 @@ class CustomerSupplier(models.Model):
 
     @property
     def current_balance(self):
-        """حساب الرصيد الحالي بناءً على المعاملات الفعلية"""
+        """حساب الرصيد الحالي بناءً على الرصيد الافتتاحي والمعاملات الفعلية"""
         try:
             from accounts.models import AccountTransaction
             from django.db.models import Sum
@@ -96,7 +96,7 @@ class CustomerSupplier(models.Model):
             total_credit = transactions.filter(direction='credit').aggregate(
                 total=Sum('amount'))['total'] or 0
             
-            return total_debit - total_credit
+            return self.balance + (total_debit - total_credit)
         except ImportError:
             # في حالة عدم وجود نموذج الحسابات، استخدم الرصيد المحفوظ
             return self.balance

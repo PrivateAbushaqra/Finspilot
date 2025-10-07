@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load i18n %}
 {% load currency_tags %}
+{% load humanize %}
 
 
 {% block title %}{% trans "Bank Transfers" %} - {{ block.super }}{% endblock %}
@@ -393,165 +394,172 @@
                     <!-- Transfers List -->
                     <div id="transfersList">
                         {% if bank_transfers or bank_cashbox_transfers %}
-                            <!-- Bank to Bank Transfers -->
-                            {% for transfer in bank_transfers %}
-                                <div class="transfer-card">
-                                    <div class="card-body">
-                                        <div class="row align-items-center">
-                                            <div class="col-md-2">
-                                                <div class="fw-bold">{{ transfer.transfer_number }}</div>
-                                                <div class="transfer-date">{{ transfer.date|date:"j/n/Y" }}</div>
+                            <div class="table-responsive">
+                                <table class="table table-bordered" width="100%" cellspacing="0">
+                                    <thead>
+                                        <tr>
+                                            <th>{% trans "Transfer Number" %}</th>
+                                            <th>{% trans "Date" %}</th>
+                                            <th>{% trans "From Account" %}</th>
+                                            <th>{% trans "To Account" %}</th>
+                                            <th>{% trans "Amount" %}</th>
+                                            <th>{% trans "Journal Entry" %}</th>
+                                            <th>{% trans "Created By" %}</th>
+                                            <th>{% trans "Actions" %}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Bank to Bank Transfers -->
+                                        {% for item in bank_transfers %}
+                                        {% with transfer=item.transfer journal_entry=item.journal_entry %}
+                                        <tr>
+                                            <td>
+                                                <a href="{% url 'banks:transfer_detail' transfer.id %}" class="text-decoration-none">
+                                                    <strong>{{ transfer.transfer_number }}</strong>
+                                                </a>
+                                                <br>
                                                 <small class="badge bg-primary">{% trans "Bank Transfer" %}</small>
-                                            </div>
-                                            
-                                            <div class="col-md-3">
-                                                <span class="account-badge">{{ transfer.from_account.name }}</span>
-                                                <small class="d-block text-muted">{{ transfer.from_account.bank_name }}</small>
-                                            </div>
-                                            
-                                            <div class="col-md-1 text-center">
-                                                <i class="fas fa-arrow-left transfer-arrow"></i>
-                                            </div>
-                                            
-                                            <div class="col-md-3">
-                                                <span class="account-badge">{{ transfer.to_account.name }}</span>
-                                                <small class="d-block text-muted">{{ transfer.to_account.bank_name }}</small>
-                                            </div>
-                                            
-                                            <div class="col-md-2 text-center">
-                                                <div class="transfer-amount">{{ transfer.amount|floatformat:3 }}</div>
+                                            </td>
+                                            <td>{{ transfer.date|date:"j/n/Y" }}</td>
+                                            <td>
+                                                <strong>{{ transfer.from_account.name }}</strong>
+                                                <br>
+                                                <small class="text-muted">{{ transfer.from_account.bank_name }}</small>
+                                            </td>
+                                            <td>
+                                                <strong>{{ transfer.to_account.name }}</strong>
+                                                <br>
+                                                <small class="text-muted">{{ transfer.to_account.bank_name }}</small>
+                                            </td>
+                                            <td class="text-end">
+                                                <strong>{{ transfer.amount|floatformat:3 }} {% get_currency_symbol %}</strong>
                                                 {% if transfer.fees > 0 %}
-                                                    <div class="transfer-fees">{% trans "Fees" %}: {{ transfer.fees|floatformat:3 }}</div>
+                                                    <br>
+                                                    <small class="text-danger">{% trans "Fees" %}: {{ transfer.fees|floatformat:3 }}</small>
                                                 {% endif %}
-                                            </div>
-                                            
-                                            <div class="col-md-1 text-end">
-                                                <div class="btn-group-actions" role="group">
-                                                    <button class="btn btn-outline-info btn-action" title="{% trans "Print" %}" onclick="printTransferDetail('{{ transfer.transfer_number }}', 'bank')">
-                                                        <i class="fas fa-print me-1"></i>
-                                                        <span>{% trans "Print" %}</span>
+                                            </td>
+                                            <td>
+                                                {% if journal_entry %}
+                                                    <a href="{% url 'journal:entry_detail' journal_entry.pk %}" class="text-decoration-none">
+                                                        <strong>{{ journal_entry.entry_number }}</strong>
+                                                    </a>
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ transfer.created_by.get_full_name|default:transfer.created_by.username }}</td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <button class="btn btn-sm btn-outline-info" title="{% trans "Print" %}" onclick="printTransferDetail('{{ transfer.transfer_number }}', 'bank')">
+                                                        <i class="fas fa-print"></i>
                                                     </button>
-                                                    <a href="{% url 'banks:transfer_detail' transfer.id %}" class="btn btn-outline-primary btn-action" title="{% trans "View" %}">
-                                                        <i class="fas fa-eye me-1"></i>
-                                                        <span>{% trans "View" %}</span>
+                                                    <a href="{% url 'banks:transfer_detail' transfer.id %}" class="btn btn-sm btn-outline-primary" title="{% trans "View Details" %}">
+                                                        <i class="fas fa-eye"></i>
                                                     </a>
                                                     {% if perms.banks.change_banktransfer %}
-                                                    <a href="{% url 'banks:transfer_edit' transfer.id %}" class="btn btn-outline-warning btn-action" title="{% trans "Edit" %}">
-                                                        <i class="fas fa-edit me-1"></i>
-                                                        <span>{% trans "Edit" %}</span>
+                                                    <a href="{% url 'banks:transfer_edit' transfer.id %}" class="btn btn-sm btn-outline-warning" title="{% trans "Edit" %}">
+                                                        <i class="fas fa-edit"></i>
                                                     </a>
                                                     {% endif %}
                                                     {% if perms.banks.delete_banktransfer %}
-                                                    <button class="btn btn-outline-danger btn-action" title="{% trans "Delete" %}" onclick="confirmDeleteTransfer('{{ transfer.id }}', '{{ transfer.transfer_number }}', 'bank')">
-                                                        <i class="fas fa-trash me-1"></i>
-                                                        <span>{% trans "Delete" %}</span>
+                                                    <button class="btn btn-sm btn-outline-danger" title="{% trans "Delete" %}" onclick="confirmDeleteTransfer('{{ transfer.id }}', '{{ transfer.transfer_number }}', 'bank')">
+                                                        <i class="fas fa-trash"></i>
                                                     </button>
                                                     {% endif %}
                                                 </div>
-                                            </div>
-                                        </div>
+                                            </td>
+                                        </tr>
+                                        {% endwith %}
+                                        {% endfor %}
                                         
-                                        {% if transfer.description %}
-                                            <div class="row mt-2">
-                                                <div class="col-12">
-                                                    <small class="text-muted">
-                                                        <i class="fas fa-comment me-1"></i>
-                                                        {{ transfer.description }}
-                                                    </small>
-                                                </div>
-                                            </div>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            {% endfor %}
-                            
-                            <!-- Bank to Cashbox / Cashbox to Bank Transfers -->
-                            {% for transfer in bank_cashbox_transfers %}
-                                <div class="transfer-card">
-                                    <div class="card-body">
-                                        <div class="row align-items-center">
-                                            <div class="col-md-2">
-                                                <div class="fw-bold">{{ transfer.transfer_number }}</div>
-                                                <div class="transfer-date">{{ transfer.date|date:"j/n/Y" }}</div>
+                                        <!-- Bank to Cashbox / Cashbox to Bank Transfers -->
+                                        {% for item in bank_cashbox_transfers %}
+                                        {% with transfer=item.transfer journal_entry=item.journal_entry %}
+                                        <tr>
+                                            <td>
+                                                <a href="{% url 'banks:cashbox_transfer_detail' transfer.id %}" class="text-decoration-none">
+                                                    <strong>{{ transfer.transfer_number }}</strong>
+                                                </a>
+                                                <br>
                                                 <small class="badge {% if transfer.transfer_type == 'bank_to_cashbox' %}bg-success{% else %}bg-warning{% endif %}">
                                                     {% if transfer.transfer_type == 'bank_to_cashbox' %}{% trans "Bank" %} → {% trans "Cashbox" %}{% else %}{% trans "Cashbox" %} → {% trans "Bank" %}{% endif %}
                                                 </small>
-                                            </div>
-                                            
-                                            <div class="col-md-3">
+                                            </td>
+                                            <td>{{ transfer.date|date:"j/n/Y" }}</td>
+                                            <td>
                                                 {% if transfer.transfer_type == 'bank_to_cashbox' %}
-                                                    <span class="account-badge">{{ transfer.from_bank.name }}</span>
-                                                    <small class="d-block text-muted">{{ transfer.from_bank.bank_name }}</small>
+                                                    <strong>{{ transfer.from_bank.name }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">{{ transfer.from_bank.bank_name }}</small>
                                                 {% else %}
-                                                    <span class="account-badge">{{ transfer.from_cashbox.name }}</span>
-                                                    <small class="d-block text-muted">{% trans "Cashbox" %}</small>
+                                                    <strong>{{ transfer.from_cashbox.name }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">{% trans "Cashbox" %}</small>
                                                 {% endif %}
-                                            </div>
-                                            
-                                            <div class="col-md-1 text-center">
-                                                <i class="fas fa-arrow-left transfer-arrow"></i>
-                                            </div>
-                                            
-                                            <div class="col-md-3">
+                                            </td>
+                                            <td>
                                                 {% if transfer.transfer_type == 'bank_to_cashbox' %}
-                                                    <span class="account-badge">{{ transfer.to_cashbox.name }}</span>
-                                                    <small class="d-block text-muted">{% trans "Cashbox" %}</small>
+                                                    <strong>{{ transfer.to_cashbox.name }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">{% trans "Cashbox" %}</small>
                                                 {% else %}
-                                                    <span class="account-badge">{{ transfer.to_bank.name }}</span>
-                                                    <small class="d-block text-muted">{{ transfer.to_bank.bank_name }}</small>
+                                                    <strong>{{ transfer.to_bank.name }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">{{ transfer.to_bank.bank_name }}</small>
                                                 {% endif %}
-                                            </div>
-                                            
-                                            <div class="col-md-2 text-center">
-                                                <div class="transfer-amount">{{ transfer.amount|floatformat:3 }}</div>
+                                            </td>
+                                            <td class="text-end">
+                                                <strong>{{ transfer.amount|floatformat:3 }} {% get_currency_symbol %}</strong>
                                                 {% if transfer.fees > 0 %}
-                                                    <div class="transfer-fees">{% trans "Fees" %}: {{ transfer.fees|floatformat:3 }}</div>
+                                                    <br>
+                                                    <small class="text-danger">{% trans "Fees" %}: {{ transfer.fees|floatformat:3 }}</small>
                                                 {% endif %}
-                                                <small class="text-info d-block">
-                                                    <i class="fas fa-money-check me-1"></i>
-                                                    {% trans "Bank Check" %}
-                                                </small>
-                                            </div>
-                                            
-                                            <div class="col-md-1 text-end">
-                                                <div class="btn-group-actions" role="group">
-                                                    <button class="btn btn-outline-info btn-action" title="{% trans "Print" %}" onclick="printTransferDetail('{{ transfer.transfer_number }}', 'cashbox')">
-                                                        <i class="fas fa-print me-1"></i>
-                                                        <span>{% trans "Print" %}</span>
+                                            </td>
+                                            <td>
+                                                {% if journal_entry %}
+                                                    <a href="{% url 'journal:entry_detail' journal_entry.pk %}" class="text-decoration-none">
+                                                        <strong>{{ journal_entry.entry_number }}</strong>
+                                                    </a>
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ transfer.created_by.get_full_name|default:transfer.created_by.username }}</td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <button class="btn btn-sm btn-outline-info" title="{% trans "Print" %}" onclick="printTransferDetail('{{ transfer.transfer_number }}', 'cashbox')">
+                                                        <i class="fas fa-print"></i>
                                                     </button>
-                                                    <a href="{% url 'banks:cashbox_transfer_detail' transfer.id %}" class="btn btn-outline-primary btn-action" title="{% trans "View" %}">
-                                                        <i class="fas fa-eye me-1"></i>
-                                                        <span>{% trans "View" %}</span>
+                                                    <a href="{% url 'banks:cashbox_transfer_detail' transfer.id %}" class="btn btn-sm btn-outline-primary" title="{% trans "View Details" %}">
+                                                        <i class="fas fa-eye"></i>
                                                     </a>
                                                     {% if perms.cashboxes.change_cashboxtransfer %}
-                                                    <a href="{% url 'banks:cashbox_transfer_edit' transfer.id %}" class="btn btn-outline-warning btn-action" title="{% trans "Edit" %}">
-                                                        <i class="fas fa-edit me-1"></i>
-                                                        <span>{% trans "Edit" %}</span>
+                                                    <a href="{% url 'banks:cashbox_transfer_edit' transfer.id %}" class="btn btn-sm btn-outline-warning" title="{% trans "Edit" %}">
+                                                        <i class="fas fa-edit"></i>
                                                     </a>
                                                     {% endif %}
                                                     {% if perms.cashboxes.delete_cashboxtransfer %}
-                                                    <button class="btn btn-outline-danger btn-action" title="{% trans "Delete" %}" onclick="confirmDeleteTransfer('{{ transfer.id }}', '{{ transfer.transfer_number }}', 'cashbox')">
-                                                        <i class="fas fa-trash me-1"></i>
-                                                        <span>{% trans "Delete" %}</span>
+                                                    <button class="btn btn-sm btn-outline-danger" title="{% trans "Delete" %}" onclick="confirmDeleteTransfer('{{ transfer.id }}', '{{ transfer.transfer_number }}', 'cashbox')">
+                                                        <i class="fas fa-trash"></i>
                                                     </button>
                                                     {% endif %}
                                                 </div>
-                                            </div>
-                                        </div>
-                                        
-                                        {% if transfer.description %}
-                                            <div class="row mt-2">
-                                                <div class="col-12">
-                                                    <small class="text-muted">
-                                                        <i class="fas fa-comment me-1"></i>
-                                                        {{ transfer.description }}
-                                                    </small>
-                                                </div>
-                                            </div>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            {% endfor %}
+                                            </td>
+                                        </tr>
+                                        {% endwith %}
+                                        {% endfor %}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="table-dark">
+                                            <td colspan="4" class="text-center fw-bold">{% trans "Total" %}</td>
+                                            <td class="text-end fw-bold">
+                                                {{ total_amounts|floatformat:3|intcomma }} {% get_currency_symbol %}
+                                            </td>
+                                            <td colspan="3"></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
                         {% else %}
                             <!-- Empty State -->
                             <div class="empty-state">
@@ -832,36 +840,38 @@ function printPage() {
                         <th>{% trans "From Account" %}</th>
                         <th>{% trans "To Account" %}</th>
                         <th>{% trans "Amount" %}</th>
-                        <th>{% trans "Fees" %}</th>
-                        <th>{% trans "Description" %}</th>
+                        <th>{% trans "Journal Entry" %}</th>
+                        <th>{% trans "Created By" %}</th>
                     </tr>
                 </thead>
                 <tbody>
     `;
     
-    // Get all transfer cards and convert to table rows
-    const transferCards = document.querySelectorAll('.transfer-card:not(.d-none)');
-    transferCards.forEach(card => {
-        const transferNumber = card.querySelector('.fw-bold')?.textContent?.trim() || '';
-        const transferDate = card.querySelector('.transfer-date')?.textContent?.trim() || '';
-        const fromAccount = card.querySelectorAll('.account-badge')[0]?.textContent?.trim() || '';
-        const toAccount = card.querySelectorAll('.account-badge')[1]?.textContent?.trim() || '';
-        const amount = card.querySelector('.transfer-amount')?.textContent?.trim() || '0.000';
-        const feesElement = card.querySelector('.transfer-fees');
-        const fees = feesElement ? feesElement.textContent.replace('{% trans "Fees" %}: ', '').trim() : '0.000';
-        const description = card.querySelector('.text-muted')?.textContent?.trim() || '';
-        
-        printContent += `
-            <tr>
-                <td>${transferNumber}</td>
-                <td>${transferDate}</td>
-                <td>${fromAccount}</td>
-                <td>${toAccount}</td>
-                <td class="transfer-amount">${amount}</td>
-                <td class="transfer-fees">${fees}</td>
-                <td>${description}</td>
-            </tr>
-        `;
+    // Get all table rows and convert to printable rows
+    const tableRows = document.querySelectorAll('#transfersList table tbody tr');
+    tableRows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length >= 7) {  // Ensure we have enough cells
+            const transferNumber = cells[0]?.textContent?.trim() || '';
+            const transferDate = cells[1]?.textContent?.trim() || '';
+            const fromAccount = cells[2]?.textContent?.trim() || '';
+            const toAccount = cells[3]?.textContent?.trim() || '';
+            const amount = cells[4]?.textContent?.trim() || '0.000';
+            const journalEntry = cells[5]?.textContent?.trim() || '';
+            const createdBy = cells[6]?.textContent?.trim() || '';
+            
+            printContent += `
+                <tr>
+                    <td>${transferNumber}</td>
+                    <td>${transferDate}</td>
+                    <td>${fromAccount}</td>
+                    <td>${toAccount}</td>
+                    <td class="transfer-amount">${amount}</td>
+                    <td>${journalEntry}</td>
+                    <td>${createdBy}</td>
+                </tr>
+            `;
+        }
     });
     
     printContent += `

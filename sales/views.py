@@ -1664,8 +1664,39 @@ class SalesReturnDeleteView(LoginRequiredMixin, DeleteView):
 
 
 def print_sales_invoice(request, pk):
+    """طباعة فاتورة المبيعات"""
     invoice = get_object_or_404(SalesInvoice, pk=pk)
-    return HttpResponse(f"طباعة فاتورة المبيعات رقم {invoice.invoice_number}")  # Placeholder
+    
+    # تسجيل نشاط الطباعة
+    from core.signals import log_print_activity
+    log_print_activity(request, 'sales_invoice', invoice.pk)
+    
+    context = {
+        'invoice': invoice,
+        'items': invoice.items.all(),
+        'company_settings': CompanySettings.objects.first(),
+        'is_print': True,  # لتخصيص العرض للطباعة
+    }
+    
+    return render(request, 'sales/invoice_detail.html', context)
+
+
+def print_pos_invoice(request, pk):
+    """طباعة فاتورة POS (للطابعات الخاصة بـ POS)"""
+    invoice = get_object_or_404(SalesInvoice, pk=pk)
+    
+    # تسجيل نشاط الطباعة
+    from core.signals import log_print_activity
+    log_print_activity(request, 'pos_invoice', invoice.pk)
+    
+    context = {
+        'invoice': invoice,
+        'items': invoice.items.all(),
+        'company_settings': CompanySettings.objects.first(),
+        'is_pos_print': True,  # لتخصيص العرض لطباعة POS
+    }
+    
+    return render(request, 'sales/pos_invoice_print.html', context)
 
 
 @login_required
@@ -1676,6 +1707,74 @@ def pos_view(request):
         messages.error(request, 'ليس لديك صلاحية للوصول إلى نقطة البيع')
         return redirect('core:dashboard')
     
+    # إنشاء عميل "Cash Customer" إذا لم يكن موجوداً
+    cash_customer, created = CustomerSupplier.objects.get_or_create(
+        name='Cash Customer',
+        type='customer',
+        defaults={
+            'city': 'نقطة البيع',
+            'is_active': True,
+            'credit_limit': 0,
+            'balance': 0,
+        }
+    )
+    
+    # تسجيل إنشاء العميل في سجل الأنشطة إذا تم إنشاؤه الآن
+    if created:
+        from core.models import AuditLog
+        AuditLog.objects.create(
+            user=request.user,
+            action_type='create',
+            content_type='CustomerSupplier',
+            object_id=cash_customer.id,
+            description=f'إنشاء عميل نقطة البيع تلقائياً: {cash_customer.name}'
+        )
+    
+    # إدارة الصناديق حسب نوع المستخدم
+    user_is_admin = request.user.is_superuser or request.user.is_staff
+    
+    if not user_is_admin:
+        # المستخدم العادي: إنشاء صندوق خاص به إذا لم يكن موجوداً
+        try:
+            from cashboxes.models import Cashbox
+            pos_cashbox = Cashbox.objects.filter(responsible_user=request.user, is_active=True).first()
+            
+            if not pos_cashbox:
+                # الحصول على العملة الأساسية
+                from core.models import CompanySettings
+                company_settings = CompanySettings.get_settings()
+                currency = 'JOD'
+                if company_settings and company_settings.currency:
+                    currency = company_settings.currency
+                
+                pos_cashbox = Cashbox.objects.create(
+                    name=request.user.username,
+                    description=f"صندوق نقطة البيع - {request.user.get_full_name() or request.user.username}",
+                    balance=Decimal('0.000'),
+                    currency=currency,
+                    location=f"نقطة البيع - {request.user.username}",
+                    responsible_user=request.user,
+                    is_active=True
+                )
+                
+                # تسجيل إنشاء الصندوق في سجل الأنشطة
+                AuditLog.objects.create(
+                    user=request.user,
+                    action_type='create',
+                    content_type='Cashbox',
+                    object_id=pos_cashbox.id,
+                    description=f'إنشاء صندوق نقطة البيع تلقائياً: {pos_cashbox.name}'
+                )
+            
+            selected_cashbox = pos_cashbox
+            
+        except Exception as e:
+            messages.error(request, f'خطأ في إعداد صندوق نقطة البيع: {str(e)}')
+            return redirect('core:dashboard')
+    else:
+        # المستخدم Admin/SuperAdmin: لا يتم إنشاء صندوق تلقائي
+        selected_cashbox = None
+    
     context = {
         'user_name': request.user.get_full_name() or request.user.username,
         'products': Product.objects.filter(is_active=True),
@@ -1684,6 +1783,9 @@ def pos_view(request):
             is_active=True
         ),
         'payment_types': SalesInvoice.PAYMENT_TYPES,
+        'cash_customer': cash_customer,
+        'user_is_admin': user_is_admin,
+        'selected_cashbox': selected_cashbox,
     }
     
     # إعدادات العملة
@@ -1695,6 +1797,14 @@ def pos_view(request):
             context['base_currency'] = Currency.objects.filter(is_active=True).first()
     except:
         context['base_currency'] = None
+    
+    # إضافة الصناديق للمستخدمين Admin
+    if user_is_admin:
+        try:
+            from cashboxes.models import Cashbox
+            context['cashboxes'] = Cashbox.objects.filter(is_active=True)
+        except ImportError:
+            context['cashboxes'] = []
     
     return render(request, 'sales/pos.html', context)
 
@@ -1756,46 +1866,44 @@ def pos_create_invoice(request):
                         number = 1
                     invoice_number = f"POS-{number:06d}"
             
-            # إنشاء الفاتورة
-            customer_id = data.get('customer_id')
-            customer = None
-            if customer_id:
-                try:
-                    customer = CustomerSupplier.objects.get(id=customer_id)
-                except CustomerSupplier.DoesNotExist:
-                    customer = None
+            # إنشاء الفاتورة - استخدام Cash Customer دائماً
+            try:
+                cash_customer = CustomerSupplier.objects.get(name='Cash Customer', type='customer')
+            except CustomerSupplier.DoesNotExist:
+                # في حالة عدم وجود العميل، إنشاء واحد
+                cash_customer = CustomerSupplier.objects.create(
+                    name='Cash Customer',
+                    type='customer',
+                    city='نقطة البيع',
+                    is_active=True,
+                    credit_limit=0,
+                    balance=0,
+                )
             
-            # تحديد الصندوق المناسب لمستخدم POS
-            pos_cashbox = None
-            if request.user.user_type == 'pos_user':
+            # تحديد الصندوق حسب نوع المستخدم
+            user_is_admin = request.user.is_superuser or request.user.is_staff
+            selected_cashbox = None
+            
+            if not user_is_admin:
+                # المستخدم العادي: استخدام صندوقه الخاص
                 try:
                     from cashboxes.models import Cashbox
-                    pos_cashbox = Cashbox.objects.filter(responsible_user=request.user).first()
-                    
-                    # إذا لم يكن له صندوق، إنشاء واحد تلقائياً
-                    if not pos_cashbox:
-                        # اسم الصندوق = اسم المستخدم
-                        cashbox_name = request.user.username
-                        
-                        # الحصول على العملة الأساسية
-                        from core.models import CompanySettings
-                        company_settings = CompanySettings.get_settings()
-                        currency = 'JOD'
-                        if company_settings and company_settings.currency:
-                            currency = company_settings.currency
-                        
-                        pos_cashbox = Cashbox.objects.create(
-                            name=cashbox_name,
-                            description=f"صندوق مستخدم نقطة البيع: {request.user.get_full_name() or request.user.username}",
-                            balance=Decimal('0.000'),
-                            currency=currency,
-                            location=f"نقطة البيع - {request.user.username}",
-                            responsible_user=request.user,
-                            is_active=True
-                        )
-                        print(f"تم إنشاء صندوق جديد: {cashbox_name}")
-                except Exception as cashbox_error:
-                    print(f"خطأ في إعداد صندوق POS: {cashbox_error}")
+                    selected_cashbox = Cashbox.objects.filter(responsible_user=request.user, is_active=True).first()
+                except Exception as e:
+                    return JsonResponse({'success': False, 'message': f'خطأ في تحديد صندوق نقطة البيع: {str(e)}'})
+            else:
+                # المستخدم Admin: يجب تحديد الصندوق من البيانات المرسلة
+                cashbox_id = data.get('cashbox_id')
+                if not cashbox_id:
+                    return JsonResponse({'success': False, 'message': 'يجب تحديد الصندوق للمستخدمين الإداريين'})
+                
+                try:
+                    from cashboxes.models import Cashbox
+                    selected_cashbox = Cashbox.objects.get(id=cashbox_id, is_active=True)
+                except Cashbox.DoesNotExist:
+                    return JsonResponse({'success': False, 'message': 'الصندوق المحدد غير موجود'})
+                except Exception as e:
+                    return JsonResponse({'success': False, 'message': f'خطأ في تحديد الصندوق: {str(e)}'})
             
             # التحقق من عدم تكرار رقم الفاتورة
             max_attempts = 10
@@ -1804,10 +1912,10 @@ def pos_create_invoice(request):
                 try:
                     invoice = SalesInvoice.objects.create(
                         invoice_number=invoice_number,
-                        customer=customer,
+                        customer=cash_customer,  # استخدام Cash Customer دائماً
                         date=date.today(),
-                        payment_type=data.get('payment_type', 'cash'),
-                        cashbox=pos_cashbox,  # ربط الفاتورة بصندوق المستخدم
+                        payment_type='cash',  # دفع نقدي دائماً
+                        cashbox=selected_cashbox,  # ربط الفاتورة بالصندوق المحدد
                         notes=data.get('notes', ''),
                         created_by=request.user,
                         subtotal=Decimal(str(data.get('subtotal', 0))),
@@ -1940,6 +2048,27 @@ def pos_create_invoice(request):
                 # لا نوقف العملية في حالة فشل إنشاء القيد المحاسبي
                 pass
             
+            # تحديث رصيد الصندوق
+            if selected_cashbox:
+                try:
+                    total_amount = Decimal(str(data.get('total', 0)))
+                    selected_cashbox.balance += total_amount
+                    selected_cashbox.save()
+                    
+                    # تسجيل تحديث رصيد الصندوق في سجل الأنشطة
+                    from core.models import AuditLog
+                    AuditLog.objects.create(
+                        user=request.user,
+                        action_type='update',
+                        content_type='Cashbox',
+                        object_id=selected_cashbox.id,
+                        description=f'تحديث رصيد الصندوق {selected_cashbox.name} بإضافة {total_amount} من فاتورة POS رقم {invoice.invoice_number}'
+                    )
+                except Exception as cashbox_error:
+                    print(f"خطأ في تحديث رصيد الصندوق: {cashbox_error}")
+                    # لا نوقف العملية في حالة فشل تحديث الرصيد
+                    pass
+            
             return JsonResponse({
                 'success': True, 
                 'message': 'تم إنشاء الفاتورة بنجاح',
@@ -1978,14 +2107,20 @@ def pos_get_product(request, product_id):
         # حساب المخزون الحالي باستخدام property
         current_stock = product.current_stock
         
+        # Calculate displayed price as sale_price / (1 + tax_rate/100)
+        tax_rate = float(product.tax_rate or 0)
+        displayed_price = float(product.sale_price)
+        if tax_rate > 0:
+            displayed_price = displayed_price / (1 + tax_rate / 100)
+        
         return JsonResponse({
             'success': True,
             'product': {
                 'id': product.id,
                 'name': product.name,
-                'price': float(product.sale_price),
+                'price': displayed_price,
                 'stock': float(current_stock) if current_stock is not None else 0,
-                'tax_rate': float(product.tax_rate or 0),
+                'tax_rate': tax_rate,
                 'barcode': product.barcode or '',
                 'track_inventory': True,  # افتراض أن جميع المنتجات تتبع المخزون
             }

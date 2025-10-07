@@ -8,6 +8,7 @@ from decimal import Decimal
 from .models import BankAccount, BankTransfer, BankTransaction, BankReconciliation, BankStatement
 from settings.models import Currency, CompanySettings
 from core.signals import log_user_activity
+from journal.services import JournalService
 
 def clean_decimal_input(value):
     """
@@ -438,16 +439,43 @@ class BankTransferListView(LoginRequiredMixin, BanksViewPermissionMixin, Templat
         from cashboxes.models import CashboxTransfer
         from django.db.models import Sum
         from datetime import datetime
+        from journal.models import JournalEntry
         
         context = super().get_context_data(**kwargs)
         
-        # الحصول على التحويلات البنكية
+        # الحصول على التحويلات البنكية مع القيود المحاسبية
         bank_transfers = BankTransfer.objects.select_related('from_account', 'to_account', 'created_by').all()
+        
+        # إضافة معلومات القيد المحاسبي لكل تحويل
+        bank_transfers_with_entries = []
+        for transfer in bank_transfers:
+            journal_entry = JournalEntry.objects.filter(
+                reference_type='bank_transfer',
+                reference_id=transfer.id
+            ).first()
+            
+            bank_transfers_with_entries.append({
+                'transfer': transfer,
+                'journal_entry': journal_entry
+            })
         
         # الحصول على التحويلات بين البنوك والصناديق
         bank_cashbox_transfers = CashboxTransfer.objects.select_related(
             'from_bank', 'to_bank', 'from_cashbox', 'to_cashbox', 'created_by'
         ).filter(transfer_type__in=['bank_to_cashbox', 'cashbox_to_bank'])
+        
+        # إضافة معلومات القيد المحاسبي للتحويلات بين البنوك والصناديق
+        cashbox_transfers_with_entries = []
+        for transfer in bank_cashbox_transfers:
+            journal_entry = JournalEntry.objects.filter(
+                reference_type='cashbox_transfer',
+                reference_id=transfer.id
+            ).first()
+            
+            cashbox_transfers_with_entries.append({
+                'transfer': transfer,
+                'journal_entry': journal_entry
+            })
         
         # حساب الإحصائيات
         total_transfers = bank_transfers.count() + bank_cashbox_transfers.count()
@@ -483,8 +511,8 @@ class BankTransferListView(LoginRequiredMixin, BanksViewPermissionMixin, Templat
         
         this_month_transfers = this_month_bank + this_month_cashbox
         
-        context['bank_transfers'] = bank_transfers
-        context['bank_cashbox_transfers'] = bank_cashbox_transfers
+        context['bank_transfers'] = bank_transfers_with_entries
+        context['bank_cashbox_transfers'] = cashbox_transfers_with_entries
         context['total_transfers'] = total_transfers
         context['total_amounts'] = total_amounts
         context['total_fees'] = total_fees
@@ -657,6 +685,9 @@ class BankTransferCreateView(LoginRequiredMixin, View):
                 )
                 
                 # لا حاجة لاستدعاء sync_balance هنا - سيتم تلقائياً عند save() للـ BankTransaction
+                
+                # إنشاء القيد المحاسبي للتحويل
+                JournalService.create_bank_transfer_entry(transfer, request.user)
                 
                 # تسجيل النشاط في سجل الأنشطة
                 log_user_activity(
@@ -859,6 +890,8 @@ class BankCashboxTransferCreateView(LoginRequiredMixin, View):
                         amount=amount * exchange_rate,
                         description=f'تحويل من بنك {bank.name} - شيك: {check_number}',
                         related_transfer=transfer,
+                        reference_type='transfer',
+                        reference_id=transfer.id,
                         created_by=request.user
                     )
                     
@@ -889,6 +922,8 @@ class BankCashboxTransferCreateView(LoginRequiredMixin, View):
                         amount=-total_amount,
                         description=f'تحويل إلى بنك {bank.name} - شيك: {check_number}',
                         related_transfer=transfer,
+                        reference_type='transfer',
+                        reference_id=transfer.id,
                         created_by=request.user
                     )
                     

@@ -18,6 +18,92 @@ from .models import Cashbox, CashboxTransfer, CashboxTransaction
 from banks.models import BankAccount
 
 
+def get_transaction_document_url(transaction):
+    """الحصول على رابط صفحة تفاصيل المستند للمعاملة"""
+    if transaction.reference_type and transaction.reference_id:
+        if transaction.reference_type == 'sales_invoice':
+            return f'/ar/sales/invoices/{transaction.reference_id}/'
+        elif transaction.reference_type == 'purchase_invoice':
+            return f'/ar/purchases/invoices/{transaction.reference_id}/'
+        elif transaction.reference_type == 'receipt':
+            return f'/ar/receipts/{transaction.reference_id}/'
+        elif transaction.reference_type == 'payment':
+            return f'/ar/payments/{transaction.reference_id}/'
+        elif transaction.reference_type == 'transfer':
+            return f'/ar/cashboxes/transfers/{transaction.reference_id}/'
+    
+    if transaction.related_transfer:
+        return f'/ar/cashboxes/transfers/{transaction.related_transfer.id}/'
+    
+    # محاولة البحث عن المستند من الوصف
+    doc_num = get_document_number_from_description(transaction.description)
+    if doc_num:
+        # البحث في الفواتير
+        from sales.models import SalesInvoice
+        from purchases.models import PurchaseInvoice
+        from receipts.models import PaymentReceipt
+        from payments.models import PaymentVoucher
+        
+        # البحث برقم الفاتورة
+        try:
+            if 'فاتورة' in transaction.description.lower():
+                # فاتورة مبيعات
+                invoice = SalesInvoice.objects.filter(invoice_number=doc_num).first()
+                if invoice:
+                    return f'/ar/sales/invoices/{invoice.id}/'
+                
+                # فاتورة مشتريات
+                invoice = PurchaseInvoice.objects.filter(invoice_number=doc_num).first()
+                if invoice:
+                    return f'/ar/purchases/invoices/{invoice.id}/'
+            
+            # البحث في السندات
+            receipt = PaymentReceipt.objects.filter(receipt_number=doc_num).first()
+            if receipt:
+                return f'/ar/receipts/{receipt.id}/'
+            
+            payment = PaymentVoucher.objects.filter(voucher_number=doc_num).first()
+            if payment:
+                return f'/ar/payments/{payment.id}/'
+                
+        except Exception:
+            pass
+    
+    return None
+
+
+def get_document_number_from_description(description):
+    """استخراج رقم المستند من الوصف"""
+    import re
+    if not description:
+        return None
+    
+    # أنماط شائعة لأرقام المستندات
+    patterns = [
+        r'فاتورة رقم\s*([A-Za-z0-9\-]+)',  # فاتورة رقم INV-001
+        r'رقم\s*([A-Za-z0-9\-]+)',  # رقم INV-001
+        r'#([A-Za-z0-9\-]+)',  # #INV-001
+        r'([A-Za-z]{2,}-[0-9]+)',  # INV-001, REC-001, PAY-001
+        r'([A-Za-z]{3,}[0-9]+)',  # INV001, REC001
+        r'سند\s+(قبض|دفع|صرف)\s+([A-Za-z0-9\-]+)',  # سند قبض REC-001
+        r'([0-9]{3,}-?[0-9]*)',  # أرقام مثل 001, 001-1, 12345
+    ]
+    
+    for pattern in patterns:
+        match = re.search(pattern, description)
+        if match:
+            if 'سند' in pattern:
+                result = match.group(2)
+            else:
+                result = match.group(1)
+            
+            # تجنب استخراج التواريخ أو المبالغ
+            if len(result) >= 3 and not result.startswith(('20', '19')) and not '.' in result:
+                return result
+    
+    return None
+
+
 @login_required
 def cashbox_list(request):
     """قائمة الصناديق"""
@@ -58,6 +144,10 @@ def cashbox_detail(request, cashbox_id):
     paginator = Paginator(transactions, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+    
+    # إضافة document_url لكل transaction
+    for transaction in page_obj:
+        transaction.document_url = get_transaction_document_url(transaction)
     
     # العملات المتاحة
     currencies = Currency.objects.filter(is_active=True).order_by('name')
@@ -314,6 +404,8 @@ def transfer_create(request):
                         amount=-amount,
                         description=f'{description} - {_("Transfer to")} {to_cashbox.name}',
                         related_transfer=transfer,
+                        reference_type='transfer',
+                        reference_id=transfer.id,
                         created_by=request.user
                     )
                     
@@ -324,6 +416,8 @@ def transfer_create(request):
                         amount=amount,
                         description=f'{description} - {_("Transfer from")} {from_cashbox.name}',
                         related_transfer=transfer,
+                        reference_type='transfer',
+                        reference_id=transfer.id,
                         created_by=request.user
                     )
                 
@@ -350,6 +444,8 @@ def transfer_create(request):
                         amount=-amount,
                         description=f'{description} - {_("Transfer to Bank")} {to_bank.name}',
                         related_transfer=transfer,
+                        reference_type='transfer',
+                        reference_id=transfer.id,
                         created_by=request.user
                     )
                 
@@ -376,8 +472,20 @@ def transfer_create(request):
                         amount=amount,
                         description=f'{description} - {_("Transfer from Bank")} {from_bank.name}',
                         related_transfer=transfer,
+                        reference_type='transfer',
+                        reference_id=transfer.id,
                         created_by=request.user
                     )
+                
+                # إنشاء القيد المحاسبي
+                try:
+                    from journal.services import JournalService
+                    JournalService.create_cashbox_transfer_entry(transfer, request.user)
+                except Exception as e:
+                    # تسجيل تحذير في حالة فشل إنشاء القيد
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f"فشل في إنشاء القيد المحاسبي للتحويل {transfer.transfer_number}: {str(e)}")
                 
                 messages.success(request, _('Transfer created successfully'))
                 

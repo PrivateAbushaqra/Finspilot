@@ -12,6 +12,10 @@ urlpatterns = [
     path('invoices/delete/<int:pk>/', views.SalesInvoiceDeleteView.as_view(), name='invoice_delete'),
     path('invoices/<int:pk>/send-to-jofotara/', views.send_invoice_to_jofotara, name='send_invoice_to_jofotara'),
     
+    # Print Invoice
+    path('invoices/print/<int:pk>/', views.print_sales_invoice, name='print_invoice'),
+    path('invoices/pos-print/<int:pk>/', views.print_pos_invoice, name='print_pos_invoice'),
+    
     # Invoice Item Management (AJAX)
     path('invoices/<int:invoice_id>/items/add/', views.invoice_add_item, name='invoice_add_item'),
     path('invoices/<int:invoice_id>/items/<int:item_id>/update/', views.invoice_update_item, name='invoice_update_item'),

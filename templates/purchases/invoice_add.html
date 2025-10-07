@@ -245,17 +245,17 @@
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h6><i class="fas fa-box me-2"></i> {% trans "Invoice Products" %}</h6>
                                 <div>
-                                    {% if user.is_superuser or user.user_type in 'superadmin,admin' or perms.products.can_add_products %}
-                                    <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#addProductModal">
-                                        <i class="fas fa-plus me-2"></i>
-                                        {% trans "Add New Product" %}
-                                    </button>
-                                    {% endif %}
                                     <button type="button" class="btn btn-add-product text-white" id="addProductBtn" 
                                             title="{% trans "Click here to add a new product" %}" data-action="add-product">
                                         <i class="fas fa-plus me-1"></i>
                                         {% trans "Add Product" %}
                                     </button>
+                                    {% if user.is_superuser or user.user_type in 'superadmin,admin' or perms.products.can_add_products %}
+                                    <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                                        <i class="fas fa-plus me-2"></i>
+                                        {% trans "Create New Product" %}
+                                    </button>
+                                    {% endif %}
                                 </div>
                             </div>
                             
@@ -520,12 +520,12 @@ function addProductRow() {
         let taxCells = `
             <td>
                 <input type="number" class="form-control" name="tax_rate[]" id="taxRate${productRowCount}" 
-                       min="0" step="0.01" placeholder="0.000" readonly style="background-color: #e9ecef;" onchange="calculateRowTotal(${productRowCount})">
+                       min="0" step="0.01" placeholder="0.000" readonly style="background-color: #e9ecef;" tabindex="-1" onchange="calculateRowTotal(${productRowCount})">
             </td>`;
         
         let taxAmountCells = `
             <td>
-                <input type="text" class="form-control tax-amount-input" id="rowTax${productRowCount}" readonly placeholder="0.000" style="background-color: #e9ecef;">
+                <input type="text" class="form-control tax-amount-input" id="rowTax${productRowCount}" readonly placeholder="0.000" style="background-color: #e9ecef;" tabindex="-1">
             </td>`;
         
         row.innerHTML = `
@@ -557,7 +557,7 @@ function addProductRow() {
             </td>
             <td>
                 <input type="text" class="form-control text-center" id="availableQuantity${productRowCount}" 
-                       placeholder="0.000" readonly style="background-color: #e9ecef;">
+                       placeholder="0.000" readonly style="background-color: #e9ecef;" tabindex="-1">
             </td>
             <td>
                 <input type="number" class="form-control" name="quantity[]" id="quantity${productRowCount}" 
@@ -569,7 +569,7 @@ function addProductRow() {
             </td>
             ${taxCells}
             <td>
-                <input type="text" class="form-control total-input" id="rowTotal${productRowCount}" readonly placeholder="0.000" style="background-color: #e9ecef;">
+                <input type="text" class="form-control total-input" id="rowTotal${productRowCount}" readonly placeholder="0.000" style="background-color: #e9ecef;" tabindex="-1">
             </td>
             ${taxAmountCells}
             <td class="text-center">
@@ -582,6 +582,9 @@ function addProductRow() {
         tbody.appendChild(row);
         
         console.log(`تم إضافة صف منتج جديد: productRow${productRowCount}`);
+        
+        // Attach event listeners to the new row
+        attachRowEventListeners(row);
         
         // Mark as having unsaved changes
         hasUnsavedChanges = true;
@@ -693,17 +696,6 @@ function selectProduct(productId, productCode, productName, lastPurchasePrice, t
             quantityInput.focus();
         }
         
-        // {% trans "Add Tab listener to tax amount field" %}
-        const taxAmountInput = row.querySelector('.tax-amount-input');
-        if (taxAmountInput) {
-            taxAmountInput.addEventListener('keydown', function(e) {
-                if (e.key === 'Tab') {
-                    e.preventDefault();
-                    addProductRow();
-                }
-            });
-        }
-        
     } catch (error) {
         console.error('{% trans "Error selecting product" %}:', error);
         alert('{% trans "Error selecting product" %}');
@@ -801,6 +793,42 @@ function calculateTotals() {
     document.getElementById('subtotalDisplay').textContent = subtotal.toFixed(decimalPlaces) + ' ' + currencySettings.symbol;
     document.getElementById('taxDisplay').textContent = totalTax.toFixed(decimalPlaces) + ' ' + currencySettings.symbol;
     document.getElementById('totalDisplay').textContent = total.toFixed(decimalPlaces) + ' ' + currencySettings.symbol;
+}
+
+function attachRowEventListeners(row) {
+    const quantityInput = row.querySelector('[id^="quantity"]');
+    const unitPriceInput = row.querySelector('[id^="unitPrice"]');
+    const taxRateInput = row.querySelector('[id^="taxRate"]');
+    
+    // Calculate totals on quantity/unit price/tax rate change
+    if (quantityInput) {
+        quantityInput.addEventListener('input', function() {
+            const rowId = this.id.replace('quantity', '');
+            calculateRowTotal(rowId);
+        });
+    }
+    
+    if (unitPriceInput) {
+        unitPriceInput.addEventListener('input', function() {
+            const rowId = this.id.replace('unitPrice', '');
+            calculateRowTotal(rowId);
+        });
+        
+        // Add new row when Tab is pressed on unit price input
+        unitPriceInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                addProductRow();
+            }
+        });
+    }
+    
+    if (taxRateInput) {
+        taxRateInput.addEventListener('input', function() {
+            const rowId = this.id.replace('taxRate', '');
+            calculateRowTotal(rowId);
+        });
+    }
 }
 
 // {% trans "Search in products" %}
@@ -2061,7 +2089,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="modal-header">
                 <h5 class="modal-title" id="addProductModalLabel">
                     <i class="fas fa-plus text-primary me-2"></i>
-                    {% trans "Add New Product" %}
+                    {% trans "Create New Product" %}
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>

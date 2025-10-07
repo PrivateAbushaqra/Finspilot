@@ -30,6 +30,11 @@ class JournalService:
             total_debit = sum(Decimal(str(line.get('debit', 0))) for line in lines_data)
             total_credit = sum(Decimal(str(line.get('credit', 0))) for line in lines_data)
             
+            # التحقق من أن القيد ليس صفرياً
+            if total_debit == 0 and total_credit == 0:
+                print(f"تجاهل إنشاء قيد صفري للعملية {reference_type} - {reference_id}")
+                return None
+            
             # التحقق من توازن القيد
             if total_debit != total_credit:
                 raise ValueError(_('مجموع المدين يجب أن يساوي مجموع الدائن'))
@@ -59,6 +64,20 @@ class JournalService:
     @staticmethod
     def create_sales_invoice_entry(invoice, user=None):
         """إنشاء قيد فاتورة المبيعات"""
+        # التحقق من صحة بيانات الفاتورة
+        if not invoice or invoice.total_amount <= 0:
+            print(f"تجاهل إنشاء قيد لفاتورة {invoice.invoice_number if invoice else 'غير محدد'} - إجمالي صفر أو سالب")
+            return None
+        
+        # التحقق من صحة البيانات المطلوبة
+        if not hasattr(invoice, 'subtotal') or invoice.subtotal < 0:
+            print(f"تجاهل إنشاء قيد لفاتورة {invoice.invoice_number} - subtotal غير صحيح")
+            return None
+        
+        if not hasattr(invoice, 'payment_type'):
+            print(f"تجاهل إنشاء قيد لفاتورة {invoice.invoice_number} - نوع الدفع غير محدد")
+            return None
+        
         # التحقق من عدم وجود قيد سابق لهذه الفاتورة
         existing_entry = JournalEntry.objects.filter(
             reference_type='sales_invoice',
@@ -181,6 +200,16 @@ class JournalService:
     @staticmethod
     def create_purchase_invoice_entry(invoice, user=None):
         """إنشاء قيد فاتورة المشتريات"""
+        # التحقق من صحة بيانات الفاتورة
+        if not invoice or invoice.total_amount <= 0:
+            print(f"تجاهل إنشاء قيد لفاتورة مشتريات {invoice.invoice_number if invoice else 'غير محدد'} - إجمالي صفر أو سالب")
+            return None
+        
+        # التحقق من صحة البيانات المطلوبة
+        if not hasattr(invoice, 'subtotal') or invoice.subtotal < 0:
+            print(f"تجاهل إنشاء قيد لفاتورة مشتريات {invoice.invoice_number} - subtotal غير صحيح")
+            return None
+        
         lines_data = []
         
         # حساب المخزون (مدين) - بقيمة المشتريات
@@ -407,17 +436,105 @@ class JournalService:
         return account
     
     @staticmethod
-    def get_purchases_account():
-        """الحصول على حساب المشتريات"""
+    def get_cashbox_account(cashbox):
+        """الحصول على حساب الصندوق"""
         account, created = Account.objects.get_or_create(
-            code='5010',
+            code=f'101{cashbox.id:03d}',
             defaults={
-                'name': 'المشتريات',
-                'account_type': 'purchases',
-                'description': 'حساب المشتريات'
+                'name': f'صندوق - {cashbox.name}',
+                'account_type': 'asset',
+                'description': f'حساب الصندوق {cashbox.name}'
             }
         )
         return account
+    
+    @staticmethod
+    def create_cashbox_transfer_entry(transfer, user=None):
+        """إنشاء قيد تحويل الصناديق"""
+        # التحقق من عدم وجود قيد سابق لهذا التحويل
+        existing_entry = JournalEntry.objects.filter(
+            reference_type='cashbox_transfer',
+            reference_id=transfer.id
+        ).first()
+        
+        if existing_entry:
+            print(f"قيد التحويل موجود بالفعل للتحويل {transfer.transfer_number}: {existing_entry.entry_number}")
+            return existing_entry
+        
+        lines_data = []
+        
+        if transfer.transfer_type == 'cashbox_to_cashbox':
+            # تحويل من صندوق إلى صندوق
+            from_account = JournalService.get_cashbox_account(transfer.from_cashbox)
+            to_account = JournalService.get_cashbox_account(transfer.to_cashbox)
+            
+            # المدين: الصندوق المستقبل
+            lines_data.append({
+                'account_id': to_account.id,
+                'debit': transfer.amount,
+                'credit': 0,
+                'description': f'تحويل من {transfer.from_cashbox.name} إلى {transfer.to_cashbox.name}'
+            })
+            
+            # الدائن: الصندوق المرسل
+            lines_data.append({
+                'account_id': from_account.id,
+                'debit': 0,
+                'credit': transfer.amount,
+                'description': f'تحويل إلى {transfer.to_cashbox.name}'
+            })
+        
+        elif transfer.transfer_type == 'cashbox_to_bank':
+            # تحويل من صندوق إلى بنك
+            from_account = JournalService.get_cashbox_account(transfer.from_cashbox)
+            to_account = JournalService.get_bank_account(transfer.to_bank)
+            
+            # المدين: حساب البنك
+            lines_data.append({
+                'account_id': to_account.id,
+                'debit': transfer.amount,
+                'credit': 0,
+                'description': f'إيداع من {transfer.from_cashbox.name} إلى {transfer.to_bank.name}'
+            })
+            
+            # الدائن: الصندوق
+            lines_data.append({
+                'account_id': from_account.id,
+                'debit': 0,
+                'credit': transfer.amount,
+                'description': f'سحب للإيداع في {transfer.to_bank.name}'
+            })
+        
+        elif transfer.transfer_type == 'bank_to_cashbox':
+            # تحويل من بنك إلى صندوق
+            from_account = JournalService.get_bank_account(transfer.from_bank)
+            to_account = JournalService.get_cashbox_account(transfer.to_cashbox)
+            
+            # المدين: الصندوق
+            lines_data.append({
+                'account_id': to_account.id,
+                'debit': transfer.amount,
+                'credit': 0,
+                'description': f'سحب من {transfer.from_bank.name} إلى {transfer.to_cashbox.name}'
+            })
+            
+            # الدائن: حساب البنك
+            lines_data.append({
+                'account_id': from_account.id,
+                'debit': 0,
+                'credit': transfer.amount,
+                'description': f'سحب للصندوق {transfer.to_cashbox.name}'
+            })
+        
+        # إنشاء القيد
+        return JournalService.create_journal_entry(
+            entry_date=transfer.date,
+            reference_type='cashbox_transfer',
+            description=f'تحويل الصناديق: {transfer.transfer_number}',
+            lines_data=lines_data,
+            reference_id=transfer.id,
+            user=user
+        )
     
     @staticmethod
     def get_tax_payable_account():
@@ -1067,7 +1184,7 @@ class JournalService:
     
     @staticmethod
     def create_bank_transfer_entry(transfer, user=None):
-        """إنشاء قيد التحويل البنكي"""
+        """إنشاء قيد تحويل البنوك"""
         # التحقق من عدم وجود قيد سابق لهذا التحويل
         existing_entry = JournalEntry.objects.filter(
             reference_type='bank_transfer',
@@ -1075,53 +1192,54 @@ class JournalService:
         ).first()
         
         if existing_entry:
-            print(f"قيد التحويل البنكي موجود بالفعل للتحويل {transfer.transfer_number}: {existing_entry.entry_number}")
+            print(f"قيد التحويل موجود بالفعل للتحويل {transfer.transfer_number}: {existing_entry.entry_number}")
             return existing_entry
         
         lines_data = []
         
-        # حساب البنك المرسل (مدين) - الخصم
+        # تحويل من بنك إلى بنك
         from_bank_account = JournalService.get_or_create_bank_account_by_name(
-            transfer.from_account.name, 
+            transfer.from_account.name,
             transfer.from_account.bank_name
         )
-        total_debit = transfer.amount + transfer.fees
-        
-        lines_data.append({
-            'account_id': from_bank_account.id,
-            'debit': total_debit,
-            'credit': 0,
-            'description': f'تحويل إلى {transfer.to_account.name} - رسوم {transfer.fees}'
-        })
-        
-        # حساب البنك المستقبل (دائن) - الإيداع
         to_bank_account = JournalService.get_or_create_bank_account_by_name(
             transfer.to_account.name,
             transfer.to_account.bank_name
         )
         
+        total_debit = transfer.amount + transfer.fees
+        
+        # حساب البنك المرسل (دائن) - الخصم
+        lines_data.append({
+            'account_id': from_bank_account.id,
+            'debit': 0,
+            'credit': total_debit,
+            'description': f'تحويل إلى {transfer.to_account.name} - رسوم {transfer.fees}'
+        })
+        
+        # حساب البنك المستقبل (مدين) - الإيداع
         lines_data.append({
             'account_id': to_bank_account.id,
-            'debit': 0,
-            'credit': transfer.amount * transfer.exchange_rate,
+            'debit': transfer.amount * transfer.exchange_rate,
+            'credit': 0,
             'description': f'تحويل من {transfer.from_account.name}'
         })
         
-        # إذا كانت هناك رسوم، يتم تحميلها على حساب مصروفات البنك
+        # إذا كانت هناك رسوم، يتم تحميلها على حساب مصروفات
         if transfer.fees > 0:
-            bank_fees_account = JournalService.get_or_create_expense_account('bank_fees')
+            fees_account = JournalService.get_or_create_expense_account('transfer_fees')
             lines_data.append({
-                'account_id': bank_fees_account.id,
-                'debit': 0,
-                'credit': transfer.fees,
-                'description': f'رسوم تحويل بنكي - {transfer.transfer_number}'
+                'account_id': fees_account.id,
+                'debit': transfer.fees,
+                'credit': 0,
+                'description': f'رسوم تحويل - {transfer.transfer_number}'
             })
         
         return JournalService.create_journal_entry(
             entry_date=transfer.date,
             reference_type='bank_transfer',
             reference_id=transfer.id,
-            description=f'تحويل بنكي رقم {transfer.transfer_number} من {transfer.from_account.name} إلى {transfer.to_account.name}',
+            description=f'تحويل رقم {transfer.transfer_number} من {transfer.from_account.name} إلى {transfer.to_account.name}',
             lines_data=lines_data,
             user=user
         )
@@ -1336,6 +1454,68 @@ class JournalService:
             reference_type='cashbox_transfer',
             reference_id=transfer.id,
             description=f'تحويل رقم {transfer.transfer_number} من {transfer.get_from_display_name()} إلى {transfer.get_to_display_name()}',
+            lines_data=lines_data,
+            user=user
+        )
+    
+    @staticmethod
+    def create_bank_transfer_entry(transfer, user=None):
+        """إنشاء قيد تحويل البنوك"""
+        # التحقق من عدم وجود قيد سابق لهذا التحويل
+        existing_entry = JournalEntry.objects.filter(
+            reference_type='bank_transfer',
+            reference_id=transfer.id
+        ).first()
+        
+        if existing_entry:
+            print(f"قيد التحويل موجود بالفعل للتحويل {transfer.transfer_number}: {existing_entry.entry_number}")
+            return existing_entry
+        
+        lines_data = []
+        
+        # تحويل من بنك إلى بنك
+        from_bank_account = JournalService.get_or_create_bank_account_by_name(
+            transfer.from_account.name,
+            transfer.from_account.bank_name
+        )
+        to_bank_account = JournalService.get_or_create_bank_account_by_name(
+            transfer.to_account.name,
+            transfer.to_account.bank_name
+        )
+        
+        total_debit = transfer.amount + transfer.fees
+        
+        # حساب البنك المرسل (دائن) - الخصم
+        lines_data.append({
+            'account_id': from_bank_account.id,
+            'debit': 0,
+            'credit': total_debit,
+            'description': f'تحويل إلى {transfer.to_account.name} - رسوم {transfer.fees}'
+        })
+        
+        # حساب البنك المستقبل (مدين) - الإيداع
+        lines_data.append({
+            'account_id': to_bank_account.id,
+            'debit': transfer.amount * transfer.exchange_rate,
+            'credit': 0,
+            'description': f'تحويل من {transfer.from_account.name}'
+        })
+        
+        # إذا كانت هناك رسوم، يتم تحميلها على حساب مصروفات
+        if transfer.fees > 0:
+            fees_account = JournalService.get_or_create_expense_account('transfer_fees')
+            lines_data.append({
+                'account_id': fees_account.id,
+                'debit': transfer.fees,
+                'credit': 0,
+                'description': f'رسوم تحويل - {transfer.transfer_number}'
+            })
+        
+        return JournalService.create_journal_entry(
+            entry_date=transfer.date,
+            reference_type='bank_transfer',
+            reference_id=transfer.id,
+            description=f'تحويل رقم {transfer.transfer_number} من {transfer.from_account.name} إلى {transfer.to_account.name}',
             lines_data=lines_data,
             user=user
         )

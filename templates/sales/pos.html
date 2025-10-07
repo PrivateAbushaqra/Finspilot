@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 {% load i18n %}
+{% load currency_tags %}
 
 {% csrf_token %}
 
@@ -949,7 +950,7 @@
                                  data-name="{{ product.name|lower }}"
                                  data-barcode="{{ product.barcode|default:'' }}">
                                 <div class="product-name">{{ product.name }}</div>
-                                <div class="product-price">{{ product.sale_price }} {% if base_currency %}{{ base_currency.symbol }}{% else %}ريال{% endif %}</div>
+                                <div class="product-price">{{ product.sale_price }} {% if base_currency %}{{ base_currency.symbol }}{% else %}{% get_currency_symbol %}{% endif %}</div>
                                 <div class="product-stock">
                                     {% if product.current_stock <= 5 %}
                                         <span class="stock-warning">{% trans "Low Stock" %}: {{ product.current_stock }}</span>
@@ -981,7 +982,7 @@
                                  data-name="{{ product.name|lower }}"
                                  data-barcode="{{ product.barcode|default:'' }}">
                                 <div class="product-name">{{ product.name }}</div>
-                                <div class="product-price">{{ product.sale_price }} {% if base_currency %}{{ base_currency.symbol }}{% else %}ريال{% endif %}</div>
+                                <div class="product-price">{{ product.sale_price }} {% if base_currency %}{{ base_currency.symbol }}{% else %}{% get_currency_symbol %}{% endif %}</div>
                                 <div class="product-stock">
                                     <span class="stock-warning">نفد المخزون</span>
                                 </div>
@@ -1010,7 +1011,8 @@
             </div>
             
             <div class="cart-footer">
-                <!-- Customer Selection -->
+                <!-- Customer Selection - مخفي للمستخدمين العاديين -->
+                {% if user_is_admin %}
                 <div class="form-group">
                     <label for="customer-select" class="form-label">
                         <i class="fas fa-user"></i> {% trans "Customer" %}
@@ -1022,8 +1024,10 @@
                         {% endfor %}
                     </select>
                 </div>
+                {% endif %}
                 
-                <!-- Payment Type -->
+                <!-- Payment Type - مخفي للمستخدمين العاديين -->
+                {% if user_is_admin %}
                 <div class="form-group">
                     <label for="payment-type" class="form-label">
                         <i class="fas fa-credit-card"></i> {% trans "Payment method" %}
@@ -1034,20 +1038,50 @@
                         {% endfor %}
                     </select>
                 </div>
+                {% endif %}
+                
+                <!-- Cashbox Selection - للمستخدمين Admin فقط -->
+                {% if user_is_admin %}
+                <div class="form-group">
+                    <label for="cashbox-select" class="form-label">
+                        <i class="fas fa-cash-register"></i> {% trans "Cashbox" %}
+                    </label>
+                    <select class="form-select" id="cashbox-select" required>
+                        <option value="">{% trans "Select Cashbox" %}</option>
+                        {% for cashbox in cashboxes %}
+                        <option value="{{ cashbox.id }}">{{ cashbox.name }} ({{ cashbox.balance|floatformat:3 }} {{ cashbox.currency }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+                
+                <!-- Customer and Payment Info Display - للمستخدمين العاديين -->
+                {% if not user_is_admin %}
+                <div class="form-group">
+                    <div class="alert alert-info" style="padding: 0.75rem; margin-bottom: 0;">
+                        <small>
+                            <i class="fas fa-info-circle"></i>
+                            <strong>{% trans "Customer:" %}</strong> {% trans "Cash Customer" %} | 
+                            <strong>{% trans "Payment:" %}</strong> {% trans "Cash" %} | 
+                            <strong>{% trans "Cashbox:" %}</strong> {{ selected_cashbox.name }}
+                        </small>
+                    </div>
+                </div>
+                {% endif %}
                 
                 <!-- Totals -->
                 <div class="totals" id="cart-totals" style="display: none;">
                     <div class="total-row">
                         <span><i class="fas fa-calculator"></i> {% trans "Subtotal:" %}</span>
-                        <span id="subtotal">0.00</span>
+                        <span id="subtotal">0.000</span>
                     </div>
                     <div class="total-row">
                         <span><i class="fas fa-percentage"></i>{% trans "Tax:" %}</span>
-                        <span id="tax-amount">0.00</span>
+                        <span id="tax-amount">0.000</span>
                     </div>
                     <div class="total-row grand-total">
                         <span><i class="fas fa-money-bill-wave"></i> {% trans "Total:" %}</span>
-                        <span id="total">0.00 {% if base_currency %}{{ base_currency.symbol }}{% else %}ريال{% endif %}</span>
+                        <span id="total">0.000 {% if base_currency %}{{ base_currency.symbol }}{% else %}{% get_currency_symbol %}{% endif %}</span>
                     </div>
                 </div>
                 
@@ -1103,7 +1137,7 @@
 // متغيرات عامة
 let cart = [];
 let invoiceId = null;
-const currencySymbol = '{% if base_currency and base_currency.symbol %}{{ base_currency.symbol }}{% else %}ريال{% endif %}';
+const currencySymbol = '{% if base_currency and base_currency.symbol %}{{ base_currency.symbol }}{% else %}{% get_currency_symbol %}{% endif %}';
 
 // تحديث {% trans "Time" %}
 function updateTime() {
@@ -1300,8 +1334,9 @@ function checkout() {
         checkoutBtn.disabled = true;
         checkoutBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري المعالجة...';
         
-        const customerId = document.getElementById('customer-select').value;
-        const paymentType = document.getElementById('payment-type').value;
+        const customerId = document.getElementById('customer-select') ? document.getElementById('customer-select').value : null;
+        const paymentType = document.getElementById('payment-type') ? document.getElementById('payment-type').value : 'cash';
+        const cashboxId = document.getElementById('cashbox-select') ? document.getElementById('cashbox-select').value : null;
     
     // حساب الإجماليات
     let subtotal = 0;
@@ -1330,14 +1365,26 @@ function checkout() {
     
     const total = subtotal + totalTax;
     
-        // التحقق من صحة الإجماليات
-        if (total <= 0) {
-            alert('الإجمالي يجب أن يكون أكبر من صفر');
-            const checkoutBtn = document.getElementById('checkout-btn');
-            checkoutBtn.disabled = false;
-            checkoutBtn.innerHTML = '<i class="fas fa-cash-register"></i> إتمام البيع';
-            return;
-        }    const data = {
+    // التحقق من صحة الإجماليات
+    if (total <= 0) {
+        alert('الإجمالي يجب أن يكون أكبر من صفر');
+        const checkoutBtn = document.getElementById('checkout-btn');
+        checkoutBtn.disabled = false;
+        checkoutBtn.innerHTML = '<i class="fas fa-cash-register"></i> إتمام البيع';
+        return;
+    }
+    
+    // التحقق من الصندوق للمستخدمين Admin
+    const isAdmin = {% if user_is_admin %}true{% else %}false{% endif %};
+    if (isAdmin && !cashboxId) {
+        alert('يجب اختيار الصندوق');
+        const checkoutBtn = document.getElementById('checkout-btn');
+        checkoutBtn.disabled = false;
+        checkoutBtn.innerHTML = '<i class="fas fa-cash-register"></i> إتمام البيع';
+        return;
+    }
+    
+    const data = {
         customer_id: customerId || null,
         payment_type: paymentType,
         items: items,
@@ -1346,6 +1393,11 @@ function checkout() {
         discount_amount: 0,
         total: total
     };
+    
+    // إضافة cashbox_id للمستخدمين Admin
+    if (isAdmin) {
+        data.cashbox_id = cashboxId;
+    }
     
     // إرسال البيانات للخادم
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
@@ -1456,7 +1508,7 @@ function checkout() {
 // {% trans "Print" %} ال{% trans "Invoice" %}
 function printInvoice() {
     if (invoiceId) {
-        window.open(`/sales/invoices/print/${invoiceId}/`, '_blank');
+        window.open(`/sales/invoices/pos-print/${invoiceId}/`, '_blank');
     }
 }
 

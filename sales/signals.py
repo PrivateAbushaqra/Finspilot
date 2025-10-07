@@ -112,6 +112,8 @@ def create_cashbox_transaction_for_sales(sender, instance, created, **kwargs):
                     amount=instance.total_amount,
                     date=instance.date,
                     description=f'مبيعات نقدية - فاتورة رقم {instance.invoice_number}',
+                    reference_type='sales_invoice',
+                    reference_id=instance.id,
                     created_by=instance.created_by
                 )
                 

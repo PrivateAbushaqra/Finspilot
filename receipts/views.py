@@ -278,6 +278,8 @@ def receipt_add(request):
                         date=date,
                         amount=amount,
                         description=f'{_("Receipt voucher")} {receipt.receipt_number} {_("from")} {customer.name}',
+                        reference_type='receipt',
+                        reference_id=receipt.id,
                         created_by=request.user
                     )
                 
@@ -331,6 +333,8 @@ def receipt_add(request):
                             date=date,
                             amount=amount,
                             description=f'{_("شيك قيد التحصيل")} - {_("سند قبض")} {receipt.receipt_number} {_("من")} {customer.name} - {_("رقم الشيك")}: {check_number}',
+                            reference_type='receipt',
+                            reference_id=receipt.id,
                             created_by=request.user
                         )
                         
@@ -507,6 +511,8 @@ def receipt_reverse(request, receipt_id):
                             date=timezone.now().date(),
                             amount=-receipt.amount,
                             description=f'{_("Reversal of receipt voucher")} {receipt.receipt_number} - {reason}',
+                            reference_type='receipt',
+                            reference_id=receipt.id,
                             created_by=request.user
                         )
                     else:
@@ -621,6 +627,8 @@ def check_collect(request, receipt_id):
                         date=collection_date,
                         amount=receipt.amount,
                         description=f'{_("Check collection")} {receipt.check_number} - {_("voucher")} {receipt.receipt_number}',
+                        reference_type='receipt',
+                        reference_id=receipt.id,
                         created_by=request.user
                     )
                     

@@ -89,6 +89,10 @@ class Product(models.Model):
                                         validators=[MinValueValidator(0)], default=0, blank=True)
     tax_rate = models.DecimalField(_('نسبة الضريبة'), max_digits=5, decimal_places=2, 
                                  validators=[MinValueValidator(0), MaxValueValidator(100)], default=0)
+    opening_balance_quantity = models.DecimalField(_('كمية الرصيد الافتتاحي'), max_digits=10, decimal_places=3, 
+                                                 validators=[MinValueValidator(0)], default=0, blank=True)
+    opening_balance_cost = models.DecimalField(_('تكلفة الرصيد الافتتاحي'), max_digits=15, decimal_places=3, 
+                                             validators=[MinValueValidator(0)], default=0, blank=True)
     enable_alerts = models.BooleanField(_('تفعيل التنبيهات'), default=True)
     is_active = models.BooleanField(_('نشط'), default=True)
     created_at = models.DateTimeField(_('تاريخ الإنشاء'), auto_now_add=True)
@@ -203,17 +207,4 @@ class Product(models.Model):
 
     def get_opening_balance(self):
         """الحصول على الرصيد الافتتاحي الحالي"""
-        from inventory.models import InventoryMovement
-        from decimal import Decimal
-        
-        # البحث عن حركة الرصيد الافتتاحي
-        opening_movement = InventoryMovement.objects.filter(
-            product=self,
-            movement_type='in',
-            reference_type='opening_balance'
-        ).first()
-        
-        if opening_movement:
-            return Decimal(str(opening_movement.quantity))
-        
-        return Decimal('0')
+        return self.opening_balance_quantity

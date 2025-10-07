@@ -72,6 +72,8 @@ class JournalEntry(models.Model):
         ('asset_depreciation', _('Asset Depreciation')),
         ('provision', _('Provision')),
         ('provision_entry', _('Provision Entry')),
+        ('cashbox_transfer', _('Cashbox Transfer')),
+        ('bank_transfer', _('Bank Transfer')),
         ('manual', _('Manual Entry')),
         ('adjustment', _('Adjustment Entry')),
     ]
@@ -82,6 +84,8 @@ class JournalEntry(models.Model):
     reference_id = models.PositiveIntegerField(_('رقم العملية المرتبطة'), null=True, blank=True)
     sales_invoice = models.ForeignKey('sales.SalesInvoice', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('فاتورة المبيعات'))
     purchase_invoice = models.ForeignKey('purchases.PurchaseInvoice', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('فاتورة المشتريات'))
+    cashbox_transfer = models.ForeignKey('cashboxes.CashboxTransfer', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('تحويل الصناديق'))
+    bank_transfer = models.ForeignKey('banks.BankTransfer', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('تحويل البنوك'))
     description = models.TextField(_('وصف القيد'))
     total_amount = models.DecimalField(_('إجمالي المبلغ'), max_digits=15, decimal_places=3)
     
@@ -117,6 +121,18 @@ class JournalEntry(models.Model):
                 from purchases.models import PurchaseInvoice
                 self.purchase_invoice = PurchaseInvoice.objects.get(id=self.reference_id)
             except PurchaseInvoice.DoesNotExist:
+                pass
+        elif self.reference_type == 'cashbox_transfer' and self.reference_id:
+            try:
+                from cashboxes.models import CashboxTransfer
+                self.cashbox_transfer = CashboxTransfer.objects.get(id=self.reference_id)
+            except CashboxTransfer.DoesNotExist:
+                pass
+        elif self.reference_type == 'bank_transfer' and self.reference_id:
+            try:
+                from banks.models import BankTransfer
+                self.bank_transfer = BankTransfer.objects.get(id=self.reference_id)
+            except BankTransfer.DoesNotExist:
                 pass
         
         super().save(*args, **kwargs)

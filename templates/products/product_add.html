@@ -4,7 +4,7 @@
 
 
 
-{% block title %}{% trans "Add New Product" %} - {{ block.super }}{% endblock %}
+{% block title %}{% trans "Create New Product" %} - {{ block.super }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -30,7 +30,7 @@
                 <div>
                     <h1 class="h3 mb-0 text-gray-800">
                         <i class="fas fa-plus text-primary me-2"></i>
-                        {% trans "Add New Product" %}
+                        {% trans "Create New Product" %}
                     </h1>
                     <p class="mb-0 text-muted">{% trans "Create a new product in the system" %}</p>
                 </div>
@@ -270,6 +270,20 @@
                                     </div>
                                 </div>
                                 <div class="col-md-4">
+                                    <div class="mb-3" id="opening_balance_cost_container" style="display: none;">
+                                        <label for="opening_balance_cost" class="form-label">
+                                            <i class="fas fa-dollar-sign text-warning me-1"></i>
+                                            {% trans "Opening Balance Cost" %} <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="number" class="form-control" id="opening_balance_cost" name="opening_balance_cost" 
+                                               step="0.001" min="0" value="0">
+                                        <small class="form-text text-muted">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            {% trans "Total cost of the opening balance for FIFO inventory calculation" %}
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
                                     <div class="mb-3">
                                         <label for="min_stock" class="form-label">{% trans "Minimum Stock Level" %}</label>
                                         <input type="number" class="form-control" id="min_stock" name="min_stock" min="0" value="0">
@@ -460,8 +474,24 @@ $(document).ready(function() {
         }
     });
     
-    // Bind events
-    $('#selling_price, #tax_rate').on('input keyup', calculateTax);
+    // Show/hide opening balance cost field
+    function toggleOpeningBalanceCost() {
+        var openingBalance = parseFloat($('#opening_balance').val()) || 0;
+        var costContainer = $('#opening_balance_cost_container');
+        var costField = $('#opening_balance_cost');
+        
+        if (openingBalance > 0) {
+            costContainer.show();
+            costField.prop('required', true);
+        } else {
+            costContainer.hide();
+            costField.prop('required', false);
+            costField.val(0);
+        }
+    }
+    
+    // Bind opening balance change event
+    $('#opening_balance').on('input change', toggleOpeningBalanceCost);
     
     // Improve user experience
     $('#tax_rate').on('input', function() {
@@ -509,6 +539,9 @@ $(document).ready(function() {
     $(document).ready(function() {
         toggleSerialNumberField();
         $('#unit').on('change', toggleSerialNumberField);
+        
+        // Initialize opening balance cost field
+        toggleOpeningBalanceCost();
     });
 });
 </script>

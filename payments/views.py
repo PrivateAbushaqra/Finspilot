@@ -309,6 +309,8 @@ def create_payment_transaction(voucher):
             amount=voucher.amount,
             description=f'Payment voucher {voucher.voucher_number} - {voucher.beneficiary_display}',
             date=voucher.date,
+            reference_type='payment',
+            reference_id=voucher.id,
             created_by=voucher.created_by
         )
     

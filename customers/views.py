@@ -985,7 +985,8 @@ def ajax_add_customer(request):
                 credit_limit = 0
                 balance = 0
             
-            print(f"محاولة إنشاء عميل جديد: {name}")  # للتتبع
+            print(f"محاولة إنشاء عميل جديد: {name}, city: {city}, type: {customer_type}")  # للتتبع
+            print(f"البيانات المستلمة: credit_limit={credit_limit}, balance={balance}, is_active={is_active}")
             
             # التحقق من البيانات المطلوبة
             if not name:
@@ -1029,18 +1030,29 @@ def ajax_add_customer(request):
                 'message': 'تم إنشاء العميل بنجاح',
                 'customer': {
                     'id': customer.id,
-                    'name': customer.name,
-                    'phone': customer.phone,
-                    'email': customer.email
+                    'name': str(customer.name or ''),
+                    'phone': str(customer.phone or ''),
+                    'email': str(customer.email or '')
                 }
             })
             
     except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
         print(f"خطأ في إنشاء العميل: {str(e)}")
-        return JsonResponse({
-            'success': False,
-            'message': f'حدث خطأ أثناء إنشاء العميل: {str(e)}'
-        })
+        print(f"Traceback: {error_details}")
+        # تأكد من إرجاع JSON response دائماً
+        try:
+            return JsonResponse({
+                'success': False,
+                'message': f'حدث خطأ أثناء إنشاء العميل: {str(e)}'
+            }, status=500)
+        except Exception as json_error:
+            # في حالة فشل إنشاء JSON، أرجع response نصي
+            print(f"خطأ في إنشاء JSON response: {json_error}")
+            from django.http import HttpResponse
+            return HttpResponse('{"success": false, "message": "خطأ داخلي في الخادم"}', 
+                              content_type='application/json', status=500)
 
 
 @login_required

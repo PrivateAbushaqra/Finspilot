@@ -297,11 +297,11 @@ class ProductCreateView(LoginRequiredMixin, View):
             serial_number = request.POST.get('serial_number', '').strip()
             category_id = request.POST.get('category', '')
             unit = request.POST.get('unit', 'piece')
-            # سعر التكلفة يُحسب تلقائياً من فواتير المشتريات - سنتركه صفر في البداية
             sale_price = request.POST.get('sale_price', '0')
             wholesale_price = request.POST.get('wholesale_price', '0')
             tax_rate = request.POST.get('tax_rate', '0')
             opening_balance = request.POST.get('opening_balance', '0')
+            opening_balance_cost = request.POST.get('opening_balance_cost', '0')
             min_stock = request.POST.get('min_stock', '0')
             max_stock = request.POST.get('max_stock', '0')
             description = request.POST.get('description', '').strip()
@@ -361,6 +361,7 @@ class ProductCreateView(LoginRequiredMixin, View):
                 wholesale_price = float(wholesale_price) if wholesale_price else 0
                 tax_rate = float(tax_rate) if tax_rate else 0
                 opening_balance = float(opening_balance) if opening_balance else 0
+                opening_balance_cost = float(opening_balance_cost) if opening_balance_cost else 0
                 
                 # التحقق من صحة نسبة الضريبة
                 if tax_rate < 0 or tax_rate > 100:
@@ -370,6 +371,11 @@ class ProductCreateView(LoginRequiredMixin, View):
                 # التحقق من صحة رصيد بداية المدة
                 if opening_balance < 0:
                     messages.error(request, 'رصيد بداية المدة يجب أن يكون صفر أو أكبر!')
+                    return self.get(request)
+                
+                # التحقق من تكلفة الرصيد الافتتاحي إذا كان الرصيد أكبر من صفر
+                if opening_balance > 0 and (opening_balance_cost <= 0 or opening_balance_cost is None):
+                    messages.error(request, 'تكلفة الرصيد الافتتاحي مطلوبة ويجب أن تكون أكبر من صفر عند وجود رصيد افتتاحي!')
                     return self.get(request)
                     
             except ValueError:
@@ -391,6 +397,8 @@ class ProductCreateView(LoginRequiredMixin, View):
                 sale_price=sale_price,
                 wholesale_price=wholesale_price,  # إضافة سعر الجملة
                 tax_rate=tax_rate,
+                opening_balance_quantity=opening_balance,
+                opening_balance_cost=opening_balance_cost,
                 is_active=is_active
             )
             
@@ -409,13 +417,14 @@ class ProductCreateView(LoginRequiredMixin, View):
                         }
                     )
                     
+                    unit_cost = opening_balance_cost / opening_balance if opening_balance > 0 else 0
                     InventoryMovement.objects.create(
                         product=product,
                         warehouse=default_warehouse,
                         movement_type='in',
                         quantity=float(opening_balance),
-                        unit_cost=cost_price,
-                        total_cost=float(opening_balance) * cost_price,
+                        unit_cost=unit_cost,
+                        total_cost=opening_balance_cost,
                         reference_type='opening_balance',
                         reference_id=product.id,
                         notes=f'الرصيد الافتتاحي للمنتج {product.name}',
@@ -524,6 +533,7 @@ class ProductUpdateView(LoginRequiredMixin, View):
             wholesale_price = request.POST.get('wholesale_price', '0')
             tax_rate = request.POST.get('tax_rate', '0')
             opening_balance = request.POST.get('opening_balance', '0')
+            opening_balance_cost = request.POST.get('opening_balance_cost', '0')
             description = request.POST.get('description', '').strip()
             is_active = request.POST.get('is_active') == 'on'
             
@@ -564,6 +574,7 @@ class ProductUpdateView(LoginRequiredMixin, View):
                 wholesale_price = float(wholesale_price) if wholesale_price else 0
                 tax_rate = float(tax_rate) if tax_rate else 0
                 opening_balance = float(opening_balance) if opening_balance else 0
+                opening_balance_cost = float(opening_balance_cost) if opening_balance_cost else 0
                 
                 # التحقق من صحة نسبة الضريبة
                 if tax_rate < 0 or tax_rate > 100:
@@ -573,6 +584,11 @@ class ProductUpdateView(LoginRequiredMixin, View):
                 # التحقق من صحة رصيد بداية المدة
                 if opening_balance < 0:
                     messages.error(request, 'رصيد بداية المدة يجب أن يكون صفر أو أكبر!')
+                    return self.get(request, pk)
+                
+                # التحقق من تكلفة الرصيد الافتتاحي إذا كان الرصيد أكبر من صفر
+                if opening_balance > 0 and (opening_balance_cost <= 0 or opening_balance_cost is None):
+                    messages.error(request, 'تكلفة الرصيد الافتتاحي مطلوبة ويجب أن تكون أكبر من صفر عند وجود رصيد افتتاحي!')
                     return self.get(request, pk)
                     
             except ValueError:
@@ -590,6 +606,8 @@ class ProductUpdateView(LoginRequiredMixin, View):
             product.sale_price = sale_price
             product.wholesale_price = wholesale_price
             product.tax_rate = tax_rate
+            product.opening_balance_quantity = opening_balance
+            product.opening_balance_cost = opening_balance_cost
             product.is_active = is_active
             product.save()
             
@@ -988,6 +1006,7 @@ def product_add_ajax(request):
             wholesale_price = request.POST.get('wholesale_price', '0')
             tax_rate = request.POST.get('tax_rate', '0')
             opening_balance = request.POST.get('opening_balance', '0')
+            opening_balance_cost = request.POST.get('opening_balance_cost', '0')
             min_stock = request.POST.get('min_stock', '0')
             max_stock = request.POST.get('max_stock', '0')
             description = request.POST.get('description', '').strip()
@@ -1059,6 +1078,7 @@ def product_add_ajax(request):
                 wholesale_price = float(wholesale_price) if wholesale_price else 0
                 tax_rate = float(tax_rate) if tax_rate else 0
                 opening_balance = float(opening_balance) if opening_balance else 0
+                opening_balance_cost = float(opening_balance_cost) if opening_balance_cost else 0
                 
                 # التحقق من صحة نسبة الضريبة
                 if tax_rate < 0 or tax_rate > 100:
@@ -1113,13 +1133,14 @@ def product_add_ajax(request):
                         }
                     )
                     
+                    unit_cost = opening_balance_cost / opening_balance if opening_balance > 0 else 0
                     InventoryMovement.objects.create(
                         product=product,
                         warehouse=default_warehouse,
                         movement_type='in',
                         quantity=float(opening_balance),
-                        unit_cost=cost_price,
-                        total_cost=float(opening_balance) * cost_price,
+                        unit_cost=unit_cost,
+                        total_cost=opening_balance_cost,
                         reference_type='opening_balance',
                         reference_id=product.id,
                         notes=f'الرصيد الافتتاحي للمنتج {product.name}',

@@ -296,6 +296,17 @@ class CashboxTransaction(models.Model):
     related_transfer = models.ForeignKey(CashboxTransfer, on_delete=models.CASCADE, 
                                        null=True, blank=True, verbose_name=_('التحويل المرتبط'))
     
+    # ربط بالمستند الأصلي
+    reference_type = models.CharField(_('Reference Type'), max_length=50, blank=True, 
+                                    choices=[
+                                        ('sales_invoice', _('فاتورة مبيعات')),
+                                        ('purchase_invoice', _('فاتورة مشتريات')),
+                                        ('receipt', _('سند قبض')),
+                                        ('payment', _('سند دفع')),
+                                        ('transfer', _('تحويل')),
+                                    ])
+    reference_id = models.PositiveIntegerField(_('Reference ID'), null=True, blank=True)
+    
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name=_('Created By'))
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
 
