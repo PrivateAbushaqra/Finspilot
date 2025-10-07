@@ -159,6 +159,29 @@ def delete_purchase_return_journal_entry(sender, instance, **kwargs):
         logger.error(f"خطأ في حذف القيد المحاسبي لمردود المشتريات {instance.return_number}: {e}")
 
 
+@receiver(post_save, sender='banks.BankTransfer')
+def create_bank_transfer_journal_entry(sender, instance, created, **kwargs):
+    """إنشاء قيد محاسبي تلقائياً عند إنشاء تحويل بنكي"""
+    if created and instance.id:
+        try:
+            user = getattr(instance, 'created_by', None)
+            if user:
+                JournalService.create_bank_transfer_entry(instance, user)
+                logger.info(f"تم إنشاء قيد محاسبي تلقائياً للتحويل البنكي {instance.transfer_number}")
+        except Exception as e:
+            logger.error(f"خطأ في إنشاء القيد المحاسبي للتحويل البنكي {instance.transfer_number}: {e}")
+
+
+@receiver(post_delete, sender='banks.BankTransfer')
+def delete_bank_transfer_journal_entry(sender, instance, **kwargs):
+    """حذف القيد المحاسبي تلقائياً عند حذف تحويل بنكي"""
+    try:
+        JournalService.delete_journal_entry_by_reference('bank_transfer', instance.id)
+        logger.info(f"تم حذف القيد المحاسبي للتحويل البنكي {instance.transfer_number}")
+    except Exception as e:
+        logger.error(f"خطأ في حذف القيد المحاسبي للتحويل البنكي {instance.transfer_number}: {e}")
+
+
 # إشارات الإيرادات والمصروفات
 @receiver(post_save, sender='revenues_expenses.RevenueExpenseEntry')
 def create_revenue_expense_journal_entry(sender, instance, created, **kwargs):
@@ -373,3 +396,27 @@ def delete_depreciation_journal_entry(sender, instance, **kwargs):
         logger.info(f"تم حذف القيد المحاسبي لإهلاك {instance.asset.name if instance.asset else 'غير محدد'}")
     except Exception as e:
         logger.error(f"خطأ في حذف القيد المحاسبي لإهلاك {instance.asset.name if instance.asset else 'غير محدد'}: {e}")
+
+
+# إشارات تحويلات الصناديق
+@receiver(post_save, sender='cashboxes.CashboxTransfer')
+def create_cashbox_transfer_journal_entry(sender, instance, created, **kwargs):
+    """إنشاء قيد محاسبي تلقائياً عند إنشاء تحويل صندوق"""
+    if created and instance.id:
+        try:
+            user = getattr(instance, 'created_by', None)
+            if user:
+                JournalService.create_cashbox_transfer_entry(instance, user)
+                logger.info(f"تم إنشاء قيد محاسبي تلقائياً للتحويل {instance.transfer_number}")
+        except Exception as e:
+            logger.error(f"خطأ في إنشاء القيد المحاسبي للتحويل {instance.transfer_number}: {e}")
+
+
+@receiver(post_delete, sender='cashboxes.CashboxTransfer')
+def delete_cashbox_transfer_journal_entry(sender, instance, **kwargs):
+    """حذف القيد المحاسبي تلقائياً عند حذف تحويل صندوق"""
+    try:
+        JournalService.delete_journal_entry_by_reference('cashbox_transfer', instance.id)
+        logger.info(f"تم حذف القيد المحاسبي للتحويل {instance.transfer_number}")
+    except Exception as e:
+        logger.error(f"خطأ في حذف القيد المحاسبي للتحويل {instance.transfer_number}: {e}")

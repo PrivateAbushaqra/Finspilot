@@ -381,17 +381,15 @@ def transfer_create(request):
                 
                 messages.success(request, _('Transfer created successfully'))
                 
-                # تسجيل النشاط
-                try:
-                    from core.signals import log_user_activity
-                    log_user_activity(
-                        request,
-                        'create',
-                        transfer,
-                        f'إنشاء تحويل {transfer.transfer_number} من {transfer.get_from_display()} إلى {transfer.get_to_display()}'
-                    )
-                except Exception:
-                    pass
+                # تسجيل النشاط في سجل التدقيق
+                from core.models import AuditLog
+                AuditLog.objects.create(
+                    user=request.user,
+                    action_type='create',
+                    content_type='CashboxTransfer',
+                    object_id=transfer.id,
+                    description=f'إنشاء تحويل {transfer.transfer_number} من {transfer.get_from_display_name()} إلى {transfer.get_to_display_name()} - المبلغ: {transfer.amount}'
+                )
                 
                 # تحديث التسلسل بعد نجاح التحويل
                 if not transfer_number:  # فقط إذا تم توليد الرقم تلقائياً

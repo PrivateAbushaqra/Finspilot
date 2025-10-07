@@ -354,6 +354,17 @@ def receipt_add(request):
                 # إنشاء القيد المحاسبي
                 create_receipt_journal_entry(receipt, request.user)
                 
+                # تسجيل النشاط في سجل التدقيق
+                from core.models import AuditLog
+                payment_type_display = dict(PaymentReceipt.PAYMENT_TYPES).get(payment_type, payment_type)
+                AuditLog.objects.create(
+                    user=request.user,
+                    action_type='create',
+                    content_type='PaymentReceipt',
+                    object_id=receipt.id,
+                    description=f'إنشاء سند قبض رقم {receipt.receipt_number} - العميل: {customer.name} - المبلغ: {amount} - نوع الدفع: {payment_type_display}'
+                )
+                
                 messages.success(request, _('Receipt voucher {} created successfully').format(receipt.receipt_number))
                 return redirect('receipts:receipt_detail', receipt_id=receipt.id)
         

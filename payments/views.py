@@ -179,6 +179,18 @@ def payment_voucher_create(request):
                     # Create journal entry
                     create_payment_journal_entry(voucher, request.user)
                     
+                    # تسجيل النشاط في سجل التدقيق
+                    from core.models import AuditLog
+                    payment_type_display = dict(PaymentVoucher.PAYMENT_TYPES).get(voucher.payment_type, voucher.payment_type)
+                    beneficiary = voucher.supplier.name if voucher.supplier else voucher.beneficiary_name
+                    AuditLog.objects.create(
+                        user=request.user,
+                        action_type='create',
+                        content_type='PaymentVoucher',
+                        object_id=voucher.id,
+                        description=f'إنشاء سند صرف رقم {voucher.voucher_number} - المستفيد: {beneficiary} - المبلغ: {voucher.amount} - نوع الدفع: {payment_type_display}'
+                    )
+                    
                     messages.success(request, _('Payment voucher created successfully'))
                     return redirect('payments:voucher_detail', pk=voucher.pk)
             except Exception as e:

@@ -245,7 +245,29 @@ class JournalService:
                 'credit': 0,
                 'description': f'قبض نقدي - سند رقم {receipt.receipt_number}'
             })
-        else:
+        elif receipt.payment_type == 'bank_transfer':
+            # للتحويل البنكي - استخدام الحساب البنكي المحدد
+            if receipt.bank_account:
+                bank_account = JournalService.get_or_create_bank_account_by_name(
+                    receipt.bank_account.name,
+                    receipt.bank_account.bank_name
+                )
+                lines_data.append({
+                    'account_id': bank_account.id,
+                    'debit': receipt.amount,
+                    'credit': 0,
+                    'description': f'تحويل بنكي رقم {receipt.bank_transfer_reference} - سند رقم {receipt.receipt_number}'
+                })
+            else:
+                # في حالة عدم وجود حساب بنكي، استخدم حساب عام
+                bank_account = JournalService.get_cash_account()
+                lines_data.append({
+                    'account_id': bank_account.id,
+                    'debit': receipt.amount,
+                    'credit': 0,
+                    'description': f'تحويل بنكي - سند رقم {receipt.receipt_number}'
+                })
+        else:  # check
             # للشيكات - استخدام اسم البنك
             bank_account = JournalService.get_or_create_bank_account(receipt.bank_name)
             lines_data.append({
@@ -288,7 +310,8 @@ class JournalService:
                 'description': f'سند دفع رقم {payment.voucher_number}'
             })
         else:
-            expense_account = JournalService.get_or_create_expense_account(payment.expense_type)
+            # للمصروفات الأخرى - استخدام حساب مصروفات عام
+            expense_account = JournalService.get_or_create_expense_account('other')
             lines_data.append({
                 'account_id': expense_account.id,
                 'debit': payment.amount,
@@ -305,14 +328,47 @@ class JournalService:
                 'credit': payment.amount,
                 'description': f'دفع نقدي - سند رقم {payment.voucher_number}'
             })
-        else:
-            bank_account = JournalService.get_or_create_bank_account(payment.bank)
-            lines_data.append({
-                'account_id': bank_account.id,
-                'debit': 0,
-                'credit': payment.amount,
-                'description': f'دفع بنكي - سند رقم {payment.voucher_number}'
-            })
+        elif payment.payment_type == 'bank_transfer':
+            # للتحويل البنكي
+            if payment.bank:
+                bank_account = JournalService.get_or_create_bank_account_by_name(
+                    payment.bank.name,
+                    payment.bank.bank_name
+                )
+                lines_data.append({
+                    'account_id': bank_account.id,
+                    'debit': 0,
+                    'credit': payment.amount,
+                    'description': f'تحويل بنكي رقم {payment.bank_reference} - سند رقم {payment.voucher_number}'
+                })
+            else:
+                # في حالة عدم وجود حساب بنكي
+                cash_account = JournalService.get_cash_account()
+                lines_data.append({
+                    'account_id': cash_account.id,
+                    'debit': 0,
+                    'credit': payment.amount,
+                    'description': f'تحويل بنكي - سند رقم {payment.voucher_number}'
+                })
+        else:  # check
+            # للشيكات - استخدام اسم البنك إذا كان متوفر
+            if hasattr(payment, 'check_bank_name') and payment.check_bank_name:
+                bank_account = JournalService.get_or_create_bank_account(payment.check_bank_name)
+                lines_data.append({
+                    'account_id': bank_account.id,
+                    'debit': 0,
+                    'credit': payment.amount,
+                    'description': f'شيك رقم {payment.check_number} - سند رقم {payment.voucher_number}'
+                })
+            else:
+                # استخدام حساب عام
+                cash_account = JournalService.get_cash_account()
+                lines_data.append({
+                    'account_id': cash_account.id,
+                    'debit': 0,
+                    'credit': payment.amount,
+                    'description': f'شيك - سند رقم {payment.voucher_number}'
+                })
         
         return JournalService.create_journal_entry(
             entry_date=payment.date,
@@ -1005,6 +1061,281 @@ class JournalService:
             reference_type='sales_credit_note',
             reference_id=credit_note.id,
             description=f'إشعار دائن للمبيعات رقم {credit_note.note_number} - {credit_note.customer.name}',
+            lines_data=lines_data,
+            user=user
+        )
+    
+    @staticmethod
+    def create_bank_transfer_entry(transfer, user=None):
+        """إنشاء قيد التحويل البنكي"""
+        # التحقق من عدم وجود قيد سابق لهذا التحويل
+        existing_entry = JournalEntry.objects.filter(
+            reference_type='bank_transfer',
+            reference_id=transfer.id
+        ).first()
+        
+        if existing_entry:
+            print(f"قيد التحويل البنكي موجود بالفعل للتحويل {transfer.transfer_number}: {existing_entry.entry_number}")
+            return existing_entry
+        
+        lines_data = []
+        
+        # حساب البنك المرسل (مدين) - الخصم
+        from_bank_account = JournalService.get_or_create_bank_account_by_name(
+            transfer.from_account.name, 
+            transfer.from_account.bank_name
+        )
+        total_debit = transfer.amount + transfer.fees
+        
+        lines_data.append({
+            'account_id': from_bank_account.id,
+            'debit': total_debit,
+            'credit': 0,
+            'description': f'تحويل إلى {transfer.to_account.name} - رسوم {transfer.fees}'
+        })
+        
+        # حساب البنك المستقبل (دائن) - الإيداع
+        to_bank_account = JournalService.get_or_create_bank_account_by_name(
+            transfer.to_account.name,
+            transfer.to_account.bank_name
+        )
+        
+        lines_data.append({
+            'account_id': to_bank_account.id,
+            'debit': 0,
+            'credit': transfer.amount * transfer.exchange_rate,
+            'description': f'تحويل من {transfer.from_account.name}'
+        })
+        
+        # إذا كانت هناك رسوم، يتم تحميلها على حساب مصروفات البنك
+        if transfer.fees > 0:
+            bank_fees_account = JournalService.get_or_create_expense_account('bank_fees')
+            lines_data.append({
+                'account_id': bank_fees_account.id,
+                'debit': 0,
+                'credit': transfer.fees,
+                'description': f'رسوم تحويل بنكي - {transfer.transfer_number}'
+            })
+        
+        return JournalService.create_journal_entry(
+            entry_date=transfer.date,
+            reference_type='bank_transfer',
+            reference_id=transfer.id,
+            description=f'تحويل بنكي رقم {transfer.transfer_number} من {transfer.from_account.name} إلى {transfer.to_account.name}',
+            lines_data=lines_data,
+            user=user
+        )
+    
+    @staticmethod
+    def get_or_create_bank_account_by_name(account_name, bank_name):
+        """الحصول على حساب بنكي أو إنشاؤه بناءً على الاسم"""
+        from .models import Account
+        
+        # البحث عن حساب بنكي موجود
+        account = Account.objects.filter(
+            name__icontains=account_name,
+            account_type='asset',
+            code__startswith='1101'  # الحسابات البنكية عادة تبدأ بـ 1101
+        ).first()
+        
+        if account:
+            return account
+        
+        # إنشاء حساب بنكي جديد
+        # البحث عن آخر كود للبنوك
+        last_account = Account.objects.filter(
+            code__startswith='1101'
+        ).order_by('-code').first()
+        
+        if last_account:
+            try:
+                last_number = int(last_account.code[4:])
+                new_code = f'1101{last_number + 1:04d}'
+            except ValueError:
+                new_code = f'11010001'
+        else:
+            new_code = f'11010001'
+        
+        return Account.objects.create(
+            code=new_code,
+            name=f'{account_name} - {bank_name}',
+            account_type='asset',
+            is_active=True,
+            description=f'حساب بنكي تلقائي - {bank_name}'
+        )
+    
+    @staticmethod
+    def get_or_create_cashbox_account_by_name(cashbox_name):
+        """الحصول على حساب صندوق أو إنشاؤه بناءً على الاسم"""
+        from .models import Account
+        
+        # البحث عن حساب صندوق موجود
+        account = Account.objects.filter(
+            name__icontains=cashbox_name,
+            account_type='asset',
+            code__startswith='11'  # الحسابات النقدية عادة تبدأ بـ 11
+        ).first()
+        
+        if account:
+            return account
+        
+        # إنشاء حساب صندوق جديد
+        # البحث عن آخر كود للصناديق
+        last_account = Account.objects.filter(
+            code__startswith='1102'
+        ).order_by('-code').first()
+        
+        if last_account:
+            try:
+                last_number = int(last_account.code[4:])
+                new_code = f'1102{last_number + 1:04d}'
+            except ValueError:
+                new_code = f'11020001'
+        else:
+            new_code = f'11020001'
+        
+        return Account.objects.create(
+            code=new_code,
+            name=f'صندوق - {cashbox_name}',
+            account_type='asset',
+            is_active=True,
+            description=f'حساب صندوق تلقائي - {cashbox_name}'
+        )
+    
+    @staticmethod
+    def create_cashbox_transfer_entry(transfer, user=None):
+        """إنشاء قيد تحويل الصندوق"""
+        # التحقق من عدم وجود قيد سابق لهذا التحويل
+        existing_entry = JournalEntry.objects.filter(
+            reference_type='cashbox_transfer',
+            reference_id=transfer.id
+        ).first()
+        
+        if existing_entry:
+            print(f"قيد التحويل موجود بالفعل للتحويل {transfer.transfer_number}: {existing_entry.entry_number}")
+            return existing_entry
+        
+        lines_data = []
+        
+        # معالجة التحويلات حسب النوع
+        if transfer.transfer_type == 'cashbox_to_cashbox':
+            # تحويل من صندوق إلى صندوق
+            from_cashbox_account = JournalService.get_or_create_cashbox_account_by_name(
+                transfer.from_cashbox.name
+            )
+            to_cashbox_account = JournalService.get_or_create_cashbox_account_by_name(
+                transfer.to_cashbox.name
+            )
+            
+            total_debit = transfer.amount + transfer.fees
+            
+            # حساب الصندوق المرسل (دائن) - الخصم
+            lines_data.append({
+                'account_id': from_cashbox_account.id,
+                'debit': 0,
+                'credit': total_debit,
+                'description': f'تحويل إلى {transfer.to_cashbox.name} - رسوم {transfer.fees}'
+            })
+            
+            # حساب الصندوق المستقبل (مدين) - الإيداع
+            lines_data.append({
+                'account_id': to_cashbox_account.id,
+                'debit': transfer.amount * transfer.exchange_rate,
+                'credit': 0,
+                'description': f'تحويل من {transfer.from_cashbox.name}'
+            })
+            
+            # إذا كانت هناك رسوم، يتم تحميلها على حساب مصروفات
+            if transfer.fees > 0:
+                fees_account = JournalService.get_or_create_expense_account('transfer_fees')
+                lines_data.append({
+                    'account_id': fees_account.id,
+                    'debit': transfer.fees,
+                    'credit': 0,
+                    'description': f'رسوم تحويل - {transfer.transfer_number}'
+                })
+        
+        elif transfer.transfer_type == 'cashbox_to_bank':
+            # تحويل من صندوق إلى بنك
+            from_cashbox_account = JournalService.get_or_create_cashbox_account_by_name(
+                transfer.from_cashbox.name
+            )
+            to_bank_account = JournalService.get_or_create_bank_account_by_name(
+                transfer.to_bank.name,
+                transfer.to_bank.bank_name
+            )
+            
+            total_debit = transfer.amount + transfer.fees
+            
+            # حساب الصندوق (دائن) - الخصم
+            lines_data.append({
+                'account_id': from_cashbox_account.id,
+                'debit': 0,
+                'credit': total_debit,
+                'description': f'تحويل إلى بنك {transfer.to_bank.name} - رسوم {transfer.fees}'
+            })
+            
+            # حساب البنك (مدين) - الإيداع
+            lines_data.append({
+                'account_id': to_bank_account.id,
+                'debit': transfer.amount * transfer.exchange_rate,
+                'credit': 0,
+                'description': f'تحويل من صندوق {transfer.from_cashbox.name}'
+            })
+            
+            # إذا كانت هناك رسوم
+            if transfer.fees > 0:
+                fees_account = JournalService.get_or_create_expense_account('transfer_fees')
+                lines_data.append({
+                    'account_id': fees_account.id,
+                    'debit': transfer.fees,
+                    'credit': 0,
+                    'description': f'رسوم تحويل - {transfer.transfer_number}'
+                })
+        
+        elif transfer.transfer_type == 'bank_to_cashbox':
+            # تحويل من بنك إلى صندوق
+            from_bank_account = JournalService.get_or_create_bank_account_by_name(
+                transfer.from_bank.name,
+                transfer.from_bank.bank_name
+            )
+            to_cashbox_account = JournalService.get_or_create_cashbox_account_by_name(
+                transfer.to_cashbox.name
+            )
+            
+            total_debit = transfer.amount + transfer.fees
+            
+            # حساب البنك (دائن) - الخصم
+            lines_data.append({
+                'account_id': from_bank_account.id,
+                'debit': 0,
+                'credit': total_debit,
+                'description': f'تحويل إلى صندوق {transfer.to_cashbox.name} - رسوم {transfer.fees}'
+            })
+            
+            # حساب الصندوق (مدين) - الإيداع
+            lines_data.append({
+                'account_id': to_cashbox_account.id,
+                'debit': transfer.amount * transfer.exchange_rate,
+                'credit': 0,
+                'description': f'تحويل من بنك {transfer.from_bank.name}'
+            })
+            
+            # إذا كانت هناك رسوم
+            if transfer.fees > 0:
+                fees_account = JournalService.get_or_create_expense_account('transfer_fees')
+                lines_data.append({
+                    'account_id': fees_account.id,
+                    'debit': transfer.fees,
+                    'credit': 0,
+                    'description': f'رسوم تحويل - {transfer.transfer_number}'
+                })
+        
+        return JournalService.create_journal_entry(
+            entry_date=transfer.date,
+            reference_type='cashbox_transfer',
+            reference_id=transfer.id,
+            description=f'تحويل رقم {transfer.transfer_number} من {transfer.get_from_display_name()} إلى {transfer.get_to_display_name()}',
             lines_data=lines_data,
             user=user
         )

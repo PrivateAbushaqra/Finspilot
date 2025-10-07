@@ -657,6 +657,14 @@ class BankTransferCreateView(LoginRequiredMixin, View):
                 )
                 
                 # لا حاجة لاستدعاء sync_balance هنا - سيتم تلقائياً عند save() للـ BankTransaction
+                
+                # تسجيل النشاط في سجل الأنشطة
+                log_user_activity(
+                    request,
+                    'CREATE',
+                    transfer,
+                    f'تم إنشاء تحويل بنكي رقم {transfer.transfer_number} من {from_account.name} إلى {to_account.name} بمبلغ {amount:.3f}'
+                )
             
             messages.success(request, f'تم إنشاء التحويل البنكي "{transfer.transfer_number}" بنجاح!')
             return redirect('banks:transfer_list')
@@ -904,6 +912,17 @@ class BankCashboxTransferCreateView(LoginRequiredMixin, View):
                     bank.sync_balance()
             
             messages.success(request, f'تم إنشاء التحويل "{transfer.transfer_number}" بنجاح!')
+            
+            # تسجيل النشاط في سجل التدقيق
+            from core.models import AuditLog
+            AuditLog.objects.create(
+                user=request.user,
+                action_type='create',
+                content_type='CashboxTransfer',
+                object_id=transfer.id,
+                description=f'إنشاء تحويل {transfer.transfer_type} رقم {transfer.transfer_number} - المبلغ: {amount} - رسوم: {fees}'
+            )
+            
             return redirect('banks:transfer_list')
             
         except Exception as e:
