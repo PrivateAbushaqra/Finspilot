@@ -224,6 +224,20 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Form Errors -->
+        {% if formset.non_form_errors %}
+        <div class="row">
+            <div class="col-12">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    {% for error in formset.non_form_errors %}
+                        {{ error }}<br>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </form>
 </div>
 

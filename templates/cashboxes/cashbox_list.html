@@ -18,6 +18,10 @@
                             {% trans "Print Full Report" %}
                         </button>
                         {% if user.is_superuser or user.user_type in 'superadmin,admin' or perms.cashboxes.can_add_cashboxes %}
+                        <a href="{% url 'cashboxes:transfer_create' %}" class="btn btn-warning btn-sm me-2">
+                            <i class="fas fa-exchange-alt me-1"></i>
+                            {% trans "إنشاء تحويل جديد" %}
+                        </a>
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCashboxModal">
                             <i class="fas fa-plus"></i> {% trans "Create New Cashbox" %}
                         </button>

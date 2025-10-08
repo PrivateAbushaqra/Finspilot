@@ -17,6 +17,10 @@
                                 <i class="fas fa-print me-1"></i>
                                 {% trans "Print Full Report" %}
                             </button>
+                            <a href="{% url 'cashboxes:cashbox_list' %}" class="btn btn-success btn-sm me-2">
+                                <i class="fas fa-list me-1"></i>
+                                {% trans "قائمة الصناديق" %}
+                            </a>
                             <button type="button" class="btn btn-primary no-print" data-bs-toggle="modal" data-bs-target="#createTransferModal">
                                 <i class="fas fa-plus"></i> {% trans "New Transfer" %}
                             </button>

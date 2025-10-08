@@ -88,15 +88,34 @@ class JournalLineForm(forms.ModelForm):
 
 
 # إنشاء FormSet للبنود
-JournalLineFormSet = inlineformset_factory(
+class JournalLineFormSet(inlineformset_factory(
     JournalEntry, 
     JournalLine,
     form=JournalLineForm,
     extra=2,
-    min_num=2,
-    validate_min=True,
+    min_num=0,
+    validate_min=False,
     can_delete=True
-)
+)):
+    def clean(self):
+        """التحقق من توازن البنود"""
+        super().clean()
+        
+        total_debit = Decimal('0')
+        total_credit = Decimal('0')
+        
+        for form in self.forms:
+            if form.cleaned_data and not form.cleaned_data.get('DELETE', False):
+                debit = form.cleaned_data.get('debit', Decimal('0'))
+                credit = form.cleaned_data.get('credit', Decimal('0'))
+                total_debit += debit
+                total_credit += credit
+        
+        if total_debit != total_credit:
+            raise forms.ValidationError(_('يجب أن يساوي مجموع المدين مجموع الدائن'))
+        
+        if total_debit == 0:
+            raise forms.ValidationError(_('يجب إدخال بنود القيد المحاسبي'))
 
 
 class JournalSearchForm(forms.Form):

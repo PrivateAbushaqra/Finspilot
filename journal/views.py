@@ -327,8 +327,7 @@ def journal_entry_create(request):
                     formset.instance = entry
                     formset.save()
 
-                    # التحقق من توازن القيد وحساب الإجمالي
-                    entry.clean()
+                    # حساب الإجمالي
                     total_debit = entry.lines.aggregate(total=Sum('debit'))['total'] or Decimal('0')
                     entry.total_amount = total_debit
                     entry.save()
