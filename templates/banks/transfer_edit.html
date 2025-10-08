@@ -1,0 +1,465 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load currency_tags %}
+{% load l10n %}
+
+
+{% block title %}{% trans "Edit Bank Transfer" %} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-container {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+        margin-top: 1rem;
+    }
+
+    .form-header {
+        border-bottom: 2px solid #e9ecef;
+        padding-bottom: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .form-section {
+        margin-bottom: 2rem;
+    }
+
+    .form-section h5 {
+        color: #6c757d;
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .transfer-visual {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 10px;
+        padding: 2rem;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .account-box {
+        background: white;
+        border: 2px solid #dee2e6;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin: 0 1rem;
+        min-height: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        transition: all 0.3s ease;
+    }
+
+    .account-box.selected {
+        border-color: #007bff;
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+    }
+
+    .transfer-arrow {
+        font-size: 2rem;
+        color: #28a745;
+        margin: 0 1rem;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+
+    .amount-display {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #28a745;
+        text-align: center;
+        margin: 1rem 0;
+    }
+
+    .btn-save {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 25px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(23, 162, 184, 0.3);
+    }
+
+    .btn-cancel {
+        background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 25px;
+        transition: all 0.3s ease;
+    }
+
+    .required-field {
+        color: #dc3545;
+    }
+
+    .calculation-box {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+
+    .warning-alert {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        border: none;
+        color: #212529;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0 text-gray-800">
+                        <i class="fas fa-edit text-warning me-2"></i>
+                        {% trans "Edit Bank Transfer" %}
+                    </h1>
+                    <nav aria-label="breadcrumb" class="mt-2">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">{% trans "Dashboard" %}</a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'banks:transfer_list' %}">{% trans "Bank Transfers" %}</a></li>
+                            <li class="breadcrumb-item active">{% trans "Edit Transfer" %} {{ object.transfer_number }}</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div>
+                    <a href="{% url 'banks:transfer_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-right me-1"></i>
+                        {% trans "Back to List" %}
+                    </a>
+                </div>
+            </div>
+
+            <!-- Warning Alert -->
+            <div class="alert warning-alert mb-4">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-exclamation-triangle fa-lg me-3"></i>
+                    <div>
+                        <strong>{% trans "Important Alert" %}</strong><br>
+                        <small>{% trans "Make sure the transfer data is correct before saving. Account balances will be updated automatically." %}</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Container -->
+            <div class="form-container">
+                <div class="form-header">
+                    <h2>
+                        <i class="fas fa-edit text-warning me-2"></i>
+                        {% trans "Edit Bank Transfer Information" %}
+                    </h2>
+                    <p class="text-muted mb-0">{% trans "Modify transfer details and save changes" %}</p>
+                </div>
+
+                <!-- Transfer Visual -->
+                <div class="transfer-visual">
+                    <h5 class="mb-4">{% trans "Transfer Preview" %}</h5>
+                    <div class="d-flex align-items-center justify-content-center">
+                        <div class="account-box selected" id="fromAccountBox">
+                            <i class="fas fa-university fa-2x mb-2"></i>
+                            <strong id="fromAccountName">{{ object.from_account.name }} - {{ object.from_account.bank_name }}</strong>
+                            <small id="fromAccountBalance" class="text-muted">{% trans "Balance" %}: {{ object.from_account.balance|floatformat:3 }} {{ object.from_account.currency }}</small>
+                        </div>
+
+                        <div class="transfer-arrow">
+                            <i class="fas fa-arrow-left"></i>
+                        </div>
+
+                        <div class="account-box selected" id="toAccountBox">
+                            <i class="fas fa-university fa-2x mb-2"></i>
+                            <strong id="toAccountName">{{ object.to_account.name }} - {{ object.to_account.bank_name }}</strong>
+                            <small id="toAccountBalance" class="text-muted">{% trans "Balance" %}: {{ object.to_account.balance|floatformat:3 }} {{ object.to_account.currency }}</small>
+                        </div>
+                    </div>
+
+                    <div class="amount-display" id="amountDisplay">{% trans "Amount" %}: {{ object.amount|floatformat:3 }} {% get_currency_symbol %}</div>
+                </div>
+
+                <form method="post" id="bankTransferForm">
+                    {% csrf_token %}
+
+                    <!-- Transfer Details Section -->
+                    <div class="form-section">
+                        <h5>
+                            <i class="fas fa-info-circle me-1"></i>
+                            {% trans "Transfer Details" %}
+                        </h5>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_transfer_number" class="form-label">
+                                        {% trans "Transfer Number" %} <span class="required-field">*</span>
+                                    </label>
+                                    <input type="text" class="form-control" id="id_transfer_number" name="transfer_number"
+                                           value="{{ object.transfer_number }}" readonly>
+                                    <div class="form-text">
+                                        {% trans "Reference number for transfer (cannot be changed)" %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_date" class="form-label">
+                                        {% trans "Transfer Date" %} <span class="required-field">*</span>
+                                    </label>
+                                    <input type="date" class="form-control" id="id_date" name="date"
+                                           value="{{ object.date|date:'Y-m-d' }}" required>
+                                    <div class="form-text">{% trans "Transfer execution date" %}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Accounts Section -->
+                    <div class="form-section">
+                        <h5>
+                            <i class="fas fa-university me-1"></i>
+                            {% trans "Accounts" %}
+                        </h5>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_from_account" class="form-label">
+                                        {% trans "From Account" %} <span class="required-field">*</span>
+                                    </label>
+                                    <select class="form-select" id="id_from_account" name="from_account" required>
+                                        <option value="">{% trans "Select Sender Account" %}</option>
+                                        {% for account in accounts %}
+                                        <option value="{{ account.id }}" data-balance="{{ account.balance|default_if_none:0|unlocalize }}" data-currency="{{ account.currency }}"
+                                                {% if account.id == object.from_account.id %}selected{% endif %}>
+                                            {{ account.name }} - {{ account.bank_name }} ({{ account.balance|floatformat:3 }} {{ account.currency }})
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="form-text">{% trans "Select the account to debit from" %}</div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_to_account" class="form-label">
+                                        {% trans "To Account" %} <span class="required-field">*</span>
+                                    </label>
+                                    <select class="form-select" id="id_to_account" name="to_account" required>
+                                        <option value="">{% trans "Select Receiver Account" %}</option>
+                                        {% for account in accounts %}
+                                        <option value="{{ account.id }}" data-balance="{{ account.balance|default_if_none:0|unlocalize }}" data-currency="{{ account.currency }}"
+                                                {% if account.id == object.to_account.id %}selected{% endif %}>
+                                            {{ account.name }} - {{ account.bank_name }} ({{ account.balance|floatformat:3 }} {{ account.currency }})
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="form-text">{% trans "Select the account to deposit to" %}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Amount Section -->
+                    <div class="form-section">
+                        <h5>
+                            <i class="fas fa-money-bill-wave me-1"></i>
+                            {% trans "Amounts and Fees" %}
+                        </h5>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="id_amount" class="form-label">
+                                        {% trans "Transfer Amount" %} <span class="required-field">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="id_amount" name="amount"
+                                               step="0.001" min="0.001" value="{{ object.amount|unlocalize }}" required>
+                                        <span class="input-group-text" id="amountCurrency">{{ object.from_account.currency }}</span>
+                                    </div>
+                                    <div class="form-text">{% trans "Amount to be transferred" %}</div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="id_fees" class="form-label">{% trans "Transfer Fees" %}</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="id_fees" name="fees"
+                                               step="0.001" min="0" value="{{ object.fees|unlocalize }}">
+                                        <span class="input-group-text">{{ object.from_account.currency }}</span>
+                                    </div>
+                                    <div class="form-text">{% trans "Bank fees for the transfer" %}</div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="id_exchange_rate" class="form-label">{% trans "Exchange Rate" %}</label>
+                                    <input type="number" class="form-control" id="id_exchange_rate" name="exchange_rate"
+                                           step="0.0001" min="0.0001" value="{{ object.exchange_rate|unlocalize }}">
+                                    <div class="form-text">{% trans "Exchange rate between currencies (1 if same currency)" %}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Calculation Box -->
+                        <div class="calculation-box">
+                            <h6 class="mb-3">{% trans "Transfer Summary" %}</h6>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <small class="text-muted">{% trans "Base Amount" %}:</small>
+                                    <div class="fw-bold" id="baseAmount">{{ object.amount|floatformat:3 }} {{ object.from_account.currency }}</div>
+                                </div>
+                                <div class="col-md-3">
+                                    <small class="text-muted">{% trans "Fees" %}:</small>
+                                    <div class="fw-bold text-danger" id="feesAmount">{{ object.fees|floatformat:3 }} {{ object.from_account.currency }}</div>
+                                </div>
+                                <div class="col-md-3">
+                                    <small class="text-muted">{% trans "Total Deduction" %}:</small>
+                                    <div class="fw-bold text-warning" id="totalDebit">{{ object.get_total_amount|floatformat:3 }} {{ object.from_account.currency }}</div>
+                                </div>
+                                <div class="col-md-3">
+                                    <small class="text-muted">{% trans "Net Deposit" %}:</small>
+                                    <div class="fw-bold text-success" id="netCredit">{{ object.amount|floatformat:3 }} {{ object.to_account.currency }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Description Section -->
+                    <div class="form-section">
+                        <h5>
+                            <i class="fas fa-comment me-1"></i>
+                            {% trans "Transfer Description" %}
+                        </h5>
+
+                        <div class="mb-3">
+                            <label for="id_description" class="form-label">{% trans "Transfer Description" %}</label>
+                            <textarea class="form-control" id="id_description" name="description" rows="3"
+                                    placeholder="{% trans "Enter a description for the purpose of the transfer" %}...">{{ object.description }}</textarea>
+                            <div class="form-text">{% trans "Optional description for the reason or purpose of the transfer" %}</div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-between align-items-center pt-3">
+                        <div class="text-muted">
+                            <small><span class="required-field">*</span> {% trans "Required fields" %}</small>
+                        </div>
+                        <div>
+                            <a href="{% url 'banks:transfer_list' %}" class="btn btn-cancel me-2">
+                                <i class="fas fa-times me-1"></i>
+                                {% trans "Cancel" %}
+                            </a>
+                            <button type="submit" class="btn btn-save text-white">
+                                <i class="fas fa-save me-1"></i>
+                                {% trans "Save Changes" %}
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fromAccountSelect = document.getElementById('id_from_account');
+    const toAccountSelect = document.getElementById('id_to_account');
+    const amountInput = document.getElementById('id_amount');
+    const feesInput = document.getElementById('id_fees');
+    const exchangeRateInput = document.getElementById('id_exchange_rate');
+    const amountCurrency = document.getElementById('amountCurrency');
+    const fromAccountBox = document.getElementById('fromAccountBox');
+    const toAccountBox = document.getElementById('toAccountBox');
+    const fromAccountName = document.getElementById('fromAccountName');
+    const toAccountName = document.getElementById('toAccountName');
+    const fromAccountBalance = document.getElementById('fromAccountBalance');
+    const toAccountBalance = document.getElementById('toAccountBalance');
+    const amountDisplay = document.getElementById('amountDisplay');
+    const baseAmount = document.getElementById('baseAmount');
+    const feesAmount = document.getElementById('feesAmount');
+    const totalDebit = document.getElementById('totalDebit');
+    const netCredit = document.getElementById('netCredit');
+
+    function updateCalculations() {
+        const amount = parseFloat(amountInput.value) || 0;
+        const fees = parseFloat(feesInput.value) || 0;
+        const exchangeRate = parseFloat(exchangeRateInput.value) || 1;
+
+        const totalDeduction = amount + fees;
+        const netDeposit = amount * exchangeRate;
+
+        baseAmount.textContent = amount.toFixed(3) + ' ' + (amountCurrency.textContent || 'JOD');
+        feesAmount.textContent = fees.toFixed(3) + ' ' + (amountCurrency.textContent || 'JOD');
+        totalDebit.textContent = totalDeduction.toFixed(3) + ' ' + (amountCurrency.textContent || 'JOD');
+        netCredit.textContent = netDeposit.toFixed(3) + ' ' + (amountCurrency.textContent || 'JOD');
+
+        amountDisplay.textContent = 'المبلغ: ' + amount.toFixed(3) + ' ' + (amountCurrency.textContent || 'JOD');
+    }
+
+    function updateAccountInfo() {
+        const fromOption = fromAccountSelect.options[fromAccountSelect.selectedIndex];
+        const toOption = toAccountSelect.options[toAccountSelect.selectedIndex];
+
+        if (fromOption.value) {
+            const balance = fromOption.getAttribute('data-balance') || '0';
+            const currency = fromOption.getAttribute('data-currency') || 'JOD';
+            fromAccountName.textContent = fromOption.text.split(' (')[0];
+            fromAccountBalance.textContent = 'الرصيد: ' + parseFloat(balance).toFixed(3) + ' ' + currency;
+            amountCurrency.textContent = currency;
+            fromAccountBox.classList.add('selected');
+        } else {
+            fromAccountName.textContent = 'اختر حساب المرسل';
+            fromAccountBalance.textContent = 'الرصيد: ---';
+            fromAccountBox.classList.remove('selected');
+        }
+
+        if (toOption.value) {
+            const balance = toOption.getAttribute('data-balance') || '0';
+            const currency = toOption.getAttribute('data-currency') || 'JOD';
+            toAccountName.textContent = toOption.text.split(' (')[0];
+            toAccountBalance.textContent = 'الرصيد: ' + parseFloat(balance).toFixed(3) + ' ' + currency;
+            toAccountBox.classList.add('selected');
+        } else {
+            toAccountName.textContent = 'اختر حساب المستلم';
+            toAccountBalance.textContent = 'الرصيد: ---';
+            toAccountBox.classList.remove('selected');
+        }
+
+        updateCalculations();
+    }
+
+    // Event listeners
+    fromAccountSelect.addEventListener('change', updateAccountInfo);
+    toAccountSelect.addEventListener('change', updateAccountInfo);
+    amountInput.addEventListener('input', updateCalculations);
+    feesInput.addEventListener('input', updateCalculations);
+    exchangeRateInput.addEventListener('input', updateCalculations);
+
+    // Initial update
+    updateAccountInfo();
+});
+</script>
+{% endblock %}

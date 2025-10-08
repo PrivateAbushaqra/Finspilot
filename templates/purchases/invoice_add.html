@@ -577,6 +577,12 @@ function addProductRow() {
         // Attach event listeners to the new row
         attachRowEventListeners(row);
         
+        // Focus on quantity input of the new row
+        const newQuantityInput = document.getElementById(`quantity${productRowCount}`);
+        if (newQuantityInput) {
+            setTimeout(() => newQuantityInput.focus(), 10);
+        }
+        
         // Mark as having unsaved changes
         hasUnsavedChanges = true;
         

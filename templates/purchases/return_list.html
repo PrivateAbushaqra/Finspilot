@@ -101,13 +101,90 @@
                         <table class="table table-striped table-hover mb-0">
                             <thead class="table-dark">
                                 <tr>
-                                    <th>{% trans "Return Number" %}</th>
-                                    <th>{% trans "Original Invoice" %}</th>
-                                    <th>{% trans "Supplier" %}</th>
-                                    <th>{% trans "Date" %}</th>
-                                    <th>{% trans "Return Type" %}</th>
-                                    <th>{% trans "Return Reason" %}</th>
-                                    <th>{% trans "Grand Total" %}</th>
+                                    <th>
+                                        <a href="?{% for key, value in request.GET.items %}{% if key != 'order_by' %}{{ key }}={{ value }}&{% endif %}{% endfor %}order_by={% if current_order == 'return_number' %}-{% endif %}return_number" class="text-white text-decoration-none">
+                                            {% trans "Return Number" %}
+                                            {% if current_order == 'return_number' %}
+                                                <i class="fas fa-sort-up"></i>
+                                            {% elif current_order == '-return_number' %}
+                                                <i class="fas fa-sort-down"></i>
+                                            {% else %}
+                                                <i class="fas fa-sort"></i>
+                                            {% endif %}
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="?{% for key, value in request.GET.items %}{% if key != 'order_by' %}{{ key }}={{ value }}&{% endif %}{% endfor %}order_by={% if current_order == 'original_invoice__supplier_invoice_number' %}-{% endif %}original_invoice__supplier_invoice_number" class="text-white text-decoration-none">
+                                            {% trans "Original Invoice" %}
+                                            {% if current_order == 'original_invoice__supplier_invoice_number' %}
+                                                <i class="fas fa-sort-up"></i>
+                                            {% elif current_order == '-original_invoice__supplier_invoice_number' %}
+                                                <i class="fas fa-sort-down"></i>
+                                            {% else %}
+                                                <i class="fas fa-sort"></i>
+                                            {% endif %}
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="?{% for key, value in request.GET.items %}{% if key != 'order_by' %}{{ key }}={{ value }}&{% endif %}{% endfor %}order_by={% if current_order == 'original_invoice__supplier__name' %}-{% endif %}original_invoice__supplier__name" class="text-white text-decoration-none">
+                                            {% trans "Supplier" %}
+                                            {% if current_order == 'original_invoice__supplier__name' %}
+                                                <i class="fas fa-sort-up"></i>
+                                            {% elif current_order == '-original_invoice__supplier__name' %}
+                                                <i class="fas fa-sort-down"></i>
+                                            {% else %}
+                                                <i class="fas fa-sort"></i>
+                                            {% endif %}
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="?{% for key, value in request.GET.items %}{% if key != 'order_by' %}{{ key }}={{ value }}&{% endif %}{% endfor %}order_by={% if current_order == 'date' %}-{% endif %}date" class="text-white text-decoration-none">
+                                            {% trans "Date" %}
+                                            {% if current_order == 'date' %}
+                                                <i class="fas fa-sort-up"></i>
+                                            {% elif current_order == '-date' %}
+                                                <i class="fas fa-sort-down"></i>
+                                            {% else %}
+                                                <i class="fas fa-sort"></i>
+                                            {% endif %}
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="?{% for key, value in request.GET.items %}{% if key != 'order_by' %}{{ key }}={{ value }}&{% endif %}{% endfor %}order_by={% if current_order == 'return_type' %}-{% endif %}return_type" class="text-white text-decoration-none">
+                                            {% trans "Return Type" %}
+                                            {% if current_order == 'return_type' %}
+                                                <i class="fas fa-sort-up"></i>
+                                            {% elif current_order == '-return_type' %}
+                                                <i class="fas fa-sort-down"></i>
+                                            {% else %}
+                                                <i class="fas fa-sort"></i>
+                                            {% endif %}
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="?{% for key, value in request.GET.items %}{% if key != 'order_by' %}{{ key }}={{ value }}&{% endif %}{% endfor %}order_by={% if current_order == 'return_reason' %}-{% endif %}return_reason" class="text-white text-decoration-none">
+                                            {% trans "Return Reason" %}
+                                            {% if current_order == 'return_reason' %}
+                                                <i class="fas fa-sort-up"></i>
+                                            {% elif current_order == '-return_reason' %}
+                                                <i class="fas fa-sort-down"></i>
+                                            {% else %}
+                                                <i class="fas fa-sort"></i>
+                                            {% endif %}
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="?{% for key, value in request.GET.items %}{% if key != 'order_by' %}{{ key }}={{ value }}&{% endif %}{% endfor %}order_by={% if current_order == 'total_amount' %}-{% endif %}total_amount" class="text-white text-decoration-none">
+                                            {% trans "Grand Total" %}
+                                            {% if current_order == 'total_amount' %}
+                                                <i class="fas fa-sort-up"></i>
+                                            {% elif current_order == '-total_amount' %}
+                                                <i class="fas fa-sort-down"></i>
+                                            {% else %}
+                                                <i class="fas fa-sort"></i>
+                                            {% endif %}
+                                        </a>
+                                    </th>
                                     <th>{% trans "Actions" %}</th>
                                 </tr>
                             </thead>

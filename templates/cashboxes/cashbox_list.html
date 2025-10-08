@@ -18,10 +18,10 @@
                             {% trans "Print Full Report" %}
                         </button>
                         {% if user.is_superuser or user.user_type in 'superadmin,admin' or perms.cashboxes.can_add_cashboxes %}
-                        <a href="{% url 'cashboxes:transfer_create' %}" class="btn btn-warning btn-sm me-2">
+                        <button type="button" class="btn btn-warning btn-sm me-2" data-bs-toggle="modal" data-bs-target="#createTransferModal">
                             <i class="fas fa-exchange-alt me-1"></i>
                             {% trans "إنشاء تحويل جديد" %}
-                        </a>
+                        </button>
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCashboxModal">
                             <i class="fas fa-plus"></i> {% trans "Create New Cashbox" %}
                         </button>
@@ -479,5 +479,239 @@ function printPage() {
         printWindow.close();
     };
 }
+</script>
+
+<!-- Create Transfer Modal -->
+<div class="modal fade" id="createTransferModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="post" action="{% url 'cashboxes:transfer_create' %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">{% trans "Create New Transfer" %}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">{% trans "Transfer Number" %}</label>
+                                <input type="text" name="transfer_number" class="form-control" value="{{ next_transfer_number }}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">{% trans "Transfer Type" %} *</label>
+                                <select name="transfer_type" id="transfer_type" class="form-select" required>
+                                    <option value="">{% trans "Select Transfer Type" %}</option>
+                                    <option value="cashbox_to_cashbox">{% trans "Cashbox to Cashbox" %}</option>
+                                    <option value="cashbox_to_bank">{% trans "Cashbox to Bank" %}</option>
+                                    <option value="bank_to_cashbox">{% trans "Bank to Cashbox" %}</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">{% trans "Date" %} *</label>
+                                <input type="date" name="date" class="form-control" value="{{ today|date:'Y-m-d' }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">{% trans "Amount" %} *</label>
+                                <input type="number" name="amount" class="form-control" step="0.001" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">{% trans "Fees" %}</label>
+                                <input type="number" name="fees" class="form-control" step="0.001" value="0">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">{% trans "Exchange Rate" %}</label>
+                                <input type="number" name="exchange_rate" class="form-control" step="0.0001" value="1">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- خيارات المصدر والهدف -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <!-- From Cashbox -->
+                            <div class="mb-3 d-none" id="from_cashbox_group">
+                                <label class="form-label">{% trans "From Cashbox" %}</label>
+                                <select name="from_cashbox" class="form-select">
+                                    <option value="">{% trans "Select Cashbox" %}</option>
+                                    {% for cashbox in cashboxes %}
+                                    <option value="{{ cashbox.id }}">{{ cashbox.name }} ({{ cashbox.balance|floatformat:3 }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <!-- From Bank -->
+                            <div class="mb-3 d-none" id="from_bank_group">
+                                <label class="form-label">{% trans "From Bank" %}</label>
+                                <select name="from_bank" class="form-select">
+                                    <option value="">{% trans "Select Bank" %}</option>
+                                    {% for bank in banks %}
+                                    <option value="{{ bank.id }}">{{ bank.name }} ({{ bank.balance|floatformat:3 }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <!-- To Cashbox -->
+                            <div class="mb-3 d-none" id="to_cashbox_group">
+                                <label class="form-label">{% trans "To Cashbox" %}</label>
+                                <select name="to_cashbox" class="form-select">
+                                    <option value="">{% trans "Select Cashbox" %}</option>
+                                    {% for cashbox in cashboxes %}
+                                    <option value="{{ cashbox.id }}">{{ cashbox.name }} ({{ cashbox.balance|floatformat:3 }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <!-- To Bank -->
+                            <div class="mb-3 d-none" id="to_bank_group">
+                                <label class="form-label">{% trans "To Bank" %}</label>
+                                <select name="to_bank" class="form-select">
+                                    <option value="">{% trans "Select Bank" %}</option>
+                                    {% for bank in banks %}
+                                    <option value="{{ bank.id }}">{{ bank.name }} ({{ bank.balance|floatformat:3 }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Deposit Information - Only shown for cashbox to bank transfers -->
+                    <div id="deposit_info_group" class="d-none">
+                        <hr>
+                        <h6>{% trans "Deposit Information" %}</h6>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">{% trans "Deposit Document Number" %} *</label>
+                                    <input type="text" name="deposit_document_number" class="form-control" placeholder="{% trans "Enter the deposit document number" %}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">{% trans "Deposit Type" %} *</label>
+                                    <select name="deposit_type" id="deposit_type" class="form-select">
+                                        <option value="">{% trans "Select deposit type" %}</option>
+                                        <option value="cash">{% trans "Cash" %}</option>
+                                        <option value="check">{% trans "Check" %}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Check Information - يظهر فقط عند اختيار شيك -->
+                        <div id="check_info_group" class="d-none">
+                            <h6 class="text-muted">{% trans "Check Information" %}</h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label">{% trans "Check Number" %} *</label>
+                                        <input type="text" name="check_number" class="form-control" placeholder="{% trans 'Check Number' %}">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label">{% trans "Check Date" %} *</label>
+                                        <input type="date" name="check_date" class="form-control">
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label class="form-label">{% trans "Check Bank Name" %} *</label>
+                                        <input type="text" name="check_bank_name" class="form-control" placeholder="{% trans 'Name of the bank that issued the check' %}">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">{% trans "Description" %}</label>
+                        <textarea name="description" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        {% trans "Cancel" %}
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        {% trans "Create Transfer" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const transferTypeSelect = document.getElementById('transfer_type');
+    const fromCashboxGroup = document.getElementById('from_cashbox_group');
+    const fromBankGroup = document.getElementById('from_bank_group');
+    const toCashboxGroup = document.getElementById('to_cashbox_group');
+    const toBankGroup = document.getElementById('to_bank_group');
+    const depositInfoGroup = document.getElementById('deposit_info_group');
+    const checkInfoGroup = document.getElementById('check_info_group');
+    const depositTypeSelect = document.getElementById('deposit_type');
+    
+    function updateFormFields() {
+        const transferType = transferTypeSelect.value;
+        
+        // إخفاء جميع الحقول أولاً
+        fromCashboxGroup.classList.add('d-none');
+        fromBankGroup.classList.add('d-none');
+        toCashboxGroup.classList.add('d-none');
+        toBankGroup.classList.add('d-none');
+        depositInfoGroup.classList.add('d-none');
+        
+        if (transferType === 'cashbox_to_cashbox') {
+            fromCashboxGroup.classList.remove('d-none');
+            toCashboxGroup.classList.remove('d-none');
+        } else if (transferType === 'cashbox_to_bank') {
+            fromCashboxGroup.classList.remove('d-none');
+            toBankGroup.classList.remove('d-none');
+            depositInfoGroup.classList.remove('d-none');
+        } else if (transferType === 'bank_to_cashbox') {
+            fromBankGroup.classList.remove('d-none');
+            toCashboxGroup.classList.remove('d-none');
+        }
+    }
+    
+    function updateDepositFields() {
+        const depositType = depositTypeSelect.value;
+        if (depositType === 'check') {
+            checkInfoGroup.classList.remove('d-none');
+        } else {
+            checkInfoGroup.classList.add('d-none');
+        }
+    }
+    
+    transferTypeSelect.addEventListener('change', updateFormFields);
+    depositTypeSelect.addEventListener('change', updateDepositFields);
+    
+    // تحديث الحقول عند فتح الmodal
+    document.getElementById('createTransferModal').addEventListener('show.bs.modal', function() {
+        updateFormFields();
+        updateDepositFields();
+    });
+});
 </script>
 {% endblock %}

@@ -108,6 +108,8 @@ def get_document_number_from_description(description):
 def cashbox_list(request):
     """قائمة الصناديق"""
     from settings.models import Currency
+    from banks.models import BankAccount
+    from django.utils import timezone
     
     cashboxes = Cashbox.objects.filter(is_active=True).order_by('name')
     
@@ -118,11 +120,41 @@ def cashbox_list(request):
     currencies = Currency.objects.filter(is_active=True).order_by('name')
     base_currency = Currency.get_base_currency()
     
+    # البيانات المطلوبة للmodal
+    banks = BankAccount.objects.filter(is_active=True).order_by('name')
+    
+    # الحصول على رقم التحويل التالي
+    from core.models import DocumentSequence
+    next_transfer_number = None
+    try:
+        sequence = DocumentSequence.objects.get(document_type='cashbox_transfer')
+        next_transfer_number = sequence.get_next_number()
+    except DocumentSequence.DoesNotExist:
+        # في حالة عدم وجود تسلسل، استخدم الطريقة القديمة
+        prefix = 'CT'
+        date_str = timezone.now().strftime('%Y%m%d')
+        
+        # البحث عن آخر رقم في نفس اليوم
+        last_transfer = CashboxTransfer.objects.filter(
+            transfer_number__startswith=f'{prefix}{date_str}'
+        ).order_by('-transfer_number').first()
+        
+        if last_transfer:
+            last_number = int(last_transfer.transfer_number[-4:])
+            new_number = last_number + 1
+        else:
+            new_number = 1
+        
+        next_transfer_number = f'{prefix}{date_str}{new_number:04d}'
+    
     context = {
         'cashboxes': cashboxes,
         'total_balance': total_balance,
         'currencies': currencies,
         'base_currency': base_currency,
+        'banks': banks,
+        'next_transfer_number': next_transfer_number,
+        'today': timezone.now().date(),
         'page_title': _('Cashboxes'),
     }
     return render(request, 'cashboxes/cashbox_list.html', context)

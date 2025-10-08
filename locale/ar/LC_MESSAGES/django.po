@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-08 12:43+0300\n"
+"POT-Creation-Date: 2025-10-08 13:07+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -122,6 +122,7 @@ msgstr "رقم الحركة"
 #: .\templates\banks\transfer_list.html:930
 #: .\templates\banks\transfer_list.html:1058
 #: .\templates\cashboxes\cashbox_detail.html:97
+#: .\templates\cashboxes\cashbox_list.html:518
 #: .\templates\cashboxes\transfer_detail.html:30
 #: .\templates\cashboxes\transfer_detail.html:124
 #: .\templates\cashboxes\transfer_list.html:74
@@ -170,7 +171,7 @@ msgstr "رقم الحركة"
 #: .\templates\purchases\purchase_report.html:293
 #: .\templates\purchases\purchase_return_statement.html:140
 #: .\templates\purchases\purchase_statement.html:140
-#: .\templates\purchases\return_list.html:107
+#: .\templates\purchases\return_list.html:142
 #: .\templates\receipts\receipt_add.html:66
 #: .\templates\receipts\receipt_detail.html:43
 #: .\templates\receipts\receipt_detail.html:237
@@ -258,12 +259,14 @@ msgstr ""
 #: .\templates\banks\transfer_add.html:451
 #: .\templates\banks\transfer_add.html:515
 #: .\templates\banks\transfer_detail.html:249
+#: .\templates\banks\transfer_edit.html:195
 #: .\templates\banks\transfer_list.html:154
 #: .\templates\banks\transfer_list.html:210
 #: .\templates\banks\transfer_list.html:405
 #: .\templates\banks\transfer_list.html:842
 #: .\templates\banks\transfer_list.html:933
 #: .\templates\cashboxes\cashbox_detail.html:100
+#: .\templates\cashboxes\cashbox_list.html:524
 #: .\templates\cashboxes\transfer_detail.html:62
 #: .\templates\cashboxes\transfer_detail.html:122
 #: .\templates\cashboxes\transfer_list.html:78
@@ -377,6 +380,7 @@ msgstr ""
 #: .\templates\cashboxes\cashbox_detail.html:243
 #: .\templates\cashboxes\cashbox_list.html:148
 #: .\templates\cashboxes\cashbox_list.html:204
+#: .\templates\cashboxes\cashbox_list.html:647
 #: .\templates\cashboxes\transfer_detail.html:74
 #: .\templates\cashboxes\transfer_detail.html:123
 #: .\templates\cashboxes\transfer_list.html:329
@@ -469,7 +473,7 @@ msgstr "الوصف"
 #: .\templates\inventory\transfer_add.html:57
 #: .\templates\purchases\debitnote_add.html:29
 #: .\templates\purchases\invoice_add.html:280
-#: .\templates\purchases\invoice_add.html:1172
+#: .\templates\purchases\invoice_add.html:1178
 #: .\templates\purchases\return_add.html:83
 #: .\templates\purchases\return_edit.html:75
 #: .\templates\purchases\return_edit.html:77
@@ -710,7 +714,7 @@ msgstr ""
 #: .\templates\products\product_list.html:999
 #: .\templates\products\product_list.html:1094
 #: .\templates\provisions\provision_form.html:128
-#: .\templates\purchases\invoice_add.html:2281
+#: .\templates\purchases\invoice_add.html:2287
 #: .\templates\receipts\receipt_list.html:65
 #: .\templates\receipts\receipt_list.html:122
 #: .\templates\revenues_expenses\category_create.html:63
@@ -857,7 +861,7 @@ msgstr ""
 #: .\templates\purchases\invoice_list.html:335
 #: .\templates\purchases\return_add.html:221
 #: .\templates\purchases\return_list.html:71
-#: .\templates\purchases\return_list.html:106
+#: .\templates\purchases\return_list.html:130
 #: .\templates\reports\aging_report.html:160
 #: .\templates\reports\aging_report.html:255
 msgid "Supplier"
@@ -1269,6 +1273,8 @@ msgstr "رمز SWIFT"
 #: .\templates\banks\transfer_add.html:423
 #: .\templates\banks\transfer_add.html:430
 #: .\templates\banks\transfer_add.html:434
+#: .\templates\banks\transfer_edit.html:181
+#: .\templates\banks\transfer_edit.html:191
 #: .\templates\cashboxes\cashbox_list.html:57
 #: .\templates\cashboxes\cashbox_list.html:409
 #: .\templates\customers\customer_list.html:189
@@ -1303,7 +1309,7 @@ msgstr "الرصيد"
 
 #: .\banks\models.py:16 .\templates\cashboxes\cashbox_list.html:152
 #: .\templates\customers\add.html:199
-#: .\templates\purchases\invoice_add.html:1154
+#: .\templates\purchases\invoice_add.html:1160
 #: .\templates\sales\invoice_add.html:1556
 msgid "Initial Balance"
 msgstr "الرصيد الافتتاحي"
@@ -1343,12 +1349,14 @@ msgstr "الحسابات البنكية"
 
 #: .\banks\models.py:102 .\cashboxes\models.py:110 .\inventory\models.py:120
 #: .\templates\banks\transfer_add.html:212
+#: .\templates\banks\transfer_edit.html:212
 #: .\templates\banks\transfer_list.html:154
 #: .\templates\banks\transfer_list.html:206
 #: .\templates\banks\transfer_list.html:401
 #: .\templates\banks\transfer_list.html:838
 #: .\templates\banks\transfer_list.html:929
 #: .\templates\banks\transfer_list.html:1057
+#: .\templates\cashboxes\cashbox_list.html:498
 #: .\templates\cashboxes\transfer_detail.html:26
 #: .\templates\cashboxes\transfer_list.html:73
 #: .\templates\cashboxes\transfer_list.html:180
@@ -1359,6 +1367,7 @@ msgstr "رقم التحويل"
 #: .\banks\models.py:105 .\templates\banks\transfer_add.html:258
 #: .\templates\banks\transfer_detail.html:147
 #: .\templates\banks\transfer_detail.html:319
+#: .\templates\banks\transfer_edit.html:246
 #: .\templates\banks\transfer_list.html:403
 #: .\templates\banks\transfer_list.html:840
 #: .\templates\banks\transfer_list.html:931
@@ -1369,6 +1378,7 @@ msgstr "من الحساب"
 #: .\banks\models.py:107 .\templates\banks\transfer_add.html:275
 #: .\templates\banks\transfer_detail.html:171
 #: .\templates\banks\transfer_detail.html:327
+#: .\templates\banks\transfer_edit.html:264
 #: .\templates\banks\transfer_list.html:404
 #: .\templates\banks\transfer_list.html:841
 #: .\templates\banks\transfer_list.html:932
@@ -1386,6 +1396,7 @@ msgstr "إلى الحساب"
 #: .\templates\banks\transfer_detail.html:210
 #: .\templates\banks\transfer_detail.html:249
 #: .\templates\banks\transfer_detail.html:339
+#: .\templates\banks\transfer_edit.html:334
 #: .\templates\banks\transfer_list.html:154
 #: .\templates\banks\transfer_list.html:438
 #: .\templates\banks\transfer_list.html:515
@@ -1393,6 +1404,7 @@ msgstr "إلى الحساب"
 #: .\templates\banks\transfer_list.html:959
 #: .\templates\banks\transfer_list.html:1041
 #: .\templates\banks\transfer_list.html:1077
+#: .\templates\cashboxes\cashbox_list.html:533
 #: .\templates\cashboxes\transfer_detail.html:66
 #: .\templates\cashboxes\transfer_detail.html:99
 #: .\templates\cashboxes\transfer_list.html:79
@@ -1409,6 +1421,8 @@ msgstr "الرسوم"
 #: .\templates\banks\transfer_add.html:327
 #: .\templates\banks\transfer_detail.html:223
 #: .\templates\banks\transfer_detail.html:343
+#: .\templates\banks\transfer_edit.html:317
+#: .\templates\cashboxes\cashbox_list.html:539
 #: .\templates\cashboxes\transfer_detail.html:70
 #: .\templates\cashboxes\transfer_list.html:221
 msgid "Exchange Rate"
@@ -1426,6 +1440,7 @@ msgstr "تحويل بنكي"
 
 #: .\banks\models.py:118 .\templates\banks\transfer_add.html:140
 #: .\templates\banks\transfer_detail.html:94
+#: .\templates\banks\transfer_edit.html:140
 #: .\templates\banks\transfer_list.html:7
 #: .\templates\banks\transfer_list.html:296
 #: .\templates\banks\transfer_list.html:301
@@ -1792,7 +1807,7 @@ msgstr "تسويات البنوك"
 #: .\templates\purchases\return_edit.html:17
 #: .\templates\purchases\return_edit.html:88
 #: .\templates\purchases\return_edit.html:89
-#: .\templates\purchases\return_list.html:145
+#: .\templates\purchases\return_list.html:222
 #: .\templates\receipts\receipt_detail.html:20
 #: .\templates\revenues_expenses\category_list.html:62
 #: .\templates\revenues_expenses\recurring_detail.html:76
@@ -1820,6 +1835,7 @@ msgstr "تعديل"
 #: .\templates\banks\account_add.html:99
 #: .\templates\banks\transfer_add.html:148
 #: .\templates\banks\transfer_detail.html:111
+#: .\templates\banks\transfer_edit.html:148
 #: .\templates\cashboxes\cashbox_detail.html:18
 #: .\templates\cashboxes\transfer_detail.html:15
 #: .\templates\customers\add.html:104 .\templates\customers\delete.html:94
@@ -1925,11 +1941,13 @@ msgstr "تسويات البنوك"
 #: .\templates\banks\bank_cashbox_transfer_add.html:359
 #: .\templates\banks\cashbox_transfer_edit.html:322
 #: .\templates\banks\transfer_add.html:382
+#: .\templates\banks\transfer_edit.html:372
 #: .\templates\cashboxes\cashbox_detail.html:264
 #: .\templates\cashboxes\cashbox_detail.html:302
 #: .\templates\cashboxes\cashbox_list.html:175
 #: .\templates\cashboxes\cashbox_list.html:225
 #: .\templates\cashboxes\cashbox_list.html:263
+#: .\templates\cashboxes\cashbox_list.html:653
 #: .\templates\cashboxes\transfer_list.html:335
 #: .\templates\core\audit_log.html:89 .\templates\core\audit_log.html:241
 #: .\templates\customers\add.html:238 .\templates\customers\edit.html:254
@@ -1972,8 +1990,8 @@ msgstr "تسويات البنوك"
 #: .\templates\provisions\provision_entry_form.html:77
 #: .\templates\provisions\provision_form.html:170
 #: .\templates\purchases\invoice_add.html:311
-#: .\templates\purchases\invoice_add.html:1189
-#: .\templates\purchases\invoice_add.html:2299
+#: .\templates\purchases\invoice_add.html:1195
+#: .\templates\purchases\invoice_add.html:2305
 #: .\templates\purchases\invoice_list.html:346
 #: .\templates\purchases\return_add.html:154
 #: .\templates\purchases\return_list.html:90
@@ -2168,7 +2186,7 @@ msgstr "مسح"
 #: .\templates\provisions\provision_list.html:45
 #: .\templates\provisions\provision_movement_report.html:116
 #: .\templates\purchases\debitnote_list.html:43
-#: .\templates\purchases\return_list.html:111
+#: .\templates\purchases\return_list.html:188
 #: .\templates\receipts\check_list.html:78
 #: .\templates\receipts\receipt_list.html:95
 #: .\templates\revenues_expenses\category_list.html:36
@@ -2211,7 +2229,7 @@ msgstr "لم يتم العثور على وظائف"
 #: .\templates\provisions\provision_list.html:94
 #: .\templates\provisions\provision_movement_report.html:154
 #: .\templates\purchases\invoice_list.html:263
-#: .\templates\purchases\return_list.html:170
+#: .\templates\purchases\return_list.html:247
 #: .\templates\receipts\check_list.html:127
 #: .\templates\receipts\receipt_list.html:148
 #: .\templates\revenues_expenses\entry_list.html:163
@@ -2246,7 +2264,7 @@ msgstr "السابق"
 #: .\templates\provisions\provision_movement_report.html:172
 #: .\templates\purchases\invoice_list.html:281
 #: .\templates\purchases\return_delete.html:24
-#: .\templates\purchases\return_list.html:182
+#: .\templates\purchases\return_list.html:259
 #: .\templates\receipts\check_list.html:145
 #: .\templates\receipts\receipt_list.html:166
 #: .\templates\revenues_expenses\entry_list.html:181
@@ -2434,7 +2452,7 @@ msgstr ""
 msgid "You do not have permission to edit bank accounts."
 msgstr "ليس لديك صلاحية لتعديل حسابات بنكية."
 
-#: .\banks\views.py:316 .\banks\views.py:1383
+#: .\banks\views.py:316 .\banks\views.py:1443
 msgid "You do not have permission to delete bank accounts."
 msgstr "ليس لديك صلاحية لحذف حسابات بنكية."
 
@@ -2467,63 +2485,63 @@ msgid ""
 "A similar transfer was created recently! Please check the transfer list."
 msgstr ""
 
-#: .\banks\views.py:1320
+#: .\banks\views.py:1380
 msgid "Only superadmin can perform absolute deletion."
 msgstr "فقط المدير الفائق يمكنه إجراء الحذف المطلق."
 
-#: .\banks\views.py:1615
+#: .\banks\views.py:1675
 #, fuzzy
 #| msgid "أرصدة البنوك والصناديق النقدية"
 msgid "تم الوصول إلى قائمة المطابقات البنكية"
 msgstr "أرصدة البنوك والصناديق النقدية"
 
-#: .\banks\views.py:1653
+#: .\banks\views.py:1713
 msgid "تم إنشاء مطابقة بنكية جديدة: {}"
 msgstr ""
 
-#: .\banks\views.py:1656
+#: .\banks\views.py:1716
 #, fuzzy
 #| msgid "Transfer created successfully"
 msgid "Bank reconciliation created successfully."
 msgstr "تم إنشاء التحويل بنجاح"
 
-#: .\banks\views.py:1684
+#: .\banks\views.py:1744
 #, fuzzy
 #| msgid "أرصدة البنوك والصناديق النقدية"
 msgid "تم عرض تفاصيل المطابقة البنكية: {}"
 msgstr "أرصدة البنوك والصناديق النقدية"
 
-#: .\banks\views.py:1704
+#: .\banks\views.py:1764
 #, fuzzy
 #| msgid "لم يتم تحديد العملية المطلوبة"
 msgid "تم تحديث المطابقة البنكية: {}"
 msgstr "لم يتم تحديد العملية المطلوبة"
 
-#: .\banks\views.py:1707
+#: .\banks\views.py:1767
 #, fuzzy
 #| msgid "Employee updated successfully."
 msgid "Bank reconciliation updated successfully."
 msgstr "تم تحديث الموظف بنجاح."
 
-#: .\banks\views.py:1751
+#: .\banks\views.py:1811
 msgid "تم الوصول إلى قائمة كشوفات البنك"
 msgstr ""
 
-#: .\banks\views.py:1771
+#: .\banks\views.py:1831
 msgid "تم إنشاء كشف بنكي جديد: {}"
 msgstr ""
 
-#: .\banks\views.py:1774
+#: .\banks\views.py:1834
 #, fuzzy
 #| msgid "Transfer created successfully"
 msgid "Bank statement created successfully."
 msgstr "تم إنشاء التحويل بنجاح"
 
-#: .\banks\views.py:1794
+#: .\banks\views.py:1854
 msgid "تم تحديث الكشف البنكي: {}"
 msgstr ""
 
-#: .\banks\views.py:1797
+#: .\banks\views.py:1857
 #, fuzzy
 #| msgid "Employee updated successfully."
 msgid "Bank statement updated successfully."
@@ -2581,19 +2599,22 @@ msgstr "يمكن حذف الصناديق النقدية"
 msgid "Cash box can be modified"
 msgstr "تعديل صندوق"
 
-#: .\cashboxes\models.py:105 .\templates\cashboxes\transfer_list.html:39
+#: .\cashboxes\models.py:105 .\templates\cashboxes\cashbox_list.html:507
+#: .\templates\cashboxes\transfer_list.html:39
 #: .\templates\cashboxes\transfer_list.html:189
 #: .\templates\cashboxes\transfer_list.html:577
 msgid "Cashbox to Cashbox"
 msgstr "صندوق إلى صندوق"
 
-#: .\cashboxes\models.py:106 .\templates\cashboxes\transfer_list.html:42
+#: .\cashboxes\models.py:106 .\templates\cashboxes\cashbox_list.html:508
+#: .\templates\cashboxes\transfer_list.html:42
 #: .\templates\cashboxes\transfer_list.html:190
 #: .\templates\cashboxes\transfer_list.html:581
 msgid "Cashbox to Bank"
 msgstr "صندوق إلى بنك"
 
-#: .\cashboxes\models.py:107 .\templates\cashboxes\transfer_list.html:45
+#: .\cashboxes\models.py:107 .\templates\cashboxes\cashbox_list.html:509
+#: .\templates\cashboxes\transfer_list.html:45
 #: .\templates\cashboxes\transfer_list.html:191
 msgid "Bank to Cashbox"
 msgstr "بنك إلى صندوق"
@@ -2636,6 +2657,7 @@ msgstr ""
 
 #: .\cashboxes\models.py:134 .\payments\models.py:17
 #: .\templates\assets_liabilities\dashboard.html:384
+#: .\templates\cashboxes\cashbox_list.html:613
 #: .\templates\cashboxes\transfer_list.html:295
 #: .\templates\payments\voucher_list.html:44
 #: .\templates\purchases\invoice_list.html:220
@@ -2653,6 +2675,7 @@ msgstr "نقدي"
 #: .\cashboxes\models.py:135 .\payments\models.py:18
 #: .\templates\assets_liabilities\dashboard.html:386
 #: .\templates\banks\bank_cashbox_transfer_add.html:258
+#: .\templates\cashboxes\cashbox_list.html:614
 #: .\templates\cashboxes\transfer_list.html:296
 #: .\templates\core\dashboard.html:369 .\templates\core\dashboard.html:381
 #: .\templates\payments\voucher_list.html:45
@@ -2664,11 +2687,13 @@ msgstr "نقدي"
 msgid "Check"
 msgstr "شيك"
 
-#: .\cashboxes\models.py:138 .\templates\cashboxes\transfer_list.html:286
+#: .\cashboxes\models.py:138 .\templates\cashboxes\cashbox_list.html:604
+#: .\templates\cashboxes\transfer_list.html:286
 msgid "Deposit Document Number"
 msgstr "رقم وثيقة الإيداع"
 
-#: .\cashboxes\models.py:139 .\templates\cashboxes\transfer_list.html:292
+#: .\cashboxes\models.py:139 .\templates\cashboxes\cashbox_list.html:610
+#: .\templates\cashboxes\transfer_list.html:292
 msgid "Deposit Type"
 msgstr "نوع الإيداع"
 
@@ -2677,6 +2702,8 @@ msgstr "نوع الإيداع"
 #: .\templates\banks\cashbox_transfer_detail.html:280
 #: .\templates\banks\cashbox_transfer_detail.html:426
 #: .\templates\banks\cashbox_transfer_edit.html:276
+#: .\templates\cashboxes\cashbox_list.html:626
+#: .\templates\cashboxes\cashbox_list.html:627
 #: .\templates\cashboxes\transfer_list.html:308
 #: .\templates\cashboxes\transfer_list.html:309
 #: .\templates\receipts\check_collect.html:31
@@ -2692,6 +2719,7 @@ msgstr "رقم الشيك"
 #: .\templates\banks\cashbox_transfer_detail.html:284
 #: .\templates\banks\cashbox_transfer_detail.html:430
 #: .\templates\banks\cashbox_transfer_edit.html:282
+#: .\templates\cashboxes\cashbox_list.html:632
 #: .\templates\cashboxes\transfer_list.html:314
 #: .\templates\receipts\check_collect.html:43
 #: .\templates\receipts\check_list.html:74
@@ -2701,7 +2729,8 @@ msgstr "رقم الشيك"
 msgid "Check Date"
 msgstr "تاريخ الشيك"
 
-#: .\cashboxes\models.py:142 .\templates\cashboxes\transfer_list.html:320
+#: .\cashboxes\models.py:142 .\templates\cashboxes\cashbox_list.html:638
+#: .\templates\cashboxes\transfer_list.html:320
 msgid "Check Bank Name"
 msgstr "اسم بنك الشيك"
 
@@ -2725,23 +2754,23 @@ msgstr "لا يمكن التحويل من صندوق إلى نفسه"
 msgid "Sender cashbox and receiver bank must be specified"
 msgstr "يجب تحديد صندوق المرسل وبنك المستقبل"
 
-#: .\cashboxes\models.py:180 .\cashboxes\views.py:300
+#: .\cashboxes\models.py:180 .\cashboxes\views.py:332
 msgid "Deposit document number is required for transfers to bank"
 msgstr "رقم وثيقة الإيداع مطلوب للتحويلات إلى البنك"
 
-#: .\cashboxes\models.py:182 .\cashboxes\views.py:303
+#: .\cashboxes\models.py:182 .\cashboxes\views.py:335
 msgid "Deposit type is required"
 msgstr "نوع الإيداع مطلوب"
 
-#: .\cashboxes\models.py:186 .\cashboxes\views.py:307
+#: .\cashboxes\models.py:186 .\cashboxes\views.py:339
 msgid "Check number is required when deposit type is \"Check\""
 msgstr "رقم الشيك مطلوب عندما يكون نوع الإيداع \"شيك\""
 
-#: .\cashboxes\models.py:188 .\cashboxes\views.py:310 .\payments\forms.py:135
+#: .\cashboxes\models.py:188 .\cashboxes\views.py:342 .\payments\forms.py:135
 msgid "Check date is required"
 msgstr "تاريخ الشيك مطلوب"
 
-#: .\cashboxes\models.py:190 .\cashboxes\views.py:313
+#: .\cashboxes\models.py:190 .\cashboxes\views.py:345
 msgid "Check bank name is required"
 msgstr "اسم بنك الشيك مطلوب"
 
@@ -2823,20 +2852,20 @@ msgstr ""
 msgid "حركات الصناديق"
 msgstr ""
 
-#: .\cashboxes\views.py:126 .\templates\core\dashboard.html:281
+#: .\cashboxes\views.py:158 .\templates\core\dashboard.html:281
 #: .\templates\core\dashboard.html:334
 msgid "Cashboxes"
 msgstr "الصناديق النقدية"
 
-#: .\cashboxes\views.py:159 .\templates\cashboxes\cashbox_detail.html:7
+#: .\cashboxes\views.py:191 .\templates\cashboxes\cashbox_detail.html:7
 msgid "Cashbox Details"
 msgstr "تفاصيل الصندوق النقدي"
 
-#: .\cashboxes\views.py:176 .\cashboxes\views.py:232
+#: .\cashboxes\views.py:208 .\cashboxes\views.py:264
 msgid "Cashbox name is required"
 msgstr "اسم الصندوق النقدي مطلوب"
 
-#: .\cashboxes\views.py:197 .\inventory\models.py:68 .\reports\views.py:176
+#: .\cashboxes\views.py:229 .\inventory\models.py:68 .\reports\views.py:176
 #: .\reports\views.py:209 .\templates\products\product_add.html:262
 #: .\templates\products\product_edit.html:238
 #: .\templates\products\product_edit.html:259
@@ -2845,141 +2874,141 @@ msgstr "اسم الصندوق النقدي مطلوب"
 msgid "Opening Balance"
 msgstr "الرصيد الافتتاحي"
 
-#: .\cashboxes\views.py:211
+#: .\cashboxes\views.py:243
 msgid "Cashbox created successfully"
 msgstr "تم إنشاء الصندوق النقدي بنجاح"
 
-#: .\cashboxes\views.py:214
+#: .\cashboxes\views.py:246
 msgid "An error occurred while creating the cashbox"
 msgstr "حدث خطأ أثناء إنشاء الصندوق النقدي"
 
-#: .\cashboxes\views.py:253
+#: .\cashboxes\views.py:285
 msgid "Cashbox updated successfully"
 msgstr "تم تحديث الصندوق النقدي بنجاح"
 
-#: .\cashboxes\views.py:256
+#: .\cashboxes\views.py:288
 msgid "An error occurred while updating the cashbox"
 msgstr "حدث خطأ أثناء تحديث الصندوق النقدي"
 
-#: .\cashboxes\views.py:269
+#: .\cashboxes\views.py:301
 msgid ""
 "Warning: Cashbox transfer sequence is not set! Please add the \"Cashbox "
 "Transfer\" sequence in Settings before creating any transfer."
 msgstr ""
 
-#: .\cashboxes\views.py:294
+#: .\cashboxes\views.py:326
 msgid "All fields are required"
 msgstr "جميع الحقول مطلوبة"
 
-#: .\cashboxes\views.py:320
+#: .\cashboxes\views.py:352
 msgid "Transfer number already exists! Please use another number."
 msgstr "رقم التحويل موجود بالفعل! يرجى استخدام رقم آخر."
 
-#: .\cashboxes\views.py:329
+#: .\cashboxes\views.py:361
 msgid "Amount must be greater than zero"
 msgstr "المبلغ يجب أن يكون أكبر من صفر"
 
-#: .\cashboxes\views.py:390
+#: .\cashboxes\views.py:422
 msgid "Insufficient balance in the sender cashbox"
 msgstr "رصيد غير كافٍ في صندوق المرسل"
 
-#: .\cashboxes\views.py:405
+#: .\cashboxes\views.py:437
 msgid "Transfer to"
 msgstr "تحويل إلى"
 
-#: .\cashboxes\views.py:417
+#: .\cashboxes\views.py:449
 msgid "Transfer from"
 msgstr "تحويل من"
 
-#: .\cashboxes\views.py:430
+#: .\cashboxes\views.py:462
 msgid "Insufficient balance in the cashbox"
 msgstr "رصيد غير كافٍ في الصندوق"
 
-#: .\cashboxes\views.py:445
+#: .\cashboxes\views.py:477
 msgid "Transfer to Bank"
 msgstr "تحويل إلى البنك"
 
-#: .\cashboxes\views.py:458
+#: .\cashboxes\views.py:490
 msgid "Insufficient balance in the bank"
 msgstr "رصيد غير كافٍ في البنك"
 
-#: .\cashboxes\views.py:473
+#: .\cashboxes\views.py:505
 msgid "Transfer from Bank"
 msgstr "تحويل من البنك"
 
-#: .\cashboxes\views.py:490
+#: .\cashboxes\views.py:522
 msgid "Transfer created successfully"
 msgstr "تم إنشاء التحويل بنجاح"
 
-#: .\cashboxes\views.py:515
+#: .\cashboxes\views.py:547
 msgid "An error occurred while creating the transfer"
 msgstr "حدث خطأ أثناء إنشاء التحويل"
 
-#: .\cashboxes\views.py:580 .\templates\banks\transfer_list.html:893
+#: .\cashboxes\views.py:612 .\templates\banks\transfer_list.html:893
 #: .\templates\cashboxes\transfer_list.html:5
 #: .\templates\cashboxes\transfer_list.html:14
 msgid "Cashbox Transfers"
 msgstr "تحويلات الصناديق"
 
-#: .\cashboxes\views.py:598
+#: .\cashboxes\views.py:630
 msgid "تفاصيل التحويل"
 msgstr ""
 
-#: .\cashboxes\views.py:686
+#: .\cashboxes\views.py:718
 msgid ""
 "Transaction deleted successfully and all related balances have been updated."
 msgstr ""
 
-#: .\cashboxes\views.py:689
+#: .\cashboxes\views.py:721
 msgid "An error occurred while deleting the transaction: {}"
 msgstr "حدث خطأ أثناء حذف المعاملة: {}"
 
-#: .\cashboxes\views.py:748
+#: .\cashboxes\views.py:780
 msgid ""
 "Transfer deleted successfully and all related balances have been updated."
 msgstr ""
 
-#: .\cashboxes\views.py:751
+#: .\cashboxes\views.py:783
 msgid "An error occurred while deleting the transfer: {}"
 msgstr "حدث خطأ أثناء حذف التحويل: {}"
 
-#: .\cashboxes\views.py:765
+#: .\cashboxes\views.py:797
 msgid "You do not have permission to clear cashbox transactions"
 msgstr "ليس لديك صلاحية لمسح معاملات الصناديق النقدية"
 
-#: .\cashboxes\views.py:809
+#: .\cashboxes\views.py:841
 msgid ""
 "All transactions for cashbox \"{}\" were cleared successfully and all "
 "related balances were updated."
 msgstr ""
 
-#: .\cashboxes\views.py:812
+#: .\cashboxes\views.py:844
 msgid "An error occurred while clearing cashbox transactions: {}"
 msgstr "حدث خطأ أثناء مسح معاملات الصناديق النقدية: {}"
 
-#: .\cashboxes\views.py:822
+#: .\cashboxes\views.py:854
 msgid "You do not have permission to delete cashboxes"
 msgstr "ليس لديك صلاحية لحذف الصناديق النقدية"
 
-#: .\cashboxes\views.py:841
+#: .\cashboxes\views.py:873
 msgid "Cannot delete the cashbox because the balance is not zero"
 msgstr "لا يمكن حذف الصندوق النقدي لأن الرصيد ليس صفراً"
 
-#: .\cashboxes\views.py:850
+#: .\cashboxes\views.py:882
 msgid "Deleted cashbox: {}"
 msgstr "تم حذف الصندوق: {}"
 
-#: .\cashboxes\views.py:857
+#: .\cashboxes\views.py:889
 msgid ""
 "Cashbox \"{}\" was deleted successfully while preserving transfers and "
 "balances in other cashboxes"
 msgstr ""
 
-#: .\cashboxes\views.py:861
+#: .\cashboxes\views.py:893
 msgid "Cannot delete the cashbox due to protected related transactions"
 msgstr "لا يمكن حذف الصندوق النقدي بسبب معاملات ذات صلة محمية"
 
-#: .\cashboxes\views.py:863
+#: .\cashboxes\views.py:895
 msgid "An error occurred while deleting the cashbox: {}"
 msgstr "حدث خطأ أثناء حذف الصندوق النقدي: {}"
 
@@ -3043,7 +3072,7 @@ msgstr "الهاتف"
 #: .\templates\hr\employee_detail.html:107
 #: .\templates\hr\reports\employee_report.html:39
 #: .\templates\partials\print_header.html:39
-#: .\templates\purchases\invoice_add.html:1114
+#: .\templates\purchases\invoice_add.html:1120
 #: .\templates\sales\creditnote_detail.html:70
 #: .\templates\sales\invoice_add.html:1516
 #: .\templates\sales\invoice_detail.html:104
@@ -3379,7 +3408,7 @@ msgstr "المبلغ قبل الضريبة"
 #: .\templates\inventory\list.html:436
 #: .\templates\products\product_list.html:1279
 #: .\templates\products\product_list.html:1294
-#: .\templates\purchases\invoice_add.html:731
+#: .\templates\purchases\invoice_add.html:737
 #: .\templates\purchases\return_add.html:129
 #: .\templates\sales\creditnote_list.html:36
 #: .\templates\sales\creditnote_report.html:81
@@ -3604,7 +3633,7 @@ msgstr "الجوال"
 #: .\templates\partials\print_header.html:31
 #: .\templates\payments\voucher_detail.html:103
 #: .\templates\purchases\debitnote_detail.html:74
-#: .\templates\purchases\invoice_add.html:1126
+#: .\templates\purchases\invoice_add.html:1132
 #: .\templates\purchases\invoice_detail.html:397
 #: .\templates\sales\creditnote_detail.html:74
 #: .\templates\sales\invoice_add.html:1528
@@ -4020,7 +4049,7 @@ msgstr "تجديد"
 #: .\hr\models.py:212 .\templates\assets_liabilities\asset_detail.html:182
 #: .\templates\purchases\return_add.html:76
 #: .\templates\purchases\return_edit.html:68
-#: .\templates\purchases\return_list.html:132
+#: .\templates\purchases\return_list.html:209
 msgid "Expired"
 msgstr "منتهي الصلاحية"
 
@@ -4392,7 +4421,7 @@ msgstr "الصورة"
 #: .\templates\hr\employee_document_list.html:61
 #: .\templates\payments\voucher_list.html:56
 #: .\templates\purchases\return_add.html:78
-#: .\templates\purchases\return_list.html:134
+#: .\templates\purchases\return_list.html:211
 msgid "Other"
 msgstr "أخرى"
 
@@ -5572,7 +5601,7 @@ msgstr "رمز المنتج"
 #: .\templates\products\product_list.html:813
 #: .\templates\products\product_list.html:1571
 #: .\templates\purchases\invoice_add.html:352
-#: .\templates\purchases\invoice_add.html:2096
+#: .\templates\purchases\invoice_add.html:2102
 #: .\templates\purchases\return_add.html:99
 #: .\templates\sales\invoice_add.html:652
 msgid "Product Name"
@@ -5581,20 +5610,20 @@ msgstr "اسم المنتج"
 #: .\products\forms.py:20 .\templates\products\category_add.html:49
 #: .\templates\products\product_add.html:573
 #: .\templates\products\product_edit.html:54
-#: .\templates\purchases\invoice_add.html:2102
+#: .\templates\purchases\invoice_add.html:2108
 msgid "English Name"
 msgstr "الاسم بالإنجليزية"
 
 #: .\products\forms.py:22 .\templates\products\product_add.html:98
 #: .\templates\products\product_edit.html:81
 #: .\templates\products\product_list.html:846
-#: .\templates\purchases\invoice_add.html:2129
+#: .\templates\purchases\invoice_add.html:2135
 msgid "Barcode"
 msgstr "الباركود"
 
 #: .\products\forms.py:23 .\templates\products\product_add.html:110
 #: .\templates\products\product_list.html:857
-#: .\templates\purchases\invoice_add.html:2140
+#: .\templates\purchases\invoice_add.html:2146
 msgid "Serial Number"
 msgstr "رقم التسلسلي"
 
@@ -6757,7 +6786,7 @@ msgstr "تقرير المبيعات"
 #: .\templates\accounts\customer_statement.html:363
 #: .\templates\purchases\debitnote_list.html:39
 #: .\templates\purchases\invoice_add.html:289
-#: .\templates\purchases\invoice_add.html:731
+#: .\templates\purchases\invoice_add.html:737
 #: .\templates\purchases\return_add.html:125
 #: .\templates\reports\sales_by_salesperson.html:79
 #: .\templates\sales\creditnote_edit.html:36
@@ -6820,7 +6849,7 @@ msgstr "المبلغ الإجمالي"
 
 #: .\reports\views.py:395 .\reports\views.py:432
 #: .\templates\purchases\return_add.html:55
-#: .\templates\purchases\return_list.html:105
+#: .\templates\purchases\return_list.html:118
 #: .\templates\reports\sales_by_salesperson.html:83
 #: .\templates\sales\return_delete.html:94
 #: .\templates\sales\return_list.html:194
@@ -6893,7 +6922,7 @@ msgstr "الرصيد الدائن"
 #: .\templates\journal\entry_create.html:176
 #: .\templates\journal\entry_detail.html:171
 #: .\templates\purchases\invoice_add.html:263
-#: .\templates\purchases\invoice_add.html:731
+#: .\templates\purchases\invoice_add.html:737
 #: .\templates\purchases\invoice_delete.html:94
 #: .\templates\purchases\invoice_detail.html:423
 #: .\templates\purchases\invoice_detail.html:464
@@ -7404,12 +7433,12 @@ msgstr ""
 msgid "يرجى اختيار العميل"
 msgstr "إحصائيات المبيعات"
 
-#: .\sales\views.py:504 .\templates\purchases\invoice_add.html:867
+#: .\sales\views.py:504 .\templates\purchases\invoice_add.html:873
 #: .\templates\sales\invoice_add.html:584
 msgid "يرجى اختيار طريقة الدفع"
 msgstr ""
 
-#: .\sales\views.py:506 .\templates\purchases\invoice_add.html:875
+#: .\sales\views.py:506 .\templates\purchases\invoice_add.html:881
 #: .\templates\sales\invoice_add.html:594
 #, fuzzy
 #| msgid "إحصائيات المبيعات"
@@ -8410,7 +8439,7 @@ msgstr "قائمة المعاملات"
 #: .\templates\hr\position_list.html:87
 #: .\templates\journal\account_form.html:365
 #: .\templates\products\product_edit.html:394
-#: .\templates\purchases\return_list.html:167
+#: .\templates\purchases\return_list.html:244
 #: .\templates\sales\creditnote_list.html:88
 #: .\templates\sales\creditnote_report.html:120
 #: .\templates\sales\return_list.html:261
@@ -8430,7 +8459,7 @@ msgstr "الأول"
 #: .\templates\hr\leave_request_list.html:116
 #: .\templates\hr\payroll_period_list.html:122
 #: .\templates\hr\position_list.html:105
-#: .\templates\purchases\return_list.html:185
+#: .\templates\purchases\return_list.html:262
 #: .\templates\sales\creditnote_list.html:106
 #: .\templates\sales\creditnote_report.html:138
 #: .\templates\sales\return_list.html:277
@@ -8468,7 +8497,7 @@ msgstr "العودة إلى قائمة الأصول"
 #: .\templates\customers\supplier_list.html:399
 #: .\templates\hr\payroll_period_form.html:132
 #: .\templates\inventory\warehouse_edit.html:121
-#: .\templates\purchases\invoice_add.html:2092
+#: .\templates\purchases\invoice_add.html:2098
 #: .\templates\revenues_expenses\recurring_create.html:57
 #: .\templates\revenues_expenses\recurring_detail.html:96
 #: .\templates\revenues_expenses\recurring_edit.html:63
@@ -8889,7 +8918,7 @@ msgstr "الاسم"
 #: .\templates\journal\entries_by_type.html:130
 #: .\templates\journal\entry_list.html:160
 #: .\templates\provisions\provision_list.html:65
-#: .\templates\purchases\return_list.html:141
+#: .\templates\purchases\return_list.html:218
 #: .\templates\revenues_expenses\entry_list.html:128
 #: .\templates\revenues_expenses\recurring_edit.html:40
 #: .\templates\revenues_expenses\recurring_list.html:212
@@ -8988,7 +9017,7 @@ msgstr "إضافة قيد إهلاك"
 #: .\templates\purchases\return_delete.html:133
 #: .\templates\purchases\return_delete.html:134
 #: .\templates\purchases\return_detail.html:219
-#: .\templates\purchases\return_list.html:149
+#: .\templates\purchases\return_list.html:226
 #: .\templates\revenues_expenses\category_confirm_delete.html:11
 #: .\templates\revenues_expenses\category_list.html:68
 #: .\templates\revenues_expenses\recurring_detail.html:268
@@ -9282,7 +9311,7 @@ msgstr "لم يتم إضافة خصوم بعد"
 #: .\templates\products\product_edit.html:541
 #: .\templates\purchases\invoice_add.html:166
 #: .\templates\purchases\invoice_add.html:167
-#: .\templates\purchases\invoice_add.html:1078
+#: .\templates\purchases\invoice_add.html:1084
 #: .\templates\revenues_expenses\category_create.html:12
 #: .\templates\sales\invoice_add.html:258
 #: .\templates\sales\invoice_add.html:1480 .\templates\sales\pos.html:1181
@@ -10153,6 +10182,7 @@ msgstr "إضافة حساب بنكي جديد"
 #: .\templates\banks\cashbox_transfer_edit.html:86
 #: .\templates\banks\transfer_add.html:139
 #: .\templates\banks\transfer_detail.html:93
+#: .\templates\banks\transfer_edit.html:139
 #: .\templates\banks\transfer_list.html:300 .\templates\base.html:606
 #: .\templates\base.html:788 .\templates\base.html:828
 #: .\templates\base.html:1370 .\templates\base.html:1477
@@ -10244,6 +10274,7 @@ msgstr "أي ملاحظات إضافية حول الحساب البنكي"
 
 #: .\templates\banks\account_add.html:261
 #: .\templates\banks\transfer_add.html:377
+#: .\templates\banks\transfer_edit.html:367
 msgid "Required fields"
 msgstr "الحقول المطلوبة"
 
@@ -10440,8 +10471,8 @@ msgstr "تحديث"
 #: .\templates\products\product_detail.html:186
 #: .\templates\products\product_list.html:83
 #: .\templates\products\product_list.html:809
-#: .\templates\purchases\invoice_add.html:1138
-#: .\templates\purchases\invoice_add.html:1169
+#: .\templates\purchases\invoice_add.html:1144
+#: .\templates\purchases\invoice_add.html:1175
 #: .\templates\purchases\invoice_detail.html:121
 #: .\templates\purchases\invoice_detail.html:337
 #: .\templates\purchases\invoice_detail.html:341
@@ -11287,7 +11318,7 @@ msgid "Bind events to update preview"
 msgstr "ربط الأحداث لتحديث المعاينة"
 
 #: .\templates\banks\bank_cashbox_transfer_add.html:498
-#: .\templates\purchases\invoice_add.html:853
+#: .\templates\purchases\invoice_add.html:859
 #: .\templates\revenues_expenses\entry_create.html:492
 msgid "Validate form before submission"
 msgstr "التحقق من صحة النموذج قبل الإرسال"
@@ -11365,11 +11396,11 @@ msgstr "التحقق من أن الرصيد رقم صحيح (يمكن أن يك�
 #: .\templates\products\product_list.html:1390
 #: .\templates\products\product_list.html:1491
 #: .\templates\purchases\invoice_add.html:455
-#: .\templates\purchases\invoice_add.html:604
-#: .\templates\purchases\invoice_add.html:908
-#: .\templates\purchases\invoice_add.html:975
-#: .\templates\purchases\invoice_add.html:979
-#: .\templates\purchases\invoice_add.html:980
+#: .\templates\purchases\invoice_add.html:610
+#: .\templates\purchases\invoice_add.html:914
+#: .\templates\purchases\invoice_add.html:981
+#: .\templates\purchases\invoice_add.html:985
+#: .\templates\purchases\invoice_add.html:986
 #: .\templates\purchases\return_add.html:230
 #: .\templates\sales\invoice_add.html:1375
 #: .\templates\sales\invoice_add.html:1383 .\templates\sales\pos.html:1406
@@ -11410,6 +11441,7 @@ msgid "Re-enable form after 10 seconds in case of Failed submission"
 msgstr "إعادة تفعيل النموذج بعد 10 ثوانٍ في حالة فشل الإرسال"
 
 #: .\templates\banks\bank_cashbox_transfer_add.html:602
+#: .\templates\cashboxes\cashbox_list.html:656
 #: .\templates\cashboxes\transfer_list.html:338
 msgid "Create Transfer"
 msgstr "إنشاء تحويل"
@@ -11449,12 +11481,14 @@ msgstr "الصندوق والبنك"
 
 #: .\templates\banks\cashbox_transfer_detail.html:162
 #: .\templates\banks\cashbox_transfer_detail.html:387
+#: .\templates\cashboxes\cashbox_list.html:561
 #: .\templates\cashboxes\transfer_list.html:243
 msgid "From Bank"
 msgstr "من البنك"
 
 #: .\templates\banks\cashbox_transfer_detail.html:162
 #: .\templates\banks\cashbox_transfer_detail.html:400
+#: .\templates\cashboxes\cashbox_list.html:550
 #: .\templates\cashboxes\transfer_list.html:232
 msgid "From Cashbox"
 msgstr "من الصندوق"
@@ -11469,12 +11503,14 @@ msgstr "سجل النقد"
 
 #: .\templates\banks\cashbox_transfer_detail.html:196
 #: .\templates\banks\cashbox_transfer_detail.html:395
+#: .\templates\cashboxes\cashbox_list.html:574
 #: .\templates\cashboxes\transfer_list.html:256
 msgid "To Cashbox"
 msgstr "إلى الصندوق"
 
 #: .\templates\banks\cashbox_transfer_detail.html:196
 #: .\templates\banks\cashbox_transfer_detail.html:404
+#: .\templates\cashboxes\cashbox_list.html:585
 #: .\templates\cashboxes\transfer_list.html:267
 msgid "To Bank"
 msgstr "إلى البنك"
@@ -11590,10 +11626,12 @@ msgid "Add New Bank Transfer"
 msgstr "إضافة تحويل بنكي جديد"
 
 #: .\templates\banks\transfer_add.html:158
+#: .\templates\banks\transfer_edit.html:158
 msgid "Important Alert"
 msgstr "تنبيه مهم"
 
 #: .\templates\banks\transfer_add.html:159
+#: .\templates\banks\transfer_edit.html:159
 msgid ""
 "Make sure the transfer data is correct before saving. Account balances will "
 "be updated automatically."
@@ -11608,6 +11646,7 @@ msgid "Fill all required fields to create a new bank transfer"
 msgstr "املأ جميع الحقول المطلوبة لإنشاء تحويل بنكي جديد"
 
 #: .\templates\banks\transfer_add.html:176
+#: .\templates\banks\transfer_edit.html:176
 msgid "Transfer Preview"
 msgstr "معاينة التحويل"
 
@@ -11620,6 +11659,7 @@ msgid "Select receiver account"
 msgstr "اختر حساب المستلم"
 
 #: .\templates\banks\transfer_add.html:205
+#: .\templates\banks\transfer_edit.html:205
 msgid "Transfer Details"
 msgstr "تفاصيل التحويل"
 
@@ -11644,92 +11684,113 @@ msgstr "أضف التسلسل الآن"
 
 #: .\templates\banks\transfer_add.html:237
 #: .\templates\banks\transfer_detail.html:128
+#: .\templates\banks\transfer_edit.html:225
 #: .\templates\receipts\receipt_add.html:153
 #: .\templates\receipts\receipt_detail.html:80
 msgid "Transfer Date"
 msgstr "تاريخ التحويل"
 
 #: .\templates\banks\transfer_add.html:241
+#: .\templates\banks\transfer_edit.html:229
 msgid "Transfer execution date"
 msgstr "تاريخ تنفيذ التحويل"
 
 #: .\templates\banks\transfer_add.html:251
+#: .\templates\banks\transfer_edit.html:239
 msgid "Accounts"
 msgstr "الحسابات"
 
 #: .\templates\banks\transfer_add.html:261
 #: .\templates\banks\transfer_add.html:422
+#: .\templates\banks\transfer_edit.html:249
 msgid "Select Sender Account"
 msgstr "اختر حساب المرسل"
 
 #: .\templates\banks\transfer_add.html:268
+#: .\templates\banks\transfer_edit.html:257
 msgid "Select the account to debit from"
 msgstr "اختر الحساب المراد الخصم منه"
 
 #: .\templates\banks\transfer_add.html:278
 #: .\templates\banks\transfer_add.html:433
+#: .\templates\banks\transfer_edit.html:267
 msgid "Select Receiver Account"
 msgstr "اختر حساب المستلم"
 
 #: .\templates\banks\transfer_add.html:285
+#: .\templates\banks\transfer_edit.html:275
 msgid "Select the account to deposit to"
 msgstr "اختر الحساب المراد الإيداع إليه"
 
 #: .\templates\banks\transfer_add.html:295
+#: .\templates\banks\transfer_edit.html:285
 msgid "Amounts and Fees"
 msgstr "المبالغ والرسوم"
 
 #: .\templates\banks\transfer_add.html:302
 #: .\templates\banks\transfer_detail.html:197
 #: .\templates\banks\transfer_detail.html:335
+#: .\templates\banks\transfer_edit.html:292
 #: .\templates\banks\transfer_list.html:1073
 msgid "Transfer Amount"
 msgstr "مبلغ التحويل"
 
 #: .\templates\banks\transfer_add.html:309
+#: .\templates\banks\transfer_edit.html:299
 msgid "Amount to be transferred"
 msgstr "المبلغ المراد تحويله"
 
 #: .\templates\banks\transfer_add.html:315
+#: .\templates\banks\transfer_edit.html:305
 msgid "Transfer Fees"
 msgstr "رسوم التحويل"
 
 #: .\templates\banks\transfer_add.html:321
+#: .\templates\banks\transfer_edit.html:311
 msgid "Bank fees for the transfer"
 msgstr "رسوم البنك للتحويل"
 
 #: .\templates\banks\transfer_add.html:330
+#: .\templates\banks\transfer_edit.html:320
 msgid "Exchange rate between currencies (1 if same currency)"
 msgstr "سعر الصرف بين العملات (1 إذا كانت نفس العملة)"
 
 #: .\templates\banks\transfer_add.html:337
+#: .\templates\banks\transfer_edit.html:327
 #: .\templates\cashboxes\transfer_detail.html:92
 msgid "Transfer Summary"
 msgstr "ملخص التحويل"
 
 #: .\templates\banks\transfer_add.html:340
+#: .\templates\banks\transfer_edit.html:330
 msgid "Base Amount"
 msgstr "المبلغ الأساسي"
 
 #: .\templates\banks\transfer_add.html:348
 #: .\templates\banks\transfer_add.html:515
+#: .\templates\banks\transfer_edit.html:338
 msgid "Total Deduction"
 msgstr "إجمالي الخصم"
 
 #: .\templates\banks\transfer_add.html:352
+#: .\templates\banks\transfer_edit.html:342
 msgid "Net Deposit"
 msgstr "صافي الإيداع"
 
 #: .\templates\banks\transfer_add.html:363
 #: .\templates\banks\transfer_add.html:367
+#: .\templates\banks\transfer_edit.html:353
+#: .\templates\banks\transfer_edit.html:357
 msgid "Transfer Description"
 msgstr "وصف التحويل"
 
 #: .\templates\banks\transfer_add.html:369
+#: .\templates\banks\transfer_edit.html:359
 msgid "Enter a description for the purpose of the transfer"
 msgstr "أدخل وصفاً لغرض التحويل"
 
 #: .\templates\banks\transfer_add.html:370
+#: .\templates\banks\transfer_edit.html:360
 msgid "Optional description for the reason or purpose of the transfer"
 msgstr "وصف اختياري لسبب أو غرض التحويل"
 
@@ -11772,6 +11833,7 @@ msgid "Print Voucher"
 msgstr "طباعة الإيصال"
 
 #: .\templates\banks\transfer_detail.html:107
+#: .\templates\banks\transfer_edit.html:141
 msgid "Edit Transfer"
 msgstr "تعديل التحويل"
 
@@ -11796,6 +11858,42 @@ msgstr "ختم الشركة"
 #, python-format
 msgid "Bank Transfer Voucher - %(num)s"
 msgstr "إيصال التحويل البنكي - %(num)s"
+
+#: .\templates\banks\transfer_edit.html:7
+#: .\templates\banks\transfer_edit.html:135
+#, fuzzy
+#| msgid "Add Bank Transfer"
+msgid "Edit Bank Transfer"
+msgstr "إضافة تحويل بنكي"
+
+#: .\templates\banks\transfer_edit.html:169
+#, fuzzy
+#| msgid "Bank Transfer Information"
+msgid "Edit Bank Transfer Information"
+msgstr "معلومات التحويل البنكي"
+
+#: .\templates\banks\transfer_edit.html:171
+msgid "Modify transfer details and save changes"
+msgstr ""
+
+#: .\templates\banks\transfer_edit.html:217
+#, fuzzy
+#| msgid "Invoice number is automatically generated from sequence settings"
+msgid "Reference number for transfer (cannot be changed)"
+msgstr "يتم إنشاء رقم الفاتورة تلقائياً من إعدادات التسلسل"
+
+#: .\templates\banks\transfer_edit.html:376
+#: .\templates\hr\attendance_form.html:293
+#: .\templates\hr\employee_document_form.html:285
+#: .\templates\hr\payroll_period_form.html:298
+#: .\templates\inventory\warehouse_edit.html:240
+#: .\templates\products\product_edit.html:324
+#: .\templates\revenues_expenses\category_edit.html:13
+#: .\templates\sales\creditnote_edit.html:54
+#: .\templates\settings\document_sequence_edit.html:141
+#: .\templates\users\group_edit.html:242 .\templates\users\user_edit.html:297
+msgid "Save Changes"
+msgstr "حفظ التغييرات"
 
 #: .\templates\banks\transfer_list.html:314
 msgid "Add New Transfer"
@@ -11912,6 +12010,7 @@ msgid "of type"
 msgstr "من نوع"
 
 #: .\templates\banks\transfer_list.html:1059
+#: .\templates\cashboxes\cashbox_list.html:504
 #: .\templates\cashboxes\transfer_detail.html:34
 #: .\templates\cashboxes\transfer_list.html:35
 #: .\templates\cashboxes\transfer_list.html:75
@@ -12413,7 +12512,7 @@ msgstr ""
 #: .\templates\base.html:2753 .\templates\customers\add.html:175
 #: .\templates\customers\edit.html:173
 #: .\templates\customers\supplier_list.html:434
-#: .\templates\purchases\invoice_add.html:1130
+#: .\templates\purchases\invoice_add.html:1136
 #: .\templates\sales\invoice_add.html:1532
 msgid "City"
 msgstr "المدينة"
@@ -12529,6 +12628,58 @@ msgstr "إلى الصندوق"
 msgid "Total Balance"
 msgstr "إجمالي الأرصدة"
 
+#: .\templates\cashboxes\cashbox_list.html:491
+#: .\templates\cashboxes\transfer_list.html:156
+#: .\templates\cashboxes\transfer_list.html:173
+msgid "Create New Transfer"
+msgstr "إنشاء تحويل جديد"
+
+#: .\templates\cashboxes\cashbox_list.html:506
+#: .\templates\cashboxes\transfer_list.html:188
+msgid "Select Transfer Type"
+msgstr "اختر نوع التحويل"
+
+#: .\templates\cashboxes\cashbox_list.html:552
+#: .\templates\cashboxes\cashbox_list.html:576
+#: .\templates\cashboxes\transfer_list.html:234
+#: .\templates\cashboxes\transfer_list.html:258
+#: .\templates\receipts\check_collect.html:118 .\templates\sales\pos.html:1050
+msgid "Select Cashbox"
+msgstr "اختر الصندوق"
+
+#: .\templates\cashboxes\cashbox_list.html:563
+#: .\templates\cashboxes\cashbox_list.html:587
+#: .\templates\cashboxes\transfer_list.html:245
+#: .\templates\cashboxes\transfer_list.html:269
+msgid "Select Bank"
+msgstr "اختر البنك"
+
+#: .\templates\cashboxes\cashbox_list.html:599
+#: .\templates\cashboxes\transfer_list.html:281
+msgid "Deposit Information"
+msgstr "معلومات الإيداع"
+
+#: .\templates\cashboxes\cashbox_list.html:605
+#: .\templates\cashboxes\transfer_list.html:287
+msgid "Enter the deposit document number"
+msgstr "أدخل رقم مستند الإيداع"
+
+#: .\templates\cashboxes\cashbox_list.html:612
+#: .\templates\cashboxes\transfer_list.html:294
+msgid "Select deposit type"
+msgstr "اختر نوع الإيداع"
+
+#: .\templates\cashboxes\cashbox_list.html:622
+#: .\templates\cashboxes\transfer_list.html:304
+#: .\templates\receipts\check_collect.html:24
+msgid "Check Information"
+msgstr "معلومات الشيك"
+
+#: .\templates\cashboxes\cashbox_list.html:639
+#: .\templates\cashboxes\transfer_list.html:321
+msgid "Name of the bank that issued the check"
+msgstr "اسم البنك الذي أصدر الشيك"
+
 #: .\templates\cashboxes\transfer_detail.html:23
 msgid "Transfer Information"
 msgstr "معلومات التحويل"
@@ -12554,47 +12705,6 @@ msgstr "تحويل جديد"
 #: .\templates\cashboxes\transfer_list.html:154
 msgid "No transfers found"
 msgstr "لم يتم العثور على تحويلات"
-
-#: .\templates\cashboxes\transfer_list.html:156
-#: .\templates\cashboxes\transfer_list.html:173
-msgid "Create New Transfer"
-msgstr "إنشاء تحويل جديد"
-
-#: .\templates\cashboxes\transfer_list.html:188
-msgid "Select Transfer Type"
-msgstr "اختر نوع التحويل"
-
-#: .\templates\cashboxes\transfer_list.html:234
-#: .\templates\cashboxes\transfer_list.html:258
-#: .\templates\receipts\check_collect.html:118 .\templates\sales\pos.html:1050
-msgid "Select Cashbox"
-msgstr "اختر الصندوق"
-
-#: .\templates\cashboxes\transfer_list.html:245
-#: .\templates\cashboxes\transfer_list.html:269
-msgid "Select Bank"
-msgstr "اختر البنك"
-
-#: .\templates\cashboxes\transfer_list.html:281
-msgid "Deposit Information"
-msgstr "معلومات الإيداع"
-
-#: .\templates\cashboxes\transfer_list.html:287
-msgid "Enter the deposit document number"
-msgstr "أدخل رقم مستند الإيداع"
-
-#: .\templates\cashboxes\transfer_list.html:294
-msgid "Select deposit type"
-msgstr "اختر نوع الإيداع"
-
-#: .\templates\cashboxes\transfer_list.html:304
-#: .\templates\receipts\check_collect.html:24
-msgid "Check Information"
-msgstr "معلومات الشيك"
-
-#: .\templates\cashboxes\transfer_list.html:321
-msgid "Name of the bank that issued the check"
-msgstr "اسم البنك الذي أصدر الشيك"
 
 #: .\templates\cashboxes\transfer_list.html:406
 #: .\templates\cashboxes\transfer_list.html:515
@@ -12672,7 +12782,7 @@ msgstr "صفحات سجل الأنشطة"
 #: .\templates\hr\leave_request_list.html:107
 #: .\templates\hr\payroll_period_list.html:113
 #: .\templates\hr\position_list.html:96
-#: .\templates\purchases\return_list.html:176
+#: .\templates\purchases\return_list.html:253
 #: .\templates\sales\creditnote_list.html:97
 #: .\templates\sales\creditnote_report.html:129
 #: .\templates\sales\return_list.html:269
@@ -13007,7 +13117,7 @@ msgstr "تنقل الإشعارات"
 #: .\templates\hr\leave_request_list.html:107
 #: .\templates\hr\payroll_period_list.html:113
 #: .\templates\hr\position_list.html:96
-#: .\templates\purchases\return_list.html:176
+#: .\templates\purchases\return_list.html:253
 #: .\templates\sales\creditnote_list.html:97
 #: .\templates\sales\creditnote_report.html:129
 msgid "Page"
@@ -13222,7 +13332,7 @@ msgstr "اسم العميل أو المورد كما يظهر في الفوات�
 #: .\templates\customers\edit.html:153
 #: .\templates\customers\supplier_list.html:410
 #: .\templates\hr\employee_detail.html:111
-#: .\templates\purchases\invoice_add.html:1106
+#: .\templates\purchases\invoice_add.html:1112
 #: .\templates\sales\invoice_add.html:1508
 msgid "Phone Number"
 msgstr "رقم الهاتف"
@@ -13238,7 +13348,7 @@ msgstr "البريد الإلكتروني لإرسال الفواتير والت
 #: .\templates\customers\add.html:165 .\templates\customers\delete.html:141
 #: .\templates\customers\edit.html:163
 #: .\templates\partials\print_header.html:45
-#: .\templates\purchases\invoice_add.html:1120
+#: .\templates\purchases\invoice_add.html:1126
 #: .\templates\sales\invoice_add.html:1522 .\templates\settings\company.html:40
 #: .\templates\settings\company_fixed.html:39
 msgid "Tax Number"
@@ -13258,7 +13368,7 @@ msgstr "المدينة التي يقع فيها العميل أو المورد"
 
 #: .\templates\customers\add.html:190 .\templates\customers\delete.html:147
 #: .\templates\customers\edit.html:188 .\templates\customers\edit.html:215
-#: .\templates\purchases\invoice_add.html:1143
+#: .\templates\purchases\invoice_add.html:1149
 #: .\templates\sales\invoice_add.html:1545
 msgid "Credit Limit"
 msgstr "الحد الائتماني"
@@ -13700,7 +13810,7 @@ msgid "Pages of"
 msgstr "صفحات من"
 
 #: .\templates\customers\supplier_list.html:404
-#: .\templates\purchases\invoice_add.html:1100
+#: .\templates\purchases\invoice_add.html:1106
 msgid "Supplier Name"
 msgstr "اسم المورد"
 
@@ -14305,18 +14415,6 @@ msgstr "أي ملاحظات إضافية حول الحضور والانصراف"
 #: .\templates\hr\payroll_period_form.html:281
 msgid "Data Error"
 msgstr "خطأ في البيانات"
-
-#: .\templates\hr\attendance_form.html:293
-#: .\templates\hr\employee_document_form.html:285
-#: .\templates\hr\payroll_period_form.html:298
-#: .\templates\inventory\warehouse_edit.html:240
-#: .\templates\products\product_edit.html:324
-#: .\templates\revenues_expenses\category_edit.html:13
-#: .\templates\sales\creditnote_edit.html:54
-#: .\templates\settings\document_sequence_edit.html:141
-#: .\templates\users\group_edit.html:242 .\templates\users\user_edit.html:297
-msgid "Save Changes"
-msgstr "حفظ التغييرات"
 
 #: .\templates\hr\attendance_form.html:295
 msgid "Add Attendance"
@@ -16167,7 +16265,7 @@ msgstr "نظرة عامة على المخزون"
 #: .\templates\inventory\product_detail.html:318
 #: .\templates\inventory\transfer_add.html:76
 #: .\templates\purchases\invoice_add.html:260
-#: .\templates\purchases\invoice_add.html:702
+#: .\templates\purchases\invoice_add.html:708
 #: .\templates\purchases\invoice_delete.html:92
 #: .\templates\purchases\invoice_detail.html:421
 #: .\templates\purchases\invoice_edit.html:218
@@ -17926,7 +18024,7 @@ msgstr "أرصدة البنوك والصناديق النقدية"
 #: .\templates\products\product_list.html:749
 #: .\templates\products\product_list.html:800
 #: .\templates\purchases\invoice_add.html:247
-#: .\templates\purchases\invoice_add.html:2083
+#: .\templates\purchases\invoice_add.html:2089
 msgid "Create New Product"
 msgstr "إنشاء منتج جديد"
 
@@ -17942,7 +18040,7 @@ msgstr "معلومات المنتج"
 #: .\templates\products\product_add.html:79
 #: .\templates\products\product_edit.html:63
 #: .\templates\products\product_list.html:828
-#: .\templates\purchases\invoice_add.html:2111
+#: .\templates\purchases\invoice_add.html:2117
 msgid "Product Type"
 msgstr "نوع المنتج"
 
@@ -17951,7 +18049,7 @@ msgstr "نوع المنتج"
 #: .\templates\products\product_edit.html:65
 #: .\templates\products\product_list.html:624
 #: .\templates\products\product_list.html:830
-#: .\templates\purchases\invoice_add.html:2113
+#: .\templates\purchases\invoice_add.html:2119
 msgid "Physical Product"
 msgstr "منتج مادي"
 
@@ -17962,13 +18060,13 @@ msgstr "منتج مادي"
 #: .\templates\products\product_edit.html:143
 #: .\templates\products\product_list.html:619
 #: .\templates\products\product_list.html:831
-#: .\templates\purchases\invoice_add.html:2114
+#: .\templates\purchases\invoice_add.html:2120
 msgid "Service"
 msgstr "خدمة"
 
 #: .\templates\products\product_add.html:88
 #: .\templates\products\product_list.html:837
-#: .\templates\purchases\invoice_add.html:2120
+#: .\templates\purchases\invoice_add.html:2126
 msgid "Product Code (SKU)"
 msgstr "رمز المنتج (SKU)"
 
@@ -18152,7 +18250,7 @@ msgstr "تتبع المخزون"
 #: .\templates\products\product_add.html:340
 #: .\templates\products\product_list.html:1022
 #: .\templates\products\product_list.html:1397
-#: .\templates\purchases\invoice_add.html:2304
+#: .\templates\purchases\invoice_add.html:2310
 msgid "Save Product"
 msgstr "حفظ المنتج"
 
@@ -18209,7 +18307,7 @@ msgstr "حذف المنتج"
 #: .\templates\products\product_detail.html:181
 #: .\templates\products\product_detail.html:202
 #: .\templates\products\product_edit.html:338
-#: .\templates\purchases\invoice_add.html:702
+#: .\templates\purchases\invoice_add.html:708
 #: .\templates\sales\invoice_add.html:397
 #: .\templates\sales\pos_invoice_print.html:207
 #: .\templates\settings\print_design.html:428
@@ -18239,7 +18337,7 @@ msgstr ""
 
 #: .\templates\products\product_edit.html:95
 #: .\templates\products\product_list.html:864
-#: .\templates\purchases\invoice_add.html:2147
+#: .\templates\purchases\invoice_add.html:2153
 msgid "This field is for products sold per piece that need warranty (optional)"
 msgstr "هذا الحقل للمنتجات المباعة بالقطعة التي تحتاج كفالة (اختياري)"
 
@@ -18293,7 +18391,7 @@ msgstr "تم الانتهاء بنجاح"
 
 #: .\templates\products\product_edit.html:586
 #: .\templates\products\product_list.html:1228
-#: .\templates\purchases\invoice_add.html:980
+#: .\templates\purchases\invoice_add.html:986
 #: .\templates\search\search.html:298
 msgid "Please try again"
 msgstr "يرجى المحاولة مرة أخرى"
@@ -18405,7 +18503,7 @@ msgid "Maximum Stock"
 msgstr "الحد الأقصى للمخزون"
 
 #: .\templates\products\product_list.html:1007
-#: .\templates\purchases\invoice_add.html:2289
+#: .\templates\purchases\invoice_add.html:2295
 msgid "Track Stock"
 msgstr "تتبع المخزون"
 
@@ -19122,361 +19220,361 @@ msgstr "اسم المنتج..."
 msgid "Delete product"
 msgstr "حذف المنتج"
 
-#: .\templates\purchases\invoice_add.html:584
+#: .\templates\purchases\invoice_add.html:590
 msgid "Error adding product row"
 msgstr "خطأ في إضافة صف المنتج"
 
-#: .\templates\purchases\invoice_add.html:585
+#: .\templates\purchases\invoice_add.html:591
 msgid "Error adding new product row"
 msgstr "خطأ في إضافة صف منتج جديد"
 
-#: .\templates\purchases\invoice_add.html:600
+#: .\templates\purchases\invoice_add.html:606
 msgid "Ensure modal exists"
 msgstr "تأكد من وجود النافذة المنبثقة"
 
-#: .\templates\purchases\invoice_add.html:603
+#: .\templates\purchases\invoice_add.html:609
 msgid "Product modal not found"
 msgstr "لم يتم العثور على نافذة المنتج المنبثقة"
 
-#: .\templates\purchases\invoice_add.html:604
+#: .\templates\purchases\invoice_add.html:610
 msgid "Product selection window not found"
 msgstr "لم يتم العثور على نافذة اختيار المنتج"
 
-#: .\templates\purchases\invoice_add.html:612
+#: .\templates\purchases\invoice_add.html:618
 msgid "Error opening product modal"
 msgstr "خطأ في فتح نافذة المنتج المنبثقة"
 
-#: .\templates\purchases\invoice_add.html:613
+#: .\templates\purchases\invoice_add.html:619
 msgid "Error opening product selection window"
 msgstr "خطأ في فتح نافذة اختيار المنتج"
 
-#: .\templates\purchases\invoice_add.html:619
+#: .\templates\purchases\invoice_add.html:625
 msgid "Current row not selected"
 msgstr "لم يتم تحديد الصف الحالي"
 
-#: .\templates\purchases\invoice_add.html:626
+#: .\templates\purchases\invoice_add.html:632
 #, fuzzy
 #| msgid "Product modal not found"
 msgid "Product row not found"
 msgstr "لم يتم العثور على نافذة المنتج المنبثقة"
 
-#: .\templates\purchases\invoice_add.html:639
+#: .\templates\purchases\invoice_add.html:645
 msgid "Product fields not found in row"
 msgstr "لم يتم العثور على حقول المنتج في الصف"
 
-#: .\templates\purchases\invoice_add.html:643
+#: .\templates\purchases\invoice_add.html:649
 msgid "Fill product data"
 msgstr "ملء بيانات المنتج"
 
-#: .\templates\purchases\invoice_add.html:648
+#: .\templates\purchases\invoice_add.html:654
 msgid "Fill available quantity"
 msgstr "ملء الكمية المتاحة"
 
-#: .\templates\purchases\invoice_add.html:653
+#: .\templates\purchases\invoice_add.html:659
 msgid "Update tax rate"
 msgstr "تحديث معدل الضريبة"
 
-#: .\templates\purchases\invoice_add.html:654
+#: .\templates\purchases\invoice_add.html:660
 msgid "Filling tax rate"
 msgstr "ملء معدل الضريبة"
 
-#: .\templates\purchases\invoice_add.html:657
+#: .\templates\purchases\invoice_add.html:663
 msgid "taxRateInput filled"
 msgstr "تم ملء taxRateInput"
 
-#: .\templates\purchases\invoice_add.html:661
+#: .\templates\purchases\invoice_add.html:667
 msgid "hiddenTaxRateInput filled"
 msgstr "تم ملء hiddenTaxRateInput"
 
-#: .\templates\purchases\invoice_add.html:664
+#: .\templates\purchases\invoice_add.html:670
 msgid "Fill last purchase price as suggested value"
 msgstr "ملء آخر سعر شراء كقيمة مقترحة"
 
-#: .\templates\purchases\invoice_add.html:667
+#: .\templates\purchases\invoice_add.html:673
 msgid "Unit price filled"
 msgstr "تم ملء سعر الوحدة"
 
-#: .\templates\purchases\invoice_add.html:670
+#: .\templates\purchases\invoice_add.html:676
 msgid "Wait a bit to ensure all data is filled then calculate total"
 msgstr "انتظر قليلاً للتأكد من ملء جميع البيانات ثم احسب الإجمالي"
 
-#: .\templates\purchases\invoice_add.html:675
+#: .\templates\purchases\invoice_add.html:681
 msgid "Close modal"
 msgstr "إغلاق النافذة المنبثقة"
 
-#: .\templates\purchases\invoice_add.html:684
+#: .\templates\purchases\invoice_add.html:690
 msgid "Focus on quantity field"
 msgstr "التركيز على حقل الكمية"
 
-#: .\templates\purchases\invoice_add.html:691
-#: .\templates\purchases\invoice_add.html:692
+#: .\templates\purchases\invoice_add.html:697
+#: .\templates\purchases\invoice_add.html:698
 msgid "Error selecting product"
 msgstr "خطأ في اختيار المنتج"
 
-#: .\templates\purchases\invoice_add.html:697
+#: .\templates\purchases\invoice_add.html:703
 msgid "Calculating row total"
 msgstr "حساب إجمالي الصف"
 
-#: .\templates\purchases\invoice_add.html:704
+#: .\templates\purchases\invoice_add.html:710
 msgid "Get tax rate from visible or hidden field"
 msgstr "الحصول على معدل الضريبة من الحقل المرئي أو المخفي"
 
-#: .\templates\purchases\invoice_add.html:711
+#: .\templates\purchases\invoice_add.html:717
 msgid "Tax rate from visible field"
 msgstr "معدل الضريبة من الحقل المرئي"
 
-#: .\templates\purchases\invoice_add.html:714
+#: .\templates\purchases\invoice_add.html:720
 msgid "Tax rate from hidden field"
 msgstr "معدل الضريبة من الحقل المخفي"
 
-#: .\templates\purchases\invoice_add.html:717
+#: .\templates\purchases\invoice_add.html:723
 msgid "Final tax rate"
 msgstr "معدل الضريبة النهائي"
 
-#: .\templates\purchases\invoice_add.html:719
+#: .\templates\purchases\invoice_add.html:725
 msgid "Calculate subtotal (without tax)"
 msgstr "حساب المجموع الفرعي (بدون ضريبة)"
 
-#: .\templates\purchases\invoice_add.html:722
+#: .\templates\purchases\invoice_add.html:728
 msgid "Check tax inclusive checkbox state"
 msgstr "التحقق من حالة مربع التحديد شامل الضريبة"
 
-#: .\templates\purchases\invoice_add.html:725
+#: .\templates\purchases\invoice_add.html:731
 msgid "Calculate tax amount"
 msgstr "حساب مبلغ الضريبة"
 
-#: .\templates\purchases\invoice_add.html:728
+#: .\templates\purchases\invoice_add.html:734
 msgid "Total amount"
 msgstr "المبلغ الإجمالي"
 
-#: .\templates\purchases\invoice_add.html:733
+#: .\templates\purchases\invoice_add.html:739
 msgid "Update subtotal field"
 msgstr "تحديث حقل المجموع الفرعي"
 
-#: .\templates\purchases\invoice_add.html:739
+#: .\templates\purchases\invoice_add.html:745
 msgid "Update tax field if exists"
 msgstr "تحديث حقل الضريبة إذا كان موجوداً"
 
-#: .\templates\purchases\invoice_add.html:743
+#: .\templates\purchases\invoice_add.html:749
 msgid "Visible tax field updated"
 msgstr "تم تحديث حقل الضريبة المرئي"
 
-#: .\templates\purchases\invoice_add.html:746
+#: .\templates\purchases\invoice_add.html:752
 msgid "Update hidden tax field"
 msgstr "تحديث حقل الضريبة المخفي"
 
-#: .\templates\purchases\invoice_add.html:750
+#: .\templates\purchases\invoice_add.html:756
 msgid "Hidden tax field updated"
 msgstr "تم تحديث حقل الضريبة المخفي"
 
-#: .\templates\purchases\invoice_add.html:760
+#: .\templates\purchases\invoice_add.html:766
 msgid "Calculate subtotal and total taxes"
 msgstr "حساب المجموع الفرعي والضرائب الإجمالية"
 
-#: .\templates\purchases\invoice_add.html:770
+#: .\templates\purchases\invoice_add.html:776
 msgid "If visible tax field not found, look for hidden field"
 msgstr "إذا لم يتم العثور على حقل الضريبة المرئي، ابحث عن الحقل المخفي"
 
-#: .\templates\purchases\invoice_add.html:782
+#: .\templates\purchases\invoice_add.html:788
 msgid "Update display using currency settings"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:825
+#: .\templates\purchases\invoice_add.html:831
 msgid "Search in products"
 msgstr "البحث في المنتجات"
 
-#: .\templates\purchases\invoice_add.html:836
+#: .\templates\purchases\invoice_add.html:842
 msgid "Search in available text only"
 msgstr "البحث في النص المتاح فقط"
 
-#: .\templates\purchases\invoice_add.html:839
+#: .\templates\purchases\invoice_add.html:845
 msgid "Add tax rate to search if exists"
 msgstr "إضافة معدل الضريبة إلى البحث إذا كان موجوداً"
 
-#: .\templates\purchases\invoice_add.html:840
+#: .\templates\purchases\invoice_add.html:846
 msgid "means tax column exists"
 msgstr "يعني أن عمود الضريبة موجود"
 
-#: .\templates\purchases\invoice_add.html:859
+#: .\templates\purchases\invoice_add.html:865
 #, fuzzy
 #| msgid "إحصائيات المبيعات"
 msgid "يرجى اختيار المورد"
 msgstr "إحصائيات المبيعات"
 
-#: .\templates\purchases\invoice_add.html:893
+#: .\templates\purchases\invoice_add.html:899
 msgid "At least one product must be added to the invoice"
 msgstr "يجب إضافة منتج واحد على الأقل إلى الفاتورة"
 
-#: .\templates\purchases\invoice_add.html:898
+#: .\templates\purchases\invoice_add.html:904
 msgid "Supplier management functions"
 msgstr "وظائف إدارة المورد"
 
-#: .\templates\purchases\invoice_add.html:900
+#: .\templates\purchases\invoice_add.html:906
 msgid "New supplier creation button clicked"
 msgstr "تم النقر على زر إنشاء مورد جديد"
 
-#: .\templates\purchases\invoice_add.html:905
+#: .\templates\purchases\invoice_add.html:911
 msgid "Modal opened successfully"
 msgstr "تم فتح النافذة المنبثقة بنجاح"
 
-#: .\templates\purchases\invoice_add.html:907
+#: .\templates\purchases\invoice_add.html:913
 msgid "Modal not found"
 msgstr "لم يتم العثور على النافذة المنبثقة"
 
-#: .\templates\purchases\invoice_add.html:908
+#: .\templates\purchases\invoice_add.html:914
 msgid "Supplier creation window not found"
 msgstr "لم يتم العثور على نافذة إنشاء المورد"
 
-#: .\templates\purchases\invoice_add.html:913
+#: .\templates\purchases\invoice_add.html:919
 msgid "Starting to save new supplier"
 msgstr "بدء حفظ المورد الجديد"
 
-#: .\templates\purchases\invoice_add.html:917
+#: .\templates\purchases\invoice_add.html:923
 #: .\templates\sales\invoice_add.html:1296
 msgid "Add CSRF token"
 msgstr "إضافة رمز CSRF"
 
-#: .\templates\purchases\invoice_add.html:921
+#: .\templates\purchases\invoice_add.html:927
 msgid "Sending data to server"
 msgstr "إرسال البيانات إلى الخادم"
 
-#: .\templates\purchases\invoice_add.html:937
+#: .\templates\purchases\invoice_add.html:943
 msgid "Add new supplier to list"
 msgstr "إضافة مورد جديد إلى القائمة"
 
-#: .\templates\purchases\invoice_add.html:966
+#: .\templates\purchases\invoice_add.html:972
 msgid "Close modal and reset form"
 msgstr "إغلاق النافذة المنبثقة وإعادة تعيين النموذج"
 
-#: .\templates\purchases\invoice_add.html:971
+#: .\templates\purchases\invoice_add.html:977
 msgid "Supplier created successfully"
 msgstr "تم إنشاء المورد بنجاح"
 
-#: .\templates\purchases\invoice_add.html:972
+#: .\templates\purchases\invoice_add.html:978
 msgid "Supplier saved successfully"
 msgstr "تم حفظ المورد بنجاح"
 
-#: .\templates\purchases\invoice_add.html:974
+#: .\templates\purchases\invoice_add.html:980
 msgid "Server error"
 msgstr "خطأ في الخادم"
 
-#: .\templates\purchases\invoice_add.html:975
+#: .\templates\purchases\invoice_add.html:981
 msgid "Error occurred while creating supplier"
 msgstr "حدث خطأ أثناء إنشاء المورد"
 
-#: .\templates\purchases\invoice_add.html:984
+#: .\templates\purchases\invoice_add.html:990
 msgid "Function to update supplier balance"
 msgstr "وظيفة لتحديث رصيد المورد"
 
-#: .\templates\purchases\invoice_add.html:995
+#: .\templates\purchases\invoice_add.html:1001
 msgid "Call API to get supplier information"
 msgstr "استدعاء API للحصول على معلومات المورد"
 
-#: .\templates\purchases\invoice_add.html:1002
+#: .\templates\purchases\invoice_add.html:1008
 msgid "Error getting supplier data"
 msgstr "خطأ في الحصول على بيانات المورد"
 
-#: .\templates\purchases\invoice_add.html:1007
+#: .\templates\purchases\invoice_add.html:1013
 #: .\templates\sales\invoice_add.html:1416
 msgid "Get currency information from company"
 msgstr "الحصول على معلومات العملة من الشركة"
 
-#: .\templates\purchases\invoice_add.html:1018
+#: .\templates\purchases\invoice_add.html:1024
 #: .\templates\sales\invoice_add.html:1420
 msgid "View current balance"
 msgstr "عرض الرصيد الحالي"
 
-#: .\templates\purchases\invoice_add.html:1025
+#: .\templates\purchases\invoice_add.html:1031
 msgid "Use currency from company settings"
 msgstr "استخدام العملة من إعدادات الشركة"
 
-#: .\templates\purchases\invoice_add.html:1035
+#: .\templates\purchases\invoice_add.html:1041
 #: .\templates\sales\invoice_add.html:1437
 msgid "Change text color based on balance"
 msgstr "تغيير لون النص بناءً على الرصيد"
 
-#: .\templates\purchases\invoice_add.html:1047
+#: .\templates\purchases\invoice_add.html:1053
 msgid "Error getting currency data"
 msgstr "خطأ في الحصول على بيانات العملة"
 
-#: .\templates\purchases\invoice_add.html:1048
+#: .\templates\purchases\invoice_add.html:1054
 msgid "In case of failure to get currency, use default currency"
 msgstr "في حالة فشل الحصول على العملة، استخدم العملة الافتراضية"
 
-#: .\templates\purchases\invoice_add.html:1069
+#: .\templates\purchases\invoice_add.html:1075
 msgid "Network error"
 msgstr "خطأ في الشبكة"
 
-#: .\templates\purchases\invoice_add.html:1074
+#: .\templates\purchases\invoice_add.html:1080
 msgid "Bind event to supplier change"
 msgstr "ربط الحدث بتغيير المورد"
 
-#: .\templates\purchases\invoice_add.html:1084
+#: .\templates\purchases\invoice_add.html:1090
 msgid "Create New Supplier"
 msgstr "إنشاء مورد جديد"
 
-#: .\templates\purchases\invoice_add.html:1095
+#: .\templates\purchases\invoice_add.html:1101
 msgid "Basic Supplier Information"
 msgstr "معلومات المورد الأساسية"
 
-#: .\templates\purchases\invoice_add.html:1149
+#: .\templates\purchases\invoice_add.html:1155
 msgid "Maximum amount the supplier can be debited"
 msgstr "المبلغ الأقصى الذي يمكن أن يكون مدين من المورد"
 
-#: .\templates\purchases\invoice_add.html:1160
+#: .\templates\purchases\invoice_add.html:1166
 msgid "Current Balance (positive: credit, negative: debit)"
 msgstr "الرصيد الحالي (إيجابي: ائتمان، سلبي: مدين)"
 
-#: .\templates\purchases\invoice_add.html:1174
+#: .\templates\purchases\invoice_add.html:1180
 #: .\templates\sales\invoice_add.html:1576
 msgid "Any additional notes or information"
 msgstr "أي ملاحظات أو معلومات إضافية"
 
-#: .\templates\purchases\invoice_add.html:1179
+#: .\templates\purchases\invoice_add.html:1185
 msgid "Active Supplier"
 msgstr "مورد نشط"
 
-#: .\templates\purchases\invoice_add.html:1181
+#: .\templates\purchases\invoice_add.html:1187
 msgid "Deactivating hides the supplier from lists"
 msgstr "إلغاء التنشيط يخفي المورد من القوائم"
 
-#: .\templates\purchases\invoice_add.html:1191
+#: .\templates\purchases\invoice_add.html:1197
 msgid "Save Supplier"
 msgstr "حفظ المورد"
 
-#: .\templates\purchases\invoice_add.html:1198
+#: .\templates\purchases\invoice_add.html:1204
 msgid "Critical JavaScript for Purchase Invoice - Enhanced"
 msgstr "JavaScript الحرج لفاتورة الشراء - محسن"
 
-#: .\templates\purchases\invoice_add.html:1262
+#: .\templates\purchases\invoice_add.html:1268
 msgid "addProductRow function not found"
 msgstr "لم يتم العثور على وظيفة addProductRow"
 
-#: .\templates\purchases\invoice_add.html:1263
+#: .\templates\purchases\invoice_add.html:1269
 msgid "Error: Product addition function not available. Please reload the page."
 msgstr "خطأ: وظيفة إضافة المنتج غير متوفرة. يرجى إعادة تحميل الصفحة."
 
-#: .\templates\purchases\invoice_add.html:1266
+#: .\templates\purchases\invoice_add.html:1272
 msgid "Error adding product row in purchase invoice"
 msgstr "خطأ في إضافة صف المنتج في فاتورة الشراء"
 
-#: .\templates\purchases\invoice_add.html:1267
+#: .\templates\purchases\invoice_add.html:1273
 msgid "Error occurred while adding product. Please try again."
 msgstr "حدث خطأ أثناء إضافة المنتج. يرجى المحاولة مرة أخرى."
 
-#: .\templates\purchases\invoice_add.html:1271
+#: .\templates\purchases\invoice_add.html:1277
 msgid "Ensure button styling"
 msgstr "تأكد من تنسيق الزر"
 
-#: .\templates\purchases\invoice_add.html:1372
+#: .\templates\purchases\invoice_add.html:1378
 msgid "Re-applying purchase invoice button styling"
 msgstr "إعادة تطبيق تنسيق زر فاتورة الشراء"
 
-#: .\templates\purchases\invoice_add.html:1378
+#: .\templates\purchases\invoice_add.html:1384
 msgid "Purchase Invoice Critical JavaScript loaded and monitoring started"
 msgstr "تم تحميل JavaScript الحرج لفاتورة الشراء وبدء المراقبة"
 
-#: .\templates\purchases\invoice_add.html:2141
+#: .\templates\purchases\invoice_add.html:2147
 msgid "- For Warranty"
 msgstr "- للضمان"
 
@@ -19521,7 +19619,7 @@ msgid "Total Invoices"
 msgstr "إجمالي الفواتير"
 
 #: .\templates\purchases\invoice_list.html:226
-#: .\templates\purchases\return_list.html:110
+#: .\templates\purchases\return_list.html:178
 #: .\templates\sales\invoice_list.html:377
 #: .\templates\sales\return_add.html:236 .\templates\sales\return_list.html:195
 msgid "Grand Total"
@@ -19592,7 +19690,7 @@ msgid "Create Purchase Return"
 msgstr "إنشاء مرتجع شراء"
 
 #: .\templates\purchases\return_add.html:33
-#: .\templates\purchases\return_list.html:104
+#: .\templates\purchases\return_list.html:106
 #: .\templates\sales\return_delete.html:70
 #: .\templates\sales\return_detail.html:92
 #: .\templates\sales\return_detail.html:111
@@ -19608,19 +19706,19 @@ msgstr "تاريخ المرتجع"
 
 #: .\templates\purchases\return_add.html:45
 #: .\templates\purchases\return_list.html:63
-#: .\templates\purchases\return_list.html:108
+#: .\templates\purchases\return_list.html:154
 msgid "Return Type"
 msgstr "نوع المرتجع"
 
 #: .\templates\purchases\return_add.html:47
 #: .\templates\purchases\return_list.html:67
-#: .\templates\purchases\return_list.html:125
+#: .\templates\purchases\return_list.html:202
 msgid "Partial Return"
 msgstr "مرتجع جزئي"
 
 #: .\templates\purchases\return_add.html:48
 #: .\templates\purchases\return_list.html:66
-#: .\templates\purchases\return_list.html:123
+#: .\templates\purchases\return_list.html:200
 msgid "Full Return"
 msgstr "مرتجع كامل"
 
@@ -19629,7 +19727,7 @@ msgid "Select Original Invoice"
 msgstr "اختر الفاتورة الأصلية"
 
 #: .\templates\purchases\return_add.html:70
-#: .\templates\purchases\return_list.html:109
+#: .\templates\purchases\return_list.html:166
 msgid "Return Reason"
 msgstr "سبب المرتجع"
 
@@ -19642,7 +19740,7 @@ msgid "Defective Product"
 msgstr "منتج معيب"
 
 #: .\templates\purchases\return_add.html:74
-#: .\templates\purchases\return_list.html:130
+#: .\templates\purchases\return_list.html:207
 msgid "Wrong Item"
 msgstr "عنصر خاطئ"
 
@@ -19713,19 +19811,19 @@ msgid "Edit Purchase Return"
 msgstr "تحرير مرتجع الشراء"
 
 #: .\templates\purchases\return_edit.html:65
-#: .\templates\purchases\return_list.html:129
+#: .\templates\purchases\return_list.html:206
 #: .\templates\sales\return_add.html:294
 msgid "Defective"
 msgstr "معيب"
 
 #: .\templates\purchases\return_edit.html:69
-#: .\templates\purchases\return_list.html:133
+#: .\templates\purchases\return_list.html:210
 #: .\templates\sales\return_add.html:297
 msgid "Damaged"
 msgstr "تالف"
 
 #: .\templates\purchases\return_list.html:22
-#: .\templates\purchases\return_list.html:200
+#: .\templates\purchases\return_list.html:277
 msgid "Create New Purchase Return"
 msgstr "إنشاء مرتجع شراء جديد"
 
@@ -19737,15 +19835,15 @@ msgstr "إجمالي المرتجع"
 msgid "Total Value of Returns"
 msgstr "إجمالي قيمة المرتجعات"
 
-#: .\templates\purchases\return_list.html:131
+#: .\templates\purchases\return_list.html:208
 msgid "Excess"
 msgstr "زائد"
 
-#: .\templates\purchases\return_list.html:196
+#: .\templates\purchases\return_list.html:273
 msgid "No Purchase Returns"
 msgstr "لا توجد مرتجعات شراء"
 
-#: .\templates\purchases\return_list.html:197
+#: .\templates\purchases\return_list.html:274
 msgid "You can create a new return by clicking the button above."
 msgstr "يمكنك إنشاء مرتجع جديد بالنقر على الزر أعلاه."
 

@@ -1134,13 +1134,14 @@ class PurchaseReturnListView(LoginRequiredMixin, ListView):
     paginate_by = 20
     
     def get_queryset(self):
-        queryset = PurchaseReturn.objects.select_related('original_invoice__supplier').order_by('-date', '-id')
+        queryset = PurchaseReturn.objects.select_related('original_invoice__supplier')
         
         # Apply filters if provided
         date_from = self.request.GET.get('date_from')
         date_to = self.request.GET.get('date_to')
         return_type = self.request.GET.get('return_type')
         supplier_id = self.request.GET.get('supplier')
+        order_by = self.request.GET.get('order_by', '-date')
         
         if date_from:
             queryset = queryset.filter(date__gte=date_from)
@@ -1150,6 +1151,12 @@ class PurchaseReturnListView(LoginRequiredMixin, ListView):
             queryset = queryset.filter(return_type=return_type)
         if supplier_id:
             queryset = queryset.filter(original_invoice__supplier_id=supplier_id)
+        
+        # Apply ordering
+        if order_by.startswith('-'):
+            queryset = queryset.order_by(order_by, '-id')
+        else:
+            queryset = queryset.order_by(order_by, 'id')
             
         return queryset
     
@@ -1176,6 +1183,9 @@ class PurchaseReturnListView(LoginRequiredMixin, ListView):
             'return_type': self.request.GET.get('return_type', ''),
             'supplier': self.request.GET.get('supplier', ''),
         }
+        
+        # Current ordering
+        context['current_order'] = self.request.GET.get('order_by', '-date')
         
         return context
 

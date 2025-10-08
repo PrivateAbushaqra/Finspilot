@@ -1037,8 +1037,68 @@ class BankTransferUpdateView(LoginRequiredMixin, UpdateView):
         return context
     
     def form_valid(self, form):
+        from django.db import transaction
+        from core.services import JournalService
+        from core.utils import log_user_activity
+        
+        transfer = self.object
+        
+        with transaction.atomic():
+            # حفظ التعديلات الأساسية
+            response = super().form_valid(form)
+            
+            # تحديث معاملات البنك المرتبطة
+            # حذف المعاملات القديمة
+            BankTransaction.objects.filter(
+                reference_number=transfer.transfer_number
+            ).delete()
+            
+            # إنشاء معاملات بنكية جديدة
+            total_amount = transfer.amount + transfer.fees
+            
+            # إنشاء حركة الخصم من الحساب المرسل
+            BankTransaction.objects.create(
+                bank=transfer.from_account,
+                transaction_type='withdrawal',
+                amount=total_amount,
+                description=f'تحويل إلى حساب {transfer.to_account.name} - رقم التحويل: {transfer.transfer_number}',
+                reference_number=transfer.transfer_number,
+                date=transfer.date,
+                created_by=self.request.user
+            )
+            
+            # إنشاء حركة الإيداع للحساب المستقبل
+            BankTransaction.objects.create(
+                bank=transfer.to_account,
+                transaction_type='deposit',
+                amount=transfer.amount * transfer.exchange_rate,
+                description=f'تحويل من حساب {transfer.from_account.name} - رقم التحويل: {transfer.transfer_number}',
+                reference_number=transfer.transfer_number,
+                date=transfer.date,
+                created_by=self.request.user
+            )
+            
+            # تحديث القيد المحاسبي
+            # حذف القيود القديمة
+            from journal.models import JournalEntry
+            JournalEntry.objects.filter(
+                reference_type='bank_transfer',
+                reference_id=transfer.id
+            ).delete()
+            
+            # إنشاء قيد محاسبي جديد
+            JournalService.create_bank_transfer_entry(transfer, self.request.user)
+            
+            # تسجيل النشاط في سجل الأنشطة
+            log_user_activity(
+                self.request,
+                'UPDATE',
+                transfer,
+                f'تم تحديث التحويل البنكي رقم {transfer.transfer_number} من {transfer.from_account.name} إلى {transfer.to_account.name} بمبلغ {transfer.amount:.3f}'
+            )
+        
         messages.success(self.request, 'تم تحديث التحويل بنجاح!')
-        return super().form_valid(form)
+        return response
 
 
 class CashboxTransferDetailView(LoginRequiredMixin, DetailView):
