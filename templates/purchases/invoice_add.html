@@ -131,6 +131,7 @@
                 <div class="p-4">
                     <form method="post" id="invoiceForm">
                         {% csrf_token %}
+                        <input type="hidden" name="payment_type" id="id_payment_type" value="credit">
                         
                         <!-- {% trans "Basic Invoice Information" %} -->
                         <div class="row mb-4">
@@ -184,16 +185,6 @@
                                             {% trans "Balance" %} {% trans "Supplier" %}: <span id="supplier-balance-amount" class="fw-bold"></span>
                                         </small>
                                     </div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label class="form-label"><i class="fas fa-money-bill me-1"></i> {% trans "Payment Type" %} *</label>
-                                    <select class="form-select" name="payment_type" id="id_payment_type" required>
-                                        <option value="">{% trans "Select Payment Type" %}</option>
-                                        <option value="cash" {% if form_data.payment_type == 'cash' %}selected{% endif %}>{% trans "Cash" %}</option>
-                                        <option value="credit" {% if form_data.payment_type == 'credit' %}selected{% endif %}>{% trans "Credit" %}</option>
-                                    </select>
                                 </div>
                             </div>
                             <div class="col-md-4">
