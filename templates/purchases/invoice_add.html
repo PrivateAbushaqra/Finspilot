@@ -577,6 +577,14 @@ function addProductRow() {
         // Attach event listeners to the new row
         attachRowEventListeners(row);
         
+        // Setup product search for the new row (if functions are available)
+        // Use setTimeout to ensure the row is fully added to DOM
+        setTimeout(function() {
+            if (typeof window.setupProductSearchForRow === 'function') {
+                window.setupProductSearchForRow(row);
+            }
+        }, 100);
+        
         // Focus on quantity input of the new row
         const newQuantityInput = document.getElementById(`quantity${productRowCount}`);
         if (newQuantityInput) {
@@ -825,6 +833,12 @@ function attachRowEventListeners(row) {
             const rowId = this.id.replace('taxRate', '');
             calculateRowTotal(rowId);
         });
+    }
+    
+    // Setup product search functionality for this row (will be called after functions are defined)
+    // Mark row as needing search setup
+    if (!row.hasAttribute('data-needs-search-setup')) {
+        row.setAttribute('data-needs-search-setup', 'true');
     }
 }
 
@@ -1771,31 +1785,34 @@ document.addEventListener('DOMContentLoaded', function() {
     // Setup product search for existing rows and new rows
     function setupAllProductSearches() {
         document.querySelectorAll('#productsTableBody tr').forEach(row => {
-            if (!row.hasAttribute('data-product-search-setup')) {
+            // Check if row needs search setup (either not setup yet or marked as needing setup)
+            if (!row.hasAttribute('data-product-search-setup') || row.hasAttribute('data-needs-search-setup')) {
                 setupProductSearch(row);
                 setupProductCodeSearch(row);
                 row.setAttribute('data-product-search-setup', 'true');
+                row.removeAttribute('data-needs-search-setup');
             }
         });
     }
 
-    // Initial setup
-    setupAllProductSearches();
-
-    // Setup for new rows when added
-    const originalAddProductRow = window.addProductRow;
-    window.addProductRow = function() {
-        originalAddProductRow();
-        // Small delay to ensure DOM is updated
-        setTimeout(setupAllProductSearches, 100);
+    // Make setupProductSearchForRow available globally
+    window.setupProductSearchForRow = function(row) {
+        if (!row.hasAttribute('data-product-search-setup')) {
+            setupProductSearch(row);
+            setupProductCodeSearch(row);
+            row.setAttribute('data-product-search-setup', 'true');
+        }
     };
+
+    // Initial setup for existing rows
+    setupAllProductSearches();
 });
 
 // Keyboard shortcuts for invoice management
 document.addEventListener('keydown', function(e) {
     // Ctrl+Enter to save invoice
-    if (e.ctrlKey && e.key === 's') {
-        e.preventDefault(); // Prevent browser save dialog
+    if (e.ctrlKey && e.key === 'Enter') {
+        e.preventDefault(); // Prevent default behavior
         
         const saveButton = document.querySelector('button[type="submit"][class*="btn-success"]');
         if (saveButton) {

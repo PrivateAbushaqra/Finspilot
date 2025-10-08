@@ -13,7 +13,7 @@ from django.utils import timezone
 from decimal import Decimal, ROUND_HALF_UP
 from datetime import date, datetime
 import json
-from .models import SalesInvoice, SalesInvoiceItem, SalesReturn
+from .models import SalesInvoice, SalesInvoiceItem, SalesReturn, SalesReturnItem
 from .models import SalesCreditNote
 from products.models import Product
 from customers.models import CustomerSupplier
@@ -206,11 +206,6 @@ class SalesInvoiceListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
                 Q(customer__name__icontains=search)
             )
         
-        # Status filter
-        status = self.request.GET.get('status')
-        if status:
-            queryset = queryset.filter(status=status)
-        
         # Date filter
         date_from = self.request.GET.get('date_from')
         date_to = self.request.GET.get('date_to')
@@ -229,6 +224,13 @@ class SalesInvoiceListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         if cashbox_id:
             queryset = queryset.filter(cashbox_id=cashbox_id)
         
+        # Apply ordering
+        order_by = self.request.GET.get('order_by', '-date')
+        if order_by.startswith('-'):
+            queryset = queryset.order_by(order_by, '-id')
+        else:
+            queryset = queryset.order_by(order_by, 'id')
+        
         return queryset.select_related('customer', 'created_by', 'cashbox')
     
     def get_context_data(self, **kwargs):
@@ -242,6 +244,18 @@ class SalesInvoiceListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         context['total_sales_amount'] = invoices.aggregate(
             total=Sum('total_amount')
         )['total'] or 0
+        
+        # This month's invoices
+        current_month = timezone.now().replace(day=1)
+        month_invoices = invoices.filter(date__gte=current_month).count()
+        context['month_invoices'] = month_invoices
+        
+        # Active customers (customers with invoices)
+        active_customers = CustomerSupplier.objects.filter(
+            Q(type='customer') | Q(type='both'),
+            salesinvoice__isnull=False
+        ).distinct().count()
+        context['active_customers'] = active_customers
         
         # Cashboxes list for filter
         try:
@@ -261,6 +275,9 @@ class SalesInvoiceListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
             pass
         
         context['active_currencies'] = Currency.objects.filter(is_active=True)
+        
+        # Current ordering
+        context['current_order'] = self.request.GET.get('order_by', '-date')
         
         return context
 
@@ -584,7 +601,7 @@ def sales_invoice_create(request):
                                     request,
                                     'error',
                                     dummy,
-                                    _('فشل إنشاء فاتورة: لا توجد عناصر مضافة')
+                                    _('فشل إنشاء فاتورة: لا توجد عناصر مadded')
                                 )
                             except Exception:
                                 pass
@@ -724,7 +741,7 @@ def sales_invoice_create(request):
                                     # parse quantity/price/tax robustly to accept '1.5' or '1,5' etc.
                                     quantity = parse_decimal_input(quantities[i], name='quantity', default=Decimal('0'))
                                     unit_price = parse_decimal_input(prices[i], name='price', default=Decimal('0'))
-                                    tax_rate = parse_decimal_input(tax_rates[i], name='tax_rate', default=Decimal('0')) if i < len(tax_rates) and tax_rates[i] else Decimal('0')
+                                    tax_rate = parse_decimal_input(taxRates[i] if i < len(taxRates) else '0', name='tax_rate', default=Decimal('0'))
 
                                     # Safeguard: if submitted unit_price differs from product.sale_price
                                     # and appears to be a cost/last-purchase/zero value, prefer product.sale_price
@@ -1169,6 +1186,13 @@ class SalesReturnListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         if customer:
             queryset = queryset.filter(customer_id=customer)
         
+        # Apply ordering
+        order_by = self.request.GET.get('order_by', '-date')
+        if order_by.startswith('-'):
+            queryset = queryset.order_by(order_by, '-id')
+        else:
+            queryset = queryset.order_by(order_by, 'id')
+        
         return queryset.select_related('customer', 'original_invoice', 'created_by')
     
     def get_context_data(self, **kwargs):
@@ -1205,231 +1229,334 @@ class SalesReturnListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         except:
             pass
         
+        # Current ordering
+        context['current_order'] = self.request.GET.get('order_by', '-date')
+        
         return context
 
 
-class SalesReturnCreateView(LoginRequiredMixin, CreateView):
-    model = SalesReturn
-    template_name = 'sales/return_add.html'
-    fields = ['return_number', 'date', 'original_invoice', 'customer', 'notes']
-    success_url = reverse_lazy('sales:return_list')
+@login_required
+def sales_return_create(request):
+    """إنشاء مردود مبيعات جديدة"""
     
-    def form_valid(self, form):
-        from django.db import transaction
+    def get_return_create_context(request, form_data=None):
+        """إعداد سياق صفحة إنشاء المردود مع البيانات المُدخلة إن وجدت"""
+        user = request.user
+        context = {
+            'customers': CustomerSupplier.objects.filter(type__in=['customer', 'both']),
+            'today_date': date.today().isoformat(),
+        }
         
-        print(f"POST data: {self.request.POST}")
+        # إضافة البيانات المُدخلة إذا كانت موجودة
+        if form_data:
+            context.update(form_data)
         
+        # إضافة الفواتير المتاحة للمرتجعات
+        context['invoices'] = SalesInvoice.objects.filter(
+            customer__isnull=False
+        ).select_related('customer').order_by('-date')[:50]  # حدّث لأحدث 50 فاتورة
+        
+        # توليد رقم المرتجع المقترح
         try:
-            with transaction.atomic():
-                # التحقق من البيانات المطلوبة
-                if not form.cleaned_data.get('original_invoice'):
-                    messages.error(self.request, 'يرجى اختيار الفاتورة الأصلية')
-                    return self.form_invalid(form)
-                
-                # توليد رقم المرتجع إذا لم يكن محدد
-                if not form.cleaned_data.get('return_number'):
-                    try:
-                        sequence = DocumentSequence.objects.get(document_type='sales_return')
-                        form.instance.return_number = sequence.get_next_number()
-                    except DocumentSequence.DoesNotExist:
-                        last_return = SalesReturn.objects.order_by('-id').first()
-                        if last_return:
-                            number = int(last_return.return_number.split('-')[-1]) + 1 if '-' in last_return.return_number else int(last_return.return_number) + 1
-                        else:
-                            number = 1
-                        form.instance.return_number = f"RETURN-{number:06d}"
-                
-                form.instance.created_by = self.request.user
-                
-                # معالجة بيانات المنتجات المرتجعة
-                return_quantities = {}
-                return_prices = {}
-                
-                for key, value in self.request.POST.items():
-                    if key.startswith('return_quantities[') and key.endswith(']'):
-                        product_id = key[18:-1]  # استخراج product_id
-                        try:
-                            quantity = Decimal(value) if value else Decimal('0')
-                            if quantity > 0:
-                                return_quantities[int(product_id)] = quantity
-                        except (ValueError, TypeError):
-                            continue
-                    elif key.startswith('return_prices[') and key.endswith(']'):
-                        product_id = key[14:-1]  # استخراج product_id
-                        try:
-                            price = Decimal(value) if value else Decimal('0')
-                            if price >= 0:
-                                return_prices[int(product_id)] = price
-                        except (ValueError, TypeError):
-                            continue
-                
-                # التحقق من وجود منتجات للإرجاع
-                if not return_quantities:
-                    messages.error(self.request, 'يرجى تحديد كمية للإرجاع لمنتج واحد على الأقل')
-                    return self.form_invalid(form)
-                
-                # حساب المجاميع
-                subtotal = Decimal('0')
-                total_tax = Decimal('0')
-                
-                # حفظ المردود أولاً
-                response = super().form_valid(form)
-                
-                # إنشاء عناصر المردود
-                from .models import SalesReturnItem
-                for product_id, quantity in return_quantities.items():
-                    if product_id in return_prices:
-                        try:
-                            product = Product.objects.get(id=product_id)
-                            unit_price = return_prices[product_id]
-                            
-                            # حساب الضريبة والإجمالي
-                            line_subtotal = quantity * unit_price
-                            tax_rate = product.tax_rate or Decimal('0')
-                            tax_amount = line_subtotal * (tax_rate / Decimal('100'))
-                            total_amount = line_subtotal + tax_amount
-                            
-                            # إنشاء عنصر المردود
-                            SalesReturnItem.objects.create(
-                                return_invoice=self.object,
-                                product=product,
-                                quantity=quantity,
-                                unit_price=unit_price,
-                                tax_rate=tax_rate,
-                                tax_amount=tax_amount,
-                                total_amount=total_amount
-                            )
-                            
-                            subtotal += line_subtotal
-                            total_tax += tax_amount
-                            
-                        except Product.DoesNotExist:
-                            continue
-                
-                # تحديث مجاميع المردود
-                self.object.subtotal = subtotal
-                self.object.tax_amount = total_tax
-                self.object.total_amount = subtotal + total_tax
-                self.object.save()
-                # 🔧 إعادة تحميل الكائن من قاعدة البيانات لضمان استخدام القيم المحدثة في القيد المحاسبي
-                self.object.refresh_from_db()
-                
-                # إنشاء حركة حساب للعميل
-                create_sales_return_account_transaction(self.object, self.request.user)
-                
-                # إنشاء حركات المخزون للمردود
-                create_sales_return_inventory_movements(self.object, self.request.user)
-                
-                # إنشاء القيد المحاسبي
-                create_sales_return_journal_entry(self.object, self.request.user)
-                
-                # تسجيل النشاط
-                from core.signals import log_user_activity
-                log_user_activity(
-                    self.request,
-                    'create',
-                    self.object,
-                    f'تم إنشاء مردود مبيعات رقم {self.object.return_number}'
-                )
-                
-                messages.success(self.request, f'تم إنشاء مردود المبيعات رقم {self.object.return_number} بنجاح')
-                return response
-                
-        except Exception as e:
-            messages.error(self.request, f'حدث خطأ أثناء حفظ المردود: {str(e)}')
-            return self.form_invalid(form)
-    
-    def form_invalid(self, form):
-        print(f"Form errors: {form.errors}")
-        messages.error(self.request, 'يرجى التحقق من البيانات المدخلة وإصلاح الأخطاء')
-        return super().form_invalid(form)
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['invoices'] = SalesInvoice.objects.all()
-        context['customers'] = CustomerSupplier.objects.filter(
-            type__in=['customer', 'both']
-        )
-        
-        # إعدادات العملة
-        try:
-            company_settings = CompanySettings.objects.first()
-            if company_settings and company_settings.base_currency:
-                context['base_currency'] = company_settings.base_currency
-            else:
-                context['base_currency'] = Currency.objects.filter(is_active=True).first()
-        except:
-            context['base_currency'] = None
-        
-        # الحصول على رقم المرتجع التالي
-        try:
+            from core.models import DocumentSequence
             sequence = DocumentSequence.objects.get(document_type='sales_return')
-            context['next_return_number'] = sequence.get_formatted_number()
+            context['suggested_return_number'] = sequence.get_formatted_number()
         except DocumentSequence.DoesNotExist:
+            # التراجع إلى الترقيم البسيط
             last_return = SalesReturn.objects.order_by('-id').first()
             if last_return:
                 try:
-                    number = int(last_return.return_number.split('-')[-1]) + 1 if '-' in last_return.return_number else int(last_return.return_number) + 1
+                    number = int(last_return.return_number.split('-')[-1]) + 1
+                    context['suggested_return_number'] = f"RETURN-{number:06d}"
                 except (ValueError, IndexError):
-                    number = 1
+                    context['suggested_return_number'] = f"RETURN-{SalesReturn.objects.count() + 1:06d}"
             else:
-                number = 1
-            context['next_return_number'] = f"SRET-{number:06d}"
+                context['suggested_return_number'] = "RETURN-000001"
         
         return context
-
-
-class SalesReturnDetailView(LoginRequiredMixin, DetailView):
-    model = SalesReturn
-    template_name = 'sales/return_detail.html'
-    context_object_name = 'return'
     
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+    if request.method == 'POST':
+        # جمع جميع البيانات المُدخلة لإعادة عرضها في حالة الأخطاء
+        form_data = {
+            'customer_id': request.POST.get('customer'),
+            'warehouse_id': request.POST.get('warehouse'),
+            'return_reason': request.POST.get('return_reason'),
+            'notes': request.POST.get('notes', ''),
+            'products': request.POST.getlist('products[]'),
+            'quantities': request.POST.getlist('quantities[]'),
+            'prices': request.POST.getlist('prices[]'),
+            'tax_rates': request.POST.getlist('tax_rates[]'),
+            'tax_amounts': request.POST.getlist('tax_amounts[]'),
+        }
         
-        # Currency settings
         try:
-            company_settings = CompanySettings.objects.first()
-            if company_settings and company_settings.base_currency:
-                context['base_currency'] = company_settings.base_currency
-            else:
-                context['base_currency'] = Currency.objects.filter(is_active=True).first()
-        except:
-            pass
-        
-        return context
+            # سنحاول عدة مرات لتجنب تعارض الأرقام في حال السباق
+            max_attempts = 5
+            attempt = 0
+            allow_manual = True
+            while attempt < max_attempts:
+                attempt += 1
+                try:
+                    with transaction.atomic():
+                        user = request.user
+                        customer_id = request.POST.get('customer')
+                        warehouse_id = request.POST.get('warehouse')
+                        return_reason = request.POST.get('return_reason')
+                        notes = request.POST.get('notes', '')
+                        
+                        # توليد رقم المرتجع إذا لم يكن محدد
+                        return_number = None
+                        manual_return_number = request.POST.get('return_number')
+                        if manual_return_number and (user.is_superuser or user.is_staff or user.has_perm('sales.change_salesreturn_number')):
+                            return_number = manual_return_number
+                        else:
+                            return_number = None
 
+                        if not return_number:
+                            try:
+                                sequence = DocumentSequence.objects.get(document_type='sales_return')
+                                return_number = sequence.get_next_number()
+                            except DocumentSequence.DoesNotExist:
+                                # توليد بديل إذا لم يوجد تسلسل
+                                last_return = SalesReturn.objects.order_by('-id').first()
+                                if last_return:
+                                    try:
+                                        number = int(last_return.return_number.split('-')[-1]) + 1 if '-' in last_return.return_number else int(last_return.return_number) + 1
+                                        return_number = f"RETURN-{number:06d}"
+                                    except (ValueError, IndexError):
+                                        return_number = f"RETURN-{SalesReturn.objects.count() + 1:06d}"
+                                else:
+                                    return_number = "RETURN-000001"
 
-class SalesReturnUpdateView(LoginRequiredMixin, UpdateView):
-    model = SalesReturn
-    template_name = 'sales/return_edit.html'
-    fields = ['return_number', 'date', 'original_invoice', 'customer', 'notes']
+                        # التحقق من البيانات المطلوبة
+                        errors = []
+                        if not customer_id:
+                            errors.append(_('يرجى اختيار العميل'))
+                        if not warehouse_id:
+                            errors.append(_('يرجى اختيار المستودع'))
+                        if not return_reason:
+                            errors.append(_('يرجى تحديد سبب المرتجع'))
+                        
+                        if errors:
+                            for error in errors:
+                                messages.error(request, error)
+                            # جمع البيانات المُدخلة لإعادة عرضها
+                            form_data = {
+                                'customer_id': customer_id,
+                                'warehouse_id': warehouse_id,
+                                'return_reason': return_reason,
+                                'notes': notes,
+                            }
+                            context = get_return_create_context(request, form_data)
+                            return render(request, 'sales/return_add.html', context)
+
+                        customer = get_object_or_404(CustomerSupplier, id=customer_id)
+
+                        # الحصول على المستودع إذا تم تحديده
+                        warehouse = None
+                        if warehouse_id:
+                            try:
+                                from inventory.models import Warehouse
+                                warehouse = Warehouse.objects.get(id=warehouse_id)
+                            except (ImportError, Warehouse.DoesNotExist):
+                                warehouse = None
+
+                        # إنشاء المردود
+                        sales_return = SalesReturn.objects.create(
+                            return_number=return_number,
+                            date=date.today(),
+                            customer=customer,
+                            warehouse=warehouse,
+                            notes=notes,
+                            created_by=user,
+                            subtotal=0,  # سيتم تحديثها لاحقاً
+                            tax_amount=0,  # سيتم تحديثها لاحقاً
+                            total_amount=0  # سيتم تحديثها لاحقاً
+                        )
+
+                        # معالجة بيانات المنتجات المرتجعة
+                        return_products = request.POST.getlist('products[]')
+                        return_quantities = request.POST.getlist('quantities[]')
+                        return_prices = request.POST.getlist('prices[]')
+                        return_tax_rates = request.POST.getlist('tax_rates[]')
+                        return_tax_amounts = request.POST.getlist('tax_amounts[]')
+
+                        # التحقق من وجود منتجات للإرجاع
+                        if not return_products or not any(p for p in return_products if p):
+                            # سجل محاولة فاشلة في سجل النشاط لتتبع أخطاء الإدخال
+                            try:
+                                from core.signals import log_user_activity
+                                dummy = SalesReturn()
+                                log_user_activity(
+                                    request,
+                                    'error',
+                                    dummy,
+                                    _('فشل إنشاء مردود: لا توجد عناصر مضافة')
+                                )
+                            except Exception:
+                                pass
+
+                            messages.error(request, _('يرجى إضافة منتج واحد على الأقل للإرجاع'))
+                            context = get_return_create_context(request, form_data)
+                            return render(request, 'sales/return_add.html', context)
+
+                        # حساب المجاميع أولاً قبل إنشاء أي شيء (للتحقق من الحد الائتماني)
+                        subtotal = Decimal('0')
+                        total_tax_amount = Decimal('0')
+                        
+                        # حساب المجاميع المؤقتة
+                        for i, product_id in enumerate(return_products):
+                            if product_id and i < len(return_quantities) and i < len(return_prices):
+                                try:
+                                    product = Product.objects.get(id=product_id)
+                                    quantity = parse_decimal_input(return_quantities[i], name='quantity', default=Decimal('0'))
+                                    unit_price = parse_decimal_input(return_prices[i], name='price', default=Decimal('0'))
+                                    tax_rate = parse_decimal_input(return_tax_rates[i] if i < len(return_tax_rates) else '0', name='tax_rate', default=Decimal('0'))
+
+                                    if quantity <= 0 or unit_price < 0:
+                                        continue
+
+                                    line_subtotal = quantity * unit_price
+                                    line_tax_amount = line_subtotal * (tax_rate / 100) if tax_rate > 0 else Decimal('0')
+                                    
+                                    subtotal += line_subtotal
+                                    total_tax_amount += line_tax_amount
+                                except (Product.DoesNotExist, ValueError, TypeError):
+                                    continue
+
+                        # حساب الإجمالي النهائي
+                        final_total = (subtotal + total_tax_amount).quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+
+                        # إذا كان هناك حد ائتماني، تحقق من أن المبلغ الإجمالي لا يتجاوز الحد المتاح
+                        if customer and customer.credit_limit and customer.credit_limit > 0:
+                            current_balance = customer.current_balance
+                            available_credit = customer.credit_limit - abs(current_balance) if current_balance < 0 else customer.credit_limit
+                            
+                            if final_total > available_credit:
+                                # رسالة تحذير مع اقتراحات
+                                error_message = _(
+                                    'لا يمكن إنشاء المردود لأن المبلغ الإجمالي (%(total)s) يتجاوز الحد الائتماني المتاح للعميل (%(available)s).\n\nاقتراحات:\n1. زيادة الحد الائتماني للعميل\n2. تحصيل المستحقات المتأخرة من العميل\n3. تحويل المردود إلى دفع نقدي'
+                                ) % {
+                                    'total': f"{final_total:.3f}",
+                                    'available': f"{available_credit:.3f}"
+                                }
+                                
+                                # التأكد من عدم وجود رسائل سابقة من نفس النوع
+                                existing_messages = [msg for msg in messages.get_messages(request) if msg.message == error_message]
+                                if not existing_messages:
+                                    messages.warning(request, error_message)
+                                
+                                # تسجيل المحاولة الفاشلة في سجل الأنشطة
+                                try:
+                                    from core.signals import log_user_activity
+                                    log_user_activity(
+                                        request,
+                                        'error',
+                                        customer,
+                                        _('فشل في إنشاء مردود مبيعات: تجاوز الحد الائتماني - المبلغ %(total)s > المتاح %(available)s') % {
+                                            'total': f"{final_total:.3f}",
+                                            'available': f"{available_credit:.3f}"
+                                        }
+                                    )
+                                except Exception:
+                                    pass
+                                
+                                context = get_return_create_context(request, form_data)
+                                return render(request, 'sales/return_add.html', context)
+
+                        # إذا وصلنا هنا، الحد الائتماني مسموح - يمكننا إنشاء المردود
+                        # إعادة تعيين المجاميع لإعادة الحساب أثناء الإنشاء الفعلي
+                        subtotal = Decimal('0')
+                        total_tax_amount = Decimal('0')
+
+                        # إضافة عناصر المرتجع
+                        for i, product_id in enumerate(return_products):
+                            if product_id and i < len(return_quantities) and i < len(return_prices):
+                                try:
+                                    product = Product.objects.get(id=product_id)
+                                    # parse quantity/price/tax robustly to accept '1.5' or '1,5' etc.
+                                    quantity = parse_decimal_input(return_quantities[i], name='quantity', default=Decimal('0'))
+                                    unit_price = parse_decimal_input(return_prices[i], name='price', default=Decimal('0'))
+                                    tax_rate = parse_decimal_input(return_taxRates[i] if i < len(return_taxRates) else '0', name='tax_rate', default=Decimal('0'))
+
+                                    # حساب مبلغ الضريبة لهذا السطر
+                                    line_subtotal = quantity * unit_price
+                                    line_tax_amount = line_subtotal * (tax_rate / Decimal('100'))
+                                    line_total = line_subtotal + line_tax_amount
+
+                                    # إنشاء عنصر المردود
+                                    SalesReturnItem.objects.create(
+                                        return_invoice=sales_return,
+                                        product=product,
+                                        quantity=quantity,
+                                        unit_price=unit_price,
+                                        tax_rate=tax_rate,
+                                        tax_amount=line_tax_amount.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP),
+                                        total_amount=line_total.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+                                    )
+
+                                    # إضافة إلى المجاميع
+                                    subtotal += line_subtotal
+                                    total_tax_amount += line_tax_amount
+
+                                except (Product.DoesNotExist, ValueError, TypeError):
+                                    continue
+
+                        # تحديث مجاميع المردود
+                        sales_return.subtotal = subtotal.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+                        sales_return.tax_amount = total_tax_amount.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+                        sales_return.total_amount = (subtotal + total_tax_amount).quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+
+                        # حفظ المردود
+                        sales_return.save()
+
+                        # إنشاء القيود المحاسبية
+                        create_sales_return_journal_entry(sales_return, user)
+
+                        # إنشاء حركة حساب للعميل
+                        create_sales_return_account_transaction(sales_return, user)
+
+                        # إنشاء حركات المخزون
+                        create_sales_return_inventory_movements(sales_return, user)
+                        
+                        # تسجيل النشاط
+                        try:
+                            from core.signals import log_user_activity
+                            log_user_activity(
+                                request,
+                                'create',
+                                sales_return,
+                                f'إنشاء مردود مبيعات {sales_return.return_number} للفاتورة {sales_return.original_invoice.invoice_number}'
+                            )
+                        except Exception:
+                            pass
+                        
+                        messages.success(request, f'تم إنشاء مردود المبيعات {sales_return.return_number} بنجاح')
+                        return redirect('sales:return_detail', pk=sales_return.pk)
+                except IntegrityError as ie:
+                    # على الأرجح تعارض في رقم المرتجع، أعد المحاولة برقم جديد
+                    if 'return_number' in str(ie):
+                        # عطّل الرقم اليدوي في المحاولة القادمة وأعد المحاولة
+                        allow_manual = False
+                        if attempt < max_attempts:
+                            continue
+                        else:
+                            raise
+                    else:
+                        raise
+
+            # إذا وصلنا هنا ولم نرجع، نبلغ عن فشل عام
+            messages.error(request, _('تعذر إنشاء المردود بعد محاولات متعددة، يرجى المحاولة لاحقاً'))
+            context = get_return_create_context(request, form_data)
+            return render(request, 'sales/return_add.html', context)
+        except Exception as e:
+            messages.error(request, _('حدث خطأ أثناء حفظ المردود: %(error)s') % {'error': str(e)})
+            context = get_return_create_context(request, form_data)
+            return render(request, 'sales/return_add.html', context)
     
-    def get_success_url(self):
-        return reverse_lazy('sales:return_detail', kwargs={'pk': self.object.pk})
-    
-    def form_valid(self, form):
-        messages.success(self.request, 'تم تحديث مردود المبيعات بنجاح')
-        return super().form_valid(form)
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['invoices'] = SalesInvoice.objects.all()
-        context['customers'] = CustomerSupplier.objects.filter(
-            type__in=['customer', 'both']
-        )
-        
-        # Currency settings
-        try:
-            company_settings = CompanySettings.objects.first()
-            if company_settings and company_settings.base_currency:
-                context['base_currency'] = company_settings.base_currency
-            else:
-                context['base_currency'] = Currency.objects.filter(is_active=True).first()
-        except:
-            pass
-        
-        return context
+    # GET request - عرض نموذج إنشاء المردود
+    context = get_return_create_context(request)
+    return render(request, 'sales/return_add.html', context)
 
 
 class SalesCreditNoteListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
@@ -1440,102 +1567,73 @@ class SalesCreditNoteListView(LoginRequiredMixin, UserPassesTestMixin, ListView)
     
     def test_func(self):
         return self.request.user.has_sales_permission()
-
+    
     def get_queryset(self):
         queryset = SalesCreditNote.objects.all()
+        
+        # Search functionality
         search = self.request.GET.get('search')
         if search:
             queryset = queryset.filter(
                 Q(note_number__icontains=search) |
                 Q(customer__name__icontains=search)
             )
+        
+        # Date filter
         date_from = self.request.GET.get('date_from')
         date_to = self.request.GET.get('date_to')
         if date_from:
             queryset = queryset.filter(date__gte=date_from)
         if date_to:
             queryset = queryset.filter(date__lte=date_to)
-        return queryset.select_related('customer', 'created_by')
-
-
-@login_required
-def sales_creditnote_create(request):
-    """إنشاء إشعار دائن للمبيعات"""
-    if request.method == 'POST':
-        try:
-            with transaction.atomic():
-                user = request.user
-                customer_id = request.POST.get('customer')
-                notes = request.POST.get('notes', '')
-
-                if not customer_id:
-                    messages.error(request, _('يرجى اختيار عميل'))
-                    return redirect('sales:creditnote_add')
-
-                customer = get_object_or_404(CustomerSupplier, id=customer_id)
-
-                # توليد رقم الإشعار عبر DocumentSequence
-                try:
-                    seq = DocumentSequence.objects.get(document_type='credit_note')
-                    note_number = seq.get_next_number()
-                except DocumentSequence.DoesNotExist:
-                    last = SalesCreditNote.objects.order_by('-id').first()
-                    if last:
-                        try:
-                            number = int(last.note_number.split('-')[-1]) + 1
-                        except Exception:
-                            number = last.id + 1
-                    else:
-                        number = 1
-                    note_number = f"CN-{number:06d}"
-
-                credit = SalesCreditNote.objects.create(
-                    note_number=note_number,
-                    date=request.POST.get('date', date.today()),
-                    customer=customer,
-                    subtotal=Decimal(request.POST.get('subtotal', '0') or '0'),
-                    notes=notes,
-                    created_by=user
-                )
-
-                # سجل الـ AuditLog
-                try:
-                    from core.signals import log_user_activity
-                    log_user_activity(
-                        request,
-                        'create',
-                        credit,
-                        _('إنشاء إشعار دائن رقم %(number)s') % {'number': credit.note_number}
-                    )
-                except Exception:
-                    pass
-
-                messages.success(request, _('تم إنشاء إشعار دائن رقم %(number)s') % {'number': credit.note_number})
-                return redirect('sales:creditnote_detail', pk=credit.pk)
-        except Exception as e:
-            messages.error(request, _('حدث خطأ أثناء حفظ الإشعار: %(error)s') % {'error': str(e)})
-            return redirect('sales:creditnote_add')
-
-    # GET
-    context = {
-        'customers': CustomerSupplier.objects.filter(type__in=['customer', 'both']),
-        'today_date': date.today().isoformat(),
-    }
-    try:
-        seq = DocumentSequence.objects.get(document_type='credit_note')
-        context['next_note_number'] = seq.peek_next_number() if hasattr(seq, 'peek_next_number') else seq.get_formatted_number()
-    except DocumentSequence.DoesNotExist:
-        last = SalesCreditNote.objects.order_by('-id').first()
-        if last:
-            try:
-                number = int(last.note_number.split('-')[-1]) + 1
-            except Exception:
-                number = last.id + 1
+        
+        # Apply ordering
+        order_by = self.request.GET.get('order_by', '-date')
+        if order_by.startswith('-'):
+            queryset = queryset.order_by(order_by, '-id')
         else:
-            number = 1
-        context['next_note_number'] = f"CN-{number:06d}"
-
-    return render(request, 'sales/creditnote_add.html', context)
+            queryset = queryset.order_by(order_by, 'id')
+        
+        return queryset.select_related('customer', 'created_by')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Statistics
+        creditnotes = SalesCreditNote.objects.all()
+        context['total_creditnotes'] = creditnotes.count()
+        context['total_credit_amount'] = creditnotes.aggregate(
+            total=Sum('total_amount')
+        )['total'] or 0
+        
+        # This month's credit notes
+        current_month = timezone.now().replace(day=1)
+        month_creditnotes = creditnotes.filter(date__gte=current_month).count()
+        context['month_creditnotes'] = month_creditnotes
+        
+        # Active customers (customers with credit notes)
+        active_customers = CustomerSupplier.objects.filter(
+            Q(type='customer') | Q(type='both'),
+            salescreditnote__isnull=False
+        ).distinct().count()
+        context['active_customers'] = active_customers
+        
+        # Currency and company settings
+        try:
+            company_settings = CompanySettings.objects.first()
+            if company_settings and company_settings.base_currency:
+                context['base_currency'] = company_settings.base_currency
+            else:
+                context['base_currency'] = Currency.objects.filter(is_active=True).first()
+        except:
+            pass
+        
+        context['active_currencies'] = Currency.objects.filter(is_active=True)
+        
+        # Current ordering
+        context['current_order'] = self.request.GET.get('order_by', '-date')
+        
+        return context
 
 
 class SalesCreditNoteDetailView(LoginRequiredMixin, DetailView):
@@ -2499,6 +2597,65 @@ def get_invoices_for_returns(request):
         return JsonResponse({
             'success': False,
             'error': f'خطأ في النظام: {str(e)}'
+        })
+
+
+def get_invoice_items(request, invoice_id):
+    """جلب عناصر الفاتورة عبر AJAX للمرتجعات"""
+    try:
+        print(f"طلب جلب عناصر الفاتورة رقم: {invoice_id}")
+        
+        invoice = SalesInvoice.objects.get(id=invoice_id)
+        items = invoice.items.select_related('product').all()
+        
+        print(f"تم العثور على {items.count()} عنصر في الفاتورة")
+        
+        items_data = []
+        for item in items:
+            # Calculate total returned quantity for this product in returns for this invoice
+            total_returned = SalesReturnItem.objects.filter(
+                return_invoice__original_invoice=invoice,
+                product=item.product
+            ).aggregate(total=Sum('quantity'))['total'] or 0
+            
+            remaining_quantity = item.quantity - total_returned
+            
+            print(f"المنتج {item.product.name}: الكمية الأصلية={item.quantity}, المرتجع={total_returned}, المتبقي={remaining_quantity}")
+            
+            if remaining_quantity > 0:  # Only show items that can still be returned
+                items_data.append({
+                    'id': item.id,
+                    'product_id': item.product.id,
+                    'product_name': item.product.name,
+                    'product_code': item.product.code,
+                    'original_quantity': float(item.quantity),
+                    'returned_quantity': float(total_returned),
+                    'remaining_quantity': float(remaining_quantity),
+                    'unit_price': float(item.unit_price),
+                    'tax_rate': float(item.tax_rate),
+                })
+        
+        print(f"عدد العناصر المتاحة للإرجاع: {len(items_data)}")
+        
+        return JsonResponse({
+            'success': True,
+            'items': items_data,
+            'invoice_number': invoice.invoice_number,
+            'customer_name': invoice.customer.name,
+            'invoice_date': invoice.date.strftime('%Y-%m-%d'),
+        })
+        
+    except SalesInvoice.DoesNotExist:
+        print(f"الفاتورة رقم {invoice_id} غير موجودة")
+        return JsonResponse({
+            'success': False,
+            'message': 'الفاتورة غير موجودة'
+        })
+    except Exception as e:
+        print(f"خطأ في جلب عناصر الفاتورة: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'message': f'حدث خطأ: {str(e)}'
         })
 
 

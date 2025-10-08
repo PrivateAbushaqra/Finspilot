@@ -291,6 +291,77 @@
         </div>
     </div>
 
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stats-card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">{% trans "Total Invoices" %}</h6>
+                            <h3 class="mb-0">{{ total_invoices|default:0 }}</h3>
+                            <small>{% trans "Invoice" %}</small>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-file-invoice fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stats-card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">{% trans "Total Amount" %}</h6>
+                            <h3 class="mb-0">{{ total_sales_amount|default:0|currency_format }}</h3>
+                            <small>{% get_currency_code %}</small>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-dollar-sign fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stats-card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">{% trans "Invoices" %} {% trans "This Month" %}</h6>
+                            <h3 class="mb-0">{{ month_invoices|default:0 }}</h3>
+                            <small>{% trans "Invoice" %}</small>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-calendar-month fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stats-card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">{% trans "Active Customers" %}</h6>
+                            <h3 class="mb-0">{{ active_customers|default:0 }}</h3>
+                            <small>{% trans "Customer" %}</small>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-users fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Filters Section -->
     <div class="filters-section">
         <form method="get" class="row g-3">
@@ -306,8 +377,8 @@
                     <option value="">{% trans "All types" %}</option>
                     <option value="cash" {% if request.GET.payment_type == 'cash' %}selected{% endif %}>{% trans "Cash" %}</option>
                     <option value="credit" {% if request.GET.payment_type == 'credit' %}selected{% endif %}>{% trans "Credit" %}</option>
-                    <option value="check" {% if request.GET.payment_type == 'check' %}selected{% endif %}>{% trans "Check" %}</option>
-                    <option value="installment" {% if request.GET.payment_type == 'installment' %}selected{% endif %}>{% trans "Installment" %}</option>
+                    <!--<option value="check" {% if request.GET.payment_type == 'check' %}selected{% endif %}>{% trans "Check" %}</option>-->
+                    <!--<option value="installment" {% if request.GET.payment_type == 'installment' %}selected{% endif %}>{% trans "Installment" %}</option>-->
                 </select>
             </div>
             
@@ -320,17 +391,6 @@
                             {{ cashbox.name }}
                         </option>
                     {% endfor %}
-                </select>
-            </div>
-            
-            <div class="col-md-2">
-                <label for="status" class="form-label">{% trans "Status" %}</label>
-                <select class="form-select" id="status" name="status">
-                    <option value="">{% trans "All statuses" %}</option>
-                    <option value="draft" {% if request.GET.status == 'draft' %}selected{% endif %}>{% trans "Draft" %}</option>
-                    <option value="sent" {% if request.GET.status == 'sent' %}selected{% endif %}>{% trans "Sent" %}</option>
-                    <option value="paid" {% if request.GET.status == 'paid' %}selected{% endif %}>{% trans "Paid" %}</option>
-                    <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>{% trans "Cancelled" %}</option>
                 </select>
             </div>
             
@@ -371,13 +431,78 @@
                     <table class="table table-hover">
                         <thead class="table-light">
                             <tr>
-                                <th>{% trans "Invoice Number" %}</th>
-                                <th>{% trans "Customer" %}</th>
-                                <th>{% trans "Date" %}</th>
-                                <th>{% trans "Grand Total" %}</th>
-                                <th>{% trans "Payment Type" %}</th>
-                                <th>{% trans "Cash Box" %}</th>
-                                <th>{% trans "Status" %}</th>
+                                <th>
+                                    <a href="?{% for key, value in request.GET.items %}{% if key != 'order_by' %}{{ key }}={{ value }}&{% endif %}{% endfor %}order_by={% if current_order == 'invoice_number' %}-{% endif %}invoice_number" class="text-dark text-decoration-none">
+                                        {% trans "Invoice Number" %}
+                                        {% if current_order == 'invoice_number' %}
+                                            <i class="fas fa-sort-up"></i>
+                                        {% elif current_order == '-invoice_number' %}
+                                            <i class="fas fa-sort-down"></i>
+                                        {% else %}
+                                            <i class="fas fa-sort"></i>
+                                        {% endif %}
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="?{% for key, value in request.GET.items %}{% if key != 'order_by' %}{{ key }}={{ value }}&{% endif %}{% endfor %}order_by={% if current_order == 'customer__name' %}-{% endif %}customer__name" class="text-dark text-decoration-none">
+                                        {% trans "Customer" %}
+                                        {% if current_order == 'customer__name' %}
+                                            <i class="fas fa-sort-up"></i>
+                                        {% elif current_order == '-customer__name' %}
+                                            <i class="fas fa-sort-down"></i>
+                                        {% else %}
+                                            <i class="fas fa-sort"></i>
+                                        {% endif %}
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="?{% for key, value in request.GET.items %}{% if key != 'order_by' %}{{ key }}={{ value }}&{% endif %}{% endfor %}order_by={% if current_order == 'date' %}-{% endif %}date" class="text-dark text-decoration-none">
+                                        {% trans "Date" %}
+                                        {% if current_order == 'date' %}
+                                            <i class="fas fa-sort-up"></i>
+                                        {% elif current_order == '-date' %}
+                                            <i class="fas fa-sort-down"></i>
+                                        {% else %}
+                                            <i class="fas fa-sort"></i>
+                                        {% endif %}
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="?{% for key, value in request.GET.items %}{% if key != 'order_by' %}{{ key }}={{ value }}&{% endif %}{% endfor %}order_by={% if current_order == 'total_amount' %}-{% endif %}total_amount" class="text-dark text-decoration-none">
+                                        {% trans "Grand Total" %}
+                                        {% if current_order == 'total_amount' %}
+                                            <i class="fas fa-sort-up"></i>
+                                        {% elif current_order == '-total_amount' %}
+                                            <i class="fas fa-sort-down"></i>
+                                        {% else %}
+                                            <i class="fas fa-sort"></i>
+                                        {% endif %}
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="?{% for key, value in request.GET.items %}{% if key != 'order_by' %}{{ key }}={{ value }}&{% endif %}{% endfor %}order_by={% if current_order == 'payment_type' %}-{% endif %}payment_type" class="text-dark text-decoration-none">
+                                        {% trans "Payment Type" %}
+                                        {% if current_order == 'payment_type' %}
+                                            <i class="fas fa-sort-up"></i>
+                                        {% elif current_order == '-payment_type' %}
+                                            <i class="fas fa-sort-down"></i>
+                                        {% else %}
+                                            <i class="fas fa-sort"></i>
+                                        {% endif %}
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="?{% for key, value in request.GET.items %}{% if key != 'order_by' %}{{ key }}={{ value }}&{% endif %}{% endfor %}order_by={% if current_order == 'cashbox__name' %}-{% endif %}cashbox__name" class="text-dark text-decoration-none">
+                                        {% trans "Cash Box" %}
+                                        {% if current_order == 'cashbox__name' %}
+                                            <i class="fas fa-sort-up"></i>
+                                        {% elif current_order == '-cashbox__name' %}
+                                            <i class="fas fa-sort-down"></i>
+                                        {% else %}
+                                            <i class="fas fa-sort"></i>
+                                        {% endif %}
+                                    </a>
+                                </th>
                                 <th>{% trans "Actions" %}</th>
                             </tr>
                         </thead>
@@ -424,19 +549,6 @@
                                         </span>
                                     {% else %}
                                         <span class="text-muted">-</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    {% if invoice.status == 'paid' %}
-                                        <span class="badge bg-success">{% trans "Paid" %}</span>
-                                    {% elif invoice.status == 'sent' %}
-                                        <span class="badge bg-warning">{% trans "Sent" %}</span>
-                                    {% elif invoice.status == 'draft' %}
-                                        <span class="badge bg-secondary">{% trans "Draft" %}</span>
-                                    {% elif invoice.status == 'cancelled' %}
-                                        <span class="badge bg-danger">{% trans "Cancelled" %}</span>
-                                    {% else %}
-                                        <span class="badge bg-light text-dark">{% trans "Not specified" %}</span>
                                     {% endif %}
                                 </td>
                                 <td>
@@ -511,7 +623,7 @@
 {% block extra_js %}
 <script>
 // Auto-submit form on filter change
-document.querySelectorAll('#status, #date_from, #date_to').forEach(function(element) {
+document.querySelectorAll('#date_from, #date_to').forEach(function(element) {
     element.addEventListener('change', function() {
         this.form.submit();
     });

@@ -62,24 +62,25 @@ class Account(models.Model):
 class JournalEntry(models.Model):
     """قيد محاسبي"""
     REFERENCE_TYPES = [
-        ('sales_invoice', _('Sales Invoice')),
-        ('purchase_invoice', _('Purchase Invoice')),
-        ('sales_return', _('Sales Return')),
-        ('purchase_return', _('Purchase Return')),
-        ('receipt_voucher', _('Receipt Voucher')),
-        ('payment_voucher', _('Payment Voucher')),
-        ('revenue_expense', _('Revenue/Expense Entry')),
         ('asset_depreciation', _('Asset Depreciation')),
-        ('provision', _('Provision')),
-        ('provision_entry', _('Provision Entry')),
-        ('cashbox_transfer', _('Cashbox Transfer')),
-        ('bank_transfer', _('Bank Transfer')),
         ('manual', _('Manual Entry')),
         ('adjustment', _('Adjustment Entry')),
     ]
 
+    ENTRY_TYPES = [
+        ('daily', _('قيد يومي')),
+        ('closing', _('قيد إقفال')),
+        ('adjustment', _('قيد تسوية')),
+        ('opening', _('قيد افتتاحي')),
+        ('transfer', _('قيد تحويل')),
+        ('allocation', _('قيد توزيع')),
+        ('revaluation', _('قيد إعادة تقييم')),
+        ('other', _('قيد آخر')),
+    ]
+
     entry_number = models.CharField(_('رقم القيد'), max_length=50, unique=True, blank=True)
     entry_date = models.DateField(_('تاريخ القيد'))
+    entry_type = models.CharField(_('نوع القيد'), max_length=20, choices=ENTRY_TYPES, default='daily')
     reference_type = models.CharField(_('نوع العملية'), max_length=20, choices=REFERENCE_TYPES)
     reference_id = models.PositiveIntegerField(_('رقم العملية المرتبطة'), null=True, blank=True)
     sales_invoice = models.ForeignKey('sales.SalesInvoice', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('فاتورة المبيعات'))

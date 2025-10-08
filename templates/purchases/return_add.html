@@ -2,7 +2,11 @@
 {% load i18n %}
 {% load currency_tags %}
 
-
+{% block extra_css %}
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+{% endblock %}
 
 {% block title %}{% trans "Create Purchase Return" %}{% endblock %}
 
@@ -53,10 +57,13 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">{% trans "Original Invoice" %} <span class="text-danger">*</span></label>
-                                    <select class="form-control" name="original_invoice" id="originalInvoiceSelect" required>
+                                    <select class="form-control" name="original_invoice" id="originalInvoiceSelect" required style="width: 100%;">
                                         <option value="">{% trans "Select Original Invoice" %}</option>
                                         {% for invoice in invoices %}
-                                            <option value="{{ invoice.id }}">
+                                            <option value="{{ invoice.id }}" 
+                                                    data-supplier="{{ invoice.supplier.name }}"
+                                                    data-invoice="{{ invoice.supplier_invoice_number }}"
+                                                    data-date="{{ invoice.date }}">
                                                 {{ invoice.supplier_invoice_number }} - {{ invoice.supplier.name }} ({{ invoice.date }})
                                             </option>
                                         {% endfor %}
@@ -161,6 +168,11 @@
         </div>
     </div>
 </div>
+{% endblock content %}
+
+{% block extra_js %}
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -170,8 +182,43 @@ document.addEventListener('DOMContentLoaded', function() {
     const totalsSection = document.getElementById('totalsSection');
     const saveButton = document.getElementById('saveButton');
     
+    // Initialize Select2 with search functionality
+    $('#originalInvoiceSelect').select2({
+        language: '{{ LANGUAGE_CODE }}',
+        dir: '{{ LANGUAGE_CODE }}' === 'ar' ? 'rtl' : 'ltr',
+        placeholder: '{% trans "Search by invoice number or supplier name..." %}',
+        allowClear: true,
+        width: '100%',
+        matcher: function(params, data) {
+            // If there are no search terms, return all data
+            if ($.trim(params.term) === '') {
+                return data;
+            }
+            
+            // Do not display the item if there is no 'text' property
+            if (typeof data.text === 'undefined') {
+                return null;
+            }
+            
+            // Check if the text contains the term
+            const searchTerm = params.term.toLowerCase();
+            const text = data.text.toLowerCase();
+            const supplier = $(data.element).data('supplier') ? $(data.element).data('supplier').toLowerCase() : '';
+            const invoice = $(data.element).data('invoice') ? $(data.element).data('invoice').toLowerCase() : '';
+            
+            // Search in invoice number, supplier name, and full text
+            if (text.indexOf(searchTerm) > -1 || 
+                supplier.indexOf(searchTerm) > -1 || 
+                invoice.indexOf(searchTerm) > -1) {
+                return data;
+            }
+            
+            return null;
+        }
+    });
+    
     // Handle invoice selection
-    originalInvoiceSelect.addEventListener('change', function() {
+    $('#originalInvoiceSelect').on('change', function() {
         const invoiceId = this.value;
         
         console.log('Invoice selected:', invoiceId);
@@ -414,4 +461,4 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
-{% endblock %}
+{% endblock extra_js %}

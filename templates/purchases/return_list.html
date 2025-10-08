@@ -8,208 +8,225 @@
 
 {% block content %}
 <div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">
+                <i class="fas fa-undo-alt text-success me-2"></i>
+                {% trans "Purchase Returns" %}
+            </h2>
+            <p class="text-muted mb-0">{% trans "Manage all purchase returns" %}</p>
+        </div>
+        <div>
+            <a href="{% url 'purchases:return_add' %}" class="btn btn-success">
+                <i class="fas fa-plus me-1"></i>
+                {% trans "New Purchase Return" %}
+            </a>
+            <button type="button" onclick="printPage()" class="btn btn-outline-secondary ms-2">
+                <i class="fas fa-print me-1"></i>
+                {% trans "Print" %} {% trans "the list" %}
+            </button>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">{% trans "Total Returns" %}</h6>
+                            <h3 class="mb-0">{{ total_returns|default:0 }}</h3>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-undo-alt fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">{% trans "Total Returns Value" %}</h6>
+                            <h3 class="mb-0">{{ total_amount|currency_format|default:"0.00" }}</h3>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-money-bill-wave fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">{% trans "Returns" %} {% trans "This Month" %}</h6>
+                            <h3 class="mb-0">{{ monthly_returns|default:0 }}</h3>
+                        </div>
+                        <div class="ms-3">
+                            <i class="fas fa-calendar-alt fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters Section -->
+    <div class="filters-section">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="search" class="form-label">{% trans "Search" %}</label>
+                <input type="text" class="form-control" id="search" name="search" 
+                       value="{{ request.GET.search }}" placeholder="{% trans "Return number or supplier name" %}">
+            </div>
+            
+            <div class="col-md-2">
+                <label for="date_from" class="form-label">{% trans "From Date" %}</label>
+                <input type="date" class="form-control" id="date_from" name="date_from" 
+                       value="{{ request.GET.date_from }}">
+            </div>
+            
+            <div class="col-md-2">
+                <label for="date_to" class="form-label">{% trans "To Date" %}</label>
+                <input type="date" class="form-control" id="date_to" name="date_to" 
+                       value="{{ request.GET.date_to }}">
+            </div>
+            
+            <div class="col-md-3">
+                <label for="supplier" class="form-label">{% trans "Supplier" %}</label>
+                <select class="form-select" id="supplier" name="supplier">
+                    <option value="">{% trans "All suppliers" %}</option>
+                    {% for supplier in suppliers %}
+                        <option value="{{ supplier.id }}" 
+                                {% if request.GET.supplier == supplier.id|stringformat:"s" %}selected{% endif %}>
+                            {{ supplier.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i>
+                        {% trans "Search" %}
+                    </button>
+                    <a href="{% url 'purchases:return_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times"></i>
+                        {% trans "Reset" %}
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Returns List -->
     <div class="row">
         <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h3 class="card-title mb-0">
-                        <i class="fas fa-undo me-2"></i>
-                        {% trans "Purchase Returns List" %}
-                    </h3>
-                    <div>
-                        <a href="{% url 'purchases:return_add' %}" class="btn btn-primary">
-                            <i class="fas fa-plus me-2"></i>
-                            {% trans "Create New Purchase Return" %}
-                        </a>
+            {% if returns %}
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list me-2"></i>
+                            {% trans "Purchase Returns List" %}
+                            <span class="badge bg-primary ms-2">{{ returns|length }}</span>
+                        </h5>
                     </div>
-                </div>
-
-                <!-- Statistics Row -->
-                <div class="card-body border-bottom">
-                    <div class="row text-center">
-                        <div class="col-md-6">
-                            <div class="d-flex justify-content-center align-items-center">
-                                <div class="text-center">
-                                    <!--<h4 class="text-info mb-1">إجمالي المردودات</h4>
-                                    <small class="text-muted"></small>{{ Total_Return|default:0 }}</small>-->
-                                    <h4 class="text-info mb-1">{% trans "Total Return" %}</h4>
-                                    <small class="text-muted"></small>{{ Total_Return|default:0 }}</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="d-flex justify-content-center align-items-center">
-                                <div class="text-center">
-                                    <h4 class="text-danger mb-1">{{ total_amount|currency_format }}</h4>
-                                    <small class="text-muted">{% trans "Total Value of Returns" %}</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Filters -->
-                <div class="card-body border-bottom">
-                    <form method="get" class="row g-3">
-                        <div class="col-md-3">
-                            <label class="form-label">{% trans "From Date" %}</label>
-                            <input type="date" class="form-control" name="date_from" value="{{ current_filters.date_from }}">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">{% trans "To Date" %}</label>
-                            <input type="date" class="form-control" name="date_to" value="{{ current_filters.date_to }}">
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label">{% trans "Return Type" %}</label>
-                            <select class="form-control" name="return_type">
-                                <option value="">{% trans "All" %}</option>
-                                <option value="full" {% if current_filters.return_type == 'full' %}selected{% endif %}>{% trans "Full Return" %}</option>
-                                <option value="partial" {% if current_filters.return_type == 'partial' %}selected{% endif %}>{% trans "Partial Return" %}</option>
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label">{% trans "Supplier" %}</label>
-                            <select class="form-control" name="supplier">
-                                <option value="">{% trans "All Suppliers" %}</option>
-                                {% for supplier in suppliers %}
-                                    <option value="{{ supplier.id }}" {% if current_filters.supplier == supplier.id|stringformat:"s" %}selected{% endif %}>
-                                        {{ supplier.name }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label">&nbsp;</label>
-                            <div>
-                                <button type="submit" class="btn btn-outline-primary">
-                                    <i class="fas fa-search me-1"></i>
-                                    {% trans "Search" %}
-                                </button>
-                                <a href="{% url 'purchases:return_list' %}" class="btn btn-outline-secondary">
-                                    <i class="fas fa-times me-1"></i>
-                                    {% trans "Cancel" %}
-                                </a>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Returns Table -->
-                <div class="card-body p-0">
-                    {% if returns %}
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover mb-0">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>
-                                        <a href="?{% for key, value in request.GET.items %}{% if key != 'order_by' %}{{ key }}={{ value }}&{% endif %}{% endfor %}order_by={% if current_order == 'return_number' %}-{% endif %}return_number" class="text-white text-decoration-none">
-                                            {% trans "Return Number" %}
-                                            {% if current_order == 'return_number' %}
-                                                <i class="fas fa-sort-up"></i>
-                                            {% elif current_order == '-return_number' %}
-                                                <i class="fas fa-sort-down"></i>
-                                            {% else %}
-                                                <i class="fas fa-sort"></i>
-                                            {% endif %}
-                                        </a>
-                                    </th>
-                                    <th>
-                                        <a href="?{% for key, value in request.GET.items %}{% if key != 'order_by' %}{{ key }}={{ value }}&{% endif %}{% endfor %}order_by={% if current_order == 'original_invoice__supplier_invoice_number' %}-{% endif %}original_invoice__supplier_invoice_number" class="text-white text-decoration-none">
-                                            {% trans "Original Invoice" %}
-                                            {% if current_order == 'original_invoice__supplier_invoice_number' %}
-                                                <i class="fas fa-sort-up"></i>
-                                            {% elif current_order == '-original_invoice__supplier_invoice_number' %}
-                                                <i class="fas fa-sort-down"></i>
-                                            {% else %}
-                                                <i class="fas fa-sort"></i>
-                                            {% endif %}
-                                        </a>
-                                    </th>
-                                    <th>
-                                        <a href="?{% for key, value in request.GET.items %}{% if key != 'order_by' %}{{ key }}={{ value }}&{% endif %}{% endfor %}order_by={% if current_order == 'original_invoice__supplier__name' %}-{% endif %}original_invoice__supplier__name" class="text-white text-decoration-none">
-                                            {% trans "Supplier" %}
-                                            {% if current_order == 'original_invoice__supplier__name' %}
-                                                <i class="fas fa-sort-up"></i>
-                                            {% elif current_order == '-original_invoice__supplier__name' %}
-                                                <i class="fas fa-sort-down"></i>
-                                            {% else %}
-                                                <i class="fas fa-sort"></i>
-                                            {% endif %}
-                                        </a>
-                                    </th>
-                                    <th>
-                                        <a href="?{% for key, value in request.GET.items %}{% if key != 'order_by' %}{{ key }}={{ value }}&{% endif %}{% endfor %}order_by={% if current_order == 'date' %}-{% endif %}date" class="text-white text-decoration-none">
-                                            {% trans "Date" %}
-                                            {% if current_order == 'date' %}
-                                                <i class="fas fa-sort-up"></i>
-                                            {% elif current_order == '-date' %}
-                                                <i class="fas fa-sort-down"></i>
-                                            {% else %}
-                                                <i class="fas fa-sort"></i>
-                                            {% endif %}
-                                        </a>
-                                    </th>
-                                    <th>
-                                        <a href="?{% for key, value in request.GET.items %}{% if key != 'order_by' %}{{ key }}={{ value }}&{% endif %}{% endfor %}order_by={% if current_order == 'return_type' %}-{% endif %}return_type" class="text-white text-decoration-none">
-                                            {% trans "Return Type" %}
-                                            {% if current_order == 'return_type' %}
-                                                <i class="fas fa-sort-up"></i>
-                                            {% elif current_order == '-return_type' %}
-                                                <i class="fas fa-sort-down"></i>
-                                            {% else %}
-                                                <i class="fas fa-sort"></i>
-                                            {% endif %}
-                                        </a>
-                                    </th>
-                                    <th>
-                                        <a href="?{% for key, value in request.GET.items %}{% if key != 'order_by' %}{{ key }}={{ value }}&{% endif %}{% endfor %}order_by={% if current_order == 'return_reason' %}-{% endif %}return_reason" class="text-white text-decoration-none">
-                                            {% trans "Return Reason" %}
-                                            {% if current_order == 'return_reason' %}
-                                                <i class="fas fa-sort-up"></i>
-                                            {% elif current_order == '-return_reason' %}
-                                                <i class="fas fa-sort-down"></i>
-                                            {% else %}
-                                                <i class="fas fa-sort"></i>
-                                            {% endif %}
-                                        </a>
-                                    </th>
-                                    <th>
-                                        <a href="?{% for key, value in request.GET.items %}{% if key != 'order_by' %}{{ key }}={{ value }}&{% endif %}{% endfor %}order_by={% if current_order == 'total_amount' %}-{% endif %}total_amount" class="text-white text-decoration-none">
-                                            {% trans "Grand Total" %}
-                                            {% if current_order == 'total_amount' %}
-                                                <i class="fas fa-sort-up"></i>
-                                            {% elif current_order == '-total_amount' %}
-                                                <i class="fas fa-sort-down"></i>
-                                            {% else %}
-                                                <i class="fas fa-sort"></i>
-                                            {% endif %}
-                                        </a>
-                                    </th>
-                                    <th>{% trans "Actions" %}</th>
-                                </tr>
-                            </thead>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>
+                                            <a href="?{% for key, value in request.GET.items %}{% if key != 'order_by' %}{{ key }}={{ value }}&{% endif %}{% endfor %}order_by={% if current_order == 'return_number' %}-{% endif %}return_number" class="text-dark text-decoration-none">
+                                                {% trans "Return Number" %}
+                                                {% if current_order == 'return_number' %}
+                                                    <i class="fas fa-sort-up"></i>
+                                                {% elif current_order == '-return_number' %}
+                                                    <i class="fas fa-sort-down"></i>
+                                                {% else %}
+                                                    <i class="fas fa-sort"></i>
+                                                {% endif %}
+                                            </a>
+                                        </th>
+                                        <th>
+                                            <a href="?{% for key, value in request.GET.items %}{% if key != 'order_by' %}{{ key }}={{ value }}&{% endif %}{% endfor %}order_by={% if current_order == 'date' %}-{% endif %}date" class="text-dark text-decoration-none">
+                                                {% trans "Date" %}
+                                                {% if current_order == 'date' %}
+                                                    <i class="fas fa-sort-up"></i>
+                                                {% elif current_order == '-date' %}
+                                                    <i class="fas fa-sort-down"></i>
+                                                {% else %}
+                                                    <i class="fas fa-sort"></i>
+                                                {% endif %}
+                                            </a>
+                                        </th>
+                                        <th>
+                                            <a href="?{% for key, value in request.GET.items %}{% if key != 'order_by' %}{{ key }}={{ value }}&{% endif %}{% endfor %}order_by={% if current_order == 'original_invoice__supplier__name' %}-{% endif %}original_invoice__supplier__name" class="text-dark text-decoration-none">
+                                                {% trans "Supplier" %}
+                                                {% if current_order == 'original_invoice__supplier__name' %}
+                                                    <i class="fas fa-sort-up"></i>
+                                                {% elif current_order == '-original_invoice__supplier__name' %}
+                                                    <i class="fas fa-sort-down"></i>
+                                                {% else %}
+                                                    <i class="fas fa-sort"></i>
+                                                {% endif %}
+                                            </a>
+                                        </th>
+                                        <th>
+                                            <a href="?{% for key, value in request.GET.items %}{% if key != 'order_by' %}{{ key }}={{ value }}&{% endif %}{% endfor %}order_by={% if current_order == 'original_invoice__supplier_invoice_number' %}-{% endif %}original_invoice__supplier_invoice_number" class="text-dark text-decoration-none">
+                                                {% trans "Original Invoice" %}
+                                                {% if current_order == 'original_invoice__supplier_invoice_number' %}
+                                                    <i class="fas fa-sort-up"></i>
+                                                {% elif current_order == '-original_invoice__supplier_invoice_number' %}
+                                                    <i class="fas fa-sort-down"></i>
+                                                {% else %}
+                                                    <i class="fas fa-sort"></i>
+                                                {% endif %}
+                                            </a>
+                                        </th>
+                                        <th>
+                                            <a href="?{% for key, value in request.GET.items %}{% if key != 'order_by' %}{{ key }}={{ value }}&{% endif %}{% endfor %}order_by={% if current_order == 'total_amount' %}-{% endif %}total_amount" class="text-dark text-decoration-none">
+                                                {% trans "Grand Total" %}
+                                                {% if current_order == 'total_amount' %}
+                                                    <i class="fas fa-sort-up"></i>
+                                                {% elif current_order == '-total_amount' %}
+                                                    <i class="fas fa-sort-down"></i>
+                                                {% else %}
+                                                    <i class="fas fa-sort"></i>
+                                                {% endif %}
+                                            </a>
+                                        </th>
+                                        <th>{% trans "Actions" %}</th>
+                                    </tr>
+                                </thead>
                             <tbody>
                                 {% for return in returns %}
                                 <tr>
-                                    <td class="fw-bold text-primary">{{ return.return_number }}</td>
-                                    <td>{{ return.original_invoice.supplier_invoice_number }}</td>
-                                    <td>{{ return.supplier.name }}</td>
-                                    <td>{{ return.date }}</td>
                                     <td>
-                                        {% if return.return_type == 'full' %}
-                                            <span class="badge bg-danger">{% trans "Full Return" %}</span>
-                                        {% else %}
-                                            <span class="badge bg-warning">{% trans "Partial Return" %}</span>
-                                        {% endif %}
+                                        <a href="{% url 'purchases:return_detail' return.pk %}" 
+                                           class="text-decoration-none">
+                                            <strong class="text-primary">{{ return.return_number }}</strong>
+                                        </a>
                                     </td>
+                                    <td>{{ return.date }}</td>
+                                    <td>{{ return.original_invoice.supplier.name }}</td>
                                     <td>
-                                        {% if return.return_reason == 'defective' %}{% trans "Defective" %}
-                                        {% elif return.return_reason == 'wrong_item' %}{% trans "Wrong Item" %}
-                                        {% elif return.return_reason == 'excess' %}{% trans "Excess" %}
-                                        {% elif return.return_reason == 'expired' %}{% trans "Expired" %}
-                                        {% elif return.return_reason == 'damaged' %}{% trans "Damaged" %} أثناء النقل
-                                        {% else %}{% trans "Other" %}
-                                        {% endif %}
+                                        <a href="{% url 'purchases:invoice_detail' return.original_invoice.pk %}" 
+                                           class="text-decoration-none">
+                                            <i class="fas fa-file-invoice text-primary me-1"></i>
+                                            {{ return.original_invoice.supplier_invoice_number }}
+                                        </a>
                                     </td>
                                     <td class="fw-bold text-danger">{{ return.total_amount|currency_format }}</td>
                                     <td>
@@ -233,42 +250,39 @@
                             </tbody>
                         </table>
                     </div>
+                </div>
 
-                    <!-- Pagination -->
-                    {% if is_paginated %}
-                    <div class="card-footer">
-                        <nav aria-label="Page navigation">
-                            <ul class="pagination justify-content-center mb-0">
-                                {% if page_obj.has_previous %}
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page=1{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">{% trans "First" %}ى</a>
-                                    </li>
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">{% trans "Previous" %}ة</a>
-                                    </li>
-                                {% endif %}
+                <!-- Pagination -->
+                {% if is_paginated %}
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.supplier %}&supplier={{ request.GET.supplier }}{% endif %}">{% trans "First" %}</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.supplier %}&supplier={{ request.GET.supplier }}{% endif %}">{% trans "Previous" %}</a>
+                            </li>
+                        {% endif %}
 
-                                <li class="page-item active">
-                                    <span class="page-link">
-                                        {% trans "Page" %} {{ page_obj.number }} {% trans "of" %} {{ page_obj.paginator.num_pages }}
-                                    </span>
-                                </li>
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_obj.number }} {% trans "of" %} {{ page_obj.paginator.num_pages }}</span>
+                        </li>
 
-                                {% if page_obj.has_next %}
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">{% trans "Next" %}ة</a>
-                                    </li>
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">{% trans "Last" %}ة</a>
-                                    </li>
-                                {% endif %}
-                            </ul>
-                        </nav>
-                    </div>
-                    {% endif %}
-
-                    {% else %}
-                    <div class="text-center py-5">
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.supplier %}&supplier={{ request.GET.supplier }}{% endif %}">{% trans "Next" %}</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}{% if request.GET.supplier %}&supplier={{ request.GET.supplier }}{% endif %}">{% trans "Last" %}</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            {% else %}
+                <div class="card">
+                    <div class="card-body text-center py-5">
                         <i class="fas fa-undo fa-3x text-muted mb-3"></i>
                         <h5 class="text-muted">{% trans "No Purchase Returns" %}</h5>
                         <p class="text-muted">{% trans "You can create a new return by clicking the button above." %}</p>
@@ -277,9 +291,8 @@
                             {% trans "Create New Purchase Return" %}
                         </a>
                     </div>
-                    {% endif %}
                 </div>
-            </div>
+            {% endif %}
         </div>
     </div>
 </div>
