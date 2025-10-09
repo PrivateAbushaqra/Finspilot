@@ -31,6 +31,7 @@ urlpatterns = [
     # API endpoints  
     path('api/invoices-for-returns/', views.get_invoices_for_returns, name='api_invoices_for_returns'),
     path('ajax/get-invoice-items/<int:invoice_id>/', views.get_invoice_items, name='get_invoice_items'),
+    path('api/product-stock/<int:product_id>/<int:warehouse_id>/', views.get_product_stock, name='get_product_stock'),
     
     # Point of Sale
     path('pos/', views.pos_view, name='pos'),

@@ -18,6 +18,44 @@ from .models import SalesCreditNote
 from products.models import Product
 from customers.models import CustomerSupplier
 from settings.models import CompanySettings, Currency
+
+
+def get_product_stock_in_warehouse(product, warehouse):
+    """
+    حساب المخزون المتوفر للمنتج في مستودع معين
+    """
+    try:
+        from inventory.models import InventoryMovement
+        incoming = InventoryMovement.objects.filter(
+            product=product,
+            warehouse=warehouse,
+            movement_type='in'
+        ).aggregate(total=Sum('quantity'))['total'] or Decimal('0')
+        
+        outgoing = InventoryMovement.objects.filter(
+            product=product,
+            warehouse=warehouse,
+            movement_type='out'
+        ).aggregate(total=Sum('quantity'))['total'] or Decimal('0')
+        
+        return incoming - outgoing
+    except ImportError:
+        # في حالة عدم وجود نموذج المخزون
+        return product.current_stock if hasattr(product, 'current_stock') else Decimal('0')
+
+
+def get_product_stock(request, product_id, warehouse_id):
+    """
+    API endpoint للحصول على مخزون المنتج في مستودع معين
+    """
+    try:
+        product = get_object_or_404(Product, id=product_id)
+        from inventory.models import Warehouse
+        warehouse = get_object_or_404(Warehouse, id=warehouse_id)
+        stock = get_product_stock_in_warehouse(product, warehouse)
+        return JsonResponse({'stock': str(stock)})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
 from core.models import DocumentSequence
 from accounts.services import create_sales_invoice_transaction, create_sales_return_transaction, delete_transaction_by_reference
 from journal.services import JournalService
@@ -621,6 +659,7 @@ def sales_invoice_create(request):
                             inclusive_tax_flag = True
 
                         # حساب المجاميع المؤقتة
+                        stock_warnings = {}  # قاموس التحذيرات للكميات الزائدة
                         for i, product_id in enumerate(products):
                             if product_id and i < len(quantities) and i < len(prices):
                                 try:
@@ -631,6 +670,27 @@ def sales_invoice_create(request):
 
                                     if quantity <= 0 or unit_price < 0:
                                         continue
+
+                                    # فحص المخزون في المستودع المختار أو المخزون العام
+                                    try:
+                                        if warehouse:
+                                            available_stock = get_product_stock_in_warehouse(product, warehouse)
+                                        else:
+                                            available_stock = product.current_stock
+                                    except Exception as e:
+                                        # في حالة فشل حساب المخزون، استخدم المخزون العام
+                                        available_stock = product.current_stock
+                                        print(f"خطأ في حساب المخزون للمنتج {product.name}: {e}")
+
+                                    # تحذير إذا المنتج غير متوفر في المستودع
+                                    if available_stock <= 0:
+                                        stock_warnings[str(product.id)] = _('تحذير: المنتج "%(product)s" غير متوفر في المستودع المختار.') % {'product': product.name}
+                                    elif quantity > available_stock:
+                                        stock_warnings[str(product.id)] = _('تحذير: الكمية المطلوبة (%(quantity)s) تتجاوز المخزون المتوفر (%(available)s) للمنتج "%(product)s" في المستودع المختار.') % {
+                                            'quantity': quantity,
+                                            'available': available_stock,
+                                            'product': product.name
+                                        }
 
                                     line_subtotal = quantity * unit_price
                                     line_tax_amount = line_subtotal * (tax_rate / 100) if tax_rate > 0 else Decimal('0')
@@ -683,7 +743,34 @@ def sales_invoice_create(request):
                                 context = get_invoice_create_context(request, form_data)
                                 return render(request, 'sales/invoice_add.html', context)
 
-                        # إذا وصلنا هنا، الحد الائتماني مسموح - يمكننا إنشاء الفاتورة
+                        # فحص تحذيرات المخزون
+                        skip_stock_check = request.POST.get('skip_stock_check') == 'true'
+                        if stock_warnings and not skip_stock_check:
+                            # إضافة التحذيرات إلى الرسائل
+                            for warning_msg in stock_warnings.values():
+                                messages.warning(request, warning_msg)
+                            
+                            # إضافة التحذيرات إلى form_data لعرضها في القالب
+                            form_data['stock_warnings'] = stock_warnings
+                            form_data['show_skip_button'] = True
+                            
+                            # تسجيل التحذير في سجل الأنشطة
+                            try:
+                                from core.signals import log_user_activity
+                                dummy = SalesInvoice()
+                                log_user_activity(
+                                    request,
+                                    'warning',
+                                    dummy,
+                                    _('تحذير: كميات مطلوبة تتجاوز المخزون المتوفر في %(count)s منتج') % {'count': len(stock_warnings)}
+                                )
+                            except Exception:
+                                pass
+                            
+                            context = get_invoice_create_context(request, form_data)
+                            return render(request, 'sales/invoice_add.html', context)
+
+                        # إذا وصلنا هنا، الحد الائتماني مسموح والمخزون مسموح أو تم تخطيه - يمكننا إنشاء الفاتورة
                         # إعادة تعيين المجاميع لإعادة الحساب أثناء الإنشاء الفعلي
                         subtotal = Decimal('0')
                         total_tax_amount = Decimal('0')
@@ -741,7 +828,7 @@ def sales_invoice_create(request):
                                     # parse quantity/price/tax robustly to accept '1.5' or '1,5' etc.
                                     quantity = parse_decimal_input(quantities[i], name='quantity', default=Decimal('0'))
                                     unit_price = parse_decimal_input(prices[i], name='price', default=Decimal('0'))
-                                    tax_rate = parse_decimal_input(taxRates[i] if i < len(taxRates) else '0', name='tax_rate', default=Decimal('0'))
+                                    tax_rate = parse_decimal_input(tax_rates[i] if i < len(tax_rates) else '0', name='tax_rate', default=Decimal('0'))
 
                                     # Safeguard: if submitted unit_price differs from product.sale_price
                                     # and appears to be a cost/last-purchase/zero value, prefer product.sale_price
@@ -1477,7 +1564,7 @@ def sales_return_create(request):
                                     # parse quantity/price/tax robustly to accept '1.5' or '1,5' etc.
                                     quantity = parse_decimal_input(return_quantities[i], name='quantity', default=Decimal('0'))
                                     unit_price = parse_decimal_input(return_prices[i], name='price', default=Decimal('0'))
-                                    tax_rate = parse_decimal_input(return_taxRates[i] if i < len(return_taxRates) else '0', name='tax_rate', default=Decimal('0'))
+                                    tax_rate = parse_decimal_input(return_tax_rates[i] if i < len(return_tax_rates) else '0', name='tax_rate', default=Decimal('0'))
 
                                     # حساب مبلغ الضريبة لهذا السطر
                                     line_subtotal = quantity * unit_price

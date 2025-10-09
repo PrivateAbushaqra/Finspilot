@@ -97,6 +97,11 @@
         color: #dc3545;
     }
     
+    .stock-warning {
+        background-color: #ffe6e6 !important;
+        border-left: 4px solid #dc3545 !important;
+    }
+    
     .product-code-input {
         font-family: 'Courier New', monospace;
         font-weight: bold;
@@ -384,6 +389,10 @@
                         <i class="fas fa-plus me-1"></i>
                         {% trans "Add" %} {% trans "Product" %}
                     </button>
+                    <div id="warehouseRequiredMessage" class="text-danger mt-2" style="display: none;">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        {% trans "يرجى اختيار المستودع أولاً قبل إضافة المنتجات" %}
+                    </div>
                 </div>
                 
                 <div class="table-responsive products-table">
@@ -403,7 +412,7 @@
                         </thead>
                         <tbody id="productsTableBody">
                             {% for item in existing_products %}
-                            <tr class="product-row" id="productRow{{ forloop.counter }}">
+                            <tr class="product-row{% if item.id|stringformat:'s' in stock_warnings %} stock-warning{% endif %}" id="productRow{{ forloop.counter }}">
                                 <td>
                                     <input type="hidden" name="products[]" class="product-id-input" value="{{ item.id }}">
                                     <input type="hidden" name="tax_rates[]" class="tax-rate-hidden-input" value="{{ item.tax_rate }}">
@@ -540,6 +549,12 @@
                             {% trans "Save Invoice" %}
                             <small class="ms-1 text-muted">(Ctrl+Enter)</small>
                         </button>
+                        {% if show_skip_button %}
+                        <button type="submit" name="skip_stock_check" value="true" class="btn btn-warning btn-lg">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            {% trans "تخطي فحص المخزون و حفظ" %}
+                        </button>
+                        {% endif %}
                         <button type="submit" name="action" value="save_and_send" class="btn btn-success btn-lg">
                             <i class="fas fa-paper-plane me-2"></i>
                             {% trans "Save and Send" %}
@@ -554,6 +569,10 @@
         </form>
     </div>
 </div>
+
+<script>
+const stockWarnings = {{ stock_warnings|safe }};
+</script>
 
 <script>
 // Client-side pre-submit validation to show errors inline
@@ -608,6 +627,78 @@ document.getElementById('salesInvoiceForm').addEventListener('submit', function(
         }
     }catch(err){
         console.error('Client-side validation error', err);
+    }
+});
+</script>
+
+<script>
+// Apply stock warnings styling
+document.addEventListener('DOMContentLoaded', function() {
+    // دالة للتحقق من حالة المستودع
+    function checkWarehouseRequirement() {
+        const warehouseSelect = document.getElementById('id_warehouse');
+        const addProductBtn = document.getElementById('addProductBtn');
+        const messageDiv = document.getElementById('warehouseRequiredMessage');
+        
+        if (warehouseSelect && warehouseSelect.value) {
+            // مستودع مختار، فعل الزر وأخفِ الرسالة
+            addProductBtn.disabled = false;
+            addProductBtn.classList.remove('disabled');
+            if (messageDiv) messageDiv.style.display = 'none';
+        } else {
+            // لا مستودع مختار، عطل الزر وأظهر الرسالة
+            addProductBtn.disabled = true;
+            addProductBtn.classList.add('disabled');
+            if (messageDiv) messageDiv.style.display = 'block';
+        }
+    }
+    
+    // تحقق عند تحميل الصفحة
+    checkWarehouseRequirement();
+    
+    // تحقق عند تغيير المستودع
+    const warehouseSelect = document.getElementById('id_warehouse');
+    if (warehouseSelect) {
+        warehouseSelect.addEventListener('change', checkWarehouseRequirement);
+    }
+    
+    document.querySelectorAll('.product-row').forEach(row => {
+        const productIdInput = row.querySelector('.product-id-input');
+        if (productIdInput && productIdInput.value && stockWarnings[productIdInput.value]) {
+            row.classList.add('stock-warning');
+        }
+    });
+
+    // تحديث المخزون عند تغيير المستودع
+    const warehouseSelect = document.getElementById('id_warehouse');
+    if (warehouseSelect) {
+        warehouseSelect.addEventListener('change', function() {
+            document.querySelectorAll('.product-row').forEach(row => {
+                const productIdInput = row.querySelector('.product-id-input');
+                const availableQuantityInput = row.querySelector('.available-quantity-input');
+                if (productIdInput && productIdInput.value && availableQuantityInput) {
+                    if (warehouseSelect.value) {
+                        fetch(`/ar/sales/api/product-stock/${productIdInput.value}/${warehouseSelect.value}/`)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.stock !== undefined) {
+                                    availableQuantityInput.value = formatCurrency(parseFloat(data.stock), 3);
+                                    if (parseFloat(data.stock) <= 0) {
+                                        row.classList.add('stock-warning');
+                                    } else {
+                                        row.classList.remove('stock-warning');
+                                    }
+                                }
+                            })
+                            .catch(error => console.error('Error fetching stock:', error));
+                    } else {
+                        // إذا لم يتم اختيار مستودع، استخدم المخزون العام
+                        // لكن نحتاج إلى الحصول عليه من البيانات الأولية
+                        // للبساطة، اتركه كما هو
+                    }
+                }
+            });
+        });
     }
 });
 </script>
@@ -786,6 +877,19 @@ function setupAddProductButton() {
         }
     });
     
+    // إضافة معالج Tab للانتقال التلقائي
+    newBtn.addEventListener('keydown', function(e) {
+        if (e.key === 'Tab' && !e.shiftKey) {
+            e.preventDefault();
+            try {
+                addProductRow();
+                console.log('✅ Product row added via Tab key');
+            } catch (error) {
+                console.error('❌ Error adding product row via Tab:', error);
+            }
+        }
+    });
+    
     // Ensure button styling
     newBtn.style.cssText = `
         background: linear-gradient(45deg, #28a745, #20c997) !important;
@@ -915,6 +1019,15 @@ function addProductRow() {
     attachRowEventListeners(row);
     console.log('{% trans "addProductRow completed successfully" %}');
     
+    // تركيز المؤشر على خانة رمز المنتج في السطر الجديد
+    setTimeout(function() {
+        const newCodeInput = row.querySelector('.product-code-input');
+        if (newCodeInput) {
+            newCodeInput.focus();
+            console.log('✅ Focus set on product code input for new row');
+        }
+    }, 100);
+    
     // Mark as having unsaved changes
     hasUnsavedChanges = true;
     
@@ -950,6 +1063,13 @@ function openProductModal(rowId) {
 }
 
 function selectProduct(productId, productCode, productName, salePrice, taxRate, availableQuantity) {
+    // التحقق من اختيار المستودع أولاً
+    const warehouseSelect = document.getElementById('id_warehouse');
+    if (!warehouseSelect || !warehouseSelect.value) {
+        alert('{% trans "يرجى اختيار المستودع أولاً قبل اختيار المنتج" %}');
+        return;
+    }
+    
     // Use POS product endpoint as authoritative source for sale price when available.
     try {
         if (!currentRow) return;
@@ -969,6 +1089,25 @@ function selectProduct(productId, productCode, productName, salePrice, taxRate, 
         nameInput.value = productName;
         if (availableQuantityInput) {
             availableQuantityInput.value = formatCurrency(parseFloat(availableQuantity || 0), 3);
+        }
+
+        // تحديث المخزون بناءً على المستودع المختار
+        const warehouseSelect = document.getElementById('id_warehouse');
+        if (warehouseSelect && warehouseSelect.value) {
+            fetch(`/ar/sales/api/product-stock/${productId}/${warehouseSelect.value}/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.stock !== undefined) {
+                        availableQuantityInput.value = formatCurrency(parseFloat(data.stock), 3);
+                        // إذا المخزون 0 أو أقل، أضف تحذيراً بصرياً
+                        if (parseFloat(data.stock) <= 0) {
+                            row.classList.add('stock-warning');
+                        } else {
+                            row.classList.remove('stock-warning');
+                        }
+                    }
+                })
+                .catch(error => console.error('Error fetching stock:', error));
         }
 
         // Helper to apply a numeric price into the input with attributes
