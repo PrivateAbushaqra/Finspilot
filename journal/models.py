@@ -78,8 +78,21 @@ class JournalEntry(models.Model):
         ('adjustment', _('Adjustment Entry')),
     ]
 
+    # أنواع القيود
+    ENTRY_TYPES = [
+        ('sales', _('Sales')),
+        ('purchase', _('Purchase')),
+        ('receipt', _('Receipt')),
+        ('payment', _('Payment')),
+        ('transfer', _('Transfer')),
+        ('adjustment', _('Adjustment')),
+        ('daily', _('Daily')),
+        ('other', _('Other')),
+    ]
+    
     entry_number = models.CharField(_('رقم القيد'), max_length=50, unique=True, blank=True)
     entry_date = models.DateField(_('تاريخ القيد'))
+    entry_type = models.CharField(_('نوع القيد'), max_length=20, choices=ENTRY_TYPES, default='daily')
     reference_type = models.CharField(_('نوع العملية'), max_length=20, choices=REFERENCE_TYPES)
     reference_id = models.PositiveIntegerField(_('رقم العملية المرتبطة'), null=True, blank=True)
     sales_invoice = models.ForeignKey('sales.SalesInvoice', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('فاتورة المبيعات'))
@@ -110,7 +123,7 @@ class JournalEntry(models.Model):
             self.entry_number = self.generate_entry_number()
         
         # تحديث الحقول المرتبطة بالفواتير
-        if self.reference_type == 'sales_invoice' and self.reference_id:
+        if self.reference_type in ['sales_invoice', 'sales_invoice_cogs'] and self.reference_id:
             try:
                 from sales.models import SalesInvoice
                 self.sales_invoice = SalesInvoice.objects.get(id=self.reference_id)

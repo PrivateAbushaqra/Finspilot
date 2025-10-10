@@ -11,6 +11,7 @@ urlpatterns = [
     path('accounts/delete/<int:pk>/', views.BankAccountDeleteView.as_view(), name='account_delete'),
     path('accounts/superadmin-delete/<int:pk>/', views.BankAccountSuperAdminDeleteView.as_view(), name='account_superadmin_delete'),
     path('accounts/<int:pk>/transactions/', views.BankAccountTransactionsView.as_view(), name='account_transactions'),
+    path('accounts/<int:pk>/export-xlsx/', views.account_export_xlsx, name='account_export_xlsx'),
     path('accounts/force-delete/<int:pk>/', views.BankAccountForceDeleteView.as_view(), name='account_force_delete'),
     path('accounts/toggle-status/<int:pk>/', views.BankAccountToggleStatusView.as_view(), name='account_toggle_status'),
     path('accounts/clear-transactions/<int:pk>/', views.ClearAccountTransactionsView.as_view(), name='clear_account_transactions'),

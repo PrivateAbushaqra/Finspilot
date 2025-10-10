@@ -40,13 +40,22 @@ class JournalService:
                 raise ValueError(_('مجموع المدين يجب أن يساوي مجموع الدائن'))
             
             # إنشاء القيد
+            # ملاحظة: entry_type موجود في قاعدة البيانات كـ NOT NULL
+            # لكنه ليس في النموذج، لذا نضيفه يدوياً
+            entry_type_value = 'daily'  # القيمة الافتراضية
+            if reference_type == 'sales_invoice':
+                entry_type_value = 'sales'
+            elif reference_type == 'purchase_invoice':
+                entry_type_value = 'purchase'
+            
             journal_entry = JournalEntry.objects.create(
                 entry_date=entry_date,
                 reference_type=reference_type,
                 reference_id=reference_id,
                 description=description,
                 total_amount=total_debit,
-                created_by=user
+                created_by=user,
+                entry_type=entry_type_value  # إضافة entry_type المفقود
             )
             
             # إنشاء بنود القيد
@@ -110,16 +119,24 @@ class JournalService:
                 'description': f'فاتورة مبيعات رقم {invoice.invoice_number}'
             })
         
-        # حساب المبيعات (دائن)
+        # حساب المبيعات والضريبة والخصم
         sales_account = JournalService.get_sales_account()
+        
+        # التحقق من نوع الضريبة
+        is_inclusive_tax = getattr(invoice, 'inclusive_tax', True)  # افتراضياً شاملة
+        
+        # حساب المبيعات (دائن)
+        # المبيعات دائماً = subtotal (قبل الخصم)
+        sales_amount = invoice.subtotal
+        
         lines_data.append({
             'account_id': sales_account.id,
             'debit': 0,
-            'credit': invoice.subtotal,
+            'credit': sales_amount,
             'description': f'مبيعات - فاتورة رقم {invoice.invoice_number}'
         })
         
-        # حساب الضريبة إذا وجدت
+        # حساب الضريبة إذا وجدت (دائن)
         if invoice.tax_amount > 0:
             tax_account = JournalService.get_tax_payable_account()
             lines_data.append({
@@ -127,6 +144,17 @@ class JournalService:
                 'debit': 0,
                 'credit': invoice.tax_amount,
                 'description': f'ضريبة مبيعات - فاتورة رقم {invoice.invoice_number}'
+            })
+        
+        # حساب الخصم إذا وجد (مدين - مصروف على البائع)
+        # الخصم المحمول = مصروف يقلل من صافي الربح
+        if hasattr(invoice, 'discount_amount') and invoice.discount_amount > 0:
+            discount_account = JournalService.get_sales_discount_account()
+            lines_data.append({
+                'account_id': discount_account.id,
+                'debit': invoice.discount_amount,
+                'credit': 0,
+                'description': f'خصم مبيعات - فاتورة رقم {invoice.invoice_number}'
             })
         
         return JournalService.create_journal_entry(
@@ -431,6 +459,19 @@ class JournalService:
                 'name': 'المبيعات',
                 'account_type': 'sales',
                 'description': 'حساب المبيعات'
+            }
+        )
+        return account
+    
+    @staticmethod
+    def get_sales_discount_account():
+        """الحصول على حساب خصم المبيعات"""
+        account, created = Account.objects.get_or_create(
+            code='4020',
+            defaults={
+                'name': 'خصم المبيعات',
+                'account_type': 'expense',
+                'description': 'حساب خصم المبيعات'
             }
         )
         return account

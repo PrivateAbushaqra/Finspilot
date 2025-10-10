@@ -184,11 +184,11 @@
                                 <strong>{{ item.product.name }}</strong><br>
                                 <small class="text-muted">{{ item.product.category.name|default:"غير مصنف" }}</small>
                             </td>
-                            <td class="text-center">{{ item.quantity|floatformat:3 }}</td>
-                            <td class="text-end">{{ item.unit_price|floatformat:2 }} {% get_currency_symbol %}</td>
-                            <td class="text-center">{{ item.tax_rate|floatformat:2 }}%</td>
-                            <td class="text-end">{{ item.tax_amount|floatformat:2 }} {% get_currency_symbol %}</td>
-                            <td class="text-end">{{ item.total_amount|floatformat:2 }} {% get_currency_symbol %}</td>
+                            <td class="text-center">{{ item.quantity|floatformat:2 }}</td>
+                            <td class="text-end">{{ item.unit_price|format_currency }} {% get_currency_symbol %}</td>
+                            <td class="text-center">{{ item.tax_rate|format_currency }}%</td>
+                            <td class="text-end">{{ item.tax_amount|format_currency }} {% get_currency_symbol %}</td>
+                            <td class="text-end">{{ item.total_amount|format_currency }} {% get_currency_symbol %}</td>
                         </tr>
                         {% empty %}
                         <tr>
@@ -219,19 +219,19 @@
                     <table class="table table-sm">
                         <tr>
                             <td><strong>{% trans "Subtotal:" %}</strong></td>
-                            <td class="text-end">{{ invoice.subtotal|floatformat:2 }} {% get_currency_symbol %}</td>
+                            <td class="text-end">{{ invoice.subtotal|format_currency }} {% get_currency_symbol %}</td>
                         </tr>
                         <tr>
                             <td><strong>{% trans "Discount" %}:</strong></td>
-                            <td class="text-end">{{ invoice.discount_amount|floatformat:2 }} {% get_currency_symbol %}</td>
+                            <td class="text-end">{{ invoice.discount_amount|format_currency }} {% get_currency_symbol %}</td>
                         </tr>
                         <tr>
                             <td><strong>{% trans "Tax" %}:</strong></td>
-                            <td class="text-end">{{ invoice.tax_amount|floatformat:2 }} {% get_currency_symbol %}</td>
+                            <td class="text-end">{{ invoice.tax_amount|format_currency }} {% get_currency_symbol %}</td>
                         </tr>
                         <tr class="table-active">
                             <td><strong>{% trans "Final Total" %}:</strong></td>
-                            <td class="text-end"><strong>{{ invoice.total_amount|floatformat:2 }} {% get_currency_symbol %}</strong></td>
+                            <td class="text-end"><strong>{{ invoice.total_amount|format_currency }} {% get_currency_symbol %}</strong></td>
                         </tr>
                     </table>
                 </div>

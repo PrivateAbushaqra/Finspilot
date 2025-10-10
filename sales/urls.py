@@ -23,13 +23,14 @@ urlpatterns = [
     
     # Sales Returns
     path('returns/', views.SalesReturnListView.as_view(), name='return_list'),
-    path('returns/add/', views.SalesReturnCreateView.as_view(), name='return_add'),
-    path('returns/<int:pk>/', views.SalesReturnDetailView.as_view(), name='return_detail'),
-    path('returns/edit/<int:pk>/', views.SalesReturnUpdateView.as_view(), name='return_edit'),
+    path('returns/add/', views.sales_return_create, name='return_add'),
+    # path('returns/<int:pk>/', views.SalesReturnDetailView.as_view(), name='return_detail'),
+    # path('returns/edit/<int:pk>/', views.SalesReturnUpdateView.as_view(), name='return_edit'),
     path('returns/delete/<int:pk>/', views.SalesReturnDeleteView.as_view(), name='return_delete'),
     
     # API endpoints  
     path('api/invoices-for-returns/', views.get_invoices_for_returns, name='api_invoices_for_returns'),
+    path('ajax/get-invoice-items/<int:invoice_id>/', views.get_invoice_items, name='get_invoice_items'),
     
     # Point of Sale
     path('pos/', views.pos_view, name='pos'),
@@ -43,7 +44,7 @@ urlpatterns = [
     path('returns-statement/', views.SalesReturnStatementView.as_view(), name='sales_return_statement'),
     # Credit Notes (separate section)
     path('credit-notes/', views.SalesCreditNoteListView.as_view(), name='creditnote_list'),
-    path('credit-notes/add/', views.sales_creditnote_create, name='creditnote_add'),
+    # path('credit-notes/add/', views.sales_creditnote_create, name='creditnote_add'),
     path('credit-notes/<int:pk>/', views.SalesCreditNoteDetailView.as_view(), name='creditnote_detail'),
     path('credit-notes/edit/<int:pk>/', views.SalesCreditNoteUpdateView.as_view(), name='creditnote_edit'),
     path('credit-notes/delete/<int:pk>/', views.SalesCreditNoteDeleteView.as_view(), name='creditnote_delete'),

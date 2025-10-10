@@ -297,6 +297,43 @@ class CustomerSupplierCreateView(LoginRequiredMixin, View):
                 is_active=is_active
             )
             
+            # إنشاء حركة محاسبية للرصيد الافتتاحي إذا كان أكبر من الصفر
+            if balance != 0:
+                try:
+                    from accounts.models import AccountTransaction
+                    from datetime import date
+                    
+                    # تحديد اتجاه الحركة حسب نوع العميل والرصيد
+                    if customer_supplier.is_customer:
+                        # للعملاء: رصيد موجب = مدين (له علينا)، رصيد سالب = دائن (علينا له)
+                        direction = 'debit' if balance > 0 else 'credit'
+                    else:
+                        # للموردين: رصيد موجب = دائن (لنا عليه)، رصيد سالب = مدين (عليه لنا)  
+                        direction = 'credit' if balance > 0 else 'debit'
+                    
+                    # إنشاء الحركة
+                    transaction = AccountTransaction.objects.create(
+                        transaction_number=f"OB-{customer_supplier.sequence_number}",
+                        date=date.today(),
+                        customer_supplier=customer_supplier,
+                        transaction_type='adjustment',
+                        direction=direction,
+                        amount=abs(balance),
+                        reference_type='opening_balance',
+                        reference_id=customer_supplier.id,
+                        description=f'الرصيد الافتتاحي لـ {customer_supplier.name}',
+                        notes='رصيد افتتاحي تم إنشاؤه تلقائياً عند إضافة العميل/المورد',
+                        created_by=request.user
+                    )
+                    
+                    # حساب وتحديث الرصيد بعد الحركة
+                    transaction.balance_after = balance
+                    transaction.save()
+                    
+                except Exception as e:
+                    # في حالة فشل إنشاء الحركة، سجل خطأ لكن لا تمنع إنشاء العميل
+                    pass
+            
             # تسجيل النشاط
             log_view_activity(request, 'create', customer_supplier, _('Created customer/supplier: %(name)s') % {'name': name})
             
@@ -338,8 +375,9 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
     def get(self, request, pk, *args, **kwargs):
         customer_supplier = get_object_or_404(CustomerSupplier, pk=pk)
         
-        # حساب الائتمان المتاح
-        available_credit = customer_supplier.credit_limit - abs(customer_supplier.balance) if customer_supplier.balance < 0 else customer_supplier.credit_limit
+        # حساب الائتمان المتاح بناءً على الرصيد الحالي المحسوب من المعاملات
+        current_balance = customer_supplier.current_balance
+        available_credit = customer_supplier.credit_limit - abs(current_balance) if current_balance < 0 else customer_supplier.credit_limit
         
         context = {
             'customer_supplier': customer_supplier,
@@ -359,7 +397,7 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
             city = request.POST.get('city', '').strip()
             tax_number = request.POST.get('tax_number', '').strip()
             credit_limit = request.POST.get('credit_limit', '0')
-            balance = request.POST.get('balance', '0')
+            # لا نعد نسمح بتعديل الرصيد - يُحسب تلقائياً من المعاملات
             notes = request.POST.get('notes', '').strip()
             is_active = request.POST.get('is_active') == 'on'
             
@@ -380,12 +418,11 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
             # تحويل الأرقام المالية
             try:
                 credit_limit = float(credit_limit) if credit_limit else 0
-                balance = float(balance) if balance else 0
             except ValueError:
                 messages.error(request, 'قيم المبالغ المالية غير صحيحة!')
                 return redirect('customers:edit', pk=pk)
             
-            # تحديث البيانات
+            # تحديث البيانات (بدون تعديل الرصيد)
             customer_supplier.name = name
             customer_supplier.email = email
             customer_supplier.phone = phone
@@ -393,7 +430,7 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
             customer_supplier.city = city
             customer_supplier.tax_number = tax_number
             customer_supplier.credit_limit = credit_limit
-            customer_supplier.balance = balance
+            # لا نعدل customer_supplier.balance - يبقى كما هو (الرصيد الافتتاحي)
             customer_supplier.notes = notes
             customer_supplier.is_active = is_active
             customer_supplier.save()

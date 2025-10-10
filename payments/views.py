@@ -306,13 +306,17 @@ def create_payment_transaction(voucher):
         CashboxTransaction.objects.create(
             cashbox=voucher.cashbox,
             transaction_type='withdrawal',
-            amount=voucher.amount,
+            amount=-voucher.amount,  # المبلغ سالب للسحب
             description=f'Payment voucher {voucher.voucher_number} - {voucher.beneficiary_display}',
             date=voucher.date,
             reference_type='payment',
             reference_id=voucher.id,
             created_by=voucher.created_by
         )
+        
+        # تحديث رصيد الصندوق
+        voucher.cashbox.balance -= voucher.amount
+        voucher.cashbox.save(update_fields=['balance'])
     
     elif voucher.payment_type == 'bank_transfer' and voucher.bank:
         # Bank transaction (payment) - using direct import to avoid circular problems
@@ -342,11 +346,15 @@ def reverse_payment_transaction(voucher):
             CashboxTransaction.objects.create(
                 cashbox=transaction.cashbox,
                 transaction_type='deposit',
-                amount=transaction.amount,
+                amount=abs(transaction.amount),  # المبلغ موجب للإيداع (نعيد المبلغ المسحوب)
                 description=f'Reverse {transaction.description}',
                 date=django_timezone.now().date(),
                 created_by=voucher.reversed_by or voucher.created_by
             )
+            
+            # تحديث رصيد الصندوق
+            transaction.cashbox.balance += abs(transaction.amount)
+            transaction.cashbox.save(update_fields=['balance'])
     
     elif voucher.payment_type == 'bank_transfer' and voucher.bank:
         # Find and reverse bank transaction - using direct import

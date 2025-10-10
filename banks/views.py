@@ -1,5 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.utils import timezone
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView, View, DetailView
 from django.contrib import messages
 from django.urls import reverse_lazy
@@ -1269,9 +1271,46 @@ class BankAccountTransactionsView(LoginRequiredMixin, TemplateView):
         account_id = self.kwargs.get('pk')
         account = get_object_or_404(BankAccount, pk=account_id)
         
-        # الحصول على جميع الحركات
+        # تسجيل النشاط في سجل الأنشطة
+        log_user_activity(
+            self.request,
+            'ACCESS',
+            account,
+            _('تم الوصول إلى معاملات الحساب البنكي: {}').format(account.name)
+        )
+        
+        # مزامنة الرصيد للتأكد من أنه محدث
+        account.sync_balance()
+        
+        # الحصول على جميع الحركات مرتبة تصاعدياً حسب التاريخ والإنشاء
         from .models import BankTransaction
-        transactions = BankTransaction.objects.filter(bank=account).order_by('-date', '-created_at')
+        transactions = BankTransaction.objects.filter(bank=account).order_by('date', 'created_at')
+        
+        # حساب الرصيد المتراكم لكل حركة
+        from decimal import Decimal
+        running_balance = account.initial_balance or Decimal('0')
+        for transaction in transactions:
+            # حساب الرصيد المتراكم بناءً على نوع المعاملة
+            if transaction.transaction_type == 'deposit':
+                running_balance += transaction.amount
+            else:  # withdrawal
+                running_balance -= transaction.amount
+            transaction.running_balance = running_balance
+        
+        # عكس الترتيب للعرض (الأحدث أولاً)
+        transactions = list(reversed(transactions))
+        
+        # البحث عن transfer_id للمعاملات التي لديها reference_number
+        for transaction in transactions:
+            if transaction.reference_number:
+                from .models import BankTransfer
+                transfer = BankTransfer.objects.filter(transfer_number=transaction.reference_number).first()
+                if transfer:
+                    transaction.transfer_id = transfer.pk
+                else:
+                    transaction.transfer_id = None
+            else:
+                transaction.transfer_id = None
         
         # معلومات من الجلسة إذا كان هذا جزء من عملية حذف
         delete_mode = self.request.session.get('delete_account_id') == account.pk
@@ -1279,13 +1318,13 @@ class BankAccountTransactionsView(LoginRequiredMixin, TemplateView):
         context.update({
             'account': account,
             'transactions': transactions,
-            'transactions_count': transactions.count(),
+            'transactions_count': len(transactions),
             'delete_mode': delete_mode,
             # إظهار زر الحذف النهائي لمن يملك صلاحية الحذف (المخصصة أو الافتراضية أو سوبر)
             # الشرط: لا معاملات على الحساب (حتى لو الرصيد غير صفر)
         'can_delete_account': (
                 delete_mode
-                and transactions.count() == 0
+                and len(transactions) == 0
                 and (
                     self.request.user.is_superuser
                     or self.request.user.has_perm('banks.delete_bankaccount')
@@ -1859,3 +1898,130 @@ class BankStatementUpdateView(LoginRequiredMixin, BanksViewPermissionMixin, Upda
 
     def get_success_url(self):
         return reverse_lazy('banks:statement_list')
+
+
+@login_required
+def account_export_xlsx(request, pk):
+    """تصدير معاملات الحساب البنكي إلى ملف Excel"""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment
+    from django.http import HttpResponse
+    from django.utils.translation import gettext as _
+    from core.signals import log_user_activity
+    from decimal import Decimal
+    
+    try:
+        account = get_object_or_404(BankAccount, pk=pk)
+        
+        # تسجيل النشاط في سجل الأنشطة
+        log_user_activity(
+            request,
+            'EXPORT',
+            account,
+            _('تم تصدير معاملات الحساب البنكي إلى Excel: {}').format(account.name)
+        )
+        
+        # إنشاء ملف Excel جديد
+        wb = Workbook()
+        ws = wb.active
+        ws.title = _("Bank Account Statement")
+        
+        # تنسيق العناوين
+        header_font = Font(bold=True, color="FFFFFF")
+        header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+        center_alignment = Alignment(horizontal="center")
+        
+        # إضافة معلومات الحساب
+        ws['A1'] = _("Bank Account Statement")
+        ws['A1'].font = Font(bold=True, size=16)
+        ws.merge_cells('A1:G1')
+        ws['A1'].alignment = center_alignment
+        
+        ws['A3'] = _("Account Name") + ":"
+        ws['B3'] = account.name
+        
+        ws['A4'] = _("Bank Name") + ":"
+        ws['B4'] = account.bank_name
+        
+        ws['A5'] = _("Account Number") + ":"
+        ws['B5'] = account.account_number
+        
+        ws['A6'] = _("Current Balance") + ":"
+        ws['B6'] = f"{account.balance} {account.get_currency_symbol()}"
+        
+        ws['A7'] = _("Transactions Count") + ":"
+        transactions_count = BankTransaction.objects.filter(bank=account).count()
+        ws['B7'] = transactions_count
+        
+        ws['A8'] = _("Export Date") + ":"
+        ws['B8'] = str(timezone.now().date())
+        
+        # إضافة عناوين الأعمدة
+        headers = [
+            _("Date"),
+            _("Transaction Type"),
+            _("Reference Number"),
+            _("Description"),
+            _("Amount"),
+            _("Balance After Transaction"),
+            _("Created By")
+        ]
+        
+        for col_num, header in enumerate(headers, 1):
+            cell = ws.cell(row=10, column=col_num)
+            cell.value = header
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = center_alignment
+        
+        # الحصول على جميع المعاملات
+        transactions = BankTransaction.objects.filter(bank=account).order_by('date', 'created_at')
+        
+        # حساب الرصيد المتراكم
+        running_balance = account.initial_balance or Decimal('0')
+        for transaction in transactions:
+            if transaction.transaction_type == 'deposit':
+                running_balance += transaction.amount
+            else:  # withdrawal
+                running_balance -= transaction.amount
+            transaction.running_balance = running_balance
+        
+        # عكس الترتيب للعرض (الأحدث أولاً)
+        transactions = list(reversed(transactions))
+        
+        # إضافة بيانات المعاملات
+        for row_num, transaction in enumerate(transactions, 11):
+            ws.cell(row=row_num, column=1).value = transaction.date.strftime('%Y-%m-%d')
+            ws.cell(row=row_num, column=2).value = transaction.get_transaction_type_display()
+            ws.cell(row=row_num, column=3).value = transaction.reference_number or "-"
+            ws.cell(row=row_num, column=4).value = transaction.description
+            ws.cell(row=row_num, column=5).value = float(transaction.amount)
+            ws.cell(row=row_num, column=6).value = float(transaction.running_balance)
+            ws.cell(row=row_num, column=7).value = transaction.created_by.username
+        
+        # تعديل عرض الأعمدة
+        for column in ws.columns:
+            max_length = 0
+            column_letter = column[0].column_letter
+            for cell in column:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(str(cell.value))
+                except:
+                    pass
+            adjusted_width = (max_length + 2)
+            ws.column_dimensions[column_letter].width = adjusted_width
+        
+        # إنشاء الاستجابة
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        filename = f"bank_account_statement_{account.name}_{timezone.now().date()}.xlsx"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        wb.save(response)
+        return response
+        
+    except Exception as e:
+        messages.error(request, _('An error occurred while exporting: {}').format(str(e)))
+        return redirect('banks:account_detail', pk=pk)

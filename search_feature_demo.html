@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مثال على خاصية البحث - Select2</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    <style>
+        body {
+            padding: 30px;
+            background-color: #f5f5f5;
+        }
+        .demo-card {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .demo-title {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .demo-description {
+            background: #e3f2fd;
+            padding: 15px;
+            border-right: 4px solid #2196F3;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        .steps {
+            background: #fff3e0;
+            padding: 15px;
+            border-right: 4px solid #ff9800;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+        .steps ol {
+            margin: 10px 0 0 0;
+            padding-right: 20px;
+        }
+        .note {
+            background: #f1f8e9;
+            padding: 15px;
+            border-right: 4px solid #8bc34a;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="demo-card">
+            <h2 class="demo-title">🔍 مثال توضيحي: خاصية البحث في القائمة المنسدلة</h2>
+            
+            <div class="demo-description">
+                <strong>📝 الوصف:</strong>
+                <p class="mb-0">هذا مثال توضيحي يوضح كيفية عمل خاصية البحث المضافة إلى صفحة مردود المشتريات. الميزة تتيح لك البحث السريع في الفواتير بكتابة اسم المورد أو رقم الفاتورة.</p>
+            </div>
+
+            <div class="mb-3">
+                <label for="invoiceSelect" class="form-label">
+                    <strong>الفاتورة الأصلية *</strong>
+                </label>
+                <select id="invoiceSelect" class="form-control" style="width: 100%;">
+                    <option value="">اختر الفاتورة الأصلية</option>
+                    <option value="1" data-supplier="شركة النور للتجارة" data-invoice="INV-2024-001">INV-2024-001 - شركة النور للتجارة (2024-10-01)</option>
+                    <option value="2" data-supplier="مؤسسة الأمل" data-invoice="INV-2024-002">INV-2024-002 - مؤسسة الأمل (2024-10-02)</option>
+                    <option value="3" data-supplier="شركة السلام" data-invoice="INV-2024-003">INV-2024-003 - شركة السلام (2024-10-03)</option>
+                    <option value="4" data-supplier="مؤسسة البركة" data-invoice="INV-2024-004">INV-2024-004 - مؤسسة البركة (2024-10-04)</option>
+                    <option value="5" data-supplier="شركة النجاح" data-invoice="INV-2024-005">INV-2024-005 - شركة النجاح (2024-10-05)</option>
+                    <option value="6" data-supplier="مؤسسة الخير" data-invoice="INV-2024-006">INV-2024-006 - مؤسسة الخير (2024-10-06)</option>
+                    <option value="7" data-supplier="شركة الفجر" data-invoice="INV-2024-007">INV-2024-007 - شركة الفجر (2024-10-07)</option>
+                    <option value="8" data-supplier="مؤسسة التقدم" data-invoice="INV-2024-008">INV-2024-008 - مؤسسة التقدم (2024-10-08)</option>
+                    <option value="9" data-supplier="شركة الازدهار" data-invoice="INV-2024-009">INV-2024-009 - شركة الازدهار (2024-10-09)</option>
+                    <option value="10" data-supplier="مؤسسة النماء" data-invoice="INV-2024-010">INV-2024-010 - مؤسسة النماء (2024-10-10)</option>
+                </select>
+            </div>
+
+            <div class="steps">
+                <strong>📋 كيفية الاستخدام:</strong>
+                <ol>
+                    <li>انقر على القائمة المنسدلة أعلاه</li>
+                    <li>ستظهر خانة البحث في الأعلى</li>
+                    <li>اكتب اسم المورد (مثال: "النور" أو "الأمل")</li>
+                    <li>أو اكتب رقم الفاتورة (مثال: "001" أو "002")</li>
+                    <li>ستظهر النتائج المطابقة فوراً</li>
+                    <li>اختر الفاتورة المطلوبة من النتائج</li>
+                </ol>
+            </div>
+
+            <div class="note">
+                <strong>💡 ملاحظة:</strong>
+                <p class="mb-0">هذا مثال توضيحي فقط. نفس الميزة تم تطبيقها على صفحة مردود المشتريات الفعلية في النظام على العنوان:</p>
+                <code style="display: block; background: white; padding: 10px; margin-top: 10px; border-radius: 5px;">
+                    http://127.0.0.1:8000/ar/purchases/returns/add/
+                </code>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            // تهيئة Select2 مع خاصية البحث
+            $('#invoiceSelect').select2({
+                language: 'ar',
+                dir: 'rtl',
+                placeholder: 'ابحث برقم الفاتورة أو اسم المورد...',
+                allowClear: true,
+                width: '100%',
+                theme: 'bootstrap-5',
+                matcher: function(params, data) {
+                    // إذا لم يكن هناك نص بحث، أظهر جميع الخيارات
+                    if ($.trim(params.term) === '') {
+                        return data;
+                    }
+
+                    // إذا لم يكن هناك نص للخيار، لا تعرضه
+                    if (typeof data.text === 'undefined') {
+                        return null;
+                    }
+
+                    // البحث في النص، اسم المورد، ورقم الفاتورة
+                    const searchTerm = params.term.toLowerCase();
+                    const text = data.text.toLowerCase();
+                    const supplier = $(data.element).data('supplier') ? $(data.element).data('supplier').toLowerCase() : '';
+                    const invoice = $(data.element).data('invoice') ? $(data.element).data('invoice').toLowerCase() : '';
+
+                    // إذا وجد النص في أي من الحقول، أظهر الخيار
+                    if (text.indexOf(searchTerm) > -1 || 
+                        supplier.indexOf(searchTerm) > -1 || 
+                        invoice.indexOf(searchTerm) > -1) {
+                        return data;
+                    }
+
+                    return null;
+                }
+            });
+
+            // عند اختيار عنصر
+            $('#invoiceSelect').on('select2:select', function (e) {
+                const data = e.params.data;
+                console.log('تم اختيار:', data.text);
+            });
+        });
+    </script>
+</body>
+</html>

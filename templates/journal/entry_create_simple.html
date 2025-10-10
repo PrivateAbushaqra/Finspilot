@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}إنشاء قيد محاسبي{% endblock %}
+
+{% block extra_css %}
+<style>
+    .journal-form {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        padding: 10px;
+        border: 1px solid #ddd;
+        text-align: right;
+    }
+    input, select, textarea {
+        width: 100%;
+        padding: 5px;
+    }
+    .error {
+        color: red;
+        font-size: 12px;
+    }
+    .btn {
+        padding: 10px 20px;
+        margin: 5px;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="journal-form">
+    <h1>إنشاء قيد محاسبي - نسخة مبسطة للاختبار</h1>
+    
+    <form method="post" id="simpleForm">
+        {% csrf_token %}
+        
+        <h2>معلومات القيد</h2>
+        <table>
+            <tr>
+                <th>رقم القيد</th>
+                <td>{{ form.entry_number }}</td>
+            </tr>
+            <tr>
+                <th>التاريخ</th>
+                <td>{{ form.entry_date }}</td>
+            </tr>
+            <tr>
+                <th>نوع المرجع</th>
+                <td>{{ form.reference_type }}</td>
+            </tr>
+            <tr>
+                <th>الوصف</th>
+                <td>{{ form.description }}</td>
+            </tr>
+        </table>
+        
+        <h2>بنود القيد</h2>
+        {{ formset.management_form }}
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>الحساب</th>
+                    <th>تفاصيل البند</th>
+                    <th>مدين</th>
+                    <th>دائن</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for line_form in formset %}
+                <tr>
+                    <td>
+                        {{ line_form.account }}
+                        <div class="error">{{ line_form.account.errors }}</div>
+                    </td>
+                    <td>
+                        {{ line_form.line_description }}
+                        <div class="error">{{ line_form.line_description.errors }}</div>
+                    </td>
+                    <td>
+                        {{ line_form.debit }}
+                        <div class="error">{{ line_form.debit.errors }}</div>
+                    </td>
+                    <td>
+                        {{ line_form.credit }}
+                        <div class="error">{{ line_form.credit.errors }}</div>
+                    </td>
+                </tr>
+                {% if line_form.non_field_errors %}
+                <tr>
+                    <td colspan="4" class="error">{{ line_form.non_field_errors }}</td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        {% if formset.non_form_errors %}
+        <div class="error">{{ formset.non_form_errors }}</div>
+        {% endif %}
+        
+        <div style="margin-top: 20px;">
+            <button type="submit" class="btn">حفظ القيد</button>
+            <a href="{% url 'journal:entry_list' %}" class="btn">إلغاء</a>
+        </div>
+    </form>
+</div>
+
+<script>
+// لا يوجد JavaScript - نموذج بسيط فقط!
+// فقط نطبع القيم قبل الإرسال للتشخيص
+document.getElementById('simpleForm').addEventListener('submit', function(e) {
+    console.log('📤 إرسال النموذج - القيم الفعلية:');
+    const formData = new FormData(this);
+    for (let [key, value] of formData.entries()) {
+        if (key.includes('debit') || key.includes('credit')) {
+            console.log(`  ${key} = "${value}"`);
+        }
+    }
+});
+</script>
+{% endblock %}

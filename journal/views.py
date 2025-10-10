@@ -308,14 +308,70 @@ def journal_entry_create(request):
         log_view_activity(request, 'view', Obj(), str(_('Viewing create journal entry page')))
     except Exception:
         pass
+    
     if request.method == 'POST':
-        # ربط النماذج بالطلب دائماً للحفاظ على البيانات عند الأخطاء
+        # تشخيص بسيط
+        import sys
+        print("\n" + "="*100, file=sys.stderr)
+        print("🔥 POST REQUEST RECEIVED", file=sys.stderr)
+        print("="*100, file=sys.stderr)
+        
+        # 🔧 إصلاح: استعادة القيم من backup fields إذا كانت الحقول الأصلية فارغة
+        post_data = request.POST.copy()
+        for key in list(post_data.keys()):
+            if key.endswith('_backup'):
+                original_key = key.replace('_backup', '')
+                backup_value = post_data.get(key)
+                original_value = post_data.get(original_key, '')
+                
+                # إذا كان الحقل الأصلي فارغاً والـ backup موجود، استخدم backup
+                if (not original_value or original_value == '') and backup_value:
+                    post_data[original_key] = backup_value
+                    print(f"🔧 استعادة {original_key} من backup: {backup_value}", file=sys.stderr)
+        
+        # إنشاء كائن مؤقت بدون حفظه لربط النماذج
         temp_entry = JournalEntry(created_by=request.user)
-        form = JournalEntryForm(request.POST, instance=temp_entry)
-        formset = JournalLineFormSet(request.POST, instance=temp_entry)
+        form = JournalEntryForm(post_data, instance=temp_entry, user=request.user)
+        formset = JournalLineFormSet(post_data, instance=temp_entry)
 
-        try:
-            if form.is_valid() and formset.is_valid():
+        # طباعة البيانات المرسلة (بعد الاستعادة من backup)
+        print("\n📋 POST Data (after backup restoration):", file=sys.stderr)
+        for key, value in post_data.items():
+            if not key.endswith('_backup'):  # لا نطبع backup fields
+                print(f"  {key} = {value}", file=sys.stderr)
+        
+        print("\n📊 Management Form Data:", file=sys.stderr)
+        print(f"  TOTAL_FORMS: {request.POST.get('form-TOTAL_FORMS')}", file=sys.stderr)
+        print(f"  INITIAL_FORMS: {request.POST.get('form-INITIAL_FORMS')}", file=sys.stderr)
+        print(f"  MIN_NUM_FORMS: {request.POST.get('form-MIN_NUM_FORMS')}", file=sys.stderr)
+        print(f"  MAX_NUM_FORMS: {request.POST.get('form-MAX_NUM_FORMS')}", file=sys.stderr)
+
+        # التحقق من صحة النماذج
+        print("\n✅ Validating forms...", file=sys.stderr)
+        form_valid = form.is_valid()
+        formset_valid = formset.is_valid()
+        
+        print(f"  Form valid: {form_valid}", file=sys.stderr)
+        print(f"  Formset valid: {formset_valid}", file=sys.stderr)
+        
+        # طباعة الأخطاء
+        if not form_valid:
+            print("\n❌ Form Errors:", file=sys.stderr)
+            for field, errors in form.errors.items():
+                print(f"  {field}: {errors}", file=sys.stderr)
+                
+        if not formset_valid:
+            print("\n❌ Formset Errors:", file=sys.stderr)
+            for i, form_errors in enumerate(formset.errors):
+                if form_errors:
+                    print(f"  Form {i}: {form_errors}", file=sys.stderr)
+            if formset.non_form_errors():
+                print(f"  Non-form errors: {formset.non_form_errors()}", file=sys.stderr)
+        
+        print("="*100 + "\n", file=sys.stderr)
+        
+        if form_valid and formset_valid:
+            try:
                 with transaction.atomic():
                     # حفظ القيد أولاً بقيمة إجمالية مبدئية
                     entry = form.save(commit=False)
@@ -323,9 +379,25 @@ def journal_entry_create(request):
                     entry.total_amount = Decimal('0')
                     entry.save()
 
-                    # ربط formset بالكيان المحفوظ ثم الحفظ
+                    # حفظ البنود يدوياً - استبعاد البنود الفارغة
                     formset.instance = entry
-                    formset.save()
+                    lines_to_save = []
+                    
+                    for form in formset:
+                        if form.cleaned_data and not form.cleaned_data.get('DELETE', False):
+                            account = form.cleaned_data.get('account')
+                            debit = form.cleaned_data.get('debit') or Decimal('0')
+                            credit = form.cleaned_data.get('credit') or Decimal('0')
+                            
+                            # احفظ فقط البنود التي لها حساب وقيمة
+                            if account and (debit > 0 or credit > 0):
+                                line = form.save(commit=False)
+                                line.journal_entry = entry
+                                lines_to_save.append(line)
+                    
+                    # حفظ جميع البنود الصالحة
+                    for line in lines_to_save:
+                        line.save()
 
                     # حساب الإجمالي
                     total_debit = entry.lines.aggregate(total=Sum('debit'))['total'] or Decimal('0')
@@ -347,36 +419,54 @@ def journal_entry_create(request):
 
                 messages.success(request, _('تم إنشاء القيد بنجاح'))
                 return redirect('journal:entry_detail', pk=entry.pk)
-            else:
-                # تسجيل أخطاء التحقق إن وجدت
+                
+            except Exception as e:
+                # خطأ غير متوقع أثناء الحفظ
                 try:
                     from core.models import AuditLog
                     AuditLog.objects.create(
                         user=request.user,
                         action_type='error',
                         content_type='JournalEntry',
-                        description='خطأ تحقق في نموذج القيد أو البنود عند الإنشاء'
+                        description=f'استثناء غير متوقع أثناء إنشاء القيد: {str(e)}'
                     )
                 except Exception:
                     pass
-        except Exception as e:
-            # أي خطأ غير متوقع في الإنتاج يجب ألا يؤدي إلى 500، بل يعرض الرسالة ويُسجّل
+                messages.error(request, _('حدث خطأ غير متوقع أثناء إنشاء القيد. يرجى المحاولة مرة أخرى.'))
+        else:
+            # هناك أخطاء في التحقق - إضافة رسائل خطأ واضحة
+            if not form_valid:
+                messages.error(request, _('يرجى تصحيح الأخطاء في معلومات القيد الأساسية'))
+            
+            if not formset_valid:
+                # عرض أخطاء الـ formset بشكل واضح
+                if formset.non_form_errors():
+                    for error in formset.non_form_errors():
+                        messages.error(request, error)
+                else:
+                    messages.error(request, _('يرجى تصحيح الأخطاء في بنود القيد'))
+            
+            # تسجيل أخطاء التحقق
             try:
                 from core.models import AuditLog
                 AuditLog.objects.create(
                     user=request.user,
                     action_type='error',
                     content_type='JournalEntry',
-                    description=f'استثناء غير متوقع أثناء إنشاء القيد: {str(e)}'
+                    description='خطأ تحقق في نموذج القيد أو البنود عند الإنشاء'
                 )
             except Exception:
                 pass
-            messages.error(request, _('حدث خطأ غير متوقع أثناء إنشاء القيد. يرجى المحاولة مرة أخرى.'))
+        
+        # في حالة الأخطاء، سيتم عرض النموذج مرة أخرى مع البيانات المدخلة
+        # form و formset يحتفظان بالبيانات المدخلة من request.POST
     else:
-        form = JournalEntryForm()
+        # طلب GET - إنشاء نماذج فارغة
+        form = JournalEntryForm(user=request.user)
         temp_entry = JournalEntry()
         formset = JournalLineFormSet(instance=temp_entry)
     
+    # إعداد السياق وعرض الصفحة (سواء كان GET أو POST مع أخطاء)
     context = {
         'form': form,
         'formset': formset,
@@ -384,6 +474,53 @@ def journal_entry_create(request):
         'title': _('إنشاء قيد محاسبي جديد')
     }
     return render(request, 'journal/entry_create.html', context)
+
+
+@login_required
+@permission_required('journal.add_journalentry', raise_exception=True)
+def journal_entry_create_simple(request):
+    """
+    نسخة مبسطة جداً من صفحة إنشاء القيد - للاختبار فقط!
+    بدون JavaScript معقد - لمعرفة سبب المشكلة
+    """
+    from .models import JournalEntry, Account
+    from .forms import JournalEntryForm, JournalLineFormSet
+    
+    if request.method == 'POST':
+        # طباعة القيم المستلمة
+        print("\n" + "="*80)
+        print("🧪 نموذج الاختبار البسيط - POST Data:")
+        for key, value in request.POST.items():
+            if 'debit' in key or 'credit' in key or 'account' in key:
+                print(f"  {key} = {value}")
+        print("="*80 + "\n")
+        
+        temp_entry = JournalEntry(created_by=request.user)
+        form = JournalEntryForm(request.POST, instance=temp_entry, user=request.user)
+        formset = JournalLineFormSet(request.POST, instance=temp_entry)
+        
+        if form.is_valid() and formset.is_valid():
+            entry = form.save()
+            formset.instance = entry
+            formset.save()
+            messages.success(request, _('تم إنشاء القيد المحاسبي بنجاح'))
+            return redirect('journal:entry_detail', pk=entry.pk)
+        else:
+            print("❌ Form errors:", form.errors)
+            print("❌ Formset errors:", formset.errors)
+            print("❌ Non-form errors:", formset.non_form_errors())
+    else:
+        form = JournalEntryForm(user=request.user)
+        temp_entry = JournalEntry()
+        formset = JournalLineFormSet(instance=temp_entry)
+    
+    context = {
+        'form': form,
+        'formset': formset,
+        'accounts': Account.objects.filter(is_active=True).order_by('code'),
+        'title': _('إنشاء قيد محاسبي - نسخة بسيطة')
+    }
+    return render(request, 'journal/entry_create_simple.html', context)
 
 
 @login_required

@@ -79,6 +79,24 @@
         padding: 1rem;
         margin-bottom: 1.5rem;
     }
+    
+    /* أنماط لخلفيات الأرصدة */
+    .bg-light-success {
+        background-color: #d1f2eb !important;
+        border-color: #28a745 !important;
+        color: #155724;
+    }
+    
+    .bg-light-danger {
+        background-color: #f8d7da !important;
+        border-color: #dc3545 !important;
+        color: #721c24;
+    }
+    
+    .bg-light {
+        background-color: #f8f9fa !important;
+        color: #6c757d;
+    }
 </style>
 {% endblock %}
 
@@ -194,30 +212,43 @@
                             <div class="form-text">{% trans "Maximum amount the" %} {% trans "Customer" %} {% trans "can be" %} {% trans "debited" %}</div>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="balance" class="form-label">{% trans "Balance" %} الحالي</label>
+                            <label for="current_balance_display" class="form-label">{% trans "Current Balance" %} (محسوب من المعاملات)</label>
                             <div class="balance-input">
                                 <span class="currency-symbol">{% get_currency_symbol %}</span>
-                                <input type="number" class="form-control" id="balance" name="balance" 
-                                       value="{{ customer_supplier.balance }}" step="0.001">
+                                <input type="text" class="form-control {% if customer_supplier.current_balance > 0 %}bg-light-success{% elif customer_supplier.current_balance < 0 %}bg-light-danger{% else %}bg-light{% endif %}" 
+                                       id="current_balance_display" 
+                                       value="{{ customer_supplier.current_balance|floatformat:3 }}" 
+                                       readonly>
                             </div>
-                            <div class="form-text">{% trans "Current balance (positive: in credit, negative: in debit)" %}</div>
+                            <div class="form-text text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                الرصيد الحالي محسوب تلقائياً من جميع المعاملات ولا يمكن تعديله يدوياً
+                            </div>
                         </div>
                     </div>
                     
                     <!-- Balance Summary -->
                     <div class="alert alert-info">
                         <div class="row text-center">
-                            <div class="col-md-4">
-                                <h6 class="text-success">{% trans "Current Balance" %}</h6>
-                                <h4 class="text-success">{{ customer_supplier.balance|currency_format }}</h4>
+                            <div class="col-md-3">
+                                <h6 class="{% if customer_supplier.current_balance > 0 %}text-success{% elif customer_supplier.current_balance < 0 %}text-danger{% else %}text-muted{% endif %}">الرصيد الحالي</h6>
+                                <h4 class="{% if customer_supplier.current_balance > 0 %}text-success{% elif customer_supplier.current_balance < 0 %}text-danger{% else %}text-muted{% endif %}">{{ customer_supplier.current_balance|currency_format }}</h4>
+                                <small class="text-muted">محسوب من المعاملات</small>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-3">
+                                <h6 class="text-secondary">الرصيد الافتتاحي</h6>
+                                <h4 class="text-secondary">{{ customer_supplier.balance|currency_format }}</h4>
+                                <small class="text-muted">عند الإنشاء</small>
+                            </div>
+                            <div class="col-md-3">
                                 <h6 class="text-primary">{% trans "Credit Limit" %}</h6>
                                 <h4 class="text-primary">{{ customer_supplier.credit_limit|currency_format }}</h4>
+                                <small class="text-muted">الحد الائتماني</small>
                             </div>
-                            <div class="col-md-4">
-                                <h6 class="text-info">{% trans "Available Credit" %}</h6>
+                            <div class="col-md-3">
+                                <h6 class="text-info">الائتمان المتاح</h6>
                                 <h4 class="text-info">{{ available_credit|currency_format }}</h4>
+                                <small class="text-muted">المبلغ المتاح</small>
                             </div>
                         </div>
                     </div>

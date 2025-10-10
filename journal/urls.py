@@ -19,6 +19,7 @@ urlpatterns = [
     path('entries/', views.journal_entry_list, name='entry_list'),
     path('entries/by-type/', views.journal_entries_by_type, name='entries_by_type'),
     path('entries/create/', views.journal_entry_create, name='entry_create'),
+    path('entries/create-simple/', views.journal_entry_create_simple, name='entry_create_simple'),
     path('entries/<int:pk>/', views.journal_entry_detail, name='entry_detail'),
     path('entries/<int:pk>/detail/', views.journal_entry_detail_with_lines, name='entry_detail_with_lines'),
     path('entries/<int:pk>/delete/', views.delete_journal_entry, name='entry_delete'),

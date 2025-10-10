@@ -6,61 +6,93 @@
 {% block title %}{% trans "Account Transactions" %} - {{ account.name }} - {{ block.super }}{% endblock %}
 
 {% block extra_css %}
+<!-- DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.24/css/dataTables.bootstrap5.min.css">
 <style>
-    .transaction-card {
-        border: 1px solid #e9ecef;
-        border-radius: 8px;
-        margin-bottom: 1rem;
-        transition: all 0.3s ease;
-    }
-    
-    .transaction-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-    
-    .transaction-type-deposit {
-        border-left: 4px solid #28a745;
-    }
-    
-    .transaction-type-withdrawal {
-        border-left: 4px solid #dc3545;
-    }
-    
-    .amount-deposit {
-        color: #28a745;
-        font-weight: bold;
-    }
-    
-    .amount-withdrawal {
-        color: #dc3545;
-        font-weight: bold;
-    }
-    
-    .delete-warning {
-        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
-        color: white;
-        border-radius: 10px;
-        padding: 1.5rem;
-        margin-bottom: 2rem;
-    }
-    
-    .account-summary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: 10px;
-        padding: 1.5rem;
-        margin-bottom: 2rem;
-    }
-    
-    .action-buttons {
-        position: sticky;
-        top: 20px;
-        z-index: 100;
-    }
+/* تنسيق أيقونات الترتيب في DataTables */
+table.dataTable thead th {
+    position: relative;
+    background-image: none !important;
+}
+table.dataTable thead th.sorting:before,
+table.dataTable thead th.sorting:after,
+table.dataTable thead th.sorting_asc:before,
+table.dataTable thead th.sorting_asc:after,
+table.dataTable thead th.sorting_desc:before,
+table.dataTable thead th.sorting_desc:after {
+    position: absolute;
+    right: 8px;
+    display: block;
+    opacity: 0.3;
+}
+table.dataTable thead th.sorting:before {
+    content: "\f0de";
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    top: 50%;
+    transform: translateY(-50%);
+}
+table.dataTable thead th.sorting:after {
+    content: "\f0dd";
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    bottom: 0;
+    top: auto;
+}
+
+.transaction-card {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.transaction-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.transaction-type-deposit {
+    border-left: 4px solid #28a745;
+}
+
+.transaction-type-withdrawal {
+    border-left: 4px solid #dc3545;
+}
+
+.amount-deposit {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.amount-withdrawal {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.delete-warning {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+    color: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.account-summary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.action-buttons {
+    position: sticky;
+    top: 20px;
+    z-index: 100;
+}
 </style>
 {% endblock %}
-
 {% block content %}
 <div class="container-fluid">
     <!-- Page Header -->
@@ -135,57 +167,84 @@
     {% if transactions_count > 0 %}
     <!-- Transactions List -->
     <div class="card">
-        <div class="card-header">
+        <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">
                 <i class="fas fa-exchange-alt me-2"></i>
                 {% trans "Financial Transactions" %}
             </h5>
+            <div>
+                <button type="button" class="btn btn-primary btn-sm me-2" onclick="printStatement()">
+                    <i class="fas fa-print"></i> {% trans "Print Statement" %}
+                </button>
+                <a href="{% url 'banks:account_export_xlsx' account.pk %}" class="btn btn-success btn-sm">
+                    <i class="fas fa-file-excel"></i> {% trans "Export to Excel" %}
+                </a>
+            </div>
         </div>
         <div class="card-body">
-            {% for transaction in transactions %}
-            <div class="transaction-card transaction-type-{{ transaction.transaction_type }} p-3" 
-                 data-transaction-id="{{ transaction.id }}">
-                <div class="row align-items-center">
-                    <div class="col-md-2">
-                        <div class="text-center">
-                            {% if transaction.transaction_type == 'deposit' %}
-                                <i class="fas fa-arrow-down fa-2x text-success"></i>
-                                <div class="mt-1 small">{% trans "Deposit" %}</div>
-                            {% else %}
-                                <i class="fas fa-arrow-up fa-2x text-danger"></i>
-                                <div class="mt-1 small">{% trans "Withdrawal" %}</div>
+            <div class="table-responsive">
+                <table id="transactionsTable" class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Date" %}</th>
+                            <th>{% trans "Transaction Type" %}</th>
+                            <th>{% trans "Reference Number" %}</th>
+                            <th>{% trans "Description" %}</th>
+                            <th>{% trans "Amount" %}</th>
+                            <th>{% trans "Balance After Transaction" %}</th>
+                            <th>{% trans "Created By" %}</th>
+                            {% if delete_mode %}
+                            <th>{% trans "Actions" %}</th>
                             {% endif %}
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <h6 class="mb-1 amount-{{ transaction.transaction_type }}">
-                            {% if transaction.transaction_type == 'deposit' %}+{% else %}-{% endif %}{{ transaction.amount|floatformat:3 }} {% get_currency_symbol %}
-                        </h6>
-                        <small class="text-muted">{{ transaction.date }}</small>
-                    </div>
-                    <div class="col-md-4">
-                        <p class="mb-1">{{ transaction.description|truncatechars:60 }}</p>
-                        {% if transaction.reference_number %}
-                        <small class="text-muted">{% trans "Reference" %}: {{ transaction.reference_number }}</small>
-                        {% endif %}
-                    </div>
-                    <div class="col-md-2">
-                        <small class="text-muted">{% trans "By" %}: {{ transaction.created_by.username }}</small><br>
-                        <small class="text-muted">{{ transaction.created_at|date:"Y/m/d H:i" }}</small>
-                    </div>
-                    <div class="col-md-1 text-end">
-                        <button class="btn btn-sm btn-outline-danger delete-transaction-btn" 
-                                data-transaction-id="{{ transaction.id }}"
-                                data-transaction-type="{{ transaction.get_transaction_type_display }}"
-                                data-transaction-amount="{{ transaction.amount }}"
-                                data-transaction-date="{{ transaction.date }}"
-                                title="{% trans "Delete Transaction" %}">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for transaction in transactions %}
+                        <tr>
+                            <td>{{ transaction.date|date:"Y-m-d" }}</td>
+                            <td>
+                                <span class="badge bg-{% if transaction.transaction_type == 'deposit' %}success{% else %}danger{% endif %}">
+                                    {{ transaction.get_transaction_type_display }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if transaction.reference_number and transaction.transfer_id %}
+                                    <a href="{% url 'banks:transfer_detail' transaction.transfer_id %}" 
+                                       class="text-decoration-none" 
+                                       title="{% trans "View Transfer Details" %}">
+                                        {{ transaction.reference_number }}
+                                    </a>
+                                {% elif transaction.reference_number %}
+                                    {{ transaction.reference_number }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>{{ transaction.description|truncatechars:60 }}</td>
+                            <td class="{% if transaction.amount > 0 %}text-success{% elif transaction.amount < 0 %}text-danger{% endif %}">
+                                {{ transaction.amount|floatformat:3 }}
+                            </td>
+                            <td class="{% if transaction.running_balance > 0 %}text-success{% elif transaction.running_balance < 0 %}text-danger{% else %}text-muted{% endif %}">
+                                <strong>{{ transaction.running_balance|floatformat:3 }}</strong>
+                            </td>
+                            <td>{{ transaction.created_by.username }}</td>
+                            {% if delete_mode %}
+                            <td>
+                                <button class="btn btn-sm btn-outline-danger delete-transaction-btn" 
+                                        data-transaction-id="{{ transaction.id }}"
+                                        data-transaction-type="{{ transaction.get_transaction_type_display }}"
+                                        data-transaction-amount="{{ transaction.amount }}"
+                                        data-transaction-date="{{ transaction.date }}"
+                                        title="{% trans "Delete Transaction" %}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-            {% endfor %}
         </div>
     </div>
     {% else %}
@@ -266,6 +325,10 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- DataTables JS -->
+<script type="text/javascript" src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.10.24/js/dataTables.bootstrap5.min.js"></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const deleteTransactionModal = new bootstrap.Modal(document.getElementById('deleteTransactionModal'));
@@ -357,6 +420,104 @@ document.addEventListener('DOMContentLoaded', function() {
             alertDiv.remove();
         }, 5000);
     }
+
+    // تفعيل DataTables لجدول المعاملات
+    $('#transactionsTable').DataTable({
+        "language": {
+            "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Arabic.json"
+        },
+        "order": [[ 0, "desc" ]],  // الترتيب الافتراضي حسب التاريخ تنازلياً
+        "pageLength": 20,
+        "searching": true,
+        "info": true,
+        "paging": false,  // إلغاء التقسيم للصفحات
+        "columnDefs": [
+            { "orderable": true, "targets": [0, 1, 2, 3, 4, 6] },  // جعل معظم الأعمدة قابلة للترتيب
+            { "orderable": false, "targets": [5, 7] }  // عمود الرصيد بعد الحركة وعمود الإجراءات غير قابل للترتيب
+        ]
+    });
 });
+
+// دالة طباعة الكشف
+function printStatement() {
+    // إنشاء نافذة طباعة جديدة
+    var printWindow = window.open('', '_blank');
+    
+    // إعداد محتوى الطباعة
+    var printContent = `
+        <!DOCTYPE html>
+        <html dir="rtl" lang="ar">
+        <head>
+            <meta charset="UTF-8">
+            <title>{% trans "Bank Account Statement" %} - {{ account.name }}</title>
+            <style>
+                body { font-family: Arial, sans-serif; direction: rtl; margin: 20px; }
+                .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
+                .info { margin-bottom: 20px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }
+                th { background-color: #f5f5f5; font-weight: bold; }
+                .balance-positive { color: green; }
+                .balance-negative { color: red; }
+                @media print { body { margin: 0; } }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>{% trans "Bank Account Statement" %}</h1>
+                <h2>{{ account.name }}</h2>
+                <p>{{ account.bank_name }} - {{ account.account_number }}</p>
+            </div>
+            
+            <div class="info">
+                <p><strong>{% trans "Current Balance" %}:</strong> <span class="{% if account.balance > 0 %}balance-positive{% elif account.balance < 0 %}balance-negative{% endif %}">{{ account.balance|floatformat:3 }} {% get_currency_symbol %}</span></p>
+                <p><strong>{% trans "Transactions Count" %}:</strong> {{ transactions_count }}</p>
+                <p><strong>{% trans "Print Date" %}:</strong> ${new Date().toLocaleDateString('ar')}</p>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>{% trans "Date" %}</th>
+                        <th>{% trans "Transaction Type" %}</th>
+                        <th>{% trans "Reference Number" %}</th>
+                        <th>{% trans "Description" %}</th>
+                        <th>{% trans "Amount" %}</th>
+                        <th>{% trans "Balance After Transaction" %}</th>
+                        <th>{% trans "Created By" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for transaction in transactions %}
+                    <tr>
+                        <td>{{ transaction.date|date:"Y-m-d" }}</td>
+                        <td>{{ transaction.get_transaction_type_display }}</td>
+                        <td>{{ transaction.reference_number|default:"-" }}</td>
+                        <td>{{ transaction.description }}</td>
+                        <td class="{% if transaction.amount > 0 %}balance-positive{% elif transaction.amount < 0 %}balance-negative{% endif %}">{{ transaction.amount|floatformat:3 }}</td>
+                        <td class="{% if transaction.running_balance > 0 %}balance-positive{% elif transaction.running_balance < 0 %}balance-negative{% endif %}">{{ transaction.running_balance|floatformat:3 }}</td>
+                        <td>{{ transaction.created_by.username }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            <div style="text-align: center; margin-top: 50px; font-size: 12px; color: #666;">
+                Finspilot Software
+            </div>
+        </body>
+        </html>
+    `;
+    
+    // كتابة المحتوى في النافذة الجديدة
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    
+    // انتظار تحميل المحتوى ثم الطباعة
+    printWindow.onload = function() {
+        printWindow.print();
+        printWindow.close();
+    };
+}
 </script>
 {% endblock %}

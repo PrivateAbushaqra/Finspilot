@@ -72,7 +72,8 @@ class Cashbox(models.Model):
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
         
         # حساب الرصيد الجديد
-        new_balance = deposits - withdrawals
+        # withdrawals هو سالب، لذا نضيفه بدلاً من طرحه
+        new_balance = deposits + withdrawals
         
         # تحديث الرصيد إذا كان مختلفاً
         if self.balance != new_balance:
@@ -96,7 +97,7 @@ class Cashbox(models.Model):
             transaction_type__in=['withdrawal', 'transfer_out']
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
         
-        return deposits - withdrawals
+        return deposits + withdrawals
 
 
 class CashboxTransfer(models.Model):
@@ -175,9 +176,7 @@ class CashboxTransfer(models.Model):
         elif self.transfer_type == 'cashbox_to_bank':
             if not self.from_cashbox or not self.to_bank:
                 raise ValidationError(_('Sender cashbox and receiver bank must be specified'))
-            # التحقق من معلومات الإيداع
-            if not self.deposit_document_number:
-                raise ValidationError(_('Deposit document number is required for transfers to bank'))
+            # التحقق من معلومات الإيداع (deposit_document_number أصبح اختياري)
             if not self.deposit_type:
                 raise ValidationError(_('Deposit type is required'))
             # التحقق من معلومات الشيك

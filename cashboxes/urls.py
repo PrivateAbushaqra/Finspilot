@@ -11,6 +11,7 @@ urlpatterns = [
     path('<int:cashbox_id>/edit/', views.cashbox_edit, name='cashbox_edit'),
     path('<int:cashbox_id>/delete/', views.cashbox_delete, name='cashbox_delete'),
     path('<int:cashbox_id>/clear-transactions/', views.ClearCashboxTransactionsView.as_view(), name='clear_transactions'),
+    path('<int:cashbox_id>/export-xlsx/', views.cashbox_export_xlsx, name='cashbox_export_xlsx'),
     
     # التحويلات
     path('transfers/', views.transfer_list, name='transfer_list'),

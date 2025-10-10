@@ -2,686 +2,489 @@
 {% load i18n %}
 {% load currency_tags %}
 
-
-
-{% block title %}{% trans "Add Sales Return" %} - {{ block.super }}{% endblock %}
-
 {% block extra_css %}
-<style>
-    .form-container {
-        background: #fff;
-        border-radius: 8px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);document.addEventListener('DOMContentLoaded', function() {
-    // Set current date
-    const today = new Date().toISOString().split('T')[0];
-    const dateField = document.getElementById('id_return_date');
-    if (dateField && !dateField.value) {
-        dateField.value = today;
-    }
-    
-    // Show all invoices button
-    document.getElementById('showAllInvoices').addEventListener('click', function() {
-        console.log('Show all invoices clicked');
-        loadAllInvoices();
-    });
-});
-
-function loadAllInvoices() {
-    console.log('Loading all invoices...');
-    const apiUrl = '/ar/sales/api/invoices-for-returns/';
-    
-    fetch(apiUrl)
-        .then(response => {
-            console.log('All invoices API response status:', response.status);
-            return response.json();
-        })
-        .then(data => {
-            console.log('All invoices API response data:', data);
-            if (data.success) {
-                availableInvoices = data.invoices;
-                displaySearchResults(data.invoices);
-                document.getElementById('id_original_invoice_search').focus();
-            } else {
-                console.error('Error fetching invoices:', data.error);
-                alert('Error loading invoices: ' + data.error);
-            }
-        })
-        .catch(error => {
-            console.error('Network error:', error);
-            alert('Error connecting to server');
-        });
-}
-
-// Store selected invoices
-let availableInvoices = [];
-let selectedInvoice = null;ding: 2rem;
-        margin-bottom: 2rem;
-    }
-    
-    .form-header {
-        border-bottom: 2px solid #e9ecef;
-        padding-bottom: 1rem;
-        margin-bottom: 2rem;
-    }
-    
-    .form-section {
-        background: #f8f9fa;
-        border-radius: 6px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        border-left: 4px solid #dc3545;
-    }
-    
-    .return-item-row {
-        background: #fff;
-        border: 1px solid #e9ecef;
-        border-radius: 6px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-    }
-    
-    .summary-section {
-        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
-        color: white;
-        border-radius: 8px;
-        padding: 1.5rem;
-        margin-top: 2rem;
-    }
-    
-    .required-field {
-        color: #dc3545;
-    }
-    
-    .invoice-search {
-        position: relative;
-    }
-    
-    .search-results {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        background: white;
-        border: 1px solid #ddd;
-        border-top: none;
-        max-height: 200px;
-        overflow-y: auto;
-        z-index: 1000;
-        display: none;
-    }
-    
-    .search-result-item {
-        padding: 0.5rem 1rem;
-        cursor: pointer;
-        border-bottom: 1px solid #eee;
-    }
-    
-    .search-result-item:hover {
-        background: #f8f9fa;
-    }
-    
-    .invoice-details {
-        background: #e7f3ff;
-        border: 1px solid #b8daff;
-        border-radius: 6px;
-        padding: 1rem;
-        margin-top: 1rem;
-    }
-</style>
+<!-- Select2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 {% endblock %}
+
+{% block title %}{% trans "Create Sales Return" %}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
-    <!-- Page Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h2 class="mb-0">
-                <i class="fas fa-undo text-danger me-2"></i>
-                {% trans "Add Sales Return" %}
-            </h2>
-            <p class="text-muted mb-0">Create Sales Return {% trans "New" %}</p>
-        </div>
-        <div>
-            <a href="{% url 'sales:return_list' %}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left me-1"></i>
-                Back to {% trans "List" %}
-            </a>
-        </div>
-    </div>
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-undo me-2"></i>
+                        {% trans "Create Sales Return" %}
+                    </h3>
+                    <a href="{% url 'sales:return_list' %}" class="btn btn-outline-secondary float-end">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        {% trans "Back to List" %}
+                    </a>
+                </div>
 
-    <!-- Form Container -->
-    <div class="form-container">
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
-        
-        <div class="form-header">
-            <h3>
-                <i class="fas fa-undo text-danger me-2"></i>
-                Sales Return Information
-            </h3>
-            <p class="text-muted mb-0">Please fill in all required fields</p>
-        </div>
-        
-        <form method="post" id="salesReturnForm">
-            {% csrf_token %}
-            
-            <!-- Return Information Section -->
-            <div class="form-section">
-                <h5>
-                    <i class="fas fa-info-circle me-1"></i>
-                    {% trans "Information" %} Sales Return
-                </h5>
-                
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="id_return_number" class="form-label">
-                                Sales Return Number <span class="required-field">*</span>
-                            </label>
-                            <input type="text" class="form-control" id="id_return_number" name="return_number" 
-                                   value="{{ next_return_number }}" 
-                                   {% if not can_edit_return_number %}readonly{% endif %}
-                                   placeholder="{% trans "Number" %} Expected: {{ next_return_number }}" required>
-                            {% if not can_edit_return_number %}
-                                <small class="form-text text-muted">{% trans "Number" %} will be generated automatically</small>
-                            {% endif %}
-                        </div>
-                    </div>
+                <form method="post" id="returnForm">
+                    {% csrf_token %}
                     
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="id_return_date" class="form-label">
-                                {% trans "Return Date" %} <span class="required-field">*</span>
-                            </label>
-                            <input type="date" class="form-control" id="id_return_date" name="date" 
-                                   {% if not can_edit_date %}readonly{% endif %}
-                                   required>
-                            {% if not can_edit_date %}
-                                <small class="form-text text-muted">You do not have permission to {% trans "Edit" %} {% trans "Date" %}</small>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="mb-3">
-                            <label for="id_original_invoice" class="form-label">
-                                Original Invoice <span class="required-field">*</span>
-                            </label>
-                            <div class="invoice-search">
-                                <input type="text" class="form-control" id="id_original_invoice_search" 
-                                       placeholder="Search for invoice by number or customer name..." autocomplete="off" required>
-                                <button type="button" class="btn btn-sm btn-outline-secondary mt-2" id="showAllInvoices">Show All Invoices</button>
-                                <input type="hidden" id="id_original_invoice" name="original_invoice">
-                                <div class="search-results" id="invoiceSearchResults"></div>
-                            </div>
-                        </div>
-                        
-                        <!-- Invoice Details (will be populated when invoice is selected) -->
-                        <div class="invoice-details" id="invoiceDetails" style="display: none;">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <strong>{% trans "Invoice Number" %}:</strong> <span id="selectedInvoiceNumber"></span><br>
-                                    <strong>{% trans "Customer" %}:</strong> <span id="selectedCustomer"></span><br>
-                                    <strong>{% trans "Invoice Date" %}:</strong> <span id="selectedInvoiceDate"></span>
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Return Information -->
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">{% trans "Return Number" %} <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="return_number" 
+                                           value="{{ suggested_return_number }}" required>
                                 </div>
-                                <div class="col-md-6">
-                                    <strong>{% trans "Grand Total" %}:</strong> <span id="selectedInvoiceTotal"></span><br>
-                                    <strong>{% trans "Status" %}:</strong> <span id="selectedInvoiceStatus"></span>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">{% trans "Return Date" %} <span class="text-danger">*</span></label>
+                                    <input type="date" class="form-control" name="date" 
+                                           value="{% now 'Y-m-d' %}" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">{% trans "Return Type" %} <span class="text-danger">*</span></label>
+                                    <select class="form-control" name="return_type" required>
+                                        <option value="partial">{% trans "Partial Return" %}</option>
+                                        <option value="full">{% trans "Full Return" %}</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">{% trans "Original Invoice" %} <span class="text-danger">*</span></label>
+                                    <select class="form-control" name="original_invoice" id="originalInvoiceSelect" required style="width: 100%;">
+                                        <option value="">{% trans "Select Original Invoice" %}</option>
+                                        {% for invoice in invoices %}
+                                            <option value="{{ invoice.id }}" 
+                                                    data-customer="{{ invoice.customer.name }}"
+                                                    data-invoice="{{ invoice.invoice_number }}"
+                                                    data-date="{{ invoice.date }}">
+                                                {{ invoice.invoice_number }} - {{ invoice.customer.name }} ({{ invoice.date }})
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <!-- Selected Invoice Information -->
+                                <div id="invoiceInfo"></div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">{% trans "Return Reason" %} <span class="text-danger">*</span></label>
+                                    <select class="form-control" name="return_reason" required>
+                                        <option value="">{% trans "Select Return Reason" %}</option>
+                                        <option value="defective">{% trans "Defective Product" %}</option>
+                                        <option value="wrong_item">{% trans "Wrong Item" %}</option>
+                                        <option value="excess">{% trans "Excess Quantity" %}</option>
+                                        <option value="expired">{% trans "Expired" %}</option>
+                                        <option value="damaged">{% trans "Damaged During Transport" %}</option>
+                                        <option value="other">{% trans "Other" %}</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">{% trans "Notes" %}</label>
+                                    <textarea class="form-control" name="notes" rows="3" 
+                                              placeholder="{% trans 'Enter any additional notes...' %}"></textarea>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="mb-3">
-                            <label for="id_customer" class="form-label">
-                                Customer <span class="required-field">*</span>
-                            </label>
-                            <select class="form-control" id="id_customer" name="customer" required>
-                                <option value="">Choose customer...</option>
-                                {% for customer in customers %}
-                                <option value="{{ customer.id }}">{{ customer.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Return Items Section -->
-            <div class="form-section">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5>
-                        <i class="fas fa-box me-1"></i>
-                        Return Items
-                    </h5>
-                </div>
-                
-                <div id="returnItemsContainer">
-                    <!-- Return items will be loaded here when invoice is selected -->
-                    <div class="text-center text-muted py-4" id="noInvoiceMessage">
-                        <i class="fas fa-search fa-2x mb-2"></i>
-                        <p>Select the original invoice first to display available products for return</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Return Reason Section -->
-            <div class="form-section">
-                <h5>
-                    <i class="fas fa-comment me-1"></i>
-                    {% trans "Details" %} Return
-                </h5>
-                
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="id_return_reason" class="form-label">
-                                Return Reason <span class="required-field">*</span>
-                            </label>
-                            <select class="form-select" id="id_return_reason" name="return_reason" required>
-                                <option value="">Choose return reason</option>
-                                <option value="defective">{% trans "Defective" %} Product</option>
-                                <option value="wrong_item">Wrong Product</option>
-                                <option value="customer_request">{% trans "Customer" %} Request</option>
-                                <option value="damaged">{% trans "Damaged" %} Product</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="id_refund_method" class="form-label">Refund Method</label>
-                            <select class="form-select" id="id_refund_method" name="refund_method">
-                                <option value="cash">{% trans "Cash" %}</option>
-                                <option value="bank_transfer">{% trans "Bank" %} {% trans "Transfer" %}</option>
-                                <option value="credit_note">{% trans "Credit" %} Note</option>
-                                <option value="exchange">Exchange</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="mb-3">
-                    <label for="id_notes" class="form-label">{% trans "Notes" %}</label>
-                    <textarea class="form-control" id="id_notes" name="notes" rows="3" 
-                              placeholder="Any additional {% trans "Notes" %} about the return..."></textarea>
-                </div>
-            </div>
-
-            <!-- Return Summary -->
-            <div class="summary-section" id="returnSummary" style="display: none;">
-                <div class="row">
-                    <div class="col-md-8">
-                        <h5 class="mb-3">{% trans "Summary" %} Return</h5>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="summary-details">
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Total Return:</span>
-                                <strong id="totalReturnDisplay">0.00 {% get_currency_symbol %}</strong>
+                        <!-- Invoice Items Section -->
+                        <div class="row mt-4" id="invoiceItemsSection" style="display: none;">
+                            <div class="col-12">
+                                <h5 class="mb-3">{% trans "Available Invoice Items for Return" %}</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered" id="itemsTable">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>{% trans "Product Code" %}</th>
+                                                <th>{% trans "Product Name" %}</th>
+                                                <th>{% trans "Original Quantity" %}</th>
+                                                <th>{% trans "Previously Returned" %}</th>
+                                                <th>{% trans "Available for Return" %}</th>
+                                                <th>{% trans "Return Quantity" %}</th>
+                                                <th>{% trans "Unit Price" %}</th>
+                                                <th>{% trans "Tax Rate" %}</th>
+                                                <th>{% trans "Total" %}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="itemsTableBody">
+                                            <!-- Items will be loaded here via AJAX -->
+                                        </tbody>
+                                    </table>
+                                </div>
                             </div>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Return Fees:</span>
-                                <strong id="returnFeesDisplay">0.00 {% get_currency_symbol %}</strong>
-                            </div>
-                            <hr>
-                            <div class="d-flex justify-content-between mb-0">
-                                <span class="h5">Net Refund:</span>
-                                <strong class="h5 text-warning" id="netRefundDisplay">0.00 {% get_currency_symbol %}</strong>
+                        </div>
+
+                        <!-- Totals Section -->
+                        <div class="row mt-4" id="totalsSection" style="display: none;">
+                            <div class="col-12">
+                                <div class="row justify-content-end">
+                                    <div class="col-md-4">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <div class="d-flex justify-content-between mb-2">
+                                                    <span>{% trans "Subtotal" %}:</span>
+                                                    <span id="subtotalDisplay">0.00</span>
+                                                </div>
+                                                <div class="d-flex justify-content-between mb-2">
+                                                    <span>{% trans "Tax" %}:</span>
+                                                    <span id="taxDisplay">0.00</span>
+                                                </div>
+                                                <hr>
+                                                <div class="d-flex justify-content-between fw-bold">
+                                                    <span>{% trans "Total" %}:</span>
+                                                    <span id="totalDisplay">0.00</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- Form Actions -->
-            <div class="row mt-4">
-                <div class="col-12">
-                    <div class="d-flex gap-3">
-                        <button type="submit" name="action" value="save" class="btn btn-danger btn-lg">
-                            <i class="fas fa-save me-2"></i>
-                            {% trans "Save" %} Return
-                        </button>
-                        <button type="submit" name="action" value="save_and_process" class="btn btn-warning btn-lg">
-                            <i class="fas fa-check me-2"></i>
-                            {% trans "Save" %} and Process
-                        </button>
-                        <a href="{% url 'sales:return_list' %}" class="btn btn-secondary btn-lg">
-                            <i class="fas fa-times me-2"></i>
-                            Cancel
-                        </a>
+                    <div class="card-footer">
+                        <div class="row">
+                            <div class="col-12 text-end">
+                                <button type="submit" class="btn btn-success" id="saveButton" disabled>
+                                    <i class="fas fa-save me-2"></i>
+                                    {% trans "Save Return" %}
+                                </button>
+                                <a href="{% url 'sales:return_list' %}" class="btn btn-secondary">
+                                    <i class="fas fa-times me-2"></i>
+                                    {% trans "Cancel" %}
+                                </a>
+                            </div>
+                        </div>
                     </div>
-                </div>
+                </form>
             </div>
-        </form>
+        </div>
     </div>
 </div>
-{% endblock %}
 
+{% endblock %}
 {% block extra_js %}
 <script>
-let availableInvoices = [];
-let selectedInvoice = null;
-
-// Load available invoices
 document.addEventListener('DOMContentLoaded', function() {
-    // Set current date
-    const today = new Date().toISOString().split('T')[0];
-    const dateField = document.getElementById('id_return_date');
-    if (dateField && !dateField.value) {
-        dateField.value = today;
-    }
+    const originalInvoiceSelect = document.getElementById('originalInvoiceSelect');
+    const invoiceItemsSection = document.getElementById('invoiceItemsSection');
+    const itemsTableBody = document.getElementById('itemsTableBody');
+    const totalsSection = document.getElementById('totalsSection');
+    const saveButton = document.getElementById('saveButton');
     
-    // Show all invoices button
-    document.getElementById('showAllInvoices').addEventListener('click', function() {
-        console.log('Show all invoices clicked');
-        loadAllInvoices();
+    // Handle invoice selection
+    originalInvoiceSelect.addEventListener('change', function() {
+        const invoiceId = this.value;
+        
+        console.log('Invoice selected:', invoiceId);
+        
+        if (invoiceId) {
+            loadInvoiceItems(invoiceId);
+        } else {
+            console.log('Invoice selection cancelled');
+            document.getElementById('invoiceInfo').innerHTML = '';
+            invoiceItemsSection.style.display = 'none';
+            totalsSection.style.display = 'none';
+            saveButton.disabled = true;
+        }
     });
-});
-
-function loadAllInvoices() {
-    console.log('Loading all invoices...');
-    const apiUrl = '/ar/sales/api/invoices-for-returns/';
     
-    fetch(apiUrl)
-        .then(response => {
-            console.log('All invoices API response status:', response.status);
-            return response.json();
-        })
-        .then(data => {
-            console.log('All invoices API response data:', data);
-            if (data.success) {
-                availableInvoices = data.invoices;
-                displaySearchResults(data.invoices);
-                document.getElementById('id_original_invoice_search').focus();
-            } else {
-                console.error('Error fetching invoices:', data.error);
-                alert('Error loading invoices: ' + data.error);
-            }
-        })
-        .catch(error => {
-            console.error('Network error:', error);
-            alert('Error connecting to server');
-        });
-}
-
-// Invoice search functionality
-document.getElementById('id_original_invoice_search').addEventListener('input', function() {
-    console.log('Search input triggered with value:', this.value);
-    performInvoiceSearch(this.value);
-});
-
-function performInvoiceSearch(searchTerm) {
-    console.log('performInvoiceSearch called with:', searchTerm);
-    const resultsContainer = document.getElementById('invoiceSearchResults');
-    
-    if (searchTerm.length < 2) {
-        console.log('Search term too short, hiding results');
-        resultsContainer.style.display = 'none';
-        return;
+    function loadInvoiceItems(invoiceId) {
+        console.log('Loading invoice items for ID:', invoiceId);
+        
+        // Show loading indicator
+        const loadingMessage = document.createElement('div');
+        loadingMessage.className = 'text-center text-muted py-3';
+        loadingMessage.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>{% trans "Loading invoice items" %}...';
+        itemsTableBody.innerHTML = '';
+        itemsTableBody.appendChild(loadingMessage);
+        
+        // Build correct URL
+        const url = `{% url 'sales:get_invoice_items' 0 %}`.replace('0', invoiceId);
+        console.log('Using URL:', url);
+        
+        fetch(url)
+            .then(response => {
+                console.log('Server response:', response.status, response.statusText);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Received data:', data);
+                if (data.success) {
+                    displayInvoiceItems(data.items);
+                    
+                    // Display invoice information
+                    document.getElementById('invoiceInfo').innerHTML = `
+                        <div class="alert alert-info">
+                            <strong>{% trans "Invoice Number" %}:</strong> ${data.invoice_number}<br>
+                            <strong>{% trans "Customer" %}:</strong> ${data.customer_name}
+                        </div>
+                    `;
+                    
+                    invoiceItemsSection.style.display = 'block';
+                    totalsSection.style.display = 'block';
+                    saveButton.disabled = false;
+                } else {
+                    console.error('Server error:', data.message);
+                    alert('{% trans "Error" %}: ' + data.message);
+                    invoiceItemsSection.style.display = 'none';
+                    totalsSection.style.display = 'none';
+                    saveButton.disabled = true;
+                }
+            })
+            .catch(error => {
+                console.error('Fetch error:', error);
+                alert('{% trans "An error occurred while loading invoice items. Please try again." %}');
+                invoiceItemsSection.style.display = 'none';
+                totalsSection.style.display = 'none';
+                saveButton.disabled = true;
+            });
     }
     
-    // Call API to fetch invoices
-    const apiUrl = `/ar/sales/api/invoices-for-returns/?search=${encodeURIComponent(searchTerm)}`;
-    console.log('Making API call to:', apiUrl);
-    
-    fetch(apiUrl)
-        .then(response => {
-            console.log('API response status:', response.status);
-            return response.json();
-        })
-        .then(data => {
-            console.log('API response data:', data);
-            if (data.success) {
-                availableInvoices = data.invoices;
-                displaySearchResults(data.invoices);
-            } else {
-                console.error('Error fetching invoices:', data.error);
-                resultsContainer.innerHTML = '<div class="search-result-item text-danger">Search error occurred</div>';
-                resultsContainer.style.display = 'block';
-            }
-        })
-        .catch(error => {
-            console.error('Network error:', error);
-            resultsContainer.innerHTML = '<div class="search-result-item text-danger">Connection error</div>';
-            resultsContainer.style.display = 'block';
-        });
-}
-
-function displaySearchResults(invoices) {
-    console.log('displaySearchResults called with invoices:', invoices);
-    const resultsContainer = document.getElementById('invoiceSearchResults');
-    resultsContainer.innerHTML = '';
-    
-    if (invoices.length > 0) {
-        invoices.forEach(invoice => {
-            const item = document.createElement('div');
-            item.className = 'search-result-item';
-            item.innerHTML = `
-                <strong>${invoice.invoice_number}</strong> - ${invoice.customer}<br>
-                <small class="text-muted">${invoice.date} - ${invoice.total.toFixed(2)} {% get_currency_symbol %}</small>
+    function displayInvoiceItems(items) {
+        itemsTableBody.innerHTML = '';
+        
+        if (items.length === 0) {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td colspan="9" class="text-center text-muted py-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    {% trans "No items available for return in this invoice" %}
+                </td>
             `;
-            item.addEventListener('click', () => selectInvoice(invoice));
-            resultsContainer.appendChild(item);
-        });
-        resultsContainer.style.display = 'block';
-        console.log('Displayed', invoices.length, 'invoices');
-    } else {
-        resultsContainer.innerHTML = '<div class="search-result-item text-muted">No matching invoices found</div>';
-        resultsContainer.style.display = 'block';
-        console.log('No invoices found');
-    }
-}
-
-function selectInvoice(invoice) {
-    selectedInvoice = invoice;
-    
-    // Update form fields
-    document.getElementById('id_original_invoice_search').value = invoice.invoice_number + ' - ' + invoice.customer;
-    document.getElementById('id_original_invoice').value = invoice.id;
-    document.getElementById('invoiceSearchResults').style.display = 'none';
-    
-    // Auto-update customer field
-    if (invoice.customer_id) {
-        const customerSelect = document.getElementById('id_customer');
-        if (customerSelect) {
-            customerSelect.value = invoice.customer_id;
-        }
-    }
-    
-    // Show invoice details
-    document.getElementById('selectedInvoiceNumber').textContent = invoice.invoice_number;
-    document.getElementById('selectedCustomer').textContent = invoice.customer;
-    document.getElementById('selectedInvoiceDate').textContent = invoice.date;
-    document.getElementById('selectedInvoiceTotal').textContent = invoice.total.toFixed(2) + ' {% get_currency_symbol %}';
-    document.getElementById('selectedInvoiceStatus').textContent = invoice.payment_type || 'Paid';
-    document.getElementById('invoiceDetails').style.display = 'block';
-    
-    // Load return items
-    loadReturnItems(invoice);
-}
-
-function getStatusText(status) {
-    const statusMap = {
-        'paid': '{% trans "Paid" %}',
-        'pending': 'Pending',
-        'draft': 'Draft',
-        'cancelled': 'Cancelled'
-    };
-    return statusMap[status] || status;
-}
-
-function loadReturnItems(invoice) {
-    const container = document.getElementById('returnItemsContainer');
-    document.getElementById('noInvoiceMessage').style.display = 'none';
-    
-    container.innerHTML = '';
-    
-    invoice.items.forEach((item, index) => {
-        const itemRow = document.createElement('div');
-        itemRow.className = 'return-item-row';
-        itemRow.innerHTML = `
-            <div class="row align-items-center">
-                <div class="col-md-3">
-                    <strong>${item.product_name}</strong>
-                    <small class="text-muted d-block">${item.product_code || ''}</small>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">{% trans "Quantity" %} Original</label>
-                    <input type="text" class="form-control" value="${item.quantity}" readonly>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">Return Quantity</label>
-                    <input type="number" class="form-control return-quantity" 
-                           name="return_quantities[${item.product_id}]" 
-                           min="0" max="${item.quantity}" value="0"
-                           data-product-id="${item.product_id}">
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">{% trans "Unit Price" %}</label>
-                    <input type="number" class="form-control return-price" 
-                           name="return_prices[${item.product_id}]" 
-                           value="${item.unit_price}" step="0.01" min="0"
-                           data-product-id="${item.product_id}">
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">{% trans "Amount" %} Returned</label>
-                    <input type="text" class="form-control return-amount" readonly value="0.00">
-                </div>
-                <div class="col-md-1">
-                    <div class="form-check">
-                        <input class="form-check-input return-checkbox" type="checkbox" 
-                               id="return_${item.product_id}" data-product-id="${item.product_id}">
-                        <label class="form-check-label" for="return_${item.product_id}">
-                            Return
-                        </label>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        container.appendChild(itemRow);
-    });
-    
-    // Attach event listeners
-    attachReturnItemListeners();
-    
-    // Calculate initial totals
-    calculateReturnTotals();
-    
-    // Show return summary
-    document.getElementById('returnSummary').style.display = 'block';
-}
-
-function attachReturnItemListeners() {
-    document.querySelectorAll('.return-quantity').forEach(input => {
-        input.addEventListener('input', calculateReturnTotals);
-    });
-    
-    document.querySelectorAll('.return-price').forEach(input => {
-        input.addEventListener('input', calculateReturnTotals);
-    });
-    
-    document.querySelectorAll('.return-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            const row = this.closest('.return-item-row');
-            const quantityInput = row.querySelector('.return-quantity');
-            
-            if (this.checked) {
-                quantityInput.disabled = false;
-                quantityInput.value = quantityInput.max; // Set to maximum available
-            } else {
-                quantityInput.disabled = true;
-                quantityInput.value = 0;
-            }
-            
-            calculateReturnTotals();
-        });
-    });
-}
-
-function calculateReturnTotals() {
-    let totalReturn = 0;
-    let totalTax = 0;
-    
-    document.querySelectorAll('.return-quantity').forEach(input => {
-        const quantity = parseFloat(input.value) || 0;
-        const row = input.closest('.return-item-row');
-        const priceInput = row.querySelector('.return-price');
-        const price = parseFloat(priceInput.value) || 0;
-        const productId = input.dataset.productId;
-        
-        // Search for tax rate from sample data
-        let taxRate = 0;
-        if (selectedInvoice && selectedInvoice.items) {
-            const item = selectedInvoice.items.find(item => item.product_id == productId);
-            if (item && item.tax_rate) {
-                taxRate = item.tax_rate;
-            }
+            itemsTableBody.appendChild(row);
+            return;
         }
         
-        const subtotal = quantity * price;
+        items.forEach((item, index) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><small>${item.product_code}</small></td>
+                <td><strong>${item.product_name}</strong></td>
+                <td class="text-center">${parseFloat(item.original_quantity).toFixed(3)}</td>
+                <td class="text-center">${parseFloat(item.returned_quantity).toFixed(3)}</td>
+                <td class="text-center"><span class="badge bg-success">${parseFloat(item.remaining_quantity).toFixed(3)}</span></td>
+                <td>
+                    <input type="number" class="form-control returned-qty" 
+                           data-item-id="${item.id}"
+                           data-tax-rate="${item.tax_rate}"
+                           min="0" max="${item.remaining_quantity}" 
+                           step="0.001" value="0" 
+                           placeholder="0.000">
+                    <input type="hidden" name="item_id[]" value="${item.id}">
+                    <input type="hidden" name="returned_quantity[]" class="returned-quantity-hidden" value="0">
+                </td>
+                <td>
+                    <input type="number" class="form-control unit-price-input" 
+                           data-item-id="${item.id}"
+                           value="${item.unit_price}" 
+                           step="0.001" min="0" 
+                           placeholder="0.000" readonly>
+                    <input type="hidden" name="unit_price[]" class="unit-price-hidden" value="${item.unit_price}">
+                </td>
+                <td class="text-center">${parseFloat(item.tax_rate).toFixed(2)}%</td>
+                <td class="item-total text-end fw-bold">0.00</td>
+            `;
+            
+            itemsTableBody.appendChild(row);
+        });
+        
+        // Add event listeners to quantity inputs
+        document.querySelectorAll('.returned-qty').forEach(input => {
+            input.addEventListener('input', function() {
+                // Update hidden input
+                const hiddenInput = this.parentElement.querySelector('.returned-quantity-hidden');
+                if (hiddenInput) {
+                    hiddenInput.value = this.value;
+                }
+                
+                updateItemTotal(this);
+                updateGrandTotals();
+            });
+        });
+        
+        // Add event listeners to unit price inputs
+        document.querySelectorAll('.unit-price-input').forEach(input => {
+            input.addEventListener('input', function() {
+                // Update hidden input
+                const hiddenInput = this.parentElement.querySelector('.unit-price-hidden');
+                if (hiddenInput) {
+                    hiddenInput.value = this.value;
+                }
+                
+                updateItemTotal(this);
+                updateGrandTotals();
+            });
+        });
+        
+        // Small delay to ensure all elements are added to DOM
+        setTimeout(() => {
+            updateGrandTotals();
+        }, 100);
+    }
+    
+    function updateItemTotal(input) {
+        const row = input.closest('tr');
+        const quantity = parseFloat(row.querySelector('.returned-qty').value) || 0;
+        const unitPrice = parseFloat(row.querySelector('.unit-price-input').value) || 0;
+        const taxRateElement = row.querySelector('td:nth-child(8)'); // Tax rate column
+        const taxRateText = taxRateElement ? taxRateElement.textContent : '0%';
+        const taxRate = parseFloat(taxRateText.replace('%', '')) || 0;
+        
+        const subtotal = quantity * unitPrice;
         const taxAmount = subtotal * (taxRate / 100);
         const total = subtotal + taxAmount;
         
-        // Update individual return amount
-        const amountInput = row.querySelector('.return-amount');
-        amountInput.value = total.toFixed(2);
+        const totalCell = row.querySelector('.item-total');
+        totalCell.textContent = total.toFixed(3);
+    }
+    
+    function updateGrandTotals() {
+        let grandSubtotal = 0;
+        let grandTax = 0;
         
-        totalReturn += subtotal;
-        totalTax += taxAmount;
+        document.querySelectorAll('tbody tr').forEach(row => {
+            const quantityInput = row.querySelector('.returned-qty');
+            const priceInput = row.querySelector('.unit-price-input');
+            const taxRateElement = row.querySelector('td:nth-child(8)'); // Tax rate column
+            
+            if (quantityInput && priceInput) {
+                const quantity = parseFloat(quantityInput.value) || 0;
+                const unitPrice = parseFloat(priceInput.value) || 0;
+                const taxRateText = taxRateElement ? taxRateElement.textContent : '0%';
+                const taxRate = parseFloat(taxRateText.replace('%', '')) || 0;
+                
+                if (quantity > 0) {
+                    const subtotal = quantity * unitPrice;
+                    const taxAmount = subtotal * (taxRate / 100);
+                    
+                    grandSubtotal += subtotal;
+                    grandTax += taxAmount;
+                }
+            }
+        });
+        
+        const grandTotal = grandSubtotal + grandTax;
+        
+        // Check if DOM elements exist
+        const subtotalEl = document.getElementById('subtotalDisplay');
+        const taxEl = document.getElementById('taxDisplay');
+        const totalEl = document.getElementById('totalDisplay');
+        
+        if (subtotalEl) subtotalEl.textContent = grandSubtotal.toFixed(3);
+        if (taxEl) taxEl.textContent = grandTax.toFixed(3);
+        if (totalEl) totalEl.textContent = grandTotal.toFixed(3);
+    }
+    
+    function updateReturnedQuantities() {
+        const quantities = [];
+        document.querySelectorAll('.returned-qty').forEach(input => {
+            quantities.push(input.value || '0');
+        });
+        
+        // Remove existing hidden inputs
+        document.querySelectorAll('input[name="returned_quantity[]"]').forEach(input => {
+            input.remove();
+        });
+        
+        // Add new hidden inputs
+        quantities.forEach(qty => {
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'returned_quantity[]';
+            hiddenInput.value = qty;
+            document.getElementById('returnForm').appendChild(hiddenInput);
+        });
+    }
+    
+    // Form validation
+    document.getElementById('returnForm').addEventListener('submit', function(e) {
+        const hasReturnedItems = Array.from(document.querySelectorAll('.returned-qty'))
+            .some(input => parseFloat(input.value) > 0);
+        
+        if (!hasReturnedItems) {
+            e.preventDefault();
+            alert('{% trans "You must enter a quantity for at least one item to return" %}');
+            return false;
+        }
+        
+        updateReturnedQuantities();
+        return true;
     });
-    
-    const returnFees = 0; // Can be customized according to company policy
-    const grandTotal = totalReturn + totalTax;
-    const netRefund = grandTotal - returnFees;
-    
-    // Update summary
-    document.getElementById('totalReturnDisplay').textContent = totalReturn.toFixed(2) + ' {% get_currency_symbol %}';
-    document.getElementById('returnFeesDisplay').textContent = returnFees.toFixed(2) + ' {% get_currency_symbol %}';
-    document.getElementById('netRefundDisplay').textContent = netRefund.toFixed(2) + ' {% get_currency_symbol %}';
-}
-
-// Hide search results when clicking outside
-document.addEventListener('click', function(e) {
-    if (!e.target.closest('.invoice-search')) {
-        document.getElementById('invoiceSearchResults').style.display = 'none';
-    }
 });
+</script>
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-// Form validation
-document.getElementById('salesReturnForm').addEventListener('submit', function(e) {
-    if (!selectedInvoice) {
-        e.preventDefault();
-        alert('You must select the original invoice');
-        return;
-    }
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const originalInvoiceSelect = document.getElementById('originalInvoiceSelect');
+    const invoiceItemsSection = document.getElementById('invoiceItemsSection');
+    const itemsTableBody = document.getElementById('itemsTableBody');
+    const totalsSection = document.getElementById('totalsSection');
+    const saveButton = document.getElementById('saveButton');
     
-    const returnQuantities = document.querySelectorAll('.return-quantity');
-    let hasValidReturns = false;
-    
-    returnQuantities.forEach(input => {
-        if (parseFloat(input.value) > 0) {
-            hasValidReturns = true;
+    // Initialize Select2 with search functionality
+    $('#originalInvoiceSelect').select2({
+        language: '{{ LANGUAGE_CODE }}',
+        dir: '{{ LANGUAGE_CODE }}' === 'ar' ? 'rtl' : 'ltr',
+        placeholder: '{% trans "Search by invoice number or customer name..." %}',
+        allowClear: true,
+        width: '100%',
+        matcher: function(params, data) {
+            // If there are no search terms, return all data
+            if ($.trim(params.term) === '') {
+                return data;
+            }
+            
+            // Do not display the item if there is no 'text' property
+            if (typeof data.text === 'undefined') {
+                return null;
+            }
+            
+            // Check if the text contains the term
+            const searchTerm = params.term.toLowerCase();
+            const text = data.text.toLowerCase();
+            const customer = $(data.element).data('customer') ? $(data.element).data('customer').toLowerCase() : '';
+            const invoice = $(data.element).data('invoice') ? $(data.element).data('invoice').toLowerCase() : '';
+            
+            // Search in invoice number, customer name, and full text
+            if (text.indexOf(searchTerm) > -1 || 
+                customer.indexOf(searchTerm) > -1 || 
+                invoice.indexOf(searchTerm) > -1) {
+                return data;
+            }
+            
+            return null;
         }
     });
     
-    if (!hasValidReturns) {
-        e.preventDefault();
-        alert('You must select a return quantity for at least one product');
-    }
+    // Handle invoice selection
+    $('#originalInvoiceSelect').on('change', function() {
+        const invoiceId = this.value;
+        
+        console.log('Invoice selected:', invoiceId);
+        
+        if (invoiceId) {
+            loadInvoiceItems(invoiceId);
+        } else {
+            console.log('Invoice selection cancelled');
+            document.getElementById('invoiceInfo').innerHTML = '';
+            invoiceItemsSection.style.display = 'none';
+            totalsSection.style.display = 'none';
+            saveButton.disabled = true;
+        }
+    });
 });
 </script>
 {% endblock %}

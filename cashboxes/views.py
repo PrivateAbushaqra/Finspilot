@@ -104,6 +104,39 @@ def get_document_number_from_description(description):
     return None
 
 
+def get_transaction_short_description(transaction):
+    """الحصول على وصف مختصر للحركة بناءً على نوع المستند"""
+    if transaction.reference_type:
+        if transaction.reference_type == 'sales_invoice':
+            return 'فاتورة مبيعات-نقدية'
+        elif transaction.reference_type == 'purchase_invoice':
+            return 'فاتورة مشتريات'
+        elif transaction.reference_type == 'receipt':
+            return 'إيصال قبض'
+        elif transaction.reference_type == 'payment':
+            return 'سند صرف'
+        elif transaction.reference_type == 'transfer':
+            return 'تحويل'
+    
+    # للحركات التي لا تحتوي على reference_type، نستخدم الوصف الأصلي
+    return transaction.description or 'حركة نقدية'
+
+
+def get_transaction_document_number(transaction):
+    """الحصول على رقم المستند البسيط للحركة"""
+    if transaction.reference_type and transaction.reference_id:
+        return transaction.reference_id
+    elif transaction.related_transfer:
+        return transaction.related_transfer.transfer_number
+    else:
+        # محاولة استخراج رقم المستند من الوصف
+        doc_num = get_document_number_from_description(transaction.description)
+        if doc_num:
+            return doc_num
+        else:
+            return transaction.id
+
+
 @login_required
 def cashbox_list(request):
     """قائمة الصناديق"""
@@ -167,19 +200,34 @@ def cashbox_detail(request, cashbox_id):
     
     cashbox = get_object_or_404(Cashbox, id=cashbox_id)
     
-    # الحصول على حركات الصندوق
-    transactions = CashboxTransaction.objects.filter(
+    # مزامنة رصيد الصندوق مع المعاملات الفعلية
+    cashbox.sync_balance()
+    
+    # الحصول على جميع حركات الصندوق مرتبة تصاعدياً حسب التاريخ والإنشاء
+    all_transactions = CashboxTransaction.objects.filter(
         cashbox=cashbox
-    ).order_by('-date', '-created_at')
+    ).order_by('date', 'created_at')
+    
+    # حساب الرصيد المتراكم لكل حركة
+    running_balance = Decimal('0')
+    for transaction in all_transactions:
+        # إضافة المبلغ مباشرة (المبلغ موجب للإيداعات والواردات، سالب للسحوبات والصادرات)
+        running_balance += transaction.amount
+        transaction.running_balance = running_balance
+    
+    # عكس الترتيب للعرض (الأحدث أولاً)
+    all_transactions = list(reversed(all_transactions))
     
     # التقسيم لصفحات
-    paginator = Paginator(transactions, 20)
+    paginator = Paginator(all_transactions, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
     # إضافة document_url لكل transaction
     for transaction in page_obj:
         transaction.document_url = get_transaction_document_url(transaction)
+        transaction.short_description = get_transaction_short_description(transaction)
+        transaction.document_number = get_transaction_document_number(transaction)
     
     # العملات المتاحة
     currencies = Currency.objects.filter(is_active=True).order_by('name')
@@ -326,10 +374,13 @@ def transfer_create(request):
             messages.error(request, _('All fields are required'))
             return redirect('cashboxes:transfer_list')
         
-        # التحقق من معلومات الإيداع للتحويل من صندوق إلى بنك
+        # التحقق من معلومات الإيداع للتحويل من صندوق إلى بنك (اختياري)
         if transfer_type == 'cashbox_to_bank':
-            if not deposit_document_number:
-                messages.error(request, _('Deposit document number is required for transfers to bank'))
+            if not from_cashbox_id:
+                messages.error(request, _('Sender cashbox is required'))
+                return redirect('cashboxes:transfer_list')
+            if not to_bank_id:
+                messages.error(request, _('Receiver bank is required'))
                 return redirect('cashboxes:transfer_list')
             if not deposit_type:
                 messages.error(request, _('Deposit type is required'))
@@ -344,6 +395,15 @@ def transfer_create(request):
                 if not check_bank_name:
                     messages.error(request, _('Check bank name is required'))
                     return redirect('cashboxes:transfer_list')
+        
+        # التحقق من معلومات التحويل من البنك إلى الصندوق
+        elif transfer_type == 'bank_to_cashbox':
+            if not from_bank_id:
+                messages.error(request, _('Sender bank is required'))
+                return redirect('cashboxes:transfer_list')
+            if not to_cashbox_id:
+                messages.error(request, _('Receiver cashbox is required'))
+                return redirect('cashboxes:transfer_list')
         
         # التحقق من رقم التحويل إذا تم إدخاله
         if transfer_number:
@@ -509,15 +569,8 @@ def transfer_create(request):
                         created_by=request.user
                     )
                 
-                # إنشاء القيد المحاسبي
-                try:
-                    from journal.services import JournalService
-                    JournalService.create_cashbox_transfer_entry(transfer, request.user)
-                except Exception as e:
-                    # تسجيل تحذير في حالة فشل إنشاء القيد
-                    import logging
-                    logger = logging.getLogger(__name__)
-                    logger.warning(f"فشل في إنشاء القيد المحاسبي للتحويل {transfer.transfer_number}: {str(e)}")
+                # ملاحظة: لا نحتاج لإنشاء قيد محاسبي للتحويلات بين الحسابات النقدية وفقاً لـ IFRS
+                # هذه التحويلات لا تغير الرصيد الإجمالي للنقد، فقط تغير توزيعه
                 
                 messages.success(request, _('Transfer created successfully'))
                 
@@ -895,3 +948,127 @@ def cashbox_delete(request, cashbox_id):
             messages.error(request, _('An error occurred while deleting the cashbox: {}').format(str(e)))
     
     return redirect('cashboxes:cashbox_detail', cashbox_id=cashbox_id)
+
+
+@login_required
+def cashbox_export_xlsx(request, cashbox_id):
+    """تصدير معاملات الصندوق إلى ملف Excel"""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment
+    from django.http import HttpResponse
+    from django.utils.translation import gettext as _
+    from core.signals import log_user_activity
+    
+    try:
+        cashbox = get_object_or_404(Cashbox, id=cashbox_id)
+        
+        # تسجيل النشاط في سجل الأنشطة
+        log_user_activity(
+            request,
+            'EXPORT',
+            cashbox,
+            _('تم تصدير معاملات الصندوق إلى Excel: {}').format(cashbox.name)
+        )
+        
+        # إنشاء ملف Excel جديد
+        wb = Workbook()
+        ws = wb.active
+        ws.title = _("Cashbox Statement")
+        
+        # تنسيق العناوين
+        header_font = Font(bold=True, color="FFFFFF")
+        header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+        center_alignment = Alignment(horizontal="center")
+        
+        # إضافة معلومات الصندوق
+        ws['A1'] = _("Cashbox Statement")
+        ws['A1'].font = Font(bold=True, size=16)
+        ws.merge_cells('A1:G1')
+        ws['A1'].alignment = center_alignment
+        
+        ws['A3'] = _("Cashbox Name") + ":"
+        ws['B3'] = cashbox.name
+        
+        ws['A4'] = _("Description") + ":"
+        ws['B4'] = cashbox.description or "-"
+        
+        ws['A5'] = _("Location") + ":"
+        ws['B5'] = cashbox.location or "-"
+        
+        ws['A6'] = _("Manager") + ":"
+        ws['B6'] = cashbox.responsible_user.username if cashbox.responsible_user else "-"
+        
+        ws['A7'] = _("Current Balance") + ":"
+        ws['B7'] = f"{cashbox.balance} {cashbox.currency or 'SAR'}"
+        
+        ws['A8'] = _("Export Date") + ":"
+        ws['B8'] = str(timezone.now().date())
+        
+        # إضافة عناوين الأعمدة
+        headers = [
+            _("Date"),
+            _("Transaction Type"),
+            _("Document Number"),
+            _("Description"),
+            _("Amount"),
+            _("Balance After Transaction"),
+            _("Created By")
+        ]
+        
+        for col_num, header in enumerate(headers, 1):
+            cell = ws.cell(row=10, column=col_num)
+            cell.value = header
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = center_alignment
+        
+        # الحصول على جميع المعاملات
+        transactions = CashboxTransaction.objects.filter(
+            cashbox=cashbox
+        ).order_by('date', 'created_at')
+        
+        # حساب الرصيد المتراكم
+        running_balance = Decimal('0')
+        for transaction in transactions:
+            running_balance += transaction.amount
+            transaction.running_balance = running_balance
+        
+        # عكس الترتيب للعرض (الأحدث أولاً)
+        transactions = list(reversed(transactions))
+        
+        # إضافة بيانات المعاملات
+        for row_num, transaction in enumerate(transactions, 11):
+            ws.cell(row=row_num, column=1).value = transaction.date.strftime('%Y-%m-%d')
+            ws.cell(row=row_num, column=2).value = transaction.get_transaction_type_display()
+            ws.cell(row=row_num, column=3).value = get_transaction_document_number(transaction)
+            ws.cell(row=row_num, column=4).value = transaction.description
+            ws.cell(row=row_num, column=5).value = float(transaction.amount)
+            ws.cell(row=row_num, column=6).value = float(transaction.running_balance)
+            ws.cell(row=row_num, column=7).value = transaction.created_by.username
+        
+        # تعديل عرض الأعمدة
+        for column in ws.columns:
+            max_length = 0
+            column_letter = column[0].column_letter
+            for cell in column:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(str(cell.value))
+                except:
+                    pass
+            adjusted_width = (max_length + 2)
+            ws.column_dimensions[column_letter].width = adjusted_width
+        
+        # إنشاء الاستجابة
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        filename = f"cashbox_statement_{cashbox.name}_{timezone.now().date()}.xlsx"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
+        wb.save(response)
+        return response
+        
+    except Exception as e:
+        messages.error(request, _('An error occurred while exporting: {}').format(str(e)))
+        return redirect('cashboxes:cashbox_detail', cashbox_id=cashbox_id)

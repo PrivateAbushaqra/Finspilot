@@ -241,6 +241,42 @@
     </form>
 </div>
 
+<!-- Template for new journal line -->
+<template id="emptyLineTemplate">
+    <tr class="journal-line-row" data-form-prefix="form-__prefix__">
+        <td>
+            <select name="form-__prefix__-account" id="id_form-__prefix__-account" class="form-control">
+                <option value="">---------</option>
+                {% for account in accounts %}
+                <option value="{{ account.id }}">{{ account.code }} - {{ account.name }}</option>
+                {% endfor %}
+            </select>
+        </td>
+        <td>
+            <input type="text" name="form-__prefix__-line_description" id="id_form-__prefix__-line_description" class="form-control">
+        </td>
+        <td>
+            <input type="number" name="form-__prefix__-debit" step="0.001" min="0" id="id_form-__prefix__-debit" class="form-control debit-input">
+        </td>
+        <td>
+            <input type="number" name="form-__prefix__-credit" step="0.001" min="0" id="id_form-__prefix__-credit" class="form-control credit-input">
+        </td>
+        <td class="text-center">
+            <button type="button" class="btn btn-sm btn-outline-secondary" 
+                onclick="clearLine(this)" title="{% if LANGUAGE_CODE == 'ar' %}مسح البند{% else %}{% trans 'Clear Item' %}{% endif %}">
+                <i class="fas fa-eraser"></i>
+            </button>
+        </td>
+        <td class="text-center">
+            <input type="checkbox" name="form-__prefix__-DELETE" id="id_form-__prefix__-DELETE" style="display:none">
+            <button type="button" class="btn btn-sm btn-outline-danger" 
+                onclick="deleteLine(this)" title="{% if LANGUAGE_CODE == 'ar' %}حذف البند{% else %}{% trans "Delete Item" %}{% endif %}">
+                <i class="fas fa-trash"></i>
+            </button>
+        </td>
+    </tr>
+</template>
+
 <!-- Modal Container -->
 <div class="modal fade" id="accountModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-lg modal-dialog-scrollable">
@@ -329,39 +365,46 @@ function calculateTotals() {
     // Update balance status
     const balanceStatus = document.getElementById('balanceStatus');
     const balanceAlert = document.getElementById('balanceAlert');
-    const saveButton = document.getElementById('saveButton');
     
     if (Math.abs(totalDebit - totalCredit) < 0.001 && totalDebit > 0) {
         balanceStatus.className = 'badge bg-success';
         balanceStatus.innerHTML = '<i class="fas fa-check me-1"></i>' + (IS_AR ? 'متوازن' : '{% trans "Balanced" %}');
         balanceAlert.classList.add('d-none');
-        saveButton.disabled = false;
     } else {
         balanceStatus.className = 'badge bg-danger';
         balanceStatus.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>' + (IS_AR ? 'غير متوازن' : '{% trans "Unbalanced" %}');
         balanceAlert.classList.remove('d-none');
-        saveButton.disabled = true;
     }
 }
 
 // Add event listeners
 function addEventListeners() {
     document.querySelectorAll('input[name$="-debit"], input[name$="-credit"]').forEach(input => {
-        input.addEventListener('input', function() {
-            // Prevent entering both Debit and Credit in the same row
-            const row = this.closest('tr');
-            const debitInput = row.querySelector('input[name$="-debit"]');
-            const creditInput = row.querySelector('input[name$="-credit"]');
-            
-            if (this === debitInput && this.value) {
-                creditInput.value = '';
-            } else if (this === creditInput && this.value) {
-                debitInput.value = '';
-            }
-            
-            calculateTotals();
-        });
+        // إزالة event listener القديم إن وجد لتجنب التكرار
+        input.removeEventListener('input', handleDebitCreditInput);
+        input.addEventListener('input', handleDebitCreditInput);
     });
+}
+
+// دالة منفصلة للتعامل مع إدخال المدين والدائن
+function handleDebitCreditInput() {
+    console.log(`⌨️  إدخال قيمة في: ${this.name} = "${this.value}"`);
+    
+    // Prevent entering both Debit and Credit in the same row
+    const row = this.closest('tr');
+    const debitInput = row.querySelector('input[name$="-debit"]');
+    const creditInput = row.querySelector('input[name$="-credit"]');
+    
+    // فقط امسح الحقل الآخر إذا كان المستخدم يُدخل قيمة غير صفر
+    if (this === debitInput && parseFloat(this.value) > 0) {
+        console.log(`  ↪️  مسح حقل credit في نفس الصف`);
+        creditInput.value = '';  // اتركه فارغاً بدلاً من '0'
+    } else if (this === creditInput && parseFloat(this.value) > 0) {
+        console.log(`  ↪️  مسح حقل debit في نفس الصف`);
+        debitInput.value = '';  // اتركه فارغاً بدلاً من '0'
+    }
+    
+    calculateTotals();
 }
 
 // Reset form
@@ -374,23 +417,52 @@ function resetForm() {
 
 // Validate form before submission
 document.getElementById('journalEntryForm').addEventListener('submit', function(e) {
-    const totalDebit = parseFloat(document.getElementById('totalDebit').textContent);
-    const totalCredit = parseFloat(document.getElementById('totalCredit').textContent);
+    // طباعة قيم الحقول قبل الإرسال للتشخيص - مباشرة قبل الإرسال!
+    console.log('🔍🔍🔍 قيم الحقول قبل الإرسال مباشرة:');
+    document.querySelectorAll('input[name$="-debit"], input[name$="-credit"]').forEach(input => {
+        console.log(`  ${input.name} = "${input.value}" (DOM value: "${input.getAttribute('value')}")`);
+    });
     
-    if (Math.abs(totalDebit - totalCredit) > 0.001) {
-        e.preventDefault();
-        alert(IS_AR ? 'يجب أن يساوي مجموع المدين مجموع الدائن' : '{% trans "Debit total must equal Credit total" %}');
-        return false;
-    }
-    
-    if (totalDebit === 0) {
-        e.preventDefault();
-        alert(IS_AR ? 'يجب إدخال بنود القيد المحاسبي' : '{% trans "Journal entry items must be entered" %}');
-        return false;
-    }
-    
-    // Update total amounts
+    // لا نمنع الإرسال - سيتم التحقق من جانب الخادم
     calculateTotals();
+    
+    // طباعة FormData الفعلي الذي سيتم إرساله
+    const formData = new FormData(this);
+    console.log('📤 FormData الذي سيتم إرساله:');
+    for (let [key, value] of formData.entries()) {
+        if (key.includes('debit') || key.includes('credit')) {
+            console.log(`  ${key} = "${value}"`);
+        }
+    }
+    
+    // 🚨 حل قوي: نسخ القيم إلى حقول مخفية للتأكد من إرسالها
+    console.log('🔧 فحص وإصلاح القيم قبل الإرسال:');
+    
+    // حذف أي حقول مخفية قديمة
+    document.querySelectorAll('input[data-backup-field="true"]').forEach(el => el.remove());
+    
+    document.querySelectorAll('input[name$="-debit"], input[name$="-credit"]').forEach(input => {
+        const currentValue = input.value;
+        console.log(`  📋 ${input.name}: القيمة الحالية = "${currentValue}"`);
+        
+        // إذا كانت القيمة موجودة وغير صفر، تأكد من إرسالها
+        if (currentValue && currentValue !== '' && parseFloat(currentValue) !== 0) {
+            // تحديث attribute
+            input.setAttribute('value', currentValue);
+            
+            // إنشاء حقل مخفي backup للتأكد 100%
+            const backupInput = document.createElement('input');
+            backupInput.type = 'hidden';
+            backupInput.name = input.name + '_backup';
+            backupInput.value = currentValue;
+            backupInput.setAttribute('data-backup-field', 'true');
+            input.parentNode.appendChild(backupInput);
+            
+            console.log(`  ✅ ${input.name}: تم تأكيد القيمة = "${currentValue}" + backup`);
+        } else {
+            console.log(`  ⚠️ ${input.name}: فارغ أو صفر`);
+        }
+    });
 });
 
 // Attach AJAX submit handler for modal form
@@ -450,16 +522,27 @@ if (openBtn) {
 
 // Page load
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 تحميل الصفحة - بدء التهيئة');
+    
+    // أولاً: تطبيق event listeners
     addEventListeners();
     
-    // Set current date as default
+    // ثانياً: تعيين التاريخ الافتراضي فقط إذا كان فارغاً
     const dateInput = document.querySelector('input[name="entry_date"]');
     if (dateInput && !dateInput.value) {
         const today = new Date().toISOString().split('T')[0];
         dateInput.value = today;
     }
     
+    // ثالثاً: حساب الإجماليات بناءً على القيم الموجودة
+    // لا نُعيّن القيم إلى 0 هنا - نترك Django يتولى ذلك
     calculateTotals();
+    
+    // رابعاً: طباعة القيم الأولية للتشخيص
+    console.log('📊 القيم الأولية للحقول:');
+    document.querySelectorAll('input[name$="-debit"], input[name$="-credit"]').forEach(input => {
+        console.log(`  ${input.name} = "${input.value}"`);
+    });
 });
 </script>
 {% endblock %}

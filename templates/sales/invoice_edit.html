@@ -402,18 +402,60 @@ $(document).ready(function() {
         $('#add-item-form input, #add-item-form select').val('');
     });
 
-    // Product selection change
+    // Product selection change - استخدام POS API (بنفس طريقة POS وصفحة الإضافة)
     $('#new-product-select').change(function() {
-        const selectedOption = $(this).find('option:selected');
-        const price = selectedOption.data('price');
-        const taxRate = selectedOption.data('tax');
+        const productId = $(this).val();
         
-        if (price) {
-            $('#new-price').val(price);
+        if (!productId) {
+            $('#new-price').val('');
+            $('#new-tax-rate').val('');
+            return;
         }
-        if (taxRate) {
-            $('#new-tax-rate').val(taxRate);
-        }
+        
+        // عرض رسالة تحميل
+        $('#new-price').val('...').prop('disabled', true);
+        $('#new-tax-rate').val('...').prop('disabled', true);
+        
+        // استدعاء POS API للحصول على السعر الصحيح (بدون ضريبة)
+        $.ajax({
+            url: `/sales/pos/product/${productId}/`,
+            type: 'GET',
+            success: function(data) {
+                $('#new-price').prop('disabled', false);
+                $('#new-tax-rate').prop('disabled', false);
+                
+                if (data && data.success && data.product) {
+                    // استخدام السعر من API (بدون ضريبة)
+                    $('#new-price').val(parseFloat(data.product.price || 0).toFixed(3));
+                    $('#new-tax-rate').val(parseFloat(data.product.tax_rate || 0).toFixed(2));
+                    console.info('✅ السعر من POS API:', data.product.price);
+                } else {
+                    // في حالة فشل API، استخدام القيم من الـ template
+                    const selectedOption = $('#new-product-select').find('option:selected');
+                    const fallbackPrice = parseFloat(selectedOption.data('price')) || 0;
+                    const fallbackTax = parseFloat(selectedOption.data('tax')) || 0;
+                    const calculatedPrice = fallbackTax > 0 ? fallbackPrice / (1 + fallbackTax / 100) : fallbackPrice;
+                    
+                    $('#new-price').val(calculatedPrice.toFixed(3));
+                    $('#new-tax-rate').val(fallbackTax.toFixed(2));
+                    console.warn('⚠️ استخدام القيم الاحتياطية');
+                }
+            },
+            error: function(xhr, status, error) {
+                $('#new-price').prop('disabled', false);
+                $('#new-tax-rate').prop('disabled', false);
+                
+                // في حالة خطأ، استخدام القيم من الـ template
+                const selectedOption = $('#new-product-select').find('option:selected');
+                const fallbackPrice = parseFloat(selectedOption.data('price')) || 0;
+                const fallbackTax = parseFloat(selectedOption.data('tax')) || 0;
+                const calculatedPrice = fallbackTax > 0 ? fallbackPrice / (1 + fallbackTax / 100) : fallbackPrice;
+                
+                $('#new-price').val(calculatedPrice.toFixed(3));
+                $('#new-tax-rate').val(fallbackTax.toFixed(2));
+                console.error('❌ خطأ في استدعاء POS API:', error);
+            }
+        });
     });
 
     // Save new item

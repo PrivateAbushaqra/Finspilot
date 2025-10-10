@@ -316,7 +316,16 @@ class PurchaseInvoiceListView(LoginRequiredMixin, ListView):
     paginate_by = 20
     
     def get_queryset(self):
-        queryset = PurchaseInvoice.objects.select_related('supplier', 'warehouse').order_by('-date', '-id')
+        queryset = PurchaseInvoice.objects.select_related('supplier', 'warehouse')
+        
+        # Search functionality
+        search = self.request.GET.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(supplier_invoice_number__icontains=search) |
+                Q(invoice_number__icontains=search) |
+                Q(supplier__name__icontains=search)
+            )
         
         # Apply filters if provided
         date_from = self.request.GET.get('date_from')
@@ -332,6 +341,13 @@ class PurchaseInvoiceListView(LoginRequiredMixin, ListView):
             queryset = queryset.filter(payment_type=payment_type)
         if supplier_id:
             queryset = queryset.filter(supplier_id=supplier_id)
+        
+        # Apply ordering
+        order_by = self.request.GET.get('order_by', '-date')
+        if order_by.startswith('-'):
+            queryset = queryset.order_by(order_by, '-id')
+        else:
+            queryset = queryset.order_by(order_by, 'id')
             
         return queryset
     
@@ -362,6 +378,9 @@ class PurchaseInvoiceListView(LoginRequiredMixin, ListView):
         context['suppliers'] = CustomerSupplier.objects.filter(
             Q(type='supplier') | Q(type='both')
         ).order_by('name')
+        
+        # Current ordering
+        context['current_order'] = self.request.GET.get('order_by', '-date')
         
         return context
 
@@ -1134,15 +1153,21 @@ class PurchaseReturnListView(LoginRequiredMixin, ListView):
     paginate_by = 20
     
     def get_queryset(self):
-        queryset = PurchaseReturn.objects.select_related('original_invoice__supplier')
+        queryset = PurchaseReturn.objects.select_related('original_invoice__supplier', 'created_by')
         
         # Apply filters if provided
+        search = self.request.GET.get('search')
         date_from = self.request.GET.get('date_from')
         date_to = self.request.GET.get('date_to')
         return_type = self.request.GET.get('return_type')
         supplier_id = self.request.GET.get('supplier')
         order_by = self.request.GET.get('order_by', '-date')
         
+        if search:
+            queryset = queryset.filter(
+                Q(return_number__icontains=search) |
+                Q(original_invoice__supplier__name__icontains=search)
+            )
         if date_from:
             queryset = queryset.filter(date__gte=date_from)
         if date_to:
@@ -1169,7 +1194,17 @@ class PurchaseReturnListView(LoginRequiredMixin, ListView):
         
         # Total amount
         total_amount = all_returns.aggregate(total=Sum('total_amount'))['total'] or 0
-        context['total_amount'] = total_amount
+        context['total_returns_amount'] = total_amount
+        
+        # This month's returns
+        current_month = timezone.now().replace(day=1)
+        month_returns = all_returns.filter(date__gte=current_month).count()
+        context['monthly_returns'] = month_returns
+        
+        # Today's returns
+        today = timezone.now().date()
+        daily_returns = all_returns.filter(date=today).count()
+        context['daily_returns'] = daily_returns
         
         # Get suppliers for filter
         context['suppliers'] = CustomerSupplier.objects.filter(
@@ -1178,9 +1213,9 @@ class PurchaseReturnListView(LoginRequiredMixin, ListView):
         
         # Current filters
         context['current_filters'] = {
+            'search': self.request.GET.get('search', ''),
             'date_from': self.request.GET.get('date_from', ''),
             'date_to': self.request.GET.get('date_to', ''),
-            'return_type': self.request.GET.get('return_type', ''),
             'supplier': self.request.GET.get('supplier', ''),
         }
         

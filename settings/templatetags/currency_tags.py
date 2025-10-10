@@ -114,3 +114,41 @@ def get_currency_symbol():
     
     # إذا لم توجد عملة، عدم إنشاء أي عملة افتراضية
     return ""
+
+@register.filter
+def format_currency(value):
+    """
+    تنسيق الأرقام المالية حسب عدد الخانات العشرية للعملة الأساسية
+    يستخدم فقط للتنسيق بدون إضافة رمز العملة
+    """
+    if value is None:
+        return "0"
+    
+    try:
+        # التحقق من نوع البيانات
+        if isinstance(value, str):
+            value = Decimal(value)
+        elif not isinstance(value, Decimal):
+            value = Decimal(str(value))
+        
+        # الحصول على العملة الأساسية
+        company_settings = CompanySettings.objects.first()
+        if company_settings and company_settings.base_currency:
+            currency = company_settings.base_currency
+        else:
+            currency = Currency.get_base_currency()
+        
+        # إذا لم توجد عملة، استخدم خانتين عشريتين افتراضياً
+        if not currency:
+            return f"{value:.2f}"
+        
+        # تنسيق العدد حسب عدد الخانات العشرية
+        decimal_places = currency.decimal_places
+        if decimal_places == 0:
+            return f"{value:.0f}"
+        else:
+            return f"{value:.{decimal_places}f}"
+            
+    except Exception as e:
+        # في حالة الخطأ، إرجاع القيمة كما هي
+        return str(value)

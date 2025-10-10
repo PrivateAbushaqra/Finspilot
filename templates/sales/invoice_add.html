@@ -432,7 +432,7 @@
                                 </td>
                                 <td>
                                     <input type="text" class="form-control text-center available-quantity-input" 
-                                           placeholder="0.000" readonly style="background-color: #e9ecef;" tabindex="-1" value="{{ item.current_stock|floatformat:3 }}">
+                                           placeholder="0.000" readonly style="background-color: #e9ecef;" tabindex="-1" value="{{ item.current_stock|format_currency }}">
                                 </td>
                                 <td>
                                     <input type="number" class="form-control quantity-input" 
@@ -501,7 +501,8 @@
                     </div>
                     <div class="col-md-4">
                         <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" value="1" id="id_inclusive_tax" name="inclusive_tax" checked
+                            <input class="form-check-input" type="checkbox" value="1" id="id_inclusive_tax" name="inclusive_tax" 
+                                {% if inclusive_tax is None or inclusive_tax %}checked{% endif %}
                                 {% if not can_toggle_invoice_tax %} disabled {% endif %}>
                             <label class="form-check-label" for="id_inclusive_tax">
                                 {% trans "Inclusive Tax" %}
@@ -665,11 +666,11 @@ function formatCurrency(value, overridePlaces){
                                 <td>{{ product.description|truncatechars:50|default:"{% trans 'No description available' %}" }}</td>
                                 <td class="text-center">
                                     <span class="badge bg-{% if product.current_stock > 0 %}success{% else %}danger{% endif %}">
-                                        {{ product.current_stock|floatformat:3 }}
+                                        {{ product.current_stock|format_currency }}
                                     </span>
                                 </td>
-                                <td>{{ product.sale_price|floatformat:2 }}</td>
-                                <td>{{ product.tax_rate|floatformat:2 }}%</td>
+                                <td>{{ product.sale_price|format_currency }}</td>
+                                <td>{{ product.tax_rate|format_currency }}%</td>
                                 <td>
                                     <button type="button" class="btn btn-sm btn-primary" 
                                             onclick="selectProduct('{{ product.id }}', '{{ product.code }}', '{{ product.name }}', '{{ product.sale_price }}', '{{ product.tax_rate }}', '{{ product.current_stock }}')">
@@ -769,7 +770,7 @@ function setupAddProductButton() {
     const newBtn = addBtn.cloneNode(true);
     addBtn.parentNode.replaceChild(newBtn, addBtn);
     
-    // Add new event listener
+    // Add click event listener
     newBtn.addEventListener('click', function(e) {
         buttonClickCount++;
         console.log(`🖱️ Button click #${buttonClickCount}`);
@@ -780,6 +781,18 @@ function setupAddProductButton() {
         try {
             addProductRow();
             console.log('✅ Product row added successfully');
+            
+            // Focus on the first product code input of the new row
+            setTimeout(() => {
+                const lastRow = document.querySelector('#productsTableBody tr:last-child');
+                if (lastRow) {
+                    const productCodeInput = lastRow.querySelector('.product-code-input');
+                    if (productCodeInput) {
+                        productCodeInput.focus();
+                        console.log('✅ Focus set on new product code input');
+                    }
+                }
+            }, 100);
         } catch (error) {
             console.error('❌ Error adding product row:', error);
             alert("{% trans 'An error occurred while adding the product. Please try again.' %}");
@@ -879,7 +892,7 @@ function addProductRow() {
         </td>
         <td>
             <input type="text" class="form-control text-center available-quantity-input" 
-                   placeholder="0.000" readonly style="background-color: #e9ecef;" tabindex="-1">
+                   placeholder="0.00" readonly style="background-color: #e9ecef;" tabindex="-1">
         </td>
         <td>
             <input type="number" class="form-control quantity-input" 
@@ -950,7 +963,8 @@ function openProductModal(rowId) {
 }
 
 function selectProduct(productId, productCode, productName, salePrice, taxRate, availableQuantity) {
-    // Use POS product endpoint as authoritative source for sale price when available.
+    // استخدام POS API كمصدر وحيد للسعر (بنفس طريقة صفحة POS)
+    // السعر المخزن في المنتج شامل الضريبة، والـ API يقوم بخصمها تلقائياً
     try {
         if (!currentRow) return;
         const row = document.getElementById(`productRow${currentRow}`);
@@ -963,7 +977,7 @@ function selectProduct(productId, productCode, productName, salePrice, taxRate, 
         const priceInput = row.querySelector('.price-input');
         const taxRateInput = row.querySelector('.tax-rate-input');
 
-        // Fill the product basic information first
+        // ملء البيانات الأساسية للمنتج
         productIdInput.value = productId;
         codeInput.value = productCode;
         nameInput.value = productName;
@@ -971,7 +985,7 @@ function selectProduct(productId, productCode, productName, salePrice, taxRate, 
             availableQuantityInput.value = formatCurrency(parseFloat(availableQuantity || 0), 3);
         }
 
-        // Helper to apply a numeric price into the input with attributes
+        // دالة مساعدة لتطبيق السعر
         function applyPrice(displayedPrice, source) {
             const valid = (displayedPrice === null || displayedPrice === undefined || displayedPrice === '') ? NaN : Number(displayedPrice);
             const finalVal = Number.isFinite(valid) ? valid : 0;
@@ -980,106 +994,81 @@ function selectProduct(productId, productCode, productName, salePrice, taxRate, 
             if (source) priceInput.setAttribute('data-price-source', source);
         }
 
-        // Calculate displayed price for template salePrice
-        const templateDisplayedPrice = (() => {
-            const price = parseFloat(salePrice) || 0;
-            const currentTaxRate = parseFloat(taxRate) || 0;
-            return currentTaxRate > 0 ? price / (1 + currentTaxRate / 100) : price;
-        })();
+        // عرض رسالة تحميل مؤقتة
+        priceInput.value = '...';
+        priceInput.disabled = true;
 
-        // First use the calculated displayed price from template
-        applyPrice(templateDisplayedPrice, 'template');
-
-        // Then try to fetch authoritative product data from POS endpoint
-        try {
-            const endpoint = `/sales/pos/product/${encodeURIComponent(productId)}/`;
-            fetch(endpoint, { credentials: 'same-origin' })
-                .then(response => response.json())
-                .then(data => {
-                    if (data && data.success && data.product) {
-                        const posPrice = parseFloat(data.product.price);
-                        if (Number.isFinite(posPrice)) {
-                            // If POS price differs from current by more than a tiny delta, use POS price
-                            const current = parseFloat(priceInput.value) || 0;
-                            if (Math.abs(current - posPrice) > 0.0001) {
-                                applyPrice(posPrice, 'pos');
-                                console.info(`selectProduct: price for product ${productId} taken from POS endpoint: ${posPrice}`);
-                            } else {
-                                // still mark source
-                                priceInput.setAttribute('data-price-source', 'pos');
-                            }
-                        } else {
-                            console.warn('{% trans "POS endpoint returned invalid price for product" %}', productId, data.product.price);
-                        }
-
-                        // tax rate from POS if available, otherwise use template value
-                        taxRateInput.value = parseFloat(data.product.tax_rate || taxRate) || 0;
+        // استدعاء POS API للحصول على السعر الصحيح (بدون ضريبة)
+        const endpoint = `/sales/pos/product/${encodeURIComponent(productId)}/`;
+        fetch(endpoint, { credentials: 'same-origin' })
+            .then(response => response.json())
+            .then(data => {
+                // إعادة تفعيل حقل السعر
+                priceInput.disabled = false;
+                
+                if (data && data.success && data.product) {
+                    // استخدام السعر من API مباشرة (بدون ضريبة)
+                    const posPrice = parseFloat(data.product.price);
+                    if (Number.isFinite(posPrice)) {
+                        applyPrice(posPrice, 'pos');
+                        console.info(`✅ السعر من POS API للمنتج ${productId}: ${posPrice} (بدون ضريبة)`);
                     } else {
-                        // POS endpoint did not return product data; fall back to passed values
-                        taxRateInput.value = parseFloat(taxRate) || 0;
-                        console.warn('{% trans "POS product endpoint did not return product data, using template values" %}', productId);
+                        // في حالة سعر غير صالح، استخدام القيمة الافتراضية
+                        applyPrice(0, 'fallback');
+                        console.warn('⚠️ POS API أرجع سعر غير صالح للمنتج', productId);
                     }
 
-                    // Close modal and recalc totals
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('productModal'));
-                    if (modal) modal.hide();
-                    calculateRowTotal(row);
-                    calculateGrandTotal();
+                    // استخدام نسبة الضريبة من API
+                    taxRateInput.value = parseFloat(data.product.tax_rate || 0) || 0;
+                } else {
+                    // في حالة فشل API، حساب السعر من القيم الممررة
+                    const fallbackPrice = parseFloat(salePrice) || 0;
+                    const fallbackTaxRate = parseFloat(taxRate) || 0;
+                    const calculatedPrice = fallbackTaxRate > 0 ? fallbackPrice / (1 + fallbackTaxRate / 100) : fallbackPrice;
                     
-                    // Focus on quantity input
-                    const quantityInput = row.querySelector('.quantity-input');
-                    if (quantityInput) {
-                        quantityInput.focus();
-                    }
-                })
-                .catch(err => {
-                    // On network error or other fetch failure, keep template price and log warning
-                    taxRateInput.value = parseFloat(taxRate) || 0;
-                    console.warn('{% trans "Failed to fetch POS product data, using template sale price" %}', err);
+                    applyPrice(calculatedPrice, 'fallback');
+                    taxRateInput.value = fallbackTaxRate;
+                    console.warn('⚠️ POS API لم يُرجع بيانات، استخدام القيم الاحتياطية');
+                }
 
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('productModal'));
-                    if (modal) modal.hide();
-                    calculateRowTotal(row);
-                    calculateGrandTotal();
-                });
-        } catch (e) {
-            // If constructing/fetching fails, ensure we still close modal and calculate totals
-            taxRateInput.value = parseFloat(taxRate) || 0;
+                // إغلاق النافذة المنبثقة وإعادة حساب الإجماليات
+                const modal = bootstrap.Modal.getInstance(document.getElementById('productModal'));
+                if (modal) modal.hide();
+                calculateRowTotal(row);
+                calculateGrandTotal();
+                
+                // التركيز على حقل الكمية
+                const quantityInput = row.querySelector('.quantity-input');
+                if (quantityInput) {
+                    quantityInput.focus();
+                }
+            })
+            .catch(err => {
+                // في حالة خطأ في الشبكة، حساب السعر من القيم الممررة
+                priceInput.disabled = false;
+                
+                const fallbackPrice = parseFloat(salePrice) || 0;
+                const fallbackTaxRate = parseFloat(taxRate) || 0;
+                const calculatedPrice = fallbackTaxRate > 0 ? fallbackPrice / (1 + fallbackTaxRate / 100) : fallbackPrice;
+                
+                applyPrice(calculatedPrice, 'error-fallback');
+                taxRateInput.value = fallbackTaxRate;
+                console.error('❌ خطأ في استدعاء POS API:', err);
+
+                const modal = bootstrap.Modal.getInstance(document.getElementById('productModal'));
+                if (modal) modal.hide();
+                calculateRowTotal(row);
+                calculateGrandTotal();
+            });
+    } catch (e) {
+        console.error('❌ خطأ في دالة selectProduct:', e);
+        // التأكد من إغلاق النافذة المنبثقة حتى في حالة الخطأ
+        try {
             const modal = bootstrap.Modal.getInstance(document.getElementById('productModal'));
             if (modal) modal.hide();
-            calculateRowTotal(row);
-            calculateGrandTotal();
+        } catch (modalErr) {
+            console.error('خطأ في إغلاق النافذة المنبثقة:', modalErr);
         }
-
-        // Defensive check after a short delay: if something else overwrote the price programmatically, revert
-        setTimeout(() => {
-            try {
-                const currentPrice = parseFloat(priceInput.value) || 0;
-                const original = parseFloat(priceInput.getAttribute('data-original-price')) || 0;
-                if (Math.abs(currentPrice - original) > 0.0001) {
-                    console.warn(`Price for product ${productId} at row ${currentRow} was changed programmatically from ${original} to ${currentPrice}`);
-                    setTimeout(() => {
-                        try {
-                                if (document.activeElement !== priceInput) {
-                                priceInput.value = formatCurrency(original, 3);
-                                calculateRowTotal(row);
-                                calculateGrandTotal();
-                                console.info(`Price at row ${currentRow} reverted to original sale price ${original}`);
-                            } else {
-                                console.info(`User is editing price at row ${currentRow}, not reverting`);
-                            }
-                        } catch (err) {
-                            console.error('Error during price revert check:', err);
-                        }
-                    }, 150);
-                }
-            } catch (err) {
-                console.error('Error verifying price overwrite:', err);
-            }
-        }, 250);
-
-    } catch (e) {
-        console.error('selectProduct error:', e);
     }
 }
 
@@ -1901,8 +1890,14 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (availableQuantityInput) {
                             availableQuantityInput.value = formatCurrency(parseFloat(product.current_stock || 0), 3);
                         }
-                        priceInput.value = formatCurrency(parseFloat(product.sale_price || 0), 3);
-                        taxRateInput.value = parseFloat(product.tax_rate) || 0;
+                        
+                        // حساب السعر بدون ضريبة (نفس طريقة POS)
+                        const salePrice = parseFloat(product.sale_price || 0);
+                        const taxRate = parseFloat(product.tax_rate || 0);
+                        const displayedPrice = taxRate > 0 ? salePrice / (1 + taxRate / 100) : salePrice;
+                        
+                        priceInput.value = formatCurrency(displayedPrice, 3);
+                        taxRateInput.value = taxRate;
 
                         dropdown.style.display = 'none';
 
@@ -2066,6 +2061,85 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Keyboard shortcuts for invoice management
 document.addEventListener('keydown', function(e) {
+    // Shift+A to add new product row
+    if (e.shiftKey && e.key.toLowerCase() === 'a' && !e.ctrlKey && !e.altKey) {
+        // Don't trigger if user is typing in an input field
+        const activeElement = document.activeElement;
+        const isInputField = activeElement && (
+            activeElement.tagName === 'INPUT' || 
+            activeElement.tagName === 'TEXTAREA' || 
+            activeElement.tagName === 'SELECT' ||
+            activeElement.isContentEditable
+        );
+        
+        if (!isInputField) {
+            e.preventDefault();
+            
+            try {
+                addProductRow();
+                console.log('✅ Product row added via Shift+A shortcut');
+                
+                // Focus on the first product code input of the new row
+                setTimeout(() => {
+                    const lastRow = document.querySelector('#productsTableBody tr:last-child');
+                    if (lastRow) {
+                        const productCodeInput = lastRow.querySelector('.product-code-input');
+                        if (productCodeInput) {
+                            productCodeInput.focus();
+                            console.log('✅ Focus set on new product code input');
+                        }
+                    }
+                }, 100);
+            } catch (error) {
+                console.error('❌ Error adding product row via Shift+A:', error);
+            }
+        }
+    }
+    
+    // Shift+D to delete current product row
+    if (e.shiftKey && e.key.toLowerCase() === 'd' && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        
+        // Find the row containing the currently focused element
+        const activeElement = document.activeElement;
+        const currentRow = activeElement ? activeElement.closest('#productsTableBody tr') : null;
+        
+        if (currentRow) {
+            // Get row ID
+            const rowId = currentRow.id.replace('productRow', '');
+            
+            // Check if this is the last row
+            const allRows = document.querySelectorAll('#productsTableBody tr');
+            if (allRows.length <= 1) {
+                alert("{% trans 'Cannot delete the last product row. At least one product row must remain.' %}");
+                return;
+            }
+            
+            // Show confirmation dialog
+            if (confirm("{% trans 'Are you sure you want to delete this product row?' %}")) {
+                // Find the previous row to focus after deletion
+                const previousRow = currentRow.previousElementSibling;
+                
+                // Delete the row
+                removeProductRow(rowId);
+                console.log(`✅ Product row ${rowId} deleted via Shift+D shortcut`);
+                
+                // Focus on the first input of the previous row
+                if (previousRow) {
+                    setTimeout(() => {
+                        const firstInput = previousRow.querySelector('input:not([type="hidden"]):not([readonly])');
+                        if (firstInput) {
+                            firstInput.focus();
+                            console.log('✅ Focus moved to previous row');
+                        }
+                    }, 100);
+                }
+            }
+        } else {
+            alert("{% trans 'Please select a product row to delete by clicking on any field in that row.' %}");
+        }
+    }
+    
     // Ctrl+Enter to save invoice
     if (e.ctrlKey && e.key === 'Enter') {
         e.preventDefault(); // Prevent default behavior
@@ -2087,6 +2161,8 @@ document.addEventListener('keydown', function(e) {
 // Function to show keyboard shortcuts help
 function showKeyboardShortcuts() {
     const shortcuts = [
+        { key: 'Shift+A', description: 'إضافة سطر منتج جديد' },
+        { key: 'Shift+D', description: 'حذف سطر المنتج الحالي' },
         { key: 'Ctrl+Enter', description: 'حفظ الفاتورة' },
         { key: 'Ctrl+H or Ctrl+?', description: 'عرض اختصارات لوحة المفاتيح' }
     ];
@@ -2316,7 +2392,14 @@ document.addEventListener('DOMContentLoaded', function() {
                                 if (nameInput) nameInput.value = product.name;
                                 if (availableQuantityInput) availableQuantityInput.value = product.current_stock;
                                 if (taxRateInput && !taxRateInput.value) taxRateInput.value = product.tax_rate;
-                                if (priceInput && !priceInput.value) priceInput.value = product.sale_price;
+                                
+                                // حساب السعر بدون ضريبة (نفس طريقة POS)
+                                if (priceInput && !priceInput.value) {
+                                    const salePrice = parseFloat(product.sale_price || 0);
+                                    const taxRate = parseFloat(product.tax_rate || 0);
+                                    const displayedPrice = taxRate > 0 ? salePrice / (1 + taxRate / 100) : salePrice;
+                                    priceInput.value = displayedPrice;
+                                }
                             }
                         }
                         
@@ -2341,6 +2424,14 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.product-row').forEach(row => {
         attachRowEventListeners(row);
     });
+    
+    // {% trans "Calculate totals for existing products when page loads" %}
+    setTimeout(() => {
+        document.querySelectorAll('.product-row').forEach(row => {
+            calculateRowTotal(row);
+        });
+        calculateGrandTotal();
+    }, 300);
     {% endif %}
 });
 </script>

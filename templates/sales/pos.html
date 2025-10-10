@@ -1049,7 +1049,7 @@
                     <select class="form-select" id="cashbox-select" required>
                         <option value="">{% trans "Select Cashbox" %}</option>
                         {% for cashbox in cashboxes %}
-                        <option value="{{ cashbox.id }}">{{ cashbox.name }} ({{ cashbox.balance|floatformat:3 }} {{ cashbox.currency }})</option>
+                        <option value="{{ cashbox.id }}">{{ cashbox.name }} ({{ cashbox.balance|format_currency }} {{ cashbox.currency }})</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -1138,6 +1138,7 @@
 let cart = [];
 let invoiceId = null;
 const currencySymbol = '{% if base_currency and base_currency.symbol %}{{ base_currency.symbol }}{% else %}{% get_currency_symbol %}{% endif %}';
+const currencyDecimalPlaces = {% if base_currency %}{{ base_currency.decimal_places }}{% else %}2{% endif %};
 
 // تحديث {% trans "Time" %}
 function updateTime() {
@@ -1233,7 +1234,7 @@ function updateCartDisplay() {
             <div class="cart-item">
                 <div class="item-info">
                     <div class="item-name">${item.name}</div>
-                    <div class="item-details">${item.price} × ${item.quantity} = ${itemTotal.toFixed(2)}</div>
+                    <div class="item-details">${item.price.toFixed(currencyDecimalPlaces)} × ${item.quantity} = ${itemTotal.toFixed(currencyDecimalPlaces)}</div>
                 </div>
                 <div class="item-controls">
                     <div class="qty-controls">
@@ -1260,9 +1261,9 @@ function updateCartDisplay() {
     const total = subtotal + totalTax;
     
     // تحديث الإجماليات
-    document.getElementById('subtotal').textContent = subtotal.toFixed(2);
-    document.getElementById('tax-amount').textContent = totalTax.toFixed(2);
-    document.getElementById('total').textContent = total.toFixed(2) + ' ' + currencySymbol;
+    document.getElementById('subtotal').textContent = subtotal.toFixed(currencyDecimalPlaces);
+    document.getElementById('tax-amount').textContent = totalTax.toFixed(currencyDecimalPlaces);
+    document.getElementById('total').textContent = total.toFixed(currencyDecimalPlaces) + ' ' + currencySymbol;
     
     cartTotals.style.display = 'block';
     checkoutBtn.disabled = false;
@@ -1448,7 +1449,7 @@ function checkout() {
             invoiceId = data.invoice_id;
             document.getElementById('success-message').innerHTML = `
                 <strong>رقم ال{% trans "Invoice" %}:</strong> ${data.invoice_number}<br>
-                <strong>الإجمالي:</strong> ${total.toFixed(2)} ${currencySymbol}
+                <strong>الإجمالي:</strong> ${total.toFixed(currencyDecimalPlaces)} ${currencySymbol}
             `;
             
             const successModal = new bootstrap.Modal(document.getElementById('successModal'));
@@ -1586,7 +1587,7 @@ function displayProducts(products) {
                  data-name="${product.name.toLowerCase()}"
                  data-barcode="${product.barcode || ''}">
                 <div class="product-name">${product.name}</div>
-                <div class="product-price">${product.price} ${currencySymbol}</div>
+                <div class="product-price">${product.price.toFixed(currencyDecimalPlaces)} ${currencySymbol}</div>
         `;
         
         if (product.stock <= 0) {
