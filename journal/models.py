@@ -62,18 +62,7 @@ class Account(models.Model):
 class JournalEntry(models.Model):
     """قيد محاسبي"""
     REFERENCE_TYPES = [
-        ('sales_invoice', _('Sales Invoice')),
-        ('purchase_invoice', _('Purchase Invoice')),
-        ('sales_return', _('Sales Return')),
-        ('purchase_return', _('Purchase Return')),
-        ('receipt_voucher', _('Receipt Voucher')),
-        ('payment_voucher', _('Payment Voucher')),
-        ('revenue_expense', _('Revenue/Expense Entry')),
         ('asset_depreciation', _('Asset Depreciation')),
-        ('provision', _('Provision')),
-        ('provision_entry', _('Provision Entry')),
-        ('cashbox_transfer', _('Cashbox Transfer')),
-        ('bank_transfer', _('Bank Transfer')),
         ('manual', _('Manual Entry')),
         ('adjustment', _('Adjustment Entry')),
     ]
@@ -89,7 +78,6 @@ class JournalEntry(models.Model):
         ('daily', _('Daily')),
         ('other', _('Other')),
     ]
-    
     entry_number = models.CharField(_('رقم القيد'), max_length=50, unique=True, blank=True)
     entry_date = models.DateField(_('تاريخ القيد'))
     entry_type = models.CharField(_('نوع القيد'), max_length=20, choices=ENTRY_TYPES, default='daily')

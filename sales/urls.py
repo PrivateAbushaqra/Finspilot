@@ -28,11 +28,10 @@ urlpatterns = [
     # path('returns/edit/<int:pk>/', views.SalesReturnUpdateView.as_view(), name='return_edit'),
     path('returns/delete/<int:pk>/', views.SalesReturnDeleteView.as_view(), name='return_delete'),
     
-    # API endpoints  
+    # API endpoints
     path('api/invoices-for-returns/', views.get_invoices_for_returns, name='api_invoices_for_returns'),
     path('ajax/get-invoice-items/<int:invoice_id>/', views.get_invoice_items, name='get_invoice_items'),
-    
-    # Point of Sale
+    path('api/product-stock/<int:product_id>/<int:warehouse_id>/', views.get_product_stock, name='get_product_stock'),    # Point of Sale
     path('pos/', views.pos_view, name='pos'),
     path('pos/create-invoice/', views.pos_create_invoice, name='pos_create_invoice'),
     path('pos/product/<int:product_id>/', views.pos_get_product, name='pos_get_product'),

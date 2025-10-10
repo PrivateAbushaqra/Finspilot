@@ -32,10 +32,11 @@ class AccountForm(forms.ModelForm):
 class JournalEntryForm(forms.ModelForm):
     class Meta:
         model = JournalEntry
-        fields = ['entry_number', 'entry_date', 'reference_type', 'reference_id', 'description']
+        fields = ['entry_number', 'entry_date', 'entry_type', 'reference_type', 'reference_id', 'description']
         widgets = {
             'entry_number': forms.TextInput(attrs={'class': 'form-control'}),
             'entry_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'entry_type': forms.Select(attrs={'class': 'form-control'}),
             'reference_type': forms.Select(attrs={'class': 'form-control'}),
             'reference_id': forms.NumberInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
