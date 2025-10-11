@@ -79,10 +79,13 @@ class Product(models.Model):
                                    help_text=_('للمنتجات التي تُباع بالقطعة وتحتاج كفالة'))
     category = models.ForeignKey(Category, on_delete=models.PROTECT, verbose_name=_('الفئة'))
     description = models.TextField(_('الوصف'), blank=True)
+    image = models.ImageField(_('صورة المنتج'), upload_to='products/', blank=True, null=True)
     cost_price = models.DecimalField(_('سعر التكلفة'), max_digits=15, decimal_places=3, 
                                    validators=[MinValueValidator(0)], default=0, blank=True)
     minimum_quantity = models.DecimalField(_('الحد الأدنى للكمية'), max_digits=10, decimal_places=3, 
                                          validators=[MinValueValidator(0)], default=0)
+    maximum_quantity = models.DecimalField(_('الحد الأقصى للكمية'), max_digits=10, decimal_places=3, 
+                                         validators=[MinValueValidator(0)], default=0, blank=True)
     sale_price = models.DecimalField(_('سعر البيع'), max_digits=15, decimal_places=3, 
                                    validators=[MinValueValidator(0)])
     wholesale_price = models.DecimalField(_('سعر الجملة'), max_digits=15, decimal_places=3, 

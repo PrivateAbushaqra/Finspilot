@@ -53,7 +53,7 @@ class InventoryListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
                 movement_type='out'
             ).aggregate(total=Sum('quantity'))['total'] or 0
             
-            current_stock = in_movements - out_movements
+            current_stock = in_movements - out_movements + product.opening_balance_quantity
             
             # Add to total stock if positive
             if current_stock > 0:
@@ -90,7 +90,7 @@ class InventoryListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
                 movement_type='out'
             ).aggregate(total=Sum('quantity'))['total'] or 0
             
-            current_stock = in_movements - out_movements
+            current_stock = in_movements - out_movements + product.opening_balance_quantity
             
             # Determine stock level
             if current_stock <= 0:
@@ -102,12 +102,19 @@ class InventoryListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             else:
                 stock_level = 'good'
             
-            # --- تعديل احتساب القيمة بناءً على تكلفة الشراء الفعلية المتبقية من فواتير الشراء ---
+            # --- تعديل احتساب القيمة بناءً على تكلفة الشراء الفعلية المتبقية من فواتير الشراء مع تضمين الرصيد الافتتاحي ---
             from purchases.models import PurchaseInvoiceItem
             from decimal import Decimal
             remaining_qty = Decimal(current_stock)
             value = Decimal('0.0')
-            # جلب عناصر فواتير الشراء الأقدم فالأحدث
+            
+            # أولاً، استخدم الرصيد الافتتاحي إذا كان موجوداً
+            if product.opening_balance_quantity > 0 and remaining_qty > 0:
+                used_qty = min(Decimal(product.opening_balance_quantity), remaining_qty)
+                value += used_qty * Decimal(product.opening_balance_cost)
+                remaining_qty -= used_qty
+            
+            # ثم، جلب عناصر فواتير الشراء الأقدم فالأحدث
             purchase_items = PurchaseInvoiceItem.objects.filter(product=product).order_by('invoice__date', 'invoice__id')
             for item in purchase_items:
                 if remaining_qty <= 0:

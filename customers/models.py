@@ -90,7 +90,7 @@ class CustomerSupplier(models.Model):
             from accounts.models import AccountTransaction
             from django.db.models import Sum
             
-            transactions = AccountTransaction.objects.filter(customer_supplier=self)
+            transactions = AccountTransaction.objects.filter(customer_supplier=self).exclude(reference_type='opening_balance')
             total_debit = transactions.filter(direction='debit').aggregate(
                 total=Sum('amount'))['total'] or 0
             total_credit = transactions.filter(direction='credit').aggregate(

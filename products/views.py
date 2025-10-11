@@ -515,7 +515,9 @@ class ProductUpdateView(LoginRequiredMixin, View):
         context = {
             'product': product,
             'categories': Category.objects.filter(is_active=True),
-            'current_opening_balance': current_opening_balance
+            'current_opening_balance': current_opening_balance,
+            'current_stock': product.current_stock,
+            'maximum_quantity': product.maximum_quantity
         }
         return render(request, self.template_name, context)
     
@@ -533,10 +535,13 @@ class ProductUpdateView(LoginRequiredMixin, View):
             sale_price = request.POST.get('sale_price', '0')
             wholesale_price = request.POST.get('wholesale_price', '0')
             tax_rate = request.POST.get('tax_rate', '0')
-            opening_balance = request.POST.get('opening_balance', '0')
+            opening_balance = request.POST.get('opening_balance_quantity', '0')
             opening_balance_cost = request.POST.get('opening_balance_cost', '0')
+            minimum_quantity = request.POST.get('minimum_quantity', '0')
+            maximum_quantity = request.POST.get('maximum_quantity', '0')
             description = request.POST.get('description', '').strip()
             is_active = request.POST.get('is_active') == 'on'
+            image = request.FILES.get('image')
             
             # التحقق من صحة البيانات
             if not name:
@@ -577,6 +582,9 @@ class ProductUpdateView(LoginRequiredMixin, View):
                 opening_balance = float(opening_balance) if opening_balance else 0
                 opening_balance_cost = float(opening_balance_cost) if opening_balance_cost else 0
                 
+                minimum_quantity = float(minimum_quantity) if minimum_quantity else 0
+                maximum_quantity = float(maximum_quantity) if maximum_quantity else 0
+                
                 # التحقق من صحة نسبة الضريبة
                 if tax_rate < 0 or tax_rate > 100:
                     messages.error(request, 'نسبة الضريبة يجب أن تكون بين 0 و 100!')
@@ -604,12 +612,16 @@ class ProductUpdateView(LoginRequiredMixin, View):
             product.serial_number = serial_number
             product.description = description
             product.cost_price = cost_price
+            product.minimum_quantity = minimum_quantity
+            product.maximum_quantity = maximum_quantity
             product.sale_price = sale_price
             product.wholesale_price = wholesale_price
             product.tax_rate = tax_rate
             product.opening_balance_quantity = opening_balance
             product.opening_balance_cost = opening_balance_cost
             product.is_active = is_active
+            if image:
+                product.image = image
             product.save()
             
             # التعامل مع تعديل الرصيد الافتتاحي

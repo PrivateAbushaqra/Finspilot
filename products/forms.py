@@ -10,9 +10,9 @@ class ProductForm(forms.ModelForm):
         model = Product
         fields = [
             'code', 'name', 'name_en', 'product_type', 'barcode', 'serial_number', 
-            'category', 'description', 'cost_price', 
-            'minimum_quantity', 'sale_price', 'wholesale_price', 
-            'tax_rate', 'enable_alerts', 'is_active'
+            'category', 'description', 'image', 'cost_price', 
+            'minimum_quantity', 'maximum_quantity', 'sale_price', 'wholesale_price', 
+            'tax_rate', 'opening_balance_quantity', 'opening_balance_cost', 'enable_alerts', 'is_active'
         ]
         widgets = {
             'code': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('Product Code')}),
@@ -23,11 +23,15 @@ class ProductForm(forms.ModelForm):
             'serial_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('Serial Number')}),
             'category': forms.Select(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': _('Product Description')}),
+            'image': forms.FileInput(attrs={'class': 'form-control'}),
             'cost_price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001', 'min': '0'}),
             'minimum_quantity': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001', 'min': '0'}),
+            'maximum_quantity': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001', 'min': '0'}),
             'sale_price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001', 'min': '0'}),
             'wholesale_price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001', 'min': '0'}),
             'tax_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0', 'max': '100'}),
+            'opening_balance_quantity': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001', 'min': '0'}),
+            'opening_balance_cost': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001', 'min': '0'}),
             'enable_alerts': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }

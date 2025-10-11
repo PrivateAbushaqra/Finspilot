@@ -297,42 +297,7 @@ class CustomerSupplierCreateView(LoginRequiredMixin, View):
                 is_active=is_active
             )
             
-            # إنشاء حركة محاسبية للرصيد الافتتاحي إذا كان أكبر من الصفر
-            if balance != 0:
-                try:
-                    from accounts.models import AccountTransaction
-                    from datetime import date
-                    
-                    # تحديد اتجاه الحركة حسب نوع العميل والرصيد
-                    if customer_supplier.is_customer:
-                        # للعملاء: رصيد موجب = مدين (له علينا)، رصيد سالب = دائن (علينا له)
-                        direction = 'debit' if balance > 0 else 'credit'
-                    else:
-                        # للموردين: رصيد موجب = دائن (لنا عليه)، رصيد سالب = مدين (عليه لنا)  
-                        direction = 'credit' if balance > 0 else 'debit'
-                    
-                    # إنشاء الحركة
-                    transaction = AccountTransaction.objects.create(
-                        transaction_number=f"OB-{customer_supplier.sequence_number}",
-                        date=date.today(),
-                        customer_supplier=customer_supplier,
-                        transaction_type='adjustment',
-                        direction=direction,
-                        amount=abs(balance),
-                        reference_type='opening_balance',
-                        reference_id=customer_supplier.id,
-                        description=f'الرصيد الافتتاحي لـ {customer_supplier.name}',
-                        notes='رصيد افتتاحي تم إنشاؤه تلقائياً عند إضافة العميل/المورد',
-                        created_by=request.user
-                    )
-                    
-                    # حساب وتحديث الرصيد بعد الحركة
-                    transaction.balance_after = balance
-                    transaction.save()
-                    
-                except Exception as e:
-                    # في حالة فشل إنشاء الحركة، سجل خطأ لكن لا تمنع إنشاء العميل
-                    pass
+            # لا نحتاج إلى إنشاء حركة محاسبية للرصيد الافتتاحي - يُحسب تلقائياً في current_balance
             
             # تسجيل النشاط
             log_view_activity(request, 'create', customer_supplier, _('Created customer/supplier: %(name)s') % {'name': name})

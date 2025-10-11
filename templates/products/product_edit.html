@@ -183,7 +183,7 @@
                                     </label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="tax_rate" name="tax_rate" 
-                                               step="0.01" min="0" max="100" value="{{ product.tax_rate|default:0 }}" 
+                                               step="0.01" min="0" max="100" value="{{ product.tax_rate|unlocalize }}" 
                                                placeholder="{% trans 'Example: 15' %}">
                                         <span class="input-group-text">%</span>
                                     </div>
@@ -237,8 +237,8 @@
                                             <i class="fas fa-balance-scale text-success me-1"></i>
                                             {% trans "Opening Balance" %}
                                         </label>
-                                        <input type="number" class="form-control" id="opening_balance" name="opening_balance" 
-                                               step="0.001" min="0" value="{{ product.get_opening_balance|default:0 }}">
+                                        <input type="number" class="form-control" id="opening_balance" name="opening_balance_quantity" 
+                                               step="0.001" min="0" value="{{ product.opening_balance_quantity|unlocalize }}">
                                         <small class="form-text text-muted">
                                             <i class="fas fa-info-circle me-1"></i>
                                             {% trans "Initial stock when starting to use the system" %}
@@ -252,7 +252,7 @@
                                             {% trans "Opening Balance Cost" %} <span class="text-danger">*</span>
                                         </label>
                                         <input type="number" class="form-control" id="opening_balance_cost" name="opening_balance_cost" 
-                                               step="0.001" min="0" value="{{ product.opening_balance_cost|default:0 }}" required>
+                                               step="0.001" min="0" value="{{ product.opening_balance_cost|unlocalize }}" required>
                                         <small class="form-text text-muted">
                                             <i class="fas fa-info-circle me-1"></i>
                                             {% trans "Total cost of the opening balance for FIFO inventory calculation" %}
@@ -266,7 +266,7 @@
                                             {% trans "Current Stock" %}
                                         </label>
                                         <input type="number" class="form-control" id="current_stock" name="current_stock" 
-                                               min="0" value="{{ product.current_stock|default:0 }}" 
+                                               min="0" value="{{ product.current_stock|unlocalize }}" 
                                                readonly style="background-color: #f8f9fa; cursor: not-allowed;">
                                         <small class="form-text text-muted">
                                             <i class="fas fa-calculator me-1"></i>
@@ -277,13 +277,13 @@
                                 <div class="col-md-4">
                                     <div class="mb-3">
                                         <label for="min_stock" class="form-label">{% trans "Minimum Stock Level" %}</label>
-                                        <input type="number" class="form-control" id="min_stock" name="min_stock" min="0" value="{% if product.minimum_quantity %}{{ product.minimum_quantity }}{% else %}0{% endif %}">
+                                        <input type="number" class="form-control" id="min_stock" name="minimum_quantity" min="0" value="{% if product.minimum_quantity %}{{ product.minimum_quantity|unlocalize }}{% else %}0{% endif %}">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <div class="mb-3">
                                         <label for="max_stock" class="form-label">{% trans "Maximum Stock Level" %}</label>
-                                        <input type="number" class="form-control" id="max_stock" name="max_stock" min="0" value="{% if product.max_stock %}{{ product.max_stock }}{% else %}0{% endif %}">
+                                        <input type="number" class="form-control" id="max_stock" name="maximum_quantity" min="0" value="{% if product.maximum_quantity %}{{ product.maximum_quantity|unlocalize }}{% else %}0{% endif %}">
                                     </div>
                                 </div>
                             </div>
