@@ -80,7 +80,7 @@
                                                 <span class="{% if estimated_profit >= 0 %}text-success{% else %}text-danger{% endif %}">
                                                     {{ estimated_profit|floatformat:2 }}
                                                 </span>
-                                                <small class="text-muted">ريال</small>
+                                                <small class="text-muted">{{ base_currency.symbol }}</small>
                                             </h4>
                                             <p class="text-center">
                                                 {% if estimated_profit >= 0 %}

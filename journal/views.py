@@ -1154,11 +1154,16 @@ def year_end_closing(request):
     estimated_closing = YearEndClosing(year=current_year, closing_date=date.today())
     estimated_profit = estimated_closing.calculate_net_profit()
     
+    # الحصول على العملة الأساسية
+    from settings.models import Currency
+    base_currency = Currency.get_base_currency()
+    
     context = {
         'form': form,
         'closings': closings,
         'estimated_profit': estimated_profit,
         'current_year': current_year,
+        'base_currency': base_currency,
     }
     
     # تسجيل عرض الصفحة
