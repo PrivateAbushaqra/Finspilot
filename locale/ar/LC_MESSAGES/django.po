@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-11 12:51+0300\n"
+"POT-Creation-Date: 2025-10-11 14:07+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2917,7 +2917,6 @@ msgid "فاتورة مشتريات"
 msgstr "إحصائيات المشتريات"
 
 #: .\cashboxes\models.py:303 .\core\models.py:68 .\receipts\models.py:84
-#: .\receipts\views.py:335
 msgid "سند قبض"
 msgstr ""
 
@@ -5504,6 +5503,14 @@ msgstr ""
 msgid "مجموع المدين يجب أن يساوي مجموع الدائن"
 msgstr ""
 
+#: .\journal\services.py:990
+msgid "شيكات تحت التحصيل"
+msgstr ""
+
+#: .\journal\services.py:992
+msgid "حساب شيكات تحت التحصيل - IFRS 9"
+msgstr ""
+
 #: .\journal\views.py:117 .\templates\base.html:651 .\templates\base.html:890
 #: .\templates\journal\account_list.html:6
 #: .\templates\journal\account_list.html:13
@@ -5674,13 +5681,13 @@ msgstr ""
 msgid "تم إجراء الإقفال لهذه السنة مسبقاً"
 msgstr ""
 
-#: .\journal\views.py:1171
+#: .\journal\views.py:1176
 #, fuzzy
 #| msgid "أرصدة البنوك والصناديق النقدية"
 msgid "صفحة الإقفال السنوي"
 msgstr "أرصدة البنوك والصناديق النقدية"
 
-#: .\journal\views.py:1172
+#: .\journal\views.py:1177
 #, fuzzy
 #| msgid "أرصدة البنوك والصناديق النقدية"
 msgid "عرض صفحة الإقفال السنوي"
@@ -6760,8 +6767,7 @@ msgstr "أرصدة البنوك والصناديق النقدية"
 msgid "ملاحظات التحويل البنكي"
 msgstr "أرصدة البنوك والصناديق النقدية"
 
-#: .\receipts\models.py:48 .\receipts\views.py:335
-#: .\templates\payments\voucher_detail.html:182
+#: .\receipts\models.py:48 .\templates\payments\voucher_detail.html:182
 msgid "رقم الشيك"
 msgstr ""
 
@@ -6904,35 +6910,35 @@ msgstr ""
 msgid "عكس سندات القبض"
 msgstr ""
 
-#: .\receipts\views.py:176 .\templates\accounts\customer_statement.html:131
+#: .\receipts\views.py:179 .\templates\accounts\customer_statement.html:131
 #: .\templates\accounts\customer_statement.html:173
 #: .\templates\accounts\customer_statement.html:414
 #: .\templates\receipts\receipt_list.html:14
 msgid "Receipt Vouchers"
 msgstr "سندات القبض"
 
-#: .\receipts\views.py:211 .\receipts\views.py:575
+#: .\receipts\views.py:214 .\receipts\views.py:543
 msgid "جميع الحقول مطلوبة"
 msgstr ""
 
-#: .\receipts\views.py:216
+#: .\receipts\views.py:219
 msgid "رقم السند موجود مسبقاً، يرجى اختيار رقم آخر"
 msgstr ""
 
-#: .\receipts\views.py:222
+#: .\receipts\views.py:225
 msgid "المبلغ يجب أن يكون أكبر من صفر"
 msgstr ""
 
-#: .\receipts\views.py:262 .\receipts\views.py:280 .\receipts\views.py:298
-#: .\receipts\views.py:521
+#: .\receipts\views.py:265 .\receipts\views.py:283 .\receipts\views.py:301
+#: .\receipts\views.py:489
 msgid "Receipt voucher"
 msgstr "سند قبض"
 
-#: .\receipts\views.py:263
+#: .\receipts\views.py:266
 msgid "Payment type"
 msgstr "نوع الدفع"
 
-#: .\receipts\views.py:280 .\receipts\views.py:298
+#: .\receipts\views.py:283 .\receipts\views.py:301
 #: .\templates\banks\account_edit.html:213
 #: .\templates\core\profit_loss_report.html:496
 #: .\templates\customers\supplier_list.html:333
@@ -6941,99 +6947,80 @@ msgstr "نوع الدفع"
 msgid "from"
 msgstr "من"
 
-#: .\receipts\views.py:309
+#: .\receipts\views.py:312
 #, python-format
 msgid ""
 "تحويل بنكي لسند قبض رقم %(number)s - الحساب البنكي: %(account)s - المبلغ: "
 "%(amount)s"
 msgstr ""
 
-#: .\receipts\views.py:335
-msgid "شيك قيد التحصيل"
-msgstr ""
-
-#: .\receipts\views.py:335 .\templates\products\product_list.html:678
-#: .\templates\reports\aging_report.html:111
-#: .\templates\reports\cash_flow.html:101
-#: .\templates\reports\cash_flow.html:112
-#: .\templates\reports\income_statement.html:101
-msgid "من"
-msgstr ""
-
-#: .\receipts\views.py:348
-#, python-format
-msgid ""
-"إيداع شيك في الصندوق - سند قبض رقم %(number)s - الصندوق: %(cashbox)s - "
-"المبلغ: %(amount)s - رقم الشيك: %(check)s"
-msgstr ""
-
-#: .\receipts\views.py:372
+#: .\receipts\views.py:340
 msgid "Receipt voucher {} created successfully"
 msgstr "تم إنشاء سند القبض {} بنجاح"
 
-#: .\receipts\views.py:376
+#: .\receipts\views.py:344
 msgid "Error occurred while creating receipt voucher: {}"
 msgstr "حدث خطأ أثناء إنشاء سند القبض: {}"
 
-#: .\receipts\views.py:393 .\templates\receipts\check_list.html:20
+#: .\receipts\views.py:361 .\templates\receipts\check_list.html:20
 #: .\templates\receipts\receipt_list.html:21
 msgid "Add Receipt Voucher"
 msgstr "إضافة سند قبض"
 
-#: .\receipts\views.py:417
+#: .\receipts\views.py:385
 msgid "Receipt Voucher Details"
 msgstr "تفاصيل سند القبض"
 
-#: .\receipts\views.py:429
+#: .\receipts\views.py:397
 msgid "لا يمكن تعديل سند معكوس"
 msgstr ""
 
-#: .\receipts\views.py:441
+#: .\receipts\views.py:409
 msgid "Receipt voucher updated successfully"
 msgstr "تم تحديث سند القبض بنجاح"
 
-#: .\receipts\views.py:457
+#: .\receipts\views.py:425
 msgid "لا يمكن عكس هذا السند"
 msgstr ""
 
-#: .\receipts\views.py:465
+#: .\receipts\views.py:433
 msgid "سبب العكس مطلوب"
 msgstr ""
 
-#: .\receipts\views.py:494 .\receipts\views.py:513
+#: .\receipts\views.py:462 .\receipts\views.py:481
 msgid "Reversal of receipt voucher"
 msgstr "عكس سند القبض"
 
-#: .\receipts\views.py:495
+#: .\receipts\views.py:463
 msgid "Reversal"
 msgstr "العكس"
 
-#: .\receipts\views.py:519
+#: .\receipts\views.py:487
 msgid ""
 "Warning: Insufficient cash box balance, reversal applied to account only"
 msgstr ""
 
-#: .\receipts\views.py:521
+#: .\receipts\views.py:489
 msgid "has been reversed successfully"
 msgstr "تم العكس بنجاح"
 
-#: .\receipts\views.py:525
+#: .\receipts\views.py:493
 msgid "Error occurred while reversing voucher"
 msgstr "حدث خطأ أثناء عكس السند"
 
-#: .\receipts\views.py:557
+#: .\receipts\views.py:525
 msgid "الشيكات"
 msgstr ""
 
-#: .\receipts\views.py:629
+#: .\receipts\views.py:597
 msgid "Check collection"
 msgstr "تحصيل الشيك"
 
-#: .\receipts\views.py:629
+#: .\receipts\views.py:597
 msgid "voucher"
 msgstr "سند"
 
-#: .\receipts\views.py:762
+#: .\receipts\views.py:730
 msgid "تحصيل الشيك"
 msgstr ""
 
@@ -13922,7 +13909,6 @@ msgstr "بيانات الحساب المراد حذفها"
 
 #: .\templates\customers\delete.html:159 .\templates\customers\delete.html:163
 #: .\templates\settings\superadmin_management.html:309
-#: .\templates\core\dashboard.html:358
 msgid "Not Specified"
 msgstr "غير محدد"
 
@@ -18817,6 +18803,14 @@ msgstr "الصورة"
 
 #: .\templates\products\product_list.html:677
 msgid "عرض"
+msgstr ""
+
+#: .\templates\products\product_list.html:678
+#: .\templates\reports\aging_report.html:111
+#: .\templates\reports\cash_flow.html:101
+#: .\templates\reports\cash_flow.html:112
+#: .\templates\reports\income_statement.html:101
+msgid "من"
 msgstr ""
 
 #: .\templates\products\product_list.html:680

@@ -8,6 +8,9 @@ from django.http import JsonResponse
 from django.core.paginator import Paginator
 from django.db.models import Q, Sum
 from django.urls import reverse
+import logging
+
+logger = logging.getLogger(__name__)
 
 from .models import PaymentVoucher  # , PaymentVoucherItem
 from .forms import PaymentVoucherForm  # , PaymentVoucherItemFormSet
@@ -165,8 +168,28 @@ def payment_voucher_create(request):
         form = PaymentVoucherForm(request.POST)
         if form.is_valid():
             try:
+                # التحقق من الرصيد قبل إنشاء السند
+                voucher = form.save(commit=False)
+                
+                # التحقق من رصيد الصندوق للدفع النقدي
+                if voucher.payment_type == 'cash' and voucher.cashbox:
+                    if voucher.cashbox.balance < voucher.amount:
+                        messages.error(request, _('رصيد الصندوق غير كافي لإتمام هذا الدفع'))
+                        return render(request, 'payments/voucher_form.html', {'form': form})
+                
+                # التحقق من رصيد البنك للتحويل البنكي
+                elif voucher.payment_type == 'bank_transfer' and voucher.bank:
+                    if voucher.bank.balance < voucher.amount:
+                        messages.error(request, _('رصيد البنك غير كافي لإتمام هذا الدفع'))
+                        return render(request, 'payments/voucher_form.html', {'form': form})
+                
+                # التحقق من رصيد البنك للشيكات (إذا كان مرتبط ببنك معين)
+                elif voucher.payment_type == 'check' and voucher.bank:
+                    if voucher.bank.balance < voucher.amount:
+                        messages.error(request, _('رصيد البنك غير كافي لإصدار هذا الشيك'))
+                        return render(request, 'payments/voucher_form.html', {'form': form})
+                
                 with transaction.atomic():
-                    voucher = form.save(commit=False)
                     voucher.created_by = request.user
                     voucher.save()
                     
@@ -194,6 +217,7 @@ def payment_voucher_create(request):
                     messages.success(request, _('Payment voucher created successfully'))
                     return redirect('payments:voucher_detail', pk=voucher.pk)
             except Exception as e:
+                logger.error(f"Error creating payment voucher {form.cleaned_data.get('voucher_number', 'unknown')}: {str(e)}", exc_info=True)
                 messages.error(request, f'{_("Error creating payment voucher")}: {str(e)}')
     else:
         form = PaymentVoucherForm()
@@ -327,6 +351,19 @@ def create_payment_transaction(voucher):
             amount=voucher.amount,
             description=f'Payment voucher {voucher.voucher_number} - {voucher.beneficiary_display}',
             reference_number=voucher.bank_reference or voucher.voucher_number,
+            date=voucher.date,
+            created_by=voucher.created_by
+        )
+
+    elif voucher.payment_type == 'check':
+        # Check transaction (payment) - using direct import to avoid circular problems
+        from banks.models import BankTransaction
+        BankTransaction.objects.create(
+            bank=None,  # يمكن تحديد البنك لاحقاً أو تركه فارغ للشيكات
+            transaction_type='check_issued',
+            amount=voucher.amount,
+            description=f'Payment voucher {voucher.voucher_number} - Check {voucher.check_number} - {voucher.beneficiary_display}',
+            reference_number=voucher.check_number,
             date=voucher.date,
             created_by=voucher.created_by
         )

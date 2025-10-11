@@ -325,10 +325,10 @@ class JournalService:
                     'description': f'تحويل بنكي - سند رقم {receipt.receipt_number}'
                 })
         else:  # check
-            # للشيكات - استخدام اسم البنك
-            bank_account = JournalService.get_or_create_bank_account(receipt.bank_name)
+            # للشيكات - استخدام حساب شيكات تحت التحصيل
+            checks_account = JournalService.get_or_create_checks_in_transit_account()
             lines_data.append({
-                'account_id': bank_account.id,
+                'account_id': checks_account.id,
                 'debit': receipt.amount,
                 'credit': 0,
                 'description': f'شيك رقم {receipt.check_number} - سند رقم {receipt.receipt_number}'
@@ -408,24 +408,14 @@ class JournalService:
                     'description': f'تحويل بنكي - سند رقم {payment.voucher_number}'
                 })
         else:  # check
-            # للشيكات - استخدام اسم البنك إذا كان متوفر
-            if hasattr(payment, 'check_bank_name') and payment.check_bank_name:
-                bank_account = JournalService.get_or_create_bank_account(payment.check_bank_name)
-                lines_data.append({
-                    'account_id': bank_account.id,
-                    'debit': 0,
-                    'credit': payment.amount,
-                    'description': f'شيك رقم {payment.check_number} - سند رقم {payment.voucher_number}'
-                })
-            else:
-                # استخدام حساب عام
-                cash_account = JournalService.get_cash_account()
-                lines_data.append({
-                    'account_id': cash_account.id,
-                    'debit': 0,
-                    'credit': payment.amount,
-                    'description': f'شيك - سند رقم {payment.voucher_number}'
-                })
+            # للشيكات - استخدام حساب شيكات صادرة
+            checks_payable_account = JournalService.get_or_create_checks_payable_account()
+            lines_data.append({
+                'account_id': checks_payable_account.id,
+                'debit': 0,
+                'credit': payment.amount,
+                'description': f'شيك رقم {payment.check_number} - سند رقم {payment.voucher_number}'
+            })
         
         return JournalService.create_journal_entry(
             entry_date=payment.date,
@@ -987,9 +977,23 @@ class JournalService:
         account, created = Account.objects.get_or_create(
             code=code,
             defaults={
-                'name': 'شيكات تحت التحصيل',
+                'name': _('شيكات تحت التحصيل'),
                 'account_type': 'asset',
-                'description': 'حساب شيكات تحت التحصيل - IFRS 9'
+                'description': _('حساب شيكات تحت التحصيل - IFRS 9')
+            }
+        )
+        return account
+    
+    @staticmethod
+    def get_or_create_checks_payable_account():
+        """الحصول على حساب شيكات صادرة أو إنشاؤه"""
+        code = "2103"
+        account, created = Account.objects.get_or_create(
+            code=code,
+            defaults={
+                'name': _('شيكات صادرة'),
+                'account_type': 'liability',
+                'description': _('حساب شيكات صادرة - IFRS 9')
             }
         )
         return account

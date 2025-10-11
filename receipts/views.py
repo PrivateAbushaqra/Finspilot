@@ -8,6 +8,9 @@ from django.db.models import Q, Sum
 from django.utils import timezone
 from django.core.paginator import Paginator
 from decimal import Decimal
+import logging
+
+logger = logging.getLogger(__name__)
 
 from .models import PaymentReceipt, CheckCollection, ReceiptReversal
 from customers.models import CustomerSupplier
@@ -312,48 +315,13 @@ def receipt_add(request):
                                 'amount': amount
                             }
                         )
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.error(f"خطأ في تسجيل النشاط للتحويل البنكي في سند القبض {receipt.receipt_number}: {e}")
                 
-                # For checks: update check status and add to cashbox
+                # For checks: update check status only (no cashbox update until collection)
                 if payment_type == 'check':
                     receipt.check_status = 'pending'
                     receipt.save()
-                    
-                    # إضافة الشيك إلى الصندوق المحدد
-                    if check_cashbox_id:
-                        check_cashbox = get_object_or_404(Cashbox, id=check_cashbox_id)
-                        check_cashbox.balance += amount
-                        check_cashbox.save()
-                        
-                        # إضافة حركة صندوق للشيك
-                        CashboxTransaction.objects.create(
-                            cashbox=check_cashbox,
-                            transaction_type='deposit',
-                            date=date,
-                            amount=amount,
-                            description=f'{_("شيك قيد التحصيل")} - {_("سند قبض")} {receipt.receipt_number} {_("من")} {customer.name} - {_("رقم الشيك")}: {check_number}',
-                            reference_type='receipt',
-                            reference_id=receipt.id,
-                            created_by=request.user
-                        )
-                        
-                        # تسجيل النشاط
-                        try:
-                            from core.signals import log_user_activity
-                            log_user_activity(
-                                request,
-                                'create',
-                                receipt,
-                                _('إيداع شيك في الصندوق - سند قبض رقم %(number)s - الصندوق: %(cashbox)s - المبلغ: %(amount)s - رقم الشيك: %(check)s') % {
-                                    'number': receipt.receipt_number,
-                                    'cashbox': check_cashbox.name,
-                                    'amount': amount,
-                                    'check': check_number
-                                }
-                            )
-                        except Exception:
-                            pass
                 
                 # إنشاء القيد المحاسبي
                 create_receipt_journal_entry(receipt, request.user)
