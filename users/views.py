@@ -1253,13 +1253,23 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return kwargs
     
     def get_context_data(self, **kwargs):
+        from django.core.management.color import no_style
+        from django.db import connection
+        import sys
+        
         context = super().get_context_data(**kwargs)
         
         # الحصول على جميع الصلاحيات
         queryset = Permission.objects.select_related('content_type').order_by('content_type__app_label', 'name')
         
         # تصفية صلاحيات superadmin إذا لم يكن المستخدم superadmin أو admin
-        if not (getattr(self.request.user, 'user_type', None) in ['superadmin', 'admin'] or self.request.user.is_superuser):
+        user_type = getattr(self.request.user, 'user_type', None)
+        is_superuser = self.request.user.is_superuser
+        is_admin_or_super = user_type in ['superadmin', 'admin'] or is_superuser
+        
+        print(f"Debug: user_type={user_type}, is_superuser={is_superuser}, is_admin_or_super={is_admin_or_super}", file=sys.stderr)
+        
+        if not is_admin_or_super:
             queryset = queryset.exclude(
                 codename__in=[
                     'can_access_system_management',
@@ -1278,6 +1288,9 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
             # إضافة ترجمة للصلاحية
             permission.translated_name = self._get_permission_translation(permission)
             permissions_by_app[app_label].append(permission)
+        
+        print(f"Debug: permissions_by_app keys: {list(permissions_by_app.keys())}", file=sys.stderr)
+        print(f"Debug: total permissions: {sum(len(perms) for perms in permissions_by_app.values())}", file=sys.stderr)
         
         context['permissions_by_app'] = permissions_by_app
         
