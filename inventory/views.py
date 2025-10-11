@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from django.http import JsonResponse
 from django.contrib import messages
 from django.urls import reverse_lazy
+from django.utils.translation import gettext as _
 from .models import Warehouse, InventoryMovement, WarehouseTransfer
 from products.models import Product
 
@@ -18,6 +19,14 @@ class InventoryListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        
+        # Get sorting parameters
+        sort_by = self.request.GET.get('sort', 'product_name')
+        sort_direction = self.request.GET.get('dir', 'asc')
+        
+        # Get filtering parameters
+        search = self.request.GET.get('search', '')
+        stock_level_filter = self.request.GET.get('stock_level', '')
         
         # Get all warehouses
         warehouses = Warehouse.objects.filter(is_active=True)
@@ -120,7 +129,23 @@ class InventoryListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
                 'stock_level': stock_level
             })
         
+        # Sort inventory items
+        if sort_by in ['product_name', 'product_code', 'quantity', 'value', 'stock_level', 'warehouse_name']:
+            reverse_sort = sort_direction == 'desc'
+            inventory_items = sorted(inventory_items, key=lambda x: x.get(sort_by, ''), reverse=reverse_sort)
+        
+        # Filter inventory items
+        if search:
+            inventory_items = [item for item in inventory_items if search.lower() in item['product_name'].lower() or search.lower() in item['product_code'].lower()]
+        
+        if stock_level_filter:
+            inventory_items = [item for item in inventory_items if item['stock_level'] == stock_level_filter]
+        
         context['inventory_items'] = inventory_items
+        context['current_sort'] = sort_by
+        context['sort_direction'] = sort_direction
+        context['search'] = search
+        context['stock_level_filter'] = stock_level_filter
         
         # Get recent movements
         recent_movements = []
@@ -377,6 +402,17 @@ class MovementListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
             'warehouses': Warehouse.objects.filter(is_active=True),
             'is_superadmin': getattr(self.request.user, 'is_superadmin', False),
         })
+        
+        # تسجيل النشاط في سجل الأنشطة
+        from core.models import AuditLog
+        AuditLog.objects.create(
+            user=self.request.user,
+            action_type='view',
+            content_type='inventory_movements_list',
+            description=_('عرض قائمة حركات المخزون مع عمود رقم المستند'),
+            ip_address=self.request.META.get('REMOTE_ADDR')
+        )
+        
         return context
 
 class TransferListView(LoginRequiredMixin, TemplateView):

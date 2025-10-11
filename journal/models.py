@@ -21,7 +21,7 @@ class Account(models.Model):
 
     code = models.CharField(_('كود الحساب'), max_length=20, unique=True)
     name = models.CharField(_('Account Name'), max_length=100)
-    account_type = models.CharField(_('نوع الحساب'), max_length=20, choices=ACCOUNT_TYPES)
+    account_type = models.CharField(_('Account Type'), max_length=20, choices=ACCOUNT_TYPES)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, 
                               verbose_name=_('الحساب الرئيسي'), related_name='children')
     description = models.TextField(_('Description'), blank=True)
@@ -69,8 +69,6 @@ class JournalEntry(models.Model):
 
     # أنواع القيود
     ENTRY_TYPES = [
-        ('sales', _('Sales')),
-        ('purchase', _('Purchase')),
         ('receipt', _('Receipt')),
         ('payment', _('Payment')),
         ('transfer', _('Transfer')),
@@ -230,6 +228,29 @@ class JournalLine(models.Model):
         
         if self.debit == 0 and self.credit == 0:
             raise ValidationError(_('يجب إدخال مبلغ مدين أو دائن'))
+
+    @property
+    def get_running_balance(self):
+        """حساب الرصيد التراكمي حتى هذا البند"""
+        from django.db.models import Sum
+        
+        # الحصول على جميع الحركات للحساب حتى تاريخ هذا البند
+        lines = JournalLine.objects.filter(
+            account=self.account,
+            journal_entry__entry_date__lte=self.journal_entry.entry_date
+        ).exclude(
+            journal_entry__entry_date=self.journal_entry.entry_date,
+            created_at__gt=self.created_at
+        ).order_by('journal_entry__entry_date', 'created_at')
+        
+        debit_total = lines.aggregate(total=Sum('debit'))['total'] or Decimal('0')
+        credit_total = lines.aggregate(total=Sum('credit'))['total'] or Decimal('0')
+        
+        # حسب نوع الحساب
+        if self.account.account_type in ['asset', 'expense', 'purchases']:
+            return debit_total - credit_total
+        else:
+            return credit_total - debit_total
 
 
 class YearEndClosing(models.Model):

@@ -896,47 +896,6 @@ def sales_invoice_create(request):
                                         total_amount=line_total.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
                                     )
 
-                                    # إنشاء حركة مخزون صادرة للمبيعات
-                                    try:
-                                        from inventory.models import InventoryMovement, Warehouse
-                                        import uuid
-
-                                        # استخدام المستودع المحدد في الفاتورة أو الافتراضي
-                                        movement_warehouse = warehouse
-                                        if not movement_warehouse:
-                                            movement_warehouse = Warehouse.objects.filter(is_active=True).first()
-                                            if not movement_warehouse:
-                                                # إنشاء مستودع افتراضي إذا لم يكن موجوداً
-                                                movement_warehouse = Warehouse.objects.create(
-                                                    name='المستودع الرئيسي',
-                                                    code='MAIN',
-                                                    is_active=True
-                                                )
-
-                                        # توليد رقم الحركة
-                                        movement_number = f"SALE-OUT-{uuid.uuid4().hex[:8].upper()}"
-
-                                        InventoryMovement.objects.create(
-                                            movement_number=movement_number,
-                                            date=invoice_date,
-                                            product=product,
-                                            warehouse=movement_warehouse,
-                                            movement_type='out',
-                                            reference_type='sales_invoice',
-                                            reference_id=invoice.id,
-                                            quantity=quantity,
-                                            unit_cost=unit_price,
-                                            notes=f'مبيعات - فاتورة رقم {invoice.invoice_number}',
-                                            created_by=user
-                                        )
-                                    except ImportError:
-                                        # في حالة عدم وجود نموذج المخزون
-                                        pass
-                                    except Exception as inventory_error:
-                                        # في حالة حدوث خطأ في المخزون، لا نوقف إنشاء الفاتورة
-                                        print(f"خطأ في إنشاء حركة المخزون: {inventory_error}")
-                                        pass
-
                                     # إضافة إلى المجاميع
                                     subtotal += line_subtotal
                                     total_tax_amount += line_tax_amount
@@ -1700,8 +1659,7 @@ def sales_return_create(request):
                         # إنشاء حركة حساب للعميل
                         create_sales_return_account_transaction(sales_return, user)
 
-                        # إنشاء حركات المخزون
-                        create_sales_return_inventory_movements(sales_return, user)
+                        # حركات المخزون تُنشأ تلقائياً عبر signals
                         
                         # تسجيل النشاط
                         try:
@@ -2240,44 +2198,7 @@ def pos_create_invoice(request):
                     tax_amount=Decimal(str(item_data.get('tax_amount', 0))),
                 )
                 
-                # إنشاء حركة مخزون صادرة
-                try:
-                    from inventory.models import InventoryMovement, Warehouse
-                    
-                    # الحصول على المستودع الافتراضي
-                    default_warehouse = Warehouse.objects.filter(is_active=True).first()
-                    if not default_warehouse:
-                        # إنشاء مستودع افتراضي إذا لم يكن موجوداً
-                        default_warehouse = Warehouse.objects.create(
-                            name='المستودع الرئيسي',
-                            code='MAIN',
-                            is_active=True
-                        )
-                    
-                    # توليد رقم الحركة
-                    import uuid
-                    movement_number = f"POS-OUT-{uuid.uuid4().hex[:8].upper()}"
-                    
-                    InventoryMovement.objects.create(
-                        movement_number=movement_number,
-                        date=date.today(),
-                        product=product,
-                        warehouse=default_warehouse,
-                        movement_type='out',
-                        reference_type='sales_invoice',
-                        reference_id=invoice.id,
-                        quantity=Decimal(str(item_data['quantity'])),
-                        unit_cost=Decimal(str(item_data.get('unit_price', 0))),
-                        notes=f'مبيعات - فاتورة رقم {invoice.invoice_number}',
-                        created_by=request.user
-                    )
-                except ImportError:
-                    # في حالة عدم وجود نموذج المخزون
-                    pass
-                except Exception as inventory_error:
-                    # في حالة حدوث خطأ في المخزون، لا نوقف إنشاء الفاتورة
-                    print(f"خطأ في إنشاء حركة المخزون: {inventory_error}")
-                    pass
+                # حركات المخزون تُنشأ تلقائياً عبر signals
             
             # إنشاء حركة حساب للعميل
             try:

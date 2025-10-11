@@ -178,7 +178,7 @@ def account_edit(request, pk):
     
     return render(request, 'journal/account_form.html', {
         'form': form, 
-        'title': _('تعديل الحساب'),
+        'title': _('Edit Account'),
         'account': account
     })
 
@@ -248,14 +248,26 @@ def account_detail(request, pk):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
+    try:
+        balance = account.get_balance()
+    except Exception as e:
+        print(f"ERROR calculating balance: {e}")
+        balance = Decimal('0')
+    
+    balance = balance or Decimal('0')
+    
     context = {
         'account': account,
         'page_obj': page_obj,
         'totals': totals,
         'date_from': date_from,
         'date_to': date_to,
-        'balance': account.get_balance()
+        'balance': balance
     }
+    
+    # تسجيل النشاط في سجل الأنشطة
+    log_view_activity(request, 'view', account, str(_('Viewing account details: {}')).format(account.name))
+    
     return render(request, 'journal/account_detail.html', context)
 
 

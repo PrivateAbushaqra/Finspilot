@@ -236,17 +236,19 @@
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h6><i class="fas fa-box me-2"></i> {% trans "Invoice Products" %}</h6>
                                 <div>
-                                    <button type="button" class="btn btn-add-product text-white" id="addProductBtn" 
+                                    <button type="button" class="btn btn-warning me-2" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                                        <i class="fas fa-folder-plus me-2"></i>
+                                        {% trans "أضف فئة" %}
+                                    </button>
+                                    <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                                        <i class="fas fa-plus me-2"></i>
+                                        {% trans "أضف منتج" %}
+                                    </button>
+                                    <button type="button" class="btn btn-add-product text-white" id="addProductBtn" tabindex="-1"
                                             title="{% trans "Click here to add a new product" %}" data-action="add-product">
                                         <i class="fas fa-plus me-1"></i>
                                         {% trans "Add Product" %}
                                     </button>
-                                    {% if user.is_superuser or user.user_type in 'superadmin,admin' or perms.products.can_add_products %}
-                                    <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#addProductModal">
-                                        <i class="fas fa-plus me-2"></i>
-                                        {% trans "Create New Product" %}
-                                    </button>
-                                    {% endif %}
                                 </div>
                             </div>
                             
@@ -819,13 +821,13 @@ function attachRowEventListeners(row) {
             calculateRowTotal(rowId);
         });
         
-        // Add new row when Tab is pressed on unit price input
-        unitPriceInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Tab') {
-                e.preventDefault();
-                addProductRow();
-            }
-        });
+        // إزالة إضافة صف جديد عند الضغط على Tab
+        // unitPriceInput.addEventListener('keydown', function(e) {
+        //     if (e.key === 'Tab') {
+        //         e.preventDefault();
+        //         addProductRow();
+        //     }
+        // });
     }
     
     if (taxRateInput) {
@@ -1922,10 +1924,10 @@ document.addEventListener('keydown', function(e) {
 // Function to show keyboard shortcuts help
 function showKeyboardShortcuts() {
     const shortcuts = [
-        { key: 'Shift+A', description: 'إضافة سطر منتج جديد' },
-        { key: 'Shift+D', description: 'حذف سطر المنتج الحالي' },
-        { key: 'Ctrl+Enter', description: 'حفظ الفاتورة' },
-        { key: 'Ctrl+H or Ctrl+?', description: 'عرض اختصارات لوحة المفاتيح' }
+        { key: 'Shift+A', description: '{% trans "إضافة سطر منتج جديد" %}' },
+        { key: 'Shift+D', description: '{% trans "حذف سطر المنتج الحالي" %}' },
+        { key: 'Ctrl+Enter', description: '{% trans "حفظ الفاتورة" %}' },
+        { key: 'Ctrl+H or Ctrl+?', description: '{% trans "عرض اختصارات لوحة المفاتيح" %}' }
     ];
     
     let message = 'اختصارات لوحة المفاتيح:\n\n';
@@ -2010,6 +2012,145 @@ function showUnsavedChangesModal(targetUrl) {
 // Function to proceed to URL
 function proceedToUrl(url) {
     window.location.href = url;
+}
+
+// JavaScript للتعامل مع نافذة إضافة الفئة
+const addCategoryModal = document.getElementById('addCategoryModal');
+const addCategoryForm = document.getElementById('addCategoryForm');
+const saveCategoryBtn = document.getElementById('saveCategoryBtn');
+const categoryParentSelect = document.getElementById('categoryParent');
+
+// تحميل قائمة الفئات الأساسية عند فتح النافذة
+if (addCategoryModal) {
+    addCategoryModal.addEventListener('show.bs.modal', function() {
+        // تحميل قائمة الفئات الأساسية
+        fetch('{% url "products:category_add_ajax" %}', {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Clear previous options
+            categoryParentSelect.innerHTML = '<option value="">اختر الفئة الأب (اختياري)</option>';
+
+            // Add new categories
+            if (data.categories) {
+                data.categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category.id;
+                    option.textContent = category.name;
+                    categoryParentSelect.appendChild(option);
+                });
+            }
+        })
+        .catch(error => {
+            console.error('خطأ في تحميل الفئات:', error);
+        });
+    });
+
+    // مسح النموذج عند إغلاق النافذة
+    addCategoryModal.addEventListener('hidden.bs.modal', function() {
+        addCategoryForm.reset();
+        // إزالة رسائل الخطأ
+        const errorElements = addCategoryForm.querySelectorAll('.is-invalid');
+        errorElements.forEach(element => {
+            element.classList.remove('is-invalid');
+        });
+        const errorMessages = addCategoryForm.querySelectorAll('.invalid-feedback');
+        errorMessages.forEach(element => {
+            element.remove();
+        });
+    });
+}
+
+// معالجة إرسال نموذج الفئة
+if (addCategoryForm) {
+    addCategoryForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        // تعطيل الزر وإظهار التحميل
+        const spinner = saveCategoryBtn.querySelector('.spinner-border');
+        const btnText = saveCategoryBtn.querySelector('.btn-text');
+        const icon = saveCategoryBtn.querySelector('.fas');
+
+        saveCategoryBtn.disabled = true;
+        spinner.classList.remove('d-none');
+        btnText.textContent = 'جاري الحفظ...';
+        icon.style.display = 'none';
+
+        // إرسال البيانات
+        const formData = new FormData(addCategoryForm);
+
+        fetch('{% url "products:category_add_ajax" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // إظهار رسالة نجاح
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-success alert-dismissible fade show';
+                alertDiv.innerHTML = `
+                    <i class="fas fa-check-circle me-2"></i>
+                    ${data.message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+
+                // إدراج الرسالة في أعلى الصفحة
+                const container = document.querySelector('.container-fluid');
+                container.insertBefore(alertDiv, container.firstChild);
+
+                // إغلاق النافذة
+                const modal = bootstrap.Modal.getInstance(addCategoryModal);
+                modal.hide();
+
+                // تحديث قائمة الفئات المتاحة في modal المنتج
+                if (addProductModal && productCategorySearch.length > 0) {
+                    // إضافة الفئة الجديدة إلى قائمة الفئات
+                    if (data.category) {
+                        window.productCategories.push({
+                            id: data.category.id,
+                            name: data.category.name,
+                            code: data.category.code || ''
+                        });
+                        
+                        // تحديث data-categories attribute
+                        var updatedData = window.productCategories.map(function(cat) {
+                            return cat.id + '|' + cat.name + '|' + (cat.code || '');
+                        }).join('||');
+                        productCategorySearch.attr('data-categories', updatedData);
+                        
+                        // تحديث قيمة البحث إذا كانت الفئة المحددة
+                        if (productCategoryHidden.val() == data.category.id) {
+                            productCategorySearch.val(data.category.name);
+                        }
+                    }
+                }
+
+            } else {
+                // إظهار رسالة خطأ
+                alert('خطأ: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('خطأ:', error);
+            alert('حدث خطأ في الشبكة. يرجى المحاولة مرة أخرى.');
+        })
+        .finally(() => {
+            // إعادة تفعيل الزر
+            saveCategoryBtn.disabled = false;
+            spinner.classList.add('d-none');
+            btnText.textContent = 'حفظ الفئة';
+            icon.style.display = 'inline';
+        });
+    });
 }
 
 // JavaScript للتعامل مع نافذة إضافة المنتج
@@ -2113,7 +2254,7 @@ if (addProductForm) {
                 modal.hide();
 
                 // تحديث قائمة المنتجات المتاحة
-                loadAvailableProducts();
+                loadAvailableProducts(data.product);
 
             } else {
                 // إظهار رسالة خطأ
@@ -2144,6 +2285,40 @@ function toggleProductSerialNumberField() {
     } else {
         serialNumberRow.style.display = 'none';
         document.getElementById('productSerialNumber').value = '';
+    }
+}
+
+// دالة تحديث قائمة المنتجات المتاحة
+function loadAvailableProducts(newProduct = null) {
+    const productList = document.getElementById('productList');
+    if (!productList) {
+        console.error('قائمة المنتجات غير موجودة');
+        return;
+    }
+
+    if (newProduct) {
+        // إضافة المنتج الجديد إلى القائمة
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><small>${newProduct.code}</small></td>
+            <td><strong>${newProduct.name}</strong></td>
+            <td><small>منتج جديد</small></td>
+            <td class="text-center">
+                <span class="badge bg-success">0.000</span>
+            </td>
+            <td>
+                <span class="text-muted">غير محدد</span>
+            </td>
+            <td><small>${newProduct.is_active ? '0.00%' : 'غير نشط'}</small></td>
+            <td>
+                <button type="button" class="btn btn-sm btn-primary" 
+                        onclick="selectProduct('${newProduct.id}', '${newProduct.code}', '${newProduct.name}', '0', '0', '0')"
+                        title="اختيار ${newProduct.name}">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </td>
+        `;
+        productList.appendChild(row);
     }
 }
 
@@ -2186,6 +2361,159 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // تطبيق التحكم عند تحميل الصفحة
     toggleProductSerialNumberField();
+});
+
+// Category search functionality for product modal
+$(document).ready(function() {
+    // Parse categories from data attribute
+    var productCategoriesData = $('#productCategorySearch').data('categories') || '';
+    window.productCategories = []; // تعريف كمتغير عام
+    
+    if (productCategoriesData) {
+        var categoryStrings = productCategoriesData.split('||');
+        window.productCategories = categoryStrings.map(function(catStr) {
+            var parts = catStr.split('|');
+            return {
+                id: parts[0],
+                name: parts[1] || '',
+                code: parts[2] || ''
+            };
+        });
+    }
+
+    var productCategorySearch = $('#productCategorySearch');
+    var productCategoryDropdown = $('#productCategoryDropdown');
+    var productCategoryHidden = $('#productCategory');
+
+    // Function to filter and show categories
+    function filterProductCategories() {
+        var searchTerm = productCategorySearch.val().toLowerCase().trim();
+
+        if (searchTerm === '') {
+            productCategoryDropdown.hide();
+            return;
+        }
+
+        // Clear previous options
+        productCategoryDropdown.empty();
+
+        // Filter categories
+        var filteredCategories = window.productCategories.filter(function(category) {
+            return category.name.toLowerCase().includes(searchTerm) ||
+                   (category.code && category.code.toLowerCase().includes(searchTerm));
+        });
+
+        if (filteredCategories.length === 0) {
+            productCategoryDropdown.hide();
+            return;
+        }
+
+        // Create dropdown options
+        filteredCategories.forEach(function(category) {
+            var option = $('<button type="button" class="dropdown-item"></button>');
+            option.html('<strong>' + category.name + '</strong>' + (category.code ? ' (' + category.code + ')' : ''));
+            option.attr('data-category', JSON.stringify(category));
+
+            option.on('click', function() {
+                // Fill category data
+                productCategoryHidden.val(category.id);
+                productCategorySearch.val(category.name);
+                productCategoryDropdown.hide();
+
+                // Trigger change event for validation
+                productCategoryHidden.trigger('change');
+            });
+
+            productCategoryDropdown.append(option);
+        });
+
+        productCategoryDropdown.show();
+    }
+
+    // Handle input changes
+    productCategorySearch.on('input', filterProductCategories);
+
+    // Handle focus to show all categories if empty
+    productCategorySearch.on('focus', function() {
+        if (productCategorySearch.val().trim() === '') {
+            // Show all categories
+            productCategoryDropdown.empty();
+            window.productCategories.slice(0, 10).forEach(function(category) { // Show first 10 categories
+                var option = $('<button type="button" class="dropdown-item"></button>');
+                option.html('<strong>' + category.name + '</strong>' + (category.code ? ' (' + category.code + ')' : ''));
+                option.attr('data-category', JSON.stringify(category));
+
+                option.on('click', function() {
+                    // Fill category data
+                    productCategoryHidden.val(category.id);
+                    productCategorySearch.val(category.name);
+                    productCategoryDropdown.hide();
+
+                    // Trigger change event for validation
+                    productCategoryHidden.trigger('change');
+                });
+
+                productCategoryDropdown.append(option);
+            });
+            productCategoryDropdown.show();
+        }
+    });
+
+    // Hide dropdown when clicking outside
+    $(document).on('click', function(e) {
+        if (!productCategorySearch.is(e.target) && !productCategoryDropdown.is(e.target) && productCategoryDropdown.has(e.target).length === 0) {
+            productCategoryDropdown.hide();
+        }
+    });
+
+    // Handle blur with delay to allow click on dropdown items
+    productCategorySearch.on('blur', function() {
+        setTimeout(function() {
+            if (productCategorySearch.val() && !productCategoryHidden.val()) {
+                // If user typed something but didn't select from dropdown, clear it
+                productCategorySearch.val('');
+                productCategoryHidden.val('');
+            }
+        }, 200);
+    });
+
+    // Update search input when hidden field changes (e.g., from new category modal)
+    productCategoryHidden.on('change', function() {
+        if (productCategoryHidden.val()) {
+            var selectedCategory = window.productCategories.find(function(cat) {
+                return cat.id == productCategoryHidden.val();
+            });
+            if (selectedCategory) {
+                productCategorySearch.val(selectedCategory.name);
+            }
+        } else {
+            productCategorySearch.val('');
+        }
+    });
+
+    // Handle search button click
+    $('#productSearchCategoryBtn').on('click', function() {
+        productCategorySearch.focus();
+        if (productCategorySearch.val().trim() === '') {
+            // Show all categories
+            productCategoryDropdown.empty();
+            window.productCategories.slice(0, 10).forEach(function(category) {
+                var option = $('<button type="button" class="dropdown-item"></button>');
+                option.html('<strong>' + category.name + '</strong>' + (category.code ? ' (' + category.code + ')' : ''));
+                option.attr('data-category', JSON.stringify(category));
+
+                option.on('click', function() {
+                    productCategoryHidden.val(category.id);
+                    productCategorySearch.val(category.name);
+                    productCategoryDropdown.hide();
+                    productCategoryHidden.trigger('change');
+                });
+
+                productCategoryDropdown.append(option);
+            });
+            productCategoryDropdown.show();
+        }
+    });
 });
 </script>
 
@@ -2269,10 +2597,27 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="productCategory" class="form-label">الفئة <span class="text-danger">*</span></label>
-                                <select class="form-select" id="productCategory" name="category" required>
-                                    <option value="">اختر الفئة</option>
-                                    <!-- Options will be loaded dynamically -->
-                                </select>
+                                <div class="input-group">
+                                    <div class="position-relative flex-grow-1">
+                                        <input type="text" class="form-control" id="productCategorySearch" placeholder="اكتب للبحث عن الفئات..." autocomplete="off"
+                                               data-categories="{% for category in categories %}{{ category.id }}|{{ category.name|escapejs }}|{{ category.code|escapejs }}{% if not forloop.last %}||{% endif %}{% endfor %}">
+                                        <div id="productCategoryDropdown" class="dropdown-menu w-100" style="display: none; max-height: 200px; overflow-y: auto;">
+                                            <!-- Category options will be populated here -->
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-primary" id="productSearchCategoryBtn" title="البحث عن الفئات">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                    <input type="hidden" id="productCategory" name="category" required>
+                                    <button type="button" class="btn btn-outline-primary" id="productAddCategoryBtn" title="إضافة فئة جديدة"
+                                            data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                                        <i class="fas fa-plus"></i>
+                                        إضافة فئة
+                                    </button>
+                                </div>
+                                <div class="form-text">
+                                    <small class="text-muted">ابدأ الكتابة للبحث عن الفئات أو اضغط زر البحث</small>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -2418,6 +2763,93 @@ document.addEventListener('DOMContentLoaded', function() {
                         <span class="spinner-border spinner-border-sm d-none me-2" role="status" aria-hidden="true"></span>
                         <i class="fas fa-save me-2"></i>
                         <span class="btn-text">{% trans "Save Product" %}</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- نافذة إضافة فئة منبثقة -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCategoryModalLabel">
+                    <i class="fas fa-folder-plus text-warning me-2"></i>
+                    {% trans "أضف فئة" %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="addCategoryForm">
+                <div class="modal-body">
+                    {% csrf_token %}
+
+                    <!-- Basic Information -->
+                    <h6 class="mb-3"><i class="fas fa-info-circle me-2"></i>{% trans "Basic Information" %}</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="categoryName" class="form-label">{% trans "Category Name" %} <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="categoryName" name="name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="categoryNameEn" class="form-label">{% trans "English Name" %} <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="categoryNameEn" name="name_en" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="categoryCode" class="form-label">{% trans "Category Code" %}</label>
+                                <input type="text" class="form-control" id="categoryCode" name="code" placeholder="{% trans 'Example: CAT-001' %}">
+                                <div class="form-text">{% trans "Unique code for the category (optional)" %}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="categoryParent" class="form-label">{% trans "Parent Category" %}</label>
+                                <select class="form-select" id="categoryParent" name="parent">
+                                    <option value="">{% trans "Choose Parent Category (Optional)" %}</option>
+                                    <!-- Options will be loaded dynamically -->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="categoryDescription" class="form-label">{% trans "Description" %}</label>
+                                <textarea class="form-control" id="categoryDescription" name="description" rows="3"></textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="categoryIsActive" name="is_active" checked>
+                                    <label class="form-check-label" for="categoryIsActive">
+                                        {% trans "Active" %}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>
+                        {% trans "Cancel" %}
+                    </button>
+                    <button type="submit" class="btn btn-warning" id="saveCategoryBtn">
+                        <span class="spinner-border spinner-border-sm d-none me-2" role="status" aria-hidden="true"></span>
+                        <i class="fas fa-save me-2"></i>
+                        <span class="btn-text">{% trans "Save Category" %}</span>
                     </button>
                 </div>
             </form>

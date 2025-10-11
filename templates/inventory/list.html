@@ -456,17 +456,116 @@
                         
                         <div class="p-3">
                             {% if inventory_items %}
+                                <!-- Filter Form -->
+                                <div class="mb-3">
+                                    <form method="get" class="row g-3">
+                                        <div class="col-md-6">
+                                            <input type="text" name="search" value="{{ search }}" class="form-control" placeholder="{% trans 'Search by product name or code' %}">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <select name="stock_level" class="form-control">
+                                                <option value="">{% trans 'All Stock Levels' %}</option>
+                                                <option value="good" {% if stock_level_filter == 'good' %}selected{% endif %}>{% trans 'Good Stock' %}</option>
+                                                <option value="low" {% if stock_level_filter == 'low' %}selected{% endif %}>{% trans 'Low Stock' %}</option>
+                                                <option value="critical" {% if stock_level_filter == 'critical' %}selected{% endif %}>{% trans 'Critical Stock' %}</option>
+                                                <option value="out" {% if stock_level_filter == 'out' %}selected{% endif %}>{% trans 'Out of Stock' %}</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <button type="submit" class="btn btn-primary w-100">{% trans 'Filter' %}</button>
+                                        </div>
+                                    </form>
+                                </div>
+                                
                                 <div class="table-responsive">
                                     <table class="table table-striped table-hover">
                                         <thead class="table-dark">
                                             <tr>
-                                                <th><i class="fas fa-box me-2"></i>{% trans "Product" %}</th>
-                                                <th>{% trans "Code" %}</th>
-                                                <th>{% trans "Warehouse" %}</th>
-                                                <th>{% trans "Quantity" %}</th>
-                                                <th>{% trans "Value" %}</th>
-                                                <th>{% trans "Stock Status" %}</th>
-                                                <th class="text-center">{% trans "Actions" %}</th>
+                                                <th>
+                                                    <a href="?{% if current_sort == 'product_name' and sort_direction == 'asc' %}sort=product_name&dir=desc{% else %}sort=product_name&dir=asc{% endif %}" class="text-decoration-none" style="color: black !important;">
+                                                        <i class="fas fa-box me-2"></i>{% trans "Product" %}
+                                                        {% if current_sort == 'product_name' %}
+                                                            {% if sort_direction == 'asc' %}
+                                                                <i class="fas fa-sort-up ms-1"></i>
+                                                            {% else %}
+                                                                <i class="fas fa-sort-down ms-1"></i>
+                                                            {% endif %}
+                                                        {% else %}
+                                                            <i class="fas fa-sort ms-1"></i>
+                                                        {% endif %}
+                                                    </a>
+                                                </th>
+                                                <th>
+                                                    <a href="?{% if current_sort == 'product_code' and sort_direction == 'asc' %}sort=product_code&dir=desc{% else %}sort=product_code&dir=asc{% endif %}" class="text-decoration-none" style="color: black !important;">
+                                                        {% trans "Code" %}
+                                                        {% if current_sort == 'product_code' %}
+                                                            {% if sort_direction == 'asc' %}
+                                                                <i class="fas fa-sort-up ms-1"></i>
+                                                            {% else %}
+                                                                <i class="fas fa-sort-down ms-1"></i>
+                                                            {% endif %}
+                                                        {% else %}
+                                                            <i class="fas fa-sort ms-1"></i>
+                                                        {% endif %}
+                                                    </a>
+                                                </th>
+                                                <th>
+                                                    <a href="?{% if current_sort == 'warehouse_name' and sort_direction == 'asc' %}sort=warehouse_name&dir=desc{% else %}sort=warehouse_name&dir=asc{% endif %}" class="text-decoration-none" style="color: black !important;">
+                                                        {% trans "Warehouse" %}
+                                                        {% if current_sort == 'warehouse_name' %}
+                                                            {% if sort_direction == 'asc' %}
+                                                                <i class="fas fa-sort-up ms-1"></i>
+                                                            {% else %}
+                                                                <i class="fas fa-sort-down ms-1"></i>
+                                                            {% endif %}
+                                                        {% else %}
+                                                            <i class="fas fa-sort ms-1"></i>
+                                                        {% endif %}
+                                                    </a>
+                                                </th>
+                                                <th>
+                                                    <a href="?{% if current_sort == 'quantity' and sort_direction == 'asc' %}sort=quantity&dir=desc{% else %}sort=quantity&dir=asc{% endif %}" class="text-decoration-none" style="color: black !important;">
+                                                        {% trans "Quantity" %}
+                                                        {% if current_sort == 'quantity' %}
+                                                            {% if sort_direction == 'asc' %}
+                                                                <i class="fas fa-sort-up ms-1"></i>
+                                                            {% else %}
+                                                                <i class="fas fa-sort-down ms-1"></i>
+                                                            {% endif %}
+                                                        {% else %}
+                                                            <i class="fas fa-sort ms-1"></i>
+                                                        {% endif %}
+                                                    </a>
+                                                </th>
+                                                <th>
+                                                    <a href="?{% if current_sort == 'value' and sort_direction == 'asc' %}sort=value&dir=desc{% else %}sort=value&dir=asc{% endif %}" class="text-decoration-none" style="color: black !important;">
+                                                        {% trans "Value" %}
+                                                        {% if current_sort == 'value' %}
+                                                            {% if sort_direction == 'asc' %}
+                                                                <i class="fas fa-sort-up ms-1"></i>
+                                                            {% else %}
+                                                                <i class="fas fa-sort-down ms-1"></i>
+                                                            {% endif %}
+                                                        {% else %}
+                                                            <i class="fas fa-sort ms-1"></i>
+                                                        {% endif %}
+                                                    </a>
+                                                </th>
+                                                <th>
+                                                    <a href="?{% if current_sort == 'stock_level' and sort_direction == 'asc' %}sort=stock_level&dir=desc{% else %}sort=stock_level&dir=asc{% endif %}" class="text-decoration-none" style="color: black !important;">
+                                                        {% trans "Stock Status" %}
+                                                        {% if current_sort == 'stock_level' %}
+                                                            {% if sort_direction == 'asc' %}
+                                                                <i class="fas fa-sort-up ms-1"></i>
+                                                            {% else %}
+                                                                <i class="fas fa-sort-down ms-1"></i>
+                                                            {% endif %}
+                                                        {% else %}
+                                                            <i class="fas fa-sort ms-1"></i>
+                                                        {% endif %}
+                                                    </a>
+                                                </th>
+                                                <th class="text-center" style="color: black !important;">{% trans "Actions" %}</th>
                                             </tr>
                                         </thead>
                                         <tbody>

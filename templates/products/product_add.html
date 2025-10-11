@@ -126,17 +126,25 @@
                                 <div class="mb-3">
                                     <label for="category" class="form-label">{% trans "Category" %} <span class="text-danger">*</span></label>
                                     <div class="input-group">
-                                        <select class="form-select" id="category" name="category" required>
-                                            <option value="">{% trans "Select Category" %}</option>
-                                            {% for category in categories %}
-                                                <option value="{{ category.id }}">{{ category.name }}</option>
-                                            {% endfor %}
-                                        </select>
-        <button type="button" class="btn btn-outline-primary" id="addCategoryBtn" title="{% trans "Add New Category" %}" 
-                data-has-permission="{% if user.is_superuser or user.user_type == 'superadmin' or perms.products.can_add_categories_inline %}true{% else %}false{% endif %}">
-            <i class="fas fa-plus"></i>
-            {% trans "Add Category" %}
-        </button>
+                                        <div class="position-relative flex-grow-1">
+                                            <input type="text" class="form-control" id="categorySearch" placeholder="{% trans 'Type to search categories...' %}" autocomplete="off"
+                                                   data-categories="{% for category in categories %}{{ category.id }}|{{ category.name|escapejs }}|{{ category.code|escapejs }}{% if not forloop.last %}||{% endif %}{% endfor %}">
+                                            <div id="categoryDropdown" class="dropdown-menu w-100" style="display: none; max-height: 200px; overflow-y: auto;">
+                                                <!-- Category options will be populated here -->
+                                            </div>
+                                        </div>
+                                        <button type="button" class="btn btn-outline-primary" id="searchCategoryBtn" title="{% trans "Search categories" %}">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                        <input type="hidden" id="category" name="category" required>
+                                        <button type="button" class="btn btn-outline-primary" id="addCategoryBtn" title="{% trans "Add New Category" %}" 
+                                                data-has-permission="{% if user.is_superuser or user.user_type == 'superadmin' or perms.products.can_add_categories_inline %}true{% else %}false{% endif %}">
+                                            <i class="fas fa-plus"></i>
+                                            {% trans "Add Category" %}
+                                        </button>
+                                    </div>
+                                    <div class="form-text">
+                                        <small class="text-muted">{% trans "Start typing to search for categories or click search button" %}</small>
                                     </div>
                                 </div>
                             </div>
@@ -270,13 +278,13 @@
                                     </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="mb-3" id="opening_balance_cost_container" style="display: none;">
+                                    <div class="mb-3">
                                         <label for="opening_balance_cost" class="form-label">
                                             <i class="fas fa-dollar-sign text-warning me-1"></i>
                                             {% trans "Opening Balance Cost" %} <span class="text-danger">*</span>
                                         </label>
                                         <input type="number" class="form-control" id="opening_balance_cost" name="opening_balance_cost" 
-                                               step="0.001" min="0" value="0">
+                                               step="0.001" min="0" value="0" required>
                                         <small class="form-text text-muted">
                                             <i class="fas fa-info-circle me-1"></i>
                                             {% trans "Total cost of the opening balance for FIFO inventory calculation" %}
@@ -474,24 +482,22 @@ $(document).ready(function() {
         }
     });
     
-    // Show/hide opening balance cost field
-    function toggleOpeningBalanceCost() {
+    // Calculate opening balance cost automatically
+    function calculateOpeningBalanceCost() {
         var openingBalance = parseFloat($('#opening_balance').val()) || 0;
-        var costContainer = $('#opening_balance_cost_container');
+        var costPrice = parseFloat($('#cost_price').val()) || 0;
         var costField = $('#opening_balance_cost');
         
-        if (openingBalance > 0) {
-            costContainer.show();
-            costField.prop('required', true);
-        } else {
-            costContainer.hide();
-            costField.prop('required', false);
+        if (openingBalance > 0 && costPrice > 0) {
+            var totalCost = openingBalance * costPrice;
+            costField.val(totalCost.toFixed(3));
+        } else if (openingBalance === 0) {
             costField.val(0);
         }
     }
     
-    // Bind opening balance change event
-    $('#opening_balance').on('input change', toggleOpeningBalanceCost);
+    // Bind opening balance and cost price change events
+    $('#opening_balance, #cost_price').on('input change', calculateOpeningBalanceCost);
     
     // Improve user experience
     $('#tax_rate').on('input', function() {
@@ -633,8 +639,134 @@ $(document).ready(function() {
 </div>
 
 <script>
-// Category management
 $(document).ready(function() {
+    // Category search functionality
+    // Parse categories from data attribute
+    var categoriesData = $('#categorySearch').data('categories') || '';
+    var categories = [];
+    
+    if (categoriesData) {
+        var categoryStrings = categoriesData.split('||');
+        categories = categoryStrings.map(function(catStr) {
+            var parts = catStr.split('|');
+            return {
+                id: parts[0],
+                name: parts[1] || '',
+                code: parts[2] || ''
+            };
+        });
+    }
+
+    var categorySearch = $('#categorySearch');
+    var categoryDropdown = $('#categoryDropdown');
+    var categoryHidden = $('#category');
+
+    // Function to filter and show categories
+    function filterCategories() {
+        var searchTerm = categorySearch.val().toLowerCase().trim();
+
+        if (searchTerm === '') {
+            categoryDropdown.hide();
+            return;
+        }
+
+        // Clear previous options
+        categoryDropdown.empty();
+
+        // Filter categories
+        var filteredCategories = categories.filter(function(category) {
+            return category.name.toLowerCase().includes(searchTerm) ||
+                   (category.code && category.code.toLowerCase().includes(searchTerm));
+        });
+
+        if (filteredCategories.length === 0) {
+            categoryDropdown.hide();
+            return;
+        }
+
+        // Create dropdown options
+        filteredCategories.forEach(function(category) {
+            var option = $('<button type="button" class="dropdown-item"></button>');
+            option.html('<strong>' + category.name + '</strong>' + (category.code ? ' (' + category.code + ')' : ''));
+            option.attr('data-category', JSON.stringify(category));
+
+            option.on('click', function() {
+                // Fill category data
+                categoryHidden.val(category.id);
+                categorySearch.val(category.name);
+                categoryDropdown.hide();
+
+                // Trigger change event for validation
+                categoryHidden.trigger('change');
+            });
+
+            categoryDropdown.append(option);
+        });
+
+        categoryDropdown.show();
+    }
+
+    // Handle input changes
+    categorySearch.on('input', filterCategories);
+
+    // Handle focus to show all categories if empty
+    categorySearch.on('focus', function() {
+        if (categorySearch.val().trim() === '') {
+            // Show all categories
+            categoryDropdown.empty();
+            categories.slice(0, 10).forEach(function(category) { // Show first 10 categories
+                var option = $('<button type="button" class="dropdown-item"></button>');
+                option.html('<strong>' + category.name + '</strong>' + (category.code ? ' (' + category.code + ')' : ''));
+                option.attr('data-category', JSON.stringify(category));
+
+                option.on('click', function() {
+                    // Fill category data
+                    categoryHidden.val(category.id);
+                    categorySearch.val(category.name);
+                    categoryDropdown.hide();
+
+                    // Trigger change event for validation
+                    categoryHidden.trigger('change');
+                });
+
+                categoryDropdown.append(option);
+            });
+            categoryDropdown.show();
+        }
+    });
+
+    // Hide dropdown when clicking outside
+    $(document).on('click', function(e) {
+        if (!categorySearch.is(e.target) && !categoryDropdown.is(e.target) && categoryDropdown.has(e.target).length === 0) {
+            categoryDropdown.hide();
+        }
+    });
+
+    // Handle blur with delay to allow click on dropdown items
+    categorySearch.on('blur', function() {
+        setTimeout(function() {
+            if (categorySearch.val() && !categoryHidden.val()) {
+                // If user typed something but didn't select from dropdown, clear it
+                categorySearch.val('');
+                categoryHidden.val('');
+            }
+        }, 200);
+    });
+
+    // Update search input when hidden field changes (e.g., from new category modal)
+    categoryHidden.on('change', function() {
+        if (categoryHidden.val()) {
+            var selectedCategory = categories.find(function(cat) {
+                return cat.id == categoryHidden.val();
+            });
+            if (selectedCategory) {
+                categorySearch.val(selectedCategory.name);
+            }
+        } else {
+            categorySearch.val('');
+        }
+    });
+
     // Check if user has permission to add categories inline
     var hasPermission = $('#addCategoryBtn').data('has-permission') === 'true';
     
@@ -692,9 +824,22 @@ $(document).ready(function() {
             success: function(response) {
                 if (response.success) {
                     // Add new category to the list
-                    var option = '<option value="' + response.category.id + '">' + response.category.name + '</option>';
-                    $('#category').append(option);
-                    $('#category').val(response.category.id);
+                    var newCategory = {
+                        id: response.category.id,
+                        name: response.category.name,
+                        code: response.category.code || ''
+                    };
+                    categories.push(newCategory);
+                    
+                    // Update the data attribute
+                    var updatedData = categories.map(function(cat) {
+                        return cat.id + '|' + cat.name + '|' + cat.code;
+                    }).join('||');
+                    categorySearch.attr('data-categories', updatedData);
+                    
+                    // Select the new category
+                    categoryHidden.val(response.category.id);
+                    categorySearch.val(response.category.name);
                     
                     // Close modal and show success message
                     $('#categoryModal').modal('hide');
@@ -736,6 +881,149 @@ $(document).ready(function() {
         $('#categoryIsActive').prop('checked', true);
     });
 });
+
+// Category Search Modal Functions
+function openCategorySearchModal() {
+    $('#categorySearchModal').modal('show');
+    // Focus on search input
+    setTimeout(function() {
+        $('#categorySearchInput').focus();
+    }, 500);
+}
+
+function selectCategory(categoryId, categoryName, categoryCode) {
+    $('#category').val(categoryId);
+    $('#categorySearch').val(categoryName);
+    $('#categoryDropdown').hide();
+    $('#categorySearchModal').modal('hide');
+    
+    // Trigger change event for validation
+    $('#category').trigger('change');
+}
+
+// Filter categories in modal
+function filterCategoriesInModal() {
+    const searchTerm = $('#categorySearchInput').val().toLowerCase().trim();
+    const categoryItems = $('#categoryList .category-item');
+    
+    if (searchTerm === '') {
+        categoryItems.show();
+        return;
+    }
+    
+    categoryItems.each(function() {
+        const categoryName = $(this).data('name').toLowerCase();
+        const categoryCode = $(this).data('code').toLowerCase();
+        
+        if (categoryName.includes(searchTerm) || categoryCode.includes(searchTerm)) {
+            $(this).show();
+        } else {
+            $(this).hide();
+        }
+    });
+}
+
+// Bind search button
+$('#searchCategoryBtn').on('click', function() {
+    openCategorySearchModal();
+});
+
+// Bind search input in modal
+$('#categorySearchInput').on('input', filterCategoriesInModal);
+
+// Category Search Modal Functions
+function openCategorySearchModal() {
+    $('#categorySearchModal').modal('show');
+    // Focus on search input
+    setTimeout(function() {
+        $('#categorySearchInput').focus();
+    }, 500);
+}
+
+function selectCategory(categoryId, categoryName, categoryCode) {
+    $('#category').val(categoryId);
+    $('#categorySearch').val(categoryName);
+    $('#categoryDropdown').hide();
+    $('#categorySearchModal').modal('hide');
+    
+    // Trigger change event for validation
+    $('#category').trigger('change');
+}
+
+// Filter categories in modal
+function filterCategoriesInModal() {
+    const searchTerm = $('#categorySearchInput').val().toLowerCase().trim();
+    const categoryItems = $('#categoryList .category-item');
+    
+    if (searchTerm === '') {
+        categoryItems.show();
+        return;
+    }
+    
+    categoryItems.each(function() {
+        const categoryName = $(this).data('name').toLowerCase();
+        const categoryCode = $(this).data('code').toLowerCase();
+        
+        if (categoryName.includes(searchTerm) || categoryCode.includes(searchTerm)) {
+            $(this).show();
+        } else {
+            $(this).hide();
+        }
+    });
+}
+
+// Bind search button
+$('#searchCategoryBtn').on('click', function() {
+    openCategorySearchModal();
+});
+
+// Bind search input in modal
+$('#categorySearchInput').on('input', filterCategoriesInModal);
 </script>
+
+<!-- Category Search Modal -->
+<div class="modal fade" id="categorySearchModal" tabindex="-1" aria-labelledby="categorySearchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="categorySearchModalLabel">
+                    <i class="fas fa-search me-2"></i>
+                    {% trans "Select Category" %}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <input type="text" class="form-control" id="categorySearchInput" placeholder="{% trans 'Search for category by name or code...' %}">
+                </div>
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>{% trans "Category Name" %}</th>
+                                <th>{% trans "Category Code" %}</th>
+                                <th>{% trans "Select" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody id="categoryList">
+                            {% for category in categories %}
+                            <tr class="category-item" data-name="{{ category.name }}" data-code="{{ category.code }}">
+                                <td>{{ category.name }}</td>
+                                <td>{{ category.code }}</td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-primary" 
+                                            onclick="selectCategory('{{ category.id }}', '{{ category.name|escapejs }}', '{{ category.code|escapejs }}')">
+                                        {% trans "Select" %}
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 {% endblock %}

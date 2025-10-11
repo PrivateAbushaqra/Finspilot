@@ -16,7 +16,8 @@ urlpatterns = [
     path('detail/<int:pk>/', views.ProductDetailView.as_view(), name='product_detail'),
     path('edit/<int:pk>/', views.ProductUpdateView.as_view(), name='product_edit'),
     path('delete/<int:pk>/', views.ProductDeleteView.as_view(), name='product_delete'),
+    path('movements/<int:pk>/', views.ProductMovementsView.as_view(), name='product_movements'),
     path('api/search/', views.product_search_api, name='product_search_api'),
-    path('api/category/add/', views.category_add_ajax, name='category_add_ajax'),
-    path('api/product/add/', views.product_add_ajax, name='product_add_ajax'),
+    path('api/category/add/', views.CategoryAddAjaxView.as_view(), name='category_add_ajax'),
+    path('api/product/add/', views.ProductAddAjaxView.as_view(), name='product_add_ajax'),
 ]

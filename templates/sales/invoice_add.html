@@ -384,7 +384,7 @@
                         <i class="fas fa-box me-1"></i>
                         {% trans "Products" %}
                     </h5>
-                    <button type="button" class="btn btn-add-product" id="addProductBtn" 
+                    <button type="button" class="btn btn-add-product" id="addProductBtn" tabindex="-1"
                             title="{% trans "Click to add a new product" %}" data-action="add-product">
                         <i class="fas fa-plus me-1"></i>
                         {% trans "Add" %} {% trans "Product" %}
@@ -1244,15 +1244,15 @@ function attachRowEventListeners(row) {
         calculateGrandTotal();
     });
     
-    // Add new row when Tab is pressed on price input
-    if (priceInput) {
-        priceInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Tab') {
-                e.preventDefault();
-                addProductRow();
-            }
-        });
-    }
+    // إزالة إضافة صف جديد عند الضغط على Tab
+    // if (priceInput) {
+    //     priceInput.addEventListener('keydown', function(e) {
+    //         if (e.key === 'Tab') {
+    //             e.preventDefault();
+    //             addProductRow();
+    //         }
+    //     });
+    // }
 }
 
 function calculateRowTotal(row) {
@@ -2205,6 +2205,85 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Keyboard shortcuts for invoice management
 document.addEventListener('keydown', function(e) {
+    // Shift+A to add new product row
+    if (e.shiftKey && e.key.toLowerCase() === 'a' && !e.ctrlKey && !e.altKey) {
+        // Don't trigger if user is typing in an input field
+        const activeElement = document.activeElement;
+        const isInputField = activeElement && (
+            activeElement.tagName === 'INPUT' || 
+            activeElement.tagName === 'TEXTAREA' || 
+            activeElement.tagName === 'SELECT' ||
+            activeElement.isContentEditable
+        );
+        
+        if (!isInputField) {
+            e.preventDefault();
+            
+            try {
+                addProductRow();
+                console.log('✅ Product row added via Shift+A shortcut');
+                
+                // Focus on the first product code input of the new row
+                setTimeout(() => {
+                    const lastRow = document.querySelector('#productsTableBody tr:last-child');
+                    if (lastRow) {
+                        const productCodeInput = lastRow.querySelector('.product-code-input');
+                        if (productCodeInput) {
+                            productCodeInput.focus();
+                            console.log('✅ Focus set on new product code input');
+                        }
+                    }
+                }, 100);
+            } catch (error) {
+                console.error('❌ Error adding product row via Shift+A:', error);
+            }
+        }
+    }
+    
+    // Shift+D to delete current product row
+    if (e.shiftKey && e.key.toLowerCase() === 'd' && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        
+        // Find the row containing the currently focused element
+        const activeElement = document.activeElement;
+        const currentRow = activeElement ? activeElement.closest('#productsTableBody tr') : null;
+        
+        if (currentRow) {
+            // Get row ID
+            const rowId = currentRow.id.replace('productRow', '');
+            
+            // Check if this is the last row
+            const allRows = document.querySelectorAll('#productsTableBody tr');
+            if (allRows.length <= 1) {
+                alert("{% trans 'Cannot delete the last product row. At least one product row must remain.' %}");
+                return;
+            }
+            
+            // Show confirmation dialog
+            if (confirm("{% trans 'Are you sure you want to delete this product row?' %}")) {
+                // Find the previous row to focus after deletion
+                const previousRow = currentRow.previousElementSibling;
+                
+                // Delete the row
+                removeProductRow(rowId);
+                console.log(`✅ Product row ${rowId} deleted via Shift+D shortcut`);
+                
+                // Focus on the first input of the previous row
+                if (previousRow) {
+                    setTimeout(() => {
+                        const firstInput = previousRow.querySelector('input:not([type="hidden"]):not([readonly])');
+                        if (firstInput) {
+                            firstInput.focus();
+                            console.log('✅ Focus moved to previous row');
+                        }
+                    }, 100);
+                }
+            }
+        } else {
+            alert("{% trans 'Please select a product row to delete by clicking on any field in that row.' %}");
+        }
+    }
+    
     // Ctrl+Enter to save invoice
     if (e.ctrlKey && e.key === 'Enter') {
         e.preventDefault(); // Prevent default behavior
@@ -2226,8 +2305,10 @@ document.addEventListener('keydown', function(e) {
 // Function to show keyboard shortcuts help
 function showKeyboardShortcuts() {
     const shortcuts = [
-        { key: 'Ctrl+Enter', description: 'حفظ الفاتورة' },
-        { key: 'Ctrl+H or Ctrl+?', description: 'عرض اختصارات لوحة المفاتيح' }
+        { key: 'Shift+A', description: '{% trans "إضافة سطر منتج جديد" %}' },
+        { key: 'Shift+D', description: '{% trans "حذف سطر المنتج الحالي" %}' },
+        { key: 'Ctrl+Enter', description: '{% trans "حفظ الفاتورة" %}' },
+        { key: 'Ctrl+H or Ctrl+?', description: '{% trans "عرض اختصارات لوحة المفاتيح" %}' }
     ];
     
     let message = 'اختصارات لوحة المفاتيح:\n\n';

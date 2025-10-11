@@ -15,7 +15,7 @@ from datetime import datetime, timedelta, date
 from decimal import Decimal, ROUND_HALF_UP
 from .models import PurchaseInvoice, PurchaseInvoiceItem, PurchaseReturn, PurchaseReturnItem, PurchaseReturn, PurchaseReturnItem
 from customers.models import CustomerSupplier
-from products.models import Product
+from products.models import Product, Category
 from inventory.models import InventoryMovement, Warehouse
 from accounts.services import create_purchase_invoice_transaction, create_purchase_return_transaction, delete_transaction_by_reference
 from journal.models import JournalEntry
@@ -422,6 +422,7 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
             ).order_by('name'),
             'default_warehouse': request.user.default_purchase_warehouse,
             'products': products_with_prices,
+            'categories': Category.objects.filter(is_active=True).order_by('name'),
             'next_invoice_number': next_invoice_number
         }
         
@@ -652,29 +653,6 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
                                 tax_amount=tax_amount,
                                 total_amount=total_amount
                             )
-                            
-                            # إنشاء حركة مخزون (إضافة الكمية المشتراة)
-                            try:
-                                # استخدام المستودع المحدد في الفاتورة أو المستودع الافتراضي
-                                inv_warehouse = invoice.warehouse if invoice.warehouse else Warehouse.objects.filter(is_active=True).first()
-                                if inv_warehouse:
-                                    InventoryMovement.objects.create(
-                                        movement_number=f"PUR-{invoice.invoice_number}-{i+1}",
-                                        date=invoice.date,
-                                        product=product,
-                                        warehouse=inv_warehouse,
-                                        movement_type='in',
-                                        reference_type='purchase_invoice',
-                                        reference_id=invoice.id,
-                                        quantity=quantity,
-                                        unit_cost=unit_price,
-                                        total_cost=row_subtotal,
-                                        notes=f"شراء من فاتورة رقم {invoice.invoice_number}",
-                                        created_by=created_by
-                                    )
-                            except Exception as inventory_error:
-                                # في حالة فشل إنشاء حركة المخزون، نسجل الخطأ لكن لا نوقف العملية
-                                messages.warning(request, f'تم حفظ الفاتورة لكن حدث خطأ في تحديث المخزون للمنتج {product.name}: {str(inventory_error)}')
                             
                             subtotal += row_subtotal
                             total_tax += tax_amount
@@ -1013,23 +991,6 @@ class PurchaseInvoiceUpdateView(LoginRequiredMixin, View):
                                 tax_amount=tax_amount,
                                 total_amount=total_amount
                             )
-                            
-                            # إنشاء حركة مخزون جديدة
-                            warehouse_to_use = invoice.warehouse if invoice.warehouse else Warehouse.objects.filter(is_active=True).first()
-                            if warehouse_to_use:
-                                InventoryMovement.objects.create(
-                                    movement_number=f"PUR-{invoice.invoice_number}-{i+1}",
-                                    movement_type='purchase',
-                                    movement_date=invoice.date,
-                                    product=product,
-                                    warehouse=warehouse_to_use,
-                                    quantity=quantity,
-                                    unit_price=unit_price,
-                                    reference_type='purchase_invoice',
-                                    reference_id=invoice.id,
-                                    notes=f'تعديل فاتورة مشتريات {invoice.invoice_number}',
-                                    created_by=request.user
-                                )
                             
                             subtotal += row_subtotal
                             total_tax += tax_amount
@@ -1565,7 +1526,7 @@ class PurchaseReportView(LoginRequiredMixin, TemplateView):
             start_date = today.replace(month=1, day=1).strftime('%Y-%m-%d')
         if not end_date:
             end_date = today.strftime('%Y-%m-%d')
-            
+        
         # تحويل التواريخ لاستخدامها في الاستعلامات
         start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
         end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()

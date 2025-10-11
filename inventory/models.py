@@ -94,6 +94,67 @@ class InventoryMovement(models.Model):
         return f"{self.movement_number} - {self.product.name}"
 
     def save(self, *args, **kwargs):
+        # حساب التكلفة الإجمالية تلقائياً
+        if self.quantity and self.unit_cost:
+            self.total_cost = self.quantity * self.unit_cost
+        super().save(*args, **kwargs)
+
+    @property
+    def document_number(self):
+        """الحصول على رقم المستند المرجعي"""
+        try:
+            if self.reference_type == 'sales_invoice':
+                from sales.models import SalesInvoice
+                doc = SalesInvoice.objects.get(id=self.reference_id)
+                return doc.invoice_number
+            elif self.reference_type == 'sales_return':
+                from sales.models import SalesReturn
+                doc = SalesReturn.objects.get(id=self.reference_id)
+                return doc.return_number
+            elif self.reference_type == 'purchase_invoice':
+                from purchases.models import PurchaseInvoice
+                doc = PurchaseInvoice.objects.get(id=self.reference_id)
+                return doc.invoice_number
+            elif self.reference_type == 'purchase_return':
+                from purchases.models import PurchaseReturn
+                doc = PurchaseReturn.objects.get(id=self.reference_id)
+                return doc.return_number
+            elif self.reference_type == 'warehouse_transfer':
+                doc = WarehouseTransfer.objects.get(id=self.reference_id)
+                return doc.transfer_number
+            elif self.reference_type == 'adjustment':
+                return self.movement_number  # للتسويات، استخدم رقم الحركة
+            elif self.reference_type == 'opening_balance':
+                return _('Opening Balance')
+            else:
+                return _('Not Available')
+        except Exception:
+            return _('Not Found')
+
+    @property
+    def document_url(self):
+        """الحصول على رابط صفحة تفاصيل المستند"""
+        try:
+            if self.reference_type == 'sales_invoice':
+                return f'/ar/sales/invoices/{self.reference_id}/'
+            elif self.reference_type == 'sales_return':
+                return None  # لا يوجد صفحة تفاصيل للإرجاعات في المبيعات
+            elif self.reference_type == 'purchase_invoice':
+                return f'/ar/purchases/invoices/{self.reference_id}/'
+            elif self.reference_type == 'purchase_return':
+                return f'/ar/purchases/returns/{self.reference_id}/'
+            elif self.reference_type == 'warehouse_transfer':
+                return None  # لا يوجد صفحة تفاصيل للتحويلات
+            elif self.reference_type == 'adjustment':
+                return None  # لا رابط للتسويات
+            elif self.reference_type == 'opening_balance':
+                return None  # لا رابط للرصيد الافتتاحي
+            else:
+                return None
+        except Exception:
+            return None
+
+    def save(self, *args, **kwargs):
         # إنشاء رقم الحركة تلقائياً إذا لم يكن موجوداً
         if not self.movement_number:
             from django.utils import timezone

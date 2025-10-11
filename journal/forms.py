@@ -243,7 +243,7 @@ class TrialBalanceForm(forms.Form):
         widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'})
     )
     account_type = forms.ChoiceField(
-        label=_('نوع الحساب'),
+        label=_('Account Type'),
         choices=[('', _('جميع الأنواع'))] + Account.ACCOUNT_TYPES,
         required=False,
         widget=forms.Select(attrs={'class': 'form-control'})

@@ -11,6 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from .models import Category, Product
 from core.models import AuditLog
+from inventory.models import InventoryMovement
 
 # Category Views
 class CategoryListView(LoginRequiredMixin, TemplateView):
@@ -1077,6 +1078,7 @@ def product_add_ajax(request):
                 selling_price = float(selling_price)
                 wholesale_price = float(wholesale_price) if wholesale_price else 0
                 tax_rate = float(tax_rate) if tax_rate else 0
+                min_stock = float(min_stock) if min_stock else 0
                 opening_balance = float(opening_balance) if opening_balance else 0
                 opening_balance_cost = float(opening_balance_cost) if opening_balance_cost else 0
                 
@@ -1217,3 +1219,362 @@ def product_add_ajax(request):
         return JsonResponse({
             'categories': list(categories)
         })
+
+# AJAX Views for adding categories and products from purchase invoice
+@method_decorator(csrf_exempt, name='dispatch')
+class CategoryAddAjaxView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        """إرجاع قائمة الفئات المتاحة للاستخدام في الشاشات المنبثقة"""
+        try:
+            from .models import Category
+            categories = Category.objects.filter(is_active=True).order_by('name')
+            categories_data = []
+            for category in categories:
+                categories_data.append({
+                    'id': category.id,
+                    'name': category.name,
+                    'code': category.code
+                })
+            
+            return JsonResponse({
+                'success': True,
+                'categories': categories_data
+            })
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"خطأ في تحميل الفئات: {str(e)}")
+            return JsonResponse({
+                'success': False,
+                'error': f'حدث خطأ أثناء تحميل الفئات: {str(e)}'
+            })
+
+    def post(self, request, *args, **kwargs):
+        try:
+            # استلام البيانات من النموذج
+            name = request.POST.get('name', '').strip()
+            name_en = request.POST.get('name_en', '').strip()
+            code = request.POST.get('code', '').strip()
+            parent_id = request.POST.get('parent', '')
+            description = request.POST.get('description', '').strip()
+            is_active = request.POST.get('is_active', 'true').lower() == 'true'
+            
+            # التحقق من صحة البيانات
+            if not name:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'اسم الفئة مطلوب!'
+                })
+            
+            # التحقق من عدم تكرار الرمز
+            if code and Category.objects.filter(code=code).exists():
+                return JsonResponse({
+                    'success': False,
+                    'error': 'رمز الفئة موجود مسبقاً!'
+                })
+            
+            # معالجة الفئة الأب
+            parent = None
+            if parent_id:
+                try:
+                    parent = Category.objects.get(id=parent_id)
+                except Category.DoesNotExist:
+                    parent = None
+            
+            # إنشاء الفئة
+            category = Category.objects.create(
+                name=name,
+                name_en=name_en,
+                code=code if code else None,
+                parent=parent,
+                description=description,
+                is_active=is_active
+            )
+            
+            # تسجيل النشاط في سجل المراجعة
+            AuditLog.objects.create(
+                user=request.user,
+                action_type='create',
+                content_type='Category',
+                object_id=category.id,
+                description=f'تم إنشاء فئة جديدة من فاتورة المشتريات: {category.name}',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'تم إنشاء الفئة "{category.name}" بنجاح!',
+                'category': {
+                    'id': category.id,
+                    'name': category.name,
+                    'code': category.code
+                }
+            })
+            
+        except Exception as e:
+            # تسجيل الخطأ في audit log
+            AuditLog.objects.create(
+                user=request.user,
+                action_type='error',
+                content_type='Category',
+                object_id=None,
+                description=f'حدث خطأ أثناء إنشاء الفئة من فاتورة المشتريات: {str(e)}',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"خطأ في إنشاء الفئة: {str(e)}")
+            
+            return JsonResponse({
+                'success': False,
+                'error': f'حدث خطأ أثناء إنشاء الفئة: {str(e)}'
+            })
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ProductAddAjaxView(LoginRequiredMixin, View):
+    def get(self, request, *args, **kwargs):
+        """إرجاع قائمة الفئات المتاحة للاستخدام في modal إنشاء المنتج"""
+        try:
+            from .models import Category
+            categories = Category.objects.filter(is_active=True).order_by('name')
+            categories_data = []
+            for category in categories:
+                categories_data.append({
+                    'id': category.id,
+                    'name': category.name,
+                    'code': category.code
+                })
+            
+            return JsonResponse({
+                'success': True,
+                'categories': categories_data
+            })
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"خطأ في تحميل الفئات: {str(e)}")
+            return JsonResponse({
+                'success': False,
+                'error': f'حدث خطأ أثناء تحميل الفئات: {str(e)}'
+            })
+
+    def post(self, request, *args, **kwargs):
+        try:
+            # استلام البيانات من النموذج
+            name = request.POST.get('name', '').strip()
+            name_en = request.POST.get('name_en', '').strip()
+            sku = request.POST.get('sku', '').strip()
+            product_type = request.POST.get('product_type', 'goods')
+            barcode = request.POST.get('barcode', '').strip()
+            serial_number = request.POST.get('serial_number', '').strip()
+            category_id = request.POST.get('category', '')
+            description = request.POST.get('description', '').strip()
+            cost_price = request.POST.get('cost_price', '0')
+            selling_price = request.POST.get('selling_price', '0')
+            wholesale_price = request.POST.get('wholesale_price', '0')
+            tax_rate = request.POST.get('tax_rate', '0')
+            min_stock = request.POST.get('min_stock', '0')
+            opening_balance = request.POST.get('opening_balance', '0')
+            opening_balance_cost = request.POST.get('opening_balance_cost', '0')
+            is_active = request.POST.get('is_active', 'true').lower() == 'true'
+            
+            # التحقق من صحة البيانات الأساسية
+            if not name:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'اسم المنتج مطلوب!'
+                })
+            
+            if not sku:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'رمز المنتج مطلوب!'
+                })
+            
+            # التحقق من عدم تكرار الرمز
+            if Product.objects.filter(code=sku).exists():
+                return JsonResponse({
+                    'success': False,
+                    'error': 'رمز المنتج موجود مسبقاً!'
+                })
+            
+            # التحقق من صحة الأسعار والنسب
+            try:
+                cost_price = float(cost_price) if cost_price else 0
+                selling_price = float(selling_price) if selling_price else 0
+                wholesale_price = float(wholesale_price) if wholesale_price else 0
+                tax_rate = float(tax_rate) if tax_rate else 0
+                min_stock = float(min_stock) if min_stock else 0
+                opening_balance = float(opening_balance) if opening_balance else 0
+                opening_balance_cost = float(opening_balance_cost) if opening_balance_cost else 0
+            except ValueError:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'يرجى إدخال أسعار ونسبة ضريبة صحيحة!'
+                })
+            
+            # التحقق من صحة نسبة الضريبة
+            if tax_rate < 0 or tax_rate > 100:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'نسبة الضريبة يجب أن تكون بين 0 و 100!'
+                })
+            
+            # الحصول على الفئة
+            category = None
+            if category_id:
+                try:
+                    category = Category.objects.get(id=category_id)
+                except Category.DoesNotExist:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'الفئة المحددة غير موجودة!'
+                    })
+            
+            # إنشاء المنتج
+            product = Product.objects.create(
+                code=sku,
+                name=name,
+                name_en=name_en,
+                product_type=product_type,
+                barcode=barcode,
+                serial_number=serial_number,
+                category=category,
+                description=description,
+                cost_price=cost_price,
+                minimum_quantity=min_stock,
+                sale_price=selling_price,
+                wholesale_price=wholesale_price,
+                tax_rate=tax_rate,
+                is_active=is_active
+            )
+            
+            # إنشاء حركة مخزون للرصيد الافتتاحي إذا كان أكبر من صفر
+            if opening_balance > 0:
+                try:
+                    from inventory.models import InventoryMovement, Warehouse
+                    
+                    # الحصول على المستودع الافتراضي أو إنشاؤه
+                    default_warehouse, created = Warehouse.objects.get_or_create(
+                        code='MAIN',
+                        defaults={
+                            'name': 'المستودع الرئيسي',
+                            'address': 'المستودع الافتراضي للنظام',
+                            'is_active': True
+                        }
+                    )
+                    
+                    unit_cost = opening_balance_cost / opening_balance if opening_balance > 0 else 0
+                    InventoryMovement.objects.create(
+                        product=product,
+                        warehouse=default_warehouse,
+                        movement_type='in',
+                        quantity=opening_balance,
+                        unit_cost=unit_cost,
+                        total_cost=opening_balance_cost,
+                        reference_type='opening_balance',
+                        reference_id=product.id,
+                        notes=f'الرصيد الافتتاحي للمنتج {product.name}',
+                        created_by=request.user,
+                        date=product.created_at.date()
+                    )
+                except Exception as e:
+                    # تسجيل تحذير في حالة فشل إنشاء حركة المخزون
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f"فشل في إنشاء حركة المخزون للرصيد الافتتاحي للمنتج {product.id}: {str(e)}")
+            
+            # معالجة رفع الصورة
+            if 'image' in request.FILES:
+                product.image = request.FILES['image']
+                product.save()
+            
+            # تسجيل النشاط في سجل الأنشطة
+            AuditLog.objects.create(
+                user=request.user,
+                action_type='create',
+                content_type='Product',
+                object_id=product.id,
+                description=f'تم إنشاء المنتج من فاتورة المشتريات: {product.name} - رمز المنتج: {product.code} - سعر البيع: {product.sale_price}',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            
+            # رسالة نجاح مع تفاصيل الضريبة
+            success_message = f'تم إنشاء المنتج "{product.name}" بنجاح!'
+            if tax_rate > 0:
+                from decimal import Decimal
+                selling_price_decimal = Decimal(str(selling_price))
+                tax_rate_decimal = Decimal(str(tax_rate))
+                tax_amount = selling_price_decimal * (tax_rate_decimal / Decimal('100'))
+                price_with_tax = selling_price_decimal + tax_amount
+                success_message += f' (سعر البيع: {selling_price:.3f}، الضريبة: {tax_rate}%، السعر شامل الضريبة: {price_with_tax:.3f})'
+            
+            return JsonResponse({
+                'success': True,
+                'message': success_message,
+                'product': {
+                    'id': product.id,
+                    'name': product.name,
+                    'code': product.code,
+                    'sale_price': float(product.sale_price),
+                    'category_name': product.category.name if product.category else None,
+                    'product_type': product.product_type,
+                    'tax_rate': float(product.tax_rate),
+                    'is_active': product.is_active
+                }
+            })
+            
+        except Exception as e:
+            # تسجيل الخطأ في audit log
+            AuditLog.objects.create(
+                user=request.user,
+                action_type='error',
+                content_type='Product',
+                object_id=None,
+                description=f'حدث خطأ أثناء إنشاء المنتج من فاتورة المشتريات: {str(e)}',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"خطأ في إنشاء المنتج: {str(e)}")
+            
+            return JsonResponse({
+                'success': False,
+                'error': f'حدث خطأ أثناء إنشاء المنتج: {str(e)}'
+            })
+
+class ProductMovementsView(LoginRequiredMixin, ListView):
+    model = InventoryMovement
+    template_name = 'products/product_movements.html'
+    context_object_name = 'movements'
+    paginate_by = 50  # عدد مناسب للعرض
+    
+    def get_queryset(self):
+        product_id = self.kwargs.get('pk')
+        return InventoryMovement.objects.filter(product_id=product_id).order_by('-date', '-created_at')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        product = get_object_or_404(Product, pk=self.kwargs.get('pk'))
+        context['product'] = product
+        
+        # إحصائيات الحركات
+        all_movements = self.get_queryset()
+        context['total_movements'] = all_movements.count()
+        context['incoming_movements'] = all_movements.filter(movement_type='in').count()
+        context['outgoing_movements'] = all_movements.filter(movement_type='out').count()
+        context['transfer_movements'] = all_movements.filter(movement_type='transfer').count()
+        
+        # تسجيل النشاط في سجل الأنشطة
+        AuditLog.objects.create(
+            user=self.request.user,
+            action_type='view',
+            content_type='Product Movements',
+            object_id=product.id,
+            description=f'عرض حركات المنتج: {product.name}',
+            ip_address=self.request.META.get('REMOTE_ADDR')
+        )
+        
+        return context

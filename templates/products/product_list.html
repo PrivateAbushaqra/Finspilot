@@ -610,7 +610,11 @@
                                             <i class="fas fa-box text-muted"></i>
                                         </div>
                                     </td>
-                                    <td title="{{ product.name }}">{{ product.name|truncatechars:20 }}</td>
+                                    <td title="{{ product.name }}">
+                                        <a href="{% url 'products:product_movements' product.pk %}" class="text-decoration-none text-dark fw-bold">
+                                            {{ product.name|truncatechars:20 }}
+                                        </a>
+                                    </td>
                                     <td title="{{ product.code }}">{{ product.code }}</td>
                                     <td>
                                         {% if product.is_service %}
@@ -871,10 +875,27 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="productCategory" class="form-label">{% trans "Category" %} <span class="text-danger">*</span></label>
-                                <select class="form-select" id="productCategory" name="category" required>
-                                    <option value="">{% trans "Choose Category" %}</option>
-                                    <!-- Options will be loaded dynamically -->
-                                </select>
+                                <div class="input-group">
+                                    <div class="position-relative flex-grow-1">
+                                        <input type="text" class="form-control" id="productCategorySearch" placeholder="اكتب للبحث عن الفئات..." autocomplete="off"
+                                               data-categories="{% for category in categories %}{{ category.id }}|{{ category.name|escapejs }}|{{ category.code|escapejs }}{% if not forloop.last %}||{% endif %}{% endfor %}">
+                                        <div id="productCategoryDropdown" class="dropdown-menu w-100" style="display: none; max-height: 200px; overflow-y: auto;">
+                                            <!-- Category options will be populated here -->
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-primary" id="productSearchCategoryBtn" title="البحث عن الفئات">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                    <input type="hidden" id="productCategory" name="category" required>
+                                    <button type="button" class="btn btn-outline-primary" id="productAddCategoryBtn" title="إضافة فئة جديدة"
+                                            data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                                        <i class="fas fa-plus"></i>
+                                        إضافة فئة
+                                    </button>
+                                </div>
+                                <div class="form-text">
+                                    <small class="text-muted">ابدأ الكتابة للبحث عن الفئات أو اضغط زر البحث</small>
+                                </div>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -1216,6 +1237,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     modal.hide();
                     
                     // Update category list in search page
+                    // Update productCategories array if it exists
+                    if (window.productCategories && data.category) {
+                        window.productCategories.push({
+                            id: data.category.id,
+                            name: data.category.name,
+                            code: data.category.code || ''
+                        });
+                    }
+                    
                     location.reload();
                     
                 } else {
@@ -1378,8 +1408,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     const modal = bootstrap.Modal.getInstance(addProductModal);
                     modal.hide();
                     
-                    // تحديث {% trans "Products List" %}
-                    location.reload();
+                    // إضافة المنتج الجديد إلى القائمة مباشرة
+                    if (data.product) {
+                        addProductToList(data.product);
+                    } else {
+                        // إعادة تحميل الصفحة إذا لم تكن البيانات متوفرة
+                        location.reload();
+                    }
                     
                 } else {
                     // إظهار رسالة {% trans "Error" %}
@@ -1727,5 +1762,200 @@ function exportToExcel() {
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
 }
+</script>
+
+<!-- Category search functionality for product modal in product list -->
+<script>
+$(document).ready(function() {
+    // Parse categories from data attribute
+    var productCategoriesData = $('#productCategorySearch').data('categories') || '';
+    window.productCategories = [];
+    
+    if (productCategoriesData) {
+        var categoryStrings = productCategoriesData.split('||');
+        window.productCategories = categoryStrings.map(function(catStr) {
+            var parts = catStr.split('|');
+            return {
+                id: parts[0],
+                name: parts[1] || '',
+                code: parts[2] || ''
+            };
+        });
+    }
+
+    // دالة لإضافة منتج جديد إلى القائمة
+    function addProductToList(product) {
+        const tableBody = document.querySelector('#productsTable tbody');
+        if (!tableBody) return;
+        
+        const newRow = document.createElement('tr');
+        const productTypeText = product.product_type === 'physical' ? 'مادي' : 'خدمة';
+        const categoryName = product.category_name || 'غير مصنف';
+        const salePrice = parseFloat(product.sale_price || 0).toFixed(3);
+        const priceWithTax = (parseFloat(product.sale_price || 0) * (1 + parseFloat(product.tax_rate || 0) / 100)).toFixed(3);
+        
+        newRow.innerHTML = `
+            <td>
+                <img src="/static/images/no-image.png" alt="${product.name}" class="rounded" style="width: 40px; height: 40px; object-fit: cover;">
+            </td>
+            <td><strong>${product.name}</strong></td>
+            <td><small class="text-muted">${product.code}</small></td>
+            <td><span class="badge bg-secondary">${productTypeText}</span></td>
+            <td>${categoryName}</td>
+            <td class="text-success fw-bold">${salePrice} ر.س</td>
+            <td class="text-primary">${priceWithTax} ر.س</td>
+            <td><span class="badge bg-success">0</span></td>
+            <td><span class="badge bg-success">نشط</span></td>
+        `;
+        
+        // إضافة الصف في بداية الجدول
+        if (tableBody.firstChild) {
+            tableBody.insertBefore(newRow, tableBody.firstChild);
+        } else {
+            tableBody.appendChild(newRow);
+        }
+        
+        // تحديث الإحصائيات
+        updateProductStats();
+    }
+    
+    // دالة لتحديث الإحصائيات
+    function updateProductStats() {
+        const totalProductsElement = document.getElementById('totalProducts');
+        if (totalProductsElement) {
+            const currentTotal = parseInt(totalProductsElement.textContent) || 0;
+            totalProductsElement.textContent = currentTotal + 1;
+        }
+    }
+
+    var productCategorySearch = $('#productCategorySearch');
+    var productCategoryDropdown = $('#productCategoryDropdown');
+    var productCategoryHidden = $('#productCategory');
+
+    // Function to filter and show categories
+    function filterProductCategories() {
+        var searchTerm = productCategorySearch.val().toLowerCase().trim();
+
+        if (searchTerm === '') {
+            productCategoryDropdown.hide();
+            return;
+        }
+
+        // Clear previous options
+        productCategoryDropdown.empty();
+
+        // Filter categories
+        var filteredCategories = window.productCategories.filter(function(category) {
+            return category.name.toLowerCase().includes(searchTerm) ||
+                   (category.code && category.code.toLowerCase().includes(searchTerm));
+        });
+
+        if (filteredCategories.length === 0) {
+            productCategoryDropdown.hide();
+            return;
+        }
+
+        // Create dropdown options
+        filteredCategories.forEach(function(category) {
+            var option = $('<button type="button" class="dropdown-item"></button>');
+            option.html('<strong>' + category.name + '</strong>' + (category.code ? ' (' + category.code + ')' : ''));
+            option.attr('data-category', JSON.stringify(category));
+
+            option.on('click', function() {
+                // Fill category data
+                productCategoryHidden.val(category.id);
+                productCategorySearch.val(category.name);
+                productCategoryDropdown.hide();
+
+                // Trigger change event for validation
+                productCategoryHidden.trigger('change');
+            });
+
+            productCategoryDropdown.append(option);
+        });
+
+        productCategoryDropdown.show();
+    }
+
+    // Handle input changes
+    productCategorySearch.on('input', filterProductCategories);
+
+    // Handle focus to show all categories if empty
+    productCategorySearch.on('focus', function() {
+        if (productCategorySearch.val().trim() === '') {
+            // Show all categories
+            productCategoryDropdown.empty();
+            window.productCategories.slice(0, 10).forEach(function(category) {
+                var option = $('<button type="button" class="dropdown-item"></button>');
+                option.html('<strong>' + category.name + '</strong>' + (category.code ? ' (' + category.code + ')' : ''));
+                option.attr('data-category', JSON.stringify(category));
+
+                option.on('click', function() {
+                    productCategoryHidden.val(category.id);
+                    productCategorySearch.val(category.name);
+                    productCategoryDropdown.hide();
+                    productCategoryHidden.trigger('change');
+                });
+
+                productCategoryDropdown.append(option);
+            });
+            productCategoryDropdown.show();
+        }
+    });
+
+    // Hide dropdown when clicking outside
+    $(document).on('click', function(e) {
+        if (!productCategorySearch.is(e.target) && !productCategoryDropdown.is(e.target) && productCategoryDropdown.has(e.target).length === 0) {
+            productCategoryDropdown.hide();
+        }
+    });
+
+    // Handle blur with delay to allow click on dropdown items
+    productCategorySearch.on('blur', function() {
+        setTimeout(function() {
+            if (productCategorySearch.val() && !productCategoryHidden.val()) {
+                productCategorySearch.val('');
+                productCategoryHidden.val('');
+            }
+        }, 200);
+    });
+
+    // Update search input when hidden field changes (e.g., from new category modal)
+    productCategoryHidden.on('change', function() {
+        if (productCategoryHidden.val()) {
+            var selectedCategory = window.productCategories.find(function(cat) {
+                return cat.id == productCategoryHidden.val();
+            });
+            if (selectedCategory) {
+                productCategorySearch.val(selectedCategory.name);
+            }
+        } else {
+            productCategorySearch.val('');
+        }
+    });
+
+    // Handle search button click
+    $('#productSearchCategoryBtn').on('click', function() {
+        productCategorySearch.focus();
+        if (productCategorySearch.val().trim() === '') {
+            productCategoryDropdown.empty();
+            window.productCategories.slice(0, 10).forEach(function(category) {
+                var option = $('<button type="button" class="dropdown-item"></button>');
+                option.html('<strong>' + category.name + '</strong>' + (category.code ? ' (' + category.code + ')' : ''));
+                option.attr('data-category', JSON.stringify(category));
+
+                option.on('click', function() {
+                    productCategoryHidden.val(category.id);
+                    productCategorySearch.val(category.name);
+                    productCategoryDropdown.hide();
+                    productCategoryHidden.trigger('change');
+                });
+
+                productCategoryDropdown.append(option);
+            });
+            productCategoryDropdown.show();
+        }
+    });
+});
 </script>
 {% endblock %}

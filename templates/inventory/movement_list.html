@@ -301,6 +301,7 @@
                             <thead class="table-dark">
                                 <tr>
                                     <th>{% trans "Type" %}</th>
+                                    <th>{% trans "Document Number" %}</th>
                                     <th>{% trans "Quantity" %}</th>
                                     <th>{% trans "Warehouse" %}</th>
                                     <th>{% trans "Date" %}</th>
@@ -329,6 +330,15 @@
                                         {% else %}
                                             <i class="fas fa-tools text-warning me-1"></i>
                                             <span class="text-warning fw-bold">{% trans "Adjustment" %}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if movement.document_url %}
+                                            <a href="{{ movement.document_url }}" class="text-primary fw-bold" target="_blank">
+                                                {{ movement.document_number }}
+                                            </a>
+                                        {% else %}
+                                            <span class="text-muted">{{ movement.document_number }}</span>
                                         {% endif %}
                                     </td>
                                     <td>
