@@ -247,6 +247,20 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="mb-3">
+                                        <label for="opening_balance_cost" class="form-label">
+                                            <i class="fas fa-dollar-sign text-warning me-1"></i>
+                                            {% trans "Opening Balance Cost" %} <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="number" class="form-control" id="opening_balance_cost" name="opening_balance_cost" 
+                                               step="0.001" min="0" value="{{ product.opening_balance_cost|default:0 }}" required>
+                                        <small class="form-text text-muted">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            {% trans "Total cost of the opening balance for FIFO inventory calculation" %}
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
                                         <label for="current_stock" class="form-label">
                                             <i class="fas fa-warehouse text-primary me-1"></i>
                                             {% trans "Current Stock" %}

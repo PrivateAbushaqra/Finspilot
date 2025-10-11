@@ -187,6 +187,14 @@ class BankAccountCreateView(LoginRequiredMixin, View):
                 created_by=request.user if request.user.is_authenticated else None
             )
 
+            # Log activity in activity log
+            log_user_activity(
+                request.user,
+                'CREATE',
+                account,
+                f'تم إنشاء حساب بنكي جديد: {account.name} - الرصيد الأولي: {balance} {currency_code}'
+            )
+
             messages.success(request, f'Bank account "{account.name}" created successfully!')
             return redirect('banks:account_list')
 

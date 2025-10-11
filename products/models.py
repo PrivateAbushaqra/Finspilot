@@ -141,7 +141,8 @@ class Product(models.Model):
             movement_type='out'
         ).aggregate(total=models.Sum('quantity'))['total'] or 0
         
-        return incoming - outgoing
+        # إضافة الرصيد الافتتاحي
+        return (incoming - outgoing) + self.opening_balance_quantity
 
     @property
     def is_low_stock(self):
