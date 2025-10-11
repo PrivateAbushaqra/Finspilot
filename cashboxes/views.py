@@ -2,6 +2,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_http_methods
 from django.db import transaction
@@ -146,6 +149,10 @@ def cashbox_list(request):
     
     cashboxes = Cashbox.objects.filter(is_active=True).order_by('name')
     
+    # مزامنة أرصدة الصناديق
+    for cashbox in cashboxes:
+        cashbox.sync_balance()
+    
     # إحصائيات سريعة
     total_balance = sum(cashbox.balance for cashbox in cashboxes)
     
@@ -257,23 +264,38 @@ def cashbox_create(request):
             return redirect('cashboxes:cashbox_list')
         
         try:
+            initial_balance_decimal = Decimal(initial_balance or 0)
+        except (ValueError, TypeError):
+            messages.error(request, _('Initial balance must be a valid number'))
+            return redirect('cashboxes:cashbox_list')
+        
+        # التحقق من responsible_user_id إذا تم تمريره
+        responsible_user = None
+        if responsible_user_id:
+            try:
+                responsible_user = User.objects.get(id=responsible_user_id)
+            except User.DoesNotExist:
+                messages.error(request, _('Selected responsible user does not exist'))
+                return redirect('cashboxes:cashbox_list')
+        
+        try:
             with transaction.atomic():
                 cashbox = Cashbox.objects.create(
                     name=name,
                     description=description,
-                    balance=Decimal(initial_balance or 0),
+                    balance=initial_balance_decimal,
                     currency=currency,
                     location=location,
-                    responsible_user_id=responsible_user_id if responsible_user_id else None
+                    responsible_user=responsible_user
                 )
                 
                 # إضافة حركة الرصيد الافتتاحي إذا كان أكبر من صفر
-                if Decimal(initial_balance or 0) > 0:
+                if initial_balance_decimal > 0:
                     CashboxTransaction.objects.create(
                         cashbox=cashbox,
                         transaction_type='initial_balance',
                         date=timezone.now().date(),
-                        amount=Decimal(initial_balance),
+                        amount=initial_balance_decimal,
                         description=_('Opening Balance'),
                         created_by=request.user
                     )
@@ -291,6 +313,7 @@ def cashbox_create(request):
                 messages.success(request, _('Cashbox created successfully'))
                 return redirect('cashboxes:cashbox_detail', cashbox_id=cashbox.id)
         except Exception as e:
+            print(f"خطأ في إنشاء الصندوق: {e}")  # إضافة طباعة الخطأ للتشخيص
             messages.error(request, _('An error occurred while creating the cashbox'))
     
     return redirect('cashboxes:cashbox_list')
