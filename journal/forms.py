@@ -83,11 +83,21 @@ class JournalEntryForm(forms.ModelForm):
 
 
 class JournalLineForm(forms.ModelForm):
+    # حقل نصي للبحث عن الحساب
+    account_search = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control account-search-input',
+            'placeholder': _('اكتب للبحث عن الحساب...'),
+            'autocomplete': 'off'
+        })
+    )
+    
     class Meta:
         model = JournalLine
         fields = ['account', 'debit', 'credit', 'line_description']
         widgets = {
-            'account': forms.Select(attrs={'class': 'form-control'}),
+            'account': forms.HiddenInput(),  # إخفاء الحقل الأصلي
             'debit': forms.NumberInput(attrs={'class': 'form-control debit-input', 'step': '0.001', 'min': '0', 'placeholder': '0'}),
             'credit': forms.NumberInput(attrs={'class': 'form-control credit-input', 'step': '0.001', 'min': '0', 'placeholder': '0'}),
             'line_description': forms.TextInput(attrs={'class': 'form-control'}),
@@ -95,8 +105,7 @@ class JournalLineForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # تصفية الحسابات النشطة فقط
-        self.fields['account'].queryset = Account.objects.filter(is_active=True)
+        # إزالة queryset لأن الحقل أصبح مخفي
         # جعل الحقول غير مطلوبة (سيتم التحقق في clean)
         self.fields['account'].required = False
         self.fields['debit'].required = False
@@ -105,6 +114,7 @@ class JournalLineForm(forms.ModelForm):
         if not self.instance.pk:  # نموذج جديد فقط
             self.fields['debit'].initial = ''
             self.fields['credit'].initial = ''
+            self.fields['account_search'].initial = ''
     
     def clean(self):
         """تخطي التحقق من البنود الفارغة تماماً"""

@@ -6,6 +6,19 @@
 
 {% block content %}
 <div class="container-fluid">
+    <!-- Script to store accounts data -->
+    <script>
+        var accounts = [
+            {% for account in accounts %}
+            {
+                id: {{ account.id }},
+                name: "{{ account.name|escapejs }}",
+                code: "{{ account.code|escapejs }}",
+                account_type: "{{ account.get_account_type_display|escapejs }}"
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+    </script>
     <div class="row">
         <div class="col-12">
             <div class="d-sm-flex align-items-center justify-content-between mb-4">
@@ -146,10 +159,26 @@
                                     {% for form in formset %}
                                         <tr class="journal-line-row" data-form-prefix="{{ form.prefix }}">
                                             <td>
-                                                {{ form.account }}
-                                                {% if form.account.errors %}
-                                                    <div class="text-danger small">{{ form.account.errors.0 }}</div>
-                                                {% endif %}
+                                                <div class="position-relative">
+                                                    <div class="input-group">
+                                                        <div class="position-relative flex-grow-1">
+                                                            {{ form.account_search }}
+                                                            <div id="accountDropdown-{{ form.prefix }}" class="dropdown-menu w-100 account-dropdown" style="display: none; max-height: 200px; overflow-y: auto;">
+                                                                <!-- Account options will be populated here -->
+                                                            </div>
+                                                        </div>
+                                                        <button type="button" class="btn btn-outline-primary btn-sm" id="searchAccountBtn-{{ form.prefix }}" title="{% trans "Search accounts" %}">
+                                                            <i class="fas fa-search"></i>
+                                                        </button>
+                                                    </div>
+                                                    {{ form.account }}
+                                                    {% if form.account.errors %}
+                                                        <div class="text-danger small">{{ form.account.errors.0 }}</div>
+                                                    {% endif %}
+                                                    {% if form.account_search.errors %}
+                                                        <div class="text-danger small">{{ form.account_search.errors.0 }}</div>
+                                                    {% endif %}
+                                                </div>
                                             </td>
                                             <td>
                                                 {{ form.line_description }}
@@ -259,12 +288,21 @@
 <template id="emptyLineTemplate">
     <tr class="journal-line-row" data-form-prefix="form-__prefix__">
         <td>
-            <select name="form-__prefix__-account" id="id_form-__prefix__-account" class="form-control">
-                <option value="">---------</option>
-                {% for account in accounts %}
-                <option value="{{ account.id }}">{{ account.code }} - {{ account.name }}</option>
-                {% endfor %}
-            </select>
+            <div class="position-relative">
+                <div class="input-group">
+                    <div class="position-relative flex-grow-1">
+                        <input type="text" name="form-__prefix__-account_search" id="id_form-__prefix__-account_search" 
+                               class="form-control account-search-input" placeholder="{% trans 'اكتب للبحث عن الحساب...' %}" autocomplete="off">
+                        <div id="accountDropdown-form-__prefix__" class="dropdown-menu w-100 account-dropdown" style="display: none; max-height: 200px; overflow-y: auto;">
+                            <!-- Account options will be populated here -->
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="searchAccountBtn-form-__prefix__" title="{% trans "Search accounts" %}">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                <input type="hidden" name="form-__prefix__-account" id="id_form-__prefix__-account">
+            </div>
         </td>
         <td>
             <input type="text" name="form-__prefix__-line_description" id="id_form-__prefix__-line_description" class="form-control">
@@ -327,6 +365,10 @@ function addJournalLine() {
     
     // Add event listeners for new fields
     addEventListeners();
+    
+    // تهيئة فلترة الحسابات للبند الجديد
+    initializeAccountSearchForRow(lineCount);
+    
     lineCount++;
 }
 
@@ -534,12 +576,217 @@ if (openBtn) {
   });
 }
 
+function initializeAccountSearchForRow(formPrefix) {
+    var row = $('[data-form-prefix="' + formPrefix + '"]');
+    var searchInput = row.find('.account-search-input');
+    var dropdown = row.find('.account-dropdown');
+    
+    // Handle input changes
+    searchInput.on('input', function() {
+        filterAccounts($(this), dropdown);
+    });
+
+    // Handle focus to show all accounts if empty
+    searchInput.on('focus', function() {
+        if ($(this).val().trim() === '') {
+            dropdown.empty();
+            accounts.slice(0, 10).forEach(function(account) { // Show first 10 accounts
+                var option = $('<button type="button" class="dropdown-item"></button>');
+                option.html('<strong>' + account.name + '</strong>' + (account.code ? ' (' + account.code + ')' : '') + 
+                           '<br><small class="text-muted">' + account.account_type + '</small>');
+                option.attr('data-account', JSON.stringify(account));
+
+                option.on('click', function() {
+                    var accountHidden = row.find('input[name="' + formPrefix + '-account"]');
+                    accountHidden.val(account.id);
+                    searchInput.val(account.name);
+                    dropdown.hide();
+                    accountHidden.trigger('change');
+                });
+
+                dropdown.append(option);
+            });
+            dropdown.show();
+        }
+    });
+
+    // Handle blur
+    searchInput.on('blur', function() {
+        setTimeout(function() {
+            var accountHidden = row.find('input[name="' + formPrefix + '-account"]');
+            if (searchInput.val() && !accountHidden.val()) {
+                searchInput.val('');
+            }
+            dropdown.hide();
+        }, 150);
+    });
+}
+
+// دوال فلترة الحسابات
+function filterAccounts(searchInput, dropdown) {
+    var searchTerm = searchInput.val().toLowerCase().trim();
+
+    if (searchTerm === '') {
+        dropdown.hide();
+        return;
+    }
+
+    // Clear previous options
+    dropdown.empty();
+
+    // Filter accounts
+    var filteredAccounts = accounts.filter(function(account) {
+        return account.name.toLowerCase().includes(searchTerm) ||
+               (account.code && account.code.toLowerCase().includes(searchTerm)) ||
+               (account.account_type && account.account_type.toLowerCase().includes(searchTerm));
+    });
+
+    if (filteredAccounts.length === 0) {
+        dropdown.hide();
+        return;
+    }
+
+    // Create dropdown options
+    filteredAccounts.forEach(function(account) {
+        var option = $('<button type="button" class="dropdown-item"></button>');
+        option.html('<strong>' + account.name + '</strong>' + (account.code ? ' (' + account.code + ')' : '') + 
+                   '<br><small class="text-muted">' + account.account_type + '</small>');
+        option.attr('data-account', JSON.stringify(account));
+
+        option.on('click', function() {
+            // Fill account data
+            var formPrefix = searchInput.closest('.journal-line-row').data('form-prefix');
+            var accountHidden = $('input[name="' + formPrefix + '-account"]');
+            accountHidden.val(account.id);
+            searchInput.val(account.name);
+            dropdown.hide();
+
+            // Trigger change event for validation
+            accountHidden.trigger('change');
+        });
+
+        dropdown.append(option);
+    });
+
+    dropdown.show();
+}
+
+function initializeAccountSearch() {
+    // Handle input changes for all account search inputs
+    $(document).on('input', '.account-search-input', function() {
+        var searchInput = $(this);
+        var formPrefix = searchInput.closest('.journal-line-row').data('form-prefix');
+        var dropdown = $('#accountDropdown-' + formPrefix);
+        filterAccounts(searchInput, dropdown);
+    });
+
+    // Handle focus to show all accounts if empty
+    $(document).on('focus', '.account-search-input', function() {
+        var searchInput = $(this);
+        if (searchInput.val().trim() === '') {
+            var formPrefix = searchInput.closest('.journal-line-row').data('form-prefix');
+            var dropdown = $('#accountDropdown-' + formPrefix);
+            
+            dropdown.empty();
+            accounts.slice(0, 10).forEach(function(account) { // Show first 10 accounts
+                var option = $('<button type="button" class="dropdown-item"></button>');
+                option.html('<strong>' + account.name + '</strong>' + (account.code ? ' (' + account.code + ')' : '') + 
+                           '<br><small class="text-muted">' + account.account_type + '</small>');
+                option.attr('data-account', JSON.stringify(account));
+
+                option.on('click', function() {
+                    var formPrefix = searchInput.closest('.journal-line-row').data('form-prefix');
+                    var accountHidden = $('input[name="' + formPrefix + '-account"]');
+                    accountHidden.val(account.id);
+                    searchInput.val(account.name);
+                    dropdown.hide();
+                    accountHidden.trigger('change');
+                });
+
+                dropdown.append(option);
+            });
+            dropdown.show();
+        }
+    });
+
+    // Hide dropdown when clicking outside
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('.account-search-input').length && 
+            !$(e.target).closest('.account-dropdown').length) {
+            $('.account-dropdown').hide();
+        }
+    });
+
+    // Handle blur with delay to allow click on dropdown items
+    $(document).on('blur', '.account-search-input', function() {
+        var searchInput = $(this);
+        setTimeout(function() {
+            var formPrefix = searchInput.closest('.journal-line-row').data('form-prefix');
+            var dropdown = $('#accountDropdown-' + formPrefix);
+            if (searchInput.val() && !$('input[name="' + formPrefix + '-account"]').val()) {
+                // If user typed something but didn't select from dropdown, clear it
+                searchInput.val('');
+            }
+            dropdown.hide();
+        }, 150);
+    });
+}
+
+function initializeAccountSearchForRow(formPrefix) {
+    var row = $('[data-form-prefix="' + formPrefix + '"]');
+    var searchInput = row.find('.account-search-input');
+    var dropdown = row.find('.account-dropdown');
+    
+    // Handle input changes
+    searchInput.on('input', function() {
+        filterAccounts($(this), dropdown);
+    });
+
+    // Handle focus to show all accounts if empty
+    searchInput.on('focus', function() {
+        if ($(this).val().trim() === '') {
+            dropdown.empty();
+            accounts.slice(0, 10).forEach(function(account) { // Show first 10 accounts
+                var option = $('<button type="button" class="dropdown-item"></button>');
+                option.html('<strong>' + account.name + '</strong>' + (account.code ? ' (' + account.code + ')' : '') + 
+                           '<br><small class="text-muted">' + account.account_type + '</small>');
+                option.attr('data-account', JSON.stringify(account));
+
+                option.on('click', function() {
+                    var accountHidden = row.find('input[name="' + formPrefix + '-account"]');
+                    accountHidden.val(account.id);
+                    searchInput.val(account.name);
+                    dropdown.hide();
+                    accountHidden.trigger('change');
+                });
+
+                dropdown.append(option);
+            });
+            dropdown.show();
+        }
+    });
+
+    // Handle blur
+    searchInput.on('blur', function() {
+        setTimeout(function() {
+            var accountHidden = row.find('input[name="' + formPrefix + '-account"]');
+            if (searchInput.val() && !accountHidden.val()) {
+                searchInput.val('');
+            }
+            dropdown.hide();
+        }, 150);
+    });
+}
+
 // Page load
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 تحميل الصفحة - بدء التهيئة');
     
     // أولاً: تطبيق event listeners
     addEventListeners();
+    
+    // تهيئة فلترة الحسابات
+    initializeAccountSearch();
     
     // ثانياً: تعيين التاريخ الافتراضي فقط إذا كان فارغاً
     const dateInput = document.querySelector('input[name="entry_date"]');
