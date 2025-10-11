@@ -4,10 +4,12 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.db.models import Q, Sum
 from django.db import transaction
 from django.utils.translation import gettext_lazy as _
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.core.paginator import Paginator
 from decimal import Decimal
 from datetime import datetime, date
+import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
 from .models import Account, JournalEntry, JournalLine
 from .forms import (AccountForm, JournalEntryForm, JournalLineFormSet, 
@@ -58,9 +60,10 @@ def journal_dashboard(request):
 
 
 @login_required
+@permission_required('journal.view_journalaccount', raise_exception=True)
 def account_list(request):
     """قائمة الحسابات"""
-    accounts = Account.objects.filter(is_active=True).order_by('code')
+    accounts = Account.objects.filter(is_active=True)
     
     # البحث
     search = request.GET.get('search')
@@ -71,15 +74,25 @@ def account_list(request):
             Q(description__icontains=search)
         )
     
-    from django.contrib.auth.decorators import login_required, permission_required
-
-    @login_required
-    @permission_required('journal.view_journalaccount', raise_exception=True)
-    def account_list(request):
-        """قائمة الحسابات"""
+    # فلترة النوع
     account_type = request.GET.get('type')
     if account_type:
         accounts = accounts.filter(account_type=account_type)
+    
+    # الترتيب
+    order_by = request.GET.get('order_by', 'code')
+    direction = request.GET.get('direction', 'asc')
+    
+    if direction == 'desc':
+        order_by = '-' + order_by
+    
+    # ترتيب حسب الحقل المطلوب مع الترتيب الهرمي
+    if order_by in ['code', '-code', 'name', '-name', 'account_type', '-account_type', 'balance', '-balance', 'parent__name', '-parent__name']:
+        # ترتيب هرمي: الحسابات الرئيسية أولاً، ثم الفرعية
+        accounts = accounts.order_by(order_by)
+    else:
+        # الترتيب الهرمي الافتراضي
+        accounts = accounts.order_by('parent__code', 'code')
     
     # الترقيم
     paginator = Paginator(accounts, 20)
@@ -90,8 +103,11 @@ def account_list(request):
         'page_obj': page_obj,
         'account_types': Account.ACCOUNT_TYPES,
         'current_type': account_type,
-        'search_query': search
+        'search_query': search,
+        'order_by': request.GET.get('order_by', 'code'),
+        'direction': direction,
     }
+    
     # سجل النشاط: فتح صفحة قائمة الحسابات
     try:
         class Obj:
@@ -102,7 +118,99 @@ def account_list(request):
         log_view_activity(request, 'view', Obj(), str(_('Viewing accounts list')))
     except Exception:
         pass
+    
     return render(request, 'journal/account_list.html', context)
+
+@login_required
+def export_accounts_excel(request):
+    """تصدير قائمة الحسابات إلى Excel"""
+    accounts = Account.objects.filter(is_active=True)
+    
+    # البحث
+    search = request.GET.get('search')
+    if search:
+        accounts = accounts.filter(
+            Q(name__icontains=search) | 
+            Q(code__icontains=search) |
+            Q(description__icontains=search)
+        )
+    
+    # فلترة النوع
+    account_type = request.GET.get('type')
+    if account_type:
+        accounts = accounts.filter(account_type=account_type)
+    
+    # الترتيب
+    order_by = request.GET.get('order_by', 'code')
+    direction = request.GET.get('direction', 'asc')
+    
+    if direction == 'desc':
+        order_by = '-' + order_by
+    
+    # ترتيب حسب الحقل المطلوب مع الترتيب الهرمي
+    if order_by in ['code', '-code', 'name', '-name', 'account_type', '-account_type', 'balance', '-balance', 'parent__name', '-parent__name']:
+        accounts = accounts.order_by(order_by)
+    else:
+        accounts = accounts.order_by('parent__code', 'code')
+    
+    # إنشاء ملف Excel
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = _("قائمة الحسابات")
+    
+    # تنسيق العناوين
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="4F81BD", end_color="4F81BD", fill_type="solid")
+    header_alignment = Alignment(horizontal="center", vertical="center")
+    border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
+    
+    # إضافة العناوين
+    headers = [
+        _("كود الحساب"),
+        _("اسم الحساب"),
+        _("النوع"),
+        _("الحساب الرئيسي"),
+        _("الرصيد"),
+        _("الحالة")
+    ]
+    
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_num, value=str(header))
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_alignment
+        cell.border = border
+        ws.column_dimensions[openpyxl.utils.get_column_letter(col_num)].width = 20
+    
+    # إضافة البيانات
+    for row_num, account in enumerate(accounts, 2):
+        ws.cell(row=row_num, column=1, value=account.code).border = border
+        ws.cell(row=row_num, column=2, value=account.name).border = border
+        ws.cell(row=row_num, column=3, value=str(account.get_account_type_display())).border = border
+        ws.cell(row=row_num, column=4, value=account.parent.name if account.parent else "").border = border
+        ws.cell(row=row_num, column=5, value=float(account.get_balance())).border = border
+        ws.cell(row=row_num, column=6, value=_("نشط") if account.is_active else _("غير نشط")).border = border
+    
+    # إنشاء الاستجابة
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="accounts_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx"'
+    
+    # حفظ الملف
+    wb.save(response)
+    
+    # سجل النشاط: تصدير الحسابات
+    try:
+        class Obj:
+            id = 0
+            pk = 0
+            def __str__(self):
+                return str(_('Accounts Export'))
+        log_view_activity(request, 'export', Obj(), str(_('تصدير قائمة الحسابات إلى Excel')))
+    except Exception:
+        pass
+    
+    return response
+
 @login_required
 @permission_required('journal.add_journalaccount', raise_exception=True)
 def account_create(request):

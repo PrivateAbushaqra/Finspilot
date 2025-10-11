@@ -18,4 +18,5 @@ urlpatterns = [
     path('transfers/', views.TransferListView.as_view(), name='transfer_list'),
     path('transfers/add/', views.TransferCreateView.as_view(), name='transfer_add'),
     path('low-stock/', views.LowStockView.as_view(), name='low_stock'),
+    path('export/excel/', views.export_inventory_excel, name='export_excel'),
 ]

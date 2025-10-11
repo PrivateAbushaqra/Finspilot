@@ -137,11 +137,90 @@
                     <table class="table table-hover mb-0">
                         <thead>
                             <tr>
-                                <th width="15%">{% trans "Date" %}</th>
-                                <th width="20%">{% trans "Document Number" %}</th>
-                                <th width="25%">{% trans "Description" %}</th>
-                                <th width="20%">{% trans "Debit" %}</th>
-                                <th width="20%">{% trans "Balance" %}</th>
+                                <th width="12%">
+                                    <a href="?{% if current_sort == 'date' and sort_direction == 'asc' %}sort=date&dir=desc{% else %}sort=date&dir=asc{% endif %}&start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}" class="text-decoration-none text-white">
+                                        {% trans "Date" %}
+                                        {% if current_sort == 'date' %}
+                                            {% if sort_direction == 'asc' %}
+                                                <i class="fas fa-sort-up ms-1"></i>
+                                            {% else %}
+                                                <i class="fas fa-sort-down ms-1"></i>
+                                            {% endif %}
+                                        {% else %}
+                                            <i class="fas fa-sort ms-1"></i>
+                                        {% endif %}
+                                    </a>
+                                </th>
+                                <th width="17%">
+                                    <a href="?{% if current_sort == 'document_number' and sort_direction == 'asc' %}sort=document_number&dir=desc{% else %}sort=document_number&dir=asc{% endif %}&start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}" class="text-decoration-none text-white">
+                                        {% trans "Document Number" %}
+                                        {% if current_sort == 'document_number' %}
+                                            {% if sort_direction == 'asc' %}
+                                                <i class="fas fa-sort-up ms-1"></i>
+                                            {% else %}
+                                                <i class="fas fa-sort-down ms-1"></i>
+                                            {% endif %}
+                                        {% else %}
+                                            <i class="fas fa-sort ms-1"></i>
+                                        {% endif %}
+                                    </a>
+                                </th>
+                                <th width="27%">
+                                    <a href="?{% if current_sort == 'description' and sort_direction == 'asc' %}sort=description&dir=desc{% else %}sort=description&dir=asc{% endif %}&start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}" class="text-decoration-none text-white">
+                                        {% trans "Description" %}
+                                        {% if current_sort == 'description' %}
+                                            {% if sort_direction == 'asc' %}
+                                                <i class="fas fa-sort-up ms-1"></i>
+                                            {% else %}
+                                                <i class="fas fa-sort-down ms-1"></i>
+                                            {% endif %}
+                                        {% else %}
+                                            <i class="fas fa-sort ms-1"></i>
+                                        {% endif %}
+                                    </a>
+                                </th>
+                                <th width="13%">
+                                    <a href="?{% if current_sort == 'debit' and sort_direction == 'asc' %}sort=debit&dir=desc{% else %}sort=debit&dir=asc{% endif %}&start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}" class="text-decoration-none text-white">
+                                        {% trans "Debit" %}
+                                        {% if current_sort == 'debit' %}
+                                            {% if sort_direction == 'asc' %}
+                                                <i class="fas fa-sort-up ms-1"></i>
+                                            {% else %}
+                                                <i class="fas fa-sort-down ms-1"></i>
+                                            {% endif %}
+                                        {% else %}
+                                            <i class="fas fa-sort ms-1"></i>
+                                        {% endif %}
+                                    </a>
+                                </th>
+                                <th width="17%">
+                                    <a href="?{% if current_sort == 'total_with_tax' and sort_direction == 'asc' %}sort=total_with_tax&dir=desc{% else %}sort=total_with_tax&dir=asc{% endif %}&start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}" class="text-decoration-none text-white">
+                                        {% trans "Total with Tax" %}
+                                        {% if current_sort == 'total_with_tax' %}
+                                            {% if sort_direction == 'asc' %}
+                                                <i class="fas fa-sort-up ms-1"></i>
+                                            {% else %}
+                                                <i class="fas fa-sort-down ms-1"></i>
+                                            {% endif %}
+                                        {% else %}
+                                            <i class="fas fa-sort ms-1"></i>
+                                        {% endif %}
+                                    </a>
+                                </th>
+                                <th width="14%">
+                                    <a href="?{% if current_sort == 'balance' and sort_direction == 'asc' %}sort=balance&dir=desc{% else %}sort=balance&dir=asc{% endif %}&start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}" class="text-decoration-none text-white">
+                                        {% trans "Balance" %}
+                                        {% if current_sort == 'balance' %}
+                                            {% if sort_direction == 'asc' %}
+                                                <i class="fas fa-sort-up ms-1"></i>
+                                            {% else %}
+                                                <i class="fas fa-sort-down ms-1"></i>
+                                            {% endif %}
+                                        {% else %}
+                                            <i class="fas fa-sort ms-1"></i>
+                                        {% endif %}
+                                    </a>
+                                </th>
                             </tr>
                         </thead>
                         <tbody>
@@ -157,6 +236,9 @@
                                 <td>{{ item.description }}</td>
                                 <td class="debit-amount">
                                     {{ item.debit|floatformat:3 }} {% get_currency_symbol %}
+                                </td>
+                                <td class="text-primary fw-bold">
+                                    {{ item.total_with_tax|floatformat:3 }} {% get_currency_symbol %}
                                 </td>
                                 <td class="balance-amount">
                                     {{ item.balance|floatformat:3 }} {% get_currency_symbol %}

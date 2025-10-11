@@ -354,6 +354,10 @@ class PurchaseInvoiceListView(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
+        # Calculate page total for visible invoices
+        page_total = sum(invoice.total_amount for invoice in context['invoices'])
+        context['page_total'] = page_total
+        
         # Calculate statistics
         all_invoices = PurchaseInvoice.objects.all()
         context['total_invoices'] = all_invoices.count()
@@ -1616,6 +1620,10 @@ class PurchaseStatementView(LoginRequiredMixin, TemplateView):
         if self.request.GET.get('end_date'):
             end_date = datetime.strptime(self.request.GET.get('end_date'), '%Y-%m-%d').date()
         
+        # معالجة الترتيب
+        sort_by = self.request.GET.get('sort', 'date')
+        sort_direction = self.request.GET.get('dir', 'asc')
+        
         # جلب فواتير المشتريات مرتبة حسب التاريخ
         purchase_invoices = PurchaseInvoice.objects.filter(
             date__range=[start_date, end_date]
@@ -1628,6 +1636,8 @@ class PurchaseStatementView(LoginRequiredMixin, TemplateView):
         for invoice in purchase_invoices:
             # قيمة الفاتورة قبل الضريبة وبعد الخصم
             debit_amount = invoice.subtotal
+            # قيمة الفاتورة شامل الضريبة
+            total_with_tax = invoice.total_amount
             running_balance += debit_amount
             
             statement_data.append({
@@ -1635,15 +1645,34 @@ class PurchaseStatementView(LoginRequiredMixin, TemplateView):
                 'document_number': invoice.invoice_number,
                 'description': 'فاتورة مشتريات',
                 'debit': debit_amount,
+                'total_with_tax': total_with_tax,
                 'balance': running_balance,
                 'invoice': invoice
             })
+        
+        # تطبيق الترتيب على البيانات
+        if sort_by in ['date', 'document_number', 'description', 'debit', 'total_with_tax', 'balance']:
+            reverse_sort = sort_direction == 'desc'
+            if sort_by == 'date':
+                statement_data = sorted(statement_data, key=lambda x: x['date'], reverse=reverse_sort)
+            elif sort_by == 'document_number':
+                statement_data = sorted(statement_data, key=lambda x: x['document_number'], reverse=reverse_sort)
+            elif sort_by == 'description':
+                statement_data = sorted(statement_data, key=lambda x: x['description'], reverse=reverse_sort)
+            elif sort_by == 'debit':
+                statement_data = sorted(statement_data, key=lambda x: x['debit'], reverse=reverse_sort)
+            elif sort_by == 'total_with_tax':
+                statement_data = sorted(statement_data, key=lambda x: x['total_with_tax'], reverse=reverse_sort)
+            elif sort_by == 'balance':
+                statement_data = sorted(statement_data, key=lambda x: x['balance'], reverse=reverse_sort)
         
         context.update({
             'start_date': start_date,
             'end_date': end_date,
             'statement_data': statement_data,
             'final_balance': running_balance,
+            'current_sort': sort_by,
+            'sort_direction': sort_direction,
         })
         
         return context

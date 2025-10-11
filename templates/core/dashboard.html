@@ -271,7 +271,11 @@
                             <i class="fas fa-university fa-2x text-primary mb-2"></i>
                             <h6 class="mb-1">{% trans "Banks" %}</h6>
                             <small class="text-muted">
-                                {% if not forloop.last %}{{ accounts|length }} + {% else %}{{ accounts|length }}{% endif %}
+                                {% for currency, accounts in bank_balances.items %}
+                                    {{ accounts|length }}{% if not forloop.last %} + {% endif %}
+                                {% empty %}
+                                    0
+                                {% endfor %}
                             </small>
                         </div>
                     </div>
@@ -280,7 +284,11 @@
                             <i class="fas fa-cash-register fa-2x text-success mb-2"></i>
                             <h6 class="mb-1">{% trans "Cashboxes" %}</h6>
                             <small class="text-muted">
-                                {% if not forloop.last %}{{ cashboxes|length }} + {% else %}{{ cashboxes|length }}{% endif %}
+                                {% for currency, cashboxes in cashbox_balances.items %}
+                                    {{ cashboxes|length }}{% if not forloop.last %} + {% endif %}
+                                {% empty %}
+                                    0
+                                {% endfor %}
                             </small>
                         </div>
                     </div>
@@ -289,7 +297,11 @@
                             <i class="fas fa-money-check fa-2x text-warning mb-2"></i>
                             <h6 class="mb-1">{% trans "Pending Checks" %}</h6>
                             <small class="text-muted">
-                                {% if not forloop.last %}{{ checks_data.count }} + {% else %}{{ checks_data.count }}{% endif %}
+                                {% for currency, checks_data in pending_checks_by_currency.items %}
+                                    {{ checks_data.count }}{% if not forloop.last %} + {% endif %}
+                                {% empty %}
+                                    0
+                                {% endfor %}
                             </small>
                         </div>
                     </div>
@@ -316,7 +328,7 @@
                                             <span class="fw-medium">{{ account.name }}</span>
                                             <small class="text-muted d-block">{{ account.account_number }}</small>
                                         </div>
-                                        <span class="fw-bold text-primary">{{ account.balance|floatformat:3 }} {{ currency }}</span>
+                                        <span class="fw-bold text-primary">{{ account.balance|currency_format:currency }}</span>
                                     </div>
                                 {% endfor %}
                             </div>
@@ -345,7 +357,7 @@
                                             <span class="fw-medium">{{ cashbox.name }}</span>
                                             <small class="text-muted d-block">{{ cashbox.location|default:"{% trans 'Not specified' %}" }}</small>
                                         </div>
-                                        <span class="fw-bold text-success">{{ cashbox.balance|floatformat:3 }} {{ currency }}</span>
+                                        <span class="fw-bold text-success">{{ cashbox.balance|currency_format:currency }}</span>
                                     </div>
                                 {% endfor %}
                             </div>
@@ -506,8 +518,8 @@
 {% block extra_js %}
 <!-- Data for Charts -->
 <div id="chart-data" 
-     data-sales-total="{{ sales_stats.month.total|default:0 }}" 
-     data-purchases-total="{{ purchase_stats.month.total|default:0 }}" 
+     data-sales-total="{% if sales_stats.month %}{{ sales_stats.month.total|floatformat:2 }}{% else %}0{% endif %}" 
+     data-purchases-total="{% if purchase_stats.month %}{{ purchase_stats.month.total|floatformat:2 }}{% else %}0{% endif %}" 
      style="display: none;"></div>
 
 <script>

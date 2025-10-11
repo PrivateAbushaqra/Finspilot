@@ -453,6 +453,15 @@
                         </tr>
                         {% endfor %}
                     </tbody>
+                    {% if invoices %}
+                    <tfoot>
+                        <tr class="table-info">
+                            <td colspan="5" class="text-end fw-bold">{% trans "Page Total" %}:</td>
+                            <td class="fw-bold">{{ page_total|currency_format }}</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                    {% endif %}
                 </table>
             </div>
 

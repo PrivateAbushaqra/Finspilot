@@ -77,7 +77,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             from banks.models import BankAccount
             from cashboxes.models import Cashbox
             from receipts.models import PaymentReceipt
-            from settings.models import Currency, CompanySettings
+            from .models import CompanySettings
             
             # العملة الأساسية من إعدادات الشركة (نحتاجها مبكراً)
             company_settings = CompanySettings.get_settings()

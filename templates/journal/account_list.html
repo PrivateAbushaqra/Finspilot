@@ -53,6 +53,24 @@
         </div>
     </div>
 
+    <!-- أزرار التصدير والطباعة -->
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">{% trans "خيارات التصدير والطباعة" %}</h5>
+                <div class="btn-group" role="group">
+                    <a href="{% url 'journal:export_accounts_excel' %}{% if search_query %}?search={{ search_query }}{% if current_type %}&type={{ current_type }}{% endif %}{% if order_by %}&order_by={{ order_by }}&direction={{ direction }}{% endif %}{% endif %}{% if current_type and not search_query %}?type={{ current_type }}{% if order_by %}&order_by={{ order_by }}&direction={{ direction }}{% endif %}{% endif %}{% if order_by and not search_query and not current_type %}?order_by={{ order_by }}&direction={{ direction }}{% endif %}" 
+                       class="btn btn-success" target="_blank">
+                        <i class="fas fa-file-excel"></i> {% trans "تصدير إلى Excel" %}
+                    </a>
+                    <button onclick="printTable()" class="btn btn-info">
+                        <i class="fas fa-print"></i> {% trans "طباعة" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- {% trans "Table" %} الحسابات -->
     <div class="card shadow mb-4">
         <div class="card-body">
@@ -61,11 +79,76 @@
                     <table class="table table-bordered">
                         <thead>
                             <tr>
-                                <th>{% trans "كود الحساب" %}</th>
-                                <th>{% trans "Account Name" %}</th>
-                                <th>{% if LANGUAGE_CODE == 'ar' %}النوع{% else %}{% trans "Type" %}{% endif %}</th>
-                                <th>{% trans "الحساب الرئيسي" %}</th>
-                                <th>{% if LANGUAGE_CODE == 'ar' %}الرصيد{% else %}{% trans "Balance" %}{% endif %}</th>
+                                <th>
+                                    <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if current_type %}type={{ current_type }}&{% endif %}order_by=code&direction={% if order_by == 'code' and direction == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none">
+                                        {% trans "كود الحساب" %}
+                                        {% if order_by == 'code' %}
+                                            {% if direction == 'asc' %}
+                                                <i class="fas fa-sort-up"></i>
+                                            {% else %}
+                                                <i class="fas fa-sort-down"></i>
+                                            {% endif %}
+                                        {% else %}
+                                            <i class="fas fa-sort text-muted"></i>
+                                        {% endif %}
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if current_type %}type={{ current_type }}&{% endif %}order_by=name&direction={% if order_by == 'name' and direction == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none">
+                                        {% trans "Account Name" %}
+                                        {% if order_by == 'name' %}
+                                            {% if direction == 'asc' %}
+                                                <i class="fas fa-sort-up"></i>
+                                            {% else %}
+                                                <i class="fas fa-sort-down"></i>
+                                            {% endif %}
+                                        {% else %}
+                                            <i class="fas fa-sort text-muted"></i>
+                                        {% endif %}
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if current_type %}type={{ current_type }}&{% endif %}order_by=account_type&direction={% if order_by == 'account_type' and direction == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none">
+                                        {% if LANGUAGE_CODE == 'ar' %}النوع{% else %}{% trans "Type" %}{% endif %}
+                                        {% if order_by == 'account_type' %}
+                                            {% if direction == 'asc' %}
+                                                <i class="fas fa-sort-up"></i>
+                                            {% else %}
+                                                <i class="fas fa-sort-down"></i>
+                                            {% endif %}
+                                        {% else %}
+                                            <i class="fas fa-sort text-muted"></i>
+                                        {% endif %}
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if current_type %}type={{ current_type }}&{% endif %}order_by=parent__name&direction={% if order_by == 'parent__name' and direction == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none">
+                                        {% trans "الحساب الرئيسي" %}
+                                        {% if order_by == 'parent__name' %}
+                                            {% if direction == 'asc' %}
+                                                <i class="fas fa-sort-up"></i>
+                                            {% else %}
+                                                <i class="fas fa-sort-down"></i>
+                                            {% endif %}
+                                        {% else %}
+                                            <i class="fas fa-sort text-muted"></i>
+                                        {% endif %}
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if current_type %}type={{ current_type }}&{% endif %}order_by=balance&direction={% if order_by == 'balance' and direction == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none">
+                                        {% if LANGUAGE_CODE == 'ar' %}الرصيد{% else %}{% trans "Balance" %}{% endif %}
+                                        {% if order_by == 'balance' %}
+                                            {% if direction == 'asc' %}
+                                                <i class="fas fa-sort-up"></i>
+                                            {% else %}
+                                                <i class="fas fa-sort-down"></i>
+                                            {% endif %}
+                                        {% else %}
+                                            <i class="fas fa-sort text-muted"></i>
+                                        {% endif %}
+                                    </a>
+                                </th>
                                 <th>{% if LANGUAGE_CODE == 'ar' %}الحالة{% else %}{% trans "Status" %}{% endif %}</th>
                                 <th>{% trans "الإجراءات" %}</th>
                             </tr>
@@ -134,7 +217,7 @@
                     <ul class="pagination justify-content-center">
                         {% if page_obj.has_previous %}
                             <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&type={{ current_type }}">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&type={{ current_type }}&order_by={{ order_by }}&direction={{ direction }}">
                                     {% if LANGUAGE_CODE == 'ar' %}السابق{% else %}{% trans "Previous" %}{% endif %}
                                 </a>
                             </li>
@@ -145,16 +228,16 @@
                                 <li class="page-item active">
                                     <span class="page-link">{{ num }}</span>
                                 </li>
-                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            {% elif num > page_obj.number|add:-3 and num < page_obj.number|add:3 %}
                                 <li class="page-item">
-                                    <a class="page-link" href="?page={{ num }}&search={{ search_query }}&type={{ current_type }}">{{ num }}</a>
+                                    <a class="page-link" href="?page={{ num }}&search={{ search_query }}&type={{ current_type }}&order_by={{ order_by }}&direction={{ direction }}">{{ num }}</a>
                                 </li>
                             {% endif %}
                         {% endfor %}
 
                         {% if page_obj.has_next %}
                             <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&type={{ current_type }}">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&type={{ current_type }}&order_by={{ order_by }}&direction={{ direction }}">
                                     {% if LANGUAGE_CODE == 'ar' %}التالي{% else %}{% trans "Next" %}{% endif %}
                                 </a>
                             </li>
@@ -216,6 +299,87 @@ function confirmDelete(accountName, deleteUrl) {
     document.getElementById('accountName').textContent = accountName;
     document.getElementById('deleteForm').action = deleteUrl;
     $('#deleteModal').modal('show');
+}
+
+function printTable() {
+    var printWindow = window.open('', '_blank');
+    var tableHTML = `
+        <html>
+        <head>
+            <title>{% trans "قائمة الحسابات" %}</title>
+            <style>
+                body { font-family: Arial, sans-serif; direction: rtl; }
+                table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: right; }
+                th { background-color: #f2f2f2; font-weight: bold; }
+                .text-right { text-align: left; }
+                .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+                .badge-success { background-color: #28a745; color: white; }
+                .badge-secondary { background-color: #6c757d; color: white; }
+                .badge-info { background-color: #17a2b8; color: white; }
+                @media print { body { margin: 0; } }
+            </style>
+        </head>
+        <body>
+            <h1 style="text-align: center;">{% trans "قائمة الحسابات" %}</h1>
+            <p style="text-align: center;">{% trans "تاريخ الطباعة" %}: ${new Date().toLocaleDateString('ar')}</p>
+            <table>
+                <thead>
+                    <tr>
+                        <th>{% trans "كود الحساب" %}</th>
+                        <th>{% trans "اسم الحساب" %}</th>
+                        <th>{% trans "النوع" %}</th>
+                        <th>{% trans "الحساب الرئيسي" %}</th>
+                        <th>{% trans "الرصيد" %}</th>
+                        <th>{% trans "الحالة" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    // إضافة صفوف الجدول
+    var rows = document.querySelectorAll('table.table tbody tr');
+    rows.forEach(function(row) {
+        tableHTML += '<tr>';
+        var cells = row.querySelectorAll('td');
+        cells.forEach(function(cell, index) {
+            if (index < 6) { // فقط الأعمدة الستة الأولى
+                var cellContent = cell.innerHTML;
+                // تنظيف المحتوى من الأزرار والروابط
+                if (index === 1) { // عمود الاسم
+                    var link = cell.querySelector('a');
+                    cellContent = link ? link.textContent.trim() : cell.textContent.trim();
+                } else if (index === 2) { // عمود النوع
+                    var badge = cell.querySelector('.badge');
+                    cellContent = badge ? badge.textContent.trim() : cell.textContent.trim();
+                } else if (index === 3) { // الحساب الرئيسي
+                    cellContent = cell.textContent.trim();
+                } else if (index === 4) { // الرصيد
+                    var strong = cell.querySelector('strong');
+                    cellContent = strong ? strong.textContent.trim() : cell.textContent.trim();
+                } else if (index === 5) { // الحالة
+                    var badge = cell.querySelector('.badge');
+                    cellContent = badge ? badge.textContent.trim() : cell.textContent.trim();
+                } else {
+                    var strong = cell.querySelector('strong');
+                    cellContent = strong ? strong.textContent.trim() : cell.textContent.trim();
+                }
+                tableHTML += '<td>' + cellContent + '</td>';
+            }
+        });
+        tableHTML += '</tr>';
+    });
+    
+    tableHTML += `
+                </tbody>
+            </table>
+        </body>
+        </html>
+    `;
+    
+    printWindow.document.write(tableHTML);
+    printWindow.document.close();
+    printWindow.print();
 }
 </script>
 {% endblock %}

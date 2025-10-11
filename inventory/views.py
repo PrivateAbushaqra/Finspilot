@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.decorators import login_required
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView, View, DetailView
 from django.db.models import Sum, Count, Q
 from django.utils import timezone
@@ -847,3 +848,173 @@ class MovementDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
                 'success': False, 
                 'message': f'حدث خطأ أثناء حذف الحركة: {str(e)}'
             }, status=500)
+
+
+@login_required
+def export_inventory_excel(request):
+    """تصدير قائمة المخزون إلى Excel"""
+    from django.http import HttpResponse
+    from django.utils.translation import gettext_lazy as _
+    from core.signals import log_export_activity
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment
+    from decimal import Decimal
+
+    # التحقق من الصلاحيات
+    if not request.user.has_inventory_permission() and not request.user.is_superuser:
+        from django.contrib import messages
+        from django.shortcuts import redirect
+        messages.error(request, 'ليس لديك صلاحية لعرض المخزون')
+        return redirect('/')
+
+    # الحصول على معايير البحث والترتيب من الطلب
+    sort_by = request.GET.get('sort', 'product_name')
+    sort_direction = request.GET.get('dir', 'asc')
+    search = request.GET.get('search', '')
+    stock_level_filter = request.GET.get('stock_level', '')
+
+    # الحصول على بيانات المخزون (نفس منطق InventoryListView)
+    from products.models import Product
+
+    products = Product.objects.filter(is_active=True)
+
+    inventory_items = []
+    for product in products:
+        # Calculate current stock for this product
+        in_movements = InventoryMovement.objects.filter(
+            product=product,
+            movement_type='in'
+        ).aggregate(total=Sum('quantity'))['total'] or 0
+
+        out_movements = InventoryMovement.objects.filter(
+            product=product,
+            movement_type='out'
+        ).aggregate(total=Sum('quantity'))['total'] or 0
+
+        current_stock = in_movements - out_movements
+
+        # Determine stock level
+        if current_stock <= 0:
+            stock_level = 'out'
+        elif current_stock <= 5:
+            stock_level = 'critical'
+        elif current_stock <= 20:
+            stock_level = 'low'
+        else:
+            stock_level = 'good'
+
+        # Calculate value based on actual purchase invoice costs
+        from purchases.models import PurchaseInvoiceItem
+        remaining_qty = Decimal(current_stock)
+        value = Decimal('0.0')
+        # Get purchase invoice items in oldest to newest order
+        purchase_items = PurchaseInvoiceItem.objects.filter(product=product).order_by('invoice__date', 'invoice__id')
+        for item in purchase_items:
+            if remaining_qty <= 0:
+                break
+            used_qty = min(item.quantity, remaining_qty)
+            value += used_qty * item.unit_price
+            remaining_qty -= used_qty
+        # If there's remaining quantity not covered by purchase invoices (data gap), use default cost price
+        if remaining_qty > 0:
+            value += remaining_qty * Decimal(product.cost_price)
+
+        inventory_items.append({
+            'product_id': product.id,
+            'product_name': product.name,
+            'product_code': product.code,
+            'quantity': current_stock,
+            'value': float(value),
+            'sale_price': float(product.sale_price),
+            'warehouse_name': 'المستودع الرئيسي',
+            'stock_level': stock_level
+        })
+
+    # تطبيق الترتيب
+    if sort_by in ['product_name', 'product_code', 'quantity', 'value', 'stock_level', 'warehouse_name']:
+        reverse_sort = sort_direction == 'desc'
+        inventory_items = sorted(inventory_items, key=lambda x: x.get(sort_by, ''), reverse=reverse_sort)
+
+    # تطبيق الفلاتر
+    if search:
+        inventory_items = [item for item in inventory_items if search.lower() in item['product_name'].lower() or search.lower() in item['product_code'].lower()]
+
+    if stock_level_filter:
+        inventory_items = [item for item in inventory_items if item['stock_level'] == stock_level_filter]
+
+    # إنشاء ملف Excel
+    wb = Workbook()
+    ws = wb.active
+    ws.title = str(_('Inventory List'))
+
+    # تنسيق العناوين
+    header_font = Font(bold=True, color="FFFFFF")
+    header_fill = PatternFill(start_color="4F81BD", end_color="4F81BD", fill_type="solid")
+    center_alignment = Alignment(horizontal="center", vertical="center")
+
+    # كتابة العناوين
+    headers = [
+        _('Product Name'),
+        _('Product Code'),
+        _('Warehouse'),
+        _('Quantity'),
+        _('Value'),
+        _('Sale Price'),
+        _('Stock Status')
+    ]
+
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_num, value=str(header))
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = center_alignment
+
+    # كتابة البيانات
+    for row_num, item in enumerate(inventory_items, 2):
+        ws.cell(row=row_num, column=1, value=item['product_name'])
+        ws.cell(row=row_num, column=2, value=item['product_code'])
+        ws.cell(row=row_num, column=3, value=item['warehouse_name'])
+        ws.cell(row=row_num, column=4, value=item['quantity'])
+        ws.cell(row=row_num, column=5, value=item['value'])
+        ws.cell(row=row_num, column=6, value=item['sale_price'])
+
+        # تحديد حالة المخزون باللغة العربية
+        stock_status = ''
+        if item['stock_level'] == 'good':
+            stock_status = _('Good Stock')
+        elif item['stock_level'] == 'low':
+            stock_status = _('Low Stock')
+        elif item['stock_level'] == 'critical':
+            stock_status = _('Critical Stock')
+        else:
+            stock_status = _('Out of Stock')
+
+        ws.cell(row=row_num, column=7, value=str(stock_status))
+
+    # تعديل عرض الأعمدة
+    for column in ws.columns:
+        max_length = 0
+        column_letter = column[0].column_letter
+        for cell in column:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        adjusted_width = min(max_length + 2, 50)  # حد أقصى 50
+        ws.column_dimensions[column_letter].width = adjusted_width
+
+    # إنشاء الاستجابة
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    filename = f'inventory_list_{timezone.now().date()}.xlsx'
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    # حفظ الملف
+    wb.save(response)
+
+    # تسجيل النشاط
+    log_export_activity(request, str(_('Inventory List')), filename, 'Excel')
+
+    return response
