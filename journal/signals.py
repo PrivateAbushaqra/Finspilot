@@ -420,3 +420,122 @@ def delete_cashbox_transfer_journal_entry(sender, instance, **kwargs):
         logger.info(f"تم حذف القيد المحاسبي للتحويل {instance.transfer_number}")
     except Exception as e:
         logger.error(f"خطأ في حذف القيد المحاسبي للتحويل {instance.transfer_number}: {e}")
+
+
+# إشارات تحديث أرصدة الحسابات
+@receiver(post_save, sender='journal.JournalLine')
+def update_account_balance_on_save(sender, instance, **kwargs):
+    """تحديث رصيد الحساب عند حفظ بند قيد محاسبي"""
+    try:
+        instance.account.update_account_balance()
+        logger.info(f"تم تحديث رصيد الحساب {instance.account.code} - {instance.account.name}")
+        
+        # مزامنة رصيد الصندوق أو البنك إذا كان الحساب مرتبطاً بهم
+        sync_cashbox_or_bank_balance(instance.account)
+        
+    except Exception as e:
+        logger.error(f"خطأ في تحديث رصيد الحساب {instance.account.code}: {e}")
+
+
+@receiver(post_delete, sender='journal.JournalLine')
+def update_account_balance_on_delete(sender, instance, **kwargs):
+    """تحديث رصيد الحساب عند حذف بند قيد محاسبي"""
+    try:
+        instance.account.update_account_balance()
+        logger.info(f"تم تحديث رصيد الحساب {instance.account.code} - {instance.account.name} بعد الحذف")
+        
+        # مزامنة رصيد الصندوق أو البنك إذا كان الحساب مرتبطاً بهم
+        sync_cashbox_or_bank_balance(instance.account)
+        
+    except Exception as e:
+        logger.error(f"خطأ في تحديث رصيد الحساب {instance.account.code} بعد الحذف: {e}")
+
+
+def sync_cashbox_or_bank_balance(account):
+    """
+    مزامنة أرصدة الصناديق والبنوك مع أرصدة حساباتهم المحاسبية
+    """
+    try:
+        # التحقق إذا كان حساب صندوق (يبدأ بـ 101)
+        if account.code.startswith('101'):
+            sync_cashbox_balance_from_account(account)
+        
+        # التحقق إذا كان حساب بنك (يبدأ بـ 1101)
+        elif account.code.startswith('1101'):
+            sync_bank_balance_from_account(account)
+            
+    except Exception as e:
+        logger.error(f"خطأ في مزامنة رصيد الصندوق/البنك للحساب {account.code}: {e}")
+
+
+def sync_cashbox_balance_from_account(account):
+    """
+    مزامنة رصيد الصندوق مع رصيد حسابه المحاسبي
+    """
+    try:
+        from cashboxes.models import Cashbox
+        
+        # البحث عن الصندوق المرتبط بهذا الحساب
+        # طريقة البحث: من خلال اسم الحساب
+        cashbox = None
+        
+        # محاولة استخراج رقم الصندوق من اسم الحساب
+        if '1001' in account.name:
+            cashbox = Cashbox.objects.filter(name__icontains='1001').first()
+        elif '1002' in account.name:
+            cashbox = Cashbox.objects.filter(name__icontains='1002').first()
+        else:
+            # محاولة بحث عام
+            account_name_part = account.name.split('-')[-1].strip() if '-' in account.name else account.name
+            cashbox = Cashbox.objects.filter(name__icontains=account_name_part).first()
+        
+        if cashbox:
+            # تحديث رصيد الصندوق ليطابق رصيد الحساب المحاسبي
+            old_balance = cashbox.balance
+            new_balance = account.balance
+            
+            if old_balance != new_balance:
+                cashbox.balance = new_balance
+                cashbox.save(update_fields=['balance'])
+                logger.info(f"✅ تم مزامنة رصيد الصندوق '{cashbox.name}' من {old_balance} إلى {new_balance}")
+                
+    except Exception as e:
+        logger.error(f"خطأ في مزامنة رصيد الصندوق: {e}")
+
+
+def sync_bank_balance_from_account(account):
+    """
+    مزامنة رصيد البنك مع رصيد حسابه المحاسبي
+    """
+    try:
+        from banks.models import BankAccount
+        
+        # البحث عن الحساب البنكي المرتبط بهذا الحساب
+        bank_account = None
+        
+        # محاولة البحث من خلال اسم الحساب
+        account_name_parts = account.name.split('-')
+        if len(account_name_parts) >= 2:
+            # محاولة البحث بالاسم الأول
+            bank_account = BankAccount.objects.filter(
+                name__icontains=account_name_parts[0].strip()
+            ).first()
+            
+            if not bank_account:
+                # محاولة البحث باسم البنك
+                bank_account = BankAccount.objects.filter(
+                    bank_name__icontains=account_name_parts[-1].strip()
+                ).first()
+        
+        if bank_account:
+            # تحديث رصيد البنك ليطابق رصيد الحساب المحاسبي
+            old_balance = bank_account.balance
+            new_balance = account.balance
+            
+            if old_balance != new_balance:
+                bank_account.balance = new_balance
+                bank_account.save(update_fields=['balance'])
+                logger.info(f"✅ تم مزامنة رصيد البنك '{bank_account.name}' من {old_balance} إلى {new_balance}")
+                
+    except Exception as e:
+        logger.error(f"خطأ في مزامنة رصيد البنك: {e}")

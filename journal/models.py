@@ -58,6 +58,11 @@ class Account(models.Model):
         else:
             return credit_total - debit_total
 
+    def update_account_balance(self):
+        """تحديث رصيد الحساب بناءً على جميع القيود"""
+        self.balance = self.get_balance()
+        self.save(update_fields=['balance'])
+
 
 class JournalEntry(models.Model):
     """قيد محاسبي"""

@@ -21,10 +21,10 @@ def clean_decimal_input(value):
     return str(value).replace(',', '').replace(' ', '').strip()
 
 class BanksViewPermissionMixin:
-    """حراسة صلاحيات العرض لصفحات البنوك (عرض فقط)."""
+    """Bank pages view permissions guard (view only)."""
     def user_can_view_banks(self):
         u = getattr(self, 'request', None).user
-        # السماح للسوبر/المديرين، أو من لديه الصلاحية المخصصة للعرض
+        # Allow superusers/managers, or those with custom view permissions
         return (
             u.is_authenticated and (
                 u.is_superuser or u.has_perm('banks.can_view_banks_account') or u.has_perm('banks.can_edit_banks_account') or u.has_perm('banks.can_delete_banks_account')
@@ -44,12 +44,12 @@ class BankAccountListView(LoginRequiredMixin, BanksViewPermissionMixin, Template
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        # تسجيل النشاط في سجل الأنشطة
+        # Log activity in activity log
         log_user_activity(
             self.request,
             'ACCESS',
             None,
-            _('تم الوصول إلى قائمة الحسابات المصرفية')
+            _('Bank Account List Accessed')
         )
         
         accounts = BankAccount.objects.all()
@@ -93,7 +93,7 @@ class BankAccountCreateView(LoginRequiredMixin, View):
     template_name = 'banks/account_add.html'
     
     def get(self, request, *args, **kwargs):
-        # منع مستخدم العرض فقط من الوصول لصفحة الإضافة
+        # Prevent view-only users from accessing the add page
         if not (
             request.user.is_superuser
             or request.user.has_perm('banks.add_bankaccount')
@@ -102,12 +102,12 @@ class BankAccountCreateView(LoginRequiredMixin, View):
             messages.error(request, _('You do not have permission to add bank accounts.'))
             return redirect('banks:account_list')
         
-        # تسجيل النشاط في سجل الأنشطة
+        # Log activity in activity log
         log_user_activity(
             request,
             'ACCESS',
             None,
-            _('تم الوصول إلى صفحة إضافة حساب مصرفي')
+            _('Bank Account Add Page Accessed')
         )
         
         context = {
@@ -125,7 +125,7 @@ class BankAccountCreateView(LoginRequiredMixin, View):
             messages.error(request, _('You do not have permission to add bank accounts.'))
             return redirect('banks:account_list')
         try:
-            # استلام البيانات من النموذج
+            # Receive data from the form
             name = request.POST.get('name', '').strip()
             bank_name = request.POST.get('bank_name', '').strip()
             account_number = request.POST.get('account_number', '').strip()
@@ -136,34 +136,34 @@ class BankAccountCreateView(LoginRequiredMixin, View):
             is_active = request.POST.get('is_active') == 'on'
             notes = request.POST.get('notes', '').strip()
 
-            # التحقق من صحة البيانات
+            # Validate data
             if not name:
-                messages.error(request, 'اسم الحساب مطلوب!')
+                messages.error(request, 'Account name is required!')
                 return render(request, self.template_name)
 
             if not bank_name:
-                messages.error(request, 'اسم البنك مطلوب!')
+                messages.error(request, 'Bank name is required!')
                 return render(request, self.template_name)
 
             if not account_number:
-                messages.error(request, 'رقم الحساب مطلوب!')
+                messages.error(request, 'Account number is required!')
                 return render(request, self.template_name)
 
-            # التحقق من عدم تكرار رقم الحساب
+            # Check for duplicate account number
             if BankAccount.objects.filter(account_number=account_number).exists():
-                messages.error(request, 'رقم الحساب موجود مسبقاً!')
+                messages.error(request, 'Account number already exists!')
                 return render(request, self.template_name)
 
-            # تحويل الرصيد إلى رقم
+            # Convert balance to number
             try:
                 balance = Decimal(str(balance))
             except (ValueError, Decimal.InvalidOperation):
                 balance = Decimal('0.0')
 
-            # الحصول على العملة من قاعدة البيانات
+            # Get currency from database
             currency_obj = Currency.objects.filter(code=currency_code).first()
             if not currency_obj:
-                # إذا لم توجد العملة، استخدم العملة الأساسية من إعدادات الشركة
+                # If currency not found, use the base currency from company settings
                 from settings.models import CompanySettings
                 company_settings = CompanySettings.objects.first()
                 if company_settings and company_settings.base_currency:
@@ -173,7 +173,7 @@ class BankAccountCreateView(LoginRequiredMixin, View):
                     currency_obj = Currency.get_base_currency()
                     currency_code = currency_obj.code if currency_obj else ''
 
-            # إنشاء الحساب البنكي
+            # Create bank account
             account = BankAccount.objects.create(
                 name=name,
                 bank_name=bank_name,
@@ -187,11 +187,11 @@ class BankAccountCreateView(LoginRequiredMixin, View):
                 created_by=request.user if request.user.is_authenticated else None
             )
 
-            messages.success(request, f'تم إنشاء الحساب البنكي "{account.name}" بنجاح!')
+            messages.success(request, f'Bank account "{account.name}" created successfully!')
             return redirect('banks:account_list')
 
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء إنشاء الحساب: {str(e)}')
+            messages.error(request, f'Error occurred while creating account: {str(e)}')
             return render(request, self.template_name)
 
 class BankAccountUpdateView(LoginRequiredMixin, View):
@@ -202,12 +202,12 @@ class BankAccountUpdateView(LoginRequiredMixin, View):
             messages.error(request, _('You do not have permission to edit bank accounts.'))
             return redirect('banks:account_list')
         account = get_object_or_404(BankAccount, pk=pk)
-        # إن كان يملك الصلاحية المخصصة فقط (بدون change_bankaccount)، يسمح له بتعديل أي حساب
-        # لا تقييد بالمنشئ حسب طلب العميل
-        # معالجة الرصيد إذا كان None
+        # If he has only the custom permission (without change_bankaccount), allow him to edit any account
+        # No restriction by creator as per client request
+        # Handle balance if it is None
         if account.balance is None:
             account.balance = 0.000
-        # إذا تم تمرير بيانات مدخلة (من post عند ظهور خطأ)، استخدمها
+        # If input data is passed (from post when error appears), use it
         initial = kwargs.get('initial', None)
         context = {
             'account': account,
@@ -224,8 +224,8 @@ class BankAccountUpdateView(LoginRequiredMixin, View):
             return redirect('banks:account_list')
         try:
             account = get_object_or_404(BankAccount, pk=pk)
-            # حامل can_edit_banks_account يمكنه تعديل أي حساب حتى بدون صلاحية change
-            # استلام البيانات من النموذج
+            # Holder of can_edit_banks_account can edit any account even without change permission
+            # Receive data from the form
             name = request.POST.get('name', '').strip()
             bank_name = request.POST.get('bank_name', '').strip()
             account_number = request.POST.get('account_number', '').strip()
@@ -235,14 +235,14 @@ class BankAccountUpdateView(LoginRequiredMixin, View):
             currency_code = request.POST.get('currency', '')
             is_active = request.POST.get('is_active') == 'on'
             notes = request.POST.get('notes', '').strip()
-            # التحقق من صحة البيانات
+            # Validate data
             if not name or not bank_name or not account_number:
                 if not name:
-                    messages.error(request, 'اسم الحساب مطلوب!')
+                    messages.error(request, 'Account name is required!')
                 if not bank_name:
-                    messages.error(request, 'اسم البنك مطلوب!')
+                    messages.error(request, 'Bank name is required!')
                 if not account_number:
-                    messages.error(request, 'رقم الحساب مطلوب!')
+                    messages.error(request, 'Account number is required!')
                 initial = {
                     'name': name,
                     'bank_name': bank_name,
@@ -255,12 +255,12 @@ class BankAccountUpdateView(LoginRequiredMixin, View):
                     'notes': notes,
                 }
                 return self.get(request, pk, initial=initial)
-            # التحقق من عدم تكرار رقم الحساب (ما عدا الحساب الحالي)
+            # Check for duplicate account number (excluding current account)
             existing_account = BankAccount.objects.filter(
                 account_number=account_number
             ).exclude(pk=pk).first()
             if existing_account:
-                messages.error(request, 'رقم الحساب موجود مسبقاً!')
+                messages.error(request, 'Account number already exists!')
                 initial = {
                     'name': name,
                     'bank_name': bank_name,
@@ -273,12 +273,12 @@ class BankAccountUpdateView(LoginRequiredMixin, View):
                     'notes': notes,
                 }
                 return self.get(request, pk, initial=initial)
-            # تحويل الرصيد إلى رقم
+            # Convert balance to number
             try:
                 balance = Decimal(str(balance))
             except (ValueError, Decimal.InvalidOperation):
-                balance = account.balance  # إبقاء الرصيد الحالي في حالة الخطأ
-            # تحديث الحساب
+                balance = account.balance  # Keep the current balance in case of error
+            # Update account
             account.name = name
             account.bank_name = bank_name
             account.account_number = account_number
@@ -289,10 +289,10 @@ class BankAccountUpdateView(LoginRequiredMixin, View):
             account.is_active = is_active
             account.notes = notes
             account.save()
-            messages.success(request, f'تم تحديث الحساب البنكي "{account.name}" بنجاح!')
+            messages.success(request, f'Bank account "{account.name}" updated successfully!')
             return redirect('banks:account_list')
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء تحديث الحساب: {str(e)}')
+            messages.error(request, f'Error occurred while updating account: {str(e)}')
             initial = {
                 'name': request.POST.get('name', ''),
                 'bank_name': request.POST.get('bank_name', ''),
@@ -320,49 +320,48 @@ class BankAccountDeleteView(LoginRequiredMixin, View):
         try:
             account = BankAccount.objects.get(pk=pk)
             account_name = account.name
-            # إذا لم توجد أي حركات على الحساب، اسمح بالحذف مباشرة بغض النظر عن الرصيد
+            # If no transactions exist on the account, allow direct deletion regardless of balance
             from .models import BankTransaction
             no_transactions = not BankTransaction.objects.filter(bank=account).exists()
             if no_transactions:
                 with transaction.atomic():
-                    # حذف أي تحويلات مرتبطة كإجراء احترازي
+                    # Delete any related transfers as a precautionary measure
                     BankTransfer.objects.filter(from_account=account).delete()
                     BankTransfer.objects.filter(to_account=account).delete()
                     from cashboxes.models import CashboxTransfer
                     CashboxTransfer.objects.filter(from_bank=account).delete()
                     CashboxTransfer.objects.filter(to_bank=account).delete()
-                    # حذف الحساب
-                    account.delete()
+                    # Delete account
                     
-                # تسجيل النشاط في سجل الأنشطة
+                # Log activity in activity log
                 from core.signals import log_activity
                 log_activity(
                     action_type='delete',
-                    obj=None,  # الكائن محذوف
-                    description=f'حذف الحساب البنكي "{account_name}" (لم توجد حركات)',
+                    obj=None,  # Object deleted
+                    description=f'Deleted bank account "{account_name}" (no transactions)',
                     user=request.user
                 )
                 
-                messages.success(request, f'تم حذف الحساب البنكي "{account_name}" لعدم وجود أي حركات عليه.')
+                messages.success(request, f'Bank account "{account_name}" deleted because it has no transactions.')
                 return redirect('banks:account_list')
             
-            # التحقق من عدم وجود رصيد في الحساب
+            # Check that there is no balance in the account
             if account.balance != 0:
                 if request.user.is_superuser:
-                    messages.error(request, f'لا يمكن حذف الحساب "{account_name}" لأن الرصيد غير صفر ({account.balance:.3f}). يمكنك حذف جميع حركات الحساب أولاً باستخدام زر الممحاة، أو تحويل الرصيد لحساب آخر.')
+                    messages.error(request, f'Cannot delete account "{account_name}" because balance is not zero ({account.balance:.3f}). You can delete all account transactions first using the eraser button, or transfer the balance to another account.')
                 else:
-                    messages.error(request, f'لا يمكن حذف الحساب "{account_name}" لأن الرصيد غير صفر ({account.balance:.3f}). يجب تحويل الرصيد لحساب آخر أولاً.')
+                    messages.error(request, f'Cannot delete account "{account_name}" because balance is not zero ({account.balance:.3f}). The balance must be transferred to another account first.')
                 return redirect('banks:account_list')
             
-            # التحقق من وجود معاملات مرتبطة بالحساب (فقط إذا كان الرصيد غير صفر)
-            # إذا كان الرصيد صفر، يمكن حذف الحساب حتى لو كان له معاملات (تحويلات مثلاً)
+            # Check for transactions related to the account (only if balance is not zero)
+            # If balance is zero, account can be deleted even if it has transactions (transfers for example)
             from .models import BankTransaction
             bank_transactions = BankTransaction.objects.filter(bank=account)
             
-            # نسمح بالحذف إذا كان الرصيد صفر، حتى لو كان هناك معاملات
-            # لأن هذا يعني أن المستخدم قام بتحويل جميع الأموال بنجاح
+            # We allow deletion if balance is zero, even if there are transactions
+            # Because this means the user has successfully transferred all funds
             if bank_transactions.exists() and account.balance != 0:
-                # حفظ معرف الحساب في الجلسة لعرض صفحة الحركات
+                # Save account ID in session to display transactions page
                 request.session['delete_account_id'] = account.pk
                 request.session['delete_account_name'] = account_name
                 if request.user.is_superuser:
@@ -371,66 +370,66 @@ class BankAccountDeleteView(LoginRequiredMixin, View):
                     messages.warning(request, _('Cannot delete account "{}" because it has {} financial transactions and non-zero balance ({}). You must transfer the balance or delete all transactions first.').format(account_name, bank_transactions.count(), account.balance))
                 return redirect('banks:account_transactions', pk=account.pk)
             
-            # التحقق من وجود تحويلات مرتبطة بالحساب (فقط إذا كان الرصيد غير صفر)
-            # إذا كان الرصيد صفر، يمكن حذف الحساب حتى لو كان له تحويلات
+            # Check for transfers related to the account (only if balance is not zero)
+            # If balance is zero, account can be deleted even if it has transfers
             bank_transfers_from = BankTransfer.objects.filter(from_account=account)
             bank_transfers_to = BankTransfer.objects.filter(to_account=account)
             
             if (bank_transfers_from.exists() or bank_transfers_to.exists()) and account.balance != 0:
                 transfers_count = bank_transfers_from.count() + bank_transfers_to.count()
-                messages.error(request, f'لا يمكن حذف الحساب "{account_name}" لأن هناك {transfers_count} تحويل بنكي ورصيد غير صفر ({account.balance:.3f}). يجب تحويل الرصيد أو حذف جميع التحويلات أولاً.')
+                messages.error(request, f'Cannot delete account "{account_name}" because there are {transfers_count} bank transfers and non-zero balance ({account.balance:.3f}). You must transfer the balance or delete all transfers first.')
                 return redirect('banks:account_list')
             
-            # التحقق من وجود تحويلات بين البنوك والصناديق (فقط إذا كان الرصيد غير صفر)
+            # Check for transfers between banks and cashboxes (only if balance is not zero)
             from cashboxes.models import CashboxTransfer
             cashbox_transfers_from = CashboxTransfer.objects.filter(from_bank=account)
             cashbox_transfers_to = CashboxTransfer.objects.filter(to_bank=account)
             
             if (cashbox_transfers_from.exists() or cashbox_transfers_to.exists()) and account.balance != 0:
                 transfers_count = cashbox_transfers_from.count() + cashbox_transfers_to.count()
-                messages.error(request, f'لا يمكن حذف الحساب "{account_name}" لأن هناك {transfers_count} تحويل بين البنوك والصناديق ورصيد غير صفر ({account.balance:.3f}). يجب تحويل الرصيد أو حذف جميع التحويلات أولاً.')
+                messages.error(request, f'Cannot delete account "{account_name}" because there are {transfers_count} transfers between banks and cashboxes and non-zero balance ({account.balance:.3f}). You must transfer the balance or delete all transfers first.')
                 return redirect('banks:account_list')
             
-            # إذا مرت جميع الفحوصات، يمكن حذف الحساب
+            # If all checks pass, account can be deleted
             with transaction.atomic():
-                # إذا كان الرصيد صفر، حذف المعاملات والتحويلات أولاً
+                # If balance is zero, delete transactions and transfers first
                 if account.balance == 0:
-                    # حذف المعاملات المرتبطة
+                    # Delete related transactions
                     from .models import BankTransaction
                     BankTransaction.objects.filter(bank=account).delete()
                     
-                    # حذف التحويلات المرتبطة
+                    # Delete related transfers
                     BankTransfer.objects.filter(from_account=account).delete()
                     BankTransfer.objects.filter(to_account=account).delete()
                     
-                    # حذف تحويلات الصناديق المرتبطة
+                    # Delete related cashbox transfers
                     from cashboxes.models import CashboxTransfer
                     CashboxTransfer.objects.filter(from_bank=account).delete()
                     CashboxTransfer.objects.filter(to_bank=account).delete()
                 
-                # حذف الحساب
+                # Delete account
                 account.delete()
                 
-                # تسجيل النشاط في سجل الأنشطة
+                # Log activity in activity log
                 from core.signals import log_activity
                 log_activity(
                     action_type='delete',
-                    obj=None,  # الكائن محذوف
-                    description=f'حذف الحساب البنكي "{account_name}"',
+                    obj=None,  # Object deleted
+                    description=f'Deleted bank account "{account_name}"',
                     user=request.user
                 )
                 
-                messages.success(request, f'تم حذف الحساب البنكي "{account_name}" بنجاح!')
+                messages.success(request, f'Bank account "{account_name}" deleted successfully!')
             
         except BankAccount.DoesNotExist:
-            messages.error(request, 'الحساب البنكي غير موجود!')
+            messages.error(request, 'Bank account not found!')
         except Exception as e:
             # التعامل مع أخطاء المفاتيح الخارجية المحمية
             error_message = str(e)
             if "Cannot delete some instances" in error_message and "protected foreign keys" in error_message:
                 messages.error(request, f'لا يمكن حذف الحساب "{account_name}" لأن هناك بيانات مرتبطة به في النظام. يُنصح بإلغاء تفعيل الحساب بدلاً من حذفه.')
             else:
-                messages.error(request, f'حدث خطأ أثناء حذف الحساب: {error_message}')
+                messages.error(request, f'Error occurred while deleting account: {error_message}')
         
         return redirect('banks:account_list')
 
@@ -560,13 +559,13 @@ class BankTransferCreateView(LoginRequiredMixin, View):
         elif transfer_type == 'cashbox_to_bank':
             return self._handle_cashbox_to_bank_transfer(request)
         else:
-            messages.error(request, 'نوع التحويل غير صحيح!')
+            messages.error(request, 'Invalid transfer type!')
             return redirect('banks:transfer_add')
     
     def _handle_bank_to_bank_transfer(self, request):
         """معالجة التحويل بين البنوك"""
         try:
-            # استلام البيانات من النموذج
+            # Receive data from the form
             date = request.POST.get('date', '').strip()
             from_account_id = request.POST.get('from_account', '').strip()
             to_account_id = request.POST.get('to_account', '').strip()
@@ -584,17 +583,17 @@ class BankTransferCreateView(LoginRequiredMixin, View):
                 'base_currency': Currency.get_base_currency()
             }
             
-            # التحقق من صحة البيانات
+            # Validate data
             if not date:
-                messages.error(request, 'تاريخ التحويل مطلوب!')
+                messages.error(request, 'Transfer date is required!')
                 return render(request, self.template_name, context)
             
             if not from_account_id or not to_account_id:
-                messages.error(request, 'يجب اختيار حساب المرسل وحساب المستقبل!')
+                messages.error(request, 'Sender and receiver accounts must be selected!')
                 return render(request, self.template_name, context)
             
             if from_account_id == to_account_id:
-                messages.error(request, 'لا يمكن التحويل من الحساب إلى نفسه!')
+                messages.error(request, 'Cannot transfer from account to itself!')
                 return render(request, self.template_name, context)
             
             # التحقق من وجود الحسابات
@@ -602,7 +601,7 @@ class BankTransferCreateView(LoginRequiredMixin, View):
                 from_account = BankAccount.objects.get(id=from_account_id, is_active=True)
                 to_account = BankAccount.objects.get(id=to_account_id, is_active=True)
             except BankAccount.DoesNotExist:
-                messages.error(request, 'أحد الحسابات المختارة غير موجود أو غير نشط!')
+                messages.error(request, 'One of the selected accounts does not exist or is inactive!')
                 return render(request, self.template_name, context)
             
             # تحويل المبالغ إلى أرقام
@@ -611,7 +610,7 @@ class BankTransferCreateView(LoginRequiredMixin, View):
                 if amount <= 0:
                     raise ValueError
             except (ValueError, Decimal.InvalidOperation):
-                messages.error(request, 'مبلغ التحويل يجب أن يكون رقماً موجباً!')
+                messages.error(request, 'Transfer amount must be a positive number!')
                 return render(request, self.template_name, context)
             
             try:
@@ -619,7 +618,7 @@ class BankTransferCreateView(LoginRequiredMixin, View):
                 if fees < 0:
                     raise ValueError
             except (ValueError, Decimal.InvalidOperation):
-                messages.error(request, 'رسوم التحويل يجب أن تكون رقماً غير سالب!')
+                messages.error(request, 'Transfer fees must be a non-negative number!')
                 return render(request, self.template_name, context)
             
             try:
@@ -627,7 +626,7 @@ class BankTransferCreateView(LoginRequiredMixin, View):
                 if exchange_rate <= 0:
                     raise ValueError
             except (ValueError, Decimal.InvalidOperation):
-                messages.error(request, 'سعر الصرف يجب أن يكون رقماً موجباً!')
+                messages.error(request, 'Exchange rate must be a positive number!')
                 return render(request, self.template_name, context)
             
             # التحقق من كفاية الرصيد
@@ -646,7 +645,7 @@ class BankTransferCreateView(LoginRequiredMixin, View):
                     sequence = DocumentSequence.objects.get(document_type='bank_transfer')
                     transfer_number = sequence.get_next_number()
                 except DocumentSequence.DoesNotExist:
-                    messages.error(request, 'لم يتم إعداد تسلسل أرقام التحويلات البنكية! يرجى إضافة تسلسل "التحويل بين الحسابات البنكية" من صفحة الإعدادات.')
+                    messages.error(request, 'Bank transfer number sequence not configured! Please add "Bank Account Transfer" sequence from settings page.')
                     return render(request, self.template_name, context)
                 
                 # إنشاء التحويل البنكي
@@ -696,14 +695,14 @@ class BankTransferCreateView(LoginRequiredMixin, View):
                     request,
                     'CREATE',
                     transfer,
-                    f'تم إنشاء تحويل بنكي رقم {transfer.transfer_number} من {from_account.name} إلى {to_account.name} بمبلغ {amount:.3f}'
+                    f'Bank transfer number {transfer.transfer_number} created from {from_account.name} to {to_account.name} with amount {amount:.3f}'
                 )
             
-            messages.success(request, f'تم إنشاء التحويل البنكي "{transfer.transfer_number}" بنجاح!')
+            messages.success(request, f'Bank transfer "{transfer.transfer_number}" created successfully!')
             return redirect('banks:transfer_list')
             
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء إنشاء التحويل: {str(e)}')
+            messages.error(request, f'Error occurred while creating transfer: {str(e)}')
             return render(request, self.template_name, context)
 
 class BankCashboxTransferCreateView(LoginRequiredMixin, View):
@@ -725,7 +724,7 @@ class BankCashboxTransferCreateView(LoginRequiredMixin, View):
             sequence = DocumentSequence.objects.get(document_type='bank_cash_transfer')
             context['transfer_sequence'] = sequence
         except DocumentSequence.DoesNotExist:
-            messages.error(request, 'لم يتم إعداد تسلسل أرقام التحويلات بين البنوك والصناديق! يرجى إضافة تسلسل "التحويل بين البنوك والصناديق" من صفحة الإعدادات.')
+            messages.error(request, 'Bank-cashbox transfer number sequence not configured! Please add "Bank-Cashbox Transfer" sequence from settings page.')
         
         return render(request, self.template_name, context)
     
@@ -741,7 +740,7 @@ class BankCashboxTransferCreateView(LoginRequiredMixin, View):
             current_time = datetime.now()
             recent_time = current_time - timedelta(seconds=10)
             
-            # استلام البيانات من النموذج
+            # Receive data from the form
             date = request.POST.get('date', '').strip()
             transfer_type = request.POST.get('transfer_type', '').strip()
             bank_id = request.POST.get('bank', '').strip()
@@ -778,29 +777,29 @@ class BankCashboxTransferCreateView(LoginRequiredMixin, View):
                 'base_currency': Currency.get_base_currency()
             }
             
-            # التحقق من صحة البيانات
+            # Validate data
             if not date:
-                messages.error(request, 'تاريخ التحويل مطلوب!')
+                messages.error(request, 'Transfer date is required!')
                 return render(request, self.template_name, context)
             
             if not transfer_type or transfer_type not in ['bank_to_cashbox', 'cashbox_to_bank']:
-                messages.error(request, 'يجب اختيار نوع التحويل!')
+                messages.error(request, 'Transfer type must be selected!')
                 return render(request, self.template_name, context)
             
             if not bank_id or not cashbox_id:
-                messages.error(request, 'يجب اختيار البنك والصندوق!')
+                messages.error(request, 'Bank and cashbox must be selected!')
                 return render(request, self.template_name, context)
             
             if not check_number:
-                messages.error(request, 'رقم الشيك مطلوب!')
+                messages.error(request, 'Check number is required!')
                 return render(request, self.template_name, context)
             
             if not check_date:
-                messages.error(request, 'تاريخ الشيك مطلوب!')
+                messages.error(request, 'Check date is required!')
                 return render(request, self.template_name, context)
             
             if not check_bank_name:
-                messages.error(request, 'اسم البنك للشيك مطلوب!')
+                messages.error(request, 'Check bank name is required!')
                 return render(request, self.template_name, context)
             
             # التحقق من وجود البنك والصندوق
@@ -817,7 +816,7 @@ class BankCashboxTransferCreateView(LoginRequiredMixin, View):
                 if amount <= 0:
                     raise ValueError
             except (ValueError, Decimal.InvalidOperation):
-                messages.error(request, 'مبلغ التحويل يجب أن يكون رقماً موجباً!')
+                messages.error(request, 'Transfer amount must be a positive number!')
                 return render(request, self.template_name, context)
             
             try:
@@ -825,7 +824,7 @@ class BankCashboxTransferCreateView(LoginRequiredMixin, View):
                 if fees < 0:
                     raise ValueError
             except (ValueError, Decimal.InvalidOperation):
-                messages.error(request, 'رسوم التحويل يجب أن تكون رقماً غير سالب!')
+                messages.error(request, 'Transfer fees must be a non-negative number!')
                 return render(request, self.template_name, context)
             
             try:
@@ -833,7 +832,7 @@ class BankCashboxTransferCreateView(LoginRequiredMixin, View):
                 if exchange_rate <= 0:
                     raise ValueError
             except (ValueError, Decimal.InvalidOperation):
-                messages.error(request, 'سعر الصرف يجب أن يكون رقماً موجباً!')
+                messages.error(request, 'Exchange rate must be a positive number!')
                 return render(request, self.template_name, context)
             
             # التحقق من كفاية الرصيد
@@ -852,7 +851,7 @@ class BankCashboxTransferCreateView(LoginRequiredMixin, View):
                     sequence = DocumentSequence.objects.get(document_type='bank_cash_transfer')
                     transfer_number = sequence.get_next_number()
                 except DocumentSequence.DoesNotExist:
-                    messages.error(request, 'لم يتم إعداد تسلسل أرقام التحويلات بين البنوك والصناديق! يرجى إضافة تسلسل "التحويل بين البنوك والصناديق" من صفحة الإعدادات.')
+                    messages.error(request, 'Bank-cashbox transfer number sequence not configured! Please add "Bank-Cashbox Transfer" sequence from settings page.')
                     return render(request, self.template_name, context)
                 
                 if transfer_type == 'bank_to_cashbox':
@@ -948,7 +947,7 @@ class BankCashboxTransferCreateView(LoginRequiredMixin, View):
                     # تحديث رصيد البنك بناءً على المعاملات الفعلية
                     bank.sync_balance()
             
-            messages.success(request, f'تم إنشاء التحويل "{transfer.transfer_number}" بنجاح!')
+            messages.success(request, f'Transfer "{transfer.transfer_number}" created successfully!')
             
             # تسجيل النشاط في سجل التدقيق
             from core.models import AuditLog
@@ -963,7 +962,7 @@ class BankCashboxTransferCreateView(LoginRequiredMixin, View):
             return redirect('banks:transfer_list')
             
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء إنشاء التحويل: {str(e)}')
+            messages.error(request, f'Error occurred while creating transfer: {str(e)}')
             return render(request, self.template_name, context)
 
 class BankAccountDetailView(LoginRequiredMixin, DetailView):
@@ -1177,7 +1176,7 @@ class BankTransferDeleteView(LoginRequiredMixin, View):
         except BankTransfer.DoesNotExist:
             return JsonResponse({'error': 'التحويل غير موجود'}, status=404)
         except Exception as e:
-            return JsonResponse({'error': f'حدث خطأ أثناء حذف التحويل: {str(e)}'}, status=500)
+            return JsonResponse({'error': f'Error occurred while deleting transfer: {str(e)}'}, status=500)
 
 
 class CashboxTransferDeleteView(LoginRequiredMixin, View):
@@ -1206,7 +1205,7 @@ class CashboxTransferDeleteView(LoginRequiredMixin, View):
             exchange_rate = transfer.exchange_rate
             
             with transaction.atomic():
-                # حذف المعاملات المرتبطة أولاً
+                # Delete related transactions أولاً
                 BankTransaction.objects.filter(
                     reference_number__icontains=transfer_number.split('-')[0] if '-' in transfer_number else transfer_number
                 ).delete()
@@ -1237,7 +1236,7 @@ class CashboxTransferDeleteView(LoginRequiredMixin, View):
         except CashboxTransfer.DoesNotExist:
             return JsonResponse({'error': 'التحويل غير موجود'}, status=404)
         except Exception as e:
-            return JsonResponse({'error': f'حدث خطأ أثناء حذف التحويل: {str(e)}'}, status=500)
+            return JsonResponse({'error': f'Error occurred while deleting transfer: {str(e)}'}, status=500)
 
 class BankAccountToggleStatusView(LoginRequiredMixin, View):
     """تفعيل/إلغاء تفعيل الحساب البنكي"""
@@ -1256,9 +1255,9 @@ class BankAccountToggleStatusView(LoginRequiredMixin, View):
                 messages.success(request, f'تم إلغاء تفعيل الحساب البنكي "{account_name}" بنجاح!')
             
         except BankAccount.DoesNotExist:
-            messages.error(request, 'الحساب البنكي غير موجود!')
+            messages.error(request, 'Bank account not found!')
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء تغيير حالة الحساب: {str(e)}')
+            messages.error(request, f'Error occurred while changing account status: {str(e)}')
         
         return redirect('banks:account_list')
 
@@ -1276,7 +1275,7 @@ class BankAccountTransactionsView(LoginRequiredMixin, TemplateView):
             self.request,
             'ACCESS',
             account,
-            _('تم الوصول إلى معاملات الحساب البنكي: {}').format(account.name)
+            _('Bank Account Transactions Accessed: {}').format(account.name)
         )
         
         # مزامنة الرصيد للتأكد من أنه محدث
@@ -1406,7 +1405,7 @@ class BankTransactionDeleteView(LoginRequiredMixin, View):
         except BankTransaction.DoesNotExist:
             return JsonResponse({'error': 'المعاملة غير موجودة'}, status=404)
         except Exception as e:
-            return JsonResponse({'error': f'حدث خطأ أثناء حذف المعاملة: {str(e)}'}, status=500)
+            return JsonResponse({'error': f'Error occurred while deleting transaction: {str(e)}'}, status=500)
 
 class BankAccountSuperAdminDeleteView(LoginRequiredMixin, View):
     """حذف مطلق للحسابات البنكية - للـ superadmin فقط"""
@@ -1444,7 +1443,7 @@ class BankAccountSuperAdminDeleteView(LoginRequiredMixin, View):
                 from core.signals import log_activity
                 log_activity(
                     action_type='delete',
-                    obj=None,  # الكائن محذوف
+                    obj=None,  # Object deleted
                     description=f'حذف مطلق للحساب البنكي "{account_name}" مع جميع حركاته وتحويلاته (superadmin)',
                     user=request.user
                 )
@@ -1460,10 +1459,10 @@ class BankAccountSuperAdminDeleteView(LoginRequiredMixin, View):
             return redirect('banks:account_list')
             
         except BankAccount.DoesNotExist:
-            messages.error(request, 'الحساب البنكي غير موجود!')
+            messages.error(request, 'Bank account not found!')
             return redirect('banks:account_list')
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء الحذف المطلق: {str(e)}')
+            messages.error(request, f'Error occurred while permanent deletion: {str(e)}')
             return redirect('banks:account_list')
 
 class BankAccountForceDeleteView(LoginRequiredMixin, View):
@@ -1485,12 +1484,12 @@ class BankAccountForceDeleteView(LoginRequiredMixin, View):
             account = BankAccount.objects.get(pk=pk)
             account_name = account.name
             
-            # السماح بالحذف مباشرة إذا لم توجد أي معاملات، حتى لو كان الرصيد غير صفر
+            # Allow direct deletion if no transactions exist, even if balance is not zero
             from .models import BankTransaction
             no_transactions = not BankTransaction.objects.filter(bank=account).exists()
             if no_transactions:
                 with transaction.atomic():
-                    # حذف التحويلات المرتبطة احترازياً
+                    # Delete related transfers احترازياً
                     BankTransfer.objects.filter(from_account=account).delete()
                     BankTransfer.objects.filter(to_account=account).delete()
                     from cashboxes.models import CashboxTransfer
@@ -1503,7 +1502,7 @@ class BankAccountForceDeleteView(LoginRequiredMixin, View):
                         del request.session['delete_account_id']
                     if 'delete_account_name' in request.session:
                         del request.session['delete_account_name']
-                messages.success(request, f'تم حذف الحساب البنكي "{account_name}" لعدم وجود أي حركات عليه.')
+                messages.success(request, f'Bank account "{account_name}" deleted because it has no transactions.')
                 return redirect('banks:account_list')
             
             # التحقق من صلاحية الحذف في حال وجود معاملات: يتطلب رصيد صفر وعدم وجود معاملات
@@ -1552,13 +1551,13 @@ class BankAccountForceDeleteView(LoginRequiredMixin, View):
             
             # إذا مرت جميع الفحوصات، حذف الحساب
             with transaction.atomic():
-                # إذا كان الرصيد صفر، حذف المعاملات والتحويلات أولاً
+                # If balance is zero, delete transactions and transfers first
                 if account.balance == 0:
-                    # حذف المعاملات المرتبطة
+                    # Delete related transactions
                     from .models import BankTransaction
                     BankTransaction.objects.filter(bank=account).delete()
                     
-                    # حذف التحويلات المرتبطة
+                    # Delete related transfers
                     BankTransfer.objects.filter(from_account=account).delete()
                     BankTransfer.objects.filter(to_account=account).delete()
                     
@@ -1574,7 +1573,7 @@ class BankAccountForceDeleteView(LoginRequiredMixin, View):
                 from core.signals import log_activity
                 log_activity(
                     action_type='delete',
-                    obj=None,  # الكائن محذوف
+                    obj=None,  # Object deleted
                     description=f'حذف الحساب البنكي "{account_name}" نهائياً',
                     user=request.user
                 )
@@ -1585,13 +1584,13 @@ class BankAccountForceDeleteView(LoginRequiredMixin, View):
                 if 'delete_account_name' in request.session:
                     del request.session['delete_account_name']
                 
-                messages.success(request, f'تم حذف الحساب البنكي "{account_name}" بنجاح!')
+                messages.success(request, f'Bank account "{account_name}" deleted successfully!')
             
         except BankAccount.DoesNotExist:
-            messages.error(request, 'الحساب البنكي غير موجود!')
+            messages.error(request, 'Bank account not found!')
             return redirect('banks:account_list')
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء حذف الحساب: {str(e)}')
+            messages.error(request, f'Error occurred while deleting account: {str(e)}')
             return redirect('banks:account_transactions', pk=pk)
 
 class ClearAccountTransactionsView(LoginRequiredMixin, View):
@@ -1609,7 +1608,7 @@ class ClearAccountTransactionsView(LoginRequiredMixin, View):
             # حساب العناصر المراد حذفها
             transactions_count = BankTransaction.objects.filter(bank=account).count()
             
-            # حذف التحويلات المرتبطة بالحساب
+            # Delete related transfers بالحساب
             bank_transfers_from = BankTransfer.objects.filter(from_account=account)
             bank_transfers_to = BankTransfer.objects.filter(to_account=account)
             transfers_count = bank_transfers_from.count() + bank_transfers_to.count()
@@ -1671,7 +1670,7 @@ class ClearAccountTransactionsView(LoginRequiredMixin, View):
             )
             
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء حذف الحركات: {str(e)}')
+            messages.error(request, f'Error occurred while deleting movements: {str(e)}')
         
         return redirect('banks:account_list')
 
@@ -1711,7 +1710,7 @@ class BankReconciliationListView(LoginRequiredMixin, BanksViewPermissionMixin, L
             self.request,
             'ACCESS',
             None,
-            _('تم الوصول إلى قائمة المطابقات البنكية')
+            _('Bank Reconciliations List Accessed')
         )
 
         return context
@@ -1749,7 +1748,7 @@ class BankReconciliationCreateView(LoginRequiredMixin, BanksViewPermissionMixin,
             self.request,
             'CREATE',
             form.instance,
-            _('تم إنشاء مطابقة بنكية جديدة: {}').format(form.instance)
+            _('New Bank Reconciliation Created: {}').format(form.instance)
         )
 
         messages.success(self.request, _('Bank reconciliation created successfully.'))
@@ -1780,7 +1779,7 @@ class BankReconciliationDetailView(LoginRequiredMixin, BanksViewPermissionMixin,
             self.request,
             'ACCESS',
             reconciliation,
-            _('تم عرض تفاصيل المطابقة البنكية: {}').format(reconciliation)
+            _('Bank Reconciliation Details Viewed: {}').format(reconciliation)
         )
 
         return context
@@ -1800,7 +1799,7 @@ class BankReconciliationUpdateView(LoginRequiredMixin, BanksViewPermissionMixin,
             self.request,
             'UPDATE',
             form.instance,
-            _('تم تحديث المطابقة البنكية: {}').format(form.instance)
+            _('Bank Reconciliation Updated: {}').format(form.instance)
         )
 
         messages.success(self.request, _('Bank reconciliation updated successfully.'))
@@ -1847,7 +1846,7 @@ class BankStatementListView(LoginRequiredMixin, BanksViewPermissionMixin, ListVi
             self.request,
             'ACCESS',
             None,
-            _('تم الوصول إلى قائمة كشوفات البنك')
+            _('Bank Statements List Accessed')
         )
 
         return context
@@ -1867,7 +1866,7 @@ class BankStatementCreateView(LoginRequiredMixin, BanksViewPermissionMixin, Crea
             self.request,
             'CREATE',
             form.instance,
-            _('تم إنشاء كشف بنكي جديد: {}').format(form.instance)
+            _('New Bank Statement Created: {}').format(form.instance)
         )
 
         messages.success(self.request, _('Bank statement created successfully.'))
@@ -1890,7 +1889,7 @@ class BankStatementUpdateView(LoginRequiredMixin, BanksViewPermissionMixin, Upda
             self.request,
             'UPDATE',
             form.instance,
-            _('تم تحديث الكشف البنكي: {}').format(form.instance)
+            _('Bank Statement Updated: {}').format(form.instance)
         )
 
         messages.success(self.request, _('Bank statement updated successfully.'))
@@ -1918,7 +1917,7 @@ def account_export_xlsx(request, pk):
             request,
             'EXPORT',
             account,
-            _('تم تصدير معاملات الحساب البنكي إلى Excel: {}').format(account.name)
+            _('Bank Account Transactions Exported to Excel: {}').format(account.name)
         )
         
         # إنشاء ملف Excel جديد
@@ -2025,3 +2024,4 @@ def account_export_xlsx(request, pk):
     except Exception as e:
         messages.error(request, _('An error occurred while exporting: {}').format(str(e)))
         return redirect('banks:account_detail', pk=pk)
+

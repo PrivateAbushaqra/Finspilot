@@ -17,11 +17,11 @@
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <!-- نموذج الإقفال -->
+                        <!-- Closing Form -->
                         <div class="col-md-6">
                             <div class="card">
                                 <div class="card-header">
-                                    <h5 class="card-title">{% trans "إجراء الإقفال السنوي" %}</h5>
+                                    <h5 class="card-title">{% trans "Annual closing procedure" %}</h5>
                                 </div>
                                 <div class="card-body">
                                     <form method="post">
@@ -29,11 +29,11 @@
                                         
                                         <div class="alert alert-info">
                                             <i class="fas fa-info-circle"></i>
-                                            {% trans "سيتم إقفال جميع حسابات الإيرادات والمصروفات ونقل صافي الربح/الخسارة إلى رأس المال" %}
+                                            {% trans "All revenue and expense accounts will be closed and net profit/loss will be transferred to capital" %}
                                         </div>
                                         
                                         <div class="form-group">
-                                            <label for="{{ form.year.id_for_label }}">{% trans "السنة المالية" %}</label>
+                                            <label for="{{ form.year.id_for_label }}">{% trans "Fiscal year" %}</label>
                                             {{ form.year }}
                                             {% if form.year.errors %}
                                                 <div class="text-danger">{{ form.year.errors }}</div>
@@ -41,7 +41,7 @@
                                         </div>
                                         
                                         <div class="form-group">
-                                            <label for="{{ form.closing_date.id_for_label }}">{% trans "تاريخ الإقفال" %}</label>
+                                            <label for="{{ form.closing_date.id_for_label }}">{% trans "Closing date" %}</label>
                                             {{ form.closing_date }}
                                             {% if form.closing_date.errors %}
                                                 <div class="text-danger">{{ form.closing_date.errors }}</div>
@@ -51,7 +51,7 @@
                                         <div class="form-group form-check">
                                             {{ form.confirm }}
                                             <label class="form-check-label" for="{{ form.confirm.id_for_label }}">
-                                                {% trans "أؤكد إجراء الإقفال السنوي" %}
+                                                {% trans "I confirm performing the annual closing" %}
                                             </label>
                                             {% if form.confirm.errors %}
                                                 <div class="text-danger">{{ form.confirm.errors }}</div>
@@ -60,18 +60,18 @@
                                         
                                         <button type="submit" class="btn btn-primary">
                                             <i class="fas fa-check"></i>
-                                            {% trans "إجراء الإقفال" %}
+                                            {% trans "Perform closing" %}
                                         </button>
                                     </form>
                                 </div>
                             </div>
                         </div>
                         
-                        <!-- معلومات تقديرية -->
+                        <!-- Estimated Information -->
                         <div class="col-md-6">
                             <div class="card">
                                 <div class="card-header">
-                                    <h5 class="card-title">{% trans "تقدير صافي الربح للسنة الحالية" %}</h5>
+                                    <h5 class="card-title">{% trans "Estimate net profit for the current year" %}</h5>
                                 </div>
                                 <div class="card-body">
                                     <div class="row">
@@ -84,9 +84,9 @@
                                             </h4>
                                             <p class="text-center">
                                                 {% if estimated_profit >= 0 %}
-                                                    {% trans "ربح متوقع" %}
+                                                    {% trans "Expected profit" %}
                                                 {% else %}
-                                                    {% trans "خسارة متوقعة" %}
+                                                    {% trans "Expected loss" %}
                                                 {% endif %}
                                             </p>
                                         </div>
@@ -96,26 +96,26 @@
                             
                             <div class="card mt-3">
                                 <div class="card-header">
-                                    <h5 class="card-title">{% trans "ملاحظات مهمة" %}</h5>
+                                    <h5 class="card-title">{% trans "Important notes" %}</h5>
                                 </div>
                                 <div class="card-body">
                                     <ul class="list-unstyled">
-                                        <li><i class="fas fa-exclamation-triangle text-warning"></i> {% trans "لا يمكن التراجع عن الإقفال بعد تنفيذه" %}</li>
-                                        <li><i class="fas fa-info-circle text-info"></i> {% trans "تأكد من إغلاق جميع القيود قبل الإقفال" %}</li>
-                                        <li><i class="fas fa-check-circle text-success"></i> {% trans "سيتم إنشاء قيد محاسبي تلقائياً" %}</li>
-                                        <li><i class="fas fa-file-alt text-primary"></i> {% trans "سيتم تسجيل العملية في سجل الأنشطة" %}</li>
+                                        <li><i class="fas fa-exclamation-triangle text-warning"></i> {% trans "The closing cannot be undone after execution" %}</li>
+                                        <li><i class="fas fa-info-circle text-info"></i> {% trans "Make sure all entries are closed before closing" %}</li>
+                                        <li><i class="fas fa-check-circle text-success"></i> {% trans "An accounting entry will be created automatically" %}</li>
+                                        <li><i class="fas fa-file-alt text-primary"></i> {% trans "The operation will be recorded in the activity log" %}</li>
                                     </ul>
                                 </div>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- الإقفالات السابقة -->
+                    <!-- Previous Closings -->
                     <div class="row mt-4">
                         <div class="col-12">
                             <div class="card">
                                 <div class="card-header">
-                                    <h5 class="card-title">{% trans "الإقفالات السابقة" %}</h5>
+                                    <h5 class="card-title">{% trans "Previous closings" %}</h5>
                                 </div>
                                 <div class="card-body">
                                     {% if closings %}
@@ -123,11 +123,11 @@
                                             <table class="table table-striped">
                                                 <thead>
                                                     <tr>
-                                                        <th>{% trans "السنة" %}</th>
-                                                        <th>{% trans "تاريخ الإقفال" %}</th>
-                                                        <th>{% trans "صافي الربح/الخسارة" %}</th>
-                                                        <th>{% trans "الحالة" %}</th>
-                                                        <th>{% trans "التفاصيل" %}</th>
+                                                        <th>{% trans "Year" %}</th>
+                                                        <th>{% trans "Closing date" %}</th>
+                                                        <th>{% trans "Net profit/loss" %}</th>
+                                                        <th>{% trans "Status" %}</th>
+                                                        <th>{% trans "Details" %}</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -146,7 +146,7 @@
                                                             <td>
                                                                 {% if closing.closing_entry %}
                                                                     <a href="{% url 'journal:entry_detail' closing.closing_entry.pk %}" class="btn btn-sm btn-info">
-                                                                        <i class="fas fa-eye"></i> {% trans "عرض القيد" %}
+                                                                        <i class="fas fa-eye"></i> {% trans "View entry" %}
                                                                     </a>
                                                                 {% endif %}
                                                             </td>
@@ -156,7 +156,7 @@
                                             </table>
                                         </div>
                                     {% else %}
-                                        <p class="text-muted text-center">{% trans "لا توجد إقفالات سابقة" %}</p>
+                                        <p class="text-muted text-center">{% trans "No previous closings" %}</p>
                                     {% endif %}
                                 </div>
                             </div>
@@ -172,9 +172,9 @@
 {% block extra_js %}
 <script>
 $(document).ready(function() {
-    // تأكيد الإقفال
+    // Confirm closing
     $('form').on('submit', function(e) {
-        if (!confirm('{% trans "هل أنت متأكد من إجراء الإقفال السنوي؟ لا يمكن التراجع عن هذا الإجراء." %}')) {
+        if (!confirm('{% trans "Are you sure you want to perform the annual closing? This action cannot be undone." %}')) {
             e.preventDefault();
         }
     });
