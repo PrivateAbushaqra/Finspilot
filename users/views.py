@@ -680,7 +680,8 @@ class UserGroupListView(LoginRequiredMixin, ListView):
     context_object_name = 'groups'
     
     def test_func(self):
-        return self.request.user.is_staff or self.request.user.is_superuser
+        user = self.request.user
+        return user.is_staff or user.is_superuser or getattr(user, 'user_type', None) in ['admin', 'superadmin']
     
     def get_queryset(self):
         """تصفية المجموعات لإخفاء مجموعات السوبر أدمين عن المستخدمين غير السوبر أدمين"""
@@ -894,7 +895,8 @@ class UserGroupCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     success_url = reverse_lazy('users:group_list')
     
     def test_func(self):
-        return self.request.user.is_staff or self.request.user.is_superuser
+        user = self.request.user
+        return user.is_staff or user.is_superuser or getattr(user, 'user_type', None) in ['admin', 'superadmin']
     
     def get_form_kwargs(self):
         """تمرير المستخدم للنموذج لتصفية الصلاحيات"""
@@ -1244,7 +1246,8 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     success_url = reverse_lazy('users:group_list')
     
     def test_func(self):
-        return self.request.user.is_staff or self.request.user.is_superuser
+        user = self.request.user
+        return user.is_staff or user.is_superuser or getattr(user, 'user_type', None) in ['admin', 'superadmin']
     
     def get_form_kwargs(self):
         """تمرير المستخدم للنموذج لتصفية الصلاحيات"""
@@ -1253,23 +1256,13 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return kwargs
     
     def get_context_data(self, **kwargs):
-        from django.core.management.color import no_style
-        from django.db import connection
-        import sys
-        
         context = super().get_context_data(**kwargs)
-        
+
         # الحصول على جميع الصلاحيات
         queryset = Permission.objects.select_related('content_type').order_by('content_type__app_label', 'name')
-        
+
         # تصفية صلاحيات superadmin إذا لم يكن المستخدم superadmin أو admin
-        user_type = getattr(self.request.user, 'user_type', None)
-        is_superuser = self.request.user.is_superuser
-        is_admin_or_super = user_type in ['superadmin', 'admin'] or is_superuser
-        
-        print(f"Debug: user_type={user_type}, is_superuser={is_superuser}, is_admin_or_super={is_admin_or_super}", file=sys.stderr)
-        
-        if not is_admin_or_super:
+        if not (getattr(self.request.user, 'user_type', None) in ['superadmin', 'admin'] or self.request.user.is_superuser):
             queryset = queryset.exclude(
                 codename__in=[
                     'can_access_system_management',
@@ -1277,38 +1270,35 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
                     'can_view_audit_logs'
                 ]
             )
-        
+
         # تنظيم الصلاحيات حسب التطبيق
         permissions_by_app = {}
         for permission in queryset:
             app_label = permission.content_type.app_label
             if app_label not in permissions_by_app:
                 permissions_by_app[app_label] = []
-            
+
             # إضافة ترجمة للصلاحية
             permission.translated_name = self._get_permission_translation(permission)
             permissions_by_app[app_label].append(permission)
-        
-        print(f"Debug: permissions_by_app keys: {list(permissions_by_app.keys())}", file=sys.stderr)
-        print(f"Debug: total permissions: {sum(len(perms) for perms in permissions_by_app.values())}", file=sys.stderr)
-        
+
         context['permissions_by_app'] = permissions_by_app
-        
-        # إضافة أسماء التطبيقات المترجمة  
+
+        # إضافة أسماء التطبيقات المترجمة
         context['app_names'] = self._get_app_names()
-        
+
         # إضافة معلومات إضافية مطلوبة للقالب
         context['group_users'] = self.object.user_set.all()
         context['current_permissions'] = list(self.object.permissions.values_list('pk', flat=True))
-        
+
         # استخدام initial من النموذج لضمان ظهور الأقسام المختارة تلقائياً
         form = self.get_form()
         context['dashboard_sections_list'] = form.fields['dashboard_sections'].initial or []
-        
+
         # إضافة wrapper للصلاحيات
         from django.contrib.auth.context_processors import PermWrapper
         context['perms'] = PermWrapper(self.request.user)
-        
+
         return context
     
     def dispatch(self, request, *args, **kwargs):
@@ -1550,7 +1540,8 @@ class UserGroupDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     success_url = reverse_lazy('users:group_list')
     
     def test_func(self):
-        return self.request.user.is_staff or self.request.user.is_superuser
+        user = self.request.user
+        return user.is_staff or user.is_superuser or getattr(user, 'user_type', None) in ['admin', 'superadmin']
     
     def dispatch(self, request, *args, **kwargs):
         self.object = self.get_object()
