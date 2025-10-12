@@ -202,12 +202,11 @@ class CategoryDeleteView(LoginRequiredMixin, View):
             # تسجيل النشاط
             AuditLog.objects.create(
                 user=request.user,
-                action='DELETE',
-                model_name='Category',
+                action_type='delete',
+                content_type='Category',
                 object_id=pk,
-                details=f'حذف الفئة: {category_name}',
-                ip_address=request.META.get('REMOTE_ADDR'),
-                user_agent=request.META.get('HTTP_USER_AGENT')
+                description=f'حذف الفئة: {category_name}',
+                ip_address=request.META.get('REMOTE_ADDR')
             )
             
             messages.success(request, f'تم حذف التصنيف "{category_name}" بنجاح!')
@@ -385,6 +384,15 @@ class ProductCreateView(LoginRequiredMixin, View):
                 messages.error(request, 'يرجى إدخال أسعار ونسبة ضريبة صحيحة!')
                 return self.get(request)
             
+            # الحصول على مستودع الرصيد الافتتاحي
+            opening_balance_warehouse = None
+            if opening_balance_warehouse_id:
+                try:
+                    opening_balance_warehouse = Warehouse.objects.get(id=opening_balance_warehouse_id, is_active=True)
+                except Warehouse.DoesNotExist:
+                    messages.error(request, 'مستودع الرصيد الافتتاحي المحدد غير موجود!')
+                    return self.get(request)
+            
             # إنشاء المنتج
             product = Product.objects.create(
                 code=sku,
@@ -406,20 +414,9 @@ class ProductCreateView(LoginRequiredMixin, View):
                 is_active=is_active
             )
             
-            # الحصول على مستودع الرصيد الافتتاحي
-            opening_balance_warehouse = None
-            if opening_balance_warehouse_id:
-                try:
-                    opening_balance_warehouse = Warehouse.objects.get(id=opening_balance_warehouse_id, is_active=True)
-                except Warehouse.DoesNotExist:
-                    messages.error(request, 'مستودع الرصيد الافتتاحي المحدد غير موجود!')
-                    return self.get(request)
-            
             # إنشاء حركة مخزون للرصيد الافتتاحي إذا كان أكبر من صفر
             if opening_balance and float(opening_balance) > 0:
                 try:
-                    from inventory.models import InventoryMovement, Warehouse
-                    
                     # استخدام مستودع الرصيد الافتتاحي المحدد
                     unit_cost = opening_balance_cost / opening_balance if opening_balance > 0 else 0
                     InventoryMovement.objects.create(
@@ -608,6 +605,15 @@ class ProductUpdateView(LoginRequiredMixin, View):
             except ValueError:
                 messages.error(request, 'يرجى إدخال أسعار ونسبة ضريبة صحيحة!')
                 return self.get(request, pk)
+            
+            # الحصول على مستودع الرصيد الافتتاحي
+            opening_balance_warehouse = None
+            if opening_balance_warehouse_id:
+                try:
+                    opening_balance_warehouse = Warehouse.objects.get(id=opening_balance_warehouse_id, is_active=True)
+                except Warehouse.DoesNotExist:
+                    messages.error(request, 'مستودع الرصيد الافتتاحي المحدد غير موجود!')
+                    return self.get(request, pk)
             
             # تحديث جميع حقول المنتج
             product.name = name
@@ -810,12 +816,11 @@ class ProductDeleteView(LoginRequiredMixin, View):
             # تسجيل النشاط في سجل الأنشطة
             AuditLog.objects.create(
                 user=request.user,
-                action='DELETE',
-                model_name='Product',
+                action_type='delete',
+                content_type='Product',
                 object_id=pk,
-                details=f'حذف المنتج: {product_name} (الكود: {product.code})',
-                ip_address=request.META.get('REMOTE_ADDR'),
-                user_agent=request.META.get('HTTP_USER_AGENT')
+                description=f'حذف المنتج: {product_name} (الكود: {product.code})',
+                ip_address=request.META.get('REMOTE_ADDR')
             )
             
             messages.success(request, f'تم حذف المنتج "{product_name}" بنجاح!')
@@ -1135,8 +1140,10 @@ def product_add_ajax(request):
                 try:
                     opening_balance_warehouse = Warehouse.objects.get(id=opening_balance_warehouse_id, is_active=True)
                 except Warehouse.DoesNotExist:
-                    messages.error(request, 'مستودع الرصيد الافتتاحي المحدد غير موجود!')
-                    return self.get(request)
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'مستودع الرصيد الافتتاحي المحدد غير موجود!'
+                    })
             
             # إنشاء حركة مخزون للرصيد الافتتاحي إذا كان أكبر من صفر
             if opening_balance and float(opening_balance) > 0:
@@ -1234,8 +1241,21 @@ def product_add_ajax(request):
 # AJAX Views for adding categories and products from purchase invoice
 @method_decorator(csrf_exempt, name='dispatch')
 class CategoryAddAjaxView(LoginRequiredMixin, View):
+    def dispatch(self, request, *args, **kwargs):
+        """Override dispatch to log all requests"""
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"=== CategoryAddAjaxView dispatch called ===")
+        logger.info(f"Method: {request.method}")
+        logger.info(f"User: {request.user}")
+        logger.info(f"POST data: {dict(request.POST) if request.method == 'POST' else 'N/A'}")
+        return super().dispatch(request, *args, **kwargs)
+    
     def get(self, request, *args, **kwargs):
         """إرجاع قائمة الفئات المتاحة للاستخدام في الشاشات المنبثقة"""
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info("=== GET method called ===")
         try:
             from .models import Category
             categories = Category.objects.filter(is_active=True).order_by('name')
@@ -1262,23 +1282,38 @@ class CategoryAddAjaxView(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         try:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(f"CategoryAddAjaxView POST called by user: {request.user}")
+            
             # استلام البيانات من النموذج
             name = request.POST.get('name', '').strip()
             name_en = request.POST.get('name_en', '').strip()
             code = request.POST.get('code', '').strip()
             parent_id = request.POST.get('parent', '')
             description = request.POST.get('description', '').strip()
-            is_active = request.POST.get('is_active', 'true').lower() == 'true'
+            is_active = request.POST.get('is_active') == 'on'
+            
+            logger.info(f"Received data: name={name}, code={code}, parent_id={parent_id}")
             
             # التحقق من صحة البيانات
             if not name:
+                logger.warning("Category name is required")
                 return JsonResponse({
                     'success': False,
                     'error': 'اسم الفئة مطلوب!'
                 })
             
+            if not name_en:
+                logger.warning("Category English name is required")
+                return JsonResponse({
+                    'success': False,
+                    'error': _('الاسم بالإنجليزية مطلوب!')
+                })
+            
             # التحقق من عدم تكرار الرمز
             if code and Category.objects.filter(code=code).exists():
+                logger.warning(f"Category code {code} already exists")
                 return JsonResponse({
                     'success': False,
                     'error': 'رمز الفئة موجود مسبقاً!'
@@ -1289,10 +1324,13 @@ class CategoryAddAjaxView(LoginRequiredMixin, View):
             if parent_id:
                 try:
                     parent = Category.objects.get(id=parent_id)
+                    logger.info(f"Parent category found: {parent.name}")
                 except Category.DoesNotExist:
+                    logger.warning(f"Parent category {parent_id} not found")
                     parent = None
             
             # إنشاء الفئة
+            logger.info("Creating category...")
             category = Category.objects.create(
                 name=name,
                 name_en=name_en,
@@ -1301,6 +1339,7 @@ class CategoryAddAjaxView(LoginRequiredMixin, View):
                 description=description,
                 is_active=is_active
             )
+            logger.info(f"Category created successfully: {category.id} - {category.name}")
             
             # تسجيل النشاط في سجل المراجعة
             AuditLog.objects.create(
@@ -1311,6 +1350,7 @@ class CategoryAddAjaxView(LoginRequiredMixin, View):
                 description=f'تم إنشاء فئة جديدة من فاتورة المشتريات: {category.name}',
                 ip_address=request.META.get('REMOTE_ADDR')
             )
+            logger.info("Audit log created")
             
             return JsonResponse({
                 'success': True,
@@ -1323,6 +1363,8 @@ class CategoryAddAjaxView(LoginRequiredMixin, View):
             })
             
         except Exception as e:
+            logger.error(f"Error in CategoryAddAjaxView: {str(e)}", exc_info=True)
+            
             # تسجيل الخطأ في audit log
             AuditLog.objects.create(
                 user=request.user,
@@ -1332,10 +1374,6 @@ class CategoryAddAjaxView(LoginRequiredMixin, View):
                 description=f'حدث خطأ أثناء إنشاء الفئة من فاتورة المشتريات: {str(e)}',
                 ip_address=request.META.get('REMOTE_ADDR')
             )
-            
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"خطأ في إنشاء الفئة: {str(e)}")
             
             return JsonResponse({
                 'success': False,
@@ -1388,6 +1426,7 @@ class ProductAddAjaxView(LoginRequiredMixin, View):
             min_stock = request.POST.get('min_stock', '0')
             opening_balance = request.POST.get('opening_balance', '0')
             opening_balance_cost = request.POST.get('opening_balance_cost', '0')
+            opening_balance_warehouse_id = request.POST.get('opening_balance_warehouse')
             is_active = request.POST.get('is_active', 'true').lower() == 'true'
             
             # التحقق من صحة البيانات الأساسية
@@ -1443,6 +1482,17 @@ class ProductAddAjaxView(LoginRequiredMixin, View):
                         'error': 'الفئة المحددة غير موجودة!'
                     })
             
+            # الحصول على مستودع الرصيد الافتتاحي
+            opening_balance_warehouse = None
+            if opening_balance_warehouse_id:
+                try:
+                    opening_balance_warehouse = Warehouse.objects.get(id=opening_balance_warehouse_id, is_active=True)
+                except Warehouse.DoesNotExist:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'مستودع الرصيد الافتتاحي المحدد غير موجود!'
+                    })
+            
             # إنشاء المنتج
             product = Product.objects.create(
                 code=sku,
@@ -1458,6 +1508,9 @@ class ProductAddAjaxView(LoginRequiredMixin, View):
                 sale_price=selling_price,
                 wholesale_price=wholesale_price,
                 tax_rate=tax_rate,
+                opening_balance_quantity=opening_balance,
+                opening_balance_cost=opening_balance_cost,
+                opening_balance_warehouse=opening_balance_warehouse,
                 is_active=is_active
             )
             

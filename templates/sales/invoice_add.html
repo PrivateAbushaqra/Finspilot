@@ -1968,7 +1968,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Filter products
             const filteredProducts = products.filter(product =>
                 product.name.toLowerCase().includes(searchTerm) ||
-                product.code.toLowerCase().includes(searchTerm)
+                product.code.toLowerCase().includes(searchTerm) ||
+                product.description.toLowerCase().includes(searchTerm)
             );
 
             if (filteredProducts.length === 0) {
@@ -2025,7 +2026,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (nameInput.value.trim() === '') {
                 // Show all products
                 dropdown.innerHTML = '';
-                products.slice(0, 10).forEach(product => { // Show first 10 products
+                products.slice(0, 20).forEach(product => { // Show first 20 products
                     const option = document.createElement('button');
                     option.type = 'button';
                     option.className = 'dropdown-item';
@@ -2103,7 +2104,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Filter products by code
             const filteredProducts = products.filter(product =>
-                product.code.toLowerCase().includes(searchTerm)
+                product.code.toLowerCase().includes(searchTerm) ||
+                product.name.toLowerCase().includes(searchTerm) ||
+                product.description.toLowerCase().includes(searchTerm)
             );
 
             if (filteredProducts.length === 0) {

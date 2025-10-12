@@ -9,8 +9,9 @@ from django.http import JsonResponse
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.utils.translation import gettext as _
-from .models import Warehouse, InventoryMovement, WarehouseTransfer
+from .models import Warehouse, InventoryMovement, WarehouseTransfer, WarehouseTransferItem
 from products.models import Product
+from core.models import AuditLog
 
 class InventoryListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     template_name = 'inventory/list.html'
@@ -46,7 +47,7 @@ class InventoryListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             in_movements = InventoryMovement.objects.filter(
                 product=product,
                 movement_type='in'
-            ).aggregate(total=Sum('quantity'))['total'] or 0
+            ).exclude(reference_type='opening_balance').aggregate(total=Sum('quantity'))['total'] or 0
             
             out_movements = InventoryMovement.objects.filter(
                 product=product,
@@ -83,7 +84,7 @@ class InventoryListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             in_movements = InventoryMovement.objects.filter(
                 product=product,
                 movement_type='in'
-            ).aggregate(total=Sum('quantity'))['total'] or 0
+            ).exclude(reference_type='opening_balance').aggregate(total=Sum('quantity'))['total'] or 0
             
             out_movements = InventoryMovement.objects.filter(
                 product=product,
@@ -111,7 +112,9 @@ class InventoryListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             # أولاً، استخدم الرصيد الافتتاحي إذا كان موجوداً
             if product.opening_balance_quantity > 0 and remaining_qty > 0:
                 used_qty = min(Decimal(product.opening_balance_quantity), remaining_qty)
-                value += used_qty * Decimal(product.opening_balance_cost)
+                # حساب تكلفة الوحدة من الرصيد الافتتاحي
+                unit_cost = Decimal(product.opening_balance_cost) / Decimal(product.opening_balance_quantity) if product.opening_balance_quantity > 0 else Decimal('0')
+                value += used_qty * unit_cost
                 remaining_qty -= used_qty
             
             # ثم، جلب عناصر فواتير الشراء الأقدم فالأحدث
@@ -416,7 +419,6 @@ class MovementListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         })
         
         # تسجيل النشاط في سجل الأنشطة
-        from core.models import AuditLog
         AuditLog.objects.create(
             user=self.request.user,
             action_type='view',
@@ -564,14 +566,14 @@ class LowStockView(LoginRequiredMixin, TemplateView):
             in_movements = InventoryMovement.objects.filter(
                 product=product,
                 movement_type='in'
-            ).aggregate(total=Sum('quantity'))['total'] or 0
+            ).exclude(reference_type='opening_balance').aggregate(total=Sum('quantity'))['total'] or 0
             
             out_movements = InventoryMovement.objects.filter(
                 product=product,
                 movement_type='out'
             ).aggregate(total=Sum('quantity'))['total'] or 0
             
-            current_stock = in_movements - out_movements
+            current_stock = in_movements - out_movements + product.opening_balance_quantity
             min_quantity = 10  # Default minimum quantity
             
             # Determine stock level

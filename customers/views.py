@@ -709,13 +709,14 @@ class CustomerSupplierTransactionsView(LoginRequiredMixin, TemplateView):
             total_credit = transactions.filter(direction='credit').aggregate(
                 total=Sum('amount'))['total'] or 0
             
-            current_balance = total_debit - total_credit
+            # حساب الرصيد الختامي = الرصيد الافتتاحي + صافي المعاملات المفلترة
+            closing_balance = customer_supplier.balance + (total_debit - total_credit)
             
             context.update({
                 'customer_supplier': customer_supplier,
                 'transactions': transactions,
-                'opening_balance': 0,  # يمكن حسابه لاحقاً
-                'closing_balance': current_balance,
+                'opening_balance': customer_supplier.balance,  # الرصيد الافتتاحي
+                'closing_balance': closing_balance,  # الرصيد الختامي = افتتاحي + معاملات
                 'total_debit': total_debit,
                 'total_credit': total_credit,
                 'total_transactions': transactions.count(),
@@ -750,6 +751,17 @@ class CustomerSupplierTransactionsView(LoginRequiredMixin, TemplateView):
                 'date_to': date_to,
                 'error_message': f'خطأ في تحميل البيانات: {str(e)}'
             })
+        
+        # تسجيل النشاط في سجل الأنشطة
+        from core.models import AuditLog
+        total_transactions_count = context.get('total_transactions', 0)
+        AuditLog.objects.create(
+            user=self.request.user,
+            action_type='view',
+            content_type='customer_supplier_transactions',
+            description=f'عرض معاملات العميل/المورد: {customer_supplier.name} ({total_transactions_count} معاملة)',
+            ip_address=self.request.META.get('REMOTE_ADDR')
+        )
         
         return context
 

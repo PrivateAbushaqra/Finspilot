@@ -426,8 +426,10 @@ $(document).ready(function() {
         var openingBalance = parseFloat($('#opening_balance_quantity').val()) || 0;
         var costPrice = parseFloat($('#cost_price').val()) || 0;
         var costField = $('#opening_balance_cost');
+        var currentCostValue = parseFloat(costField.val()) || 0;
         
-        if (openingBalance > 0 && costPrice > 0) {
+        // لا نعيد الحساب إلا إذا كانت القيمة الحالية فارغة أو صفر (للحفاظ على القيمة المحفوظة في قاعدة البيانات)
+        if (currentCostValue === 0 && openingBalance > 0 && costPrice > 0) {
             var totalCost = openingBalance * costPrice;
             costField.val(totalCost.toFixed(3));
         } else if (openingBalance === 0) {
@@ -458,7 +460,7 @@ $(document).ready(function() {
         toggleSerialNumberField();
         
         // تهيئة الرصيد الافتتاحي والمستودع
-        calculateOpeningBalanceCost();
+        // calculateOpeningBalanceCost(); // لا نستدعيها عند تحميل الصفحة للحفاظ على القيمة من قاعدة البيانات
         toggleOpeningBalanceWarehouse();
         
         $('#unit').on('change', function() {
@@ -481,7 +483,7 @@ $(document).ready(function() {
     
     // حساب مبدئي عند تحميل الصفحة
     calculateTax();
-    calculateOpeningBalanceCost();
+    // لا نستدعي calculateOpeningBalanceCost() عند تحميل الصفحة للحفاظ على القيمة من قاعدة البيانات
     
     // تحسين تجربة المستخدم
     $('#tax_rate').on('input', function() {

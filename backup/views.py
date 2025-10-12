@@ -1746,6 +1746,23 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
         backup_data_dict = {}  # قاموس للوصول السريع للبيانات
         
         if isinstance(backup_data, dict) and 'data' in backup_data:
+            # 🔧 تحويل أسماء التطبيقات القديمة إلى الأسماء الجديدة
+            app_name_mapping = {
+                'revenues': 'revenues_expenses',
+                'assets': 'assets_liabilities'
+            }
+            
+            # إنشاء نسخة من البيانات مع الأسماء المحدثة
+            updated_backup_data = {'data': {}}
+            for app_name, app_data in backup_data['data'].items():
+                new_app_name = app_name_mapping.get(app_name, app_name)
+                updated_backup_data['data'][new_app_name] = app_data
+                if new_app_name != app_name:
+                    logger.info(f"🔄 تحويل تطبيق {app_name} إلى {new_app_name}")
+            
+            # استخدام البيانات المحدثة
+            backup_data = updated_backup_data
+            
             # أولاً: جمع جميع الجداول الموجودة في النسخة الاحتياطية
             for app_name, app_data in backup_data['data'].items():
                 for model_name, model_records in app_data.items():
@@ -1921,6 +1938,8 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                                             record_data['dashboard_sections'] = []
                                     elif model._meta.label == 'users.User':
                                         # إضافة قيم افتراضية للحقول المطلوبة
+                                        if not record_data.get('first_name'):
+                                            record_data['first_name'] = 'غير محدد'
                                         if not record_data.get('phone'):
                                             record_data['phone'] = '000000000'
                                         if not record_data.get('last_name'):
@@ -1935,6 +1954,9 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                                         # إضافة قيمة افتراضية لـ system_subtitle
                                         if not record_data.get('system_subtitle'):
                                             record_data['system_subtitle'] = ''
+                                        # إضافة قيمة افتراضية لـ app_logo إذا كان فارغاً
+                                        if not record_data.get('app_logo'):
+                                            record_data['app_logo'] = None
                                     elif model._meta.label == 'journal.JournalEntry':
                                         # 🔧 حل مشكلة تكرار entry_number
                                         # إذا كان entry_number موجود مسبقاً، نولّد رقم جديد

@@ -334,7 +334,7 @@ def update_inventory_on_sales_invoice(sender, instance, created, **kwargs):
                         reference_type='sales_invoice',
                         reference_id=instance.id,
                         quantity=item.quantity,
-                        unit_cost=item.product.calculate_weighted_average_cost(),
+                        unit_cost=item.unit_price,  # استخدام سعر البيع من الفاتورة بدلاً من التكلفة المرجحة
                         notes=f'مبيعات - فاتورة رقم {instance.invoice_number}',
                         created_by=instance.created_by
                     )
@@ -355,7 +355,7 @@ def update_inventory_on_sales_invoice(sender, instance, created, **kwargs):
                         reference_type='sales_invoice',
                         reference_id=instance.id,
                         quantity=item.quantity,
-                        unit_cost=item.product.calculate_weighted_average_cost(),
+                        unit_cost=item.unit_price,  # استخدام سعر البيع من الفاتورة بدلاً من التكلفة المرجحة
                         notes=f'مبيعات - فاتورة رقم {instance.invoice_number}',
                         created_by=instance.created_by
                     )
