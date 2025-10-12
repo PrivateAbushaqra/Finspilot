@@ -19,7 +19,7 @@ class PurchaseInvoice(models.Model):
     supplier = models.ForeignKey(CustomerSupplier, on_delete=models.PROTECT, 
                                verbose_name=_('المورد'), limit_choices_to={'type__in': ['supplier', 'both']})
     warehouse = models.ForeignKey('inventory.Warehouse', on_delete=models.PROTECT, 
-                                verbose_name=_('Warehouse'), null=True, blank=True)
+                                verbose_name=_('Warehouse'), default=1)
     payment_type = models.CharField(_('نوع الدفع'), max_length=20, choices=PAYMENT_TYPES)
     is_tax_inclusive = models.BooleanField(_('شامل ضريبة'), default=True, 
                                          help_text=_('عند الاختيار، ستكون الأسعار شاملة للضريبة'))

@@ -261,11 +261,29 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="mb-3">
+                                        <label for="opening_balance_warehouse" class="form-label">
+                                            <i class="fas fa-warehouse text-info me-1"></i>
+                                            {% trans "Opening Balance Warehouse" %}
+                                        </label>
+                                        <select class="form-control" id="opening_balance_warehouse" name="opening_balance_warehouse">
+                                            <option value="">{% trans "Select Warehouse" %}</option>
+                                            {% for warehouse in warehouses %}
+                                            <option value="{{ warehouse.id }}" {% if product.opening_balance_warehouse and product.opening_balance_warehouse.id == warehouse.id %}selected{% endif %}>{{ warehouse.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <small class="form-text text-muted">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            {% trans "Warehouse where the opening balance will be placed" %}
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
                                         <label for="current_stock" class="form-label">
                                             <i class="fas fa-warehouse text-primary me-1"></i>
                                             {% trans "Current Stock" %}
                                         </label>
-                                        <input type="number" class="form-control" id="current_stock" name="current_stock" 
+                                        <input type="number" class="form-control" id="current_stock" 
                                                min="0" value="{{ product.current_stock|unlocalize }}" 
                                                readonly style="background-color: #f8f9fa; cursor: not-allowed;">
                                         <small class="form-text text-muted">
@@ -403,6 +421,34 @@ $(document).ready(function() {
         toggleSerialNumberField();
     }
     
+    // حساب تكلفة الرصيد الافتتاحي تلقائياً
+    function calculateOpeningBalanceCost() {
+        var openingBalance = parseFloat($('#opening_balance_quantity').val()) || 0;
+        var costPrice = parseFloat($('#cost_price').val()) || 0;
+        var costField = $('#opening_balance_cost');
+        
+        if (openingBalance > 0 && costPrice > 0) {
+            var totalCost = openingBalance * costPrice;
+            costField.val(totalCost.toFixed(3));
+        } else if (openingBalance === 0) {
+            costField.val(0);
+        }
+    }
+    
+    // تبديل متطلب مستودع الرصيد الافتتاحي
+    function toggleOpeningBalanceWarehouse() {
+        var openingBalance = parseFloat($('#opening_balance_quantity').val()) || 0;
+        var warehouseField = $('#opening_balance_warehouse');
+        
+        if (openingBalance > 0) {
+            warehouseField.prop('required', true);
+            warehouseField.closest('.mb-3').find('label').addClass('required');
+        } else {
+            warehouseField.prop('required', false);
+            warehouseField.closest('.mb-3').find('label').removeClass('required');
+        }
+    }
+    
     // تطبيق التحكم عند تحميل الصفحة وعند تغيير وحدة القياس
     $(document).ready(function() {
         // {% trans "Select" %} {% trans "Status" %} {% trans "First" %}ية بناءً على is_service
@@ -410,6 +456,11 @@ $(document).ready(function() {
         toggleInventoryFields(isService);
         
         toggleSerialNumberField();
+        
+        // تهيئة الرصيد الافتتاحي والمستودع
+        calculateOpeningBalanceCost();
+        toggleOpeningBalanceWarehouse();
+        
         $('#unit').on('change', function() {
             toggleSerialNumberField();
             
@@ -423,9 +474,14 @@ $(document).ready(function() {
     
     // ربط الأحداث
     $('#sale_price, #tax_rate').on('input keyup', calculateTax);
+    $('#opening_balance_quantity, #cost_price').on('input change', calculateOpeningBalanceCost);
+    
+    // ربط حدث تغيير الرصيد الافتتاحي لمتطلب المستودع
+    $('#opening_balance_quantity').on('input change', toggleOpeningBalanceWarehouse);
     
     // حساب مبدئي عند تحميل الصفحة
     calculateTax();
+    calculateOpeningBalanceCost();
     
     // تحسين تجربة المستخدم
     $('#tax_rate').on('input', function() {
@@ -436,6 +492,48 @@ $(document).ready(function() {
         } else if (value < 0) {
             $(this).val(0);
             calculateTax();
+        }
+    });
+    
+    // تحسين التحقق من الأسعار
+    $('#sale_price').on('blur', function() {
+        var sellingPrice = parseFloat($(this).val()) || 0;
+        var costPrice = parseFloat($('#cost_price').val()) || 0;
+        
+        if (costPrice > 0 && sellingPrice > 0 && sellingPrice < costPrice) {
+            Swal.fire({
+                icon: 'warning',
+                title: '{% trans "Warning" %}',
+                text: '{% trans "Sale price is less than cost price. Are you sure?" %}',
+                showCancelButton: true,
+                confirmButtonText: '{% trans "Yes, I am sure" %}',
+                cancelButtonText: '{% trans "Edit Price" %}'
+            }).then((result) => {
+                if (!result.isConfirmed) {
+                    $(this).focus();
+                }
+            });
+        }
+    });
+    
+    // تحسين تجربة المستخدم لحقل الرصيد الافتتاحي
+    $('#opening_balance_quantity').on('input', function() {
+        var value = parseFloat($(this).val());
+        if (value < 0) {
+            $(this).val(0);
+        }
+        
+        // إعادة حساب تكلفة الرصيد الافتتاحي
+        calculateOpeningBalanceCost();
+        
+        // تحديث متطلب مستودع الرصيد الافتتاحي
+        toggleOpeningBalanceWarehouse();
+    });
+    
+    $('#opening_balance_cost').on('input', function() {
+        var value = parseFloat($(this).val());
+        if (value < 0) {
+            $(this).val(0);
         }
     });
     

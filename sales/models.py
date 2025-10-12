@@ -22,7 +22,7 @@ class SalesInvoice(models.Model):
                                verbose_name=_('Customer'), limit_choices_to={'type__in': ['customer', 'both']},
                                null=True, blank=True)
     warehouse = models.ForeignKey('inventory.Warehouse', on_delete=models.PROTECT, 
-                                verbose_name=_('Warehouse'), null=True, blank=True)
+                                verbose_name=_('Warehouse'), default=1)
     payment_type = models.CharField(_('نوع الدفع'), max_length=20, choices=PAYMENT_TYPES)
     cashbox = models.ForeignKey('cashboxes.Cashbox', on_delete=models.SET_NULL, 
                                verbose_name=_('الصندوق'), null=True, blank=True,

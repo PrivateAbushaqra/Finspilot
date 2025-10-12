@@ -1,6 +1,7 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 from .models import Product, Category
+from inventory.models import Warehouse
 
 
 class ProductForm(forms.ModelForm):
@@ -12,7 +13,7 @@ class ProductForm(forms.ModelForm):
             'code', 'name', 'name_en', 'product_type', 'barcode', 'serial_number', 
             'category', 'description', 'image', 'cost_price', 
             'minimum_quantity', 'maximum_quantity', 'sale_price', 'wholesale_price', 
-            'tax_rate', 'opening_balance_quantity', 'opening_balance_cost', 'enable_alerts', 'is_active'
+            'tax_rate', 'opening_balance_quantity', 'opening_balance_cost', 'opening_balance_warehouse', 'enable_alerts', 'is_active'
         ]
         widgets = {
             'code': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('Product Code')}),
@@ -32,6 +33,7 @@ class ProductForm(forms.ModelForm):
             'tax_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0', 'max': '100'}),
             'opening_balance_quantity': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001', 'min': '0'}),
             'opening_balance_cost': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001', 'min': '0'}),
+            'opening_balance_warehouse': forms.Select(attrs={'class': 'form-control'}),
             'enable_alerts': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
@@ -39,6 +41,7 @@ class ProductForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['category'].queryset = Category.objects.filter(is_active=True)
+        self.fields['opening_balance_warehouse'].queryset = Warehouse.objects.filter(is_active=True).exclude(code='MAIN')
 
 
 class CategoryForm(forms.ModelForm):

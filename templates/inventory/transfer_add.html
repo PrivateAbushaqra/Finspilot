@@ -32,7 +32,9 @@
                                     <label class="form-label">{% trans "From Warehouse" %} <span class="text-danger">*</span></label>
                                     <select class="form-select" name="from_warehouse" required>
                                         <option value="">{% trans "Select Source Warehouse" %}</option>
-                                        <!-- سيتم ملء هذا من قاعدة البيانات -->
+                                        {% for warehouse in warehouses %}
+                                        <option value="{{ warehouse.id }}">{{ warehouse.name }}</option>
+                                        {% endfor %}
                                     </select>
                                 </div>
                             </div>
@@ -41,14 +43,16 @@
                                     <label class="form-label">{% trans "To Warehouse" %} <span class="text-danger">*</span></label>
                                     <select class="form-select" name="to_warehouse" required>
                                         <option value="">{% trans "Select Destination Warehouse" %}</option>
-                                        <!-- سيتم ملء هذا من قاعدة البيانات -->
+                                        {% for warehouse in warehouses %}
+                                        <option value="{{ warehouse.id }}">{{ warehouse.name }}</option>
+                                        {% endfor %}
                                     </select>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label class="form-label">{% trans "Date" %} <span class="text-danger">*</span></label>
-                                    <input type="date" class="form-control" name="date" required>
+                                    <input type="date" class="form-control" name="transfer_date" required>
                                 </div>
                             </div>
                         </div>
@@ -65,20 +69,18 @@
                         <div id="transfer-items">
                             <div class="transfer-item border rounded p-3 mb-3">
                                 <div class="row">
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <label class="form-label">{% trans "Product" %}</label>
-                                        <select class="form-select" name="products[]" required>
+                                        <select class="form-select" name="product_id[]" required>
                                             <option value="">{% trans "Select Product" %}</option>
-                                            <!-- سيتم ملء هذا من قاعدة البيانات -->
+                                            {% for product in products %}
+                                            <option value="{{ product.id }}">{{ product.name }} ({{ product.code }})</option>
+                                            {% endfor %}
                                         </select>
                                     </div>
-                                    <div class="col-md-3">
+                                    <div class="col-md-4">
                                         <label class="form-label">{% trans "Quantity" %}</label>
-                                        <input type="number" class="form-control" name="quantities[]" step="0.001" required>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label">{% trans "Unit Cost" %}</label>
-                                        <input type="number" class="form-control" name="unit_costs[]" step="0.01" required>
+                                        <input type="number" class="form-control" name="quantity[]" step="0.001" required>
                                     </div>
                                     <div class="col-md-2">
                                         <label class="form-label">&nbsp;</label>

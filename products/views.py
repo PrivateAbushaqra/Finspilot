@@ -11,7 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from .models import Category, Product
 from core.models import AuditLog
-from inventory.models import InventoryMovement
+from inventory.models import InventoryMovement, Warehouse
 
 # Category Views
 class CategoryListView(LoginRequiredMixin, TemplateView):
@@ -283,7 +283,8 @@ class ProductCreateView(LoginRequiredMixin, View):
     
     def get(self, request, *args, **kwargs):
         context = {
-            'categories': Category.objects.filter(is_active=True)
+            'categories': Category.objects.filter(is_active=True),
+            'warehouses': Warehouse.objects.filter(is_active=True).exclude(code='MAIN')
         }
         return render(request, self.template_name, context)
     
@@ -308,6 +309,7 @@ class ProductCreateView(LoginRequiredMixin, View):
             description = request.POST.get('description', '').strip()
             is_active = request.POST.get('is_active') == 'on'
             track_stock = request.POST.get('track_stock') == 'on'
+            opening_balance_warehouse_id = request.POST.get('opening_balance_warehouse')
             
             # التحقق من صحة البيانات
             if not name:
@@ -375,10 +377,10 @@ class ProductCreateView(LoginRequiredMixin, View):
                     return self.get(request)
                 
                 # التحقق من تكلفة الرصيد الافتتاحي إذا كان الرصيد أكبر من صفر
-                if opening_balance > 0 and (opening_balance_cost <= 0 or opening_balance_cost is None):
-                    messages.error(request, 'تكلفة الرصيد الافتتاحي مطلوبة ويجب أن تكون أكبر من صفر عند وجود رصيد افتتاحي!')
+                if opening_balance > 0 and not opening_balance_warehouse_id:
+                    messages.error(request, 'مستودع الرصيد الافتتاحي مطلوب عند وجود رصيد افتتاحي!')
                     return self.get(request)
-                    
+                
             except ValueError:
                 messages.error(request, 'يرجى إدخال أسعار ونسبة ضريبة صحيحة!')
                 return self.get(request)
@@ -400,28 +402,29 @@ class ProductCreateView(LoginRequiredMixin, View):
                 tax_rate=tax_rate,
                 opening_balance_quantity=opening_balance,
                 opening_balance_cost=opening_balance_cost,
+                opening_balance_warehouse=opening_balance_warehouse,
                 is_active=is_active
             )
+            
+            # الحصول على مستودع الرصيد الافتتاحي
+            opening_balance_warehouse = None
+            if opening_balance_warehouse_id:
+                try:
+                    opening_balance_warehouse = Warehouse.objects.get(id=opening_balance_warehouse_id, is_active=True)
+                except Warehouse.DoesNotExist:
+                    messages.error(request, 'مستودع الرصيد الافتتاحي المحدد غير موجود!')
+                    return self.get(request)
             
             # إنشاء حركة مخزون للرصيد الافتتاحي إذا كان أكبر من صفر
             if opening_balance and float(opening_balance) > 0:
                 try:
                     from inventory.models import InventoryMovement, Warehouse
                     
-                    # الحصول على المستودع الافتراضي أو إنشاؤه
-                    default_warehouse, created = Warehouse.objects.get_or_create(
-                        code='MAIN',
-                        defaults={
-                            'name': 'المستودع الرئيسي',
-                            'address': 'المستودع الافتراضي للنظام',
-                            'is_active': True
-                        }
-                    )
-                    
+                    # استخدام مستودع الرصيد الافتتاحي المحدد
                     unit_cost = opening_balance_cost / opening_balance if opening_balance > 0 else 0
                     InventoryMovement.objects.create(
                         product=product,
-                        warehouse=default_warehouse,
+                        warehouse=opening_balance_warehouse,
                         movement_type='in',
                         quantity=float(opening_balance),
                         unit_cost=unit_cost,
@@ -515,6 +518,7 @@ class ProductUpdateView(LoginRequiredMixin, View):
         context = {
             'product': product,
             'categories': Category.objects.filter(is_active=True),
+            'warehouses': Warehouse.objects.filter(is_active=True).exclude(code='MAIN'),
             'current_opening_balance': current_opening_balance,
             'current_stock': product.current_stock,
             'maximum_quantity': product.maximum_quantity
@@ -542,6 +546,7 @@ class ProductUpdateView(LoginRequiredMixin, View):
             description = request.POST.get('description', '').strip()
             is_active = request.POST.get('is_active') == 'on'
             image = request.FILES.get('image')
+            opening_balance_warehouse_id = request.POST.get('opening_balance_warehouse')
             
             # التحقق من صحة البيانات
             if not name:
@@ -595,11 +600,11 @@ class ProductUpdateView(LoginRequiredMixin, View):
                     messages.error(request, 'رصيد بداية المدة يجب أن يكون صفر أو أكبر!')
                     return self.get(request, pk)
                 
-                # التحقق من تكلفة الرصيد الافتتاحي إذا كان الرصيد أكبر من صفر
-                if opening_balance > 0 and (opening_balance_cost <= 0 or opening_balance_cost is None):
-                    messages.error(request, 'تكلفة الرصيد الافتتاحي مطلوبة ويجب أن تكون أكبر من صفر عند وجود رصيد افتتاحي!')
+                # التحقق من مستودع الرصيد الافتتاحي إذا كان الرصيد أكبر من صفر
+                if opening_balance > 0 and not opening_balance_warehouse_id:
+                    messages.error(request, 'مستودع الرصيد الافتتاحي مطلوب عند وجود رصيد افتتاحي!')
                     return self.get(request, pk)
-                    
+                
             except ValueError:
                 messages.error(request, 'يرجى إدخال أسعار ونسبة ضريبة صحيحة!')
                 return self.get(request, pk)
@@ -620,6 +625,7 @@ class ProductUpdateView(LoginRequiredMixin, View):
             product.opening_balance_quantity = opening_balance
             product.opening_balance_cost = opening_balance_cost
             product.is_active = is_active
+            product.opening_balance_warehouse = opening_balance_warehouse
             if image:
                 product.image = image
             product.save()
@@ -631,16 +637,6 @@ class ProductUpdateView(LoginRequiredMixin, View):
             
             if new_opening_balance != current_opening_balance:
                 from inventory.models import InventoryMovement, Warehouse
-                
-                # الحصول على المستودع الافتراضي أو إنشاؤه
-                default_warehouse, created = Warehouse.objects.get_or_create(
-                    code='MAIN',
-                    defaults={
-                        'name': 'المستودع الرئيسي',
-                        'address': 'المستودع الافتراضي للنظام',
-                        'is_active': True
-                    }
-                )
                 
                 # حذف الرصيد الافتتاحي القديم إذا كان موجوداً
                 old_opening_movement = InventoryMovement.objects.filter(
@@ -669,7 +665,7 @@ class ProductUpdateView(LoginRequiredMixin, View):
                 if new_opening_balance > 0:
                     new_movement = InventoryMovement.objects.create(
                         product=product,
-                        warehouse=default_warehouse,
+                        warehouse=product.opening_balance_warehouse,
                         movement_type='in',
                         quantity=float(new_opening_balance),
                         unit_cost=cost_price,
@@ -1025,6 +1021,7 @@ def product_add_ajax(request):
             description = request.POST.get('description', '').strip()
             is_active = request.POST.get('is_active') == 'on'
             track_stock = request.POST.get('track_stock') == 'on'
+            opening_balance_warehouse_id = request.POST.get('opening_balance_warehouse')
             
             # التحقق من صحة البيانات
             if not name:
@@ -1132,25 +1129,25 @@ def product_add_ajax(request):
                 is_active=is_active
             )
             
+            # الحصول على مستودع الرصيد الافتتاحي
+            opening_balance_warehouse = None
+            if opening_balance_warehouse_id:
+                try:
+                    opening_balance_warehouse = Warehouse.objects.get(id=opening_balance_warehouse_id, is_active=True)
+                except Warehouse.DoesNotExist:
+                    messages.error(request, 'مستودع الرصيد الافتتاحي المحدد غير موجود!')
+                    return self.get(request)
+            
             # إنشاء حركة مخزون للرصيد الافتتاحي إذا كان أكبر من صفر
             if opening_balance and float(opening_balance) > 0:
                 try:
                     from inventory.models import InventoryMovement, Warehouse
                     
-                    # الحصول على المستودع الافتراضي أو إنشاؤه
-                    default_warehouse, created = Warehouse.objects.get_or_create(
-                        code='MAIN',
-                        defaults={
-                            'name': 'المستودع الرئيسي',
-                            'address': 'المستودع الافتراضي للنظام',
-                            'is_active': True
-                        }
-                    )
-                    
+                    # استخدام مستودع الرصيد الافتتاحي المحدد
                     unit_cost = opening_balance_cost / opening_balance if opening_balance > 0 else 0
                     InventoryMovement.objects.create(
                         product=product,
-                        warehouse=default_warehouse,
+                        warehouse=opening_balance_warehouse,
                         movement_type='in',
                         quantity=float(opening_balance),
                         unit_cost=unit_cost,
@@ -1178,7 +1175,7 @@ def product_add_ajax(request):
                 action_type='create',
                 content_type='Product',
                 object_id=product.id,
-                description=f'تم إنشاء المنتج: {product.name} - رمز المنتج: {product.code} - سعر البيع: {product.sale_price}',
+                description=f'تم إنشاء المنتج من فاتورة المشتريات: {product.name} - رمز المنتج: {product.code} - سعر البيع: {product.sale_price}',
                 ip_address=request.META.get('REMOTE_ADDR')
             )
             
@@ -1201,6 +1198,8 @@ def product_add_ajax(request):
                     'code': product.code,
                     'sale_price': float(product.sale_price),
                     'category_name': product.category.name if product.category else None,
+                    'product_type': product.product_type,
+                    'tax_rate': float(product.tax_rate),
                     'is_active': product.is_active
                 }
             })
@@ -1212,7 +1211,7 @@ def product_add_ajax(request):
                 action_type='error',
                 content_type='Product',
                 object_id=None,
-                description=f'حدث خطأ أثناء إنشاء المنتج: {str(e)}',
+                description=f'حدث خطأ أثناء إنشاء المنتج من فاتورة المشتريات: {str(e)}',
                 ip_address=request.META.get('REMOTE_ADDR')
             )
             
@@ -1467,20 +1466,11 @@ class ProductAddAjaxView(LoginRequiredMixin, View):
                 try:
                     from inventory.models import InventoryMovement, Warehouse
                     
-                    # الحصول على المستودع الافتراضي أو إنشاؤه
-                    default_warehouse, created = Warehouse.objects.get_or_create(
-                        code='MAIN',
-                        defaults={
-                            'name': 'المستودع الرئيسي',
-                            'address': 'المستودع الافتراضي للنظام',
-                            'is_active': True
-                        }
-                    )
-                    
+                    # استخدام مستودع الرصيد الافتتاحي المحدد
                     unit_cost = opening_balance_cost / opening_balance if opening_balance > 0 else 0
                     InventoryMovement.objects.create(
                         product=product,
-                        warehouse=default_warehouse,
+                        warehouse=opening_balance_warehouse,
                         movement_type='in',
                         quantity=opening_balance,
                         unit_cost=unit_cost,

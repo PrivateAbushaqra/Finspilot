@@ -96,6 +96,8 @@ class Product(models.Model):
                                                  validators=[MinValueValidator(0)], default=0, blank=True)
     opening_balance_cost = models.DecimalField(_('تكلفة الرصيد الافتتاحي'), max_digits=15, decimal_places=3, 
                                              validators=[MinValueValidator(0)], default=0, blank=True)
+    opening_balance_warehouse = models.ForeignKey('inventory.Warehouse', on_delete=models.SET_NULL, 
+                                                verbose_name=_('مستودع الرصيد الافتتاحي'), null=True, blank=True)
     enable_alerts = models.BooleanField(_('تفعيل التنبيهات'), default=True)
     is_active = models.BooleanField(_('نشط'), default=True)
     created_at = models.DateTimeField(_('تاريخ الإنشاء'), auto_now_add=True)
@@ -130,14 +132,14 @@ class Product(models.Model):
 
     @property
     def current_stock(self):
-        """الكمية الحالية في المخزون"""
+        """الكمية الحالية في المخزون (مجموع جميع المستودعات)"""
         from inventory.models import InventoryMovement
         
-        # حساب الكمية الواردة (in) ناقص الكمية الصادرة (out)
+        # حساب الكمية الواردة (in) ناقص الكمية الصادرة (out)، مع استثناء حركات الرصيد الافتتاحي لتجنب المضاعفة
         incoming = InventoryMovement.objects.filter(
             product=self,
             movement_type='in'
-        ).aggregate(total=models.Sum('quantity'))['total'] or 0
+        ).exclude(reference_type='opening_balance').aggregate(total=models.Sum('quantity'))['total'] or 0
         
         outgoing = InventoryMovement.objects.filter(
             product=self,
@@ -146,6 +148,28 @@ class Product(models.Model):
         
         # إضافة الرصيد الافتتاحي
         return (incoming - outgoing) + self.opening_balance_quantity
+
+    def get_stock_in_warehouse(self, warehouse):
+        """الحصول على الكمية الحالية في مستودع معين"""
+        from inventory.models import InventoryMovement
+        
+        # حساب الكمية الواردة (in) ناقص الكمية الصادرة (out) في المستودع المحدد
+        incoming = InventoryMovement.objects.filter(
+            product=self,
+            warehouse=warehouse,
+            movement_type='in'
+        ).exclude(reference_type='opening_balance').aggregate(total=models.Sum('quantity'))['total'] or 0
+        
+        outgoing = InventoryMovement.objects.filter(
+            product=self,
+            warehouse=warehouse,
+            movement_type='out'
+        ).aggregate(total=models.Sum('quantity'))['total'] or 0
+        
+        # إضافة الرصيد الافتتاحي إذا كان المستودع هو مستودع الرصيد الافتتاحي
+        opening_balance = self.opening_balance_quantity if self.opening_balance_warehouse == warehouse else 0
+        
+        return (incoming - outgoing) + opening_balance
 
     @property
     def is_low_stock(self):

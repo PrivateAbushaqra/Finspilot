@@ -30,6 +30,36 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-body">
+                    {% if transfers %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>{% trans "Transfer Number" %}</th>
+                                    <th>{% trans "Date" %}</th>
+                                    <th>{% trans "From Warehouse" %}</th>
+                                    <th>{% trans "To Warehouse" %}</th>
+                                    <th>{% trans "Created By" %}</th>
+                                    <th>{% trans "Actions" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transfer in transfers %}
+                                <tr>
+                                    <td>{{ transfer.id }}</td>
+                                    <td>{{ transfer.transfer_date|date:"d/m/Y" }}</td>
+                                    <td>{{ transfer.from_warehouse.name }}</td>
+                                    <td>{{ transfer.to_warehouse.name }}</td>
+                                    <td>{{ transfer.created_by.get_full_name|default:transfer.created_by.username }}</td>
+                                    <td>
+                                        <span class="badge badge-info">{% trans "Completed" %}</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
                     <div class="text-center py-5">
                         <i class="fas fa-exchange-alt fa-4x text-muted mb-3"></i>
                         <h4>{% trans "No Transfers Found" %}</h4>
@@ -39,6 +69,7 @@
                             {% trans "Add" %} {% trans "Transfer" %} {% trans "New" %}
                         </a>
                     </div>
+                    {% endif %}
                 </div>
             </div>
         </div>

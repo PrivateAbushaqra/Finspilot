@@ -293,6 +293,24 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="mb-3">
+                                        <label for="opening_balance_warehouse" class="form-label">
+                                            <i class="fas fa-warehouse text-info me-1"></i>
+                                            {% trans "Opening Balance Warehouse" %}
+                                        </label>
+                                        <select class="form-control" id="opening_balance_warehouse" name="opening_balance_warehouse">
+                                            <option value="">{% trans "Select Warehouse" %}</option>
+                                            {% for warehouse in warehouses %}
+                                            <option value="{{ warehouse.id }}">{{ warehouse.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <small class="form-text text-muted">
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            {% trans "Warehouse where the opening balance will be placed" %}
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
                                         <label for="min_stock" class="form-label">{% trans "Minimum Stock Level" %}</label>
                                         <input type="number" class="form-control" id="min_stock" name="min_stock" min="0" value="0">
                                     </div>
@@ -471,17 +489,6 @@ $(document).ready(function() {
         toggleSerialNumberField();
     }
     
-    // Bind unit change event
-    $('#unit').on('change', function() {
-        toggleSerialNumberField();
-        
-        // If "service" is selected as unit, enable service product
-        if ($(this).val() === 'service') {
-            $('#is_service').prop('checked', true);
-            toggleInventoryFields(true);
-        }
-    });
-    
     // Calculate opening balance cost automatically
     function calculateOpeningBalanceCost() {
         var openingBalance = parseFloat($('#opening_balance').val()) || 0;
@@ -496,8 +503,36 @@ $(document).ready(function() {
         }
     }
     
+    // Toggle opening balance warehouse requirement
+    function toggleOpeningBalanceWarehouse() {
+        var openingBalance = parseFloat($('#opening_balance').val()) || 0;
+        var warehouseField = $('#opening_balance_warehouse');
+        
+        if (openingBalance > 0) {
+            warehouseField.prop('required', true);
+            warehouseField.closest('.mb-3').find('label').addClass('required');
+        } else {
+            warehouseField.prop('required', false);
+            warehouseField.closest('.mb-3').find('label').removeClass('required');
+        }
+    }
+    
+    // Bind unit change event
+    $('#unit').on('change', function() {
+        toggleSerialNumberField();
+        
+        // If "service" is selected as unit, enable service product
+        if ($(this).val() === 'service') {
+            $('#is_service').prop('checked', true);
+            toggleInventoryFields(true);
+        }
+    });
+    
     // Bind opening balance and cost price change events
     $('#opening_balance, #cost_price').on('input change', calculateOpeningBalanceCost);
+    
+    // Bind opening balance change event for warehouse requirement
+    $('#opening_balance').on('input change', toggleOpeningBalanceWarehouse);
     
     // Improve user experience
     $('#tax_rate').on('input', function() {
@@ -546,8 +581,9 @@ $(document).ready(function() {
         toggleSerialNumberField();
         $('#unit').on('change', toggleSerialNumberField);
         
-        // Initialize opening balance cost field
+        // Initialize opening balance cost field and warehouse requirement
         toggleOpeningBalanceCost();
+        toggleOpeningBalanceWarehouse();
     });
 });
 </script>

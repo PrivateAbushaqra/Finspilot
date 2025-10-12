@@ -223,11 +223,15 @@ class WarehouseListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     def test_func(self):
         return self.request.user.has_inventory_permission()
     
+    def get_queryset(self):
+        # استثناء المستودع الافتراضي للنظام
+        return Warehouse.objects.exclude(code='MAIN')
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
-        # Calculate statistics
-        all_warehouses = Warehouse.objects.all()
+        # Calculate statistics (استثناء المستودع الافتراضي للنظام)
+        all_warehouses = Warehouse.objects.exclude(code='MAIN')
         context['total_warehouses'] = all_warehouses.count()
         context['active_warehouses'] = all_warehouses.filter(is_active=True).count()
         context['sub_warehouses'] = all_warehouses.filter(parent__isnull=False).count()
@@ -423,11 +427,123 @@ class MovementListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         
         return context
 
-class TransferListView(LoginRequiredMixin, TemplateView):
+class TransferListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    model = WarehouseTransfer
     template_name = 'inventory/transfer_list.html'
+    context_object_name = 'transfers'
+    
+    def test_func(self):
+        return self.request.user.has_inventory_permission()
+    
+    def get_queryset(self):
+        return WarehouseTransfer.objects.select_related('from_warehouse', 'to_warehouse', 'created_by').order_by('-transfer_date', '-id')
 
-class TransferCreateView(LoginRequiredMixin, TemplateView):
+class TransferCreateView(LoginRequiredMixin, UserPassesTestMixin, View):
     template_name = 'inventory/transfer_add.html'
+    
+    def test_func(self):
+        return self.request.user.has_inventory_permission()
+    
+    def get(self, request, *args, **kwargs):
+        context = {
+            'warehouses': Warehouse.objects.filter(is_active=True).exclude(code='MAIN'),
+            'products': Product.objects.filter(is_active=True)
+        }
+        return render(request, self.template_name, context)
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            from_warehouse_id = request.POST.get('from_warehouse')
+            to_warehouse_id = request.POST.get('to_warehouse')
+            transfer_date = request.POST.get('transfer_date')
+            notes = request.POST.get('notes', '')
+            
+            if from_warehouse_id == to_warehouse_id:
+                messages.error(request, 'لا يمكن التحويل من وإلى نفس المستودع!')
+                return self.get(request)
+            
+            from_warehouse = get_object_or_404(Warehouse, id=from_warehouse_id, is_active=True)
+            to_warehouse = get_object_or_404(Warehouse, id=to_warehouse_id, is_active=True)
+            
+            # إنشاء التحويل
+            transfer = WarehouseTransfer.objects.create(
+                from_warehouse=from_warehouse,
+                to_warehouse=to_warehouse,
+                transfer_date=transfer_date,
+                notes=notes,
+                created_by=request.user
+            )
+            
+            # معالجة العناصر
+            product_ids = request.POST.getlist('product_id[]')
+            quantities = request.POST.getlist('quantity[]')
+            
+            for i, product_id in enumerate(product_ids):
+                if product_id and quantities[i]:
+                    product = get_object_or_404(Product, id=product_id)
+                    quantity = float(quantities[i])
+                    
+                    # التحقق من توفر الكمية في المستودع المصدر
+                    current_stock = product.get_stock_in_warehouse(from_warehouse)
+                    if current_stock < quantity:
+                        messages.error(request, f'الكمية المتاحة للمنتج {product.name} في المستودع {from_warehouse.name} هي {current_stock}')
+                        transfer.delete()  # حذف التحويل إذا فشل
+                        return self.get(request)
+                    
+                    # إنشاء عنصر التحويل
+                    WarehouseTransferItem.objects.create(
+                        transfer=transfer,
+                        product=product,
+                        quantity=quantity
+                    )
+                    
+                    # إنشاء حركات المخزون
+                    # حركة صادرة من المستودع المصدر
+                    InventoryMovement.objects.create(
+                        product=product,
+                        warehouse=from_warehouse,
+                        movement_type='out',
+                        quantity=quantity,
+                        unit_cost=product.cost_price,
+                        total_cost=quantity * product.cost_price,
+                        reference_type='warehouse_transfer',
+                        reference_id=transfer.id,
+                        notes=f'تحويل إلى {to_warehouse.name}',
+                        created_by=request.user,
+                        date=transfer.transfer_date
+                    )
+                    
+                    # حركة واردة إلى المستودع الهدف
+                    InventoryMovement.objects.create(
+                        product=product,
+                        warehouse=to_warehouse,
+                        movement_type='in',
+                        quantity=quantity,
+                        unit_cost=product.cost_price,
+                        total_cost=quantity * product.cost_price,
+                        reference_type='warehouse_transfer',
+                        reference_id=transfer.id,
+                        notes=f'تحويل من {from_warehouse.name}',
+                        created_by=request.user,
+                        date=transfer.transfer_date
+                    )
+            
+            # تسجيل النشاط
+            AuditLog.objects.create(
+                user=request.user,
+                action_type='create',
+                content_type='WarehouseTransfer',
+                object_id=transfer.id,
+                description=f'تم إنشاء تحويل مخزون من {from_warehouse.name} إلى {to_warehouse.name}',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            
+            messages.success(request, f'تم إنشاء التحويل بنجاح!')
+            return redirect('inventory:transfer_list')
+            
+        except Exception as e:
+            messages.error(request, f'حدث خطأ أثناء إنشاء التحويل: {str(e)}')
+            return self.get(request)
 
 class LowStockView(LoginRequiredMixin, TemplateView):
     template_name = 'inventory/low_stock.html'
@@ -1023,5 +1139,3 @@ def export_inventory_excel(request):
 
     # تسجيل النشاط
     log_export_activity(request, str(_('Inventory List')), filename, 'Excel')
-
-    return response
