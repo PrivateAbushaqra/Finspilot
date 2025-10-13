@@ -170,8 +170,8 @@
                         <div class="col-md-4">
                             <div class="balance-card text-center">
                                 <h5 class="text-muted mb-2">{% trans "Current Balance" %}</h5>
-                                <h2 class="mb-0 {% if account.balance > 0 %}text-success{% elif account.balance < 0 %}text-danger{% else %}text-muted{% endif %}">
-                                    {{ account.balance|floatformat:3 }} {{ account.currency }}
+                                <h2 class="mb-0 {% if actual_balance > 0 %}text-success{% elif actual_balance < 0 %}text-danger{% else %}text-muted{% endif %}">
+                                    {{ actual_balance|floatformat:3 }} {{ account.currency }}
                                 </h2>
                             </div>
                         </div>
@@ -195,13 +195,13 @@
                 </div>
                 <div class="col-md-3">
                     <div class="stats-card danger">
-                        <h4>{{ transfers_from.count }}</h4>
+                        <h4>{{ transfers_from.count|add:cashbox_transfers_from.count }}</h4>
                         <p class="mb-0">{% trans "Outgoing Transfers" %}</p>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="stats-card">
-                        <h4>{{ transfers_to.count }}</h4>
+                        <h4>{{ transfers_to.count|add:cashbox_transfers_to.count }}</h4>
                         <p class="mb-0">{% trans "Incoming Transfers" %}</p>
                     </div>
                 </div>
@@ -262,7 +262,7 @@
                             </h5>
                         </div>
                         <div class="card-body">
-                            {% if transfers_from or transfers_to %}
+                            {% if transfers_from or transfers_to or cashbox_transfers_from or cashbox_transfers_to %}
                                 {% for transfer in transfers_from|slice:":5" %}
                                 <div class="transaction-card p-3">
                                     <div class="d-flex justify-content-between align-items-center">
@@ -292,6 +292,46 @@
                                                 {% trans "Incoming Transfer" %}
                                             </h6>
                                             <p class="mb-1 text-muted">{% trans "From" %}: {{ transfer.from_account.name }}</p>
+                                            <small class="text-muted">{{ transfer.date }}</small>
+                                        </div>
+                                        <div class="text-end">
+                                            <h5 class="mb-0 text-success">
+                                                +{{ transfer.amount|floatformat:3 }}
+                                            </h5>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                
+                                {% for transfer in cashbox_transfers_from|slice:":5" %}
+                                <div class="transaction-card p-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">
+                                                <i class="fas fa-arrow-right text-danger me-1"></i>
+                                                {% trans "Transfer to Cashbox" %}
+                                            </h6>
+                                            <p class="mb-1 text-muted">{% trans "To" %}: {{ transfer.to_cashbox.name }}</p>
+                                            <small class="text-muted">{{ transfer.date }}</small>
+                                        </div>
+                                        <div class="text-end">
+                                            <h5 class="mb-0 text-danger">
+                                                -{{ transfer.amount|floatformat:3 }}
+                                            </h5>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                
+                                {% for transfer in cashbox_transfers_to|slice:":5" %}
+                                <div class="transaction-card p-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">
+                                                <i class="fas fa-arrow-left text-success me-1"></i>
+                                                {% trans "Transfer from Cashbox" %}
+                                            </h6>
+                                            <p class="mb-1 text-muted">{% trans "From" %}: {{ transfer.from_cashbox.name }}</p>
                                             <small class="text-muted">{{ transfer.date }}</small>
                                         </div>
                                         <div class="text-end">

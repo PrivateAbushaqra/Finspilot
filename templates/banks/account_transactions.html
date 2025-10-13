@@ -209,11 +209,19 @@ table.dataTable thead th.sorting:after {
                             </td>
                             <td>
                                 {% if transaction.reference_number and transaction.transfer_id %}
-                                    <a href="{% url 'banks:transfer_detail' transaction.transfer_id %}" 
-                                       class="text-decoration-none" 
-                                       title="{% trans "View Transfer Details" %}">
-                                        {{ transaction.reference_number }}
-                                    </a>
+                                    {% if transaction.transfer_type == 'cashbox_transfer' %}
+                                        <a href="{% url 'banks:cashbox_transfer_detail' transaction.transfer_id %}" 
+                                           class="text-decoration-none" 
+                                           title="{% trans "View Transfer Details" %}">
+                                            {{ transaction.reference_number }}
+                                        </a>
+                                    {% else %}
+                                        <a href="{% url 'banks:transfer_detail' transaction.transfer_id %}" 
+                                           class="text-decoration-none" 
+                                           title="{% trans "View Transfer Details" %}">
+                                            {{ transaction.reference_number }}
+                                        </a>
+                                    {% endif %}
                                 {% elif transaction.reference_number %}
                                     {{ transaction.reference_number }}
                                 {% else %}

@@ -135,13 +135,14 @@ class InventoryListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
                 'product_code': product.code,
                 'quantity': current_stock,
                 'value': float(value),
+                'unit_price': float(value / current_stock) if current_stock > 0 else 0,
                 'sale_price': float(product.sale_price),
                 'warehouse_name': 'المستودع الرئيسي',
                 'stock_level': stock_level
             })
         
         # Sort inventory items
-        if sort_by in ['product_name', 'product_code', 'quantity', 'value', 'stock_level', 'warehouse_name']:
+        if sort_by in ['product_name', 'product_code', 'quantity', 'unit_price', 'value', 'stock_level', 'warehouse_name']:
             reverse_sort = sort_direction == 'desc'
             inventory_items = sorted(inventory_items, key=lambda x: x.get(sort_by, ''), reverse=reverse_sort)
         

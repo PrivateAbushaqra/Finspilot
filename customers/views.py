@@ -133,17 +133,17 @@ class CustomerListView(LoginRequiredMixin, ListView):
         all_customers = CustomerSupplier.objects.filter(type__in=['customer', 'both'])
         
         # حساب الإحصائيات بناءً على current_balance (المحسوب من المعاملات)
-        total_debt = 0
-        customer_credit = 0
+        total_debt = 0  # إجمالي الديون (العملاء المدينون للشركة)
+        customer_credit = 0  # إجمالي الدائنين (الشركة مدينة للعملاء)
         total_balance = 0
         
         for customer in all_customers:
             balance = customer.current_balance
             total_balance += balance
-            if balance < 0:
-                total_debt += abs(balance)
-            elif balance > 0:
-                customer_credit += balance
+            if balance > 0:
+                total_debt += balance  # العميل مدين للشركة
+            elif balance < 0:
+                customer_credit += abs(balance)  # الشركة مدينة للعميل
         
         context.update({
             'total_customers': all_customers.count(),
@@ -354,6 +354,9 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
         customer_supplier = get_object_or_404(CustomerSupplier, pk=pk)
         
         try:
+            # حساب الرصيد الحالي
+            current_balance = customer_supplier.current_balance
+            
             # الحصول على البيانات من النموذج
             name = request.POST.get('name', '').strip()
             email = request.POST.get('email', '').strip()
@@ -419,7 +422,7 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
             messages.success(
                 request, 
                 f'تم تحديث {type_display} "{name}" بنجاح!\n'
-                f'الرصيد الجديد: {balance:.3f} {currency_symbol}'
+                f'الرصيد الجديد: {current_balance:.3f} {currency_symbol}'
             )
             
             # إعادة توجيه حسب النوع
@@ -573,6 +576,21 @@ class CustomerSupplierDeleteView(LoginRequiredMixin, View):
                 # حذف إشعارات ائتمان المبيعات
                 cursor.execute("""
                     DELETE FROM sales_salescreditnote WHERE customer_id = %s
+                """, [customer_id])
+                
+                # حذف القيود المحاسبية المرتبطة بالفواتير
+                cursor.execute("""
+                    DELETE FROM journal_journalentry 
+                    WHERE sales_invoice_id IN (
+                        SELECT id FROM sales_salesinvoice WHERE customer_id = %s
+                    )
+                """, [customer_id])
+                
+                cursor.execute("""
+                    DELETE FROM journal_journalentry 
+                    WHERE purchase_invoice_id IN (
+                        SELECT id FROM purchases_purchaseinvoice WHERE supplier_id = %s
+                    )
                 """, [customer_id])
                 
                 # 2. حذف حركات المخزون المرتبطة

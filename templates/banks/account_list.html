@@ -330,8 +330,8 @@
                                         </div>
                                         <div class="col-md-2">
                                             <small class="text-muted">{% trans "Balance" %}:</small>
-                                            <div class="{% if account.balance >= 0 %}balance-positive{% else %}balance-negative{% endif %}">
-                                                {{ account.balance|floatformat:3 }} {{ account.currency }}
+                                            <div class="{% if account.actual_balance >= 0 %}balance-positive{% else %}balance-negative{% endif %}">
+                                                {{ account.actual_balance|floatformat:3 }} {{ account.currency }}
                                             </div>
                                         </div>
                                         <div class="col-md-2">
@@ -384,7 +384,7 @@
                                                 <button class="btn btn-outline-danger delete-account-btn" 
                                                         data-account-id="{{ account.pk }}" 
                                                         data-account-name="{{ account.name }}" 
-                                                        data-account-balance="{{ account.balance }}"
+                                                        data-account-balance="{{ account.actual_balance }}"
                                                         title="{% trans 'Delete Account' %}">
                                                     <i class="fas fa-trash"></i>
                                                 </button>

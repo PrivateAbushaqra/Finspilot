@@ -53,7 +53,14 @@ class BankAccountListView(LoginRequiredMixin, BanksViewPermissionMixin, Template
         )
         
         accounts = BankAccount.objects.all()
-        context['accounts'] = accounts
+        
+        # إضافة الرصيد الفعلي لكل حساب
+        accounts_with_balance = []
+        for account in accounts:
+            account.actual_balance = account.calculate_actual_balance()
+            accounts_with_balance.append(account)
+        
+        context['accounts'] = accounts_with_balance
         context['total_accounts'] = accounts.count()
         context['active_accounts'] = accounts.filter(is_active=True).count()
         context['inactive_accounts'] = accounts.filter(is_active=False).count()
@@ -68,7 +75,9 @@ class BankAccountListView(LoginRequiredMixin, BanksViewPermissionMixin, Template
             currency_code = account.currency  # CharField
             if currency_code not in balances_by_currency:
                 balances_by_currency[currency_code] = 0
-            balances_by_currency[currency_code] += account.balance
+            # استخدام الرصيد المحسوب من الحركات بدلاً من الحقل المحفوظ
+            actual_balance = account.calculate_actual_balance()
+            balances_by_currency[currency_code] += actual_balance
         
         context['balances_by_currency'] = balances_by_currency
         
@@ -883,7 +892,7 @@ class BankCashboxTransferCreateView(LoginRequiredMixin, View):
                         transaction_type='withdrawal',
                         amount=total_amount,
                         description=f'تحويل إلى صندوق {cashbox.name} - شيك: {check_number}',
-                        reference_number=check_number,
+                        reference_number=transfer_number,
                         date=date,
                         created_by=request.user
                     )
@@ -942,7 +951,7 @@ class BankCashboxTransferCreateView(LoginRequiredMixin, View):
                         transaction_type='deposit',
                         amount=amount * exchange_rate,
                         description=f'تحويل من صندوق {cashbox.name} - شيك: {check_number}',
-                        reference_number=check_number,
+                        reference_number=transfer_number,
                         date=date,
                         created_by=request.user
                     )
@@ -983,6 +992,9 @@ class BankAccountDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         account = self.get_object()
         
+        # حساب الرصيد الفعلي من الحركات
+        actual_balance = account.calculate_actual_balance()
+        
         # الحصول على الحركات الأخيرة للحساب
         from .models import BankTransaction
         recent_transactions = BankTransaction.objects.filter(
@@ -992,6 +1004,11 @@ class BankAccountDetailView(LoginRequiredMixin, DetailView):
         # الحصول على التحويلات المرتبطة بالحساب
         transfers_from = BankTransfer.objects.filter(from_account=account)[:10]
         transfers_to = BankTransfer.objects.filter(to_account=account)[:10]
+        
+        # الحصول على التحويلات بين البنك والصناديق
+        from cashboxes.models import CashboxTransfer
+        cashbox_transfers_from = CashboxTransfer.objects.filter(from_bank=account)[:10]
+        cashbox_transfers_to = CashboxTransfer.objects.filter(to_bank=account)[:10]
         
         # إحصائيات الحساب
         from django.db.models import Sum, Count
@@ -1016,8 +1033,11 @@ class BankAccountDetailView(LoginRequiredMixin, DetailView):
             'recent_transactions': recent_transactions,
             'transfers_from': transfers_from,
             'transfers_to': transfers_to,
+            'cashbox_transfers_from': cashbox_transfers_from,
+            'cashbox_transfers_to': cashbox_transfers_to,
             'this_month_deposits': this_month_deposits,
             'this_month_withdrawals': this_month_withdrawals,
+            'actual_balance': actual_balance,
             'currencies': Currency.get_active_currencies(),
         })
         
@@ -1311,13 +1331,46 @@ class BankAccountTransactionsView(LoginRequiredMixin, TemplateView):
         for transaction in transactions:
             if transaction.reference_number:
                 from .models import BankTransfer
+                from cashboxes.models import CashboxTransfer
                 transfer = BankTransfer.objects.filter(transfer_number=transaction.reference_number).first()
                 if transfer:
                     transaction.transfer_id = transfer.pk
+                    transaction.transfer_type = 'bank_transfer'
                 else:
-                    transaction.transfer_id = None
+                    # البحث عن CashboxTransfer بطرق مختلفة
+                    cashbox_transfer = None
+                    
+                    # أولاً، البحث بـ transfer_number
+                    cashbox_transfer = CashboxTransfer.objects.filter(transfer_number=transaction.reference_number).first()
+                    
+                    if not cashbox_transfer:
+                        # البحث بالحساب والمبلغ والتاريخ
+                        cashbox_transfers = CashboxTransfer.objects.filter(
+                            date=transaction.date,
+                            created_by=transaction.created_by
+                        )
+                        for ct in cashbox_transfers:
+                            expected_amount = ct.amount
+                            if ct.fees and transaction.transaction_type == 'withdrawal' and hasattr(ct, 'from_bank') and ct.from_bank == transaction.bank:
+                                expected_amount += ct.fees
+                            elif ct.fees and transaction.transaction_type == 'deposit' and hasattr(ct, 'to_bank') and ct.to_bank == transaction.bank:
+                                expected_amount = ct.amount * ct.exchange_rate
+                            
+                            if abs(transaction.amount - expected_amount) < 0.01:
+                                if ((hasattr(ct, 'from_bank') and ct.from_bank == transaction.bank) or
+                                    (hasattr(ct, 'to_bank') and ct.to_bank == transaction.bank)):
+                                    cashbox_transfer = ct
+                                    break
+                    
+                    if cashbox_transfer:
+                        transaction.transfer_id = cashbox_transfer.pk
+                        transaction.transfer_type = 'cashbox_transfer'
+                    else:
+                        transaction.transfer_id = None
+                        transaction.transfer_type = None
             else:
                 transaction.transfer_id = None
+                transaction.transfer_type = None
         
         # معلومات من الجلسة إذا كان هذا جزء من عملية حذف
         delete_mode = self.request.session.get('delete_account_id') == account.pk
