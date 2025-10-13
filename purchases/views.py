@@ -13,6 +13,7 @@ from core.signals import log_activity
 import logging
 from datetime import datetime, timedelta, date
 from decimal import Decimal, ROUND_HALF_UP
+import json
 from .models import PurchaseInvoice, PurchaseInvoiceItem, PurchaseReturn, PurchaseReturnItem, PurchaseReturn, PurchaseReturnItem
 from customers.models import CustomerSupplier
 from products.models import Product, Category
@@ -401,6 +402,21 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
             product.last_purchase_price = product.get_last_purchase_price()
             products_with_prices.append(product)
         
+        # إعداد بيانات المنتجات للـ JavaScript
+        products_data = []
+        for product in products:
+            products_data.append({
+                'id': product.id,
+                'code': product.code,
+                'name': product.name,
+                'price': float(product.get_last_purchase_price() or 0),
+                'tax_rate': float(product.tax_rate or 0),
+                'current_stock': float(product.current_stock or 0),
+                'description': product.description or ''
+            })
+        
+        print(f"Products count: {len(products)}, products_data count: {len(products_data)}")
+        
         # إضافة رقم الفاتورة التالي من DocumentSequence
         try:
             sequence = DocumentSequence.objects.get(document_type='purchase_invoice')
@@ -426,6 +442,7 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
             ).order_by('name'),
             'default_warehouse': request.user.default_purchase_warehouse,
             'products': products_with_prices,
+            'products_json': json.dumps(products_data),
             'categories': Category.objects.filter(is_active=True).order_by('name'),
             'next_invoice_number': next_invoice_number
         }

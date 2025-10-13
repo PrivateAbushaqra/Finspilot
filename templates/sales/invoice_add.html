@@ -98,8 +98,8 @@
     }
     
     .stock-warning {
-        background-color: #ffe6e6 !important;
-        border-left: 4px solid #dc3545 !important;
+        background-color: #fff3cd !important;
+        border-left: 4px solid #ffc107 !important;
     }
     
     .product-code-input {
@@ -108,7 +108,17 @@
     }
     
     .products-table {
-        min-height: 200px;
+        height: auto;
+        overflow-y: visible;
+        position: relative;
+        z-index: 10;
+        padding-bottom: 50px; /* مسافة أساسية أسفل الجدول */
+    }
+    
+    /* Ensure dropdowns appear above everything */
+    .product-dropdown, .product-code-dropdown {
+        z-index: 1000 !important;
+        position: absolute !important;
     }
     
     .btn-remove-product {
@@ -1028,6 +1038,15 @@ function addProductRow() {
         }
     }, 100);
     
+    // زيادة المسافة الفارغة أسفل الجدول مع كل صف جديد
+    const productsTable = document.querySelector('.products-table');
+    if (productsTable) {
+        const currentPadding = parseInt(window.getComputedStyle(productsTable).paddingBottom) || 50;
+        const newPadding = currentPadding + 20; // زيادة 20px مع كل صف جديد
+        productsTable.style.paddingBottom = newPadding + 'px';
+        console.log('✅ Increased table bottom padding to:', newPadding + 'px');
+    }
+    
     // Mark as having unsaved changes
     hasUnsavedChanges = true;
     
@@ -1053,6 +1072,15 @@ function removeProductRow(rowId) {
         
         row.remove();
         calculateGrandTotal();
+        
+        // تقليل المسافة الفارغة أسفل الجدول عند حذف صف
+        const productsTable = document.querySelector('.products-table');
+        if (productsTable) {
+            const currentPadding = parseInt(window.getComputedStyle(productsTable).paddingBottom) || 50;
+            const newPadding = Math.max(50, currentPadding - 20); // تقليل 20px، لكن لا تقل عن 50px
+            productsTable.style.paddingBottom = newPadding + 'px';
+            console.log('✅ Decreased table bottom padding to:', newPadding + 'px');
+        }
     }
 }
 
@@ -1982,16 +2010,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 const option = document.createElement('button');
                 option.type = 'button';
                 option.className = 'dropdown-item';
-                option.innerHTML = `<strong>${product.name}</strong> (${product.code}) - ${product.current_stock} available`;
-                option.setAttribute('data-product', JSON.stringify(product));
-
+                option.textContent = product.name;
+                option.setAttribute('data-id', product.id);
+                
                 option.addEventListener('click', function() {
                     // Fill all product fields
                     productIdInput.value = product.id;
                     codeInput.value = product.code;
                     nameInput.value = product.name;
                     if (availableQuantityInput) {
-                        availableQuantityInput.value = formatCurrency(parseFloat(product.current_stock || 0), 3);
+                        availableQuantityInput.value = formatCurrency(parseFloat(availableQuantity || 0), 3);
                     }
                     
                     // Calculate displayed price as sale_price / (1 + tax_rate/100)
@@ -2030,9 +2058,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     const option = document.createElement('button');
                     option.type = 'button';
                     option.className = 'dropdown-item';
-                    option.innerHTML = `<strong>${product.name}</strong> (${product.code}) - ${product.current_stock} available`;
-                    option.setAttribute('data-product', JSON.stringify(product));
-
+                    option.textContent = product.name;
+                    option.setAttribute('data-id', product.id);
+                    
                     option.addEventListener('click', function() {
                         // Fill all product fields
                         productIdInput.value = product.id;

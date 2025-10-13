@@ -30,9 +30,9 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        check_only = options['check_only']
+        check_only = options.get('check_only', False)
         account_code = options.get('account_code')
-        auto_fix = options['fix']
+        auto_fix = options.get('fix', False)
 
         self.stdout.write("=" * 80)
         self.stdout.write(self.style.SUCCESS("🔍 فحص أرصدة الحسابات المحاسبية"))

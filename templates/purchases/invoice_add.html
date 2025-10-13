@@ -238,8 +238,8 @@
                                 <div>
                                     <!--<button type="button" class="btn btn-warning me-2" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
                                         <i class="fas fa-folder-plus me-2"></i>
-                                        {% trans "Add Category" %}
-                                    </button>-->
+                                        {% trans "أضف فئة" %}-->
+                                    </button>
                                     <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#addProductModal">
                                         <i class="fas fa-plus me-2"></i>
                                         {% trans "Create Product" %}
@@ -1590,8 +1590,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Filter products
             const filteredProducts = products.filter(product =>
                 product.name.toLowerCase().includes(searchTerm) ||
-                product.code.toLowerCase().includes(searchTerm) ||
-                product.description.toLowerCase().includes(searchTerm)
+                product.code.toLowerCase().includes(searchTerm)
             );
 
             if (filteredProducts.length === 0) {
@@ -1644,7 +1643,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (nameInput.value.trim() === '') {
                 // Show all products
                 dropdown.innerHTML = '';
-                products.slice(0, 20).forEach(product => { // Show first 20 products
+                products.slice(0, 10).forEach(product => { // Show first 10 products
                     const option = document.createElement('button');
                     option.type = 'button';
                     option.className = 'dropdown-item';
@@ -1724,9 +1723,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Filter products by code
             const filteredProducts = products.filter(product =>
-                product.code.toLowerCase().includes(searchTerm) ||
-                product.name.toLowerCase().includes(searchTerm) ||
-                product.description.toLowerCase().includes(searchTerm)
+                product.code.toLowerCase().includes(searchTerm)
             );
 
             if (filteredProducts.length === 0) {
@@ -2018,24 +2015,16 @@ function proceedToUrl(url) {
 }
 
 // JavaScript للتعامل مع نافذة إضافة الفئة
-document.addEventListener('DOMContentLoaded', function() {
-    const addCategoryModal = document.getElementById('addCategoryModal');
-    const addCategoryForm = document.getElementById('addCategoryForm');
-    const saveCategoryBtn = document.getElementById('saveCategoryBtn');
-    const categoryParentSelect = document.getElementById('categoryParent');
-
-    console.log('DOM loaded, initializing category modal...');
-    console.log('addCategoryModal:', addCategoryModal);
-    console.log('addCategoryForm:', addCategoryForm);
-    console.log('saveCategoryBtn:', saveCategoryBtn);
+const addCategoryModal = document.getElementById('addCategoryModal');
+const addCategoryForm = document.getElementById('addCategoryForm');
+const saveCategoryBtn = document.getElementById('saveCategoryBtn');
+const categoryParentSelect = document.getElementById('categoryParent');
 
 // تحميل قائمة الفئات الأساسية عند فتح النافذة
 if (addCategoryModal) {
     addCategoryModal.addEventListener('show.bs.modal', function() {
         // تحميل قائمة الفئات الأساسية
-        // استخدام المسار الكامل بدلاً من template tag لتجنب مشاكل إعادة التوجيه
-        const categoryApiUrl = window.location.origin + '/{{ LANGUAGE_CODE }}/products/api/category/add/';
-        fetch(categoryApiUrl, {
+        fetch('{% url "products:category_add_ajax" %}', {
             method: 'GET',
             headers: {
                 'X-Requested-With': 'XMLHttpRequest'
@@ -2074,72 +2063,37 @@ if (addCategoryModal) {
             element.remove();
         });
     });
-
-    // إضافة event listener للزر عند فتح النافذة
-    addCategoryModal.addEventListener('shown.bs.modal', function() {
-        console.log('Category modal is fully shown');
-        // لا حاجة لإضافة event listener هنا، سيتم إضافته في النهاية
-    });
 }
 
 // معالجة إرسال نموذج الفئة
-console.log('addCategoryForm element:', addCategoryForm);
-console.log('saveCategoryBtn element:', saveCategoryBtn);
+if (addCategoryForm) {
+    addCategoryForm.addEventListener('submit', function(e) {
+        e.preventDefault();
 
-if (addCategoryForm && saveCategoryBtn) {
-    console.log('Category form and button found, adding event listeners');
-    
-    // دالة إرسال النموذج
-    const submitCategoryForm = function() {
-        console.log('submitCategoryForm called');
-        
         // تعطيل الزر وإظهار التحميل
         const spinner = saveCategoryBtn.querySelector('.spinner-border');
         const btnText = saveCategoryBtn.querySelector('.btn-text');
         const icon = saveCategoryBtn.querySelector('.fas');
 
         saveCategoryBtn.disabled = true;
-        if (spinner) spinner.classList.remove('d-none');
-        if (btnText) btnText.textContent = 'جاري الحفظ...';
-        if (icon) icon.style.display = 'none';
+        spinner.classList.remove('d-none');
+        btnText.textContent = 'جاري الحفظ...';
+        icon.style.display = 'none';
 
         // إرسال البيانات
         const formData = new FormData(addCategoryForm);
-        // استخدام المسار الكامل بدلاً من template tag لتجنب مشاكل إعادة التوجيه
-        const url = window.location.origin + '/{{ LANGUAGE_CODE }}/products/api/category/add/';
-        console.log('Form data collected:', Object.fromEntries(formData));
-        console.log('Target URL:', url);
 
-        const csrfToken = addCategoryForm.querySelector('[name=csrfmiddlewaretoken]');
-        console.log('CSRF token element:', csrfToken);
-        console.log('CSRF token value:', csrfToken ? csrfToken.value : 'NOT FOUND');
-
-        fetch(url, {
+        fetch('{% url "products:category_add_ajax" %}', {
             method: 'POST',
             body: formData,
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': csrfToken ? csrfToken.value : ''
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
             }
         })
-        .then(response => {
-            console.log('Response status:', response.status);
-            console.log('Response headers:', Object.fromEntries(response.headers));
-            
-            // التحقق من redirect (في حالة عدم تسجيل الدخول)
-            if (response.redirected) {
-                console.error('Request was redirected to:', response.url);
-                alert('يجب تسجيل الدخول أولاً!');
-                window.location.href = response.url;
-                return;
-            }
-            
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            console.log('Response data:', data);
-            
-            if (data && data.success) {
+            if (data.success) {
                 // إظهار رسالة نجاح
                 const alertDiv = document.createElement('div');
                 alertDiv.className = 'alert alert-success alert-dismissible fade show';
@@ -2151,29 +2105,16 @@ if (addCategoryForm && saveCategoryBtn) {
 
                 // إدراج الرسالة في أعلى الصفحة
                 const container = document.querySelector('.container-fluid');
-                if (container) {
-                    container.insertBefore(alertDiv, container.firstChild);
-                    // إزالة الرسالة بعد 5 ثوانٍ
-                    setTimeout(() => {
-                        if (alertDiv && alertDiv.parentNode) {
-                            alertDiv.remove();
-                        }
-                    }, 5000);
-                }
+                container.insertBefore(alertDiv, container.firstChild);
 
                 // إغلاق النافذة
                 const modal = bootstrap.Modal.getInstance(addCategoryModal);
-                if (modal) {
-                    modal.hide();
-                }
+                modal.hide();
 
                 // تحديث قائمة الفئات المتاحة في modal المنتج
-                if (typeof addProductModal !== 'undefined' && addProductModal && typeof productCategorySearch !== 'undefined' && productCategorySearch && productCategorySearch.length > 0) {
+                if (addProductModal && productCategorySearch.length > 0) {
                     // إضافة الفئة الجديدة إلى قائمة الفئات
                     if (data.category) {
-                        if (!window.productCategories) {
-                            window.productCategories = [];
-                        }
                         window.productCategories.push({
                             id: data.category.id,
                             name: data.category.name,
@@ -2187,7 +2128,7 @@ if (addCategoryForm && saveCategoryBtn) {
                         productCategorySearch.attr('data-categories', updatedData);
                         
                         // تحديث قيمة البحث إذا كانت الفئة المحددة
-                        if (typeof productCategoryHidden !== 'undefined' && productCategoryHidden && productCategoryHidden.val() == data.category.id) {
+                        if (productCategoryHidden.val() == data.category.id) {
                             productCategorySearch.val(data.category.name);
                         }
                     }
@@ -2195,110 +2136,24 @@ if (addCategoryForm && saveCategoryBtn) {
 
             } else {
                 // إظهار رسالة خطأ
-                const errorMessage = data && data.error ? data.error : 'حدث خطأ غير معروف';
-                console.error('خطأ في إضافة الفئة:', errorMessage);
-                
-                // إظهار رسالة خطأ في النافذة
-                const errorAlert = document.createElement('div');
-                errorAlert.className = 'alert alert-danger alert-dismissible fade show mt-3';
-                errorAlert.innerHTML = `
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    خطأ: ${errorMessage}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                `;
-                
-                // إدراج رسالة الخطأ في النافذة
-                const modalBody = addCategoryModal.querySelector('.modal-body');
-                if (modalBody) {
-                    // إزالة رسائل الخطأ القديمة
-                    const oldErrors = modalBody.querySelectorAll('.alert-danger');
-                    oldErrors.forEach(err => err.remove());
-                    
-                    modalBody.appendChild(errorAlert);
-                    
-                    // إزالة الرسالة بعد 5 ثوانٍ
-                    setTimeout(() => {
-                        if (errorAlert && errorAlert.parentNode) {
-                            errorAlert.remove();
-                        }
-                    }, 5000);
-                }
+                alert('خطأ: ' + data.error);
             }
         })
         .catch(error => {
-            console.error('Network error occurred during category creation:', error);
-            console.error('Error details:', {
-                message: error.message,
-                stack: error.stack,
-                name: error.name
-            });
-            
-            // إظهار رسالة خطأ في النافذة
-            const errorAlert = document.createElement('div');
-            errorAlert.className = 'alert alert-danger alert-dismissible fade show mt-3';
-            errorAlert.innerHTML = `
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                خطأ: حدث خطأ في الاتصال بالخادم. يرجى المحاولة مرة أخرى.
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
-            
-            const modalBody = addCategoryModal.querySelector('.modal-body');
-            if (modalBody) {
-                const oldErrors = modalBody.querySelectorAll('.alert-danger');
-                oldErrors.forEach(err => err.remove());
-                modalBody.appendChild(errorAlert);
-            }
+            console.error('خطأ:', error);
+            alert('حدث خطأ في الشبكة. يرجى المحاولة مرة أخرى.');
         })
         .finally(() => {
             // إعادة تفعيل الزر
             saveCategoryBtn.disabled = false;
-            const spinner = saveCategoryBtn.querySelector('.spinner-border');
-            const btnText = saveCategoryBtn.querySelector('.btn-text');
-            const icon = saveCategoryBtn.querySelector('.fas');
-            if (spinner) spinner.classList.add('d-none');
-            if (btnText) btnText.textContent = 'حفظ الفئة';
-            if (icon) icon.style.display = 'inline';
+            spinner.classList.add('d-none');
+            btnText.textContent = 'حفظ الفئة';
+            icon.style.display = 'inline';
         });
-    }
-    
-    // إضافة event listener للزر
-    saveCategoryBtn.addEventListener('click', function(e) {
-        console.log('Save button clicked - event listener working!');
-        e.preventDefault();
-        
-        // التحقق من صحة النموذج
-        if (addCategoryForm.checkValidity()) {
-            console.log('Form is valid, submitting...');
-            submitCategoryForm();
-        } else {
-            console.log('Form is invalid, showing validation');
-            addCategoryForm.reportValidity();
-        }
     });
-    
-    // إضافة event listener للنموذج أيضاً
-    addCategoryForm.addEventListener('submit', function(e) {
-        console.log('Category form submit event triggered');
-        e.preventDefault();
-        
-        // التحقق من صحة النموذج
-        console.log('Checking form validity...');
-        if (!addCategoryForm.checkValidity()) {
-            console.log('Form validation failed - showing browser validation');
-            addCategoryForm.reportValidity();
-            return;
-        }
-        
-        console.log('Form validation passed - proceeding with submission');
-        submitCategoryForm();
-    });
-} else {
-    console.error('Category form or save button not found!');
-    if (!addCategoryForm) console.error('addCategoryForm is missing');
-    if (!saveCategoryBtn) console.error('saveCategoryBtn is missing');
 }
 
-
+// JavaScript للتعامل مع نافذة إضافة المنتج
 const addProductModal = document.getElementById('addProductModal');
 const addProductForm = document.getElementById('addProductForm');
 const saveProductBtn = document.getElementById('saveProductBtn');
@@ -2991,7 +2846,7 @@ $(document).ready(function() {
                         <i class="fas fa-times me-2"></i>
                         {% trans "Cancel" %}
                     </button>
-                    <button type="button" class="btn btn-warning" id="saveCategoryBtn">
+                    <button type="submit" class="btn btn-warning" id="saveCategoryBtn">
                         <span class="spinner-border spinner-border-sm d-none me-2" role="status" aria-hidden="true"></span>
                         <i class="fas fa-save me-2"></i>
                         <span class="btn-text">{% trans "Save Category" %}</span>

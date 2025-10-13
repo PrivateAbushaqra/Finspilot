@@ -406,8 +406,24 @@ def create_cashbox_transfer_journal_entry(sender, instance, created, **kwargs):
         try:
             user = getattr(instance, 'created_by', None)
             if user:
-                JournalService.create_cashbox_transfer_entry(instance, user)
-                logger.info(f"تم إنشاء قيد محاسبي تلقائياً للتحويل {instance.transfer_number}")
+                journal_entry = JournalService.create_cashbox_transfer_entry(instance, user)
+                if journal_entry:
+                    logger.info(f"تم إنشاء قيد محاسبي تلقائياً للتحويل {instance.transfer_number}: {journal_entry.entry_number}")
+                    
+                    # تسجيل في audit log
+                    try:
+                        from core.models import AuditLog
+                        AuditLog.objects.create(
+                            user=user,
+                            action_type='create',
+                            content_type='JournalEntry',
+                            object_id=journal_entry.pk,
+                            description=f'إنشاء قيد تحويل تلقائياً: {journal_entry.entry_number} للتحويل {instance.transfer_number}'
+                        )
+                    except Exception as audit_error:
+                        logger.error(f"خطأ في تسجيل إنشاء قيد التحويل في audit log: {audit_error}")
+                else:
+                    logger.warning(f"لم يتم إنشاء قيد محاسبي للتحويل {instance.transfer_number}")
         except Exception as e:
             logger.error(f"خطأ في إنشاء القيد المحاسبي للتحويل {instance.transfer_number}: {e}")
 
@@ -427,11 +443,37 @@ def delete_cashbox_transfer_journal_entry(sender, instance, **kwargs):
 def update_account_balance_on_save(sender, instance, **kwargs):
     """تحديث رصيد الحساب عند حفظ بند قيد محاسبي"""
     try:
+        old_balance = instance.account.balance
         instance.account.update_account_balance()
-        logger.info(f"تم تحديث رصيد الحساب {instance.account.code} - {instance.account.name}")
+        new_balance = instance.account.balance
+        
+        logger.info(f"تم تحديث رصيد الحساب {instance.account.code} - {instance.account.name}: من {old_balance} إلى {new_balance}")
+        
+        # تسجيل في audit log
+        try:
+            from core.models import AuditLog
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            
+            # محاولة الحصول على مستخدم النظام أو المستخدم الحالي
+            system_user = User.objects.filter(is_superuser=True).first()
+            if system_user:
+                AuditLog.objects.create(
+                    user=system_user,
+                    action_type='update',
+                    content_type='Account',
+                    object_id=instance.account.pk,
+                    description=f'تحديث رصيد الحساب {instance.account.code} - {instance.account.name}: من {old_balance} إلى {new_balance} (بسبب قيد رقم {instance.journal_entry.entry_number})'
+                )
+        except Exception as audit_error:
+            logger.error(f"خطأ في تسجيل تحديث الرصيد في audit log: {audit_error}")
         
         # مزامنة رصيد الصندوق أو البنك إذا كان الحساب مرتبطاً بهم
+        logger.debug(f"استدعاء مزامنة رصيد الصندوق/البنك لحساب {instance.account.code} بعد تحديث الرصيد")
         sync_cashbox_or_bank_balance(instance.account)
+        
+        # إنشاء حركة صندوق/بنك إذا كان الحساب مرتبطاً بهم
+        create_cashbox_bank_transaction(instance)
         
     except Exception as e:
         logger.error(f"خطأ في تحديث رصيد الحساب {instance.account.code}: {e}")
@@ -441,31 +483,209 @@ def update_account_balance_on_save(sender, instance, **kwargs):
 def update_account_balance_on_delete(sender, instance, **kwargs):
     """تحديث رصيد الحساب عند حذف بند قيد محاسبي"""
     try:
+        old_balance = instance.account.balance
         instance.account.update_account_balance()
-        logger.info(f"تم تحديث رصيد الحساب {instance.account.code} - {instance.account.name} بعد الحذف")
+        new_balance = instance.account.balance
+        
+        logger.info(f"تم تحديث رصيد الحساب {instance.account.code} - {instance.account.name} بعد الحذف: من {old_balance} إلى {new_balance}")
+        
+        # تسجيل في audit log
+        try:
+            from core.models import AuditLog
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            
+            # محاولة الحصول على مستخدم النظام
+            system_user = User.objects.filter(is_superuser=True).first()
+            if system_user:
+                AuditLog.objects.create(
+                    user=system_user,
+                    action_type='update',
+                    content_type='Account',
+                    object_id=instance.account.pk,
+                    description=f'تحديث رصيد الحساب بعد حذف بند قيد: {instance.account.code} - {instance.account.name}: من {old_balance} إلى {new_balance}'
+                )
+        except Exception as audit_error:
+            logger.error(f"خطأ في تسجيل تحديث الرصيد في audit log: {audit_error}")
         
         # مزامنة رصيد الصندوق أو البنك إذا كان الحساب مرتبطاً بهم
+        logger.debug(f"استدعاء مزامنة رصيد الصندوق/البنك لحساب {instance.account.code} بعد حذف البند")
         sync_cashbox_or_bank_balance(instance.account)
         
     except Exception as e:
-        logger.error(f"خطأ في تحديث رصيد الحساب {instance.account.code} بعد الحذف: {e}")
+        logger.error(f"خطأ في تحديث رصيد الحساب {instance.account.code}: {e}")
 
 
-def sync_cashbox_or_bank_balance(account):
+def create_cashbox_bank_transaction(journal_line):
     """
-    مزامنة أرصدة الصناديق والبنوك مع أرصدة حساباتهم المحاسبية
+    إنشاء حركة صندوق أو بنك عند إنشاء بند قيد محاسبي يؤثر عليها
     """
     try:
+        logger.debug(f"فحص إنشاء حركة للحساب {journal_line.account.code} - {journal_line.account.name}")
+        
         # التحقق إذا كان حساب صندوق (يبدأ بـ 101)
-        if account.code.startswith('101'):
-            sync_cashbox_balance_from_account(account)
+        if journal_line.account.code.startswith('101'):
+            create_cashbox_transaction_from_journal_line(journal_line)
         
         # التحقق إذا كان حساب بنك (يبدأ بـ 1101)
-        elif account.code.startswith('1101'):
-            sync_bank_balance_from_account(account)
+        elif journal_line.account.code.startswith('1101'):
+            create_bank_transaction_from_journal_line(journal_line)
+        else:
+            logger.debug(f"الحساب {journal_line.account.code} ليس حساب صندوق أو بنك")
             
     except Exception as e:
-        logger.error(f"خطأ في مزامنة رصيد الصندوق/البنك للحساب {account.code}: {e}")
+        logger.error(f"خطأ في إنشاء حركة الصندوق/البنك للحساب {journal_line.account.code}: {e}")
+
+
+def create_cashbox_transaction_from_journal_line(journal_line):
+    """
+    إنشاء حركة صندوق من بند القيد المحاسبي
+    """
+    try:
+        from cashboxes.models import Cashbox, CashboxTransaction
+        
+        # استخراج رقم الصندوق من كود الحساب
+        if journal_line.account.code.startswith('101'):
+            try:
+                cashbox_id = int(journal_line.account.code[3:])
+                cashbox = Cashbox.objects.get(id=cashbox_id)
+                
+                # تحديد نوع الحركة بناءً على المدين/الدائن
+                if journal_line.debit > 0:
+                    # مدين - إيداع أو تحويل وارد
+                    transaction_type = 'deposit'
+                    amount = journal_line.debit
+                elif journal_line.credit > 0:
+                    # دائن - سحب أو تحويل صادر
+                    transaction_type = 'withdrawal'
+                    amount = -journal_line.credit
+                else:
+                    logger.debug(f"بند القيد بدون مبلغ للحساب {journal_line.account.code}")
+                    return
+                
+                # التحقق من عدم وجود حركة مكررة
+                existing_transaction = CashboxTransaction.objects.filter(
+                    cashbox=cashbox,
+                    reference_type='journal_entry',
+                    reference_id=journal_line.journal_entry.id,
+                    date=journal_line.journal_entry.entry_date
+                ).first()
+                
+                if existing_transaction:
+                    logger.debug(f"حركة الصندوق موجودة بالفعل للقيد {journal_line.journal_entry.entry_number}")
+                    return
+                
+                # إنشاء الحركة
+                CashboxTransaction.objects.create(
+                    cashbox=cashbox,
+                    transaction_type=transaction_type,
+                    date=journal_line.journal_entry.entry_date,
+                    amount=amount,
+                    description=f"قيد رقم {journal_line.journal_entry.entry_number}: {journal_line.line_description or journal_line.journal_entry.description}",
+                    reference_type='journal_entry',
+                    reference_id=journal_line.journal_entry.id,
+                    created_by=journal_line.journal_entry.created_by
+                )
+                
+                logger.info(f"تم إنشاء حركة صندوق للقيد {journal_line.journal_entry.entry_number}: {cashbox.name} - {amount}")
+                
+                # تسجيل في audit log
+                try:
+                    from core.models import AuditLog
+                    from django.contrib.auth import get_user_model
+                    User = get_user_model()
+                    
+                    system_user = User.objects.filter(is_superuser=True).first()
+                    if system_user:
+                        AuditLog.objects.create(
+                            user=system_user,
+                            action_type='create',
+                            content_type='CashboxTransaction',
+                            object_id=cashbox.id,
+                            description=f'إنشاء حركة صندوق تلقائياً من قيد {journal_line.journal_entry.entry_number}: {cashbox.name}'
+                        )
+                except Exception as audit_error:
+                    logger.error(f"خطأ في تسجيل إنشاء حركة الصندوق في audit log: {audit_error}")
+                    
+            except (ValueError, Cashbox.DoesNotExist) as e:
+                logger.warning(f"لم يتم العثور على الصندوق المرتبط بحساب {journal_line.account.code}: {e}")
+                
+    except Exception as e:
+        logger.error(f"خطأ في إنشاء حركة الصندوق: {e}")
+
+
+def create_bank_transaction_from_journal_line(journal_line):
+    """
+    إنشاء حركة بنك من بند القيد المحاسبي
+    """
+    try:
+        from banks.models import BankAccount, BankTransaction
+        
+        # استخراج رقم البنك من كود الحساب
+        if journal_line.account.code.startswith('1101'):
+            try:
+                bank_id = int(journal_line.account.code[4:])  # إزالة '1101'
+                bank = BankAccount.objects.get(id=bank_id)
+                
+                # تحديد نوع الحركة بناءً على المدين/الدائن
+                if journal_line.debit > 0:
+                    # مدين - إيداع
+                    transaction_type = 'deposit'
+                    amount = journal_line.debit
+                elif journal_line.credit > 0:
+                    # دائن - سحب
+                    transaction_type = 'withdrawal'
+                    amount = -journal_line.credit
+                else:
+                    logger.debug(f"بند القيد بدون مبلغ للحساب {journal_line.account.code}")
+                    return
+                
+                # التحقق من عدم وجود حركة مكررة
+                existing_transaction = BankTransaction.objects.filter(
+                    bank=bank,
+                    description__icontains=f"قيد رقم {journal_line.journal_entry.entry_number}",
+                    date=journal_line.journal_entry.entry_date
+                ).first()
+                
+                if existing_transaction:
+                    logger.debug(f"حركة البنك موجودة بالفعل للقيد {journal_line.journal_entry.entry_number}")
+                    return
+                
+                # إنشاء الحركة
+                BankTransaction.objects.create(
+                    bank=bank,
+                    transaction_type=transaction_type,
+                    date=journal_line.journal_entry.entry_date,
+                    amount=amount,
+                    description=f"قيد رقم {journal_line.journal_entry.entry_number}: {journal_line.line_description or journal_line.journal_entry.description}",
+                    created_by=journal_line.journal_entry.created_by
+                )
+                
+                logger.info(f"تم إنشاء حركة بنك للقيد {journal_line.journal_entry.entry_number}: {bank.name} - {amount}")
+                
+                # تسجيل في audit log
+                try:
+                    from core.models import AuditLog
+                    from django.contrib.auth import get_user_model
+                    User = get_user_model()
+                    
+                    system_user = User.objects.filter(is_superuser=True).first()
+                    if system_user:
+                        AuditLog.objects.create(
+                            user=system_user,
+                            action_type='create',
+                            content_type='BankTransaction',
+                            object_id=bank.id,
+                            description=f'إنشاء حركة بنك تلقائياً من قيد {journal_line.journal_entry.entry_number}: {bank.name}'
+                        )
+                except Exception as audit_error:
+                    logger.error(f"خطأ في تسجيل إنشاء حركة البنك في audit log: {audit_error}")
+                    
+            except (ValueError, BankAccount.DoesNotExist) as e:
+                logger.warning(f"لم يتم العثور على البنك المرتبط بحساب {journal_line.account.code}: {e}")
+                
+    except Exception as e:
+        logger.error(f"خطأ في إنشاء حركة البنك: {e}")
 
 
 def sync_cashbox_balance_from_account(account):
@@ -475,19 +695,29 @@ def sync_cashbox_balance_from_account(account):
     try:
         from cashboxes.models import Cashbox
         
+        logger.debug(f"بدء مزامنة رصيد الصندوق لحساب {account.code} - {account.name}")
+        
         # البحث عن الصندوق المرتبط بهذا الحساب
-        # طريقة البحث: من خلال اسم الحساب
+        # استخدام كود الحساب لاستخراج رقم الصندوق
         cashbox = None
         
-        # محاولة استخراج رقم الصندوق من اسم الحساب
-        if '1001' in account.name:
-            cashbox = Cashbox.objects.filter(name__icontains='1001').first()
-        elif '1002' in account.name:
-            cashbox = Cashbox.objects.filter(name__icontains='1002').first()
-        else:
-            # محاولة بحث عام
-            account_name_part = account.name.split('-')[-1].strip() if '-' in account.name else account.name
-            cashbox = Cashbox.objects.filter(name__icontains=account_name_part).first()
+        if account.code.startswith('101'):
+            try:
+                # استخراج رقم الصندوق من الكود (101001 -> 1)
+                cashbox_id = int(account.code[3:])  # إزالة '101' والحصول على الرقم
+                cashbox = Cashbox.objects.get(id=cashbox_id)
+                logger.debug(f"تم العثور على الصندوق {cashbox.name} من كود الحساب {account.code}")
+            except (ValueError, Cashbox.DoesNotExist) as e:
+                logger.warning(f"فشل استخراج رقم الصندوق من كود {account.code}: {e}")
+                # إذا فشل، جرب البحث بالاسم كطريقة احتياطية
+                if '1001' in account.name:
+                    cashbox = Cashbox.objects.filter(name__icontains='1001').first()
+                elif '1002' in account.name:
+                    cashbox = Cashbox.objects.filter(name__icontains='1002').first()
+                else:
+                    # محاولة بحث عام
+                    account_name_part = account.name.split('-')[-1].strip() if '-' in account.name else account.name
+                    cashbox = Cashbox.objects.filter(name__icontains=account_name_part).first()
         
         if cashbox:
             # تحديث رصيد الصندوق ليطابق رصيد الحساب المحاسبي
@@ -499,6 +729,28 @@ def sync_cashbox_balance_from_account(account):
                 cashbox.save(update_fields=['balance'])
                 logger.info(f"✅ تم مزامنة رصيد الصندوق '{cashbox.name}' من {old_balance} إلى {new_balance}")
                 
+                # تسجيل في audit log
+                try:
+                    from core.models import AuditLog
+                    from django.contrib.auth import get_user_model
+                    User = get_user_model()
+                    
+                    system_user = User.objects.filter(is_superuser=True).first()
+                    if system_user:
+                        AuditLog.objects.create(
+                            user=system_user,
+                            action_type='update',
+                            content_type='Cashbox',
+                            object_id=cashbox.pk,
+                            description=f'مزامنة رصيد الصندوق {cashbox.name}: من {old_balance} إلى {new_balance} (من حساب {account.code})'
+                        )
+                except Exception as audit_error:
+                    logger.error(f"خطأ في تسجيل مزامنة رصيد الصندوق في audit log: {audit_error}")
+            else:
+                logger.debug(f"رصيد الصندوق '{cashbox.name}' متطابق مع حسابه ({new_balance})")
+        else:
+            logger.warning(f"لم يتم العثور على صندوق مرتبط بحساب {account.code} - {account.name}")
+    
     except Exception as e:
         logger.error(f"خطأ في مزامنة رصيد الصندوق: {e}")
 
@@ -510,22 +762,32 @@ def sync_bank_balance_from_account(account):
     try:
         from banks.models import BankAccount
         
+        logger.debug(f"بدء مزامنة رصيد البنك لحساب {account.code} - {account.name}")
+        
         # البحث عن الحساب البنكي المرتبط بهذا الحساب
         bank_account = None
         
-        # محاولة البحث من خلال اسم الحساب
-        account_name_parts = account.name.split('-')
-        if len(account_name_parts) >= 2:
-            # محاولة البحث بالاسم الأول
-            bank_account = BankAccount.objects.filter(
-                name__icontains=account_name_parts[0].strip()
-            ).first()
-            
-            if not bank_account:
-                # محاولة البحث باسم البنك
-                bank_account = BankAccount.objects.filter(
-                    bank_name__icontains=account_name_parts[-1].strip()
-                ).first()
+        if account.code.startswith('1101'):
+            try:
+                # استخراج رقم البنك من الكود (11010002 -> 2)
+                bank_id = int(account.code[4:])  # إزالة '1101' والحصول على الرقم
+                bank_account = BankAccount.objects.get(id=bank_id)
+                logger.debug(f"تم العثور على البنك {bank_account.name} من كود الحساب {account.code}")
+            except (ValueError, BankAccount.DoesNotExist) as e:
+                logger.warning(f"فشل استخراج رقم البنك من كود {account.code}: {e}")
+                # محاولة البحث من خلال اسم الحساب كطريقة احتياطية
+                account_name_parts = account.name.split('-')
+                if len(account_name_parts) >= 2:
+                    # محاولة البحث بالاسم الأول
+                    bank_account = BankAccount.objects.filter(
+                        name__icontains=account_name_parts[0].strip()
+                    ).first()
+                    
+                    if not bank_account:
+                        # محاولة البحث باسم البنك
+                        bank_account = BankAccount.objects.filter(
+                            bank_name__icontains=account_name_parts[-1].strip()
+                        ).first()
         
         if bank_account:
             # تحديث رصيد البنك ليطابق رصيد الحساب المحاسبي
@@ -537,5 +799,50 @@ def sync_bank_balance_from_account(account):
                 bank_account.save(update_fields=['balance'])
                 logger.info(f"✅ تم مزامنة رصيد البنك '{bank_account.name}' من {old_balance} إلى {new_balance}")
                 
+                # تسجيل في audit log
+                try:
+                    from core.models import AuditLog
+                    from django.contrib.auth import get_user_model
+                    User = get_user_model()
+                    
+                    system_user = User.objects.filter(is_superuser=True).first()
+                    if system_user:
+                        AuditLog.objects.create(
+                            user=system_user,
+                            action_type='update',
+                            content_type='BankAccount',
+                            object_id=bank_account.pk,
+                            description=f'مزامنة رصيد البنك {bank_account.name}: من {old_balance} إلى {new_balance} (من حساب {account.code})'
+                        )
+                except Exception as audit_error:
+                    logger.error(f"خطأ في تسجيل مزامنة رصيد البنك في audit log: {audit_error}")
+            else:
+                logger.debug(f"رصيد البنك '{bank_account.name}' متطابق مع حسابه ({new_balance})")
+        else:
+            logger.warning(f"لم يتم العثور على بنك مرتبط بحساب {account.code} - {account.name}")
+                
     except Exception as e:
         logger.error(f"خطأ في مزامنة رصيد البنك: {e}")
+
+
+def sync_cashbox_or_bank_balance(account):
+    """
+    مزامنة رصيد الصندوق أو البنك بناءً على نوع الحساب
+    """
+    try:
+        logger.debug(f"فحص نوع الحساب {account.code} - {account.name}")
+        
+        # التحقق إذا كان حساب صندوق (يبدأ بـ 101)
+        if account.code.startswith('101'):
+            logger.debug(f"الحساب {account.code} هو حساب صندوق - بدء المزامنة")
+            sync_cashbox_balance_from_account(account)
+        
+        # التحقق إذا كان حساب بنك (يبدأ بـ 1101)
+        elif account.code.startswith('1101'):
+            logger.debug(f"الحساب {account.code} هو حساب بنك - بدء المزامنة")
+            sync_bank_balance_from_account(account)
+        else:
+            logger.debug(f"الحساب {account.code} ليس حساب صندوق أو بنك - لا حاجة للمزامنة")
+            
+    except Exception as e:
+        logger.error(f"خطأ في مزامنة رصيد الصندوق/البنك للحساب {account.code}: {e}")
