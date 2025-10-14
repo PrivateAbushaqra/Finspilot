@@ -428,56 +428,49 @@ def cashbox_edit(request, cashbox_id):
                     capital_account = Account.objects.filter(code='301').first()
                     
                     if cashbox_account and capital_account:
+                        lines_data = []
+                        
                         if balance_diff > 0:
                             # زيادة في الرصيد: مدين الصندوق، دائن رأس المال
-                            journal_entry = JournalService.create_journal_entry(
-                                date=timezone.now().date(),
-                                description=f'{_("Adjustment of Opening Balance")}: {cashbox.name}',
-                                reference_type='cashbox_adjustment',
-                                reference_id=cashbox.id,
-                                created_by=request.user
-                            )
-                            
-                            JournalService.add_journal_entry_line(
-                                journal_entry=journal_entry,
-                                account=cashbox_account,
-                                debit=abs(balance_diff),
-                                credit=Decimal('0'),
-                                description=f'{_("Increase in balance")}: {cashbox.name}'
-                            )
-                            
-                            JournalService.add_journal_entry_line(
-                                journal_entry=journal_entry,
-                                account=capital_account,
-                                debit=Decimal('0'),
-                                credit=abs(balance_diff),
-                                description=f'{_("Capital")}'
-                            )
+                            lines_data = [
+                                {
+                                    'account_id': cashbox_account.id,
+                                    'debit': abs(balance_diff),
+                                    'credit': Decimal('0'),
+                                    'description': f'{_("Increase in balance")}: {cashbox.name}'
+                                },
+                                {
+                                    'account_id': capital_account.id,
+                                    'debit': Decimal('0'),
+                                    'credit': abs(balance_diff),
+                                    'description': f'{_("Capital")}'
+                                }
+                            ]
                         else:
                             # نقصان في الرصيد: دائن الصندوق، مدين رأس المال
-                            journal_entry = JournalService.create_journal_entry(
-                                date=timezone.now().date(),
-                                description=f'{_("Adjustment of Opening Balance")}: {cashbox.name}',
-                                reference_type='cashbox_adjustment',
-                                reference_id=cashbox.id,
-                                created_by=request.user
-                            )
-                            
-                            JournalService.add_journal_entry_line(
-                                journal_entry=journal_entry,
-                                account=capital_account,
-                                debit=abs(balance_diff),
-                                credit=Decimal('0'),
-                                description=f'{_("Capital")}'
-                            )
-                            
-                            JournalService.add_journal_entry_line(
-                                journal_entry=journal_entry,
-                                account=cashbox_account,
-                                debit=Decimal('0'),
-                                credit=abs(balance_diff),
-                                description=f'{_("Decrease in balance")}: {cashbox.name}'
-                            )
+                            lines_data = [
+                                {
+                                    'account_id': capital_account.id,
+                                    'debit': abs(balance_diff),
+                                    'credit': Decimal('0'),
+                                    'description': f'{_("Capital")}'
+                                },
+                                {
+                                    'account_id': cashbox_account.id,
+                                    'debit': Decimal('0'),
+                                    'credit': abs(balance_diff),
+                                    'description': f'{_("Decrease in balance")}: {cashbox.name}'
+                                }
+                            ]
+                        
+                        journal_entry = JournalService.create_journal_entry(
+                            entry_date=timezone.now().date(),
+                            description=f'{_("Adjustment of Opening Balance")}: {cashbox.name}',
+                            reference_type='cashbox_adjustment',
+                            reference_id=cashbox.id,
+                            lines_data=lines_data,
+                            user=request.user
+                        )
                     
                     # إعادة حساب الرصيد من المعاملات
                     cashbox.sync_balance()
@@ -646,11 +639,9 @@ def transfer_create(request):
                         messages.error(request, _('Insufficient balance in the sender cashbox'))
                         return redirect('cashboxes:transfer_list')
                     
-                    # تحديث الأرصدة
-                    from_cashbox.balance -= amount
-                    to_cashbox.balance += amount
-                    from_cashbox.save()
-                    to_cashbox.save()
+                    # تحديث الأرصدة (لن يتم تحديثها مباشرة، بل من خلال المعاملات)
+                    # from_cashbox.balance -= amount  # سيتم تحديثه من خلال CashboxTransaction
+                    # to_cashbox.balance += amount  # سيتم تحديثه من خلال CashboxTransaction
                     
                     # إضافة الحركات
                     CashboxTransaction.objects.create(
@@ -676,6 +667,19 @@ def transfer_create(request):
                         reference_id=transfer.id,
                         created_by=request.user
                     )
+                    
+                    # تحديث الأرصدة من المعاملات
+                    from_cashbox.sync_balance()
+                    to_cashbox.sync_balance()
+                    
+                    # إنشاء قيد محاسبي للتحويل بين الصناديق
+                    try:
+                        from journal.services import JournalService
+                        journal_entry = JournalService.create_cashbox_transfer_entry(transfer, request.user)
+                        print(f"تم إنشاء القيد المحاسبي للتحويل: {journal_entry.entry_number}")
+                    except Exception as e:
+                        print(f"خطأ في إنشاء القيد المحاسبي: {e}")
+                        # يمكن الاستمرار لأن التحويل تم بنجاح
                 
                 elif transfer_type == 'cashbox_to_bank':
                     from_cashbox = get_object_or_404(Cashbox, id=from_cashbox_id)
@@ -686,13 +690,11 @@ def transfer_create(request):
                         messages.error(request, _('Insufficient balance in the cashbox'))
                         return redirect('cashboxes:transfer_list')
                     
-                    # تحديث الأرصدة
-                    from_cashbox.balance -= amount
-                    to_bank.balance += amount
-                    from_cashbox.save()
-                    to_bank.save()
+                    # تحديث الأرصدة (لن يتم تحديثها مباشرة، بل من خلال المعاملات)
+                    # from_cashbox.balance -= amount  # سيتم تحديثه من خلال CashboxTransaction
+                    # to_bank.balance += amount  # سيتم تحديثه من خلال BankTransaction
                     
-                    # إضافة الحركات
+                    # إضافة حركة الصندوق
                     CashboxTransaction.objects.create(
                         cashbox=from_cashbox,
                         transaction_type='transfer_out',
@@ -704,6 +706,31 @@ def transfer_create(request):
                         reference_id=transfer.id,
                         created_by=request.user
                     )
+                    
+                    # إضافة حركة البنك (مهم: لضمان تتبع المعاملات البنكية بشكل صحيح)
+                    from banks.models import BankTransaction
+                    BankTransaction.objects.create(
+                        bank=to_bank,
+                        transaction_type='deposit',
+                        amount=amount,
+                        description=f'{description} - {_("Transfer from Cashbox")} {from_cashbox.name}',
+                        reference_number=transfer.transfer_number,
+                        date=date,
+                        created_by=request.user
+                    )
+                    
+                    # تحديث الأرصدة من المعاملات
+                    from_cashbox.sync_balance()
+                    to_bank.sync_balance()
+                    
+                    # إنشاء قيد محاسبي للتحويل من الصندوق للبنك
+                    try:
+                        from journal.services import JournalService
+                        journal_entry = JournalService.create_cashbox_transfer_entry(transfer, request.user)
+                        print(f"تم إنشاء القيد المحاسبي للتحويل: {journal_entry.entry_number}")
+                    except Exception as e:
+                        print(f"خطأ في إنشاء القيد المحاسبي: {e}")
+                        # يمكن الاستمرار لأن التحويل تم بنجاح
                 
                 elif transfer_type == 'bank_to_cashbox':
                     from_bank = get_object_or_404(BankAccount, id=from_bank_id)
@@ -714,13 +741,23 @@ def transfer_create(request):
                         messages.error(request, _('Insufficient balance in the bank'))
                         return redirect('cashboxes:transfer_list')
                     
-                    # تحديث الأرصدة
-                    from_bank.balance -= amount
-                    to_cashbox.balance += amount
-                    from_bank.save()
-                    to_cashbox.save()
+                    # تحديث الأرصدة (لن يتم تحديثها مباشرة، بل من خلال المعاملات)
+                    # from_bank.balance -= amount  # سيتم تحديثه من خلال BankTransaction
+                    # to_cashbox.balance += amount  # سيتم تحديثه من خلال CashboxTransaction
                     
-                    # إضافة الحركات
+                    # إضافة حركة البنك
+                    from banks.models import BankTransaction
+                    BankTransaction.objects.create(
+                        bank=from_bank,
+                        transaction_type='withdrawal',
+                        amount=amount,
+                        description=f'{description} - {_("Transfer to Cashbox")} {to_cashbox.name}',
+                        reference_number=transfer.transfer_number,
+                        date=date,
+                        created_by=request.user
+                    )
+                    
+                    # إضافة حركة الصندوق
                     CashboxTransaction.objects.create(
                         cashbox=to_cashbox,
                         transaction_type='transfer_in',
@@ -732,9 +769,19 @@ def transfer_create(request):
                         reference_id=transfer.id,
                         created_by=request.user
                     )
-                
-                # ملاحظة: لا نحتاج لإنشاء قيد محاسبي للتحويلات بين الحسابات النقدية وفقاً لـ IFRS
-                # هذه التحويلات لا تغير الرصيد الإجمالي للنقد، فقط تغير توزيعه
+                    
+                    # تحديث الأرصدة من المعاملات
+                    from_bank.sync_balance()
+                    to_cashbox.sync_balance()
+                    
+                    # إنشاء قيد محاسبي للتحويل من البنك للصندوق
+                    try:
+                        from journal.services import JournalService
+                        journal_entry = JournalService.create_cashbox_transfer_entry(transfer, request.user)
+                        print(f"تم إنشاء القيد المحاسبي للتحويل: {journal_entry.entry_number}")
+                    except Exception as e:
+                        print(f"خطأ في إنشاء القيد المحاسبي: {e}")
+                        # يمكن الاستمرار لأن التحويل تم بنجاح
                 
                 messages.success(request, _('Transfer created successfully'))
                 
@@ -1067,7 +1114,7 @@ class ClearCashboxTransactionsView(View):
 def cashbox_delete(request, cashbox_id):
     """حذف الصندوق - محسّن للتعامل مع الحماية"""
     # التحقق من الصلاحيات
-    if not (request.user.is_superuser or request.user.is_staff):
+    if not (request.user.is_superuser or request.user.user_type in ['superadmin', 'admin'] or request.user.has_perm('cashboxes.can_delete_cashboxes')):
         messages.error(request, _('You do not have permission to delete cashboxes'))
         return redirect('cashboxes:cashbox_list')
         

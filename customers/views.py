@@ -297,7 +297,135 @@ class CustomerSupplierCreateView(LoginRequiredMixin, View):
                 is_active=is_active
             )
             
-            # لا نحتاج إلى إنشاء حركة محاسبية للرصيد الافتتاحي - يُحسب تلقائياً في current_balance
+            # إنشاء معاملة للرصيد الافتتاحي وقيد محاسبي (IFRS Compliance)
+            if balance != 0:
+                from accounts.models import AccountTransaction
+                from django.utils import timezone
+                from decimal import Decimal
+                
+                # تحديد الاتجاه حسب نوع الرصيد
+                if balance > 0:
+                    # رصيد موجب = مدين (العميل/المورد مدين لنا)
+                    direction = 'debit'
+                    amount = abs(balance)
+                elif balance < 0:
+                    # رصيد سالب = دائن (نحن مدينون له)
+                    direction = 'credit'
+                    amount = abs(balance)
+                
+                # إنشاء حركة الحساب
+                AccountTransaction.objects.create(
+                    customer_supplier=customer_supplier,
+                    transaction_type='opening_balance',
+                    reference_type='opening_balance',
+                    reference_id=customer_supplier.id,
+                    date=timezone.now().date(),
+                    amount=amount,
+                    direction=direction,
+                    description=f'رصيد افتتاحي لـ {name}',
+                    notes=f'تم إنشاء المعاملة تلقائياً عند إنشاء الحساب',
+                    created_by=request.user
+                )
+                
+                # إنشاء قيد محاسبي للرصيد الافتتاحي
+                try:
+                    from journal.services import JournalService
+                    from accounts.models import Account
+                    
+                    # الحصول على الحساب المحاسبي للعميل/المورد
+                    if type_value in ['customer', 'both']:
+                        # حساب العملاء (1301)
+                        customer_account = Account.objects.filter(code='1301').first()
+                    if type_value in ['supplier', 'both']:
+                        # حساب الموردين (2101)
+                        supplier_account = Account.objects.filter(code='2101').first()
+                    
+                    # حساب رأس المال (301) أو الأرباح المحتجزة
+                    capital_account = Account.objects.filter(code='301').first()
+                    
+                    lines_data = []
+                    
+                    if balance > 0:
+                        # رصيد موجب = العميل/المورد مدين لنا
+                        if type_value == 'customer':
+                            # مدين: حساب العملاء
+                            lines_data = [
+                                {
+                                    'account_id': customer_account.id if customer_account else None,
+                                    'debit': Decimal(str(abs(balance))),
+                                    'credit': Decimal('0'),
+                                    'description': f'رصيد افتتاحي - عميل: {name}'
+                                },
+                                {
+                                    'account_id': capital_account.id if capital_account else None,
+                                    'debit': Decimal('0'),
+                                    'credit': Decimal(str(abs(balance))),
+                                    'description': 'رأس المال'
+                                }
+                            ]
+                        elif type_value == 'supplier':
+                            # مدين: حساب الموردين (نادر - مقدمات للموردين)
+                            lines_data = [
+                                {
+                                    'account_id': supplier_account.id if supplier_account else None,
+                                    'debit': Decimal(str(abs(balance))),
+                                    'credit': Decimal('0'),
+                                    'description': f'رصيد افتتاحي - مورد: {name}'
+                                },
+                                {
+                                    'account_id': capital_account.id if capital_account else None,
+                                    'debit': Decimal('0'),
+                                    'credit': Decimal(str(abs(balance))),
+                                    'description': 'رأس المال'
+                                }
+                            ]
+                    else:
+                        # رصيد سالب = نحن مدينون له
+                        if type_value == 'customer':
+                            # دائن: حساب العملاء (نادر - مقدمات من العملاء)
+                            lines_data = [
+                                {
+                                    'account_id': capital_account.id if capital_account else None,
+                                    'debit': Decimal(str(abs(balance))),
+                                    'credit': Decimal('0'),
+                                    'description': 'رأس المال'
+                                },
+                                {
+                                    'account_id': customer_account.id if customer_account else None,
+                                    'debit': Decimal('0'),
+                                    'credit': Decimal(str(abs(balance))),
+                                    'description': f'رصيد افتتاحي - عميل: {name}'
+                                }
+                            ]
+                        elif type_value == 'supplier':
+                            # دائن: حساب الموردين (مديونية للموردين)
+                            lines_data = [
+                                {
+                                    'account_id': capital_account.id if capital_account else None,
+                                    'debit': Decimal(str(abs(balance))),
+                                    'credit': Decimal('0'),
+                                    'description': 'رأس المال'
+                                },
+                                {
+                                    'account_id': supplier_account.id if supplier_account else None,
+                                    'debit': Decimal('0'),
+                                    'credit': Decimal(str(abs(balance))),
+                                    'description': f'رصيد افتتاحي - مورد: {name}'
+                                }
+                            ]
+                    
+                    if lines_data and all(line['account_id'] for line in lines_data):
+                        journal_entry = JournalService.create_journal_entry(
+                            entry_date=timezone.now().date(),
+                            description=f'رصيد افتتاحي - {customer_supplier.get_type_display()}: {name}',
+                            reference_type='cs_opening',  # customer_supplier_opening (مختصر)
+                            reference_id=customer_supplier.id,
+                            lines_data=lines_data,
+                            user=request.user
+                        )
+                except Exception as e:
+                    # لا نريد إيقاف العملية إذا فشل إنشاء القيد
+                    print(f"خطأ في إنشاء القيد المحاسبي للرصيد الافتتاحي: {e}")
             
             # تسجيل النشاط
             log_view_activity(request, 'create', customer_supplier, _('Created customer/supplier: %(name)s') % {'name': name})
@@ -410,21 +538,21 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
             balance_difference = new_balance - old_balance
             
             if balance_difference != 0:
-                # إنشاء حركة تعديل في جدول المعاملات
+                # إنشاء حركة تعديل في جدول المعاملات وقيد محاسبي
                 from accounts.models import AccountTransaction
+                from django.utils import timezone
                 
                 # تحديد نوع الحركة
                 if balance_difference > 0:
-                    # زيادة في الرصيد = دائن للعميل/مورد
-                    direction = 'credit'
+                    # زيادة في الرصيد = مدين للعميل/مورد
+                    direction = 'debit'
                     description = _('تعديل يدوي للرصيد - زيادة: %(amount)s') % {'amount': abs(balance_difference)}
                 else:
-                    # نقص في الرصيد = مدين للعميل/مورد
-                    direction = 'debit'
+                    # نقص في الرصيد = دائن للعميل/مورد
+                    direction = 'credit'
                     description = _('تعديل يدوي للرصيد - نقص: %(amount)s') % {'amount': abs(balance_difference)}
                 
                 # إنشاء الحركة
-                from django.utils import timezone
                 AccountTransaction.objects.create(
                     customer_supplier=customer_supplier,
                     date=timezone.now().date(),
@@ -436,6 +564,67 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
                     reference_id=customer_supplier.id,
                     created_by=request.user
                 )
+                
+                # إنشاء قيد محاسبي للتعديل
+                try:
+                    from journal.services import JournalService
+                    from accounts.models import Account
+                    
+                    # الحصول على الحساب المحاسبي
+                    if customer_supplier.is_customer:
+                        account_obj = Account.objects.filter(code='1301').first()
+                    if customer_supplier.is_supplier:
+                        account_obj = Account.objects.filter(code='2101').first()
+                    
+                    # حساب رأس المال
+                    capital_account = Account.objects.filter(code='301').first()
+                    
+                    if account_obj and capital_account:
+                        lines_data = []
+                        
+                        if balance_difference > 0:
+                            # زيادة في الرصيد: مدين الحساب / دائن رأس المال
+                            lines_data = [
+                                {
+                                    'account_id': account_obj.id,
+                                    'debit': abs(balance_difference),
+                                    'credit': Decimal('0'),
+                                    'description': f'{_("Increase in balance")}: {name}'
+                                },
+                                {
+                                    'account_id': capital_account.id,
+                                    'debit': Decimal('0'),
+                                    'credit': abs(balance_difference),
+                                    'description': f'{_("Capital")}'
+                                }
+                            ]
+                        else:
+                            # نقصان في الرصيد: دائن الحساب / مدين رأس المال
+                            lines_data = [
+                                {
+                                    'account_id': capital_account.id,
+                                    'debit': abs(balance_difference),
+                                    'credit': Decimal('0'),
+                                    'description': f'{_("Capital")}'
+                                },
+                                {
+                                    'account_id': account_obj.id,
+                                    'debit': Decimal('0'),
+                                    'credit': abs(balance_difference),
+                                    'description': f'{_("Decrease in balance")}: {name}'
+                                }
+                            ]
+                        
+                        journal_entry = JournalService.create_journal_entry(
+                            entry_date=timezone.now().date(),
+                            description=f'{_("Adjustment of Balance")}: {name}',
+                            reference_type='customer_supplier_adjustment',
+                            reference_id=customer_supplier.id,
+                            lines_data=lines_data,
+                            user=request.user
+                        )
+                except Exception as e:
+                    print(f"خطأ في إنشاء القيد المحاسبي للتعديل: {e}")
                 
                 # تسجيل النشاط في سجل الأنشطة
                 from core.models import AuditLog
@@ -532,12 +721,28 @@ class CustomerSupplierDeleteView(LoginRequiredMixin, View):
         from purchases.models import PurchaseInvoice, PurchaseReturn
         from accounts.models import AccountTransaction
         
+        # حساب الفواتير
+        sales_invoices_count = SalesInvoice.objects.filter(customer=customer_supplier).count()
+        purchase_invoices_count = PurchaseInvoice.objects.filter(supplier=customer_supplier).count()
+        total_invoices = sales_invoices_count + purchase_invoices_count
+        
+        # حساب المردودات
+        sales_returns_count = SalesReturn.objects.filter(customer=customer_supplier).count()
+        purchase_returns_count = PurchaseReturn.objects.filter(original_invoice__supplier=customer_supplier).count()
+        total_returns = sales_returns_count + purchase_returns_count
+        
+        # حساب المعاملات
+        transactions_count = AccountTransaction.objects.filter(customer_supplier=customer_supplier).count()
+        
         return {
-            'sales_invoices': SalesInvoice.objects.filter(customer=customer_supplier).count(),
-            'purchase_invoices': PurchaseInvoice.objects.filter(supplier=customer_supplier).count(),
-            'sales_returns': SalesReturn.objects.filter(customer=customer_supplier).count(),
-            'purchase_returns': PurchaseReturn.objects.filter(original_invoice__supplier=customer_supplier).count(),
-            'transactions': AccountTransaction.objects.filter(customer_supplier=customer_supplier).count(),
+            'invoices': total_invoices,  # إجمالي فواتير المبيعات والمشتريات
+            'payments': total_returns,  # المردودات (يمكن اعتبارها كمدفوعات عكسية)
+            'transactions': transactions_count,  # المعاملات المالية
+            # بيانات تفصيلية إضافية
+            'sales_invoices': sales_invoices_count,
+            'purchase_invoices': purchase_invoices_count,
+            'sales_returns': sales_returns_count,
+            'purchase_returns': purchase_returns_count,
         }
     
     def post(self, request, pk, *args, **kwargs):
@@ -645,7 +850,46 @@ class CustomerSupplierDeleteView(LoginRequiredMixin, View):
                     DELETE FROM sales_salescreditnote WHERE customer_id = %s
                 """, [customer_id])
                 
-                # حذف القيود المحاسبية المرتبطة بالفواتير
+                # حذف القيود المحاسبية للرصيد الافتتاحي وتعديلات الرصيد
+                # أولاً حذف سطور القيود
+                cursor.execute("""
+                    DELETE FROM journal_journalline 
+                    WHERE journal_entry_id IN (
+                        SELECT id FROM journal_journalentry 
+                        WHERE reference_type IN ('cs_opening', 'cs_adjustment')
+                        AND reference_id = %s
+                    )
+                """, [customer_id])
+                
+                # ثم حذف القيود نفسها
+                cursor.execute("""
+                    DELETE FROM journal_journalentry 
+                    WHERE reference_type IN ('cs_opening', 'cs_adjustment')
+                    AND reference_id = %s
+                """, [customer_id])
+                
+                # حذف سطور القيود المحاسبية أولاً (قبل حذف القيود نفسها)
+                cursor.execute("""
+                    DELETE FROM journal_journalline 
+                    WHERE journal_entry_id IN (
+                        SELECT id FROM journal_journalentry 
+                        WHERE sales_invoice_id IN (
+                            SELECT id FROM sales_salesinvoice WHERE customer_id = %s
+                        )
+                    )
+                """, [customer_id])
+                
+                cursor.execute("""
+                    DELETE FROM journal_journalline 
+                    WHERE journal_entry_id IN (
+                        SELECT id FROM journal_journalentry 
+                        WHERE purchase_invoice_id IN (
+                            SELECT id FROM purchases_purchaseinvoice WHERE supplier_id = %s
+                        )
+                    )
+                """, [customer_id])
+                
+                # الآن حذف القيود المحاسبية نفسها
                 cursor.execute("""
                     DELETE FROM journal_journalentry 
                     WHERE sales_invoice_id IN (

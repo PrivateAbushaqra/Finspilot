@@ -182,19 +182,59 @@ class BankAccountCreateView(LoginRequiredMixin, View):
                     currency_obj = Currency.get_base_currency()
                     currency_code = currency_obj.code if currency_obj else ''
 
-            # Create bank account
-            account = BankAccount.objects.create(
-                name=name,
-                bank_name=bank_name,
-                account_number=account_number,
-                iban=iban,
-                swift_code=swift_code,
-                balance=balance,
-                currency=currency_code,  # CharField
-                is_active=is_active,
-                notes=notes,
-                created_by=request.user if request.user.is_authenticated else None
-            )
+            # Create bank account with initial balance journal entry
+            from django.db import transaction as db_transaction
+            
+            with db_transaction.atomic():
+                account = BankAccount.objects.create(
+                    name=name,
+                    bank_name=bank_name,
+                    account_number=account_number,
+                    iban=iban,
+                    swift_code=swift_code,
+                    balance=balance,
+                    currency=currency_code,  # CharField
+                    is_active=is_active,
+                    notes=notes,
+                    created_by=request.user if request.user.is_authenticated else None
+                )
+                
+                # إنشاء قيد محاسبي للرصيد الافتتاحي إذا كان أكبر من صفر
+                if balance > 0:
+                    try:
+                        from accounts.models import Account
+                        bank_account_obj = JournalService.get_or_create_bank_account_by_name(account.name, account.bank_name)
+                        
+                        # الحصول على حساب رأس المال
+                        capital_account = Account.objects.filter(code='301').first()
+                        
+                        if bank_account_obj and capital_account:
+                            lines_data = [
+                                {
+                                    'account_id': bank_account_obj.id,
+                                    'debit': balance,
+                                    'credit': Decimal('0'),
+                                    'description': f'{_("Opening Balance")}: {account.name}'
+                                },
+                                {
+                                    'account_id': capital_account.id,
+                                    'debit': Decimal('0'),
+                                    'credit': balance,
+                                    'description': f'{_("Capital")}'
+                                }
+                            ]
+                            
+                            journal_entry = JournalService.create_journal_entry(
+                                entry_date=timezone.now().date(),
+                                description=f'{_("Opening Balance - Bank Account")}: {account.name}',
+                                reference_type='bank_initial',
+                                reference_id=account.id,
+                                lines_data=lines_data,
+                                user=request.user
+                            )
+                    except Exception as e:
+                        # لا نريد إيقاف العملية إذا فشل إنشاء القيد
+                        print(f"خطأ في إنشاء القيد المحاسبي للرصيد الافتتاحي: {e}")
 
             # Log activity in activity log
             log_user_activity(
@@ -339,6 +379,62 @@ class BankAccountUpdateView(LoginRequiredMixin, View):
                     reference_number=f'ADJ-{account.id}-{timezone.now().strftime("%Y%m%d%H%M%S")}',
                     created_by=request.user
                 )
+                
+                # إنشاء قيد محاسبي للتعديل (مثل الصناديق)
+                try:
+                    from accounts.models import Account
+                    bank_account_obj = JournalService.get_or_create_bank_account_by_name(account.name, account.bank_name)
+                    
+                    # الحصول على حساب رأس المال
+                    capital_account = Account.objects.filter(code='301').first()
+                    
+                    if bank_account_obj and capital_account:
+                        lines_data = []
+                        
+                        if balance_difference > 0:
+                            # زيادة في الرصيد: مدين البنك، دائن رأس المال
+                            lines_data = [
+                                {
+                                    'account_id': bank_account_obj.id,
+                                    'debit': abs(balance_difference),
+                                    'credit': Decimal('0'),
+                                    'description': f'{_("Increase in balance")}: {account.name}'
+                                },
+                                {
+                                    'account_id': capital_account.id,
+                                    'debit': Decimal('0'),
+                                    'credit': abs(balance_difference),
+                                    'description': f'{_("Capital")}'
+                                }
+                            ]
+                        else:
+                            # نقصان في الرصيد: دائن البنك، مدين رأس المال
+                            lines_data = [
+                                {
+                                    'account_id': capital_account.id,
+                                    'debit': abs(balance_difference),
+                                    'credit': Decimal('0'),
+                                    'description': f'{_("Capital")}'
+                                },
+                                {
+                                    'account_id': bank_account_obj.id,
+                                    'debit': Decimal('0'),
+                                    'credit': abs(balance_difference),
+                                    'description': f'{_("Decrease in balance")}: {account.name}'
+                                }
+                            ]
+                        
+                        journal_entry = JournalService.create_journal_entry(
+                            entry_date=timezone.now().date(),
+                            description=f'{_("Adjustment of Bank Balance")}: {account.name}',
+                            reference_type='bank_adjustment',
+                            reference_id=account.id,
+                            lines_data=lines_data,
+                            user=request.user
+                        )
+                except Exception as e:
+                    # لا نريد إيقاف العملية إذا فشل إنشاء القيد
+                    print(f"خطأ في إنشاء القيد المحاسبي للتعديل: {e}")
                 
                 # تسجيل في سجل الأنشطة
                 from core.models import AuditLog
@@ -1019,6 +1115,15 @@ class BankCashboxTransferCreateView(LoginRequiredMixin, View):
                     
                     # تحديث رصيد البنك بناءً على المعاملات الفعلية
                     bank.sync_balance()
+                
+                # إنشاء قيد محاسبي للتحويل بين البنك والصندوق
+                try:
+                    from journal.services import JournalService
+                    journal_entry = JournalService.create_cashbox_transfer_entry(transfer, request.user)
+                    print(f"تم إنشاء القيد المحاسبي للتحويل: {journal_entry.entry_number}")
+                except Exception as e:
+                    print(f"خطأ في إنشاء القيد المحاسبي: {e}")
+                    # يمكن الاستمرار لأن التحويل تم بنجاح
             
             messages.success(request, f'Transfer "{transfer.transfer_number}" created successfully!')
             

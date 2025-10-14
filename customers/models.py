@@ -85,20 +85,8 @@ class CustomerSupplier(models.Model):
 
     @property
     def current_balance(self):
-        """حساب الرصيد الحالي بناءً على الرصيد الافتتاحي والمعاملات الفعلية"""
-        try:
-            from accounts.models import AccountTransaction
-            from django.db.models import Sum
-            
-            transactions = AccountTransaction.objects.filter(customer_supplier=self).exclude(reference_type='opening_balance')
-            total_debit = transactions.filter(direction='debit').aggregate(
-                total=Sum('amount'))['total'] or 0
-            total_credit = transactions.filter(direction='credit').aggregate(
-                total=Sum('amount'))['total'] or 0
-            
-            return self.balance + (total_debit - total_credit)
-        except ImportError:
-            # في حالة عدم وجود نموذج الحسابات، استخدم الرصيد المحفوظ
-            return self.balance
-        except Exception:
-            return self.balance
+        """حساب الرصيد الحالي - يتم تحديثه تلقائياً من AccountTransaction.save()"""
+        # الرصيد يتم تحديثه تلقائياً عند حفظ أي معاملة
+        # في AccountTransaction.update_customer_supplier_balance()
+        # لذلك نرجع self.balance مباشرة الذي يحتوي على الرصيد المحدث
+        return self.balance

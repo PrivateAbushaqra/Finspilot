@@ -92,7 +92,7 @@
                                                     <i class="fas fa-edit"></i> {% trans "Edit" %}
                                                 </button>
                                                 {% endif %}
-                                                {% if user.is_superuser or user.user_type in 'superadmin,admin' or perms.cashboxes.can_delete_cashboxes %}
+                                                {% if user.is_superuser or user.user_type == 'superadmin' or user.user_type == 'admin' or perms.cashboxes.can_delete_cashboxes %}
                                                     {% if cashbox.balance == 0 %}
                                                     <button type="button" class="btn btn-sm btn-outline-danger" 
                                                             data-bs-toggle="modal" 
@@ -268,7 +268,7 @@
 </div>
 
 <!-- Delete Cashbox Modal -->
-{% if user.is_superuser or user.is_staff %}
+{% if user.is_superuser or user.user_type == 'superadmin' or user.user_type == 'admin' or perms.cashboxes.can_delete_cashboxes %}
     <div class="modal fade" id="deleteCashboxModal{{ cashbox.id }}" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -307,9 +307,9 @@
                         {% endif %}
                     </div>
                 </form>
+            </div>
         </div>
     </div>
-</div>
 {% endif %}
 {% endfor %}
 {% endblock %}
