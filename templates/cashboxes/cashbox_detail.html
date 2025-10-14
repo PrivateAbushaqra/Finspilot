@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load i18n %}
+{% load l10n %}
 {% load static %}
 {% load custom_filters %}
 
@@ -241,6 +242,11 @@ table.dataTable thead th.sorting:after {
                     <div class="mb-3">
                         <label class="form-label">{% trans "Description" %}</label>
                         <textarea name="description" class="form-control" rows="3">{{ cashbox.description }}</textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans "Balance" %}</label>
+                        <input type="number" name="initial_balance" class="form-control" step="0.001" value="{{ cashbox.balance|unlocalize }}">
+                        <small class="text-muted">{% trans "Modifying the balance will create an adjustment entry" %}</small>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">{% trans "Currency" %}</label>

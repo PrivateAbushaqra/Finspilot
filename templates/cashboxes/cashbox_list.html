@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load i18n %}
+{% load l10n %}
 {% load static %}
 
 
@@ -217,7 +218,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">{% trans "Balance" %}</label>
-                        <input type="number" name="initial_balance" class="form-control" step="0.001" value="{{ cashbox.balance|floatformat:3 }}">
+                        <input type="number" name="initial_balance" class="form-control" step="0.001" value="{{ cashbox.balance|unlocalize }}">
                         <small class="text-muted">{% trans "Modifying the balance will create an adjustment entry" %}</small>
                     </div>
                     <div class="mb-3">

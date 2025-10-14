@@ -5,7 +5,13 @@ from django.db import migrations
 
 def update_bank_transaction_reference_numbers(apps, schema_editor):
     BankTransaction = apps.get_model('banks', 'BankTransaction')
-    CashboxTransfer = apps.get_model('cashboxes', 'CashboxTransfer')
+    
+    # التحقق من وجود تطبيق cashboxes
+    try:
+        CashboxTransfer = apps.get_model('cashboxes', 'CashboxTransfer')
+    except LookupError:
+        # إذا لم يكن التطبيق موجوداً بعد، نتجاهل هذه الهجرة
+        return
     
     # تحديث BankTransaction للتحويلات بين البنك والصناديق
     for transaction in BankTransaction.objects.filter(description__contains='شيك:'):
