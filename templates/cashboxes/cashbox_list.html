@@ -169,6 +169,17 @@
                         <label class="form-label">{% trans "Location" %}</label>
                         <input type="text" name="location" class="form-control">
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans "Responsible User" %}</label>
+                        <select name="responsible_user" class="form-select">
+                            <option value="">{% trans "Not Assigned" %}</option>
+                            {% for user in users %}
+                                <option value="{{ user.id }}">
+                                    {{ user.get_full_name|default:user.username }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
@@ -205,19 +216,41 @@
                         <textarea name="description" class="form-control" rows="3">{{ cashbox.description }}</textarea>
                     </div>
                     <div class="mb-3">
+                        <label class="form-label">{% trans "Balance" %}</label>
+                        <input type="number" name="initial_balance" class="form-control" step="0.001" value="{{ cashbox.balance|floatformat:3 }}">
+                        <small class="text-muted">{% trans "Modifying the balance will create an adjustment entry" %}</small>
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label">{% trans "Currency" %}</label>
                         <select name="currency" class="form-select">
-                            {% for currency in currencies %}
-                                <option value="{{ currency.code }}" {% if cashbox.currency == currency.code %}selected{% endif %}>
-                                    {{ currency.code }} - {{ currency.name }}
-                                    {% if currency.is_base_currency %} ({% trans "Base Currency" %}){% endif %}
+                            {% if base_currency %}
+                                <option value="{{ base_currency.code }}" {% if cashbox.currency == base_currency.code %}selected{% endif %}>
+                                    {{ base_currency.code }} - {{ base_currency.name }} ({% trans "Base Currency" %})
                                 </option>
+                            {% endif %}
+                            {% for currency in currencies %}
+                                {% if not currency.is_base_currency %}
+                                    <option value="{{ currency.code }}" {% if cashbox.currency == currency.code %}selected{% endif %}>
+                                        {{ currency.code }} - {{ currency.name }}
+                                    </option>
+                                {% endif %}
                             {% endfor %}
                         </select>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">{% trans "Location" %}</label>
                         <input type="text" name="location" class="form-control" value="{{ cashbox.location }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">{% trans "Responsible User" %}</label>
+                        <select name="responsible_user" class="form-select">
+                            <option value="">{% trans "Not Assigned" %}</option>
+                            {% for user in users %}
+                                <option value="{{ user.id }}" {% if cashbox.responsible_user.id == user.id %}selected{% endif %}>
+                                    {{ user.get_full_name|default:user.username }}
+                                </option>
+                            {% endfor %}
+                        </select>
                     </div>
                 </div>
                 <div class="modal-footer">

@@ -1864,12 +1864,20 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
         # استعادة البيانات
         processed_tables = 0
         processed_records = 0
+        skipped_records = 0  # 🔍 عداد للسجلات المتخطاة
         
-        # 🔧 تم إزالة transaction.atomic() - كان يسبب rollback كامل عند أي خطأ
+        # 🔍 تسجيل بداية الاستعادة
+        logger.info(f"🚀 بدء استعادة {len(flat_tables)} جدول مع {total_records_expected} سجل متوقع")
+        logger.info(f"� أول 20 جدول: {[t['display_name'] for t in flat_tables[:20]]}")
+        
+        # �🔧 تم إزالة transaction.atomic() - كان يسبب rollback كامل عند أي خطأ
         try:
             for i, table_info in enumerate(flat_tables):
                 app_name = table_info['app_name']
                 model_name = table_info['model_name']
+                
+                # 🔍 تسجيل بداية معالجة كل جدول
+                logger.info(f"📊 [{i+1}/{len(flat_tables)}] معالجة جدول: {table_info['display_name']} ({table_info['record_count']} سجل متوقع)")
                 
                 progress_data['current_table'] = table_info['display_name']
                 progress_data['processed_tables'] = i
@@ -2144,9 +2152,29 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                                     
                                     processed_records += 1
                                     table_info['actual_records'] += 1
-                                    logger.debug(f"✅ استعادة سجل {table_info['display_name']}[{pk_value}]")
+                                    
+                                    # 🔍 Logging مفصّل لكل سجل مستعاد
+                                    if model._meta.label in ['banks.bankaccount', 'banks.banktransaction', 'cashboxes.cashbox']:
+                                        logger.info(f"✅ استعادة {model._meta.label}[pk={pk_value}]: {cleaned_data.get('name', 'N/A')}")
+                                    else:
+                                        logger.debug(f"✅ استعادة سجل {table_info['display_name']}[{pk_value}]")
                                 except Exception as rec_err:
                                     error_msg = str(rec_err)
+                                    
+                                    # 🔍 Logging مفصّل للأخطاء
+                                    logger.error(f"❌ خطأ في استعادة {model._meta.label}: {error_msg}")
+                                    logger.error(f"   البيانات: {cleaned_data if 'cleaned_data' in locals() else record_data}")
+                                    
+                                    # تسجيل في Audit Log
+                                    if AUDIT_AVAILABLE:
+                                        try:
+                                            AuditLog.objects.create(
+                                                user=user,
+                                                action_type='restore_record_error',
+                                                description=f'خطأ في استعادة {model._meta.label}: {error_msg}'
+                                            )
+                                        except Exception:
+                                            pass
                                     # 🔧 تحسين: محاولة الاستعادة مع قيم افتراضية في حالة FK مفقودة
                                     if error_msg.startswith("FK_NOT_FOUND:"):
                                         logger.warning(f"⚠️ FK مفقود في {table_info['display_name']}: {error_msg}")
@@ -2163,6 +2191,7 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                                         'record': pk_value if 'pk_value' in locals() else 'unknown',
                                         'error': error_msg
                                     })
+                                    skipped_records += 1  # 🔍 زيادة عداد السجلات المتخطاة
                                     continue
                     
                     processed_tables += 1
@@ -2238,6 +2267,74 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                 
                 log_audit(user, 'create', f'اكتمل استعادة النسخة الاحتياطية: {total_restored}/{total_records_expected} سجل من {processed_tables} جدول ({total_skipped} متخطى)، تم إعادة تعيين {sequences_reset} sequence')
                 
+                # 🔍 تسجيل مفصل في Audit Log
+                if AUDIT_AVAILABLE:
+                    try:
+                        # تسجيل عام للعملية
+                        AuditLog.objects.create(
+                            user=user,
+                            action_type='restore_complete',
+                            description=f'نجحت عملية الاستعادة: {total_restored} سجل من {processed_tables} جدول، تخطي {total_skipped} سجل، {total_errors} جدول به أخطاء'
+                        )
+                        
+                        # تسجيل تفصيلي للأخطاء إن وجدت
+                        if total_errors > 0:
+                            error_details = []
+                            for table in flat_tables:
+                                if table.get('errors'):
+                                    error_details.append(f"{table['display_name']}: {len(table['errors'])} خطأ")
+                            
+                            AuditLog.objects.create(
+                                user=user,
+                                action_type='restore_errors',
+                                description=f'تفاصيل الأخطاء في الاستعادة: ' + ', '.join(error_details[:10])
+                            )
+                    except Exception:
+                        pass
+                
+                # 🔧 تصحيح الأرصدة البنكية والصناديق بعد الاستعادة
+                logger.info("🔄 بدء تصحيح الأرصدة البنكية والصناديق...")
+                try:
+                    from banks.models import BankAccount
+                    from cashboxes.models import Cashbox
+                    
+                    # تصحيح أرصدة البنوك
+                    banks_fixed = 0
+                    for bank in BankAccount.objects.all():
+                        old_balance = bank.balance
+                        actual_balance = bank.calculate_actual_balance()
+                        if old_balance != actual_balance:
+                            bank.balance = actual_balance
+                            bank.save(update_fields=['balance'])
+                            banks_fixed += 1
+                            logger.info(f"   ✅ تم تصحيح رصيد {bank.name}: {old_balance} → {actual_balance}")
+                    
+                    # تصحيح أرصدة الصناديق
+                    cashboxes_fixed = 0
+                    for cashbox in Cashbox.objects.all():
+                        old_balance = cashbox.balance
+                        actual_balance = cashbox.calculate_actual_balance()
+                        if old_balance != actual_balance:
+                            cashbox.balance = actual_balance
+                            cashbox.save(update_fields=['balance'])
+                            cashboxes_fixed += 1
+                            logger.info(f"   ✅ تم تصحيح رصيد {cashbox.name}: {old_balance} → {actual_balance}")
+                    
+                    logger.info(f"✅ تم تصحيح {banks_fixed} بنك و {cashboxes_fixed} صندوق")
+                    
+                    # تسجيل في Audit Log
+                    if AUDIT_AVAILABLE and (banks_fixed > 0 or cashboxes_fixed > 0):
+                        try:
+                            AuditLog.objects.create(
+                                user=user,
+                                action_type='balance_correction',
+                                description=f'تم تصحيح الأرصدة بعد الاستعادة: {banks_fixed} بنك، {cashboxes_fixed} صندوق'
+                            )
+                        except Exception:
+                            pass
+                except Exception as balance_error:
+                    logger.error(f"خطأ في تصحيح الأرصدة: {str(balance_error)}")
+                
         except Exception as e:
             # 🔧 لا نرفع الخطأ - نسجله فقط للسماح بالاستعادة الجزئية
             logger.error(f"خطأ في استعادة البيانات: {str(e)}")
@@ -2278,6 +2375,7 @@ def perform_clear_all_data(user):
         # قائمة التطبيقات المستثناة من المسح
         excluded_apps = [
             'django.contrib.admin',
+            'django.contrib.auth',  # ⭐ حماية الصلاحيات والمجموعات
             'django.contrib.contenttypes', 
             'django.contrib.sessions',
             'django.contrib.messages',

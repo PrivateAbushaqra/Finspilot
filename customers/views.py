@@ -354,8 +354,8 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
         customer_supplier = get_object_or_404(CustomerSupplier, pk=pk)
         
         try:
-            # حساب الرصيد الحالي
-            current_balance = customer_supplier.current_balance
+            # حساب الرصيد الحالي قبل التعديل
+            old_current_balance = customer_supplier.current_balance
             
             # الحصول على البيانات من النموذج
             name = request.POST.get('name', '').strip()
@@ -365,32 +365,33 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
             city = request.POST.get('city', '').strip()
             tax_number = request.POST.get('tax_number', '').strip()
             credit_limit = request.POST.get('credit_limit', '0')
-            # لا نعد نسمح بتعديل الرصيد - يُحسب تلقائياً من المعاملات
+            new_current_balance_str = request.POST.get('current_balance', '0')
             notes = request.POST.get('notes', '').strip()
             is_active = request.POST.get('is_active') == 'on'
             
             # التحقق من البيانات المطلوبة
             if not name:
-                messages.error(request, 'اسم العميل/المورد مطلوب!')
+                messages.error(request, _('اسم العميل/المورد مطلوب!'))
                 return redirect('customers:edit', pk=pk)
             
             if not city:
-                messages.error(request, 'المدينة مطلوبة!')
+                messages.error(request, _('المدينة مطلوبة!'))
                 return redirect('customers:edit', pk=pk)
             
             # التحقق من عدم وجود اسم مكرر (باستثناء نفس الحساب)
             if CustomerSupplier.objects.filter(name=name).exclude(pk=pk).exists():
-                messages.error(request, f'يوجد عميل/مورد آخر بنفس الاسم "{name}"!')
+                messages.error(request, _('يوجد عميل/مورد آخر بنفس الاسم "%(name)s"!') % {'name': name})
                 return redirect('customers:edit', pk=pk)
             
             # تحويل الأرقام المالية
             try:
                 credit_limit = float(credit_limit) if credit_limit else 0
+                new_current_balance = float(new_current_balance_str) if new_current_balance_str else 0
             except ValueError:
-                messages.error(request, 'قيم المبالغ المالية غير صحيحة!')
+                messages.error(request, _('قيم المبالغ المالية غير صحيحة!'))
                 return redirect('customers:edit', pk=pk)
             
-            # تحديث البيانات (بدون تعديل الرصيد)
+            # تحديث البيانات الأساسية
             customer_supplier.name = name
             customer_supplier.email = email
             customer_supplier.phone = phone
@@ -398,13 +399,62 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
             customer_supplier.city = city
             customer_supplier.tax_number = tax_number
             customer_supplier.credit_limit = credit_limit
-            # لا نعدل customer_supplier.balance - يبقى كما هو (الرصيد الافتتاحي)
             customer_supplier.notes = notes
             customer_supplier.is_active = is_active
             customer_supplier.save()
             
-            # تسجيل النشاط
-            log_view_activity(request, 'update', customer_supplier, _('Updated customer/supplier: %(name)s') % {'name': name})
+            # معالجة تغيير الرصيد الحالي
+            from decimal import Decimal
+            old_balance = Decimal(str(old_current_balance))
+            new_balance = Decimal(str(new_current_balance))
+            balance_difference = new_balance - old_balance
+            
+            if balance_difference != 0:
+                # إنشاء حركة تعديل في جدول المعاملات
+                from accounts.models import AccountTransaction
+                
+                # تحديد نوع الحركة
+                if balance_difference > 0:
+                    # زيادة في الرصيد = دائن للعميل/مورد
+                    direction = 'credit'
+                    description = _('تعديل يدوي للرصيد - زيادة: %(amount)s') % {'amount': abs(balance_difference)}
+                else:
+                    # نقص في الرصيد = مدين للعميل/مورد
+                    direction = 'debit'
+                    description = _('تعديل يدوي للرصيد - نقص: %(amount)s') % {'amount': abs(balance_difference)}
+                
+                # إنشاء الحركة
+                from django.utils import timezone
+                AccountTransaction.objects.create(
+                    customer_supplier=customer_supplier,
+                    date=timezone.now().date(),
+                    transaction_type='adjustment',
+                    direction=direction,
+                    amount=abs(balance_difference),
+                    description=description,
+                    reference_type='balance_adjustment',
+                    reference_id=customer_supplier.id,
+                    created_by=request.user
+                )
+                
+                # تسجيل النشاط في سجل الأنشطة
+                from core.models import AuditLog
+                AuditLog.objects.create(
+                    user=request.user,
+                    action_type='update',
+                    content_type='CustomerSupplier',
+                    object_id=customer_supplier.id,
+                    description=_('تعديل رصيد العميل/المورد: %(name)s من %(old)s إلى %(new)s (فرق: %(diff)s)') % {
+                        'name': name,
+                        'old': old_balance,
+                        'new': new_balance,
+                        'diff': balance_difference
+                    },
+                    ip_address=request.META.get('REMOTE_ADDR')
+                )
+            
+            # تسجيل النشاط العام
+            log_view_activity(request, 'update', customer_supplier, _('تحديث بيانات العميل/المورد: %(name)s') % {'name': name})
             
             # رسالة نجاح
             type_display = customer_supplier.get_type_display()
@@ -419,11 +469,17 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
             except:
                 currency_symbol = ""
             
-            messages.success(
-                request, 
-                f'تم تحديث {type_display} "{name}" بنجاح!\n'
-                f'الرصيد الجديد: {current_balance:.3f} {currency_symbol}'
-            )
+            # حساب الرصيد الجديد الفعلي
+            final_balance = customer_supplier.current_balance
+            
+            success_message = _('تم تحديث %(type)s "%(name)s" بنجاح!') % {'type': type_display, 'name': name}
+            if balance_difference != 0:
+                success_message += '\n' + _('الرصيد الجديد: %(balance)s %(currency)s') % {
+                    'balance': f'{final_balance:.3f}',
+                    'currency': currency_symbol
+                }
+            
+            messages.success(request, success_message)
             
             # إعادة توجيه حسب النوع
             if customer_supplier.type == 'customer':
@@ -434,7 +490,18 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
                 return redirect('customers:list')
             
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء تحديث البيانات: {str(e)}')
+            # تسجيل الخطأ
+            from core.models import AuditLog
+            AuditLog.objects.create(
+                user=request.user,
+                action_type='error',
+                content_type='CustomerSupplier',
+                object_id=pk,
+                description=_('خطأ في تحديث العميل/المورد: %(error)s') % {'error': str(e)},
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            
+            messages.error(request, _('حدث خطأ أثناء تحديث البيانات: %(error)s') % {'error': str(e)})
             return redirect('customers:edit', pk=pk)
 
 class CustomerSupplierDeleteView(LoginRequiredMixin, View):

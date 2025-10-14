@@ -642,7 +642,7 @@ class ProductUpdateView(LoginRequiredMixin, View):
             new_opening_balance = Decimal(str(opening_balance))
             
             if new_opening_balance != current_opening_balance:
-                from inventory.models import InventoryMovement, Warehouse
+                from inventory.models import InventoryMovement
                 
                 # حذف الرصيد الافتتاحي القديم إذا كان موجوداً
                 old_opening_movement = InventoryMovement.objects.filter(

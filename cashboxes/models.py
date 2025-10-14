@@ -62,7 +62,7 @@ class Cashbox(models.Model):
         # حساب إجمالي الإيداعات والتحويلات الواردة
         deposits = CashboxTransaction.objects.filter(
             cashbox=self,
-            transaction_type__in=['deposit', 'transfer_in', 'initial_balance']
+            transaction_type__in=['deposit', 'transfer_in', 'initial_balance', 'adjustment']
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
         
         # حساب إجمالي السحوبات والتحويلات الصادرة
@@ -89,7 +89,7 @@ class Cashbox(models.Model):
         
         deposits = CashboxTransaction.objects.filter(
             cashbox=self,
-            transaction_type__in=['deposit', 'transfer_in', 'initial_balance']
+            transaction_type__in=['deposit', 'transfer_in', 'initial_balance', 'adjustment']
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
         
         withdrawals = CashboxTransaction.objects.filter(

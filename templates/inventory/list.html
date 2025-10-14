@@ -562,7 +562,7 @@
                                                 </th>
                                                 <th>
                                                     <a href="?{% if current_sort == 'value' and sort_direction == 'asc' %}sort=value&dir=desc{% else %}sort=value&dir=asc{% endif %}" class="text-decoration-none" style="color: black !important;">
-                                                        {% trans "Value" %}
+                                                        {% trans "Total" %}
                                                         {% if current_sort == 'value' %}
                                                             {% if sort_direction == 'asc' %}
                                                                 <i class="fas fa-sort-up ms-1"></i>
@@ -854,6 +854,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         <th>{% trans "Product Name" %}</th>
                         <th>{% trans "Warehouse" %}</th>
                         <th>{% trans "Quantity" %}</th>
+                        <th>{% trans "Unit Price" %}</th>
+                        <th>{% trans "Total" %}</th>
                         <th>{% trans "Stock Status" %}</th>
                     </tr>
                 </thead>
@@ -866,21 +868,23 @@ document.addEventListener('DOMContentLoaded', function() {
         if (inventoryRows.length === 0) {
             inventoryHTML += `
                 <tr>
-                    <td colspan="5" style="text-align: center; padding: 20px;">{% trans "No inventory data for" %} {% trans "Print" %}</td>
+                    <td colspan="7" style="text-align: center; padding: 20px;">{% trans "No inventory data for" %} {% trans "Print" %}</td>
                 </tr>
             `;
         } else {
             inventoryRows.forEach((row) => {
                 try {
                     const cells = row.querySelectorAll('td');
-                    if (cells.length >= 5) {
+                    if (cells.length >= 7) {
                         const productName = cells[0].querySelector('strong').textContent.trim();
                         const productCode = cells[1].textContent.trim();
                         const warehouse = cells[2].textContent.trim();
                         const quantity = cells[3].querySelector('strong').textContent.trim();
-                        const stockLevel = cells[4].textContent.trim();
+                        const unitPrice = cells[4].querySelector('strong') ? cells[4].querySelector('strong').textContent.trim() : '-';
+                        const total = cells[5].querySelector('strong') ? cells[5].querySelector('strong').textContent.trim() : '-';
+                        const stockLevel = cells[6].textContent.trim();
                         
-                        console.log('{% trans "Stock data:" %}', {productCode, productName, warehouse, quantity, stockLevel});
+                        console.log('{% trans "Stock data:" %}', {productCode, productName, warehouse, quantity, unitPrice, total, stockLevel});
                         
                         inventoryHTML += `
                             <tr>
@@ -888,6 +892,8 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <td>${productName}</td>
                                 <td>${warehouse}</td>
                                 <td>${quantity}</td>
+                                <td>${unitPrice}</td>
+                                <td>${total}</td>
                                 <td>${stockLevel}</td>
                             </tr>
                         `;

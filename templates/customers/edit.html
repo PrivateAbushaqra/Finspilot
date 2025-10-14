@@ -212,17 +212,18 @@
                             <div class="form-text">{% trans "Maximum amount the" %} {% trans "Customer" %} {% trans "can be" %} {% trans "debited" %}</div>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="current_balance_display" class="form-label">{% trans "Current Balance" %} (محسوب من المعاملات)</label>
+                            <label for="current_balance" class="form-label">{% trans "Current Balance" %} (قابل للتعديل)</label>
                             <div class="balance-input">
                                 <span class="currency-symbol">{% get_currency_symbol %}</span>
-                                <input type="text" class="form-control {% if customer_supplier.current_balance > 0 %}bg-light-success{% elif customer_supplier.current_balance < 0 %}bg-light-danger{% else %}bg-light{% endif %}" 
-                                       id="current_balance_display" 
-                                       value="{{ customer_supplier.current_balance|floatformat:3 }}" 
-                                       readonly>
+                                <input type="number" class="form-control {% if customer_supplier.current_balance > 0 %}bg-light-success{% elif customer_supplier.current_balance < 0 %}bg-light-danger{% else %}bg-light{% endif %}" 
+                                       id="current_balance" 
+                                       name="current_balance"
+                                       value="{% if customer_supplier.current_balance %}{{ customer_supplier.current_balance }}{% else %}0{% endif %}" 
+                                       step="0.001">
                             </div>
                             <div class="form-text text-muted">
-                                <i class="fas fa-info-circle me-1"></i>
-                                الرصيد الحالي محسوب تلقائياً من جميع المعاملات ولا يمكن تعديله يدوياً
+                                <i class="fas fa-edit me-1"></i>
+                                يمكنك تعديل الرصيد الحالي مباشرة وسيتم تسجيل الفرق في المعاملات
                             </div>
                         </div>
                     </div>

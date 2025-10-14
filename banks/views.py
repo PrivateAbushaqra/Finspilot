@@ -224,10 +224,15 @@ class BankAccountUpdateView(LoginRequiredMixin, View):
         # Handle balance if it is None
         if account.balance is None:
             account.balance = 0.000
+        
+        # حساب الرصيد الفعلي من المعاملات
+        actual_balance = account.calculate_actual_balance()
+        
         # If input data is passed (from post when error appears), use it
         initial = kwargs.get('initial', None)
         context = {
             'account': account,
+            'actual_balance': actual_balance,
             'currencies': Currency.get_active_currencies(),
             'base_currency': Currency.get_base_currency(),
         }
@@ -292,21 +297,72 @@ class BankAccountUpdateView(LoginRequiredMixin, View):
                 return self.get(request, pk, initial=initial)
             # Convert balance to number
             try:
-                balance = Decimal(str(balance))
+                new_balance = Decimal(str(balance))
             except (ValueError, Decimal.InvalidOperation):
-                balance = account.balance  # Keep the current balance in case of error
+                new_balance = account.balance  # Keep the current balance in case of error
+            
+            # حساب الرصيد القديم
+            old_balance = account.calculate_actual_balance()
+            balance_difference = new_balance - old_balance
+            
             # Update account
             account.name = name
             account.bank_name = bank_name
             account.account_number = account_number
             account.iban = iban
             account.swift_code = swift_code
-            account.balance = balance
             account.currency = currency_code
             account.is_active = is_active
             account.notes = notes
-            account.save()
-            messages.success(request, f'Bank account "{account.name}" updated successfully!')
+            
+            # معالجة تغيير الرصيد
+            if balance_difference != 0:
+                # إنشاء حركة بنكية لتعديل الرصيد
+                from .models import BankTransaction
+                from django.utils import timezone
+                
+                # تحديد نوع الحركة
+                if balance_difference > 0:
+                    transaction_type = 'deposit'
+                    description = _('تعديل يدوي للرصيد - زيادة: %(amount)s') % {'amount': abs(balance_difference)}
+                else:
+                    transaction_type = 'withdrawal'
+                    description = _('تعديل يدوي للرصيد - نقص: %(amount)s') % {'amount': abs(balance_difference)}
+                
+                # إنشاء الحركة
+                BankTransaction.objects.create(
+                    bank=account,
+                    date=timezone.now().date(),
+                    transaction_type=transaction_type,
+                    amount=abs(balance_difference),
+                    description=description,
+                    reference_number=f'ADJ-{account.id}-{timezone.now().strftime("%Y%m%d%H%M%S")}',
+                    created_by=request.user
+                )
+                
+                # تسجيل في سجل الأنشطة
+                from core.models import AuditLog
+                AuditLog.objects.create(
+                    user=request.user,
+                    action_type='update',
+                    content_type='BankAccount',
+                    object_id=account.id,
+                    description=_('تعديل رصيد الحساب البنكي: %(name)s من %(old)s إلى %(new)s (فرق: %(diff)s)') % {
+                        'name': name,
+                        'old': old_balance,
+                        'new': new_balance,
+                        'diff': balance_difference
+                    },
+                    ip_address=request.META.get('REMOTE_ADDR')
+                )
+                
+                # إعادة حساب الرصيد من المعاملات
+                account.sync_balance()
+            else:
+                # حفظ بدون تغيير الرصيد
+                account.save()
+            
+            messages.success(request, _('تم تحديث الحساب البنكي "%(name)s" بنجاح!') % {'name': account.name})
             return redirect('banks:account_list')
         except Exception as e:
             messages.error(request, f'Error occurred while updating account: {str(e)}')

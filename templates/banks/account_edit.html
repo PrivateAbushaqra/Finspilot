@@ -223,17 +223,21 @@
                             {% trans "The" %} {% trans "Information" %} {% trans "Financial" %}
                         </h5>
                         
+                        <!-- Updated: 2025-10-14 - Using actual_balance from calculate_actual_balance() -->
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="id_balance" class="form-label">{% trans "The" %} {% trans "Balance" %} {% trans "Current" %}</label>
+                                    <label for="id_balance" class="form-label">{% trans "The" %} {% trans "Balance" %} {% trans "Current" %} (قابل للتعديل)</label>
                                     <div class="input-group">
-                                        <input type="text" class="form-control" id="id_balance" name="balance" 
+                                        <input type="number" class="form-control" id="id_balance" name="balance" 
                                                step="0.001"
-                                               value="{{ account.balance|floatformat:3 }}" required>
+                                               value="{{ actual_balance|floatformat:3|default:'0.000' }}" required>
                                         <span class="input-group-text">{{ account.currency }}</span>                                        
                                     </div>
-                                    <div class="form-text">{% trans "The" %} {% trans "Balance" %} {% trans "Current" %} {% trans "for" %} {% trans "Account" %}</div>
+                                    <div class="form-text text-muted">
+                                        <i class="fas fa-edit me-1"></i>
+                                        يمكنك تعديل الرصيد الحالي مباشرة وسيتم تسجيل الفرق في المعاملات
+                                    </div>
                                 </div>
                             </div>
                             

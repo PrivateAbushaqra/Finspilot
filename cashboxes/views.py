@@ -299,6 +299,41 @@ def cashbox_create(request):
                         description=_('Opening Balance'),
                         created_by=request.user
                     )
+                    
+                    # إنشاء قيد محاسبي للرصيد الافتتاحي
+                    from journal.services import JournalService
+                    cashbox_account = JournalService.get_cashbox_account(cashbox)
+                    
+                    # الحصول على حساب رأس المال
+                    from accounts.models import Account
+                    capital_account = Account.objects.filter(code='301').first()
+                    
+                    if cashbox_account and capital_account:
+                        journal_entry = JournalService.create_journal_entry(
+                            date=timezone.now().date(),
+                            description=f'{_("Opening Balance")}: {cashbox.name}',
+                            reference_type='cashbox_initial',
+                            reference_id=cashbox.id,
+                            created_by=request.user
+                        )
+                        
+                        # مدين: الصندوق
+                        JournalService.add_journal_entry_line(
+                            journal_entry=journal_entry,
+                            account=cashbox_account,
+                            debit=initial_balance_decimal,
+                            credit=Decimal('0'),
+                            description=f'{_("Opening Balance")}: {cashbox.name}'
+                        )
+                        
+                        # دائن: رأس المال
+                        JournalService.add_journal_entry_line(
+                            journal_entry=journal_entry,
+                            account=capital_account,
+                            debit=Decimal('0'),
+                            credit=initial_balance_decimal,
+                            description=f'{_("Capital")}'
+                        )
                 
                 # تسجيل النشاط في سجل الأنشطة
                 AuditLog.objects.create(
@@ -330,35 +365,143 @@ def cashbox_edit(request, cashbox_id):
         currency = request.POST.get('currency', '')
         location = request.POST.get('location', '')
         responsible_user_id = request.POST.get('responsible_user')
+        initial_balance = request.POST.get('initial_balance')
         
         if not name:
             messages.error(request, _('Cashbox name is required'))
-            return redirect('cashboxes:cashbox_detail', cashbox_id=cashbox_id)
+            return redirect('cashboxes:cashbox_list')
+        
+        # التحقق من الرصيد الافتتاحي
+        try:
+            new_initial_balance = Decimal(initial_balance or 0)
+        except (ValueError, TypeError):
+            messages.error(request, _('Initial balance must be a valid number'))
+            return redirect('cashboxes:cashbox_list')
+        
+        # التحقق من responsible_user_id إذا تم تمريره
+        responsible_user = None
+        if responsible_user_id:
+            try:
+                responsible_user = User.objects.get(id=responsible_user_id)
+            except User.DoesNotExist:
+                messages.error(request, _('Selected responsible user does not exist'))
+                return redirect('cashboxes:cashbox_list')
         
         try:
-            cashbox.name = name
-            cashbox.description = description
-            cashbox.currency = currency
-            cashbox.location = location
-            cashbox.responsible_user_id = responsible_user_id if responsible_user_id else None
-            cashbox.save()
-            
-            # تسجيل النشاط في سجل الأنشطة
-            AuditLog.objects.create(
-                user=request.user,
-                action_type='update',
-                content_type='Cashbox',
-                object_id=cashbox_id,
-                description=f'تعديل الصندوق: {name}',
-                ip_address=request.META.get('REMOTE_ADDR')
-            )
-            
-            messages.success(request, _('Cashbox updated successfully'))
-            return redirect('cashboxes:cashbox_detail', cashbox_id=cashbox_id)
+            with transaction.atomic():
+                # حفظ الرصيد القديم
+                old_balance = cashbox.balance
+                
+                # حساب فرق الرصيد
+                balance_diff = new_initial_balance - old_balance
+                
+                # تحديث بيانات الصندوق (بدون الرصيد)
+                cashbox.name = name
+                cashbox.description = description
+                cashbox.currency = currency
+                cashbox.location = location
+                cashbox.responsible_user = responsible_user
+                cashbox.save()
+                
+                # إذا كان هناك تغيير في الرصيد
+                if balance_diff != 0:
+                    # إنشاء حركة للتعديل
+                    adjustment_description = _('Adjustment of Opening Balance')
+                    if balance_diff > 0:
+                        adjustment_description += f' - {_("Increase")}: {abs(balance_diff)}'
+                    else:
+                        adjustment_description += f' - {_("Decrease")}: {abs(balance_diff)}'
+                    
+                    CashboxTransaction.objects.create(
+                        cashbox=cashbox,
+                        transaction_type='deposit' if balance_diff > 0 else 'withdrawal',
+                        date=timezone.now().date(),
+                        amount=abs(balance_diff),
+                        description=adjustment_description,
+                        created_by=request.user
+                    )
+                    
+                    # إنشاء قيد محاسبي للتعديل
+                    from journal.services import JournalService
+                    from journal.models import Account
+                    cashbox_account = JournalService.get_cashbox_account(cashbox)
+                    
+                    # الحصول على حساب رأس المال
+                    capital_account = Account.objects.filter(code='301').first()
+                    
+                    if cashbox_account and capital_account:
+                        if balance_diff > 0:
+                            # زيادة في الرصيد: مدين الصندوق، دائن رأس المال
+                            journal_entry = JournalService.create_journal_entry(
+                                date=timezone.now().date(),
+                                description=f'{_("Adjustment of Opening Balance")}: {cashbox.name}',
+                                reference_type='cashbox_adjustment',
+                                reference_id=cashbox.id,
+                                created_by=request.user
+                            )
+                            
+                            JournalService.add_journal_entry_line(
+                                journal_entry=journal_entry,
+                                account=cashbox_account,
+                                debit=abs(balance_diff),
+                                credit=Decimal('0'),
+                                description=f'{_("Increase in balance")}: {cashbox.name}'
+                            )
+                            
+                            JournalService.add_journal_entry_line(
+                                journal_entry=journal_entry,
+                                account=capital_account,
+                                debit=Decimal('0'),
+                                credit=abs(balance_diff),
+                                description=f'{_("Capital")}'
+                            )
+                        else:
+                            # نقصان في الرصيد: دائن الصندوق، مدين رأس المال
+                            journal_entry = JournalService.create_journal_entry(
+                                date=timezone.now().date(),
+                                description=f'{_("Adjustment of Opening Balance")}: {cashbox.name}',
+                                reference_type='cashbox_adjustment',
+                                reference_id=cashbox.id,
+                                created_by=request.user
+                            )
+                            
+                            JournalService.add_journal_entry_line(
+                                journal_entry=journal_entry,
+                                account=capital_account,
+                                debit=abs(balance_diff),
+                                credit=Decimal('0'),
+                                description=f'{_("Capital")}'
+                            )
+                            
+                            JournalService.add_journal_entry_line(
+                                journal_entry=journal_entry,
+                                account=cashbox_account,
+                                debit=Decimal('0'),
+                                credit=abs(balance_diff),
+                                description=f'{_("Decrease in balance")}: {cashbox.name}'
+                            )
+                    
+                    # إعادة حساب الرصيد من المعاملات
+                    cashbox.sync_balance()
+                
+                # تسجيل النشاط في سجل الأنشطة
+                AuditLog.objects.create(
+                    user=request.user,
+                    action_type='update',
+                    content_type='Cashbox',
+                    object_id=cashbox_id,
+                    description=f'تعديل الصندوق: {name}',
+                    ip_address=request.META.get('REMOTE_ADDR')
+                )
+                
+                messages.success(request, _('Cashbox updated successfully'))
+                return redirect('cashboxes:cashbox_list')
         except Exception as e:
+            print(f"خطأ في تحديث الصندوق: {e}")
             messages.error(request, _('An error occurred while updating the cashbox'))
+            return redirect('cashboxes:cashbox_list')
     
-    return redirect('cashboxes:cashbox_detail', cashbox_id=cashbox_id)
+    return redirect('cashboxes:cashbox_list')
 
 
 @login_required

@@ -155,7 +155,7 @@ table.dataTable thead th.sorting:after {
             </div>
             <div class="col-md-3 text-center">
                 <div class="mb-1">{% trans "Current Balance" %}</div>
-                <h3 class="mb-0" id="currentBalance">{{ account.balance|floatformat:3 }} {% get_currency_symbol %}</h3>
+                <h3 class="mb-0" id="currentBalance">{{ account.calculate_actual_balance|floatformat:3 }} {% get_currency_symbol %}</h3>
             </div>
             <div class="col-md-3 text-center">
                 <div class="mb-1">{% trans "Transactions Count" %}</div>
@@ -478,7 +478,7 @@ function printStatement() {
             </div>
             
             <div class="info">
-                <p><strong>{% trans "Current Balance" %}:</strong> <span class="{% if account.balance > 0 %}balance-positive{% elif account.balance < 0 %}balance-negative{% endif %}">{{ account.balance|floatformat:3 }} {% get_currency_symbol %}</span></p>
+                <p><strong>{% trans "Current Balance" %}:</strong> <span class="{% if account.calculate_actual_balance > 0 %}balance-positive{% elif account.calculate_actual_balance < 0 %}balance-negative{% endif %}">{{ account.calculate_actual_balance|floatformat:3 }} {% get_currency_symbol %}</span></p>
                 <p><strong>{% trans "Transactions Count" %}:</strong> {{ transactions_count }}</p>
                 <p><strong>{% trans "Print Date" %}:</strong> ${new Date().toLocaleDateString('ar')}</p>
             </div>
