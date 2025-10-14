@@ -309,30 +309,28 @@ def cashbox_create(request):
                     capital_account = Account.objects.filter(code='301').first()
                     
                     if cashbox_account and capital_account:
+                        lines_data = [
+                            {
+                                'account_id': cashbox_account.id,
+                                'debit': initial_balance_decimal,
+                                'credit': Decimal('0'),
+                                'description': f'{_("Opening Balance")}: {cashbox.name}'
+                            },
+                            {
+                                'account_id': capital_account.id,
+                                'debit': Decimal('0'),
+                                'credit': initial_balance_decimal,
+                                'description': f'{_("Capital")}'
+                            }
+                        ]
+                        
                         journal_entry = JournalService.create_journal_entry(
-                            date=timezone.now().date(),
+                            entry_date=timezone.now().date(),
                             description=f'{_("Opening Balance")}: {cashbox.name}',
                             reference_type='cashbox_initial',
                             reference_id=cashbox.id,
-                            created_by=request.user
-                        )
-                        
-                        # مدين: الصندوق
-                        JournalService.add_journal_entry_line(
-                            journal_entry=journal_entry,
-                            account=cashbox_account,
-                            debit=initial_balance_decimal,
-                            credit=Decimal('0'),
-                            description=f'{_("Opening Balance")}: {cashbox.name}'
-                        )
-                        
-                        # دائن: رأس المال
-                        JournalService.add_journal_entry_line(
-                            journal_entry=journal_entry,
-                            account=capital_account,
-                            debit=Decimal('0'),
-                            credit=initial_balance_decimal,
-                            description=f'{_("Capital")}'
+                            lines_data=lines_data,
+                            user=request.user
                         )
                 
                 # تسجيل النشاط في سجل الأنشطة
