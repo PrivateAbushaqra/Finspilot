@@ -129,6 +129,16 @@ class BankTransaction(models.Model):
         ('withdrawal', _('Withdrawal')),
     ]
     
+    ADJUSTMENT_TYPES = [
+        ('capital', _('Capital Contribution')),
+        ('error_correction', _('Error Correction')),
+        ('bank_interest', _('Bank Interest')),
+        ('bank_charges', _('Bank Charges')),
+        ('reconciliation', _('Bank Reconciliation')),
+        ('exchange_difference', _('Exchange Difference')),
+        ('other', _('Other')),
+    ]
+    
     bank = models.ForeignKey(BankAccount, on_delete=models.PROTECT, 
                            verbose_name=_('Bank Account'), related_name='transactions')
     transaction_type = models.CharField(_('Transaction Type'), max_length=20, choices=TRANSACTION_TYPES)
@@ -136,6 +146,22 @@ class BankTransaction(models.Model):
     description = models.TextField(_('Description'))
     reference_number = models.CharField(_('Reference Number'), max_length=100, blank=True)
     date = models.DateField(_('Date'))
+    
+    # حقول جديدة لتصنيف التعديلات - متوافقة مع IFRS
+    adjustment_type = models.CharField(
+        _('Adjustment Type'),
+        max_length=50,
+        choices=ADJUSTMENT_TYPES,
+        blank=True,
+        null=True,
+        help_text=_('Type of manual adjustment (IFRS compliant)')
+    )
+    is_manual_adjustment = models.BooleanField(
+        _('Manual Adjustment'),
+        default=False,
+        help_text=_('Is this a manual balance adjustment?')
+    )
+    
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name=_('Created By'))
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
     

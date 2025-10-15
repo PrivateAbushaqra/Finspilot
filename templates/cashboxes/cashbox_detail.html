@@ -249,6 +249,27 @@ table.dataTable thead th.sorting:after {
                         <small class="text-muted">{% trans "Modifying the balance will create an adjustment entry" %}</small>
                     </div>
                     <div class="mb-3">
+                        <label class="form-label">
+                            {% trans "Adjustment Type" %}
+                            <small class="text-muted">({% trans "IFRS compliant" %})</small>
+                        </label>
+                        <select name="adjustment_type" class="form-select">
+                            <option value="capital">{% trans "Capital Contribution" %}</option>
+                            <option value="error_correction">{% trans "Error Correction" %}</option>
+                            <option value="cash_shortage">{% trans "Cash Shortage" %}</option>
+                            <option value="cash_surplus">{% trans "Cash Surplus" %}</option>
+                            <option value="reconciliation">{% trans "Cash Reconciliation" %}</option>
+                            <option value="other" selected>{% trans "Other" %}</option>
+                        </select>
+                        <small class="text-muted">
+                            {% if LANGUAGE_CODE == 'ar' %}
+                                اختر سبب التعديل - سيتم استخدام الحساب المحاسبي المناسب تلقائياً
+                            {% else %}
+                                Choose the adjustment reason - the appropriate accounting account will be used automatically
+                            {% endif %}
+                        </small>
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label">{% trans "Currency" %}</label>
                         <select name="currency" class="form-select">
                             {% for currency in currencies %}

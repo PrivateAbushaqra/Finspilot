@@ -417,12 +417,16 @@ def cashbox_edit(request, cashbox_id):
                 
                 # إذا كان هناك تغيير في الرصيد
                 if balance_diff != 0:
+                    # الحصول على نوع التعديل من الطلب
+                    from core.utils import get_adjustment_account_code
+                    adjustment_type = request.POST.get('adjustment_type', 'other')
+                    
                     # إنشاء حركة للتعديل
                     adjustment_description = _('Adjustment of Opening Balance')
                     if balance_diff > 0:
-                        adjustment_description += f' - {_("Increase")}: {abs(balance_diff)}'
+                        adjustment_description += f' - {_("Increase")}: {abs(balance_diff)} - نوع: {dict(CashboxTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "غير محدد")}'
                     else:
-                        adjustment_description += f' - {_("Decrease")}: {abs(balance_diff)}'
+                        adjustment_description += f' - {_("Decrease")}: {abs(balance_diff)} - نوع: {dict(CashboxTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "غير محدد")}'
                     
                     CashboxTransaction.objects.create(
                         cashbox=cashbox,
@@ -430,56 +434,59 @@ def cashbox_edit(request, cashbox_id):
                         date=timezone.now().date(),
                         amount=abs(balance_diff),
                         description=adjustment_description,
+                        adjustment_type=adjustment_type,
+                        is_manual_adjustment=True,
                         created_by=request.user
                     )
                     
-                    # إنشاء قيد محاسبي للتعديل
+                    # إنشاء قيد محاسبي للتعديل باستخدام الحساب الصحيح
                     from journal.services import JournalService
                     from journal.models import Account
                     cashbox_account = JournalService.get_cashbox_account(cashbox)
                     
-                    # الحصول على حساب رأس المال
-                    capital_account = Account.objects.filter(code='301').first()
+                    # تحديد الحساب المقابل حسب نوع التعديل (IFRS compliant)
+                    adjustment_account_code = get_adjustment_account_code(adjustment_type, is_bank=False)
+                    adjustment_account = Account.objects.filter(code=adjustment_account_code).first()
                     
-                    if cashbox_account and capital_account:
+                    if cashbox_account and adjustment_account:
                         lines_data = []
                         
                         if balance_diff > 0:
-                            # زيادة في الرصيد: مدين الصندوق، دائن رأس المال
+                            # زيادة في الرصيد: مدين الصندوق، دائن الحساب المقابل
                             lines_data = [
                                 {
                                     'account_id': cashbox_account.id,
                                     'debit': abs(balance_diff),
                                     'credit': Decimal('0'),
-                                    'description': f'{_("Increase in balance")}: {cashbox.name}'
+                                    'description': f'{_("Increase in balance")}: {cashbox.name} ({dict(CashboxTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "تعديل")})'
                                 },
                                 {
-                                    'account_id': capital_account.id,
+                                    'account_id': adjustment_account.id,
                                     'debit': Decimal('0'),
                                     'credit': abs(balance_diff),
-                                    'description': f'{_("Capital")}'
+                                    'description': f'{adjustment_account.name} - {dict(CashboxTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "تعديل")}'
                                 }
                             ]
                         else:
-                            # نقصان في الرصيد: دائن الصندوق، مدين رأس المال
+                            # نقصان في الرصيد: دائن الصندوق، مدين الحساب المقابل
                             lines_data = [
                                 {
-                                    'account_id': capital_account.id,
+                                    'account_id': adjustment_account.id,
                                     'debit': abs(balance_diff),
                                     'credit': Decimal('0'),
-                                    'description': f'{_("Capital")}'
+                                    'description': f'{adjustment_account.name} - {dict(CashboxTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "تعديل")}'
                                 },
                                 {
                                     'account_id': cashbox_account.id,
                                     'debit': Decimal('0'),
                                     'credit': abs(balance_diff),
-                                    'description': f'{_("Decrease in balance")}: {cashbox.name}'
+                                    'description': f'{_("Decrease in balance")}: {cashbox.name} ({dict(CashboxTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "تعديل")})'
                                 }
                             ]
                         
                         journal_entry = JournalService.create_journal_entry(
                             entry_date=timezone.now().date(),
-                            description=f'{_("Adjustment of Opening Balance")}: {cashbox.name}',
+                            description=f'{_("Adjustment of Opening Balance")}: {cashbox.name} - {dict(CashboxTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "تعديل")}',
                             reference_type='cashbox_adjustment',
                             reference_id=cashbox.id,
                             lines_data=lines_data,

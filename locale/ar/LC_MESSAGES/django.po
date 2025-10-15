@@ -467,7 +467,7 @@ msgstr "الوصف"
 #: .\templates\banks\account_add.html:252
 #: .\templates\banks\account_detail.html:364
 #: .\templates\banks\account_edit.html:262
-#: .\templates\banks\account_edit.html:266 .\templates\customers\add.html:218
+#: .\templates\customers\add.html:218
 #: .\templates\customers\delete.html:153 .\templates\customers\edit.html:266
 #: .\templates\customers\supplier_list.html:476
 #: .\templates\customers\transactions.html:580
@@ -1712,12 +1712,6 @@ msgstr "الإيداعات هذا الشهر"
 msgid "Outstanding Checks"
 msgstr "الشيكات المعلقة"
 
-#: .\banks\models.py:211 .\banks\templates\banks\reconciliation_detail.html:86
-#: .\banks\templates\banks\reconciliation_form.html:106
-#, fuzzy
-#| msgid "Bank Check"
-msgid "Bank Charges"
-msgstr "شيك بنكي"
 
 #: .\banks\models.py:212 .\banks\templates\banks\reconciliation_detail.html:90
 #: .\banks\templates\banks\reconciliation_form.html:115
@@ -1733,11 +1727,34 @@ msgstr "معدل الفائدة"
 msgid "Other Adjustments"
 msgstr "التعديلات"
 
-#: .\banks\models.py:221
-#, fuzzy
-#| msgid "Bank Reconciliations"
+#: .\templates\banks\account_edit.html:266
+#: .\banks\models.py:134
+#: .\templates\banks\account_edit.html:266
+#: .\cashboxes\models.py:290
+#: .\templates\cashboxes\cashbox_detail.html:258
+#: .\templates\cashboxes\cashbox_list.html:231
+msgid "Error Correction"
+msgstr "تصحيح الخطأ"
+
+#: .\banks\models.py:135
+#: .\templates\banks\account_edit.html:267
+msgid "Bank Interest"
+msgstr "فائدة البنك"
+
+#: .\banks\models.py:136
+#: .\templates\banks\account_edit.html:268
+msgid "Bank Charges"
+msgstr "رسوم البنك"
+
+#: .\banks\models.py:137
+#: .\templates\banks\account_edit.html:269
 msgid "Bank Reconciliation"
-msgstr "تسويات البنوك"
+msgstr "تسوية البنك"
+
+#: .\banks\models.py:138
+#: .\templates\banks\account_edit.html:270
+msgid "Exchange Difference"
+msgstr "فرق الصرف"
 
 #: .\banks\models.py:222 .\banks\templates\banks\reconciliation_list.html:6
 #: .\banks\templates\banks\reconciliation_list.html:14
@@ -1745,12 +1762,28 @@ msgstr "تسويات البنوك"
 msgid "Bank Reconciliations"
 msgstr "تسويات البنوك"
 
+#: .\cashboxes\models.py:291
+#: .\templates\cashboxes\cashbox_detail.html:259
+#: .\templates\cashboxes\cashbox_list.html:232
+msgid "Cash Shortage"
+msgstr "نقص النقد"
+
+#: .\cashboxes\models.py:292
+#: .\templates\cashboxes\cashbox_detail.html:260
+#: .\templates\cashboxes\cashbox_list.html:233
+msgid "Cash Surplus"
+msgstr "الفائض النقدي"
+
+#: .\cashboxes\models.py:293
+#: .\templates\cashboxes\cashbox_detail.html:261
+#: .\templates\cashboxes\cashbox_list.html:234
+msgid "Cash Reconciliation"
+msgstr "تسوية النقدية"
+
 #: .\banks\templates\banks\reconciliation_detail.html:5
 #: .\banks\templates\banks\reconciliation_detail.html:13
-#, fuzzy
-#| msgid "Bank Reconciliations"
 msgid "Bank Reconciliation Details"
-msgstr "تسويات البنوك"
+msgstr " تفاصيل تسويات البنوك"
 
 #: .\banks\templates\banks\reconciliation_detail.html:17
 #: .\templates\assets_liabilities\asset_detail.html:80
@@ -3000,6 +3033,15 @@ msgstr "الرصيد الافتتاحي"
 msgid "Capital"
 msgstr "رأس المال"
 
+#: .\banks\models.py:133
+#: .\templates\banks\account_edit.html:265
+#: .\templates\cashboxes\cashbox_detail.html:257
+#: .\cashboxes\models.py:289
+#: .\templates\cashboxes\cashbox_detail.html:257
+#: .\templates\cashboxes\cashbox_list.html:230
+msgid "Capital Contribution"
+msgstr "مساهمة رأس المال"
+
 #: .\cashboxes\views.py:348
 msgid "Cashbox created successfully"
 msgstr "تم إنشاء الصندوق النقدي بنجاح"
@@ -3008,6 +3050,21 @@ msgstr "تم إنشاء الصندوق النقدي بنجاح"
 #: .\cashboxes\views.py:359
 msgid "An error occurred while creating the cashbox"
 msgstr "حدث خطأ أثناء إنشاء الصندوق النقدي"
+
+#: .\templates\banks\account_edit.html:232
+msgid "Current Balance :"
+msgstr "الرصيد الفعلي :"
+
+#: .\templates\banks\account_edit.html:231
+msgid "Editable"
+msgstr "قابل للتعديل"
+
+#: .\banks\models.py:152
+#: .\cashboxes\models.py:305
+#: .\templates\cashboxes\cashbox_detail.html:253
+#: .\templates\cashboxes\cashbox_list.html:226
+msgid "Adjustment Type"
+msgstr "نوع التعديل"
 
 # Cashbox adjustments
 #: .\cashboxes\views.py:409 .\cashboxes\views.py:437 .\cashboxes\views.py:462
@@ -11857,6 +11914,9 @@ msgstr "اختر الحساب البنكي"
 msgid "Choose Cashbox"
 msgstr "اختر الصندوق"
 
+
+#: .\banks\templates\banks\reconciliation_detail.html:86
+#: .\banks\templates\banks\reconciliation_form.html:106
 #: .\templates\banks\bank_cashbox_transfer_add.html:262
 msgid "Bank Check"
 msgstr "شيك بنكي"

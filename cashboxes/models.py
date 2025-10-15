@@ -285,11 +285,35 @@ class CashboxTransaction(models.Model):
         ('adjustment', _('settlement')),
     ]
     
+    ADJUSTMENT_TYPES = [
+        ('capital', _('Capital Contribution')),
+        ('error_correction', _('Error Correction')),
+        ('cash_shortage', _('Cash Shortage')),
+        ('cash_surplus', _('Cash Surplus')),
+        ('reconciliation', _('Cash Reconciliation')),
+        ('other', _('Other')),
+    ]
+    
     cashbox = models.ForeignKey(Cashbox, on_delete=models.PROTECT, verbose_name=_('الصندوق'))
     transaction_type = models.CharField(_('Transaction Type'), max_length=20, choices=TRANSACTION_TYPES)
     date = models.DateField(_('Date'))
     amount = models.DecimalField(_('Amount'), max_digits=15, decimal_places=3)
     description = models.TextField(_('Description'), blank=True)
+    
+    # حقول جديدة لتصنيف التعديلات - متوافقة مع IFRS
+    adjustment_type = models.CharField(
+        _('Adjustment Type'),
+        max_length=50,
+        choices=ADJUSTMENT_TYPES,
+        blank=True,
+        null=True,
+        help_text=_('Type of manual adjustment (IFRS compliant)')
+    )
+    is_manual_adjustment = models.BooleanField(
+        _('Manual Adjustment'),
+        default=False,
+        help_text=_('Is this a manual balance adjustment?')
+    )
     
     # ربط بالتحويل إذا كانت الحركة من تحويل
     related_transfer = models.ForeignKey(CashboxTransfer, on_delete=models.CASCADE, 

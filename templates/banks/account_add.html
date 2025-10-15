@@ -214,15 +214,33 @@
                             {% trans "Financial Information" %}
                         </h5>
                         
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>{% trans "IFRS Note" %}:</strong>
+                            {% if LANGUAGE_CODE == 'ar' %}
+                                الرصيد الافتتاحي يُسجل كمساهمة رأسمالية (حساب 301) وفقاً لمعايير IFRS IAS 1.
+                                أي تعديلات مستقبلية سيتم قيدها في الحسابات المناسبة حسب نوع التعديل.
+                            {% else %}
+                                Opening balance is recorded as capital contribution (account 301) according to IFRS IAS 1 standards.
+                                Future adjustments will be recorded to appropriate accounts based on adjustment type.
+                            {% endif %}
+                        </div>
+                        
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="id_balance" class="form-label">{% trans "Current Balance" %}</label>
+                                    <label for="id_balance" class="form-label">
+                                        {% trans "Opening Balance" %}
+                                        <small class="text-muted">({% trans "Initial Balance" %})</small>
+                                    </label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="id_balance" name="balance" step="0.001" value="0.000">
                                         <span class="input-group-text">{% get_currency_code %}</span>
                                     </div>
-                                    <div class="form-text">{% trans "Current account balance" %}</div>
+                                    <div class="form-text">
+                                        <i class="fas fa-balance-scale me-1"></i>
+                                        {% trans "Opening balance - recorded as capital contribution" %}
+                                    </div>
                                 </div>
                             </div>
                             

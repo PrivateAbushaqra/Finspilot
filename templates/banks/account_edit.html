@@ -204,7 +204,7 @@
                                     <select class="form-select" id="id_currency" name="currency">
                                         {% get_active_currencies as currencies %}
                                         {% for currency in currencies %}
-                                            <option value="{{ currency.code }}" {% if currency.is_base_currency %}selected{% endif %}>
+                                            <option value="{{ currency.code }}" {% if currency.code == account.currency %}selected{% endif %}>
                                                 {{ currency.name }} ({{ currency.code }})
                                                 {% if currency.is_base_currency %} - {% trans "Currency" %} {% trans "Base" %}{% endif %}
                                             </option>
@@ -227,7 +227,10 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="id_balance" class="form-label">{% trans "The" %} {% trans "Balance" %} {% trans "Current" %} (قابل للتعديل)</label>
+                                    <label for="id_balance" class="form-label">
+                                        {% trans "Balance" %} {% trans "Current" %} ({% trans "Editable" %})
+                                        <small class="text-info">({% trans "Current Balance" %}: {{ actual_balance }})</small>
+                                    </label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="id_balance" name="balance" 
                                                step="0.001"
@@ -235,8 +238,46 @@
                                         <span class="input-group-text">{{ account.currency }}</span>                                        
                                     </div>
                                     <div class="form-text text-muted">
-                                        <i class="fas fa-edit me-1"></i>
-                                        يمكنك تعديل الرصيد الحالي مباشرة وسيتم تسجيل الفرق في المعاملات
+                                        {% if LANGUAGE_CODE == 'ar' %}
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            الرصيد المحسوب من المعاملات: <strong>{{ actual_balance }} {{ account.currency }}</strong>
+                                            <br>
+                                            <i class="fas fa-edit me-1"></i>
+                                            يمكنك تعديل الرصيد الحالي مباشرة وسيتم تسجيل الفرق في المعاملات
+                                        {% else %}
+                                            <i class="fas fa-info-circle me-1"></i>
+                                            Balance calculated from transactions: <strong>{{ actual_balance }} {{ account.currency }}</strong>
+                                            <br>
+                                            <i class="fas fa-edit me-1"></i>
+                                            You can edit the current balance directly and the difference will be recorded in transactions
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_adjustment_type" class="form-label">
+                                        {% trans "Adjustment Type" %}
+                                        <small class="text-muted">({% trans "IFRS compliant" %})</small>
+                                    </label>
+                                    <select class="form-select" id="id_adjustment_type" name="adjustment_type">
+                                        <option value="capital">{% trans "Capital Contribution" %}</option>
+                                        <option value="error_correction">{% trans "Error Correction" %}</option>
+                                        <option value="bank_interest">{% trans "Bank Interest" %}</option>
+                                        <option value="bank_charges">{% trans "Bank Charges" %}</option>
+                                        <option value="reconciliation">{% trans "Bank Reconciliation" %}</option>
+                                        <option value="exchange_difference">{% trans "Exchange Difference" %}</option>
+                                        <option value="other" selected>{% trans "Other" %}</option>
+                                    </select>
+                                    <div class="form-text text-muted">
+                                        {% if LANGUAGE_CODE == 'ar' %}
+                                            <i class="fas fa-balance-scale me-1"></i>
+                                            اختر سبب التعديل - سيتم استخدام الحساب المحاسبي المناسب تلقائياً
+                                        {% else %}
+                                            <i class="fas fa-balance-scale me-1"></i>
+                                            Choose the adjustment reason - the appropriate accounting account will be used automatically
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
@@ -245,7 +286,7 @@
                                 <div class="mb-3">
                                     <label for="id_is_active" class="form-label">{% trans "Status" %} {% trans "Account" %}</label>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="id_is_active" name="is_active" checked>
+                                        <input class="form-check-input" type="checkbox" id="id_is_active" name="is_active" {% if account.is_active %}checked{% endif %}>
                                         <label class="form-check-label" for="id_is_active">
                                             {% trans "Account" %} {% trans "Active" %}
                                         </label>
@@ -265,7 +306,7 @@
                         
                         <div class="mb-3">
                             <label for="id_notes" class="form-label">{% trans "Notes" %}</label>
-                            <textarea class="form-control" id="id_notes" name="notes" rows="3">{% trans "This is" %} {% trans "Account" %} {% trans "Main" %} {% trans "for" %} {% trans "Company" %} {% trans "in" %} {% trans "Bank" %} {% trans "Commercial" %} {% trans "Jordanian" %}</textarea>
+                            <textarea class="form-control" id="id_notes" name="notes" rows="3">{{ account.notes }}</textarea>
                         </div>
                     </div>
                     

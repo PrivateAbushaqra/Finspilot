@@ -200,12 +200,14 @@ class BankAccountCreateView(LoginRequiredMixin, View):
                 )
                 
                 # إنشاء قيد محاسبي للرصيد الافتتاحي إذا كان أكبر من صفر
+                # متوافق مع IFRS - يتم استخدام حساب رأس المال فقط للرصيد الافتتاحي
                 if balance > 0:
                     try:
                         from accounts.models import Account
                         bank_account_obj = JournalService.get_or_create_bank_account_by_name(account.name, account.bank_name)
                         
-                        # الحصول على حساب رأس المال
+                        # استخدام حساب رأس المال للرصيد الافتتاحي فقط (IFRS IAS 1)
+                        # الرصيد الافتتاحي يعتبر مساهمة من رأس المال
                         capital_account = Account.objects.filter(code='301').first()
                         
                         if bank_account_obj and capital_account:
@@ -220,7 +222,7 @@ class BankAccountCreateView(LoginRequiredMixin, View):
                                     'account_id': capital_account.id,
                                     'debit': Decimal('0'),
                                     'credit': balance,
-                                    'description': f'{_("Capital")}'
+                                    'description': f'{_("Opening Balance - Capital Contribution")} - {account.name}'
                                 }
                             ]
                             
@@ -360,16 +362,26 @@ class BankAccountUpdateView(LoginRequiredMixin, View):
                 # إنشاء حركة بنكية لتعديل الرصيد
                 from .models import BankTransaction
                 from django.utils import timezone
+                from core.utils import get_adjustment_account_code
+                
+                # الحصول على نوع التعديل من الطلب (إذا وجد)
+                adjustment_type = request.POST.get('adjustment_type', 'other')
                 
                 # تحديد نوع الحركة
                 if balance_difference > 0:
                     transaction_type = 'deposit'
-                    description = _('تعديل يدوي للرصيد - زيادة: %(amount)s') % {'amount': abs(balance_difference)}
+                    description = _('تعديل يدوي للرصيد - زيادة: %(amount)s - نوع: %(type)s') % {
+                        'amount': abs(balance_difference),
+                        'type': dict(BankTransaction.ADJUSTMENT_TYPES).get(adjustment_type, 'غير محدد')
+                    }
                 else:
                     transaction_type = 'withdrawal'
-                    description = _('تعديل يدوي للرصيد - نقص: %(amount)s') % {'amount': abs(balance_difference)}
+                    description = _('تعديل يدوي للرصيد - نقص: %(amount)s - نوع: %(type)s') % {
+                        'amount': abs(balance_difference),
+                        'type': dict(BankTransaction.ADJUSTMENT_TYPES).get(adjustment_type, 'غير محدد')
+                    }
                 
-                # إنشاء الحركة
+                # إنشاء الحركة مع نوع التعديل
                 BankTransaction.objects.create(
                     bank=account,
                     date=timezone.now().date(),
@@ -377,56 +389,59 @@ class BankAccountUpdateView(LoginRequiredMixin, View):
                     amount=abs(balance_difference),
                     description=description,
                     reference_number=f'ADJ-{account.id}-{timezone.now().strftime("%Y%m%d%H%M%S")}',
+                    adjustment_type=adjustment_type,
+                    is_manual_adjustment=True,
                     created_by=request.user
                 )
                 
-                # إنشاء قيد محاسبي للتعديل (مثل الصناديق)
+                # إنشاء قيد محاسبي للتعديل باستخدام الحساب الصحيح
                 try:
                     from accounts.models import Account
                     bank_account_obj = JournalService.get_or_create_bank_account_by_name(account.name, account.bank_name)
                     
-                    # الحصول على حساب رأس المال
-                    capital_account = Account.objects.filter(code='301').first()
+                    # تحديد الحساب المقابل حسب نوع التعديل (IFRS compliant)
+                    adjustment_account_code = get_adjustment_account_code(adjustment_type, is_bank=True)
+                    adjustment_account = Account.objects.filter(code=adjustment_account_code).first()
                     
-                    if bank_account_obj and capital_account:
+                    if bank_account_obj and adjustment_account:
                         lines_data = []
                         
                         if balance_difference > 0:
-                            # زيادة في الرصيد: مدين البنك، دائن رأس المال
+                            # زيادة في الرصيد: مدين البنك، دائن الحساب المقابل
                             lines_data = [
                                 {
                                     'account_id': bank_account_obj.id,
                                     'debit': abs(balance_difference),
                                     'credit': Decimal('0'),
-                                    'description': f'{_("Increase in balance")}: {account.name}'
+                                    'description': f'{_("Increase in balance")}: {account.name} ({dict(BankTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "تعديل")})'
                                 },
                                 {
-                                    'account_id': capital_account.id,
+                                    'account_id': adjustment_account.id,
                                     'debit': Decimal('0'),
                                     'credit': abs(balance_difference),
-                                    'description': f'{_("Capital")}'
+                                    'description': f'{adjustment_account.name} - {dict(BankTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "تعديل")}'
                                 }
                             ]
                         else:
-                            # نقصان في الرصيد: دائن البنك، مدين رأس المال
+                            # نقصان في الرصيد: دائن البنك، مدين الحساب المقابل
                             lines_data = [
                                 {
-                                    'account_id': capital_account.id,
+                                    'account_id': adjustment_account.id,
                                     'debit': abs(balance_difference),
                                     'credit': Decimal('0'),
-                                    'description': f'{_("Capital")}'
+                                    'description': f'{adjustment_account.name} - {dict(BankTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "تعديل")}'
                                 },
                                 {
                                     'account_id': bank_account_obj.id,
                                     'debit': Decimal('0'),
                                     'credit': abs(balance_difference),
-                                    'description': f'{_("Decrease in balance")}: {account.name}'
+                                    'description': f'{_("Decrease in balance")}: {account.name} ({dict(BankTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "تعديل")})'
                                 }
                             ]
                         
                         journal_entry = JournalService.create_journal_entry(
                             entry_date=timezone.now().date(),
-                            description=f'{_("Adjustment of Bank Balance")}: {account.name}',
+                            description=f'{_("Adjustment of Bank Balance")}: {account.name} - {dict(BankTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "تعديل")}',
                             reference_type='bank_adjustment',
                             reference_id=account.id,
                             lines_data=lines_data,
