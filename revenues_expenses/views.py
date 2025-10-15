@@ -25,7 +25,20 @@ def category_edit(request, category_id):
     if request.method == 'POST':
         form = RevenueExpenseCategoryForm(request.POST, instance=category)
         if form.is_valid():
+            old_name = category.name
             form.save()
+            
+            # تسجيل في سجل الأنشطة
+            from core.models import AuditLog
+            AuditLog.objects.create(
+                user=request.user,
+                action_type='update',
+                content_type='RevenueExpenseCategory',
+                object_id=category.id,
+                description=f'تعديل فئة: {old_name} -> {category.name}',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            
             messages.success(request, _('تم تعديل الفئة بنجاح'))
             return redirect('revenues_expenses:category_list')
         else:
@@ -141,41 +154,58 @@ def revenue_expense_dashboard(request):
     company_settings = CompanySettings.objects.first()
     base_currency = company_settings.base_currency if company_settings else None
     
-    # الإحصائيات الشهرية
+    # الإحصائيات من النظام المحاسبي الرئيسي (IFRS Compliant)
     current_month = date.today().month
     current_year = date.today().year
     
-    monthly_revenues = RevenueExpenseEntry.objects.filter(
-        type='revenue',
-        date__month=current_month,
-        date__year=current_year,
-        is_approved=True
-    ).aggregate(total=Sum('amount'))['total'] or 0
+    from journal.models import JournalEntry, JournalLine, Account
     
-    monthly_expenses = RevenueExpenseEntry.objects.filter(
-        type='expense',
-        date__month=current_month,
-        date__year=current_year,
-        is_approved=True
-    ).aggregate(total=Sum('amount'))['total'] or 0
+    # حساب الإيرادات من القيود المحاسبية
+    monthly_revenues = JournalLine.objects.filter(
+        account__account_type='revenue',
+        journal_entry__entry_date__month=current_month,
+        journal_entry__entry_date__year=current_year,
+        credit__gt=0
+    ).aggregate(total=Sum('credit'))['total'] or 0
+    
+    monthly_expenses = JournalLine.objects.filter(
+        account__account_type='expense',
+        journal_entry__entry_date__month=current_month,
+        journal_entry__entry_date__year=current_year,
+        debit__gt=0
+    ).aggregate(total=Sum('debit'))['total'] or 0
     
     # الإحصائيات السنوية
-    yearly_revenues = RevenueExpenseEntry.objects.filter(
-        type='revenue',
-        date__year=current_year,
-        is_approved=True
-    ).aggregate(total=Sum('amount'))['total'] or 0
+    yearly_revenues = JournalLine.objects.filter(
+        account__account_type='revenue',
+        journal_entry__entry_date__year=current_year,
+        credit__gt=0
+    ).aggregate(total=Sum('credit'))['total'] or 0
     
-    yearly_expenses = RevenueExpenseEntry.objects.filter(
-        type='expense',
-        date__year=current_year,
-        is_approved=True
-    ).aggregate(total=Sum('amount'))['total'] or 0
+    yearly_expenses = JournalLine.objects.filter(
+        account__account_type='expense',
+        journal_entry__entry_date__year=current_year,
+        debit__gt=0
+    ).aggregate(total=Sum('debit'))['total'] or 0
     
-    # آخر العمليات
-    recent_entries = RevenueExpenseEntry.objects.select_related('category', 'created_by', 'currency').order_by('-created_at')[:10]
+    # إجمالي الإيرادات والمصروفات من جميع الأوقات
+    total_revenues = JournalLine.objects.filter(
+        account__account_type='revenue',
+        credit__gt=0
+    ).aggregate(total=Sum('credit'))['total'] or 0
     
-    # العمليات المتكررة المستحقة
+    total_expenses = JournalLine.objects.filter(
+        account__account_type='expense',
+        debit__gt=0
+    ).aggregate(total=Sum('debit'))['total'] or 0
+    
+    # عدد القيود المحاسبية
+    entries_count = JournalEntry.objects.count()
+    
+    # آخر القيود المحاسبية
+    recent_entries = JournalEntry.objects.select_related('created_by').order_by('-entry_date', '-id')[:10]
+    
+    # العمليات المتكررة المستحقة (من نظام revenues_expenses إذا كان موجوداً)
     pending_recurring = RecurringRevenueExpense.objects.filter(
         is_active=True,
         next_due_date__lte=date.today()
@@ -189,6 +219,10 @@ def revenue_expense_dashboard(request):
         'yearly_revenues': yearly_revenues,
         'yearly_expenses': yearly_expenses,
         'yearly_net': yearly_revenues - yearly_expenses,
+        'total_revenues': total_revenues,
+        'total_expenses': total_expenses,
+        'net_profit': total_revenues - total_expenses,
+        'entries_count': entries_count,
         'recent_entries': recent_entries,
         'pending_recurring': pending_recurring,
         'base_currency': base_currency,
@@ -240,6 +274,18 @@ def category_create(request):
             category = form.save(commit=False)
             category.created_by = request.user
             category.save()
+            
+            # تسجيل في سجل الأنشطة
+            from core.models import AuditLog
+            AuditLog.objects.create(
+                user=request.user,
+                action_type='create',
+                content_type='RevenueExpenseCategory',
+                object_id=category.id,
+                description=f'إنشاء فئة جديدة: {category.name}',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            
             messages.success(request, _('تم إنشاء الفئة بنجاح'))
             return redirect('revenues_expenses:category_list')
         else:
@@ -655,6 +701,81 @@ def entry_detail(request, entry_id):
         'entry': entry,
     }
     return render(request, 'revenues_expenses/entry_detail.html', context)
+
+
+@login_required
+def entry_list(request):
+    """قائمة قيود الإيرادات والمصروفات"""
+    # التحقق من الصلاحيات
+    if not request.user.has_revenueexpenseentry_view_permission():
+        messages.error(request, _('ليس لديك صلاحية عرض قيود الإيرادات والمصروفات'))
+        return redirect('revenues_expenses:dashboard')
+    
+    # الحصول على القيود
+    entries = RevenueExpenseEntry.objects.select_related(
+        'category', 'created_by', 'approved_by', 'currency'
+    ).order_by('-date', '-created_at')
+    
+    # التصفية
+    entry_type = request.GET.get('type')
+    if entry_type:
+        entries = entries.filter(type=entry_type)
+    
+    category = request.GET.get('category')
+    if category:
+        entries = entries.filter(category_id=category)
+    
+    status = request.GET.get('status')
+    if status == 'approved':
+        entries = entries.filter(is_approved=True)
+    elif status == 'pending':
+        entries = entries.filter(is_approved=False)
+    
+    payment_method = request.GET.get('payment_method')
+    if payment_method:
+        entries = entries.filter(payment_method=payment_method)
+    
+    search = request.GET.get('search')
+    if search:
+        entries = entries.filter(
+            Q(entry_number__icontains=search) |
+            Q(description__icontains=search) |
+            Q(category__name__icontains=search)
+        )
+    
+    # الترقيم
+    paginator = Paginator(entries, 25)
+    page_number = request.GET.get('page')
+    entries = paginator.get_page(page_number)
+    
+    # البيانات للتصفية
+    categories = RevenueExpenseCategory.objects.filter(is_active=True).order_by('name')
+    
+    # إحصائيات
+    total_entries = RevenueExpenseEntry.objects.count()
+    approved_count = RevenueExpenseEntry.objects.filter(is_approved=True).count()
+    pending_count = RevenueExpenseEntry.objects.filter(is_approved=False).count()
+    
+    # إجمالي المبالغ
+    total_revenue = RevenueExpenseEntry.objects.filter(type='revenue').aggregate(
+        total=Sum('amount'))['total'] or 0
+    total_expense = RevenueExpenseEntry.objects.filter(type='expense').aggregate(
+        total=Sum('amount'))['total'] or 0
+    
+    context = {
+        'page_title': _('قيود الإيرادات والمصروفات'),
+        'entries': entries,
+        'categories': categories,
+        'entry_types': RevenueExpenseCategory.CATEGORY_TYPES,
+        'payment_methods': RevenueExpenseEntry.PAYMENT_METHODS,
+        'total_entries': total_entries,
+        'approved_count': approved_count,
+        'pending_count': pending_count,
+        'total_revenue': total_revenue,
+        'total_expense': total_expense,
+        'net_amount': total_revenue - total_expense,
+    }
+    return render(request, 'revenues_expenses/entry_list.html', context)
 
 
 @login_required

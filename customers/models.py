@@ -90,3 +90,32 @@ class CustomerSupplier(models.Model):
         # في AccountTransaction.update_customer_supplier_balance()
         # لذلك نرجع self.balance مباشرة الذي يحتوي على الرصيد المحدث
         return self.balance
+    
+    def sync_balance(self):
+        """مزامنة رصيد العميل/المورد مع المعاملات الفعلية"""
+        from decimal import Decimal
+        from django.db.models import Sum
+        from django.apps import apps
+        
+        AccountTransaction = apps.get_model('accounts', 'AccountTransaction')
+        
+        # حساب إجمالي المدينات والدائنات من جميع المعاملات
+        debits = AccountTransaction.objects.filter(
+            customer_supplier=self,
+            direction='debit'
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+        
+        credits = AccountTransaction.objects.filter(
+            customer_supplier=self,
+            direction='credit'
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+        
+        # حساب الرصيد الجديد: المدينات - الدائنات (الرصيد الأولي = 0)
+        new_balance = debits - credits
+        
+        # تحديث الرصيد إذا كان مختلفاً
+        if self.balance != new_balance:
+            self.balance = new_balance
+            self.save(update_fields=['balance'])
+        
+        return new_balance

@@ -25,6 +25,16 @@ class AccountTransaction(models.Model):
         ('debit', _('مدين')),
         ('credit', _('creditor')),
     ]
+    
+    ADJUSTMENT_TYPES = [
+        ('capital_contribution', _('مساهمة رأسمالية')),
+        ('error_correction', _('تصحيح خطأ')),
+        ('bad_debt_write_off', _('شطب ديون معدومة')),
+        ('discount_allowed', _('خصم مسموح به')),
+        ('discount_received', _('خصم مستلم')),
+        ('revaluation', _('إعادة تقييم')),
+        ('other', _('أخرى')),
+    ]
 
     transaction_number = models.CharField(_('Movement Number'), max_length=50, unique=True)
     date = models.DateField(_('Date'))
@@ -33,6 +43,21 @@ class AccountTransaction(models.Model):
     transaction_type = models.CharField(_('Transaction Type'), max_length=20, choices=TRANSACTION_TYPES)
     direction = models.CharField(_('الاتجاه'), max_length=10, choices=DIRECTION_TYPES)
     amount = models.DecimalField(_('Amount'), max_digits=15, decimal_places=3)
+    
+    # حقول جديدة لتصنيف التعديلات - متوافقة مع IFRS
+    adjustment_type = models.CharField(
+        _('نوع التعديل'),
+        max_length=50,
+        choices=ADJUSTMENT_TYPES,
+        blank=True,
+        null=True,
+        help_text=_('Type of manual adjustment (IFRS compliant)')
+    )
+    is_manual_adjustment = models.BooleanField(
+        _('تعديل يدوي'),
+        default=False,
+        help_text=_('Is this a manual balance adjustment?')
+    )
     
     # ربط بالمستندات الأصلية
     reference_type = models.CharField(_('نوع المرجع'), max_length=20, blank=True)
@@ -87,15 +112,42 @@ class AccountTransaction(models.Model):
         return f"{prefix}-{timestamp}-{random_part}"
 
     def calculate_balance_after(self):
-        """حساب الرصيد بعد الحركة"""
-        current_balance = self.customer_supplier.balance
+        """حساب الرصيد بعد الحركة - الرصيد المتراكم حتى هذه المعاملة"""
+        # حساب الرصيد من الصفر بناءً على جميع المعاملات حتى هذه المعاملة
+        transactions = AccountTransaction.objects.filter(
+            customer_supplier=self.customer_supplier,
+            date__lt=self.date
+        ).order_by('date', 'created_at')
         
-        if self.direction == 'debit':
-            # المدين يزيد الرصيد (للعملاء = دين عليهم، للموردين = دين لهم)
-            return current_balance + self.amount
+        # إضافة معاملات في نفس التاريخ قبل هذه المعاملة
+        if self.created_at:
+            transactions_same_date = AccountTransaction.objects.filter(
+                customer_supplier=self.customer_supplier,
+                date=self.date,
+                created_at__lt=self.created_at
+            ).order_by('created_at')
         else:
-            # الدائن يقلل الرصيد (للعملاء = دفع منهم، للموردين = دفع لهم)
-            return current_balance - self.amount
+            transactions_same_date = AccountTransaction.objects.none()
+        
+        all_prior_transactions = list(transactions) + list(transactions_same_date)
+        
+        # الرصيد الافتتاحي = 0
+        balance = Decimal('0')
+        
+        # إضافة جميع المعاملات السابقة
+        for transaction in all_prior_transactions:
+            if transaction.direction == 'debit':
+                balance += transaction.amount
+            else:
+                balance -= transaction.amount
+        
+        # إضافة هذه المعاملة
+        if self.direction == 'debit':
+            balance += self.amount
+        else:
+            balance -= self.amount
+        
+        return balance
 
     def update_customer_supplier_balance(self):
         """تحديث رصيد العميل/المورد"""

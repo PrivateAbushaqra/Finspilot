@@ -30,6 +30,7 @@
                     <tr>
                         <th>{% trans "Category Name" %}</th>
                         <th>{% trans "Type" %}</th>
+                        <th>{% trans "Accounting Account" %}</th>
                         <th>{% trans "Description" %}</th>
                         <th>{% trans "Created Date" %}</th>
                         <th>{% trans "Status" %}</th>
@@ -47,6 +48,13 @@
                                 <span class="badge bg-danger">{% trans "Expense" %}</span>
                             {% endif %}
                         </td>
+                        <td>
+                            {% if category.account %}
+                                {{ category.account.code }} - {{ category.account.name }}
+                            {% else %}
+                                <span class="text-muted">{% trans "Not assigned" %}</span>
+                            {% endif %}
+                        </td>
                         <td>{{ category.description|default:"{% trans 'No description available' %}" }}</td>
                         <td>{{ category.created_at|date:"Y-m-d H:i" }}</td>
                         <td>
@@ -58,17 +66,19 @@
                         </td>
                         <td>
                             <div class="btn-group btn-group-sm">
-                                {% if user.has_perm %}revenues_expenses.change_revenueexpensecategory{% endif %}
+                                {% if perms.revenues_expenses.change_revenueexpensecategory %}
                                     <a href="{% url 'revenues_expenses:category_edit' category.id %}" class="btn btn-outline-primary" title="{% trans "Edit" %}">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                {% if user.has_perm %}revenues_expenses.delete_revenueexpensecategory{% endif %}
+                                {% endif %}
+                                {% if perms.revenues_expenses.delete_revenueexpensecategory %}
                                     <a href="{% url 'revenues_expenses:category_delete' category.id %}"
                                        class="btn btn-outline-danger"
                                        title="{% trans 'Delete' %}"
                                        onclick='return confirm("{% trans "Are you sure you want to delete this category?" %}");'>
                                         <i class="fas fa-trash"></i>
                                     </a>
+                                {% endif %}
                                 {% if category.is_active %}
                                     <button class="btn btn-outline-warning" title="{% trans 'Deactivate' %}">
                                         <i class="fas fa-ban"></i>

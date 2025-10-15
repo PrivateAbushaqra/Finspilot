@@ -13,6 +13,7 @@ from .models import CustomerSupplier
 from django.core.paginator import Paginator
 from django.utils.translation import gettext as _
 from core.signals import log_view_activity
+from core.utils import get_adjustment_account_code
 
 @login_required
 @require_http_methods(["GET"])
@@ -542,17 +543,26 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
                 from accounts.models import AccountTransaction
                 from django.utils import timezone
                 
+                # الحصول على نوع التعديل من الطلب (إذا وجد)
+                adjustment_type = request.POST.get('adjustment_type', 'other')
+                
                 # تحديد نوع الحركة
                 if balance_difference > 0:
                     # زيادة في الرصيد = مدين للعميل/مورد
                     direction = 'debit'
-                    description = _('تعديل يدوي للرصيد - زيادة: %(amount)s') % {'amount': abs(balance_difference)}
+                    description = _('تعديل يدوي للرصيد - زيادة: %(amount)s - نوع: %(type)s') % {
+                        'amount': abs(balance_difference),
+                        'type': dict(AccountTransaction.ADJUSTMENT_TYPES).get(adjustment_type, 'غير محدد')
+                    }
                 else:
                     # نقص في الرصيد = دائن للعميل/مورد
                     direction = 'credit'
-                    description = _('تعديل يدوي للرصيد - نقص: %(amount)s') % {'amount': abs(balance_difference)}
+                    description = _('تعديل يدوي للرصيد - نقص: %(amount)s - نوع: %(type)s') % {
+                        'amount': abs(balance_difference),
+                        'type': dict(AccountTransaction.ADJUSTMENT_TYPES).get(adjustment_type, 'غير محدد')
+                    }
                 
-                # إنشاء الحركة
+                # إنشاء الحركة مع نوع التعديل
                 AccountTransaction.objects.create(
                     customer_supplier=customer_supplier,
                     date=timezone.now().date(),
@@ -562,10 +572,15 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
                     description=description,
                     reference_type='balance_adjustment',
                     reference_id=customer_supplier.id,
+                    adjustment_type=adjustment_type,
+                    is_manual_adjustment=True,
                     created_by=request.user
                 )
                 
-                # إنشاء قيد محاسبي للتعديل
+                # تحديث رصيد العميل/المورد بعد إنشاء المعاملة
+                customer_supplier.sync_balance()
+                
+                # إنشاء قيد محاسبي للتعديل باستخدام الحساب الصحيح
                 try:
                     from journal.services import JournalService
                     from accounts.models import Account
@@ -576,49 +591,50 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
                     if customer_supplier.is_supplier:
                         account_obj = Account.objects.filter(code='2101').first()
                     
-                    # حساب رأس المال
-                    capital_account = Account.objects.filter(code='301').first()
+                    # تحديد الحساب المقابل حسب نوع التعديل (IFRS compliant)
+                    adjustment_account_code = get_adjustment_account_code(adjustment_type, is_bank=False, is_customer_supplier=True)
+                    adjustment_account = Account.objects.filter(code=adjustment_account_code).first()
                     
-                    if account_obj and capital_account:
+                    if account_obj and adjustment_account:
                         lines_data = []
                         
                         if balance_difference > 0:
-                            # زيادة في الرصيد: مدين الحساب / دائن رأس المال
+                            # زيادة في الرصيد: مدين الحساب / دائن الحساب المقابل
                             lines_data = [
                                 {
                                     'account_id': account_obj.id,
                                     'debit': abs(balance_difference),
                                     'credit': Decimal('0'),
-                                    'description': f'{_("Increase in balance")}: {name}'
+                                    'description': f'{_("Increase in balance")}: {name} ({dict(AccountTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "تعديل")})'
                                 },
                                 {
-                                    'account_id': capital_account.id,
+                                    'account_id': adjustment_account.id,
                                     'debit': Decimal('0'),
                                     'credit': abs(balance_difference),
-                                    'description': f'{_("Capital")}'
+                                    'description': f'{adjustment_account.name} - {dict(AccountTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "تعديل")}'
                                 }
                             ]
                         else:
-                            # نقصان في الرصيد: دائن الحساب / مدين رأس المال
+                            # نقصان في الرصيد: دائن الحساب / مدين الحساب المقابل
                             lines_data = [
                                 {
-                                    'account_id': capital_account.id,
+                                    'account_id': adjustment_account.id,
                                     'debit': abs(balance_difference),
                                     'credit': Decimal('0'),
-                                    'description': f'{_("Capital")}'
+                                    'description': f'{adjustment_account.name} - {dict(AccountTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "تعديل")}'
                                 },
                                 {
                                     'account_id': account_obj.id,
                                     'debit': Decimal('0'),
                                     'credit': abs(balance_difference),
-                                    'description': f'{_("Decrease in balance")}: {name}'
+                                    'description': f'{_("Decrease in balance")}: {name} ({dict(AccountTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "تعديل")})'
                                 }
                             ]
                         
                         journal_entry = JournalService.create_journal_entry(
                             entry_date=timezone.now().date(),
-                            description=f'{_("Adjustment of Balance")}: {name}',
-                            reference_type='customer_supplier_adjustment',
+                            description=f'{_("Adjustment of Customer/Supplier Balance")}: {name} - {dict(AccountTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "تعديل")}',
+                            reference_type='adjustment',
                             reference_id=customer_supplier.id,
                             lines_data=lines_data,
                             user=request.user
@@ -633,11 +649,12 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
                     action_type='update',
                     content_type='CustomerSupplier',
                     object_id=customer_supplier.id,
-                    description=_('تعديل رصيد العميل/المورد: %(name)s من %(old)s إلى %(new)s (فرق: %(diff)s)') % {
+                    description=_('تعديل رصيد العميل/المورد: %(name)s من %(old)s إلى %(new)s (فرق: %(diff)s) - نوع: %(type)s') % {
                         'name': name,
                         'old': old_balance,
                         'new': new_balance,
-                        'diff': balance_difference
+                        'diff': balance_difference,
+                        'type': dict(AccountTransaction.ADJUSTMENT_TYPES).get(adjustment_type, 'غير محدد')
                     },
                     ip_address=request.META.get('REMOTE_ADDR')
                 )
@@ -1038,8 +1055,10 @@ class CustomerSupplierTransactionsView(LoginRequiredMixin, TemplateView):
             total_credit = transactions.filter(direction='credit').aggregate(
                 total=Sum('amount'))['total'] or 0
             
-            # حساب الرصيد الختامي = الرصيد الافتتاحي + صافي المعاملات المفلترة
-            closing_balance = customer_supplier.balance + (total_debit - total_credit)
+            # حساب الرصيد الافتتاحي والختامي
+            net_filtered = total_debit - total_credit
+            opening_balance = customer_supplier.balance - net_filtered
+            closing_balance = customer_supplier.balance
             
             context.update({
                 'customer_supplier': customer_supplier,

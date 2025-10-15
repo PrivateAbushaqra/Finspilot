@@ -171,26 +171,26 @@
                         <tbody>
                             {% for entry in recent_entries %}
                             <tr>
-                                <td>{{ entry.date|date:"Y-m-d" }}</td>
+                                <td>{{ entry.entry_date|date:"Y-m-d" }}</td>
                                 <td>
-                                    {% if entry.type == 'revenue' %}
-                                        <span class="badge bg-success">{% trans "Revenue" %}</span>
+                                    {% if entry.entry_type == 'receipt' %}
+                                        <span class="badge bg-success">{% trans "Receipt" %}</span>
+                                    {% elif entry.entry_type == 'payment' %}
+                                        <span class="badge bg-danger">{% trans "Payment" %}</span>
+                                    {% elif entry.entry_type == 'adjustment' %}
+                                        <span class="badge bg-warning">{% trans "Adjustment" %}</span>
                                     {% else %}
-                                        <span class="badge bg-danger">{% trans "Expense" %}</span>
+                                        <span class="badge bg-secondary">{{ entry.get_entry_type_display }}</span>
                                     {% endif %}
                                 </td>
-                                <td>{{ entry.category.name }}</td>
-                                <td>{{ entry.amount|currency_format:entry.currency }}</td>
+                                <td>{{ entry.reference_type|title }}</td>
+                                <td>{{ entry.total_amount|currency_format }}</td>
                                 <td>{{ entry.description|truncatechars:50 }}</td>
                                 <td>
-                                    {% if entry.is_approved %}
-                                        <span class="badge bg-success">{% trans "Approved" %}</span>
-                                    {% else %}
-                                        <span class="badge bg-warning">{% trans "Pending" %}</span>
-                                    {% endif %}
+                                    <span class="badge bg-success">{% trans "Posted" %}</span>
                                 </td>
                                 <td>
-                                    <a href="{% url 'revenues_expenses:entry_detail' entry.id %}" class="btn btn-sm btn-outline-primary">
+                                    <a href="{% url 'journal:entry_detail' entry.id %}" class="btn btn-sm btn-outline-primary">
                                         <i class="fas fa-eye"></i>
                                     </a>
                                 </td>

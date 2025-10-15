@@ -207,12 +207,20 @@
                             <div class="balance-input">
                                 <span class="currency-symbol">{% get_currency_symbol %}</span>
                                 <input type="number" class="form-control" id="credit_limit" name="credit_limit" 
-                                       value="{{ customer_supplier.credit_limit }}" step="0.001" min="0">
+                                       value="{% if customer_supplier.credit_limit %}{{ customer_supplier.credit_limit }}{% else %}0{% endif %}" step="0.001" min="0">
                             </div>
                             <div class="form-text">{% trans "Maximum amount the" %} {% trans "Customer" %} {% trans "can be" %} {% trans "debited" %}</div>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="current_balance" class="form-label">{% trans "Current Balance" %} (قابل للتعديل)</label>
+                            <label for="current_balance" class="form-label">{% trans "Current Balance" %} ({% trans "Editable" %})</label>
+                            
+                            <!-- IFRS Compliance Alert -->
+                            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>{% trans "IFRS Compliance:" %}</strong> {% trans "Balance adjustments must use appropriate accounts according to International Financial Reporting Standards. Select the correct adjustment type below." %}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                            
                             <div class="balance-input">
                                 <span class="currency-symbol">{% get_currency_symbol %}</span>
                                 <input type="number" class="form-control {% if customer_supplier.current_balance > 0 %}bg-light-success{% elif customer_supplier.current_balance < 0 %}bg-light-danger{% else %}bg-light{% endif %}" 
@@ -223,7 +231,24 @@
                             </div>
                             <div class="form-text text-muted">
                                 <i class="fas fa-edit me-1"></i>
-                                يمكنك تعديل الرصيد الحالي مباشرة وسيتم تسجيل الفرق في المعاملات
+                                {% trans "You can modify the current balance directly and the difference will be recorded in IFRS-compliant transactions using the selected adjustment type." %}
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3" id="adjustment_type_container" style="display: none;">
+                            <label for="adjustment_type" class="form-label">{% trans "Adjustment Type" %} ({% trans "IFRS Compliant" %}) <span class="text-danger">*</span></label>
+                            <select class="form-select" id="adjustment_type" name="adjustment_type">
+                                <option value="">{% trans "Please select adjustment type" %}</option>
+                                <option value="other">{% trans "Other" %}</option>
+                                <option value="capital_contribution">{% trans "Capital Contribution" %}</option>
+                                <option value="error_correction">{% trans "Error Correction" %}</option>
+                                <option value="bad_debt_write_off">{% trans "Bad Debt Write-off" %}</option>
+                                <option value="discount_allowed">{% trans "Discount Allowed" %}</option>
+                                <option value="discount_received">{% trans "Discount Received" %}</option>
+                                <option value="revaluation">{% trans "Revaluation" %}</option>
+                            </select>
+                            <div class="form-text text-muted">
+                                <i class="fas fa-info-circle me-1"></i>
+                                {% trans "Select the type of adjustment for IFRS compliance. The system will use the appropriate account." %}
                             </div>
                         </div>
                     </div>
@@ -232,24 +257,24 @@
                     <div class="alert alert-info">
                         <div class="row text-center">
                             <div class="col-md-3">
-                                <h6 class="{% if customer_supplier.current_balance > 0 %}text-success{% elif customer_supplier.current_balance < 0 %}text-danger{% else %}text-muted{% endif %}">الرصيد الحالي</h6>
+                                <h6 class="{% if customer_supplier.current_balance > 0 %}text-success{% elif customer_supplier.current_balance < 0 %}text-danger{% else %}text-muted{% endif %}">{% trans "Current Balance" %}</h6>
                                 <h4 class="{% if customer_supplier.current_balance > 0 %}text-success{% elif customer_supplier.current_balance < 0 %}text-danger{% else %}text-muted{% endif %}">{{ customer_supplier.current_balance|currency_format }}</h4>
-                                <small class="text-muted">محسوب من المعاملات</small>
+                                <small class="text-muted">{% trans "Calculated from Transactions" %}</small>
                             </div>
                             <div class="col-md-3">
-                                <h6 class="text-secondary">الرصيد الافتتاحي</h6>
+                                <h6 class="text-secondary">{% trans "Opening Balance" %}</h6>
                                 <h4 class="text-secondary">{{ customer_supplier.balance|currency_format }}</h4>
-                                <small class="text-muted">عند الإنشاء</small>
+                                <small class="text-muted">{% trans "At Creation" %}</small>
                             </div>
                             <div class="col-md-3">
                                 <h6 class="text-primary">{% trans "Credit Limit" %}</h6>
                                 <h4 class="text-primary">{{ customer_supplier.credit_limit|currency_format }}</h4>
-                                <small class="text-muted">الحد الائتماني</small>
+                                <small class="text-muted">{% trans "Credit Limit" %}</small>
                             </div>
                             <div class="col-md-3">
-                                <h6 class="text-info">الائتمان المتاح</h6>
+                                <h6 class="text-info">{% trans "Available Credit" %}</h6>
                                 <h4 class="text-info">{{ available_credit|currency_format }}</h4>
-                                <small class="text-muted">المبلغ المتاح</small>
+                                <small class="text-muted">{% trans "Available Amount" %}</small>
                             </div>
                         </div>
                     </div>
@@ -269,7 +294,7 @@
                         </div>
                         <div class="col-12">
                             <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" checked>
+                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" {% if customer_supplier.is_active %}checked{% endif %}>
                                 <label class="form-check-label" for="is_active">
                                     {% trans "Account" %} {% trans "Active" %}
                                 </label>
@@ -302,6 +327,64 @@
 
 {% block extra_js %}
 <script>
+    // متغير لتخزين القيمة الأصلية للرصيد
+    let originalBalance = parseFloat(document.getElementById('current_balance').value) || 0;
+    
+    // دالة للتحكم في إظهار خانة نوع التعديل
+    function toggleAdjustmentType() {
+        const currentBalance = parseFloat(document.getElementById('current_balance').value) || 0;
+        const adjustmentContainer = document.getElementById('adjustment_type_container');
+        const adjustmentSelect = document.getElementById('adjustment_type');
+        
+        if (currentBalance !== originalBalance) {
+            // إظهار خانة نوع التعديل
+            adjustmentContainer.style.display = 'block';
+            adjustmentSelect.required = true;
+        } else {
+            // إخفاء خانة نوع التعديل
+            adjustmentContainer.style.display = 'none';
+            adjustmentSelect.required = false;
+            adjustmentSelect.value = '';
+        }
+    }
+    
+    // دالة للتحقق من صحة النموذج
+    function validateForm() {
+        const currentBalance = parseFloat(document.getElementById('current_balance').value) || 0;
+        const adjustmentSelect = document.getElementById('adjustment_type');
+        
+        if (currentBalance !== originalBalance) {
+            if (!adjustmentSelect.value) {
+                alert('{% trans "Please select the adjustment type for IFRS compliance." %}');
+                adjustmentSelect.focus();
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
+    // ربط الأحداث
+    document.addEventListener('DOMContentLoaded', function() {
+        const currentBalanceInput = document.getElementById('current_balance');
+        const form = document.getElementById('editCustomerSupplierForm');
+        
+        // مراقبة تغييرات الرصيد
+        currentBalanceInput.addEventListener('input', toggleAdjustmentType);
+        currentBalanceInput.addEventListener('change', toggleAdjustmentType);
+        
+        // التحقق من النموذج قبل الإرسال
+        form.addEventListener('submit', function(e) {
+            if (!validateForm()) {
+                e.preventDefault();
+                return false;
+            }
+        });
+        
+        // التركيز على حقل الاسم
+        document.getElementById('name').focus();
+    });
+    
     // Delete function
     function deleteCustomer() {
         const form = document.getElementById('editCustomerSupplierForm');
@@ -348,10 +431,5 @@
         // Update display (this would be implemented in a real scenario)
         console.log('Balance updated:', { balance, creditLimit, availableCredit });
     }
-
-    // Auto-focus on name field
-    document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('name').focus();
-    });
 </script>
 {% endblock %}

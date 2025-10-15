@@ -31,6 +31,8 @@ class RevenueExpenseCategory(models.Model):
     
     name = models.CharField(max_length=200, verbose_name=_('اسم الفئة'))
     type = models.CharField(max_length=20, choices=CATEGORY_TYPES, verbose_name=_('نوع الفئة'))
+    account = models.ForeignKey('journal.Account', on_delete=models.PROTECT, verbose_name=_('الحساب المحاسبي'), 
+                               limit_choices_to={'account_type__in': ['revenue', 'expense']}, null=True, blank=True)
     description = models.TextField(blank=True, null=True, verbose_name=_('Description'))
     is_active = models.BooleanField(default=True, verbose_name=_('Active'))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Created At'))

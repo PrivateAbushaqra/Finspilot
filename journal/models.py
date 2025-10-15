@@ -70,6 +70,7 @@ class JournalEntry(models.Model):
         ('asset_depreciation', _('Asset Depreciation')),
         ('manual', _('Manual Entry')),
         ('adjustment', _('Adjustment Entry')),
+        ('customer_supplier_adjustment', _('Customer/Supplier Balance Adjustment')),
     ]
 
     # أنواع القيود
@@ -84,7 +85,7 @@ class JournalEntry(models.Model):
     entry_number = models.CharField(_('رقم القيد'), max_length=50, unique=True, blank=True)
     entry_date = models.DateField(_('تاريخ القيد'))
     entry_type = models.CharField(_('نوع القيد'), max_length=20, choices=ENTRY_TYPES, default='daily')
-    reference_type = models.CharField(_('نوع العملية'), max_length=20, choices=REFERENCE_TYPES)
+    reference_type = models.CharField(_('نوع العملية'), max_length=30, choices=REFERENCE_TYPES)
     reference_id = models.PositiveIntegerField(_('رقم العملية المرتبطة'), null=True, blank=True)
     sales_invoice = models.ForeignKey('sales.SalesInvoice', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('فاتورة المبيعات'))
     purchase_invoice = models.ForeignKey('purchases.PurchaseInvoice', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('فاتورة المشتريات'))

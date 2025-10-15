@@ -60,6 +60,11 @@ def assets_liabilities_dashboard(request):
         due_date__range=[date.today(), date.today().replace(month=date.today().month+1)]
     ).select_related('category', 'currency').order_by('due_date')[:5]
     
+    # إحصائيات إضافية
+    total_assets_count = Asset.objects.filter(status='active').count()
+    total_liabilities_count = Liability.objects.filter(status__in=['active', 'overdue']).count()
+    total_items = total_assets_count + total_liabilities_count
+    
     context = {
         'page_title': _('Assets and Liabilities Dashboard'),
         'total_assets_cost': total_assets_cost,
@@ -70,6 +75,7 @@ def assets_liabilities_dashboard(request):
         'assets_by_category': assets_by_category,
         'upcoming_liabilities': upcoming_liabilities,
         'base_currency': base_currency,
+        'total_items': total_items,
     }
     
     return render(request, 'assets_liabilities/dashboard.html', context)
@@ -121,6 +127,54 @@ def asset_list(request):
     }
     
     return render(request, 'assets_liabilities/asset_list.html', context)
+
+
+@login_required
+def liability_list(request):
+    """قائمة الخصوم"""
+    liabilities = Liability.objects.select_related(
+        'category', 'created_by', 'currency'
+    ).order_by('due_date')
+    
+    # التصفية
+    category = request.GET.get('category')
+    if category:
+        liabilities = liabilities.filter(category_id=category)
+    
+    status = request.GET.get('status')
+    if status:
+        liabilities = liabilities.filter(status=status)
+    
+    search = request.GET.get('search')
+    if search:
+        liabilities = liabilities.filter(
+            Q(liability_number__icontains=search) |
+            Q(name__icontains=search) |
+            Q(creditor_name__icontains=search)
+        )
+    
+    # الترقيم
+    paginator = Paginator(liabilities, 25)
+    page_number = request.GET.get('page')
+    liabilities_page = paginator.get_page(page_number)
+    
+    # فئات للتصفية
+    categories = LiabilityCategory.objects.filter(is_active=True).order_by('name')
+    
+    # حساب القيمة الإجمالية للخصوم
+    total_value = liabilities.aggregate(
+        total=Sum('current_balance')
+    )['total'] or 0
+    
+    context = {
+        'page_title': _('الخصوم'),
+        'liabilities': liabilities_page,
+        'categories': categories,
+        'status_choices': Liability.STATUS_CHOICES,
+        'total_value': total_value,
+    }
+    
+    return render(request, 'assets_liabilities/liability_list.html', context)
 
 
 @login_required

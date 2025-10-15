@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-14 13:18+0300\n"
+"POT-Creation-Date: 2025-10-15 17:17+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -78,18 +78,50 @@ msgstr ""
 msgid "creditor"
 msgstr "دائن"
 
-#: .\accounts\models.py:29 .\inventory\models.py:71
+#: .\accounts\models.py:30
+#, fuzzy
+#| msgid "إحصائيات المبيعات"
+msgid "مساهمة رأسمالية"
+msgstr "إحصائيات المبيعات"
+
+#: .\accounts\models.py:31
+msgid "تصحيح خطأ"
+msgstr ""
+
+#: .\accounts\models.py:32
+msgid "شطب ديون معدومة"
+msgstr ""
+
+#: .\accounts\models.py:33
+msgid "خصم مسموح به"
+msgstr ""
+
+#: .\accounts\models.py:34
+#, fuzzy
+#| msgid "إحصائيات المبيعات"
+msgid "خصم مستلم"
+msgstr "إحصائيات المبيعات"
+
+#: .\accounts\models.py:35
+msgid "إعادة تقييم"
+msgstr ""
+
+#: .\accounts\models.py:36 .\purchases\models.py:100
+msgid "أخرى"
+msgstr ""
+
+#: .\accounts\models.py:39 .\inventory\models.py:71
 #: .\templates\inventory\movement_list.html:537
 #: .\templates\products\product_movements.html:222
 msgid "Movement Number"
 msgstr "رقم الحركة"
 
-#: .\accounts\models.py:30 .\banks\models.py:103 .\banks\models.py:138
+#: .\accounts\models.py:40 .\banks\models.py:103 .\banks\models.py:148
 #: .\banks\templates\banks\reconciliation_detail.html:114
 #: .\banks\templates\banks\statement_form.html:43
-#: .\banks\templates\banks\statement_list.html:72 .\banks\views.py:2073
-#: .\cashboxes\models.py:113 .\cashboxes\models.py:290
-#: .\cashboxes\views.py:1175 .\core\views.py:621 .\core\views.py:695
+#: .\banks\templates\banks\statement_list.html:72 .\banks\views.py:2197
+#: .\cashboxes\models.py:113 .\cashboxes\models.py:299
+#: .\cashboxes\views.py:1241 .\core\views.py:621 .\core\views.py:695
 #: .\hr\models.py:258 .\inventory\models.py:72 .\inventory\models.py:182
 #: .\provisions\models.py:87 .\purchases\models.py:18 .\purchases\models.py:187
 #: .\reports\views.py:172 .\reports\views.py:208 .\reports\views.py:394
@@ -107,7 +139,7 @@ msgstr "رقم الحركة"
 #: .\templates\assets_liabilities\dashboard.html:634
 #: .\templates\assets_liabilities\dashboard.html:697
 #: .\templates\assets_liabilities\dashboard.html:1013
-#: .\templates\banks\account_edit.html:281
+#: .\templates\banks\account_edit.html:323
 #: .\templates\banks\account_transactions.html:189
 #: .\templates\banks\account_transactions.html:290
 #: .\templates\banks\account_transactions.html:489
@@ -123,9 +155,9 @@ msgstr "رقم الحركة"
 #: .\templates\banks\transfer_list.html:839
 #: .\templates\banks\transfer_list.html:930
 #: .\templates\banks\transfer_list.html:1058
-#: .\templates\cashboxes\cashbox_detail.html:140
-#: .\templates\cashboxes\cashbox_detail.html:392
-#: .\templates\cashboxes\cashbox_list.html:550
+#: .\templates\cashboxes\cashbox_detail.html:141
+#: .\templates\cashboxes\cashbox_detail.html:419
+#: .\templates\cashboxes\cashbox_list.html:572
 #: .\templates\cashboxes\transfer_detail.html:30
 #: .\templates\cashboxes\transfer_detail.html:124
 #: .\templates\cashboxes\transfer_list.html:111
@@ -216,19 +248,19 @@ msgstr "رقم الحركة"
 msgid "Date"
 msgstr "التاريخ"
 
-#: .\accounts\models.py:32
+#: .\accounts\models.py:42
 msgid "العميل/المورد"
 msgstr ""
 
-#: .\accounts\models.py:33 .\banks\models.py:134 .\banks\views.py:2074
-#: .\cashboxes\models.py:289 .\cashboxes\views.py:1176 .\inventory\models.py:75
+#: .\accounts\models.py:43 .\banks\models.py:144 .\banks\views.py:2198
+#: .\cashboxes\models.py:298 .\cashboxes\views.py:1242 .\inventory\models.py:75
 #: .\templates\accounts\customer_statement.html:201
 #: .\templates\accounts\transaction_list.html:34
 #: .\templates\accounts\transaction_list.html:135
 #: .\templates\banks\account_transactions.html:190
 #: .\templates\banks\account_transactions.html:490
-#: .\templates\cashboxes\cashbox_detail.html:141
-#: .\templates\cashboxes\cashbox_detail.html:393
+#: .\templates\cashboxes\cashbox_detail.html:142
+#: .\templates\cashboxes\cashbox_detail.html:420
 #: .\templates\cashboxes\transfer_detail.html:121
 #: .\templates\customers\transactions.html:386
 #: .\templates\customers\transactions.html:559
@@ -237,13 +269,13 @@ msgstr ""
 msgid "Transaction Type"
 msgstr "نوع المعاملة"
 
-#: .\accounts\models.py:34
+#: .\accounts\models.py:44
 msgid "الاتجاه"
 msgstr ""
 
-#: .\accounts\models.py:35 .\banks\models.py:108 .\banks\models.py:135
-#: .\banks\views.py:2077 .\cashboxes\models.py:145 .\cashboxes\models.py:291
-#: .\cashboxes\views.py:1179 .\payments\models.py:40 .\receipts\models.py:33
+#: .\accounts\models.py:45 .\banks\models.py:108 .\banks\models.py:145
+#: .\banks\views.py:2201 .\cashboxes\models.py:145 .\cashboxes\models.py:300
+#: .\cashboxes\views.py:1245 .\payments\models.py:40 .\receipts\models.py:33
 #: .\revenues_expenses\models.py:66 .\revenues_expenses\models.py:161
 #: .\templates\accounts\customer_statement.html:427
 #: .\templates\accounts\customer_statement.html:491
@@ -276,9 +308,9 @@ msgstr ""
 #: .\templates\banks\transfer_list.html:405
 #: .\templates\banks\transfer_list.html:842
 #: .\templates\banks\transfer_list.html:933
-#: .\templates\cashboxes\cashbox_detail.html:145
-#: .\templates\cashboxes\cashbox_detail.html:396
-#: .\templates\cashboxes\cashbox_list.html:556
+#: .\templates\cashboxes\cashbox_detail.html:146
+#: .\templates\cashboxes\cashbox_detail.html:423
+#: .\templates\cashboxes\cashbox_list.html:578
 #: .\templates\cashboxes\transfer_detail.html:62
 #: .\templates\cashboxes\transfer_detail.html:122
 #: .\templates\cashboxes\transfer_list.html:115
@@ -337,23 +369,43 @@ msgstr ""
 msgid "Amount"
 msgstr "المبلغ"
 
-#: .\accounts\models.py:38 .\inventory\models.py:76
+#: .\accounts\models.py:49
+#, fuzzy
+#| msgid "أرصدة البنوك والصناديق النقدية"
+msgid "نوع التعديل"
+msgstr "أرصدة البنوك والصناديق النقدية"
+
+#: .\accounts\models.py:54 .\banks\models.py:157 .\cashboxes\models.py:310
+msgid "Type of manual adjustment (IFRS compliant)"
+msgstr ""
+
+#: .\accounts\models.py:57
+#, fuzzy
+#| msgid "إحصائيات المبيعات"
+msgid "تعديل يدوي"
+msgstr "إحصائيات المبيعات"
+
+#: .\accounts\models.py:59 .\banks\models.py:162 .\cashboxes\models.py:315
+msgid "Is this a manual balance adjustment?"
+msgstr ""
+
+#: .\accounts\models.py:63 .\inventory\models.py:76
 msgid "نوع المرجع"
 msgstr ""
 
-#: .\accounts\models.py:39 .\inventory\models.py:77
+#: .\accounts\models.py:64 .\inventory\models.py:77
 msgid "معرف المرجع"
 msgstr ""
 
-#: .\accounts\models.py:41 .\assets_liabilities\models.py:22
+#: .\accounts\models.py:66 .\assets_liabilities\models.py:22
 #: .\assets_liabilities\models.py:52 .\assets_liabilities\models.py:131
 #: .\assets_liabilities\models.py:158 .\banks\models.py:111
-#: .\banks\models.py:136 .\banks\models.py:166
+#: .\banks\models.py:146 .\banks\models.py:192
 #: .\banks\templates\banks\reconciliation_detail.html:115
 #: .\banks\templates\banks\statement_form.html:55
-#: .\banks\templates\banks\statement_list.html:73 .\banks\views.py:2076
-#: .\cashboxes\models.py:11 .\cashboxes\models.py:148 .\cashboxes\models.py:292
-#: .\cashboxes\views.py:1158 .\cashboxes\views.py:1178 .\core\models.py:266
+#: .\banks\templates\banks\statement_list.html:73 .\banks\views.py:2200
+#: .\cashboxes\models.py:11 .\cashboxes\models.py:148 .\cashboxes\models.py:301
+#: .\cashboxes\views.py:1224 .\cashboxes\views.py:1244 .\core\models.py:266
 #: .\hr\models.py:15 .\hr\models.py:36 .\hr\models.py:313 .\hr\models.py:516
 #: .\journal\models.py:27 .\payments\admin.py:40 .\payments\models.py:66
 #: .\provisions\models.py:13 .\provisions\models.py:41
@@ -384,14 +436,14 @@ msgstr ""
 #: .\templates\banks\transfer_detail.html:356
 #: .\templates\banks\transfer_list.html:935
 #: .\templates\banks\transfer_list.html:1081
-#: .\templates\cashboxes\cashbox_detail.html:86
-#: .\templates\cashboxes\cashbox_detail.html:143
-#: .\templates\cashboxes\cashbox_detail.html:242
-#: .\templates\cashboxes\cashbox_detail.html:382
-#: .\templates\cashboxes\cashbox_detail.html:395
-#: .\templates\cashboxes\cashbox_list.html:148
-#: .\templates\cashboxes\cashbox_list.html:215
-#: .\templates\cashboxes\cashbox_list.html:679
+#: .\templates\cashboxes\cashbox_detail.html:87
+#: .\templates\cashboxes\cashbox_detail.html:144
+#: .\templates\cashboxes\cashbox_detail.html:243
+#: .\templates\cashboxes\cashbox_detail.html:409
+#: .\templates\cashboxes\cashbox_detail.html:422
+#: .\templates\cashboxes\cashbox_list.html:149
+#: .\templates\cashboxes\cashbox_list.html:216
+#: .\templates\cashboxes\cashbox_list.html:701
 #: .\templates\cashboxes\transfer_detail.html:74
 #: .\templates\cashboxes\transfer_detail.html:123
 #: .\templates\cashboxes\transfer_list.html:366
@@ -454,8 +506,8 @@ msgstr ""
 msgid "Description"
 msgstr "الوصف"
 
-#: .\accounts\models.py:42 .\assets_liabilities\models.py:227
-#: .\banks\models.py:19 .\banks\models.py:173 .\banks\models.py:215
+#: .\accounts\models.py:67 .\assets_liabilities\models.py:227
+#: .\banks\models.py:19 .\banks\models.py:199 .\banks\models.py:241
 #: .\banks\templates\banks\reconciliation_detail.html:101
 #: .\banks\templates\banks\reconciliation_form.html:150
 #: .\banks\templates\banks\statement_form.html:120 .\customers\models.py:25
@@ -464,11 +516,11 @@ msgstr "الوصف"
 #: .\inventory\models.py:187 .\payments\models.py:67 .\purchases\models.py:29
 #: .\purchases\models.py:112 .\receipts\models.py:68 .\receipts\models.py:265
 #: .\receipts\models.py:285 .\sales\models.py:36 .\sales\models.py:119
-#: .\templates\banks\account_add.html:252
+#: .\templates\banks\account_add.html:270
 #: .\templates\banks\account_detail.html:364
-#: .\templates\banks\account_edit.html:262
-#: .\templates\customers\add.html:218
-#: .\templates\customers\delete.html:153 .\templates\customers\edit.html:266
+#: .\templates\banks\account_edit.html:304
+#: .\templates\banks\account_edit.html:308 .\templates\customers\add.html:218
+#: .\templates\customers\delete.html:153 .\templates\customers\edit.html:291
 #: .\templates\customers\supplier_list.html:476
 #: .\templates\customers\transactions.html:580
 #: .\templates\hr\attendance_confirm_delete.html:190
@@ -506,17 +558,17 @@ msgstr "الوصف"
 msgid "Notes"
 msgstr "الملاحظات"
 
-#: .\accounts\models.py:45
+#: .\accounts\models.py:70
 msgid "الرصيد بعد الحركة"
 msgstr ""
 
-#: .\accounts\models.py:47 .\assets_liabilities\models.py:29
+#: .\accounts\models.py:72 .\assets_liabilities\models.py:29
 #: .\assets_liabilities\models.py:81 .\assets_liabilities\models.py:135
 #: .\assets_liabilities\models.py:184 .\assets_liabilities\models.py:234
-#: .\banks\models.py:22 .\banks\models.py:112 .\banks\models.py:139
-#: .\banks\models.py:174 .\banks\models.py:216 .\banks\views.py:2079
-#: .\cashboxes\models.py:150 .\cashboxes\models.py:309
-#: .\cashboxes\views.py:1181 .\hr\models.py:131 .\hr\models.py:236
+#: .\banks\models.py:22 .\banks\models.py:112 .\banks\models.py:165
+#: .\banks\models.py:200 .\banks\models.py:242 .\banks\views.py:2203
+#: .\cashboxes\models.py:150 .\cashboxes\models.py:333
+#: .\cashboxes\views.py:1247 .\hr\models.py:131 .\hr\models.py:236
 #: .\hr\models.py:269 .\hr\models.py:352 .\hr\models.py:381 .\hr\models.py:427
 #: .\inventory\models.py:82 .\inventory\models.py:188 .\journal\models.py:96
 #: .\payments\models.py:70 .\provisions\models.py:16 .\provisions\models.py:63
@@ -535,8 +587,8 @@ msgstr ""
 #: .\templates\banks\transfer_detail.html:361
 #: .\templates\banks\transfer_list.html:407
 #: .\templates\banks\transfer_list.html:844
-#: .\templates\cashboxes\cashbox_detail.html:146
-#: .\templates\cashboxes\cashbox_detail.html:398
+#: .\templates\cashboxes\cashbox_detail.html:147
+#: .\templates\cashboxes\cashbox_detail.html:425
 #: .\templates\cashboxes\transfer_detail.html:78
 #: .\templates\cashboxes\transfer_list.html:117
 #: .\templates\cashboxes\transfer_list.html:589
@@ -560,12 +612,12 @@ msgstr ""
 msgid "Created By"
 msgstr "أنشئ بواسطة"
 
-#: .\accounts\models.py:48 .\assets_liabilities\models.py:28
+#: .\accounts\models.py:73 .\assets_liabilities\models.py:28
 #: .\assets_liabilities\models.py:79 .\assets_liabilities\models.py:134
 #: .\assets_liabilities\models.py:182 .\assets_liabilities\models.py:233
-#: .\banks\models.py:20 .\banks\models.py:113 .\banks\models.py:140
-#: .\banks\models.py:175 .\banks\models.py:217 .\cashboxes\models.py:18
-#: .\cashboxes\models.py:151 .\cashboxes\models.py:310 .\core\models.py:36
+#: .\banks\models.py:20 .\banks\models.py:113 .\banks\models.py:166
+#: .\banks\models.py:201 .\banks\models.py:243 .\cashboxes\models.py:18
+#: .\cashboxes\models.py:151 .\cashboxes\models.py:334 .\core\models.py:36
 #: .\core\models.py:76 .\core\models.py:294 .\customers\models.py:26
 #: .\hr\models.py:19 .\hr\models.py:42 .\hr\models.py:129 .\hr\models.py:234
 #: .\hr\models.py:267 .\hr\models.py:316 .\hr\models.py:350 .\hr\models.py:379
@@ -591,9 +643,9 @@ msgstr "أنشئ بواسطة"
 msgid "Created At"
 msgstr "أنشئ في"
 
-#: .\accounts\models.py:49 .\assets_liabilities\models.py:80
+#: .\accounts\models.py:74 .\assets_liabilities\models.py:80
 #: .\assets_liabilities\models.py:183 .\banks\models.py:21
-#: .\banks\models.py:114 .\banks\models.py:176 .\banks\models.py:218
+#: .\banks\models.py:114 .\banks\models.py:202 .\banks\models.py:244
 #: .\cashboxes\models.py:19 .\cashboxes\models.py:152 .\core\models.py:37
 #: .\core\models.py:77 .\customers\models.py:27 .\hr\models.py:20
 #: .\hr\models.py:43 .\hr\models.py:130 .\hr\models.py:235 .\hr\models.py:268
@@ -608,11 +660,11 @@ msgstr "أنشئ في"
 msgid "Updated At"
 msgstr "محدث في"
 
-#: .\accounts\models.py:52
+#: .\accounts\models.py:77
 msgid "حركة حساب"
 msgstr ""
 
-#: .\accounts\models.py:53
+#: .\accounts\models.py:78
 msgid "حركات الحسابات"
 msgstr ""
 
@@ -686,13 +738,13 @@ msgstr ""
 #: .\templates\assets_liabilities\asset_list.html:207
 #: .\templates\assets_liabilities\liability_list.html:156
 #: .\templates\banks\account_detail.html:164
-#: .\templates\banks\account_edit.html:249
-#: .\templates\banks\account_edit.html:252
+#: .\templates\banks\account_edit.html:291
+#: .\templates\banks\account_edit.html:294
 #: .\templates\banks\account_list.html:339
 #: .\templates\customers\customer_list.html:264
 #: .\templates\customers\customer_list.html:317
 #: .\templates\customers\customer_list.html:831
-#: .\templates\customers\delete.html:179 .\templates\customers\edit.html:274
+#: .\templates\customers\delete.html:179 .\templates\customers\edit.html:299
 #: .\templates\customers\supplier_list.html:247
 #: .\templates\customers\supplier_list.html:301
 #: .\templates\customers\supplier_list.html:483
@@ -823,11 +875,11 @@ msgstr ""
 #: .\templates\banks\account_edit.html:209
 #: .\templates\banks\account_edit.html:213
 #: .\templates\banks\account_list.html:730
-#: .\templates\cashboxes\cashbox_detail.html:246
-#: .\templates\cashboxes\cashbox_list.html:58
-#: .\templates\cashboxes\cashbox_list.html:156
-#: .\templates\cashboxes\cashbox_list.html:224
-#: .\templates\cashboxes\cashbox_list.html:443
+#: .\templates\cashboxes\cashbox_detail.html:273
+#: .\templates\cashboxes\cashbox_list.html:59
+#: .\templates\cashboxes\cashbox_list.html:157
+#: .\templates\cashboxes\cashbox_list.html:246
+#: .\templates\cashboxes\cashbox_list.html:465
 #: .\templates\core\profit_loss_report.html:499
 #: .\templates\revenues_expenses\entry_create.html:105
 #: .\templates\revenues_expenses\entry_detail.html:151
@@ -1216,7 +1268,7 @@ msgstr "لم يتم تحديد العملية المطلوبة"
 msgid "تم بدء عملية المسح في الخلفية، يمكن متابعة التقدم على هذه الصفحة"
 msgstr ""
 
-#: .\banks\models.py:10 .\banks\views.py:2052 .\journal\models.py:23
+#: .\banks\models.py:10 .\banks\views.py:2176 .\journal\models.py:23
 #: .\reports\views.py:560 .\reports\views.py:606
 #: .\templates\banks\account_add.html:137
 #: .\templates\banks\account_list.html:106
@@ -1228,7 +1280,7 @@ msgstr ""
 msgid "Account Name"
 msgstr "اسم الحساب"
 
-#: .\banks\models.py:11 .\banks\views.py:2055 .\payments\models.py:61
+#: .\banks\models.py:11 .\banks\views.py:2179 .\payments\models.py:61
 #: .\receipts\models.py:51 .\templates\banks\account_add.html:147
 #: .\templates\banks\account_list.html:727
 #: .\templates\banks\cashbox_transfer_detail.html:288
@@ -1237,7 +1289,7 @@ msgstr "اسم الحساب"
 msgid "Bank Name"
 msgstr "اسم البنك"
 
-#: .\banks\models.py:12 .\banks\views.py:2058
+#: .\banks\models.py:12 .\banks\views.py:2182
 #: .\templates\banks\account_add.html:167
 #: .\templates\banks\account_detail.html:140
 #: .\templates\banks\account_list.html:106
@@ -1264,7 +1316,7 @@ msgstr "رقم الحساب الدولي 'IBAN'"
 msgid "SWIFT Code"
 msgstr "رمز SWIFT"
 
-#: .\banks\models.py:15 .\banks\models.py:170
+#: .\banks\models.py:15 .\banks\models.py:196
 #: .\banks\templates\banks\reconciliation_detail.html:119
 #: .\banks\templates\banks\statement_form.html:94
 #: .\banks\templates\banks\statement_list.html:77 .\cashboxes\models.py:12
@@ -1272,7 +1324,7 @@ msgstr "رمز SWIFT"
 #: .\templates\accounts\customer_statement.html:205
 #: .\templates\accounts\transaction_list.html:139
 #: .\templates\assets_liabilities\dashboard.html:908
-#: .\templates\banks\account_edit.html:229
+#: .\templates\banks\account_edit.html:231
 #: .\templates\banks\account_list.html:106
 #: .\templates\banks\account_list.html:332
 #: .\templates\banks\account_list.html:729
@@ -1298,9 +1350,10 @@ msgstr "رمز SWIFT"
 #: .\templates\banks\transfer_add.html:434
 #: .\templates\banks\transfer_edit.html:181
 #: .\templates\banks\transfer_edit.html:191
-#: .\templates\cashboxes\cashbox_list.html:57
-#: .\templates\cashboxes\cashbox_list.html:219
-#: .\templates\cashboxes\cashbox_list.html:442
+#: .\templates\cashboxes\cashbox_detail.html:247
+#: .\templates\cashboxes\cashbox_list.html:58
+#: .\templates\cashboxes\cashbox_list.html:220
+#: .\templates\cashboxes\cashbox_list.html:464
 #: .\templates\customers\customer_list.html:189
 #: .\templates\customers\customer_list.html:256
 #: .\templates\customers\customer_list.html:296
@@ -1329,7 +1382,8 @@ msgstr "رمز SWIFT"
 msgid "Balance"
 msgstr "الرصيد"
 
-#: .\banks\models.py:16 .\templates\cashboxes\cashbox_list.html:152
+#: .\banks\models.py:16 .\templates\banks\account_add.html:234
+#: .\templates\cashboxes\cashbox_list.html:153
 #: .\templates\customers\add.html:199
 #: .\templates\purchases\invoice_add.html:1176
 #: .\templates\sales\invoice_add.html:1723
@@ -1340,8 +1394,8 @@ msgstr "الرصيد الافتتاحي"
 msgid "Initial account balance at the start of operations"
 msgstr "الرصيد الافتتاحي للحساب في بداية العمليات"
 
-#: .\banks\models.py:25 .\banks\models.py:133 .\banks\models.py:164
-#: .\banks\models.py:196 .\banks\templates\banks\reconciliation_detail.html:30
+#: .\banks\models.py:25 .\banks\models.py:143 .\banks\models.py:190
+#: .\banks\models.py:222 .\banks\templates\banks\reconciliation_detail.html:30
 #: .\banks\templates\banks\reconciliation_form.html:25
 #: .\banks\templates\banks\reconciliation_form.html:35
 #: .\banks\templates\banks\reconciliation_list.html:27
@@ -1378,7 +1432,7 @@ msgstr "الحسابات البنكية"
 #: .\templates\banks\transfer_list.html:838
 #: .\templates\banks\transfer_list.html:929
 #: .\templates\banks\transfer_list.html:1057
-#: .\templates\cashboxes\cashbox_list.html:530
+#: .\templates\cashboxes\cashbox_list.html:552
 #: .\templates\cashboxes\transfer_detail.html:26
 #: .\templates\cashboxes\transfer_list.html:110
 #: .\templates\cashboxes\transfer_list.html:217
@@ -1427,7 +1481,7 @@ msgstr "إلى الحساب"
 #: .\templates\banks\transfer_list.html:959
 #: .\templates\banks\transfer_list.html:1041
 #: .\templates\banks\transfer_list.html:1077
-#: .\templates\cashboxes\cashbox_list.html:565
+#: .\templates\cashboxes\cashbox_list.html:587
 #: .\templates\cashboxes\transfer_detail.html:66
 #: .\templates\cashboxes\transfer_detail.html:99
 #: .\templates\cashboxes\transfer_list.html:116
@@ -1445,7 +1499,7 @@ msgstr "الرسوم"
 #: .\templates\banks\transfer_detail.html:223
 #: .\templates\banks\transfer_detail.html:343
 #: .\templates\banks\transfer_edit.html:317
-#: .\templates\cashboxes\cashbox_list.html:571
+#: .\templates\cashboxes\cashbox_list.html:593
 #: .\templates\cashboxes\transfer_detail.html:70
 #: .\templates\cashboxes\transfer_list.html:258
 msgid "Exchange Rate"
@@ -1481,8 +1535,60 @@ msgstr "إيداع"
 msgid "Withdrawal"
 msgstr "سحب"
 
-#: .\banks\models.py:137 .\banks\models.py:167
-#: .\banks\templates\banks\statement_form.html:64 .\banks\views.py:2075
+#: .\banks\models.py:133 .\cashboxes\models.py:289
+#: .\templates\banks\account_edit.html:265
+#: .\templates\cashboxes\cashbox_detail.html:257
+#: .\templates\cashboxes\cashbox_list.html:230
+#: .\templates\customers\edit.html:242
+msgid "Capital Contribution"
+msgstr "مساهمة رأس المال"
+
+#: .\banks\models.py:134 .\cashboxes\models.py:290
+#: .\templates\banks\account_edit.html:266
+#: .\templates\cashboxes\cashbox_detail.html:258
+#: .\templates\cashboxes\cashbox_list.html:231
+#: .\templates\customers\edit.html:243
+msgid "Error Correction"
+msgstr "تصحيح الخطأ"
+
+#: .\banks\models.py:135 .\templates\banks\account_edit.html:267
+msgid "Bank Interest"
+msgstr "فائدة البنك"
+
+#: .\banks\models.py:136 .\banks\models.py:237
+#: .\banks\templates\banks\reconciliation_detail.html:86
+#: .\banks\templates\banks\reconciliation_form.html:106
+#: .\templates\banks\account_edit.html:268
+msgid "Bank Charges"
+msgstr "رسوم البنك"
+
+#: .\banks\models.py:137 .\banks\models.py:247
+#: .\templates\banks\account_edit.html:269
+msgid "Bank Reconciliation"
+msgstr "تسوية البنك"
+
+#: .\banks\models.py:138 .\templates\banks\account_edit.html:270
+msgid "Exchange Difference"
+msgstr "فرق الصرف"
+
+#: .\banks\models.py:139 .\cashboxes\models.py:294 .\hr\models.py:509
+#: .\journal\models.py:82 .\payments\models.py:26
+#: .\templates\assets_liabilities\dashboard.html:334
+#: .\templates\banks\account_edit.html:271
+#: .\templates\cashboxes\cashbox_detail.html:262
+#: .\templates\cashboxes\cashbox_list.html:235
+#: .\templates\customers\edit.html:241
+#: .\templates\hr\employee_document_confirm_delete.html:56
+#: .\templates\hr\employee_document_detail.html:58
+#: .\templates\hr\employee_document_list.html:61
+#: .\templates\payments\voucher_list.html:56
+#: .\templates\purchases\return_add.html:85
+#: .\templates\sales\return_add.html:85
+msgid "Other"
+msgstr "أخرى"
+
+#: .\banks\models.py:147 .\banks\models.py:193
+#: .\banks\templates\banks\statement_form.html:64 .\banks\views.py:2199
 #: .\templates\assets_liabilities\dashboard.html:400
 #: .\templates\banks\account_transactions.html:191
 #: .\templates\banks\account_transactions.html:491
@@ -1493,22 +1599,36 @@ msgstr "سحب"
 msgid "Reference Number"
 msgstr "رقم المرجع"
 
-#: .\banks\models.py:143
+#: .\banks\models.py:152 .\cashboxes\models.py:305
+#: .\templates\banks\account_edit.html:261
+#: .\templates\cashboxes\cashbox_detail.html:253
+#: .\templates\cashboxes\cashbox_list.html:226
+#: .\templates\customers\edit.html:238
+msgid "Adjustment Type"
+msgstr "نوع التعديل"
+
+#: .\banks\models.py:160 .\cashboxes\models.py:313
+#, fuzzy
+#| msgid "Adjustment"
+msgid "Manual Adjustment"
+msgstr "تعديل"
+
+#: .\banks\models.py:169
 msgid "Bank Transaction"
 msgstr "معاملة بنكية"
 
-#: .\banks\models.py:144
+#: .\banks\models.py:170
 msgid "Bank Transactions"
 msgstr "المعاملات البنكية"
 
-#: .\banks\models.py:165 .\banks\models.py:197
+#: .\banks\models.py:191 .\banks\models.py:223
 #: .\banks\templates\banks\reconciliation_detail.html:34
 #: .\banks\templates\banks\reconciliation_form.html:43
 #: .\banks\templates\banks\reconciliation_list.html:76
 msgid "Statement Date"
 msgstr "تاريخ البيان"
 
-#: .\banks\models.py:168 .\banks\templates\banks\reconciliation_detail.html:117
+#: .\banks\models.py:194 .\banks\templates\banks\reconciliation_detail.html:117
 #: .\banks\templates\banks\statement_form.html:76
 #: .\banks\templates\banks\statement_list.html:75 .\reports\views.py:172
 #: .\reports\views.py:208 .\templates\accounts\customer_statement.html:203
@@ -1527,7 +1647,7 @@ msgstr "تاريخ البيان"
 msgid "Debit"
 msgstr "مدين"
 
-#: .\banks\models.py:169 .\banks\templates\banks\reconciliation_detail.html:118
+#: .\banks\models.py:195 .\banks\templates\banks\reconciliation_detail.html:118
 #: .\banks\templates\banks\statement_form.html:85
 #: .\banks\templates\banks\statement_list.html:76 .\reports\views.py:172
 #: .\reports\views.py:208 .\templates\accounts\customer_statement.html:204
@@ -1550,7 +1670,7 @@ msgstr "مدين"
 msgid "Credit"
 msgstr "ذمم"
 
-#: .\banks\models.py:171 .\banks\templates\banks\statement_form.html:107
+#: .\banks\models.py:197 .\banks\templates\banks\statement_form.html:107
 #: .\banks\templates\banks\statement_list.html:37
 #: .\banks\templates\banks\statement_list.html:78
 #, fuzzy
@@ -1558,51 +1678,51 @@ msgstr "ذمم"
 msgid "Reconciled"
 msgstr "ثانية"
 
-#: .\banks\models.py:172
+#: .\banks\models.py:198
 #, fuzzy
 #| msgid "Related Data"
 msgid "Reconciled Date"
 msgstr "البيانات ذات الصلة"
 
-#: .\banks\models.py:179
+#: .\banks\models.py:205
 #, fuzzy
 #| msgid "Statement"
 msgid "Bank Statement"
 msgstr "كشف حساب"
 
-#: .\banks\models.py:180 .\banks\templates\banks\statement_list.html:5
+#: .\banks\models.py:206 .\banks\templates\banks\statement_list.html:5
 #: .\banks\templates\banks\statement_list.html:13
 msgid "Bank Statements"
 msgstr "كشف حساب"
 
-#: .\banks\models.py:198 .\banks\templates\banks\reconciliation_detail.html:50
+#: .\banks\models.py:224 .\banks\templates\banks\reconciliation_detail.html:50
 #: .\banks\templates\banks\reconciliation_form.html:56
 #: .\banks\templates\banks\reconciliation_form.html:65
 #: .\banks\templates\banks\reconciliation_list.html:77
 msgid "Book Balance"
 msgstr "Book Balance"
 
-#: .\banks\models.py:199 .\banks\templates\banks\reconciliation_detail.html:54
+#: .\banks\models.py:225 .\banks\templates\banks\reconciliation_detail.html:54
 #: .\banks\templates\banks\reconciliation_form.html:73
 #: .\banks\templates\banks\reconciliation_list.html:78
 msgid "Statement Balance"
 msgstr "بيان الرصيد"
 
-#: .\banks\models.py:200 .\banks\templates\banks\reconciliation_detail.html:58
+#: .\banks\models.py:226 .\banks\templates\banks\reconciliation_detail.html:58
 #: .\banks\templates\banks\reconciliation_form.html:164
 #, fuzzy
 #| msgid "Declining Balance"
 msgid "Reconciled Balance"
 msgstr "الرصيد المتناقص"
 
-#: .\banks\models.py:201 .\banks\templates\banks\reconciliation_detail.html:62
+#: .\banks\models.py:227 .\banks\templates\banks\reconciliation_detail.html:62
 #: .\banks\templates\banks\reconciliation_form.html:170
 #: .\banks\templates\banks\reconciliation_list.html:79
 #: .\templates\accounts\transaction_list.html:109
 msgid "Difference"
 msgstr "الفرق"
 
-#: .\banks\models.py:202 .\banks\templates\banks\reconciliation_detail.html:38
+#: .\banks\models.py:228 .\banks\templates\banks\reconciliation_detail.html:38
 #: .\banks\templates\banks\reconciliation_form.html:137
 #: .\banks\templates\banks\reconciliation_list.html:38
 #: .\banks\templates\banks\reconciliation_list.html:80 .\hr\models.py:109
@@ -1616,7 +1736,7 @@ msgstr "الفرق"
 #: .\templates\assets_liabilities\liability_list.html:59
 #: .\templates\assets_liabilities\liability_list.html:123
 #: .\templates\banks\account_detail.html:162
-#: .\templates\banks\account_edit.html:245
+#: .\templates\banks\account_edit.html:287
 #: .\templates\banks\account_list.html:106
 #: .\templates\banks\account_list.html:731
 #: .\templates\banks\account_list.html:884
@@ -1684,101 +1804,53 @@ msgstr "الفرق"
 msgid "Status"
 msgstr "الحالة"
 
-#: .\banks\models.py:203 .\hr\models.py:214
+#: .\banks\models.py:229 .\hr\models.py:214
 msgid "Draft"
 msgstr "مسودة"
 
-#: .\banks\models.py:204 .\templates\inventory\transfer_list.html:55
+#: .\banks\models.py:230 .\templates\inventory\transfer_list.html:55
 #, fuzzy
 #| msgid "Total Tables"
 msgid "Completed"
 msgstr "إجمالي الجداول"
 
-#: .\banks\models.py:205 .\hr\models.py:333 .\payments\models.py:32
+#: .\banks\models.py:231 .\hr\models.py:333 .\payments\models.py:32
 msgid "Cancelled"
 msgstr "ملغي"
 
-#: .\banks\models.py:209 .\banks\templates\banks\reconciliation_detail.html:78
+#: .\banks\models.py:235 .\banks\templates\banks\reconciliation_detail.html:78
 #: .\banks\templates\banks\reconciliation_form.html:85
 #, fuzzy
 #| msgid "Deposits This Month"
 msgid "Deposits in Transit"
 msgstr "الإيداعات هذا الشهر"
 
-#: .\banks\models.py:210 .\banks\templates\banks\reconciliation_detail.html:82
+#: .\banks\models.py:236 .\banks\templates\banks\reconciliation_detail.html:82
 #: .\banks\templates\banks\reconciliation_form.html:94
 #, fuzzy
 #| msgid "Pending Checks"
 msgid "Outstanding Checks"
 msgstr "الشيكات المعلقة"
 
-
-#: .\banks\models.py:212 .\banks\templates\banks\reconciliation_detail.html:90
+#: .\banks\models.py:238 .\banks\templates\banks\reconciliation_detail.html:90
 #: .\banks\templates\banks\reconciliation_form.html:115
 #, fuzzy
 #| msgid "Interest Rate"
 msgid "Interest Earned"
 msgstr "معدل الفائدة"
 
-#: .\banks\models.py:213 .\banks\templates\banks\reconciliation_detail.html:94
+#: .\banks\models.py:239 .\banks\templates\banks\reconciliation_detail.html:94
 #: .\banks\templates\banks\reconciliation_form.html:127
 #, fuzzy
 #| msgid "Adjustments"
 msgid "Other Adjustments"
 msgstr "التعديلات"
 
-#: .\templates\banks\account_edit.html:266
-#: .\banks\models.py:134
-#: .\templates\banks\account_edit.html:266
-#: .\cashboxes\models.py:290
-#: .\templates\cashboxes\cashbox_detail.html:258
-#: .\templates\cashboxes\cashbox_list.html:231
-msgid "Error Correction"
-msgstr "تصحيح الخطأ"
-
-#: .\banks\models.py:135
-#: .\templates\banks\account_edit.html:267
-msgid "Bank Interest"
-msgstr "فائدة البنك"
-
-#: .\banks\models.py:136
-#: .\templates\banks\account_edit.html:268
-msgid "Bank Charges"
-msgstr "رسوم البنك"
-
-#: .\banks\models.py:137
-#: .\templates\banks\account_edit.html:269
-msgid "Bank Reconciliation"
-msgstr "تسوية البنك"
-
-#: .\banks\models.py:138
-#: .\templates\banks\account_edit.html:270
-msgid "Exchange Difference"
-msgstr "فرق الصرف"
-
-#: .\banks\models.py:222 .\banks\templates\banks\reconciliation_list.html:6
+#: .\banks\models.py:248 .\banks\templates\banks\reconciliation_list.html:6
 #: .\banks\templates\banks\reconciliation_list.html:14
 #: .\templates\base.html:657 .\templates\base.html:896
 msgid "Bank Reconciliations"
 msgstr "تسويات البنوك"
-
-#: .\cashboxes\models.py:291
-#: .\templates\cashboxes\cashbox_detail.html:259
-#: .\templates\cashboxes\cashbox_list.html:232
-msgid "Cash Shortage"
-msgstr "نقص النقد"
-
-#: .\cashboxes\models.py:292
-#: .\templates\cashboxes\cashbox_detail.html:260
-#: .\templates\cashboxes\cashbox_list.html:233
-msgid "Cash Surplus"
-msgstr "الفائض النقدي"
-
-#: .\cashboxes\models.py:293
-#: .\templates\cashboxes\cashbox_detail.html:261
-#: .\templates\cashboxes\cashbox_list.html:234
-msgid "Cash Reconciliation"
-msgstr "تسوية النقدية"
 
 #: .\banks\templates\banks\reconciliation_detail.html:5
 #: .\banks\templates\banks\reconciliation_detail.html:13
@@ -1801,10 +1873,10 @@ msgstr " تفاصيل تسويات البنوك"
 #: .\templates\banks\cashbox_transfer_edit.html:108
 #: .\templates\banks\transfer_list.html:460
 #: .\templates\banks\transfer_list.html:537
-#: .\templates\cashboxes\cashbox_detail.html:56
-#: .\templates\cashboxes\cashbox_detail.html:226
-#: .\templates\cashboxes\cashbox_list.html:90
+#: .\templates\cashboxes\cashbox_detail.html:57
+#: .\templates\cashboxes\cashbox_detail.html:227
 #: .\templates\cashboxes\cashbox_list.html:91
+#: .\templates\cashboxes\cashbox_list.html:92
 #: .\templates\customers\customer_list.html:268
 #: .\templates\customers\customer_list.html:323
 #: .\templates\customers\edit.html:111 .\templates\customers\edit.html:132
@@ -1881,7 +1953,7 @@ msgstr "تعديل"
 #: .\templates\banks\transfer_add.html:148
 #: .\templates\banks\transfer_detail.html:111
 #: .\templates\banks\transfer_edit.html:148
-#: .\templates\cashboxes\cashbox_detail.html:53
+#: .\templates\cashboxes\cashbox_detail.html:54
 #: .\templates\cashboxes\transfer_detail.html:15
 #: .\templates\customers\add.html:104 .\templates\customers\delete.html:94
 #: .\templates\hr\attendance_confirm_delete.html:88
@@ -1918,17 +1990,8 @@ msgstr "تعديل"
 #: .\templates\sales\return_add.html:25
 #: .\templates\sales\return_delete.html:176 .\templates\users\group_add.html:21
 #: .\templates\users\group_delete.html:20 .\templates\users\group_edit.html:21
-#: .\templates\provisions\provision_movement_report.html:22
-#: .\templates\provisions\provision_report.html:22
-#: .\templates\provisions\provision_confirm_delete.html:18
-#: .\templates\provisions\provision_entry_confirm_delete.html:18
-#: .\templates\provisions\provision_entry_form.html:23
 msgid "Back to List"
 msgstr "العودة إلى القائمة"
-
-#: .\templates\banks\account_add.html:99
-msgid "Back to Bank List"
-msgstr "العودة إلى القائمة البنوك"
 
 #: .\banks\templates\banks\reconciliation_detail.html:75
 #: .\templates\inventory\movement_bulk_delete.html:46
@@ -1986,8 +2049,8 @@ msgstr "تسويات البنوك"
 #: .\templates\assets_liabilities\liability_create.html:369
 #: .\templates\assets_liabilities\liability_create.html:413
 #: .\templates\backup\backup_restore.html:328
-#: .\templates\banks\account_add.html:266
-#: .\templates\banks\account_edit.html:302
+#: .\templates\banks\account_add.html:284
+#: .\templates\banks\account_edit.html:344
 #: .\templates\banks\account_list.html:519
 #: .\templates\banks\account_list.html:561
 #: .\templates\banks\account_list.html:586
@@ -1997,15 +2060,15 @@ msgstr "تسويات البنوك"
 #: .\templates\banks\cashbox_transfer_edit.html:322
 #: .\templates\banks\transfer_add.html:382
 #: .\templates\banks\transfer_edit.html:372
-#: .\templates\cashboxes\cashbox_detail.html:263
-#: .\templates\cashboxes\cashbox_detail.html:301
-#: .\templates\cashboxes\cashbox_list.html:186
-#: .\templates\cashboxes\cashbox_list.html:258
-#: .\templates\cashboxes\cashbox_list.html:296
-#: .\templates\cashboxes\cashbox_list.html:685
+#: .\templates\cashboxes\cashbox_detail.html:290
+#: .\templates\cashboxes\cashbox_detail.html:328
+#: .\templates\cashboxes\cashbox_list.html:187
+#: .\templates\cashboxes\cashbox_list.html:280
+#: .\templates\cashboxes\cashbox_list.html:318
+#: .\templates\cashboxes\cashbox_list.html:707
 #: .\templates\cashboxes\transfer_list.html:372
 #: .\templates\core\audit_log.html:89 .\templates\core\audit_log.html:241
-#: .\templates\customers\add.html:238 .\templates\customers\edit.html:286
+#: .\templates\customers\add.html:238 .\templates\customers\edit.html:311
 #: .\templates\customers\supplier_list.html:493
 #: .\templates\customers\transactions.html:587
 #: .\templates\hr\attendance_confirm_delete.html:219
@@ -2218,7 +2281,7 @@ msgstr "مسح"
 #: .\templates\backup\backup_restore_simple.html:180
 #: .\templates\banks\account_transactions.html:197
 #: .\templates\banks\transfer_list.html:408
-#: .\templates\cashboxes\cashbox_list.html:62
+#: .\templates\cashboxes\cashbox_list.html:63
 #: .\templates\cashboxes\transfer_list.html:118
 #: .\templates\customers\customer_list.html:298
 #: .\templates\customers\supplier_list.html:282
@@ -2269,7 +2332,7 @@ msgstr "لم يتم العثور على وظائف"
 #: .\banks\templates\banks\reconciliation_list.html:126
 #: .\banks\templates\banks\statement_list.html:121
 #: .\templates\accounts\transaction_list.html:233
-#: .\templates\cashboxes\cashbox_detail.html:187
+#: .\templates\cashboxes\cashbox_detail.html:188
 #: .\templates\cashboxes\transfer_list.html:165
 #: .\templates\core\audit_log.html:189 .\templates\core\notifications.html:222
 #: .\templates\customers\supplier_list.html:356
@@ -2302,7 +2365,7 @@ msgstr "السابق"
 #: .\banks\templates\banks\reconciliation_list.html:144
 #: .\banks\templates\banks\statement_list.html:139
 #: .\templates\accounts\transaction_list.html:243
-#: .\templates\cashboxes\cashbox_detail.html:205
+#: .\templates\cashboxes\cashbox_detail.html:206
 #: .\templates\cashboxes\transfer_list.html:183
 #: .\templates\core\audit_log.html:203 .\templates\core\notifications.html:234
 #: .\templates\customers\supplier_list.html:368
@@ -2508,148 +2571,189 @@ msgstr "ليس لديك صلاحية لإضافة حسابات بنكية."
 msgid "Bank Account Add Page Accessed"
 msgstr "تم الوصول إلى قائمة الحسابات المصرفية"
 
-#: .\banks\views.py:219 .\banks\views.py:240
+#: .\banks\views.py:219 .\cashboxes\views.py:304 .\cashboxes\views.py:322
+#: .\cashboxes\views.py:334 .\inventory\models.py:68 .\inventory\models.py:128
+#: .\reports\views.py:176 .\reports\views.py:209
+#: .\templates\banks\account_add.html:233 .\templates\customers\edit.html:265
+#: .\templates\products\product_add.html:270
+#: .\templates\products\product_edit.html:238
+#: .\templates\products\product_edit.html:291
+#: .\templates\products\product_list.html:987
+#: .\templates\reports\customer_statement.html:87
+msgid "Opening Balance"
+msgstr "الرصيد الافتتاحي"
+
+#: .\banks\views.py:225
+#, fuzzy
+#| msgid "Capital Contribution"
+msgid "Opening Balance - Capital Contribution"
+msgstr "مساهمة رأس المال"
+
+#: .\banks\views.py:231
+#, fuzzy
+#| msgid "Opening Balance Cost"
+msgid "Opening Balance - Bank Account"
+msgstr "تكلفة الرصيد الافتتاحي"
+
+#: .\banks\views.py:261 .\banks\views.py:287
 msgid "You do not have permission to edit bank accounts."
 msgstr "ليس لديك صلاحية لتعديل حسابات بنكية."
 
-#: .\banks\views.py:322 .\customers\views.py:420
-#, python-format
-msgid "تعديل يدوي للرصيد - زيادة: %(amount)s"
+#: .\banks\views.py:373 .\customers\views.py:553
+#, fuzzy, python-format
+#| msgid "تعديل يدوي للرصيد - زيادة: %(amount)s"
+msgid "تعديل يدوي للرصيد - زيادة: %(amount)s - نوع: %(type)s"
 msgstr "تعديل يدوي للرصيد - زيادة: %(amount)s"
 
-#: .\banks\views.py:325 .\customers\views.py:424
-#, python-format
-msgid "تعديل يدوي للرصيد - نقص: %(amount)s"
+#: .\banks\views.py:379 .\customers\views.py:560
+#, fuzzy, python-format
+#| msgid "تعديل يدوي للرصيد - نقص: %(amount)s"
+msgid "تعديل يدوي للرصيد - نقص: %(amount)s - نوع: %(type)s"
 msgstr "تعديل يدوي للرصيد - نقص: %(amount)s"
 
-#: .\banks\views.py:346
+#: .\banks\views.py:416 .\cashboxes\views.py:461 .\customers\views.py:608
+msgid "Increase in balance"
+msgstr "زيادة في الرصيد"
+
+#: .\banks\views.py:438 .\cashboxes\views.py:483 .\customers\views.py:630
+msgid "Decrease in balance"
+msgstr "نقص في الرصيد"
+
+# Cashbox adjustments
+#: .\banks\views.py:444
+#, fuzzy
+#| msgid "Adjustment of Opening Balance"
+msgid "Adjustment of Bank Balance"
+msgstr "تعديل الرصيد الافتتاحي"
+
+#: .\banks\views.py:461
 #, python-format
 msgid ""
 "تعديل رصيد الحساب البنكي: %(name)s من %(old)s إلى %(new)s (فرق: %(diff)s)"
 msgstr ""
 "تعديل رصيد الحساب البنكي: %(name)s من %(old)s إلى %(new)s (فرق: %(diff)s)"
 
-#: .\banks\views.py:361
+#: .\banks\views.py:476
 #, python-format
 msgid "تم تحديث الحساب البنكي \"%(name)s\" بنجاح!"
 msgstr "تم تحديث الحساب البنكي \"%(name)s\" بنجاح!"
 
-#: .\banks\views.py:387 .\banks\views.py:1594
+#: .\banks\views.py:502 .\banks\views.py:1718
 msgid "You do not have permission to delete bank accounts."
 msgstr "ليس لديك صلاحية لحذف حسابات بنكية."
 
-#: .\banks\views.py:437
+#: .\banks\views.py:552
 msgid ""
 "Cannot delete account \"{}\" because it has {} financial transactions and "
 "non-zero balance ({}). You can use the eraser button to delete all "
 "transactions first."
 msgstr ""
 
-#: .\banks\views.py:439
+#: .\banks\views.py:554
 msgid ""
 "Cannot delete account \"{}\" because it has {} financial transactions and "
 "non-zero balance ({}). You must transfer the balance or delete all "
 "transactions first."
 msgstr ""
 
-#: .\banks\views.py:598
+#: .\banks\views.py:713
 msgid "You do not have permission to add bank transfers."
 msgstr "ليس لديك صلاحية لإضافة تحويلات بنكية."
 
-#: .\banks\views.py:616
+#: .\banks\views.py:731
 msgid ""
 "Warning: Bank transfer number sequence not configured! Please add \"Bank "
 "Account Transfer\" sequence from settings page before creating any transfer."
 msgstr ""
 
-#: .\banks\views.py:836
+#: .\banks\views.py:951
 msgid ""
 "A similar transfer was created recently! Please check the transfer list."
 msgstr ""
 
-#: .\banks\views.py:1358
+#: .\banks\views.py:1482
 #, fuzzy
 #| msgid "Bank Account Transactions"
 msgid "Bank Account Transactions Accessed: {}"
 msgstr "معاملات الحساب البنكي"
 
-#: .\banks\views.py:1531
+#: .\banks\views.py:1655
 msgid "Only superadmin can perform absolute deletion."
 msgstr "فقط المدير الفائق يمكنه إجراء الحذف المطلق."
 
-#: .\banks\views.py:1826
+#: .\banks\views.py:1950
 #, fuzzy
 #| msgid "Bank Account List Accessed"
 msgid "Bank Reconciliations List Accessed"
 msgstr "تم الوصول إلى قائمة الحسابات المصرفية"
 
-#: .\banks\views.py:1864
+#: .\banks\views.py:1988
 #, fuzzy
 #| msgid "Bank Reconciliations"
 msgid "New Bank Reconciliation Created: {}"
 msgstr "تسويات البنوك"
 
-#: .\banks\views.py:1867
+#: .\banks\views.py:1991
 #, fuzzy
 #| msgid "Transfer created successfully"
 msgid "Bank reconciliation created successfully."
 msgstr "تم إنشاء التحويل بنجاح"
 
-#: .\banks\views.py:1895
+#: .\banks\views.py:2019
 #, fuzzy
 #| msgid "Bank Reconciliations"
 msgid "Bank Reconciliation Details Viewed: {}"
 msgstr "تسويات البنوك"
 
-#: .\banks\views.py:1915
+#: .\banks\views.py:2039
 #, fuzzy
 #| msgid "Bank Reconciliations"
 msgid "Bank Reconciliation Updated: {}"
 msgstr "تسويات البنوك"
 
-#: .\banks\views.py:1918
+#: .\banks\views.py:2042
 #, fuzzy
 #| msgid "Employee updated successfully."
 msgid "Bank reconciliation updated successfully."
 msgstr "تم تحديث الموظف بنجاح."
 
-#: .\banks\views.py:1962
+#: .\banks\views.py:2086
 #, fuzzy
 #| msgid "Bank Account List Accessed"
 msgid "Bank Statements List Accessed"
 msgstr "تم الوصول إلى قائمة الحسابات المصرفية"
 
-#: .\banks\views.py:1982
+#: .\banks\views.py:2106
 #, fuzzy
 #| msgid "Statement"
 msgid "New Bank Statement Created: {}"
 msgstr "كشف حساب"
 
-#: .\banks\views.py:1985
+#: .\banks\views.py:2109
 #, fuzzy
 #| msgid "Transfer created successfully"
 msgid "Bank statement created successfully."
 msgstr "تم إنشاء التحويل بنجاح"
 
-#: .\banks\views.py:2005
+#: .\banks\views.py:2129
 #, fuzzy
 #| msgid "Statement"
 msgid "Bank Statement Updated: {}"
 msgstr "كشف حساب"
 
-#: .\banks\views.py:2008
+#: .\banks\views.py:2132
 #, fuzzy
 #| msgid "Employee updated successfully."
 msgid "Bank statement updated successfully."
 msgstr "تم تحديث الموظف بنجاح."
 
-#: .\banks\views.py:2033
+#: .\banks\views.py:2157
 #, fuzzy
 #| msgid "Bank Account Transactions"
 msgid "Bank Account Transactions Exported to Excel: {}"
 msgstr "معاملات الحساب البنكي"
 
-#: .\banks\views.py:2039 .\banks\views.py:2047
+#: .\banks\views.py:2163 .\banks\views.py:2171
 #: .\templates\banks\account_transactions.html:460
 #: .\templates\banks\account_transactions.html:475
 #, fuzzy
@@ -2657,44 +2761,45 @@ msgstr "معاملات الحساب البنكي"
 msgid "Bank Account Statement"
 msgstr "كشف الحساب"
 
-#: .\banks\views.py:2061 .\cashboxes\views.py:1167
+#: .\banks\views.py:2185 .\cashboxes\views.py:1233
 #: .\templates\accounts\customer_statement.html:87
 #: .\templates\assets_liabilities\liability_create.html:206
 #: .\templates\assets_liabilities\liability_list.html:121
-#: .\templates\banks\account_add.html:220
 #: .\templates\banks\account_detail.html:172
+#: .\templates\banks\account_edit.html:232
 #: .\templates\banks\account_transactions.html:157
 #: .\templates\banks\account_transactions.html:481
 #: .\templates\banks\bank_cashbox_transfer_add.html:583
-#: .\templates\cashboxes\cashbox_detail.html:108
-#: .\templates\cashboxes\cashbox_detail.html:385
+#: .\templates\cashboxes\cashbox_detail.html:109
+#: .\templates\cashboxes\cashbox_detail.html:412
 #: .\templates\customers\delete.html:166 .\templates\customers\edit.html:215
+#: .\templates\customers\edit.html:260
 #: .\templates\customers\transactions.html:771
 msgid "Current Balance"
 msgstr "الرصيد الحالي"
 
-#: .\banks\views.py:2064 .\templates\banks\account_transactions.html:161
+#: .\banks\views.py:2188 .\templates\banks\account_transactions.html:161
 #: .\templates\banks\account_transactions.html:482
 msgid "Transactions Count"
 msgstr "عدد المعاملات"
 
-#: .\banks\views.py:2068 .\cashboxes\views.py:1170
+#: .\banks\views.py:2192 .\cashboxes\views.py:1236
 #, fuzzy
 #| msgid "Report Date"
 msgid "Export Date"
 msgstr "تاريخ التقرير"
 
-#: .\banks\views.py:2078 .\cashboxes\views.py:1180
+#: .\banks\views.py:2202 .\cashboxes\views.py:1246
 #: .\templates\banks\account_transactions.html:194
 #: .\templates\banks\account_transactions.html:494
-#: .\templates\cashboxes\cashbox_detail.html:144
-#: .\templates\cashboxes\cashbox_detail.html:397
+#: .\templates\cashboxes\cashbox_detail.html:145
+#: .\templates\cashboxes\cashbox_detail.html:424
 #, fuzzy
 #| msgid "Delete Transaction"
 msgid "Balance After Transaction"
 msgstr "حذف المعاملة"
 
-#: .\banks\views.py:2138 .\cashboxes\views.py:1239
+#: .\banks\views.py:2262 .\cashboxes\views.py:1305
 #, fuzzy
 #| msgid "An error occurred while updating the group: {}"
 msgid "An error occurred while exporting: {}"
@@ -2704,21 +2809,21 @@ msgstr "حدث خطأ أثناء تحديث المجموعة: {}"
 msgid "Cash Box Name"
 msgstr "اسم الصندوق"
 
-#: .\cashboxes\models.py:15 .\cashboxes\views.py:1161
+#: .\cashboxes\models.py:15 .\cashboxes\views.py:1227
 #: .\templates\assets_liabilities\asset_create.html:347
 #: .\templates\assets_liabilities\asset_detail.html:126
-#: .\templates\cashboxes\cashbox_detail.html:90
-#: .\templates\cashboxes\cashbox_detail.html:257
-#: .\templates\cashboxes\cashbox_detail.html:383
-#: .\templates\cashboxes\cashbox_list.html:59
-#: .\templates\cashboxes\cashbox_list.html:169
-#: .\templates\cashboxes\cashbox_list.html:241
-#: .\templates\cashboxes\cashbox_list.html:444
+#: .\templates\cashboxes\cashbox_detail.html:91
+#: .\templates\cashboxes\cashbox_detail.html:284
+#: .\templates\cashboxes\cashbox_detail.html:410
+#: .\templates\cashboxes\cashbox_list.html:60
+#: .\templates\cashboxes\cashbox_list.html:170
+#: .\templates\cashboxes\cashbox_list.html:263
+#: .\templates\cashboxes\cashbox_list.html:466
 msgid "Location"
 msgstr "الموقع"
 
-#: .\cashboxes\models.py:17 .\templates\cashboxes\cashbox_list.html:173
-#: .\templates\cashboxes\cashbox_list.html:245
+#: .\cashboxes\models.py:17 .\templates\cashboxes\cashbox_list.html:174
+#: .\templates\cashboxes\cashbox_list.html:267
 msgid "Responsible User"
 msgstr "المسؤول عن الصندوق"
 
@@ -2754,21 +2859,21 @@ msgstr "يمكن حذف الصناديق النقدية"
 msgid "Cash box can be modified"
 msgstr "تعديل صندوق"
 
-#: .\cashboxes\models.py:106 .\templates\cashboxes\cashbox_list.html:539
+#: .\cashboxes\models.py:106 .\templates\cashboxes\cashbox_list.html:561
 #: .\templates\cashboxes\transfer_list.html:76
 #: .\templates\cashboxes\transfer_list.html:226
 #: .\templates\cashboxes\transfer_list.html:636
 msgid "Cashbox to Cashbox"
 msgstr "صندوق إلى صندوق"
 
-#: .\cashboxes\models.py:107 .\templates\cashboxes\cashbox_list.html:540
+#: .\cashboxes\models.py:107 .\templates\cashboxes\cashbox_list.html:562
 #: .\templates\cashboxes\transfer_list.html:79
 #: .\templates\cashboxes\transfer_list.html:227
 #: .\templates\cashboxes\transfer_list.html:640
 msgid "Cashbox to Bank"
 msgstr "صندوق إلى بنك"
 
-#: .\cashboxes\models.py:108 .\templates\cashboxes\cashbox_list.html:541
+#: .\cashboxes\models.py:108 .\templates\cashboxes\cashbox_list.html:563
 #: .\templates\cashboxes\transfer_list.html:82
 #: .\templates\cashboxes\transfer_list.html:228
 msgid "Bank to Cashbox"
@@ -2812,7 +2917,7 @@ msgstr ""
 
 #: .\cashboxes\models.py:135 .\payments\models.py:17
 #: .\templates\assets_liabilities\dashboard.html:384
-#: .\templates\cashboxes\cashbox_list.html:645
+#: .\templates\cashboxes\cashbox_list.html:667
 #: .\templates\cashboxes\transfer_list.html:332
 #: .\templates\payments\voucher_list.html:44
 #: .\templates\purchases\invoice_list.html:261
@@ -2830,7 +2935,7 @@ msgstr "نقدي"
 #: .\cashboxes\models.py:136 .\payments\models.py:18
 #: .\templates\assets_liabilities\dashboard.html:386
 #: .\templates\banks\bank_cashbox_transfer_add.html:258
-#: .\templates\cashboxes\cashbox_list.html:646
+#: .\templates\cashboxes\cashbox_list.html:668
 #: .\templates\cashboxes\transfer_list.html:333
 #: .\templates\core\dashboard.html:381 .\templates\core\dashboard.html:393
 #: .\templates\payments\voucher_list.html:45
@@ -2844,12 +2949,12 @@ msgstr "نقدي"
 msgid "Check"
 msgstr "شيك"
 
-#: .\cashboxes\models.py:139 .\templates\cashboxes\cashbox_list.html:636
+#: .\cashboxes\models.py:139 .\templates\cashboxes\cashbox_list.html:658
 #: .\templates\cashboxes\transfer_list.html:323
 msgid "Deposit Document Number"
 msgstr "رقم وثيقة الإيداع"
 
-#: .\cashboxes\models.py:140 .\templates\cashboxes\cashbox_list.html:642
+#: .\cashboxes\models.py:140 .\templates\cashboxes\cashbox_list.html:664
 #: .\templates\cashboxes\transfer_list.html:329
 msgid "Deposit Type"
 msgstr "نوع الإيداع"
@@ -2859,8 +2964,8 @@ msgstr "نوع الإيداع"
 #: .\templates\banks\cashbox_transfer_detail.html:280
 #: .\templates\banks\cashbox_transfer_detail.html:426
 #: .\templates\banks\cashbox_transfer_edit.html:276
-#: .\templates\cashboxes\cashbox_list.html:658
-#: .\templates\cashboxes\cashbox_list.html:659
+#: .\templates\cashboxes\cashbox_list.html:680
+#: .\templates\cashboxes\cashbox_list.html:681
 #: .\templates\cashboxes\transfer_list.html:345
 #: .\templates\cashboxes\transfer_list.html:346
 #: .\templates\receipts\receipt_add.html:99
@@ -2873,14 +2978,14 @@ msgstr "رقم الشيك"
 #: .\templates\banks\cashbox_transfer_detail.html:284
 #: .\templates\banks\cashbox_transfer_detail.html:430
 #: .\templates\banks\cashbox_transfer_edit.html:282
-#: .\templates\cashboxes\cashbox_list.html:664
+#: .\templates\cashboxes\cashbox_list.html:686
 #: .\templates\cashboxes\transfer_list.html:351
 #: .\templates\receipts\receipt_add.html:104
 #: .\templates\receipts\receipt_detail.html:97
 msgid "Check Date"
 msgstr "تاريخ الشيك"
 
-#: .\cashboxes\models.py:143 .\templates\cashboxes\cashbox_list.html:670
+#: .\cashboxes\models.py:143 .\templates\cashboxes\cashbox_list.html:692
 #: .\templates\cashboxes\transfer_list.html:357
 msgid "Check Bank Name"
 msgstr "اسم بنك الشيك"
@@ -2905,19 +3010,19 @@ msgstr "لا يمكن التحويل من صندوق إلى نفسه"
 msgid "Sender cashbox and receiver bank must be specified"
 msgstr "يجب تحديد صندوق المرسل وبنك المستقبل"
 
-#: .\cashboxes\models.py:181 .\cashboxes\views.py:552
+#: .\cashboxes\models.py:181 .\cashboxes\views.py:564
 msgid "Deposit type is required"
 msgstr "نوع الإيداع مطلوب"
 
-#: .\cashboxes\models.py:185 .\cashboxes\views.py:556
+#: .\cashboxes\models.py:185 .\cashboxes\views.py:568
 msgid "Check number is required when deposit type is \"Check\""
 msgstr "رقم الشيك مطلوب عندما يكون نوع الإيداع \"شيك\""
 
-#: .\cashboxes\models.py:187 .\cashboxes\views.py:559 .\payments\forms.py:135
+#: .\cashboxes\models.py:187 .\cashboxes\views.py:571 .\payments\forms.py:135
 msgid "Check date is required"
 msgstr "تاريخ الشيك مطلوب"
 
-#: .\cashboxes\models.py:189 .\cashboxes\views.py:562
+#: .\cashboxes\models.py:189 .\cashboxes\views.py:574
 msgid "Check bank name is required"
 msgstr "اسم بنك الشيك مطلوب"
 
@@ -2942,333 +3047,317 @@ msgstr ""
 msgid "رصيد افتتاحي"
 msgstr ""
 
-#: .\cashboxes\models.py:288 .\sales\models.py:28
+#: .\cashboxes\models.py:291 .\templates\cashboxes\cashbox_detail.html:259
+#: .\templates\cashboxes\cashbox_list.html:232
+msgid "Cash Shortage"
+msgstr "نقص النقد"
+
+#: .\cashboxes\models.py:292 .\templates\cashboxes\cashbox_detail.html:260
+#: .\templates\cashboxes\cashbox_list.html:233
+msgid "Cash Surplus"
+msgstr "الفائض النقدي"
+
+#: .\cashboxes\models.py:293 .\templates\cashboxes\cashbox_detail.html:261
+#: .\templates\cashboxes\cashbox_list.html:234
+msgid "Cash Reconciliation"
+msgstr "تسوية النقدية"
+
+#: .\cashboxes\models.py:297 .\sales\models.py:28
 #: .\templates\payments\voucher_detail.html:154
 msgid "الصندوق"
 msgstr ""
 
-#: .\cashboxes\models.py:296
+#: .\cashboxes\models.py:320
 msgid "التحويل المرتبط"
 msgstr ""
 
-#: .\cashboxes\models.py:299
+#: .\cashboxes\models.py:323
 #, fuzzy
 #| msgid "Reference"
 msgid "Reference Type"
 msgstr "المرجع"
 
-#: .\cashboxes\models.py:301
+#: .\cashboxes\models.py:325
 #, fuzzy
 #| msgid "إحصائيات المبيعات"
 msgid "فاتورة مبيعات"
 msgstr "إحصائيات المبيعات"
 
-#: .\cashboxes\models.py:302
+#: .\cashboxes\models.py:326
 #, fuzzy
 #| msgid "إحصائيات المشتريات"
 msgid "فاتورة مشتريات"
 msgstr "إحصائيات المشتريات"
 
-#: .\cashboxes\models.py:303 .\core\models.py:68 .\receipts\models.py:84
+#: .\cashboxes\models.py:327 .\core\models.py:68 .\receipts\models.py:84
 msgid "سند قبض"
 msgstr ""
 
-#: .\cashboxes\models.py:304
+#: .\cashboxes\models.py:328
 #, fuzzy
 #| msgid "إحصائيات المبيعات"
 msgid "سند دفع"
 msgstr "إحصائيات المبيعات"
 
-#: .\cashboxes\models.py:305 .\inventory\models.py:57
+#: .\cashboxes\models.py:329 .\inventory\models.py:57
 #: .\revenues_expenses\models.py:59
 msgid "تحويل"
 msgstr ""
 
-#: .\cashboxes\models.py:307
+#: .\cashboxes\models.py:331
 #, fuzzy
 #| msgid "Reference"
 msgid "Reference ID"
 msgstr "المرجع"
 
-#: .\cashboxes\models.py:313
+#: .\cashboxes\models.py:337
 msgid "حركة صندوق"
 msgstr ""
 
-#: .\cashboxes\models.py:314
+#: .\cashboxes\models.py:338
 msgid "حركات الصناديق"
 msgstr ""
 
-#: .\cashboxes\views.py:198 .\templates\core\dashboard.html:285
+#: .\cashboxes\views.py:202 .\templates\core\dashboard.html:285
 #: .\templates\core\dashboard.html:346
 msgid "Cashboxes"
 msgstr "الصناديق النقدية"
 
-#: .\cashboxes\views.py:246
+#: .\cashboxes\views.py:250
 msgid "Cashbox Details"
 msgstr "تفاصيل الصندوق النقدي"
 
-#: .\cashboxes\views.py:263 .\cashboxes\views.py:371
+#: .\cashboxes\views.py:267 .\cashboxes\views.py:383
 msgid "Cashbox name is required"
 msgstr "اسم الصندوق النقدي مطلوب"
 
-#: .\cashboxes\views.py:269 .\cashboxes\views.py:378
+#: .\cashboxes\views.py:273 .\cashboxes\views.py:390
 msgid "Initial balance must be a valid number"
 msgstr "يجب أن يكون الرصيد الافتتاحي رقمًا صحيحًا"
 
-#: .\cashboxes\views.py:278 .\cashboxes\views.py:387
+#: .\cashboxes\views.py:282 .\cashboxes\views.py:399
 msgid "Selected responsible user does not exist"
 msgstr "المستخدم المسؤول المحدد غير موجود"
 
-#: .\cashboxes\views.py:299 .\cashboxes\views.py:314 .\cashboxes\views.py:326
-#: .\inventory\models.py:68 .\inventory\models.py:128 .\reports\views.py:176
-#: .\reports\views.py:209 .\templates\products\product_add.html:270
-#: .\templates\products\product_edit.html:238
-#: .\templates\products\product_edit.html:291
-#: .\templates\products\product_list.html:987
-#: .\templates\reports\customer_statement.html:87
-msgid "Opening Balance"
-msgstr "الرصيد الافتتاحي"
-
-#: .\cashboxes\views.py:335 .\cashboxes\views.py:456 .\cashboxes\views.py:473
+#: .\cashboxes\views.py:328
 msgid "Capital"
 msgstr "رأس المال"
 
-#: .\banks\models.py:133
-#: .\templates\banks\account_edit.html:265
-#: .\templates\cashboxes\cashbox_detail.html:257
-#: .\cashboxes\models.py:289
-#: .\templates\cashboxes\cashbox_detail.html:257
-#: .\templates\cashboxes\cashbox_list.html:230
-msgid "Capital Contribution"
-msgstr "مساهمة رأس المال"
-
-#: .\cashboxes\views.py:348
+#: .\cashboxes\views.py:354
 msgid "Cashbox created successfully"
 msgstr "تم إنشاء الصندوق النقدي بنجاح"
 
-#: .\cashboxes\views.py:360
-#: .\cashboxes\views.py:359
+#: .\cashboxes\views.py:363 .\cashboxes\views.py:364
 msgid "An error occurred while creating the cashbox"
 msgstr "حدث خطأ أثناء إنشاء الصندوق النقدي"
 
-#: .\templates\banks\account_edit.html:232
-msgid "Current Balance :"
-msgstr "الرصيد الفعلي :"
-
-#: .\templates\banks\account_edit.html:231
-msgid "Editable"
-msgstr "قابل للتعديل"
-
-#: .\banks\models.py:152
-#: .\cashboxes\models.py:305
-#: .\templates\cashboxes\cashbox_detail.html:253
-#: .\templates\cashboxes\cashbox_list.html:226
-msgid "Adjustment Type"
-msgstr "نوع التعديل"
-
 # Cashbox adjustments
-#: .\cashboxes\views.py:409 .\cashboxes\views.py:437 .\cashboxes\views.py:462
+#: .\cashboxes\views.py:425 .\cashboxes\views.py:489
 msgid "Adjustment of Opening Balance"
 msgstr "تعديل الرصيد الافتتاحي"
 
-#: .\cashboxes\views.py:411
+#: .\cashboxes\views.py:427
 msgid "Increase"
 msgstr "زيادة"
 
-#: .\cashboxes\views.py:413
+#: .\cashboxes\views.py:429
 msgid "Decrease"
 msgstr "نقصان"
 
-#: .\cashboxes\views.py:448
-msgid "Increase in balance"
-msgstr "زيادة في الرصيد"
-
-#: .\cashboxes\views.py:481
-msgid "Decrease in balance"
-msgstr "نقص في الرصيد"
-
-#: .\cashboxes\views.py:497
+#: .\cashboxes\views.py:509
 msgid "Cashbox updated successfully"
 msgstr "تم تحديث الصندوق النقدي بنجاح"
 
-#: .\cashboxes\views.py:501
+#: .\cashboxes\views.py:513
 msgid "An error occurred while updating the cashbox"
 msgstr "حدث خطأ أثناء تحديث الصندوق النقدي"
 
-#: .\cashboxes\views.py:515
+#: .\cashboxes\views.py:527
 msgid ""
 "Warning: Cashbox transfer sequence is not set! Please add the \"Cashbox "
 "Transfer\" sequence in Settings before creating any transfer."
 msgstr ""
 
-#: .\cashboxes\views.py:540
+#: .\cashboxes\views.py:552
 msgid "All fields are required"
 msgstr "جميع الحقول مطلوبة"
 
-#: .\cashboxes\views.py:546
+#: .\cashboxes\views.py:558
 #, fuzzy
 #| msgid "Cashbox name is required"
 msgid "Sender cashbox is required"
 msgstr "اسم الصندوق النقدي مطلوب"
 
-#: .\cashboxes\views.py:549
+#: .\cashboxes\views.py:561
 #, fuzzy
 #| msgid "Reversal reason is required"
 msgid "Receiver bank is required"
 msgstr "سبب الإلغاء مطلوب"
 
-#: .\cashboxes\views.py:568
+#: .\cashboxes\views.py:580
 #, fuzzy
 #| msgid "Check bank name is required"
 msgid "Sender bank is required"
 msgstr "اسم بنك الشيك مطلوب"
 
-#: .\cashboxes\views.py:571
+#: .\cashboxes\views.py:583
 #, fuzzy
 #| msgid "Reversal reason is required"
 msgid "Receiver cashbox is required"
 msgstr "سبب الإلغاء مطلوب"
 
-#: .\cashboxes\views.py:578
+#: .\cashboxes\views.py:590
 msgid "Transfer number already exists! Please use another number."
 msgstr "رقم التحويل موجود بالفعل! يرجى استخدام رقم آخر."
 
-#: .\cashboxes\views.py:587
+#: .\cashboxes\views.py:599
 msgid "Amount must be greater than zero"
 msgstr "المبلغ يجب أن يكون أكبر من صفر"
 
-#: .\cashboxes\views.py:648
+#: .\cashboxes\views.py:660
 msgid "Insufficient balance in the sender cashbox"
 msgstr "رصيد غير كافٍ في صندوق المرسل"
 
-#: .\cashboxes\views.py:663
+#: .\cashboxes\views.py:673
 msgid "Transfer to"
 msgstr "تحويل إلى"
 
-#: .\cashboxes\views.py:675
+#: .\cashboxes\views.py:685
 msgid "Transfer from"
 msgstr "تحويل من"
 
-#: .\cashboxes\views.py:688
+#: .\cashboxes\views.py:711
 msgid "Insufficient balance in the cashbox"
 msgstr "رصيد غير كافٍ في الصندوق"
 
-#: .\cashboxes\views.py:703
+#: .\cashboxes\views.py:724
 msgid "Transfer to Bank"
 msgstr "تحويل إلى البنك"
 
-#: .\cashboxes\views.py:716
+#: .\cashboxes\views.py:737 .\templates\banks\account_detail.html:332
+#, fuzzy
+#| msgid "Transfer from Bank"
+msgid "Transfer from Cashbox"
+msgstr "تحويل من البنك"
+
+#: .\cashboxes\views.py:762
 msgid "Insufficient balance in the bank"
 msgstr "رصيد غير كافٍ في البنك"
 
-#: .\cashboxes\views.py:731
+#: .\cashboxes\views.py:775 .\templates\banks\account_detail.html:312
+#, fuzzy
+#| msgid "Bank to Cashbox"
+msgid "Transfer to Cashbox"
+msgstr "بنك إلى صندوق"
+
+#: .\cashboxes\views.py:787
 msgid "Transfer from Bank"
 msgstr "تحويل من البنك"
 
-#: .\cashboxes\views.py:741
+#: .\cashboxes\views.py:807
 msgid "Transfer created successfully"
 msgstr "تم إنشاء التحويل بنجاح"
 
-#: .\cashboxes\views.py:766
+#: .\cashboxes\views.py:832
 msgid "An error occurred while creating the transfer"
 msgstr "حدث خطأ أثناء إنشاء التحويل"
 
-#: .\cashboxes\views.py:831 .\templates\banks\transfer_list.html:893
+#: .\cashboxes\views.py:897 .\templates\banks\transfer_list.html:893
 #: .\templates\cashboxes\transfer_list.html:5
 #: .\templates\cashboxes\transfer_list.html:51
 msgid "Cashbox Transfers"
 msgstr "تحويلات الصناديق"
 
-#: .\cashboxes\views.py:849
+#: .\cashboxes\views.py:915
 msgid "تفاصيل التحويل"
 msgstr ""
 
-#: .\cashboxes\views.py:937
+#: .\cashboxes\views.py:1003
 msgid ""
 "Transaction deleted successfully and all related balances have been updated."
 msgstr ""
 
-#: .\cashboxes\views.py:940
+#: .\cashboxes\views.py:1006
 msgid "An error occurred while deleting the transaction: {}"
 msgstr "حدث خطأ أثناء حذف المعاملة: {}"
 
-#: .\cashboxes\views.py:999
+#: .\cashboxes\views.py:1065
 msgid ""
 "Transfer deleted successfully and all related balances have been updated."
 msgstr ""
 
-#: .\cashboxes\views.py:1002
+#: .\cashboxes\views.py:1068
 msgid "An error occurred while deleting the transfer: {}"
 msgstr "حدث خطأ أثناء حذف التحويل: {}"
 
-#: .\cashboxes\views.py:1016
+#: .\cashboxes\views.py:1082
 msgid "You do not have permission to clear cashbox transactions"
 msgstr "ليس لديك صلاحية لمسح معاملات الصناديق النقدية"
 
-#: .\cashboxes\views.py:1060
+#: .\cashboxes\views.py:1126
 msgid ""
 "All transactions for cashbox \"{}\" were cleared successfully and all "
 "related balances were updated."
 msgstr ""
 
-#: .\cashboxes\views.py:1063
+#: .\cashboxes\views.py:1129
 msgid "An error occurred while clearing cashbox transactions: {}"
 msgstr "حدث خطأ أثناء مسح معاملات الصناديق النقدية: {}"
 
-#: .\cashboxes\views.py:1073
+#: .\cashboxes\views.py:1139
 msgid "You do not have permission to delete cashboxes"
 msgstr "ليس لديك صلاحية لحذف الصناديق النقدية"
 
-#: .\cashboxes\views.py:1092
+#: .\cashboxes\views.py:1158
 msgid "Cannot delete the cashbox because the balance is not zero"
 msgstr "لا يمكن حذف الصندوق النقدي لأن الرصيد ليس صفراً"
 
-#: .\cashboxes\views.py:1101
+#: .\cashboxes\views.py:1167
 msgid "Deleted cashbox: {}"
 msgstr "تم حذف الصندوق: {}"
 
-#: .\cashboxes\views.py:1108
+#: .\cashboxes\views.py:1174
 msgid ""
 "Cashbox \"{}\" was deleted successfully while preserving transfers and "
 "balances in other cashboxes"
 msgstr ""
 
-#: .\cashboxes\views.py:1112
+#: .\cashboxes\views.py:1178
 msgid "Cannot delete the cashbox due to protected related transactions"
 msgstr "لا يمكن حذف الصندوق النقدي بسبب معاملات ذات صلة محمية"
 
-#: .\cashboxes\views.py:1114
+#: .\cashboxes\views.py:1180
 msgid "An error occurred while deleting the cashbox: {}"
 msgstr "حدث خطأ أثناء حذف الصندوق النقدي: {}"
 
-#: .\cashboxes\views.py:1136
+#: .\cashboxes\views.py:1202
 #, fuzzy
 #| msgid "لم يتم تحديد العملية المطلوبة"
 msgid "تم تصدير معاملات الصندوق إلى Excel: {}"
 msgstr "لم يتم تحديد العملية المطلوبة"
 
-#: .\cashboxes\views.py:1142 .\cashboxes\views.py:1150
-#: .\templates\cashboxes\cashbox_detail.html:362
-#: .\templates\cashboxes\cashbox_detail.html:377
+#: .\cashboxes\views.py:1208 .\cashboxes\views.py:1216
+#: .\templates\cashboxes\cashbox_detail.html:389
+#: .\templates\cashboxes\cashbox_detail.html:404
 #, fuzzy
 #| msgid "Cash Flow Statement"
 msgid "Cashbox Statement"
 msgstr "بيان التدفق النقدي"
 
-#: .\cashboxes\views.py:1155 .\templates\cashboxes\cashbox_detail.html:82
-#: .\templates\cashboxes\cashbox_detail.html:238
-#: .\templates\cashboxes\cashbox_list.html:56
-#: .\templates\cashboxes\cashbox_list.html:144
-#: .\templates\cashboxes\cashbox_list.html:211
-#: .\templates\cashboxes\cashbox_list.html:441
+#: .\cashboxes\views.py:1221 .\templates\cashboxes\cashbox_detail.html:83
+#: .\templates\cashboxes\cashbox_detail.html:239
+#: .\templates\cashboxes\cashbox_list.html:57
+#: .\templates\cashboxes\cashbox_list.html:145
+#: .\templates\cashboxes\cashbox_list.html:212
+#: .\templates\cashboxes\cashbox_list.html:463
 msgid "Cashbox Name"
 msgstr "اسم الصندوق"
 
-#: .\cashboxes\views.py:1164 .\hr\models.py:17
-#: .\templates\cashboxes\cashbox_detail.html:94
-#: .\templates\cashboxes\cashbox_detail.html:384
-#: .\templates\cashboxes\cashbox_list.html:60
-#: .\templates\cashboxes\cashbox_list.html:445
+#: .\cashboxes\views.py:1230 .\hr\models.py:17
+#: .\templates\cashboxes\cashbox_detail.html:95
+#: .\templates\cashboxes\cashbox_detail.html:411
+#: .\templates\cashboxes\cashbox_list.html:61
+#: .\templates\cashboxes\cashbox_list.html:467
 #: .\templates\hr\department_detail.html:41
 #: .\templates\hr\department_list.html:30
 #: .\templates\inventory\warehouse_delete.html:95
@@ -3278,10 +3367,10 @@ msgstr "اسم الصندوق"
 msgid "Manager"
 msgstr "المدير"
 
-#: .\cashboxes\views.py:1177 .\core\views.py:621 .\core\views.py:695
+#: .\cashboxes\views.py:1243 .\core\views.py:621 .\core\views.py:695
 #: .\reports\views.py:394 .\reports\views.py:432
-#: .\templates\cashboxes\cashbox_detail.html:142
-#: .\templates\cashboxes\cashbox_detail.html:394
+#: .\templates\cashboxes\cashbox_detail.html:143
+#: .\templates\cashboxes\cashbox_detail.html:421
 #: .\templates\core\tax_report.html:365
 #: .\templates\inventory\movement_list.html:304
 #: .\templates\purchases\purchase_statement.html:156
@@ -3492,8 +3581,8 @@ msgstr ""
 #: .\templates\banks\account_list.html:895
 #: .\templates\banks\bank_cashbox_transfer_add.html:399
 #: .\templates\banks\cashbox_transfer_edit.html:145 .\templates\base.html:2201
-#: .\templates\cashboxes\cashbox_list.html:83
 #: .\templates\cashboxes\cashbox_list.html:84
+#: .\templates\cashboxes\cashbox_list.html:85
 #: .\templates\customers\supplier_list.html:655
 #: .\templates\customers\transactions.html:439
 #: .\templates\customers\transactions.html:498
@@ -3774,121 +3863,131 @@ msgstr ""
 msgid "يمكن حذف عميل/مورد"
 msgstr ""
 
-#: .\customers\views.py:36
+#: .\customers\views.py:37
 msgid "Customer search"
 msgstr "البحث عن العميل"
 
-#: .\customers\views.py:38
+#: .\customers\views.py:39
 #, python-format
 msgid "Customer quick search: %(q)s"
 msgstr "البحث السريع عن العميل: %(q)s"
 
-#: .\customers\views.py:165
+#: .\customers\views.py:166
 #, fuzzy
 #| msgid "Customers List"
 msgid "Customer List"
 msgstr "قائمة العملاء"
 
-#: .\customers\views.py:166
+#: .\customers\views.py:167
 #, fuzzy
 #| msgid "إحصائيات المبيعات"
 msgid "عرض قائمة العملاء"
 msgstr "إحصائيات المبيعات"
 
-#: .\customers\views.py:243
+#: .\customers\views.py:244
 msgid "محاولة دخول صفحة إضافة عميل/مورد بدون صلاحية"
 msgstr ""
 
-#: .\customers\views.py:244
+#: .\customers\views.py:245
 msgid "ليس لديك صلاحية لإضافة عميل/مورد"
 msgstr ""
 
-#: .\customers\views.py:303
+#: .\customers\views.py:432
 #, fuzzy, python-format
 #| msgid "Please enter customer/supplier name"
 msgid "Created customer/supplier: %(name)s"
 msgstr "يرجى إدخال اسم العميل/المورد"
 
-#: .\customers\views.py:374
+#: .\customers\views.py:503
 msgid "اسم العميل/المورد مطلوب!"
 msgstr "اسم العميل/المورد مطلوب!"
 
-#: .\customers\views.py:378
+#: .\customers\views.py:507
 msgid "المدينة مطلوبة!"
 msgstr "المدينة مطلوبة!"
 
-#: .\customers\views.py:383
+#: .\customers\views.py:512
 #, python-format
 msgid "يوجد عميل/مورد آخر بنفس الاسم \"%(name)s\"!"
 msgstr "يوجد عميل/مورد آخر بنفس الاسم \"%(name)s\"!"
 
-#: .\customers\views.py:391
+#: .\customers\views.py:520
 msgid "قيم المبالغ المالية غير صحيحة!"
 msgstr "قيم المبالغ المالية غير صحيحة!"
 
-#: .\customers\views.py:447
-#, python-format
+# Cashbox adjustments
+#: .\customers\views.py:636
+#, fuzzy
+#| msgid "Adjustment of Opening Balance"
+msgid "Adjustment of Customer/Supplier Balance"
+msgstr "تعديل الرصيد الافتتاحي"
+
+#: .\customers\views.py:652
+#, fuzzy, python-format
+#| msgid ""
+#| "تعديل رصيد العميل/المورد: %(name)s من %(old)s إلى %(new)s (فرق: %(diff)s)"
 msgid ""
-"تعديل رصيد العميل/المورد: %(name)s من %(old)s إلى %(new)s (فرق: %(diff)s)"
+"تعديل رصيد العميل/المورد: %(name)s من %(old)s إلى %(new)s (فرق: %(diff)s) - "
+"نوع: %(type)s"
 msgstr ""
 "تعديل رصيد العميل/المورد: %(name)s من %(old)s إلى %(new)s (فرق: %(diff)s)"
 
-#: .\customers\views.py:457
+#: .\customers\views.py:663
 #, python-format
 msgid "تحديث بيانات العميل/المورد: %(name)s"
 msgstr "تحديث بيانات العميل/المورد: %(name)s"
 
-#: .\customers\views.py:475
+#: .\customers\views.py:681
 #, python-format
 msgid "تم تحديث %(type)s \"%(name)s\" بنجاح!"
 msgstr "تم تحديث %(type)s \"%(name)s\" بنجاح!"
 
-#: .\customers\views.py:477
+#: .\customers\views.py:683
 #, python-format
 msgid "الرصيد الجديد: %(balance)s %(currency)s"
 msgstr "الرصيد الجديد: %(balance)s %(currency)s"
 
-#: .\customers\views.py:500
+#: .\customers\views.py:706
 #, python-format
 msgid "خطأ في تحديث العميل/المورد: %(error)s"
 msgstr "خطأ في تحديث العميل/المورد: %(error)s"
 
-#: .\customers\views.py:504
+#: .\customers\views.py:710
 #, python-format
 msgid "حدث خطأ أثناء تحديث البيانات: %(error)s"
 msgstr "حدث خطأ أثناء تحديث البيانات: %(error)s"
 
-#: .\customers\views.py:515 .\customers\views.py:555
+#: .\customers\views.py:721 .\customers\views.py:777
 msgid "ليس لديك صلاحية لحذف العملاء/الموردين"
 msgstr ""
 
-#: .\customers\views.py:525
+#: .\customers\views.py:731
 msgid "تحذير: سيتم حذف جميع البيانات المرتبطة نهائياً!"
 msgstr ""
 
-#: .\customers\views.py:550
+#: .\customers\views.py:772
 msgid "يجب كتابة \"DELETE\" للتأكيد!"
 msgstr ""
 
-#: .\customers\views.py:573
+#: .\customers\views.py:795
 #, python-format
 msgid ""
 "تم حذف العميل/المورد وجميع البيانات المرتبطة نهائياً: %(name)s (%(type)s)"
 msgstr ""
 
-#: .\customers\views.py:580
+#: .\customers\views.py:802
 #, python-format
 msgid ""
 "تم حذف %(type)s \"%(name)s\" بنجاح!\n"
 "جميع البيانات المرتبطة تم حذفها نهائياً."
 msgstr ""
 
-#: .\customers\views.py:593
+#: .\customers\views.py:815
 #, python-format
 msgid "فشل حذف العميل/المورد: %(error)s"
 msgstr ""
 
-#: .\customers\views.py:597
+#: .\customers\views.py:819
 #, python-format
 msgid "حدث خطأ أثناء حذف البيانات: %(error)s"
 msgstr ""
@@ -4224,7 +4323,7 @@ msgid "Internship"
 msgstr "تدريب"
 
 #: .\hr\models.py:76 .\templates\banks\account_detail.html:164
-#: .\templates\banks\account_edit.html:252
+#: .\templates\banks\account_edit.html:294
 #: .\templates\banks\account_list.html:339
 #: .\templates\customers\customer_list.html:831
 #: .\templates\customers\delete.html:179
@@ -4714,17 +4813,6 @@ msgstr "السيرة الذاتية"
 #: .\templates\hr\employee_document_list.html:59
 msgid "Photo"
 msgstr "الصورة"
-
-#: .\hr\models.py:509 .\journal\models.py:82 .\payments\models.py:26
-#: .\templates\assets_liabilities\dashboard.html:334
-#: .\templates\hr\employee_document_confirm_delete.html:56
-#: .\templates\hr\employee_document_detail.html:58
-#: .\templates\hr\employee_document_list.html:61
-#: .\templates\payments\voucher_list.html:56
-#: .\templates\purchases\return_add.html:85
-#: .\templates\sales\return_add.html:85
-msgid "Other"
-msgstr "أخرى"
 
 #: .\hr\models.py:515 .\templates\hr\employee_document_confirm_delete.html:63
 #: .\templates\hr\employee_document_detail.html:66
@@ -6124,7 +6212,6 @@ msgstr "الصندوق"
 #: .\templates\banks\account_edit.html:177
 #: .\templates\banks\account_edit.html:186
 #: .\templates\banks\account_edit.html:197
-#: .\templates\banks\account_edit.html:267
 #: .\templates\banks\account_list.html:106
 #: .\templates\banks\cashbox_transfer_detail.html:149
 #: .\templates\banks\cashbox_transfer_edit.html:108
@@ -6755,10 +6842,6 @@ msgstr ""
 
 #: .\purchases\models.py:99
 msgid "تالف أثناء النقل"
-msgstr ""
-
-#: .\purchases\models.py:100
-msgid "أخرى"
 msgstr ""
 
 #: .\purchases\models.py:103
@@ -9170,7 +9253,7 @@ msgid "First"
 msgstr "الأول"
 
 #: .\templates\accounts\transaction_list.html:246
-#: .\templates\banks\account_edit.html:287 .\templates\core\audit_log.html:208
+#: .\templates\banks\account_edit.html:329 .\templates\core\audit_log.html:208
 #: .\templates\core\notifications.html:237
 #: .\templates\customers\supplier_list.html:371
 #: .\templates\hr\attendance_list.html:264
@@ -9468,8 +9551,8 @@ msgstr "أصل"
 #: .\templates\assets_liabilities\asset_detail.html:355
 #: .\templates\banks\account_list.html:907
 #: .\templates\banks\account_transactions.html:315
-#: .\templates\cashboxes\cashbox_detail.html:295
-#: .\templates\cashboxes\cashbox_list.html:290
+#: .\templates\cashboxes\cashbox_detail.html:322
+#: .\templates\cashboxes\cashbox_list.html:312
 #: .\templates\hr\employee_confirm_delete.html:324
 #: .\templates\inventory\movement_list.html:592
 #: .\templates\inventory\warehouse_delete.html:81
@@ -9521,12 +9604,12 @@ msgstr "إغلاق"
 #: .\templates\assets_liabilities\dashboard.html:1005
 #: .\templates\banks\account_edit.html:112
 #: .\templates\banks\account_edit.html:124
-#: .\templates\banks\account_edit.html:306
-#: .\templates\banks\account_edit.html:347
-#: .\templates\banks\account_edit.html:350
+#: .\templates\banks\account_edit.html:348
+#: .\templates\banks\account_edit.html:389
+#: .\templates\banks\account_edit.html:392
 #: .\templates\banks\cashbox_transfer_edit.html:112
 #: .\templates\banks\cashbox_transfer_edit.html:326 .\templates\base.html:3015
-#: .\templates\customers\edit.html:294
+#: .\templates\customers\edit.html:319
 #: .\templates\customers\supplier_list.html:496
 #: .\templates\customers\supplier_list.html:623
 #: .\templates\customers\supplier_list.html:653
@@ -9657,17 +9740,17 @@ msgstr "إضافة قيد إهلاك"
 #: .\templates\banks\account_transactions.html:326
 #: .\templates\banks\transfer_list.html:465
 #: .\templates\banks\transfer_list.html:542 .\templates\base.html:3016
-#: .\templates\cashboxes\cashbox_detail.html:61
-#: .\templates\cashboxes\cashbox_detail.html:68
-#: .\templates\cashboxes\cashbox_detail.html:274
-#: .\templates\cashboxes\cashbox_list.html:99
+#: .\templates\cashboxes\cashbox_detail.html:62
+#: .\templates\cashboxes\cashbox_detail.html:69
+#: .\templates\cashboxes\cashbox_detail.html:301
 #: .\templates\cashboxes\cashbox_list.html:100
-#: .\templates\cashboxes\cashbox_list.html:107
-#: .\templates\cashboxes\cashbox_list.html:300
+#: .\templates\cashboxes\cashbox_list.html:101
+#: .\templates\cashboxes\cashbox_list.html:108
+#: .\templates\cashboxes\cashbox_list.html:322
 #: .\templates\customers\customer_list.html:276
 #: .\templates\customers\customer_list.html:331
 #: .\templates\customers\delete.html:5 .\templates\customers\delete.html:90
-#: .\templates\customers\edit.html:290
+#: .\templates\customers\edit.html:315
 #: .\templates\customers\supplier_list.html:259
 #: .\templates\customers\supplier_list.html:315
 #: .\templates\customers\transactions.html:486
@@ -9966,7 +10049,6 @@ msgstr "القائمة السريعة"
 
 #: .\templates\assets_liabilities\dashboard.html:213
 #: .\templates\banks\account_edit.html:145
-#: .\templates\banks\account_edit.html:267
 msgid "for"
 msgstr "لـ"
 
@@ -10710,9 +10792,9 @@ msgstr "إجمالي السجلات"
 
 #: .\templates\backup\backup_restore_simple.html:128
 #, fuzzy
-#| msgid "Current Balance"
+#| msgid "Current Value"
 msgid "Current Table:"
-msgstr "الرصيد الحالي"
+msgstr "القيمة الحالية"
 
 #: .\templates\backup\backup_restore_simple.html:141
 msgid "Cancel and Reload Page"
@@ -10746,9 +10828,9 @@ msgstr "اسم الأصل"
 
 #: .\templates\backup\backup_restore_simple.html:178
 #: .\templates\banks\cashbox_transfer_detail.html:358
-#: .\templates\cashboxes\cashbox_detail.html:98
-#: .\templates\cashboxes\cashbox_list.html:61
-#: .\templates\cashboxes\cashbox_list.html:446
+#: .\templates\cashboxes\cashbox_detail.html:99
+#: .\templates\cashboxes\cashbox_list.html:62
+#: .\templates\cashboxes\cashbox_list.html:468
 #: .\templates\cashboxes\transfer_detail.html:82
 #: .\templates\customers\delete.html:172
 #: .\templates\hr\attendance_confirm_delete.html:207
@@ -10839,6 +10921,10 @@ msgstr "لوحة التحكم"
 msgid "Add New Account"
 msgstr "إضافة حساب جديد"
 
+#: .\templates\banks\account_add.html:99
+msgid "Back to Bank List"
+msgstr "العودة إلى القائمة البنوك"
+
 #: .\templates\banks\account_add.html:118
 msgid "Bank Account Information"
 msgstr "معلومات الحساب البنكي"
@@ -10874,9 +10960,9 @@ msgid "International bank code (optional)"
 msgstr "رمز البنك الدولي (اختياري)"
 
 #: .\templates\banks\account_add.html:200
-#: .\templates\cashboxes\cashbox_detail.html:251
-#: .\templates\cashboxes\cashbox_list.html:159
-#: .\templates\cashboxes\cashbox_list.html:228
+#: .\templates\cashboxes\cashbox_detail.html:278
+#: .\templates\cashboxes\cashbox_list.html:160
+#: .\templates\cashboxes\cashbox_list.html:250
 #: .\templates\settings\company.html:116
 #: .\templates\settings\company_fixed.html:115
 msgid "Base Currency"
@@ -10886,44 +10972,50 @@ msgstr "العملة الأساسية"
 msgid "Base currency is defined in company settings"
 msgstr "العملة الأساسية محددة في إعدادات الشركة"
 
-#: .\templates\banks\account_add.html:225
-msgid "Current account balance"
-msgstr "رصيد الحساب الحالي"
+#: .\templates\banks\account_add.html:219
+#, fuzzy
+#| msgid "Note"
+msgid "IFRS Note"
+msgstr "ملاحظة"
 
-#: .\templates\banks\account_add.html:231
+#: .\templates\banks\account_add.html:242
+msgid "Opening balance - recorded as capital contribution"
+msgstr ""
+
+#: .\templates\banks\account_add.html:249
 msgid "Account Status"
 msgstr "حالة الحساب"
 
-#: .\templates\banks\account_add.html:235
+#: .\templates\banks\account_add.html:253
 msgid "Account Active"
 msgstr "الحساب نشط"
 
-#: .\templates\banks\account_add.html:238
+#: .\templates\banks\account_add.html:256
 msgid "Determines whether the account is active or not"
 msgstr "يحدد ما إذا كان الحساب نشطاً أم لا"
 
-#: .\templates\banks\account_add.html:248
+#: .\templates\banks\account_add.html:266
 #: .\templates\hr\attendance_form.html:252
 #: .\templates\hr\payroll_period_form.html:213
 #: .\templates\receipts\receipt_detail.html:321
 msgid "Additional Notes"
 msgstr "ملاحظات إضافية"
 
-#: .\templates\banks\account_add.html:254
+#: .\templates\banks\account_add.html:272
 msgid "Any additional notes about the bank account"
 msgstr "أي ملاحظات إضافية حول الحساب البنكي"
 
-#: .\templates\banks\account_add.html:261
+#: .\templates\banks\account_add.html:279
 #: .\templates\banks\transfer_add.html:377
 #: .\templates\banks\transfer_edit.html:367
 msgid "Required fields"
 msgstr "الحقول المطلوبة"
 
-#: .\templates\banks\account_add.html:270 .\templates\customers\add.html:246
+#: .\templates\banks\account_add.html:288 .\templates\customers\add.html:246
 msgid "Save Account"
 msgstr "حفظ الحساب"
 
-#: .\templates\banks\account_add.html:310
+#: .\templates\banks\account_add.html:328
 #: .\templates\customers\transactions.html:608
 #: .\templates\sales\invoice_add.html:190
 msgid "Please fill all required fields"
@@ -10985,18 +11077,6 @@ msgstr "تحويل صادر"
 msgid "Incoming Transfer"
 msgstr "تحويل وارد"
 
-#: .\templates\banks\account_detail.html:312
-#, fuzzy
-#| msgid "Bank to Cashbox"
-msgid "Transfer to Cashbox"
-msgstr "بنك إلى صندوق"
-
-#: .\templates\banks\account_detail.html:332
-#, fuzzy
-#| msgid "Transfer from Bank"
-msgid "Transfer from Cashbox"
-msgstr "تحويل من البنك"
-
 #: .\templates\banks\account_detail.html:348
 msgid "No bank transfers"
 msgstr "لا توجد تحويلات بنكية"
@@ -11013,13 +11093,12 @@ msgstr "تعديل الحساب البنكي"
 #: .\templates\banks\account_edit.html:173
 #: .\templates\banks\account_edit.html:177
 #: .\templates\banks\account_edit.html:186
-#: .\templates\banks\account_edit.html:245
-#: .\templates\banks\account_edit.html:249
-#: .\templates\banks\account_edit.html:252
-#: .\templates\banks\account_edit.html:267
+#: .\templates\banks\account_edit.html:287
+#: .\templates\banks\account_edit.html:291
+#: .\templates\banks\account_edit.html:294
 #: .\templates\banks\account_list.html:369 .\templates\core\dashboard.html:323
-#: .\templates\customers\delete.html:90 .\templates\customers\edit.html:274
-#: .\templates\customers\edit.html:290
+#: .\templates\customers\delete.html:90 .\templates\customers\edit.html:299
+#: .\templates\customers\edit.html:315
 #: .\templates\journal\entry_confirm_delete.html:117
 #: .\templates\journal\entry_create.html:149
 msgid "Account"
@@ -11077,9 +11156,9 @@ msgstr "قائمة"
 
 #: .\templates\banks\account_edit.html:111
 #: .\templates\banks\account_edit.html:122
-#: .\templates\banks\account_edit.html:287
-#: .\templates\cashboxes\cashbox_detail.html:266
-#: .\templates\cashboxes\cashbox_list.html:261
+#: .\templates\banks\account_edit.html:329
+#: .\templates\cashboxes\cashbox_detail.html:293
+#: .\templates\cashboxes\cashbox_list.html:283
 #: .\templates\receipts\receipt_detail.html:293
 #: .\templates\sales\creditnote_list.html:65
 msgid "Update"
@@ -11090,13 +11169,13 @@ msgstr "تحديث"
 #: .\templates\banks\account_edit.html:122
 #: .\templates\banks\account_edit.html:134
 #: .\templates\banks\account_edit.html:223
-#: .\templates\banks\account_edit.html:275
+#: .\templates\banks\account_edit.html:317
 #: .\templates\banks\bank_cashbox_transfer_add.html:183
 #: .\templates\banks\bank_cashbox_transfer_add.html:187
 #: .\templates\banks\bank_cashbox_transfer_add.html:258
 #: .\templates\banks\bank_cashbox_transfer_add.html:262
 #: .\templates\customers\edit.html:162 .\templates\customers\edit.html:202
-#: .\templates\customers\edit.html:262 .\templates\customers\edit.html:268
+#: .\templates\customers\edit.html:287 .\templates\customers\edit.html:293
 #: .\templates\customers\supplier_list.html:396
 #: .\templates\customers\supplier_list.html:439
 #: .\templates\customers\supplier_list.html:442
@@ -11160,8 +11239,8 @@ msgstr "ال"
 
 #: .\templates\banks\account_edit.html:112
 #: .\templates\banks\account_edit.html:124
-#: .\templates\banks\account_edit.html:297
-#: .\templates\banks\account_edit.html:345
+#: .\templates\banks\account_edit.html:339
+#: .\templates\banks\account_edit.html:387
 #: .\templates\banks\cashbox_transfer_edit.html:300
 #: .\templates\banks\cashbox_transfer_edit.html:439
 #: .\templates\banks\cashbox_transfer_edit.html:447
@@ -11179,10 +11258,10 @@ msgstr "اضغط"
 
 #: .\templates\banks\account_edit.html:112
 #: .\templates\banks\account_edit.html:124
-#: .\templates\banks\account_edit.html:306
-#: .\templates\banks\account_edit.html:347
+#: .\templates\banks\account_edit.html:348
+#: .\templates\banks\account_edit.html:389
 #: .\templates\banks\cashbox_transfer_edit.html:326
-#: .\templates\customers\edit.html:294 .\templates\sales\return_edit.html:241
+#: .\templates\customers\edit.html:319 .\templates\sales\return_edit.html:241
 msgid "Changes"
 msgstr "التغييرات"
 
@@ -11195,8 +11274,8 @@ msgid "data"
 msgstr "البيانات"
 
 #: .\templates\banks\account_edit.html:124
-#: .\templates\banks\account_edit.html:297
-#: .\templates\banks\account_edit.html:345
+#: .\templates\banks\account_edit.html:339
+#: .\templates\banks\account_edit.html:387
 msgid "Fields"
 msgstr "الحقول"
 
@@ -11209,7 +11288,6 @@ msgstr "و"
 
 #: .\templates\banks\account_edit.html:134
 #: .\templates\banks\account_edit.html:223
-#: .\templates\banks\account_edit.html:229
 #: .\templates\customers\supplier_list.html:396
 #: .\templates\customers\supplier_list.html:434
 #: .\templates\customers\supplier_list.html:439
@@ -11283,7 +11361,6 @@ msgid "Settings"
 msgstr ""
 
 #: .\templates\banks\account_edit.html:213
-#: .\templates\banks\account_edit.html:267
 msgid "Company"
 msgstr "الشركة"
 
@@ -11292,7 +11369,7 @@ msgstr "الشركة"
 msgid "Financial"
 msgstr "مالي"
 
-#: .\templates\banks\account_edit.html:229
+#: .\templates\banks\account_edit.html:231
 #: .\templates\banks\bank_cashbox_transfer_add.html:235
 #: .\templates\banks\bank_cashbox_transfer_add.html:252
 #: .\templates\banks\cashbox_transfer_edit.html:191
@@ -11305,72 +11382,57 @@ msgstr "مالي"
 msgid "Current"
 msgstr "حالي"
 
-#: .\templates\banks\account_edit.html:252
+#: .\templates\banks\account_edit.html:231 .\templates\customers\edit.html:215
+msgid "Editable"
+msgstr "قابل للتعديل"
+
+#: .\templates\banks\account_edit.html:262
+#: .\templates\cashboxes\cashbox_detail.html:254
+#: .\templates\cashboxes\cashbox_list.html:227
+msgid "IFRS compliant"
+msgstr ""
+
+#: .\templates\banks\account_edit.html:294
 msgid "determines"
 msgstr "يحدد"
 
-#: .\templates\banks\account_edit.html:252
+#: .\templates\banks\account_edit.html:294
 msgid "whether"
 msgstr "ما إذا كان"
 
-#: .\templates\banks\account_edit.html:252 .\templates\customers\edit.html:168
+#: .\templates\banks\account_edit.html:294 .\templates\customers\edit.html:168
 #: .\templates\customers\edit.html:188 .\templates\customers\edit.html:193
 #: .\templates\hr\employee_document_form.html:225
 msgid "or"
 msgstr "أو"
 
-#: .\templates\banks\account_edit.html:262 .\templates\customers\edit.html:262
+#: .\templates\banks\account_edit.html:304 .\templates\customers\edit.html:287
 #: .\templates\customers\supplier_list.html:473
 msgid "Additional"
 msgstr "إضافي"
 
-#: .\templates\banks\account_edit.html:267
-msgid "This is"
-msgstr "هذا هو"
-
-#: .\templates\banks\account_edit.html:267
-#: .\templates\inventory\low_stock.html:483
-#: .\templates\inventory\warehouse_list.html:283
-#: .\templates\products\category_list.html:287
-msgid "Main"
-msgstr "رئيسي"
-
-#: .\templates\banks\account_edit.html:267
-#: .\templates\banks\cashbox_transfer_edit.html:485
-#: .\templates\customers\transactions.html:914
-msgid "in"
-msgstr "في"
-
-#: .\templates\banks\account_edit.html:267
-msgid "Commercial"
-msgstr "تجاري"
-
-#: .\templates\banks\account_edit.html:267
-msgid "Jordanian"
-msgstr "أردني"
-
-#: .\templates\banks\account_edit.html:275
+#: .\templates\banks\account_edit.html:317
 msgid "Audit"
 msgstr "تدقيق"
 
-#: .\templates\banks\account_edit.html:281
+#: .\templates\banks\account_edit.html:323
 msgid "Creation"
 msgstr "إنشاء"
 
-#: .\templates\banks\account_edit.html:345
+#: .\templates\banks\account_edit.html:387
 msgid "Please fill"
 msgstr "يرجى ملء"
 
-#: .\templates\banks\account_edit.html:345
+#: .\templates\banks\account_edit.html:387
 #: .\templates\inventory\movement_bulk_delete.html:58
 msgid "all"
 msgstr "جميع"
 
-#: .\templates\banks\account_edit.html:347
+#: .\templates\banks\account_edit.html:389
 msgid "Do you want"
 msgstr "هل تريد"
 
-#: .\templates\banks\account_edit.html:350
+#: .\templates\banks\account_edit.html:392
 msgid "Loading"
 msgstr "جاري التحميل"
 
@@ -11380,7 +11442,7 @@ msgstr "قائمة الحسابات البنكية"
 
 #: .\templates\banks\account_list.html:276
 #: .\templates\banks\transfer_list.html:309
-#: .\templates\cashboxes\cashbox_list.html:18
+#: .\templates\cashboxes\cashbox_list.html:19
 #: .\templates\cashboxes\transfer_list.html:55
 #: .\templates\customers\customer_list.html:105
 #: .\templates\customers\list.html:118
@@ -11471,7 +11533,7 @@ msgid "Active Accounts"
 msgstr "الحسابات النشطة"
 
 #: .\templates\banks\account_list.html:464
-#: .\templates\cashboxes\cashbox_list.html:37
+#: .\templates\cashboxes\cashbox_list.html:38
 msgid "Total Balances"
 msgstr "إجمالي الأرصدة"
 
@@ -11561,7 +11623,7 @@ msgstr "قائمة الحسابات البنكية"
 
 #: .\templates\banks\account_list.html:719
 #: .\templates\banks\transfer_list.html:831
-#: .\templates\cashboxes\cashbox_list.html:434
+#: .\templates\cashboxes\cashbox_list.html:456
 #: .\templates\cashboxes\transfer_list.html:575
 #: .\templates\customers\transactions.html:764
 #: .\templates\receipts\receipt_list.html:219
@@ -11571,7 +11633,7 @@ msgstr "تم إنشاؤه في"
 
 #: .\templates\banks\account_list.html:719
 #: .\templates\banks\transfer_list.html:831
-#: .\templates\cashboxes\cashbox_list.html:434
+#: .\templates\cashboxes\cashbox_list.html:456
 #: .\templates\cashboxes\transfer_list.html:575
 #: .\templates\customers\transactions.html:764
 #, fuzzy
@@ -11581,7 +11643,7 @@ msgstr "التاريخ"
 
 #: .\templates\banks\account_list.html:766
 #: .\templates\banks\transfer_list.html:882
-#: .\templates\cashboxes\cashbox_list.html:485
+#: .\templates\cashboxes\cashbox_list.html:507
 #: .\templates\cashboxes\transfer_list.html:629
 #: .\templates\customers\transactions.html:828
 #: .\templates\provisions\provision_detail.html:82
@@ -11735,14 +11797,14 @@ msgid "Financial Transactions"
 msgstr "المعاملات المالية"
 
 #: .\templates\banks\account_transactions.html:177
-#: .\templates\cashboxes\cashbox_detail.html:127
+#: .\templates\cashboxes\cashbox_detail.html:128
 #, fuzzy
 #| msgid "Create Department"
 msgid "Print Statement"
 msgstr "إنشاء قسم"
 
 #: .\templates\banks\account_transactions.html:180
-#: .\templates\cashboxes\cashbox_detail.html:130
+#: .\templates\cashboxes\cashbox_detail.html:131
 #: .\templates\core\audit_log.html:27
 #: .\templates\financial_reports\income_statement.html:20
 #: .\templates\financial_reports\trial_balance.html:20
@@ -11844,7 +11906,7 @@ msgid "A network error occurred"
 msgstr "حدث خطأ في الشبكة"
 
 #: .\templates\banks\account_transactions.html:483
-#: .\templates\cashboxes\cashbox_detail.html:386
+#: .\templates\cashboxes\cashbox_detail.html:413
 #, fuzzy
 #| msgid "Print Date:"
 msgid "Print Date"
@@ -11857,7 +11919,7 @@ msgstr "بين البنك والصندوق"
 
 #: .\templates\banks\bank_cashbox_transfer_add.html:155
 #: .\templates\banks\bank_cashbox_transfer_add.html:355
-#: .\templates\cashboxes\cashbox_list.html:189
+#: .\templates\cashboxes\cashbox_list.html:190
 #: .\templates\settings\print_design.html:517
 msgid "Create"
 msgstr "إنشاء"
@@ -11914,9 +11976,6 @@ msgstr "اختر الحساب البنكي"
 msgid "Choose Cashbox"
 msgstr "اختر الصندوق"
 
-
-#: .\banks\templates\banks\reconciliation_detail.html:86
-#: .\banks\templates\banks\reconciliation_form.html:106
 #: .\templates\banks\bank_cashbox_transfer_add.html:262
 msgid "Bank Check"
 msgstr "شيك بنكي"
@@ -12108,7 +12167,7 @@ msgid "Re-enable form after 10 seconds in case of Failed submission"
 msgstr "إعادة تفعيل النموذج بعد 10 ثوانٍ في حالة فشل الإرسال"
 
 #: .\templates\banks\bank_cashbox_transfer_add.html:602
-#: .\templates\cashboxes\cashbox_list.html:688
+#: .\templates\cashboxes\cashbox_list.html:710
 #: .\templates\cashboxes\transfer_list.html:375
 msgid "Create Transfer"
 msgstr "إنشاء تحويل"
@@ -12149,14 +12208,14 @@ msgstr "الصندوق والبنك"
 
 #: .\templates\banks\cashbox_transfer_detail.html:162
 #: .\templates\banks\cashbox_transfer_detail.html:387
-#: .\templates\cashboxes\cashbox_list.html:593
+#: .\templates\cashboxes\cashbox_list.html:615
 #: .\templates\cashboxes\transfer_list.html:280
 msgid "From Bank"
 msgstr "من البنك"
 
 #: .\templates\banks\cashbox_transfer_detail.html:162
 #: .\templates\banks\cashbox_transfer_detail.html:400
-#: .\templates\cashboxes\cashbox_list.html:582
+#: .\templates\cashboxes\cashbox_list.html:604
 #: .\templates\cashboxes\transfer_list.html:269
 msgid "From Cashbox"
 msgstr "من الصندوق"
@@ -12171,14 +12230,14 @@ msgstr "سجل النقد"
 
 #: .\templates\banks\cashbox_transfer_detail.html:196
 #: .\templates\banks\cashbox_transfer_detail.html:395
-#: .\templates\cashboxes\cashbox_list.html:606
+#: .\templates\cashboxes\cashbox_list.html:628
 #: .\templates\cashboxes\transfer_list.html:293
 msgid "To Cashbox"
 msgstr "إلى الصندوق"
 
 #: .\templates\banks\cashbox_transfer_detail.html:196
 #: .\templates\banks\cashbox_transfer_detail.html:404
-#: .\templates\cashboxes\cashbox_list.html:617
+#: .\templates\cashboxes\cashbox_list.html:639
 #: .\templates\cashboxes\transfer_list.html:304
 msgid "To Bank"
 msgstr "إلى البنك"
@@ -12278,6 +12337,11 @@ msgstr "يجب اختيار البنك والصندوق"
 #: .\templates\banks\cashbox_transfer_edit.html:485
 msgid "not sufficient"
 msgstr "غير كافٍ"
+
+#: .\templates\banks\cashbox_transfer_edit.html:485
+#: .\templates\customers\transactions.html:914
+msgid "in"
+msgstr "في"
 
 #: .\templates\banks\cashbox_transfer_edit.html:485
 msgid "Source"
@@ -12682,7 +12746,7 @@ msgid "of type"
 msgstr "من نوع"
 
 #: .\templates\banks\transfer_list.html:1059
-#: .\templates\cashboxes\cashbox_list.html:536
+#: .\templates\cashboxes\cashbox_list.html:558
 #: .\templates\cashboxes\transfer_detail.html:34
 #: .\templates\cashboxes\transfer_list.html:72
 #: .\templates\cashboxes\transfer_list.html:112
@@ -13202,151 +13266,152 @@ msgstr "ثانية"
 msgid "Open"
 msgstr "فتح"
 
-#: .\templates\cashboxes\cashbox_detail.html:66
-#: .\templates\cashboxes\cashbox_list.html:105
+#: .\templates\cashboxes\cashbox_detail.html:67
+#: .\templates\cashboxes\cashbox_list.html:106
 msgid "Cannot delete cashbox because balance is not zero"
 msgstr "لا يمكن حذف الصندوق لأن الرصيد ليس صفراً"
 
-#: .\templates\cashboxes\cashbox_detail.html:79
+#: .\templates\cashboxes\cashbox_detail.html:80
 msgid "Cashbox Information"
 msgstr "معلومات الصندوق"
 
-#: .\templates\cashboxes\cashbox_detail.html:124
+#: .\templates\cashboxes\cashbox_detail.html:125
 msgid "Cashbox Transactions"
 msgstr "معاملات الصندوق"
 
-#: .\templates\cashboxes\cashbox_detail.html:213
+#: .\templates\cashboxes\cashbox_detail.html:214
 msgid "No cashbox transactions"
 msgstr "لا توجد معاملات صندوق"
 
-#: .\templates\cashboxes\cashbox_detail.html:233
-#: .\templates\cashboxes\cashbox_list.html:206
+#: .\templates\cashboxes\cashbox_detail.html:234
+#: .\templates\cashboxes\cashbox_list.html:207
 msgid "Edit Cashbox"
 msgstr "تعديل الصندوق"
 
-#: .\templates\cashboxes\cashbox_detail.html:282
-#: .\templates\cashboxes\cashbox_detail.html:305
-#: .\templates\cashboxes\cashbox_list.html:277
+#: .\templates\cashboxes\cashbox_detail.html:249
+#: .\templates\cashboxes\cashbox_list.html:222
+msgid "Modifying the balance will create an adjustment entry"
+msgstr "سيتم إنشاء قيد تعديل عند تعديل الرصيد"
+
+#: .\templates\cashboxes\cashbox_detail.html:309
+#: .\templates\cashboxes\cashbox_detail.html:332
+#: .\templates\cashboxes\cashbox_list.html:299
 msgid "Delete Cashbox"
 msgstr "حذف الصندوق"
 
-#: .\templates\cashboxes\cashbox_detail.html:286
-#: .\templates\cashboxes\cashbox_list.html:281
+#: .\templates\cashboxes\cashbox_detail.html:313
+#: .\templates\cashboxes\cashbox_list.html:303
 msgid "Are you sure you want to delete the cashbox"
 msgstr "هل أنت متأكد من أنك تريد حذف الصندوق"
 
-#: .\templates\cashboxes\cashbox_detail.html:290
-#: .\templates\cashboxes\cashbox_list.html:285
+#: .\templates\cashboxes\cashbox_detail.html:317
+#: .\templates\cashboxes\cashbox_list.html:307
 msgid "Cannot delete cashbox because current balance is"
 msgstr "لا يمكن حذف الصندوق لأن الرصيد الحالي هو"
 
-#: .\templates\cashboxes\cashbox_detail.html:309
-#: .\templates\cashboxes\cashbox_list.html:304
+#: .\templates\cashboxes\cashbox_detail.html:336
+#: .\templates\cashboxes\cashbox_list.html:326
 #: .\templates\hr\position_confirm_delete.html:123
 msgid "Cannot Delete"
 msgstr "لا يمكن الحذف"
 
-#: .\templates\cashboxes\cashbox_list.html:6
-#: .\templates\cashboxes\cashbox_list.html:14
+#: .\templates\cashboxes\cashbox_list.html:7
+#: .\templates\cashboxes\cashbox_list.html:15
 msgid "Cashbox List"
 msgstr "قائمة الصناديق"
 
-#: .\templates\cashboxes\cashbox_list.html:23
+#: .\templates\cashboxes\cashbox_list.html:24
 msgid "إنشاء تحويل جديد"
 msgstr ""
 
-#: .\templates\cashboxes\cashbox_list.html:26
-#: .\templates\cashboxes\cashbox_list.html:122
-#: .\templates\cashboxes\cashbox_list.html:132
-#: .\templates\cashboxes\cashbox_list.html:139
+#: .\templates\cashboxes\cashbox_list.html:27
+#: .\templates\cashboxes\cashbox_list.html:123
+#: .\templates\cashboxes\cashbox_list.html:133
+#: .\templates\cashboxes\cashbox_list.html:140
 msgid "Create New Cashbox"
 msgstr "إنشاء صندوق جديد"
 
-#: .\templates\cashboxes\cashbox_list.html:45
+#: .\templates\cashboxes\cashbox_list.html:46
 msgid "Number of Active Cashboxes"
 msgstr "عدد الصناديق النشطة"
 
-#: .\templates\cashboxes\cashbox_list.html:120
+#: .\templates\cashboxes\cashbox_list.html:121
 msgid "No cashboxes available"
 msgstr "لا توجد صناديق متاحة"
 
-#: .\templates\cashboxes\cashbox_list.html:175
-#: .\templates\cashboxes\cashbox_list.html:247
+#: .\templates\cashboxes\cashbox_list.html:176
+#: .\templates\cashboxes\cashbox_list.html:269
 #, fuzzy
 #| msgid "No Manager Assigned"
 msgid "Not Assigned"
 msgstr "لم يتم تعيين مدير"
 
-#: .\templates\cashboxes\cashbox_list.html:221
-msgid "Modifying the balance will create an adjustment entry"
-msgstr "سيتم إنشاء قيد تعديل عند تعديل الرصيد"
-
-#: .\templates\cashboxes\cashbox_list.html:342
-#: .\templates\cashboxes\cashbox_list.html:433
+#: .\templates\cashboxes\cashbox_list.html:364
+#: .\templates\cashboxes\cashbox_list.html:455
 #, fuzzy
 #| msgid "Cashbox List"
 msgid "Cashbox List Report"
 msgstr "قائمة الصناديق"
 
-#: .\templates\cashboxes\cashbox_list.html:435
-#: .\templates\cashboxes\cashbox_list.html:488
+#: .\templates\cashboxes\cashbox_list.html:457
+#: .\templates\cashboxes\cashbox_list.html:510
 #, fuzzy
 #| msgid "To Cashbox"
 msgid "Total Cashboxes"
 msgstr "إلى الصندوق"
 
-#: .\templates\cashboxes\cashbox_list.html:492
+#: .\templates\cashboxes\cashbox_list.html:514
 #, fuzzy
 #| msgid "Total Balances"
 msgid "Total Balance"
 msgstr "إجمالي الأرصدة"
 
-#: .\templates\cashboxes\cashbox_list.html:523
+#: .\templates\cashboxes\cashbox_list.html:545
 #: .\templates\cashboxes\transfer_list.html:193
 #: .\templates\cashboxes\transfer_list.html:210
 msgid "Create New Transfer"
 msgstr "إنشاء تحويل جديد"
 
-#: .\templates\cashboxes\cashbox_list.html:538
+#: .\templates\cashboxes\cashbox_list.html:560
 #: .\templates\cashboxes\transfer_list.html:225
 msgid "Select Transfer Type"
 msgstr "اختر نوع التحويل"
 
-#: .\templates\cashboxes\cashbox_list.html:584
-#: .\templates\cashboxes\cashbox_list.html:608
+#: .\templates\cashboxes\cashbox_list.html:606
+#: .\templates\cashboxes\cashbox_list.html:630
 #: .\templates\cashboxes\transfer_list.html:271
 #: .\templates\cashboxes\transfer_list.html:295 .\templates\sales\pos.html:1050
 msgid "Select Cashbox"
 msgstr "اختر الصندوق"
 
-#: .\templates\cashboxes\cashbox_list.html:595
-#: .\templates\cashboxes\cashbox_list.html:619
+#: .\templates\cashboxes\cashbox_list.html:617
+#: .\templates\cashboxes\cashbox_list.html:641
 #: .\templates\cashboxes\transfer_list.html:282
 #: .\templates\cashboxes\transfer_list.html:306
 msgid "Select Bank"
 msgstr "اختر البنك"
 
-#: .\templates\cashboxes\cashbox_list.html:631
+#: .\templates\cashboxes\cashbox_list.html:653
 #: .\templates\cashboxes\transfer_list.html:318
 msgid "Deposit Information"
 msgstr "معلومات الإيداع"
 
-#: .\templates\cashboxes\cashbox_list.html:637
+#: .\templates\cashboxes\cashbox_list.html:659
 #: .\templates\cashboxes\transfer_list.html:324
 msgid "Enter the deposit document number"
 msgstr "أدخل رقم مستند الإيداع"
 
-#: .\templates\cashboxes\cashbox_list.html:644
+#: .\templates\cashboxes\cashbox_list.html:666
 #: .\templates\cashboxes\transfer_list.html:331
 msgid "Select deposit type"
 msgstr "اختر نوع الإيداع"
 
-#: .\templates\cashboxes\cashbox_list.html:654
+#: .\templates\cashboxes\cashbox_list.html:676
 #: .\templates\cashboxes\transfer_list.html:341
 msgid "Check Information"
 msgstr "معلومات الشيك"
 
-#: .\templates\cashboxes\cashbox_list.html:671
+#: .\templates\cashboxes\cashbox_list.html:693
 #: .\templates\cashboxes\transfer_list.html:358
 msgid "Name of the bank that issued the check"
 msgstr "اسم البنك الذي أصدر الشيك"
@@ -14034,7 +14099,8 @@ msgid "City where the customer or supplier is located"
 msgstr "المدينة التي يقع فيها العميل أو المورد"
 
 #: .\templates\customers\add.html:190 .\templates\customers\delete.html:147
-#: .\templates\customers\edit.html:206 .\templates\customers\edit.html:245
+#: .\templates\customers\edit.html:206 .\templates\customers\edit.html:270
+#: .\templates\customers\edit.html:272
 #: .\templates\purchases\invoice_add.html:1165
 #: .\templates\sales\invoice_add.html:1712
 msgid "Credit Limit"
@@ -14056,7 +14122,7 @@ msgstr "أي ملاحظات أو معلومات إضافية"
 msgid "Active Account"
 msgstr "حساب نشط"
 
-#: .\templates\customers\add.html:228 .\templates\customers\edit.html:276
+#: .\templates\customers\add.html:228 .\templates\customers\edit.html:301
 msgid "Deactivating hides the account from lists"
 msgstr "إلغاء التفعيل يخفي الحساب من القوائم"
 
@@ -14249,6 +14315,8 @@ msgid ""
 "You can edit all data except account type. If you need to change the type, "
 "please create a new account."
 msgstr ""
+"يمكنك تعديل جميع البيانات باستثناء نوع الحساب. إذا كنت ترغب في تغيير النوع، "
+"يُرجى إنشاء حساب جديد."
 
 #: .\templates\customers\edit.html:142
 msgid "Are you sure you want to delete this account?"
@@ -14304,9 +14372,82 @@ msgstr "يكون"
 msgid "debited"
 msgstr "مدين به"
 
-#: .\templates\customers\edit.html:268
+#: .\templates\customers\edit.html:220
+msgid "IFRS Compliance:"
+msgstr ""
+
+#: .\templates\customers\edit.html:220
+msgid ""
+"Balance adjustments must use appropriate accounts according to International "
+"Financial Reporting Standards. Select the correct adjustment type below."
+msgstr ""
+"يجب استخدام الحسابات المناسبة لتسويات الأرصدة وفقًا لمعايير التقارير المالية "
+"الدولية (IFRS). اختر نوع التعديل الصحيح أدناه."
+
+#: .\templates\customers\edit.html:234
+msgid ""
+"You can modify the current balance directly and the difference will be "
+"recorded in IFRS-compliant transactions using the selected adjustment type."
+msgstr ""
+"بإمكانك تعديل الرصيد الحالي بشكل مباشر وسيتم تسجيل الفرق في المعاملات "
+"المتوافقة مع المعايير الدولية لإعداد التقارير المالية (IFRS) باستخدام نوع "
+"التعديل المحدد."
+
+#: .\templates\customers\edit.html:238
+msgid "IFRS Compliant"
+msgstr ""
+
+#: .\templates\customers\edit.html:240
+msgid "Please select adjustment type"
+msgstr "يرجى اختيار نوع التعديل"
+
+#: .\templates\customers\edit.html:244
+msgid "Bad Debt Write-off"
+msgstr "شطب الديون المعدومة"
+
+#: .\templates\customers\edit.html:245
+msgid "Discount Allowed"
+msgstr "الخصم المسموح به"
+
+#: .\templates\customers\edit.html:246
+msgid "Discount Received"
+msgstr "تم الحصول على الخصم"
+
+#: .\templates\customers\edit.html:247
+msgid "Revaluation"
+msgstr "إعادة التقييم"
+
+#: .\templates\customers\edit.html:251
+msgid ""
+"Select the type of adjustment for IFRS compliance. The system will use the "
+"appropriate account."
+msgstr ""
+"حدد نوع التعديل للامتثال للمعايير الدولية لإعداد التقارير المالية (IFRS). "
+"سيستخدم النظام الحساب المناسب."
+
+#: .\templates\customers\edit.html:262
+msgid "Calculated from Transactions"
+msgstr "محسوب من المعاملات"
+
+#: .\templates\customers\edit.html:267
+msgid "At Creation"
+msgstr "عند الإنشاء"
+
+#: .\templates\customers\edit.html:275
+msgid "Available Credit"
+msgstr "الائتمان المتاح"
+
+#: .\templates\customers\edit.html:277
+msgid "Available Amount"
+msgstr "المبلغ المتاح"
+
+#: .\templates\customers\edit.html:293
 msgid "Any notes or additional"
 msgstr "أي ملاحظات أو"
+
+#: .\templates\customers\edit.html:358
+msgid "Please select the adjustment type for IFRS compliance."
+msgstr "يرجى اختيار نوع التعديل للامتثال مع IFRS."
 
 #: .\templates\customers\list.html:5
 msgid "Customers and Suppliers"
@@ -17126,6 +17267,12 @@ msgstr "عدد البطاقات ذات المخزون المنخفض الموج�
 msgid "No low stock products found"
 msgstr "لم يتم العثور على منتجات ذات مخزون منخفض"
 
+#: .\templates\inventory\low_stock.html:483
+#: .\templates\inventory\warehouse_list.html:283
+#: .\templates\products\category_list.html:287
+msgid "Main"
+msgstr "رئيسي"
+
 #: .\templates\inventory\low_stock.html:485
 msgid "Low stock data"
 msgstr "بيانات المخزون المنخفض"
@@ -19222,6 +19369,14 @@ msgstr "حذف الوظيفة"
 msgid "Confirm deletion of provision"
 msgstr "تأكيد الحذف"
 
+#: .\templates\provisions\provision_confirm_delete.html:18
+#: .\templates\provisions\provision_entry_confirm_delete.html:18
+#: .\templates\provisions\provision_entry_form.html:23
+#, fuzzy
+#| msgid "Back to Products"
+msgid "Back to Provision"
+msgstr "العودة إلى المنتجات"
+
 #: .\templates\provisions\provision_confirm_delete.html:31
 #, fuzzy
 #| msgid "Are you sure you want to delete this transaction?"
@@ -19475,6 +19630,13 @@ msgstr ""
 #| msgid "Print Report"
 msgid "Main Report"
 msgstr "طباعة التقرير"
+
+#: .\templates\provisions\provision_movement_report.html:22
+#: .\templates\provisions\provision_report.html:22
+#, fuzzy
+#| msgid "Active Products"
+msgid "Back to Provisions"
+msgstr "المنتجات النشطة"
 
 #: .\templates\provisions\provision_movement_report.html:34
 #, fuzzy
@@ -25200,6 +25362,26 @@ msgstr "المستخدمون ذوي الصلاحيات العالية مخفيو
 msgid "High privileged users are shown."
 msgstr "المستخدمون ذوي الصلاحيات العالية مخفيون"
 
+#~ msgid "Current Balance :"
+#~ msgstr "الرصيد الفعلي :"
+
+#~ msgid "Current account balance"
+#~ msgstr "رصيد الحساب الحالي"
+
+#~ msgid "This is"
+#~ msgstr "هذا هو"
+
+#~ msgid "Commercial"
+#~ msgstr "تجاري"
+
+#~ msgid "Jordanian"
+#~ msgstr "أردني"
+
+#~ msgid ""
+#~ "You can modify the current balance directly and the difference will be "
+#~ "recorded in the transactions."
+#~ msgstr "يمكنك تعديل الرصيد الحالي مباشرة وسيتم تسجيل الفرق في المعاملات"
+
 #, fuzzy, python-format
 #~| msgid "Please enter customer/supplier name"
 #~ msgid "Updated customer/supplier: %(name)s"
@@ -25320,9 +25502,6 @@ msgstr "المستخدمون ذوي الصلاحيات العالية مخفيو
 
 #~ msgid "Current balance (positive: in credit, negative: in debit)"
 #~ msgstr "الرصيد الحالي (إيجابي: في الائتمان، سلبي: مدين)"
-
-#~ msgid "Available Credit"
-#~ msgstr "الائتمان المتاح"
 
 #~ msgid "Debit total must equal Credit total"
 #~ msgstr "يجب أن يساوي إجمالي المدين إجمالي الدائن"

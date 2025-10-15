@@ -19,8 +19,9 @@ class AssetCategory(models.Model):
     
     name = models.CharField(max_length=200, verbose_name=_('اسم الفئة'))
     type = models.CharField(max_length=20, choices=ASSET_TYPES, verbose_name=_('نوع الأصل'))
+    account = models.ForeignKey('journal.Account', on_delete=models.PROTECT, verbose_name=_('الحساب المحاسبي'), 
+                               limit_choices_to={'account_type': 'asset'}, null=True, blank=True)
     description = models.TextField(blank=True, null=True, verbose_name=_('Description'))
-    # account = models.CharField(max_length=100, verbose_name=_('الحساب'))  # سيتم إضافة ربط الحسابات لاحقاً
     depreciation_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name=_('معدل الإهلاك %'))
     useful_life_years = models.IntegerField(default=0, verbose_name=_('العمر الافتراضي بالسنوات'))
     is_depreciable = models.BooleanField(default=False, verbose_name=_('قابل للإهلاك'))
@@ -128,8 +129,9 @@ class LiabilityCategory(models.Model):
     
     name = models.CharField(max_length=200, verbose_name=_('اسم الفئة'))
     type = models.CharField(max_length=20, choices=LIABILITY_TYPES, verbose_name=_('نوع الخصم'))
+    account = models.ForeignKey('journal.Account', on_delete=models.PROTECT, verbose_name=_('الحساب المحاسبي'), 
+                               limit_choices_to={'account_type__in': ['liability', 'equity']}, null=True, blank=True)
     description = models.TextField(blank=True, null=True, verbose_name=_('Description'))
-    # account = models.CharField(max_length=100, verbose_name=_('الحساب'))  # سيتم إضافة ربط الحسابات لاحقاً
     is_active = models.BooleanField(default=True, verbose_name=_('Active'))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Created At'))
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_('Created By'))

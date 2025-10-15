@@ -7,10 +7,11 @@ from settings.models import Currency, CompanySettings
 class RevenueExpenseCategoryForm(forms.ModelForm):
     class Meta:
         model = RevenueExpenseCategory
-        fields = ['name', 'type', 'description', 'is_active']
+        fields = ['name', 'type', 'account', 'description', 'is_active']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'type': forms.Select(attrs={'class': 'form-control'}),
+            'account': forms.Select(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
