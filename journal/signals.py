@@ -544,6 +544,12 @@ def create_cashbox_transaction_from_journal_line(journal_line):
     try:
         from cashboxes.models import Cashbox, CashboxTransaction
         
+        # تجاهل القيود التي تم إنشاء معاملاتها يدوياً
+        ignored_reference_types = ['cashbox_initial', 'cashbox_adjustment', 'transfer']
+        if journal_line.journal_entry.reference_type in ignored_reference_types:
+            logger.debug(f"تجاهل إنشاء معاملة صندوق من القيد {journal_line.journal_entry.entry_number} - النوع: {journal_line.journal_entry.reference_type} (تم إنشاء المعاملة يدوياً)")
+            return
+        
         # استخراج رقم الصندوق من كود الحساب
         if journal_line.account.code.startswith('101'):
             try:
@@ -620,6 +626,12 @@ def create_bank_transaction_from_journal_line(journal_line):
     """
     try:
         from banks.models import BankAccount, BankTransaction
+        
+        # تجاهل القيود التي تم إنشاء معاملاتها يدوياً
+        ignored_reference_types = ['transfer', 'cashbox_transfer', 'bank_transfer']
+        if journal_line.journal_entry.reference_type in ignored_reference_types:
+            logger.debug(f"تجاهل إنشاء معاملة بنك من القيد {journal_line.journal_entry.entry_number} - النوع: {journal_line.journal_entry.reference_type} (تم إنشاء المعاملة يدوياً)")
+            return
         
         # استخراج رقم البنك من كود الحساب
         if journal_line.account.code.startswith('1101'):

@@ -163,6 +163,9 @@ def cashbox_list(request):
     # البيانات المطلوبة للmodal
     banks = BankAccount.objects.filter(is_active=True).order_by('name')
     
+    # الحصول على جميع المستخدمين للاختيار
+    users = User.objects.filter(is_active=True).order_by('username')
+    
     # الحصول على رقم التحويل التالي
     from core.models import DocumentSequence
     next_transfer_number = None
@@ -193,6 +196,7 @@ def cashbox_list(request):
         'currencies': currencies,
         'base_currency': base_currency,
         'banks': banks,
+        'users': users,
         'next_transfer_number': next_transfer_number,
         'today': timezone.now().date(),
         'page_title': _('Cashboxes'),
@@ -280,10 +284,11 @@ def cashbox_create(request):
         
         try:
             with transaction.atomic():
+                # إنشاء الصندوق برصيد صفر - سيتم تحديثه تلقائياً من المعاملات
                 cashbox = Cashbox.objects.create(
                     name=name,
                     description=description,
-                    balance=initial_balance_decimal,
+                    balance=Decimal('0'),  # برصيد صفر
                     currency=currency,
                     location=location,
                     responsible_user=responsible_user
@@ -305,7 +310,7 @@ def cashbox_create(request):
                     cashbox_account = JournalService.get_cashbox_account(cashbox)
                     
                     # الحصول على حساب رأس المال
-                    from accounts.models import Account
+                    from journal.models import Account
                     capital_account = Account.objects.filter(code='301').first()
                     
                     if cashbox_account and capital_account:
@@ -332,6 +337,9 @@ def cashbox_create(request):
                             lines_data=lines_data,
                             user=request.user
                         )
+                    
+                    # مزامنة رصيد الصندوق من المعاملات
+                    cashbox.sync_balance()
                 
                 # تسجيل النشاط في سجل الأنشطة
                 AuditLog.objects.create(
@@ -346,8 +354,14 @@ def cashbox_create(request):
                 messages.success(request, _('Cashbox created successfully'))
                 return redirect('cashboxes:cashbox_detail', cashbox_id=cashbox.id)
         except Exception as e:
-            print(f"خطأ في إنشاء الصندوق: {e}")  # إضافة طباعة الخطأ للتشخيص
-            messages.error(request, _('An error occurred while creating the cashbox'))
+            import traceback
+            error_trace = traceback.format_exc()
+            print(f"خطأ في إنشاء الصندوق: {e}")
+            print(f"تفاصيل الخطأ:\n{error_trace}")
+            
+            # رسالة خطأ أكثر تفصيلاً
+            error_message = str(e) if str(e) else _('An error occurred while creating the cashbox')
+            messages.error(request, f'{_("An error occurred while creating the cashbox")}: {error_message}')
     
     return redirect('cashboxes:cashbox_list')
 
