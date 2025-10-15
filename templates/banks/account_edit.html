@@ -223,7 +223,7 @@
                             {% trans "The" %} {% trans "Information" %} {% trans "Financial" %}
                         </h5>
                         
-                        <!-- Updated: 2025-10-14 - Using actual_balance from calculate_actual_balance() -->
+                        <!-- Updated: 2025-10-15 - Fixed to show actual balance correctly -->
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
@@ -231,7 +231,7 @@
                                     <div class="input-group">
                                         <input type="number" class="form-control" id="id_balance" name="balance" 
                                                step="0.001"
-                                               value="{{ actual_balance|floatformat:3|default:'0.000' }}" required>
+                                               value="{{ actual_balance }}" required>
                                         <span class="input-group-text">{{ account.currency }}</span>                                        
                                     </div>
                                     <div class="form-text text-muted">
