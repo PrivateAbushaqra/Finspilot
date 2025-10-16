@@ -364,8 +364,24 @@ class BankAccountUpdateView(LoginRequiredMixin, View):
                 from django.utils import timezone
                 from core.utils import get_adjustment_account_code
                 
-                # الحصول على نوع التعديل من الطلب (إذا وجد)
-                adjustment_type = request.POST.get('adjustment_type', 'other')
+                # الحصول على نوع التعديل من الطلب (إجباري عند تغيير الرصيد - IFRS)
+                adjustment_type = request.POST.get('adjustment_type', '').strip()
+                
+                # التحقق من أن نوع التعديل تم اختياره (IFRS Compliance)
+                if not adjustment_type:
+                    messages.error(request, _('يجب اختيار نوع التعديل عند تغيير الرصيد الحالي لضمان التوافق مع معايير IFRS'))
+                    initial = {
+                        'name': name,
+                        'bank_name': bank_name,
+                        'account_number': account_number,
+                        'iban': iban,
+                        'swift_code': swift_code,
+                        'balance': balance,
+                        'currency': currency_code,
+                        'is_active': is_active,
+                        'notes': notes,
+                    }
+                    return self.get(request, pk, initial=initial)
                 
                 # تحديد نوع الحركة
                 if balance_difference > 0:

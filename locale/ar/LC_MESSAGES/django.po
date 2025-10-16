@@ -14457,6 +14457,14 @@ msgstr ""
 msgid "Calculated from Transactions"
 msgstr "محسوب من المعاملات"
 
+#: .\templates\banks\account_edit.html:243
+msgid "Balance Calculated from Transactions:"
+msgstr "الرصيد المحسوب من المعاملات:"
+
+#: .\templates\banks\account_edit.html:246
+msgid "You can modify the current balance directly and the difference will be recorded in the transactions."
+msgstr "يمكنك تعديل الرصيد الحالي مباشرة وسيتم تسجيل الفرق في المعاملات"
+
 #: .\templates\customers\edit.html:267
 msgid "At Creation"
 msgstr "عند الإنشاء"
@@ -25419,11 +25427,6 @@ msgstr "المستخدمون ذوي الصلاحيات العالية مخفيو
 #~ msgid "Jordanian"
 #~ msgstr "أردني"
 
-#~ msgid ""
-#~ "You can modify the current balance directly and the difference will be "
-#~ "recorded in the transactions."
-#~ msgstr "يمكنك تعديل الرصيد الحالي مباشرة وسيتم تسجيل الفرق في المعاملات"
-
 #, fuzzy, python-format
 #~| msgid "Please enter customer/supplier name"
 #~ msgid "Updated customer/supplier: %(name)s"
@@ -25824,3 +25827,24 @@ msgstr "المستخدمون ذوي الصلاحيات العالية مخفيو
 
 #~ msgid "حدث خطأ أثناء مسح البيانات"
 #~ msgstr "حدث خطأ أثناء مسح البيانات"
+
+#: .\templates\banks\account_edit.html:264
+msgid "اختر نوع التعديل"
+msgstr "اختر نوع التعديل"
+
+#: .\banks\views.py:377
+msgid "يجب اختيار نوع التعديل عند تغيير الرصيد الحالي لضمان التوافق مع معايير IFRS"
+msgstr "يجب اختيار نوع التعديل عند تغيير الرصيد الحالي لضمان التوافق مع معايير IFRS"
+
+#: .\cashboxes\views.py:421
+msgid "يجب اختيار نوع التعديل عند تغيير الرصيد لضمان التوافق مع معايير IFRS"
+msgstr "يجب اختيار نوع التعديل عند تغيير الرصيد لضمان التوافق مع معايير IFRS"
+
+#: .\templates\inventory\transfer_add.html:66
+msgid "Transfer ALL inventory from source warehouse to destination warehouse"
+msgstr "نقل كافة المخزون من المستودع المصدر إلى المستودع الوجهة"
+
+#: .\templates\inventory\transfer_add.html:67
+msgid "This will transfer all products with their quantities and costs from the source warehouse to the destination warehouse"
+msgstr "سيؤدي هذا إلى نقل جميع المنتجات مع كمياتها وتكاليفها من مستودع المصدر إلى مستودع الوجهة"
+

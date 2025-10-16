@@ -47,7 +47,7 @@
                                 {% for transfer in transfers %}
                                 <tr>
                                     <td>{{ transfer.id }}</td>
-                                    <td>{{ transfer.transfer_date|date:"d/m/Y" }}</td>
+                                    <td>{{ transfer.date|date:"d/m/Y" }}</td>
                                     <td>{{ transfer.from_warehouse.name }}</td>
                                     <td>{{ transfer.to_warehouse.name }}</td>
                                     <td>{{ transfer.created_by.get_full_name|default:transfer.created_by.username }}</td>

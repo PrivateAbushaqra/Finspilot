@@ -417,9 +417,14 @@ def cashbox_edit(request, cashbox_id):
                 
                 # إذا كان هناك تغيير في الرصيد
                 if balance_diff != 0:
-                    # الحصول على نوع التعديل من الطلب
+                    # الحصول على نوع التعديل من الطلب (إجباري عند تغيير الرصيد - IFRS)
                     from core.utils import get_adjustment_account_code
-                    adjustment_type = request.POST.get('adjustment_type', 'other')
+                    adjustment_type = request.POST.get('adjustment_type', '').strip()
+                    
+                    # التحقق من أن نوع التعديل تم اختياره (IFRS Compliance)
+                    if not adjustment_type:
+                        messages.error(request, _('يجب اختيار نوع التعديل عند تغيير الرصيد لضمان التوافق مع معايير IFRS'))
+                        return redirect('cashboxes:cashbox_list')
                     
                     # إنشاء حركة للتعديل
                     # حسب IFRS: يجب تسجيل التغيير الفعلي في الرصيد

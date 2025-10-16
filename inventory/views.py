@@ -439,7 +439,7 @@ class TransferListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         return self.request.user.has_inventory_permission()
     
     def get_queryset(self):
-        return WarehouseTransfer.objects.select_related('from_warehouse', 'to_warehouse', 'created_by').order_by('-transfer_date', '-id')
+        return WarehouseTransfer.objects.select_related('from_warehouse', 'to_warehouse', 'created_by').order_by('-date', '-id')
 
 class TransferCreateView(LoginRequiredMixin, UserPassesTestMixin, View):
     template_name = 'inventory/transfer_add.html'
@@ -450,7 +450,8 @@ class TransferCreateView(LoginRequiredMixin, UserPassesTestMixin, View):
     def get(self, request, *args, **kwargs):
         context = {
             'warehouses': Warehouse.objects.filter(is_active=True).exclude(code='MAIN'),
-            'products': Product.objects.filter(is_active=True)
+            'products': Product.objects.filter(is_active=True),
+            'can_transfer_all_inventory': request.user.is_superuser or request.user.groups.filter(name__in=['admin', 'superadmin']).exists()
         }
         return render(request, self.template_name, context)
     
@@ -460,6 +461,7 @@ class TransferCreateView(LoginRequiredMixin, UserPassesTestMixin, View):
             to_warehouse_id = request.POST.get('to_warehouse')
             transfer_date = request.POST.get('transfer_date')
             notes = request.POST.get('notes', '')
+            transfer_all_inventory = request.POST.get('transfer_all_inventory') == 'on'
             
             if from_warehouse_id == to_warehouse_id:
                 messages.error(request, 'لا يمكن التحويل من وإلى نفس المستودع!')
@@ -468,26 +470,84 @@ class TransferCreateView(LoginRequiredMixin, UserPassesTestMixin, View):
             from_warehouse = get_object_or_404(Warehouse, id=from_warehouse_id, is_active=True)
             to_warehouse = get_object_or_404(Warehouse, id=to_warehouse_id, is_active=True)
             
+            # التحقق من صلاحية المستخدم لنقل كامل المخزون
+            if transfer_all_inventory and not (request.user.is_superuser or request.user.groups.filter(name__in=['admin', 'superadmin']).exists()):
+                messages.error(request, 'ليس لديك صلاحية لنقل كامل المخزون!')
+                return self.get(request)
+            
             # إنشاء التحويل
             transfer = WarehouseTransfer.objects.create(
                 from_warehouse=from_warehouse,
                 to_warehouse=to_warehouse,
-                transfer_date=transfer_date,
+                date=transfer_date,
                 notes=notes,
                 created_by=request.user
             )
             
-            # معالجة العناصر
-            product_ids = request.POST.getlist('product_id[]')
-            quantities = request.POST.getlist('quantity[]')
-            
-            for i, product_id in enumerate(product_ids):
-                if product_id and quantities[i]:
-                    product = get_object_or_404(Product, id=product_id)
-                    quantity = float(quantities[i])
+            if transfer_all_inventory:
+                # نقل كامل المخزون من المستودع المصدر إلى المستودع الهدف
+                from inventory.models import InventoryMovement
+                from products.models import Product
+                
+                # الحصول على جميع المنتجات التي لها مخزون في المستودع المصدر
+                products_with_stock = []
+                for product in Product.objects.filter(is_active=True):
+                    stock = product.get_stock_in_warehouse(from_warehouse)
+                    if stock > 0:
+                        products_with_stock.append((product, stock))
+                
+                for product, quantity in products_with_stock:
+                    # إنشاء عنصر التحويل
+                    WarehouseTransferItem.objects.create(
+                        transfer=transfer,
+                        product=product,
+                        quantity=quantity,
+                        unit_cost=product.cost_price,
+                        total_cost=quantity * product.cost_price
+                    )
                     
-                    # التحقق من توفر الكمية في المستودع المصدر
-                    current_stock = product.get_stock_in_warehouse(from_warehouse)
+                    # إنشاء حركات المخزون
+                    # حركة صادرة من المستودع المصدر
+                    InventoryMovement.objects.create(
+                        product=product,
+                        warehouse=from_warehouse,
+                        movement_type='out',
+                        quantity=quantity,
+                        unit_cost=product.cost_price,
+                        total_cost=quantity * product.cost_price,
+                        reference_type='warehouse_transfer',
+                        reference_id=transfer.id,
+                        notes=f'نقل كامل المخزون إلى {to_warehouse.name}',
+                        created_by=request.user,
+                        date=transfer.date
+                    )
+                    
+                    # حركة واردة إلى المستودع الهدف
+                    InventoryMovement.objects.create(
+                        product=product,
+                        warehouse=to_warehouse,
+                        movement_type='in',
+                        quantity=quantity,
+                        unit_cost=product.cost_price,
+                        total_cost=quantity * product.cost_price,
+                        reference_type='warehouse_transfer',
+                        reference_id=transfer.id,
+                        notes=f'استلام كامل المخزون من {from_warehouse.name}',
+                        created_by=request.user,
+                        date=transfer.date
+                    )
+            else:
+                # معالجة العناصر العادية
+                product_ids = request.POST.getlist('product_id[]')
+                quantities = request.POST.getlist('quantity[]')
+                
+                for i, product_id in enumerate(product_ids):
+                    if product_id and quantities[i]:
+                        product = get_object_or_404(Product, id=product_id)
+                        quantity = float(quantities[i])
+                        
+                        # التحقق من توفر الكمية في المستودع المصدر
+                        current_stock = product.get_stock_in_warehouse(from_warehouse)
                     if current_stock < quantity:
                         messages.error(request, f'الكمية المتاحة للمنتج {product.name} في المستودع {from_warehouse.name} هي {current_stock}')
                         transfer.delete()  # حذف التحويل إذا فشل
@@ -513,7 +573,7 @@ class TransferCreateView(LoginRequiredMixin, UserPassesTestMixin, View):
                         reference_id=transfer.id,
                         notes=f'تحويل إلى {to_warehouse.name}',
                         created_by=request.user,
-                        date=transfer.transfer_date
+                        date=transfer.date
                     )
                     
                     # حركة واردة إلى المستودع الهدف
@@ -528,7 +588,7 @@ class TransferCreateView(LoginRequiredMixin, UserPassesTestMixin, View):
                         reference_id=transfer.id,
                         notes=f'تحويل من {from_warehouse.name}',
                         created_by=request.user,
-                        date=transfer.transfer_date
+                        date=transfer.date
                     )
             
             # تسجيل النشاط
@@ -1142,3 +1202,29 @@ def export_inventory_excel(request):
 
     # تسجيل النشاط
     log_export_activity(request, str(_('Inventory List')), filename, 'Excel')
+
+    return response
+
+
+@login_required
+def get_product_stock(request):
+    """AJAX endpoint to get product stock in a warehouse"""
+    product_id = request.GET.get('product_id')
+    warehouse_id = request.GET.get('warehouse_id')
+    
+    if not product_id or not warehouse_id:
+        return JsonResponse({'error': 'Product ID and Warehouse ID are required'}, status=400)
+    
+    try:
+        product = Product.objects.get(id=product_id, is_active=True)
+        warehouse = Warehouse.objects.get(id=warehouse_id, is_active=True)
+        stock = product.get_stock_in_warehouse(warehouse)
+        
+        return JsonResponse({
+            'stock': stock,
+            'cost_price': float(product.cost_price)
+        })
+    except (Product.DoesNotExist, Warehouse.DoesNotExist):
+        return JsonResponse({'error': 'Product or Warehouse not found'}, status=404)
+
+

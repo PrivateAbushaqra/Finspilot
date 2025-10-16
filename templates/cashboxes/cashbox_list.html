@@ -218,21 +218,26 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">{% trans "Balance" %}</label>
-                        <input type="number" name="initial_balance" class="form-control" step="0.001" value="{{ cashbox.balance|unlocalize }}">
+                        <input type="number" name="initial_balance" class="form-control cashbox-balance-input" 
+                               id="balance_{{ cashbox.id }}" step="0.001" value="{{ cashbox.balance|unlocalize }}" 
+                               data-original-balance="{{ cashbox.balance|unlocalize }}"
+                               data-cashbox-id="{{ cashbox.id }}">
                         <small class="text-muted">{% trans "Modifying the balance will create an adjustment entry" %}</small>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">
+                        <label class="form-label" id="adjustment_label_{{ cashbox.id }}">
                             {% trans "Adjustment Type" %}
                             <small class="text-muted">({% trans "IFRS compliant" %})</small>
                         </label>
-                        <select name="adjustment_type" class="form-select">
+                        <select name="adjustment_type" class="form-select cashbox-adjustment-type" 
+                                id="adjustment_type_{{ cashbox.id }}" data-cashbox-id="{{ cashbox.id }}">
+                            <option value="">{% trans "اختر نوع التعديل" %}</option>
                             <option value="capital">{% trans "Capital Contribution" %}</option>
                             <option value="error_correction">{% trans "Error Correction" %}</option>
                             <option value="cash_shortage">{% trans "Cash Shortage" %}</option>
                             <option value="cash_surplus">{% trans "Cash Surplus" %}</option>
                             <option value="reconciliation">{% trans "Cash Reconciliation" %}</option>
-                            <option value="other" selected>{% trans "Other" %}</option>
+                            <option value="other">{% trans "Other" %}</option>
                         </select>
                         <small class="text-muted">
                             {% if LANGUAGE_CODE == 'ar' %}
@@ -765,6 +770,72 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('createTransferModal').addEventListener('show.bs.modal', function() {
         updateFormFields();
         updateDepositFields();
+    });
+    
+    // التحقق من تعديل الرصيد وجعل نوع التعديل إجبارياً
+    document.querySelectorAll('.cashbox-balance-input').forEach(function(balanceInput) {
+        const cashboxId = balanceInput.dataset.cashboxId;
+        const originalBalance = parseFloat(balanceInput.dataset.originalBalance);
+        const adjustmentTypeSelect = document.getElementById('adjustment_type_' + cashboxId);
+        const adjustmentLabel = document.getElementById('adjustment_label_' + cashboxId);
+        
+        balanceInput.addEventListener('input', function() {
+            const newBalance = parseFloat(this.value) || 0;
+            const hasBalanceChanged = Math.abs(newBalance - originalBalance) > 0.001;
+            
+            if (hasBalanceChanged) {
+                // جعل نوع التعديل إجبارياً
+                adjustmentTypeSelect.required = true;
+                adjustmentLabel.innerHTML = '{% trans "Adjustment Type" %} <small class="text-muted">({% trans "IFRS compliant" %})</small> <span class="text-danger">*</span>';
+                
+                if (!adjustmentTypeSelect.value) {
+                    adjustmentTypeSelect.classList.add('border-warning');
+                }
+            } else {
+                // جعل نوع التعديل اختيارياً
+                adjustmentTypeSelect.required = false;
+                adjustmentLabel.innerHTML = '{% trans "Adjustment Type" %} <small class="text-muted">({% trans "IFRS compliant" %})</small>';
+                adjustmentTypeSelect.classList.remove('border-warning', 'is-invalid');
+            }
+        });
+    });
+    
+    // إزالة التنبيه البصري عند اختيار نوع التعديل
+    document.querySelectorAll('.cashbox-adjustment-type').forEach(function(select) {
+        select.addEventListener('change', function() {
+            if (this.value) {
+                this.classList.remove('border-warning', 'is-invalid');
+                this.classList.add('is-valid');
+            }
+        });
+    });
+    
+    // التحقق عند إرسال النموذج
+    document.querySelectorAll('form[action*="cashbox_edit"]').forEach(function(form) {
+        form.addEventListener('submit', function(e) {
+            const cashboxId = form.action.split('/').filter(Boolean).pop();
+            const balanceInput = document.getElementById('balance_' + cashboxId);
+            const adjustmentTypeSelect = document.getElementById('adjustment_type_' + cashboxId);
+            
+            if (balanceInput && adjustmentTypeSelect) {
+                const originalBalance = parseFloat(balanceInput.dataset.originalBalance);
+                const newBalance = parseFloat(balanceInput.value) || 0;
+                const hasBalanceChanged = Math.abs(newBalance - originalBalance) > 0.001;
+                
+                if (hasBalanceChanged && !adjustmentTypeSelect.value) {
+                    e.preventDefault();
+                    adjustmentTypeSelect.classList.add('is-invalid');
+                    adjustmentTypeSelect.focus();
+                    
+                    {% if LANGUAGE_CODE == 'ar' %}
+                        alert('يجب اختيار نوع التعديل عند تغيير الرصيد لضمان التوافق مع معايير IFRS');
+                    {% else %}
+                        alert('You must select an adjustment type when changing the balance to ensure IFRS compliance');
+                    {% endif %}
+                    return false;
+                }
+            }
+        });
     });
 });
 </script>

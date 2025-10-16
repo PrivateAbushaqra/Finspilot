@@ -437,8 +437,6 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
             ).order_by('name'),
             'warehouses': Warehouse.objects.filter(
                 is_active=True
-            ).exclude(
-                code__in=['MAIN', 'DEFAULT', 'SYSTEM', '1000']  # استبعاد المستودعات النظامية/الافتراضية
             ).order_by('name'),
             'default_warehouse': request.user.default_purchase_warehouse,
             'products': products_with_prices,

@@ -240,10 +240,10 @@
                                     <div class="form-text text-muted">
                                         {% if LANGUAGE_CODE == 'ar' %}
                                             <i class="fas fa-info-circle me-1"></i>
-                                            الرصيد المحسوب من المعاملات: <strong>{{ actual_balance }} {{ account.currency }}</strong>
+                                            {% trans "Balance Calculated from Transactions:" %} <strong>{{ actual_balance }} {{ account.currency }}</strong>
                                             <br>
                                             <i class="fas fa-edit me-1"></i>
-                                            يمكنك تعديل الرصيد الحالي مباشرة وسيتم تسجيل الفرق في المعاملات
+                                            {% trans "You can modify the current balance directly and the difference will be recorded in the transactions." %}
                                         {% else %}
                                             <i class="fas fa-info-circle me-1"></i>
                                             Balance calculated from transactions: <strong>{{ actual_balance }} {{ account.currency }}</strong>
@@ -260,15 +260,17 @@
                                     <label for="id_adjustment_type" class="form-label">
                                         {% trans "Adjustment Type" %}
                                         <small class="text-muted">({% trans "IFRS compliant" %})</small>
+                                        <span class="required-field">*</span>
                                     </label>
-                                    <select class="form-select" id="id_adjustment_type" name="adjustment_type">
+                                    <select class="form-select" id="id_adjustment_type" name="adjustment_type" required>
+                                        <option value="">{% trans "اختر نوع التعديل" %}</option>
                                         <option value="capital">{% trans "Capital Contribution" %}</option>
                                         <option value="error_correction">{% trans "Error Correction" %}</option>
                                         <option value="bank_interest">{% trans "Bank Interest" %}</option>
                                         <option value="bank_charges">{% trans "Bank Charges" %}</option>
                                         <option value="reconciliation">{% trans "Bank Reconciliation" %}</option>
                                         <option value="exchange_difference">{% trans "Exchange Difference" %}</option>
-                                        <option value="other" selected>{% trans "Other" %}</option>
+                                        <option value="other">{% trans "Other" %}</option>
                                     </select>
                                     <div class="form-text text-muted">
                                         {% if LANGUAGE_CODE == 'ar' %}
@@ -362,14 +364,68 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('bankAccountEditForm');
     const currencySelect = document.getElementById('id_currency');
     const balanceGroup = document.querySelector('.input-group-text');
+    const balanceInput = document.getElementById('id_balance');
+    const adjustmentTypeSelect = document.getElementById('id_adjustment_type');
+    
+    // الرصيد الأصلي (الحالي)
+    const originalBalance = parseFloat('{{ actual_balance }}');
     
     // Update currency display when currency changes
     currencySelect.addEventListener('change', function() {
         balanceGroup.textContent = this.value;
     });
     
+    // التحقق من تغيير الرصيد وجعل نوع التعديل إجبارياً
+    balanceInput.addEventListener('input', function() {
+        const newBalance = parseFloat(this.value) || 0;
+        const hasBalanceChanged = Math.abs(newBalance - originalBalance) > 0.001; // دقة 3 منازل عشرية
+        
+        if (hasBalanceChanged) {
+            // جعل نوع التعديل إجبارياً
+            adjustmentTypeSelect.required = true;
+            adjustmentTypeSelect.parentElement.querySelector('label').innerHTML = 
+                '{% trans "Adjustment Type" %} <small class="text-muted">({% trans "IFRS compliant" %})</small> <span class="required-field">*</span>';
+            
+            // إضافة تنبيه بصري
+            if (!adjustmentTypeSelect.value) {
+                adjustmentTypeSelect.classList.add('border-warning');
+            }
+        } else {
+            // جعل نوع التعديل اختيارياً
+            adjustmentTypeSelect.required = false;
+            adjustmentTypeSelect.parentElement.querySelector('label').innerHTML = 
+                '{% trans "Adjustment Type" %} <small class="text-muted">({% trans "IFRS compliant" %})</small>';
+            adjustmentTypeSelect.classList.remove('border-warning', 'is-invalid');
+        }
+    });
+    
+    // إزالة التنبيه البصري عند اختيار نوع التعديل
+    adjustmentTypeSelect.addEventListener('change', function() {
+        if (this.value) {
+            this.classList.remove('border-warning', 'is-invalid');
+            this.classList.add('is-valid');
+        }
+    });
+    
     // Form submission handling
     form.addEventListener('submit', function(e) {
+        const newBalance = parseFloat(balanceInput.value) || 0;
+        const hasBalanceChanged = Math.abs(newBalance - originalBalance) > 0.001;
+        
+        // التحقق من نوع التعديل عند تغيير الرصيد
+        if (hasBalanceChanged && !adjustmentTypeSelect.value) {
+            e.preventDefault();
+            adjustmentTypeSelect.classList.add('is-invalid');
+            adjustmentTypeSelect.focus();
+            
+            {% if LANGUAGE_CODE == 'ar' %}
+                alert('يجب اختيار نوع التعديل عند تغيير الرصيد الحالي لضمان التوافق مع معايير IFRS');
+            {% else %}
+                alert('You must select an adjustment type when changing the current balance to ensure IFRS compliance');
+            {% endif %}
+            return false;
+        }
+        
         const requiredFields = form.querySelectorAll('[required]');
         let isValid = true;
         
