@@ -415,8 +415,11 @@ class ProductCreateView(LoginRequiredMixin, View):
             )
             
             # إنشاء حركة مخزون للرصيد الافتتاحي إذا كان أكبر من صفر
-            if opening_balance and float(opening_balance) > 0:
+            if opening_balance and float(opening_balance) > 0 and not product.is_service:
                 try:
+                    from journal.models import JournalEntry, JournalLine, Account
+                    from core.models import DocumentSequence
+                    
                     # استخدام مستودع الرصيد الافتتاحي المحدد
                     unit_cost = opening_balance_cost / opening_balance if opening_balance > 0 else 0
                     InventoryMovement.objects.create(
@@ -432,6 +435,90 @@ class ProductCreateView(LoginRequiredMixin, View):
                         created_by=request.user,
                         date=product.created_at.date()
                     )
+                    
+                    # إنشاء القيد المحاسبي للرصيد الافتتاحي (حسب IFRS)
+                    # وفقاً لـ IAS 2 (Inventories): يجب قياس المخزون بالتكلفة
+                    # وفقاً لـ IAS 1 (Presentation of Financial Statements): الرصيد الافتتاحي يؤثر على حقوق الملكية
+                    try:
+                        # البحث عن حساب المخزون (1501) - Current Assets
+                        inventory_account = Account.objects.filter(code='1501').first()
+                        # البحث عن حساب حقوق الملكية (301) - Equity
+                        equity_account = Account.objects.filter(code='301').first()
+                        
+                        if inventory_account and equity_account and opening_balance_cost > 0:
+                            # توليد رقم القيد
+                            try:
+                                seq = DocumentSequence.objects.get(document_type='journal')
+                                entry_number = seq.get_next_number()
+                            except DocumentSequence.DoesNotExist:
+                                last_entry = JournalEntry.objects.order_by('-id').first()
+                                if last_entry and last_entry.entry_number:
+                                    try:
+                                        last_num = int(last_entry.entry_number.split('-')[-1])
+                                        entry_number = f'JE-{last_num + 1:06d}'
+                                    except:
+                                        entry_number = f'JE-{timezone.now().strftime("%Y%m%d%H%M%S")}'
+                                else:
+                                    entry_number = 'JE-000001'
+                            
+                            # إنشاء قيد اليومية (IFRS Compliant)
+                            journal_entry = JournalEntry.objects.create(
+                                entry_number=entry_number,
+                                entry_date=timezone.now().date(),
+                                entry_type='daily',
+                                reference_type='manual',
+                                description=f'رصيد افتتاحي - {product.name} ({product.code})',
+                                total_amount=opening_balance_cost,
+                                created_by=request.user,
+                            )
+                            
+                            # إنشاء أطراف القيد
+                            # من ح/ المخزون (أصل متداول - مدين)
+                            JournalLine.objects.create(
+                                journal_entry=journal_entry,
+                                account=inventory_account,
+                                debit=opening_balance_cost,
+                                credit=0,
+                                line_description=f'رصيد افتتاحي - {product.name}'
+                            )
+                            
+                            # إلى ح/ حقوق الملكية (دائن)
+                            JournalLine.objects.create(
+                                journal_entry=journal_entry,
+                                account=equity_account,
+                                debit=0,
+                                credit=opening_balance_cost,
+                                line_description=f'رصيد افتتاحي - {product.name}'
+                            )
+                            
+                            # تحديث أرصدة الحسابات
+                            inventory_account.update_account_balance()
+                            equity_account.update_account_balance()
+                            
+                            # تسجيل النشاط
+                            AuditLog.objects.create(
+                                user=request.user,
+                                action_type='create',
+                                content_type='JournalEntry',
+                                object_id=journal_entry.id,
+                                description=f'إنشاء قيد محاسبي للرصيد الافتتاحي - المنتج: {product.name} - رقم القيد: {entry_number} - المبلغ: {opening_balance_cost}',
+                                ip_address=request.META.get('REMOTE_ADDR')
+                            )
+                    except Exception as journal_error:
+                        # تسجيل الخطأ
+                        import logging
+                        logger = logging.getLogger(__name__)
+                        logger.error(f"خطأ في إنشاء قيد اليومية للرصيد الافتتاحي: {journal_error}")
+                        
+                        AuditLog.objects.create(
+                            user=request.user,
+                            action_type='error',
+                            content_type='JournalEntry',
+                            object_id=None,
+                            description=f'خطأ في إنشاء القيد المحاسبي للرصيد الافتتاحي - المنتج: {product.name} - الخطأ: {str(journal_error)}',
+                            ip_address=request.META.get('REMOTE_ADDR')
+                        )
+                        
                 except Exception as e:
                     # تسجيل تحذير في حالة فشل إنشاء حركة المخزون
                     import logging
@@ -615,6 +702,18 @@ class ProductUpdateView(LoginRequiredMixin, View):
                     messages.error(request, 'مستودع الرصيد الافتتاحي المحدد غير موجود!')
                     return self.get(request, pk)
             
+            # التعامل مع تعديل الرصيد الافتتاحي
+            from decimal import Decimal
+            from inventory.models import InventoryMovement
+            from journal.models import JournalEntry, JournalLine, Account
+            from core.models import DocumentSequence
+            
+            # الحصول على القيم القديمة من قاعدة البيانات قبل التحديث
+            old_product_data = Product.objects.get(pk=product.pk)
+            old_opening_balance_quantity = Decimal(str(old_product_data.opening_balance_quantity))
+            old_opening_balance_cost = Decimal(str(old_product_data.opening_balance_cost))
+            old_opening_balance_warehouse = old_product_data.opening_balance_warehouse
+            
             # تحديث جميع حقول المنتج
             product.name = name
             product.name_en = name_en
@@ -636,22 +735,27 @@ class ProductUpdateView(LoginRequiredMixin, View):
                 product.image = image
             product.save()
             
-            # التعامل مع تعديل الرصيد الافتتاحي
-            current_opening_balance = product.get_opening_balance()
-            from decimal import Decimal
-            new_opening_balance = Decimal(str(opening_balance))
+            new_opening_balance_quantity = Decimal(str(opening_balance))
+            new_opening_balance_cost = Decimal(str(opening_balance_cost))
             
-            if new_opening_balance != current_opening_balance:
-                from inventory.models import InventoryMovement
-                
-                # حذف الرصيد الافتتاحي القديم إذا كان موجوداً
+            # التحقق من حدوث تغيير في الرصيد الافتتاحي أو تكلفته أو مستودعه
+            opening_balance_changed = (
+                new_opening_balance_quantity != old_opening_balance_quantity or
+                new_opening_balance_cost != old_opening_balance_cost or
+                opening_balance_warehouse != old_opening_balance_warehouse
+            )
+            
+            if opening_balance_changed:
+                # 1. حذف حركة المخزون القديمة للرصيد الافتتاحي
                 old_opening_movement = InventoryMovement.objects.filter(
                     product=product,
                     movement_type='in',
                     reference_type='opening_balance'
                 ).first()
                 
+                old_movement_id = None
                 if old_opening_movement:
+                    old_movement_id = old_opening_movement.id
                     old_opening_movement.delete()
                     
                     # تسجيل النشاط في سجل الأنشطة
@@ -659,23 +763,68 @@ class ProductUpdateView(LoginRequiredMixin, View):
                         user=request.user,
                         action_type='delete',
                         content_type='InventoryMovement',
-                        object_id=old_opening_movement.id if old_opening_movement else None,
-                        description=_('تم حذف الرصيد الافتتاحي القديم للمنتج: %(product_name)s - الكمية القديمة: %(old_quantity)s') % {
+                        object_id=old_movement_id,
+                        description=_('حذف الرصيد الافتتاحي القديم للمنتج: %(product_name)s - الكمية القديمة: %(old_quantity)s - التكلفة القديمة: %(old_cost)s') % {
                             'product_name': product.name,
-                            'old_quantity': current_opening_balance
+                            'old_quantity': old_opening_balance_quantity,
+                            'old_cost': old_opening_balance_cost
                         },
                         ip_address=request.META.get('REMOTE_ADDR')
                     )
                 
-                # إنشاء رصيد افتتاحي جديد إذا كان أكبر من صفر
-                if new_opening_balance > 0:
+                # 2. حذف القيد المحاسبي القديم للرصيد الافتتاحي (إن وجد)
+                old_journal_entries = JournalEntry.objects.filter(
+                    reference_type='manual',
+                    description__icontains=f'{product.code}'
+                ).filter(
+                    description__icontains='رصيد افتتاحي'
+                )
+                
+                for old_entry in old_journal_entries:
+                    # حذف أطراف القيد
+                    old_lines = JournalLine.objects.filter(journal_entry=old_entry)
+                    affected_accounts = [line.account for line in old_lines]
+                    old_lines.delete()
+                    
+                    # حذف القيد
+                    old_entry_number = old_entry.entry_number
+                    old_entry.delete()
+                    
+                    # تحديث أرصدة الحسابات المتأثرة
+                    for account in affected_accounts:
+                        account.update_account_balance()
+                    
+                    # تسجيل النشاط
+                    AuditLog.objects.create(
+                        user=request.user,
+                        action_type='delete',
+                        content_type='JournalEntry',
+                        object_id=old_entry.id if hasattr(old_entry, 'id') else None,
+                        description=f'حذف القيد المحاسبي القديم للرصيد الافتتاحي - المنتج: {product.name} - رقم القيد: {old_entry_number}',
+                        ip_address=request.META.get('REMOTE_ADDR')
+                    )
+                
+                # 3. إنشاء حركة مخزون جديدة للرصيد الافتتاحي إذا كان أكبر من صفر
+                if new_opening_balance_quantity > 0 and opening_balance_warehouse:
+                    # حساب تكلفة الوحدة
+                    unit_cost = new_opening_balance_cost / new_opening_balance_quantity if new_opening_balance_quantity > 0 else Decimal('0')
+                    
+                    # توليد رقم الحركة
+                    try:
+                        seq = DocumentSequence.objects.get(document_type='inventory_movement')
+                        movement_number = seq.get_next_number()
+                    except DocumentSequence.DoesNotExist:
+                        movement_number = f'OB-{product.code}-{timezone.now().strftime("%Y%m%d%H%M%S")}'
+                    
+                    # إنشاء حركة المخزون
                     new_movement = InventoryMovement.objects.create(
+                        movement_number=movement_number,
                         product=product,
-                        warehouse=product.opening_balance_warehouse,
+                        warehouse=opening_balance_warehouse,
                         movement_type='in',
-                        quantity=float(new_opening_balance),
-                        unit_cost=cost_price,
-                        total_cost=float(new_opening_balance) * cost_price,
+                        quantity=float(new_opening_balance_quantity),
+                        unit_cost=float(unit_cost),
+                        total_cost=float(new_opening_balance_cost),
                         reference_type='opening_balance',
                         reference_id=product.id,
                         notes=f'تحديث الرصيد الافتتاحي للمنتج {product.name}',
@@ -689,12 +838,104 @@ class ProductUpdateView(LoginRequiredMixin, View):
                         action_type='create',
                         content_type='InventoryMovement',
                         object_id=new_movement.id,
-                        description=_('تم إنشاء رصيد افتتاحي جديد للمنتج: %(product_name)s - الكمية: %(quantity)s') % {
+                        description=_('إنشاء رصيد افتتاحي جديد للمنتج: %(product_name)s - الكمية: %(quantity)s - التكلفة: %(cost)s') % {
                             'product_name': product.name,
-                            'quantity': new_opening_balance
+                            'quantity': new_opening_balance_quantity,
+                            'cost': new_opening_balance_cost
                         },
                         ip_address=request.META.get('REMOTE_ADDR')
                     )
+                    
+                    # 4. إنشاء قيد محاسبي جديد للرصيد الافتتاحي (حسب IFRS)
+                    # وفقاً لـ IAS 2 (Inventories): يجب قياس المخزون بالتكلفة أو صافي القيمة القابلة للتحقق، أيهما أقل
+                    # وفقاً لـ IAS 1 (Presentation of Financial Statements): الرصيد الافتتاحي يؤثر على حقوق الملكية
+                    try:
+                        # البحث عن حساب المخزون (1501) - Current Assets
+                        # IAS 2: Inventories should be classified as current assets
+                        inventory_account = Account.objects.filter(code='1501').first()
+                        
+                        # البحث عن حساب حقوق الملكية/الأرباح المحتجزة (301) - Equity
+                        # IAS 1: Opening balances represent owner's equity contribution
+                        equity_account = Account.objects.filter(code='301').first()
+                        
+                        if inventory_account and equity_account and new_opening_balance_cost > 0:
+                            # توليد رقم القيد
+                            try:
+                                seq = DocumentSequence.objects.get(document_type='journal')
+                                entry_number = seq.get_next_number()
+                            except DocumentSequence.DoesNotExist:
+                                last_entry = JournalEntry.objects.order_by('-id').first()
+                                if last_entry and last_entry.entry_number:
+                                    try:
+                                        last_num = int(last_entry.entry_number.split('-')[-1])
+                                        entry_number = f'JE-{last_num + 1:06d}'
+                                    except:
+                                        entry_number = f'JE-{timezone.now().strftime("%Y%m%d%H%M%S")}'
+                                else:
+                                    entry_number = 'JE-000001'
+                            
+                            # إنشاء قيد اليومية (IFRS Compliant)
+                            # المعالجة المحاسبية حسب IAS 2 (Inventories) و IAS 1 (Presentation)
+                            journal_entry = JournalEntry.objects.create(
+                                entry_number=entry_number,
+                                entry_date=timezone.now().date(),
+                                entry_type='daily',
+                                reference_type='manual',
+                                description=f'رصيد افتتاحي - {product.name} ({product.code})',
+                                total_amount=new_opening_balance_cost,
+                                created_by=request.user,
+                            )
+                            
+                            # إنشاء أطراف القيد
+                            # من ح/ المخزون (أصل متداول - مدين)
+                            # IAS 2: قياس المخزون بالتكلفة عند الاعتراف الأولي
+                            # IAS 1: تصنيف المخزون كأصل متداول
+                            JournalLine.objects.create(
+                                journal_entry=journal_entry,
+                                account=inventory_account,
+                                debit=new_opening_balance_cost,
+                                credit=Decimal('0'),
+                                line_description=f'رصيد افتتاحي - {product.name}'
+                            )
+                            
+                            # إلى ح/ حقوق الملكية (دائن)
+                            # IAS 1: الرصيد الافتتاحي يؤثر على حقوق الملكية
+                            # تمثل مساهمة المالك أو الأرباح المحتجزة من فترات سابقة
+                            JournalLine.objects.create(
+                                journal_entry=journal_entry,
+                                account=equity_account,
+                                debit=Decimal('0'),
+                                credit=new_opening_balance_cost,
+                                line_description=f'رصيد افتتاحي - {product.name}'
+                            )
+                            
+                            # تحديث أرصدة الحسابات
+                            inventory_account.update_account_balance()
+                            equity_account.update_account_balance()
+                            
+                            # تسجيل النشاط
+                            AuditLog.objects.create(
+                                user=request.user,
+                                action_type='create',
+                                content_type='JournalEntry',
+                                object_id=journal_entry.id,
+                                description=f'إنشاء قيد محاسبي للرصيد الافتتاحي - المنتج: {product.name} - رقم القيد: {entry_number} - المبلغ: {new_opening_balance_cost}',
+                                ip_address=request.META.get('REMOTE_ADDR')
+                            )
+                    except Exception as e:
+                        # تسجيل الخطأ
+                        import logging
+                        logger = logging.getLogger(__name__)
+                        logger.error(f"خطأ في إنشاء قيد اليومية للرصيد الافتتاحي: {e}")
+                        
+                        AuditLog.objects.create(
+                            user=request.user,
+                            action_type='error',
+                            content_type='JournalEntry',
+                            object_id=None,
+                            description=f'خطأ في إنشاء القيد المحاسبي للرصيد الافتتاحي - المنتج: {product.name} - الخطأ: {str(e)}',
+                            ip_address=request.META.get('REMOTE_ADDR')
+                        )
             
             # تسجيل النشاط في سجل الأنشطة
             AuditLog.objects.create(
@@ -702,7 +943,7 @@ class ProductUpdateView(LoginRequiredMixin, View):
                 action_type='update',
                 content_type='Product',
                 object_id=product.id,
-                description=f'تم تحديث المنتج: {product.name} - سعر البيع: {product.sale_price} - سعر التكلفة المحسوب: {cost_price:.3f} - الرصيد الافتتاحي: {new_opening_balance}',
+                description=f'تم تحديث المنتج: {product.name} - سعر البيع: {product.sale_price} - سعر التكلفة المحسوب: {cost_price:.3f} - الرصيد الافتتاحي: {new_opening_balance_quantity}',
                 ip_address=request.META.get('REMOTE_ADDR')
             )
             
@@ -710,8 +951,8 @@ class ProductUpdateView(LoginRequiredMixin, View):
             success_message = f'تم تحديث المنتج "{product.name}" بنجاح!'
             
             # إضافة معلومات الرصيد الافتتاحي إذا تم تغييره
-            if new_opening_balance != current_opening_balance:
-                success_message += f' (تم تحديث الرصيد الافتتاحي من {current_opening_balance} إلى {new_opening_balance})'
+            if opening_balance_changed:
+                success_message += f' (تم تحديث الرصيد الافتتاحي من {old_opening_balance_quantity} إلى {new_opening_balance_quantity})'
             
             if tax_rate > 0:
                 from decimal import Decimal
@@ -781,12 +1022,13 @@ class ProductDeleteView(LoginRequiredMixin, View):
         try:
             product = get_object_or_404(Product, pk=pk)
             product_name = product.name
+            product_code = product.code
             
-            # التحقق من الارتباطات قبل الحذف
-            related_data = self._check_product_relations(product)
+            # التحقق من الارتباطات (باستثناء حركات الرصيد الافتتاحي)
+            related_data = self._check_product_relations(product, exclude_opening_balance=True)
             
             if any(related_data.values()):
-                # إذا كان هناك ارتباطات، عرض رسالة مفصلة
+                # إذا كان هناك ارتباطات فعلية (غير الرصيد الافتتاحي)
                 error_message = f'لا يمكن حذف المنتج "{product_name}" لأنه مرتبط بالبيانات التالية:'
                 
                 if related_data['inventory_movements']:
@@ -810,7 +1052,68 @@ class ProductDeleteView(LoginRequiredMixin, View):
                 messages.error(request, error_message)
                 return redirect('products:product_delete', pk=pk)
             
-            # إذا لم تكن هناك ارتباطات، احذف المنتج
+            # حذف حركات الرصيد الافتتاحي والقيود المحاسبية المرتبطة بها
+            from inventory.models import InventoryMovement
+            from journal.models import JournalEntry, JournalLine
+            
+            # 1. حذف حركات المخزون للرصيد الافتتاحي
+            opening_movements = InventoryMovement.objects.filter(
+                product=product,
+                reference_type='opening_balance'
+            )
+            
+            if opening_movements.exists():
+                movements_count = opening_movements.count()
+                opening_movements.delete()
+                
+                # تسجيل الحذف في AuditLog
+                AuditLog.objects.create(
+                    user=request.user,
+                    action_type='delete',
+                    content_type='InventoryMovement',
+                    object_id=None,
+                    description=f'حذف {movements_count} حركة مخزون للرصيد الافتتاحي - المنتج: {product_name} ({product_code})',
+                    ip_address=request.META.get('REMOTE_ADDR')
+                )
+            
+            # 2. حذف القيود المحاسبية للرصيد الافتتاحي
+            opening_journal_entries = JournalEntry.objects.filter(
+                reference_type='manual'
+            ).filter(
+                description__icontains=product_code
+            ).filter(
+                description__icontains='رصيد افتتاحي'
+            )
+            
+            for entry in opening_journal_entries:
+                entry_number = entry.entry_number
+                entry_amount = entry.total_amount
+                
+                # الحصول على الحسابات المتأثرة قبل الحذف
+                entry_lines = JournalLine.objects.filter(journal_entry=entry)
+                affected_accounts = [line.account for line in entry_lines]
+                
+                # حذف أطراف القيد
+                entry_lines.delete()
+                
+                # حذف القيد
+                entry.delete()
+                
+                # تحديث أرصدة الحسابات المتأثرة
+                for account in affected_accounts:
+                    account.update_account_balance()
+                
+                # تسجيل الحذف في AuditLog
+                AuditLog.objects.create(
+                    user=request.user,
+                    action_type='delete',
+                    content_type='JournalEntry',
+                    object_id=None,
+                    description=f'حذف قيد محاسبي للرصيد الافتتاحي - المنتج: {product_name} ({product_code}) - رقم القيد: {entry_number} - المبلغ: {entry_amount}',
+                    ip_address=request.META.get('REMOTE_ADDR')
+                )
+            
+            # 3. الآن يمكن حذف المنتج
             product.delete()
             
             # تسجيل النشاط في سجل الأنشطة
@@ -819,7 +1122,7 @@ class ProductDeleteView(LoginRequiredMixin, View):
                 action_type='delete',
                 content_type='Product',
                 object_id=pk,
-                description=f'حذف المنتج: {product_name} (الكود: {product.code})',
+                description=f'حذف المنتج: {product_name} (الكود: {product_code})',
                 ip_address=request.META.get('REMOTE_ADDR')
             )
             
@@ -827,12 +1130,32 @@ class ProductDeleteView(LoginRequiredMixin, View):
             
         except Exception as e:
             # معالجة أخطاء أخرى غير متوقعة
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"خطأ في حذف المنتج {pk}: {str(e)}")
+            
+            # تسجيل الخطأ في AuditLog
+            AuditLog.objects.create(
+                user=request.user,
+                action_type='error',
+                content_type='Product',
+                object_id=pk,
+                description=f'خطأ في حذف المنتج ID {pk}: {str(e)}',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
+            
             messages.error(request, f'حدث خطأ غير متوقع أثناء حذف المنتج: {str(e)}')
         
         return redirect('products:product_list')
     
-    def _check_product_relations(self, product):
-        """فحص جميع الارتباطات المحمية للمنتج"""
+    def _check_product_relations(self, product, exclude_opening_balance=False):
+        """
+        فحص جميع الارتباطات المحمية للمنتج
+        
+        Args:
+            product: المنتج المراد فحصه
+            exclude_opening_balance: استثناء حركات الرصيد الافتتاحي من الفحص
+        """
         related_data = {
             'inventory_movements': None,
             'warehouse_transfers': None,
@@ -844,6 +1167,11 @@ class ProductDeleteView(LoginRequiredMixin, View):
             # فحص حركات المخزون
             from inventory.models import InventoryMovement
             inventory_movements = InventoryMovement.objects.filter(product=product)
+            
+            # استثناء حركات الرصيد الافتتاحي إذا طُلب ذلك
+            if exclude_opening_balance:
+                inventory_movements = inventory_movements.exclude(reference_type='opening_balance')
+            
             if inventory_movements.exists():
                 related_data['inventory_movements'] = {
                     'count': inventory_movements.count(),

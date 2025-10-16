@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title">
+                        <i class="fas fa-hand-holding-usd"></i> {{ page_title }}
+                    </h3>
+                    <div>
+                        <a href="{% url 'receipts:check_list' %}" class="btn btn-secondary me-2">
+                            <i class="fas fa-arrow-left"></i> {% trans "Back to Checks" %}
+                        </a>
+                        <a href="{% url 'receipts:receipt_detail' receipt.id %}" class="btn btn-info">
+                            <i class="fas fa-eye"></i> {% trans "View Receipt" %}
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <!-- Check Information -->
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-header">
+                                    <h5 class="card-title">{% trans "Check Information" %}</h5>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-borderless">
+                                        <tr>
+                                            <th width="40%">{% trans "Receipt Number" %}:</th>
+                                            <td>{{ receipt.receipt_number }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans "Check Number" %}:</th>
+                                            <td>{{ receipt.check_number }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans "Customer" %}:</th>
+                                            <td>{{ receipt.customer.name }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans "Amount" %}:</th>
+                                            <td class="fw-bold text-primary">{{ receipt.amount|floatformat:3 }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans "Check Date" %}:</th>
+                                            <td>{{ receipt.check_date|date:"Y-m-d" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans "Due Date" %}:</th>
+                                            <td>{{ receipt.check_due_date|date:"Y-m-d" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans "Bank Name" %}:</th>
+                                            <td>{{ receipt.bank_name }}</td>
+                                        </tr>
+                                        <tr>
+                                            <th>{% trans "Current Status" %}:</th>
+                                            <td>
+                                                <span class="badge bg-{% if receipt.check_status == 'pending' %}warning{% elif receipt.check_status == 'collected' %}success{% else %}danger{% endif %}">
+                                                    {{ receipt.get_check_status_display }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        {% if receipt.expected_credit_loss > 0 %}
+                                        <tr>
+                                            <th>{% trans "Expected Credit Loss" %} (ECL):</th>
+                                            <td class="text-danger fw-bold">
+                                                {{ receipt.expected_credit_loss|floatformat:3 }}
+                                                <br>
+                                                <small class="text-muted">{{ receipt.ecl_calculation_method }}</small>
+                                            </td>
+                                        </tr>
+                                        {% endif %}
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Collection Form -->
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="card-title mb-0">{% trans "Collection Information" %}</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form method="post">
+                                        {% csrf_token %}
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">{% trans "Collection Date" %} *</label>
+                                            <input type="date" name="collection_date" class="form-control" value="{{ today }}" required>
+                                            <small class="form-text text-muted">
+                                                <i class="fas fa-info-circle"></i> {% trans "Date when the check is processed" %}
+                                            </small>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">{% trans "Collection Status" %} *</label>
+                                            <select name="status" class="form-select" id="collectionStatus" required>
+                                                <option value="">{% trans "Select Status" %}</option>
+                                                <option value="collected">{% trans "تم التحصيل" %} ✓</option>
+                                                <option value="bounced">{% trans "مرتد" %} ✗</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <!-- Cash Box Selection (shown only when collected) -->
+                                        <div class="mb-3" id="cashboxDiv" style="display: none;">
+                                            <label class="form-label">{% trans "Cash Box" %} *</label>
+                                            <select name="cashbox" class="form-select" id="cashboxSelect">
+                                                <option value="">{% trans "Select Cash Box" %}</option>
+                                                {% for cashbox in cashboxes %}
+                                                <option value="{{ cashbox.id }}">
+                                                    {{ cashbox.name }} ({% trans "Balance" %}: {{ cashbox.balance|floatformat:3 }})
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        
+                                        <!-- Bounce Reason (shown only when bounced) -->
+                                        <div class="mb-3" id="bounceReasonDiv" style="display: none;">
+                                            <label class="form-label">{% trans "Bounce Reason" %} *</label>
+                                            <select name="bounce_reason" class="form-select" id="bounceReasonSelect">
+                                                <option value="">{% trans "Select Reason" %}</option>
+                                                {% for reason in bounce_reasons %}
+                                                <option value="{{ reason }}">{{ reason }}</option>
+                                                {% endfor %}
+                                            </select>
+                                            <small class="form-text text-danger">
+                                                <i class="fas fa-exclamation-triangle"></i> {% trans "IFRS 9: This will create a journal entry transferring the amount from checks in transit to accounts receivable" %}
+                                            </small>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">{% trans "Notes" %}</label>
+                                            <textarea name="notes" class="form-control" rows="3" placeholder="{% trans 'Additional notes about the collection' %}"></textarea>
+                                        </div>
+                                        
+                                        <!-- IFRS 9 Information -->
+                                        <div class="alert alert-info">
+                                            <h6><i class="fas fa-balance-scale"></i> {% trans "IFRS 9 Compliance" %}</h6>
+                                            <ul class="mb-0 small">
+                                                <li>{% trans "ECL will be calculated automatically" %}</li>
+                                                <li>{% trans "Journal entries will be created according to IFRS 9" %}</li>
+                                                <li>{% trans "Late collection warnings will be logged" %}</li>
+                                                <li>{% trans "Early collection will be verified against invoices" %}</li>
+                                            </ul>
+                                        </div>
+                                        
+                                        <div class="d-grid gap-2">
+                                            <button type="submit" class="btn btn-success btn-lg">
+                                                <i class="fas fa-check-circle"></i> {% trans "Process Collection" %}
+                                            </button>
+                                            <a href="{% url 'receipts:receipt_detail' receipt.id %}" class="btn btn-secondary">
+                                                {% trans "Cancel" %}
+                                            </a>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const collectionStatus = document.getElementById('collectionStatus');
+    const cashboxDiv = document.getElementById('cashboxDiv');
+    const cashboxSelect = document.getElementById('cashboxSelect');
+    const bounceReasonDiv = document.getElementById('bounceReasonDiv');
+    const bounceReasonSelect = document.getElementById('bounceReasonSelect');
+    
+    collectionStatus.addEventListener('change', function() {
+        if (this.value === 'collected') {
+            cashboxDiv.style.display = 'block';
+            cashboxSelect.required = true;
+            bounceReasonDiv.style.display = 'none';
+            bounceReasonSelect.required = false;
+        } else if (this.value === 'bounced') {
+            cashboxDiv.style.display = 'none';
+            cashboxSelect.required = false;
+            bounceReasonDiv.style.display = 'block';
+            bounceReasonSelect.required = true;
+        } else {
+            cashboxDiv.style.display = 'none';
+            cashboxSelect.required = false;
+            bounceReasonDiv.style.display = 'none';
+            bounceReasonSelect.required = false;
+        }
+    });
+});
+</script>
+{% endblock %}

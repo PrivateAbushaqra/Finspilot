@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load i18n %}
 
-{% block title %}{% trans "Activity Log" %} - Triangle{% endblock %}
+{% block title %}{% trans "Activity Log" %} - FinsPilot{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -176,7 +176,7 @@
                         
                         <!-- Pagination -->
                         {% if is_paginated %}
-                            <nav aria-label="{% trans "Activity Log pages" %}">
+                            <nav aria-label="{% trans 'Activity Log pages' %}">
                                 <ul class="pagination justify-content-center">
                                     {% if page_obj.has_previous %}
                                         <li class="page-item">

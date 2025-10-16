@@ -18,7 +18,6 @@ from cashboxes.models import Cashbox, CashboxTransaction
 from banks.models import BankAccount
 from settings.models import CompanySettings
 from customers.models import CustomerSupplier
-from settings.models import CompanySettings
 from journal.services import JournalService
 
 
@@ -156,14 +155,13 @@ def payment_voucher_list(request):
     return render(request, 'payments/voucher_list.html', context)
 
 
-from django.core.exceptions import PermissionDenied
-
 @login_required
 def payment_voucher_create(request):
+    """Create new payment voucher"""
     if not request.user.has_perm('payments.add_paymentvoucher'):
+        from django.core.exceptions import PermissionDenied
         messages.error(request, _('ليس لديك صلاحية إضافة سند صرف'))
         raise PermissionDenied(_('ليس لديك صلاحية إضافة سند صرف'))
-    """Create new payment voucher"""
     if request.method == 'POST':
         form = PaymentVoucherForm(request.POST)
         if form.is_valid():
@@ -327,7 +325,8 @@ def create_payment_transaction(voucher):
     """Create financial transaction for payment voucher"""
     if voucher.payment_type == 'cash' and voucher.cashbox:
         # Cashbox transaction (payment)
-        CashboxTransaction.objects.create(
+        # Note: رصيد الصندوق يتم تحديثه تلقائياً من خلال signals في cashboxes/signals.py
+        cashbox_trans = CashboxTransaction.objects.create(
             cashbox=voucher.cashbox,
             transaction_type='withdrawal',
             amount=-voucher.amount,  # المبلغ سالب للسحب
@@ -337,10 +336,8 @@ def create_payment_transaction(voucher):
             reference_id=voucher.id,
             created_by=voucher.created_by
         )
-        
-        # تحديث رصيد الصندوق
-        voucher.cashbox.balance -= voucher.amount
-        voucher.cashbox.save(update_fields=['balance'])
+        print(f"✓ تم إنشاء حركة صندوق: {cashbox_trans.id}")
+        # تم إزالة التحديث اليدوي - الآن يتم عبر signals
     
     elif voucher.payment_type == 'bank_transfer' and voucher.bank:
         # Bank transaction (payment) - using direct import to avoid circular problems
@@ -348,7 +345,7 @@ def create_payment_transaction(voucher):
         BankTransaction.objects.create(
             bank=voucher.bank,
             transaction_type='withdrawal',
-            amount=voucher.amount,
+            amount=-voucher.amount,  # المبلغ سالب للسحب
             description=f'Payment voucher {voucher.voucher_number} - {voucher.beneficiary_display}',
             reference_number=voucher.bank_reference or voucher.voucher_number,
             date=voucher.date,
@@ -374,6 +371,7 @@ def reverse_payment_transaction(voucher):
     if voucher.payment_type == 'cash' and voucher.cashbox:
         # Find and reverse cash box transaction
         # Search for transaction using description since CashboxTransaction doesn't have reference_number
+        # Note: رصيد الصندوق يتم تحديثه تلقائياً من خلال signals
         transactions = CashboxTransaction.objects.filter(
             cashbox=voucher.cashbox,
             description__contains=voucher.voucher_number,
@@ -388,10 +386,7 @@ def reverse_payment_transaction(voucher):
                 date=django_timezone.now().date(),
                 created_by=voucher.reversed_by or voucher.created_by
             )
-            
-            # تحديث رصيد الصندوق
-            transaction.cashbox.balance += abs(transaction.amount)
-            transaction.cashbox.save(update_fields=['balance'])
+            # تم إزالة التحديث اليدوي - الآن يتم عبر signals
     
     elif voucher.payment_type == 'bank_transfer' and voucher.bank:
         # Find and reverse bank transaction - using direct import

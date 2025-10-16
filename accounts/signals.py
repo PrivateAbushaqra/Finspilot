@@ -5,6 +5,29 @@ from .models import AccountTransaction
 
 
 @receiver(post_save, sender=AccountTransaction)
+def update_customer_supplier_balance(sender, instance, created, **kwargs):
+    """تحديث رصيد العميل/المورد عند إنشاء معاملة جديدة"""
+    if created:
+        try:
+            customer_supplier = instance.customer_supplier
+            
+            # حساب التغيير في الرصيد
+            if instance.direction == 'debit':
+                # مدين - يزيد من رصيد العميل (دين على العميل)
+                customer_supplier.balance += instance.amount
+            elif instance.direction == 'credit':
+                # دائن - يقلل من رصيد العميل (دفع من العميل)
+                customer_supplier.balance -= instance.amount
+            
+            customer_supplier.save()
+        except Exception as e:
+            # تسجيل الخطأ دون إيقاف العملية
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f'خطأ في تحديث رصيد العميل/المورد: {e}')
+
+
+@receiver(post_save, sender=AccountTransaction)
 def log_account_transaction_activity(sender, instance, created, **kwargs):
     """تسجيل إنشاء أو تعديل المعاملات المالية في سجل الأنشطة"""
     try:

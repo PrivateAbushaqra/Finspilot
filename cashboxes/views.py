@@ -422,17 +422,20 @@ def cashbox_edit(request, cashbox_id):
                     adjustment_type = request.POST.get('adjustment_type', 'other')
                     
                     # إنشاء حركة للتعديل
+                    # حسب IFRS: يجب تسجيل التغيير الفعلي في الرصيد
                     adjustment_description = _('Adjustment of Opening Balance')
                     if balance_diff > 0:
                         adjustment_description += f' - {_("Increase")}: {abs(balance_diff)} - نوع: {dict(CashboxTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "غير محدد")}'
+                        transaction_amount = abs(balance_diff)  # موجب للإيداع
                     else:
                         adjustment_description += f' - {_("Decrease")}: {abs(balance_diff)} - نوع: {dict(CashboxTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "غير محدد")}'
+                        transaction_amount = -abs(balance_diff)  # سالب للسحب
                     
                     CashboxTransaction.objects.create(
                         cashbox=cashbox,
                         transaction_type='deposit' if balance_diff > 0 else 'withdrawal',
                         date=timezone.now().date(),
-                        amount=abs(balance_diff),
+                        amount=transaction_amount,
                         description=adjustment_description,
                         adjustment_type=adjustment_type,
                         is_manual_adjustment=True,

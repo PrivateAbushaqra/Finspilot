@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title">
+                        <i class="fas fa-money-check"></i> {{ page_title }}
+                    </h3>
+                    <a href="{% url 'receipts:receipt_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> {% trans "Back to Receipts" %}
+                    </a>
+                </div>
+                <div class="card-body">
+                    <!-- Filter Form -->
+                    <form method="get" class="mb-3">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label class="form-label">{% trans "Check Status" %}</label>
+                                <select name="status" class="form-select">
+                                    <option value="">{% trans "All" %}</option>
+                                    <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>
+                                        {% trans "في الانتظار" %}
+                                    </option>
+                                    <option value="collected" {% if request.GET.status == 'collected' %}selected{% endif %}>
+                                        {% trans "تم التحصيل" %}
+                                    </option>
+                                    <option value="bounced" {% if request.GET.status == 'bounced' %}selected{% endif %}>
+                                        {% trans "مرتد" %}
+                                    </option>
+                                    <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>
+                                        {% trans "ملغي" %}
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">{% trans "Due Date From" %}</label>
+                                <input type="date" name="due_date_from" class="form-control" value="{{ request.GET.due_date_from }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">{% trans "Due Date To" %}</label>
+                                <input type="date" name="due_date_to" class="form-control" value="{{ request.GET.due_date_to }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">&nbsp;</label>
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-search"></i> {% trans "Search" %}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    {% if checks %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>{% trans "Receipt Number" %}</th>
+                                        <th>{% trans "Check Number" %}</th>
+                                        <th>{% trans "Customer" %}</th>
+                                        <th>{% trans "Amount" %}</th>
+                                        <th>{% trans "Check Date" %}</th>
+                                        <th>{% trans "Due Date" %}</th>
+                                        <th>{% trans "Bank Name" %}</th>
+                                        <th>{% trans "Status" %}</th>
+                                        <th>{% trans "ECL" %}</th>
+                                        <th>{% trans "Actions" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for check in checks %}
+                                    <tr class="{% if check.check_status == 'bounced' %}table-danger{% elif check.check_status == 'collected' %}table-success{% endif %}">
+                                        <td>
+                                            <a href="{% url 'receipts:receipt_detail' check.id %}" class="text-decoration-none">
+                                                {{ check.receipt_number }}
+                                            </a>
+                                        </td>
+                                        <td>{{ check.check_number }}</td>
+                                        <td>{{ check.customer.name }}</td>
+                                        <td>{{ check.amount|floatformat:3 }}</td>
+                                        <td>{{ check.check_date|date:"Y-m-d" }}</td>
+                                        <td>
+                                            {{ check.check_due_date|date:"Y-m-d" }}
+                                            {% now "Y-m-d" as today %}
+                                            {% if check.check_due_date|date:"Y-m-d" < today and check.check_status == 'pending' %}
+                                                <span class="badge bg-warning">{% trans "Overdue" %}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ check.bank_name }}</td>
+                                        <td>
+                                            <span class="badge bg-{% if check.check_status == 'pending' %}warning{% elif check.check_status == 'collected' %}success{% elif check.check_status == 'bounced' %}danger{% else %}secondary{% endif %}">
+                                                {{ check.get_check_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if check.expected_credit_loss > 0 %}
+                                                <span class="text-danger fw-bold">{{ check.expected_credit_loss|floatformat:3 }}</span>
+                                                <br>
+                                                <small class="text-muted">{{ check.ecl_calculation_method }}</small>
+                                            {% else %}
+                                                <span class="text-success">0.000</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'receipts:receipt_detail' check.id %}" class="btn btn-sm btn-info" title="{% trans 'View Details' %}">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if check.check_status == 'pending' %}
+                                            <a href="{% url 'receipts:check_collect' check.id %}" class="btn btn-sm btn-success" title="{% trans 'Collect Check' %}">
+                                                <i class="fas fa-check"></i>
+                                            </a>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Pagination -->
+                        {% if checks.has_other_pages %}
+                        <nav>
+                            <ul class="pagination justify-content-center">
+                                {% if checks.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ checks.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.due_date_from %}&due_date_from={{ request.GET.due_date_from }}{% endif %}{% if request.GET.due_date_to %}&due_date_to={{ request.GET.due_date_to }}{% endif %}">
+                                        {% trans "Previous" %}
+                                    </a>
+                                </li>
+                                {% endif %}
+                                
+                                <li class="page-item active">
+                                    <span class="page-link">{{ checks.number }} {% trans "of" %} {{ checks.paginator.num_pages }}</span>
+                                </li>
+                                
+                                {% if checks.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ checks.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.due_date_from %}&due_date_from={{ request.GET.due_date_from }}{% endif %}{% if request.GET.due_date_to %}&due_date_to={{ request.GET.due_date_to }}{% endif %}">
+                                        {% trans "Next" %}
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="alert alert-info text-center">
+                            <i class="fas fa-info-circle"></i> {% trans "No checks found" %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

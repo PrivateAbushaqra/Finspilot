@@ -55,49 +55,40 @@ class Cashbox(models.Model):
         return self.currency
     
     def sync_balance(self):
-        """مزامنة رصيد الصندوق مع المعاملات الفعلية"""
+        """
+        مزامنة رصيد الصندوق مع المعاملات الفعلية
+        متوافق مع IFRS - IAS 7 (بيان التدفقات النقدية)
+        """
         from decimal import Decimal
         from django.db.models import Sum
         
-        # حساب إجمالي الإيداعات والتحويلات الواردة
-        deposits = CashboxTransaction.objects.filter(
-            cashbox=self,
-            transaction_type__in=['deposit', 'transfer_in', 'initial_balance', 'adjustment']
+        # حساب الرصيد من جميع المعاملات
+        # حسب IFRS: المبالغ الموجبة تزيد الرصيد والسالبة تنقصه
+        total_amount = CashboxTransaction.objects.filter(
+            cashbox=self
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
-        
-        # حساب إجمالي السحوبات والتحويلات الصادرة
-        withdrawals = CashboxTransaction.objects.filter(
-            cashbox=self,
-            transaction_type__in=['withdrawal', 'transfer_out']
-        ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
-        
-        # حساب الرصيد الجديد
-        # withdrawals هو سالب، لذا نضيفه بدلاً من طرحه
-        new_balance = deposits + withdrawals
         
         # تحديث الرصيد إذا كان مختلفاً
-        if self.balance != new_balance:
-            self.balance = new_balance
+        if self.balance != total_amount:
+            self.balance = total_amount
             self.save(update_fields=['balance'])
         
-        return new_balance
+        return total_amount
     
     def calculate_actual_balance(self):
-        """حساب الرصيد الفعلي دون حفظ التغييرات"""
+        """
+        حساب الرصيد الفعلي دون حفظ التغييرات
+        متوافق مع IFRS - IAS 7 (بيان التدفقات النقدية)
+        """
         from decimal import Decimal
         from django.db.models import Sum
         
-        deposits = CashboxTransaction.objects.filter(
-            cashbox=self,
-            transaction_type__in=['deposit', 'transfer_in', 'initial_balance', 'adjustment']
+        # حساب الرصيد من جميع المعاملات
+        total_amount = CashboxTransaction.objects.filter(
+            cashbox=self
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
         
-        withdrawals = CashboxTransaction.objects.filter(
-            cashbox=self,
-            transaction_type__in=['withdrawal', 'transfer_out']
-        ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
-        
-        return deposits + withdrawals
+        return total_amount
 
 
 class CashboxTransfer(models.Model):

@@ -9,9 +9,12 @@ def create_journal_entry_for_purchase_invoice(sender, instance, created, **kwarg
     """إنشاء القيد المحاسبي تلقائياً عند إنشاء أو تحديث فاتورة مشتريات"""
     try:
         # 🔧 تعطيل السيجنال أثناء عملية استعادة النسخة الاحتياطية
-        from backup.restore_context import is_restoring
-        if is_restoring():
-            return
+        try:
+            from backup.restore_context import is_restoring
+            if is_restoring():
+                return
+        except ImportError:
+            pass
         
         from journal.models import JournalEntry
         from journal.services import JournalService
@@ -35,10 +38,13 @@ def create_supplier_account_transaction(sender, instance, created, **kwargs):
     """إنشاء معاملة حساب المورد تلقائياً"""
     # 🔧 تعطيل السيجنال أثناء عملية استعادة النسخة الاحتياطية
     try:
-        from backup.restore_context import is_restoring
-        if is_restoring():
-            return
-    except ImportError:
+        try:
+            from backup.restore_context import is_restoring
+            if is_restoring():
+                return
+        except ImportError:
+            pass
+    except:
         pass
     
     if instance.payment_type == 'credit' and instance.items.count() > 0 and instance.total_amount > 0:
@@ -77,9 +83,12 @@ def update_inventory_on_purchase_invoice(sender, instance, created, **kwargs):
     """تحديث المخزون عند إنشاء أو تعديل فاتورة شراء"""
     try:
         # 🔧 تعطيل السيجنال أثناء عملية استعادة النسخة الاحتياطية
-        from backup.restore_context import is_restoring
-        if is_restoring():
-            return
+        try:
+            from backup.restore_context import is_restoring
+            if is_restoring():
+                return
+        except ImportError:
+            pass
         
         from inventory.models import InventoryMovement
         from core.models import AuditLog
@@ -190,10 +199,13 @@ def create_supplier_account_transaction_for_return(sender, instance, created, **
     """إنشاء معاملة حساب المورد للمردود تلقائياً"""
     # 🔧 تعطيل السيجنال أثناء عملية استعادة النسخة الاحتياطية
     try:
-        from backup.restore_context import is_restoring
-        if is_restoring():
-            return
-    except ImportError:
+        try:
+            from backup.restore_context import is_restoring
+            if is_restoring():
+                return
+        except ImportError:
+            pass
+    except:
         pass
     
     if instance.items.count() > 0 and instance.total_amount > 0:
@@ -318,9 +330,12 @@ def update_inventory_on_purchase_invoice_item(sender, instance, created, **kwarg
     """تحديث المخزون عند إضافة/تعديل عنصر فاتورة شراء"""
     try:
         # 🔧 تعطيل السيجنال أثناء عملية استعادة النسخة الاحتياطية
-        from backup.restore_context import is_restoring
-        if is_restoring():
-            return
+        try:
+            from backup.restore_context import is_restoring
+            if is_restoring():
+                return
+        except ImportError:
+            pass
         
         from inventory.models import InventoryMovement
         
@@ -362,7 +377,10 @@ def update_inventory_on_purchase_invoice_item(sender, instance, created, **kwarg
         print(f"تم تحديث المخزون لفاتورة الشراء {invoice.invoice_number}")
         
     except Exception as e:
-        print(f"خطأ في تحديث المخزون لفاتورة الشراء {invoice.invoice_number}: {e}")
+        try:
+            print(f"خطأ في تحديث المخزون لفاتورة الشراء {instance.invoice.invoice_number}: {e}")
+        except:
+            print(f"خطأ في تحديث المخزون: {e}")
         pass
 
 
@@ -415,3 +433,68 @@ def update_inventory_on_purchase_return_item(sender, instance, created, **kwargs
     except Exception as e:
         print(f"خطأ في تحديث المخزون لمردود المشتريات {return_invoice.return_number}: {e}")
         pass
+
+
+@receiver(post_save, sender=PurchaseInvoice)
+def update_supplier_balance_on_purchase(sender, instance, created, **kwargs):
+    """
+    تحديث رصيد المورد تلقائياً عند إنشاء أو تعديل فاتورة شراء
+    Update supplier balance automatically when purchase invoice is created or modified
+    
+    IFRS Compliance:
+    - IAS 2: Inventories
+    - IAS 37: Provisions, Contingent Liabilities and Contingent Assets
+    """
+    # تجنب التحديث المتكرر
+    if getattr(instance, '_skip_balance_update', False):
+        return
+    
+    # تعطيل السيجنال أثناء عملية استعادة النسخة الاحتياطية
+    try:
+        try:
+            from backup.restore_context import is_restoring
+            if is_restoring():
+                return
+        except ImportError:
+            pass
+    except:
+        pass
+    
+    # تحديث الرصيد فقط للموردين وإذا كانت الفاتورة تحتوي على عناصر
+    if instance.supplier and instance.items.count() > 0 and instance.total_amount > 0:
+        with transaction.atomic():
+            supplier = instance.supplier
+            
+            # حساب رصيد المورد من جميع الحركات
+            from decimal import Decimal
+            from django.db.models import Sum
+            from payments.models import PaymentVoucher
+            
+            # إجمالي المشتريات (دائن - تزيد الذمم الدائنة)
+            total_purchases = PurchaseInvoice.objects.filter(
+                supplier=supplier
+            ).aggregate(
+                total=Sum('total_amount')
+            )['total'] or Decimal('0.000')
+            
+            # إجمالي المدفوعات (مدين - تقلل الذمم الدائنة)
+            total_payments = PaymentVoucher.objects.filter(
+                supplier=supplier,
+                voucher_type='supplier',
+                is_reversed=False
+            ).aggregate(
+                total=Sum('amount')
+            )['total'] or Decimal('0.000')
+            
+            # الرصيد = المشتريات - المدفوعات
+            # Positive balance = we owe supplier (credit balance)
+            new_balance = total_purchases - total_payments
+            
+            # تحديث رصيد المورد
+            if supplier.balance != new_balance:
+                supplier._skip_signal = True  # تجنب تفعيل إشارة التحديث في نموذج المورد
+                supplier.balance = new_balance
+                supplier.save(update_fields=['balance'])
+                supplier._skip_signal = False
+                
+                print(f"✓ تم تحديث رصيد المورد {supplier.name}: {new_balance}")

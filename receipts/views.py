@@ -271,10 +271,8 @@ def receipt_add(request):
                 # For cash payment: add amount to cash box
                 if payment_type == 'cash' and cashbox_id:
                     cashbox = get_object_or_404(Cashbox, id=cashbox_id)
-                    cashbox.balance += amount
-                    cashbox.save()
                     
-                    # Add cash box transaction
+                    # Add cash box transaction - الرصيد سيتم تحديثه تلقائياً عبر signal
                     CashboxTransaction.objects.create(
                         cashbox=cashbox,
                         transaction_type='deposit',
@@ -469,15 +467,12 @@ def receipt_reverse(request, receipt_id):
                 if receipt.payment_type == 'cash' and receipt.cashbox:
                     cashbox = receipt.cashbox
                     if cashbox.balance >= receipt.amount:
-                        cashbox.balance -= receipt.amount
-                        cashbox.save()
-                        
-                        # Add cash box transaction
+                        # Add cash box transaction - الرصيد سيتم تحديثه تلقائياً عبر signal
                         CashboxTransaction.objects.create(
                             cashbox=cashbox,
                             transaction_type='withdrawal',
                             date=timezone.now().date(),
-                            amount=-receipt.amount,
+                            amount=receipt.amount,  # استخدم القيمة الموجبة، signal سيتعامل معها
                             description=f'{_("Reversal of receipt voucher")} {receipt.receipt_number} - {reason}',
                             reference_type='receipt',
                             reference_id=receipt.id,
@@ -585,10 +580,8 @@ def check_collect(request, receipt_id):
                 # إذا تم التحصيل بنجاح
                 if status == 'collected' and cashbox_id:
                     cashbox = get_object_or_404(Cashbox, id=cashbox_id)
-                    cashbox.balance += receipt.amount
-                    cashbox.save()
                     
-                    # Add cash box transaction
+                    # Add cash box transaction - الرصيد سيتم تحديثه تلقائياً عبر signal
                     CashboxTransaction.objects.create(
                         cashbox=cashbox,
                         transaction_type='deposit',
@@ -643,13 +636,14 @@ def check_collect(request, receipt_id):
                                 
                                 if not is_invoice_complete:
                                     # الفاتورة غير مكتملة - تسجيل كدفعة مقدمة
-                                    JournalService.create_check_early_collection_entry(
-                                        receipt, collection_date_obj, is_invoice_complete=False, user=request.user
-                                    )
+                                    try:
+                                        JournalService.create_check_early_collection_entry(
+                                            receipt, collection_date_obj, is_invoice_complete=False, user=request.user
+                                        )
+                                    except Exception as je:
+                                        logger.error(f'خطأ في إنشاء قيد التحصيل المبكر للشيك {receipt.check_number}: {je}')
                                     
                                     # إضافة تنبيه
-                                    import logging
-                                    logger = logging.getLogger(__name__)
                                     logger.info(f'تم تسجيل تحصيل الشيك {receipt.check_number} كدفعة مقدمة '
                                               f'بسبب عدم اكتمال الفاتورة المرتبطة.')
                                     
@@ -657,27 +651,36 @@ def check_collect(request, receipt_id):
                                     collection.save()
                                 else:
                                     # الفاتورة مكتملة - اعتراف طبيعي
-                                    JournalService.create_check_early_collection_entry(
-                                        receipt, collection_date_obj, is_invoice_complete=True, user=request.user
-                                    )
+                                    try:
+                                        JournalService.create_check_early_collection_entry(
+                                            receipt, collection_date_obj, is_invoice_complete=True, user=request.user
+                                        )
+                                    except Exception as je:
+                                        logger.error(f'خطأ في إنشاء قيد التحصيل المبكر للشيك {receipt.check_number}: {je}')
                                     
                                     # إضافة ملاحظة
                                     collection.notes += f'\n✅ تمت مراجعة الإيراد - لا تأثير على IFRS 9 (فاتورة مكتملة)'
                                     collection.save()
                             else:
                                 # لم يتم العثور على فاتورة مرتبطة - اعتراف طبيعي
-                                JournalService.create_check_early_collection_entry(
-                                    receipt, collection_date_obj, is_invoice_complete=True, user=request.user
-                                )
+                                try:
+                                    JournalService.create_check_early_collection_entry(
+                                        receipt, collection_date_obj, is_invoice_complete=True, user=request.user
+                                    )
+                                except Exception as je:
+                                    logger.error(f'خطأ في إنشاء قيد التحصيل المبكر للشيك {receipt.check_number}: {je}')
                                 
                                 collection.notes += f'\n⚠️ لم يتم العثور على فاتورة مرتبطة - يرجى التأكد من عدم الاعتراف المبكر بالإيراد'
                                 collection.save()
                         except Exception as e:
                             # في حالة خطأ في البحث عن الفاتورة - اعتراف طبيعي
-                            JournalService.create_check_early_collection_entry(
-                                receipt, collection_date_obj, is_invoice_complete=True, user=request.user
-                            )
-                            print(f"خطأ في البحث عن الفاتورة المرتبطة: {e}")
+                            logger.error(f"خطأ في البحث عن الفاتورة المرتبطة: {e}")
+                            try:
+                                JournalService.create_check_early_collection_entry(
+                                    receipt, collection_date_obj, is_invoice_complete=True, user=request.user
+                                )
+                            except Exception as je:
+                                logger.error(f'خطأ في إنشاء قيد التحصيل المبكر للشيك {receipt.check_number}: {je}')
                 
                 # إذا ارتد الشيك - معالجة الأخطاء تلقائياً IFRS 9 متوافق
                 elif status == 'bounced':
@@ -685,13 +688,14 @@ def check_collect(request, receipt_id):
                     from datetime import datetime
                     collection_date_obj = datetime.strptime(collection_date, '%Y-%m-%d').date()
                     
-                    JournalService.create_check_bounced_entry(
-                        receipt, collection_date_obj, user=request.user
-                    )
+                    try:
+                        JournalService.create_check_bounced_entry(
+                            receipt, collection_date_obj, user=request.user
+                        )
+                    except Exception as e:
+                        logger.error(f'خطأ في إنشاء قيد يومية للشيك المرتد {receipt.check_number}: {e}')
                     
                     # إضافة تنبيه في السجل
-                    import logging
-                    logger = logging.getLogger(__name__)
                     logger.warning(f'ارتداد شيك رقم {receipt.check_number} - تم إنشاء قيد يومية أوتوماتيكي '
                                  f'لنقل المبلغ من شيكات تحت التحصيل إلى ذمم مدينة وفق IFRS 9. '
                                  f'سبب الارتداد: {bounce_reason or "غير محدد"}')
