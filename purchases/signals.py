@@ -1,4 +1,4 @@
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import post_save, pre_save, pre_delete
 from django.dispatch import receiver
 from .models import PurchaseInvoice, PurchaseInvoiceItem, PurchaseReturn, PurchaseReturnItem, PurchaseDebitNote
 from django.db import transaction
@@ -498,3 +498,88 @@ def update_supplier_balance_on_purchase(sender, instance, created, **kwargs):
                 supplier._skip_signal = False
                 
                 print(f"✓ تم تحديث رصيد المورد {supplier.name}: {new_balance}")
+
+
+@receiver(post_save, sender=PurchaseDebitNote)
+def create_purchase_debit_note_entry(sender, instance, created, **kwargs):
+    """
+    إنشاء أو تحديث قيد محاسبي عند حفظ إشعار خصم المشتريات (Debit Note)
+    """
+    if hasattr(instance, '_skip_journal_entry'):
+        return
+        
+    try:
+        from journal.services import JournalService
+        
+        if created:
+            # إنشاء قيد جديد
+            JournalService.create_purchase_debit_note_entry(instance, instance.created_by)
+            print(f"✓ تم إنشاء قيد محاسبي لإشعار خصم المشتريات رقم {instance.note_number}")
+        else:
+            # تحديث قيد موجود
+            # حذف القيد القديم أولاً
+            from journal.models import JournalEntry
+            old_entries = JournalEntry.objects.filter(
+                reference_type='purchase_debit_note',
+                reference_id=instance.id
+            )
+            if old_entries.exists():
+                old_entries.delete()
+                print(f"تم حذف القيد القديم لإشعار خصم المشتريات {instance.note_number}")
+            
+            # إنشاء قيد جديد
+            JournalService.create_purchase_debit_note_entry(instance, instance.created_by)
+            print(f"✓ تم تحديث قيد محاسبي لإشعار خصم المشتريات رقم {instance.note_number}")
+            
+        # إنشاء أو تحديث معاملة حساب المورد
+        from accounts.models import AccountTransaction
+        import uuid
+        
+        # حذف المعاملة القديمة إذا كانت موجودة
+        AccountTransaction.objects.filter(
+            reference_type='purchase_debit_note',
+            reference_id=instance.id
+        ).delete()
+        
+        # إنشاء معاملة جديدة
+        transaction_number = f"PDN-{uuid.uuid4().hex[:8].upper()}"
+        AccountTransaction.objects.create(
+            transaction_number=transaction_number,
+            date=instance.date,
+            customer_supplier=instance.supplier,
+            transaction_type='debit_note',
+            direction='debit',  # مدين (زيادة المدينية من المورد)
+            amount=instance.total_amount,
+            reference_type='purchase_debit_note',
+            reference_id=instance.id,
+            description=f'إشعار مدين رقم {instance.note_number}',
+            notes=instance.notes or '',
+            created_by=instance.created_by
+        )
+        print(f"✓ تم إنشاء معاملة حساب {transaction_number} لإشعار المدين {instance.note_number}")
+    except Exception as e:
+        print(f"✗ خطأ في إنشاء قيد محاسبي لإشعار خصم المشتريات: {e}")
+
+
+@receiver(pre_delete, sender=PurchaseDebitNote)
+def delete_purchase_debit_note_journal_entry(sender, instance, **kwargs):
+    """حذف القيد المحاسبي عند حذف إشعار المدين"""
+    try:
+        from journal.models import JournalEntry
+        from accounts.models import AccountTransaction
+        
+        # حذف القيد المحاسبي
+        JournalEntry.objects.filter(
+            reference_type='purchase_debit_note',
+            reference_id=instance.id
+        ).delete()
+        
+        # حذف معاملات الحساب
+        AccountTransaction.objects.filter(
+            reference_type='purchase_debit_note',
+            reference_id=instance.id
+        ).delete()
+        
+        print(f"✓ تم حذف القيد المحاسبي لإشعار المدين {instance.note_number}")
+    except Exception as e:
+        print(f"✗ خطأ في حذف قيد إشعار المدين: {e}")

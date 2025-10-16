@@ -43,7 +43,7 @@ urlpatterns = [
     path('returns-statement/', views.SalesReturnStatementView.as_view(), name='sales_return_statement'),
     # Credit Notes (separate section)
     path('credit-notes/', views.SalesCreditNoteListView.as_view(), name='creditnote_list'),
-    # path('credit-notes/add/', views.sales_creditnote_create, name='creditnote_add'),
+    path('credit-notes/add/', views.sales_creditnote_create, name='creditnote_add'),
     path('credit-notes/<int:pk>/', views.SalesCreditNoteDetailView.as_view(), name='creditnote_detail'),
     path('credit-notes/edit/<int:pk>/', views.SalesCreditNoteUpdateView.as_view(), name='creditnote_edit'),
     path('credit-notes/delete/<int:pk>/', views.SalesCreditNoteDeleteView.as_view(), name='creditnote_delete'),

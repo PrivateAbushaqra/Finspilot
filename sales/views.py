@@ -18,6 +18,7 @@ from .models import SalesCreditNote
 from products.models import Product
 from customers.models import CustomerSupplier
 from settings.models import CompanySettings, Currency
+from core.models import DocumentSequence
 
 
 def get_product_stock_in_warehouse(product, warehouse):
@@ -1620,7 +1621,7 @@ def sales_return_create(request):
                                     # parse quantity/price/tax robustly to accept '1.5' or '1,5' etc.
                                     quantity = parse_decimal_input(return_quantities[i], name='quantity', default=Decimal('0'))
                                     unit_price = parse_decimal_input(return_prices[i], name='price', default=Decimal('0'))
-                                    tax_rate = parse_decimal_input(return_tax_rates[i] if i < len(return_tax_rates) else '0', name='tax_rate', default=Decimal('0'))
+                                    tax_rate = parse_decimal_input(return_taxRates[i] if i < len(return_taxRates) else '0', name='tax_rate', default=Decimal('0'))
 
                                     # حساب مبلغ الضريبة لهذا السطر
                                     line_subtotal = quantity * unit_price
@@ -1705,62 +1706,37 @@ class SalesCreditNoteListView(LoginRequiredMixin, UserPassesTestMixin, ListView)
     model = SalesCreditNote
     template_name = 'sales/creditnote_list.html'
     context_object_name = 'creditnotes'
-    paginate_by = 10
-    
+    paginate_by = 25
+
     def test_func(self):
-        return self.request.user.has_sales_permission()
-    
+        return (
+            self.request.user.has_perm('sales.can_view_creditnote') or
+            self.request.user.is_superuser
+        )
+
     def get_queryset(self):
-        queryset = SalesCreditNote.objects.all()
+        queryset = SalesCreditNote.objects.select_related('customer', 'created_by').all()
         
-        # Search functionality
-        search = self.request.GET.get('search')
-        if search:
-            queryset = queryset.filter(
-                Q(note_number__icontains=search) |
-                Q(customer__name__icontains=search)
-            )
+        # فلترة حسب العميل
+        customer_id = self.request.GET.get('customer')
+        if customer_id:
+            queryset = queryset.filter(customer_id=customer_id)
         
-        # Date filter
-        date_from = self.request.GET.get('date_from')
-        date_to = self.request.GET.get('date_to')
-        if date_from:
-            queryset = queryset.filter(date__gte=date_from)
-        if date_to:
-            queryset = queryset.filter(date__lte=date_to)
+        # فلترة حسب التاريخ
+        start_date = self.request.GET.get('start_date')
+        end_date = self.request.GET.get('end_date')
+        if start_date:
+            queryset = queryset.filter(date__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(date__lte=end_date)
         
-        # Apply ordering
-        order_by = self.request.GET.get('order_by', '-date')
-        if order_by.startswith('-'):
-            queryset = queryset.order_by(order_by, '-id')
-        else:
-            queryset = queryset.order_by(order_by, 'id')
-        
-        return queryset.select_related('customer', 'created_by')
-    
+        return queryset.order_by('-date', '-id')
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['customers'] = CustomerSupplier.objects.filter(type__in=['customer', 'both'])
         
-        # Statistics
-        creditnotes = SalesCreditNote.objects.all()
-        context['total_creditnotes'] = creditnotes.count()
-        context['total_credit_amount'] = creditnotes.aggregate(
-            total=Sum('total_amount')
-        )['total'] or 0
-        
-        # This month's credit notes
-        current_month = timezone.now().replace(day=1)
-        month_creditnotes = creditnotes.filter(date__gte=current_month).count()
-        context['month_creditnotes'] = month_creditnotes
-        
-        # Active customers (customers with credit notes)
-        active_customers = CustomerSupplier.objects.filter(
-            Q(type='customer') | Q(type='both'),
-            salescreditnote__isnull=False
-        ).distinct().count()
-        context['active_customers'] = active_customers
-        
-        # Currency and company settings
+        # Currency settings
         try:
             company_settings = CompanySettings.objects.first()
             if company_settings and company_settings.base_currency:
@@ -1770,12 +1746,83 @@ class SalesCreditNoteListView(LoginRequiredMixin, UserPassesTestMixin, ListView)
         except:
             pass
         
-        context['active_currencies'] = Currency.objects.filter(is_active=True)
-        
-        # Current ordering
-        context['current_order'] = self.request.GET.get('order_by', '-date')
-        
         return context
+
+
+def sales_creditnote_create(request):
+    if not (
+        request.user.has_perm('sales.can_view_creditnote') or
+        request.user.has_perm('sales.add_salescreditnote') or
+        request.user.is_superuser
+    ):
+        from django.contrib import messages
+        from django.shortcuts import redirect
+        messages.error(request, _('ليس لديك صلاحية لإنشاء إشعار دائن'))
+        return redirect('/')
+    
+    if request.method == 'POST':
+        try:
+            with transaction.atomic():
+                customer_id = request.POST.get('customer')
+                if not customer_id:
+                    messages.error(request, _('يرجى اختيار عميل'))
+                    return redirect('sales:creditnote_add')
+
+                customer = get_object_or_404(CustomerSupplier, id=customer_id)
+
+                # توليد الرقم
+                try:
+                    seq = DocumentSequence.objects.get(document_type='credit_note')
+                    note_number = seq.get_next_number()
+                except DocumentSequence.DoesNotExist:
+                    last = SalesCreditNote.objects.order_by('-id').first()
+                    number = last.id + 1 if last else 1
+                    note_number = f"CN-{number:06d}"
+
+                credit = SalesCreditNote.objects.create(
+                    note_number=note_number,
+                    date=request.POST.get('date', date.today()),
+                    customer=customer,
+                    subtotal=Decimal(request.POST.get('subtotal', '0') or '0'),
+                    notes=request.POST.get('notes', ''),
+                    created_by=request.user
+                )
+
+                # إنشاء القيد المحاسبي
+                try:
+                    from journal.services import JournalService
+                    JournalService.create_sales_credit_note_entry(credit, request.user)
+                    messages.success(request, f'تم إنشاء القيد المحاسبي لإشعار الدائن رقم {credit.note_number}')
+                except Exception as e:
+                    error_msg = f"Error creating journal entry for credit note: {str(e)}"
+                    logging.getLogger(__name__).error(error_msg)
+                    messages.warning(request, f'تم إنشاء إشعار الدائن ولكن حدث خطأ في القيد المحاسبي: {str(e)}')
+
+                try:
+                    from core.signals import log_user_activity
+                    log_user_activity(request, 'create', credit, _('إنشاء إشعار دائن رقم %(number)s') % {'number': credit.note_number})
+                except Exception:
+                    pass
+
+                messages.success(request, _('تم إنشاء إشعار دائن رقم %(number)s') % {'number': credit.note_number})
+                return redirect('sales:creditnote_detail', pk=credit.pk)
+        except Exception as e:
+            messages.error(request, _('حدث خطأ أثناء حفظ الإشعار: %(error)s') % {'error': str(e)})
+            return redirect('sales:creditnote_add')
+
+    context = {
+        'customers': CustomerSupplier.objects.filter(Q(type='customer')|Q(type='both')),
+        'today_date': date.today().isoformat(),
+    }
+    try:
+        seq = DocumentSequence.objects.get(document_type='credit_note')
+        context['next_note_number'] = seq.peek_next_number() if hasattr(seq, 'peek_next_number') else seq.get_formatted_number()
+    except DocumentSequence.DoesNotExist:
+        last = SalesCreditNote.objects.order_by('-id').first()
+        number = last.id + 1 if last else 1
+        context['next_note_number'] = f"CN-{number:06d}"
+
+    return render(request, 'sales/creditnote_add.html', context)
 
 
 class SalesCreditNoteDetailView(LoginRequiredMixin, DetailView):
@@ -2794,20 +2841,21 @@ class SalesCreditNoteReportView(LoginRequiredMixin, UserPassesTestMixin, ListVie
     def get_queryset(self):
         queryset = SalesCreditNote.objects.select_related('customer', 'created_by').all()
         
-        # فلترة حسب التاريخ
-        date_from = self.request.GET.get('date_from')
-        date_to = self.request.GET.get('date_to')
-        customer = self.request.GET.get('customer')
+        # فلترة حسب العميل
+        customer_id = self.request.GET.get('customer')
+        if customer_id:
+            queryset = queryset.filter(customer_id=customer_id)
         
-        if date_from:
-            queryset = queryset.filter(date__gte=date_from)
-        if date_to:
-            queryset = queryset.filter(date__lte=date_to)
-        if customer:
-            queryset = queryset.filter(customer_id=customer)
-            
+        # فلترة حسب التاريخ
+        start_date = self.request.GET.get('start_date')
+        end_date = self.request.GET.get('end_date')
+        if start_date:
+            queryset = queryset.filter(date__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(date__lte=end_date)
+        
         return queryset.order_by('-date', '-note_number')
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         

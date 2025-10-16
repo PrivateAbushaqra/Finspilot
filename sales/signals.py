@@ -451,7 +451,7 @@ def update_inventory_on_sales_return(sender, instance, created, **kwargs):
                         movement_type='in',
                         reference_type='sales_return',
                         reference_id=instance.id,
-                        quantity=item.returned_quantity,
+                        quantity=item.quantity,
                         unit_cost=item.unit_price,
                         notes=f'مردود مبيعات - رقم {instance.return_number}',
                         created_by=instance.created_by
@@ -466,7 +466,7 @@ def update_inventory_on_sales_return(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=SalesCreditNote)
 def create_sales_credit_note_journal_entry(sender, instance, created, **kwargs):
-    """إنشاء قيد محاسبي لإشعار الدائن"""
+    """إنشاء أو تحديث قيد محاسبي لإشعار الدائن"""
     # 🔧 تجاهل أثناء استعادة النسخة الاحتياطية
     try:
         from backup.restore_context import is_restoring
@@ -476,11 +476,56 @@ def create_sales_credit_note_journal_entry(sender, instance, created, **kwargs):
         pass
     
     try:
+        from journal.services import JournalService
+        
         if created:
-            from journal.services import JournalService
+            # إنشاء قيد جديد
             entry = JournalService.create_sales_credit_note_entry(instance, instance.created_by)
             if entry:
                 print(f"تم إنشاء قيد {entry.entry_number} لإشعار الدائن {instance.note_number}")
+        else:
+            # تحديث قيد موجود
+            # حذف القيد القديم أولاً
+            from journal.models import JournalEntry
+            old_entries = JournalEntry.objects.filter(
+                reference_type='sales_credit_note',
+                reference_id=instance.id
+            )
+            if old_entries.exists():
+                old_entries.delete()
+                print(f"تم حذف القيد القديم لإشعار الدائن {instance.note_number}")
+            
+            # إنشاء قيد جديد
+            entry = JournalService.create_sales_credit_note_entry(instance, instance.created_by)
+            if entry:
+                print(f"تم تحديث قيد {entry.entry_number} لإشعار الدائن {instance.note_number}")
+                
+        # إنشاء أو تحديث معاملة حساب العميل
+        from accounts.models import AccountTransaction
+        import uuid
+        
+        # حذف المعاملة القديمة إذا كانت موجودة
+        AccountTransaction.objects.filter(
+            reference_type='sales_credit_note',
+            reference_id=instance.id
+        ).delete()
+        
+        # إنشاء معاملة جديدة
+        transaction_number = f"SCN-{uuid.uuid4().hex[:8].upper()}"
+        AccountTransaction.objects.create(
+            transaction_number=transaction_number,
+            date=instance.date,
+            customer_supplier=instance.customer,
+            transaction_type='credit_note',
+            direction='credit',  # دائن (تقليل المدينية من العميل)
+            amount=instance.total_amount,
+            reference_type='sales_credit_note',
+            reference_id=instance.id,
+            description=f'إشعار دائن رقم {instance.note_number}',
+            notes=instance.notes or '',
+            created_by=instance.created_by
+        )
+        print(f"تم إنشاء معاملة حساب {transaction_number} لإشعار الدائن {instance.note_number}")
     except Exception as e:
         print(f"خطأ في إنشاء قيد إشعار الدائن {instance.note_number}: {e}")
         pass
@@ -561,3 +606,27 @@ def create_cogs_entry_for_sales_invoice_item(sender, instance, created, **kwargs
     
     # تم تعطيل إنشاء COGS من هنا
     pass
+
+
+@receiver(pre_delete, sender=SalesCreditNote)
+def delete_sales_credit_note_journal_entry(sender, instance, **kwargs):
+    """حذف القيد المحاسبي عند حذف إشعار الدائن"""
+    try:
+        from journal.models import JournalEntry
+        from accounts.models import AccountTransaction
+        
+        # حذف القيد المحاسبي
+        JournalEntry.objects.filter(
+            reference_type='sales_credit_note',
+            reference_id=instance.id
+        ).delete()
+        
+        # حذف معاملات الحساب
+        AccountTransaction.objects.filter(
+            reference_type='sales_credit_note',
+            reference_id=instance.id
+        ).delete()
+        
+        print(f"✓ تم حذف القيد المحاسبي لإشعار الدائن {instance.note_number}")
+    except Exception as e:
+        print(f"✗ خطأ في حذف قيد إشعار الدائن: {e}")

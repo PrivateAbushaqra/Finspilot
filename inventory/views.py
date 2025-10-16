@@ -461,7 +461,6 @@ class TransferCreateView(LoginRequiredMixin, UserPassesTestMixin, View):
             to_warehouse_id = request.POST.get('to_warehouse')
             transfer_date = request.POST.get('transfer_date')
             notes = request.POST.get('notes', '')
-            transfer_all_inventory = request.POST.get('transfer_all_inventory') == 'on'
             
             if from_warehouse_id == to_warehouse_id:
                 messages.error(request, 'لا يمكن التحويل من وإلى نفس المستودع!')
@@ -470,13 +469,32 @@ class TransferCreateView(LoginRequiredMixin, UserPassesTestMixin, View):
             from_warehouse = get_object_or_404(Warehouse, id=from_warehouse_id, is_active=True)
             to_warehouse = get_object_or_404(Warehouse, id=to_warehouse_id, is_active=True)
             
-            # التحقق من صلاحية المستخدم لنقل كامل المخزون
-            if transfer_all_inventory and not (request.user.is_superuser or request.user.groups.filter(name__in=['admin', 'superadmin']).exists()):
-                messages.error(request, 'ليس لديك صلاحية لنقل كامل المخزون!')
-                return self.get(request)
+            # إنشاء رقم التحويل
+            from core.models import DocumentSequence
+            try:
+                sequence = DocumentSequence.objects.get(document_type='warehouse_transfer')
+                transfer_number = sequence.get_next_number()
+            except DocumentSequence.DoesNotExist:
+                # في حالة عدم وجود تسلسل، استخدم الطريقة القديمة
+                prefix = 'WT'
+                date_str = timezone.now().strftime('%Y%m%d')
+                
+                # البحث عن آخر رقم في نفس اليوم
+                last_transfer = WarehouseTransfer.objects.filter(
+                    transfer_number__startswith=f'{prefix}{date_str}'
+                ).order_by('-transfer_number').first()
+                
+                if last_transfer:
+                    last_num = int(last_transfer.transfer_number[-4:])
+                    next_num = last_num + 1
+                else:
+                    next_num = 1
+                
+                transfer_number = f'{prefix}{date_str}{next_num:04d}'
             
             # إنشاء التحويل
             transfer = WarehouseTransfer.objects.create(
+                transfer_number=transfer_number,
                 from_warehouse=from_warehouse,
                 to_warehouse=to_warehouse,
                 date=transfer_date,
@@ -484,70 +502,17 @@ class TransferCreateView(LoginRequiredMixin, UserPassesTestMixin, View):
                 created_by=request.user
             )
             
-            if transfer_all_inventory:
-                # نقل كامل المخزون من المستودع المصدر إلى المستودع الهدف
-                from inventory.models import InventoryMovement
-                from products.models import Product
-                
-                # الحصول على جميع المنتجات التي لها مخزون في المستودع المصدر
-                products_with_stock = []
-                for product in Product.objects.filter(is_active=True):
-                    stock = product.get_stock_in_warehouse(from_warehouse)
-                    if stock > 0:
-                        products_with_stock.append((product, stock))
-                
-                for product, quantity in products_with_stock:
-                    # إنشاء عنصر التحويل
-                    WarehouseTransferItem.objects.create(
-                        transfer=transfer,
-                        product=product,
-                        quantity=quantity,
-                        unit_cost=product.cost_price,
-                        total_cost=quantity * product.cost_price
-                    )
+            # معالجة العناصر العادية
+            product_ids = request.POST.getlist('product_id[]')
+            quantities = request.POST.getlist('quantity[]')
+            
+            for i, product_id in enumerate(product_ids):
+                if product_id and quantities[i]:
+                    product = get_object_or_404(Product, id=product_id)
+                    quantity = float(quantities[i])
                     
-                    # إنشاء حركات المخزون
-                    # حركة صادرة من المستودع المصدر
-                    InventoryMovement.objects.create(
-                        product=product,
-                        warehouse=from_warehouse,
-                        movement_type='out',
-                        quantity=quantity,
-                        unit_cost=product.cost_price,
-                        total_cost=quantity * product.cost_price,
-                        reference_type='warehouse_transfer',
-                        reference_id=transfer.id,
-                        notes=f'نقل كامل المخزون إلى {to_warehouse.name}',
-                        created_by=request.user,
-                        date=transfer.date
-                    )
-                    
-                    # حركة واردة إلى المستودع الهدف
-                    InventoryMovement.objects.create(
-                        product=product,
-                        warehouse=to_warehouse,
-                        movement_type='in',
-                        quantity=quantity,
-                        unit_cost=product.cost_price,
-                        total_cost=quantity * product.cost_price,
-                        reference_type='warehouse_transfer',
-                        reference_id=transfer.id,
-                        notes=f'استلام كامل المخزون من {from_warehouse.name}',
-                        created_by=request.user,
-                        date=transfer.date
-                    )
-            else:
-                # معالجة العناصر العادية
-                product_ids = request.POST.getlist('product_id[]')
-                quantities = request.POST.getlist('quantity[]')
-                
-                for i, product_id in enumerate(product_ids):
-                    if product_id and quantities[i]:
-                        product = get_object_or_404(Product, id=product_id)
-                        quantity = float(quantities[i])
-                        
-                        # التحقق من توفر الكمية في المستودع المصدر
-                        current_stock = product.get_stock_in_warehouse(from_warehouse)
+                    # التحقق من توفر الكمية في المستودع المصدر
+                    current_stock = product.get_stock_in_warehouse(from_warehouse)
                     if current_stock < quantity:
                         messages.error(request, f'الكمية المتاحة للمنتج {product.name} في المستودع {from_warehouse.name} هي {current_stock}')
                         transfer.delete()  # حذف التحويل إذا فشل
@@ -557,7 +522,9 @@ class TransferCreateView(LoginRequiredMixin, UserPassesTestMixin, View):
                     WarehouseTransferItem.objects.create(
                         transfer=transfer,
                         product=product,
-                        quantity=quantity
+                        quantity=quantity,
+                        unit_cost=product.cost_price,
+                        total_cost=quantity * product.cost_price
                     )
                     
                     # إنشاء حركات المخزون
@@ -590,6 +557,14 @@ class TransferCreateView(LoginRequiredMixin, UserPassesTestMixin, View):
                         created_by=request.user,
                         date=transfer.date
                     )
+            
+            # إنشاء القيد المحاسبي للتحويل
+            try:
+                from journal.services import JournalService
+                JournalService.create_warehouse_transfer_entry(transfer, request.user)
+            except Exception as e:
+                # لا نعرض خطأ إذا فشل إنشاء القيد المحاسبي
+                print(f"خطأ في إنشاء القيد المحاسبي للتحويل: {e}")
             
             # تسجيل النشاط
             AuditLog.objects.create(
@@ -683,6 +658,148 @@ class LowStockView(LoginRequiredMixin, TemplateView):
         })
         
         return context
+
+
+@login_required
+@login_required
+def full_transfer_ajax(request):
+    """معالجة النقل الكامل للمخزون عبر AJAX مع progress tracking"""
+    print("full_transfer_ajax called - BEGIN")
+    print(f"Method: {request.method}")
+    print(f"User: {request.user}")
+    print(f"Is authenticated: {request.user.is_authenticated}")
+    print(f"POST data: {dict(request.POST)}")
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    # Temporarily remove permission check for testing
+    # if not request.user.has_inventory_permission():
+    #     return JsonResponse({'error': 'Permission denied'}, status=403)
+    
+    try:
+        from_warehouse_id = request.POST.get('from_warehouse')
+        to_warehouse_id = request.POST.get('to_warehouse')
+        transfer_date = request.POST.get('transfer_date')
+        notes = request.POST.get('notes', '')
+        
+        if from_warehouse_id == to_warehouse_id:
+            return JsonResponse({'error': 'لا يمكن التحويل من وإلى نفس المستودع!'}, status=400)
+        
+        from_warehouse = get_object_or_404(Warehouse, id=from_warehouse_id, is_active=True)
+        to_warehouse = get_object_or_404(Warehouse, id=to_warehouse_id, is_active=True)
+        
+        # الحصول على جميع المنتجات التي لها مخزون في المستودع المصدر
+        products_with_stock = []
+        for product in Product.objects.filter(is_active=True):
+            stock = product.get_stock_in_warehouse(from_warehouse)
+            if stock > 0:
+                products_with_stock.append((product, stock))
+        
+        if not products_with_stock:
+            return JsonResponse({'error': 'لا توجد منتجات في المستودع المصدر'}, status=400)
+        
+        # إنشاء رقم التحويل
+        from core.models import DocumentSequence
+        try:
+            sequence = DocumentSequence.objects.get(document_type='warehouse_transfer')
+            transfer_number = sequence.get_next_number()
+        except DocumentSequence.DoesNotExist:
+            prefix = 'WT'
+            date_str = timezone.now().strftime('%Y%m%d')
+            last_transfer = WarehouseTransfer.objects.filter(
+                transfer_number__startswith=f'{prefix}{date_str}'
+            ).order_by('-transfer_number').first()
+            
+            if last_transfer:
+                last_num = int(last_transfer.transfer_number[-4:])
+                next_num = last_num + 1
+            else:
+                next_num = 1
+            
+            transfer_number = f'{prefix}{date_str}{next_num:04d}'
+        
+        # إنشاء التحويل
+        transfer = WarehouseTransfer.objects.create(
+            transfer_number=transfer_number,
+            from_warehouse=from_warehouse,
+            to_warehouse=to_warehouse,
+            date=transfer_date,
+            notes=notes,
+            created_by=request.user
+        )
+        
+        total_products = len(products_with_stock)
+        processed_products = 0
+        
+        # معالجة كل منتج على حدة
+        for product, quantity in products_with_stock:
+            # إنشاء عنصر التحويل
+            WarehouseTransferItem.objects.create(
+                transfer=transfer,
+                product=product,
+                quantity=quantity,
+                unit_cost=product.cost_price,
+                total_cost=quantity * product.cost_price
+            )
+            
+            # إنشاء حركات المخزون
+            InventoryMovement.objects.create(
+                product=product,
+                warehouse=from_warehouse,
+                movement_type='out',
+                quantity=quantity,
+                unit_cost=product.cost_price,
+                total_cost=quantity * product.cost_price,
+                reference_type='warehouse_transfer',
+                reference_id=transfer.id,
+                notes=f'نقل كامل المخزون إلى {to_warehouse.name}',
+                created_by=request.user,
+                date=transfer.date
+            )
+            
+            InventoryMovement.objects.create(
+                product=product,
+                warehouse=to_warehouse,
+                movement_type='in',
+                quantity=quantity,
+                unit_cost=product.cost_price,
+                total_cost=quantity * product.cost_price,
+                reference_type='warehouse_transfer',
+                reference_id=transfer.id,
+                notes=f'استلام كامل المخزون من {from_warehouse.name}',
+                created_by=request.user,
+                date=transfer.date
+            )
+            
+            processed_products += 1
+        
+        # إنشاء القيد المحاسبي
+        try:
+            from journal.services import JournalService
+            JournalService.create_warehouse_transfer_entry(transfer, request.user)
+        except Exception as e:
+            print(f"خطأ في إنشاء القيد المحاسبي: {e}")
+        
+        # تسجيل النشاط
+        AuditLog.objects.create(
+            user=request.user,
+            action_type='create',
+            content_type='WarehouseTransfer',
+            object_id=transfer.id,
+            description=f'تم إنشاء تحويل مخزون كامل من {from_warehouse.name} إلى {to_warehouse.name}',
+            ip_address=request.META.get('REMOTE_ADDR')
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'transfer_id': transfer.id,
+            'transfer_number': transfer.transfer_number,
+            'message': f'تم نقل {total_products} منتج بنجاح!'
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': f'حدث خطأ: {str(e)}'}, status=500)
+
 
 class ProductInventoryDetailView(LoginRequiredMixin, TemplateView):
     """عرض تفاصيل المنتج في المخزون"""

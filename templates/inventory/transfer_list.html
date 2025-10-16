@@ -46,13 +46,34 @@
                             <tbody>
                                 {% for transfer in transfers %}
                                 <tr>
-                                    <td>{{ transfer.id }}</td>
+                                    <td>{{ transfer.transfer_number }}</td>
                                     <td>{{ transfer.date|date:"d/m/Y" }}</td>
                                     <td>{{ transfer.from_warehouse.name }}</td>
                                     <td>{{ transfer.to_warehouse.name }}</td>
-                                    <td>{{ transfer.created_by.get_full_name|default:transfer.created_by.username }}</td>
                                     <td>
-                                        <span class="badge badge-info">{% trans "Completed" %}</span>
+                                        {% if transfer.created_by %}
+                                            {% if transfer.created_by.get_full_name and transfer.created_by.get_full_name != 'غير محدد غير محدد' %}
+                                                {{ transfer.created_by.get_full_name }}
+                                            {% else %}
+                                                {{ transfer.created_by.username }}
+                                            {% endif %}
+                                        {% else %}
+                                            {% trans "Unknown" %}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="#" class="btn btn-sm btn-outline-primary" title="{% trans 'View Details' %}">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="#" class="btn btn-sm btn-outline-warning" title="{% trans 'Edit' %}">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="#" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}" onclick="return confirm('هل أنت متأكد من حذف هذا التحويل؟')">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                        <span class="badge badge-info ms-2">{% trans "Completed" %}</span>
                                     </td>
                                 </tr>
                                 {% endfor %}

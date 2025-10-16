@@ -71,6 +71,7 @@ class JournalEntry(models.Model):
         ('manual', _('Manual Entry')),
         ('adjustment', _('Adjustment Entry')),
         ('customer_supplier_adjustment', _('Customer/Supplier Balance Adjustment')),
+        ('warehouse_transfer', _('Warehouse Transfer')),
     ]
 
     # أنواع القيود

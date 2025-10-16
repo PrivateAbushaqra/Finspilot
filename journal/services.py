@@ -69,6 +69,58 @@ class JournalService:
                 )
             
             return journal_entry
+
+    @staticmethod
+    @staticmethod
+    def create_warehouse_transfer_entry(transfer, user=None):
+        """إنشاء قيد محاسبي لتحويل المستودعات"""
+        # التحقق من عدم وجود قيد سابق لهذا التحويل
+        existing_entry = JournalEntry.objects.filter(
+            reference_type='warehouse_transfer',
+            reference_id=transfer.id
+        ).first()
+        
+        if existing_entry:
+            print(f"قيد التحويل موجود بالفعل للتحويل {transfer.transfer_number}: {existing_entry.entry_number}")
+            return existing_entry
+        
+        # التحويلات المخزنية لا تحتاج عادةً إلى قيود محاسبية لأن البضائع لا تزال في المخزون
+        # لكن يمكن إنشاء قيد لأغراض التتبع أو تسجيل التكاليف
+        
+        # حساب إجمالي التكلفة
+        total_cost = sum(item.total_cost for item in transfer.items.all())
+        
+        if total_cost == 0:
+            print(f"تجاهل إنشاء قيد للتحويل {transfer.transfer_number} - إجمالي التكلفة صفر")
+            return None
+        
+        # إنشاء قيد لتسجيل حركة المخزون (اختياري - لأغراض التتبع)
+        # هذا القيد يسجل انتقال التكلفة من مستودع إلى آخر
+        lines_data = [
+            {
+                'account_id': JournalService.get_inventory_account().id,
+                'debit': total_cost,
+                'credit': 0,
+                'description': f'تحويل مخزون من {transfer.from_warehouse.name} إلى {transfer.to_warehouse.name}'
+            },
+            {
+                'account_id': JournalService.get_inventory_account().id,
+                'debit': 0,
+                'credit': total_cost,
+                'description': f'استلام مخزون من {transfer.from_warehouse.name} إلى {transfer.to_warehouse.name}'
+            }
+        ]
+        
+        journal_entry = JournalService.create_journal_entry(
+            entry_date=transfer.date,
+            reference_type='warehouse_transfer',
+            reference_id=transfer.id,
+            description=f'تحويل مخزون رقم {transfer.transfer_number} من {transfer.from_warehouse.name} إلى {transfer.to_warehouse.name}',
+            lines_data=lines_data,
+            user=user
+        )
+        
+        return journal_entry
     
     @staticmethod
     def create_sales_invoice_entry(invoice, user=None):
@@ -875,12 +927,14 @@ class JournalService:
             })
         
         # حساب الضريبة إذا وجدت (دائن)
-        if debit_note.tax_amount > 0:
+        # ملاحظة: PurchaseDebitNote لا يحتوي على tax_amount منفصل، الضريبة محسوبة في subtotal
+        tax_amount = getattr(debit_note, 'tax_amount', 0)  # استخدام getattr لتجنب الخطأ
+        if tax_amount > 0:
             tax_account = JournalService.get_tax_receivable_account()
             lines_data.append({
                 'account_id': tax_account.id,
                 'debit': 0,
-                'credit': debit_note.tax_amount,
+                'credit': tax_amount,
                 'description': f'ضريبة إشعار مدين - رقم {debit_note.note_number}'
             })
         

@@ -29,11 +29,14 @@ def create_opening_balance_journal_entry(sender, instance, created, **kwargs):
         from accounts.models import AccountTransaction
         from django.contrib.auth import get_user_model
         
-        # الحصول على المستخدم الأول (للعمليات التلقائية)
+        # الحصول على المستخدم الذي أنشأ الحساب (إن وجد)
         User = get_user_model()
-        default_user = User.objects.first()
+        creator_user = getattr(instance, '_creator_user', None)
+        if not creator_user:
+            # استخدام أول مستخدم في النظام كـ fallback
+            creator_user = User.objects.first()
         
-        if not default_user:
+        if not creator_user:
             print("⚠️ لا يوجد مستخدمين في النظام")
             return
         
@@ -60,7 +63,7 @@ def create_opening_balance_journal_entry(sender, instance, created, **kwargs):
                 direction=direction,
                 description=f'رصيد افتتاحي لـ {instance.name}',
                 notes=f'تم إنشاء المعاملة تلقائياً عند إنشاء الحساب',
-                created_by=default_user
+                created_by=creator_user
             )
         
         # الحصول على الحسابات المحاسبية
@@ -143,7 +146,7 @@ def create_opening_balance_journal_entry(sender, instance, created, **kwargs):
             reference_type='cs_opening',  # customer_supplier_opening (مختصر)
             reference_id=instance.id,
             lines_data=lines_data,
-            user=default_user
+            user=creator_user
         )
         
     except Exception as e:

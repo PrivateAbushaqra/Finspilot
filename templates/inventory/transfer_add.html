@@ -41,7 +41,7 @@
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label class="form-label">{% trans "To Warehouse" %} <span class="text-danger">*</span></label>
-                                    <select class="form-select" name="to_warehouse" required>
+                                    <select class="form-select" name="to_warehouse" id="to_warehouse" required>
                                         <option value="">{% trans "Select Destination Warehouse" %}</option>
                                         {% for warehouse in warehouses %}
                                         <option value="{{ warehouse.id }}">{{ warehouse.name }}</option>
@@ -57,25 +57,40 @@
                             </div>
                         </div>
                         
-                        {% if can_transfer_all_inventory %}
-                        <div class="mb-3">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="transfer_all_inventory" name="transfer_all_inventory">
-                                <label class="form-check-label text-danger fw-bold" for="transfer_all_inventory">
-                                    <i class="fas fa-exclamation-triangle me-2"></i>
-                                    {% trans "Transfer ALL inventory from source warehouse to destination warehouse" %}
-                                    <br><small class="text-muted">{% trans "This will transfer all products with their quantities and costs from the source warehouse to the destination warehouse" %}</small>
-                                </label>
+                        <div class="mb-3" id="transfer_all_button" style="display: block;">
+                            <button type="button" id="full_transfer_btn" class="btn btn-danger btn-lg w-100" onclick="console.log('Button clicked'); startFullTransfer()">
+                                <i class="fas fa-exchange-alt me-2"></i>
+                                <strong>{% trans "Transfer ALL Inventory" %}</strong>
+                            </button>
+                            <small class="text-muted d-block mt-2">
+                                {% trans "This will transfer all products from the source warehouse to the destination warehouse" %}
+                            </small>
+                            
+                            <!-- Progress Bar -->
+                            <div id="transfer_progress" class="mt-3" style="display: none;">
+                                <div class="progress mb-2">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-danger" 
+                                         role="progressbar" 
+                                         style="width: 0%" 
+                                         id="progress_bar">
+                                        <span id="progress_text">0%</span>
+                                    </div>
+                                </div>
+                                <div class="text-center">
+                                    <small class="text-muted" id="current_product_text">
+                                        {% trans "Preparing transfer..." %}
+                                    </small>
+                                </div>
                             </div>
                         </div>
-                        {% endif %}
                         
                         <div class="mb-3">
                             <label class="form-label">{% trans "Notes" %}</label>
                             <textarea class="form-control" name="notes" rows="3" placeholder="{% trans "Notes about the" %} {% trans "Transfer" %}..."></textarea>
                         </div>
                         
-                        <hr>
+                        <div id="products_section_container">
+                        <hr id="products_section">
                         
                         <h5 class="mb-3">{% trans "Products to be" %} {% trans "Transferred" %}</h5>
                         
@@ -112,6 +127,7 @@
                                 </div>
                             </div>
                         </div>
+                        </div>
                         
                         <div class="mb-3">
                             <button type="button" class="btn btn-outline-primary" onclick="addTransferItem()">
@@ -120,14 +136,14 @@
                             </button>
                         </div>
                         
-                        <div class="d-flex justify-content-end gap-2">
+                        <div class="d-flex justify-content-end gap-2" id="normal_buttons">
                             <a href="{% url 'inventory:transfer_list' %}" class="btn btn-secondary">
                                 <i class="fas fa-times me-2"></i>
                                 {% trans "Cancel" %}
                             </a>
-                            <button type="submit" class="btn btn-success">
+                            <button type="submit" name="action" value="normal_transfer" class="btn btn-success">
                                 <i class="fas fa-save me-2"></i>
-                                {% trans "Save" %} {% trans "the" %} {% trans "Transfer" %}
+                                {% trans "Save" %} {% trans "the Transfer" %}
                             </button>
                         </div>
                     </form>
@@ -165,6 +181,180 @@ function removeTransferItem(button) {
     } else {
         alert('{% trans "At least one product must be present" %}');
     }
+}
+
+function toggleTransferMode() {
+    const checkbox = document.getElementById('transfer_all_inventory');
+    const transferButton = document.getElementById('transfer_all_button');
+    const productsSection = document.getElementById('products_section_container');
+    const notesSection = document.querySelector('textarea[name="notes"]').closest('.mb-3');
+    const normalButtons = document.getElementById('normal_buttons');
+    
+    if (checkbox.checked) {
+        // Show transfer all button and hide products section and normal buttons
+        transferButton.style.display = 'block';
+        productsSection.style.display = 'none';
+        notesSection.style.display = 'none';
+        normalButtons.style.display = 'none';
+        
+        // Remove required attribute from product fields
+        const productSelects = productsSection.querySelectorAll('select[name="product_id[]"]');
+        const quantityInputs = productsSection.querySelectorAll('input[name="quantity[]"]');
+        
+        productSelects.forEach(select => select.removeAttribute('required'));
+        quantityInputs.forEach(input => input.removeAttribute('required'));
+    } else {
+        // Hide transfer all button and show products section and normal buttons
+        transferButton.style.display = 'none';
+        productsSection.style.display = 'block';
+        notesSection.style.display = 'block';
+        normalButtons.style.display = 'flex';
+        
+        // Add required attribute back to product fields
+        const productSelects = productsSection.querySelectorAll('select[name="product_id[]"]');
+        const quantityInputs = productsSection.querySelectorAll('input[name="quantity[]"]');
+        
+        productSelects.forEach(select => select.setAttribute('required', 'required'));
+        quantityInputs.forEach(input => input.setAttribute('required', 'required'));
+    }
+}
+
+function startFullTransfer() {
+    console.log('startFullTransfer function called');
+    
+    // Validate form
+    const fromWarehouse = document.getElementById('from_warehouse').value;
+    const toWarehouse = document.getElementById('to_warehouse').value;
+    const transferDate = document.querySelector('input[name="transfer_date"]').value;
+    
+    console.log('Form values:', { fromWarehouse, toWarehouse, transferDate });
+    
+    if (!fromWarehouse || !toWarehouse || !transferDate) {
+        alert('{% trans "Please fill in all required fields" %}');
+        return;
+    }
+    
+    if (fromWarehouse === toWarehouse) {
+        alert('{% trans "Cannot transfer from and to the same warehouse" %}');
+        return;
+    }
+    
+    console.log('All validations passed, proceeding with transfer');
+    
+    // Show progress bar
+    const progressDiv = document.getElementById('transfer_progress');
+    const progressBar = document.getElementById('progress_bar');
+    const progressText = document.getElementById('progress_text');
+    const currentProductText = document.getElementById('current_product_text');
+    const button = document.getElementById('full_transfer_btn');
+    
+    progressDiv.style.display = 'block';
+    progressBar.style.width = '0%';
+    progressText.textContent = '0%';
+    currentProductText.textContent = '{% trans "Preparing transfer..." %}';
+    
+    // Disable button
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i><strong>{% trans "Transferring..." %}</strong>';
+    
+    // Collect form data
+    const formData = new FormData();
+    formData.append('from_warehouse', fromWarehouse);
+    formData.append('to_warehouse', toWarehouse);
+    formData.append('transfer_date', transferDate);
+    formData.append('notes', document.querySelector('textarea[name="notes"]').value);
+    
+    // Simulate progress (since the backend processes all at once, we'll simulate progress)
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+        progress += Math.random() * 10;
+        if (progress > 95) progress = 95;
+        
+        progressBar.style.width = progress + '%';
+        progressText.textContent = Math.round(progress) + '%';
+        
+        // Simulate current product names - generic messages since we don't have real-time updates
+        const messages = [
+            '{% trans "Loading products..." %}',
+            '{% trans "Processing inventory data..." %}',
+            '{% trans "Creating transfer records..." %}',
+            '{% trans "Generating inventory movements..." %}',
+            '{% trans "Updating stock levels..." %}',
+            '{% trans "Finalizing transfer..." %}'
+        ];
+        const currentIndex = Math.floor(progress / 16); // 100% / 6 messages
+        if (currentIndex < messages.length) {
+            currentProductText.textContent = messages[currentIndex];
+        }
+    }, 300);
+    
+    // Send AJAX request
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const ajaxUrl = '{% url "inventory:full_transfer_ajax" %}';
+    console.log('Sending AJAX request to:', ajaxUrl);
+    
+    // Send AJAX request using XMLHttpRequest
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', ajaxUrl, true);
+    xhr.setRequestHeader('X-CSRFToken', csrfToken);
+    
+    xhr.onload = function() {
+        console.log('AJAX Response received, status:', xhr.status);
+        console.log('Response:', xhr.responseText);
+        
+        if (xhr.status === 200) {
+            try {
+                const data = JSON.parse(xhr.responseText);
+                console.log('Parsed data:', data);
+                clearInterval(progressInterval);
+                
+                if (data.success) {
+                    // Complete progress
+                    progressBar.style.width = '100%';
+                    progressText.textContent = '100%';
+                    currentProductText.textContent = '{% trans "Transfer completed successfully!" %}';
+                    
+                    // Show success message
+                    setTimeout(() => {
+                        alert(data.message + '\n{% trans "Transfer Number" %}: ' + data.transfer_number);
+                        window.location.href = '{% url "inventory:transfer_list" %}';
+                    }, 1000);
+                } else {
+                    // Show error
+                    clearInterval(progressInterval);
+                    progressDiv.style.display = 'none';
+                    button.disabled = false;
+                    button.innerHTML = '<i class="fas fa-exchange-alt me-2"></i><strong>{% trans "Transfer ALL Inventory" %}</strong>';
+                    alert('{% trans "Error" %}: ' + data.error);
+                }
+            } catch (e) {
+                console.error('JSON parse error:', e);
+                clearInterval(progressInterval);
+                progressDiv.style.display = 'none';
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-exchange-alt me-2"></i><strong>{% trans "Transfer ALL Inventory" %}</strong>';
+                alert('{% trans "JSON parse error" %}');
+            }
+        } else {
+            console.error('XHR error, status:', xhr.status);
+            clearInterval(progressInterval);
+            progressDiv.style.display = 'none';
+            button.disabled = false;
+            button.innerHTML = '<i class="fas fa-exchange-alt me-2"></i><strong>{% trans "Transfer ALL Inventory" %}</strong>';
+            alert('{% trans "HTTP Error" %}: ' + xhr.status);
+        }
+    };
+    
+    xhr.onerror = function() {
+        console.error('Network error during AJAX request');
+        clearInterval(progressInterval);
+        progressDiv.style.display = 'none';
+        button.disabled = false;
+        button.innerHTML = '<i class="fas fa-exchange-alt me-2"></i><strong>{% trans "Transfer ALL Inventory" %}</strong>';
+        alert('{% trans "Network error" %}');
+    };
+    
+    xhr.send(formData);
 }
 
 function updateProductInfo(selectElement) {

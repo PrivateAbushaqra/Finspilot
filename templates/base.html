@@ -1170,6 +1170,9 @@
                                                     <a class="nav-link {% if active_menu == 'inventory' and 'movement_list' in request.path %}active{% endif %}" href="{% url 'inventory:movement_list' %}">{% trans "Inventory Movement" %}</a>
                                                 </li>
                                                 <li class="nav-item">
+                                                    <a class="nav-link {% if active_menu == 'inventory' and 'transfer_list' in request.path %}active{% endif %}" href="{% url 'inventory:transfer_list' %}">{% trans "Warehouse Transfers" %}</a>
+                                                </li>
+                                                <li class="nav-item">
                                                     <a class="nav-link {% if active_menu == 'inventory' and 'low_stock' in request.path %}active{% endif %}" href="{% url 'inventory:low_stock' %}">{% trans "Stock Alerts" %}</a>
                                                 </li>
                                             </ul>

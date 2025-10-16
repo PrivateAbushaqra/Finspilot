@@ -17,6 +17,7 @@ urlpatterns = [
     path('movements/bulk-delete/', views.MovementBulkDeleteView.as_view(), name='movement_bulk_delete'),
     path('transfers/', views.TransferListView.as_view(), name='transfer_list'),
     path('transfers/add/', views.TransferCreateView.as_view(), name='transfer_add'),
+    path('transfers/full-transfer/', views.full_transfer_ajax, name='full_transfer_ajax'),
     path('transfers/get-product-stock/', views.get_product_stock, name='get_product_stock'),
     path('low-stock/', views.LowStockView.as_view(), name='low_stock'),
     path('export/excel/', views.export_inventory_excel, name='export_excel'),

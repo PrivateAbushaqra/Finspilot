@@ -64,7 +64,7 @@ class DocumentSequence(models.Model):
         ('bank_cash_transfer', _('التحويل بين البنوك والصناديق')),
         ('cashbox_transfer', _('التحويل بين الصناديق')),
         ('journal_entry', _('القيود المحاسبية')),
-        ('warehouse_transfer', _('التحويل بين المستودعات')),
+        ('warehouse_transfer', _('Transfer Between Warehouses')),
         ('receipt_voucher', _('سند قبض')),
         ('payment_voucher', _('سند صرف')),
     ]

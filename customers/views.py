@@ -277,14 +277,15 @@ class CustomerSupplierCreateView(LoginRequiredMixin, View):
             
             # تحويل الأرقام المالية
             try:
-                credit_limit = float(credit_limit) if credit_limit else 0
-                balance = float(balance) if balance else 0
-            except ValueError:
+                from decimal import Decimal
+                credit_limit = Decimal(str(credit_limit)) if credit_limit else Decimal('0')
+                balance = Decimal(str(balance)) if balance else Decimal('0')
+            except (ValueError, Exception):
                 messages.error(request, 'قيم المبالغ المالية غير صحيحة!')
                 return render(request, self.template_name)
             
             # إنشاء العميل/المورد الجديد
-            customer_supplier = CustomerSupplier.objects.create(
+            customer_supplier = CustomerSupplier(
                 name=name,
                 type=type_value,
                 email=email,
@@ -298,135 +299,15 @@ class CustomerSupplierCreateView(LoginRequiredMixin, View):
                 is_active=is_active
             )
             
-            # إنشاء معاملة للرصيد الافتتاحي وقيد محاسبي (IFRS Compliance)
-            if balance != 0:
-                from accounts.models import AccountTransaction
-                from django.utils import timezone
-                from decimal import Decimal
-                
-                # تحديد الاتجاه حسب نوع الرصيد
-                if balance > 0:
-                    # رصيد موجب = مدين (العميل/المورد مدين لنا)
-                    direction = 'debit'
-                    amount = abs(balance)
-                elif balance < 0:
-                    # رصيد سالب = دائن (نحن مدينون له)
-                    direction = 'credit'
-                    amount = abs(balance)
-                
-                # إنشاء حركة الحساب
-                AccountTransaction.objects.create(
-                    customer_supplier=customer_supplier,
-                    transaction_type='opening_balance',
-                    reference_type='opening_balance',
-                    reference_id=customer_supplier.id,
-                    date=timezone.now().date(),
-                    amount=amount,
-                    direction=direction,
-                    description=f'رصيد افتتاحي لـ {name}',
-                    notes=f'تم إنشاء المعاملة تلقائياً عند إنشاء الحساب',
-                    created_by=request.user
-                )
-                
-                # إنشاء قيد محاسبي للرصيد الافتتاحي
-                try:
-                    from journal.services import JournalService
-                    from accounts.models import Account
-                    
-                    # الحصول على الحساب المحاسبي للعميل/المورد
-                    if type_value in ['customer', 'both']:
-                        # حساب العملاء (1301)
-                        customer_account = Account.objects.filter(code='1301').first()
-                    if type_value in ['supplier', 'both']:
-                        # حساب الموردين (2101)
-                        supplier_account = Account.objects.filter(code='2101').first()
-                    
-                    # حساب رأس المال (301) أو الأرباح المحتجزة
-                    capital_account = Account.objects.filter(code='301').first()
-                    
-                    lines_data = []
-                    
-                    if balance > 0:
-                        # رصيد موجب = العميل/المورد مدين لنا
-                        if type_value == 'customer':
-                            # مدين: حساب العملاء
-                            lines_data = [
-                                {
-                                    'account_id': customer_account.id if customer_account else None,
-                                    'debit': Decimal(str(abs(balance))),
-                                    'credit': Decimal('0'),
-                                    'description': f'رصيد افتتاحي - عميل: {name}'
-                                },
-                                {
-                                    'account_id': capital_account.id if capital_account else None,
-                                    'debit': Decimal('0'),
-                                    'credit': Decimal(str(abs(balance))),
-                                    'description': 'رأس المال'
-                                }
-                            ]
-                        elif type_value == 'supplier':
-                            # مدين: حساب الموردين (نادر - مقدمات للموردين)
-                            lines_data = [
-                                {
-                                    'account_id': supplier_account.id if supplier_account else None,
-                                    'debit': Decimal(str(abs(balance))),
-                                    'credit': Decimal('0'),
-                                    'description': f'رصيد افتتاحي - مورد: {name}'
-                                },
-                                {
-                                    'account_id': capital_account.id if capital_account else None,
-                                    'debit': Decimal('0'),
-                                    'credit': Decimal(str(abs(balance))),
-                                    'description': 'رأس المال'
-                                }
-                            ]
-                    else:
-                        # رصيد سالب = نحن مدينون له
-                        if type_value == 'customer':
-                            # دائن: حساب العملاء (نادر - مقدمات من العملاء)
-                            lines_data = [
-                                {
-                                    'account_id': capital_account.id if capital_account else None,
-                                    'debit': Decimal(str(abs(balance))),
-                                    'credit': Decimal('0'),
-                                    'description': 'رأس المال'
-                                },
-                                {
-                                    'account_id': customer_account.id if customer_account else None,
-                                    'debit': Decimal('0'),
-                                    'credit': Decimal(str(abs(balance))),
-                                    'description': f'رصيد افتتاحي - عميل: {name}'
-                                }
-                            ]
-                        elif type_value == 'supplier':
-                            # دائن: حساب الموردين (مديونية للموردين)
-                            lines_data = [
-                                {
-                                    'account_id': capital_account.id if capital_account else None,
-                                    'debit': Decimal(str(abs(balance))),
-                                    'credit': Decimal('0'),
-                                    'description': 'رأس المال'
-                                },
-                                {
-                                    'account_id': supplier_account.id if supplier_account else None,
-                                    'debit': Decimal('0'),
-                                    'credit': Decimal(str(abs(balance))),
-                                    'description': f'رصيد افتتاحي - مورد: {name}'
-                                }
-                            ]
-                    
-                    if lines_data and all(line['account_id'] for line in lines_data):
-                        journal_entry = JournalService.create_journal_entry(
-                            entry_date=timezone.now().date(),
-                            description=f'رصيد افتتاحي - {customer_supplier.get_type_display()}: {name}',
-                            reference_type='cs_opening',  # customer_supplier_opening (مختصر)
-                            reference_id=customer_supplier.id,
-                            lines_data=lines_data,
-                            user=request.user
-                        )
-                except Exception as e:
-                    # لا نريد إيقاف العملية إذا فشل إنشاء القيد
-                    print(f"خطأ في إنشاء القيد المحاسبي للرصيد الافتتاحي: {e}")
+            # تمرير المستخدم الحالي للـ signal
+            customer_supplier._creator_user = request.user
+            
+            # حفظ العميل (سيتم تنفيذ الـ signal تلقائياً)
+            customer_supplier.save()
+            
+            # ملاحظة: إنشاء معاملة الرصيد الافتتاحي والقيد المحاسبي يتم تلقائياً عبر signal
+            # في ملف customers/signals.py - create_opening_balance_journal_entry
+            # وهو مطابق لمعايير IFRS
             
             # تسجيل النشاط
             log_view_activity(request, 'create', customer_supplier, _('Created customer/supplier: %(name)s') % {'name': name})
