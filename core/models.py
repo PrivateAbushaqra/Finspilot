@@ -2,6 +2,7 @@
 from django.db import models, transaction
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 User = get_user_model()
 
@@ -15,6 +16,8 @@ class CompanySettings(models.Model):
     phone = models.CharField(_('Phone'), max_length=50, blank=True)
     email = models.EmailField(_('Email'), blank=True)
     tax_number = models.CharField(_('الرقم الضريبي'), max_length=50, blank=True)
+    default_tax_rate = models.DecimalField(_('نسبة الضريبة الافتراضية'), max_digits=5, decimal_places=2, 
+                                         validators=[MinValueValidator(0), MaxValueValidator(100)], default=0)
     
     # إعدادات الجلسة والأمان
     session_timeout_minutes = models.PositiveIntegerField(

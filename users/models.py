@@ -211,6 +211,29 @@ class User(AbstractUser):
             pass
         return False
 
+    def can_change_invoice_creator(self):
+        """
+        تعيد True إذا كان لدى المستخدم صلاحية تغيير منشئ الفاتورة
+        """
+        if self.is_admin:
+            return True
+        # تحقق من الصلاحية المخصصة
+        if self.has_perm('sales.can_change_invoice_creator'):
+            return True
+        # تحقق من صلاحيات المجموعات المخصصة
+        try:
+            from users.models import UserGroupMembership
+            group_ids = UserGroupMembership.objects.filter(user=self).values_list('group_id', flat=True)
+            from users.models import UserGroup
+            for group in UserGroup.objects.filter(id__in=group_ids):
+                group_perms = group.permissions or {}
+                sales_perms = group_perms.get('sales', [])
+                if 'can_change_invoice_creator' in sales_perms:
+                    return True
+        except Exception:
+            pass
+        return False
+
     def has_purchases_permission(self):
         return (
             self.is_admin

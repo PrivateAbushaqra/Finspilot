@@ -10,7 +10,15 @@ from django.views.i18n import set_language
 from django.views.generic import RedirectView
 from core.views import logout_alias, language_switch_view
 
+def redirect_to_default_language(request):
+    """توجيه المستخدم إلى اللغة الافتراضية"""
+    from django.shortcuts import redirect
+    # استخدام اللغة الافتراضية من الإعدادات مباشرة
+    language = settings.LANGUAGE_CODE
+    return redirect(f'/{language}/')
+
 urlpatterns = [
+    path('', redirect_to_default_language, name='root_redirect'),
     path('admin/', admin.site.urls),
     path('api/', include('core.api_urls')),
     path('i18n/', include('django.conf.urls.i18n')),

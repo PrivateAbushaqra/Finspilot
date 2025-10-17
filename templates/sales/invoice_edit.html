@@ -88,6 +88,20 @@
                     </div>
                 </div>
 
+                {% if form.errors %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <h5 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>يوجد أخطاء في النموذج</h5>
+                    <ul class="mb-0">
+                    {% for field, errors in form.errors.items %}
+                        {% for error in errors %}
+                        <li><strong>{{ field }}:</strong> {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                    </ul>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endif %}
+                
                 <form method="post">
                     {% csrf_token %}
                     <input type="hidden" name="inclusive_tax" value="0">
@@ -175,7 +189,25 @@
                             </div>
                         </div>
                         <div class="col-md-6">
-                            <!-- مساحة فارغة للتوازن -->
+                            {% if can_change_creator %}
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-user-edit text-warning me-1"></i> 
+                                    {% trans "Created By" %}
+                                </label>
+                                <select class="form-select" name="created_by">
+                                    {% for user in all_users %}
+                                    <option value="{{ user.id }}" {% if object.created_by and user.id == object.created_by.id %}selected{% endif %}>
+                                        {{ user.get_full_name|default:user.username }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text text-warning">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                    {% trans "Changing the creator requires special permission" %}
+                                </div>
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
 
@@ -273,7 +305,7 @@
                                     <div class="row">
                                         <div class="col-md-4">
                                             <label class="form-label">المنتج</label>
-                                            <select class="form-select" id="new-product-select" required>
+                                            <select class="form-select" id="new-product-select">
                                                 <option value="">اختر المنتج...</option>
                                                 {% for product in products %}
                                                 <option value="{{ product.id }}" data-code="{{ product.code }}" 
@@ -287,17 +319,17 @@
                                         <div class="col-md-2">
                                             <label class="form-label">الكمية</label>
                                             <input type="number" class="form-control" id="new-quantity" 
-                                                   min="0.01" step="0.01" placeholder="0.00" required>
+                                                   min="0.01" step="0.01" placeholder="0.00">
                                         </div>
                                         <div class="col-md-2">
                                             <label class="form-label">سعر الوحدة</label>
                                             <input type="number" class="form-control" id="new-price" 
-                                                   min="0" step="0.01" placeholder="0.00" required>
+                                                   min="0" step="0.01" placeholder="0.00">
                                         </div>
                                         <div class="col-md-2">
                                             <label class="form-label">نسبة الضريبة</label>
                                             <input type="number" class="form-control" id="new-tax-rate" 
-                                                   min="0" max="100" step="0.01" placeholder="0.00" required>
+                                                   min="0" max="100" step="0.01" placeholder="0.00">
                                         </div>
                                         <div class="col-md-2 d-flex align-items-end">
                                             <button type="button" class="btn btn-success me-2" id="save-new-item-btn">
@@ -367,11 +399,30 @@
 {% block extra_js %}
 <script>
 $(document).ready(function() {
-    // Add form classes
-    $('input[type="text"], input[type="number"], input[type="date"], select, textarea').addClass('form-control');
+    console.log('✅ صفحة تعديل الفاتورة تم تحميلها');
     
-    // Date input styling
-    $('input[type="date"]').addClass('form-control');
+    // عداد لإرسال النموذج
+    let isSubmitting = false;
+    
+    // Add form submit listener
+    $('form').on('submit', function(e) {
+        // منع الإرسال المكرر
+        if (isSubmitting) {
+            console.log('⏳ النموذج قيد الإرسال...');
+            e.preventDefault();
+            return false;
+        }
+        
+        console.log('✅ النموذج يتم إرساله...');
+        console.log('البيانات:', $(this).serialize());
+        
+        // تعطيل زر الحفظ
+        $('button[type="submit"]').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> جاري الحفظ...');
+        
+        isSubmitting = true;
+        // السماح للنموذج بالإرسال
+        return true;
+    });
 
     // CSRF token setup for AJAX
     function getCookie(name) {
@@ -471,7 +522,7 @@ $(document).ready(function() {
         }
 
         $.ajax({
-            url: `/ar/sales/invoices/${object.pk}/items/add/`,
+            url: `/ar/sales/invoices/{{ object.pk }}/items/add/`,
             type: 'POST',
             data: {
                 csrfmiddlewaretoken: csrftoken,
@@ -501,7 +552,7 @@ $(document).ready(function() {
         const price = row.find('.price-input').val();
 
         $.ajax({
-            url: `/ar/sales/invoices/${object.pk}/items/${itemId}/update/`,
+            url: `/ar/sales/invoices/{{ object.pk }}/items/${itemId}/update/`,
             type: 'POST',
             data: {
                 csrfmiddlewaretoken: csrftoken,
@@ -538,7 +589,7 @@ $(document).ready(function() {
         const itemId = $(this).data('item-id');
 
         $.ajax({
-            url: `/ar/sales/invoices/${object.pk}/items/${itemId}/delete/`,
+            url: `/ar/sales/invoices/{{ object.pk }}/items/${itemId}/delete/`,
             type: 'POST',
             data: {
                 csrfmiddlewaretoken: csrftoken

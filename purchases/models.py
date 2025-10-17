@@ -198,6 +198,8 @@ class PurchaseDebitNote(models.Model):
                                    help_text=_('UUID returned from JoFotara API'))
     jofotara_sent_at = models.DateTimeField(_('Sent to JoFotara At'), blank=True, null=True,
                                           help_text=_('Date and time when debit note was sent to JoFotara'))
+    jofotara_verification_url = models.URLField(_('JoFotara Verification URL'), blank=True, null=True,
+                                              help_text=_('URL to verify debit note on JoFotara portal'))
 
     class Meta:
         verbose_name = _('اشعار مدين')

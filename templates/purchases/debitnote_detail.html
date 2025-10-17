@@ -115,6 +115,19 @@
                                 </button>
                             </td>
                         </tr>
+                        {% if debitnote.jofotara_verification_url %}
+                        <tr>
+                            <td><strong>رابط التحقق:</strong></td>
+                            <td>
+                                <a href="{{ debitnote.jofotara_verification_url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-external-link-alt me-1"></i>التحقق من الإشعار
+                                </a>
+                                <button class="btn btn-sm btn-outline-secondary ms-2" onclick="copyToClipboard('{{ debitnote.jofotara_verification_url }}')">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endif %}
                         {% endif %}
                     </table>
                 </div>

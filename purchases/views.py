@@ -1763,13 +1763,14 @@ def send_debitnote_to_jofotara(request, pk):
         from settings.utils import send_debit_note_to_jofotara
         
         # Send the debit note
-        result = send_debit_note_to_jofotara(debit_note)
+        result = send_debit_note_to_jofotara(debit_note, request.user)
         
         if result['success']:
             # Update debit note with JoFotara UUID if available
             if 'uuid' in result:
                 debit_note.jofotara_uuid = result['uuid']
                 debit_note.jofotara_sent_at = timezone.now()
+                debit_note.jofotara_verification_url = result.get('verification_url')
                 debit_note.save()
             
             messages.success(request, f'تم إرسال الإشعار الخصم {debit_note.note_number} إلى JoFotara بنجاح')

@@ -1116,6 +1116,34 @@ class SalesInvoiceUpdateView(LoginRequiredMixin, UpdateView):
     template_name = 'sales/invoice_edit.html'
     fields = ['invoice_number', 'date', 'customer', 'payment_type', 'notes']
     
+    def get_form(self, form_class=None):
+        """Override to add CSS classes to form fields"""
+        form = super().get_form(form_class)
+        
+        # Add Bootstrap classes to all form fields
+        for field_name, field in form.fields.items():
+            if field_name == 'notes':
+                field.widget.attrs.update({
+                    'class': 'form-control',
+                    'rows': '3',
+                    'placeholder': 'أدخل ملاحظات إضافية...'
+                })
+            elif field_name == 'date':
+                field.widget.attrs.update({
+                    'class': 'form-control',
+                    'type': 'date'
+                })
+            elif field_name in ['customer', 'payment_type']:
+                field.widget.attrs.update({
+                    'class': 'form-select'
+                })
+            else:
+                field.widget.attrs.update({
+                    'class': 'form-control'
+                })
+        
+        return form
+    
     def get_success_url(self):
         return reverse_lazy('sales:invoice_detail', kwargs={'pk': self.object.pk})
     
@@ -1131,18 +1159,61 @@ class SalesInvoiceUpdateView(LoginRequiredMixin, UpdateView):
             product_type__in=['physical', 'service']
         ).select_related('category').order_by('name')
         
+        # Add all users for created_by field if user has permission
+        if self.request.user.can_change_invoice_creator():
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            context['all_users'] = User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username')
+            context['can_change_creator'] = True
+        else:
+            context['can_change_creator'] = False
+        
         return context
     
     def form_valid(self, form):
+        """Handle valid form submission"""
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"🔄 بدء معالجة تعديل الفاتورة {form.instance.invoice_number}")
+        
         # Handle warehouse selection
         warehouse_id = self.request.POST.get('warehouse')
         if warehouse_id:
             from inventory.models import Warehouse
             try:
                 warehouse = Warehouse.objects.get(id=warehouse_id, is_active=True)
+                old_warehouse = form.instance.warehouse
                 form.instance.warehouse = warehouse
+                if old_warehouse and old_warehouse.id != warehouse.id:
+                    logger.info(f"  📦 تغيير المستودع من {old_warehouse.name} إلى {warehouse.name}")
             except Warehouse.DoesNotExist:
+                logger.warning(f"  ⚠️ المستودع {warehouse_id} غير موجود")
                 pass  # Keep existing warehouse if invalid
+        
+        # Handle created_by change if user has permission
+        created_by_id = self.request.POST.get('created_by')
+        old_creator_info = None
+        new_creator_info = None
+        
+        if created_by_id and self.request.user.can_change_invoice_creator():
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            try:
+                new_creator = User.objects.get(id=created_by_id, is_active=True)
+                old_creator = form.instance.created_by
+                if old_creator.id != new_creator.id:
+                    # حفظ المعلومات للتسجيل لاحقاً
+                    old_creator_info = {
+                        'name': old_creator.get_full_name() or old_creator.username,
+                        'id': old_creator.id
+                    }
+                    new_creator_info = {
+                        'name': new_creator.get_full_name() or new_creator.username,
+                        'id': new_creator.id
+                    }
+                    form.instance.created_by = new_creator
+            except User.DoesNotExist:
+                pass  # Keep existing creator if invalid
         
         # detect change to inclusive_tax and log activity
         try:
@@ -1152,6 +1223,23 @@ class SalesInvoiceUpdateView(LoginRequiredMixin, UpdateView):
             old_inclusive = None
 
         response = super().form_valid(form)
+        
+        # Log creator change after saving
+        if old_creator_info and new_creator_info:
+            try:
+                from core.signals import log_user_activity
+                log_user_activity(
+                    self.request,
+                    'update',
+                    self.object,
+                    _('تغيير منشئ الفاتورة %(number)s من %(old)s إلى %(new)s') % {
+                        'number': self.object.invoice_number,
+                        'old': old_creator_info['name'],
+                        'new': new_creator_info['name']
+                    }
+                )
+            except Exception:
+                pass
 
         try:
             new_inclusive = self.object.inclusive_tax
@@ -1168,8 +1256,25 @@ class SalesInvoiceUpdateView(LoginRequiredMixin, UpdateView):
         except Exception:
             pass
 
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"✅ تم حفظ الفاتورة {self.object.invoice_number} بنجاح")
+        
         messages.success(self.request, 'تم تحديث فاتورة المبيعات بنجاح')
         return response
+    
+    def form_invalid(self, form):
+        """Handle form validation errors"""
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"❌ فشل حفظ الفاتورة. الأخطاء: {form.errors}")
+        
+        messages.error(self.request, 'حدث خطأ في حفظ البيانات. يرجى مراجعة الحقول والمحاولة مرة أخرى.')
+        for field, errors in form.errors.items():
+            field_name = form.fields[field].label if field in form.fields else field
+            for error in errors:
+                messages.error(self.request, f'{field_name}: {error}')
+        return super().form_invalid(form)
 
 
 class SalesInvoiceDeleteView(LoginRequiredMixin, DeleteView):
@@ -2359,8 +2464,10 @@ def pos_get_product(request, product_id):
         # حساب المخزون الحالي باستخدام property
         current_stock = product.current_stock
         
-        # Calculate displayed price as sale_price / (1 + tax_rate/100)
+        # الحصول على نسبة الضريبة (استخدام القيمة المحددة للمنتج فقط)
         tax_rate = float(product.tax_rate or 0)
+        
+        # Calculate displayed price as sale_price / (1 + tax_rate/100)
         displayed_price = float(product.sale_price)
         if tax_rate > 0:
             displayed_price = displayed_price / (1 + tax_rate / 100)
@@ -2395,7 +2502,7 @@ def pos_search_products(request):
     
     try:
         products = Product.objects.filter(
-            Q(name__icontains=query) | Q(barcode__icontains=query),
+            Q(name__icontains=query) | Q(barcode__icontains=query) | Q(code__icontains=query),
             is_active=True
         )[:20]
         
@@ -2411,6 +2518,7 @@ def pos_search_products(request):
                 'stock': float(current_stock) if current_stock is not None else 0,
                 'tax_rate': float(product.tax_rate or 0),
                 'barcode': product.barcode or '',
+                'code': product.code or '',
                 'track_inventory': True,  # افتراض أن جميع المنتجات تتبع المخزون
             })
         
@@ -2614,13 +2722,14 @@ def send_invoice_to_jofotara(request, pk):
         from settings.utils import send_sales_invoice_to_jofotara
         
         # Send the invoice
-        result = send_sales_invoice_to_jofotara(invoice)
+        result = send_sales_invoice_to_jofotara(invoice, request.user)
         
         if result['success']:
             # Update invoice with JoFotara UUID if available
             if 'uuid' in result:
                 invoice.jofotara_uuid = result['uuid']
                 invoice.jofotara_sent_at = timezone.now()
+                invoice.jofotara_verification_url = result.get('verification_url')
                 invoice.save()
             
             messages.success(request, f'تم إرسال الفاتورة {invoice.invoice_number} إلى JoFotara بنجاح')
@@ -2657,13 +2766,14 @@ def send_creditnote_to_jofotara(request, pk):
         from settings.utils import send_credit_note_to_jofotara
         
         # Send the credit note
-        result = send_credit_note_to_jofotara(credit_note)
+        result = send_credit_note_to_jofotara(credit_note, request.user)
         
         if result['success']:
             # Update credit note with JoFotara UUID if available
             if 'uuid' in result:
                 credit_note.jofotara_uuid = result['uuid']
                 credit_note.jofotara_sent_at = timezone.now()
+                credit_note.jofotara_verification_url = result.get('verification_url')
                 credit_note.save()
             
             messages.success(request, f'تم إرسال الإشعار الدائن {credit_note.note_number} إلى JoFotara بنجاح')

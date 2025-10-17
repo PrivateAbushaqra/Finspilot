@@ -268,10 +268,10 @@ def sales_by_salesperson(request):
         is_active=True
     ).order_by('first_name', 'last_name', 'username')
 
-    # Defaults: last 30 days
+    # Defaults: last 90 days + next 30 days (لتغطية الفواتير المستقبلية أيضاً)
     today = date.today()
-    default_start = today - timedelta(days=30)
-    default_end = today
+    default_start = today - timedelta(days=90)
+    default_end = today + timedelta(days=30)
 
     salesperson_id = request.GET.get('salesperson')
     start_raw = request.GET.get('start_date')

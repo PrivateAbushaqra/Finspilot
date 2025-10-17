@@ -149,6 +149,13 @@
         font-size: 9px;
         color: #666;
     }
+
+    .powered-by {
+        margin-top: 5px;
+        font-size: 8px;
+        color: #999;
+        text-align: center;
+    }
 </style>
 {% endblock %}
 
@@ -161,10 +168,23 @@
         {% endif %}
 
         <div class="company-name">
-            {% if company_settings.company_name %}
-                {{ company_settings.company_name }}
+            {% get_current_language as LANGUAGE_CODE %}
+            {% if LANGUAGE_CODE == 'ar' %}
+                {% if company_settings.company_name %}
+                    {{ company_settings.company_name }}
+                {% else %}
+                    {% trans "Company Name" %}
+                {% endif %}
             {% else %}
-                {% trans "Company Name" %}
+                {% if company_settings.company_name_en %}
+                    {{ company_settings.company_name_en }}
+                {% else %}
+                    {% if company_settings.company_name %}
+                        {{ company_settings.company_name }}
+                    {% else %}
+                        {% trans "Company Name" %}
+                    {% endif %}
+                {% endif %}
             {% endif %}
         </div>
 
@@ -262,7 +282,7 @@
     <!-- تذييل الفاتورة -->
     <div class="footer">
         <div class="thank-you">
-            {% trans "Thank you for your business!" %}
+            {% trans "Thank you for your Visiting us!" %}
         </div>
 
         <div>
@@ -271,6 +291,10 @@
 
         <div class="print-info">
             {% trans "Printed on" %}: {{ invoice.created_at|date:"d/m/Y H:i:s" }}
+        </div>
+
+        <div class="powered-by">
+            Powered By FinsPilot Software
         </div>
     </div>
 </div>

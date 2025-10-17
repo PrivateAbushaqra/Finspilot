@@ -18,7 +18,7 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-default-key-change-in
 
 # تعريف متغيرات البيئة المبكرة
 IS_RENDER = config('RENDER', default=False, cast=bool)
-DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = config('DEBUG', default=True, cast=bool)
 
 # Detect when running tests so we can relax some production-only settings
 TESTING = len(sys.argv) > 1 and sys.argv[1] == 'test'

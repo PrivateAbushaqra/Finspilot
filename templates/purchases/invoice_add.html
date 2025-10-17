@@ -23,7 +23,11 @@
     }
     
     .products-table {
-        min-height: 200px;
+        height: auto;
+        overflow-y: visible;
+        position: relative;
+        z-index: 10;
+        padding-bottom: 50px; /* مسافة أساسية أسفل الجدول */
     }
     
     .total-section {
@@ -593,6 +597,15 @@ function addProductRow() {
             setTimeout(() => newQuantityInput.focus(), 10);
         }
         
+        // زيادة المسافة الفارغة أسفل الجدول مع كل صف جديد
+        const productsTable = document.querySelector('.products-table');
+        if (productsTable) {
+            const currentPadding = parseInt(window.getComputedStyle(productsTable).paddingBottom) || 50;
+            const newPadding = currentPadding + 40; // زيادة 40px مع كل صف جديد
+            productsTable.style.paddingBottom = newPadding + 'px';
+            console.log('✅ Increased table bottom padding to:', newPadding + 'px');
+        }
+        
         // Mark as having unsaved changes
         hasUnsavedChanges = true;
         
@@ -605,8 +618,24 @@ function addProductRow() {
 function removeProductRow(rowId) {
     const row = document.getElementById(`productRow${rowId}`);
     if (row) {
+        // Check if this is the last row
+        const allRows = document.querySelectorAll('#productsTableBody tr');
+        if (allRows.length <= 1) {
+            alert("{% trans 'Invoice must contain at least one product' %}");
+            return;
+        }
+        
         row.remove();
         calculateTotals();
+        
+        // تقليل المسافة الفارغة أسفل الجدول عند حذف صف
+        const productsTable = document.querySelector('.products-table');
+        if (productsTable) {
+            const currentPadding = parseInt(window.getComputedStyle(productsTable).paddingBottom) || 50;
+            const newPadding = Math.max(50, currentPadding - 40); // تقليل 40px، لكن لا تقل عن 50px
+            productsTable.style.paddingBottom = newPadding + 'px';
+            console.log('✅ Decreased table bottom padding to:', newPadding + 'px');
+        }
     }
 }
 

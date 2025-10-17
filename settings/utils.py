@@ -420,7 +420,7 @@ class JoFotaraAPI:
             file_path = f"invoices/{file_name}"
 
             # Ensure directory exists
-            default_storage.save(file_path, ContentFile(xml_content))
+            default_storage.save(file_path, ContentFile(xml_content.encode('utf-8')))
 
             return {
                 'success': True,
@@ -472,7 +472,7 @@ def send_invoice_to_jofotara(invoice_data, invoice_type='sales'):
 def prepare_sales_invoice_data(sales_invoice):
     """Prepare sales invoice data for JoFotara API"""
     from sales.models import SalesInvoice, SalesInvoiceItem
-    from customers.models import Customer
+    from customers.models import CustomerSupplier as Customer
     from core.models import CompanySettings
 
     try:
@@ -490,24 +490,24 @@ def prepare_sales_invoice_data(sales_invoice):
             'scheme_id': 'TN',
             'name': company_settings.company_name or '',
             'street': company_settings.address or '',
-            'city': company_settings.city or '',
+            'city': '',  # CompanySettings doesn't have city field
             'country_code': 'JO',
             'tax_id': company_settings.tax_number or '',
-            'company_id': company_settings.registration_number or '',
+            'company_id': '',  # CompanySettings doesn't have registration_number field
             'email': company_settings.email or '',
             'phone': company_settings.phone or ''
         }
 
         # Prepare buyer data
         buyer_data = {
-            'id': customer.tax_number or customer.id_number or '',
+            'id': customer.tax_number or str(customer.sequence_number) or '',
             'scheme_id': 'TN' if customer.tax_number else 'ID',
             'name': customer.name or '',
             'street': customer.address or '',
             'city': customer.city or '',
             'country_code': 'JO',
             'tax_id': customer.tax_number or '',
-            'company_id': customer.registration_number or '',
+            'company_id': str(customer.sequence_number) or '',  # Use sequence_number as company_id
             'email': customer.email or '',
             'phone': customer.phone or ''
         }
@@ -521,7 +521,7 @@ def prepare_sales_invoice_data(sales_invoice):
                 'quantity': float(item.quantity),
                 'unit_code': 'EA',  # Default unit
                 'unit_price': float(item.unit_price),
-                'line_extension_amount': float(item.total),
+                'line_extension_amount': float(item.total_amount),  # Use total_amount instead of total
                 'tax_percent': 16  # Standard VAT rate
             }
             lines_data.append(line_data)
@@ -531,7 +531,7 @@ def prepare_sales_invoice_data(sales_invoice):
             'invoice_number': sales_invoice.invoice_number,
             'issue_date': sales_invoice.date.isoformat(),
             'issue_time': sales_invoice.created_at.time().isoformat() if sales_invoice.created_at else datetime.now().time().isoformat(),
-            'currency': sales_invoice.currency.code if sales_invoice.currency else 'JOD',
+            'currency': company_settings.currency,  # Use company currency instead of invoice.currency
             'seller': seller_data,
             'buyer': buyer_data,
             'lines': lines_data
@@ -592,7 +592,7 @@ def prepare_debit_note_data(debit_note):
         raise
 
 
-def send_sales_invoice_to_jofotara(sales_invoice):
+def send_sales_invoice_to_jofotara(sales_invoice, user=None):
     """Send sales invoice to JoFotara"""
     try:
         invoice_data = prepare_sales_invoice_data(sales_invoice)
@@ -601,7 +601,7 @@ def send_sales_invoice_to_jofotara(sales_invoice):
         # Log the result
         from core.models import AuditLog
         AuditLog.objects.create(
-            user=None,  # System action
+            user=user,  # Use the passed user
             action_type='send_invoice',
             content_type='SalesInvoice',
             object_id=sales_invoice.id,
@@ -618,7 +618,7 @@ def send_sales_invoice_to_jofotara(sales_invoice):
         }
 
 
-def send_credit_note_to_jofotara(credit_note):
+def send_credit_note_to_jofotara(credit_note, user=None):
     """Send credit note to JoFotara"""
     try:
         invoice_data = prepare_credit_note_data(credit_note)
@@ -627,7 +627,7 @@ def send_credit_note_to_jofotara(credit_note):
         # Log the result
         from core.models import AuditLog
         AuditLog.objects.create(
-            user=None,  # System action
+            user=user,  # Use the passed user
             action_type='send_credit_note',
             content_type='SalesCreditNote',
             object_id=credit_note.id,
@@ -644,7 +644,7 @@ def send_credit_note_to_jofotara(credit_note):
         }
 
 
-def send_debit_note_to_jofotara(debit_note):
+def send_debit_note_to_jofotara(debit_note, user=None):
     """Send debit note to JoFotara"""
     try:
         invoice_data = prepare_debit_note_data(debit_note)
@@ -653,7 +653,7 @@ def send_debit_note_to_jofotara(debit_note):
         # Log the result
         from core.models import AuditLog
         AuditLog.objects.create(
-            user=None,  # System action
+            user=user,  # Use the passed user
             action_type='send_debit_note',
             content_type='PurchaseDebitNote',
             object_id=debit_note.id,

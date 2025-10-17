@@ -43,8 +43,7 @@
     }
 
     .pos-container {
-        height: 100vh;
-        overflow: hidden;
+        min-height: 100vh;
         padding: 0;
         margin: 0;
     }
@@ -116,14 +115,15 @@
     
     .pos-content {
         display: flex;
-        height: calc(100vh - 100px);
+        min-height: calc(100vh - 100px);
         gap: 1.5rem;
         padding: 1.5rem;
         background: var(--gray-50);
     }
     
     .products-section {
-        flex: 1;
+        flex: none;
+        width: calc(100% - 450px);
         background: var(--white);
         border-radius: var(--border-radius-lg);
         box-shadow: var(--shadow-md);
@@ -131,6 +131,7 @@
         flex-direction: column;
         overflow: hidden;
         border: 1px solid var(--gray-200);
+        max-height: calc(100vh - 200px);
     }
 
     .products-header {
@@ -315,6 +316,28 @@
         margin-top: 0.5rem;
     }
     
+    .product-id {
+        color: var(--gray-500);
+        font-size: 0.75rem;
+        font-family: 'Courier New', monospace;
+        background: var(--gray-100);
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--border-radius-sm);
+        display: inline-block;
+        margin-top: 0.5rem;
+    }
+    
+    .product-tax-rate {
+        color: var(--gray-500);
+        font-size: 0.75rem;
+        font-family: 'Courier New', monospace;
+        background: var(--gray-100);
+        padding: 0.25rem 0.5rem;
+        border-radius: var(--border-radius-sm);
+        display: inline-block;
+        margin-top: 0.5rem;
+    }
+    
     .cart-section {
         width: 420px;
         display: flex;
@@ -323,7 +346,8 @@
         border-radius: var(--border-radius-lg);
         box-shadow: var(--shadow-lg);
         border: 1px solid var(--gray-200);
-        overflow: hidden;
+        height: calc(100vh - 150px);
+        padding-bottom: 5rem;
     }
     
     .cart-header {
@@ -352,7 +376,6 @@
         flex: 1;
         overflow-y: auto;
         padding: 1.5rem;
-        max-height: 350px;
         min-height: 200px;
     }
     
@@ -360,6 +383,7 @@
         padding: 1.5rem;
         border-top: 2px solid var(--gray-100);
         background: var(--gray-50);
+        flex-shrink: 0;
     }
     
     .cart-item {
@@ -719,6 +743,7 @@
             height: auto;
             gap: 1rem;
             padding: 1rem;
+            padding-bottom: 120px; /* مساحة للأزرار الثابتة */
         }
         
         .products-section {
@@ -772,6 +797,24 @@
             padding: 0.5rem 1rem;
             font-size: 0.9rem;
         }
+        
+        /* جعل الأزرار ثابتة في أسفل الشاشة للشاشات الصغيرة */
+        .cart-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--white);
+            border-top: 2px solid var(--gray-200);
+            padding: 1rem;
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+            border-radius: 0;
+        }
+        
+        .cart-section {
+            padding-bottom: 0; /* إزالة الـ padding الإضافي */
+        }
     }
     
     @media (max-width: 576px) {
@@ -791,6 +834,7 @@
         .pos-content {
             padding: 0.75rem;
             gap: 0.75rem;
+            padding-bottom: 100px; /* مساحة للأزرار الثابتة */
         }
         
         .products-header {
@@ -832,6 +876,7 @@
         
         .cart-section {
             max-height: 250px;
+            padding-bottom: 0; /* إزالة الـ padding الإضافي */
         }
         
         .cart-items {
@@ -875,10 +920,28 @@
             padding: 0.4rem 0.8rem;
             font-size: 0.8rem;
         }
+        
+        /* جعل الأزرار ثابتة في أسفل الشاشة للشاشات الصغيرة جداً */
+        .cart-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--white);
+            border-top: 2px solid var(--gray-200);
+            padding: 0.75rem;
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+            border-radius: 0;
+        }
     }
     
     /* تحسينات إضافية للأجهزة الصغيرة جداً */
     @media (max-width: 400px) {
+        .pos-content {
+            padding-bottom: 90px; /* مساحة للأزرار الثابتة */
+        }
+        
         .product-grid {
             grid-template-columns: repeat(2, 1fr);
         }
@@ -889,10 +952,25 @@
         
         .cart-section {
             max-height: 200px;
+            padding-bottom: 0; /* إزالة الـ padding الإضافي */
         }
         
         .cart-items {
             max-height: 100px;
+        }
+        
+        /* جعل الأزرار ثابتة في أسفل الشاشة للشاشات الصغيرة جداً */
+        .cart-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--white);
+            border-top: 2px solid var(--gray-200);
+            padding: 0.5rem;
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+            border-radius: 0;
         }
     }
 </style>
@@ -948,7 +1026,11 @@
                                  onclick="addToCart({{ product.id }})" 
                                  data-product-id="{{ product.id }}"
                                  data-name="{{ product.name|lower }}"
-                                 data-barcode="{{ product.barcode|default:'' }}">
+                                 data-barcode="{{ product.barcode|default:'' }}"
+                                 data-price="{{ product.sale_price }}"
+                                 data-stock="{{ product.current_stock }}"
+                                 data-code="{{ product.code }}"
+                                 data-tax-rate="{{ product.tax_rate }}">
                                 <div class="product-name">{{ product.name }}</div>
                                 <div class="product-price">{{ product.sale_price }} {% if base_currency %}{{ base_currency.symbol }}{% else %}{% get_currency_symbol %}{% endif %}</div>
                                 <div class="product-stock">
@@ -961,6 +1043,8 @@
                                 {% if product.barcode %}
                                     <div class="product-barcode">{{ product.barcode }}</div>
                                 {% endif %}
+                                <div class="product-id">{% trans "Product Code" %}: {{ product.code }}</div>
+                                <div class="product-tax-rate">{% trans "Tax Rate" %}: {{ product.tax_rate }}%</div>
                             </div>
                             {% endif %}
                         {% endfor %}
@@ -980,7 +1064,11 @@
                             <div class="product-card out-of-stock" 
                                  data-product-id="{{ product.id }}"
                                  data-name="{{ product.name|lower }}"
-                                 data-barcode="{{ product.barcode|default:'' }}">
+                                 data-barcode="{{ product.barcode|default:'' }}"
+                                 data-price="{{ product.sale_price }}"
+                                 data-stock="{{ product.current_stock }}"
+                                 data-code="{{ product.code }}"
+                                 data-tax-rate="{{ product.tax_rate }}">
                                 <div class="product-name">{{ product.name }}</div>
                                 <div class="product-price">{{ product.sale_price }} {% if base_currency %}{{ base_currency.symbol }}{% else %}{% get_currency_symbol %}{% endif %}</div>
                                 <div class="product-stock">
@@ -989,6 +1077,8 @@
                                 {% if product.barcode %}
                                     <div class="product-barcode">{{ product.barcode }}</div>
                                 {% endif %}
+                                <div class="product-id">{% trans "Product Code" %}: {{ product.code }}</div>
+                                <div class="product-tax-rate">{% trans "Tax Rate" %}: {{ product.tax_rate }}%</div>
                             </div>
                             {% endif %}
                         {% endfor %}
@@ -1137,6 +1227,8 @@
 // متغيرات عامة
 let cart = [];
 let invoiceId = null;
+let originalAvailableHtml = '';
+let originalOutOfStockHtml = '';
 const currencySymbol = '{% if base_currency and base_currency.symbol %}{{ base_currency.symbol }}{% else %}{% get_currency_symbol %}{% endif %}';
 const currencyDecimalPlaces = {% if base_currency %}{{ base_currency.decimal_places }}{% else %}2{% endif %};
 
@@ -1538,8 +1630,12 @@ document.getElementById('product-search').addEventListener('input', function() {
     allProducts.forEach(product => {
         const name = product.getAttribute('data-name') || '';
         const barcode = product.getAttribute('data-barcode') || '';
+        const productId = product.getAttribute('data-product-id') || '';
+        const price = product.getAttribute('data-price') || '';
+        const stock = product.getAttribute('data-stock') || '';
+        const code = product.getAttribute('data-code') || '';
         
-        if (name.includes(query) || barcode.includes(query)) {
+        if (name.includes(query) || barcode.includes(query) || productId.includes(query) || price.includes(query) || stock.includes(query) || code.includes(query)) {
             foundProducts.push(product);
             product.style.display = 'block';
         } else {
@@ -1585,7 +1681,11 @@ function displayProducts(products) {
                  ${!isOutOfStock ? `onclick="addToCart(${product.id})"` : ''} 
                  data-product-id="${product.id}"
                  data-name="${product.name.toLowerCase()}"
-                 data-barcode="${product.barcode || ''}">
+                 data-barcode="${product.barcode || ''}"
+                 data-price="${product.price}"
+                 data-stock="${product.stock}"
+                 data-code="${product.code || ''}"
+                 data-tax-rate="${product.tax_rate || 0}">
                 <div class="product-name">${product.name}</div>
                 <div class="product-price">${product.price.toFixed(currencyDecimalPlaces)} ${currencySymbol}</div>
         `;
@@ -1606,15 +1706,15 @@ function displayProducts(products) {
         
         if (product.barcode) {
             if (product.stock <= 0) {
-                outOfStockHtml += `<div class="product-barcode">${product.barcode}</div></div>`;
+                outOfStockHtml += `<div class="product-barcode">${product.barcode}</div><div class="product-id">{% trans "Product Code" %}: ${product.code}</div><div class="product-tax-rate">{% trans "Tax Rate" %}: ${product.tax_rate || 0}%</div></div>`;
             } else {
-                availableHtml += `<div class="product-barcode">${product.barcode}</div></div>`;
+                availableHtml += `<div class="product-barcode">${product.barcode}</div><div class="product-id">{% trans "Product Code" %}: ${product.code}</div><div class="product-tax-rate">{% trans "Tax Rate" %}: ${product.tax_rate || 0}%</div></div>`;
             }
         } else {
             if (product.stock <= 0) {
-                outOfStockHtml += '</div>';
+                outOfStockHtml += `<div class="product-id">{% trans "Product Code" %}: ${product.code}</div><div class="product-tax-rate">{% trans "Tax Rate" %}: ${product.tax_rate || 0}%</div></div>`;
             } else {
-                availableHtml += '</div>';
+                availableHtml += `<div class="product-id">{% trans "Product Code" %}: ${product.code}</div><div class="product-tax-rate">{% trans "Tax Rate" %}: ${product.tax_rate || 0}%</div></div>`;
             }
         }
     });
@@ -1629,10 +1729,9 @@ function displayProducts(products) {
 
 // {% trans "View" %} جميع المنتجات
 function showAllProducts() {
-    const allProducts = document.querySelectorAll('.product-card');
-    allProducts.forEach(product => {
-        product.style.display = 'block';
-    });
+    // إعادة تعيين الـ HTML الأصلي
+    document.getElementById('available-products').innerHTML = originalAvailableHtml;
+    document.getElementById('outofstock-products').innerHTML = originalOutOfStockHtml;
     
     // إعادة تحديث العدادات
     updateProductCounts();
@@ -1671,6 +1770,10 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!csrfToken) {
         console.error('CSRF token not found');
     }
+    
+    // حفظ الـ HTML الأصلي للمنتجات
+    originalAvailableHtml = document.getElementById('available-products').innerHTML;
+    originalOutOfStockHtml = document.getElementById('outofstock-products').innerHTML;
     
     // تحديث عدادات المنتجات
     updateProductCounts();

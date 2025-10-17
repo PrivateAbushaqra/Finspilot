@@ -81,7 +81,14 @@
                         </tr>
                         <tr>
                             <td><strong>{% trans "Created by" %}:</strong></td>
-                            <td>{{ invoice.created_by.get_full_name|default:invoice.created_by.username }}</td>
+                            <td>
+                                {{ invoice.created_by.get_full_name|default:invoice.created_by.username }}
+                                {% if user.can_change_invoice_creator %}
+                                    <a href="{% url 'sales:invoice_edit' invoice.pk %}" class="btn btn-sm btn-warning ms-2" title="{% trans 'Edit invoice to change creator' %}">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                {% endif %}
+                            </td>
                         </tr>
                     </table>
                 </div>
@@ -148,6 +155,19 @@
                             </button>
                         </td>
                     </tr>
+                    {% if invoice.jofotara_verification_url %}
+                    <tr>
+                        <td><strong>{% trans "Verification Link" %}:</strong></td>
+                        <td>
+                            <a href="{{ invoice.jofotara_verification_url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-external-link-alt me-1"></i>{% trans "Verify Invoice" %}
+                            </a>
+                            <button class="btn btn-sm btn-outline-secondary ms-2" onclick="copyToClipboard('{{ invoice.jofotara_verification_url }}')">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endif %}
                     {% endif %}
                 </table>
             </div>
@@ -326,7 +346,7 @@ function sendToJofotara(invoiceId) {
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>{% trans "Sending..." %}';
         
         // Send AJAX request
-        fetch(`/sales/invoice/${invoiceId}/send-to-jofotara/`, {
+        fetch(`/sales/invoices/${invoiceId}/send-to-jofotara/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

@@ -5,8 +5,8 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.db import transaction
 from django.utils.translation import gettext_lazy as _
-from .models import Currency
-from core.models import CompanySettings
+from .models import Currency, CompanySettings
+from core.models import AuditLog
 import json
 
 class SettingsView(LoginRequiredMixin, TemplateView):
@@ -83,10 +83,16 @@ class CompanySettingsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView)
                 # تحديث بيانات الشركة
                 old_company_name = company_settings.company_name
                 company_settings.company_name = request.POST.get('company_name', '')
+                company_settings.company_name_en = request.POST.get('company_name_en', '')
                 company_settings.tax_number = request.POST.get('tax_number', '')
+                company_settings.commercial_registration = request.POST.get('commercial_registration', '')
                 company_settings.phone = request.POST.get('phone', '')
                 company_settings.email = request.POST.get('email', '')
                 company_settings.address = request.POST.get('address', '')
+                company_settings.website = request.POST.get('website', '')
+                
+                # تحديث إعدادات العملة
+                company_settings.show_currency_symbol = 'show_currency_symbol' in request.POST
                 
                 # تسجيل النشاط إذا تغير اسم الشركة
                 if old_company_name != company_settings.company_name:
@@ -122,6 +128,16 @@ class CompanySettingsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView)
                 
                 # حفظ الإعدادات
                 company_settings.save()
+                
+                # تسجيل النشاط في سجل الأنشطة
+                AuditLog.objects.create(
+                    user=request.user,
+                    action_type='update',
+                    content_type='CompanySettings',
+                    object_id=company_settings.pk,
+                    description='تم تحديث إعدادات الشركة'
+                )
+                
                 messages.success(request, 'تم حفظ إعدادات الشركة بنجاح!')
                 
         except Exception as e:

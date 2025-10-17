@@ -43,15 +43,17 @@ class SalesInvoice(models.Model):
                                    help_text=_('UUID returned from JoFotara API'))
     jofotara_sent_at = models.DateTimeField(_('Sent to JoFotara At'), blank=True, null=True,
                                           help_text=_('Date and time when invoice was sent to JoFotara'))
+    jofotara_verification_url = models.URLField(_('JoFotara Verification URL'), blank=True, null=True,
+                                              help_text=_('URL to verify invoice on JoFotara portal'))
 
     class Meta:
         verbose_name = _('Sales Invoice')
         verbose_name_plural = _('Sales Invoices')
         ordering = ['-date', '-invoice_number']
         permissions = (
-            ('can_toggle_invoice_tax', 'Can toggle invoice tax inclusion'),
-            ('can_change_invoice_creator', 'Can change invoice creator'),
-            ('can_send_to_jofotara', 'Can send invoices to JoFotara'),
+            ('can_toggle_invoice_tax', _('Can toggle invoice tax inclusion')),
+            ('can_change_invoice_creator', _('Can change invoice creator')),
+            ('can_send_to_jofotara', _('Can send invoices to JoFotara')),
         )
 
     def __str__(self):
@@ -178,6 +180,8 @@ class SalesCreditNote(models.Model):
                                    help_text=_('UUID returned from JoFotara API'))
     jofotara_sent_at = models.DateTimeField(_('Sent to JoFotara At'), blank=True, null=True,
                                           help_text=_('Date and time when credit note was sent to JoFotara'))
+    jofotara_verification_url = models.URLField(_('JoFotara Verification URL'), blank=True, null=True,
+                                              help_text=_('URL to verify credit note on JoFotara portal'))
 
     class Meta:
         verbose_name = _('اشعار دائن')
