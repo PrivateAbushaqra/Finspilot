@@ -100,26 +100,26 @@ class CashboxTransfer(models.Model):
     ]
     
     transfer_number = models.CharField(_('Transfer Number'), max_length=50, unique=True)
-    transfer_type = models.CharField(_('نوع التحويل'), max_length=20, choices=TRANSFER_TYPES)
+    transfer_type = models.CharField(_('Transfer Type'), max_length=20, choices=TRANSFER_TYPES)
     date = models.DateField(_('Date'))
     
     # الصناديق
     from_cashbox = models.ForeignKey(Cashbox, on_delete=models.SET_NULL, null=True, blank=True,
-                                   verbose_name=_('من الصندوق'), related_name='transfers_from')
+                                   verbose_name=_('From Cashbox'), related_name='transfers_from')
     to_cashbox = models.ForeignKey(Cashbox, on_delete=models.SET_NULL, null=True, blank=True,
-                                 verbose_name=_('إلى الصندوق'), related_name='transfers_to')
+                                 verbose_name=_('To Cashbox'), related_name='transfers_to')
     
     # البنوك
     from_bank = models.ForeignKey('banks.BankAccount', on_delete=models.PROTECT, null=True, blank=True,
-                                verbose_name=_('من البنك'), related_name='cashbox_transfers_from')
+                                verbose_name=_('From Bank'), related_name='cashbox_transfers_from')
     to_bank = models.ForeignKey('banks.BankAccount', on_delete=models.PROTECT, null=True, blank=True,
-                              verbose_name=_('إلى البنك'), related_name='cashbox_transfers_to')
+                              verbose_name=_('To Bank'), related_name='cashbox_transfers_to')
     
     # حفظ أسماء الصناديق والبنوك في حالة الحذف
-    from_cashbox_name = models.CharField(_('اسم الصندوق المرسل'), max_length=200, blank=True)
-    to_cashbox_name = models.CharField(_('اسم الصندوق المستقبل'), max_length=200, blank=True)
-    from_bank_name = models.CharField(_('اسم البنك المرسل'), max_length=200, blank=True)
-    to_bank_name = models.CharField(_('اسم البنك المستقبل'), max_length=200, blank=True)
+    from_cashbox_name = models.CharField(_('Sender Cashbox Name'), max_length=200, blank=True)
+    to_cashbox_name = models.CharField(_('Receiver Cashbox Name'), max_length=200, blank=True)
+    from_bank_name = models.CharField(_('Sender Bank Name'), max_length=200, blank=True)
+    to_bank_name = models.CharField(_('Receiver Bank Name'), max_length=200, blank=True)
     
     # معلومات الإيداع للتحويل من الصندوق إلى البنك
     DEPOSIT_TYPES = [
@@ -143,8 +143,8 @@ class CashboxTransfer(models.Model):
     updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
 
     class Meta:
-        verbose_name = _('تحويل صندوق')
-        verbose_name_plural = _('تحويلات الصناديق')
+        verbose_name = _('Cashbox Transfer')
+        verbose_name_plural = _('Cashbox Transfers')
         ordering = ['-date', '-transfer_number']
 
     def __str__(self):
@@ -270,9 +270,9 @@ class CashboxTransaction(models.Model):
     TRANSACTION_TYPES = [
         ('deposit', _('Deposit')),
         ('withdrawal', _('Withdrawal')),
-        ('transfer_in', _('تحويل وارد')),
-        ('transfer_out', _('تحويل صادر')),
-        ('initial_balance', _('رصيد افتتاحي')),
+        ('transfer_in', _('Transfer In')),
+        ('transfer_out', _('Transfer Out')),
+        ('initial_balance', _('Initial Balance')),
         ('adjustment', _('settlement')),
     ]
     
@@ -285,7 +285,7 @@ class CashboxTransaction(models.Model):
         ('other', _('Other')),
     ]
     
-    cashbox = models.ForeignKey(Cashbox, on_delete=models.PROTECT, verbose_name=_('الصندوق'))
+    cashbox = models.ForeignKey(Cashbox, on_delete=models.PROTECT, verbose_name=_('Cash Box'))
     transaction_type = models.CharField(_('Transaction Type'), max_length=20, choices=TRANSACTION_TYPES)
     date = models.DateField(_('Date'))
     amount = models.DecimalField(_('Amount'), max_digits=15, decimal_places=3)
@@ -308,16 +308,16 @@ class CashboxTransaction(models.Model):
     
     # ربط بالتحويل إذا كانت الحركة من تحويل
     related_transfer = models.ForeignKey(CashboxTransfer, on_delete=models.CASCADE, 
-                                       null=True, blank=True, verbose_name=_('التحويل المرتبط'))
+                                       null=True, blank=True, verbose_name=_('Related Transfer'))
     
     # ربط بالمستند الأصلي
     reference_type = models.CharField(_('Reference Type'), max_length=50, blank=True, 
                                     choices=[
-                                        ('sales_invoice', _('فاتورة مبيعات')),
-                                        ('purchase_invoice', _('فاتورة مشتريات')),
-                                        ('receipt', _('سند قبض')),
-                                        ('payment', _('سند دفع')),
-                                        ('transfer', _('تحويل')),
+                                        ('sales_invoice', _('Sales Invoice')),
+                                        ('purchase_invoice', _('Purchase Invoice')),
+                                        ('receipt', _('Receipt')),
+                                        ('payment', _('Payment')),
+                                        ('transfer', _('Transfer')),
                                     ])
     reference_id = models.PositiveIntegerField(_('Reference ID'), null=True, blank=True)
     
@@ -325,8 +325,8 @@ class CashboxTransaction(models.Model):
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
 
     class Meta:
-        verbose_name = _('حركة صندوق')
-        verbose_name_plural = _('حركات الصناديق')
+        verbose_name = _('Cashbox Transaction')
+        verbose_name_plural = _('Cashbox Transactions')
         ordering = ['-date', '-created_at']
 
     def __str__(self):

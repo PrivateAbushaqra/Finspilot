@@ -22,31 +22,31 @@ class AccountTransaction(models.Model):
     ]
     
     DIRECTION_TYPES = [
-        ('debit', _('مدين')),
+        ('debit', _('debtor')),
         ('credit', _('creditor')),
     ]
     
     ADJUSTMENT_TYPES = [
-        ('capital_contribution', _('مساهمة رأسمالية')),
-        ('error_correction', _('تصحيح خطأ')),
-        ('bad_debt_write_off', _('شطب ديون معدومة')),
-        ('discount_allowed', _('خصم مسموح به')),
-        ('discount_received', _('خصم مستلم')),
-        ('revaluation', _('إعادة تقييم')),
-        ('other', _('أخرى')),
+        ('capital_contribution', _('Capital Contribution')),
+        ('error_correction', _('Error Correction')),
+        ('bad_debt_write_off', _('Bad Debt Write-off')),
+        ('discount_allowed', _('Discount Allowed')),
+        ('discount_received', _('Discount Received')),
+        ('revaluation', _('Revaluation')),
+        ('other', _('Other')),
     ]
 
     transaction_number = models.CharField(_('Movement Number'), max_length=50, unique=True)
     date = models.DateField(_('Date'))
     customer_supplier = models.ForeignKey(CustomerSupplier, on_delete=models.PROTECT, 
-                                        verbose_name=_('العميل/المورد'), related_name='transactions')
+                                        verbose_name=_('Customer/Supplier'), related_name='transactions')
     transaction_type = models.CharField(_('Transaction Type'), max_length=20, choices=TRANSACTION_TYPES)
-    direction = models.CharField(_('الاتجاه'), max_length=10, choices=DIRECTION_TYPES)
+    direction = models.CharField(_('Direction'), max_length=10, choices=DIRECTION_TYPES)
     amount = models.DecimalField(_('Amount'), max_digits=15, decimal_places=3)
     
     # حقول جديدة لتصنيف التعديلات - متوافقة مع IFRS
     adjustment_type = models.CharField(
-        _('نوع التعديل'),
+        _('Adjustment Type'),
         max_length=50,
         choices=ADJUSTMENT_TYPES,
         blank=True,
@@ -54,28 +54,28 @@ class AccountTransaction(models.Model):
         help_text=_('Type of manual adjustment (IFRS compliant)')
     )
     is_manual_adjustment = models.BooleanField(
-        _('تعديل يدوي'),
+        _('Manual Adjustment'),
         default=False,
         help_text=_('Is this a manual balance adjustment?')
     )
     
     # ربط بالمستندات الأصلية
-    reference_type = models.CharField(_('نوع المرجع'), max_length=20, blank=True)
-    reference_id = models.PositiveIntegerField(_('معرف المرجع'), blank=True, null=True)
+    reference_type = models.CharField(_('Reference Type'), max_length=20, blank=True)
+    reference_id = models.PositiveIntegerField(_('Reference ID'), blank=True, null=True)
     
     description = models.TextField(_('Description'), blank=True)
     notes = models.TextField(_('Notes'), blank=True)
     
     # الرصيد بعد الحركة
-    balance_after = models.DecimalField(_('الرصيد بعد الحركة'), max_digits=15, decimal_places=3, default=0)
+    balance_after = models.DecimalField(_('Balance After Transaction'), max_digits=15, decimal_places=3, default=0)
     
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name=_('Created By'))
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
     updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
 
     class Meta:
-        verbose_name = _('حركة حساب')
-        verbose_name_plural = _('حركات الحسابات')
+        verbose_name = _('Account Transaction')
+        verbose_name_plural = _('Account Transactions')
         ordering = ['-date', '-created_at']
         indexes = [
             models.Index(fields=['customer_supplier', 'date']),

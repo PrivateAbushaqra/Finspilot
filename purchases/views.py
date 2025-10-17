@@ -745,13 +745,14 @@ class PurchaseDebitNoteListView(LoginRequiredMixin, ListView):
 
 @login_required
 def purchase_debitnote_create(request):
+    from django.contrib import messages
+    from django.shortcuts import redirect
+    
     if not (
         request.user.has_perm('purchases.can_view_debitnote') or
         request.user.has_perm('purchases.add_purchasedebitnote') or
         request.user.is_superuser
     ):
-        from django.contrib import messages
-        from django.shortcuts import redirect
         messages.error(request, _('ليس لديك صلاحية لإنشاء مذكرة دين'))
         return redirect('/')
     if request.method == 'POST':

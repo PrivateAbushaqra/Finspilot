@@ -164,7 +164,7 @@ class CustomerListView(LoginRequiredMixin, ListView):
                     self.pk = 0
                 def __str__(self):
                     return str(_('Customer List'))
-            log_view_activity(self.request, 'view', CustomerListObj(), _('عرض قائمة العملاء'))
+            log_view_activity(self.request, 'view', CustomerListObj(), _('View customer list'))
         except Exception:
             pass
         
@@ -241,8 +241,8 @@ class CustomerSupplierCreateView(LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         if not request.user.has_perm('customers.can_add_customers_suppliers'):
             from core.signals import log_view_activity
-            log_view_activity(request, 'denied', None, _('محاولة دخول صفحة إضافة عميل/مورد بدون صلاحية'))
-            messages.error(request, _('ليس لديك صلاحية لإضافة عميل/مورد'))
+            log_view_activity(request, 'denied', None, _('Attempt to access add customer/supplier page without permission'))
+            messages.error(request, _('You do not have permission to add customer/supplier'))
             return redirect('customers:customer_list')
         return render(request, self.template_name)
     
@@ -381,16 +381,16 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
             
             # التحقق من البيانات المطلوبة
             if not name:
-                messages.error(request, _('اسم العميل/المورد مطلوب!'))
+                messages.error(request, _('Customer/Supplier name is required!'))
                 return redirect('customers:edit', pk=pk)
             
             if not city:
-                messages.error(request, _('المدينة مطلوبة!'))
+                messages.error(request, _('City is required!'))
                 return redirect('customers:edit', pk=pk)
             
             # التحقق من عدم وجود اسم مكرر (باستثناء نفس الحساب)
             if CustomerSupplier.objects.filter(name=name).exclude(pk=pk).exists():
-                messages.error(request, _('يوجد عميل/مورد آخر بنفس الاسم "%(name)s"!') % {'name': name})
+                messages.error(request, _('Another customer/supplier with the same name "%(name)s" exists!') % {'name': name})
                 return redirect('customers:edit', pk=pk)
             
             # تحويل الأرقام المالية
@@ -398,7 +398,7 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
                 credit_limit = float(credit_limit) if credit_limit else 0
                 new_current_balance = float(new_current_balance_str) if new_current_balance_str else 0
             except ValueError:
-                messages.error(request, _('قيم المبالغ المالية غير صحيحة!'))
+                messages.error(request, _('Invalid financial values!'))
                 return redirect('customers:edit', pk=pk)
             
             # تحديث البيانات الأساسية
@@ -431,14 +431,14 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
                 if balance_difference > 0:
                     # زيادة في الرصيد = مدين للعميل/مورد
                     direction = 'debit'
-                    description = _('تعديل يدوي للرصيد - زيادة: %(amount)s - نوع: %(type)s') % {
+                    description = _('Manual balance adjustment - increase: %(amount)s - type: %(type)s') % {
                         'amount': abs(balance_difference),
                         'type': dict(AccountTransaction.ADJUSTMENT_TYPES).get(adjustment_type, 'غير محدد')
                     }
                 else:
                     # نقص في الرصيد = دائن للعميل/مورد
                     direction = 'credit'
-                    description = _('تعديل يدوي للرصيد - نقص: %(amount)s - نوع: %(type)s') % {
+                    description = _('Manual balance adjustment - decrease: %(amount)s - type: %(type)s') % {
                         'amount': abs(balance_difference),
                         'type': dict(AccountTransaction.ADJUSTMENT_TYPES).get(adjustment_type, 'غير محدد')
                     }
@@ -530,7 +530,7 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
                     action_type='update',
                     content_type='CustomerSupplier',
                     object_id=customer_supplier.id,
-                    description=_('تعديل رصيد العميل/المورد: %(name)s من %(old)s إلى %(new)s (فرق: %(diff)s) - نوع: %(type)s') % {
+                    description=_('Customer/Supplier balance adjustment: %(name)s from %(old)s to %(new)s (difference: %(diff)s) - type: %(type)s') % {
                         'name': name,
                         'old': old_balance,
                         'new': new_balance,
@@ -541,7 +541,7 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
                 )
             
             # تسجيل النشاط العام
-            log_view_activity(request, 'update', customer_supplier, _('تحديث بيانات العميل/المورد: %(name)s') % {'name': name})
+            log_view_activity(request, 'update', customer_supplier, _('Update customer/supplier data: %(name)s') % {'name': name})
             
             # رسالة نجاح
             type_display = customer_supplier.get_type_display()
@@ -559,9 +559,9 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
             # حساب الرصيد الجديد الفعلي
             final_balance = customer_supplier.current_balance
             
-            success_message = _('تم تحديث %(type)s "%(name)s" بنجاح!') % {'type': type_display, 'name': name}
+            success_message = _('%(type)s "%(name)s" updated successfully!') % {'type': type_display, 'name': name}
             if balance_difference != 0:
-                success_message += '\n' + _('الرصيد الجديد: %(balance)s %(currency)s') % {
+                success_message += '\n' + _('New balance: %(balance)s %(currency)s') % {
                     'balance': f'{final_balance:.3f}',
                     'currency': currency_symbol
                 }
@@ -584,11 +584,11 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
                 action_type='error',
                 content_type='CustomerSupplier',
                 object_id=pk,
-                description=_('خطأ في تحديث العميل/المورد: %(error)s') % {'error': str(e)},
+                description=_('Error updating customer/supplier: %(error)s') % {'error': str(e)},
                 ip_address=request.META.get('REMOTE_ADDR')
             )
             
-            messages.error(request, _('حدث خطأ أثناء تحديث البيانات: %(error)s') % {'error': str(e)})
+            messages.error(request, _('An error occurred while updating data: %(error)s') % {'error': str(e)})
             return redirect('customers:edit', pk=pk)
 
 class CustomerSupplierDeleteView(LoginRequiredMixin, View):
@@ -599,7 +599,7 @@ class CustomerSupplierDeleteView(LoginRequiredMixin, View):
         
         # التحقق من الصلاحيات - فقط للسوبر أدمين
         if not request.user.is_superuser:
-            messages.error(request, _('ليس لديك صلاحية لحذف العملاء/الموردين'))
+            messages.error(request, _('You do not have permission to delete customers/suppliers'))
             return redirect('customers:detail', pk=pk)
         
         # فحص البيانات المرتبطة
@@ -609,7 +609,7 @@ class CustomerSupplierDeleteView(LoginRequiredMixin, View):
             'customer_supplier': customer_supplier,
             'related_data': related_data,
             'can_delete': True,  # السوبر أدمين يمكنه الحذف دائماً
-            'warning_message': _('تحذير: سيتم حذف جميع البيانات المرتبطة نهائياً!') if any(related_data.values()) else None
+            'warning_message': _('Warning: All related data will be permanently deleted!') if any(related_data.values()) else None
         }
         return render(request, self.template_name, context)
     

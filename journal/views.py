@@ -205,7 +205,7 @@ def export_accounts_excel(request):
             pk = 0
             def __str__(self):
                 return str(_('Accounts Export'))
-        log_view_activity(request, 'export', Obj(), str(_('تصدير قائمة الحسابات إلى Excel')))
+        log_view_activity(request, 'export', Obj(), str(_('Export account list to Excel')))
     except Exception:
         pass
     
@@ -224,7 +224,7 @@ def account_create(request):
             pk = 0
             def __str__(self):
                 return str(_('Create Account'))
-        log_view_activity(request, 'view', Obj(), str(_('فتح شاشة إنشاء حساب')))
+        log_view_activity(request, 'view', Obj(), str(_('Open account creation screen')))
     except Exception:
         pass
 
@@ -255,20 +255,20 @@ def account_create(request):
                     'display': f"{account.code} - {account.name}"
                 })
             else:
-                messages.success(request, _('تم إنشاء الحساب بنجاح'))
+                messages.success(request, _('Account created successfully'))
                 return redirect('journal:account_list')
         else:
             if is_modal or request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 # أعد النموذج مع الأخطاء كـ HTML جزئي
-                html = render(request, 'journal/account_form_modal.html', {'form': form, 'title': _('إنشاء حساب جديد')}).content.decode('utf-8')
+                html = render(request, 'journal/account_form_modal.html', {'form': form, 'title': _('Create new account')}).content.decode('utf-8')
                 return JsonResponse({'success': False, 'html': html}, status=400)
     else:
         form = AccountForm()
 
     # عرض النموذج
     if is_modal:
-        return render(request, 'journal/account_form_modal.html', {'form': form, 'title': _('إنشاء حساب جديد')})
-    return render(request, 'journal/account_form.html', {'form': form, 'title': _('إنشاء حساب جديد')})
+        return render(request, 'journal/account_form_modal.html', {'form': form, 'title': _('Create new account')})
+    return render(request, 'journal/account_form.html', {'form': form, 'title': _('Create new account')})
 
 
 @login_required
@@ -279,7 +279,7 @@ def account_edit(request, pk):
         form = AccountForm(request.POST, instance=account)
         if form.is_valid():
             form.save()
-            messages.success(request, _('تم تحديث الحساب بنجاح'))
+            messages.success(request, _('Account updated successfully'))
             return redirect('journal:account_list')
     else:
         form = AccountForm(instance=account)
@@ -298,12 +298,12 @@ def account_delete(request, pk):
     
     # التحقق من الصلاحيات
     if not (request.user.is_superuser or request.user.has_perm('users.can_delete_accounts')):
-        messages.error(request, _('ليس لديك صلاحية لحذف الحسابات'))
+        messages.error(request, _('You do not have permission to delete accounts'))
         return redirect('journal:account_list')
     
     # التحقق من وجود حركات على الحساب
     if account.journal_lines.exists():
-        messages.error(request, _('لا يمكن حذف الحساب لوجود حركات عليه'))
+        messages.error(request, _('Cannot delete account because it has transactions'))
         return redirect('journal:account_list')
     
     if request.method == 'POST':
@@ -322,7 +322,7 @@ def account_delete(request, pk):
         except Exception as e:
             pass
             
-        messages.success(request, _('تم حذف الحساب بنجاح'))
+        messages.success(request, _('Account deleted successfully'))
         return redirect('journal:account_list')
     
     return redirect('journal:account_list')
@@ -537,7 +537,7 @@ def journal_entry_create(request):
                 except Exception:
                     pass
 
-                messages.success(request, _('تم إنشاء القيد بنجاح'))
+                messages.success(request, _('Entry created successfully'))
                 return redirect('journal:entry_detail', pk=entry.pk)
                 
             except Exception as e:
@@ -552,11 +552,11 @@ def journal_entry_create(request):
                     )
                 except Exception:
                     pass
-                messages.error(request, _('حدث خطأ غير متوقع أثناء إنشاء القيد. يرجى المحاولة مرة أخرى.'))
+                messages.error(request, _('An unexpected error occurred while creating the entry. Please try again.'))
         else:
             # هناك أخطاء في التحقق - إضافة رسائل خطأ واضحة
             if not form_valid:
-                messages.error(request, _('يرجى تصحيح الأخطاء في معلومات القيد الأساسية'))
+                messages.error(request, _('Please correct the errors in the basic entry information'))
             
             if not formset_valid:
                 # عرض أخطاء الـ formset بشكل واضح
@@ -564,7 +564,7 @@ def journal_entry_create(request):
                     for error in formset.non_form_errors():
                         messages.error(request, error)
                 else:
-                    messages.error(request, _('يرجى تصحيح الأخطاء في بنود القيد'))
+                    messages.error(request, _('Please correct the errors in the entry lines'))
             
             # تسجيل أخطاء التحقق
             try:
@@ -591,7 +591,7 @@ def journal_entry_create(request):
         'form': form,
         'formset': formset,
         'accounts': Account.objects.filter(is_active=True).order_by('code'),
-        'title': _('إنشاء قيد محاسبي جديد')
+        'title': _('Create new journal entry')
     }
     return render(request, 'journal/entry_create.html', context)
 
@@ -623,7 +623,7 @@ def journal_entry_create_simple(request):
             entry = form.save()
             formset.instance = entry
             formset.save()
-            messages.success(request, _('تم إنشاء القيد المحاسبي بنجاح'))
+            messages.success(request, _('Journal entry created successfully'))
             return redirect('journal:entry_detail', pk=entry.pk)
         else:
             print("❌ Form errors:", form.errors)
@@ -638,7 +638,7 @@ def journal_entry_create_simple(request):
         'form': form,
         'formset': formset,
         'accounts': Account.objects.filter(is_active=True).order_by('code'),
-        'title': _('إنشاء قيد محاسبي - نسخة بسيطة')
+        'title': _('Create journal entry - simple version')
     }
     return render(request, 'journal/entry_create_simple.html', context)
 
@@ -673,12 +673,12 @@ def journal_entry_edit(request, pk):
                     )
                 except Exception:
                     pass
-                messages.success(request, _('تم تعديل القيد بنجاح'))
+                messages.success(request, _('Entry modified successfully'))
                 return redirect('journal:entry_detail', pk=entry.pk)
             else:
-                messages.error(request, _('يرجى تصحيح الأخطاء في النموذج'))
+                messages.error(request, _('Please correct the errors in the form'))
         except Exception as e:
-            messages.error(request, _('حدث خطأ أثناء تعديل القيد: ') + str(e))
+            messages.error(request, _('An error occurred while modifying the entry: ') + str(e))
     else:
         form = JournalEntryForm(instance=entry, user=request.user)
         formset = JournalLineFormSet(instance=entry)
@@ -686,7 +686,7 @@ def journal_entry_edit(request, pk):
         'form': form,
         'formset': formset,
         'accounts': Account.objects.filter(is_active=True).order_by('code'),
-        'title': _('تعديل قيد محاسبي'),
+        'title': _('Modify journal entry'),
         'entry': entry
     }
     return render(request, 'journal/entry_create.html', context)

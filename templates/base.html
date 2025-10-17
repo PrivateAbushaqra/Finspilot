@@ -1049,12 +1049,11 @@
                                                 <li class="nav-item">
                                                     <a class="nav-link {% if active_menu == 'sales' and 'return_list' in request.path %}active{% endif %}" href="{% url 'sales:return_list' %}">{% trans "Sales Returns List" %}</a>
                                                 </li>
-                                                <!-- <li class="nav-item">
+                                                {% if perms.sales.can_view_creditnote %}
+                                                <li class="nav-item">
                                                     <a class="nav-link {% if active_menu == 'sales' and 'creditnote_list' in request.path %}active{% endif %}" href="{% url 'sales:creditnote_list' %}">{% trans "Credit Notes" %}</a>
                                                 </li>
-                                                <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'sales' and 'creditnote_report' in request.path %}active{% endif %}" href="{% url 'sales:creditnote_report' %}">كشف مذكرات الدائن</a>
-                                                </li> -->
+                                                {% endif %}
                                                 <li class="nav-item">
                                                     <a class="nav-link {% if active_menu == 'sales' and 'sales_statement' in request.path %}active{% endif %}" href="{% url 'sales:sales_statement' %}">{% trans "Sales Statement" %}</a>
                                                 </li>
@@ -1306,12 +1305,11 @@
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'sales' and 'return_list' in request.path %}active{% endif %}" href="{% url 'sales:return_list' %}">{% trans "Sales Returns List" %}</a>
                                     </li>
+                                    {% if perms.sales.can_view_creditnote %}
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'sales' and 'creditnote_list' in request.path %}active{% endif %}" href="{% url 'sales:creditnote_list' %}">{% trans "Credit Notes" %}</a>
                                     </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'sales' and 'creditnote_report' in request.path %}active{% endif %}" href="{% url 'sales:creditnote_report' %}">كشف مذكرات الدائن</a>
-                                    </li>
+                                    {% endif %}
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'sales' and 'sales_statement' in request.path %}active{% endif %}" href="{% url 'sales:sales_statement' %}">{% trans "Sales Statement" %}</a>
                                     </li>

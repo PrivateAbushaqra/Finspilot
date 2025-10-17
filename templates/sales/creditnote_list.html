@@ -36,6 +36,7 @@
                                     <th>{% trans "Tax" %}</th>
                                     <th>{% trans "Total Amount" %}</th>
                                     <th>{% trans "Created by" %}</th>
+                                    <th>JoFotara</th>
                                     <th>{% trans "Actions" %}</th>
                                 </tr>
                             </thead>
@@ -52,7 +53,33 @@
                                     <td>
                                         <strong class="text-primary">{{ creditnote.total_amount }}</strong>
                                     </td>
-                                    <td>{{ creditnote.created_by.get_full_name|default:creditnote.created_by.username }}</td>
+                                    <td>{{ creditnote.created_by.username }}</td>
+                                    <td class="text-center">
+                                        {% if creditnote.jofotara_uuid %}
+                                            <span class="badge bg-success" title="{% trans 'Sent to JoFotara' %}">
+                                                <i class="fas fa-check-circle me-1"></i>
+                                                {% trans "Sent" %}
+                                            </span>
+                                            <br>
+                                            <small class="text-muted" style="font-size: 0.75rem;">
+                                                {{ creditnote.jofotara_sent_at|date:"Y-m-d H:i" }}
+                                            </small>
+                                            {% if creditnote.jofotara_verification_url %}
+                                            <br>
+                                            <a href="{{ creditnote.jofotara_verification_url }}" 
+                                               target="_blank" 
+                                               class="btn btn-sm btn-outline-info mt-1"
+                                               title="{% trans 'Verify on JoFotara' %}">
+                                                <i class="fas fa-external-link-alt"></i>
+                                            </a>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge bg-secondary" title="{% trans 'Not sent yet' %}">
+                                                <i class="fas fa-clock me-1"></i>
+                                                {% trans "Pending" %}
+                                            </span>
+                                        {% endif %}
+                                    </td>
                                     <td>
                                         <div class="btn-group" role="group">
                                             <a href="{% url 'sales:creditnote_detail' creditnote.pk %}" 

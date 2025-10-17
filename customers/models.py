@@ -6,20 +6,20 @@ from django.db.models import Max
 class CustomerSupplier(models.Model):
     """العملاء والموردون"""
     TYPES = [
-        ('customer', _('عميل')),
-        ('supplier', _('مورد')),
-        ('both', _('عميل ومورد')),
+        ('customer', _('Customer')),
+        ('supplier', _('Supplier')),
+        ('both', _('Customer and Supplier')),
     ]
 
-    sequence_number = models.IntegerField(_('الرقم التسلسلي'), unique=True, null=True, blank=True)
-    name = models.CharField(_('الاسم'), max_length=200)
-    type = models.CharField(_('النوع'), max_length=20, choices=TYPES)
+    sequence_number = models.IntegerField(_('Sequence Number'), unique=True, null=True, blank=True)
+    name = models.CharField(_('Name'), max_length=200)
+    type = models.CharField(_('Type'), max_length=20, choices=TYPES)
     email = models.EmailField(_('Email'), blank=True)
     phone = models.CharField(_('Phone'), max_length=50, blank=True)
-    address = models.TextField(_('العنوان'), blank=True)
-    city = models.CharField(_('المدينة'), max_length=100, blank=False)
-    tax_number = models.CharField(_('الرقم الضريبي'), max_length=50, blank=True)
-    credit_limit = models.DecimalField(_('حد الائتمان'), max_digits=15, decimal_places=3, default=0)
+    address = models.TextField(_('Address'), blank=True)
+    city = models.CharField(_('City'), max_length=100, blank=False)
+    tax_number = models.CharField(_('Tax Number'), max_length=50, blank=True)
+    credit_limit = models.DecimalField(_('Credit Limit'), max_digits=15, decimal_places=3, default=0)
     balance = models.DecimalField(_('Balance'), max_digits=15, decimal_places=3, default=0)
     is_active = models.BooleanField(_('Active'), default=True)
     notes = models.TextField(_('Notes'), blank=True)
@@ -27,14 +27,14 @@ class CustomerSupplier(models.Model):
     updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
 
     class Meta:
-        verbose_name = _('عميل/مورد')
-        verbose_name_plural = _('العملاء والموردون')
+        verbose_name = _('Customer/Supplier')
+        verbose_name_plural = _('Customers and Suppliers')
         ordering = ['sequence_number']
         permissions = [
-            ('can_view_customers_suppliers', _('يمكن مشاهدة العملاء/الموردين')),
-            ('can_add_customers_suppliers', _('يمكن إضافة عميل/مورد')),
-            ('can_edit_customers_suppliers', _('يمكن تعديل عميل/مورد')),
-            ('can_delete_customers_suppliers', _('يمكن حذف عميل/مورد')),
+            ('can_view_customers_suppliers', _('Can view customers/suppliers')),
+            ('can_add_customers_suppliers', _('Can add customer/supplier')),
+            ('can_edit_customers_suppliers', _('Can edit customer/supplier')),
+            ('can_delete_customers_suppliers', _('Can delete customer/supplier')),
         ]
 
     def save(self, *args, **kwargs):

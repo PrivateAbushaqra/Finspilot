@@ -603,20 +603,73 @@ def prepare_sales_invoice_data(sales_invoice):
 
 def prepare_credit_note_data(credit_note):
     """Prepare credit note data for JoFotara API"""
-    from sales.models import SalesCreditNote, SalesCreditNoteItem
-
+    from sales.models import SalesCreditNote
+    from core.models import CompanySettings
+    
     try:
-        # Get original invoice data
-        original_invoice = credit_note.original_invoice
+        # Get company settings
+        company_settings = CompanySettings.objects.first()
+        if not company_settings:
+            raise ValueError("Company settings not found")
 
-        # Use the same preparation logic as sales invoice
-        invoice_data = prepare_sales_invoice_data(credit_note)
+        # Get customer data
+        customer = credit_note.customer
 
-        # Add credit note specific data
-        invoice_data.update({
-            'original_invoice_number': original_invoice.invoice_number if original_invoice else '',
-            'original_invoice_date': original_invoice.date.isoformat() if original_invoice else ''
-        })
+        # Prepare seller data
+        seller_data = {
+            'id': company_settings.tax_number or '',
+            'scheme_id': 'TN',
+            'name': company_settings.company_name or '',
+            'street': company_settings.address or '',
+            'city': '',  # CompanySettings doesn't have city field
+            'country_code': 'JO',
+            'tax_id': company_settings.tax_number or '',
+            'company_id': '',  # CompanySettings doesn't have registration_number field
+            'email': company_settings.email or '',
+            'phone': company_settings.phone or ''
+        }
+
+        # Prepare buyer data
+        buyer_data = {
+            'id': customer.tax_number or str(customer.sequence_number) or '',
+            'scheme_id': 'TN' if customer.tax_number else 'ID',
+            'name': customer.name or '',
+            'street': customer.address or '',
+            'city': customer.city or '',
+            'country_code': 'JO',
+            'tax_id': customer.tax_number or '',
+            'company_id': str(customer.sequence_number) or '',
+            'email': customer.email or '',
+            'phone': customer.phone or ''
+        }
+
+        # Since credit note doesn't have items, create a single line with the total amount
+        lines_data = [{
+            'id': '1',
+            'description': credit_note.notes or 'Credit Note',
+            'quantity': 1,
+            'unit_price': float(credit_note.subtotal),
+            'tax_amount': float(credit_note.total_amount - credit_note.subtotal),
+            'line_total': float(credit_note.total_amount)
+        }]
+
+        # Prepare invoice data
+        invoice_data = {
+            'invoice_number': credit_note.note_number,
+            'issue_date': credit_note.date.isoformat(),
+            'issue_time': credit_note.created_at.time().isoformat() if credit_note.created_at else datetime.now().time().isoformat(),
+            'currency': company_settings.currency,
+            'seller': seller_data,
+            'buyer': buyer_data,
+            'lines': lines_data
+        }
+
+        # Check if credit note has original_invoice field (optional)
+        if hasattr(credit_note, 'original_invoice') and credit_note.original_invoice:
+            invoice_data.update({
+                'original_invoice_number': credit_note.original_invoice.invoice_number,
+                'original_invoice_date': credit_note.original_invoice.date.isoformat()
+            })
 
         return invoice_data
 
@@ -627,20 +680,66 @@ def prepare_credit_note_data(credit_note):
 
 def prepare_debit_note_data(debit_note):
     """Prepare debit note data for JoFotara API"""
-    from purchases.models import PurchaseDebitNote, PurchaseDebitNoteItem
+    from purchases.models import PurchaseDebitNote
+    from core.models import CompanySettings
 
     try:
-        # Get original invoice data
-        original_invoice = debit_note.original_invoice
+        # Get company settings for seller information
+        company_settings = CompanySettings.objects.first()
+        if not company_settings:
+            raise ValueError("Company settings not configured")
 
-        # Prepare invoice data (similar to sales invoice but for purchases)
-        invoice_data = prepare_sales_invoice_data(debit_note)
+        # Get supplier (buyer in debit note context) information
+        supplier = debit_note.supplier
 
-        # Add debit note specific data
-        invoice_data.update({
-            'original_invoice_number': original_invoice.invoice_number if original_invoice else '',
-            'original_invoice_date': original_invoice.date.isoformat() if original_invoice else ''
-        })
+        # Prepare seller data (company)
+        seller_data = {
+            'id': company_settings.tax_number or '',
+            'scheme_id': 'TN',
+            'name': company_settings.company_name or '',
+            'street': company_settings.address or '',
+            'city': '',  # CompanySettings doesn't have city field
+            'country_code': 'JO',
+            'tax_id': company_settings.tax_number or '',
+            'company_id': '',  # CompanySettings doesn't have registration_number
+            'email': company_settings.email or '',
+            'phone': company_settings.phone or ''
+        }
+
+        # Prepare buyer data (supplier)
+        buyer_data = {
+            'id': supplier.tax_number or str(supplier.sequence_number) or '',
+            'scheme_id': 'TN' if supplier.tax_number else 'ID',
+            'name': supplier.name or '',
+            'street': supplier.address or '',
+            'city': supplier.city or '',
+            'country_code': 'JO',
+            'tax_id': supplier.tax_number or '',
+            'company_id': str(supplier.sequence_number) or '',
+            'email': supplier.email or '',
+            'phone': supplier.phone or ''
+        }
+
+        # Since debit note doesn't have items, create a single line with the total amount
+        lines_data = [{
+            'id': '1',
+            'description': debit_note.notes or f'Debit Note {debit_note.note_number}',
+            'quantity': 1,
+            'unit_price': float(debit_note.subtotal),
+            'tax_amount': float(debit_note.total_amount - debit_note.subtotal),
+            'line_total': float(debit_note.total_amount)
+        }]
+
+        # Prepare invoice data
+        invoice_data = {
+            'invoice_number': debit_note.note_number,
+            'issue_date': debit_note.date.isoformat(),
+            'issue_time': debit_note.created_at.time().isoformat() if debit_note.created_at else datetime.now().time().isoformat(),
+            'currency': company_settings.currency,
+            'seller': seller_data,
+            'buyer': buyer_data,
+            'lines': lines_data
+        }
 
         return invoice_data
 

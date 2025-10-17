@@ -578,10 +578,10 @@ def liability_create(request):
                 user=request.user
             )
             
-            messages.success(request, _('تم إنشاء الخصم بنجاح'))
+            messages.success(request, _('Liability created successfully'))
             return redirect('assets_liabilities:liability_list')
         else:
-            messages.error(request, _('يرجى تصحيح الأخطاء في النموذج'))
+            messages.error(request, _('Please correct the errors in the form'))
     else:
         form = LiabilityForm()
     
@@ -599,7 +599,7 @@ def liability_detail(request, liability_id):
     
     context = {
         'liability': liability,
-        'page_title': f'{_("تفاصيل الخصم")} - {liability.name}',
+        'page_title': f'{_("Liability Details")} - {liability.name}',
     }
     return render(request, 'assets_liabilities/liability_detail.html', context)
 
@@ -628,17 +628,17 @@ def depreciation_create(request, asset_id):
             asset.last_depreciation_date = depreciation.depreciation_date
             asset.save()
             
-            messages.success(request, _('تم إنشاء قيد الإهلاك بنجاح'))
+            messages.success(request, _('Depreciation entry created successfully'))
             return redirect('assets_liabilities:asset_detail', asset_id=asset.id)
         else:
-            messages.error(request, _('يرجى تصحيح الأخطاء في النموذج'))
+            messages.error(request, _('Please correct the errors in the form'))
     else:
         form = DepreciationEntryForm(initial={'asset': asset})
     
     context = {
         'form': form,
         'asset': asset,
-        'page_title': f'{_("إضافة قيد إهلاك")} - {asset.name}',
+        'page_title': f'{_("Add Depreciation Entry")} - {asset.name}',
     }
     return render(request, 'assets_liabilities/depreciation_create.html', context)
 

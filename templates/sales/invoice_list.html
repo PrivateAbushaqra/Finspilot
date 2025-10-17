@@ -82,6 +82,12 @@
             display: none;
         }
         
+        /* إخفاء عمود JoFotara */
+        .table th:nth-child(7),
+        .table td:nth-child(7) {
+            display: none;
+        }
+        
         .invoice-card {
             margin-bottom: 0.5rem;
         }
@@ -503,6 +509,7 @@
                                         {% endif %}
                                     </a>
                                 </th>
+                                <th>{% trans "JoFotara" %}</th>
                                 <th>{% trans "Actions" %}</th>
                             </tr>
                         </thead>
@@ -549,6 +556,23 @@
                                         </span>
                                     {% else %}
                                         <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if invoice.jofotara_sent_at %}
+                                        <span class="badge bg-success" title="{% trans 'Sent to JoFotara on' %} {{ invoice.jofotara_sent_at|date:'Y-m-d H:i' }}">
+                                            <i class="fas fa-check-circle"></i> {% trans "Sent" %}
+                                        </span>
+                                        {% if invoice.jofotara_verification_url %}
+                                            <a href="{{ invoice.jofotara_verification_url }}" target="_blank" 
+                                               class="btn btn-sm btn-outline-info ms-1" title="{% trans 'Verify on JoFotara' %}">
+                                                <i class="fas fa-external-link-alt"></i>
+                                            </a>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="badge bg-secondary" title="{% trans 'Not sent to JoFotara yet' %}">
+                                            <i class="fas fa-clock"></i> {% trans "Pending" %}
+                                        </span>
                                     {% endif %}
                                 </td>
                                 <td>

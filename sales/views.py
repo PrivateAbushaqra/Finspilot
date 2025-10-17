@@ -1860,8 +1860,6 @@ def sales_creditnote_create(request):
         request.user.has_perm('sales.add_salescreditnote') or
         request.user.is_superuser
     ):
-        from django.contrib import messages
-        from django.shortcuts import redirect
         messages.error(request, _('ليس لديك صلاحية لإنشاء إشعار دائن'))
         return redirect('/')
     

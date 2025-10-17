@@ -11,27 +11,27 @@ User = get_user_model()
 class AssetCategory(models.Model):
     """فئات الأصول"""
     ASSET_TYPES = [
-        ('current', _('أصول متداولة')),
-        ('fixed', _('أصول ثابتة')),
-        ('intangible', _('أصول غير ملموسة')),
-        ('investment', _('استثمارات')),
+        ('current', _('Current Assets')),
+        ('fixed', _('Fixed Assets')),
+        ('intangible', _('Intangible Assets')),
+        ('investment', _('Investments')),
     ]
     
-    name = models.CharField(max_length=200, verbose_name=_('اسم الفئة'))
-    type = models.CharField(max_length=20, choices=ASSET_TYPES, verbose_name=_('نوع الأصل'))
-    account = models.ForeignKey('journal.Account', on_delete=models.PROTECT, verbose_name=_('الحساب المحاسبي'), 
+    name = models.CharField(max_length=200, verbose_name=_('Category Name'))
+    type = models.CharField(max_length=20, choices=ASSET_TYPES, verbose_name=_('Asset Type'))
+    account = models.ForeignKey('journal.Account', on_delete=models.PROTECT, verbose_name=_('Accounting Account'), 
                                limit_choices_to={'account_type': 'asset'}, null=True, blank=True)
     description = models.TextField(blank=True, null=True, verbose_name=_('Description'))
-    depreciation_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name=_('معدل الإهلاك %'))
-    useful_life_years = models.IntegerField(default=0, verbose_name=_('العمر الافتراضي بالسنوات'))
-    is_depreciable = models.BooleanField(default=False, verbose_name=_('قابل للإهلاك'))
+    depreciation_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name=_('Depreciation Rate %'))
+    useful_life_years = models.IntegerField(default=0, verbose_name=_('Useful Life Years'))
+    is_depreciable = models.BooleanField(default=False, verbose_name=_('Depreciable'))
     is_active = models.BooleanField(default=True, verbose_name=_('Active'))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Created At'))
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_('Created By'))
     
     class Meta:
-        verbose_name = _('فئة الأصل')
-        verbose_name_plural = _('فئات الأصول')
+        verbose_name = _('Asset Category')
+        verbose_name_plural = _('Asset Categories')
         ordering = ['type', 'name']
     
     def __str__(self):
@@ -47,34 +47,34 @@ class Asset(models.Model):
         ('sold', _('Sold')),
     ]
     
-    asset_number = models.CharField(max_length=50, unique=True, verbose_name=_('رقم الأصل'))
-    name = models.CharField(max_length=200, verbose_name=_('اسم الأصل'))
-    category = models.ForeignKey(AssetCategory, on_delete=models.CASCADE, verbose_name=_('الفئة'))
+    asset_number = models.CharField(max_length=50, unique=True, verbose_name=_('Asset Number'))
+    name = models.CharField(max_length=200, verbose_name=_('Asset Name'))
+    category = models.ForeignKey(AssetCategory, on_delete=models.CASCADE, verbose_name=_('Category'))
     description = models.TextField(blank=True, null=True, verbose_name=_('Description'))
     
     # معلومات مالية
-    purchase_cost = models.DecimalField(max_digits=15, decimal_places=3, validators=[MinValueValidator(Decimal('0'))], verbose_name=_('تكلفة الشراء'))
-    current_value = models.DecimalField(max_digits=15, decimal_places=3, validators=[MinValueValidator(Decimal('0'))], verbose_name=_('القيمة الحالية'))
-    accumulated_depreciation = models.DecimalField(max_digits=15, decimal_places=3, default=0, verbose_name=_('مجمع الإهلاك'))
-    salvage_value = models.DecimalField(max_digits=15, decimal_places=3, default=0, verbose_name=_('القيمة التخريدية'))
+    purchase_cost = models.DecimalField(max_digits=15, decimal_places=3, validators=[MinValueValidator(Decimal('0'))], verbose_name=_('Purchase Cost'))
+    current_value = models.DecimalField(max_digits=15, decimal_places=3, validators=[MinValueValidator(Decimal('0'))], verbose_name=_('Current Value'))
+    accumulated_depreciation = models.DecimalField(max_digits=15, decimal_places=3, default=0, verbose_name=_('Accumulated Depreciation'))
+    salvage_value = models.DecimalField(max_digits=15, decimal_places=3, default=0, verbose_name=_('Salvage Value'))
     
     # إضافة حقل العملة
     currency = models.ForeignKey('settings.Currency', on_delete=models.PROTECT, null=True, blank=True, verbose_name=_('Currency'))
     
     # معلومات الشراء
-    purchase_date = models.DateField(verbose_name=_('تاريخ الشراء'))
+    purchase_date = models.DateField(verbose_name=_('Purchase Date'))
     supplier = models.CharField(max_length=200, blank=True, null=True, verbose_name=_('Supplier'))
-    invoice_number = models.CharField(max_length=100, blank=True, null=True, verbose_name=_('رقم الفاتورة'))
-    warranty_expiry = models.DateField(blank=True, null=True, verbose_name=_('انتهاء الضمان'))
+    invoice_number = models.CharField(max_length=100, blank=True, null=True, verbose_name=_('Invoice Number'))
+    warranty_expiry = models.DateField(blank=True, null=True, verbose_name=_('Warranty Expiry'))
     
     # معلومات الموقع والحالة
-    location = models.CharField(max_length=200, blank=True, null=True, verbose_name=_('الموقع'))
-    responsible_person = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='responsible_assets', verbose_name=_('الشخص المسؤول'))
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active', verbose_name=_('الحالة'))
+    location = models.CharField(max_length=200, blank=True, null=True, verbose_name=_('Location'))
+    responsible_person = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='responsible_assets', verbose_name=_('Responsible Person'))
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active', verbose_name=_('Status'))
     
     # الإهلاك
-    depreciation_method = models.CharField(max_length=50, default='straight_line', verbose_name=_('طريقة الإهلاك'))
-    last_depreciation_date = models.DateField(blank=True, null=True, verbose_name=_('تاريخ آخر إهلاك'))
+    depreciation_method = models.CharField(max_length=50, default='straight_line', verbose_name=_('Depreciation Method'))
+    last_depreciation_date = models.DateField(blank=True, null=True, verbose_name=_('Last Depreciation Date'))
     
     # معلومات التتبع
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Created At'))
@@ -82,8 +82,8 @@ class Asset(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_('Created By'))
     
     class Meta:
-        verbose_name = _('أصل')
-        verbose_name_plural = _('الأصول')
+        verbose_name = _('Asset')
+        verbose_name_plural = _('Assets')
         ordering = ['-purchase_date']
     
     def __str__(self):
@@ -122,14 +122,14 @@ class Asset(models.Model):
 class LiabilityCategory(models.Model):
     """فئات الخصوم"""
     LIABILITY_TYPES = [
-        ('current', _('خصوم متداولة')),
-        ('long_term', _('خصوم طويلة الأجل')),
-        ('equity', _('حقوق الملكية')),
+        ('current', _('Current Liabilities')),
+        ('long_term', _('Long-term Liabilities')),
+        ('equity', _('Equity')),
     ]
     
-    name = models.CharField(max_length=200, verbose_name=_('اسم الفئة'))
-    type = models.CharField(max_length=20, choices=LIABILITY_TYPES, verbose_name=_('نوع الخصم'))
-    account = models.ForeignKey('journal.Account', on_delete=models.PROTECT, verbose_name=_('الحساب المحاسبي'), 
+    name = models.CharField(max_length=200, verbose_name=_('Category Name'))
+    type = models.CharField(max_length=20, choices=LIABILITY_TYPES, verbose_name=_('Liability Type'))
+    account = models.ForeignKey('journal.Account', on_delete=models.PROTECT, verbose_name=_('Accounting Account'), 
                                limit_choices_to={'account_type__in': ['liability', 'equity']}, null=True, blank=True)
     description = models.TextField(blank=True, null=True, verbose_name=_('Description'))
     is_active = models.BooleanField(default=True, verbose_name=_('Active'))
@@ -137,8 +137,8 @@ class LiabilityCategory(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_('Created By'))
     
     class Meta:
-        verbose_name = _('فئة الخصم')
-        verbose_name_plural = _('فئات الخصوم')
+        verbose_name = _('Liability Category')
+        verbose_name_plural = _('Liability Categories')
         ordering = ['type', 'name']
     
     def __str__(self):
@@ -149,36 +149,36 @@ class Liability(models.Model):
     """الخصوم"""
     STATUS_CHOICES = [
         ('active', _('Active')),
-        ('paid', _('مسدد')),
-        ('overdue', _('متأخر')),
-        ('cancelled', _('ملغي')),
+        ('paid', _('Paid')),
+        ('overdue', _('Overdue')),
+        ('cancelled', _('Cancelled')),
     ]
     
-    liability_number = models.CharField(max_length=50, unique=True, verbose_name=_('رقم الخصم'))
-    name = models.CharField(max_length=200, verbose_name=_('اسم الخصم'))
-    category = models.ForeignKey(LiabilityCategory, on_delete=models.CASCADE, verbose_name=_('الفئة'))
+    liability_number = models.CharField(max_length=50, unique=True, verbose_name=_('Liability Number'))
+    name = models.CharField(max_length=200, verbose_name=_('Liability Name'))
+    category = models.ForeignKey(LiabilityCategory, on_delete=models.CASCADE, verbose_name=_('Category'))
     description = models.TextField(blank=True, null=True, verbose_name=_('Description'))
     
     # معلومات مالية
-    original_amount = models.DecimalField(max_digits=15, decimal_places=3, validators=[MinValueValidator(Decimal('0.001'))], verbose_name=_('المبلغ الأصلي'))
-    current_balance = models.DecimalField(max_digits=15, decimal_places=3, validators=[MinValueValidator(Decimal('0'))], verbose_name=_('الرصيد الحالي'))
-    interest_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name=_('معدل الفائدة %'))
+    original_amount = models.DecimalField(max_digits=15, decimal_places=3, validators=[MinValueValidator(Decimal('0.001'))], verbose_name=_('Original Amount'))
+    current_balance = models.DecimalField(max_digits=15, decimal_places=3, validators=[MinValueValidator(Decimal('0'))], verbose_name=_('Current Balance'))
+    interest_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name=_('Interest Rate %'))
     
     # إضافة حقل العملة
     currency = models.ForeignKey('settings.Currency', on_delete=models.PROTECT, null=True, blank=True, verbose_name=_('Currency'))
     
     # معلومات التواريخ
-    start_date = models.DateField(verbose_name=_('تاريخ البداية'))
-    due_date = models.DateField(verbose_name=_('تاريخ الاستحقاق'))
-    last_payment_date = models.DateField(blank=True, null=True, verbose_name=_('تاريخ آخر دفعة'))
+    start_date = models.DateField(verbose_name=_('Start Date'))
+    due_date = models.DateField(verbose_name=_('Due Date'))
+    last_payment_date = models.DateField(blank=True, null=True, verbose_name=_('Last Payment Date'))
     
     # معلومات الطرف الآخر
-    creditor_name = models.CharField(max_length=200, verbose_name=_('اسم الدائن'))
-    creditor_contact = models.CharField(max_length=200, blank=True, null=True, verbose_name=_('معلومات الاتصال'))
-    contract_number = models.CharField(max_length=100, blank=True, null=True, verbose_name=_('رقم العقد'))
+    creditor_name = models.CharField(max_length=200, verbose_name=_('Creditor Name'))
+    creditor_contact = models.CharField(max_length=200, blank=True, null=True, verbose_name=_('Contact Information'))
+    contract_number = models.CharField(max_length=100, blank=True, null=True, verbose_name=_('Contract Number'))
     
     # معلومات الحالة
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active', verbose_name=_('الحالة'))
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active', verbose_name=_('Status'))
     
     # معلومات التتبع
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Created At'))
@@ -186,8 +186,8 @@ class Liability(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_('Created By'))
     
     class Meta:
-        verbose_name = _('خصم')
-        verbose_name_plural = _('الخصوم')
+        verbose_name = _('Liability')
+        verbose_name_plural = _('Liabilities')
         ordering = ['due_date']
     
     def __str__(self):
@@ -220,12 +220,12 @@ class Liability(models.Model):
 
 class DepreciationEntry(models.Model):
     """قيود الإهلاك"""
-    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, verbose_name=_('الأصل'))
-    depreciation_date = models.DateField(verbose_name=_('تاريخ الإهلاك'))
-    depreciation_amount = models.DecimalField(max_digits=15, decimal_places=3, validators=[MinValueValidator(Decimal('0.001'))], verbose_name=_('مبلغ الإهلاك'))
-    accumulated_depreciation_before = models.DecimalField(max_digits=15, decimal_places=3, verbose_name=_('مجمع الإهلاك قبل'))
-    accumulated_depreciation_after = models.DecimalField(max_digits=15, decimal_places=3, verbose_name=_('مجمع الإهلاك بعد'))
-    net_book_value_after = models.DecimalField(max_digits=15, decimal_places=3, verbose_name=_('القيمة الدفترية بعد'))
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE, verbose_name=_('Asset'))
+    depreciation_date = models.DateField(verbose_name=_('Depreciation Date'))
+    depreciation_amount = models.DecimalField(max_digits=15, decimal_places=3, validators=[MinValueValidator(Decimal('0.001'))], verbose_name=_('Depreciation Amount'))
+    accumulated_depreciation_before = models.DecimalField(max_digits=15, decimal_places=3, verbose_name=_('Accumulated Depreciation Before'))
+    accumulated_depreciation_after = models.DecimalField(max_digits=15, decimal_places=3, verbose_name=_('Accumulated Depreciation After'))
+    net_book_value_after = models.DecimalField(max_digits=15, decimal_places=3, verbose_name=_('Net Book Value After'))
     notes = models.TextField(blank=True, null=True, verbose_name=_('Notes'))
     
     # إضافة حقل العملة
@@ -236,8 +236,8 @@ class DepreciationEntry(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_('Created By'))
     
     class Meta:
-        verbose_name = _('قيد إهلاك')
-        verbose_name_plural = _('قيود الإهلاك')
+        verbose_name = _('Depreciation Entry')
+        verbose_name_plural = _('Depreciation Entries')
         ordering = ['-depreciation_date']
     
     def __str__(self):

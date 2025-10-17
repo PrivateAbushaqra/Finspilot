@@ -10,20 +10,20 @@ User = get_user_model()
 class Account(models.Model):
     """دليل الحسابات المحاسبية"""
     ACCOUNT_TYPES = [
-        ('asset', _('أصول')),
-        ('liability', _('مطلوبات')),
-        ('equity', _('حقوق ملكية')),
-        ('revenue', _('إيرادات')),
-        ('expense', _('مصاريف')),
-        ('purchases', _('مشتريات')),
-        ('sales', _('مبيعات')),
+        ('asset', _('Assets')),
+        ('liability', _('Liabilities')),
+        ('equity', _('Equity')),
+        ('revenue', _('Revenues')),
+        ('expense', _('Expenses')),
+        ('purchases', _('Purchases')),
+        ('sales', _('Sales')),
     ]
 
-    code = models.CharField(_('كود الحساب'), max_length=20, unique=True)
+    code = models.CharField(_('Account Code'), max_length=20, unique=True)
     name = models.CharField(_('Account Name'), max_length=100)
     account_type = models.CharField(_('Account Type'), max_length=20, choices=ACCOUNT_TYPES)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, 
-                              verbose_name=_('الحساب الرئيسي'), related_name='children')
+                              verbose_name=_('Parent Account'), related_name='children')
     description = models.TextField(_('Description'), blank=True)
     is_active = models.BooleanField(_('Active'), default=True)
     balance = models.DecimalField(_('Balance'), max_digits=15, decimal_places=3, default=0)
@@ -32,12 +32,12 @@ class Account(models.Model):
     updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
 
     class Meta:
-        verbose_name = _('حساب')
-        verbose_name_plural = _('الحسابات')
+        verbose_name = _('Account')
+        verbose_name_plural = _('Accounts')
         ordering = ['code', 'name']
         default_permissions = ('add', 'change', 'delete', 'view')
         permissions = [
-            ('view_journalaccount', _('Can view حساب')),
+            ('view_journalaccount', _('Can view Account')),
         ]
 
     def __str__(self):
@@ -83,29 +83,29 @@ class JournalEntry(models.Model):
         ('daily', _('Daily')),
         ('other', _('Other')),
     ]
-    entry_number = models.CharField(_('رقم القيد'), max_length=50, unique=True, blank=True)
-    entry_date = models.DateField(_('تاريخ القيد'))
-    entry_type = models.CharField(_('نوع القيد'), max_length=20, choices=ENTRY_TYPES, default='daily')
-    reference_type = models.CharField(_('نوع العملية'), max_length=30, choices=REFERENCE_TYPES)
-    reference_id = models.PositiveIntegerField(_('رقم العملية المرتبطة'), null=True, blank=True)
-    sales_invoice = models.ForeignKey('sales.SalesInvoice', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('فاتورة المبيعات'))
-    purchase_invoice = models.ForeignKey('purchases.PurchaseInvoice', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('فاتورة المشتريات'))
-    cashbox_transfer = models.ForeignKey('cashboxes.CashboxTransfer', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('تحويل الصناديق'))
-    bank_transfer = models.ForeignKey('banks.BankTransfer', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('تحويل البنوك'))
-    description = models.TextField(_('وصف القيد'))
-    total_amount = models.DecimalField(_('إجمالي المبلغ'), max_digits=15, decimal_places=3)
+    entry_number = models.CharField(_('Entry Number'), max_length=50, unique=True, blank=True)
+    entry_date = models.DateField(_('Entry Date'))
+    entry_type = models.CharField(_('Entry Type'), max_length=20, choices=ENTRY_TYPES, default='daily')
+    reference_type = models.CharField(_('Reference Type'), max_length=30, choices=REFERENCE_TYPES)
+    reference_id = models.PositiveIntegerField(_('Reference ID'), null=True, blank=True)
+    sales_invoice = models.ForeignKey('sales.SalesInvoice', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('Sales Invoice'))
+    purchase_invoice = models.ForeignKey('purchases.PurchaseInvoice', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('Purchase Invoice'))
+    cashbox_transfer = models.ForeignKey('cashboxes.CashboxTransfer', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('Cashbox Transfer'))
+    bank_transfer = models.ForeignKey('banks.BankTransfer', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('Bank Transfer'))
+    description = models.TextField(_('Entry Description'))
+    total_amount = models.DecimalField(_('Total Amount'), max_digits=15, decimal_places=3)
     
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name=_('Created By'))
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
     updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
 
     class Meta:
-        verbose_name = _('قيد محاسبي')
-        verbose_name_plural = _('القيود المحاسبية')
+        verbose_name = _('Journal Entry')
+        verbose_name_plural = _('Journal Entries')
         ordering = ['-entry_date', '-created_at']
         default_permissions = ('add', 'change', 'delete', 'view')
         permissions = [
-            ('change_entry_number', _('تعديل رقم القيد')),
+            ('change_entry_number', _('Change Entry Number')),
         ]
 
     def __str__(self):
@@ -203,24 +203,24 @@ class JournalEntry(models.Model):
             total_credit = self.lines.aggregate(total=models.Sum('credit'))['total'] or Decimal('0')
             
             if total_debit != total_credit:
-                raise ValidationError(_('يجب أن يكون مجموع المدين مساوياً لمجموع الدائن'))
+                raise ValidationError(_('Debit and credit totals must be equal'))
 
 
 class JournalLine(models.Model):
     """بند القيد المحاسبي"""
     journal_entry = models.ForeignKey(JournalEntry, on_delete=models.CASCADE, 
-                                    verbose_name=_('القيد المحاسبي'), related_name='lines')
+                                    verbose_name=_('Journal Entry'), related_name='lines')
     account = models.ForeignKey(Account, on_delete=models.PROTECT, 
-                               verbose_name=_('الحساب'), related_name='journal_lines')
-    debit = models.DecimalField(_('مدين'), max_digits=15, decimal_places=3, default=0)
-    credit = models.DecimalField(_('creditor'), max_digits=15, decimal_places=3, default=0)
-    line_description = models.TextField(_('تفاصيل البند'), blank=True)
+                               verbose_name=_('Account'), related_name='journal_lines')
+    debit = models.DecimalField(_('Debit'), max_digits=15, decimal_places=3, default=0)
+    credit = models.DecimalField(_('Credit'), max_digits=15, decimal_places=3, default=0)
+    line_description = models.TextField(_('Line Description'), blank=True)
     
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
 
     class Meta:
-        verbose_name = _('بند قيد')
-        verbose_name_plural = _('بنود القيود')
+        verbose_name = _('Journal Line')
+        verbose_name_plural = _('Journal Lines')
 
     def __str__(self):
         return f"{self.journal_entry.entry_number} - {self.account.name}"
@@ -228,13 +228,13 @@ class JournalLine(models.Model):
     def clean(self):
         """التحقق من صحة البيانات"""
         if self.debit < 0 or self.credit < 0:
-            raise ValidationError(_('المبالغ يجب أن تكون موجبة'))
+            raise ValidationError(_('Amounts must be positive'))
         
         if self.debit > 0 and self.credit > 0:
-            raise ValidationError(_('لا يمكن أن يكون البند مدين ودائن في نفس الوقت'))
+            raise ValidationError(_('Line cannot be both debit and credit'))
         
         if self.debit == 0 and self.credit == 0:
-            raise ValidationError(_('يجب إدخال مبلغ مدين أو دائن'))
+            raise ValidationError(_('Must enter debit or credit amount'))
 
     @property
     def get_running_balance(self):
@@ -263,29 +263,29 @@ class JournalLine(models.Model):
 class YearEndClosing(models.Model):
     """إقفال السنة المالية"""
     STATUS_CHOICES = [
-        ('pending', _('في الانتظار')),
-        ('completed', _('مكتمل')),
-        ('cancelled', _('ملغي')),
+        ('pending', _('Pending')),
+        ('completed', _('Completed')),
+        ('cancelled', _('Cancelled')),
     ]
     
-    year = models.IntegerField(_('السنة المالية'))
-    closing_date = models.DateField(_('تاريخ الإقفال'))
-    net_profit = models.DecimalField(_('صافي الربح/الخسارة'), max_digits=15, decimal_places=3, default=0)
-    status = models.CharField(_('الحالة'), max_length=20, choices=STATUS_CHOICES, default='pending')
+    year = models.IntegerField(_('Fiscal Year'))
+    closing_date = models.DateField(_('Closing Date'))
+    net_profit = models.DecimalField(_('Net Profit/Loss'), max_digits=15, decimal_places=3, default=0)
+    status = models.CharField(_('Status'), max_length=20, choices=STATUS_CHOICES, default='pending')
     
     # القيود المرتبطة
     closing_entry = models.OneToOneField(JournalEntry, on_delete=models.SET_NULL, null=True, blank=True,
-                                        verbose_name=_('قيد الإقفال'), related_name='year_end_closing')
+                                        verbose_name=_('Closing Entry'), related_name='year_end_closing')
     
-    created_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name=_('أنشئ بواسطة'))
-    created_at = models.DateTimeField(_('تاريخ الإنشاء'), auto_now_add=True)
-    updated_at = models.DateTimeField(_('تاريخ التحديث'), auto_now=True)
+    created_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name=_('Created By'))
+    created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
+    updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
     
-    notes = models.TextField(_('ملاحظات'), blank=True)
+    notes = models.TextField(_('Notes'), blank=True)
 
     class Meta:
-        verbose_name = _('إقفال سنوي')
-        verbose_name_plural = _('الإقفالات السنوية')
+        verbose_name = _('Year End Closing')
+        verbose_name_plural = _('Year End Closings')
         ordering = ['-year', '-closing_date']
         unique_together = ['year']
         default_permissions = ('add', 'change', 'delete', 'view')
@@ -321,7 +321,7 @@ class YearEndClosing(models.Model):
     def perform_closing(self):
         """إجراء الإقفال السنوي"""
         if self.status == 'completed':
-            return False, _("الإقفال مكتمل مسبقاً")
+            return False, _("Closing already completed")
         
         # حساب صافي الربح
         self.calculate_net_profit()
@@ -394,4 +394,4 @@ class YearEndClosing(models.Model):
         self.status = 'completed'
         self.save()
         
-        return True, _("تم إجراء الإقفال السنوي بنجاح")
+        return True, _("Year end closing performed successfully")

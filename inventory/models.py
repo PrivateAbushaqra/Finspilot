@@ -7,21 +7,21 @@ User = get_user_model()
 
 class Warehouse(models.Model):
     """المستودع"""
-    name = models.CharField(_('اسم المستودع'), max_length=100)
-    code = models.CharField(_('رمز المستودع'), max_length=20, unique=True)
+    name = models.CharField(_('Warehouse Name'), max_length=100)
+    code = models.CharField(_('Warehouse Code'), max_length=20, unique=True)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True,
-                              verbose_name=_('المستودع الأساسي'), related_name='sub_warehouses')
-    address = models.TextField(_('العنوان'), blank=True)
+                              verbose_name=_('Parent Warehouse'), related_name='sub_warehouses')
+    address = models.TextField(_('Address'), blank=True)
     manager = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
-                               verbose_name=_('مدير المستودع'))
+                               verbose_name=_('Warehouse Manager'))
     is_active = models.BooleanField(_('Active'), default=True)
-    is_default = models.BooleanField(_('المستودع الافتراضي'), default=False)
+    is_default = models.BooleanField(_('Default Warehouse'), default=False)
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
     updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
 
     class Meta:
-        verbose_name = _('مستودع')
-        verbose_name_plural = _('المستودعات')
+        verbose_name = _('Warehouse')
+        verbose_name_plural = _('Warehouses')
         ordering = ['name']
         permissions = [
             ('can_view_inventory', _('Can access inventory')),
@@ -52,9 +52,9 @@ class Warehouse(models.Model):
 class InventoryMovement(models.Model):
     """حركة المخزون"""
     MOVEMENT_TYPES = [
-        ('in', _('وارد')),
-        ('out', _('صادر')),
-        ('transfer', _('تحويل')),
+        ('in', _('In')),
+        ('out', _('Out')),
+        ('transfer', _('Transfer')),
         ('adjustment', _('settlement')),
     ]
 
@@ -73,18 +73,18 @@ class InventoryMovement(models.Model):
     product = models.ForeignKey('products.Product', on_delete=models.PROTECT, verbose_name=_('Product'))
     warehouse = models.ForeignKey(Warehouse, on_delete=models.PROTECT, verbose_name=_('Warehouse'))
     movement_type = models.CharField(_('Transaction Type'), max_length=20, choices=MOVEMENT_TYPES)
-    reference_type = models.CharField(_('نوع المرجع'), max_length=30, choices=REFERENCE_TYPES)
-    reference_id = models.PositiveIntegerField(_('معرف المرجع'))
-    quantity = models.DecimalField(_('الكمية'), max_digits=10, decimal_places=3)
-    unit_cost = models.DecimalField(_('تكلفة الوحدة'), max_digits=15, decimal_places=3, default=0)
-    total_cost = models.DecimalField(_('التكلفة الإجمالية'), max_digits=15, decimal_places=3, default=0)
+    reference_type = models.CharField(_('Reference Type'), max_length=30, choices=REFERENCE_TYPES)
+    reference_id = models.PositiveIntegerField(_('Reference ID'))
+    quantity = models.DecimalField(_('Quantity'), max_digits=10, decimal_places=3)
+    unit_cost = models.DecimalField(_('Unit Cost'), max_digits=15, decimal_places=3, default=0)
+    total_cost = models.DecimalField(_('Total Cost'), max_digits=15, decimal_places=3, default=0)
     notes = models.TextField(_('Notes'), blank=True)
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name=_('Created By'))
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
 
     class Meta:
-        verbose_name = _('حركة مخزون')
-        verbose_name_plural = _('حركات المخزون')
+        verbose_name = _('Inventory Movement')
+        verbose_name_plural = _('Inventory Movements')
         ordering = ['-date', '-movement_number']
         permissions = [
             ('can_view_inventory', _('Can access inventory')),
@@ -181,17 +181,17 @@ class WarehouseTransfer(models.Model):
     transfer_number = models.CharField(_('Transfer Number'), max_length=50, unique=True)
     date = models.DateField(_('Date'))
     from_warehouse = models.ForeignKey(Warehouse, on_delete=models.PROTECT, 
-                                     verbose_name=_('من المستودع'), related_name='transfers_from')
+                                     verbose_name=_('From Warehouse'), related_name='transfers_from')
     to_warehouse = models.ForeignKey(Warehouse, on_delete=models.PROTECT, 
-                                   verbose_name=_('إلى المستودع'), related_name='transfers_to')
+                                   verbose_name=_('To Warehouse'), related_name='transfers_to')
     notes = models.TextField(_('Notes'), blank=True)
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name=_('Created By'))
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
     updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
 
     class Meta:
-        verbose_name = _('تحويل مستودع')
-        verbose_name_plural = _('تحويلات المستودعات')
+        verbose_name = _('Warehouse Transfer')
+        verbose_name_plural = _('Warehouse Transfers')
         ordering = ['-date', '-transfer_number']
 
     def __str__(self):
@@ -201,15 +201,15 @@ class WarehouseTransfer(models.Model):
 class WarehouseTransferItem(models.Model):
     """عنصر تحويل المستودع"""
     transfer = models.ForeignKey(WarehouseTransfer, on_delete=models.CASCADE, 
-                               verbose_name=_('التحويل'), related_name='items')
+                               verbose_name=_('Transfer'), related_name='items')
     product = models.ForeignKey('products.Product', on_delete=models.PROTECT, verbose_name=_('Product'))
-    quantity = models.DecimalField(_('الكمية'), max_digits=10, decimal_places=3)
-    unit_cost = models.DecimalField(_('تكلفة الوحدة'), max_digits=15, decimal_places=3, default=0)
-    total_cost = models.DecimalField(_('التكلفة الإجمالية'), max_digits=15, decimal_places=3, default=0)
+    quantity = models.DecimalField(_('Quantity'), max_digits=10, decimal_places=3)
+    unit_cost = models.DecimalField(_('Unit Cost'), max_digits=15, decimal_places=3, default=0)
+    total_cost = models.DecimalField(_('Total Cost'), max_digits=15, decimal_places=3, default=0)
 
     class Meta:
-        verbose_name = _('عنصر تحويل المستودع')
-        verbose_name_plural = _('عناصر تحويل المستودعات')
+        verbose_name = _('Warehouse Transfer Item')
+        verbose_name_plural = _('Warehouse Transfer Items')
 
     def __str__(self):
         return f"{self.transfer.transfer_number} - {self.product.name}"

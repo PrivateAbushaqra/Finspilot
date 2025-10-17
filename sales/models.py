@@ -9,30 +9,30 @@ User = get_user_model()
 class SalesInvoice(models.Model):
     """فاتورة المبيعات"""
     PAYMENT_TYPES = [
-        ('cash', _('نقدي')),
-        ('credit', _('ذمم (آجل)')),
+        ('cash', _('Cash')),
+        ('credit', _('Credit')),
         ('bank_transfer', _('Bank Transfer')),
-        ('check', _('شيك')),
-        ('installment', _('تقسيط')),
+        ('check', _('Check')),
+        ('installment', _('Installment')),
     ]
 
-    invoice_number = models.CharField(_('رقم الفاتورة'), max_length=50, unique=True)
+    invoice_number = models.CharField(_('Invoice Number'), max_length=50, unique=True)
     date = models.DateField(_('Date'))
     customer = models.ForeignKey(CustomerSupplier, on_delete=models.PROTECT, 
                                verbose_name=_('Customer'), limit_choices_to={'type__in': ['customer', 'both']},
                                null=True, blank=True)
     warehouse = models.ForeignKey('inventory.Warehouse', on_delete=models.PROTECT, 
                                 verbose_name=_('Warehouse'), default=1)
-    payment_type = models.CharField(_('نوع الدفع'), max_length=20, choices=PAYMENT_TYPES)
+    payment_type = models.CharField(_('Payment Type'), max_length=20, choices=PAYMENT_TYPES)
     cashbox = models.ForeignKey('cashboxes.Cashbox', on_delete=models.SET_NULL, 
-                               verbose_name=_('الصندوق'), null=True, blank=True,
-                               help_text=_('الصندوق المحصل منه النقد للمبيعات النقدية'))
-    subtotal = models.DecimalField(_('المجموع الفرعي'), max_digits=15, decimal_places=3, default=0)
-    tax_amount = models.DecimalField(_('مبلغ الضريبة'), max_digits=15, decimal_places=3, default=0)
-    discount_amount = models.DecimalField(_('مبلغ الخصم'), max_digits=15, decimal_places=3, default=0)
-    total_amount = models.DecimalField(_('المبلغ الإجمالي'), max_digits=15, decimal_places=3, default=0)
+                               verbose_name=_('Cashbox'), null=True, blank=True,
+                               help_text=_('Cashbox from which cash is collected for cash sales'))
+    subtotal = models.DecimalField(_('Subtotal'), max_digits=15, decimal_places=3, default=0)
+    tax_amount = models.DecimalField(_('Tax Amount'), max_digits=15, decimal_places=3, default=0)
+    discount_amount = models.DecimalField(_('Discount Amount'), max_digits=15, decimal_places=3, default=0)
+    total_amount = models.DecimalField(_('Total Amount'), max_digits=15, decimal_places=3, default=0)
     # new: whether tax is included/calculated for this invoice
-    inclusive_tax = models.BooleanField(_('شامل ضريبة'), default=True)
+    inclusive_tax = models.BooleanField(_('Inclusive Tax'), default=True)
     notes = models.TextField(_('Notes'), blank=True)
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name=_('Created By'))
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
@@ -78,17 +78,17 @@ class SalesInvoice(models.Model):
 class SalesInvoiceItem(models.Model):
     """عنصر فاتورة المبيعات"""
     invoice = models.ForeignKey(SalesInvoice, on_delete=models.CASCADE, 
-                              verbose_name=_('الفاتورة'), related_name='items')
+                              verbose_name=_('Invoice'), related_name='items')
     product = models.ForeignKey('products.Product', on_delete=models.PROTECT, verbose_name=_('Product'))
-    quantity = models.DecimalField(_('الكمية'), max_digits=10, decimal_places=3)
-    unit_price = models.DecimalField(_('سعر الوحدة'), max_digits=15, decimal_places=3)
-    tax_rate = models.DecimalField(_('نسبة الضريبة'), max_digits=5, decimal_places=2, default=0)
-    tax_amount = models.DecimalField(_('مبلغ الضريبة'), max_digits=15, decimal_places=3, default=0)
-    total_amount = models.DecimalField(_('المبلغ الإجمالي'), max_digits=15, decimal_places=3, default=0)
+    quantity = models.DecimalField(_('Quantity'), max_digits=10, decimal_places=3)
+    unit_price = models.DecimalField(_('Unit Price'), max_digits=15, decimal_places=3)
+    tax_rate = models.DecimalField(_('Tax Rate'), max_digits=5, decimal_places=2, default=0)
+    tax_amount = models.DecimalField(_('Tax Amount'), max_digits=15, decimal_places=3, default=0)
+    total_amount = models.DecimalField(_('Total Amount'), max_digits=15, decimal_places=3, default=0)
 
     class Meta:
-        verbose_name = _('عنصر فاتورة المبيعات')
-        verbose_name_plural = _('عناصر فواتير المبيعات')
+        verbose_name = _('Sales Invoice Item')
+        verbose_name_plural = _('Sales Invoice Items')
 
     def __str__(self):
         return f"{self.invoice.invoice_number} - {self.product.name}"
@@ -110,14 +110,14 @@ class SalesInvoiceItem(models.Model):
 
 class SalesReturn(models.Model):
     """مردود المبيعات"""
-    return_number = models.CharField(_('رقم مرتجع المبيعات'), max_length=50, unique=True)
+    return_number = models.CharField(_('Sales Return Number'), max_length=50, unique=True)
     date = models.DateField(_('Date'))
     original_invoice = models.ForeignKey(SalesInvoice, on_delete=models.PROTECT, 
-                                       verbose_name=_('الفاتورة الأصلية'))
+                                       verbose_name=_('Original Invoice'))
     customer = models.ForeignKey(CustomerSupplier, on_delete=models.PROTECT, verbose_name=_('Customer'))
-    subtotal = models.DecimalField(_('المجموع الفرعي'), max_digits=15, decimal_places=3, default=0)
-    tax_amount = models.DecimalField(_('مبلغ الضريبة'), max_digits=15, decimal_places=3, default=0)
-    total_amount = models.DecimalField(_('المبلغ الإجمالي'), max_digits=15, decimal_places=3, default=0)
+    subtotal = models.DecimalField(_('Subtotal'), max_digits=15, decimal_places=3, default=0)
+    tax_amount = models.DecimalField(_('Tax Amount'), max_digits=15, decimal_places=3, default=0)
+    total_amount = models.DecimalField(_('Total Amount'), max_digits=15, decimal_places=3, default=0)
     notes = models.TextField(_('Notes'), blank=True)
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name=_('Created By'))
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
@@ -135,17 +135,17 @@ class SalesReturn(models.Model):
 class SalesReturnItem(models.Model):
     """عنصر مردود المبيعات"""
     return_invoice = models.ForeignKey(SalesReturn, on_delete=models.CASCADE, 
-                                     verbose_name=_('مردود المبيعات'), related_name='items')
+                                     verbose_name=_('Sales Return'), related_name='items')
     product = models.ForeignKey('products.Product', on_delete=models.PROTECT, verbose_name=_('Product'))
-    quantity = models.DecimalField(_('الكمية'), max_digits=10, decimal_places=3)
-    unit_price = models.DecimalField(_('سعر الوحدة'), max_digits=15, decimal_places=3)
-    tax_rate = models.DecimalField(_('نسبة الضريبة'), max_digits=5, decimal_places=2, default=0)
-    tax_amount = models.DecimalField(_('مبلغ الضريبة'), max_digits=15, decimal_places=3, default=0)
-    total_amount = models.DecimalField(_('المبلغ الإجمالي'), max_digits=15, decimal_places=3, default=0)
+    quantity = models.DecimalField(_('Quantity'), max_digits=10, decimal_places=3)
+    unit_price = models.DecimalField(_('Unit Price'), max_digits=15, decimal_places=3)
+    tax_rate = models.DecimalField(_('Tax Rate'), max_digits=5, decimal_places=2, default=0)
+    tax_amount = models.DecimalField(_('Tax Amount'), max_digits=15, decimal_places=3, default=0)
+    total_amount = models.DecimalField(_('Total Amount'), max_digits=15, decimal_places=3, default=0)
 
     class Meta:
-        verbose_name = _('عنصر مردود المبيعات')
-        verbose_name_plural = _('عناصر مردود المبيعات')
+        verbose_name = _('Sales Return Item')
+        verbose_name_plural = _('Sales Return Items')
 
     def __str__(self):
         return f"{self.return_invoice.return_number} - {self.product.name}"
@@ -165,12 +165,12 @@ class SalesReturnItem(models.Model):
 
 class SalesCreditNote(models.Model):
     """اشعار دائن لمبيعات"""
-    note_number = models.CharField(_('رقم إشعار دائن'), max_length=50, unique=True)
+    note_number = models.CharField(_('Credit Note Number'), max_length=50, unique=True)
     date = models.DateField(_('Date'))
     customer = models.ForeignKey(CustomerSupplier, on_delete=models.PROTECT, verbose_name=_('Customer'))
-    subtotal = models.DecimalField(_('المجموع الفرعي'), max_digits=15, decimal_places=3, default=0)
-    total_amount = models.DecimalField(_('المبلغ الإجمالي'), max_digits=15, decimal_places=3, default=0)
-    notes = models.TextField(_('ملاحظات'), blank=True)
+    subtotal = models.DecimalField(_('Subtotal'), max_digits=15, decimal_places=3, default=0)
+    total_amount = models.DecimalField(_('Total Amount'), max_digits=15, decimal_places=3, default=0)
+    notes = models.TextField(_('Notes'), blank=True)
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name=_('Created By'))
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
     updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
@@ -184,10 +184,11 @@ class SalesCreditNote(models.Model):
                                               help_text=_('URL to verify credit note on JoFotara portal'))
 
     class Meta:
-        verbose_name = _('اشعار دائن')
-        verbose_name_plural = _('اشعارات دائن')
+        verbose_name = _('Credit Note')
+        verbose_name_plural = _('Credit Notes')
         ordering = ['-date', '-note_number']
         permissions = (
+            ('can_view_creditnote', _('Can view Credit Note')),
             ('can_send_to_jofotara', 'Can send credit notes to JoFotara'),
         )
 
