@@ -5,6 +5,7 @@
 {% block title %}{% trans "Credit Note Details" %} - {{ creditnote.note_number }}{% endblock %}
 
 {% block content %}
+{% csrf_token %}
 <div class="container-fluid">
     <!-- Page Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">

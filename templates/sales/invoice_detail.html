@@ -6,6 +6,7 @@
 {% block title %}{% trans "Sales Invoice Details" %} - {{ block.super }}{% endblock %}
 
 {% block content %}
+{% csrf_token %}
 <div class="container-fluid">
     <!-- Page Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
