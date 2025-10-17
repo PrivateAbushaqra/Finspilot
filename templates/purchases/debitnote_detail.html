@@ -180,6 +180,7 @@
 {% block extra_js %}
 <script>
 function sendToJofotara(debitnoteId) {
+    console.log('Starting sendToJofotara for debit note:', debitnoteId);
     if (confirm("هل أنت متأكد من إرسال هذا الإشعار الخصم إلى JoFotara؟")) {
         const btn = document.getElementById("sendToJofotaraBtn");
         const originalText = btn.innerHTML;
@@ -188,15 +189,45 @@ function sendToJofotara(debitnoteId) {
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جاري الإرسال...';
         
+        // Get CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        console.log('CSRF token element:', csrfToken);
+        console.log('CSRF token value:', csrfToken ? csrfToken.value : 'NOT FOUND');
+        
         // Send AJAX request
-        fetch(`/purchases/debit-notes/${debitnoteId}/send-to-jofotara/`, {
+        // احصل على مسار اللغة الحالي من URL
+        const currentPath = window.location.pathname;
+        const langPrefix = currentPath.match(/^\/(ar|en)\//)?.[0] || '/ar/';
+        const url = `${langPrefix}purchases/debit-notes/${debitnoteId}/send-to-jofotara/`;
+        console.log('Sending POST request to:', url);
+        
+        // Send AJAX request
+        fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                'X-CSRFToken': csrfToken ? csrfToken.value : '',
+                'X-Requested-With': 'XMLHttpRequest'  // إضافة هذا الـ header لتحديد AJAX request
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('Response status:', response.status);
+            console.log('Response redirected:', response.redirected);
+            console.log('Response url:', response.url);
+            
+            if (response.redirected || response.status === 302) {
+                console.error('Request was redirected, probably session expired');
+                alert('انتهت صلاحية الجلسة. يرجى إعادة تسجيل الدخول وإعادة المحاولة.');
+                window.location.href = '/ar/auth/login/';
+                throw new Error('Session expired');
+            }
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 alert('تم إرسال الإشعار الخصم إلى JoFotara بنجاح!\nUUID: ' + (data.uuid || 'غير محدد'));

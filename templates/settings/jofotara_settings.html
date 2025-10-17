@@ -214,12 +214,11 @@
                                         {% trans "Save Settings" %}
                                     </button>
                                     
-                                    {% if jofotara_settings.use_mock_api %}
-                                    <button type="button" id="testConnectionBtn" class="btn btn-test">
+                                    <button type="button" id="testConnectionBtn" class="btn btn-test" 
+                                            style="{% if not jofotara_settings.use_mock_api %}display: none;{% endif %}">
                                         <i class="fas fa-plug me-2"></i>
                                         {% trans "Test Connection" %}
                                     </button>
-                                    {% endif %}
                                     
                                     <a href="{% url 'settings:index' %}" class="btn btn-secondary">
                                         <i class="fas fa-arrow-left me-2"></i>
@@ -260,6 +259,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const useMockApiCheckbox = document.getElementById('use_mock_api');
     const mockApiSection = document.getElementById('mockApiSection');
     const testConnectionBtn = document.getElementById('testConnectionBtn');
+    const testResults = document.getElementById('testResults');
+    const testResultsContent = document.getElementById('testResultsContent');
     
     if (useMockApiCheckbox && mockApiSection) {
         // دالة للتحكم في الظهور
@@ -294,9 +295,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // وظيفة اختبار الاتصال
-    const testConnectionBtn = document.getElementById('testConnectionBtn');
-    const testResults = document.getElementById('testResults');
-    const testResultsContent = document.getElementById('testResultsContent');
     
     if (testConnectionBtn) {
         testConnectionBtn.addEventListener('click', function() {

@@ -1748,6 +1748,15 @@ class PurchaseReturnStatementView(LoginRequiredMixin, TemplateView):
 @require_POST
 def send_debitnote_to_jofotara(request, pk):
     """إرسال إشعار خصم إلى JoFotara"""
+    # للطلبات AJAX، نتحقق من الـ header ونعيد JSON response
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    
+    if not is_ajax:
+        return JsonResponse({
+            'success': False,
+            'error': 'هذه الدالة تستخدم للطلبات AJAX فقط'
+        }, status=400)
+    
     try:
         # Get the debit note
         debit_note = get_object_or_404(PurchaseDebitNote, pk=pk)

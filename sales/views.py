@@ -2707,6 +2707,15 @@ class SalesReturnStatementView(LoginRequiredMixin, UserPassesTestMixin, Template
 @require_POST
 def send_invoice_to_jofotara(request, pk):
     """إرسال فاتورة المبيعات إلى JoFotara"""
+    # للطلبات AJAX، نتحقق من الـ header ونعيد JSON response
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    
+    if not is_ajax:
+        return JsonResponse({
+            'success': False,
+            'error': 'هذه الدالة تستخدم للطلبات AJAX فقط'
+        }, status=400)
+    
     try:
         # Get the invoice
         invoice = get_object_or_404(SalesInvoice, pk=pk)
@@ -2751,6 +2760,15 @@ def send_invoice_to_jofotara(request, pk):
 @require_POST
 def send_creditnote_to_jofotara(request, pk):
     """إرسال إشعار دائن إلى JoFotara"""
+    # للطلبات AJAX، نتحقق من الـ header ونعيد JSON response
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    
+    if not is_ajax:
+        return JsonResponse({
+            'success': False,
+            'error': 'هذه الدالة تستخدم للطلبات AJAX فقط'
+        }, status=400)
+    
     try:
         # Get the credit note
         credit_note = get_object_or_404(SalesCreditNote, pk=pk)

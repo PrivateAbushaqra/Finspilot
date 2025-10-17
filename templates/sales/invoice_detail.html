@@ -338,6 +338,7 @@
 {% block extra_js %}
 <script>
 function sendToJofotara(invoiceId) {
+    console.log('Starting sendToJofotara for invoice:', invoiceId);
     if (confirm("{% trans 'Are you sure you want to send this invoice to JoFotara?' %}")) {
         const btn = document.getElementById("sendToJofotaraBtn");
         const originalText = btn.innerHTML;
@@ -346,15 +347,60 @@ function sendToJofotara(invoiceId) {
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>{% trans "Sending..." %}';
         
+        // Get CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        console.log('CSRF token element:', csrfToken);
+        console.log('CSRF token value:', csrfToken ? csrfToken.value : 'NOT FOUND');
+        
         // Send AJAX request
-        fetch(`/sales/invoices/${invoiceId}/send-to-jofotara/`, {
+        // احصل على مسار اللغة الحالي من URL
+        const currentPath = window.location.pathname;
+        const langPrefix = currentPath.match(/^\/(ar|en)\//)?.[0] || '/ar/';
+        const url = `${langPrefix}sales/invoices/${invoiceId}/send-to-jofotara/`;
+        console.log('Sending POST request to:', url);
+        
+        fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            }
+                'X-CSRFToken': csrfToken ? csrfToken.value : '',
+                'X-Requested-With': 'XMLHttpRequest'  // إضافة هذا الـ header لتحديد AJAX request
+            },
+            redirect: 'manual'  // Handle redirects manually
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('Response status:', response.status);
+            console.log('Response type:', response.type);
+            console.log('Response url:', response.url);
+            
+            // Check for session expiry: 401 Unauthorized or redirect (302/301/0)
+            if (response.status === 401 || response.type === 'opaqueredirect' || response.status === 302 || response.status === 301 || response.status === 0) {
+                console.error('Session expired detected (status:', response.status, ', type:', response.type, ')');
+                
+                // حفظ flag في sessionStorage لمنع logout في beforeunload
+                sessionStorage.setItem('sessionExpiredRedirect', 'true');
+                console.log('sessionExpiredRedirect flag saved to sessionStorage');
+                
+                // Set flag in sessionManager أيضاً
+                if (window.sessionManager) {
+                    window.sessionManager.isSessionExpiredRedirect = true;
+                    console.log('Flag set in sessionManager:', window.sessionManager.isSessionExpiredRedirect);
+                }
+                
+                alert('انتهت صلاحية الجلسة. يرجى إعادة تسجيل الدخول وإعادة المحاولة.');
+                
+                // Redirect مباشرة
+                window.location.replace('/ar/auth/login/?next=' + encodeURIComponent(window.location.pathname));
+                
+                throw new Error('Session expired');
+            }
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 alert('{% trans "Invoice sent to JoFotara successfully!" %}\nUUID: ' + (data.uuid || '{% trans "Not specified" %}'));

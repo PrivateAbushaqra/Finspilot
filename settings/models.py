@@ -120,7 +120,7 @@ class CompanySettings(models.Model):
     )
     logout_on_browser_close = models.BooleanField(
         _('تسجيل الخروج عند إغلاق المتصفح'),
-        default=True,
+        default=False,  # ✅ معطل افتراضياً لتجنب مشاكل التعارض مع session expired
         help_text=_('إنهاء الجلسة تلقائياً عند إغلاق المتصفح')
     )
     

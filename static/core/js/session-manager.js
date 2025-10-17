@@ -8,12 +8,13 @@ class SessionManager {
         this.warningTime = 5; // تحذير قبل 5 دقائق من انتهاء الجلسة
         this.timeoutMinutes = 30; // القيمة الافتراضية
         this.enableTimeout = true;
-        this.logoutOnBrowserClose = true;
+        this.logoutOnBrowserClose = false; // ✅ معطل افتراضياً لتجنب مشاكل التعارض
         this.warningTimer = null;
         this.sessionTimer = null;
         this.warningShown = false;
     this.isFormSubmitting = false;
     this.isNavigatingInternally = false;
+    this.isSessionExpiredRedirect = false; // علم جديد لمنع logout عند redirect بسبب session expired
         
         this.init();
     }
@@ -113,20 +114,50 @@ class SessionManager {
     
     setupBrowserCloseDetection() {
         if (this.logoutOnBrowserClose) {
-            window.addEventListener('beforeunload', (e) => {
-                // لا تُسجّل خروجاً عند إرسال نموذج أو تنقل داخلي طبيعي
-                if (this.isFormSubmitting || this.isNavigatingInternally) return;
-                // إرسال طلب تسجيل خروج عند إغلاق المتصفح/التبويب فعلياً
+            // فحص sessionStorage لمعرفة إذا كان هذا redirect بسبب session expired
+            const sessionExpiredFlag = sessionStorage.getItem('sessionExpiredRedirect');
+            if (sessionExpiredFlag === 'true') {
+                // تنظيف الـ flag بعد استخدامه
+                sessionStorage.removeItem('sessionExpiredRedirect');
+                this.isSessionExpiredRedirect = true;
+            }
+            
+            // استخدام beforeunload مع فحص دقيق جداً
+            const self = this;
+            window.addEventListener('beforeunload', function(e) {
+                // فحص sessionStorage أولاً
+                const isRedirecting = sessionStorage.getItem('sessionExpiredRedirect') === 'true';
+                
+                // فحص جميع الحالات التي يجب تجنب logout فيها
+                if (self.isFormSubmitting || self.isNavigatingInternally || self.isSessionExpiredRedirect || isRedirecting) {
+                    return;
+                }
+                
+                // فحص إضافي: لا ترسل logout إذا كان الـ URL الحالي يحتوي على auth
+                try {
+                    const currentPath = window.location.pathname;
+                    if (currentPath.includes('/auth/login') || currentPath.includes('/auth/logout')) {
+                        return;
+                    }
+                } catch (err) {
+                    // تجاهل الأخطاء
+                }
+                
+                // إرسال طلب تسجيل خروج فقط عند إغلاق حقيقي
                 try {
                     const lang = (document.documentElement.getAttribute('lang') || 'ar').split('-')[0];
                     const url = `/${lang}/auth/logout/`;
-                    navigator.sendBeacon(url, new FormData());
+                    const formData = new FormData();
+                    formData.append('csrfmiddlewaretoken', self.getCSRFToken());
+                    navigator.sendBeacon(url, formData);
                 } catch (err) {
-                    navigator.sendBeacon('/logout/', new FormData());
+                    const formData = new FormData();
+                    formData.append('csrfmiddlewaretoken', self.getCSRFToken());
+                    navigator.sendBeacon('/logout/', formData);
                 }
-            });
+            }, {capture: true});
             
-            // معالجة إغلاق التبويب
+            // معالجة إغلاق التبويب عبر visibilitychange كـ backup
             document.addEventListener('visibilitychange', () => {
                 if (document.visibilityState === 'hidden') {
                     // المستخدم غادر التبويب - يمكن إضافة منطق إضافي هنا
@@ -320,21 +351,9 @@ class SessionManager {
         // إزالة أي نوافذ تحذير مفتوحة
         this.hideSessionWarning();
         
-        // تسجيل خروج صامت من الجلسة
-        try {
-            fetch('/ar/auth/logout/', {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': this.getCSRFToken(),
-                    'Content-Type': 'application/json',
-                },
-                credentials: 'same-origin'
-            }).catch(() => {
-                // تجاهل الأخطاء في هذه المرحلة
-            });
-        } catch (error) {
-            // تجاهل الأخطاء
-        }
+        // لا حاجة لـ logout صامت - Django سيتعامل معه تلقائياً
+        // المحاولة القديمة كانت تسبب خطأ CSRF 403 بدون فائدة حقيقية
+        // Django session middleware يتعامل مع الجلسات المنتهية بشكل صحيح
         
         // إظهار رسالة انتهاء الجلسة
         const modal = document.createElement('div');

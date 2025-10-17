@@ -177,6 +177,7 @@
 {% block extra_js %}
 <script>
 function sendToJofotara(creditnoteId) {
+    console.log('Starting sendToJofotara for credit note:', creditnoteId);
     if (confirm("{% trans 'Are you sure you want to send this credit note to JoFotara?' %}")) {
         const btn = document.getElementById("sendToJofotaraBtn");
         const originalText = btn.innerHTML;
@@ -185,15 +186,44 @@ function sendToJofotara(creditnoteId) {
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>{% trans "Sending..." %}';
         
+        // Get CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        console.log('CSRF token element:', csrfToken);
+        console.log('CSRF token value:', csrfToken ? csrfToken.value : 'NOT FOUND');
+        
         // Send AJAX request
-        fetch(`/sales/credit-notes/${creditnoteId}/send-to-jofotara/`, {
+        // احصل على مسار اللغة الحالي من URL
+        const currentPath = window.location.pathname;
+        const langPrefix = currentPath.match(/^\/(ar|en)\//)?.[0] || '/ar/';
+        const url = `${langPrefix}sales/credit-notes/${creditnoteId}/send-to-jofotara/`;
+        console.log('Sending POST request to:', url);
+        
+        fetch(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                'X-CSRFToken': csrfToken ? csrfToken.value : '',
+                'X-Requested-With': 'XMLHttpRequest'  // إضافة هذا الـ header لتحديد AJAX request
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('Response status:', response.status);
+            console.log('Response redirected:', response.redirected);
+            console.log('Response url:', response.url);
+            
+            if (response.redirected || response.status === 302) {
+                console.error('Request was redirected, probably session expired');
+                alert('انتهت صلاحية الجلسة. يرجى إعادة تسجيل الدخول وإعادة المحاولة.');
+                window.location.href = '/ar/auth/login/';
+                throw new Error('Session expired');
+            }
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 alert('{% trans "Credit note sent to JoFotara successfully!" %}\nUUID: ' + (data.uuid || '{% trans "Not specified" %}'));

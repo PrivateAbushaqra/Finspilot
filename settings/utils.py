@@ -21,6 +21,8 @@ class JoFotaraAPI:
         self.settings = JoFotaraSettings.objects.first()
         if not self.settings:
             raise ValueError("JoFotara settings not configured")
+        self.access_token = None
+        self.token_expires_at = None
 
     def test_connection(self):
         """Test connection to JoFotara API"""
@@ -82,33 +84,44 @@ class JoFotaraAPI:
             if self.settings.use_mock_api:
                 return self._mock_send_invoice(xml_content, json_data)
 
-            # Real API call
+            # Get headers with OAuth token
             headers = self._get_headers()
-            headers['Content-Type'] = 'application/xml'
+            
+            # Debug: Log headers being sent
+            logger.info(f"Sending request to JoFotara with Authorization: Bearer {headers.get('Authorization', '')[:50]}...")
 
             # Encode XML to base64
             xml_base64 = base64.b64encode(xml_content.encode('utf-8')).decode('utf-8')
 
+            # Prepare payload according to server specification
             payload = {
-                'xml_content': xml_base64,
-                'invoice_type': invoice_type
+                'invoice': xml_base64,
+                'invoiceNumber': invoice_data.get('invoice_number', 'UNKNOWN')
             }
 
+            # Use data parameter with json.dumps to preserve headers
+            import json as json_module
             response = requests.post(
-                f"{self.settings.api_url.rstrip('/')}/invoices",
-                json=payload,
+                f"{self.settings.api_url.rstrip('/')}/core/invoices",
+                data=json_module.dumps(payload),
                 headers=headers,
                 timeout=60
             )
+            
+            # Debug: Log response
+            logger.info(f"Response status: {response.status_code}")
+            logger.info(f"Response body: {response.text[:200]}")
 
             if response.status_code == 200:
                 response_data = response.json()
+                # Map server response to expected format
                 return {
                     'success': True,
                     'uuid': response_data.get('uuid'),
-                    'qr_code': response_data.get('qr_code'),
-                    'verification_url': response_data.get('verification_url'),
-                    'xml_content': xml_content
+                    'qr_code': response_data.get('qrCode'),
+                    'verification_url': response_data.get('verificationUrl'),
+                    'xml_content': xml_content,
+                    'message': response_data.get('message')
                 }
             else:
                 return {
@@ -209,17 +222,61 @@ class JoFotaraAPI:
             logger.error(f"Error converting to UBL XML: {str(e)}")
             raise
 
+    def _get_oauth_token(self):
+        """Get OAuth 2.0 access token from JoFotara API"""
+        try:
+            # Check if we have a valid token
+            if self.access_token and self.token_expires_at:
+                from datetime import datetime, timezone
+                if datetime.now(timezone.utc) < self.token_expires_at:
+                    return self.access_token
+            
+            # Request new token
+            token_url = f"{self.settings.api_url.rstrip('/')}/oauth/token"
+            payload = {
+                'grant_type': 'client_credentials',
+                'client_id': self.settings.client_id,
+                'client_secret': self.settings.client_secret
+            }
+            
+            response = requests.post(
+                token_url,
+                json=payload,
+                headers={'Content-Type': 'application/json'},
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                token_data = response.json()
+                self.access_token = token_data.get('access_token')
+                
+                # Calculate expiry time
+                from datetime import datetime, timedelta, timezone
+                expires_in = token_data.get('expires_in', 3600)
+                self.token_expires_at = datetime.now(timezone.utc) + timedelta(seconds=expires_in - 60)
+                
+                logger.info(f"OAuth token obtained successfully, expires in {expires_in}s")
+                return self.access_token
+            else:
+                logger.error(f"Failed to get OAuth token: {response.status_code} - {response.text}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"Error getting OAuth token: {str(e)}")
+            return None
+
     def _get_headers(self):
         """Get authentication headers for API requests"""
         if self.settings.use_mock_api:
             return {'Content-Type': 'application/json'}
 
-        # Basic auth with client_id and client_secret
-        auth_string = f"{self.settings.client_id}:{self.settings.client_secret}"
-        auth_base64 = base64.b64encode(auth_string.encode()).decode()
+        # Get OAuth token
+        token = self._get_oauth_token()
+        if not token:
+            raise ValueError("Failed to obtain OAuth access token")
 
         return {
-            'Authorization': f'Basic {auth_base64}',
+            'Authorization': f'Bearer {token}',
             'Content-Type': 'application/json'
         }
 
@@ -598,15 +655,16 @@ def send_sales_invoice_to_jofotara(sales_invoice, user=None):
         invoice_data = prepare_sales_invoice_data(sales_invoice)
         result = send_invoice_to_jofotara(invoice_data, 'sales')
 
-        # Log the result
-        from core.models import AuditLog
-        AuditLog.objects.create(
-            user=user,  # Use the passed user
-            action_type='send_invoice',
-            content_type='SalesInvoice',
-            object_id=sales_invoice.id,
-            description=f'إرسال فاتورة مبيعات {sales_invoice.invoice_number} إلى JoFotara: {"نجح" if result["success"] else "فشل"}'
-        )
+        # Log the result only if user is provided
+        if user:
+            from core.models import AuditLog
+            AuditLog.objects.create(
+                user=user,
+                action_type='send_invoice',
+                content_type='SalesInvoice',
+                object_id=sales_invoice.id,
+                description=f'إرسال فاتورة مبيعات {sales_invoice.invoice_number} إلى JoFotara: {"نجح" if result["success"] else "فشل"}'
+            )
 
         return result
 
@@ -624,15 +682,16 @@ def send_credit_note_to_jofotara(credit_note, user=None):
         invoice_data = prepare_credit_note_data(credit_note)
         result = send_invoice_to_jofotara(invoice_data, 'credit_note')
 
-        # Log the result
-        from core.models import AuditLog
-        AuditLog.objects.create(
-            user=user,  # Use the passed user
-            action_type='send_credit_note',
-            content_type='SalesCreditNote',
-            object_id=credit_note.id,
-            description=f'إرسال إشعار خصم {credit_note.note_number} إلى JoFotara: {"نجح" if result["success"] else "فشل"}'
-        )
+        # Log the result only if user is provided
+        if user:
+            from core.models import AuditLog
+            AuditLog.objects.create(
+                user=user,
+                action_type='send_credit_note',
+                content_type='SalesCreditNote',
+                object_id=credit_note.id,
+                description=f'إرسال إشعار خصم {credit_note.note_number} إلى JoFotara: {"نجح" if result["success"] else "فشل"}'
+            )
 
         return result
 
@@ -650,15 +709,16 @@ def send_debit_note_to_jofotara(debit_note, user=None):
         invoice_data = prepare_debit_note_data(debit_note)
         result = send_invoice_to_jofotara(invoice_data, 'debit_note')
 
-        # Log the result
-        from core.models import AuditLog
-        AuditLog.objects.create(
-            user=user,  # Use the passed user
-            action_type='send_debit_note',
-            content_type='PurchaseDebitNote',
-            object_id=debit_note.id,
-            description=f'إرسال إشعار إضافة {debit_note.note_number} إلى JoFotara: {"نجح" if result["success"] else "فشل"}'
-        )
+        # Log the result only if user is provided
+        if user:
+            from core.models import AuditLog
+            AuditLog.objects.create(
+                user=user,
+                action_type='send_debit_note',
+                content_type='PurchaseDebitNote',
+                object_id=debit_note.id,
+                description=f'إرسال إشعار إضافة {debit_note.note_number} إلى JoFotara: {"نجح" if result["success"] else "فشل"}'
+            )
 
         return result
 
