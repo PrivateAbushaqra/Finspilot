@@ -832,6 +832,14 @@ class PurchaseDebitNoteDetailView(LoginRequiredMixin, DetailView):
                 context['base_currency'] = company_settings.base_currency
         except Exception:
             pass
+        
+        # إضافة القيود المحاسبية المرتبطة
+        from journal.models import JournalEntry
+        context['journal_entries'] = JournalEntry.objects.filter(
+            reference_type='debit_note',
+            reference_id=self.object.id
+        ).select_related('created_by')
+        
         return context
 
 class PurchaseInvoiceDetailView(LoginRequiredMixin, TemplateView):
@@ -1026,6 +1034,16 @@ class PurchaseInvoiceUpdateView(LoginRequiredMixin, View):
                 
                 # حذف المعاملات المحاسبية القديمة
                 delete_transaction_by_reference('purchase_invoice', invoice.id)
+                
+                # حذف القيود المحاسبية القديمة
+                try:
+                    from journal.models import JournalEntry
+                    JournalEntry.objects.filter(
+                        reference_type='purchase_invoice',
+                        reference_id=invoice.id
+                    ).delete()
+                except Exception as e:
+                    print(f"تحذير: فشل في حذف القيود المحاسبية القديمة: {e}")
                 
                 # إنشاء المعاملات المحاسبية الجديدة
                 create_purchase_invoice_account_transaction(invoice, request.user)
@@ -1378,6 +1396,10 @@ class PurchaseReturnDetailView(LoginRequiredMixin, DetailView):
             item.subtotal = item.returned_quantity * item.unit_price
             items_with_subtotal.append(item)
         context['items'] = items_with_subtotal
+        
+        # إضافة القيود المحاسبية المرتبطة
+        from journal.models import JournalEntry
+        context['journal_entries'] = JournalEntry.objects.filter(purchase_return=self.object).select_related('created_by')
         
         return context
 

@@ -595,6 +595,115 @@ $(document).ready(function() {
     const language = pathMatch ? pathMatch[1] : 'ar';
     const invoiceId = '{{ object.pk }}';
     const apiBaseUrl = `/${language}/sales/invoices/${invoiceId}`;
+    const discountAmount = parseFloat('{{ object.discount_amount|unlocalize }}') || 0;
+
+    // Function to calculate item totals in real-time
+    function calculateItemTotal(row) {
+        const quantity = parseFloat(row.find('.quantity-input').val()) || 0;
+        const price = parseFloat(row.find('.price-input').val()) || 0;
+        const taxRateText = row.find('td:nth-child(4)').text().replace('%', '');
+        const taxRate = parseFloat(taxRateText) || 0;
+        
+        const subtotal = quantity * price;
+        const taxAmount = subtotal * (taxRate / 100);
+        const total = subtotal + taxAmount;
+        
+        return {
+            subtotal: subtotal,
+            taxAmount: taxAmount,
+            total: total
+        };
+    }
+
+    // Function to update invoice totals in real-time
+    function updateInvoiceTotals() {
+        let totalSubtotal = 0;
+        let totalTax = 0;
+        
+        $('#invoice-items-table tbody tr').each(function() {
+            const itemTotals = calculateItemTotal($(this));
+            totalSubtotal += itemTotals.subtotal;
+            totalTax += itemTotals.taxAmount;
+        });
+        
+        const grandTotal = totalSubtotal + totalTax - discountAmount;
+        
+        $('#invoice-subtotal-display').text(formatCurrency(totalSubtotal));
+        $('#invoice-tax-display').text(formatCurrency(totalTax));
+        $('#invoice-total-display').text(formatCurrency(grandTotal));
+    }
+
+    // Real-time calculation when quantity or price changes
+    $('.quantity-input, .price-input').on('input', function() {
+        const row = $(this).closest('tr');
+        const itemTotals = calculateItemTotal(row);
+        
+        // Update item display
+        row.find('.tax-amount').text(formatCurrency(itemTotals.taxAmount));
+        row.find('.total-amount strong').text(formatCurrency(itemTotals.total));
+        
+        // Update invoice totals
+        updateInvoiceTotals();
+    });
+
+    // Function to collect all item changes for bulk save
+    function collectItemChanges() {
+        const changes = [];
+        $('#invoice-items-table tbody tr').each(function() {
+            const row = $(this);
+            const itemId = row.data('item-id');
+            const originalQuantity = parseFloat(row.find('.quantity-input').data('original-value') || row.find('.quantity-input').val());
+            const originalPrice = parseFloat(row.find('.price-input').data('original-value') || row.find('.price-input').val());
+            const currentQuantity = parseFloat(row.find('.quantity-input').val());
+            const currentPrice = parseFloat(row.find('.price-input').val());
+            
+            if (currentQuantity !== originalQuantity || currentPrice !== originalPrice) {
+                changes.push({
+                    item_id: itemId,
+                    quantity: currentQuantity,
+                    unit_price: currentPrice
+                });
+            }
+        });
+        return changes;
+    }
+
+    // Store original values on page load
+    $(document).ready(function() {
+        $('.quantity-input, .price-input').each(function() {
+            $(this).data('original-value', $(this).val());
+        });
+    });
+
+    // Intercept form submission to include item changes
+    $('form').on('submit', function(e) {
+        const itemChanges = collectItemChanges();
+        if (itemChanges.length > 0) {
+            // Add item changes as hidden inputs
+            itemChanges.forEach(function(change, index) {
+                $('<input>').attr({
+                    type: 'hidden',
+                    name: `item_changes[${index}][item_id]`,
+                    value: change.item_id
+                }).appendTo('form');
+                
+                $('<input>').attr({
+                    type: 'hidden',
+                    name: `item_changes[${index}][quantity]`,
+                    value: change.quantity
+                }).appendTo('form');
+                
+                $('<input>').attr({
+                    type: 'hidden',
+                    name: `item_changes[${index}][unit_price]`,
+                    value: change.unit_price
+                }).appendTo('form');
+            });
+            
+            // Show loading indicator
+            $('button[type="submit"]').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...');
+        }
+    });
 
     // Auto-save when pressing Enter in quantity or price inputs
     $('.quantity-input, .price-input').on('keypress', function(e) {

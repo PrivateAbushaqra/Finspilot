@@ -1186,6 +1186,7 @@ class SalesInvoiceUpdateView(LoginRequiredMixin, UpdateView):
             old_values['customer_name'] = old_invoice.customer.name if old_invoice.customer else 'نقدي'
             old_values['payment_type'] = old_invoice.payment_type
             old_values['notes'] = old_invoice.notes
+            old_values['total_amount'] = old_invoice.total_amount
         except SalesInvoice.DoesNotExist:
             pass
         
@@ -1235,6 +1236,102 @@ class SalesInvoiceUpdateView(LoginRequiredMixin, UpdateView):
         except SalesInvoice.DoesNotExist:
             old_inclusive = None
 
+        # Handle item changes from the form
+        from decimal import Decimal, ROUND_HALF_UP
+        item_changes = []
+        index = 0
+        while f'item_changes[{index}][item_id]' in self.request.POST:
+            try:
+                item_id = int(self.request.POST.get(f'item_changes[{index}][item_id]'))
+                quantity = Decimal(self.request.POST.get(f'item_changes[{index}][quantity]'))
+                unit_price = Decimal(self.request.POST.get(f'item_changes[{index}][unit_price]'))
+                item_changes.append({
+                    'item_id': item_id,
+                    'quantity': quantity,
+                    'unit_price': unit_price
+                })
+            except (ValueError, TypeError):
+                pass
+            index += 1
+        
+        # Process item changes if any
+        if item_changes:
+            logger.info(f"🔄 معالجة {len(item_changes)} تغيير على العناصر")
+            
+            for change in item_changes:
+                try:
+                    item = SalesInvoiceItem.objects.get(pk=change['item_id'], invoice=form.instance)
+                    
+                    old_quantity = item.quantity
+                    old_price = item.unit_price
+                    
+                    # Check for actual changes
+                    if old_quantity == change['quantity'] and old_price == change['unit_price']:
+                        continue
+                    
+                    # Update item
+                    item.quantity = change['quantity']
+                    item.unit_price = change['unit_price']
+                    
+                    # Recalculate amounts
+                    line_subtotal = item.quantity * item.unit_price
+                    line_tax_amount = line_subtotal * (item.tax_rate / Decimal('100'))
+                    line_total = line_subtotal + line_tax_amount
+                    
+                    item.tax_amount = line_tax_amount.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+                    item.total_amount = line_total.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+                    item.save()
+                    
+                    logger.info(f"  ✅ تحديث العنصر {item.product.name}: الكمية {old_quantity}→{change['quantity']}, السعر {old_price}→{change['unit_price']}")
+                    
+                    # Update inventory movements if quantity changed
+                    if old_quantity != change['quantity']:
+                        from inventory.models import InventoryMovement
+                        quantity_diff = change['quantity'] - old_quantity
+                        
+                        # Create inventory movement for the difference
+                        InventoryMovement.objects.create(
+                            product=item.product,
+                            warehouse=form.instance.warehouse,
+                            movement_type='out' if quantity_diff > 0 else 'in',
+                            quantity=abs(quantity_diff),
+                            date=form.instance.date,
+                            reference_type='sales_invoice',
+                            reference_id=form.instance.id,
+                            notes=f'تعديل فاتورة المبيعات {form.instance.invoice_number} - تغيير الكمية'
+                        )
+                        
+                        # Update product stock
+                        item.product.current_stock -= quantity_diff
+                        item.product.save(update_fields=['current_stock'])
+                        
+                        logger.info(f"  📦 تحديث المخزون: {item.product.name} بمقدار {quantity_diff}")
+                    
+                    # Log item change activity
+                    try:
+                        from core.signals import log_user_activity
+                        change_details = []
+                        if old_quantity != change['quantity']:
+                            change_details.append(f'الكمية من {old_quantity} إلى {change["quantity"]}')
+                        if old_price != change['unit_price']:
+                            change_details.append(f'سعر الوحدة من {old_price} إلى {change["unit_price"]}')
+                        
+                        if change_details:
+                            changes_text = '، '.join(change_details)
+                            log_user_activity(
+                                self.request,
+                                'update',
+                                item,
+                                f'تحديث عنصر {item.product.name} في فاتورة المبيعات {form.instance.invoice_number}: {changes_text}'
+                            )
+                    except Exception as e:
+                        logger.error(f"❌ خطأ في تسجيل نشاط العنصر: {e}")
+                        
+                except SalesInvoiceItem.DoesNotExist:
+                    logger.warning(f"  ⚠️ العنصر {change['item_id']} غير موجود")
+                except Exception as e:
+                    logger.error(f"  ❌ خطأ في تحديث العنصر {change['item_id']}: {e}")
+
         response = super().form_valid(form)
         
         # Log all changes
@@ -1248,6 +1345,45 @@ class SalesInvoiceUpdateView(LoginRequiredMixin, UpdateView):
             changes.append(f"نوع الدفع من {old_values['payment_type']} إلى {form.instance.payment_type}")
         if 'notes' in old_values and old_values['notes'] != form.instance.notes:
             changes.append(f"تحديث الملاحظات")
+        
+        response = super().form_valid(form)
+        
+        # Update invoice totals and journal entries if items were changed
+        if item_changes:
+            # Update invoice totals
+            form.instance.update_totals()
+            form.instance.refresh_from_db()
+            
+            logger.info(f"  📊 إعادة حساب مجاميع الفاتورة: الإجمالي {form.instance.total_amount}")
+            
+            # Update or create journal entries
+            try:
+                # Delete existing journal entries for this invoice
+                from journal.models import JournalEntry
+                JournalEntry.objects.filter(
+                    reference_type__in=['sales_invoice', 'sales_invoice_cogs'],
+                    reference_id=form.instance.id
+                ).delete()
+                
+                # Create new journal entries
+                create_sales_invoice_journal_entry(form.instance, self.request.user)
+                
+                logger.info(f"  📝 إعادة إنشاء القيود المحاسبية")
+            except Exception as e:
+                logger.error(f"❌ خطأ في إنشاء القيود المحاسبية: {e}")
+            
+            # Update customer balance if total changed
+            if form.instance.customer:
+                try:
+                    old_total = old_values.get('total_amount', form.instance.total_amount)
+                    if old_total != form.instance.total_amount:
+                        total_diff = form.instance.total_amount - old_total
+                        form.instance.customer.balance += total_diff
+                        form.instance.customer.save(update_fields=['balance'])
+                        
+                        logger.info(f"  👤 تحديث رصيد العميل {form.instance.customer.name}: {total_diff}")
+                except Exception as e:
+                    logger.error(f"❌ خطأ في تحديث رصيد العميل: {e}")
         
         # Log main invoice changes
         if changes:
@@ -1512,6 +1648,80 @@ class SalesReturnListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         # Current ordering
         context['current_order'] = self.request.GET.get('order_by', '-date')
         
+        return context
+
+
+class SalesReturnDetailView(LoginRequiredMixin, DetailView):
+    model = SalesReturn
+    template_name = 'sales/return_detail.html'
+    context_object_name = 'return'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Get return items
+        context['items'] = self.object.items.select_related('product').all()
+        
+        # Calculate subtotal without tax for each item
+        items_with_subtotal = []
+        for item in context['items']:
+            item.subtotal = item.quantity * item.unit_price
+            items_with_subtotal.append(item)
+        context['items'] = items_with_subtotal
+        
+        # إضافة القيود المحاسبية المرتبطة
+        from journal.models import JournalEntry
+        # البحث عن القيود المرتبطة بالمردود
+        context['journal_entries'] = JournalEntry.objects.filter(sales_return=self.object).select_related('created_by').distinct()
+        
+        # Currency settings
+        try:
+            company_settings = CompanySettings.objects.first()
+            if company_settings and company_settings.base_currency:
+                context['base_currency'] = company_settings.base_currency
+            else:
+                context['base_currency'] = Currency.objects.filter(is_active=True).first()
+        except:
+            pass
+        
+        return context
+
+
+class SalesReturnUpdateView(LoginRequiredMixin, UpdateView):
+    model = SalesReturn
+    template_name = 'sales/return_edit.html'
+    fields = ['return_number', 'date', 'customer', 'notes']
+    
+    def get_success_url(self):
+        return reverse_lazy('sales:return_detail', kwargs={'pk': self.object.pk})
+    
+    def form_valid(self, form):
+        # تسجيل النشاط
+        try:
+            from core.signals import log_user_activity
+            log_user_activity(
+                self.request,
+                'update',
+                self.object,
+                f'تحديث مردود مبيعات رقم {self.object.return_number}'
+            )
+        except Exception:
+            pass
+        
+        messages.success(self.request, f'تم تحديث المردود بنجاح')
+        return super().form_valid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Currency settings
+        try:
+            company_settings = CompanySettings.objects.first()
+            if company_settings and company_settings.base_currency:
+                context['base_currency'] = company_settings.base_currency
+            else:
+                context['base_currency'] = Currency.objects.filter(is_active=True).first()
+        except:
+            pass
         return context
 
 
@@ -1974,6 +2184,14 @@ class SalesCreditNoteDetailView(LoginRequiredMixin, DetailView):
                 context['base_currency'] = Currency.objects.filter(is_active=True).first()
         except:
             pass
+        
+        # إضافة القيود المحاسبية المرتبطة
+        from journal.models import JournalEntry
+        context['journal_entries'] = JournalEntry.objects.filter(
+            reference_type='sales_credit_note',
+            reference_id=self.object.id
+        ).select_related('created_by')
+        
         return context
 
 

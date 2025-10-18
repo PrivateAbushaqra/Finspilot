@@ -24,8 +24,8 @@ urlpatterns = [
     # Sales Returns
     path('returns/', views.SalesReturnListView.as_view(), name='return_list'),
     path('returns/add/', views.sales_return_create, name='return_add'),
-    # path('returns/<int:pk>/', views.SalesReturnDetailView.as_view(), name='return_detail'),
-    # path('returns/edit/<int:pk>/', views.SalesReturnUpdateView.as_view(), name='return_edit'),
+    path('returns/<int:pk>/', views.SalesReturnDetailView.as_view(), name='return_detail'),
+    path('returns/edit/<int:pk>/', views.SalesReturnUpdateView.as_view(), name='return_edit'),
     path('returns/delete/<int:pk>/', views.SalesReturnDeleteView.as_view(), name='return_delete'),
     
     # API endpoints

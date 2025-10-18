@@ -109,13 +109,13 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label text-muted">{% trans "Return Number" %}</label>
-                                <div class="fs-5 fw-bold text-primary">{{ return.return_number }}</div>
+                                                                <div class="fs-5 fw-bold text-primary">{{ return.return_number }}</div>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label text-muted">{% trans "Date" %}</label>
-                                <div class="fs-5">{{ return.date }}</div>
+                                                                <div class="fs-5">{{ return.date }}</div>
                             </div>
                         </div>
                     </div>
@@ -126,7 +126,7 @@
                                 <label class="form-label text-muted">{% trans "Customer" %}</label>
                                 <div class="fs-5">
                                     <i class="fas fa-user text-muted me-2"></i>
-                                    {{ return.customer.name }}
+                                                                        {{ return.customer.name }}
                                 </div>
                             </div>
                         </div>
@@ -267,6 +267,50 @@
                 </div>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Journal Entries Section -->
+<div class="card mt-4">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0">
+            <i class="fas fa-book text-white me-2"></i>
+            {% trans "القيود المحاسبية المرتبطة" %}
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if journal_entries %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>{% trans "رقم القيد" %}</th>
+                            <th>{% trans "تاريخ القيد" %}</th>
+                            <th>{% trans "الوصف" %}</th>
+                            <th>{% trans "إجمالي المبلغ" %}</th>
+                            <th>{% trans "الإجراءات" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in journal_entries %}
+                        <tr>
+                            <td>{{ entry.entry_number }}</td>
+                            <td>{{ entry.entry_date|date:"Y-m-d" }}</td>
+                            <td>{{ entry.description }}</td>
+                            <td>{{ entry.total_amount|floatformat:3 }}</td>
+                            <td>
+                                <a href="{% url 'journal:entry_detail' entry.pk %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i> {% trans "View" %}
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-muted">{% trans "لا توجد قيود محاسبية مرتبطة بهذا المردود" %}</p>
+        {% endif %}
     </div>
 </div>
 

@@ -772,25 +772,14 @@ class JournalService:
                 'description': f'مردود مبيعات - تخفيض ضريبة رقم {sales_return.return_number}'
             })
         
-        # حسب نوع الدفع في الفاتورة الأصلية
-        if sales_return.original_invoice.payment_type == 'cash':
-            # للدفع النقدي: دائن للصندوق أو البنك
-            cash_account = JournalService.get_cash_account()
-            lines_data.append({
-                'account_id': cash_account.id,
-                'debit': 0,
-                'credit': sales_return.total_amount,
-                'description': f'دفع نقدي لمردود مبيعات رقم {sales_return.return_number}'
-            })
-        else:
-            # للدفع الائتماني: دائن للعميل
-            customer_account = JournalService.get_or_create_customer_account(sales_return.customer)
-            lines_data.append({
-                'account_id': customer_account.id,
-                'debit': 0,
-                'credit': sales_return.total_amount,
-                'description': f'مردود مبيعات رقم {sales_return.return_number}'
-            })
+        # دائماً دائن لحساب العميل (مردود المبيعات يعني استرداد المبلغ للعميل)
+        customer_account = JournalService.get_or_create_customer_account(sales_return.customer)
+        lines_data.append({
+            'account_id': customer_account.id,
+            'debit': 0,
+            'credit': sales_return.total_amount,
+            'description': f'مردود مبيعات رقم {sales_return.return_number}'
+        })
         
         return JournalService.create_journal_entry(
             entry_date=sales_return.date,
@@ -854,8 +843,8 @@ class JournalService:
     def create_purchase_return_entry(purchase_return, user=None):
         """إنشاء قيد مردود المشتريات"""
         lines_data = []
-        
-        # حساب المورد (مدين) - بقيمة المردود
+
+        # حساب المورد (مدين) - تقليل دين المورد بسبب المردود
         supplier_account = JournalService.get_or_create_supplier_account(purchase_return.original_invoice.supplier)
         lines_data.append({
             'account_id': supplier_account.id,
@@ -863,16 +852,16 @@ class JournalService:
             'credit': 0,
             'description': f'مردود مشتريات رقم {purchase_return.return_number}'
         })
-        
-        # حساب المخزون (دائن) - بنقص المخزون
+
+        # حساب المخزون (دائن) - نقص المخزون بسبب إرجاع البضاعة
         inventory_account = JournalService.get_inventory_account()
         lines_data.append({
             'account_id': inventory_account.id,
             'debit': 0,
             'credit': purchase_return.subtotal,
-            'description': f'انقاص المخزون - مردود مشتريات رقم {purchase_return.return_number}'
+            'description': f'إرجاع البضاعة للمخزون - مردود مشتريات رقم {purchase_return.return_number}'
         })
-        
+
         # حساب الضريبة إذا وجدت (دائن)
         if purchase_return.tax_amount > 0:
             tax_account = JournalService.get_tax_receivable_account()
@@ -882,7 +871,7 @@ class JournalService:
                 'credit': purchase_return.tax_amount,
                 'description': f'ضريبة مردود مشتريات - فاتورة رقم {purchase_return.return_number}'
             })
-        
+
         return JournalService.create_journal_entry(
             entry_date=purchase_return.date,
             reference_type='purchase_return',

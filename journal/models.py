@@ -72,6 +72,8 @@ class JournalEntry(models.Model):
         ('adjustment', _('Adjustment Entry')),
         ('customer_supplier_adjustment', _('Customer/Supplier Balance Adjustment')),
         ('warehouse_transfer', _('Warehouse Transfer')),
+        ('sales_return', _('Sales Return')),
+        ('sales_return_cogs', _('Sales Return COGS')),
     ]
 
     # أنواع القيود
@@ -89,7 +91,9 @@ class JournalEntry(models.Model):
     reference_type = models.CharField(_('Reference Type'), max_length=30, choices=REFERENCE_TYPES)
     reference_id = models.PositiveIntegerField(_('Reference ID'), null=True, blank=True)
     sales_invoice = models.ForeignKey('sales.SalesInvoice', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('Sales Invoice'))
+    sales_return = models.ForeignKey('sales.SalesReturn', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('Sales Return'))
     purchase_invoice = models.ForeignKey('purchases.PurchaseInvoice', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('Purchase Invoice'))
+    purchase_return = models.ForeignKey('purchases.PurchaseReturn', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('Purchase Return'))
     cashbox_transfer = models.ForeignKey('cashboxes.CashboxTransfer', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('Cashbox Transfer'))
     bank_transfer = models.ForeignKey('banks.BankTransfer', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('Bank Transfer'))
     description = models.TextField(_('Entry Description'))
@@ -122,11 +126,23 @@ class JournalEntry(models.Model):
                 self.sales_invoice = SalesInvoice.objects.get(id=self.reference_id)
             except SalesInvoice.DoesNotExist:
                 pass
+        elif self.reference_type in ['sales_return', 'sales_return_cogs'] and self.reference_id:
+            try:
+                from sales.models import SalesReturn
+                self.sales_return = SalesReturn.objects.get(id=self.reference_id)
+            except SalesReturn.DoesNotExist:
+                pass
         elif self.reference_type == 'purchase_invoice' and self.reference_id:
             try:
                 from purchases.models import PurchaseInvoice
                 self.purchase_invoice = PurchaseInvoice.objects.get(id=self.reference_id)
             except PurchaseInvoice.DoesNotExist:
+                pass
+        elif self.reference_type == 'purchase_return' and self.reference_id:
+            try:
+                from purchases.models import PurchaseReturn
+                self.purchase_return = PurchaseReturn.objects.get(id=self.reference_id)
+            except PurchaseReturn.DoesNotExist:
                 pass
         elif self.reference_type == 'cashbox_transfer' and self.reference_id:
             try:

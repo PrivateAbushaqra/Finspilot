@@ -300,7 +300,7 @@ def update_inventory_on_sales_invoice(sender, instance, created, **kwargs):
                         reference_type='sales_invoice',
                         reference_id=instance.id,
                         quantity=item.quantity,
-                        unit_cost=item.unit_price,  # استخدام سعر البيع من الفاتورة بدلاً من التكلفة المرجحة
+                        unit_cost=item.product.cost_price,  # استخدام تكلفة المنتج الحقيقية
                         notes=f'مبيعات - فاتورة رقم {instance.invoice_number}',
                         created_by=instance.created_by
                     )
@@ -321,7 +321,7 @@ def update_inventory_on_sales_invoice(sender, instance, created, **kwargs):
                         reference_type='sales_invoice',
                         reference_id=instance.id,
                         quantity=item.quantity,
-                        unit_cost=item.unit_price,  # استخدام سعر البيع من الفاتورة بدلاً من التكلفة المرجحة
+                        unit_cost=item.product.cost_price,  # استخدام تكلفة المنتج الحقيقية
                         notes=f'مبيعات - فاتورة رقم {instance.invoice_number}',
                         created_by=instance.created_by
                     )
@@ -397,7 +397,7 @@ def update_inventory_on_sales_return(sender, instance, created, **kwargs):
                         reference_type='sales_return',
                         reference_id=instance.id,
                         quantity=item.returned_quantity,
-                        unit_cost=item.unit_price,
+                        unit_cost=item.product.cost_price,  # استخدام تكلفة المنتج الحقيقية
                         notes=f'مردود مبيعات - رقم {instance.return_number}',
                         created_by=instance.created_by
                     )
@@ -418,7 +418,7 @@ def update_inventory_on_sales_return(sender, instance, created, **kwargs):
                         reference_type='sales_return',
                         reference_id=instance.id,
                         quantity=item.quantity,
-                        unit_cost=item.unit_price,
+                        unit_cost=item.product.cost_price,  # استخدام تكلفة المنتج الحقيقية
                         notes=f'مردود مبيعات - رقم {instance.return_number}',
                         created_by=instance.created_by
                     )
