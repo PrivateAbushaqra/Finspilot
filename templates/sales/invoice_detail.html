@@ -1,9 +1,41 @@
 {% extends 'base.html' %}
 {% load i18n %}
 {% load currency_tags %}
+{% load l10n %}
 
 
 {% block title %}{% trans "Sales Invoice Details" %} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .editable-cell {
+        position: relative;
+    }
+    
+    .editable-input {
+        color: #000 !important;
+        background-color: #fff !important;
+        font-size: 14px;
+        text-align: right;
+        padding: 0.375rem 0.75rem !important;
+        border: 1px solid #007bff !important;
+        border-radius: 4px;
+        width: 100% !important;
+        max-width: 150px;
+    }
+    
+    .editable-input:focus {
+        outline: none;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+    }
+    
+    .save-btn, .cancel-btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 12px;
+        margin: 0 2px;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
 {% csrf_token %}
@@ -178,12 +210,13 @@
 
     <!-- Invoice Items -->
     <div class="card mt-4">
-        <div class="card-header">
+        <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">{% trans "Invoice Items" %}</h5>
+            <small class="text-muted">💡 انقر على الكمية أو السعر للتعديل</small>
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover">
+                <table class="table table-hover" id="invoice-items-table">
                     <thead class="table-light">
                         <tr>
                             <th>{% trans "Product Code" %}</th>
@@ -193,11 +226,12 @@
                             <th class="text-center">{% trans "Tax Rate" %}</th>
                             <th class="text-end">{% trans "Tax Amount" %}</th>
                             <th class="text-end">{% trans "Total" %}</th>
+                            <th class="text-center">الإجراءات</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for item in invoice.items.all %}
-                        <tr>
+                        <tr data-item-id="{{ item.id }}">
                             <td>
                                 <strong>{{ item.product.code }}</strong>
                             </td>
@@ -205,15 +239,35 @@
                                 <strong>{{ item.product.name }}</strong><br>
                                 <small class="text-muted">{{ item.product.category.name|default:"غير مصنف" }}</small>
                             </td>
-                            <td class="text-center">{{ item.quantity|floatformat:2 }}</td>
-                            <td class="text-end">{{ item.unit_price|format_currency }} {% get_currency_symbol %}</td>
+                            <td class="text-center editable-cell quantity-cell" style="cursor: pointer;">
+                                <span class="display-value">{{ item.quantity|unlocalize }}</span>
+                                <div class="edit-mode" style="display: none;">
+                                    <input type="number" class="form-control editable-input quantity-input" 
+                                           value="{{ item.quantity|unlocalize }}" min="0.01" step="0.01" 
+                                           data-item-id="{{ item.id }}" data-original="{{ item.quantity|unlocalize }}">
+                                </div>
+                            </td>
+                            <td class="text-end editable-cell price-cell" style="cursor: pointer;">
+                                <span class="display-value">{{ item.unit_price|format_currency }} {% get_currency_symbol %}</span>
+                                <div class="edit-mode" style="display: none;">
+                                    <input type="number" class="form-control editable-input price-input" 
+                                           value="{{ item.unit_price|unlocalize }}" min="0" step="0.01" 
+                                           data-item-id="{{ item.id }}" data-original="{{ item.unit_price|unlocalize }}">
+                                </div>
+                            </td>
                             <td class="text-center">{{ item.tax_rate|format_currency }}%</td>
-                            <td class="text-end">{{ item.tax_amount|format_currency }} {% get_currency_symbol %}</td>
-                            <td class="text-end">{{ item.total_amount|format_currency }} {% get_currency_symbol %}</td>
+                            <td class="text-end tax-amount">{{ item.tax_amount|format_currency }} {% get_currency_symbol %}</td>
+                            <td class="text-end total-amount"><strong>{{ item.total_amount|format_currency }} {% get_currency_symbol %}</strong></td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-outline-danger delete-item-btn" 
+                                        data-item-id="{{ item.id }}" title="حذف العنصر">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="7" class="text-center text-muted">{% trans "No products in this invoice" %}</td>
+                            <td colspan="8" class="text-center text-muted">{% trans "No products in this invoice" %}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -237,22 +291,22 @@
                     </p>
                 </div>
                 <div class="col-md-6">
-                    <table class="table table-sm">
+                    <table class="table table-sm" id="invoice-totals-table">
                         <tr>
                             <td><strong>{% trans "Subtotal:" %}</strong></td>
-                            <td class="text-end">{{ invoice.subtotal|format_currency }} {% get_currency_symbol %}</td>
+                            <td class="text-end subtotal-value">{{ invoice.subtotal|format_currency }} {% get_currency_symbol %}</td>
                         </tr>
                         <tr>
                             <td><strong>{% trans "Discount" %}:</strong></td>
-                            <td class="text-end">{{ invoice.discount_amount|format_currency }} {% get_currency_symbol %}</td>
+                            <td class="text-end discount-value">{{ invoice.discount_amount|format_currency }} {% get_currency_symbol %}</td>
                         </tr>
                         <tr>
                             <td><strong>{% trans "Tax" %}:</strong></td>
-                            <td class="text-end">{{ invoice.tax_amount|format_currency }} {% get_currency_symbol %}</td>
+                            <td class="text-end tax-value">{{ invoice.tax_amount|format_currency }} {% get_currency_symbol %}</td>
                         </tr>
                         <tr class="table-active">
                             <td><strong>{% trans "Final Total" %}:</strong></td>
-                            <td class="text-end"><strong>{{ invoice.total_amount|format_currency }} {% get_currency_symbol %}</strong></td>
+                            <td class="text-end total-value"><strong>{{ invoice.total_amount|format_currency }} {% get_currency_symbol %}</strong></td>
                         </tr>
                     </table>
                 </div>
@@ -444,6 +498,241 @@ function copyToClipboard(text) {
         console.error('Failed to copy: ', err);
         alert('{% trans "Failed to copy text" %}');
     });
+}
+
+// معالجة التعديل المباشر للعناصر في صفحة التفاصيل
+document.addEventListener('DOMContentLoaded', function() {
+    // الرمز النقدي
+    const currencySymbol = '{% get_currency_symbol %}';
+    
+    const quantityCells = document.querySelectorAll('.quantity-cell');
+    const priceCells = document.querySelectorAll('.price-cell');
+    
+    // عند الضغط على خلية الكمية
+    quantityCells.forEach(cell => {
+        cell.addEventListener('click', function(e) {
+            if (e.target.closest('.editable-input')) return; // تجاهل إذا تم الضغط على input
+            
+            const displayValue = this.querySelector('.display-value');
+            const editMode = this.querySelector('.edit-mode');
+            const input = this.querySelector('.quantity-input');
+            
+            displayValue.style.display = 'none';
+            editMode.style.display = 'block';
+            input.focus();
+            input.select();
+            
+            const handleSave = () => saveItemUpdate(input.dataset.itemId);
+            const handleCancel = () => cancelEdit(this, displayValue, editMode, input);
+            
+            input.addEventListener('blur', handleSave);
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleSave();
+                if (e.key === 'Escape') handleCancel();
+            });
+        });
+    });
+    
+    // عند الضغط على خلية السعر
+    priceCells.forEach(cell => {
+        cell.addEventListener('click', function(e) {
+            if (e.target.closest('.editable-input')) return;
+            
+            const displayValue = this.querySelector('.display-value');
+            const editMode = this.querySelector('.edit-mode');
+            const input = this.querySelector('.price-input');
+            
+            displayValue.style.display = 'none';
+            editMode.style.display = 'block';
+            input.focus();
+            input.select();
+            
+            const handleSave = () => saveItemUpdate(input.dataset.itemId);
+            const handleCancel = () => cancelEdit(this, displayValue, editMode, input);
+            
+            input.addEventListener('blur', handleSave);
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleSave();
+                if (e.key === 'Escape') handleCancel();
+            });
+        });
+    });
+    
+    // معالجة حذف العنصر
+    document.querySelectorAll('.delete-item-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (confirm('هل أنت متأكد من حذف هذا العنصر؟')) {
+                deleteInvoiceItem(this.dataset.itemId);
+            }
+        });
+    });
+});
+
+function cancelEdit(cell, displayValue, editMode, input) {
+    editMode.style.display = 'none';
+    displayValue.style.display = 'block';
+    input.value = input.dataset.original;
+}
+
+function saveItemUpdate(itemId) {
+    const row = document.querySelector(`tr[data-item-id="${itemId}"]`);
+    const quantityInput = row.querySelector('.quantity-input');
+    const priceInput = row.querySelector('.price-input');
+    
+    const newQuantity = quantityInput.value;
+    const newPrice = priceInput.value;
+    
+    const invoiceId = {{ invoice.pk }};
+    
+    // Extract current language from URL
+    const currentPath = window.location.pathname;
+    const pathMatch = currentPath.match(/^\/([a-z]{2})\//);
+    const language = pathMatch ? pathMatch[1] : 'ar';
+    
+    const updateUrl = `/${language}/sales/invoices/${invoiceId}/items/${itemId}/update/`;
+    console.log('🔄 إرسال طلب تحديث إلى:', updateUrl);
+    console.log('📦 البيانات:', { quantity: newQuantity, unit_price: newPrice });
+    
+    // إرسال AJAX request للتحديث
+    fetch(updateUrl, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({
+            quantity: newQuantity,
+            unit_price: newPrice
+        })
+    })
+    .then(response => {
+        console.log('📥 استجابة الخادم:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('✅ البيانات المستلمة:', data);
+        if (data.success) {
+            // تحديث صفوف الجدول
+            const quantityCell = row.querySelector('.quantity-cell');
+            const priceCell = row.querySelector('.price-cell');
+            const taxCell = row.querySelector('.tax-amount');
+            const totalCell = row.querySelector('.total-amount');
+            
+            // إخفاء خانات التعديل وإظهار القيم المحدثة
+            quantityCell.querySelector('.edit-mode').style.display = 'none';
+            quantityCell.querySelector('.display-value').textContent = parseFloat(newQuantity).toFixed(3);
+            quantityCell.querySelector('.display-value').style.display = 'block';
+            
+            priceCell.querySelector('.edit-mode').style.display = 'none';
+            // تنسيق السعر بصيغة 3 منازل عشرية
+            const formattedPrice = parseFloat(data.item.unit_price).toFixed(3);
+            priceCell.querySelector('.display-value').textContent = formattedPrice + ' ' + currencySymbol;
+            priceCell.querySelector('.display-value').style.display = 'block';
+            
+            // تحديث الضريبة والإجمالي بصيغة صحيحة
+            const formattedTax = parseFloat(data.item.tax_amount).toFixed(3);
+            const formattedTotal = parseFloat(data.item.total_amount).toFixed(3);
+            taxCell.textContent = formattedTax + ' ' + currencySymbol;
+            totalCell.innerHTML = '<strong>' + formattedTotal + ' ' + currencySymbol + '</strong>';
+            
+            // تحديث مجاميع الفاتورة
+            if (data.invoice) {
+                updateInvoiceTotals(data.invoice);
+            }
+            
+            // عرض رسالة النجاح
+            showSuccessMessage('تم تحديث العنصر بنجاح');
+        } else {
+            console.error('❌ فشل التحديث:', data);
+            alert('خطأ: ' + (data.message || data.error || 'فشل التحديث'));
+        }
+    })
+    .catch(error => {
+        console.error('❌ خطأ في fetch:', error);
+        alert('خطأ في الاتصال بالخادم: ' + error.message);
+    });
+}
+
+function deleteInvoiceItem(itemId) {
+    const invoiceId = {{ invoice.pk }};
+    
+    // Extract current language from URL
+    const currentPath = window.location.pathname;
+    const pathMatch = currentPath.match(/^\/([a-z]{2})\//);
+    const language = pathMatch ? pathMatch[1] : 'ar';
+    
+    fetch(`/${language}/sales/invoices/${invoiceId}/items/${itemId}/delete/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // حذف الصف من الجدول
+            const row = document.querySelector(`tr[data-item-id="${itemId}"]`);
+            row.remove();
+            
+            // تحديث مجاميع الفاتورة
+            if (data.invoice) {
+                updateInvoiceTotals(data.invoice);
+            }
+            
+            showSuccessMessage('تم حذف العنصر بنجاح');
+        } else {
+            alert('خطأ: ' + (data.error || 'فشل الحذف'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('خطأ في الاتصال بالخادم');
+    });
+}
+
+function updateInvoiceTotals(invoice) {
+    // تحديث المجاميع باستخدام الـ IDs الجديدة
+    const currencySymbol = '{% get_currency_symbol %}';
+    const table = document.getElementById('invoice-totals-table');
+    if (table) {
+        const subtotalValue = table.querySelector('.subtotal-value');
+        const discountValue = table.querySelector('.discount-value');
+        const taxValue = table.querySelector('.tax-value');
+        const totalValue = table.querySelector('.total-value');
+        
+        if (subtotalValue) {
+            subtotalValue.textContent = parseFloat(invoice.subtotal).toFixed(3) + ' ' + currencySymbol;
+        }
+        if (discountValue) {
+            discountValue.textContent = parseFloat(invoice.discount_amount).toFixed(3) + ' ' + currencySymbol;
+        }
+        if (taxValue) {
+            taxValue.textContent = parseFloat(invoice.tax_amount).toFixed(3) + ' ' + currencySymbol;
+        }
+        if (totalValue) {
+            totalValue.innerHTML = '<strong>' + parseFloat(invoice.total_amount).toFixed(3) + ' ' + currencySymbol + '</strong>';
+        }
+    }
+}
+
+function showSuccessMessage(message) {
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-success alert-dismissible fade show position-fixed';
+    alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alert.innerHTML = `
+        <i class="fas fa-check-circle me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alert);
+    
+    setTimeout(() => {
+        alert.remove();
+    }, 3000);
+}
 }
 </script>
 {% endblock %}

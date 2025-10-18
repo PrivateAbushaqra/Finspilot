@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load i18n %}
 {% load currency_tags %}
+{% load l10n %}
 
 
 
@@ -45,6 +46,54 @@
         border-radius: 8px;
         margin-top: 1rem;
     }
+    
+    /* تحسين عرض خانات الكمية والسعر */
+    .quantity-input,
+    .price-input {
+        color: #000 !important;
+        background-color: #fff !important;
+        font-size: 14px;
+        font-weight: 500;
+        text-align: right;
+        padding: 0.375rem 0.75rem !important;
+        min-width: 120px;
+        max-width: 100%;
+        overflow: visible !important;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        border: 1px solid #ced4da !important;
+        display: block !important;
+        width: 100% !important;
+        height: auto !important;
+        line-height: 1.5 !important;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+    
+    .quantity-input::placeholder,
+    .price-input::placeholder {
+        color: #999;
+        opacity: 0.7;
+    }
+    
+    .quantity-input:focus,
+    .price-input:focus {
+        color: #000;
+        background-color: #fff;
+        border-color: #80bdff !important;
+        outline: 0;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+    }
+    
+    /* إصلاح الجدول المستجيب */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    #invoice-items-table td {
+        vertical-align: middle;
+        padding: 0.75rem !important;
+    }
 </style>
 {% endblock %}
 
@@ -55,14 +104,14 @@
         <div>
             <h2 class="mb-0">
                 <i class="fas fa-edit text-warning me-2"></i>
-                {% trans "Edit" %} {% trans "Invoice" %} المبيعات
+                {% trans "Edit" %} {% trans "Invoice" %} {% trans "Sales" %}
             </h2>
-            <p class="text-muted mb-0">{% trans "Edit" %} بيانات {% trans "Invoice" %} المبيعات رقم {{ object.invoice_number }}</p>
+            <p class="text-muted mb-0">{% trans "Edit" %} {% trans "Data" %} {% trans "Invoice" %} {% trans "Sales" %} {% trans "Number" %} {{ object.invoice_number }}</p>
         </div>
         <div>
             <a href="{% url 'sales:invoice_list' %}" class="btn btn-secondary me-2">
                 <i class="fas fa-arrow-right me-1"></i>
-                العودة لل{% trans "List" %}
+                {% trans "Back to" %} {% trans "List" %}
             </a>
             <a href="{% url 'sales:invoice_detail' object.pk %}" class="btn btn-info">
                 <i class="fas fa-eye me-1"></i>
@@ -79,18 +128,18 @@
                         <div class="col-md-6">
                             <h4 class="mb-0">
                                 <i class="fas fa-file-invoice-dollar me-2"></i>
-                                {% trans "Edit" %} {% trans "Invoice" %} المبيعات
+                                {% trans "Edit" %} {% trans "Invoice" %} {% trans "Sales" %}
                             </h4>
                         </div>
                         <div class="col-md-6 text-end">
-                            <h5 class="mb-0">رقم ال{% trans "Invoice" %}: {{ object.invoice_number }}</h5>
+                            <h5 class="mb-0">{% trans "Number" %} {% trans "Invoice" %}: {{ object.invoice_number }}</h5>
                         </div>
                     </div>
                 </div>
 
                 {% if form.errors %}
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <h5 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>يوجد أخطاء في النموذج</h5>
+                    <h5 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>{% trans "There are errors in the form" %}</h5>
                     <ul class="mb-0">
                     {% for field, errors in form.errors.items %}
                         {% for error in errors %}
@@ -112,7 +161,7 @@
                             <div class="mb-3">
                                 <label for="{{ form.invoice_number.id_for_label }}" class="form-label">
                                     <i class="fas fa-hashtag text-primary me-1"></i>
-                                    رقم ال{% trans "Invoice" %}
+                                    {% trans "Number" %} {% trans "Invoice" %}
                                 </label>
                                 {{ form.invoice_number }}
                                 {% if form.invoice_number.errors %}
@@ -265,12 +314,12 @@
                                         </td>
                                         <td>
                                             <input type="number" class="form-control form-control-sm quantity-input" 
-                                                   value="{{ item.quantity }}" min="0.01" step="0.01" 
+                                                   value="{{ item.quantity|unlocalize }}" min="0.01" step="0.01" 
                                                    data-item-id="{{ item.id }}">
                                         </td>
                                         <td>
                                             <input type="number" class="form-control form-control-sm price-input" 
-                                                   value="{{ item.unit_price }}" min="0" step="0.01" 
+                                                   value="{{ item.unit_price|unlocalize }}" min="0" step="0.01" 
                                                    data-item-id="{{ item.id }}">
                                         </td>
                                         <td>{{ item.tax_rate }}%</td>
@@ -351,11 +400,11 @@
                                 <div class="col-md-6">
                                     <div class="d-flex justify-content-between mb-2">
                                         <span>{% trans "Total" %} الفرعي:</span>
-                                        <strong>{{ object.subtotal|currency_format }}</strong>
+                                        <strong id="invoice-subtotal-display">{{ object.subtotal|currency_format }}</strong>
                                     </div>
                                     <div class="d-flex justify-content-between mb-2">
                                         <span>مبلغ الضريبة:</span>
-                                        <strong>{{ object.tax_amount|currency_format }}</strong>
+                                        <strong id="invoice-tax-display">{{ object.tax_amount|currency_format }}</strong>
                                     </div>
                                     <div class="d-flex justify-content-between mb-2 align-items-center">
                                         <div>
@@ -366,12 +415,12 @@
                                     </div>
                                     <div class="d-flex justify-content-between mb-2">
                                         <span>مبلغ الخصم:</span>
-                                        <strong>{{ object.discount_amount|currency_format }}</strong>
+                                        <strong id="invoice-discount-display">{{ object.discount_amount|currency_format }}</strong>
                                     </div>
                                     <hr>
                                     <div class="d-flex justify-content-between">
                                         <span class="h5">{% trans "Total" %} الإجمالي:</span>
-                                        <strong class="h5 text-primary">{{ object.total_amount|currency_format }}</strong>
+                                        <strong class="h5 text-primary" id="invoice-total-display">{{ object.total_amount|currency_format }}</strong>
                                     </div>
                                 </div>
                             </div>
@@ -398,32 +447,10 @@
 
 {% block extra_js %}
 <script>
+// UPDATED: 2025-10-18 - Fixed TRANSLATIONS and auto-save
 $(document).ready(function() {
-    console.log('✅ صفحة تعديل الفاتورة تم تحميلها');
+    console.log('✅ صفحة تعديل الفاتورة تم تحميلها - v2.1');
     
-    // عداد لإرسال النموذج
-    let isSubmitting = false;
-    
-    // Add form submit listener
-    $('form').on('submit', function(e) {
-        // منع الإرسال المكرر
-        if (isSubmitting) {
-            console.log('⏳ النموذج قيد الإرسال...');
-            e.preventDefault();
-            return false;
-        }
-        
-        console.log('✅ النموذج يتم إرساله...');
-        console.log('البيانات:', $(this).serialize());
-        
-        // تعطيل زر الحفظ
-        $('button[type="submit"]').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> جاري الحفظ...');
-        
-        isSubmitting = true;
-        // السماح للنموذج بالإرسال
-        return true;
-    });
-
     // CSRF token setup for AJAX
     function getCookie(name) {
         let cookieValue = null;
@@ -522,7 +549,7 @@ $(document).ready(function() {
         }
 
         $.ajax({
-            url: `/ar/sales/invoices/{{ object.pk }}/items/add/`,
+            url: `${apiBaseUrl}/items/add/`,
             type: 'POST',
             data: {
                 csrfmiddlewaretoken: csrftoken,
@@ -544,15 +571,68 @@ $(document).ready(function() {
         });
     });
 
+    // Format currency for display
+    function formatCurrency(value) {
+        if (typeof value === 'string') {
+            value = parseFloat(value);
+        }
+        // Return with 3 decimal places
+        return value.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    // Parse number from string
+    function parseNumber(str) {
+        if (!str) return 0;
+        if (typeof str === 'number') return str;
+        // Remove any non-numeric characters except decimal point
+        return parseFloat(str.toString().replace(/[^\d.-]/g, '')) || 0;
+    }
+
+    // Build the correct base URL for API calls
+    const currentPath = window.location.pathname;
+    // Extract the language and invoice ID
+    const pathMatch = currentPath.match(/^\/([a-z]{2})\/sales\/invoices\/edit\/(\d+)\/$/);
+    const language = pathMatch ? pathMatch[1] : 'ar';
+    const invoiceId = '{{ object.pk }}';
+    const apiBaseUrl = `/${language}/sales/invoices/${invoiceId}`;
+
+    // Auto-save when pressing Enter in quantity or price inputs
+    $('.quantity-input, .price-input').on('keypress', function(e) {
+        if (e.which === 13) { // Enter key
+            const row = $(this).closest('tr');
+            const itemId = $(this).data('item-id');
+            const btn = row.find('.edit-item-btn[data-item-id="' + itemId + '"]');
+            btn.click();
+        }
+    });
+
     // Edit item buttons
     $('.edit-item-btn').click(function() {
         const itemId = $(this).data('item-id');
         const row = $(this).closest('tr');
         const quantity = row.find('.quantity-input').val();
         const price = row.find('.price-input').val();
+        
+        console.log(`🔍 تحديث العنصر ${itemId}: الكمية=${quantity}, السعر=${price}`);
+        
+        // Validate input
+        if (!quantity || !price) {
+            alert('يرجى إدخال الكمية وسعر الوحدة');
+            return;
+        }
+        
+        const qtyNum = parseFloat(quantity);
+        const priceNum = parseFloat(price);
+        
+        if (qtyNum <= 0 || priceNum < 0) {
+            alert('الكمية يجب أن تكون أكبر من صفر، والسعر يجب أن يكون ≥ صفر');
+            return;
+        }
+
+        $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
 
         $.ajax({
-            url: `/ar/sales/invoices/{{ object.pk }}/items/${itemId}/update/`,
+            url: `${apiBaseUrl}/items/${itemId}/update/`,
             type: 'POST',
             data: {
                 csrfmiddlewaretoken: csrftoken,
@@ -560,22 +640,57 @@ $(document).ready(function() {
                 unit_price: price
             },
             success: function(response) {
+                console.log('✅ استجابة الخادم:', response);
+                
                 if (response.success) {
-                    // Update the display values
-                    const taxAmount = response.item.tax_amount;
-                    const totalAmount = response.item.total_amount;
+                    // Update the item display values
+                    const taxAmount = parseNumber(response.item.tax_amount);
+                    const totalAmount = parseNumber(response.item.total_amount);
                     
-                    row.find('.tax-amount').html('{{ base_currency.symbol }}' + taxAmount.toFixed(3));
-                    row.find('.total-amount strong').html('{{ base_currency.symbol }}' + totalAmount.toFixed(3));
+                    row.find('.tax-amount').text(formatCurrency(taxAmount));
+                    row.find('.total-amount strong').text(formatCurrency(totalAmount));
+                    
+                    console.log(`✅ تم تحديث صفوف الجدول - ضريبة: ${taxAmount}, إجمالي: ${totalAmount}`);
+                    
+                    // Update invoice totals if provided
+                    if (response.invoice) {
+                        const invoiceSubtotal = parseNumber(response.invoice.subtotal);
+                        const invoiceTaxAmount = parseNumber(response.invoice.tax_amount);
+                        const invoiceTotalAmount = parseNumber(response.invoice.total_amount);
+                        const invoiceDiscountAmount = parseNumber(response.invoice.discount_amount);
+                        
+                        console.log(`📊 مجاميع الفاتورة الجديدة:`, response.invoice);
+                        
+                        // Update totals using IDs directly
+                        $('#invoice-subtotal-display').text(formatCurrency(invoiceSubtotal));
+                        $('#invoice-tax-display').text(formatCurrency(invoiceTaxAmount));
+                        $('#invoice-discount-display').text(formatCurrency(invoiceDiscountAmount));
+                        $('#invoice-total-display').text(formatCurrency(invoiceTotalAmount));
+                        
+                        console.log(`✅ تم تحديث المجاميع:`);
+                        console.log(`  المجموع الفرعي: ${invoiceSubtotal}`);
+                        console.log(`  مبلغ الضريبة: ${invoiceTaxAmount}`);
+                        console.log(`  مبلغ الخصم: ${invoiceDiscountAmount}`);
+                        console.log(`  الإجمالي: ${invoiceTotalAmount}`);
+                    }
+                    
+                    // Reset button
+                    $('.edit-item-btn[data-item-id="' + itemId + '"]').prop('disabled', false).html('<i class="fas fa-save"></i>');
                     
                     // Show success message
-                    showMessage('تم تحديث العنصر بنجاح', 'success');
+                    showMessage('✅ ' + response.message, 'success');
+                    console.log('✅ تم تحديث العنصر بنجاح:', response.item);
                 } else {
-                    alert('خطأ: ' + response.message);
+                    alert('❌ خطأ: ' + response.message);
+                    $('.edit-item-btn[data-item-id="' + itemId + '"]').prop('disabled', false).html('<i class="fas fa-save"></i>');
                 }
             },
-            error: function() {
-                alert('حدث خطأ أثناء تحديث العنصر');
+            error: function(xhr, status, error) {
+                console.error('❌ خطأ AJAX:', error, xhr);
+                console.log('Status:', status);
+                console.log('Response:', xhr.responseText);
+                alert('❌ حدث خطأ أثناء تحديث العنصر. تحقق من الكمية والسعر.');
+                $('.edit-item-btn[data-item-id="' + itemId + '"]').prop('disabled', false).html('<i class="fas fa-save"></i>');
             }
         });
     });
@@ -589,7 +704,7 @@ $(document).ready(function() {
         const itemId = $(this).data('item-id');
 
         $.ajax({
-            url: `/ar/sales/invoices/{{ object.pk }}/items/${itemId}/delete/`,
+            url: `${apiBaseUrl}/items/${itemId}/delete/`,
             type: 'POST',
             data: {
                 csrfmiddlewaretoken: csrftoken

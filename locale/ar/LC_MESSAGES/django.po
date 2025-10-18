@@ -7544,6 +7544,9 @@ msgstr "كشف حساب"
 #: .\templates\sales\creditnote_delete.html:26
 #: .\templates\sales\creditnote_edit.html:19
 #: .\templates\sales\creditnote_report.html:77
+#: .\templates\sales\invoice_edit.html:109
+#: .\templates\sales\invoice_edit.html:135
+#: .\templates\sales\invoice_edit.html:164
 #: .\templates\settings\document_sequence_add.html:145
 #: .\templates\settings\document_sequence_edit.html:164
 msgid "Number"
@@ -12171,6 +12174,7 @@ msgstr "النموذج"
 #: .\templates\sales\return_detail.html:67
 #: .\templates\sales\return_detail.html:254
 #: .\templates\sales\return_edit.html:63
+#: .\templates\sales\invoice_edit.html:114
 msgid "Back to"
 msgstr "العودة إلى"
 
@@ -12511,6 +12515,7 @@ msgstr "إلغاء التعديل"
 #: .\templates\banks\cashbox_transfer_edit.html:108
 #: .\templates\banks\cashbox_transfer_edit.html:342
 #: .\templates\customers\edit.html:111
+#: .\templates\sales\invoice_edit.html:109
 msgid "Data"
 msgstr "البيانات"
 
@@ -13179,6 +13184,8 @@ msgstr "كشف المشتريات"
 #: .\templates\core\dashboard.html:537 .\templates\core\dashboard.html:565
 #: .\templates\reports\income_statement.html:157
 #: .\templates\sales\sales_statement.html:193
+#: .\templates\sales\invoice_edit.html:107
+#: .\templates\sales\invoice_edit.html:131
 #: .\journal\models.py:15
 msgid "Sales"
 msgstr "المبيعات"
@@ -26186,11 +26193,6 @@ msgstr "فئات الأصول"
 msgid "Liability Details"
 msgstr "تفاصيل الخصم"
 
-#: .\assets_liabilities\views.py:631
-#: .\assets_liabilities\views.py:288
-msgid "Depreciation entry created successfully"
-msgstr "تم إنشاء قيد الإهلاك بنجاح"
-
 #: .\assets_liabilities\views.py:581
 msgid "Liability created successfully"
 msgstr "تم إنشاء الخصم بنجاح"
@@ -26462,14 +26464,6 @@ msgstr "تم حذف قيد اليومية بنجاح"
 msgid "An error occurred while deleting the journal entry"
 msgstr "حدث خطأ أثناء حذف قيد اليومية"
 
-#: .\journal\views.py:663
-msgid "Journal Entries"
-msgstr "قيود اليومية"
-
-#: .\journal\views.py:671
-msgid "No journal entries found"
-msgstr "لم يتم العثور على قيود يومية"
-
 #: .\journal\views.py:679
 msgid "Search journal entries"
 msgstr "البحث في قيود اليومية"
@@ -26482,10 +26476,6 @@ msgstr "رقم القيد"
 msgid "Entry date"
 msgstr "تاريخ القيد"
 
-#: .\journal\views.py:703
-msgid "Description"
-msgstr "الوصف"
-
 #: .\journal\views.py:711
 msgid "Total debit"
 msgstr "إجمالي المدين"
@@ -26494,35 +26484,11 @@ msgstr "إجمالي المدين"
 msgid "Total credit"
 msgstr "إجمالي الدائن"
 
-#: .\journal\views.py:727
-msgid "Actions"
-msgstr "الإجراءات"
-
-#: .\journal\views.py:735
-msgid "View"
-msgstr "عرض"
-
-#: .\journal\views.py:743
-msgid "Edit"
-msgstr "تعديل"
-
-#: .\journal\views.py:751
-msgid "Delete"
-msgstr "حذف"
-
-#: .\journal\views.py:759
-msgid "Previous"
-msgstr "السابق"
-
-#: .\journal\views.py:767
-msgid "Next"
-msgstr "التالي"
-
-#: .\assets_liabilities\views.py:631
-msgid "Depreciation entry created successfully"
-msgstr "تم إنشاء قيد الإهلاك بنجاح"
-
 #: .\templates\cashboxes\cashbox_detail.html:269
 msgid "Choose the reason for modification - The appropriate accounting account will be used automatically"
 msgstr "اختر سبب التعديل - سيتم استخدام الحساب المحاسبي المناسب تلقائياً"
+
+#: .\templates\sales\invoice_edit.html:142
+msgid "There are errors in the form"
+msgstr "يوجد أخطاء في النموذج"
 

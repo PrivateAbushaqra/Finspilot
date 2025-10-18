@@ -1,51 +1,49 @@
-{% load i18n %}
-{% load custom_i18n %}
+
+
 <!DOCTYPE html>
-<html lang="{{ LANGUAGE_CODE }}" dir="{% if LANGUAGE_CODE == 'ar' %}rtl{% else %}ltr{% endif %}">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{% if superadmin_settings and superadmin_settings.system_title %}{{ superadmin_settings.system_title }}{% else %}Finspilot - النظام المحاسبي{% endif %}{% endblock %}</title>
+    <title>تحرير فاتورة المبيعات - نظام إدارة الأعمال</title>
     
     <!-- Bootstrap CSS -->
-    {% if LANGUAGE_CODE == 'ar' %}
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-    {% else %}
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    {% endif %}
+    
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <!-- Favicon -->
-    {% load static %}
-    <link rel="shortcut icon" type="image/png" href="{% static 'FinsPiloticn.png' %}">
+    
+    <link rel="shortcut icon" type="image/png" href="/static/FinsPiloticn.png">
     
     <!-- Responsive CSS -->
-    <link rel="stylesheet" href="{% static 'core/css/responsive.css' %}">
-    <link rel="stylesheet" href="{% static 'core/css/table-responsive.css' %}">
+    <link rel="stylesheet" href="/static/core/css/responsive.css">
+    <link rel="stylesheet" href="/static/core/css/table-responsive.css">
     
     <!-- Session Management CSS -->
-    {% if user.is_authenticated %}
-    <link rel="stylesheet" href="{% static 'core/css/session-management.css' %}">
-    {% endif %}
+    
+    <link rel="stylesheet" href="/static/core/css/session-management.css">
+    
     
     <!-- Session settings for JavaScript -->
-    {% if user.is_authenticated %}
-        {% load settings_tags %}
-        {% get_session_settings as session_settings %}
-        <meta name="session-timeout" content="{{ session_settings.timeout_minutes }}">
-        <meta name="session-timeout-enabled" content="{{ session_settings.enable_timeout|yesno:'true,false' }}">
-        <meta name="logout-on-browser-close" content="{{ session_settings.logout_on_browser_close|yesno:'true,false' }}">
-    {% endif %}
+    
+        
+        
+        <meta name="session-timeout" content="30">
+        <meta name="session-timeout-enabled" content="true">
+        <meta name="logout-on-browser-close" content="false">
+    
     
     <style>
         :root {
             /* fallbacks kept intentionally; values overridden if superadmin_settings provided */
-            --primary-color: {{ superadmin_settings.primary_color|default:'#007bff' }};
-            --secondary-color: {{ superadmin_settings.secondary_color|default:'#6c757d' }};
-            --accent-color: {{ superadmin_settings.accent_color|default:'#28a745' }};
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --accent-color: #28a745;
         }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -490,10 +488,98 @@
         }
     </style>
     
-    {% block extra_css %}{% endblock %}
+    
+<style>
+    .form-container {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        padding: 2rem;
+    }
+    
+    .invoice-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 8px 8px 0 0;
+        margin: -2rem -2rem 2rem -2rem;
+    }
+    
+    .invoice-items {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .item-row {
+        border-bottom: 1px solid #f0f0f0;
+        padding: 0.5rem 0;
+    }
+    
+    .item-row:last-child {
+        border-bottom: none;
+    }
+    
+    .totals-section {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-top: 1rem;
+    }
+    
+    /* تحسين عرض خانات الكمية والسعر */
+    .quantity-input,
+    .price-input {
+        color: #000 !important;
+        background-color: #fff !important;
+        font-size: 14px;
+        font-weight: 500;
+        text-align: right;
+        padding: 0.375rem 0.75rem !important;
+        min-width: 120px;
+        max-width: 100%;
+        overflow: visible !important;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+        border: 1px solid #ced4da !important;
+        display: block !important;
+        width: 100% !important;
+        height: auto !important;
+        line-height: 1.5 !important;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+    
+    .quantity-input::placeholder,
+    .price-input::placeholder {
+        color: #999;
+        opacity: 0.7;
+    }
+    
+    .quantity-input:focus,
+    .price-input:focus {
+        color: #000;
+        background-color: #fff;
+        border-color: #80bdff !important;
+        outline: 0;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+    }
+    
+    /* إصلاح الجدول المستجيب */
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    #invoice-items-table td {
+        vertical-align: middle;
+        padding: 0.75rem !important;
+    }
+</style>
+
 </head>
 <body>
-    {% if LANGUAGE_CODE == 'ar' %}
+    
     <style>
     /* Arabic override for print page counters */
     @page {
@@ -505,11 +591,9 @@
         }
     }
     </style>
-    {% endif %}
+    
     <!-- Company Logo Background -->
-    {% if company_settings.logo %}
-    <img src="{{ company_settings.logo.url }}" class="company-logo" alt="{% trans 'Company Logo' %}">
-    {% endif %}
+    
     
     <!-- Top Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -517,9 +601,9 @@
             <button class="btn btn-outline-secondary d-lg-none me-2" type="button" data-bs-toggle="collapse" data-bs-target="#sidebar" aria-controls="sidebar" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <a class="navbar-brand fw-bold" href="{% url 'core:dashboard' %}">
+            <a class="navbar-brand fw-bold" href="/ar/">
                 <i class="fas fa-chart-line me-2"></i>
-                {{ company_settings.company_name }} - {% trans "Home" %}
+                 - الرئيسية
             </a>
             
             <div class="navbar-nav ms-auto">
@@ -527,29 +611,29 @@
                 <div class="nav-item dropdown me-3">
                     <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button" data-bs-toggle="dropdown">
                         <i class="fas fa-globe me-1"></i>
-                        {% get_current_language as LANGUAGE_CODE %}
-                        {% if LANGUAGE_CODE == 'ar' %}{% trans "Arabic" %}{% else %}{% trans "English" %}{% endif %}
+                        
+                        العربية
                     </a>
                     <ul class="dropdown-menu">
                         <li>
-                            <form action="{% url 'set_language' %}" method="post" style="display: inline;" class="language-form" data-target-lang="ar">
-                                {% csrf_token %}
-                                <input name="next" type="hidden" value="{{ request.get_full_path }}" class="next-field" />
+                            <form action="/i18n/setlang/" method="post" style="display: inline;" class="language-form" data-target-lang="ar">
+                                <input type="hidden" name="csrfmiddlewaretoken" value="dnUXoReK6a85AAq0IdYGn6jHJq2avsrdn7lPN9nJKlI9FAqiSozB9l5qHgS9D00O">
+                                <input name="next" type="hidden" value="/ar/sales/invoices/edit/17/" class="next-field" />
                                 <input name="language" type="hidden" value="ar" />
-                                <button type="submit" class="dropdown-item {% if LANGUAGE_CODE == 'ar' %}active{% endif %}">
-                                    <i class="fas fa-check me-2" {% if LANGUAGE_CODE != 'ar' %}style="visibility: hidden;"{% endif %}></i>
-                                    {% trans "Arabic" %}
+                                <button type="submit" class="dropdown-item active">
+                                    <i class="fas fa-check me-2" ></i>
+                                    العربية
                                 </button>
                             </form>
                         </li>
                         <li>
-                            <form action="{% url 'set_language' %}" method="post" style="display: inline;" class="language-form" data-target-lang="en">
-                                {% csrf_token %}
-                                <input name="next" type="hidden" value="{{ request.get_full_path }}" class="next-field" />
+                            <form action="/i18n/setlang/" method="post" style="display: inline;" class="language-form" data-target-lang="en">
+                                <input type="hidden" name="csrfmiddlewaretoken" value="dnUXoReK6a85AAq0IdYGn6jHJq2avsrdn7lPN9nJKlI9FAqiSozB9l5qHgS9D00O">
+                                <input name="next" type="hidden" value="/ar/sales/invoices/edit/17/" class="next-field" />
                                 <input name="language" type="hidden" value="en" />
-                                <button type="submit" class="dropdown-item {% if LANGUAGE_CODE == 'en' %}active{% endif %}">
-                                    <i class="fas fa-check me-2" {% if LANGUAGE_CODE != 'en' %}style="visibility: hidden;"{% endif %}></i>
-                                    {% trans "English" %}
+                                <button type="submit" class="dropdown-item ">
+                                    <i class="fas fa-check me-2" style="visibility: hidden;"></i>
+                                    الإنجليزية
                                 </button>
                             </form>
                         </li>
@@ -557,13 +641,11 @@
                 </div>
                 
                 <!-- Notifications -->
-                {% if user.is_authenticated %}
+                
                 <div class="nav-item dropdown me-3">
-                    <a class="nav-link position-relative" href="{% url 'core:notifications' %}" id="notificationDropdown">
+                    <a class="nav-link position-relative" href="/ar/notifications/" id="notificationDropdown">
                         <i class="fas fa-bell fa-lg"></i>
-                        {% if unread_notifications_count > 0 %}
-                        <span class="notification-badge">{{ unread_notifications_count }}</span>
-                        {% endif %}
+                        
                     </a>
                 </div>
                 
@@ -571,15 +653,15 @@
                 <div class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
                         <i class="fas fa-user me-1"></i>
-                        {{ user.get_full_name|default:user.username }}
+                        المسؤول الأعلى
                     </a>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="{% url 'settings:index' %}"><i class="fas fa-cog me-2"></i>{% trans "Settings" %}</a></li>
+                        <li><a class="dropdown-item" href="/ar/settings/"><i class="fas fa-cog me-2"></i>Settings</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="{% url 'auth:logout' %}"><i class="fas fa-sign-out-alt me-2"></i>{% trans "Logout" %}</a></li>
+                        <li><a class="dropdown-item" href="/ar/auth/logout/"><i class="fas fa-sign-out-alt me-2"></i>تسجيل الخروج</a></li>
                     </ul>
                 </div>
-                {% endif %}
+                
             </div>
         </div>
     </nav>
@@ -587,23 +669,23 @@
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            {% if user.is_authenticated and user.user_type != 'pos_user' %}
+            
             <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block sidebar collapse">
                 <div class="position-sticky pt-3">
                     <ul class="nav flex-column">
 
-                        <!-- {% trans "Comprehensive Search" %} -->
+                        <!-- البحث الشامل -->
                         <li class="nav-item">
-                            <a class="nav-link {% if active_menu == 'search' %}active{% endif %}" href="{% url 'search:search' %}">
+                            <a class="nav-link " href="/ar/search/">
                                 <i class="fas fa-search me-2"></i>
-                                {% trans "Global Search" %}
+                                البحث العام
                             </a>
                         </li>
                         <!-- Dashboard -->
                         <li class="nav-item">
-                            <a class="nav-link {% if active_menu == 'dashboard' %}active{% endif %}" href="{% url 'core:dashboard' %}">
+                            <a class="nav-link " href="/ar/">
                                 <i class="fas fa-home me-2"></i>
-                                {% trans "Dashboard" %}
+                                لوحة التحكم
                             </a>
                         </li>       
 
@@ -618,11 +700,11 @@
                             aria-controls="financeMenu">
                                 <span>
                                     <i class="fas fa-wallet me-2"></i>
-                                    {% trans "Finance" %}
+                                    المالية
                                 </span>
                                 <i class="fas fa-chevron-down small"></i>
                             </a>
-                            <div class="collapse {% if active_menu == 'banks' or active_menu == 'cashboxes' or active_menu == 'receipts' or active_menu == 'payments' or active_menu == 'journal' or active_menu == 'revenues_expenses' or active_menu == 'assets_liabilities' %}show{% endif %}" id="financeMenu">
+                            <div class="collapse " id="financeMenu">
                                 <ul class="nav flex-column ms-3">
                                     <!-- ضع هنا أكواد البنود الخاصة بالمالية مثل:
                                         Bank Accounts
@@ -633,232 +715,222 @@
                                         Chart of Accounts
                                         Year-End Closing
                                     -->
-                                    {% if perms.banks.can_view_banks_account or perms.banks.can_edit_banks_account %}
+                                    
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'banks' %}active{% endif %}" data-bs-toggle="collapse" href="#banksMenu">
+                                        <a class="nav-link " data-bs-toggle="collapse" href="#banksMenu">
                                             <i class="fas fa-university me-2"></i>
-                                            {% trans "Bank Accounts" %}
+                                            الحسابات البنكية
                                             <i class="fas fa-chevron-down small"></i>
                                         </a>
-                                        <div class="collapse {% if active_menu == 'banks' %}show{% endif %}" id="banksMenu">
+                                        <div class="collapse " id="banksMenu">
                                             <ul class="nav flex-column ms-3">
-                                                {% if perms.banks.add_bankaccount or perms.banks.can_add_banks_account %}
+                                                
                                                 <li class="nav-item">
-                                                    <a class="nav-link" href="{% url 'banks:account_add' %}">{% trans "Add Account" %}</a>
+                                                    <a class="nav-link" href="/ar/banks/accounts/add/">إضافة حساب</a>
                                                 </li>
-                                                {% endif %}
+                                                
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'banks' and 'account_list' in request.path %}active{% endif %}" href="{% url 'banks:account_list' %}">{% trans "Accounts List" %}</a>
-                                                </li>
-                                                <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'banks' and 'transfer_list' in request.path %}active{% endif %}" href="{% url 'banks:transfer_list' %}">{% trans "Transfers List" %}</a>
+                                                    <a class="nav-link " href="/ar/banks/accounts/">قائمة الحسابات</a>
                                                 </li>
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'banks' and 'reconciliation_list' in request.path %}active{% endif %}" href="{% url 'banks:reconciliation_list' %}">{% trans "Bank Reconciliations" %}</a>
+                                                    <a class="nav-link " href="/ar/banks/transfers/">قائمة التحويلات</a>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <a class="nav-link " href="/ar/banks/reconciliations/">تسويات البنوك</a>
                                                 </li>
                                                 </li>
                                             </ul>
                                         </div>
                                     </li>
-                                    {% endif %} 
+                                     
                                     <!-- Cashboxes -->
-                                    {% if user.has_cashboxes_permission %}
+                                    
                                     <li class="nav-item">
                                         <a class="nav-link" data-bs-toggle="collapse" href="#cashboxesMenu">
                                             <i class="fas fa-cash-register me-2"></i>
-                                            {% trans "Cash Boxes" %}
+                                            الصناديق النقدية
                                             <i class="fas fa-chevron-down small"></i>
                                         </a>
-                                        <div class="collapse {% if active_menu == 'cashboxes' %}show{% endif %}" id="cashboxesMenu">
+                                        <div class="collapse " id="cashboxesMenu">
                                             <ul class="nav flex-column ms-3">
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'cashboxes' and 'cashbox_list' in request.path %}active{% endif %}" href="{% url 'cashboxes:cashbox_list' %}">{% trans "Cashboxes List" %}</a>
+                                                    <a class="nav-link " href="/ar/cashboxes/">قائمة الصناديق</a>
                                                 </li>
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'cashboxes' and 'transfer_list' in request.path %}active{% endif %}" href="{% url 'cashboxes:transfer_list' %}">{% trans "Transfers List" %}</a>
+                                                    <a class="nav-link " href="/ar/cashboxes/transfers/">قائمة التحويلات</a>
                                                 </li>
                                             </ul>
                                         </div>
                                     </li>
-                                    {% endif %}
+                                    
 
-                                     {% if user.has_receipts_permission %}
+                                     
                                     <li class="nav-item">
                                         <a class="nav-link" data-bs-toggle="collapse" href="#receiptsMenu">
                                             <i class="fas fa-receipt me-2"></i>
-                                            {% trans "Payment Receipts" %}
+                                            سندات القبض
                                             <i class="fas fa-chevron-down small"></i>
                                         </a>
-                                        <div class="collapse {% if active_menu == 'receipts' %}show{% endif %}" id="receiptsMenu">
+                                        <div class="collapse " id="receiptsMenu">
                                             <ul class="nav flex-column ms-3">
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'receipts' and 'receipt_add' in request.path %}active{% endif %}" href="{% url 'receipts:receipt_add' %}">{% trans "Add Payment Receipt" %}</a>
+                                                    <a class="nav-link " href="/ar/receipts/add/">إضافة سند قبض</a>
                                                 </li>
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'receipts' and 'receipt_list' in request.path %}active{% endif %}" href="{% url 'receipts:receipt_list' %}">{% trans "Receipts List" %}</a>
+                                                    <a class="nav-link " href="/ar/receipts/">قائمة سندات القبض</a>
                                                 </li>
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'receipts' and 'check_list' in request.path %}active{% endif %}" href="{% url 'receipts:check_list' %}">{% trans "Checks Management" %}</a>
+                                                    <a class="nav-link " href="/ar/receipts/checks/">إدارة الشيكات</a>
                                                 </li>
                                             </ul>
                                         </div>
                                     </li>
-                                    {% endif %}
+                                    
 
                                     <!-- Payment Vouchers -->
-                                    {% if user.is_superadmin or user.user_type == 'admin' or perms.payments.can_access_payments %}
+                                    
                                     <li class="nav-item">
                                         <a class="nav-link" data-bs-toggle="collapse" href="#paymentsMenu">
                                             <i class="fas fa-money-bill-wave me-2"></i>
-                                            {% trans "Payment Vouchers" %}
+                                            سندات الصرف
                                             <i class="fas fa-chevron-down small"></i>
                                         </a>
-                                        <div class="collapse {% if active_menu == 'payments' %}show{% endif %}" id="paymentsMenu">
+                                        <div class="collapse " id="paymentsMenu">
                                             <ul class="nav flex-column ms-3">
-                                                {% if perms.payments.add_paymentvoucher %}
+                                                
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'payments' and 'voucher_create' in request.path %}active{% endif %}" href="{% url 'payments:voucher_create' %}">{% trans "Add Payment Voucher" %}</a>
+                                                    <a class="nav-link " href="/ar/payments/create/">إضافة سند صرف</a>
                                                 </li>
-                                                {% endif %}
+                                                
                                                     <li class="nav-item">
-                                                        <a class="nav-link {% if active_menu == 'payments' and 'voucher_list' in request.path %}active{% endif %}" href="{% url 'payments:voucher_list' %}">{% trans "Vouchers List" %}</a>
+                                                        <a class="nav-link " href="/ar/payments/">قائمة الإيصالات</a>
                                                     </li>
                                             </ul>
                                         </div>
                                     </li>
-                                    {% endif %}
-                                    {% if perms.journal.view_journalentry or perms.journal.add_journalentry or perms.journal.change_journalentry or perms.journal.delete_journalentry or perms.journal.view_journalaccount or perms.journal.add_journalaccount or perms.journal.change_journalaccount or perms.journal.delete_journalaccount %}
+                                    
+                                    
                                     <!-- القيود اليومية -->
                                     <li class="nav-item">
                                         <a class="nav-link" data-bs-toggle="collapse" href="#journalEntriesMenu">
                                             <i class="fas fa-book me-2"></i>
-                                            {% trans "Journal Entries" %}
+                                            القيود اليومية
                                             <i class="fas fa-chevron-down small"></i>
                                         </a>
-                                        <div class="collapse {% if active_menu == 'journal' %}show{% endif %}" id="journalEntriesMenu">
+                                        <div class="collapse " id="journalEntriesMenu">
                                             <ul class="nav flex-column ms-3">
-                                                {% if perms.journal.view_journalentry %}
+                                                
                                                 <li class="nav-item">
-                                                    <a class="nav-link" href="{% url 'journal:entry_list' %}">{% trans "Journal Entries List" %}</a>
+                                                    <a class="nav-link" href="/ar/journal/entries/">قائمة القيود اليومية</a>
                                                 </li>
-                                                {% endif %}
-                                                {% if perms.journal.view_account %}
+                                                
+                                                
                                                 <li class="nav-item">
-                                                    <a class="nav-link" href="{% url 'journal:account_list' %}">{% trans "Chart of Accounts" %}</a>
+                                                    <a class="nav-link" href="/ar/journal/accounts/">دليل الحسابات</a>
                                                 </li>
-                                                {% endif %}
-                                                {% if perms.journal.add_journalentry %}
+                                                
+                                                
                                                 <li class="nav-item">
-                                                    <a class="nav-link" href="{% url 'journal:entry_create' %}">{% trans "Add Journal Entry" %}</a>
+                                                    <a class="nav-link" href="/ar/journal/entries/create/">إضافة قيد يومية</a>
                                                 </li>
-                                                {% endif %}
-                                                {# إصلاح: لا تظهر روابط التعديل والحذف بدون معرف صالح #}
-                                                {% if perms.journal.change_journalentry and journal_entry_id %}
+                                                
+                                                
+                                                
+                                                
+                                                
                                                 <li class="nav-item">
-                                                    <a class="nav-link" href="{% url 'journal:entry_detail' journal_entry_id %}">{% trans "Edit Journal Entry" %}</a>
+                                                    <a class="nav-link" href="/ar/journal/accounts/create/">إضافة حساب</a>
                                                 </li>
-                                                {% endif %}
-                                                {% if perms.journal.delete_journalentry and journal_entry_id %}
-                                                <li class="nav-item">
-                                                    <a class="nav-link" href="{% url 'journal:entry_delete' journal_entry_id %}">{% trans "Delete Journal Entry" %}</a>
-                                                </li>
-                                                {% endif %}
-                                                {% if perms.journal.add_account %}
-                                                <li class="nav-item">
-                                                    <a class="nav-link" href="{% url 'journal:account_create' %}">{% trans "Add Account" %}</a>
-                                                </li>
-                                                {% endif %}
+                                                
                                             </ul>
                                         </div>
                                     </li>
-                                    {% endif %}
-                                    {% if user.has_revenues_expenses_permission %}
+                                    
+                                    
                                     <!-- Revenues & Expenses -->
                                     <li class="nav-item">
                                         <a class="nav-link" data-bs-toggle="collapse" href="#revenuesExpensesMenu">
                                             <i class="fas fa-chart-line me-2"></i>
-                                            {% trans "Revenues & Expenses" %}
+                                            الإيرادات والمصروفات
                                             <i class="fas fa-chevron-down small"></i>
                                         </a>
-                                        <div class="collapse {% if active_menu == 'revenues_expenses' %}show{% endif %}" id="revenuesExpensesMenu">
+                                        <div class="collapse " id="revenuesExpensesMenu">
                                             <ul class="nav flex-column ms-3">
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'revenues_expenses' and 'dashboard' in request.path %}active{% endif %}" href="{% url 'revenues_expenses:dashboard' %}">{% trans "Dashboard" %}</a>
+                                                    <a class="nav-link " href="/ar/revenues-expenses/">لوحة التحكم</a>
                                                 </li>
-                                                {% if user.has_revenueexpensecategory_view_permission %}
+                                                
                                                 <li class="nav-item">
-                                                    {% if user.has_revenueexpensecategory_view_permission %}
-                                                        <a class="nav-link {% if active_menu == 'revenues_expenses' and 'category_list' in request.path %}active{% endif %}" href="{% url 'revenues_expenses:category_list' %}">{% trans "Manage Categories" %}</a>
-                                                    {% else %}
-                                                        <span class="nav-link disabled">{% trans "Manage Categories" %}</span>
-                                                    {% endif %}
+                                                    
+                                                        <a class="nav-link " href="/ar/revenues-expenses/categories/">إدارة الفئات</a>
+                                                    
                                                 </li>
-                                                {% endif %}
-                                                {% if user.has_revenueexpenseentry_view_permission %}
+                                                
+                                                
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'revenues_expenses' and 'entry_list' in request.path %}active{% endif %}" href="{% url 'revenues_expenses:entry_list' %}">{% trans "Entries List" %}</a>
+                                                    <a class="nav-link " href="/ar/revenues-expenses/entries/">قائمة القيود</a>
                                                 </li>
-                                                {% endif %}
-                                                {% if user.has_revenueexpenseentry_add_permission %}
+                                                
+                                                
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'revenues_expenses' and 'entry_create' in request.path %}active{% endif %}" href="{% url 'revenues_expenses:entry_create' %}">{% trans "Add New Entry" %}</a>
+                                                    <a class="nav-link " href="/ar/revenues-expenses/entries/create/">إضافة قيد جديد</a>
                                                 </li>
-                                                {% endif %}
+                                                
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'revenues_expenses' and 'recurring_list' in request.path %}active{% endif %}" href="{% url 'revenues_expenses:recurring_list' %}">{% trans "Recurring Revenue" %}</a>
+                                                    <a class="nav-link " href="/ar/revenues-expenses/recurring/">الإيراد المتكرر</a>
                                                 </li>
                                             </ul>
                                         </div>
                                     </li>
-                                    {% endif %}
-                                    {% if user.is_superadmin or user.user_type == 'admin' or perms.assets_liabilities.view_asset or perms.assets_liabilities.add_asset or perms.assets_liabilities.change_asset or perms.assets_liabilities.delete_asset or perms.assets_liabilities.view_liability or perms.assets_liabilities.add_liability or perms.assets_liabilities.change_liability or perms.assets_liabilities.delete_liability %}
+                                    
+                                    
                                     <!-- Assets & Liabilities -->
                                     <li class="nav-item">
                                         <a class="nav-link" data-bs-toggle="collapse" href="#assetsLiabilitiesMenu">
                                             <i class="fas fa-balance-scale me-2"></i>
-                                            {% trans "Assets & Liabilities" %}
+                                            الأصول والخصوم
                                             <i class="fas fa-chevron-down small"></i>
                                         </a>
-                                        <div class="collapse {% if active_menu == 'assets_liabilities' %}show{% endif %}" id="assetsLiabilitiesMenu">
+                                        <div class="collapse " id="assetsLiabilitiesMenu">
                                             <ul class="nav flex-column ms-3">
-                                                {% if perms.assets_liabilities.view_asset or perms.assets_liabilities.view_liability %}
+                                                
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'assets_liabilities' and 'dashboard' in request.path %}active{% endif %}" href="{% url 'assets_liabilities:dashboard' %}">{% trans "Dashboard" %}</a>
+                                                    <a class="nav-link " href="/ar/assets-liabilities/">لوحة التحكم</a>
                                                 </li>
-                                                {% endif %}
-                                                {% if perms.assets_liabilities.view_asset %}
+                                                
+                                                
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'assets_liabilities' and 'asset_list' in request.path %}active{% endif %}" href="{% url 'assets_liabilities:asset_list' %}">{% trans "Assets List" %}</a>
+                                                    <a class="nav-link " href="/ar/assets-liabilities/assets/">قائمة الأصول</a>
                                                 </li>
-                                                {% endif %}
-                                                {% if perms.assets_liabilities.view_liability %}
+                                                
+                                                
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'assets_liabilities' and 'liability_list' in request.path %}active{% endif %}" href="{% url 'assets_liabilities:liability_list' %}">{% trans "Liabilities List" %}</a>
+                                                    <a class="nav-link " href="/ar/assets-liabilities/liabilities/">قائمة الخصوم</a>
                                                 </li>
-                                                {% endif %}
+                                                
                                             </ul>
                                         </div>
                                     </li>
-                                    {% endif %}
-                                    {% if perms.journal.view_journalaccount %}
+                                    
+                                    
                                     <!-- دليل الحسابات
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'journal:account_list' %}">
+                                        <a class="nav-link" href="/ar/journal/accounts/">
                                             <i class="fas fa-book me-2"></i>
-                                            {% trans "Chart of Accounts" %}
+                                            دليل الحسابات
                                         </a>
                                     </li>
-                                    {% endif %}-->
+                                    -->
                                     
-                                    {% if user.is_superadmin or user.user_type == 'admin' or perms.journal.can_perform_year_end_closing %}
+                                    
                                     <!-- الإقفال السنوي -->
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'journal' and 'year_end_closing' in request.path %}active{% endif %}" href="{% url 'journal:year_end_closing' %}">
+                                        <a class="nav-link " href="/ar/journal/year-end-closing/">
                                             <i class="fas fa-calendar-check me-2"></i>
-                                            {% trans "Closing the Fiscal Year" %}
+                                            إقفال السنة المالية
                                         </a>
                                     </li>
-                                    {% endif %}
+                                    
                                     
                         
                                 </ul>
@@ -872,98 +944,98 @@
 <!------------->                        
                                      
                         <!-- Bank Accounts (visible if group grants view or edit banks account) -->
-                        <!--{% if perms.banks.can_view_banks_account or perms.banks.can_edit_banks_account %}
+                        <!--
                         <li class="nav-item">
-                            <a class="nav-link {% if active_menu == 'banks' %}active{% endif %}" data-bs-toggle="collapse" href="#banksMenu">
+                            <a class="nav-link " data-bs-toggle="collapse" href="#banksMenu">
                                 <i class="fas fa-university me-2"></i>
-                                {% trans "Bank Accounts" %}
+                                الحسابات البنكية
                                 <i class="fas fa-chevron-down small"></i>
                             </a>
                             <div class="collapse" id="banksMenu">
                                 <ul class="nav flex-column ms-3">
-                                    {% if perms.banks.add_bankaccount or perms.banks.can_add_banks_account %}
+                                    
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'banks:account_add' %}">{% trans "Add Account" %}</a>
+                                        <a class="nav-link" href="/ar/banks/accounts/add/">إضافة حساب</a>
                                     </li>
-                                    {% endif %}
+                                    
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'banks' and 'account_list' in request.path %}active{% endif %}" href="{% url 'banks:account_list' %}">{% trans "Accounts List" %}</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'banks' and 'transfer_list' in request.path %}active{% endif %}" href="{% url 'banks:transfer_list' %}">{% trans "Transfers List" %}</a>
+                                        <a class="nav-link " href="/ar/banks/accounts/">قائمة الحسابات</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'banks' and 'reconciliation_list' in request.path %}active{% endif %}" href="{% url 'banks:reconciliation_list' %}">{% trans "Bank Reconciliations" %}</a>
+                                        <a class="nav-link " href="/ar/banks/transfers/">قائمة التحويلات</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link " href="/ar/banks/reconciliations/">تسويات البنوك</a>
                                     </li>
                                 </ul>
                             </div>
                         </li>
-                        {% endif %}
+                        
                         
                         <!-- Cashboxes
-                        {% if user.has_cashboxes_permission %}
+                        
                         <li class="nav-item">
                             <a class="nav-link" data-bs-toggle="collapse" href="#cashboxesMenu">
                                 <i class="fas fa-cash-register me-2"></i>
-                                {% trans "Cash Boxes" %}
+                                الصناديق النقدية
                             </a>
                             <div class="collapse" id="cashboxesMenu">
                                 <ul class="nav flex-column ms-3">
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'cashboxes' and 'cashbox_list' in request.path %}active{% endif %}" href="{% url 'cashboxes:cashbox_list' %}">{% trans "Cashboxes List" %}</a>
+                                        <a class="nav-link " href="/ar/cashboxes/">قائمة الصناديق</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'cashboxes' and 'transfer_list' in request.path %}active{% endif %}" href="{% url 'cashboxes:transfer_list' %}">{% trans "Transfers List" %}</a>
+                                        <a class="nav-link " href="/ar/cashboxes/transfers/">قائمة التحويلات</a>
                                     </li>
                                 </ul>
                             </div>
                         </li>
-                        {% endif %}
+                        
                     
                         <!-- Payment Receipts
-                        {% if user.has_receipts_permission %}
+                        
                         <li class="nav-item">
                             <a class="nav-link" data-bs-toggle="collapse" href="#receiptsMenu">
                                 <i class="fas fa-receipt me-2"></i>
-                                {% trans "Payment Receipts" %}
+                                سندات القبض
                             </a>
                             <div class="collapse" id="receiptsMenu">
                                 <ul class="nav flex-column ms-3">
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'receipts' and 'receipt_add' in request.path %}active{% endif %}" href="{% url 'receipts:receipt_add' %}">{% trans "Add Payment Receipt" %}</a>
+                                        <a class="nav-link " href="/ar/receipts/add/">إضافة سند قبض</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'receipts' and 'receipt_list' in request.path %}active{% endif %}" href="{% url 'receipts:receipt_list' %}">{% trans "Receipts List" %}</a>
+                                        <a class="nav-link " href="/ar/receipts/">قائمة سندات القبض</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'receipts' and 'check_list' in request.path %}active{% endif %}" href="{% url 'receipts:check_list' %}">{% trans "Checks Management" %}</a>
+                                        <a class="nav-link " href="/ar/receipts/checks/">إدارة الشيكات</a>
                                     </li>
                                 </ul>
                             </div>
                         </li>
-                        {% endif %}
+                        
                         
                         <!-- Payment Vouchers 
-                        {% if user.is_superadmin or user.user_type == 'admin' or perms.payments.can_access_payments %}
+                        
                         <li class="nav-item">
                             <a class="nav-link" data-bs-toggle="collapse" href="#paymentsMenu">
                                 <i class="fas fa-money-bill-wave me-2"></i>
-                                {% trans "Payment Vouchers" %}
+                                سندات الصرف
                             </a>
                             <div class="collapse" id="paymentsMenu">
                                 <ul class="nav flex-column ms-3">
-                                    {% if perms.payments.add_paymentvoucher %}
+                                    
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'payments' and 'voucher_create' in request.path %}active{% endif %}" href="{% url 'payments:voucher_create' %}">{% trans "Add Payment Voucher" %}</a>
+                                        <a class="nav-link " href="/ar/payments/create/">إضافة سند صرف</a>
                                     </li>
-                                    {% endif %}
+                                    
                                         <li class="nav-item">
-                                            <a class="nav-link {% if active_menu == 'payments' and 'voucher_list' in request.path %}active{% endif %}" href="{% url 'payments:voucher_list' %}">{% trans "Vouchers List" %}</a>
+                                            <a class="nav-link " href="/ar/payments/">قائمة الإيصالات</a>
                                         </li>
                                 </ul>
                             </div>
                         </li>
-                        {% endif %}-->
+                        -->
                         <!-- Sales & Purchases Section -->
                         <li class="nav-item">
                             <a class="nav-link d-flex justify-content-between align-items-center"
@@ -974,128 +1046,128 @@
                             aria-controls="salesPurchasesMenu">
                                 <span>
                                     <i class="fas fa-shopping-cart me-2"></i>
-                                    {% trans "Sales & Purchases" %}
+                                    Sales & Purchases
                                 </span>
                                 <i class="fas fa-chevron-down small"></i>
                             </a>
-                            <div class="collapse {% if active_menu == 'purchases' or active_menu == 'sales' or active_menu == 'customers' %}show{% endif %}" id="salesPurchasesMenu">
+                            <div class="collapse show" id="salesPurchasesMenu">
                                 <ul class="nav flex-column ms-3">
                                     <!-- ضع هنا أكواد البنود الخاصة بالمبيعات -->
                                     <!-- ضع هنا أكواد البنود الخاصة بالمشتريات -->
                                     <!-- ضع هنا أكواد البنود الخاصة بالعملاء والموردين -->
                                     <!-- Purchases -->
-                                    {% if user.has_purchases_permission %}
+                                    
                                     <li class="nav-item">
                                         <a class="nav-link" data-bs-toggle="collapse" href="#purchasesMenu">
                                             <i class="fas fa-shopping-cart me-2"></i>
-                                            {% trans "Purchases" %}
+                                            المشتريات
                                             <i class="fas fa-chevron-down small"></i>
                                         </a>
-                                        <div class="collapse {% if active_menu == 'purchases' %}show{% endif %}" id="purchasesMenu">
+                                        <div class="collapse " id="purchasesMenu">
                                             <ul class="nav flex-column ms-3">
-                                                    {% if perms.purchases.add_purchaseinvoice or user.is_superuser %}
+                                                    
                                                         <li class="nav-item">
-                                                            <a class="nav-link {% if active_menu == 'purchases' and 'invoice_add' in request.path %}active{% endif %}" href="{% url 'purchases:invoice_add' %}">{% trans "Add Purchase Invoice" %}</a>
+                                                            <a class="nav-link " href="/ar/purchases/invoices/add/">إضافة فاتورة شراء</a>
                                                         </li>
-                                                    {% endif %}
-                                                    {% if perms.purchases.add_purchasereturn or user.is_superuser %}
+                                                    
+                                                    
                                                         <li class="nav-item">
-                                                            <a class="nav-link {% if active_menu == 'purchases' and 'return_add' in request.path %}active{% endif %}" href="{% url 'purchases:return_add' %}">{% trans "Add Purchase Return" %}</a>
+                                                            <a class="nav-link " href="/ar/purchases/returns/add/">إضافة مرتجع شراء</a>
                                                         </li>
-                                                    {% endif %}
-                                                         {% if perms.purchases.view_purchaseinvoice or user.is_superuser %}
+                                                    
+                                                         
                                                         <li class="nav-item">
-                                                            <a class="nav-link {% if active_menu == 'purchases' and 'invoice_list' in request.path %}active{% endif %}" href="{% url 'purchases:invoice_list' %}">{% trans "Purchases Invoice List" %}</a>
+                                                            <a class="nav-link " href="/ar/purchases/invoices/">قائمة فواتير المشتريات</a>
                                                         </li>
-                                                    {% endif %}
-                                                    {% if perms.purchases.can_view_purchasereturn or perms.purchases.view_purchasereturn or user.is_superuser %}
+                                                    
+                                                    
                                                             <li class="nav-item">
-                                                                <a class="nav-link {% if active_menu == 'purchases' and 'return_list' in request.path %}active{% endif %}" href="{% url 'purchases:return_list' %}">{% trans "Purchase Returns List" %}</a>
+                                                                <a class="nav-link " href="/ar/purchases/returns/">قائمة مردودات الشراء</a>
                                                             </li>
-                                                    {% endif %}
-                                                    {% if perms.purchases.can_view_debitnote %}
+                                                    
+                                                    
                                                         <li class="nav-item">
-                                                            <a class="nav-link {% if active_menu == 'purchases' and 'debitnote_list' in request.path %}active{% endif %}" href="{% url 'purchases:debitnote_list' %}">{% trans "Debit Notes" %}</a>
+                                                            <a class="nav-link " href="/ar/purchases/debit-notes/">إشعارات مدين</a>
                                                         </li>
-                                                    {% endif %}
-                                                    {% if perms.purchases.can_view_purchase_statement or user.is_superuser %}
+                                                    
+                                                    
                                                         <li class="nav-item">
-                                                            <a class="nav-link {% if active_menu == 'purchases' and 'purchase_statement' in request.path %}active{% endif %}" href="{% url 'purchases:purchase_statement' %}">{% trans "Purchase Statement" %}</a>
+                                                            <a class="nav-link " href="/ar/purchases/statement/">كشف المشتريات</a>
                                                         </li>
-                                                    {% endif %}
+                                                    
                                             </ul>
                                         </div>
                                     </li>
-                                    {% endif %}
+                                    
                                     <!-- Sales -->
-                                    {% if user.has_sales_permission %}
+                                    
                                     <li class="nav-item">
                                         <a class="nav-link" data-bs-toggle="collapse" href="#salesMenu">
                                             <i class="fas fa-cash-register me-2"></i>
-                                            {% trans "Sales" %}
+                                            المبيعات
                                             <i class="fas fa-chevron-down small"></i>
                                         </a>
-                                        <div class="collapse {% if active_menu == 'sales' %}show{% endif %}" id="salesMenu">
+                                        <div class="collapse show" id="salesMenu">
                                             <ul class="nav flex-column ms-3">
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'sales' and 'invoice_add' in request.path %}active{% endif %}" href="{% url 'sales:invoice_add' %}">{% trans "Create Sales Invoice" %}</a>
+                                                    <a class="nav-link " href="/ar/sales/invoices/add/">إنشاء فاتورة مبيعات</a>
                                                 </li>
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'sales' and 'return_add' in request.path %}active{% endif %}" href="{% url 'sales:return_add' %}">{% trans "Create Sales Return" %}</a>
+                                                    <a class="nav-link " href="/ar/sales/returns/add/">إنشاء مرتجع مبيعات</a>
                                                 </li>
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'sales' and 'invoice_list' in request.path %}active{% endif %}" href="{% url 'sales:invoice_list' %}">{% trans "Sales Invoices List" %}</a>
+                                                    <a class="nav-link " href="/ar/sales/invoices/">قائمة فواتير المبيعات</a>
                                                 </li>
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'sales' and 'return_list' in request.path %}active{% endif %}" href="{% url 'sales:return_list' %}">{% trans "Sales Returns List" %}</a>
+                                                    <a class="nav-link " href="/ar/sales/returns/">قائمة مرتجعات المبيعات</a>
                                                 </li>
-                                                {% if perms.sales.can_view_creditnote %}
+                                                
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'sales' and 'creditnote_list' in request.path %}active{% endif %}" href="{% url 'sales:creditnote_list' %}">{% trans "Credit Notes" %}</a>
+                                                    <a class="nav-link " href="/ar/sales/credit-notes/">إشعارات الدائن</a>
                                                 </li>
-                                                {% endif %}
+                                                
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'sales' and 'sales_statement' in request.path %}active{% endif %}" href="{% url 'sales:sales_statement' %}">{% trans "Sales Statement" %}</a>
+                                                    <a class="nav-link " href="/ar/sales/statement/">كشف المبيعات</a>
                                                 </li>
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'sales' and 'sales_return_statement' in request.path %}active{% endif %}" href="{% url 'sales:sales_return_statement' %}">{% trans "Sales Returns Statement" %}</a>
+                                                    <a class="nav-link " href="/ar/sales/returns-statement/">كشف مرتجعات المبيعات</a>
                                                 </li>
-                                                {% if user.has_pos_permission %}
+                                                
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'sales' and 'pos' in request.path %}active{% endif %}" href="{% url 'sales:pos' %}">{% trans "Point of Sale" %}</a>
+                                                    <a class="nav-link " href="/ar/sales/pos/">نقطة البيع</a>
                                                 </li>
-                                                {% endif %}
+                                                
                                             </ul>
                                         </div>
                                     </li>
-                                    {% endif %}
+                                    
                                     <!-- Customers & Suppliers -->
-                                    {% if user.is_superuser or user.is_admin or perms.customers.can_view_customers_suppliers %}
+                                    
                                     <li class="nav-item">
                                         <a class="nav-link" data-bs-toggle="collapse" href="#customersMenu">
                                             <i class="fas fa-users me-2"></i>
-                                            {% trans "Customers & Suppliers" %}
+                                            العملاء والموردين
                                             <i class="fas fa-chevron-down small"></i>
                                         </a>
-                                        <div class="collapse {% if active_menu == 'customers' %}show{% endif %}" id="customersMenu">
+                                        <div class="collapse " id="customersMenu">
                                             <ul class="nav flex-column ms-3">
-                                                {% if perms.customers.can_add_customers_suppliers %}
+                                                
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'customers' and 'add' in request.path %}active{% endif %}" href="{% url 'customers:add' %}">{% trans "Add Customer/Supplier" %}</a>
+                                                    <a class="nav-link " href="/ar/customers/add/">إضافة عميل/مورد</a>
                                                 </li>
-                                                {% endif %}
+                                                
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'customers' and 'customer_list' in request.path %}active{% endif %}" href="{% url 'customers:customer_list' %}">{% trans "Customers List" %}</a>
-                                                </li>
-                                                <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'customers' and 'supplier_list' in request.path %}active{% endif %}" href="{% url 'customers:supplier_list' %}">{% trans "Suppliers List" %}</a>
+                                                    <a class="nav-link " href="/ar/customers/customers/">قائمة العملاء</a>
                                                 </li>
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'customers' and 'list' in request.path and 'customer_list' not in request.path and 'supplier_list' not in request.path %}active{% endif %}" href="{% url 'customers:list' %}">{% trans "All Customers & Suppliers" %}</a>
+                                                    <a class="nav-link " href="/ar/customers/suppliers/">قائمة الموردين</a>
+                                                </li>
+                                                <li class="nav-item">
+                                                    <a class="nav-link " href="/ar/customers/">جميع العملاء والموردين</a>
                                                 </li>
                                             </ul>
                                         </div>
-                                        {% endif %}
+                                        
                                     </li>
                                 </ul>
                             </div>
@@ -1110,571 +1182,1065 @@
                             aria-controls="inventoryRevenuesMenu">
                                 <span>
                                     <i class="fas fa-boxes me-2"></i>
-                                    {% trans "Inventory & Categories & Products" %}
+                                    Inventory & Categories & Products
                                 </span>
                                 <i class="fas fa-chevron-down small"></i>
                             </a>
-                            <div class="collapse {% if active_menu == 'products' or active_menu == 'inventory' %}show{% endif %}" id="inventoryRevenuesMenu">
+                            <div class="collapse " id="inventoryRevenuesMenu">
                                 <ul class="nav flex-column ms-3">
                                     <!-- ضع هنا أكواد البنود الخاصة بالمخزون -->
                                     <!-- ضع هنا أكواد البنود الخاصة بالفئات والمنتجات -->
                                     <!-- ضع هنا أكواد البنود الخاصة بالإيرادات والمصروفات -->
             <!-- Products & Categories -->
-                                    {% if user.has_products_permission %}
+                                    
                                     <li class="nav-item">
                                         <a class="nav-link" data-bs-toggle="collapse" href="#productsMenu">
                                             <i class="fas fa-boxes me-2"></i>
-                                            {% trans "Categories & Products" %}
+                                            الفئات والمنتجات
                                             <i class="fas fa-chevron-down small"></i>
                                         </a>
-                                        <div class="collapse {% if active_menu == 'products' %}show{% endif %}" id="productsMenu">
+                                        <div class="collapse " id="productsMenu">
                                             <ul class="nav flex-column ms-3">
-                                                {% if user.is_superuser or user.user_type in 'superadmin,admin' or perms.products.can_add_categories %}
+                                                
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'products' and 'category_add' in request.path %}active{% endif %}" href="{% url 'products:category_add' %}">{% trans "Add Category" %}</a>
+                                                    <a class="nav-link " href="/ar/products/categories/add/">إضافة فئة</a>
                                                 </li>
-                                                {% endif %}
-                                                {% if user.is_superuser or user.user_type in 'superadmin,admin' or perms.products.can_add_products %}
+                                                
+                                                
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'products' and 'product_add' in request.path %}active{% endif %}" href="{% url 'products:product_add' %}">{% trans "Add Product" %}</a>
+                                                    <a class="nav-link " href="/ar/products/add/">إضافة منتج</a>
                                                 </li>
-                                                {% endif %}
+                                                
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'products' and 'category_list' in request.path %}active{% endif %}" href="{% url 'products:category_list' %}">{% trans "Categories List" %}</a>
+                                                    <a class="nav-link " href="/ar/products/categories/">قائمة الفئات</a>
                                                 </li>
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'products' and 'product_list' in request.path %}active{% endif %}" href="{% url 'products:product_list' %}">{% trans "Products List" %}</a>
+                                                    <a class="nav-link " href="/ar/products/">قائمة المنتجات</a>
                                                 </li>
                                             </ul>
                                         </div>
                                     </li>
-                                    {% endif %}
+                                    
                         <!-- Inventory -->
-                                    {% if user.has_inventory_permission %}
+                                    
                                     <li class="nav-item">
                                         <a class="nav-link" data-bs-toggle="collapse" href="#inventoryMenu">
                                             <i class="fas fa-warehouse me-2"></i>
-                                            {% trans "Inventory" %}
+                                            المخزون
                                             <i class="fas fa-chevron-down small"></i>
                                         </a>
-                                        <div class="collapse {% if active_menu == 'inventory' %}show{% endif %}" id="inventoryMenu">
+                                        <div class="collapse " id="inventoryMenu">
                                             <ul class="nav flex-column ms-3">
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'inventory' and 'list' in request.path and 'warehouse_list' not in request.path and 'movement_list' not in request.path %}active{% endif %}" href="{% url 'inventory:list' %}">{% trans "View Inventory" %}</a>
+                                                    <a class="nav-link " href="/ar/inventory/">عرض المخزون</a>
                                                 </li>
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'inventory' and 'warehouse_list' in request.path %}active{% endif %}" href="{% url 'inventory:warehouse_list' %}">{% trans "Warehouses" %}</a>
+                                                    <a class="nav-link " href="/ar/inventory/warehouses/">المستودعات</a>
                                                 </li>
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'inventory' and 'movement_list' in request.path %}active{% endif %}" href="{% url 'inventory:movement_list' %}">{% trans "Inventory Movement" %}</a>
+                                                    <a class="nav-link " href="/ar/inventory/movements/">حركة المخزون</a>
                                                 </li>
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'inventory' and 'transfer_list' in request.path %}active{% endif %}" href="{% url 'inventory:transfer_list' %}">{% trans "Warehouse Transfers" %}</a>
+                                                    <a class="nav-link " href="/ar/inventory/transfers/">تحويلات المستودعات</a>
                                                 </li>
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'inventory' and 'low_stock' in request.path %}active{% endif %}" href="{% url 'inventory:low_stock' %}">{% trans "Stock Alerts" %}</a>
+                                                    <a class="nav-link " href="/ar/inventory/low-stock/">تنبيهات المخزون</a>
                                                 </li>
                                             </ul>
                                         </div>
                                     </li>
-                                    {% endif %}
+                                    
                                 </ul>
                             </div>
                         </li>
                         
                         <!-- Products & Categories 
-                        {% if user.has_products_permission %}
+                        
                         <li class="nav-item">
                             <a class="nav-link" data-bs-toggle="collapse" href="#productsMenu">
                                 <i class="fas fa-boxes me-2"></i>
-                                {% trans "Categories & Products" %}
+                                الفئات والمنتجات
                             </a>
                             <div class="collapse" id="productsMenu">
                                 <ul class="nav flex-column ms-3">
-                                    {% if user.is_superuser or user.user_type in 'superadmin,admin' or perms.products.can_add_categories %}
+                                    
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'products' and 'category_add' in request.path %}active{% endif %}" href="{% url 'products:category_add' %}">{% trans "Add Category" %}</a>
+                                        <a class="nav-link " href="/ar/products/categories/add/">إضافة فئة</a>
                                     </li>
-                                    {% endif %}
-                                    {% if user.is_superuser or user.user_type in 'superadmin,admin' or perms.products.can_add_products %}
+                                    
+                                    
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'products' and 'product_add' in request.path %}active{% endif %}" href="{% url 'products:product_add' %}">{% trans "Add Product" %}</a>
+                                        <a class="nav-link " href="/ar/products/add/">إضافة منتج</a>
                                     </li>
-                                    {% endif %}
+                                    
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'products' and 'category_list' in request.path %}active{% endif %}" href="{% url 'products:category_list' %}">{% trans "Categories List" %}</a>
+                                        <a class="nav-link " href="/ar/products/categories/">قائمة الفئات</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'products' and 'product_list' in request.path %}active{% endif %}" href="{% url 'products:product_list' %}">{% trans "Products List" %}</a>
+                                        <a class="nav-link " href="/ar/products/">قائمة المنتجات</a>
                                     </li>
                                 </ul>
                             </div>
                         </li>
-                        {% endif %}-->
+                        -->
                         
                         <!-- Customers & Suppliers 
-                        {% if user.is_superuser or user.is_admin or perms.customers.can_view_customers_suppliers %}
+                        
                         <li class="nav-item">
                             <a class="nav-link" data-bs-toggle="collapse" href="#customersMenu">
                                 <i class="fas fa-users me-2"></i>
-                                {% trans "Customers & Suppliers" %}
+                                العملاء والموردين
                             </a>
                             <div class="collapse" id="customersMenu">
                                 <ul class="nav flex-column ms-3">
-                                    {% if perms.customers.can_add_customers_suppliers %}
+                                    
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'customers' and 'add' in request.path %}active{% endif %}" href="{% url 'customers:add' %}">{% trans "Add Customer/Supplier" %}</a>
+                                        <a class="nav-link " href="/ar/customers/add/">إضافة عميل/مورد</a>
                                     </li>
-                                    {% endif %}
+                                    
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'customers' and 'customer_list' in request.path %}active{% endif %}" href="{% url 'customers:customer_list' %}">{% trans "Customers List" %}</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'customers' and 'supplier_list' in request.path %}active{% endif %}" href="{% url 'customers:supplier_list' %}">{% trans "Suppliers List" %}</a>
+                                        <a class="nav-link " href="/ar/customers/customers/">قائمة العملاء</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'customers' and 'list' in request.path and 'customer_list' not in request.path and 'supplier_list' not in request.path %}active{% endif %}" href="{% url 'customers:list' %}">{% trans "All Customers & Suppliers" %}</a>
+                                        <a class="nav-link " href="/ar/customers/suppliers/">قائمة الموردين</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link " href="/ar/customers/">جميع العملاء والموردين</a>
                                     </li>
                                 </ul>
                             </div>
-                            {% endif %}
+                            
                         </li>-->
                         
                         <!-- Purchases 
-                        {% if user.has_purchases_permission %}
+                        
                         <li class="nav-item">
                             <a class="nav-link" data-bs-toggle="collapse" href="#purchasesMenu">
                                 <i class="fas fa-shopping-cart me-2"></i>
-                                {% trans "Purchases" %}
+                                المشتريات
                             </a>
                             <div class="collapse" id="purchasesMenu">
                                 <ul class="nav flex-column ms-3">
-                                        {% if perms.purchases.add_purchaseinvoice or user.is_superuser %}
+                                        
                                             <li class="nav-item">
-                                                <a class="nav-link {% if active_menu == 'purchases' and 'invoice_add' in request.path %}active{% endif %}" href="{% url 'purchases:invoice_add' %}">{% trans "Add Purchase Invoice" %}</a>
+                                                <a class="nav-link " href="/ar/purchases/invoices/add/">إضافة فاتورة شراء</a>
                                             </li>
-                                        {% endif %}
-                                        {% if perms.purchases.add_purchasereturn or user.is_superuser %}
+                                        
+                                        
                                             <li class="nav-item">
-                                                <a class="nav-link {% if active_menu == 'purchases' and 'return_add' in request.path %}active{% endif %}" href="{% url 'purchases:return_add' %}">{% trans "Add Purchase Return" %}</a>
+                                                <a class="nav-link " href="/ar/purchases/returns/add/">إضافة مرتجع شراء</a>
                                             </li>
-                                        {% endif %}
-                                                                                {% if perms.purchases.view_purchaseinvoice or user.is_superuser %}
+                                        
+                                                                                
                                             <li class="nav-item">
-                                                <a class="nav-link {% if active_menu == 'purchases' and 'invoice_list' in request.path %}active{% endif %}" href="{% url 'purchases:invoice_list' %}">{% trans "Purchases Invoice List" %}</a>
+                                                <a class="nav-link " href="/ar/purchases/invoices/">قائمة فواتير المشتريات</a>
                                             </li>
-                                        {% endif %}
-                                        {% if perms.purchases.can_view_purchasereturn or perms.purchases.view_purchasereturn or user.is_superuser %}
+                                        
+                                        
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'purchases' and 'return_list' in request.path %}active{% endif %}" href="{% url 'purchases:return_list' %}">{% trans "Purchase Returns List" %}</a>
+                                                    <a class="nav-link " href="/ar/purchases/returns/">قائمة مردودات الشراء</a>
                                                 </li>
-                                        {% endif %}
-                                        {% if perms.purchases.can_view_debitnote %}
+                                        
+                                        
                                             <li class="nav-item">
-                                                <a class="nav-link {% if active_menu == 'purchases' and 'debitnote_list' in request.path %}active{% endif %}" href="{% url 'purchases:debitnote_list' %}">{% trans "Debit Notes" %}</a>
+                                                <a class="nav-link " href="/ar/purchases/debit-notes/">إشعارات مدين</a>
                                             </li>
-                                        {% endif %}
-                                        {% if perms.purchases.can_view_purchase_statement or user.is_superuser %}
+                                        
+                                        
                                             <li class="nav-item">
-                                                <a class="nav-link {% if active_menu == 'purchases' and 'purchase_statement' in request.path %}active{% endif %}" href="{% url 'purchases:purchase_statement' %}">{% trans "Purchase Statement" %}</a>
+                                                <a class="nav-link " href="/ar/purchases/statement/">كشف المشتريات</a>
                                             </li>
-                                        {% endif %}
+                                        
                                 </ul>
                             </div>
                         </li>
-                        {% endif %}      -->
+                              -->
                         
                         <!-- Sales 
-                        {% if user.has_sales_permission %}
+                        
                         <li class="nav-item">
                             <a class="nav-link" data-bs-toggle="collapse" href="#salesMenu">
                                 <i class="fas fa-cash-register me-2"></i>
-                                {% trans "Sales" %}
+                                المبيعات
                             </a>
                             <div class="collapse" id="salesMenu">
                                 <ul class="nav flex-column ms-3">
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'sales' and 'invoice_add' in request.path %}active{% endif %}" href="{% url 'sales:invoice_add' %}">{% trans "Create Sales Invoice" %}</a>
+                                        <a class="nav-link " href="/ar/sales/invoices/add/">إنشاء فاتورة مبيعات</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'sales' and 'return_add' in request.path %}active{% endif %}" href="{% url 'sales:return_add' %}">{% trans "Create Sales Return" %}</a>
+                                        <a class="nav-link " href="/ar/sales/returns/add/">إنشاء مرتجع مبيعات</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'sales' and 'invoice_list' in request.path %}active{% endif %}" href="{% url 'sales:invoice_list' %}">{% trans "Sales Invoices List" %}</a>
+                                        <a class="nav-link " href="/ar/sales/invoices/">قائمة فواتير المبيعات</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'sales' and 'return_list' in request.path %}active{% endif %}" href="{% url 'sales:return_list' %}">{% trans "Sales Returns List" %}</a>
+                                        <a class="nav-link " href="/ar/sales/returns/">قائمة مرتجعات المبيعات</a>
                                     </li>
-                                    {% if perms.sales.can_view_creditnote %}
+                                    
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'sales' and 'creditnote_list' in request.path %}active{% endif %}" href="{% url 'sales:creditnote_list' %}">{% trans "Credit Notes" %}</a>
+                                        <a class="nav-link " href="/ar/sales/credit-notes/">إشعارات الدائن</a>
                                     </li>
-                                    {% endif %}
+                                    
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'sales' and 'sales_statement' in request.path %}active{% endif %}" href="{% url 'sales:sales_statement' %}">{% trans "Sales Statement" %}</a>
+                                        <a class="nav-link " href="/ar/sales/statement/">كشف المبيعات</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'sales' and 'sales_return_statement' in request.path %}active{% endif %}" href="{% url 'sales:sales_return_statement' %}">{% trans "Sales Returns Statement" %}</a>
+                                        <a class="nav-link " href="/ar/sales/returns-statement/">كشف مرتجعات المبيعات</a>
                                     </li>
-                                    {% if user.has_pos_permission %}
+                                    
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'sales' and 'pos' in request.path %}active{% endif %}" href="{% url 'sales:pos' %}">{% trans "Point of Sale" %}</a>
+                                        <a class="nav-link " href="/ar/sales/pos/">نقطة البيع</a>
                                     </li>
-                                    {% endif %}
+                                    
                                 </ul>
                             </div>
                         </li>
-                        {% endif %}-->
+                        -->
                         
                         <!-- Inventory 
-                        {% if user.has_inventory_permission %}
+                        
                         <li class="nav-item">
                             <a class="nav-link" data-bs-toggle="collapse" href="#inventoryMenu">
                                 <i class="fas fa-warehouse me-2"></i>
-                                {% trans "Inventory" %}
+                                المخزون
                             </a>
                             <div class="collapse" id="inventoryMenu">
                                 <ul class="nav flex-column ms-3">
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'inventory' and 'list' in request.path and 'warehouse_list' not in request.path and 'movement_list' not in request.path %}active{% endif %}" href="{% url 'inventory:list' %}">{% trans "View Inventory" %}</a>
+                                        <a class="nav-link " href="/ar/inventory/">عرض المخزون</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'inventory' and 'warehouse_list' in request.path %}active{% endif %}" href="{% url 'inventory:warehouse_list' %}">{% trans "Warehouses" %}</a>
+                                        <a class="nav-link " href="/ar/inventory/warehouses/">المستودعات</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'inventory' and 'movement_list' in request.path %}active{% endif %}" href="{% url 'inventory:movement_list' %}">{% trans "Inventory Movement" %}</a>
+                                        <a class="nav-link " href="/ar/inventory/movements/">حركة المخزون</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'inventory' and 'low_stock' in request.path %}active{% endif %}" href="{% url 'inventory:low_stock' %}">{% trans "Stock Alerts" %}</a>
+                                        <a class="nav-link " href="/ar/inventory/low-stock/">تنبيهات المخزون</a>
                                     </li>
                                 </ul>
                             </div>
                         </li>
-                        {% endif %}-->
+                        -->
                         
 
-<!--                        {% if user.has_revenues_expenses_permission %}
+<!--                        
                         <!-- Revenues & Expenses
                         <li class="nav-item">
                             <a class="nav-link" data-bs-toggle="collapse" href="#revenuesExpensesMenu">
                                 <i class="fas fa-chart-line me-2"></i>
-                                {% trans "Revenues & Expenses" %}
+                                الإيرادات والمصروفات
                             </a>
                             <div class="collapse" id="revenuesExpensesMenu">
                                 <ul class="nav flex-column ms-3">
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'revenues_expenses' and 'dashboard' in request.path %}active{% endif %}" href="{% url 'revenues_expenses:dashboard' %}">{% trans "Dashboard" %}</a>
+                                        <a class="nav-link " href="/ar/revenues-expenses/">لوحة التحكم</a>
                                     </li>
-                                    {% if user.has_revenueexpensecategory_view_permission %}
+                                    
                                     <li class="nav-item">
-                                        {% if user.has_revenueexpensecategory_view_permission %}
-                                            <a class="nav-link {% if active_menu == 'revenues_expenses' and 'category_list' in request.path %}active{% endif %}" href="{% url 'revenues_expenses:category_list' %}">{% trans "Manage Categories" %}</a>
-                                        {% else %}
-                                            <span class="nav-link disabled">{% trans "Manage Categories" %}</span>
-                                        {% endif %}
+                                        
+                                            <a class="nav-link " href="/ar/revenues-expenses/categories/">إدارة الفئات</a>
+                                        
                                     </li>
-                                    {% endif %}
-                                    {% if user.has_revenueexpenseentry_view_permission %}
+                                    
+                                    
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'revenues_expenses' and 'entry_list' in request.path %}active{% endif %}" href="{% url 'revenues_expenses:entry_list' %}">{% trans "Entries List" %}</a>
+                                        <a class="nav-link " href="/ar/revenues-expenses/entries/">قائمة القيود</a>
                                     </li>
-                                    {% endif %}
-                                    {% if user.has_revenueexpenseentry_add_permission %}
+                                    
+                                    
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'revenues_expenses' and 'entry_create' in request.path %}active{% endif %}" href="{% url 'revenues_expenses:entry_create' %}">{% trans "Add New Entry" %}</a>
+                                        <a class="nav-link " href="/ar/revenues-expenses/entries/create/">إضافة قيد جديد</a>
                                     </li>
-                                    {% endif %}
+                                    
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'revenues_expenses' and 'recurring_list' in request.path %}active{% endif %}" href="{% url 'revenues_expenses:recurring_list' %}">{% trans "Recurring Revenue" %}</a>
+                                        <a class="nav-link " href="/ar/revenues-expenses/recurring/">الإيراد المتكرر</a>
                                     </li>
                                 </ul>
                             </div>
                         </li>
-                        {% endif %}-->
+                        -->
                         
 
 
-<!--                        {% if perms.journal.view_journalentry or perms.journal.add_journalentry or perms.journal.change_journalentry or perms.journal.delete_journalentry or perms.journal.view_journalaccount or perms.journal.add_journalaccount or perms.journal.change_journalaccount or perms.journal.delete_journalaccount %}
+<!--                        
                         <!-- القيود اليومية 
                         <li class="nav-item">
                             <a class="nav-link" data-bs-toggle="collapse" href="#journalEntriesMenu">
                                 <i class="fas fa-book me-2"></i>
-                        {% trans "Journal Entries" %}
+                        القيود اليومية
                             </a>
                             <div class="collapse" id="journalEntriesMenu">
                                 <ul class="nav flex-column ms-3">
-                                    {% if perms.journal.view_journalentry %}
+                                    
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'journal:entry_list' %}">{% trans "Journal Entries List" %}</a>
+                                        <a class="nav-link" href="/ar/journal/entries/">قائمة القيود اليومية</a>
                                     </li>
-                                    {% endif %}
-                                    {% if perms.journal.view_account %}
+                                    
+                                    
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'journal:account_list' %}">{% trans "Chart of Accounts" %}</a>
+                                        <a class="nav-link" href="/ar/journal/accounts/">دليل الحسابات</a>
                                     </li>
-                                    {% endif %}
-                                    {% if perms.journal.add_journalentry %}
+                                    
+                                    
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'journal:entry_create' %}">{% trans "Add Journal Entry" %}</a>
+                                        <a class="nav-link" href="/ar/journal/entries/create/">إضافة قيد يومية</a>
                                     </li>
-                                    {% endif %}
-                                    {# إصلاح: لا تظهر روابط التعديل والحذف بدون معرف صالح #}
-                                    {% if perms.journal.change_journalentry and journal_entry_id %}
+                                    
+                                    
+                                    
+                                    
+                                    
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'journal:entry_detail' journal_entry_id %}">{% trans "Edit Journal Entry" %}</a>
+                                        <a class="nav-link" href="/ar/journal/accounts/create/">إضافة حساب</a>
                                     </li>
-                                    {% endif %}
-                                    {% if perms.journal.delete_journalentry and journal_entry_id %}
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'journal:entry_delete' journal_entry_id %}">{% trans "Delete Journal Entry" %}</a>
-                                    </li>
-                                    {% endif %}
-                                    {% if perms.journal.add_account %}
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'journal:account_create' %}">{% trans "Add Account" %}</a>
-                                    </li>
-                                    {% endif %}
+                                    
                                 </ul>
                             </div>
                         </li>
-                        {% endif %}-
+                        -
 
-                        {% if perms.journal.view_journalaccount %}
+                        
                         <!-- دليل الحسابات 
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'journal:account_list' %}">
+                            <a class="nav-link" href="/ar/journal/accounts/">
                                 <i class="fas fa-book me-2"></i>
-                                {% trans "Chart of Accounts" %}
+                                دليل الحسابات
                             </a>
                         </li>
-                        {% endif %}
                         
-                        {% if user.is_superadmin or user.user_type == 'admin' or perms.journal.can_perform_year_end_closing %}
+                        
+                        
                         <!-- الإقفال السنوي 
                         <li class="nav-item">
-                            <a class="nav-link {% if active_menu == 'journal' and 'year_end_closing' in request.path %}active{% endif %}" href="{% url 'journal:year_end_closing' %}">
+                            <a class="nav-link " href="/ar/journal/year-end-closing/">
                                 <i class="fas fa-calendar-check me-2"></i>
-                                {% trans "Closing the Fiscal Year" %}
+                                إقفال السنة المالية
                             </a>
                         </li>
-                        {% endif %}-->
+                        -->
                         
-<!--                        {% if user.is_superadmin or user.user_type == 'admin' or perms.assets_liabilities.view_asset or perms.assets_liabilities.add_asset or perms.assets_liabilities.change_asset or perms.assets_liabilities.delete_asset or perms.assets_liabilities.view_liability or perms.assets_liabilities.add_liability or perms.assets_liabilities.change_liability or perms.assets_liabilities.delete_liability %}
+<!--                        
                         <!-- Assets & Liabilities
                         <li class="nav-item">
                             <a class="nav-link" data-bs-toggle="collapse" href="#assetsLiabilitiesMenu">
                                 <i class="fas fa-balance-scale me-2"></i>
-                                {% trans "Assets & Liabilities" %}
+                                الأصول والخصوم
                             </a>
                             <div class="collapse" id="assetsLiabilitiesMenu">
                                 <ul class="nav flex-column ms-3">
-                                    {% if perms.assets_liabilities.view_asset or perms.assets_liabilities.view_liability %}
+                                    
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'assets_liabilities' and 'dashboard' in request.path %}active{% endif %}" href="{% url 'assets_liabilities:dashboard' %}">{% trans "Dashboard" %}</a>
+                                        <a class="nav-link " href="/ar/assets-liabilities/">لوحة التحكم</a>
                                     </li>
-                                    {% endif %}
-                                    {% if perms.assets_liabilities.view_asset %}
+                                    
+                                    
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'assets_liabilities' and 'asset_list' in request.path %}active{% endif %}" href="{% url 'assets_liabilities:asset_list' %}">{% trans "Assets List" %}</a>
+                                        <a class="nav-link " href="/ar/assets-liabilities/assets/">قائمة الأصول</a>
                                     </li>
-                                    {% endif %}
-                                    {% if perms.assets_liabilities.view_liability %}
+                                    
+                                    
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'assets_liabilities' and 'liability_list' in request.path %}active{% endif %}" href="{% url 'assets_liabilities:liability_list' %}">{% trans "Liabilities List" %}</a>
+                                        <a class="nav-link " href="/ar/assets-liabilities/liabilities/">قائمة الخصوم</a>
                                     </li>
-                                    {% endif %}
+                                    
                                 </ul>
                             </div>
                         </li>
-                        {% endif %}-->
+                        -->
 
                         <!-- Reports -->
-                        {% if user.has_reports_permission %}
+                        
                         <li class="nav-item">
                             <a class="nav-link" data-bs-toggle="collapse" href="#reportsMenu">
                                 <i class="fas fa-chart-bar me-2"></i>
-                                {% trans "Reports" %}
+                                التقارير
                                 <i class="fas fa-chevron-down small"></i>
                             </a>
-                            <div class="collapse {% if active_menu == 'reports' %}show{% endif %}" id="reportsMenu">
+                            <div class="collapse " id="reportsMenu">
                                 <ul class="nav flex-column ms-3">
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'sales_report' in request.path %}active{% endif %}" href="{% url 'sales:sales_report' %}">{% trans "Sales Reports" %}</a>
+                                        <a class="nav-link " href="/ar/sales/reports/">تقارير المبيعات</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'sales_by_salesperson' in request.path %}active{% endif %}" href="{% url 'reports:sales_by_salesperson' %}">{% trans "Sales Report By Sales Person" %}</a>
+                                        <a class="nav-link " href="/ar/reports/sales-by-salesperson/">تقرير المبيعات حسب مندوب المبيعات</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'purchase_report' in request.path %}active{% endif %}" href="{% url 'purchases:purchase_report' %}">{% trans "Purchase Reports" %}</a>
+                                        <a class="nav-link " href="/ar/purchases/reports/">تقارير المشتريات</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'tax_report' in request.path %}active{% endif %}" href="{% url 'core:tax_report' %}">{% trans "Tax Report" %}</a>
+                                        <a class="nav-link " href="/ar/reports/tax/">تقرير الضرائب</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'profit_loss_report' in request.path %}active{% endif %}" href="{% url 'core:profit_loss_report' %}">{% trans "Profit and Loss" %}</a>
+                                        <a class="nav-link " href="/ar/reports/profit-loss/">الأرباح والخسائر</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'customer_statement' in request.path %}active{% endif %}" href="{% url 'reports:customer_statement' %}">{% trans "Customer Statement" %}</a>
+                                        <a class="nav-link " href="/ar/reports/customer-statement/">كشف حساب العميل</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'trial_balance' in request.path %}active{% endif %}" href="{% url 'reports:trial_balance' %}">{% trans "Trial Balance" %}</a>
+                                        <a class="nav-link " href="/ar/reports/trial-balance/">الميزان التجريبي</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'balance_sheet' in request.path %}active{% endif %}" href="{% url 'reports:balance_sheet' %}">{% trans "Balance Sheet" %}</a>
+                                        <a class="nav-link " href="/ar/reports/balance-sheet/">الميزانية العمومية</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'income_statement' in request.path %}active{% endif %}" href="{% url 'reports:income_statement' %}">{% trans "Income Statement" %}</a>
+                                        <a class="nav-link " href="/ar/reports/income-statement/">قائمة الدخل</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'cash_flow' in request.path %}active{% endif %}" href="{% url 'reports:cash_flow' %}">{% trans "Cash Flow Statement" %}</a>
+                                        <a class="nav-link " href="/ar/reports/cash-flow/">بيان التدفق النقدي</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'aging_report' in request.path %}active{% endif %}" href="{% url 'reports:aging_report' %}">{% trans "Accounts Receivable Aging Report" %}</a>
+                                        <a class="nav-link " href="/ar/reports/aging-report/">تقرير أعمار الذمم</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'inventory_report' in request.path %}active{% endif %}" href="{% url 'reports:inventory_report' %}">{% trans "Inventory Balances Report" %}</a>
+                                        <a class="nav-link " href="/ar/reports/inventory-report/">تقرير أرصدة المخزون</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'financial_ratios' in request.path %}active{% endif %}" href="{% url 'reports:financial_ratios' %}">{% trans "Financial Ratios" %}</a>
+                                        <a class="nav-link " href="/ar/reports/financial-ratios/">النسب المالية</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'documents' and 'report' in request.path %}active{% endif %}" href="{% url 'documents:report' %}">{% trans "Documents Report" %}</a>
+                                        <a class="nav-link " href="/ar/documents/report/">تقرير المستندات</a>
                                     </li>
                                 </ul>
                             </div>
                         </li>
-                        {% endif %}
+                        
                         
                         <!-- Human Resources
-                        {% if user.is_superadmin or user.user_type == 'admin' or perms.hr.can_view_hr %}
+                        
                         <li class="nav-item">
                             <a class="nav-link" data-bs-toggle="collapse" href="#hrMenu">
                                 <i class="fas fa-users-cog me-2"></i>
-                                {% trans "Human Resources" %}
+                                الموارد البشرية
                                 <i class="fas fa-chevron-down small"></i>
                             </a>
-                            <div class="collapse {% if active_menu == 'hr' %}show{% endif %}" id="hrMenu">
+                            <div class="collapse " id="hrMenu">
                                 <ul class="nav flex-column ms-3">
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'hr' and 'dashboard' in request.path %}active{% endif %}" href="{% url 'hr:dashboard' %}">{% trans "HR Dashboard" %}</a>
+                                        <a class="nav-link " href="/ar/hr/">لوحة تحكم الموارد البشرية</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'hr' and 'employee_list' in request.path %}active{% endif %}" href="{% url 'hr:employee_list' %}">{% trans "Employees" %}</a>
+                                        <a class="nav-link " href="/ar/hr/employees/">الموظفون</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'hr' and 'department_list' in request.path %}active{% endif %}" href="{% url 'hr:department_list' %}">{% trans "Departments" %}</a>
+                                        <a class="nav-link " href="/ar/hr/departments/">الأقسام</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'hr' and 'position_list' in request.path %}active{% endif %}" href="{% url 'hr:position_list' %}">{% trans "Positions" %}</a>
+                                        <a class="nav-link " href="/ar/hr/positions/">الوظائف</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'hr' and 'attendance_list' in request.path %}active{% endif %}" href="{% url 'hr:attendance_list' %}">{% trans "Attendance" %}</a>
+                                        <a class="nav-link " href="/ar/hr/attendance/">الحضور</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'hr' and 'leave_request_list' in request.path %}active{% endif %}" href="{% url 'hr:leave_request_list' %}">{% trans "Leave Requests" %}</a>
+                                        <a class="nav-link " href="/ar/hr/leaves/">طلبات الإجازة</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'hr' and 'payroll_period_list' in request.path %}active{% endif %}" href="{% url 'hr:payroll_period_list' %}">{% trans "Payroll" %}</a>
+                                        <a class="nav-link " href="/ar/hr/payroll/">الرواتب</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'hr' and 'hr_reports' in request.path %}active{% endif %}" href="{% url 'hr:hr_reports' %}">{% trans "HR Reports" %}</a>
+                                        <a class="nav-link " href="/ar/hr/reports/">تقارير الموارد البشرية</a>
                                     </li>
                                 </ul>
                             </div>
                         </li>
-                        {% endif %}-->
+                        -->
                         
                         <!-- System Management -->
-                        {% if user.has_system_management_permission %}
+                        
                         <li class="nav-item">
                             <a class="nav-link" data-bs-toggle="collapse" href="#systemMenu">
                                 <i class="fas fa-cogs me-2"></i>
-                                {% trans "System Management" %}
+                                إدارة النظام
                                 <i class="fas fa-chevron-down small"></i>
                             </a>
-                            <div class="collapse {% if active_menu == 'users' or active_menu == 'audit_log' or active_menu == 'settings' %}show{% endif %}" id="systemMenu">
+                            <div class="collapse " id="systemMenu">
                                 <ul class="nav flex-column ms-3">
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'users' and 'add' in request.path %}active{% endif %}" href="{% url 'users:user_add' %}">{% trans "Add User" %}</a>
+                                        <a class="nav-link " href="/ar/users/add/">إضافة مستخدم</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'users' and 'list' in request.path %}active{% endif %}" href="{% url 'users:user_list' %}">{% trans "Users List" %}</a>
+                                        <a class="nav-link " href="/ar/users/">قائمة المستخدمين</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'users' and 'group' in request.path %}active{% endif %}" href="{% url 'users:group_list' %}">{% trans "Groups & Permissions" %}</a>
+                                        <a class="nav-link " href="/ar/users/groups/">المجموعات والصلاحيات</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'audit_log' %}active{% endif %}" href="{% url 'core:audit_log' %}">
+                                        <a class="nav-link " href="/ar/audit-log/">
                                             <i class="fas fa-history me-2"></i>
-                                            {% trans "Activity Log" %}
+                                            سجل الأنشطة
                                         </a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'settings' and 'document_sequences' in request.path %}active{% endif %}" href="{% url 'settings:document_sequences' %}">{% trans "Document Number Management" %}</a>
+                                        <a class="nav-link " href="/ar/settings/document-sequences/">إدارة أرقام المستندات</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'settings' and 'company' in request.path %}active{% endif %}" href="{% url 'settings:company' %}">{% trans "System Settings" %}</a>
+                                        <a class="nav-link " href="/ar/settings/company/">إعدادات النظام</a>
                                     </li>
                                     
                                     <!-- System Management - For Super Admin and Admin -->
-                                    {% if user.user_type == 'superadmin' or user.user_type == 'admin' or user.is_superuser or user.has_company_settings_permission %}
+                                    
                                     
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'settings' and 'superadmin_management' in request.path %}active{% endif %}" href="{% url 'settings:superadmin_management' %}">
+                                        <a class="nav-link " href="/ar/settings/superadmin-management/">
                                             <i class="fas fa-crown me-2 text-warning"></i>
-                                            {% trans "System Management" %}
-                                            <span class="badge bg-danger ms-1">{% trans "Advanced" %}</span>
+                                            إدارة النظام
+                                            <span class="badge bg-danger ms-1">متقدم</span>
                                         </a>
                                     </li>
                                     
                                     <!-- Print Design Settings -->
-                                    {% if user.user_type == 'superadmin' or user.is_superuser or user.has_company_settings_permission %}
+                                    
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'settings' and 'print_design' in request.path %}active{% endif %}" href="{% url 'settings:print_design' %}">
+                                        <a class="nav-link " href="/ar/settings/print-design/">
                                             <i class="fas fa-paint-brush me-2 text-success"></i>
-                                            {% trans "Print Design" %}
+                                            تصميم الطباعة
                                         </a>
                                     </li>
                                     
                                     <!-- JoFotara Settings -->
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'settings' and 'jofotara_settings' in request.path %}active{% endif %}" href="{% url 'settings:jofotara_settings' %}">
+                                        <a class="nav-link " href="/ar/settings/jofotara-settings/">
                                             <i class="fas fa-link me-2 text-info"></i>
-                                            {% trans "JoFotara Settings" %}
+                                            إعدادات JoFotara
                                         </a>
                                     </li>
-                                    {% endif %}
+                                    
                                     
                                     <!-- Backup and Restore -->
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'backup' %}active{% endif %}" href="{% url 'backup:backup_restore' %}">
+                                        <a class="nav-link " href="/ar/backup/">
                                             <i class="fas fa-database me-2 text-info"></i>
-                                            {% trans "Backup" %}
+                                            النسخ الاحتياطي
                                         </a>
                                     </li>
-                                    {% endif %}
+                                    
                                 </ul>
                             </div>
                         </li>
-                        {% endif %}
+                        
                     </ul>
                 </div>
             </nav>
-            {% endif %}
+            
             
             <!-- Main Content -->
-            <main class="{% if user.is_authenticated and user.user_type != 'pos_user' %}col-md-9 ms-sm-auto col-lg-10{% else %}col-12{% endif %} px-md-4">
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
                 <div class="main-content" id="main-content">
-                    {% if messages %}
-                        {% for message in messages %}
-                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                        {% endfor %}
-                    {% endif %}
                     
-                    {% block content %}{% endblock %}
+                    
+                    
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">
+                <i class="fas fa-edit text-warning me-2"></i>
+                تعديل فاتورة المبيعات
+            </h2>
+            <p class="text-muted mb-0">تعديل بيانات فاتورة المبيعات رقم MANUAL-TEST-11</p>
+        </div>
+        <div>
+            <a href="/ar/sales/invoices/" class="btn btn-secondary me-2">
+                <i class="fas fa-arrow-right me-1"></i>
+                العودة للقائمة
+            </a>
+            <a href="/ar/sales/invoices/17/" class="btn btn-info">
+                <i class="fas fa-eye me-1"></i>
+                عرض الالتفاصيل
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="form-container">
+                <div class="invoice-header">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h4 class="mb-0">
+                                <i class="fas fa-file-invoice-dollar me-2"></i>
+                                تعديل فاتورة المبيعات
+                            </h4>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <h5 class="mb-0">رقم الفاتورة: MANUAL-TEST-11</h5>
+                        </div>
+                    </div>
+                </div>
+
+                
+                
+                <form method="post">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="dnUXoReK6a85AAq0IdYGn6jHJq2avsrdn7lPN9nJKlI9FAqiSozB9l5qHgS9D00O">
+                    <input type="hidden" name="inclusive_tax" value="0">
+                    
+                    <div class="row">
+                        <!-- Basic Invoice Information -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_invoice_number" class="form-label">
+                                    <i class="fas fa-hashtag text-primary me-1"></i>
+                                    رقم الفاتورة
+                                </label>
+                                <input type="text" name="invoice_number" value="MANUAL-TEST-11" maxlength="50" class="form-control" required id="id_invoice_number">
+                                
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_date" class="form-label">
+                                    <i class="fas fa-calendar text-primary me-1"></i>
+                                    التاريخ
+                                </label>
+                                <input type="text" name="date" value="2025-10-18" class="form-control" type="date" required id="id_date">
+                                
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_customer" class="form-label">
+                                    <i class="fas fa-user text-primary me-1"></i>
+                                    العميل
+                                </label>
+                                <select name="customer" class="form-select" id="id_customer">
+  <option value="">---------</option>
+
+  <option value="1" selected>شركة التقنية المتقدمة - المحدثة (العميل)</option>
+
+  <option value="2">مؤسسة الأمل التجارية (العميل)</option>
+
+  <option value="3">شركة النجاح الدولية (العميل)</option>
+
+  <option value="4">مكتبة القراءة الحديثة (العميل)</option>
+
+  <option value="5">شركة البناء السريع (العميل)</option>
+
+  <option value="45">عميل اختبار سندات القبض (العميل)</option>
+
+  <option value="17">عميل اختبار سريع 1 (العميل)</option>
+
+  <option value="19">عميل اختبار سريع 1 (العميل)</option>
+
+  <option value="21">عميل اختبار سريع 1 (العميل)</option>
+
+  <option value="23">عميل اختبار سريع 1 (العميل)</option>
+
+  <option value="93">Cash Customer (العميل)</option>
+
+  <option value="9">الشركة العالمية للتجارة والصناعة (العميل والمورد)</option>
+
+  <option value="10">مؤسسة الشرق الأوسط المتحدة (العميل والمورد)</option>
+
+</select>
+                                
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_payment_type" class="form-label">
+                                    <i class="fas fa-credit-card text-primary me-1"></i>
+                                    نوع الدفعة
+                                </label>
+                                <select name="payment_type" class="form-select" required id="id_payment_type">
+  <option value="">---------</option>
+
+  <option value="cash">نقدي</option>
+
+  <option value="credit" selected>ذمم</option>
+
+  <option value="bank_transfer">تحويل بنكي</option>
+
+  <option value="check">شيك</option>
+
+  <option value="installment">تقسيط</option>
+
+</select>
+                                
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- صف المستودع -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label"><i class="fas fa-warehouse me-1"></i> المستودع</label>
+                                <select class="form-select" name="warehouse">
+                                    <option value="">اختر المستودع</option>
+                                    
+                                    <option value="1" selected>
+                                        مستودع اختبار رئيسي - WH-TEST-MAIN
+                                         (افتراضي)
+                                    </option>
+                                    
+                                    <option value="2" >
+                                        مستودع اختبار فرعي 1 - WH-TEST-SUB1
+                                        
+                                    </option>
+                                    
+                                    <option value="3" >
+                                        مستودع اختبار فرعي 2 - WH-TEST-SUB2
+                                        
+                                    </option>
+                                    
+                                </select>
+                                <div class="form-text">Select the warehouse from which products will be sold.</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    <i class="fas fa-user-edit text-warning me-1"></i> 
+                                    أنشئ بواسطة
+                                </label>
+                                <select class="form-select" name="created_by">
+                                    
+                                    <option value="4" >
+                                        pos user
+                                    </option>
+                                    
+                                    <option value="2" selected>
+                                        المسؤول الأعلى
+                                    </option>
+                                    
+                                    <option value="3" >
+                                        قاسم أول
+                                    </option>
+                                    
+                                    <option value="1" >
+                                        مسؤول النظام
+                                    </option>
+                                    
+                                </select>
+                                <div class="form-text text-warning">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                    تغيير المنشئ يتطلب صلاحية خاصة
+                                </div>
+                            </div>
+                            
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="id_notes" class="form-label">
+                                    <i class="fas fa-sticky-note text-primary me-1"></i>
+                                    ملاحظات
+                                </label>
+                                <textarea name="notes" cols="40" rows="3" class="form-control" placeholder="أدخل ملاحظات إضافية..." id="id_notes">
+</textarea>
+                                
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Invoice Items Display -->
+                    <div class="invoice-items">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">
+                                <i class="fas fa-list text-primary me-2"></i>
+                                عناصر الفاتورة
+                            </h5>
+                            <button type="button" class="btn btn-success btn-sm" id="add-item-btn">
+                                <i class="fas fa-plus me-1"></i>
+                                إضافة منتج
+                            </button>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="invoice-items-table">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>المنتج</th>
+                                        <th>الكمية</th>
+                                        <th>سعر الوحدة</th>
+                                        <th>نسبة الضريبة</th>
+                                        <th>مبلغ الضريبة</th>
+                                        <th>الإجمالي</th>
+                                        <th>الإجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    
+                                    <tr data-item-id="37">
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <span class="product-name">كاميرا ويب Logitech C920</span>
+                                                <small class="text-muted ms-2">(CAM-LOG-001)</small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <input type="number" class="form-control form-control-sm quantity-input" 
+                                                   value="3.000" min="0.01" step="0.01" 
+                                                   data-item-id="37">
+                                        </td>
+                                        <td>
+                                            <input type="number" class="form-control form-control-sm price-input" 
+                                                   value="800.000" min="0" step="0.01" 
+                                                   data-item-id="37">
+                                        </td>
+                                        <td>15,00%</td>
+                                        <td class="tax-amount">360.000 د.أ</td>
+                                        <td class="total-amount"><strong>2760.000 د.أ</strong></td>
+                                        <td>
+                                            <button type="button" class="btn btn-warning btn-sm edit-item-btn" 
+                                                    data-item-id="37">
+                                                <i class="fas fa-save"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-danger btn-sm delete-item-btn" 
+                                                    data-item-id="37">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Add New Item Form -->
+                        <div id="add-item-form" class="mt-3" style="display: none;">
+                            <div class="card border-success">
+                                <div class="card-header bg-success text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-plus me-2"></i>
+                                        إضافة منتج جديد
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <label class="form-label">المنتج</label>
+                                            <select class="form-select" id="new-product-select">
+                                                <option value="">اختر المنتج...</option>
+                                                
+                                                <option value="54" data-code="SRV-OS-001" 
+                                                        data-price="100,000" 
+                                                        data-tax="5,00">
+                                                    خدمة تثبيت نظام تشغيل (SRV-OS-001)
+                                                </option>
+                                                
+                                                <option value="55" data-code="SRV-ASSEM-001" 
+                                                        data-price="200,000" 
+                                                        data-tax="10,00">
+                                                    خدمة تجميع كمبيوتر (SRV-ASSEM-001)
+                                                </option>
+                                                
+                                                <option value="57" data-code="SRV-NET-001" 
+                                                        data-price="300,000" 
+                                                        data-tax="0,00">
+                                                    خدمة تركيب شبكة (SRV-NET-001)
+                                                </option>
+                                                
+                                                <option value="56" data-code="SRV-SUPP-001" 
+                                                        data-price="1200,000" 
+                                                        data-tax="0,00">
+                                                    خدمة دعم فني سنوي (SRV-SUPP-001)
+                                                </option>
+                                                
+                                                <option value="53" data-code="SRV-MAINT-001" 
+                                                        data-price="150,000" 
+                                                        data-tax="0,00">
+                                                    خدمة صيانة كمبيوتر (SRV-MAINT-001)
+                                                </option>
+                                                
+                                                <option value="41" data-code="RAM-KIN-001" 
+                                                        data-price="350,000" 
+                                                        data-tax="0,00">
+                                                    ذاكرة عشوائية Kingston 16GB DDR4 (RAM-KIN-001)
+                                                </option>
+                                                
+                                                <option value="50" data-code="ROU-TPL-001" 
+                                                        data-price="600,000" 
+                                                        data-tax="0,00">
+                                                    راوتر TP-Link Archer AX3000 (ROU-TPL-001)
+                                                </option>
+                                                
+                                                <option value="48" data-code="HEAD-HYP-001" 
+                                                        data-price="550,000" 
+                                                        data-tax="0,00">
+                                                    سماعة رأس HyperX Cloud II (HEAD-HYP-001)
+                                                </option>
+                                                
+                                                <option value="43" data-code="MON-DELL-001" 
+                                                        data-price="1500,000" 
+                                                        data-tax="0,00">
+                                                    شاشة Dell 27 بوصة 4K (MON-DELL-001)
+                                                </option>
+                                                
+                                                <option value="45" data-code="MON-LG-001" 
+                                                        data-price="720,000" 
+                                                        data-tax="0,00">
+                                                    شاشة LG 24 بوصة Full HD (MON-LG-001)
+                                                </option>
+                                                
+                                                <option value="44" data-code="PRT-HP-001" 
+                                                        data-price="1100,000" 
+                                                        data-tax="0,00">
+                                                    طابعة HP LaserJet Pro (PRT-HP-001)
+                                                </option>
+                                                
+                                                <option value="46" data-code="MOU-LOG-001" 
+                                                        data-price="480,000" 
+                                                        data-tax="0,00">
+                                                    فأرة Logitech MX Master 3 (MOU-LOG-001)
+                                                </option>
+                                                
+                                                <option value="52" data-code="SSD-SAM-001" 
+                                                        data-price="620,000" 
+                                                        data-tax="0,00">
+                                                    قرص SSD Samsung 1TB NVMe (SSD-SAM-001)
+                                                </option>
+                                                
+                                                <option value="49" data-code="CAM-LOG-001" 
+                                                        data-price="380,000" 
+                                                        data-tax="16,00">
+                                                    كاميرا ويب Logitech C920 (CAM-LOG-001)
+                                                </option>
+                                                
+                                                <option value="40" data-code="GPU-NV-001" 
+                                                        data-price="2800,000" 
+                                                        data-tax="0,00">
+                                                    كرت شاشة NVIDIA RTX 3060 (GPU-NV-001)
+                                                </option>
+                                                
+                                                <option value="38" data-code="PC-MSI-001" 
+                                                        data-price="6800,000" 
+                                                        data-tax="0,00">
+                                                    كمبيوتر ألعاب MSI Gaming (PC-MSI-001)
+                                                </option>
+                                                
+                                                <option value="36" data-code="PC-HP-001" 
+                                                        data-price="3400,000" 
+                                                        data-tax="0,00">
+                                                    كمبيوتر مكتبي HP EliteDesk (PC-HP-001)
+                                                </option>
+                                                
+                                                <option value="35" data-code="LAP-DELL-001" 
+                                                        data-price="4200,000" 
+                                                        data-tax="0,00">
+                                                    لابتوب Dell Latitude 5520 (LAP-DELL-001)
+                                                </option>
+                                                
+                                                <option value="37" data-code="LAP-LEN-001" 
+                                                        data-price="3500,000" 
+                                                        data-tax="0,00">
+                                                    لابتوب Lenovo ThinkPad E14 (LAP-LEN-001)
+                                                </option>
+                                                
+                                                <option value="42" data-code="MB-ASUS-001" 
+                                                        data-price="1100,000" 
+                                                        data-tax="0,00">
+                                                    لوحة أم ASUS ROG Strix B550 (MB-ASUS-001)
+                                                </option>
+                                                
+                                                <option value="47" data-code="KB-COR-001" 
+                                                        data-price="850,000" 
+                                                        data-tax="0,00">
+                                                    لوحة مفاتيح ميكانيكية Corsair K70 (KB-COR-001)
+                                                </option>
+                                                
+                                                <option value="39" data-code="CPU-INT-001" 
+                                                        data-price="2200,000" 
+                                                        data-tax="0,00">
+                                                    معالج Intel Core i7-12700K (CPU-INT-001)
+                                                </option>
+                                                
+                                                <option value="51" data-code="HDD-SEA-001" 
+                                                        data-price="420,000" 
+                                                        data-tax="0,00">
+                                                    هارد خارجي Seagate 2TB (HDD-SEA-001)
+                                                </option>
+                                                
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">الكمية</label>
+                                            <input type="number" class="form-control" id="new-quantity" 
+                                                   min="0.01" step="0.01" placeholder="0.00">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">سعر الوحدة</label>
+                                            <input type="number" class="form-control" id="new-price" 
+                                                   min="0" step="0.01" placeholder="0.00">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <label class="form-label">نسبة الضريبة</label>
+                                            <input type="number" class="form-control" id="new-tax-rate" 
+                                                   min="0" max="100" step="0.01" placeholder="0.00">
+                                        </div>
+                                        <div class="col-md-2 d-flex align-items-end">
+                                            <button type="button" class="btn btn-success me-2" id="save-new-item-btn">
+                                                <i class="fas fa-save me-1"></i>
+                                                حفظ
+                                            </button>
+                                            <button type="button" class="btn btn-secondary" id="cancel-add-item-btn">
+                                                <i class="fas fa-times me-1"></i>
+                                                إلغاء
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="totals-section">
+                            <div class="row">
+                                <div class="col-md-6"></div>
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>الإجمالي الفرعي:</span>
+                                        <strong id="invoice-subtotal-display">2400.000 د.أ</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>مبلغ الضريبة:</span>
+                                        <strong id="invoice-tax-display">360.000 د.أ</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2 align-items-center">
+                                        <div>
+                                            <label class="form-check-label me-2">شامل ضريبة</label>
+                                            <input type="checkbox" id="id_inclusive_tax_edit" name="inclusive_tax" value="1" checked
+                                                   >
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>مبلغ الخصم:</span>
+                                        <strong id="invoice-discount-display">0.000 د.أ</strong>
+                                    </div>
+                                    <hr>
+                                    <div class="d-flex justify-content-between">
+                                        <span class="h5">الإجمالي الإجمالي:</span>
+                                        <strong class="h5 text-primary" id="invoice-total-display">2760.000 د.أ</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-end mt-4">
+                        <a href="/ar/sales/invoices/17/" class="btn btn-secondary me-2">
+                            <i class="fas fa-times me-1"></i>
+                            إلغاء
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>
+                            حفظ التغييرات
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
                 </div>
             </main>
         </div>
@@ -1880,16 +2446,16 @@
                     return;
                 }
                 
-                // {% trans "Add" %} loading indicator
+                // إضافة loading indicator
                 this.classList.add('loading');
                 mainContent.style.opacity = '0.5';
                 
-                // {% trans "Add" %} spinner
+                // إضافة spinner
                 const loadingDiv = document.createElement('div');
                 loadingDiv.className = 'position-absolute top-50 start-50 translate-middle';
                 loadingDiv.innerHTML = `
                     <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">{% trans "Loading..." %}</span>
+                        <span class="visually-hidden">جاري التحميل...</span>
                     </div>
                 `;
                 mainContent.style.position = 'relative';
@@ -2103,9 +2669,9 @@
             minute: '2-digit'
         });
         
-    const pageTitle = document.querySelector('h1, h2, h3, h4, .card-title, .page-title')?.textContent?.trim() || '{% trans "Report" %}';
+    const pageTitle = document.querySelector('h1, h2, h3, h4, .card-title, .page-title')?.textContent?.trim() || 'التقرير';
         
-    const printDateLabel = '{% trans "Print Date:" %}';
+    const printDateLabel = 'تاريخ الطباعة:';
         printHeader.innerHTML = `
             <div class="print-company-info">
                 Finspilot - النظام المحاسبي
@@ -2160,7 +2726,7 @@
                     header.querySelector('.btn, button, a[href]')) {
                     header.style.display = 'none';
                     
-                    // {% trans "Hide" %} الخ{% trans "No" %}يا المقابلة في كل صف
+                    // إخفاء الخلايا المقابلة في كل صف
                     rows.forEach(row => {
                         const cell = row.children[index];
                         if (cell) {
@@ -2170,12 +2736,12 @@
                 }
             });
             
-            // {% trans "Add" %} فئات CSS للبيانات {% trans "Number" %}ية
+            // إضافة فئات CSS للبيانات رقمية
             rows.forEach(row => {
                 Array.from(row.children).forEach(cell => {
                     const text = cell.textContent.trim();
                     
-                    // التحقق من البيانات {% trans "Number" %}ية
+                    // التحقق من البيانات رقمية
                     if (/^\d+([.,]\d+)*\s*(ريال|ر\.س|SAR|$)?$/.test(text)) {
                         cell.classList.add('numeric-data');
                     }
@@ -2199,14 +2765,14 @@
         tables.forEach(table => {
             table.classList.remove('print-optimized');
             
-            // استعادة ال{% trans "View" %} الأصلي
+            // استعادة العرض الأصلي
             const originalWidth = table.getAttribute('data-original-width');
             if (originalWidth) {
                 table.style.width = originalWidth;
                 table.removeAttribute('data-original-width');
             }
             
-            // إظهار الأعمدة ال{% trans "Hidden" %}ة
+            // إظهار الأعمدة المخفية
             const hiddenElements = table.querySelectorAll('[style*="display: none"]');
             hiddenElements.forEach(element => {
                 element.style.display = '';
@@ -2214,7 +2780,7 @@
         });
     }
     
-    // {% trans "Add" %} معالج لل{% trans "Print" %} بالكيبورد (Ctrl+P)
+    // إضافة معالج للطباعة بالكيبورد (Ctrl+P)
     document.addEventListener('keydown', function(e) {
         if (e.ctrlKey && e.key === 'p') {
             e.preventDefault();
@@ -2224,25 +2790,22 @@
     </script>
     
     <!-- Session Management JavaScript -->
-    {% if user.is_authenticated %}
-    {% load static %}
-    <script src="{% static 'core/js/session-manager.js' %}?v=20251017-final"></script>
-    {% endif %}
+    
+    
+    <script src="/static/core/js/session-manager.js?v=20251017-final"></script>
+    
     
     <!-- Auto Translation JavaScript for Arabic Page -->
-    {% if LANGUAGE_CODE == 'ar' %}
-    {% load static %}
-    <script src="{% static 'core/js/arabic-auto-translate.js' %}"></script>
-    {% endif %}
+    
+    
+    <script src="/static/core/js/arabic-auto-translate.js"></script>
+    
     
     <!-- Auto Translation JavaScript -->
     <script>
-    // Define TRANSLATIONS as global variable
-    var TRANSLATIONS = {};
-    
-    if ('{{ LANGUAGE_CODE }}' === 'en') {
+    if ('ar' === 'en') {
     // Auto Translation for English - Extended Dictionary
-    TRANSLATIONS = {
+    const TRANSLATIONS = {
         // Main Navigation (Arabic to English)
         'لوحة التحكم': '',
         'تسجيل الخروج': '', 
@@ -2404,7 +2967,7 @@
         'البيانات': 'Data',
         'القائمة': 'List',
         'القوائم': 'Lists',
-        'ال{% trans "Table" %}': 'Table',
+        'الجدول': 'Table',
         'الجداول': 'Tables',
         'الصفحة': 'Page',
         'الصفحات': 'Pages',
@@ -2475,7 +3038,7 @@
         // User Interface
         'تسجيل الدخول': 'تسجيل الدخول',
         'Logout': '',
-        '{% trans "Exit" %}': '',
+        'خروج': '',
         'تسجيل': 'Register',
         'User': 'User',
         'المستخدمون': 'Users',
@@ -2483,7 +3046,7 @@
         'كلمة السر': 'Password',
         'Username': 'Username',
         'البروفايل': 'Profile',
-        '{% trans "Profile" %}': 'Profile',
+        'الملف الشخصي': 'Profile',
         'الصلاحيات': 'Permissions',
         'الأدوار': 'Roles',
         'مجموعة': 'Group',
@@ -2670,7 +3233,7 @@
         'الدفاتر': 'Books',
         'سجل': 'Record',
         'السجل': 'Record',
-        'سج{% trans "No" %}ت': 'Records',
+        'سجلات': 'Records',
         'السجلات': 'Records',
         'ميزانية': 'Budget',
         'الميزانية': 'Budget',
@@ -2706,7 +3269,7 @@
         'القيود المحاسبية': 'Journal Entries',
         'Assets & Liabilities': 'Assets & Liabilities',
         'Revenues & Expenses': 'Revenues & Expenses',
-        'إدارة السوبر أدمين': '{% trans "إدارة السوبر أدمين" %}',
+        'إدارة السوبر أدمين': 'إدارة السوبر أدمين',
         'إدارة النظام': 'System Management',
         'متقدم': 'Advanced',
         'المجموعات والصلاحيات': 'Groups & Permissions',
@@ -2744,12 +3307,12 @@
         // Form Labels
         'اسم المستخدم': 'Username',
         'كلمة المرور': 'Password',
-        'البريد ا{% trans "No" %}لكتروني': 'Email',
-        'رقم {% trans "Phone" %}': 'Phone Number',
-        '{% trans "Address" %} الالكامل': 'Full Address',
-        'تاريخ المي{% trans "No" %}د': 'Date of Birth',
+        'البريد الالكتروني': 'Email',
+        'رقم الهاتف': 'Phone Number',
+        'العنوان الالكامل': 'Full Address',
+        'تاريخ الميلاد': 'Date of Birth',
         'الجنسية': 'Nationality',
-        '{% trans "City" %}': 'City',
+        'المدينة': 'City',
         'البلد': 'Country',
         'الرمز البريدي': 'Postal Code',
         'نوع الحساب': 'Account Type',
@@ -2767,30 +3330,30 @@
         'تم الاستلام': 'Received',
         'تم التأكيد': 'Confirmed',
         'تم الإلغاء': 'Cancelled',
-        'في ا{% trans "No" %}نتظار': 'Pending',
+        'في الانتظار': 'Pending',
         'قيد المراجعة': 'Under Review',
-        '{% trans "Rejected" %}': 'Rejected',
+        'مرفوض': 'Rejected',
         'مقبول': 'Accepted',
-        '{% trans "OK" %} عليه': 'Approved',
+        'موافق عليه': 'Approved',
         
         // Error Messages
-        '{% trans "Error" %} في النظام': 'System Error',
-        '{% trans "Error" %} في قاعدة البيانات': 'Database Error',
-        '{% trans "Error" %} في ا{% trans "No" %}تصال': 'Connection Error',
+        'خطأ في النظام': 'System Error',
+        'خطأ في قاعدة البيانات': 'Database Error',
+        'خطأ في الاتصال': 'Connection Error',
         'بيانات غير صحيحة': 'Invalid Data',
         'حقل مطلوب': 'Required Field',
         'تم تجاوز الحد المسموح': 'Limit Exceeded',
         'غير مصرح': 'Unauthorized',
         'منتهي الصلاحية': 'Expired',
         'غير موجود': 'Not Found',
-        'غير {% trans "Available" %}': 'Not Available',
+        'غير متاح': 'Not Available',
         
         // Financial Terms
         'ريال سعودي': 'Saudi Riyal',
         'ريال': 'Riyal',
         'ر.س': 'SAR',
         'جنيه مصري': 'Egyptian Pound',
-        'دو{% trans "No" %}ر أمريكي': 'US Dollar',
+        'دولار أمريكي': 'US Dollar',
         'يورو': 'Euro',
         'دينار كويتي': 'Kuwaiti Dinar',
         'درهم إماراتي': 'UAE Dirham',
@@ -2813,7 +3376,7 @@
         'استمارة': 'Form',
         'الاستمارة': 'Form',
         'استمارات': 'Forms',
-        'ا{% trans "No" %}ستمارات': 'Forms',
+        'الاستمارات': 'Forms',
         'نموذج': 'Form',
         'النموذج': 'Form',
         'نماذج': 'Forms',
@@ -2833,9 +3396,9 @@
         'شبكات': 'Networks',
         'الشبكات': 'Networks',
         'اتصال': 'Connection',
-        'ا{% trans "No" %}تصال': 'Connection',
-        'اتصا{% trans "No" %}ت': 'Connections',
-        'ا{% trans "No" %}تصا{% trans "No" %}ت': 'Connections',
+        'الاتصال': 'Connection',
+        'اتصالات': 'Connections',
+        'الاتصالات': 'Connections',
         
         // Action Words
         'تشغيل': 'Run',
@@ -2845,15 +3408,15 @@
         'بدء': 'Start',
         'البدء': 'Start',
         'انتهاء': 'End',
-        'ا{% trans "No" %}نتهاء': 'End',
+        'الانتهاء': 'End',
         'استكمال': 'Complete',
-        'ا{% trans "No" %}ستكمال': 'Complete',
+        'الاستكمال': 'Complete',
         'متابعة': 'Continue',
         'المتابعة': 'Continue',
         'توقف': 'Pause',
         'التوقف': 'Pause',
         'استئناف': 'Resume',
-        'ا{% trans "No" %}ستئناف': 'Resume',
+        'الاستئناف': 'Resume',
         
         // UI Elements
         'شاشة': 'Screen',
@@ -2864,10 +3427,10 @@
         'الرمز': 'Icon',
         'رموز': 'Icons',
         'الرموز': 'Icons',
-        'ع{% trans "No" %}مة': 'Mark',
-        'الع{% trans "No" %}مة': 'Mark',
-        'ع{% trans "No" %}مات': 'Marks',
-        'الع{% trans "No" %}مات': 'Marks',
+        'علامة': 'Mark',
+        'العلامة': 'Mark',
+        'علامات': 'Marks',
+        'العلامات': 'Marks',
         'إشارة': 'Sign',
         'الإشارة': 'Sign',
         'إشارات': 'Signs',
@@ -2883,9 +3446,9 @@
         'نصوص': 'Texts',
         'النصوص': 'Texts',
         'كلمة': 'Word',
-        '{% trans "All" %}مة': 'Word',
+        'الكلمة': 'Word',
         'كلمات': 'Words',
-        '{% trans "All" %}مات': 'Words',
+        'الكلمات': 'Words',
         'جملة': 'Sentence',
         'الجملة': 'Sentence',
         'جمل': 'Sentences',
@@ -2916,10 +3479,10 @@
         'الفرق': 'Teams',
         
         // More Financial Terms
-        '{% trans "Payment" %}ة': 'Payment',
-        'ال{% trans "Payment" %}ة': 'Payment',
-        '{% trans "Payment" %}ات': 'Payments',
-        'ال{% trans "Payment" %}ات': 'Payments',
+        'دفعةة': 'Payment',
+        'الدفعةة': 'Payment',
+        'دفعةات': 'Payments',
+        'الدفعةات': 'Payments',
         'قسط': 'Installment',
         'القسط': 'Installment',
         'أقساط': 'Installments',
@@ -2930,8 +3493,8 @@
         'الفوائد': 'Interests',
         'عمولة': 'Commission',
         'العمولة': 'Commission',
-        'عمو{% trans "No" %}ت': 'Commissions',
-        'العمو{% trans "No" %}ت': 'Commissions',
+        'عمولات': 'Commissions',
+        'العمولات': 'Commissions',
         'رسوم': 'Fees',
         'الرسوم': 'Fees',
         'رسم': 'Fee',
@@ -2940,8 +3503,8 @@
         // Transaction Terms
         'معاملة': 'Transaction',
         'المعاملة': 'Transaction',
-        'معام{% trans "No" %}ت': 'Transactions',
-        'المعام{% trans "No" %}ت': 'Transactions',
+        'معاملات': 'Transactions',
+        'المعاملات': 'Transactions',
         'عملية': 'Operation',
         'العملية': 'Operation',
         'عمليات': 'Operations',
@@ -2957,7 +3520,7 @@
         
         // Time and Date Terms
         'يوم': 'Day',
-        '{% trans "Today" %}': 'Day',
+        'اليوم': 'Day',
         'أيام': 'Days',
         'الأيام': 'Days',
         'شهر': 'Month',
@@ -2977,7 +3540,7 @@
         'دقائق': 'Minutes',
         'الدقائق': 'Minutes',
         'ثانية': 'Second',
-        '{% trans "Second" %}ة': 'Second',
+        'ثانيةة': 'Second',
         'ثوان': 'Seconds',
         'الثوان': 'Seconds',
         
@@ -3006,7 +3569,7 @@
         'غرب': 'West',
         
         // More Common Verbs
-        'ي{% trans "Open" %}': 'Opens',
+        'يفتح': 'Opens',
         'يغلق': 'Closes',
         'يظهر': 'Shows',
         'يخفي': 'Hides',
@@ -3016,8 +3579,8 @@
         'يكتب': 'Writes',
         'يطبع': 'Prints',
         'يحمل': 'Loads',
-        'ي{% trans "Save" %}': 'Saves',
-        'ي{% trans "Delete" %}': 'Deletes',
+        'يحفظ': 'Saves',
+        'يحذف': 'Deletes',
         'يعدل': 'Edits',
         'ينشئ': 'Creates',
         'يضيف': 'Adds',
@@ -3146,6 +3709,11 @@
             "Manage employees, attendance, payroll, and HR operations": "إدارة الموظفين والحضور وكشوف الرواتب وعمليات الموارد البشرية",
             "View All Leave Requests": "عرض جميع طلبات الإجازة",
         };
+    }
+    
+    // If TRANSLATIONS is not defined (for Arabic), define empty object
+    if (typeof TRANSLATIONS === 'undefined') {
+        var TRANSLATIONS = {};
     }
     
     // Enhanced Ultra-Comprehensive Translation System
@@ -3814,8 +4382,8 @@
     </script>
     
     <!-- Responsive JavaScript -->
-    <script src="{% static 'core/js/responsive.js' %}"></script>
-    <script src="{% static 'core/js/table-responsive.js' %}"></script>
+    <script src="/static/core/js/responsive.js"></script>
+    <script src="/static/core/js/table-responsive.js"></script>
     
     <!-- Language Switching Enhancement -->
     <script>
@@ -3885,6 +4453,302 @@
     });
     </script>
     
-    {% block extra_js %}{% endblock %}
+    
+<script>
+// UPDATED: 2025-10-18 - Fixed TRANSLATIONS and auto-save
+$(document).ready(function() {
+    console.log('✅ صفحة تعديل الفاتورة تم تحميلها - v2.1');
+    
+    // CSRF token setup for AJAX
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    // Add item button click
+    $('#add-item-btn').click(function() {
+        $('#add-item-form').slideDown();
+        $('#new-product-select').focus();
+    });
+
+    // Cancel add item
+    $('#cancel-add-item-btn').click(function() {
+        $('#add-item-form').slideUp();
+        $('#add-item-form input, #add-item-form select').val('');
+    });
+
+    // Product selection change - استخدام POS API (بنفس طريقة POS وصفحة الإضافة)
+    $('#new-product-select').change(function() {
+        const productId = $(this).val();
+        
+        if (!productId) {
+            $('#new-price').val('');
+            $('#new-tax-rate').val('');
+            return;
+        }
+        
+        // عرض رسالة تحميل
+        $('#new-price').val('...').prop('disabled', true);
+        $('#new-tax-rate').val('...').prop('disabled', true);
+        
+        // استدعاء POS API للحصول على السعر الصحيح (بدون ضريبة)
+        $.ajax({
+            url: `/sales/pos/product/${productId}/`,
+            type: 'GET',
+            success: function(data) {
+                $('#new-price').prop('disabled', false);
+                $('#new-tax-rate').prop('disabled', false);
+                
+                if (data && data.success && data.product) {
+                    // استخدام السعر من API (بدون ضريبة)
+                    $('#new-price').val(parseFloat(data.product.price || 0).toFixed(3));
+                    $('#new-tax-rate').val(parseFloat(data.product.tax_rate || 0).toFixed(2));
+                    console.info('✅ السعر من POS API:', data.product.price);
+                } else {
+                    // في حالة فشل API، استخدام القيم من الـ template
+                    const selectedOption = $('#new-product-select').find('option:selected');
+                    const fallbackPrice = parseFloat(selectedOption.data('price')) || 0;
+                    const fallbackTax = parseFloat(selectedOption.data('tax')) || 0;
+                    const calculatedPrice = fallbackTax > 0 ? fallbackPrice / (1 + fallbackTax / 100) : fallbackPrice;
+                    
+                    $('#new-price').val(calculatedPrice.toFixed(3));
+                    $('#new-tax-rate').val(fallbackTax.toFixed(2));
+                    console.warn('⚠️ استخدام القيم الاحتياطية');
+                }
+            },
+            error: function(xhr, status, error) {
+                $('#new-price').prop('disabled', false);
+                $('#new-tax-rate').prop('disabled', false);
+                
+                // في حالة خطأ، استخدام القيم من الـ template
+                const selectedOption = $('#new-product-select').find('option:selected');
+                const fallbackPrice = parseFloat(selectedOption.data('price')) || 0;
+                const fallbackTax = parseFloat(selectedOption.data('tax')) || 0;
+                const calculatedPrice = fallbackTax > 0 ? fallbackPrice / (1 + fallbackTax / 100) : fallbackPrice;
+                
+                $('#new-price').val(calculatedPrice.toFixed(3));
+                $('#new-tax-rate').val(fallbackTax.toFixed(2));
+                console.error('❌ خطأ في استدعاء POS API:', error);
+            }
+        });
+    });
+
+    // Save new item
+    $('#save-new-item-btn').click(function() {
+        const productId = $('#new-product-select').val();
+        const quantity = parseFloat($('#new-quantity').val());
+        const price = parseFloat($('#new-price').val());
+        const taxRate = parseFloat($('#new-tax-rate').val());
+
+        if (!productId || !quantity || !price || taxRate === null) {
+            alert('يرجى ملء جميع الحقول');
+            return;
+        }
+
+        $.ajax({
+            url: `${apiBaseUrl}/items/add/`,
+            type: 'POST',
+            data: {
+                csrfmiddlewaretoken: csrftoken,
+                product_id: productId,
+                quantity: quantity,
+                unit_price: price,
+                tax_rate: taxRate
+            },
+            success: function(response) {
+                if (response.success) {
+                    location.reload(); // Reload to show updated items
+                } else {
+                    alert('خطأ: ' + response.message);
+                }
+            },
+            error: function() {
+                alert('حدث خطأ أثناء إضافة المنتج');
+            }
+        });
+    });
+
+    // Format currency for display
+    function formatCurrency(value) {
+        if (typeof value === 'string') {
+            value = parseFloat(value);
+        }
+        // Return with 3 decimal places
+        return value.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    // Parse number from string
+    function parseNumber(str) {
+        if (!str) return 0;
+        if (typeof str === 'number') return str;
+        // Remove any non-numeric characters except decimal point
+        return parseFloat(str.toString().replace(/[^\d.-]/g, '')) || 0;
+    }
+
+    // Build the correct base URL for API calls
+    const currentPath = window.location.pathname;
+    // Extract the language and invoice ID
+    const pathMatch = currentPath.match(/^\/([a-z]{2})\/sales\/invoices\/edit\/(\d+)\/$/);
+    const language = pathMatch ? pathMatch[1] : 'ar';
+    const invoiceId = '17';
+    const apiBaseUrl = `/${language}/sales/invoices/${invoiceId}`;
+
+    // Auto-save when pressing Enter in quantity or price inputs
+    $('.quantity-input, .price-input').on('keypress', function(e) {
+        if (e.which === 13) { // Enter key
+            const row = $(this).closest('tr');
+            const itemId = $(this).data('item-id');
+            const btn = row.find('.edit-item-btn[data-item-id="' + itemId + '"]');
+            btn.click();
+        }
+    });
+
+    // Edit item buttons
+    $('.edit-item-btn').click(function() {
+        const itemId = $(this).data('item-id');
+        const row = $(this).closest('tr');
+        const quantity = row.find('.quantity-input').val();
+        const price = row.find('.price-input').val();
+        
+        console.log(`🔍 تحديث العنصر ${itemId}: الكمية=${quantity}, السعر=${price}`);
+        
+        // Validate input
+        if (!quantity || !price) {
+            alert('يرجى إدخال الكمية وسعر الوحدة');
+            return;
+        }
+        
+        const qtyNum = parseFloat(quantity);
+        const priceNum = parseFloat(price);
+        
+        if (qtyNum <= 0 || priceNum < 0) {
+            alert('الكمية يجب أن تكون أكبر من صفر، والسعر يجب أن يكون ≥ صفر');
+            return;
+        }
+
+        $(this).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+
+        $.ajax({
+            url: `${apiBaseUrl}/items/${itemId}/update/`,
+            type: 'POST',
+            data: {
+                csrfmiddlewaretoken: csrftoken,
+                quantity: quantity,
+                unit_price: price
+            },
+            success: function(response) {
+                console.log('✅ استجابة الخادم:', response);
+                
+                if (response.success) {
+                    // Update the item display values
+                    const taxAmount = parseNumber(response.item.tax_amount);
+                    const totalAmount = parseNumber(response.item.total_amount);
+                    
+                    row.find('.tax-amount').text(formatCurrency(taxAmount));
+                    row.find('.total-amount strong').text(formatCurrency(totalAmount));
+                    
+                    console.log(`✅ تم تحديث صفوف الجدول - ضريبة: ${taxAmount}, إجمالي: ${totalAmount}`);
+                    
+                    // Update invoice totals if provided
+                    if (response.invoice) {
+                        const invoiceSubtotal = parseNumber(response.invoice.subtotal);
+                        const invoiceTaxAmount = parseNumber(response.invoice.tax_amount);
+                        const invoiceTotalAmount = parseNumber(response.invoice.total_amount);
+                        const invoiceDiscountAmount = parseNumber(response.invoice.discount_amount);
+                        
+                        console.log(`📊 مجاميع الفاتورة الجديدة:`, response.invoice);
+                        
+                        // Update totals using IDs directly
+                        $('#invoice-subtotal-display').text(formatCurrency(invoiceSubtotal));
+                        $('#invoice-tax-display').text(formatCurrency(invoiceTaxAmount));
+                        $('#invoice-discount-display').text(formatCurrency(invoiceDiscountAmount));
+                        $('#invoice-total-display').text(formatCurrency(invoiceTotalAmount));
+                        
+                        console.log(`✅ تم تحديث المجاميع:`);
+                        console.log(`  المجموع الفرعي: ${invoiceSubtotal}`);
+                        console.log(`  مبلغ الضريبة: ${invoiceTaxAmount}`);
+                        console.log(`  مبلغ الخصم: ${invoiceDiscountAmount}`);
+                        console.log(`  الإجمالي: ${invoiceTotalAmount}`);
+                    }
+                    
+                    // Reset button
+                    $('.edit-item-btn[data-item-id="' + itemId + '"]').prop('disabled', false).html('<i class="fas fa-save"></i>');
+                    
+                    // Show success message
+                    showMessage('✅ ' + response.message, 'success');
+                    console.log('✅ تم تحديث العنصر بنجاح:', response.item);
+                } else {
+                    alert('❌ خطأ: ' + response.message);
+                    $('.edit-item-btn[data-item-id="' + itemId + '"]').prop('disabled', false).html('<i class="fas fa-save"></i>');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('❌ خطأ AJAX:', error, xhr);
+                console.log('Status:', status);
+                console.log('Response:', xhr.responseText);
+                alert('❌ حدث خطأ أثناء تحديث العنصر. تحقق من الكمية والسعر.');
+                $('.edit-item-btn[data-item-id="' + itemId + '"]').prop('disabled', false).html('<i class="fas fa-save"></i>');
+            }
+        });
+    });
+
+    // Delete item buttons
+    $('.delete-item-btn').click(function() {
+        if (!confirm('هل أنت متأكد من حذف هذا العنصر؟')) {
+            return;
+        }
+
+        const itemId = $(this).data('item-id');
+
+        $.ajax({
+            url: `${apiBaseUrl}/items/${itemId}/delete/`,
+            type: 'POST',
+            data: {
+                csrfmiddlewaretoken: csrftoken
+            },
+            success: function(response) {
+                if (response.success) {
+                    location.reload(); // Reload to show updated items
+                } else {
+                    alert('خطأ: ' + response.message);
+                }
+            },
+            error: function() {
+                alert('حدث خطأ أثناء حذف العنصر');
+            }
+        });
+    });
+
+    // Function to show messages
+    function showMessage(message, type) {
+        const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+        const alertHtml = `
+            <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+        
+        $('.container-fluid').prepend(alertHtml);
+        
+        // Auto hide after 3 seconds
+        setTimeout(function() {
+            $('.alert').fadeOut();
+        }, 3000);
+    }
+});
+</script>
+
 </body>
 </html>

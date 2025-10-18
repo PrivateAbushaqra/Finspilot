@@ -351,6 +351,115 @@
     </div>
 </div>
 
+<!-- حركة المادة -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    حركة المادة
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if product_movements %}
+                <div class="table-responsive">
+                    <table id="productMovementsTable" class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th onclick="sortTable(0)" style="cursor: pointer;">
+                                    {% trans "Type" %} <i class="fas fa-sort sort-icon" data-column="0"></i>
+                                </th>
+                                <th onclick="sortTable(1)" style="cursor: pointer;">
+                                    {% trans "Date" %} <i class="fas fa-sort sort-icon" data-column="1"></i>
+                                </th>
+                                <th onclick="sortTable(2)" style="cursor: pointer;">
+                                    {% trans "Reference" %} <i class="fas fa-sort sort-icon" data-column="2"></i>
+                                </th>
+                                <th onclick="sortTable(3)" style="cursor: pointer;">
+                                    {% trans "Quantity" %} <i class="fas fa-sort sort-icon" data-column="3"></i>
+                                </th>
+                                <th onclick="sortTable(4)" style="cursor: pointer;">
+                                    {% trans "Unit Price" %} <i class="fas fa-sort sort-icon" data-column="4"></i>
+                                </th>
+                                <th onclick="sortTable(5)" style="cursor: pointer;">
+                                    {% trans "Total" %} <i class="fas fa-sort sort-icon" data-column="5"></i>
+                                </th>
+                                <th onclick="sortTable(6)" style="cursor: pointer;">
+                                    {% trans "Available Quantity" %} <i class="fas fa-sort sort-icon" data-column="6"></i>
+                                </th>
+                                <th onclick="sortTable(7)" style="cursor: pointer;">
+                                    {% trans "Description" %} <i class="fas fa-sort sort-icon" data-column="7"></i>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for movement in product_movements %}
+                            <tr>
+                                <td>
+                                    {% if movement.type == 'purchase_invoice' %}
+                                        <span class="badge bg-success">فاتورة شراء</span>
+                                    {% elif movement.type == 'sales_invoice' %}
+                                        <span class="badge bg-danger">فاتورة مبيعات</span>
+                                    {% elif movement.type == 'inventory_in' %}
+                                        <span class="badge bg-primary">إدخال مخزون</span>
+                                    {% elif movement.type == 'inventory_out' %}
+                                        <span class="badge bg-warning">إخراج مخزون</span>
+                                    {% elif movement.type == 'inventory_transfer' %}
+                                        <span class="badge bg-info">تحويل مخزون</span>
+                                    {% elif movement.type == 'inventory_adjustment' %}
+                                        <span class="badge bg-secondary">تسوية مخزون</span>
+                                    {% elif movement.type == 'purchase_return' %}
+                                        <span class="badge bg-dark">مردود شراء</span>
+                                    {% elif movement.type == 'sales_return' %}
+                                        <span class="badge bg-light text-dark">مردود مبيعات</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ movement.date|date:"Y-m-d" }}</td>
+                                <td>
+                                    {% if movement.url %}
+                                        <a href="{{ movement.url }}" target="_blank" class="text-primary">
+                                            {{ movement.reference }}
+                                        </a>
+                                    {% else %}
+                                        {{ movement.reference }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ movement.quantity|floatformat:0 }}</td>
+                                <td>
+                                    {% if movement.unit_price %}
+                                        {{ movement.unit_price|floatformat:3 }} {% trans "JOD" %}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if movement.total %}
+                                        {{ movement.total|floatformat:2 }} {% trans "JOD" %}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ movement.available_quantity|floatformat:0 }}
+                                </td>
+                                <td>{{ movement.description }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted">
+                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                    <p>لا توجد حركات لهذا المنتج</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1">
     <div class="modal-dialog">
@@ -397,6 +506,74 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 {% endblock %}
 
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle delete modal
+    const deleteButtons = document.querySelectorAll('.delete-product');
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const productName = this.getAttribute('data-product-name');
+            document.getElementById('deleteProductName').textContent = productName;
+        });
+    });
+});
+
+// Function to sort table
+function sortTable(columnIndex) {
+    const table = document.getElementById('productMovementsTable');
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    
+    // Get current sort direction
+    const sortIcon = table.querySelector(`.sort-icon[data-column="${columnIndex}"]`);
+    let sortDirection = sortIcon.classList.contains('fa-sort-up') ? 'desc' : 'asc';
+    
+    // Reset all sort icons
+    table.querySelectorAll('.sort-icon').forEach(icon => {
+        icon.className = 'fas fa-sort sort-icon';
+        icon.setAttribute('data-column', icon.getAttribute('data-column'));
+    });
+    
+    // Set new sort icon
+    if (sortDirection === 'asc') {
+        sortIcon.classList.add('fa-sort-up');
+    } else {
+        sortIcon.classList.add('fa-sort-down');
+    }
+    
+    // Sort rows
+    rows.sort((a, b) => {
+        const aValue = a.cells[columnIndex].textContent.trim();
+        const bValue = b.cells[columnIndex].textContent.trim();
+        
+        let comparison = 0;
+        
+        // Handle different data types
+        if (columnIndex === 1) { // Date column
+            const aDate = new Date(aValue);
+            const bDate = new Date(bValue);
+            comparison = aDate - bDate;
+        } else if (columnIndex === 3 || columnIndex === 4 || columnIndex === 5 || columnIndex === 6) { // Numeric columns
+            const aNum = parseFloat(aValue.replace(/[^\d.-]/g, '')) || 0;
+            const bNum = parseFloat(bValue.replace(/[^\d.-]/g, '')) || 0;
+            comparison = aNum - bNum;
+        } else { // Text columns
+            comparison = aValue.localeCompare(bValue, 'ar');
+        }
+        
+        return sortDirection === 'asc' ? comparison : -comparison;
+    });
+    
+    // Re-append sorted rows
+    rows.forEach(row => tbody.appendChild(row));
+    
+    // Toggle sort direction for next click
+    sortIcon.setAttribute('data-direction', sortDirection === 'asc' ? 'desc' : 'asc');
+}
+</script>
+{% endblock %}
+
 {% block extra_css %}
 <style>
     .product-image-large {
@@ -423,6 +600,16 @@ document.addEventListener('DOMContentLoaded', function() {
             border: none !important;
             box-shadow: none !important;
         }
+    }
+    
+    .sort-icon {
+        font-size: 0.8em;
+        margin-left: 5px;
+        opacity: 0.7;
+    }
+    
+    th:hover .sort-icon {
+        opacity: 1;
     }
 </style>
 {% endblock %}

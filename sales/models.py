@@ -65,8 +65,13 @@ class SalesInvoice(models.Model):
         from decimal import Decimal
         
         items = self.items.all()
-        subtotal = sum(item.quantity * item.unit_price for item in items)
-        tax_amount = sum(item.tax_amount for item in items)
+        if items.exists():
+            subtotal = sum(item.quantity * item.unit_price for item in items)
+            tax_amount = sum(item.tax_amount for item in items)
+        else:
+            subtotal = Decimal('0')
+            tax_amount = Decimal('0')
+        
         total_amount = subtotal + tax_amount
         
         self.subtotal = subtotal.quantize(Decimal('0.001'))

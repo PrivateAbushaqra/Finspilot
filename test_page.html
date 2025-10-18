@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html dir="rtl">
+<head>
+    <title>اختبار صفحة التعديل</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+<h2>اختبار تحديث المجاميع</h2>
+
+<div>
+    <h3>المجاميع:</h3>
+    <div id="invoice-subtotal-display">1000.000</div>
+    <div id="invoice-tax-display">150.000</div>
+    <div id="invoice-total-display">1150.000</div>
+</div>
+
+<button onclick="testUpdate()">اختبر التحديث</button>
+
+<script>
+function formatCurrency(value) {
+    if (typeof value === 'string') {
+        value = parseFloat(value);
+    }
+    return value.toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+function testUpdate() {
+    console.log('🔄 بدء الاختبار...');
+    
+    // محاكاة الاستجابة من الخادم
+    const response = {
+        success: true,
+        invoice: {
+            subtotal: '2000.000',
+            tax_amount: '300.000',
+            total_amount: '2300.000'
+        }
+    };
+    
+    console.log('📦 الاستجابة:', response);
+    
+    // تحديث المجاميع
+    $('#invoice-subtotal-display').text(formatCurrency(response.invoice.subtotal));
+    $('#invoice-tax-display').text(formatCurrency(response.invoice.tax_amount));
+    $('#invoice-total-display').text(formatCurrency(response.invoice.total_amount));
+    
+    console.log('✅ تم التحديث');
+}
+</script>
+</body>
+</html>

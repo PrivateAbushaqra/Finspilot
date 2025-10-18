@@ -1176,6 +1176,19 @@ class SalesInvoiceUpdateView(LoginRequiredMixin, UpdateView):
         logger = logging.getLogger(__name__)
         logger.info(f"🔄 بدء معالجة تعديل الفاتورة {form.instance.invoice_number}")
         
+        # Store old values for comparison
+        old_values = {}
+        try:
+            old_invoice = SalesInvoice.objects.get(pk=form.instance.pk)
+            old_values['invoice_number'] = old_invoice.invoice_number
+            old_values['date'] = old_invoice.date
+            old_values['customer_id'] = old_invoice.customer_id
+            old_values['customer_name'] = old_invoice.customer.name if old_invoice.customer else 'نقدي'
+            old_values['payment_type'] = old_invoice.payment_type
+            old_values['notes'] = old_invoice.notes
+        except SalesInvoice.DoesNotExist:
+            pass
+        
         # Handle warehouse selection
         warehouse_id = self.request.POST.get('warehouse')
         if warehouse_id:
@@ -1224,6 +1237,32 @@ class SalesInvoiceUpdateView(LoginRequiredMixin, UpdateView):
 
         response = super().form_valid(form)
         
+        # Log all changes
+        changes = []
+        if 'date' in old_values and old_values['date'] != form.instance.date:
+            changes.append(f"التاريخ من {old_values['date']} إلى {form.instance.date}")
+        if 'customer_id' in old_values and old_values['customer_id'] != form.instance.customer_id:
+            new_customer_name = form.instance.customer.name if form.instance.customer else 'نقدي'
+            changes.append(f"العميل من {old_values['customer_name']} إلى {new_customer_name}")
+        if 'payment_type' in old_values and old_values['payment_type'] != form.instance.payment_type:
+            changes.append(f"نوع الدفع من {old_values['payment_type']} إلى {form.instance.payment_type}")
+        if 'notes' in old_values and old_values['notes'] != form.instance.notes:
+            changes.append(f"تحديث الملاحظات")
+        
+        # Log main invoice changes
+        if changes:
+            try:
+                from core.signals import log_user_activity
+                changes_text = '، '.join(changes)
+                log_user_activity(
+                    self.request,
+                    'update',
+                    self.object,
+                    f'تحديث فاتورة المبيعات {self.object.invoice_number}: {changes_text}'
+                )
+            except Exception as e:
+                logger.error(f"❌ خطأ في تسجيل التحديثات: {e}")
+        
         # Log creator change after saving
         if old_creator_info and new_creator_info:
             try:
@@ -1232,11 +1271,7 @@ class SalesInvoiceUpdateView(LoginRequiredMixin, UpdateView):
                     self.request,
                     'update',
                     self.object,
-                    _('تغيير منشئ الفاتورة %(number)s من %(old)s إلى %(new)s') % {
-                        'number': self.object.invoice_number,
-                        'old': old_creator_info['name'],
-                        'new': new_creator_info['name']
-                    }
+                    f'تغيير منشئ الفاتورة {self.object.invoice_number} من {old_creator_info["name"]} إلى {new_creator_info["name"]}'
                 )
             except Exception:
                 pass
@@ -1249,15 +1284,11 @@ class SalesInvoiceUpdateView(LoginRequiredMixin, UpdateView):
                     self.request,
                     'update',
                     self.object,
-                    _('تغيير خيار شامل ضريبة من %(old)s إلى %(new)s لفاتورة %(number)s') % {
-                        'old': str(old_inclusive), 'new': str(new_inclusive), 'number': self.object.invoice_number
-                    }
+                    f'تغيير خيار شامل ضريبة من {old_inclusive} إلى {new_inclusive} لفاتورة {self.object.invoice_number}'
                 )
         except Exception:
             pass
 
-        import logging
-        logger = logging.getLogger(__name__)
         logger.info(f"✅ تم حفظ الفاتورة {self.object.invoice_number} بنجاح")
         
         messages.success(self.request, 'تم تحديث فاتورة المبيعات بنجاح')
@@ -3041,10 +3072,19 @@ def invoice_add_item(request, invoice_id):
         if not request.user.has_sales_permission():
             return JsonResponse({'success': False, 'message': 'ليس لديك صلاحية لتعديل فواتير المبيعات'})
         
-        product_id = request.POST.get('product_id')
-        quantity = request.POST.get('quantity')
-        unit_price = request.POST.get('unit_price')
-        tax_rate = request.POST.get('tax_rate')
+        # Handle both JSON and form-data POST requests
+        if request.content_type == 'application/json':
+            import json
+            body = json.loads(request.body)
+            product_id = body.get('product_id')
+            quantity = body.get('quantity')
+            unit_price = body.get('unit_price')
+            tax_rate = body.get('tax_rate')
+        else:
+            product_id = request.POST.get('product_id')
+            quantity = request.POST.get('quantity')
+            unit_price = request.POST.get('unit_price')
+            tax_rate = request.POST.get('tax_rate')
         
         if not all([product_id, quantity, unit_price, tax_rate]):
             return JsonResponse({'success': False, 'message': 'جميع الحقول مطلوبة'})
@@ -3073,6 +3113,24 @@ def invoice_add_item(request, invoice_id):
         
         # Update invoice totals
         invoice.update_totals()
+        
+        # Update journal entries for the invoice
+        try:
+            # Delete existing journal entries for this invoice
+            from journal.models import JournalEntry
+            JournalEntry.objects.filter(
+                reference_type__in=['sales_invoice', 'sales_invoice_cogs'],
+                reference_id=invoice.id
+            ).delete()
+            
+            # Create new journal entries with updated amounts
+            create_sales_invoice_journal_entry(invoice, request.user)
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f'تحذير: لم يتمكن من تحديث القيود المحاسبية: {str(e)}')
+            # لا نوقف العملية إذا فشل إنشاء القيود
+            pass
         
         # Log activity
         try:
@@ -3116,8 +3174,15 @@ def invoice_update_item(request, invoice_id, item_id):
         if not request.user.has_sales_permission():
             return JsonResponse({'success': False, 'message': 'ليس لديك صلاحية لتعديل فواتير المبيعات'})
         
-        quantity = request.POST.get('quantity')
-        unit_price = request.POST.get('unit_price')
+        # Handle both JSON and form-data POST requests
+        if request.content_type == 'application/json':
+            import json
+            body = json.loads(request.body)
+            quantity = body.get('quantity')
+            unit_price = body.get('unit_price')
+        else:
+            quantity = request.POST.get('quantity')
+            unit_price = request.POST.get('unit_price')
         
         if not all([quantity, unit_price]):
             return JsonResponse({'success': False, 'message': 'الكمية وسعر الوحدة مطلوبان'})
@@ -3125,8 +3190,25 @@ def invoice_update_item(request, invoice_id, item_id):
         old_quantity = item.quantity
         old_price = item.unit_price
         
-        quantity = Decimal(quantity)
-        unit_price = Decimal(unit_price)
+        try:
+            quantity = Decimal(quantity)
+            unit_price = Decimal(unit_price)
+        except:
+            return JsonResponse({'success': False, 'message': 'الكمية وسعر الوحدة يجب أن تكون أرقام صحيحة'})
+        
+        # Check if there were changes
+        has_changes = (quantity != old_quantity) or (unit_price != old_price)
+        
+        if not has_changes:
+            # No changes needed
+            return JsonResponse({
+                'success': True, 
+                'message': 'لا توجد تغييرات لحفظها',
+                'item': {
+                    'tax_amount': float(item.tax_amount),
+                    'total_amount': float(item.total_amount)
+                }
+            })
         
         # Calculate new amounts
         line_subtotal = quantity * unit_price
@@ -3143,28 +3225,69 @@ def invoice_update_item(request, invoice_id, item_id):
         # Update invoice totals
         invoice.update_totals()
         
-        # Log activity
+        # Refresh invoice from database to ensure we have latest data
+        invoice.refresh_from_db()
+        
+        # Update or create journal entries for the invoice
+        try:
+            # Delete existing journal entries for this invoice
+            from journal.models import JournalEntry
+            JournalEntry.objects.filter(
+                reference_type__in=['sales_invoice', 'sales_invoice_cogs'],
+                reference_id=invoice.id
+            ).delete()
+            
+            # Create new journal entries with updated amounts
+            create_sales_invoice_journal_entry(invoice, request.user)
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f'تحذير: لم يتمكن من تحديث القيود المحاسبية: {str(e)}')
+            # لا نوقف العملية إذا فشل إنشاء القيود
+            pass
+        
+        # Log activity with detailed changes
         try:
             from core.signals import log_user_activity
+            change_details = []
+            if quantity != old_quantity:
+                change_details.append(f'الكمية من {old_quantity} إلى {quantity}')
+            if unit_price != old_price:
+                change_details.append(f'سعر الوحدة من {old_price} إلى {unit_price}')
+            
+            changes_text = '، '.join(change_details)
             log_user_activity(
                 request,
                 'update',
                 item,
-                f'تحديث عنصر {item.product.name} في فاتورة المبيعات {invoice.invoice_number}: الكمية {old_quantity} → {quantity}, السعر {old_price} → {unit_price}'
+                f'تحديث عنصر {item.product.name} في فاتورة المبيعات {invoice.invoice_number}: {changes_text}'
             )
         except Exception:
             pass
         
         return JsonResponse({
             'success': True, 
-            'message': 'تم تحديث العنصر بنجاح',
+            'message': 'تم تحديث العنصر وحفظ التغييرات بنجاح',
             'item': {
-                'tax_amount': float(item.tax_amount),
-                'total_amount': float(item.total_amount)
+                'id': item.id,
+                'product_name': item.product.name,
+                'quantity': str(item.quantity),
+                'unit_price': str(item.unit_price),
+                'tax_amount': str(item.tax_amount),
+                'total_amount': str(item.total_amount)
+            },
+            'invoice': {
+                'subtotal': str(invoice.subtotal),
+                'tax_amount': str(invoice.tax_amount),
+                'total_amount': str(invoice.total_amount),
+                'discount_amount': str(invoice.discount_amount)
             }
         })
         
     except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f'خطأ في تحديث عنصر الفاتورة: {str(e)}')
         return JsonResponse({'success': False, 'message': f'خطأ: {str(e)}'})
 
 
@@ -3188,6 +3311,24 @@ def invoice_delete_item(request, invoice_id, item_id):
         # Update invoice totals
         invoice.update_totals()
         
+        # Update journal entries for the invoice
+        try:
+            # Delete existing journal entries for this invoice
+            from journal.models import JournalEntry
+            JournalEntry.objects.filter(
+                reference_type__in=['sales_invoice', 'sales_invoice_cogs'],
+                reference_id=invoice.id
+            ).delete()
+            
+            # Create new journal entries with updated amounts
+            create_sales_invoice_journal_entry(invoice, request.user)
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f'تحذير: لم يتمكن من تحديث القيود المحاسبية: {str(e)}')
+            # لا نوقف العملية إذا فشل إنشاء القيود
+            pass
+        
         # Log activity
         try:
             from core.signals import log_user_activity
@@ -3202,7 +3343,13 @@ def invoice_delete_item(request, invoice_id, item_id):
         
         return JsonResponse({
             'success': True, 
-            'message': 'تم حذف العنصر بنجاح'
+            'message': 'تم حذف العنصر بنجاح',
+            'invoice': {
+                'subtotal': str(invoice.subtotal),
+                'tax_amount': str(invoice.tax_amount),
+                'total_amount': str(invoice.total_amount),
+                'discount_amount': str(invoice.discount_amount)
+            }
         })
         
     except Exception as e:

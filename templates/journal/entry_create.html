@@ -590,7 +590,7 @@ function initializeAccountSearchForRow(formPrefix) {
     searchInput.on('focus', function() {
         if ($(this).val().trim() === '') {
             dropdown.empty();
-            accounts.slice(0, 10).forEach(function(account) { // Show first 10 accounts
+            accounts.forEach(function(account) { // Show all accounts
                 var option = $('<button type="button" class="dropdown-item"></button>');
                 option.html('<strong>' + account.name + '</strong>' + (account.code ? ' (' + account.code + ')' : '') + 
                            '<br><small class="text-muted">' + account.account_type + '</small>');
@@ -688,7 +688,7 @@ function initializeAccountSearch() {
             var dropdown = $('#accountDropdown-' + formPrefix);
             
             dropdown.empty();
-            accounts.slice(0, 10).forEach(function(account) { // Show first 10 accounts
+            accounts.forEach(function(account) { // Show all accounts instead of 10
                 var option = $('<button type="button" class="dropdown-item"></button>');
                 option.html('<strong>' + account.name + '</strong>' + (account.code ? ' (' + account.code + ')' : '') + 
                            '<br><small class="text-muted">' + account.account_type + '</small>');
@@ -746,7 +746,7 @@ function initializeAccountSearchForRow(formPrefix) {
     searchInput.on('focus', function() {
         if ($(this).val().trim() === '') {
             dropdown.empty();
-            accounts.slice(0, 10).forEach(function(account) { // Show first 10 accounts
+            accounts.forEach(function(account) { // Show all accounts
                 var option = $('<button type="button" class="dropdown-item"></button>');
                 option.html('<strong>' + account.name + '</strong>' + (account.code ? ' (' + account.code + ')' : '') + 
                            '<br><small class="text-muted">' + account.account_type + '</small>');

@@ -301,6 +301,7 @@
                             <thead class="table-dark">
                                 <tr>
                                     <th>{% trans "Type" %}</th>
+                                    <th>{% trans "Product" %}</th>
                                     <th>{% trans "Document Number" %}</th>
                                     <th>{% trans "Quantity" %}</th>
                                     <th>{% trans "Warehouse" %}</th>
@@ -308,6 +309,7 @@
                                     <th>{% trans "Time" %}</th>
                                     <th>{% trans "Unit Price" %}</th>
                                     <th>{% trans "Total Cost" %}</th>
+                                    <th>{% trans "Available Quantity" %}</th>
                                     <th>{% trans "Notes" %}</th>
                                     {% if request.user.user_type == 'superadmin' or request.user.is_superuser %}
                                     <th>{% trans "Actions" %}</th>
@@ -331,6 +333,9 @@
                                             <i class="fas fa-tools text-warning me-1"></i>
                                             <span class="text-warning fw-bold">{% trans "Adjustment" %}</span>
                                         {% endif %}
+                                    </td>
+                                    <td>
+                                        <strong>{{ movement.product.name }}</strong>
                                     </td>
                                     <td>
                                         {% if movement.document_url %}
@@ -369,6 +374,10 @@
                                         {% else %}
                                             <span class="text-muted">-</span>
                                         {% endif %}
+                                    </td>
+                                    <td>
+                                        <strong>{{ movement.product.current_stock|floatformat:0 }}</strong>
+                                        <small class="text-muted">{% trans "Unit" %}</small>
                                     </td>
                                     <td>
                                         {% if movement.notes %}

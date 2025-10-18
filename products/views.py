@@ -1231,6 +1231,121 @@ class ProductDetailView(LoginRequiredMixin, TemplateView):
             category=product.category
         ).exclude(pk=product.pk)[:5]
         
+        # جمع حركات المنتج من مختلف المصادر
+        movements = []
+        
+        # فواتير المشتريات
+        from purchases.models import PurchaseInvoiceItem
+        purchase_items = PurchaseInvoiceItem.objects.filter(
+            product=product
+        ).select_related('invoice').order_by('-invoice__date')
+        for item in purchase_items:
+            movements.append({
+                'type': 'purchase_invoice',
+                'date': item.invoice.date,
+                'reference': item.invoice.invoice_number,
+                'quantity': item.quantity,
+                'unit_price': item.unit_price,
+                'total': item.total_amount,
+                'url': f'/ar/purchases/invoices/{item.invoice.id}/',
+                'description': f'فاتورة شراء - {item.invoice.supplier.name}',
+                'stock_change': item.quantity  # زيادة في المخزون
+            })
+        
+        # فواتير المبيعات
+        from sales.models import SalesInvoiceItem
+        sales_items = SalesInvoiceItem.objects.filter(
+            product=product
+        ).select_related('invoice').order_by('-invoice__date')
+        for item in sales_items:
+            movements.append({
+                'type': 'sales_invoice',
+                'date': item.invoice.date,
+                'reference': item.invoice.invoice_number,
+                'quantity': item.quantity,
+                'unit_price': item.unit_price,
+                'total': item.total_amount,
+                'url': f'/ar/sales/invoices/{item.invoice.id}/',
+                'description': f'فاتورة مبيعات - {item.invoice.customer.name}',
+                'stock_change': -item.quantity  # نقصان في المخزون
+            })
+        
+        # حركات المخزون (إدخالات وإخراجات) - استثناء الحركات المرتبطة بالفواتير والمردودات والتحويلات
+        from inventory.models import InventoryMovement
+        inventory_movements = InventoryMovement.objects.filter(
+            product=product
+        ).exclude(reference_type__in=['purchase_invoice', 'sales_invoice', 'purchase_return', 'sales_return', 'warehouse_transfer']).select_related('warehouse').order_by('-date')
+        for movement in inventory_movements:
+            stock_change = movement.quantity if movement.movement_type == 'in' else -movement.quantity
+            movements.append({
+                'type': f'inventory_{movement.movement_type}',
+                'date': movement.date,
+                'reference': movement.document_number or movement.movement_number,
+                'quantity': movement.quantity,
+                'unit_price': movement.unit_cost,
+                'total': movement.total_cost,
+                'url': movement.document_url,
+                'description': f'حركة مخزون - {movement.get_movement_type_display()} - {movement.warehouse.name}',
+                'stock_change': stock_change
+            })
+        
+        # مردودات المشتريات
+        from purchases.models import PurchaseReturnItem
+        purchase_returns = PurchaseReturnItem.objects.filter(
+            product=product
+        ).select_related('return_invoice').order_by('-return_invoice__date')
+        for item in purchase_returns:
+            movements.append({
+                'type': 'purchase_return',
+                'date': item.return_invoice.date,
+                'reference': item.return_invoice.return_number,
+                'quantity': item.returned_quantity,
+                'unit_price': item.unit_price,
+                'total': item.total_amount,
+                'url': f'/ar/purchases/returns/{item.return_invoice.id}/',
+                'description': f'مردود شراء - {item.return_invoice.original_invoice.supplier.name}',
+                'stock_change': item.returned_quantity  # زيادة في المخزون
+            })
+        
+        # مردودات المبيعات
+        from sales.models import SalesReturnItem
+        sales_returns = SalesReturnItem.objects.filter(
+            product=product
+        ).select_related('return_invoice').order_by('-return_invoice__date')
+        for item in sales_returns:
+            movements.append({
+                'type': 'sales_return',
+                'date': item.return_invoice.date,
+                'reference': item.return_invoice.return_number,
+                'quantity': item.quantity,
+                'unit_price': item.unit_price,
+                'total': item.total_amount,
+                'url': None,  # لا يوجد صفحة تفاصيل لمردودات المبيعات
+                'description': f'مردود مبيعات - {item.return_invoice.original_invoice.customer.name}',
+                'stock_change': item.quantity  # زيادة في المخزون
+            })
+        
+        # ترتيب الحركات حسب التاريخ (الأحدث أولاً)
+        movements.sort(key=lambda x: x['date'], reverse=True)
+        
+        # حساب الكمية المتوفرة لكل حركة
+        current_stock = product.current_stock
+        for movement in movements:
+            movement['available_quantity'] = current_stock
+            current_stock -= movement['stock_change']  # عكس التغيير للحصول على الكمية قبل الحركة
+        
+        context['product_movements'] = movements[:50]  # عرض آخر 50 حركة
+        
+        # تسجيل النشاط في سجل الأنشطة
+        AuditLog.objects.create(
+            user=self.request.user,
+            action_type='view',
+            content_type='product_detail',
+            object_id=product.id,
+            description=f'عرض تفاصيل المنتج: {product.name} مع حركات المادة',
+            ip_address=self.request.META.get('REMOTE_ADDR')
+        )
+        
         return context
 
 def product_search_api(request):
