@@ -1183,6 +1183,52 @@ msgstr ""
 msgid "تم إنشاء قيد الإهلاك بنجاح"
 msgstr ""
 
+#: .\assets_liabilities\views.py:631
+#: .\assets_liabilities\views.py:288
+msgid "Depreciation entry created successfully"
+msgstr "تم إنشاء قيد الإهلاك بنجاح"
+
+#: .\journal\views.py:834
+msgid "Account not found"
+msgstr "الحساب غير موجود"
+
+#: .\journal\models.py:271
+#: .\journal\views.py:1090
+msgid "Fiscal Year"
+msgstr "السنة المالية"
+
+#: .\journal\views.py:1101
+msgid "I confirm performing the year-end closing"
+msgstr "أؤكد إجراء الإقفال السنوي"
+
+#: .\journal\views.py:1113
+msgid "Closing has already been performed for this year"
+msgstr "تم إجراء الإقفال لهذه السنة مسبقاً"
+
+#: .\journal\views.py:1136
+msgid "Year-End Closing"
+msgstr "إقفال سنوي"
+
+#: .\journal\views.py:1176
+msgid "Year-End Closing Page"
+msgstr "صفحة الإقفال السنوي"
+
+#: .\journal\views.py:1177
+msgid "Viewing Year-End Closing Page"
+msgstr "عرض صفحة الإقفال السنوي"
+
+#: .\journal\views.py:967
+msgid "You do not have permission to delete journal entries."
+msgstr "ليس لديك صلاحية لحذف القيود المحاسبية."
+
+#: .\journal\views.py:995
+msgid "Error deleting journal entry: "
+msgstr "خطأ في حذف القيد المحاسبي: "
+
+#: .\journal\views.py:1096
+msgid "Closing Date"
+msgstr "تاريخ الإقفال"
+
 #: .\assets_liabilities\views.py:641
 msgid "إضافة قيد إهلاك"
 msgstr ""
@@ -3990,6 +4036,7 @@ msgstr "قيم المبالغ المالية غير صحيحة!"
 #: .\customers\views.py:636
 #, fuzzy
 #| msgid "Adjustment of Opening Balance"
+
 msgid "Adjustment of Customer/Supplier Balance"
 msgstr "تعديل الرصيد الافتتاحي"
 
@@ -12058,6 +12105,7 @@ msgid ""
 msgstr "سيتم إعادة تعيين جميع أرصدة الحسابات المتأثرة تلقائياً"
 
 #: .\templates\banks\account_transactions.html:286
+#: .\templates\provisions\provision_confirm_delete.html:31
 msgid "Are you sure you want to delete this transaction?"
 msgstr "هل أنت متأكد من أنك تريد حذف هذه المعاملة؟"
 
@@ -12945,10 +12993,6 @@ msgstr "نوع التحويل"
 msgid "Are you sure you want to delete transfer number"
 msgstr "هل أنت متأكد من أنك تريد حذف رقم التحويل"
 
-#: .\templates\banks\transfer_list.html:1141
-msgid "Warning: This action cannot be undone and will affect balances!"
-msgstr "تحذير: لا يمكن التراجع عن هذا الإجراء وسيؤثر على الأرصدة!"
-
 #: .\templates\banks\transfer_list.html:1169
 #: .\templates\hr\employee_confirm_delete.html:333
 #: .\templates\users\group_delete.html:251
@@ -13057,11 +13101,13 @@ msgid "Add Journal Entry"
 msgstr "إضافة قيد يومية"
 
 #: .\templates\base.html:758 .\templates\base.html:1423
+#: .\journal\views.py:607
 msgid "Edit Journal Entry"
 msgstr "تعديل قيد يومية"
 
 #: .\templates\base.html:763 .\templates\base.html:1428
 #: .\templates\journal\entry_confirm_delete.html:56
+#: .\journal\views.py:631
 msgid "Delete Journal Entry"
 msgstr "حذف قيد يومية"
 
@@ -16698,6 +16744,7 @@ msgid ""
 msgstr ""
 
 #: .\templates\hr\position_detail.html:5
+#: .\templates\provisions\provision_detail.html:5
 msgid "Position Details"
 msgstr "تفاصيل الوظيفة"
 
@@ -19591,35 +19638,17 @@ msgstr "تأكيد الحذف"
 msgid "Back to Provision"
 msgstr "العودة إلى المنتجات"
 
-#: .\templates\provisions\provision_confirm_delete.html:31
-#, fuzzy
-#| msgid "Are you sure you want to delete this transaction?"
-msgid "Are you sure you want to delete this provision?"
-msgstr "هل أنت متأكد من أنك تريد حذف هذه المعاملة؟"
-
 #: .\templates\provisions\provision_confirm_delete.html:44
 #: .\templates\provisions\provision_detail.html:50
 #: .\templates\provisions\provision_form.html:117
 #: .\templates\provisions\provision_list.html:42
 #: .\templates\provisions\provision_report.html:163
-#, fuzzy
-#| msgid "Half Year"
+
+#: .\templates\banks\transfer_list.html:1141
 #: .\journal\models.py:271
-msgid "Fiscal Year"
-msgstr "نصف سنة"
-
 #: .\templates\provisions\provision_confirm_delete.html:51
-#, fuzzy
-#| msgid "Warning: This action cannot be undone and will affect balances!"
-msgid ""
-"This action cannot be undone. All associated entries will also be deleted."
+msgid "Warning: This action cannot be undone and will affect balances!"
 msgstr "تحذير: لا يمكن التراجع عن هذا الإجراء وسيؤثر على الأرصدة!"
-
-#: .\templates\provisions\provision_detail.html:5
-#, fuzzy
-#| msgid "Position Details"
-msgid "Provision Details"
-msgstr "تفاصيل الوظيفة"
 
 #: .\templates\provisions\provision_detail.html:15
 #, fuzzy
@@ -26016,7 +26045,7 @@ msgstr "تحويل صندوق"
 #~ msgid "حدث خطأ أثناء مسح البيانات"
 #~ msgstr "حدث خطأ أثناء مسح البيانات"
 
-#: .\templates\banks\account_edit.html:264
+#: .\templates\banks\account_edit.html:264 .\templates\cashboxes\cashbox_detail.html:259
 msgid "اختر نوع التعديل"
 msgstr "اختر نوع التعديل"
 
@@ -26024,7 +26053,7 @@ msgstr "اختر نوع التعديل"
 msgid "يجب اختيار نوع التعديل عند تغيير الرصيد الحالي لضمان التوافق مع معايير IFRS"
 msgstr "يجب اختيار نوع التعديل عند تغيير الرصيد الحالي لضمان التوافق مع معايير IFRS"
 
-#: .\cashboxes\views.py:421
+#: .\cashboxes\views.py:421 .\templates\cashboxes\cashbox_detail.html:513
 msgid "يجب اختيار نوع التعديل عند تغيير الرصيد لضمان التوافق مع معايير IFRS"
 msgstr "يجب اختيار نوع التعديل عند تغيير الرصيد لضمان التوافق مع معايير IFRS"
 
@@ -26413,10 +26442,6 @@ msgstr "حدث خطأ أثناء إنشاء قيد اليومية"
 msgid "Journal Entry Details"
 msgstr "تفاصيل قيد اليومية"
 
-#: .\journal\views.py:607
-msgid "Edit Journal Entry"
-msgstr "تعديل قيد اليومية"
-
 #: .\journal\views.py:615
 msgid "Journal entry updated successfully"
 msgstr "تم تحديث قيد اليومية بنجاح"
@@ -26424,10 +26449,6 @@ msgstr "تم تحديث قيد اليومية بنجاح"
 #: .\journal\views.py:623
 msgid "An error occurred while updating the journal entry"
 msgstr "حدث خطأ أثناء تحديث قيد اليومية"
-
-#: .\journal\views.py:631
-msgid "Delete Journal Entry"
-msgstr "حذف قيد اليومية"
 
 #: .\journal\views.py:639
 msgid "Are you sure you want to delete this journal entry?"
@@ -26500,4 +26521,8 @@ msgstr "التالي"
 #: .\assets_liabilities\views.py:631
 msgid "Depreciation entry created successfully"
 msgstr "تم إنشاء قيد الإهلاك بنجاح"
+
+#: .\templates\cashboxes\cashbox_detail.html:269
+msgid "Choose the reason for modification - The appropriate accounting account will be used automatically"
+msgstr "اختر سبب التعديل - سيتم استخدام الحساب المحاسبي المناسب تلقائياً"
 

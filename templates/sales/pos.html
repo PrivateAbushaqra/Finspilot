@@ -77,6 +77,27 @@
         z-index: 1;
     }
 
+    .pos-logout-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: var(--white);
+        padding: 0.5rem 1rem;
+        border-radius: var(--border-radius-sm);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .pos-logout-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        border-color: rgba(255, 255, 255, 0.5);
+        color: var(--white);
+        text-decoration: none;
+    }
+
     .pos-title {
         display: flex;
         align-items: center;
@@ -991,6 +1012,10 @@
             <div class="pos-time-info">
                 <div id="current-time"></div>
             </div>
+            <a href="{% url 'auth:logout' %}" class="pos-logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                {% trans "Logout" %}
+            </a>
         </div>
     </div>
 
@@ -1232,6 +1257,10 @@ let originalOutOfStockHtml = '';
 const currencySymbol = '{% if base_currency and base_currency.symbol %}{{ base_currency.symbol }}{% else %}{% get_currency_symbol %}{% endif %}';
 const currencyDecimalPlaces = {% if base_currency %}{{ base_currency.decimal_places }}{% else %}2{% endif %};
 
+// URLs للـ API
+const POS_PRODUCT_URL_BASE = '{% url "sales:pos_get_product" product_id=0 %}'.replace('/0/', '/');
+const POS_PRINT_URL_BASE = '{% url "sales:print_pos_invoice" pk=0 %}'.replace('/0/', '/');
+
 // تحديث {% trans "Time" %}
 function updateTime() {
     const now = new Date();
@@ -1248,7 +1277,7 @@ function addToCart(productId) {
         return;
     }
     
-    fetch(`/sales/pos/product/${productId}/`)
+    fetch(`${POS_PRODUCT_URL_BASE}${productId}/`)
         .then(response => response.json())
         .then(data => {
             if (data.success) {
@@ -1601,7 +1630,7 @@ function checkout() {
 // {% trans "Print" %} ال{% trans "Invoice" %}
 function printInvoice() {
     if (invoiceId) {
-        window.open(`/sales/invoices/pos-print/${invoiceId}/`, '_blank');
+        window.open(`${POS_PRINT_URL_BASE}${invoiceId}/`, '_blank');
     }
 }
 

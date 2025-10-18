@@ -2459,8 +2459,16 @@ def pos_get_product(request, product_id):
     try:
         product = Product.objects.get(id=product_id, is_active=True)
         
-        # حساب المخزون الحالي باستخدام property
-        current_stock = product.current_stock
+        # حساب المخزون الحالي باستخدام property مع معالجة الأخطاء
+        try:
+            current_stock = product.current_stock
+            if current_stock is None:
+                current_stock = 0
+        except Exception as stock_error:
+            # في حالة خطأ في حساب المخزون، استخدم 0
+            import sys
+            print(f"خطأ في حساب المخزون للمنتج {product_id}: {stock_error}", file=sys.stderr)
+            current_stock = 0
         
         # الحصول على نسبة الضريبة (استخدام القيمة المحددة للمنتج فقط)
         tax_rate = float(product.tax_rate or 0)
@@ -2476,7 +2484,7 @@ def pos_get_product(request, product_id):
                 'id': product.id,
                 'name': product.name,
                 'price': displayed_price,
-                'stock': float(current_stock) if current_stock is not None else 0,
+                'stock': float(current_stock),
                 'tax_rate': tax_rate,
                 'barcode': product.barcode or '',
                 'track_inventory': True,  # افتراض أن جميع المنتجات تتبع المخزون
@@ -2485,6 +2493,11 @@ def pos_get_product(request, product_id):
     except Product.DoesNotExist:
         return JsonResponse({'success': False, 'message': 'المنتج غير موجود'})
     except Exception as e:
+        # تسجيل الخطأ بشكل مفصل
+        import sys
+        import traceback
+        print(f"خطأ في pos_get_product للمنتج {product_id}:", file=sys.stderr)
+        print(traceback.format_exc(), file=sys.stderr)
         return JsonResponse({'success': False, 'message': f'حدث خطأ: {str(e)}'})
 
 

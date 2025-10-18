@@ -32,10 +32,8 @@ urlpatterns = [
 
 urlpatterns += i18n_patterns(
     path('', include('core.urls')),
-    # استخدام auth URLs المخصصة للتسجيل والخروج
+    # استخدام auth URLs المخصصة للتسجيل والخروج وإدارة الحسابات المالية
     path('auth/', include('accounts.urls', namespace='auth')),
-    # استخدام accounts URLs لإدارة الحسابات المالية  
-    path('accounts/', include('accounts.urls', namespace='accounts')),
     path('products/', include('products.urls')),
     path('customers/', include('customers.urls')),
     path('purchases/', include('purchases.urls')),

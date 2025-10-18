@@ -351,20 +351,32 @@ class POSUserMiddleware:
             # المسارات المسموحة لمستخدم نقطة البيع
             allowed_paths = [
                 '/ar/sales/pos/',
+                '/en/sales/pos/',
                 '/ar/logout/',
                 '/logout/',
                 '/ar/accounts/logout/',
                 '/accounts/logout/',
+                '/ar/auth/logout/',
+                '/auth/logout/',
+                '/en/auth/logout/',
                 '/static/',
                 '/media/',
             ]
             
             # السماح بـ API calls الخاصة بنقطة البيع
             pos_api_paths = [
+                '/ar/sales/pos/',
+                '/en/sales/pos/',
+                '/ar/sales/invoices/pos-print/',
+                '/en/sales/invoices/pos-print/',
                 '/ar/sales/api/',
+                '/en/sales/api/',
                 '/ar/products/api/',
+                '/en/products/api/',
                 '/ar/customers/api/',
+                '/en/customers/api/',
                 '/ar/inventory/api/',
+                '/en/inventory/api/',
             ]
             
             current_path = request.path

@@ -831,7 +831,7 @@ def get_account_balance(request, account_id):
     except Account.DoesNotExist:
         return JsonResponse({
             'success': False,
-            'message': _('الحساب غير موجود')
+            'message': _('Account not found')
         })
 
 
@@ -964,7 +964,7 @@ def delete_journal_entry(request, pk):
     """حذف قيد محاسبي (للمشرفين العليين فقط)"""
     # التحقق من صلاحيات المستخدم
     if not request.user.has_perm('journal.delete_journalentry'):
-        messages.error(request, _('ليس لديك صلاحية لحذف القيود المحاسبية.'))
+        messages.error(request, _('You do not have permission to delete journal entries.'))
         return redirect('journal:entry_list')
     
     entry = get_object_or_404(JournalEntry, pk=pk)
@@ -990,9 +990,9 @@ def delete_journal_entry(request, pk):
                     pass
                 # حذف القيد
                 entry.delete()
-                messages.success(request, _('تم حذف القيد المحاسبي بنجاح'))
+                messages.success(request, _('The Accounting Entry was Deleted Successfully'))
         except Exception as e:
-            messages.error(request, _('خطأ في حذف القيد المحاسبي: ') + str(e))
+            messages.error(request, _('Error deleting journal entry: ') + str(e))
             # تسجيل خطأ الحذف في سجل الأنشطة
             try:
                 from core.models import AuditLog
@@ -1087,18 +1087,18 @@ def year_end_closing(request):
 
     class YearEndClosingForm(forms.Form):
         year = forms.IntegerField(
-            label=_('السنة المالية'),
+            label=_('Fiscal Year'),
             initial=datetime.now().year,
             min_value=2000,
             max_value=datetime.now().year
         )
         closing_date = forms.DateField(
-            label=_('تاريخ الإقفال'),
+            label=_('Closing Date'),
             initial=date.today(),
             widget=forms.DateInput(attrs={'type': 'date'})
         )
         confirm = forms.BooleanField(
-            label=_('أؤكد إجراء الإقفال السنوي'),
+            label=_('I confirm performing the year-end closing'),
             required=True
         )
 
@@ -1110,7 +1110,7 @@ def year_end_closing(request):
             
             # التحقق من عدم وجود إقفال سابق لنفس السنة
             if YearEndClosing.objects.filter(year=year).exists():
-                messages.error(request, _('تم إجراء الإقفال لهذه السنة مسبقاً'))
+                messages.error(request, _('Closing has already been performed for this year'))
                 return redirect('journal:year_end_closing')
             
             # إنشاء سجل الإقفال
@@ -1133,7 +1133,7 @@ def year_end_closing(request):
                         id = closing.id
                         pk = closing.pk
                         def __str__(self):
-                            return str(_('إقفال سنوي'))
+                            return str(_('Year-End Closing'))
                     log_view_activity(request, 'add', ClosingObj(), 
                                     f"إقفال السنة المالية {year} - صافي الربح: {closing.net_profit}")
                 except Exception:
@@ -1173,8 +1173,8 @@ def year_end_closing(request):
             id = 0
             pk = 0
             def __str__(self):
-                return str(_('صفحة الإقفال السنوي'))
-        log_view_activity(request, 'view', PageObj(), str(_('عرض صفحة الإقفال السنوي')))
+                return str(_('Year-End Closing Page'))
+        log_view_activity(request, 'view', PageObj(), str(_('Viewing Year-End Closing Page')))
     except Exception:
         pass
     

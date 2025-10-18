@@ -102,47 +102,13 @@ def create_cashbox_transaction_for_sales(sender, instance, created, **kwargs):
                     instance.cashbox = cashbox
                     instance.save(update_fields=['cashbox'])
             
-            # إنشاء معاملة إيداع في الصندوق
-            if cashbox:
-                # CashboxTransaction model does not have reference_type/reference_id fields
-                # (we avoid adding DB fields for now). Store invoice identity in the description
-                transaction = CashboxTransaction.objects.create(
-                    cashbox=cashbox,
-                    transaction_type='deposit',
-                    amount=instance.total_amount,
-                    date=instance.date,
-                    description=f'مبيعات نقدية - فاتورة رقم {instance.invoice_number}',
-                    reference_type='sales_invoice',
-                    reference_id=instance.id,
-                    created_by=instance.created_by
-                )
-                
-                # تحديث رصيد الصندوق
-                cashbox.balance += instance.total_amount
-                cashbox.save(update_fields=['balance'])
-                
-                # تسجيل النشاط في سجل الأنشطة
-                try:
-                    AuditLog.objects.create(
-                        user=instance.created_by,
-                        action_type='create',
-                        content_type='CashboxTransaction',
-                        object_id=transaction.id,
-                        description=_('تم إيداع %(amount)s في الصندوق %(cashbox)s من فاتورة مبيعات رقم %(invoice)s - %(transaction)s') % {
-                            'amount': instance.total_amount,
-                            'cashbox': cashbox.name,
-                            'invoice': instance.invoice_number,
-                            'transaction': str(transaction)
-                        },
-                        ip_address='127.0.0.1'
-                    )
-                except Exception as log_error:
-                    print(f"خطأ في تسجيل نشاط معاملة الصندوق: {log_error}")
-                
-                print(f"تم إيداع {instance.total_amount} في {cashbox.name} من فاتورة {instance.invoice_number}")
+            # ❌ إزالة إنشاء حركة الصندوق هنا - سيتم إنشاؤها تلقائياً عند إنشاء سند القبض
+            # هذا يمنع التضاعف في حركات الصندوق
+            
+            print(f"تم ربط فاتورة {instance.invoice_number} بالصندوق {cashbox.name if cashbox else 'غير محدد'}")
                 
     except Exception as e:
-        print(f"خطأ في إنشاء معاملة الصندوق لفاتورة {instance.invoice_number}: {e}")
+        print(f"خطأ في معالجة الصندوق لفاتورة {instance.invoice_number}: {e}")
         # لا نوقف عملية إنشاء الفاتورة في حالة فشل إنشاء معاملة الصندوق
         pass
 
