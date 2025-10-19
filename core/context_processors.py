@@ -1,6 +1,7 @@
 from .models import CompanySettings
 from settings.models import Currency, CompanySettings as SettingsCompanySettings
 from django.utils import translation
+from django.utils import timezone
 
 
 def company_settings(request):
@@ -117,52 +118,73 @@ def active_menu_context(request):
         active_menu = 'dashboard'
     elif path in ['/', '/ar/', '/en/']:
         active_menu = 'dashboard'
-        active_menu = 'audit_log'
     
-    # تسجيل العملية في سجل الأنشطة (فقط للصفحات المهمة)
-    if request.user.is_authenticated and active_menu and hasattr(request, '_navigation_logged') is False:
-        try:
-            from .models import AuditLog
-            # تجنب التسجيل المكرر للصفحة نفسها
-            request._navigation_logged = True
-            
-            # تحديد اسم القسم بالعربية
-            section_names = {
-                'search': 'البحث الشامل',
-                'dashboard': 'لوحة التحكم',
-                'banks': 'الحسابات البنكية',
-                'cashboxes': 'الصناديق النقدية',
-                'receipts': 'إيصالات الاستلام',
-                'payments': 'أذون الصرف',
-                'products': 'الفئات والمنتجات',
-                'customers': 'العملاء والموردون',
-                'purchases': 'المشتريات',
-                'sales': 'المبيعات',
-                'inventory': 'المخزون',
-                'accounts': 'الحسابات',
-                'journal': 'القيود المحاسبية',
-                'reports': 'التقارير',
-                'revenues_expenses': 'الإيرادات والمصروفات',
-                'assets_liabilities': 'الأصول والخصوم',
-                'backup': 'النسخ الاحتياطي',
-                'settings': 'الإعدادات',
-                'users': 'المستخدمون',
-                'hr': 'الموارد البشرية',
-                'tools': 'الأدوات',
-                'audit_log': 'سجل الأنشطة'
-            }
-            
-            section_name = section_names.get(active_menu, active_menu)
-            
-            AuditLog.objects.create(
-                user=request.user,
-                action_type='navigation',
-                content_type='sidebar_navigation',
-                description=f'انتقال إلى قسم: {section_name}'
-            )
-        except Exception:
-            # تجاهل الأخطاء في تسجيل الأنشطة
+    # تسجيل العملية في سجل الأنشطة (فقط للصفحات المهمة وليس AJAX)
+    if (request.user.is_authenticated and 
+        active_menu and 
+        hasattr(request, '_navigation_logged') is False and
+        not request.headers.get('X-Requested-With') == 'XMLHttpRequest' and
+        request.method == 'GET'):
+        
+        # تجنب التسجيل المتكرر باستخدام session
+        last_navigation = request.session.get('last_navigation', {})
+        current_time = timezone.now().timestamp()
+        
+        # إذا كان آخر تسجيل لنفس القسم في أقل من 30 ثانية، تجاهل
+        if (last_navigation.get('menu') == active_menu and 
+            current_time - last_navigation.get('time', 0) < 30):
             pass
+        else:
+            try:
+                from .models import AuditLog
+                
+                # تجنب التسجيل المكرر للصفحة نفسها
+                request._navigation_logged = True
+                
+                # تحديد اسم القسم بالعربية
+                section_names = {
+                    'search': 'البحث الشامل',
+                    'dashboard': 'لوحة التحكم',
+                    'banks': 'الحسابات البنكية',
+                    'cashboxes': 'الصناديق النقدية',
+                    'receipts': 'إيصالات الاستلام',
+                    'payments': 'أذون الصرف',
+                    'products': 'الفئات والمنتجات',
+                    'customers': 'العملاء والموردون',
+                    'purchases': 'المشتريات',
+                    'sales': 'المبيعات',
+                    'inventory': 'المخزون',
+                    'accounts': 'الحسابات',
+                    'journal': 'القيود المحاسبية',
+                    'reports': 'التقارير',
+                    'revenues_expenses': 'الإيرادات والمصروفات',
+                    'assets_liabilities': 'الأصول والخصوم',
+                    'backup': 'النسخ الاحتياطي',
+                    'settings': 'الإعدادات',
+                    'users': 'المستخدمون',
+                    'hr': 'الموارد البشرية',
+                    'tools': 'الأدوات',
+                    'audit_log': 'سجل الأنشطة'
+                }
+                
+                section_name = section_names.get(active_menu, active_menu)
+                
+                AuditLog.objects.create(
+                    user=request.user,
+                    action_type='navigation',
+                    content_type='sidebar_navigation',
+                    description=f'انتقال إلى قسم: {section_name}'
+                )
+                
+                # تحديث session
+                request.session['last_navigation'] = {
+                    'menu': active_menu,
+                    'time': current_time
+                }
+                
+            except Exception:
+                # تجاهل الأخطاء في تسجيل الأنشطة
+                pass
     
     return {
         'active_menu': active_menu,

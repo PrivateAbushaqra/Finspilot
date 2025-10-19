@@ -3,6 +3,21 @@ from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 from decimal import Decimal
 from .models import SalesInvoice, SalesReturn, SalesCreditNote, SalesInvoiceItem, SalesReturnItem, SalesInvoiceItem
+from django.utils import timezone
+
+
+def should_log_activity(user, action_type, content_type, object_id, description_prefix, minutes=1):
+    """التحقق من عدم وجود سجل نشاط مشابه حديث"""
+    from core.models import AuditLog
+    recent_logs = AuditLog.objects.filter(
+        user=user,
+        action_type=action_type,
+        content_type=content_type,
+        object_id=object_id,
+        timestamp__gte=timezone.now() - timezone.timedelta(minutes=minutes)
+    ).filter(description__startswith=description_prefix)
+    
+    return not recent_logs.exists()
 
 
 @receiver(post_save, sender=SalesInvoice)
@@ -67,17 +82,19 @@ def create_cashbox_transaction_for_sales(sender, instance, created, **kwargs):
                         
                         # تسجيل إنشاء الصندوق في سجل الأنشطة
                         try:
-                            AuditLog.objects.create(
-                                user=instance.created_by,
-                                action_type='create',
-                                content_type='Cashbox',
-                                object_id=cashbox.id,
-                                description=_('تم إنشاء صندوق تلقائياً لمستخدم نقطة البيع: %(username)s - %(cashbox)s') % {
-                                    'username': instance.created_by.username,
-                                    'cashbox': str(cashbox)
-                                },
-                                ip_address='127.0.0.1'
-                            )
+                            description = _('تم إنشاء صندوق تلقائياً لمستخدم نقطة البيع: %(username)s - %(cashbox)s') % {
+                                'username': instance.created_by.username,
+                                'cashbox': str(cashbox)
+                            }
+                            if should_log_activity(instance.created_by, 'create', 'Cashbox', cashbox.id, 'تم إنشاء صندوق تلقائياً'):
+                                AuditLog.objects.create(
+                                    user=instance.created_by,
+                                    action_type='create',
+                                    content_type='Cashbox',
+                                    object_id=cashbox.id,
+                                    description=description,
+                                    ip_address='127.0.0.1'
+                                )
                         except Exception as log_error:
                             print(f"خطأ في تسجيل نشاط إنشاء الصندوق: {log_error}")
                 
@@ -192,18 +209,20 @@ def create_payment_receipt_for_cash_sales(sender, instance, created, **kwargs):
             
             # تسجيل النشاط في سجل الأنشطة
             try:
-                AuditLog.objects.create(
-                    user=instance.created_by,
-                    action_type='create',
-                    content_type='PaymentReceipt',
-                    object_id=receipt.id,
-                    description=_('تم إنشاء سند قبض تلقائياً رقم %(receipt)s لفاتورة المبيعات النقدية %(invoice)s - %(receipt_str)s') % {
-                        'receipt': receipt_number,
-                        'invoice': instance.invoice_number,
-                        'receipt_str': str(receipt)
-                    },
-                    ip_address='127.0.0.1'
-                )
+                description = _('تم إنشاء سند قبض تلقائياً رقم %(receipt)s لفاتورة المبيعات النقدية %(invoice)s - %(receipt_str)s') % {
+                    'receipt': receipt_number,
+                    'invoice': instance.invoice_number,
+                    'receipt_str': str(receipt)
+                }
+                if should_log_activity(instance.created_by, 'create', 'PaymentReceipt', receipt.id, 'تم إنشاء سند قبض تلقائياً'):
+                    AuditLog.objects.create(
+                        user=instance.created_by,
+                        action_type='create',
+                        content_type='PaymentReceipt',
+                        object_id=receipt.id,
+                        description=description,
+                        ip_address='127.0.0.1'
+                    )
             except Exception as log_error:
                 print(f"خطأ في تسجيل نشاط إنشاء سند القبض: {log_error}")
             

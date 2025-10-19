@@ -6,6 +6,7 @@ app_name = 'sales'
 urlpatterns = [
     # Sales Invoices
     path('invoices/', views.SalesInvoiceListView.as_view(), name='invoice_list'),
+    path('invoices/export/', views.export_invoices_to_xlsx, name='invoice_export'),
     path('invoices/add/', views.sales_invoice_create, name='invoice_add'),
     path('invoices/<int:pk>/', views.SalesInvoiceDetailView.as_view(), name='invoice_detail'),
     path('invoices/edit/<int:pk>/', views.SalesInvoiceUpdateView.as_view(), name='invoice_edit'),

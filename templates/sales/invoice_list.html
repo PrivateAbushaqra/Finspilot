@@ -4,7 +4,7 @@
 
 
 
-{% block title %}{% trans "Sales Invoices" %} - {{ block.super }}{% endblock %}
+{% block title %}{% trans "Sales Invoices" %}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -172,7 +172,7 @@
         
         /* {% trans "Add" %} رأس الشركة */
         .card-header::before {
-            content: "شركة المثلث للبرمجيات - نظام إدارة المحاسبة والمخازن\A {% trans "Report" %} {% trans "Sales Invoices" %}\A ────────────────────────────────";
+            content: "شركة فنس بايلوت - FinsPilot - نظام إدارة المحاسبة والمخازن\A {% trans "Report" %} {% trans "Sales Invoices" %}\A ────────────────────────────────";
             display: block !important;
             font-size: 12pt !important;
             font-weight: bold !important;
@@ -261,7 +261,7 @@
         
         /* {% trans "Add" %} تذييل لل{% trans "Report" %} */
         .card::after {
-            content: "────────────────────────────────\A تم إنشاء ال{% trans "Report" %} في: " attr(data-print-date) "\A شركة المثلث للبرمجيات";
+            content: "────────────────────────────────\A تم إنشاء ال{% trans "Report" %} في: " attr(data-print-date) "\A شركة فنس بايلوت - FinsPilot - نظام إدارة المحاسبة والمخازن";
             display: block !important;
             text-align: center !important;
             margin-top: 15px !important;
@@ -289,6 +289,10 @@
             <a href="{% url 'sales:invoice_add' %}" class="btn btn-primary">
                 <i class="fas fa-plus me-1"></i>
                 {% trans "New Invoice" %}
+            </a>
+            <a href="{% url 'sales:invoice_export' %}?{{ request.GET.urlencode }}" class="btn btn-success ms-2">
+                <i class="fas fa-file-excel me-1"></i>
+                {% trans "Export to Excel" %}
             </a>
             <button type="button" onclick="printPage()" class="btn btn-outline-secondary ms-2">
                 <i class="fas fa-print me-1"></i>
@@ -517,7 +521,9 @@
                             {% for invoice in invoices %}
                             <tr>
                                 <td>
-                                    <strong>{{ invoice.invoice_number }}</strong>
+                                    <a href="{% url 'sales:invoice_detail' invoice.pk %}" class="text-decoration-none">
+                                        <strong>{{ invoice.invoice_number }}</strong>
+                                    </a>
                                 </td>
                                 <td>{{ invoice.customer.name|default:"{% trans 'Not specified' %}" }}</td>
                                 <td>{{ invoice.date|date:"Y-m-d" }}</td>

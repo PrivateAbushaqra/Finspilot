@@ -19,6 +19,8 @@ from products.models import Product
 from customers.models import CustomerSupplier
 from settings.models import CompanySettings, Currency
 from core.models import DocumentSequence
+import openpyxl
+from core.models import AuditLog
 
 
 def get_product_stock_in_warehouse(product, warehouse):
@@ -330,6 +332,104 @@ class SalesInvoiceListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         context['current_order'] = self.request.GET.get('order_by', '-date')
         
         return context
+
+
+@login_required
+def export_invoices_to_xlsx(request):
+    """تصدير قائمة الفواتير إلى ملف Excel"""
+    from core.utils import get_client_ip
+    
+    # بناء queryset بنفس التصفية المستخدمة في SalesInvoiceListView
+    queryset = SalesInvoice.objects.all()
+    
+    # Search functionality
+    search = request.GET.get('search')
+    if search:
+        queryset = queryset.filter(
+            Q(invoice_number__icontains=search) |
+            Q(customer__name__icontains=search)
+        )
+    
+    # Date filter
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+    if date_from:
+        queryset = queryset.filter(date__gte=date_from)
+    if date_to:
+        queryset = queryset.filter(date__lte=date_to)
+    
+    # Payment type filter
+    payment_type = request.GET.get('payment_type')
+    if payment_type:
+        queryset = queryset.filter(payment_type=payment_type)
+    
+    # Cashbox filter
+    cashbox_id = request.GET.get('cashbox')
+    if cashbox_id:
+        queryset = queryset.filter(cashbox_id=cashbox_id)
+    
+    # Apply ordering
+    order_by = request.GET.get('order_by', '-date')
+    if order_by.startswith('-'):
+        queryset = queryset.order_by(order_by, '-id')
+    else:
+        queryset = queryset.order_by(order_by, 'id')
+    
+    # تحميل البيانات المرتبطة
+    invoices = queryset.select_related('customer', 'created_by', 'cashbox')
+    
+    # إنشاء ملف Excel
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "فواتير المبيعات"
+    
+    # إضافة العناوين
+    headers = [
+        'رقم الفاتورة',
+        'التاريخ',
+        'العميل',
+        'نوع الدفع',
+        'المبلغ الإجمالي',
+        'الحالة',
+        'الصندوق',
+        'أنشأ بواسطة',
+        'تاريخ الإنشاء'
+    ]
+    for col_num, header in enumerate(headers, 1):
+        ws.cell(row=1, column=col_num, value=header)
+    
+    # إضافة البيانات
+    for row_num, invoice in enumerate(invoices, 2):
+        ws.cell(row=row_num, column=1, value=invoice.invoice_number)
+        ws.cell(row=row_num, column=2, value=invoice.date.strftime('%Y-%m-%d') if invoice.date else '')
+        ws.cell(row=row_num, column=3, value=invoice.customer.name if invoice.customer else '')
+        ws.cell(row=row_num, column=4, value=invoice.get_payment_type_display())
+        ws.cell(row=row_num, column=5, value=float(invoice.total_amount))
+        ws.cell(row=row_num, column=6, value=invoice.get_status_display())
+        ws.cell(row=row_num, column=7, value=invoice.cashbox.name if invoice.cashbox else '')
+        ws.cell(row=row_num, column=8, value=invoice.created_by.get_full_name() if invoice.created_by else '')
+        ws.cell(row=row_num, column=9, value=invoice.created_at.strftime('%Y-%m-%d %H:%M') if invoice.created_at else '')
+    
+    # إنشاء الاستجابة
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename="فواتير_المبيعات.xlsx"'
+    
+    # حفظ الملف
+    wb.save(response)
+    
+    # تسجيل في سجل الأنشطة
+    AuditLog.objects.create(
+        user=request.user,
+        action_type='export',
+        model_name='SalesInvoice',
+        object_id=None,  # تصدير قائمة
+        description=f'تصدير قائمة الفواتير إلى Excel ({invoices.count()} فاتورة)',
+        ip_address=get_client_ip(request),
+        user_agent=request.META.get('HTTP_USER_AGENT', ''),
+        changes={}
+    )
+    
+    return response
 
 
 @login_required

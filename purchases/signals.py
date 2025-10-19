@@ -2,6 +2,21 @@ from django.db.models.signals import post_save, pre_save, pre_delete
 from django.dispatch import receiver
 from .models import PurchaseInvoice, PurchaseInvoiceItem, PurchaseReturn, PurchaseReturnItem, PurchaseDebitNote
 from django.db import transaction
+from django.utils import timezone
+
+
+def should_log_activity(user, action_type, content_type, object_id, description_prefix, minutes=1):
+    """التحقق من عدم وجود سجل نشاط مشابه حديث"""
+    from core.models import AuditLog
+    recent_logs = AuditLog.objects.filter(
+        user=user,
+        action_type=action_type,
+        content_type=content_type,
+        object_id=object_id,
+        timestamp__gte=timezone.now() - timezone.timedelta(minutes=minutes)
+    ).filter(description__startswith=description_prefix)
+    
+    return not recent_logs.exists()
 
 
 @receiver(post_save, sender=PurchaseInvoice)
@@ -147,14 +162,16 @@ def update_inventory_on_purchase_invoice(sender, instance, created, **kwargs):
         
         # تسجيل العملية في سجل الأنشطة
         try:
-            AuditLog.objects.create(
-                user=instance.created_by,
-                action_type='create' if created else 'update',
-                content_type='PurchaseInvoice',
-                object_id=instance.id,
-                description=f'{"إنشاء" if created else "تحديث"} فاتورة مشتريات رقم {instance.invoice_number}',
-                ip_address='127.0.0.1'
-            )
+            description = f'{"إنشاء" if created else "تحديث"} فاتورة مشتريات رقم {instance.invoice_number}'
+            if should_log_activity(instance.created_by, 'create' if created else 'update', 'PurchaseInvoice', instance.id, description[:20]):
+                AuditLog.objects.create(
+                    user=instance.created_by,
+                    action_type='create' if created else 'update',
+                    content_type='PurchaseInvoice',
+                    object_id=instance.id,
+                    description=description,
+                    ip_address='127.0.0.1'
+                )
         except Exception as log_error:
             print(f"خطأ في تسجيل نشاط فاتورة المشتريات: {log_error}")
         
@@ -309,14 +326,16 @@ def update_inventory_on_purchase_return(sender, instance, created, **kwargs):
         # تسجيل العملية في سجل الأنشطة
         try:
             from core.models import AuditLog
-            AuditLog.objects.create(
-                user=instance.created_by,
-                action_type='create' if created else 'update',
-                content_type='PurchaseReturn',
-                object_id=instance.id,
-                description=f'{"إنشاء" if created else "تحديث"} مردود مشتريات رقم {instance.return_number}',
-                ip_address='127.0.0.1'
-            )
+            description = f'{"إنشاء" if created else "تحديث"} مردود مشتريات رقم {instance.return_number}'
+            if should_log_activity(instance.created_by, 'create' if created else 'update', 'PurchaseReturn', instance.id, description[:20]):
+                AuditLog.objects.create(
+                    user=instance.created_by,
+                    action_type='create' if created else 'update',
+                    content_type='PurchaseReturn',
+                    object_id=instance.id,
+                    description=description,
+                    ip_address='127.0.0.1'
+                )
         except Exception as log_error:
             print(f"خطأ في تسجيل نشاط مردود المشتريات: {log_error}")
         
