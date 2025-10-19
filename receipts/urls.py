@@ -13,6 +13,7 @@ urlpatterns = [
     
     # تحصيل الشيكات
     path('checks/', views.check_list, name='check_list'),
+    path('checks/export/excel/', views.check_list_export_excel, name='check_list_export_excel'),
     path('checks/<int:receipt_id>/collect/', views.check_collect, name='check_collect'),
     
     # Ajax APIs

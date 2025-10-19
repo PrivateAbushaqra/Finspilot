@@ -9,6 +9,7 @@ from django.db.models import Q, Sum, Count
 from django.contrib.auth import get_user_model
 from datetime import date, datetime
 from decimal import Decimal
+import json
 
 from .models import (
     AssetCategory, Asset, LiabilityCategory, Liability, DepreciationEntry
@@ -184,8 +185,6 @@ def asset_create(request):
         # التحقق من نوع المحتوى
         if request.content_type == 'application/json':
             # معالجة طلب JSON من الـ modal
-            import json
-            from django.http import JsonResponse
             
             try:
                 data = json.loads(request.body)
@@ -643,18 +642,16 @@ def depreciation_create(request, asset_id):
     return render(request, 'assets_liabilities/depreciation_create.html', context)
 
 
-from django.http import JsonResponse
-import json
-
 @login_required
 def category_create_ajax(request):
     """إنشاء فئة أصل جديدة عبر AJAX"""
     if request.method == 'POST':
         try:
-            data = json.loads(request.body)
+            # التحقق من البيانات المرسلة عبر FormData
+            name = request.POST.get('name', '').strip()
+            description = request.POST.get('description', '').strip()
             
             # التحقق من البيانات المطلوبة
-            name = data.get('name', '').strip()
             if not name:
                 return JsonResponse({
                     'success': False,
@@ -671,8 +668,8 @@ def category_create_ajax(request):
             # إنشاء الفئة الجديدة
             category = AssetCategory.objects.create(
                 name=name,
-                description=data.get('description', ''),
-                is_active=data.get('is_active', True),
+                description=description,
+                is_active=request.POST.get('is_active') == 'on',
                 created_by=request.user
             )
             
@@ -688,8 +685,10 @@ def category_create_ajax(request):
             return JsonResponse({
                 'success': True,
                 'message': f'تم إنشاء الفئة "{category.name}" بنجاح',
-                'category_id': category.pk,
-                'category_name': category.name
+                'category': {
+                    'id': category.pk,
+                    'name': category.name
+                }
             })
             
         except Exception as e:
@@ -698,19 +697,17 @@ def category_create_ajax(request):
                 'error': str(e)
             })
     
-    return JsonResponse({
-        'success': False,
-        'error': 'طريقة الطلب غير مدعومة'
-    })
+    # معالجة GET request - عرض صفحة الإنشاء
+    context = {
+        'page_title': _('Add Asset Category'),
+    }
+    return render(request, 'assets_liabilities/category_create_ajax.html', context)
 
 
 @login_required
 def liability_category_create_ajax(request):
     """إنشاء فئة خصم جديدة عبر AJAX"""
     if request.method == 'POST':
-        import json
-        from django.http import JsonResponse
-        
         try:
             # التحقق من البيانات المرسلة عبر FormData
             name = request.POST.get('name', '').strip()
@@ -761,7 +758,10 @@ def liability_category_create_ajax(request):
                 'error': str(e)
             })
     
-    return JsonResponse({
-        'success': False,
-        'error': 'طريقة الطلب غير مدعومة'
-    })
+    # معالجة GET request - عرض صفحة الإنشاء
+    form = LiabilityCategoryForm()
+    context = {
+        'form': form,
+        'page_title': _('Add Liability Category'),
+    }
+    return render(request, 'assets_liabilities/liability_category_create_ajax.html', context)

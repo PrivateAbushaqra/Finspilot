@@ -430,13 +430,23 @@ class JournalService:
         
         # حساب الصندوق أو البنك (دائن)
         if payment.payment_type == 'cash':
-            cash_account = JournalService.get_cash_account()
-            lines_data.append({
-                'account_id': cash_account.id,
-                'debit': 0,
-                'credit': payment.amount,
-                'description': f'دفع نقدي - سند رقم {payment.voucher_number}'
-            })
+            if payment.cashbox:
+                cashbox_account = JournalService.get_cashbox_account(payment.cashbox)
+                lines_data.append({
+                    'account_id': cashbox_account.id,
+                    'debit': 0,
+                    'credit': payment.amount,
+                    'description': f'دفع نقدي من {payment.cashbox.name} - سند رقم {payment.voucher_number}'
+                })
+            else:
+                # في حالة عدم وجود صندوق محدد - استخدام الصندوق العام
+                cash_account = JournalService.get_cash_account()
+                lines_data.append({
+                    'account_id': cash_account.id,
+                    'debit': 0,
+                    'credit': payment.amount,
+                    'description': f'دفع نقدي - سند رقم {payment.voucher_number}'
+                })
         elif payment.payment_type == 'bank_transfer':
             # للتحويل البنكي
             if payment.bank:

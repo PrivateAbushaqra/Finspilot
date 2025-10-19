@@ -113,6 +113,12 @@
                                                 </span>
                                             </td>
                                         </tr>
+                                        {% if receipt.check_cashbox %}
+                                        <tr>
+                                            <th>{% trans "Check Cashbox" %}:</th>
+                                            <td>{{ receipt.check_cashbox.name }}</td>
+                                        </tr>
+                                        {% endif %}
                                         {% endif %}
                                         
                                         <tr>

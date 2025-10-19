@@ -495,7 +495,7 @@ def check_list(request):
     """قائمة الشيكات"""
     checks = PaymentReceipt.objects.filter(
         payment_type='check'
-    ).select_related('customer', 'created_by').order_by('-check_due_date')
+    ).select_related('customer', 'created_by', 'check_cashbox').order_by('-check_due_date')
     
     # فلترة حسب الحالة
     status = request.GET.get('status')
@@ -520,6 +520,111 @@ def check_list(request):
         'page_title': _('الشيكات'),
     }
     return render(request, 'receipts/check_list.html', context)
+
+
+@login_required
+def check_list_export_excel(request):
+    """تصدير قائمة الشيكات إلى Excel"""
+    # محاولة استيراد openpyxl
+    try:
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, PatternFill, Alignment
+    except ImportError:
+        from django.http import HttpResponse
+        return HttpResponse("OpenPyXL غير متوفر", status=500)
+
+    # الحصول على نفس البيانات المعروضة في القائمة
+    checks = PaymentReceipt.objects.filter(
+        payment_type='check'
+    ).select_related('customer', 'created_by', 'check_cashbox').order_by('-check_due_date')
+
+    # فلترة حسب الحالة
+    status = request.GET.get('status')
+    if status:
+        checks = checks.filter(check_status=status)
+
+    # فلترة حسب تاريخ الاستحقاق
+    due_date_from = request.GET.get('due_date_from')
+    due_date_to = request.GET.get('due_date_to')
+    if due_date_from:
+        checks = checks.filter(check_due_date__gte=due_date_from)
+    if due_date_to:
+        checks = checks.filter(check_due_date__lte=due_date_to)
+
+    # إنشاء ملف Excel
+    wb = Workbook()
+    ws = wb.active
+    ws.title = str(_('Checks List'))
+
+    # تنسيق العناوين
+    header_font = Font(bold=True)
+    header_fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
+
+    # العناوين
+    headers = [
+        str(_('Receipt Number')),
+        str(_('Check Number')),
+        str(_('Customer')),
+        str(_('Amount')),
+        str(_('Check Date')),
+        str(_('Due Date')),
+        str(_('Bank Name')),
+        str(_('Check Cashbox')),
+        str(_('Status')),
+        str(_('ECL'))
+    ]
+
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_num, value=str(header))
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal='center')
+
+    # البيانات
+    row = 2
+    for check in checks:
+        ws.cell(row=row, column=1, value=check.receipt_number)
+        ws.cell(row=row, column=2, value=check.check_number)
+        ws.cell(row=row, column=3, value=check.customer.name)
+        ws.cell(row=row, column=4, value=float(check.amount))
+        ws.cell(row=row, column=5, value=check.check_date.strftime('%Y-%m-%d') if check.check_date else '')
+        ws.cell(row=row, column=6, value=check.check_due_date.strftime('%Y-%m-%d') if check.check_due_date else '')
+        ws.cell(row=row, column=7, value=check.bank_name)
+        ws.cell(row=row, column=8, value=check.check_cashbox.name if check.check_cashbox else '')
+        ws.cell(row=row, column=9, value=str(check.get_check_status_display()))
+        ws.cell(row=row, column=10, value=float(check.expected_credit_loss) if check.expected_credit_loss else 0)
+        row += 1
+
+    # تعديل عرض الأعمدة
+    for column in ws.columns:
+        max_length = 0
+        column_letter = column[0].column_letter
+        for cell in column:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        adjusted_width = (max_length + 2)
+        ws.column_dimensions[column_letter].width = adjusted_width
+
+    # إنشاء الاستجابة
+    from django.http import HttpResponse
+    from django.utils import timezone
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    filename = f"checks_list_{timezone.now().date()}.xlsx"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+    wb.save(response)
+
+    # تسجيل النشاط
+    try:
+        from core.signals import log_export_activity
+        log_export_activity(request, str(_('Checks List')), filename, 'Excel')
+    except Exception:
+        pass
+
+    return response
 
 
 @login_required

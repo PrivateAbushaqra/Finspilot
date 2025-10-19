@@ -9,17 +9,20 @@ urlpatterns = [
     path('entries/<int:entry_id>/edit/', views.entry_edit, name='entry_edit'),
     # لوحة التحكم
     path('', views.revenue_expense_dashboard, name='dashboard'),
+    path('dashboard/recent-entries/export/excel/', views.dashboard_recent_entries_export_excel, name='dashboard_recent_entries_export_excel'),
     
     # فئات الإيرادات والمصروفات
     path('categories/', views.category_list, name='category_list'),
     path('categories/create/', views.category_create, name='category_create'),
     path('categories/<int:category_id>/edit/', views.category_edit, name='category_edit'),
+    path('categories/export/excel/', views.category_list_export_excel, name='category_list_export_excel'),
     
     # قيود الإيرادات والمصروفات
     path('entries/', views.entry_list, name='entry_list'),
     path('entries/create/', views.entry_create, name='entry_create'),
     path('entries/<int:entry_id>/', views.entry_detail, name='entry_detail'),
     path('entries/<int:entry_id>/approve/', views.entry_approve, name='entry_approve'),
+    path('entries/export/excel/', views.entry_list_export_excel, name='entry_list_export_excel'),
     
     # الإيرادات والمصروفات المتكررة
     path('recurring/', views.recurring_list, name='recurring_list'),

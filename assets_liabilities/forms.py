@@ -10,7 +10,8 @@ User = get_user_model()
 class AssetCategoryForm(forms.ModelForm):
     class Meta:
         model = AssetCategory
-        fields = ['name', 'type', 'description', 'depreciation_rate', 'useful_life_years', 'is_depreciable', 'is_active']
+        fields = ['name', 'type', 'description', 'depreciation_rate', 'useful_life_years', 'is_depreciable', 
+                 'depreciation_expense_account', 'accumulated_depreciation_account', 'is_active']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'type': forms.Select(attrs={'class': 'form-control'}),
@@ -18,6 +19,8 @@ class AssetCategoryForm(forms.ModelForm):
             'depreciation_rate': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0', 'max': '100'}),
             'useful_life_years': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
             'is_depreciable': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'depreciation_expense_account': forms.Select(attrs={'class': 'form-control'}),
+            'accumulated_depreciation_account': forms.Select(attrs={'class': 'form-control'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 

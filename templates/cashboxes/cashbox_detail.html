@@ -256,7 +256,7 @@ table.dataTable thead th.sorting:after {
                             <small class="text-muted">({% trans "IFRS compliant" %})</small>
                         </label>
                         <select name="adjustment_type" class="form-select" id="adjustment_type_detail">
-                            <option value="">{% trans "اختر نوع التعديل" %}</option>
+                            <option value="">{% trans "Choose the Modification Type" %}</option>
                             <option value="capital">{% trans "Capital Contribution" %}</option>
                             <option value="error_correction">{% trans "Error Correction" %}</option>
                             <option value="cash_shortage">{% trans "Cash Shortage" %}</option>
@@ -265,11 +265,7 @@ table.dataTable thead th.sorting:after {
                             <option value="other">{% trans "Other" %}</option>
                         </select>
                         <small class="text-muted">
-                            {% if LANGUAGE_CODE == 'ar' %}
-                                اختر سبب التعديل - سيتم استخدام الحساب المحاسبي المناسب تلقائياً
-                            {% else %}
-                                Choose the adjustment reason - the appropriate accounting account will be used automatically
-                            {% endif %}
+                            {% trans "Choose the adjustment reason - the appropriate accounting account will be used automatically" %}
                         </small>
                     </div>
                     <div class="mb-3">
@@ -509,11 +505,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     adjustmentTypeSelect.classList.add('is-invalid');
                     adjustmentTypeSelect.focus();
                     
-                    {% if LANGUAGE_CODE == 'ar' %}
-                        alert('يجب اختيار نوع التعديل عند تغيير الرصيد لضمان التوافق مع معايير IFRS');
-                    {% else %}
-                        alert('You must select an adjustment type when changing the balance to ensure IFRS compliance');
-                    {% endif %}
+                    alert('{% trans "You must select an adjustment type when changing the balance to ensure IFRS compliance" %}');
                     return false;
                 }
             }

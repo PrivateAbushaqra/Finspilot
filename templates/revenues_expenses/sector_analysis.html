@@ -72,7 +72,7 @@
                                     </td>
                                     <td class="text-center">
                                         {% if item.revenue > 0 %}
-                                            {{ item.profit|div:item.revenue|mul:100|floatformat:1 }}%
+                                            {{ item.profit_percentage|floatformat:1 }}%
                                         {% else %}
                                             -
                                         {% endif %}
@@ -94,7 +94,7 @@
                                     </td>
                                     <td class="text-center">
                                         {% if total_revenue > 0 %}
-                                            {{ total_profit|div:total_revenue|mul:100|floatformat:1 }}%
+                                            {{ total_profit_percentage|floatformat:1 }}%
                                         {% else %}
                                             -
                                         {% endif %}
@@ -136,7 +136,7 @@
                                     <h5 class="card-title">{% trans "هامش الربح" %}</h5>
                                     <h3>
                                         {% if total_revenue > 0 %}
-                                            {{ total_profit|div:total_revenue|mul:100|floatformat:1 }}%
+                                            {{ total_profit_percentage|floatformat:1 }}%
                                         {% else %}
                                             -
                                         {% endif %}

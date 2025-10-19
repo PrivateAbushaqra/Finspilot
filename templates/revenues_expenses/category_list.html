@@ -17,6 +17,16 @@
             <i class="fas fa-plus me-1"></i>
             {% trans "Add New Category" %}
         </a>
+        <div class="btn-group ms-2">
+            <a href="{% url 'revenues_expenses:category_list_export_excel' %}" class="btn btn-success btn-sm" title="{% trans 'تصدير إلى Excel' %}">
+                <i class="fas fa-file-excel me-1"></i>
+                {% trans "تصدير Excel" %}
+            </a>
+            <button onclick="window.print()" class="btn btn-info btn-sm" title="{% trans 'طباعة' %}">
+                <i class="fas fa-print me-1"></i>
+                {% trans "طباعة" %}
+            </button>
+        </div>
     </div>
     {% endif %}
 </div>
@@ -75,7 +85,7 @@
                                     <a href="{% url 'revenues_expenses:category_delete' category.id %}"
                                        class="btn btn-outline-danger"
                                        title="{% trans 'Delete' %}"
-                                       onclick='return confirm("{% trans "Are you sure you want to delete this category?" %}");'>
+                                       onclick="return confirm('{% trans 'Are you sure you want to delete this category?' %}');">
                                         <i class="fas fa-trash"></i>
                                     </a>
                                 {% endif %}

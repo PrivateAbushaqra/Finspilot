@@ -1378,6 +1378,38 @@ document.getElementById('productSearch').addEventListener('input', function() {
     });
 });
 
+// Handle Enter key in product search to select first visible product
+document.getElementById('productSearch').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        console.log('🔍 Enter pressed in product search modal');
+        
+        // Find the first visible product row
+        const visibleRows = Array.from(document.querySelectorAll('#productList tr')).filter(row => 
+            row.style.display !== 'none'
+        );
+        
+        console.log(`📋 Found ${visibleRows.length} visible products`);
+        
+        if (visibleRows.length > 0) {
+            const firstRow = visibleRows[0];
+            const selectButton = firstRow.querySelector('button[onclick*="selectProduct"]');
+            
+            if (selectButton) {
+                console.log('✅ Found select button, extracting product data...');
+                
+                // Simply click the button instead of trying to extract and call manually
+                selectButton.click();
+                console.log('✅ Button clicked programmatically');
+            } else {
+                console.error('❌ No select button found in first row');
+            }
+        } else {
+            console.warn('⚠️ No visible products found');
+        }
+    }
+});
+
 // Calculate totals when discount changes
 document.getElementById('id_discount').addEventListener('input', calculateGrandTotal);
 
@@ -2019,7 +2051,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     codeInput.value = product.code;
                     nameInput.value = product.name;
                     if (availableQuantityInput) {
-                        availableQuantityInput.value = formatCurrency(parseFloat(availableQuantity || 0), 3);
+                        availableQuantityInput.value = formatCurrency(parseFloat(product.current_stock || 0), 3);
                     }
                     
                     // Calculate displayed price as sale_price / (1 + tax_rate/100)
@@ -2048,6 +2080,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Handle input changes
         nameInput.addEventListener('input', filterProducts);
+
+        // Handle Enter key to select first visible product
+        nameInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                
+                // Find the first visible dropdown option
+                const firstOption = dropdown.querySelector('.dropdown-item');
+                if (firstOption) {
+                    firstOption.click();
+                }
+            }
+        });
 
         // Handle focus to show all products if empty
         nameInput.addEventListener('focus', function() {
@@ -2185,6 +2230,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Handle input changes
         codeInput.addEventListener('input', filterProductsByCode);
+
+        // Handle Enter key to select first visible product
+        codeInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                
+                // Find the first visible dropdown option
+                const firstOption = dropdown.querySelector('.dropdown-item');
+                if (firstOption) {
+                    firstOption.click();
+                }
+            }
+        });
 
         // Handle focus to show matching products if not empty
         codeInput.addEventListener('focus', function() {

@@ -6,7 +6,9 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from decimal import Decimal
 
-from .models import BankTransaction
+from .models import BankTransaction, BankAccount
+from journal.services import JournalService
+from journal.models import Account
 
 
 @receiver(post_save, sender=BankTransaction)
@@ -58,3 +60,123 @@ def update_bank_balance_on_transaction_delete(sender, instance, **kwargs):
         
         bank.save(update_fields=['balance'])
         print(f"✓ تم تحديث رصيد البنك بعد الحذف {bank.name}: {bank.balance}")
+
+@receiver(post_save, sender=BankAccount)
+def create_bank_account_opening_balance_entry(sender, instance, created, **kwargs):
+    """إنشاء قيد محاسبي لرصيد افتتاحي عند إنشاء حساب بنكي"""
+    if created and instance.initial_balance != 0:
+        try:
+            # الحصول على حساب البنك
+            bank_account = JournalService.get_or_create_bank_account_by_name(
+                instance.name,
+                instance.bank_name
+            )
+            
+            # الحصول على حساب رأس المال
+            capital_account = Account.objects.filter(code='301').first()
+            if not capital_account:
+                capital_account = Account.objects.create(
+                    code='301',
+                    name='رأس المال',
+                    account_type='equity',
+                    description='حساب رأس المال'
+                )
+            
+            lines_data = [
+                {
+                    'account_id': bank_account.id,
+                    'debit': instance.initial_balance,
+                    'credit': 0,
+                    'description': f'رصيد افتتاحي لحساب {instance.name}'
+                },
+                {
+                    'account_id': capital_account.id,
+                    'debit': 0,
+                    'credit': instance.initial_balance,
+                    'description': f'رصيد افتتاحي لحساب {instance.name}'
+                }
+            ]
+            
+            JournalService.create_journal_entry(
+                entry_date=instance.created_at.date(),
+                reference_type='manual',
+                description=f'رصيد افتتاحي لحساب البنك {instance.name}',
+                lines_data=lines_data,
+                reference_id=instance.id,
+                user=instance.created_by
+            )
+        except Exception as e:
+            print(f"خطأ في إنشاء قيد الرصيد الافتتاحي: {e}")
+
+@receiver(post_save, sender=BankTransaction)
+def create_bank_transaction_journal_entry(sender, instance, created, **kwargs):
+    """إنشاء قيد محاسبي عند إنشاء معاملة بنكية"""
+    if created:
+        try:
+            bank_account = JournalService.get_or_create_bank_account_by_name(
+                instance.bank.name,
+                instance.bank.bank_name
+            )
+            
+            lines_data = []
+            if instance.transaction_type == 'deposit':
+                # إيداع: مدين البنك، دائن حساب الإيراد أو النقد
+                # افتراضياً دائن لحساب إيراد بنكي أو رأس المال
+                capital_account = Account.objects.filter(code='301').first()
+                if not capital_account:
+                    capital_account = Account.objects.create(
+                        code='301',
+                        name='رأس المال',
+                        account_type='equity'
+                    )
+                
+                lines_data = [
+                    {
+                        'account_id': bank_account.id,
+                        'debit': instance.amount,
+                        'credit': 0,
+                        'description': f'إيداع في {instance.bank.name}: {instance.description}'
+                    },
+                    {
+                        'account_id': capital_account.id,
+                        'debit': 0,
+                        'credit': instance.amount,
+                        'description': f'إيداع في {instance.bank.name}: {instance.description}'
+                    }
+                ]
+            elif instance.transaction_type == 'withdrawal':
+                # سحب: دائن البنك، مدين حساب المصروف
+                expense_account = Account.objects.filter(code='401').first()
+                if not expense_account:
+                    expense_account = Account.objects.create(
+                        code='401',
+                        name='مصروفات متنوعة',
+                        account_type='expense'
+                    )
+                
+                lines_data = [
+                    {
+                        'account_id': expense_account.id,
+                        'debit': instance.amount,
+                        'credit': 0,
+                        'description': f'سحب من {instance.bank.name}: {instance.description}'
+                    },
+                    {
+                        'account_id': bank_account.id,
+                        'debit': 0,
+                        'credit': instance.amount,
+                        'description': f'سحب من {instance.bank.name}: {instance.description}'
+                    }
+                ]
+            
+            if lines_data:
+                JournalService.create_journal_entry(
+                    entry_date=instance.date,
+                    reference_type='manual',
+                    description=f'معاملة بنكية: {instance.get_transaction_type_display()} - {instance.description}',
+                    lines_data=lines_data,
+                    reference_id=instance.id,
+                    user=None  # لا يوجد created_by في BankTransaction
+                )
+        except Exception as e:
+            print(f"خطأ في إنشاء قيد المعاملة البنكية: {e}")

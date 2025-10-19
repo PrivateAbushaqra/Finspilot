@@ -13,9 +13,17 @@
                     <h3 class="card-title">
                         <i class="fas fa-money-check"></i> {{ page_title }}
                     </h3>
-                    <a href="{% url 'receipts:receipt_list' %}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> {% trans "Back to Receipts" %}
-                    </a>
+                    <div>
+                        <a href="{% url 'receipts:check_list_export_excel' %}" class="btn btn-success btn-sm me-2">
+                            <i class="fas fa-file-excel"></i> {% trans "Export XLSX" %}
+                        </a>
+                        <button type="button" class="btn btn-info btn-sm me-2" onclick="window.print()">
+                            <i class="fas fa-print"></i> {% trans "Print" %}
+                        </button>
+                        <a href="{% url 'receipts:receipt_list' %}" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-arrow-left"></i> {% trans "Back to Receipts" %}
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body">
                     <!-- Filter Form -->
@@ -70,6 +78,7 @@
                                         <th>{% trans "Check Date" %}</th>
                                         <th>{% trans "Due Date" %}</th>
                                         <th>{% trans "Bank Name" %}</th>
+                                        <th>{% trans "Check Cashbox" %}</th>
                                         <th>{% trans "Status" %}</th>
                                         <th>{% trans "ECL" %}</th>
                                         <th>{% trans "Actions" %}</th>
@@ -95,6 +104,7 @@
                                             {% endif %}
                                         </td>
                                         <td>{{ check.bank_name }}</td>
+                                        <td>{{ check.check_cashbox.name|default:"-" }}</td>
                                         <td>
                                             <span class="badge bg-{% if check.check_status == 'pending' %}warning{% elif check.check_status == 'collected' %}success{% elif check.check_status == 'bounced' %}danger{% else %}secondary{% endif %}">
                                                 {{ check.get_check_status_display }}

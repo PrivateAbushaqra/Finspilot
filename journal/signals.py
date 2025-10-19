@@ -2,6 +2,7 @@ from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from django.contrib.auth import get_user_model
 from .services import JournalService
+from .models import Account
 import logging
 
 User = get_user_model()
@@ -302,40 +303,43 @@ def delete_asset_journal_entry(sender, instance, **kwargs):
 @receiver(post_save, sender='assets_liabilities.Liability')
 def create_liability_journal_entry(sender, instance, created, **kwargs):
     """إنشاء قيد محاسبي تلقائياً عند إنشاء التزام جديد"""
-    if created and instance.id and instance.amount:
+    if created and instance.id and instance.original_amount:
         try:
             user = getattr(instance, 'created_by', None)
             if user:
                 lines_data = []
                 # قيد الالتزام: مدين الصندوق/المصروف، دائن الالتزام
                 if instance.category and instance.category.account:
-                    lines_data = [
-                        {
-                            'account_id': instance.expense_account.id if instance.expense_account else None,
-                            'debit': instance.amount,
-                            'credit': 0,
-                            'description': f"التزام: {instance.description}"
-                        },
-                        {
-                            'account_id': instance.category.account.id,
-                            'debit': 0,
-                            'credit': instance.amount,
-                            'description': f"التزام: {instance.description}"
-                        }
-                    ]
+                    # افتراضياً دائن الالتزام، مدين النقد
+                    cash_account = Account.objects.filter(code__startswith='101', account_type='asset').first()
+                    if cash_account:
+                        lines_data = [
+                            {
+                                'account_id': cash_account.id,
+                                'debit': instance.original_amount,
+                                'credit': 0,
+                                'description': f"استلام خصم: {instance.name}"
+                            },
+                            {
+                                'account_id': instance.category.account.id,
+                                'debit': 0,
+                                'credit': instance.original_amount,
+                                'description': f"خصم: {instance.name}"
+                            }
+                        ]
                 
                 if lines_data and all(line['account_id'] is not None for line in lines_data):
                     JournalService.create_journal_entry(
-                        entry_date=instance.date,
+                        entry_date=instance.start_date,
                         reference_type='liability',
                         reference_id=instance.id,
-                        description=f"التزام: {instance.description}",
+                        description=f"خصم: {instance.name}",
                         lines_data=lines_data,
                         user=user
                     )
-                    logger.info(f"تم إنشاء قيد محاسبي تلقائياً للالتزام {instance.description}")
+                    logger.info(f"تم إنشاء قيد محاسبي تلقائياً للخصم {instance.name}")
         except Exception as e:
-            logger.error(f"خطأ في إنشاء القيد المحاسبي للالتزام {instance.description}: {e}")
+            logger.error(f"خطأ في إنشاء القيد المحاسبي للخصم {instance.name}: {e}")
 
 
 @receiver(post_delete, sender='assets_liabilities.Liability')
@@ -352,40 +356,40 @@ def delete_liability_journal_entry(sender, instance, **kwargs):
 @receiver(post_save, sender='assets_liabilities.DepreciationEntry')
 def create_depreciation_journal_entry(sender, instance, created, **kwargs):
     """إنشاء قيد محاسبي تلقائياً عند إنشاء قيد إهلاك"""
-    if created and instance.id and instance.amount:
+    if created and instance.id and instance.depreciation_amount:
         try:
             user = getattr(instance, 'created_by', None)
             if user:
                 lines_data = []
                 # قيد الإهلاك: مدين مصروف الإهلاك، دائن مجمع إهلاك الأصل
-                if instance.asset and instance.asset.category and instance.asset.category.depreciation_account:
+                if instance.asset and instance.asset.category and hasattr(instance.asset.category, 'accumulated_depreciation_account') and instance.asset.category.accumulated_depreciation_account:
                     lines_data = [
                         {
                             'account_id': instance.asset.category.depreciation_expense_account.id if hasattr(instance.asset.category, 'depreciation_expense_account') and instance.asset.category.depreciation_expense_account else None,
-                            'debit': instance.amount,
+                            'debit': instance.depreciation_amount,
                             'credit': 0,
                             'description': f"إهلاك {instance.asset.name}"
                         },
                         {
-                            'account_id': instance.asset.category.depreciation_account.id,
+                            'account_id': instance.asset.category.accumulated_depreciation_account.id,
                             'debit': 0,
-                            'credit': instance.amount,
+                            'credit': instance.depreciation_amount,
                             'description': f"مجمع إهلاك {instance.asset.name}"
                         }
                     ]
                 
                 if lines_data and all(line['account_id'] is not None for line in lines_data):
                     JournalService.create_journal_entry(
-                        entry_date=instance.date,
-                        reference_type='depreciation',
+                        entry_date=instance.depreciation_date,
+                        reference_type='asset_depreciation',
                         reference_id=instance.id,
-                        description=f"إهلاك {instance.asset.name}",
+                        description=f"إهلاك الأصل {instance.asset.name}",
                         lines_data=lines_data,
                         user=user
                     )
-                    logger.info(f"تم إنشاء قيد محاسبي تلقائياً لإهلاك {instance.asset.name}")
+                    logger.info(f"تم إنشاء قيد محاسبي تلقائياً لإهلاك الأصل {instance.asset.name}")
         except Exception as e:
-            logger.error(f"خطأ في إنشاء القيد المحاسبي لإهلاك {instance.asset.name if instance.asset else 'غير محدد'}: {e}")
+            logger.error(f"خطأ في إنشاء القيد المحاسبي لإهلاك الأصل {instance.asset.name}: {e}")
 
 
 @receiver(post_delete, sender='assets_liabilities.DepreciationEntry')

@@ -25,6 +25,14 @@ class AssetCategory(models.Model):
     depreciation_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name=_('Depreciation Rate %'))
     useful_life_years = models.IntegerField(default=0, verbose_name=_('Useful Life Years'))
     is_depreciable = models.BooleanField(default=False, verbose_name=_('Depreciable'))
+    depreciation_expense_account = models.ForeignKey('journal.Account', on_delete=models.SET_NULL, null=True, blank=True, 
+                                                   verbose_name=_('Depreciation Expense Account'), 
+                                                   limit_choices_to={'account_type': 'expense'},
+                                                   related_name='depreciation_expense_categories')
+    accumulated_depreciation_account = models.ForeignKey('journal.Account', on_delete=models.SET_NULL, null=True, blank=True, 
+                                                       verbose_name=_('Accumulated Depreciation Account'), 
+                                                       limit_choices_to={'account_type': 'asset'},
+                                                       related_name='accumulated_depreciation_categories')
     is_active = models.BooleanField(default=True, verbose_name=_('Active'))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Created At'))
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_('Created By'))
