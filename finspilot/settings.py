@@ -86,6 +86,7 @@ MIDDLEWARE = [
     'core.middleware.POSUserMiddleware',
     'core.middleware.SessionTimeoutMiddleware',
     'core.middleware.SessionSecurityMiddleware',
+    'core.middleware.SessionExceptionMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -288,6 +289,12 @@ for host in ALLOWED_HOSTS:
 
 # CSRF
 CSRF_TRUSTED_ORIGINS = [f"https://{h.strip()}" for h in ALLOWED_HOSTS if h.strip()]
+# إعدادات CSRF للتوافق مع التبويبات الجديدة
+CSRF_COOKIE_SAMESITE = 'Lax'  # يسمح بإرسال CSRF token عند فتح تبويب جديد
+CSRF_COOKIE_HTTPONLY = False  # يجب أن تكون False لكي يتمكن JavaScript من قراءة CSRF token
+CSRF_COOKIE_NAME = 'finspilot_csrftoken'
+CSRF_COOKIE_AGE = 31449600  # سنة واحدة
+CSRF_USE_SESSIONS = False  # استخدام كوكيز منفصلة لـ CSRF
 
 # Crispy Forms
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
@@ -310,8 +317,21 @@ LOCALE_PATHS = [
 ]
 
 # Session settings
-SESSION_COOKIE_AGE = 3600  # 1 hour
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+# مدة الجلسة: 24 ساعة (86400 ثانية) لتجنب انتهاء الجلسة السريع
+SESSION_COOKIE_AGE = 86400  # 24 hours
+# عدم انتهاء الجلسة عند إغلاق المتصفح - حفظ الجلسة
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+# تجديد الجلسة عند كل طلب لتجنب انتهاء الجلسة أثناء العمل
+SESSION_SAVE_EVERY_REQUEST = True
+# إعدادات كوكيز الجلسة
+SESSION_COOKIE_SAMESITE = 'Lax'  # يسمح بإرسال الكوكيز عند فتح تبويب جديد
+SESSION_COOKIE_HTTPONLY = True  # حماية من XSS
+# اسم كوكيز الجلسة
+SESSION_COOKIE_NAME = 'finspilot_sessionid'
+# المجال للكوكيز (None للمجال الحالي فقط)
+SESSION_COOKIE_DOMAIN = None
+# المسار للكوكيز
+SESSION_COOKIE_PATH = '/'
 
 # Custom User Model
 AUTH_USER_MODEL = 'users.User'

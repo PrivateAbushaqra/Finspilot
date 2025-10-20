@@ -68,7 +68,7 @@ class JournalEntryForm(forms.ModelForm):
             try:
                 from core.models import DocumentSequence
                 seq = DocumentSequence.objects.get(document_type='journal_entry')
-                self.fields['entry_number'].initial = seq.get_next_number()
+                self.fields['entry_number'].initial = seq.peek_next_number()
             except DocumentSequence.DoesNotExist:
                 pass  # سيتم توليد رقم افتراضي في النموذج
     

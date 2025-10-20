@@ -71,13 +71,32 @@ class SalesInvoice(models.Model):
         else:
             subtotal = Decimal('0')
             tax_amount = Decimal('0')
-        
-        total_amount = subtotal + tax_amount
-        
-        self.subtotal = subtotal.quantize(Decimal('0.001'))
-        self.tax_amount = tax_amount.quantize(Decimal('0.001'))
-        self.total_amount = total_amount.quantize(Decimal('0.001'))
+        # خصم المبيعات (إن وجد)
+        discount = getattr(self, 'discount_amount', Decimal('0')) or Decimal('0')
+
+        # إجمالي الفاتورة = subtotal + tax - discount
+        total_amount = Decimal(subtotal) + Decimal(tax_amount) - Decimal(discount)
+
+        # تأكد من عدم أن يكون الإجمالي سالباً
+        if total_amount < 0:
+            total_amount = Decimal('0')
+
+        self.subtotal = Decimal(subtotal).quantize(Decimal('0.001'))
+        self.tax_amount = Decimal(tax_amount).quantize(Decimal('0.001'))
+        self.discount_amount = Decimal(discount).quantize(Decimal('0.001')) if hasattr(self, 'discount_amount') else Decimal('0')
+        self.total_amount = Decimal(total_amount).quantize(Decimal('0.001'))
         self.save(update_fields=['subtotal', 'tax_amount', 'total_amount'])
+
+    def clean(self):
+        """التحقق من صحة البيانات"""
+        from django.core.exceptions import ValidationError
+        
+        # التحقق من أن الصندوق مطلوب للفواتير النقدية
+        if self.payment_type == 'cash' and not self.cashbox:
+            raise ValidationError(_('يجب تحديد الصندوق النقدي للفواتير النقدية'))
+        
+        # استدعاء التحقق الأساسي
+        super().clean()
 
 
 class SalesInvoiceItem(models.Model):

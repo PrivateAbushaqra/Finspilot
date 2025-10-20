@@ -9,23 +9,23 @@ User = get_user_model()
 class PurchaseInvoice(models.Model):
     """فاتورة المشتريات"""
     PAYMENT_TYPES = [
-        ('cash', _('كاش')),
-        ('credit', _('ذمم')),
+        ('cash', _('Cash')),
+        ('credit', _('Credit')),
     ]
 
-    invoice_number = models.CharField(_('رقم الفاتورة'), max_length=50)
-    supplier_invoice_number = models.CharField(_('رقم فاتورة المورد'), max_length=50)
+    invoice_number = models.CharField(_('Invoice Number'), max_length=50)
+    supplier_invoice_number = models.CharField(_('Supplier Invoice Number'), max_length=50)
     date = models.DateField(_('Date'))
     supplier = models.ForeignKey(CustomerSupplier, on_delete=models.PROTECT, 
-                               verbose_name=_('المورد'), limit_choices_to={'type__in': ['supplier', 'both']})
+                               verbose_name=_('Supplier'), limit_choices_to={'type__in': ['supplier', 'both']})
     warehouse = models.ForeignKey('inventory.Warehouse', on_delete=models.PROTECT, 
                                 verbose_name=_('Warehouse'), default=1)
-    payment_type = models.CharField(_('نوع الدفع'), max_length=20, choices=PAYMENT_TYPES)
-    is_tax_inclusive = models.BooleanField(_('شامل ضريبة'), default=True, 
-                                         help_text=_('عند الاختيار، ستكون الأسعار شاملة للضريبة'))
-    subtotal = models.DecimalField(_('المجموع الفرعي'), max_digits=15, decimal_places=3, default=0)
-    tax_amount = models.DecimalField(_('مبلغ الضريبة'), max_digits=15, decimal_places=3, default=0)
-    total_amount = models.DecimalField(_('المبلغ الإجمالي'), max_digits=15, decimal_places=3, default=0)
+    payment_type = models.CharField(_('Payment Type'), max_length=20, choices=PAYMENT_TYPES)
+    is_tax_inclusive = models.BooleanField(_('Tax Inclusive'), default=True, 
+                                         help_text=_('When selected, prices will include tax'))
+    subtotal = models.DecimalField(_('Subtotal'), max_digits=15, decimal_places=3, default=0)
+    tax_amount = models.DecimalField(_('Tax Amount'), max_digits=15, decimal_places=3, default=0)
+    total_amount = models.DecimalField(_('Total Amount'), max_digits=15, decimal_places=3, default=0)
     notes = models.TextField(_('Notes'), blank=True)
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name=_('Created By'))
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
@@ -48,17 +48,17 @@ class PurchaseInvoice(models.Model):
 class PurchaseInvoiceItem(models.Model):
     """عنصر فاتورة المشتريات"""
     invoice = models.ForeignKey(PurchaseInvoice, on_delete=models.CASCADE, 
-                              verbose_name=_('الفاتورة'), related_name='items')
+                              verbose_name=_('Invoice'), related_name='items')
     product = models.ForeignKey('products.Product', on_delete=models.PROTECT, verbose_name=_('Product'))
-    quantity = models.DecimalField(_('الكمية'), max_digits=10, decimal_places=3)
-    unit_price = models.DecimalField(_('سعر الوحدة'), max_digits=15, decimal_places=3)
-    tax_rate = models.DecimalField(_('نسبة الضريبة'), max_digits=5, decimal_places=2, default=0)
-    tax_amount = models.DecimalField(_('مبلغ الضريبة'), max_digits=15, decimal_places=3, default=0)
-    total_amount = models.DecimalField(_('المبلغ الإجمالي'), max_digits=15, decimal_places=3, default=0)
+    quantity = models.DecimalField(_('Quantity'), max_digits=10, decimal_places=3)
+    unit_price = models.DecimalField(_('Unit Price'), max_digits=15, decimal_places=3)
+    tax_rate = models.DecimalField(_('Tax Rate'), max_digits=5, decimal_places=2, default=0)
+    tax_amount = models.DecimalField(_('Tax Amount'), max_digits=15, decimal_places=3, default=0)
+    total_amount = models.DecimalField(_('Total Amount'), max_digits=15, decimal_places=3, default=0)
 
     class Meta:
-        verbose_name = _('عنصر فاتورة المشتريات')
-        verbose_name_plural = _('عناصر فواتير المشتريات')
+        verbose_name = _('Purchase Invoice Item')
+        verbose_name_plural = _('Purchase Invoice Items')
 
     def __str__(self):
         return f"{self.invoice.supplier_invoice_number} - {self.product.name}"
@@ -87,28 +87,30 @@ class PurchaseInvoiceItem(models.Model):
 class PurchaseReturn(models.Model):
     """مردود مشتريات"""
     RETURN_TYPES = [
-        ('full', _('مردود كامل')),
-        ('partial', _('مردود جزئي')),
+        ('full', _('Full Return')),
+        ('partial', _('Partial Return')),
     ]
     
     RETURN_REASONS = [
-        ('defective', _('منتج معيب')),
-        ('wrong_item', _('صنف خاطئ')),
-        ('excess', _('فائض عن الحاجة')),
-        ('expired', _('منتهي الصلاحية')),
-        ('damaged', _('تالف أثناء النقل')),
-        ('other', _('أخرى')),
+        ('defective', _('Defective Product')),
+        ('wrong_item', _('Wrong Item')),
+        ('excess', _('Excess Quantity')),
+        ('expired', _('Expired')),
+        ('damaged', _('Damaged During Transport')),
+        ('other', _('Other')),
     ]
 
-    return_number = models.CharField(_('رقم المردود'), max_length=50, unique=True)
+    return_number = models.CharField(_('Return Number'), max_length=50, unique=True)
+    supplier_return_number = models.CharField(_('Supplier Return Number (Source)'), max_length=50, 
+                                            help_text=_('The return number issued by the supplier'))
     original_invoice = models.ForeignKey(PurchaseInvoice, on_delete=models.PROTECT, 
-                                       verbose_name=_('الفاتورة الأصلية'), related_name='returns')
-    date = models.DateField(_('تاريخ المردود'))
-    return_type = models.CharField(_('نوع المردود'), max_length=20, choices=RETURN_TYPES, default='partial')
-    return_reason = models.CharField(_('سبب المردود'), max_length=20, choices=RETURN_REASONS)
-    subtotal = models.DecimalField(_('المجموع الفرعي'), max_digits=15, decimal_places=3, default=0)
-    tax_amount = models.DecimalField(_('مبلغ الضريبة'), max_digits=15, decimal_places=3, default=0)
-    total_amount = models.DecimalField(_('المبلغ الإجمالي'), max_digits=15, decimal_places=3, default=0)
+                                       verbose_name=_('Original Invoice'), related_name='returns')
+    date = models.DateField(_('Return Date'))
+    return_type = models.CharField(_('Return Type'), max_length=20, choices=RETURN_TYPES, default='partial')
+    return_reason = models.CharField(_('Return Reason'), max_length=20, choices=RETURN_REASONS)
+    subtotal = models.DecimalField(_('Subtotal'), max_digits=15, decimal_places=3, default=0)
+    tax_amount = models.DecimalField(_('Tax Amount'), max_digits=15, decimal_places=3, default=0)
+    total_amount = models.DecimalField(_('Total Amount'), max_digits=15, decimal_places=3, default=0)
     notes = models.TextField(_('Notes'), blank=True)
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name=_('Created By'))
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
@@ -116,14 +118,24 @@ class PurchaseReturn(models.Model):
 
     class Meta:
         verbose_name = _('Purchase Return')
-        verbose_name_plural = _('Purchase Returns List')
+        verbose_name_plural = _('Purchase Returns')
         ordering = ['-date', '-return_number']
         permissions = (
-            ('can_view_purchasereturn', _('Can view مردود مشتريات')),
+            ('can_view_purchasereturn', _('Can view purchase returns')),
         )
 
     def __str__(self):
         return f"{self.return_number} - {self.original_invoice.supplier.name}"
+
+    def save(self, *args, **kwargs):
+        if not self.return_number:
+            try:
+                from core.models import DocumentSequence
+                seq = DocumentSequence.objects.get(document_type='purchase_return')
+                self.return_number = seq.get_next_number()
+            except DocumentSequence.DoesNotExist:
+                raise ValueError(_('Document sequence for purchase returns must be set up first'))
+        super().save(*args, **kwargs)
 
     @property
     def supplier(self):
@@ -133,19 +145,19 @@ class PurchaseReturn(models.Model):
 class PurchaseReturnItem(models.Model):
     """عنصر مردود المشتريات"""
     return_invoice = models.ForeignKey(PurchaseReturn, on_delete=models.CASCADE, 
-                                     verbose_name=_('مردود المشتريات'), related_name='items')
+                                     verbose_name=_('Purchase Return'), related_name='items')
     original_item = models.ForeignKey(PurchaseInvoiceItem, on_delete=models.PROTECT, 
-                                    verbose_name=_('العنصر الأصلي'))
+                                    verbose_name=_('Original Item'))
     product = models.ForeignKey('products.Product', on_delete=models.PROTECT, verbose_name=_('Product'))
-    returned_quantity = models.DecimalField(_('الكمية المرتجعة'), max_digits=10, decimal_places=3)
-    unit_price = models.DecimalField(_('سعر الوحدة'), max_digits=15, decimal_places=3)
-    tax_rate = models.DecimalField(_('نسبة الضريبة'), max_digits=5, decimal_places=2, default=0)
-    tax_amount = models.DecimalField(_('مبلغ الضريبة'), max_digits=15, decimal_places=3, default=0)
-    total_amount = models.DecimalField(_('المبلغ الإجمالي'), max_digits=15, decimal_places=3, default=0)
+    returned_quantity = models.DecimalField(_('Returned Quantity'), max_digits=10, decimal_places=3)
+    unit_price = models.DecimalField(_('Unit Price'), max_digits=15, decimal_places=3)
+    tax_rate = models.DecimalField(_('Tax Rate'), max_digits=5, decimal_places=2, default=0)
+    tax_amount = models.DecimalField(_('Tax Amount'), max_digits=15, decimal_places=3, default=0)
+    total_amount = models.DecimalField(_('Total Amount'), max_digits=15, decimal_places=3, default=0)
 
     class Meta:
-        verbose_name = _('عنصر مردود مشتريات')
-        verbose_name_plural = _('عناصر مردود المشتريات')
+        verbose_name = _('Purchase Return Item')
+        verbose_name_plural = _('Purchase Return Items')
 
     def __str__(self):
         return f"{self.product.name} - {self.returned_quantity}"
@@ -155,7 +167,7 @@ class PurchaseReturnItem(models.Model):
         from django.core.exceptions import ValidationError
         
         if self.returned_quantity > self.original_item.quantity:
-            raise ValidationError(_('الكمية المرتجعة لا يمكن أن تكون أكبر من الكمية الأصلية'))
+            raise ValidationError(_('Returned quantity cannot be greater than the original quantity'))
         
         # التحقق من المردودات السابقة
         previous_returns = PurchaseReturnItem.objects.filter(
@@ -164,7 +176,7 @@ class PurchaseReturnItem(models.Model):
         
         total_returned = sum(item.returned_quantity for item in previous_returns)
         if total_returned + self.returned_quantity > self.original_item.quantity:
-            raise ValidationError(_('إجمالي الكمية المرتجعة يتجاوز الكمية الأصلية'))
+            raise ValidationError(_('Total returned quantity exceeds the original quantity'))
 
     def save(self, *args, **kwargs):
         # حساب المبالغ
@@ -182,13 +194,15 @@ class PurchaseReturnItem(models.Model):
 
 
 class PurchaseDebitNote(models.Model):
-    """اشعار مدين للمشتريات"""
-    note_number = models.CharField(_('رقم اشعار مدين'), max_length=50, unique=True)
+    """Purchase Debit Note"""
+    note_number = models.CharField(_('Debit Note Number'), max_length=50, unique=True)
     date = models.DateField(_('Date'))
     supplier = models.ForeignKey(CustomerSupplier, on_delete=models.PROTECT, verbose_name=_('Supplier'))
-    subtotal = models.DecimalField(_('المجموع الفرعي'), max_digits=15, decimal_places=3, default=0)
-    total_amount = models.DecimalField(_('المبلغ الإجمالي'), max_digits=15, decimal_places=3, default=0)
-    notes = models.TextField(_('ملاحظات'), blank=True)
+    supplier_debit_note_number = models.CharField(_('Supplier Debit Note Number (Source)'), max_length=50, 
+                                                help_text=_('The debit note number issued by the supplier'))
+    subtotal = models.DecimalField(_('Subtotal'), max_digits=15, decimal_places=3, default=0)
+    total_amount = models.DecimalField(_('Total Amount'), max_digits=15, decimal_places=3, default=0)
+    notes = models.TextField(_('Notes'), blank=True)
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name=_('Created By'))
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
     updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
@@ -202,12 +216,12 @@ class PurchaseDebitNote(models.Model):
                                               help_text=_('URL to verify debit note on JoFotara portal'))
 
     class Meta:
-        verbose_name = _('اشعار مدين')
-        verbose_name_plural = _('اشعارات مدين')
+        verbose_name = _('Debit Note')
+        verbose_name_plural = _('Debit Notes')
         ordering = ['-date', '-note_number']
         permissions = (
             ('can_send_to_jofotara', 'Can send debit notes to JoFotara'),
-            ('can_view_debitnote', _('Can view اشعار مدين')),
+            ('can_view_debitnote', _('Can view debit notes')),
         )
 
     def save(self, *args, **kwargs):

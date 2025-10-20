@@ -96,7 +96,6 @@ class CompanySettingsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView)
                 
                 # تسجيل النشاط إذا تغير اسم الشركة
                 if old_company_name != company_settings.company_name:
-                    from core.models import AuditLog
                     AuditLog.objects.create(
                         user=request.user,
                         action_type='update',
@@ -729,6 +728,7 @@ class SuperadminManagementView(LoginRequiredMixin, UserPassesTestMixin, Template
 
     def get_context_data(self, **kwargs):
         from .models import SuperadminSettings
+        from core.models import CompanySettings as CoreCompanySettings
         
         context = super().get_context_data(**kwargs)
         
@@ -737,13 +737,14 @@ class SuperadminManagementView(LoginRequiredMixin, UserPassesTestMixin, Template
         context['superadmin_settings'] = superadmin_settings
         
         # الحصول على إعدادات الشركة (من core.models)
-        company_settings = CompanySettings.get_settings()
+        company_settings = CoreCompanySettings.get_settings()
         context['company_settings'] = company_settings
         
         return context
     
     def post(self, request):
         from .models import SuperadminSettings
+        from core.models import CompanySettings as CoreCompanySettings
         
         try:
             with transaction.atomic():
@@ -814,7 +815,7 @@ class SuperadminManagementView(LoginRequiredMixin, UserPassesTestMixin, Template
                     log_activity(request.user, 'update', settings, description, request)
                 
                 # تحديث إعدادات الشركة إذا كانت موجودة (استخدام core.models.CompanySettings)
-                company_settings = CompanySettings.get_settings()
+                company_settings = CoreCompanySettings.get_settings()
                 if any([
                     request.POST.get('company_name'),
                     request.POST.get('email'),
@@ -869,7 +870,7 @@ class SuperadminManagementView(LoginRequiredMixin, UserPassesTestMixin, Template
         # معالجة إعدادات الجلسة والأمان - ضمن transaction منفصل
         try:
             with transaction.atomic():
-                company_settings = CompanySettings.get_settings()
+                company_settings = CoreCompanySettings.get_settings()
                 
                 if company_settings:
                     session_changes = []

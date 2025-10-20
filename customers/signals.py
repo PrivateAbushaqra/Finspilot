@@ -9,6 +9,51 @@ from decimal import Decimal
 from .models import CustomerSupplier
 
 @receiver(post_save, sender=CustomerSupplier)
+def create_customer_supplier_account(sender, instance, created, **kwargs):
+    """
+    إنشاء حساب محاسبي للعميل/المورد عند إنشائه
+    """
+    if not created:
+        return
+
+    try:
+        from journal.models import Account
+
+        # تحديد الحساب الرئيسي والرمز
+        if instance.is_customer:
+            parent_code = '1301'  # حسابات العملاء
+            code_prefix = '1301'
+        elif instance.is_supplier:
+            parent_code = '2101'  # حسابات الموردين
+            code_prefix = '2101'
+        else:
+            # إذا كان مشتركاً
+            parent_code = '1301'  # افتراضياً تحت العملاء
+            code_prefix = '1301'
+
+        parent_account = Account.objects.filter(code=parent_code).first()
+        if not parent_account:
+            print(f"⚠️ لا يوجد حساب رئيسي {parent_code}")
+            return
+
+        # إنشاء رمز فريد للحساب
+        code = f"{code_prefix}{instance.id:04d}"
+
+        # التأكد من عدم وجود حساب بنفس الرمز
+        if not Account.objects.filter(code=code).exists():
+            Account.objects.create(
+                code=code,
+                name=f'{instance.name}',
+                account_type='asset' if instance.is_customer else 'liability',
+                parent=parent_account,
+                description=f'حساب {"العميل" if instance.is_customer else "المورد"} {instance.name}'
+            )
+
+    except Exception as e:
+        print(f"خطأ في إنشاء حساب العميل/المورد: {e}")
+
+
+@receiver(post_save, sender=CustomerSupplier)
 def create_opening_balance_journal_entry(sender, instance, created, **kwargs):
     """
     إنشاء قيد محاسبي للرصيد الافتتاحي عند إنشاء عميل/مورد جديد

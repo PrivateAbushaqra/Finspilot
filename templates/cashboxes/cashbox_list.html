@@ -719,6 +719,7 @@ function printPage() {
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const transferTypeSelect = document.getElementById('transfer_type');
+    const transferNumberInput = document.querySelector('input[name="transfer_number"]');
     const fromCashboxGroup = document.getElementById('from_cashbox_group');
     const fromBankGroup = document.getElementById('from_bank_group');
     const toCashboxGroup = document.getElementById('to_cashbox_group');
@@ -729,6 +730,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function updateFormFields() {
         const transferType = transferTypeSelect.value;
+        
+        // استخدام تسلسل التحويل بين البنوك والصناديق لجميع التحويلات
+        transferNumberInput.value = '{{ next_transfer_numbers.bank_cash_transfer }}';
         
         // إخفاء جميع الحقول أولاً
         fromCashboxGroup.classList.add('d-none');

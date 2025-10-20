@@ -119,8 +119,45 @@ def create_cashbox_transaction_for_sales(sender, instance, created, **kwargs):
                     instance.cashbox = cashbox
                     instance.save(update_fields=['cashbox'])
             
-            # ❌ إزالة إنشاء حركة الصندوق هنا - سيتم إنشاؤها تلقائياً عند إنشاء سند القبض
-            # هذا يمنع التضاعف في حركات الصندوق
+            # ✅ إنشاء حركة الصندوق مباشرة للفاتورة النقدية
+            # هذا يضمن ترصيد النقد فوراً عند إنشاء الفاتورة
+            if cashbox:
+                try:
+                    CashboxTransaction.objects.create(
+                        cashbox=cashbox,
+                        transaction_type='deposit',
+                        amount=instance.total_amount,
+                        description=f'إيداع نقدي من فاتورة مبيعات رقم {instance.invoice_number}',
+                        date=instance.date,
+                        reference_type='sales_invoice',
+                        reference_id=instance.id,
+                        created_by=instance.created_by
+                    )
+                    
+                    # تحديث رصيد الصندوق
+                    cashbox.balance += instance.total_amount
+                    cashbox.save(update_fields=['balance'])
+                    
+                    # تسجيل في سجل الأنشطة
+                    description = _('تم إيداع %(amount)s في الصندوق %(cashbox)s من فاتورة مبيعات رقم %(invoice)s') % {
+                        'amount': instance.total_amount,
+                        'cashbox': cashbox.name,
+                        'invoice': instance.invoice_number
+                    }
+                    if should_log_activity(instance.created_by, 'create', 'CashboxTransaction', None, f'تم إيداع نقدي من فاتورة {instance.invoice_number}'):
+                        AuditLog.objects.create(
+                            user=instance.created_by,
+                            action_type='create',
+                            content_type='CashboxTransaction',
+                            object_id=None,
+                            description=description,
+                            ip_address='127.0.0.1'
+                        )
+                    
+                    print(f"✅ تم إنشاء معاملة إيداع في الصندوق {cashbox.name} بقيمة {instance.total_amount}")
+                    
+                except Exception as transaction_error:
+                    print(f"خطأ في إنشاء معاملة الصندوق: {transaction_error}")
             
             print(f"تم ربط فاتورة {instance.invoice_number} بالصندوق {cashbox.name if cashbox else 'غير محدد'}")
                 
@@ -169,69 +206,10 @@ def delete_cashbox_transaction_for_sales(sender, instance, **kwargs):
         pass
 
 
-@receiver(post_save, sender=SalesInvoice)
-def create_payment_receipt_for_cash_sales(sender, instance, created, **kwargs):
-    """إنشاء سند قبض تلقائياً عند إنشاء فاتورة مبيعات نقدية"""
-    # 🔧 تجاهل أثناء استعادة النسخة الاحتياطية
-    try:
-        from backup.restore_context import is_restoring
-        if is_restoring():
-            return
-    except ImportError:
-        pass
-    
-    try:
-        from receipts.models import PaymentReceipt
-        from core.models import DocumentSequence
-        from core.models import AuditLog
-        
-        # التحقق من أن الفاتورة جديدة ونقدية
-        if created and instance.payment_type == 'cash' and instance.total_amount > 0:
-            # توليد رقم السند
-            sequence = DocumentSequence.objects.get_or_create(
-                document_type='payment_receipt',
-                defaults={'current_number': 0}
-            )[0]
-            sequence.current_number += 1
-            sequence.save()
-            receipt_number = f"PR{sequence.current_number:06d}"
-            
-            # إنشاء سند القبض
-            receipt = PaymentReceipt.objects.create(
-                receipt_number=receipt_number,
-                date=instance.date,
-                customer=instance.customer,  # حتى لو كان عميل نقدي
-                payment_type='cash',
-                amount=instance.total_amount,
-                cashbox=instance.cashbox,
-                created_by=instance.created_by
-            )
-            
-            # تسجيل النشاط في سجل الأنشطة
-            try:
-                description = _('تم إنشاء سند قبض تلقائياً رقم %(receipt)s لفاتورة المبيعات النقدية %(invoice)s - %(receipt_str)s') % {
-                    'receipt': receipt_number,
-                    'invoice': instance.invoice_number,
-                    'receipt_str': str(receipt)
-                }
-                if should_log_activity(instance.created_by, 'create', 'PaymentReceipt', receipt.id, 'تم إنشاء سند قبض تلقائياً'):
-                    AuditLog.objects.create(
-                        user=instance.created_by,
-                        action_type='create',
-                        content_type='PaymentReceipt',
-                        object_id=receipt.id,
-                        description=description,
-                        ip_address='127.0.0.1'
-                    )
-            except Exception as log_error:
-                print(f"خطأ في تسجيل نشاط إنشاء سند القبض: {log_error}")
-            
-            print(f"تم إنشاء سند قبض {receipt_number} لفاتورة المبيعات النقدية {instance.invoice_number}")
-            
-    except Exception as e:
-        print(f"خطأ في إنشاء سند القبض لفاتورة {instance.invoice_number}: {e}")
-        # لا نوقف عملية إنشاء الفاتورة في حالة فشل إنشاء سند القبض
-        pass
+# @receiver(post_save, sender=SalesInvoice)
+# def create_payment_receipt_for_cash_sales(sender, instance, created, **kwargs):
+#     """إنشاء سند قبض تلقائياً عند إنشاء فاتورة مبيعات نقدية - معطل"""
+#     pass
 
 
 @receiver(post_save, sender=SalesInvoice)
@@ -415,7 +393,7 @@ def update_inventory_on_sales_return(sender, instance, created, **kwargs):
                         movement_type='in',
                         reference_type='sales_return',
                         reference_id=instance.id,
-                        quantity=item.returned_quantity,
+                        quantity=item.quantity,
                         unit_cost=item.product.cost_price,  # استخدام تكلفة المنتج الحقيقية
                         notes=f'مردود مبيعات - رقم {instance.return_number}',
                         created_by=instance.created_by

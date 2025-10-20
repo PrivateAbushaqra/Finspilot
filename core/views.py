@@ -1096,7 +1096,11 @@ def logout_alias(request):
     if request.user.is_authenticated:
         try:
             django_logout(request)
-        except Exception:
+        except Exception as e:
+            # تجاهل أخطاء الجلسة مثل SessionInterrupted
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"خطأ في logout: {e}")
             pass
 
     # إعادة التوجيه لمسار الخروج الرسمي لضمان أي hooks/إشعارات موجودة هناك

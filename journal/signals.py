@@ -11,19 +11,28 @@ logger = logging.getLogger(__name__)
 
 @receiver(post_save, sender='sales.SalesInvoice')
 def create_sales_invoice_journal_entry(sender, instance, created, **kwargs):
-    """إنشاء قيد محاسبي تلقائياً عند إنشاء فاتورة مبيعات"""
-    if created and instance.id:
-        try:
-            # البحث عن المستخدم الذي أنشأ الفاتورة
-            user = getattr(instance, 'created_by', None)
+    """إنشاء أو تحديث القيد المحاسبي لفاتورة المبيعات عند الإنشاء أو التعديل.
+
+    - عند الإنشاء: نُنشئ قيد المبيعات وCOGS.
+    - عند التعديل: نُحدّث القيد الموجود إذا وُجد، أو نُنشئه إذا كان مفقوداً.
+    """
+    try:
+        # البحث عن المستخدم الذي أنشأ/عدّل الفاتورة
+        user = getattr(instance, 'created_by', None)
+        if created and instance.id:
+            # إنشاء القيد عند الإنشاء
             if user:
-                # إنشاء قيد الإيرادات
                 JournalService.create_sales_invoice_entry(instance, user)
-                # إنشاء قيد تكلفة البضاعة المباعة
                 JournalService.create_cogs_entry(instance, user)
                 logger.info(f"تم إنشاء القيود المحاسبية تلقائياً لفاتورة المبيعات {instance.invoice_number}")
-        except Exception as e:
-            logger.error(f"خطأ في إنشاء القيود المحاسبية لفاتورة المبيعات {instance.invoice_number}: {e}")
+        else:
+            # عند التعديل: حدّث القيد الموجود أو أنشئ واحداً إذا كان مفقوداً
+            JournalService.update_sales_invoice_entry(instance, user)
+            # تحديث/إنشاء قيد COGS إن لزم
+            JournalService.create_cogs_entry(instance, user)
+            logger.info(f"تم تحديث/التحقق من القيود المحاسبية لفاتورة المبيعات {instance.invoice_number}")
+    except Exception as e:
+        logger.error(f"خطأ في معالجة القيود المحاسبية لفاتورة المبيعات {instance.invoice_number}: {e}")
 
 
 @receiver(post_save, sender='purchases.PurchaseInvoice')
@@ -163,6 +172,9 @@ def delete_purchase_return_journal_entry(sender, instance, **kwargs):
 @receiver(post_save, sender='banks.BankTransfer')
 def create_bank_transfer_journal_entry(sender, instance, created, **kwargs):
     """إنشاء قيد محاسبي تلقائياً عند إنشاء تحويل بنكي"""
+    # تم تعطيل هذا الإشارة لأن القيد يتم إنشاؤه يدوياً في banks/views.py
+    # لتجنب إنشاء قيدين لنفس التحويل
+    return
     if created and instance.id:
         try:
             user = getattr(instance, 'created_by', None)

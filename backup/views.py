@@ -1752,13 +1752,45 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                 'assets': 'assets_liabilities'
             }
             
+            # تحويل أسماء النماذج القديمة إلى الأسماء الجديدة
+            model_name_mapping = {
+                'revenues_expenses': {
+                    'expenses_revenueexpens': 'revenueexpenseentry',
+                    'expenses_revenueexpe': 'revenueexpenseentry', 
+                    'expenses_recurringreve': 'recurringrevenueexpense'
+                },
+                'settings': {
+                    'companysettings': 'companysettings'  # سيتم تحويله إلى core.companysettings
+                }
+            }
+            
             # إنشاء نسخة من البيانات مع الأسماء المحدثة
             updated_backup_data = {'data': {}}
             for app_name, app_data in backup_data['data'].items():
                 new_app_name = app_name_mapping.get(app_name, app_name)
-                updated_backup_data['data'][new_app_name] = app_data
-                if new_app_name != app_name:
-                    logger.info(f"🔄 تحويل تطبيق {app_name} إلى {new_app_name}")
+                
+                for model_name, model_records in app_data.items():
+                    # تحويل اسم النموذج إذا كان مطلوباً
+                    if new_app_name in model_name_mapping and model_name in model_name_mapping[new_app_name]:
+                        new_model_name = model_name_mapping[new_app_name][model_name]
+                        logger.info(f"🔄 تحويل نموذج {app_name}.{model_name} إلى {new_app_name}.{new_model_name}")
+                    else:
+                        new_model_name = model_name
+                    
+                    # تحويل خاص لـ settings.companysettings إلى core.companysettings
+                    if app_name == 'settings' and model_name == 'companysettings':
+                        final_app_name = 'core'
+                        final_model_name = 'companysettings'
+                        logger.info(f"🔄 تحويل نموذج {app_name}.{model_name} إلى {final_app_name}.{final_model_name}")
+                    else:
+                        final_app_name = new_app_name
+                        final_model_name = new_model_name
+                    
+                    # إنشاء القاموس إذا لم يكن موجوداً
+                    if final_app_name not in updated_backup_data['data']:
+                        updated_backup_data['data'][final_app_name] = {}
+                    
+                    updated_backup_data['data'][final_app_name][final_model_name] = model_records
             
             # استخدام البيانات المحدثة
             backup_data = updated_backup_data
@@ -1897,7 +1929,46 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                 try:
                     # الحصول على النموذج
                     app_config = apps.get_app_config(app_name)
-                    model = app_config.get_model(model_name)
+                    
+                    # 🔧 معالجة أسماء النماذج المبتورة أو القديمة
+                    try:
+                        model = app_config.get_model(model_name)
+                    except LookupError:
+                        # محاولة إيجاد النموذج الصحيح بناءً على جزء من الاسم
+                        model = None
+                        # قائمة بتطابقات أسماء النماذج المعروفة
+                        model_mappings = {
+                            'expenses_revenueexpens': 'RevenueExpenseEntry',
+                            'expenses_revenueexpe': 'RevenueExpenseEntry',
+                            'expenses_recurringreve': 'RecurringRevenueExpense',
+                            'expenses_recurringrev': 'RecurringRevenueExpense',
+                        }
+                        
+                        # محاولة إيجاد تطابق
+                        if model_name.lower() in model_mappings:
+                            try:
+                                model = app_config.get_model(model_mappings[model_name.lower()])
+                                logger.info(f"✅ تم إيجاد النموذج البديل: {model_name} → {model_mappings[model_name.lower()]}")
+                            except LookupError:
+                                pass
+                        
+                        # إذا لم نجد تطابق، نحاول البحث بشكل جزئي
+                        if not model:
+                            for available_model in app_config.get_models():
+                                model_table_name = available_model._meta.db_table.replace(f"{app_name}_", "").lower()
+                                if model_name.lower().startswith(model_table_name[:15]) or model_table_name.startswith(model_name.lower()[:15]):
+                                    model = available_model
+                                    logger.info(f"✅ تم إيجاد النموذج بالمطابقة الجزئية: {model_name} → {available_model.__name__}")
+                                    break
+                        
+                        # إذا لم نجد النموذج نهائياً
+                        if not model:
+                            logger.warning(f"⚠️ لم يتم العثور على النموذج {app_name}.{model_name} - تخطي")
+                            progress_data['tables_status'][i]['status'] = 'skipped'
+                            progress_data['tables_status'][i]['error'] = f'النموذج غير موجود'
+                            set_restore_progress_data(progress_data)
+                            processed_tables += 1
+                            continue
                     
                     if model and 'data' in backup_data and app_name in backup_data['data'] and model_name in backup_data['data'][app_name]:
                         records = backup_data['data'][app_name][model_name]
@@ -1934,8 +2005,13 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                                             continue
                                     elif model._meta.label == 'core.CompanySettings':
                                         # إزالة الحقول القديمة
-                                        valid_fields = ['pk', 'company_name', 'logo', 'currency', 'address', 'phone', 'email', 'tax_number', 'session_timeout_minutes', 'enable_session_timeout', 'logout_on_browser_close', 'created_at', 'updated_at']
+                                        valid_fields = ['pk', 'company_name', 'logo', 'currency', 'address', 'phone', 'email', 'tax_number', 'default_tax_rate', 'session_timeout_minutes', 'enable_session_timeout', 'logout_on_browser_close', 'created_at', 'updated_at']
                                         record_data = {k: v for k, v in record_data.items() if k in valid_fields}
+                                        # إضافة قيمة افتراضية لـ default_tax_rate إذا كان مفقوداً أو null
+                                        if 'default_tax_rate' not in record_data or record_data.get('default_tax_rate') is None:
+                                            from decimal import Decimal
+                                            record_data['default_tax_rate'] = Decimal('0.00')
+                                            logger.info(f"✅ تم إضافة قيمة افتراضية لـ default_tax_rate في CompanySettings")
                                     elif model._meta.label == 'core.DocumentSequence':
                                         # إزالة الحقول القديمة
                                         valid_fields = ['pk', 'document_type', 'prefix', 'digits', 'current_number', 'created_at', 'updated_at']
@@ -1958,6 +2034,23 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                                         # إضافة قيمة افتراضية لـ groups (ManyToMany field)
                                         if 'groups' not in record_data or record_data.get('groups') in [None, 'null']:
                                             record_data['groups'] = []
+                                        # إضافة قيمة افتراضية لـ email إذا كان null
+                                        if record_data.get('email') is None:
+                                            record_data['email'] = ''
+                                    elif model._meta.label == 'products.Category':
+                                        # إضافة قيمة افتراضية لـ description إذا كان null
+                                        if record_data.get('description') is None:
+                                            record_data['description'] = ''
+                                    elif model._meta.label == 'customers.CustomerSupplier':
+                                        # إضافة قيم افتراضية للحقول blank=True إذا كانت null
+                                        if record_data.get('email') is None:
+                                            record_data['email'] = ''
+                                        if record_data.get('notes') is None:
+                                            record_data['notes'] = ''
+                                    elif model._meta.label == 'banks.BankAccount':
+                                        # إضافة قيمة افتراضية لـ iban إذا كان null
+                                        if record_data.get('iban') is None:
+                                            record_data['iban'] = ''
                                     elif model._meta.label == 'settings.SuperAdminSettings':
                                         # إضافة قيمة افتراضية لـ system_subtitle
                                         if not record_data.get('system_subtitle'):
@@ -2085,6 +2178,25 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                                             else:
                                                 cleaned_data[key] = value
                                     
+                                    # تحويل None إلى قيم فارغة للحقول blank=True
+                                    for f in model._meta.get_fields():
+                                        if hasattr(f, 'blank') and f.blank and f.name in cleaned_data and cleaned_data[f.name] is None:
+                                            if f.__class__.__name__ in ['CharField', 'TextField', 'EmailField']:
+                                                cleaned_data[f.name] = ''
+                                    
+                                    # تعيين القيم الافتراضية للحقول المفقودة التي لها قيم افتراضية
+                                    for f in model._meta.get_fields():
+                                        if f.name not in cleaned_data and hasattr(f, 'default') and f.default is not models.NOT_PROVIDED:
+                                            if callable(f.default):
+                                                # إذا كانت الدالة الافتراضية قابلة للاستدعاء
+                                                try:
+                                                    cleaned_data[f.name] = f.default()
+                                                except:
+                                                    # في حالة فشل الاستدعاء، استخدم None
+                                                    cleaned_data[f.name] = None
+                                            else:
+                                                cleaned_data[f.name] = f.default
+                                    
                                     # التحقق من أن جميع الحقول المطلوبة موجودة
                                     for f in model._meta.get_fields():
                                         # تخطي ManyToMany fields (سيتم معالجتها لاحقاً)
@@ -2093,12 +2205,33 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                                         # تخطي OneToOne reverse relations
                                         if f.__class__.__name__ == 'OneToOneRel':
                                             continue
-                                        # التحقق من الحقول المطلوبة
-                                        if hasattr(f, 'null') and not f.null and f.name != 'id':
+                                        # التحقق من الحقول المطلوبة (غير null وغير blank)
+                                        if hasattr(f, 'null') and not f.null and not getattr(f, 'blank', False) and f.name != 'id':
                                             if f.name not in cleaned_data or cleaned_data[f.name] is None:
-                                                # تخطي هذا السجل - حقل مطلوب مفقود
-                                                logger.warning(f"تخطي سجل في {model._meta.label}: الحقل المطلوب '{f.name}' مفقود أو null")
-                                                raise ValueError(f"Required field {f.name} is missing or null")
+                                                # 🔧 محاولة إضافة قيمة افتراضية بناءً على نوع الحقل
+                                                field_default_added = False
+                                                if f.__class__.__name__ == 'DecimalField':
+                                                    from decimal import Decimal
+                                                    cleaned_data[f.name] = Decimal('0.00')
+                                                    field_default_added = True
+                                                    logger.info(f"✅ تم إضافة قيمة افتراضية Decimal(0.00) للحقل '{f.name}' في {model._meta.label}")
+                                                elif f.__class__.__name__ in ['IntegerField', 'PositiveIntegerField']:
+                                                    cleaned_data[f.name] = 0
+                                                    field_default_added = True
+                                                    logger.info(f"✅ تم إضافة قيمة افتراضية 0 للحقل '{f.name}' في {model._meta.label}")
+                                                elif f.__class__.__name__ in ['CharField', 'TextField']:
+                                                    cleaned_data[f.name] = ''
+                                                    field_default_added = True
+                                                    logger.info(f"✅ تم إضافة قيمة افتراضية '' للحقل '{f.name}' في {model._meta.label}")
+                                                elif f.__class__.__name__ == 'BooleanField':
+                                                    cleaned_data[f.name] = False
+                                                    field_default_added = True
+                                                    logger.info(f"✅ تم إضافة قيمة افتراضية False للحقل '{f.name}' في {model._meta.label}")
+                                                
+                                                if not field_default_added:
+                                                    # لم نتمكن من إضافة قيمة افتراضية، تخطي هذا السجل
+                                                    logger.warning(f"⚠️ تخطي سجل في {model._meta.label}: الحقل المطلوب '{f.name}' مفقود أو null ولا يمكن تعيين قيمة افتراضية")
+                                                    raise ValueError(f"Required field {f.name} is missing or null")
                                     
                                     # إنشاء أو تحديث السجل
                                     pk_value = cleaned_data.get('pk')

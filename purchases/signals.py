@@ -183,16 +183,14 @@ def update_inventory_on_purchase_invoice(sender, instance, created, **kwargs):
 @receiver(post_save, sender=PurchaseReturn)
 def create_journal_entry_for_purchase_return(sender, instance, created, **kwargs):
     """إنشاء القيد المحاسبي تلقائياً عند إنشاء أو تحديث مردود مشتريات"""
-    # 🔧 تم تعطيل هذه الإشارة لتجنب إنشاء قيد مكرر
-    # القيد المحاسبي يتم إنشاؤه الآن من خلال الـ View فقط
-    # purchases/views.py -> PurchaseReturnCreateView -> create_purchase_return_journal_entry()
-    return
-    
     try:
         # 🔧 تعطيل السيجنال أثناء عملية استعادة النسخة الاحتياطية
-        from backup.restore_context import is_restoring
-        if is_restoring():
-            return
+        try:
+            from backup.restore_context import is_restoring
+            if is_restoring():
+                return
+        except ImportError:
+            pass
         
         from journal.models import JournalEntry
         from journal.services import JournalService

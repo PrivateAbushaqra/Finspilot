@@ -223,6 +223,8 @@ class AuditMiddleware(MiddlewareMixin):
 class SessionTimeoutMiddleware:
     """
     Middleware لمعالجة انتهاء الجلسة التلقائي
+    هذا الـ Middleware يعمل فقط عند تفعيله من إعدادات الشركة
+    ولا يتداخل مع آلية الجلسة الأساسية في Django
     """
     
     def __init__(self, get_response):
@@ -239,6 +241,7 @@ class SessionTimeoutMiddleware:
             '/static/',
             '/api/extend-session/',
             '/settings/company/',  # إضافة صفحة إعدادات الشركة
+            '/auth/',  # جميع مسارات المصادقة
         ]
         
         # التحقق من أن المستخدم مسجل دخوله
@@ -249,6 +252,7 @@ class SessionTimeoutMiddleware:
                 company_settings = CompanySettings.objects.first()
                 
                 # التحقق من تفعيل انتهاء الجلسة التلقائي
+                # فقط إذا كانت الإعدادات موجودة ومفعلة
                 if company_settings and company_settings.enable_session_timeout:
                     session_timeout_minutes = company_settings.session_timeout_minutes
                     
@@ -257,35 +261,53 @@ class SessionTimeoutMiddleware:
                     now = timezone.now()
                     
                     if last_activity:
-                        last_activity_time = timezone.datetime.fromisoformat(last_activity)
-                        time_since_activity = now - last_activity_time
-                        
-                        # إذا تجاوز المستخدم مدة عدم النشاط المحددة
-                        if time_since_activity > timedelta(minutes=session_timeout_minutes):
-                            logout(request)
+                        try:
+                            last_activity_time = timezone.datetime.fromisoformat(last_activity)
+                            time_since_activity = now - last_activity_time
                             
-                            # إذا كان طلب AJAX، أرسل استجابة JSON
-                            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                                return JsonResponse({
-                                    'error': 'انتهت جلسة العمل بسبب عدم النشاط',
-                                    'redirect': '/ar/auth/login/',
-                                    'session_expired': True
-                                }, status=401)
-                            
-                            # وإلا قم بإعادة التوجيه لصفحة تسجيل الدخول
-                            return redirect('/ar/auth/login/')
+                            # إذا تجاوز المستخدم مدة عدم النشاط المحددة
+                            if time_since_activity > timedelta(minutes=session_timeout_minutes):
+                                try:
+                                    logout(request)
+                                except Exception as e:
+                                    # تجاهل أخطاء الجلسة
+                                    import logging
+                                    logger = logging.getLogger(__name__)
+                                    logger.warning(f"خطأ في logout بسبب انتهاء الجلسة: {e}")
+                                
+                                # إذا كان طلب AJAX، أرسل استجابة JSON
+                                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                                    return JsonResponse({
+                                        'error': 'انتهت جلسة العمل بسبب عدم النشاط',
+                                        'redirect': '/ar/auth/login/',
+                                        'session_expired': True
+                                    }, status=401)
+                                
+                                # وإلا قم بإعادة التوجيه لصفحة تسجيل الدخول
+                                return redirect('/ar/auth/login/')
+                        except (ValueError, TypeError) as e:
+                            # في حال وجود خطأ في تحليل التاريخ، امسح last_activity
+                            import logging
+                            logger = logging.getLogger(__name__)
+                            logger.warning(f"خطأ في تحليل last_activity: {e}")
+                            request.session['last_activity'] = now.isoformat()
+                    else:
+                        # إذا لم يكن هناك last_activity، أنشئه
+                        request.session['last_activity'] = now.isoformat()
                     
-                    # تحديث وقت آخر نشاط
-                    request.session['last_activity'] = now.isoformat()
-                    request.session.set_expiry(None)  # استخدام انتهاء الجلسة الافتراضي
+                    # تحديث وقت آخر نشاط فقط للطلبات المهمة (ليس للملفات الثابتة)
+                    if not any(ext in request.path for ext in ['.css', '.js', '.png', '.jpg', '.ico', '.svg']):
+                        request.session['last_activity'] = now.isoformat()
                     
-                    # تطبيق إعداد الخروج عند إغلاق المتصفح
-                    if company_settings.logout_on_browser_close:
-                        request.session.set_expiry(0)  # انتهاء الجلسة عند إغلاق المتصفح
+                    # لا نستخدم set_expiry هنا لأننا نريد الاعتماد على SESSION_COOKIE_AGE
+                    # وليس على logout_on_browser_close من CompanySettings
+                    # هذا يتجنب التعارض بين الإعدادات
                 
             except Exception as e:
                 # في حالة حدوث خطأ، تسجيل الخطأ ولكن لا تؤثر على سير العمل
-                print(f"خطأ في SessionTimeoutMiddleware: {str(e)}")
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"خطأ في SessionTimeoutMiddleware: {str(e)}")
         
         response = self.get_response(request)
         return response
@@ -390,3 +412,25 @@ class POSUserMiddleware:
 
         response = self.get_response(request)
         return response
+
+
+class SessionExceptionMiddleware:
+    """
+    Middleware للتعامل مع أخطاء الجلسة مثل SessionInterrupted
+    """
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        try:
+            response = self.get_response(request)
+            return response
+        except Exception as e:
+            # التحقق من نوع الخطأ
+            if 'SessionInterrupted' in str(type(e)) or 'session was deleted' in str(e):
+                # إعادة توجيه لصفحة تسجيل الدخول
+                from django.shortcuts import redirect
+                return redirect('/ar/auth/login/')
+            else:
+                # إعادة رفع الخطأ إذا لم يكن SessionInterrupted
+                raise

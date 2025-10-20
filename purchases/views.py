@@ -422,14 +422,10 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
             sequence = DocumentSequence.objects.get(document_type='purchase_invoice')
             next_invoice_number = sequence.get_formatted_number()
         except DocumentSequence.DoesNotExist:
-            # إنشاء تسلسل جديد إذا لم يكن موجوداً
-            sequence = DocumentSequence.objects.create(
-                document_type='purchase_invoice',
-                prefix='PUR-',
-                digits=6,
-                current_number=1
-            )
-            next_invoice_number = sequence.get_formatted_number()
+            # عرض رسالة خطأ إذا لم يكن التسلسل معداً مسبقاً
+            from django.contrib import messages
+            messages.error(request, _('Purchase invoice sequence is not configured. Please set up the sequence first from the document sequences settings page.'))
+            next_invoice_number = ''
         
         context = {
             'suppliers': CustomerSupplier.objects.filter(
@@ -462,14 +458,9 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
                 sequence = DocumentSequence.objects.get(document_type='purchase_invoice')
                 invoice_number = sequence.get_next_number()
             except DocumentSequence.DoesNotExist:
-                # إنشاء تسلسل جديد إذا لم يكن موجوداً
-                sequence = DocumentSequence.objects.create(
-                    document_type='purchase_invoice',
-                    prefix='PUR-',
-                    digits=6,
-                    current_number=1
-                )
-                invoice_number = sequence.get_next_number()
+                # عرض رسالة خطأ إذا لم يكن التسلسل معداً مسبقاً
+                messages.error(request, _('Purchase invoice sequence is not configured. Please set up the sequence first from the document sequences settings page.'))
+                return redirect('purchases:invoice_add')
             
             # استلام البيانات الأساسية للفاتورة
             supplier_invoice_number = request.POST.get('supplier_invoice_number', '').strip()
@@ -765,19 +756,24 @@ def purchase_debitnote_create(request):
 
                 supplier = get_object_or_404(CustomerSupplier, id=supplier_id)
 
+                supplier_debit_note_number = request.POST.get('supplier_debit_note_number', '').strip()
+                if not supplier_debit_note_number:
+                    messages.error(request, _('يرجى إدخال رقم إشعار المدين (مصدر)'))
+                    return redirect('purchases:debitnote_add')
+
                 # توليد الرقم
                 try:
                     seq = DocumentSequence.objects.get(document_type='debit_note')
                     note_number = seq.get_next_number()
                 except DocumentSequence.DoesNotExist:
-                    last = PurchaseDebitNote.objects.order_by('-id').first()
-                    number = last.id + 1 if last else 1
-                    note_number = f"DN-{number:06d}"
+                    messages.error(request, _('يجب إعداد تسلسل "إشعار مدين" أولاً قبل إنشاء إشعارات مدين جديدة'))
+                    return redirect('purchases:debitnote_add')
 
                 debit = PurchaseDebitNote.objects.create(
                     note_number=note_number,
                     date=request.POST.get('date', date.today()),
                     supplier=supplier,
+                    supplier_debit_note_number=supplier_debit_note_number,
                     subtotal=Decimal(request.POST.get('subtotal', '0') or '0'),
                     notes=request.POST.get('notes', ''),
                     created_by=request.user
@@ -812,9 +808,7 @@ def purchase_debitnote_create(request):
         seq = DocumentSequence.objects.get(document_type='debit_note')
         context['next_note_number'] = seq.peek_next_number() if hasattr(seq, 'peek_next_number') else seq.get_formatted_number()
     except DocumentSequence.DoesNotExist:
-        last = PurchaseDebitNote.objects.order_by('-id').first()
-        number = last.id + 1 if last else 1
-        context['next_note_number'] = f"DN-{number:06d}"
+        context['sequence_error'] = _('يجب إعداد تسلسل "إشعار مدين" أولاً قبل إنشاء إشعارات مدين جديدة')
 
     return render(request, 'purchases/debitnote_add.html', context)
 
@@ -1227,7 +1221,7 @@ class PurchaseReturnListView(LoginRequiredMixin, ListView):
 class PurchaseReturnCreateView(LoginRequiredMixin, CreateView):
     model = PurchaseReturn
     template_name = 'purchases/return_add.html'
-    fields = ['return_number', 'original_invoice', 'date', 'return_type', 'return_reason', 'notes']
+    fields = ['return_number', 'original_invoice', 'supplier_return_number', 'date', 'return_type', 'return_reason', 'notes']
     success_url = reverse_lazy('purchases:return_list')
     
     def get_context_data(self, **kwargs):
@@ -1263,18 +1257,17 @@ class PurchaseReturnCreateView(LoginRequiredMixin, CreateView):
         
         context['invoices'] = available_invoices
         
-        # Generate next return number
-        last_return = PurchaseReturn.objects.order_by('-id').first()
-        if last_return:
-            try:
-                last_number = int(last_return.return_number.split('-')[-1])
-                next_number = last_number + 1
-            except:
-                next_number = 1
-        else:
-            next_number = 1
-        
-        context['suggested_return_number'] = f"RET-{next_number:06d}"
+        # Generate suggested return number
+        try:
+            from core.models import DocumentSequence
+            seq = DocumentSequence.objects.get(document_type='purchase_return')
+            # Calculate next number without saving
+            next_num = seq.current_number
+            # Format the number
+            formatted_number = f"{seq.prefix}{next_num:0{seq.digits}d}"
+            context['suggested_return_number'] = formatted_number
+        except DocumentSequence.DoesNotExist:
+            context['suggested_return_number'] = "يجب إعداد تسلسل أرقام المستندات لمردود المشتريات أولاً"
         
         return context
     
@@ -1283,7 +1276,11 @@ class PurchaseReturnCreateView(LoginRequiredMixin, CreateView):
         form.instance.created_by = self.request.user
         
         # Save the return
-        response = super().form_valid(form)
+        try:
+            response = super().form_valid(form)
+        except ValueError as e:
+            messages.error(self.request, str(e))
+            return self.form_invalid(form)
         
         # Process return items from POST data
         self.process_return_items()

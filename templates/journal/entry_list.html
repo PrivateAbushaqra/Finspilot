@@ -128,12 +128,90 @@
                         <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
                             <thead>
                                 <tr>
-                                    <th>{% trans "Entry Number" %}</th>
-                                    <th>{% trans "Date" %}</th>
-                                    <th>{% trans "Operation Type" %}</th>
-                                    <th>{% trans "Description" %}</th>
-                                    <th>{% trans "Amount" %}</th>
-                                    <th>{% trans "Created By" %}</th>
+                                    <th>
+                                        <a href="?{% for key, value in request.GET.items %}{% if key not in 'order_by,direction,page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}order_by=entry_number&direction={% if order_by == 'entry_number' and direction == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none text-dark">
+                                            {% trans "Entry Number" %}
+                                            {% if order_by == 'entry_number' %}
+                                                {% if direction == 'asc' %}
+                                                    <i class="fas fa-sort-up text-primary"></i>
+                                                {% else %}
+                                                    <i class="fas fa-sort-down text-primary"></i>
+                                                {% endif %}
+                                            {% else %}
+                                                <i class="fas fa-sort text-muted"></i>
+                                            {% endif %}
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="?{% for key, value in request.GET.items %}{% if key not in 'order_by,direction,page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}order_by=entry_date&direction={% if order_by == 'entry_date' and direction == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none text-dark">
+                                            {% trans "Date" %}
+                                            {% if order_by == 'entry_date' %}
+                                                {% if direction == 'asc' %}
+                                                    <i class="fas fa-sort-up text-primary"></i>
+                                                {% else %}
+                                                    <i class="fas fa-sort-down text-primary"></i>
+                                                {% endif %}
+                                            {% else %}
+                                                <i class="fas fa-sort text-muted"></i>
+                                            {% endif %}
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="?{% for key, value in request.GET.items %}{% if key not in 'order_by,direction,page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}order_by=reference_type&direction={% if order_by == 'reference_type' and direction == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none text-dark">
+                                            {% trans "Operation Type" %}
+                                            {% if order_by == 'reference_type' %}
+                                                {% if direction == 'asc' %}
+                                                    <i class="fas fa-sort-up text-primary"></i>
+                                                {% else %}
+                                                    <i class="fas fa-sort-down text-primary"></i>
+                                                {% endif %}
+                                            {% else %}
+                                                <i class="fas fa-sort text-muted"></i>
+                                            {% endif %}
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="?{% for key, value in request.GET.items %}{% if key not in 'order_by,direction,page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}order_by=description&direction={% if order_by == 'description' and direction == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none text-dark">
+                                            {% trans "Description" %}
+                                            {% if order_by == 'description' %}
+                                                {% if direction == 'asc' %}
+                                                    <i class="fas fa-sort-up text-primary"></i>
+                                                {% else %}
+                                                    <i class="fas fa-sort-down text-primary"></i>
+                                                {% endif %}
+                                            {% else %}
+                                                <i class="fas fa-sort text-muted"></i>
+                                            {% endif %}
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="?{% for key, value in request.GET.items %}{% if key not in 'order_by,direction,page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}order_by=total_amount&direction={% if order_by == 'total_amount' and direction == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none text-dark">
+                                            {% trans "Amount" %}
+                                            {% if order_by == 'total_amount' %}
+                                                {% if direction == 'asc' %}
+                                                    <i class="fas fa-sort-up text-primary"></i>
+                                                {% else %}
+                                                    <i class="fas fa-sort-down text-primary"></i>
+                                                {% endif %}
+                                            {% else %}
+                                                <i class="fas fa-sort text-muted"></i>
+                                            {% endif %}
+                                        </a>
+                                    </th>
+                                    <th>
+                                        <a href="?{% for key, value in request.GET.items %}{% if key not in 'order_by,direction,page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}order_by=created_by__username&direction={% if order_by == 'created_by__username' and direction == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none text-dark">
+                                            {% trans "Created By" %}
+                                            {% if order_by == 'created_by__username' %}
+                                                {% if direction == 'asc' %}
+                                                    <i class="fas fa-sort-up text-primary"></i>
+                                                {% else %}
+                                                    <i class="fas fa-sort-down text-primary"></i>
+                                                {% endif %}
+                                            {% else %}
+                                                <i class="fas fa-sort text-muted"></i>
+                                            {% endif %}
+                                        </a>
+                                    </th>
                                     <th>{% trans "Actions" %}</th>
                                 </tr>
                             </thead>

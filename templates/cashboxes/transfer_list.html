@@ -58,7 +58,7 @@ table.dataTable thead th.sorting:after {
                                 <i class="fas fa-list me-1"></i>
                                 {% trans "Cash Box List" %}
                             </a>
-                            <button type="button" class="btn btn-primary no-print" data-bs-toggle="modal" data-bs-target="#createTransferModal">
+                            <button type="button" class="btn btn-primary no-print" onclick="checkSequenceAndOpenModal()">
                                 <i class="fas fa-plus"></i> {% trans "New Transfer" %}
                             </button>
                         </div>
@@ -189,8 +189,8 @@ table.dataTable thead th.sorting:after {
                     {% else %}
                         <div class="text-center">
                             <p class="mb-3">{% trans "No transfers found" %}</p>
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTransferModal">
-                                <i class="fas fa-plus"></i> {% trans "Create New Transfer" %}
+                            <button type="button" class="btn btn-primary" onclick="checkSequenceAndOpenModal()">
+                                <i class="fas fa-plus"></i> {% trans "New Transfer" %}
                             </button>
                         </div>
                     {% endif %}
@@ -686,5 +686,17 @@ $(document).ready(function() {
         ]
     });
 });
+
+// التحقق من وجود تسلسل المستندات قبل فتح الـ modal
+function checkSequenceAndOpenModal() {
+    {% if not sequence_exists %}
+        alert('{% trans "يجب إعداد تسلسل \"التحويل بين البنوك والصناديق\" في الإعدادات قبل إنشاء أي تحويل." %}');
+        return;
+    {% endif %}
+    
+    // فتح الـ modal
+    var modal = new bootstrap.Modal(document.getElementById('createTransferModal'));
+    modal.show();
+}
 </script>
 {% endblock %}

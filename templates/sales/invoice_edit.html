@@ -414,8 +414,8 @@
                                         </div>
                                     </div>
                                     <div class="d-flex justify-content-between mb-2">
-                                        <span>مبلغ الخصم:</span>
-                                        <strong id="invoice-discount-display">{{ object.discount_amount|currency_format }}</strong>
+                                        <span>{% trans "Amount Discount" %}:</span>
+                                        <input type="number" id="invoice-discount-input" name="discount_amount" value="{{ object.discount_amount|unlocalize }}" step="0.001" min="0" class="form-control" style="width: 120px; text-align: right; font-weight: bold;">
                                     </div>
                                     <hr>
                                     <div class="d-flex justify-content-between">
@@ -595,7 +595,7 @@ $(document).ready(function() {
     const language = pathMatch ? pathMatch[1] : 'ar';
     const invoiceId = '{{ object.pk }}';
     const apiBaseUrl = `/${language}/sales/invoices/${invoiceId}`;
-    const discountAmount = parseFloat('{{ object.discount_amount|unlocalize }}') || 0;
+    const getDiscountAmount = () => parseFloat($('#invoice-discount-input').val()) || 0;
 
     // Function to calculate item totals in real-time
     function calculateItemTotal(row) {
@@ -626,6 +626,7 @@ $(document).ready(function() {
             totalTax += itemTotals.taxAmount;
         });
         
+        const discountAmount = getDiscountAmount();
         const grandTotal = totalSubtotal + totalTax - discountAmount;
         
         $('#invoice-subtotal-display').text(formatCurrency(totalSubtotal));
@@ -643,6 +644,11 @@ $(document).ready(function() {
         row.find('.total-amount strong').text(formatCurrency(itemTotals.total));
         
         // Update invoice totals
+        updateInvoiceTotals();
+    });
+
+    // Real-time calculation when discount changes
+    $('#invoice-discount-input').on('input', function() {
         updateInvoiceTotals();
     });
 
@@ -773,7 +779,7 @@ $(document).ready(function() {
                         // Update totals using IDs directly
                         $('#invoice-subtotal-display').text(formatCurrency(invoiceSubtotal));
                         $('#invoice-tax-display').text(formatCurrency(invoiceTaxAmount));
-                        $('#invoice-discount-display').text(formatCurrency(invoiceDiscountAmount));
+                        $('#invoice-discount-input').val(invoiceDiscountAmount.toFixed(3));
                         $('#invoice-total-display').text(formatCurrency(invoiceTotalAmount));
                         
                         console.log(`✅ تم تحديث المجاميع:`);

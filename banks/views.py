@@ -6,7 +6,7 @@ from django.views.generic import ListView, CreateView, UpdateView, DeleteView, T
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from .models import BankAccount, BankTransfer, BankTransaction, BankReconciliation, BankStatement
 from settings.models import Currency, CompanySettings
 from core.signals import log_user_activity
@@ -166,7 +166,7 @@ class BankAccountCreateView(LoginRequiredMixin, View):
             # Convert balance to number
             try:
                 balance = Decimal(str(balance))
-            except (ValueError, Decimal.InvalidOperation):
+            except (ValueError, InvalidOperation):
                 balance = Decimal('0.0')
 
             # Get currency from database
@@ -204,7 +204,7 @@ class BankAccountCreateView(LoginRequiredMixin, View):
                 if balance > 0:
                     try:
                         from accounts.models import Account
-                        bank_account_obj = JournalService.get_or_create_bank_account_by_name(account.name, account.bank_name)
+                        bank_account_obj = JournalService.get_or_create_bank_account(account)
                         
                         # استخدام حساب رأس المال للرصيد الافتتاحي فقط (IFRS IAS 1)
                         # الرصيد الافتتاحي يعتبر مساهمة من رأس المال
@@ -340,7 +340,7 @@ class BankAccountUpdateView(LoginRequiredMixin, View):
             # Convert balance to number
             try:
                 new_balance = Decimal(str(balance))
-            except (ValueError, Decimal.InvalidOperation):
+            except (ValueError, InvalidOperation):
                 new_balance = account.balance  # Keep the current balance in case of error
             
             # حساب الرصيد القديم
@@ -413,7 +413,7 @@ class BankAccountUpdateView(LoginRequiredMixin, View):
                 # إنشاء قيد محاسبي للتعديل باستخدام الحساب الصحيح
                 try:
                     from accounts.models import Account
-                    bank_account_obj = JournalService.get_or_create_bank_account_by_name(account.name, account.bank_name)
+                    bank_account_obj = JournalService.get_or_create_bank_account(account)
                     
                     # تحديد الحساب المقابل حسب نوع التعديل (IFRS compliant)
                     adjustment_account_code = get_adjustment_account_code(adjustment_type, is_bank=True)
@@ -809,7 +809,7 @@ class BankTransferCreateView(LoginRequiredMixin, View):
                 amount = Decimal(clean_decimal_input(amount))
                 if amount <= 0:
                     raise ValueError
-            except (ValueError, Decimal.InvalidOperation):
+            except (ValueError, InvalidOperation):
                 messages.error(request, 'Transfer amount must be a positive number!')
                 return render(request, self.template_name, context)
             
@@ -817,7 +817,7 @@ class BankTransferCreateView(LoginRequiredMixin, View):
                 fees = Decimal(clean_decimal_input(fees))
                 if fees < 0:
                     raise ValueError
-            except (ValueError, Decimal.InvalidOperation):
+            except (ValueError, InvalidOperation):
                 messages.error(request, 'Transfer fees must be a non-negative number!')
                 return render(request, self.template_name, context)
             
@@ -825,7 +825,7 @@ class BankTransferCreateView(LoginRequiredMixin, View):
                 exchange_rate = Decimal(clean_decimal_input(exchange_rate))
                 if exchange_rate <= 0:
                     raise ValueError
-            except (ValueError, Decimal.InvalidOperation):
+            except (ValueError, InvalidOperation):
                 messages.error(request, 'Exchange rate must be a positive number!')
                 return render(request, self.template_name, context)
             
@@ -864,7 +864,7 @@ class BankTransferCreateView(LoginRequiredMixin, View):
                 # إنشاء معاملات البنك بدلاً من التعديل المباشر للأرصدة
                 
                 # إنشاء حركة الخصم من الحساب المرسل
-                BankTransaction.objects.create(
+                withdrawal = BankTransaction(
                     bank=from_account,
                     transaction_type='withdrawal',
                     amount=total_amount,
@@ -873,9 +873,12 @@ class BankTransferCreateView(LoginRequiredMixin, View):
                     date=date,
                     created_by=request.user
                 )
-                
+                # علم مؤقت لإعلام إشارات BankTransaction بعدم إنشاء قيد تلقائي
+                withdrawal._skip_journal = True
+                withdrawal.save()
+
                 # إنشاء حركة الإيداع للحساب المستقبل
-                BankTransaction.objects.create(
+                deposit = BankTransaction(
                     bank=to_account,
                     transaction_type='deposit',
                     amount=amount * exchange_rate,
@@ -884,6 +887,8 @@ class BankTransferCreateView(LoginRequiredMixin, View):
                     date=date,
                     created_by=request.user
                 )
+                deposit._skip_journal = True
+                deposit.save()
                 
                 # لا حاجة لاستدعاء sync_balance هنا - سيتم تلقائياً عند save() للـ BankTransaction
                 
@@ -966,7 +971,7 @@ class BankCashboxTransferCreateView(LoginRequiredMixin, View):
                 if recent_transfer:
                     messages.warning(request, _('A similar transfer was created recently! Please check the transfer list.'))
                     return redirect('banks:transfer_list')
-            except (ValueError, Decimal.InvalidOperation):
+            except (ValueError, InvalidOperation):
                 pass  # سيتم التعامل مع الخطأ لاحقاً
             
             # إعداد السياق لحالات الخطأ
@@ -1015,7 +1020,7 @@ class BankCashboxTransferCreateView(LoginRequiredMixin, View):
                 amount = Decimal(clean_decimal_input(amount))
                 if amount <= 0:
                     raise ValueError
-            except (ValueError, Decimal.InvalidOperation):
+            except (ValueError, InvalidOperation):
                 messages.error(request, 'Transfer amount must be a positive number!')
                 return render(request, self.template_name, context)
             
@@ -1023,7 +1028,7 @@ class BankCashboxTransferCreateView(LoginRequiredMixin, View):
                 fees = Decimal(clean_decimal_input(fees))
                 if fees < 0:
                     raise ValueError
-            except (ValueError, Decimal.InvalidOperation):
+            except (ValueError, InvalidOperation):
                 messages.error(request, 'Transfer fees must be a non-negative number!')
                 return render(request, self.template_name, context)
             
@@ -1031,7 +1036,7 @@ class BankCashboxTransferCreateView(LoginRequiredMixin, View):
                 exchange_rate = Decimal(clean_decimal_input(exchange_rate))
                 if exchange_rate <= 0:
                     raise ValueError
-            except (ValueError, Decimal.InvalidOperation):
+            except (ValueError, InvalidOperation):
                 messages.error(request, 'Exchange rate must be a positive number!')
                 return render(request, self.template_name, context)
             
@@ -1070,7 +1075,7 @@ class BankCashboxTransferCreateView(LoginRequiredMixin, View):
                     )
                     
                     # إضافة حركة البنك (بدون تعديل الرصيد مباشرة)
-                    BankTransaction.objects.create(
+                    bank_transaction = BankTransaction(
                         bank=bank,
                         transaction_type='withdrawal',
                         amount=total_amount,
@@ -1079,6 +1084,9 @@ class BankCashboxTransferCreateView(LoginRequiredMixin, View):
                         date=date,
                         created_by=request.user
                     )
+                    # تعيين علم لتجنب إنشاء قيد تلقائي من signal
+                    bank_transaction._skip_journal = True
+                    bank_transaction.save()
                     
                     # مزامنة رصيد البنك من المعاملات
                     bank.sync_balance()
@@ -1129,7 +1137,7 @@ class BankCashboxTransferCreateView(LoginRequiredMixin, View):
                     )
                     
                     # إضافة حركة البنك
-                    BankTransaction.objects.create(
+                    bank_transaction = BankTransaction(
                         bank=bank,
                         transaction_type='deposit',
                         amount=amount * exchange_rate,
@@ -1138,6 +1146,9 @@ class BankCashboxTransferCreateView(LoginRequiredMixin, View):
                         date=date,
                         created_by=request.user
                     )
+                    # تعيين علم لتجنب إنشاء قيد تلقائي من signal
+                    bank_transaction._skip_journal = True
+                    bank_transaction.save()
                     
                     # تحديث الأرصدة من خلال حساب المعاملات
                     # تحديث رصيد الصندوق بالطريقة الصحيحة (سيتم تطبيق هذا لاحقاً عند إصلاح الصناديق)
@@ -1243,6 +1254,19 @@ class BankTransferDetailView(LoginRequiredMixin, DetailView):
     model = BankTransfer
     template_name = 'banks/transfer_detail.html'
     context_object_name = 'transfer'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # إضافة القيود المحاسبية المرتبطة
+        from journal.models import JournalEntry
+        from django.db.models import Q
+        context['journal_entries'] = JournalEntry.objects.filter(
+            Q(bank_transfer=self.object) | 
+            Q(reference_type='bank_transfer', reference_id=self.object.id)
+        ).select_related('created_by').distinct()
+        
+        return context
 
 
 class BankTransferUpdateView(LoginRequiredMixin, UpdateView):
@@ -1259,8 +1283,8 @@ class BankTransferUpdateView(LoginRequiredMixin, UpdateView):
     
     def form_valid(self, form):
         from django.db import transaction
-        from core.services import JournalService
-        from core.utils import log_user_activity
+        from journal.services import JournalService
+        from core.signals import log_user_activity
         
         transfer = self.object
         
@@ -1383,6 +1407,13 @@ class BankTransferDeleteView(LoginRequiredMixin, View):
                     reference_number=transfer_number
                 ).delete()
                 
+                # حذف القيد المحاسبي المرتبط
+                from journal.models import JournalEntry
+                JournalEntry.objects.filter(
+                    reference_type='bank_transfer',
+                    reference_id=transfer.id
+                ).delete()
+                
                 # حذف التحويل
                 transfer.delete()
                 
@@ -1432,6 +1463,13 @@ class CashboxTransferDeleteView(LoginRequiredMixin, View):
                 
                 CashboxTransaction.objects.filter(
                     related_transfer=transfer
+                ).delete()
+                
+                # حذف القيد المحاسبي المرتبط
+                from journal.models import JournalEntry
+                JournalEntry.objects.filter(
+                    reference_type='cashbox_transfer',
+                    reference_id=transfer.id
                 ).delete()
                 
                 # حذف التحويل

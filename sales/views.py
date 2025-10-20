@@ -477,7 +477,10 @@ def sales_invoice_create(request):
             from inventory.models import Warehouse
             context['warehouses'] = Warehouse.objects.filter(is_active=True)
             # إضافة المستودع الافتراضي للمستخدم
-            context['default_warehouse'] = user.default_sales_warehouse
+            try:
+                context['default_warehouse'] = user.default_sales_warehouse
+            except AttributeError:
+                context['default_warehouse'] = None
         except ImportError:
             context['warehouses'] = []
             context['default_warehouse'] = None
@@ -488,13 +491,16 @@ def sales_invoice_create(request):
             context['cashboxes'] = Cashbox.objects.filter(is_active=True)
             
             # تحديد الصندوق الافتراضي حسب نوع المستخدم
-            if user.has_perm('users.can_access_pos'):
-                # مستخدم POS: استخدام الصندوق المرتبط به (responsible_user)
-                pos_cashbox = Cashbox.objects.filter(responsible_user=user, is_active=True).first()
-                context['default_cashbox'] = pos_cashbox or user.default_cashbox
-            else:
-                # مستخدم عادي: استخدام الصندوق الافتراضي المحفوظ
-                context['default_cashbox'] = user.default_cashbox
+            try:
+                if user.has_perm('users.can_access_pos'):
+                    # مستخدم POS: استخدام الصندوق المرتبط به (responsible_user)
+                    pos_cashbox = Cashbox.objects.filter(responsible_user=user, is_active=True).first()
+                    context['default_cashbox'] = pos_cashbox or user.default_cashbox
+                else:
+                    # مستخدم عادي: استخدام الصندوق الافتراضي المحفوظ
+                    context['default_cashbox'] = user.default_cashbox
+            except AttributeError:
+                context['default_cashbox'] = None
         except ImportError:
             context['cashboxes'] = []
             context['default_cashbox'] = None
@@ -554,12 +560,9 @@ def sales_invoice_create(request):
             else:
                 context['next_invoice_number'] = sequence.get_formatted_number()
         except DocumentSequence.DoesNotExist:
-            last_invoice = SalesInvoice.objects.order_by('-id').first()
-            if last_invoice:
-                number = int(last_invoice.invoice_number.split('-')[-1]) + 1 if '-' in last_invoice.invoice_number else int(last_invoice.invoice_number) + 1
-            else:
-                number = 1
-            context['next_invoice_number'] = f"SALES-{number:06d}"
+            # إضافة رسالة خطأ بدلاً من إنشاء رقم تلقائي
+            context['sequence_error'] = _('Sales invoice sequence not configured. Please configure it in settings first.')
+            context['next_invoice_number'] = None
 
         # Currency settings
         try:
@@ -614,10 +617,11 @@ def sales_invoice_create(request):
                     try:
                         from core.signals import log_user_activity
                         dummy = SalesInvoice()
-                        log_user_activity(request, 'error', dummy, _('فشل تحليل قيمة رقمية للحقل %(name)s: %(val)s') % {'name': name, 'val': val})
+                        log_user_activity(request, 'error', dummy, _('Failed to parse numeric value for field %(name)s: %(val)s') % {'name': name, 'val': val})
                     except Exception:
                         pass
-                    return default
+                    from decimal import Decimal as DecimalClass
+                    return DecimalClass('0')
             # سنحاول عدة مرات لتجنب تعارض الأرقام في حال السباق
             max_attempts = 5
             attempt = 0
@@ -649,13 +653,8 @@ def sales_invoice_create(request):
                                 sequence = DocumentSequence.objects.get(document_type='sales_invoice')
                                 invoice_number = sequence.get_next_number()
                             except DocumentSequence.DoesNotExist:
-                                # توليد بديل إذا لم يوجد تسلسل
-                                last_invoice = SalesInvoice.objects.order_by('-id').first()
-                                if last_invoice:
-                                    number = int(last_invoice.invoice_number.split('-')[-1]) + 1 if '-' in last_invoice.invoice_number else int(last_invoice.invoice_number) + 1
-                                else:
-                                    number = 1
-                                invoice_number = f"SALES-{number:06d}"
+                                # إضافة رسالة خطأ بدلاً من إنشاء رقم تلقائي
+                                errors.append(_('Sales invoice sequence not configured. Please configure it in settings first.'))
 
                         # التحقق من صلاحية تعديل التاريخ
                         if user.is_superuser or user.is_staff or user.has_perm('sales.change_salesinvoice_date'):
@@ -666,11 +665,11 @@ def sales_invoice_create(request):
                         # التحقق من البيانات المطلوبة
                         errors = []
                         if not customer_id:
-                            errors.append(_('يرجى اختيار العميل'))
+                            errors.append(_('Please select a customer'))
                         if not payment_type:
-                            errors.append(_('يرجى اختيار طريقة الدفع'))
+                            errors.append(_('Please select a payment method'))
                         if not warehouse_id:
-                            errors.append(_('يرجى اختيار المستودع'))
+                            errors.append(_('Please select a warehouse'))
                         
                         if errors:
                             # سجل محاولة فاشلة في سجل النشاط لتتبع أخطاء الإدخال
@@ -681,7 +680,7 @@ def sales_invoice_create(request):
                                     request,
                                     'error',
                                     dummy,
-                                    _('فشل إنشاء فاتورة: الحقول المطلوبة مفقودة')
+                                    _('Failed to create invoice: Required fields are missing')
                                 )
                             except Exception:
                                 pass
@@ -722,7 +721,7 @@ def sales_invoice_create(request):
                                     from cashboxes.models import Cashbox
                                     cashbox = Cashbox.objects.get(id=cashbox_id, is_active=True)
                                 except (ImportError, Cashbox.DoesNotExist):
-                                    messages.error(request, _('الصندوق النقدي المحدد غير موجود أو غير نشط'))
+                                    messages.error(request, _('The selected cashbox does not exist or is not active'))
                                     context = get_invoice_create_context(request, form_data)
                                     return render(request, 'sales/invoice_add.html', context)
                             # إذا لم يتم اختيار صندوق، استخدم صندوق المستخدم التلقائي (POS)
@@ -751,12 +750,12 @@ def sales_invoice_create(request):
                                     request,
                                     'error',
                                     dummy,
-                                    _('فشل إنشاء فاتورة: لا توجد عناصر مadded')
+                                    _('Failed to create invoice: No items added')
                                 )
                             except Exception:
                                 pass
 
-                            messages.error(request, _('يرجى إضافة منتج واحد على الأقل'))
+                            messages.error(request, _('Please add at least one product'))
                             context = get_invoice_create_context(request, form_data)
                             return render(request, 'sales/invoice_add.html', context)
 
@@ -796,9 +795,9 @@ def sales_invoice_create(request):
 
                                     # تحذير إذا المنتج غير متوفر في المستودع
                                     if available_stock <= 0:
-                                        stock_warnings[str(product.id)] = _('تحذير: المنتج "%(product)s" غير متوفر في المستودع المختار.') % {'product': product.name}
+                                        stock_warnings[str(product.id)] = _('Warning: Product "%(product)s" is not available in the selected warehouse.') % {'product': product.name}
                                     elif quantity > available_stock:
-                                        stock_warnings[str(product.id)] = _('تحذير: الكمية المطلوبة (%(quantity)s) تتجاوز المخزون المتوفر (%(available)s) للمنتج "%(product)s" في المستودع المختار.') % {
+                                        stock_warnings[str(product.id)] = _('Warning: Requested quantity (%(quantity)s) exceeds available stock (%(available)s) for product "%(product)s" in the selected warehouse.') % {
                                             'quantity': quantity,
                                             'available': available_stock,
                                             'product': product.name
@@ -844,7 +843,7 @@ def sales_invoice_create(request):
                                         request,
                                         'error',
                                         customer,
-                                        _('فشل في إنشاء فاتورة مبيعات: تجاوز الحد الائتماني - المبلغ %(total)s > المتاح %(available)s') % {
+                                        _('Failed to create sales invoice: Credit limit exceeded - Amount %(total)s > Available %(available)s') % {
                                             'total': f"{final_total:.3f}",
                                             'available': f"{available_credit:.3f}"
                                         }
@@ -874,7 +873,7 @@ def sales_invoice_create(request):
                                     request,
                                     'warning',
                                     dummy,
-                                    _('تحذير: كميات مطلوبة تتجاوز المخزون المتوفر في %(count)s منتج') % {'count': len(stock_warnings)}
+                                    _('Warning: Requested quantities exceed available stock in %(count)s products') % {'count': len(stock_warnings)}
                                 )
                             except Exception:
                                 pass
@@ -922,7 +921,7 @@ def sales_invoice_create(request):
                                             request,
                                             'update',
                                             invoice,
-                                            _('تم تغيير منشئ الفاتورة إلى %(name)s على يد %(user)s') % {
+                                            _('Invoice creator changed to %(name)s by %(user)s') % {
                                                 'name': f"{chosen.first_name or ''} {chosen.last_name or chosen.username}",
                                                 'user': user.username
                                             }
@@ -965,7 +964,7 @@ def sales_invoice_create(request):
                                             try:
                                                 from core.signals import log_user_activity
                                                 # create a small description with field change
-                                                desc = _('تغيير سعر الوحدة لمنتج %(code)s أثناء إنشاء الفاتورة: من %(old)s إلى سعر البيع الرسمي %(new)s') % {
+                                                desc = _('Unit price changed for product %(code)s during invoice creation: from %(old)s to official sale price %(new)s') % {
                                                     'code': product.code,
                                                     'old': str(submitted_price),
                                                     'new': str(product_sale)
@@ -1031,8 +1030,8 @@ def sales_invoice_create(request):
                                     request,
                                     'update',
                                     user,
-                                    _('تم تحديث المستودع الافتراضي للمبيعات من %(old)s إلى %(new)s') % {
-                                        'old': old_default.name if old_default else _('غير محدد'),
+                                    _('Default sales warehouse updated from %(old)s to %(new)s') % {
+                                        'old': old_default.name if old_default else _('Not specified'),
                                         'new': warehouse.name
                                     }
                                 )
@@ -1069,8 +1068,8 @@ def sales_invoice_create(request):
                                     request,
                                     'update',
                                     user,
-                                    _('تم تحديث الصندوق النقدي الافتراضي من %(old)s إلى %(new)s') % {
-                                        'old': old_default.name if old_default else _('غير محدد'),
+                                    _('Default cashbox updated from %(old)s to %(new)s') % {
+                                        'old': old_default.name if old_default else _('Not specified'),
                                         'new': cashbox.name
                                     }
                                 )
@@ -1080,9 +1079,9 @@ def sales_invoice_create(request):
                         # تسجيل نشاط صريح لإنشاء الفاتورة (بالإضافة للإشارات العامة)
                         try:
                             from core.signals import log_user_activity
-                            activity_desc = _('إنشاء فاتورة مبيعات رقم %(number)s') % {'number': invoice.invoice_number}
+                            activity_desc = _('Created sales invoice number %(number)s') % {'number': invoice.invoice_number}
                             if payment_type == 'cash' and cashbox:
-                                activity_desc += _(' - دفع نقدي من الصندوق: %(cashbox)s') % {'cashbox': cashbox.name}
+                                activity_desc += _(' - Cash payment from cashbox: %(cashbox)s') % {'cashbox': cashbox.name}
                             log_user_activity(
                                 request,
                                 'create',
@@ -1285,10 +1284,59 @@ class SalesInvoiceUpdateView(LoginRequiredMixin, UpdateView):
             old_values['customer_id'] = old_invoice.customer_id
             old_values['customer_name'] = old_invoice.customer.name if old_invoice.customer else 'نقدي'
             old_values['payment_type'] = old_invoice.payment_type
+            old_values['discount_amount'] = old_invoice.discount_amount
             old_values['notes'] = old_invoice.notes
             old_values['total_amount'] = old_invoice.total_amount
         except SalesInvoice.DoesNotExist:
             pass
+        
+        # Track if journal entries need updating
+        needs_journal_update = False
+        
+        # Handle discount amount
+        discount_amount = self.request.POST.get('discount_amount')
+        if discount_amount is not None:
+            logger.info(f"  📥 قيمة الخصم المرسلة: '{discount_amount}'")
+            # Use robust decimal parsing to handle various client locales
+            def parse_decimal_input(val, name='value'):
+                from decimal import Decimal as DecimalClass
+                default = DecimalClass('0')
+                try:
+                    if val is None or val == '':
+                        return default
+                    s = str(val).strip()
+                    # Arabic decimal separators and common comma thousands
+                    s = s.replace('\u066b', '.')  # Arabic decimal separator if present
+                    s = s.replace('\u066c', ',')  # Arabic thousands separator if present
+                    # Replace comma with dot for decimal point, remove spaces
+                    s = s.replace(',', '.')
+                    s = s.replace(' ', '')
+                    result = DecimalClass(s)
+                    logger.info(f"  🔢 قيمة الخصم المحللة: {result}")
+                    return result
+                except Exception as e:
+                    logger.error(f"  ❌ خطأ في تحليل قيمة الخصم '{val}': {e}")
+                    # Log parsing error in AuditLog for visibility
+                    try:
+                        from core.signals import log_user_activity
+                        dummy = SalesInvoice()
+                        log_user_activity(self.request, 'error', dummy, _('فشل تحليل قيمة رقمية للحقل %(name)s: %(val)s') % {'name': name, 'val': val})
+                    except Exception:
+                        pass
+                    return DecimalClass('0')
+            
+            new_discount = parse_decimal_input(discount_amount, name='discount_amount')
+            logger.info(f"  💰 قيمة الخصم الجديدة: {new_discount}")
+            form.instance.discount_amount = new_discount
+            if 'discount_amount' in old_values and old_values['discount_amount'] != new_discount:
+                needs_journal_update = True
+                logger.info(f"  💰 تغيير مبلغ الخصم من {old_values['discount_amount']} إلى {new_discount}")
+                # Log discount change in AuditLog
+                try:
+                    from core.signals import log_user_activity
+                    log_user_activity(self.request, 'update', form.instance, _('تعديل مبلغ الخصم من %(old)s إلى %(new)s') % {'old': old_values['discount_amount'], 'new': new_discount})
+                except Exception as e:
+                    logger.error(f"  ❌ خطأ في تسجيل تعديل الخصم: {e}")
         
         # Handle warehouse selection
         warehouse_id = self.request.POST.get('warehouse')
@@ -1443,13 +1491,24 @@ class SalesInvoiceUpdateView(LoginRequiredMixin, UpdateView):
             changes.append(f"العميل من {old_values['customer_name']} إلى {new_customer_name}")
         if 'payment_type' in old_values and old_values['payment_type'] != form.instance.payment_type:
             changes.append(f"نوع الدفع من {old_values['payment_type']} إلى {form.instance.payment_type}")
+        if 'discount_amount' in old_values and old_values['discount_amount'] != form.instance.discount_amount:
+            changes.append(f"مبلغ الخصم من {old_values['discount_amount']} إلى {form.instance.discount_amount}")
         if 'notes' in old_values and old_values['notes'] != form.instance.notes:
             changes.append(f"تحديث الملاحظات")
         
         response = super().form_valid(form)
         
-        # Update invoice totals and journal entries if items were changed
-        if item_changes:
+        # Check if discount changed
+        discount_changed = 'discount_amount' in old_values and old_values['discount_amount'] != form.instance.discount_amount
+        if discount_changed:
+            needs_journal_update = True
+            logger.info(f"  💰 تغيير مبلغ الخصم من {old_values['discount_amount']} إلى {form.instance.discount_amount}")
+            # Update totals when discount changes
+            form.instance.update_totals()
+            form.instance.refresh_from_db()
+        
+        # Update invoice totals and journal entries if items were changed or discount changed
+        if item_changes or discount_changed:
             # Update invoice totals
             form.instance.update_totals()
             form.instance.refresh_from_db()
@@ -1829,6 +1888,29 @@ class SalesReturnUpdateView(LoginRequiredMixin, UpdateView):
 def sales_return_create(request):
     """إنشاء مردود مبيعات جديدة"""
     
+    # دالة مساعدة لتحويل القيم النصية إلى Decimal بشكل آمن
+    def parse_decimal_input(val, name='value', default=Decimal('0')):
+        try:
+            if val is None or val == '':
+                return default
+            s = str(val).strip()
+            # Arabic decimal separators and common comma thousands
+            s = s.replace('\u066b', '.')  # Arabic decimal separator if present
+            s = s.replace('\u066c', ',')  # Arabic thousands separator if present
+            # Replace comma with dot for decimal point, remove spaces
+            s = s.replace(',', '.')
+            s = s.replace(' ', '')
+            return Decimal(s)
+        except Exception:
+            # Log parsing error in AuditLog for visibility
+            try:
+                from core.signals import log_user_activity
+                dummy = SalesReturn()
+                log_user_activity(request, 'error', dummy, _('فشل تحليل قيمة رقمية للحقل %(name)s: %(val)s') % {'name': name, 'val': val})
+            except Exception:
+                pass
+            return default
+    
     def get_return_create_context(request, form_data=None):
         """إعداد سياق صفحة إنشاء المردود مع البيانات المُدخلة إن وجدت"""
         user = request.user
@@ -1868,8 +1950,7 @@ def sales_return_create(request):
     if request.method == 'POST':
         # جمع جميع البيانات المُدخلة لإعادة عرضها في حالة الأخطاء
         form_data = {
-            'customer_id': request.POST.get('customer'),
-            'warehouse_id': request.POST.get('warehouse'),
+            'original_invoice_id': request.POST.get('original_invoice'),
             'return_reason': request.POST.get('return_reason'),
             'notes': request.POST.get('notes', ''),
             'products': request.POST.getlist('products[]'),
@@ -1889,41 +1970,44 @@ def sales_return_create(request):
                 try:
                     with transaction.atomic():
                         user = request.user
-                        customer_id = request.POST.get('customer')
-                        warehouse_id = request.POST.get('warehouse')
                         return_reason = request.POST.get('return_reason')
                         notes = request.POST.get('notes', '')
                         
                         # توليد رقم المرتجع إذا لم يكن محدد
                         return_number = None
                         manual_return_number = request.POST.get('return_number')
-                        if manual_return_number and (user.is_superuser or user.is_staff or user.has_perm('sales.change_salesreturn_number')):
-                            return_number = manual_return_number
-                        else:
-                            return_number = None
+                        
+                        # في المحاولة الأولى فقط، نسمح بالرقم اليدوي
+                        if allow_manual and manual_return_number and (user.is_superuser or user.is_staff or user.has_perm('sales.change_salesreturn_number')):
+                            # التحقق من عدم وجود رقم مكرر
+                            if not SalesReturn.objects.filter(return_number=manual_return_number).exists():
+                                return_number = manual_return_number
 
+                        # إذا لم يكن هناك رقم يدوي أو كان مكرراً، استخدم التسلسل التلقائي
                         if not return_number:
                             try:
-                                sequence = DocumentSequence.objects.get(document_type='sales_return')
+                                sequence = DocumentSequence.objects.select_for_update().get(document_type='sales_return')
                                 return_number = sequence.get_next_number()
                             except DocumentSequence.DoesNotExist:
-                                # توليد بديل إذا لم يوجد تسلسل
-                                last_return = SalesReturn.objects.order_by('-id').first()
+                                # توليد بديل إذا لم يوجد تسلسل - مع قفل للحماية من التعارضات
+                                last_return = SalesReturn.objects.select_for_update().order_by('-id').first()
                                 if last_return:
-                                    try:
-                                        number = int(last_return.return_number.split('-')[-1]) + 1 if '-' in last_return.return_number else int(last_return.return_number) + 1
-                                        return_number = f"RETURN-{number:06d}"
-                                    except (ValueError, IndexError):
-                                        return_number = f"RETURN-{SalesReturn.objects.count() + 1:06d}"
+                                    # استخراج الرقم من آخر مرتجع
+                                    import re
+                                    match = re.search(r'(\d+)$', last_return.return_number)
+                                    if match:
+                                        number = int(match.group(1)) + 1
+                                    else:
+                                        number = SalesReturn.objects.count() + 1
+                                    return_number = f"SRET-{number:06d}"
                                 else:
-                                    return_number = "RETURN-000001"
+                                    return_number = "SRET-000001"
 
                         # التحقق من البيانات المطلوبة
                         errors = []
-                        if not customer_id:
-                            errors.append(_('يرجى اختيار العميل'))
-                        if not warehouse_id:
-                            errors.append(_('يرجى اختيار المستودع'))
+                        original_invoice_id = request.POST.get('original_invoice')
+                        if not original_invoice_id:
+                            errors.append(_('يرجى اختيار الفاتورة الأصلية'))
                         if not return_reason:
                             errors.append(_('يرجى تحديد سبب المرتجع'))
                         
@@ -1932,31 +2016,25 @@ def sales_return_create(request):
                                 messages.error(request, error)
                             # جمع البيانات المُدخلة لإعادة عرضها
                             form_data = {
-                                'customer_id': customer_id,
-                                'warehouse_id': warehouse_id,
+                                'original_invoice_id': original_invoice_id,
                                 'return_reason': return_reason,
                                 'notes': notes,
                             }
                             context = get_return_create_context(request, form_data)
                             return render(request, 'sales/return_add.html', context)
 
-                        customer = get_object_or_404(CustomerSupplier, id=customer_id)
+                        # الحصول على الفاتورة الأصلية
+                        original_invoice = get_object_or_404(SalesInvoice, id=original_invoice_id)
+                        
+                        # جلب العميل من الفاتورة الأصلية
+                        customer = original_invoice.customer
 
-                        # الحصول على المستودع إذا تم تحديده
-                        warehouse = None
-                        if warehouse_id:
-                            try:
-                                from inventory.models import Warehouse
-                                warehouse = Warehouse.objects.get(id=warehouse_id)
-                            except (ImportError, Warehouse.DoesNotExist):
-                                warehouse = None
-
-                        # إنشاء المردود
+                        # إنشاء المردود (لاحظ: SalesReturn لا يحتوي على حقل warehouse)
                         sales_return = SalesReturn.objects.create(
                             return_number=return_number,
                             date=date.today(),
+                            original_invoice=original_invoice,
                             customer=customer,
-                            warehouse=warehouse,
                             notes=notes,
                             created_by=user,
                             subtotal=0,  # سيتم تحديثها لاحقاً
@@ -2067,7 +2145,7 @@ def sales_return_create(request):
                                     # parse quantity/price/tax robustly to accept '1.5' or '1,5' etc.
                                     quantity = parse_decimal_input(return_quantities[i], name='quantity', default=Decimal('0'))
                                     unit_price = parse_decimal_input(return_prices[i], name='price', default=Decimal('0'))
-                                    tax_rate = parse_decimal_input(return_taxRates[i] if i < len(return_taxRates) else '0', name='tax_rate', default=Decimal('0'))
+                                    tax_rate = parse_decimal_input(return_tax_rates[i] if i < len(return_tax_rates) else '0', name='tax_rate', default=Decimal('0'))
 
                                     # حساب مبلغ الضريبة لهذا السطر
                                     line_subtotal = quantity * unit_price
@@ -2219,9 +2297,9 @@ def sales_creditnote_create(request):
                     seq = DocumentSequence.objects.get(document_type='credit_note')
                     note_number = seq.get_next_number()
                 except DocumentSequence.DoesNotExist:
-                    last = SalesCreditNote.objects.order_by('-id').first()
-                    number = last.id + 1 if last else 1
-                    note_number = f"CN-{number:06d}"
+                    # إضافة رسالة خطأ بدلاً من إنشاء رقم تلقائي
+                    messages.error(request, _('Credit note sequence not configured. Please configure it in settings first.'))
+                    return redirect('sales:creditnote_add')
 
                 credit = SalesCreditNote.objects.create(
                     note_number=note_number,
@@ -2262,9 +2340,9 @@ def sales_creditnote_create(request):
         seq = DocumentSequence.objects.get(document_type='credit_note')
         context['next_note_number'] = seq.peek_next_number() if hasattr(seq, 'peek_next_number') else seq.get_formatted_number()
     except DocumentSequence.DoesNotExist:
-        last = SalesCreditNote.objects.order_by('-id').first()
-        number = last.id + 1 if last else 1
-        context['next_note_number'] = f"CN-{number:06d}"
+        # إضافة رسالة خطأ بدلاً من إنشاء رقم تلقائي
+        context['sequence_error'] = _('Credit note sequence not configured. Please configure it in settings first.')
+        context['next_note_number'] = None
 
     return render(request, 'sales/creditnote_add.html', context)
 
@@ -2577,10 +2655,10 @@ def pos_create_invoice(request):
             return JsonResponse({'success': False, 'message': 'الإجمالي غير صحيح'})
         
         with transaction.atomic():
-            # توليد رقم الفاتورة
+            # توليد رقم الفاتورة باستخدام معاينة أولاً
             try:
                 sequence = DocumentSequence.objects.get(document_type='pos_invoice')
-                invoice_number = sequence.get_next_number()
+                invoice_number = sequence.peek_next_number()
             except DocumentSequence.DoesNotExist:
                 # في حالة عدم وجود تسلسل نقطة البيع، إنشاء واحد جديد
                 try:
@@ -2590,7 +2668,7 @@ def pos_create_invoice(request):
                         digits=6,
                         current_number=1
                     )
-                    invoice_number = sequence.get_next_number()
+                    invoice_number = sequence.peek_next_number()
                 except Exception as seq_error:
                     # في حالة فشل إنشاء التسلسل، استخدام رقم بسيط
                     print(f"فشل في إنشاء تسلسل pos_invoice: {seq_error}")
@@ -2773,9 +2851,37 @@ def pos_create_invoice(request):
                     # لا نوقف العملية في حالة فشل تحديث الرصيد
                     pass
             
+            # تحديث التسلسل بعد نجاح جميع العمليات
+            try:
+                if 'sequence' in locals() and sequence:
+                    # استخراج الرقم من invoice_number
+                    if invoice_number.startswith(sequence.prefix):
+                        used_number = int(invoice_number[len(sequence.prefix):])
+                        sequence.advance_to_at_least(used_number)
+            except Exception as seq_update_error:
+                print(f"خطأ في تحديث التسلسل: {seq_update_error}")
+                # لا نوقف العملية في حالة فشل تحديث التسلسل
+                pass
+            
+            # تسجيل إنشاء الفاتورة في سجل الأنشطة
+            try:
+                from core.models import AuditLog
+                AuditLog.objects.create(
+                    user=request.user,
+                    action_type='create',
+                    content_type='SalesInvoice',
+                    object_id=invoice.id,
+                    description=f'إنشاء فاتورة نقطة البيع رقم {invoice.invoice_number} - المبلغ: {invoice.total_amount}',
+                    ip_address=request.META.get('REMOTE_ADDR')
+                )
+            except Exception as audit_error:
+                print(f"خطأ في تسجيل الأنشطة: {audit_error}")
+                # لا نوقف العملية في حالة فشل تسجيل الأنشطة
+                pass
+            
             return JsonResponse({
                 'success': True, 
-                'message': 'تم إنشاء الفاتورة بنجاح',
+                'message': _('Invoice created successfully'),
                 'invoice_id': invoice.id,
                 'invoice_number': invoice.invoice_number
             })
@@ -3253,6 +3359,7 @@ def get_invoice_items(request, invoice_id):
         print(f"تم العثور على {items.count()} عنصر في الفاتورة")
         
         items_data = []
+        returnable_items = []
         for item in items:
             # Calculate total returned quantity for this product in returns for this invoice
             total_returned = SalesReturnItem.objects.filter(
@@ -3264,24 +3371,29 @@ def get_invoice_items(request, invoice_id):
             
             print(f"المنتج {item.product.name}: الكمية الأصلية={item.quantity}, المرتجع={total_returned}, المتبقي={remaining_quantity}")
             
-            if remaining_quantity > 0:  # Only show items that can still be returned
-                items_data.append({
-                    'id': item.id,
-                    'product_id': item.product.id,
-                    'product_name': item.product.name,
-                    'product_code': item.product.code,
-                    'original_quantity': float(item.quantity),
-                    'returned_quantity': float(total_returned),
-                    'remaining_quantity': float(remaining_quantity),
-                    'unit_price': float(item.unit_price),
-                    'tax_rate': float(item.tax_rate),
-                })
+            item_data = {
+                'id': item.id,
+                'product_id': item.product.id,
+                'product_name': item.product.name,
+                'product_code': item.product.code,
+                'original_quantity': float(item.quantity),
+                'returned_quantity': float(total_returned),
+                'remaining_quantity': float(remaining_quantity),
+                'unit_price': float(item.unit_price),
+                'tax_rate': float(item.tax_rate),
+            }
+            
+            items_data.append(item_data)  # All items for display
+            
+            if remaining_quantity > 0:  # Only returnable items for return form
+                returnable_items.append(item_data)
         
-        print(f"عدد العناصر المتاحة للإرجاع: {len(items_data)}")
+        print(f"عدد العناصر الكلية: {len(items_data)}, المتاحة للإرجاع: {len(returnable_items)}")
         
         return JsonResponse({
             'success': True,
-            'items': items_data,
+            'all_items': items_data,  # All invoice items for display
+            'returnable_items': returnable_items,  # Items available for return
             'invoice_number': invoice.invoice_number,
             'customer_name': invoice.customer.name,
             'invoice_date': invoice.date.strftime('%Y-%m-%d'),

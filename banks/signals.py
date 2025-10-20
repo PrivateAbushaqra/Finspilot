@@ -67,10 +67,7 @@ def create_bank_account_opening_balance_entry(sender, instance, created, **kwarg
     if created and instance.initial_balance != 0:
         try:
             # الحصول على حساب البنك
-            bank_account = JournalService.get_or_create_bank_account_by_name(
-                instance.name,
-                instance.bank_name
-            )
+            bank_account = JournalService.get_or_create_bank_account(instance)
             
             # الحصول على حساب رأس المال
             capital_account = Account.objects.filter(code='301').first()
@@ -112,11 +109,12 @@ def create_bank_account_opening_balance_entry(sender, instance, created, **kwarg
 def create_bank_transaction_journal_entry(sender, instance, created, **kwargs):
     """إنشاء قيد محاسبي عند إنشاء معاملة بنكية"""
     if created:
+        # إذا تم وضع علامة داخل الكائن لعدم إنشاء القيد (عند إنشاء المعاملات كجزء من تحويل)، تجاهل
+        if getattr(instance, '_skip_journal', False):
+            print(f"DEBUG: تخطي إنشاء القيد التلقائي للمعاملة البنكية {getattr(instance, 'reference_number', '')} بسبب _skip_journal")
+            return
         try:
-            bank_account = JournalService.get_or_create_bank_account_by_name(
-                instance.bank.name,
-                instance.bank.bank_name
-            )
+            bank_account = JournalService.get_or_create_bank_account(instance.bank)
             
             lines_data = []
             if instance.transaction_type == 'deposit':
@@ -146,12 +144,14 @@ def create_bank_transaction_journal_entry(sender, instance, created, **kwargs):
                 ]
             elif instance.transaction_type == 'withdrawal':
                 # سحب: دائن البنك، مدين حساب المصروف
-                expense_account = Account.objects.filter(code='401').first()
+                # استخدام حساب المصروفات المتنوعة 6010 بدلاً من 401 (الذي هو حساب المبيعات!)
+                expense_account = Account.objects.filter(code='6010').first()
                 if not expense_account:
                     expense_account = Account.objects.create(
-                        code='401',
+                        code='6010',
                         name='مصروفات متنوعة',
-                        account_type='expense'
+                        account_type='expense',
+                        description='حساب المصروفات المتنوعة'
                     )
                 
                 lines_data = [
@@ -170,13 +170,22 @@ def create_bank_transaction_journal_entry(sender, instance, created, **kwargs):
                 ]
             
             if lines_data:
+                # الحصول على مستخدم افتراضي إذا لم يكن محدد
+                if not hasattr(instance, 'created_by') or not instance.created_by:
+                    from users.models import User
+                    default_user = User.objects.filter(is_superuser=True).first()
+                    if not default_user:
+                        default_user = User.objects.filter(is_active=True).first()
+                else:
+                    default_user = instance.created_by
+                
                 JournalService.create_journal_entry(
                     entry_date=instance.date,
                     reference_type='manual',
                     description=f'معاملة بنكية: {instance.get_transaction_type_display()} - {instance.description}',
                     lines_data=lines_data,
                     reference_id=instance.id,
-                    user=None  # لا يوجد created_by في BankTransaction
+                    user=default_user
                 )
         except Exception as e:
             print(f"خطأ في إنشاء قيد المعاملة البنكية: {e}")

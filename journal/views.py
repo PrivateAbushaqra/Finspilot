@@ -398,6 +398,15 @@ def journal_entry_list(request):
         if form.cleaned_data['entry_number']:
             entries = entries.filter(entry_number__icontains=form.cleaned_data['entry_number'])
     
+    # الترتيب
+    order_by = request.GET.get('order_by', 'entry_date')
+    direction = request.GET.get('direction', 'desc')
+    
+    if direction == 'asc':
+        entries = entries.order_by(order_by)
+    else:
+        entries = entries.order_by(f'-{order_by}')
+    
     # حساب الإحصائيات
     total_amount = entries.aggregate(total=Sum('total_amount'))['total'] or Decimal('0')
     
@@ -410,8 +419,14 @@ def journal_entry_list(request):
         'entries': page_obj,
         'form': form,
         'reference_types': JournalEntry.REFERENCE_TYPES,
-        'total_amount': total_amount
+        'total_amount': total_amount,
+        'order_by': order_by,
+        'direction': direction,
     }
+    
+    # تسجيل النشاط في سجل الأنشطة
+    log_view_activity(request, 'view', None, str(_('Viewing journal entries list')))
+    
     return render(request, 'journal/entry_list.html', context)
 
 

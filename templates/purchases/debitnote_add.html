@@ -7,6 +7,13 @@
   <form method="post">{% csrf_token %}
     <div class="mb-3">
       <label class="form-label">{% trans "Number" %}</label>
+      {% if sequence_error %}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          {{ sequence_error }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endif %}
       <input class="form-control" name="note_number" value="{{ next_note_number }}" disabled>
     </div>
     <div class="mb-3">
@@ -19,6 +26,11 @@
     <div class="mb-3">
       <label class="form-label">{% trans "Date" %}</label>
       <input type="date" name="date" class="form-control" value="{{ today_date }}">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">{% trans "Supplier Debit Note Number (Source)" %}</label>
+      <input name="supplier_debit_note_number" class="form-control" placeholder="{% trans "Enter supplier debit note number" %}" required>
+      <small class="form-text text-muted">{% trans "Required field - Enter the supplier's debit note number" %}</small>
     </div>
     <div class="mb-3">
       <label class="form-label">{% trans "Amount" %}</label>

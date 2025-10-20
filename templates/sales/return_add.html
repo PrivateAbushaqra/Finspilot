@@ -61,6 +61,7 @@
                                         <option value="">{% trans "Select Original Invoice" %}</option>
                                         {% for invoice in invoices %}
                                             <option value="{{ invoice.id }}" 
+                                                    {% if original_invoice_id and original_invoice_id == invoice.id|stringformat:"s" %}selected{% endif %}
                                                     data-customer="{{ invoice.customer.name }}"
                                                     data-invoice="{{ invoice.invoice_number }}"
                                                     data-date="{{ invoice.date }}">
@@ -96,6 +97,30 @@
 
                         <!-- Invoice Items Section -->
                         <div class="row mt-4" id="invoiceItemsSection" style="display: none;">
+                            <div class="col-12">
+                                <h5 class="mb-3">{% trans "Original Invoice Items" %}</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered" id="originalItemsTable">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>{% trans "Product Code" %}</th>
+                                                <th>{% trans "Product Name" %}</th>
+                                                <th>{% trans "Quantity" %}</th>
+                                                <th>{% trans "Unit Price" %}</th>
+                                                <th>{% trans "Tax Rate" %}</th>
+                                                <th>{% trans "Total" %}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="originalItemsTableBody">
+                                            <!-- Original invoice items will be loaded here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Return Items Section -->
+                        <div class="row mt-4" id="returnItemsSection" style="display: none;">
                             <div class="col-12">
                                 <h5 class="mb-3">{% trans "Available Invoice Items for Return" %}</h5>
                                 <div class="table-responsive">
@@ -171,16 +196,56 @@
 
 {% endblock %}
 {% block extra_js %}
+<!-- Select2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const originalInvoiceSelect = document.getElementById('originalInvoiceSelect');
     const invoiceItemsSection = document.getElementById('invoiceItemsSection');
+    const returnItemsSection = document.getElementById('returnItemsSection');
+    const originalItemsTableBody = document.getElementById('originalItemsTableBody');
     const itemsTableBody = document.getElementById('itemsTableBody');
     const totalsSection = document.getElementById('totalsSection');
     const saveButton = document.getElementById('saveButton');
     
+    // Initialize Select2 with search functionality
+    $('#originalInvoiceSelect').select2({
+        language: '{{ LANGUAGE_CODE }}',
+        dir: '{{ LANGUAGE_CODE }}' === 'ar' ? 'rtl' : 'ltr',
+        placeholder: '{% trans "Search by invoice number or customer name..." %}',
+        allowClear: true,
+        width: '100%',
+        matcher: function(params, data) {
+            // If there are no search terms, return all data
+            if ($.trim(params.term) === '') {
+                return data;
+            }
+            
+            // Do not display the item if there is no 'text' property
+            if (typeof data.text === 'undefined') {
+                return null;
+            }
+            
+            // Check if the text contains the term
+            const searchTerm = params.term.toLowerCase();
+            const text = data.text.toLowerCase();
+            const customer = $(data.element).data('customer') ? $(data.element).data('customer').toLowerCase() : '';
+            const invoice = $(data.element).data('invoice') ? $(data.element).data('invoice').toLowerCase() : '';
+            
+            // Search in invoice number, customer name, and full text
+            if (text.indexOf(searchTerm) > -1 || 
+                customer.indexOf(searchTerm) > -1 || 
+                invoice.indexOf(searchTerm) > -1) {
+                return data;
+            }
+            
+            return null;
+        }
+    });
+    
     // Handle invoice selection
-    originalInvoiceSelect.addEventListener('change', function() {
+    $('#originalInvoiceSelect').on('change', function() {
         const invoiceId = this.value;
         
         console.log('Invoice selected:', invoiceId);
@@ -191,6 +256,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Invoice selection cancelled');
             document.getElementById('invoiceInfo').innerHTML = '';
             invoiceItemsSection.style.display = 'none';
+            returnItemsSection.style.display = 'none';
             totalsSection.style.display = 'none';
             saveButton.disabled = true;
         }
@@ -221,7 +287,8 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 console.log('Received data:', data);
                 if (data.success) {
-                    displayInvoiceItems(data.items);
+                    displayOriginalInvoiceItems(data.all_items);
+                    displayInvoiceItems(data.returnable_items);
                     
                     // Display invoice information
                     document.getElementById('invoiceInfo').innerHTML = `
@@ -232,12 +299,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     `;
                     
                     invoiceItemsSection.style.display = 'block';
+                    returnItemsSection.style.display = 'block';
                     totalsSection.style.display = 'block';
                     saveButton.disabled = false;
                 } else {
                     console.error('Server error:', data.message);
                     alert('{% trans "Error" %}: ' + data.message);
                     invoiceItemsSection.style.display = 'none';
+                    returnItemsSection.style.display = 'none';
                     totalsSection.style.display = 'none';
                     saveButton.disabled = true;
                 }
@@ -246,15 +315,53 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Fetch error:', error);
                 alert('{% trans "An error occurred while loading invoice items. Please try again." %}');
                 invoiceItemsSection.style.display = 'none';
+                returnItemsSection.style.display = 'none';
                 totalsSection.style.display = 'none';
                 saveButton.disabled = true;
             });
     }
     
+    function displayOriginalInvoiceItems(items) {
+        console.log('Displaying original invoice items:', items);
+        originalItemsTableBody.innerHTML = '';
+        
+        if (items.length === 0) {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td colspan="6" class="text-center text-muted py-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    {% trans "No items in this invoice" %}
+                </td>
+            `;
+            originalItemsTableBody.appendChild(row);
+            return;
+        }
+        
+        items.forEach((item, index) => {
+            const subtotal = item.original_quantity * item.unit_price;
+            const taxAmount = subtotal * (item.tax_rate / 100);
+            const total = subtotal + taxAmount;
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><small>${item.product_code}</small></td>
+                <td><strong>${item.product_name}</strong></td>
+                <td class="text-center">${parseFloat(item.original_quantity).toFixed(3)}</td>
+                <td class="text-end">${parseFloat(item.unit_price).toFixed(3)}</td>
+                <td class="text-center">${parseFloat(item.tax_rate).toFixed(2)}%</td>
+                <td class="text-end fw-bold">${total.toFixed(3)}</td>
+            `;
+            
+            originalItemsTableBody.appendChild(row);
+        });
+    }
+    
     function displayInvoiceItems(items) {
+        console.log('Displaying returnable invoice items:', items);
         itemsTableBody.innerHTML = '';
         
         if (items.length === 0) {
+            console.log('No items to display');
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td colspan="9" class="text-center text-muted py-3">
@@ -266,7 +373,9 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
+        console.log('Creating table rows for', items.length, 'items');
         items.forEach((item, index) => {
+            console.log('Processing item:', item.product_name);
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td><small>${item.product_code}</small></td>
@@ -281,8 +390,9 @@ document.addEventListener('DOMContentLoaded', function() {
                            min="0" max="${item.remaining_quantity}" 
                            step="0.001" value="0" 
                            placeholder="0.000">
-                    <input type="hidden" name="item_id[]" value="${item.id}">
-                    <input type="hidden" name="returned_quantity[]" class="returned-quantity-hidden" value="0">
+                    <input type="hidden" name="products[]" value="${item.product_id}">
+                    <input type="hidden" name="quantities[]" class="returned-quantity-hidden" value="0">
+                    <input type="hidden" name="tax_rates[]" value="${item.tax_rate}">
                 </td>
                 <td>
                     <input type="number" class="form-control unit-price-input" 
@@ -290,7 +400,7 @@ document.addEventListener('DOMContentLoaded', function() {
                            value="${item.unit_price}" 
                            step="0.001" min="0" 
                            placeholder="0.000" readonly>
-                    <input type="hidden" name="unit_price[]" class="unit-price-hidden" value="${item.unit_price}">
+                    <input type="hidden" name="prices[]" class="unit-price-hidden" value="${item.unit_price}">
                 </td>
                 <td class="text-center">${parseFloat(item.tax_rate).toFixed(2)}%</td>
                 <td class="item-total text-end fw-bold">0.00</td>
@@ -303,7 +413,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.returned-qty').forEach(input => {
             input.addEventListener('input', function() {
                 // Update hidden input
-                const hiddenInput = this.parentElement.querySelector('.returned-quantity-hidden');
+                const hiddenInput = this.parentElement.querySelector('input[name="quantities[]"]');
                 if (hiddenInput) {
                     hiddenInput.value = this.value;
                 }
@@ -317,7 +427,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.unit-price-input').forEach(input => {
             input.addEventListener('input', function() {
                 // Update hidden input
-                const hiddenInput = this.parentElement.querySelector('.unit-price-hidden');
+                const hiddenInput = this.parentElement.querySelector('input[name="prices[]"]');
                 if (hiddenInput) {
                     hiddenInput.value = this.value;
                 }

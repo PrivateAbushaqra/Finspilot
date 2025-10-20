@@ -7,6 +7,13 @@
   <form method="post">{% csrf_token %}
     <div class="mb-3">
       <label class="form-label">{% trans "Number" %}</label>
+      {% if sequence_error %}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          {{ sequence_error }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endif %}
       <input class="form-control" name="note_number" value="{{ next_note_number }}" disabled>
     </div>
     <div class="mb-3">

@@ -9,29 +9,29 @@ User = get_user_model()
 
 class CompanySettings(models.Model):
     """إعدادات الشركة"""
-    company_name = models.CharField(_('اسم الشركة'), max_length=200, default='FinsPilot')
-    logo = models.ImageField(_('شعار الشركة'), upload_to='company/', blank=True, null=True)
+    company_name = models.CharField(_('Company Name'), max_length=200, default='FinsPilot')
+    logo = models.ImageField(_('Company Logo'), upload_to='company/', blank=True, null=True)
     currency = models.CharField(_('Currency'), max_length=10, default='JOD')
-    address = models.TextField(_('العنوان'), blank=True)
+    address = models.TextField(_('Address'), blank=True)
     phone = models.CharField(_('Phone'), max_length=50, blank=True)
     email = models.EmailField(_('Email'), blank=True)
-    tax_number = models.CharField(_('الرقم الضريبي'), max_length=50, blank=True)
-    default_tax_rate = models.DecimalField(_('نسبة الضريبة الافتراضية'), max_digits=5, decimal_places=2, 
+    tax_number = models.CharField(_('Tax Number'), max_length=50, blank=True)
+    default_tax_rate = models.DecimalField(_('Default Tax Rate'), max_digits=5, decimal_places=2, 
                                          validators=[MinValueValidator(0), MaxValueValidator(100)], default=0)
     
     # إعدادات الجلسة والأمان
     session_timeout_minutes = models.PositiveIntegerField(
-        _('مدة انتهاء الجلسة (بالدقائق)'), 
+        _('Session Timeout (Minutes)'), 
         default=30,
         help_text=_('مدة عدم النشاط قبل إنهاء الجلسة تلقائياً (بالدقائق)')
     )
     enable_session_timeout = models.BooleanField(
-        _('تفعيل انتهاء الجلسة التلقائي'),
+        _('Enable Automatic Session Timeout'),
         default=True,
         help_text=_('تفعيل إنهاء الجلسة تلقائياً عند عدم النشاط')
     )
     logout_on_browser_close = models.BooleanField(
-        _('تسجيل الخروج عند إغلاق المتصفح'),
+        _('Logout on Browser Close'),
         default=True,
         help_text=_('إنهاء الجلسة تلقائياً عند إغلاق المتصفح')
     )
@@ -40,8 +40,8 @@ class CompanySettings(models.Model):
     updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
 
     class Meta:
-        verbose_name = _('إعدادات الشركة')
-        verbose_name_plural = _('إعدادات الشركة')
+        verbose_name = _('Company Settings')
+        verbose_name_plural = _('Company Settings')
 
     def __str__(self):
         return self.company_name
@@ -56,32 +56,32 @@ class CompanySettings(models.Model):
 class DocumentSequence(models.Model):
     """تسلسل أرقام المستندات"""
     DOCUMENT_TYPES = [
-        ('sales_invoice', _('فاتورة المبيعات')),
-        ('pos_invoice', _('فاتورة نقطة البيع')),
-        ('sales_return', _('مردود المبيعات')),
-        ('credit_note', _('إشعار دائن')),
-        ('debit_note', _('إشعار مدين')),
-        ('purchase_invoice', _('فاتورة المشتريات')),
-        ('purchase_return', _('مردود المشتريات')),
-        ('bank_transfer', _('التحويل بين الحسابات البنكية')),
-        ('bank_cash_transfer', _('التحويل بين البنوك والصناديق')),
-        ('cashbox_transfer', _('التحويل بين الصناديق')),
-        ('journal_entry', _('القيود المحاسبية')),
+        ('sales_invoice', _('Sales Invoice')),
+        ('pos_invoice', _('POS Invoice')),
+        ('sales_return', _('Sales Return')),
+        ('credit_note', _('Credit Note')),
+        ('debit_note', _('Debit Note')),
+        ('purchase_invoice', _('Purchase Invoice')),
+        ('purchase_return', _('Purchase Return')),
+        ('bank_transfer', _('Bank Account Transfer')),
+        ('bank_cash_transfer', _('Bank to Cashbox Transfer')),
+        ('cashbox_transfer', _('Cashbox Transfer')),
+        ('journal_entry', _('Journal Entries')),
         ('warehouse_transfer', _('Transfer Between Warehouses')),
-        ('receipt_voucher', _('سند قبض')),
-        ('payment_voucher', _('سند صرف')),
+        ('receipt_voucher', _('Receipt Voucher')),
+        ('payment_voucher', _('Payment Voucher')),
     ]
 
-    document_type = models.CharField(_('نوع المستند'), max_length=50, choices=DOCUMENT_TYPES, unique=True)
-    prefix = models.CharField(_('البادئة'), max_length=10, default='')
-    digits = models.PositiveIntegerField(_('عدد الخانات'), default=6)
-    current_number = models.PositiveIntegerField(_('الرقم الحالي'), default=1)
+    document_type = models.CharField(_('Document Type'), max_length=50, choices=DOCUMENT_TYPES, unique=True)
+    prefix = models.CharField(_('Prefix'), max_length=10, default='')
+    digits = models.PositiveIntegerField(_('Number of Digits'), default=6)
+    current_number = models.PositiveIntegerField(_('Current Number'), default=1)
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
     updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
 
     class Meta:
-        verbose_name = _('تسلسل أرقام المستندات')
-        verbose_name_plural = _('تسلسل أرقام المستندات')
+        verbose_name = _('Document Sequences')
+        verbose_name_plural = _('Document Sequences')
 
     def __str__(self):
         return f"{self.get_document_type_display()} - {self.prefix}"
@@ -101,8 +101,8 @@ class DocumentSequence(models.Model):
                     return last_number + 1
                 return seq.current_number
 
-            # للتحويلات بين الصناديق
-            if seq.document_type == 'cashbox_transfer':
+            # للتحويلات بين البنوك والصناديق
+            if seq.document_type == 'bank_cash_transfer':
                 from cashboxes.models import CashboxTransfer
                 last_transfer = (
                     CashboxTransfer.objects
@@ -147,6 +147,29 @@ class DocumentSequence(models.Model):
                 max_found = -1
                 for inv in existing_numbers:
                     tail = str(inv)[len(seq.prefix):]
+                    if tail.isdigit():
+                        try:
+                            num = int(tail)
+                            if num > max_found:
+                                max_found = num
+                        except Exception:
+                            continue
+                if max_found >= 0:
+                    last_num = max_found
+                next_number = _sync_with_last_used(last_num)
+
+            # القيود المحاسبية
+            elif seq.document_type == 'journal_entry':
+                from journal.models import JournalEntry
+                existing_numbers = (
+                    JournalEntry.objects
+                    .filter(entry_number__startswith=seq.prefix)
+                    .values_list('entry_number', flat=True)
+                )
+                last_num = None
+                max_found = -1
+                for entry in existing_numbers:
+                    tail = str(entry)[len(seq.prefix):]
                     if tail.isdigit():
                         try:
                             num = int(tail)
@@ -241,6 +264,39 @@ class DocumentSequence(models.Model):
                 if last:
                     n = str(last.transfer_number)[len(self.prefix):]
                     last_num = int(n) if n.isdigit() else None
+            elif self.document_type == 'bank_cash_transfer':
+                from cashboxes.models import CashboxTransfer
+                last = (
+                    CashboxTransfer.objects
+                    .filter(transfer_number__startswith=self.prefix)
+                    .order_by('-transfer_number')
+                    .first()
+                )
+                if last:
+                    n = str(last.transfer_number)[len(self.prefix):]
+                    last_num = int(n) if n.isdigit() else None
+            elif self.document_type == 'journal_entry':
+                from journal.models import JournalEntry
+                last = (
+                    JournalEntry.objects
+                    .filter(entry_number__startswith=self.prefix)
+                    .order_by('-entry_number')
+                    .first()
+                )
+                if last:
+                    n = str(last.entry_number)[len(self.prefix):]
+                    last_num = int(n) if n.isdigit() else None
+            elif self.document_type == 'warehouse_transfer':
+                from inventory.models import WarehouseTransfer
+                last = (
+                    WarehouseTransfer.objects
+                    .filter(transfer_number__startswith=self.prefix)
+                    .order_by('-transfer_number')
+                    .first()
+                )
+                if last:
+                    n = str(last.transfer_number)[len(self.prefix):]
+                    last_num = int(n) if n.isdigit() else None
         except Exception:
             pass
 
@@ -253,29 +309,29 @@ class DocumentSequence(models.Model):
 class AuditLog(models.Model):
     """سجل المراجعة"""
     ACTION_TYPES = [
-        ('create', _('إنشاء')),
-        ('update', _('تحديث')),
-        ('delete', _('حذف')),
+        ('create', _('Create')),
+        ('update', _('Update')),
+        ('delete', _('Delete')),
         ('view', _('View')),
-        ('export', _('تصدير')),
-        ('import', _('استيراد')),
-        ('reset', _('إعادة تعيين')),
+        ('export', _('Export')),
+        ('import', _('Import')),
+        ('reset', _('Reset')),
     ]
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_('المستخدم'))
-    action_type = models.CharField(_('نوع العملية'), max_length=20, choices=ACTION_TYPES)
-    content_type = models.CharField(_('نوع المحتوى'), max_length=100)
-    object_id = models.PositiveIntegerField(_('معرف الكائن'), null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_('User'))
+    action_type = models.CharField(_('Action Type'), max_length=20, choices=ACTION_TYPES)
+    content_type = models.CharField(_('Content Type'), max_length=100)
+    object_id = models.PositiveIntegerField(_('Object ID'), null=True, blank=True)
     description = models.TextField(_('Description'))
-    ip_address = models.GenericIPAddressField(_('عنوان IP'), null=True, blank=True)
-    timestamp = models.DateTimeField(_('الوقت'), auto_now_add=True)
+    ip_address = models.GenericIPAddressField(_('IP Address'), null=True, blank=True)
+    timestamp = models.DateTimeField(_('Time'), auto_now_add=True)
 
     class Meta:
-        verbose_name = _('سجل المراجعة')
-        verbose_name_plural = _('سجلات المراجعة')
+        verbose_name = _('Audit Log')
+        verbose_name_plural = _('Audit Logs')
         ordering = ['-timestamp']
         permissions = [
-            ('view_audit_log', _('يمكن عرض سجل الأنشطة')),
+            ('view_audit_log', _('Can view audit log')),
         ]
 
     def __str__(self):
@@ -285,21 +341,21 @@ class AuditLog(models.Model):
 class SystemNotification(models.Model):
     """إشعارات النظام"""
     NOTIFICATION_TYPES = [
-        ('low_stock', _('انخفاض المخزون')),
-        ('system_alert', _('تنبيه النظام')),
-        ('user_action', _('إجراء المستخدم')),
+        ('low_stock', _('Low Stock')),
+        ('system_alert', _('System Alert')),
+        ('user_action', _('User Action')),
     ]
 
-    notification_type = models.CharField(_('نوع الإشعار'), max_length=20, choices=NOTIFICATION_TYPES)
-    title = models.CharField(_('العنوان'), max_length=200)
-    message = models.TextField(_('الرسالة'))
-    is_read = models.BooleanField(_('مقروء'), default=False)
+    notification_type = models.CharField(_('Notification Type'), max_length=20, choices=NOTIFICATION_TYPES)
+    title = models.CharField(_('Title'), max_length=200)
+    message = models.TextField(_('Message'))
+    is_read = models.BooleanField(_('Read'), default=False)
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_('المستخدم'), null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_('User'), null=True, blank=True)
 
     class Meta:
-        verbose_name = _('إشعار النظام')
-        verbose_name_plural = _('إشعارات النظام')
+        verbose_name = _('System Notification')
+        verbose_name_plural = _('System Notifications')
         ordering = ['-created_at']
 
     def __str__(self):

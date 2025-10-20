@@ -13,9 +13,11 @@
                 <div class="card-header">
                     <h3 class="card-title">{% trans "Bank Reconciliations" %}</h3>
                     <div class="card-tools">
+                        {% if user.is_superuser or user.user_type in 'superadmin,admin' or perms.banks.can_edit_banks_account %}
                         <a href="{% url 'banks:reconciliation_add' %}" class="btn btn-primary btn-sm">
                             <i class="fas fa-plus"></i> {% trans "Add Reconciliation" %}
                         </a>
+                        {% endif %}
                     </div>
                 </div>
 

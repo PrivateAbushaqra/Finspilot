@@ -215,6 +215,13 @@
                             <label for="id_invoice_number" class="form-label">
                                 {% trans "Invoice Number" %} <span class="required-field">*</span>
                             </label>
+                            {% if sequence_error %}
+                                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    {{ sequence_error }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endif %}
                             <div class="input-group">
                                 <span class="input-group-text">
                                     <i class="fas fa-hashtag"></i>

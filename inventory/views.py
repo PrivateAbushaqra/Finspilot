@@ -410,6 +410,7 @@ class MovementListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
             total=Sum('quantity'))['total'] or 0
         total_transfers = all_movements.filter(movement_type='transfer').count()
         today_movements = all_movements.filter(date=timezone.now().date()).count()
+        
         context.update({
             'total_in': total_in,
             'total_out': total_out,
@@ -424,7 +425,7 @@ class MovementListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
             user=self.request.user,
             action_type='view',
             content_type='inventory_movements_list',
-            description=_('عرض قائمة حركات المخزون مع عمود رقم المستند'),
+            description=_('عرض قائمة حركات المخزون'),
             ip_address=self.request.META.get('REMOTE_ADDR')
         )
         
@@ -448,9 +449,19 @@ class TransferCreateView(LoginRequiredMixin, UserPassesTestMixin, View):
         return self.request.user.has_inventory_permission()
     
     def get(self, request, *args, **kwargs):
+        # التحقق من وجود تسلسل المستندات
+        from core.models import DocumentSequence
+        try:
+            sequence = DocumentSequence.objects.get(document_type='warehouse_transfer')
+            next_transfer_number = sequence.peek_next_number()
+        except DocumentSequence.DoesNotExist:
+            messages.error(request, _('يجب إعداد تسلسل "التحويل بين المستودعات" في الإعدادات قبل إنشاء أي تحويل.'))
+            return redirect('inventory:transfer_list')
+        
         context = {
             'warehouses': Warehouse.objects.filter(is_active=True).exclude(code='MAIN'),
             'products': Product.objects.filter(is_active=True),
+            'next_transfer_number': next_transfer_number,
             'can_transfer_all_inventory': request.user.is_superuser or request.user.groups.filter(name__in=['admin', 'superadmin']).exists()
         }
         return render(request, self.template_name, context)
@@ -461,6 +472,16 @@ class TransferCreateView(LoginRequiredMixin, UserPassesTestMixin, View):
             to_warehouse_id = request.POST.get('to_warehouse')
             transfer_date = request.POST.get('transfer_date')
             notes = request.POST.get('notes', '')
+            transfer_number = request.POST.get('transfer_number', '').strip()
+            
+            if not transfer_number:
+                messages.error(request, _('Transfer number is required'))
+                return self.get(request)
+            
+            # التحقق من عدم تكرار رقم التحويل
+            if WarehouseTransfer.objects.filter(transfer_number=transfer_number).exists():
+                messages.error(request, _('Transfer number already exists! Please use another number.'))
+                return self.get(request)
             
             if from_warehouse_id == to_warehouse_id:
                 messages.error(request, 'لا يمكن التحويل من وإلى نفس المستودع!')
@@ -468,29 +489,6 @@ class TransferCreateView(LoginRequiredMixin, UserPassesTestMixin, View):
             
             from_warehouse = get_object_or_404(Warehouse, id=from_warehouse_id, is_active=True)
             to_warehouse = get_object_or_404(Warehouse, id=to_warehouse_id, is_active=True)
-            
-            # إنشاء رقم التحويل
-            from core.models import DocumentSequence
-            try:
-                sequence = DocumentSequence.objects.get(document_type='warehouse_transfer')
-                transfer_number = sequence.get_next_number()
-            except DocumentSequence.DoesNotExist:
-                # في حالة عدم وجود تسلسل، استخدم الطريقة القديمة
-                prefix = 'WT'
-                date_str = timezone.now().strftime('%Y%m%d')
-                
-                # البحث عن آخر رقم في نفس اليوم
-                last_transfer = WarehouseTransfer.objects.filter(
-                    transfer_number__startswith=f'{prefix}{date_str}'
-                ).order_by('-transfer_number').first()
-                
-                if last_transfer:
-                    last_num = int(last_transfer.transfer_number[-4:])
-                    next_num = last_num + 1
-                else:
-                    next_num = 1
-                
-                transfer_number = f'{prefix}{date_str}{next_num:04d}'
             
             # إنشاء التحويل
             transfer = WarehouseTransfer.objects.create(
@@ -575,6 +573,15 @@ class TransferCreateView(LoginRequiredMixin, UserPassesTestMixin, View):
                 description=f'تم إنشاء تحويل مخزون من {from_warehouse.name} إلى {to_warehouse.name}',
                 ip_address=request.META.get('REMOTE_ADDR')
             )
+            
+            # تحديث التسلسل بعد نجاح التحويل
+            try:
+                sequence = DocumentSequence.objects.get(document_type='warehouse_transfer')
+                # استخراج الرقم من نهاية الرقم المُستخدم
+                used_number = int(transfer_number[len(sequence.prefix):])
+                sequence.advance_to_at_least(used_number)
+            except (DocumentSequence.DoesNotExist, ValueError, IndexError):
+                pass  # تجاهل الأخطاء في تحديث التسلسل
             
             messages.success(request, f'تم إنشاء التحويل بنجاح!')
             return redirect('inventory:transfer_list')

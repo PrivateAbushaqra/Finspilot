@@ -166,12 +166,14 @@ def cashbox_list(request):
     # الحصول على جميع المستخدمين للاختيار
     users = User.objects.filter(is_active=True).order_by('username')
     
-    # الحصول على رقم التحويل التالي
+    # الحصول على أرقام التحويل التالية لكل نوع
     from core.models import DocumentSequence
-    next_transfer_number = None
+    next_transfer_numbers = {}
+    
+    # تسلسل التحويلات بين الصناديق
     try:
         sequence = DocumentSequence.objects.get(document_type='cashbox_transfer')
-        next_transfer_number = sequence.get_next_number()
+        next_transfer_numbers['cashbox_transfer'] = sequence.get_next_number()
     except DocumentSequence.DoesNotExist:
         # في حالة عدم وجود تسلسل، استخدم الطريقة القديمة
         prefix = 'CT'
@@ -188,7 +190,32 @@ def cashbox_list(request):
         else:
             new_number = 1
         
-        next_transfer_number = f'{prefix}{date_str}{new_number:04d}'
+        next_transfer_numbers['cashbox_transfer'] = f'{prefix}{date_str}{new_number:04d}'
+    
+    # تسلسل التحويلات بين البنوك والصناديق
+    try:
+        sequence = DocumentSequence.objects.get(document_type='bank_cash_transfer')
+        next_transfer_numbers['bank_cash_transfer'] = sequence.get_next_number()
+    except DocumentSequence.DoesNotExist:
+        # في حالة عدم وجود تسلسل، استخدم الطريقة القديمة
+        prefix = 'BCT'
+        date_str = timezone.now().strftime('%Y%m%d')
+        
+        # البحث عن آخر رقم في نفس اليوم
+        last_transfer = CashboxTransfer.objects.filter(
+            transfer_number__startswith=f'{prefix}{date_str}'
+        ).order_by('-transfer_number').first()
+        
+        if last_transfer:
+            last_number = int(last_transfer.transfer_number[-4:])
+            new_number = last_number + 1
+        else:
+            new_number = 1
+        
+        next_transfer_numbers['bank_cash_transfer'] = f'{prefix}{date_str}{new_number:04d}'
+    
+    # استخدم تسلسل التحويل بين البنوك والصناديق كافتراضي
+    next_transfer_number = next_transfer_numbers.get('bank_cash_transfer')
     
     context = {
         'cashboxes': cashboxes,
@@ -198,6 +225,7 @@ def cashbox_list(request):
         'banks': banks,
         'users': users,
         'next_transfer_number': next_transfer_number,
+        'next_transfer_numbers': next_transfer_numbers,
         'today': timezone.now().date(),
         'page_title': _('Cashboxes'),
     }
@@ -423,17 +451,17 @@ def cashbox_edit(request, cashbox_id):
                     
                     # التحقق من أن نوع التعديل تم اختياره (IFRS Compliance)
                     if not adjustment_type:
-                        messages.error(request, _('يجب اختيار نوع التعديل عند تغيير الرصيد لضمان التوافق مع معايير IFRS'))
+                        messages.error(request, _('Adjustment type must be selected when changing balance to ensure IFRS compliance'))
                         return redirect('cashboxes:cashbox_list')
                     
                     # إنشاء حركة للتعديل
                     # حسب IFRS: يجب تسجيل التغيير الفعلي في الرصيد
                     adjustment_description = _('Adjustment of Opening Balance')
                     if balance_diff > 0:
-                        adjustment_description += f' - {_("Increase")}: {abs(balance_diff)} - نوع: {dict(CashboxTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "غير محدد")}'
+                        adjustment_description += f' - {_("Increase")}: {abs(balance_diff)} - Type: {dict(CashboxTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "Undefined")}'
                         transaction_amount = abs(balance_diff)  # موجب للإيداع
                     else:
-                        adjustment_description += f' - {_("Decrease")}: {abs(balance_diff)} - نوع: {dict(CashboxTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "غير محدد")}'
+                        adjustment_description += f' - {_("Decrease")}: {abs(balance_diff)} - Type: {dict(CashboxTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "Undefined")}'
                         transaction_amount = -abs(balance_diff)  # سالب للسحب
                     
                     CashboxTransaction.objects.create(
@@ -466,13 +494,13 @@ def cashbox_edit(request, cashbox_id):
                                     'account_id': cashbox_account.id,
                                     'debit': abs(balance_diff),
                                     'credit': Decimal('0'),
-                                    'description': f'{_("Increase in balance")}: {cashbox.name} ({dict(CashboxTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "تعديل")})'
+                                    'description': f'{_("Increase in balance")}: {cashbox.name} ({dict(CashboxTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "Adjustment")})'
                                 },
                                 {
                                     'account_id': adjustment_account.id,
                                     'debit': Decimal('0'),
                                     'credit': abs(balance_diff),
-                                    'description': f'{adjustment_account.name} - {dict(CashboxTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "تعديل")}'
+                                    'description': f'{adjustment_account.name} - {dict(CashboxTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "Adjustment")}'
                                 }
                             ]
                         else:
@@ -482,19 +510,19 @@ def cashbox_edit(request, cashbox_id):
                                     'account_id': adjustment_account.id,
                                     'debit': abs(balance_diff),
                                     'credit': Decimal('0'),
-                                    'description': f'{adjustment_account.name} - {dict(CashboxTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "تعديل")}'
+                                    'description': f'{adjustment_account.name} - {dict(CashboxTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "Adjustment")}'
                                 },
                                 {
                                     'account_id': cashbox_account.id,
                                     'debit': Decimal('0'),
                                     'credit': abs(balance_diff),
-                                    'description': f'{_("Decrease in balance")}: {cashbox.name} ({dict(CashboxTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "تعديل")})'
+                                    'description': f'{_("Decrease in balance")}: {cashbox.name} ({dict(CashboxTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "Adjustment")})'
                                 }
                             ]
                         
                         journal_entry = JournalService.create_journal_entry(
                             entry_date=timezone.now().date(),
-                            description=f'{_("Adjustment of Opening Balance")}: {cashbox.name} - {dict(CashboxTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "تعديل")}',
+                            description=f'{_("Adjustment of Opening Balance")}: {cashbox.name} - {dict(CashboxTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "Adjustment")}',
                             reference_type='cashbox_adjustment',
                             reference_id=cashbox.id,
                             lines_data=lines_data,
@@ -527,14 +555,19 @@ def cashbox_edit(request, cashbox_id):
 @login_required
 def transfer_create(request):
     """إنشاء تحويل"""
-    # التحقق من وجود تسلسل المستندات
-    from core.models import DocumentSequence
-    try:
-        sequence = DocumentSequence.objects.get(document_type='cashbox_transfer')
-    except DocumentSequence.DoesNotExist:
-        messages.warning(request, _('Warning: Cashbox transfer sequence is not set! Please add the "Cashbox Transfer" sequence in Settings before creating any transfer.'))
-    
     if request.method == 'POST':
+        transfer_type = request.POST.get('transfer_type')
+        
+        # استخدام تسلسل التحويل بين البنوك والصناديق لجميع التحويلات
+        sequence_type = 'bank_cash_transfer'
+        
+        # التحقق من وجود تسلسل المستندات
+        from core.models import DocumentSequence
+        try:
+            sequence = DocumentSequence.objects.get(document_type=sequence_type)
+        except DocumentSequence.DoesNotExist:
+            messages.error(request, _(f'{sequence_type.replace("_", " ").title()} sequence must be configured in settings before creating any transfer.'))
+            return redirect('cashboxes:transfer_list')
         transfer_type = request.POST.get('transfer_type')
         date = request.POST.get('date')
         amount = request.POST.get('amount')
@@ -615,12 +648,15 @@ def transfer_create(request):
                 else:
                     # معاينة الرقم التالي دون حجزه
                     try:
-                        sequence = DocumentSequence.objects.get(document_type='cashbox_transfer')
+                        sequence = DocumentSequence.objects.get(document_type=sequence_type)
                         final_transfer_number = sequence.peek_next_number()
                     except DocumentSequence.DoesNotExist:
                         # استخدام الطريقة القديمة
                         from django.utils import timezone
-                        prefix = 'CT'
+                        if sequence_type == 'bank_cash_transfer':
+                            prefix = 'BCT'
+                        else:
+                            prefix = 'CT'
                         date_str = timezone.now().strftime('%Y%m%d')
                         
                         # البحث عن آخر رقم مُستخدم فعلياً
@@ -827,7 +863,7 @@ def transfer_create(request):
                 # تحديث التسلسل بعد نجاح التحويل
                 if not transfer_number:  # فقط إذا تم توليد الرقم تلقائياً
                     try:
-                        sequence = DocumentSequence.objects.get(document_type='cashbox_transfer')
+                        sequence = DocumentSequence.objects.get(document_type=sequence_type)
                         # استخراج الرقم من نهاية الرقم المُستخدم
                         used_number = int(final_transfer_number[len(sequence.prefix):])
                         sequence.advance_to_at_least(used_number)
@@ -874,33 +910,22 @@ def transfer_list(request):
     # الحصول على رقم التحويل التالي
     from core.models import DocumentSequence
     next_transfer_number = None
+    sequence_exists = False
     try:
-        sequence = DocumentSequence.objects.get(document_type='cashbox_transfer')
-        next_transfer_number = sequence.get_next_number()
+        sequence = DocumentSequence.objects.get(document_type='bank_cash_transfer')
+        next_transfer_number = sequence.peek_next_number()
+        sequence_exists = True
     except DocumentSequence.DoesNotExist:
-        # في حالة عدم وجود تسلسل، استخدم الطريقة القديمة
-        from django.utils import timezone
-        prefix = 'CT'
-        date_str = timezone.now().strftime('%Y%m%d')
-        
-        # البحث عن آخر رقم في نفس اليوم
-        last_transfer = CashboxTransfer.objects.filter(
-            transfer_number__startswith=f'{prefix}{date_str}'
-        ).order_by('-transfer_number').first()
-        
-        if last_transfer:
-            last_number = int(last_transfer.transfer_number[-4:])
-            new_number = last_number + 1
-        else:
-            new_number = 1
-        
-        next_transfer_number = f'{prefix}{date_str}{new_number:04d}'
+        # لا يوجد تسلسل معد
+        next_transfer_number = None
+        sequence_exists = False
     
     context = {
         'transfers': page_obj,
         'cashboxes': cashboxes,
         'banks': banks,
         'next_transfer_number': next_transfer_number,
+        'sequence_exists': sequence_exists,
     # Use English msgid to avoid Arabic leaking in EN UI; AR translation handled in locale files
     'page_title': _('Cashbox Transfers'),
     }
@@ -920,7 +945,7 @@ def transfer_detail(request, transfer_id):
     context = {
         'transfer': transfer,
         'related_transactions': related_transactions,
-        'page_title': f'{_("تفاصيل التحويل")} - {transfer.transfer_number}',
+        'page_title': f'{_("Transfer Details")} - {transfer.transfer_number}',
     }
     return render(request, 'cashboxes/transfer_detail.html', context)
 
