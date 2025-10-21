@@ -120,6 +120,22 @@ class JournalLineForm(forms.ModelForm):
         """تخطي التحقق من البنود الفارغة تماماً"""
         cleaned_data = super().clean()
         account = cleaned_data.get('account')
+        account_search = cleaned_data.get('account_search')
+        
+        # إذا كان account_search موجود ولا يوجد account، نبحث عن الحساب
+        if account_search and not account:
+            try:
+                from django.db import models
+                from .models import Account
+                account = Account.objects.filter(
+                    models.Q(name__icontains=account_search) | 
+                    models.Q(code__icontains=account_search)
+                ).first()
+                if account:
+                    cleaned_data['account'] = account
+            except:
+                pass
+        
         # معالجة القيم الفارغة بشكل صحيح
         debit = cleaned_data.get('debit')
         credit = cleaned_data.get('credit')

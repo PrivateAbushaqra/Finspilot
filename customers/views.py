@@ -464,13 +464,17 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
                 # إنشاء قيد محاسبي للتعديل باستخدام الحساب الصحيح
                 try:
                     from journal.services import JournalService
-                    from accounts.models import Account
+                    from journal.models import Account
                     
-                    # الحصول على الحساب المحاسبي
-                    if customer_supplier.is_customer:
-                        account_obj = Account.objects.filter(code='1301').first()
-                    if customer_supplier.is_supplier:
-                        account_obj = Account.objects.filter(code='2101').first()
+                    # الحصول على الحساب المحاسبي الفرعي للعميل/المورد
+                    account_obj = Account.objects.filter(name=customer_supplier.name).first()
+                    
+                    # إذا لم يوجد حساب فرعي، استخدم الحساب الرئيسي كاحتياطي
+                    if not account_obj:
+                        if customer_supplier.type in ['customer', 'both']:
+                            account_obj = Account.objects.filter(code='1301').first()
+                        elif customer_supplier.type == 'supplier':
+                            account_obj = Account.objects.filter(code='2101').first()
                     
                     # تحديد الحساب المقابل حسب نوع التعديل (IFRS compliant)
                     adjustment_account_code = get_adjustment_account_code(adjustment_type, is_bank=False, is_customer_supplier=True)

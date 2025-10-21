@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load i18n %}
 {% load humanize %}
+{% load currency_tags %}
 
 {% get_current_language as LANGUAGE_CODE %}
 {% block title %}{% if LANGUAGE_CODE == 'ar' %}قائمة الحسابات{% else %}{% trans "Accounts List" %}{% endif %}{% endblock %}
@@ -173,7 +174,7 @@
                                     {% endif %}
                                 </td>
                                 <td class="text-right">
-                                    <strong>{{ account.get_balance|floatformat:3|intcomma }}</strong>
+                                    <strong>{{ account.get_balance|format_currency }}</strong>
                                 </td>
                                 <td>
                                     {% if account.is_active %}

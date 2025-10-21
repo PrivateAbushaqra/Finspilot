@@ -111,6 +111,9 @@ def create_opening_balance_journal_entry(sender, instance, created, **kwargs):
                 created_by=creator_user
             )
         
+        # تحديث الرصيد بعد إنشاء المعاملة الافتتاحية
+        instance.sync_balance()
+        
         # الحصول على الحسابات المحاسبية
         customer_account = None
         supplier_account = None

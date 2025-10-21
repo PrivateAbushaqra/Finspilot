@@ -87,7 +87,7 @@
                             <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                                 {% trans "Total Entries" %}
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ entries.paginator.count|intcomma }}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ entries.paginator.count|format_number }}</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-book fa-2x text-gray-300"></i>
@@ -104,7 +104,7 @@
                             <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
                                 {% trans "Total Amount" %}
                             </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_amount|floatformat:3|intcomma }}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_amount|format_currency }}</div>
                         </div>
                         <div class="col-auto">
                             <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
@@ -229,7 +229,7 @@
                                     </td>
                                     <td>{{ entry.description|truncatechars:50 }}</td>
                                     <td class="text-end">
-                                        <strong>{{ entry.total_amount|floatformat:3|intcomma }} {% get_currency_symbol %}</strong>
+                                        <strong>{{ entry.total_amount|format_currency }} {% get_currency_symbol %}</strong>
                                     </td>
                                     <td>{{ entry.created_by.get_full_name|default:entry.created_by.username }}</td>
                                     <td>

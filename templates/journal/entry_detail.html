@@ -76,7 +76,7 @@
                                 <tr>
                                     <td class="fw-bold">{% trans "إجمالي المبلغ" %}:</td>
                                     <td class="text-success">
-                                        <strong>{{ entry.total_amount|floatformat:3|intcomma }} {% get_currency_symbol %}</strong>
+                                        <strong>{{ entry.total_amount|format_currency }} {% get_currency_symbol %}</strong>
                                     </td>
                                 </tr>
                                 <tr>
@@ -142,7 +142,7 @@
                                     <td class="text-center">
                                         {% if line.debit > 0 %}
                                             <span class="text-success fw-bold">
-                                                {{ line.debit|floatformat:3|intcomma }}
+                                                {{ line.debit|format_currency }}
                                             </span>
                                         {% else %}
                                             <span class="text-muted">-</span>
@@ -151,7 +151,7 @@
                                     <td class="text-center">
                                         {% if line.credit > 0 %}
                                             <span class="text-danger fw-bold">
-                                                {{ line.credit|floatformat:3|intcomma }}
+                                                {{ line.credit|format_currency }}
                                             </span>
                                         {% else %}
                                             <span class="text-muted">-</span>
@@ -170,10 +170,10 @@
                                 <tr class="table-dark">
                                     <td colspan="2" class="text-center fw-bold">{% trans "Total" %}</td>
                                     <td class="text-center fw-bold text-success">
-                                        {{ totals.total_debit|default:0|floatformat:3|intcomma }}
+                                        {{ totals.total_debit|default:0|format_currency }}
                                     </td>
                                     <td class="text-center fw-bold text-danger">
-                                        {{ totals.total_credit|default:0|floatformat:3|intcomma }}
+                                        {{ totals.total_credit|default:0|format_currency }}
                                     </td>
                                     <td class="text-center">
                                         {% if totals.total_debit == totals.total_credit %}
@@ -206,7 +206,7 @@
                                 {% trans "إجمالي المدين" %}
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ totals.total_debit|default:0|floatformat:3|intcomma }} {% get_currency_symbol %}
+                                {{ totals.total_debit|default:0|format_currency }} {% get_currency_symbol %}
                             </div>
                         </div>
                         <div class="col-auto">
@@ -225,7 +225,7 @@
                                 {% trans "إجمالي الدائن" %}
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ totals.total_credit|default:0|floatformat:3|intcomma }} {% get_currency_symbol %}
+                                {{ totals.total_credit|default:0|format_currency }} {% get_currency_symbol %}
                             </div>
                         </div>
                         <div class="col-auto">

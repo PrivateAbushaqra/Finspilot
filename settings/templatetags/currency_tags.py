@@ -29,14 +29,13 @@ def currency_format(value, currency_code=None):
                 currency = Currency.get_base_currency()
         
         if not currency:
-            return f"{value:.2f}"
+            # تنسيق ثابت: فاصلة للآلاف، نقطة للعشرية
+            formatted_value = f"{value:,.2f}"
+            return formatted_value
         
-        # تنسيق العدد حسب عدد الخانات العشرية
+        # تنسيق العدد حسب عدد الخانات العشرية (فاصلة للآلاف، نقطة للعشرية)
         decimal_places = currency.decimal_places
-        if decimal_places == 0:
-            formatted_value = f"{value:.0f}"
-        else:
-            formatted_value = f"{value:.{decimal_places}f}"
+        formatted_value = f"{value:,.{decimal_places}f}"
         
         # إضافة رمز العملة
         company_settings = CompanySettings.objects.first()
@@ -138,16 +137,35 @@ def format_currency(value):
         else:
             currency = Currency.get_base_currency()
         
-        # إذا لم توجد عملة، استخدم خانتين عشريتين افتراضياً
+        # إذا لم توجد عملة، استخدم خانتين عشريتين افتراضياً (فاصلة للآلاف، نقطة للعشرية)
         if not currency:
-            return f"{value:.2f}"
+            return f"{value:,.2f}"
         
-        # تنسيق العدد حسب عدد الخانات العشرية
+        # تنسيق العدد حسب عدد الخانات العشرية (فاصلة للآلاف، نقطة للعشرية)
         decimal_places = currency.decimal_places
-        if decimal_places == 0:
-            return f"{value:.0f}"
-        else:
-            return f"{value:.{decimal_places}f}"
+        return f"{value:,.{decimal_places}f}"
+            
+    except Exception as e:
+        # في حالة الخطأ، إرجاع القيمة كما هي
+        return str(value)
+
+@register.filter
+def format_number(value):
+    """
+    تنسيق الأرقام العامة (غير مالية) مع فاصلة للآلاف ونقطة للعشرية
+    """
+    if value is None:
+        return "0"
+    
+    try:
+        # التحقق من نوع البيانات
+        if isinstance(value, str):
+            value = Decimal(value)
+        elif not isinstance(value, Decimal):
+            value = Decimal(str(value))
+        
+        # تنسيق العدد (فاصلة للآلاف، نقطة للعشرية)
+        return f"{value:,.0f}"
             
     except Exception as e:
         # في حالة الخطأ، إرجاع القيمة كما هي

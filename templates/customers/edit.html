@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load i18n %}
 {% load currency_tags %}
+{% load l10n %}
 
 
 {% block title %}{% trans "Edit Customer/Supplier" %} - {{ block.super }}{% endblock %}
@@ -207,7 +208,7 @@
                             <div class="balance-input">
                                 <span class="currency-symbol">{% get_currency_symbol %}</span>
                                 <input type="number" class="form-control" id="credit_limit" name="credit_limit" 
-                                       value="{% if customer_supplier.credit_limit %}{{ customer_supplier.credit_limit }}{% else %}0{% endif %}" step="0.001" min="0">
+                                       value="{% if customer_supplier.credit_limit %}{{ customer_supplier.credit_limit|unlocalize }}{% else %}0{% endif %}" step="0.001" min="0">
                             </div>
                             <div class="form-text">{% trans "Maximum amount the" %} {% trans "Customer" %} {% trans "can be" %} {% trans "debited" %}</div>
                         </div>
@@ -226,7 +227,7 @@
                                 <input type="number" class="form-control {% if customer_supplier.current_balance > 0 %}bg-light-success{% elif customer_supplier.current_balance < 0 %}bg-light-danger{% else %}bg-light{% endif %}" 
                                        id="current_balance" 
                                        name="current_balance"
-                                       value="{% if customer_supplier.current_balance %}{{ customer_supplier.current_balance }}{% else %}0{% endif %}" 
+                                       value="{% if customer_supplier.current_balance %}{{ customer_supplier.current_balance|unlocalize }}{% else %}0{% endif %}" 
                                        step="0.001">
                             </div>
                             <div class="form-text text-muted">
