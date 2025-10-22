@@ -10,7 +10,7 @@ class Command(BaseCommand):
             # الأصول
             {'code': '101', 'name': 'النقد في الصندوق', 'type': 'asset'},
             {'code': '102', 'name': 'الحسابات البنكية', 'type': 'asset'},
-            {'code': '1201', 'name': 'المخزون', 'type': 'asset'},
+            {'code': '1201', 'name': 'مخزون المستودعات', 'type': 'asset'},
             {'code': '1301', 'name': 'حسابات العملاء', 'type': 'asset'},
             {'code': '1401', 'name': 'الأصول الثابتة', 'type': 'asset'},
 

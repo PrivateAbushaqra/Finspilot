@@ -795,13 +795,13 @@ class JournalService:
     
     @staticmethod
     def get_inventory_account():
-        """الحصول على حساب المخزون"""
+        """الحصول على حساب المخزون العام"""
         account, created = Account.objects.get_or_create(
             code='1020',
             defaults={
-                'name': 'المخزون',
+                'name': 'المخزون العام',
                 'account_type': 'asset',
-                'description': 'حساب المخزون السلعي'
+                'description': 'حساب المخزون السلعي العام'
             }
         )
         return account
