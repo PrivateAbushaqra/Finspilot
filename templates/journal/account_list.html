@@ -218,7 +218,7 @@
                     <ul class="pagination justify-content-center">
                         {% if page_obj.has_previous %}
                             <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&type={{ current_type }}&order_by={{ order_by }}&direction={{ direction }}">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}&order_by={{ order_by }}&direction={{ direction }}">
                                     {% if LANGUAGE_CODE == 'ar' %}السابق{% else %}{% trans "Previous" %}{% endif %}
                                 </a>
                             </li>
@@ -231,14 +231,14 @@
                                 </li>
                             {% elif num > page_obj.number|add:-3 and num < page_obj.number|add:3 %}
                                 <li class="page-item">
-                                    <a class="page-link" href="?page={{ num }}&search={{ search_query }}&type={{ current_type }}&order_by={{ order_by }}&direction={{ direction }}">{{ num }}</a>
+                                    <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}&order_by={{ order_by }}&direction={{ direction }}">{{ num }}</a>
                                 </li>
                             {% endif %}
                         {% endfor %}
 
                         {% if page_obj.has_next %}
                             <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&type={{ current_type }}&order_by={{ order_by }}&direction={{ direction }}">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_type %}&type={{ current_type }}{% endif %}&order_by={{ order_by }}&direction={{ direction }}">
                                     {% if LANGUAGE_CODE == 'ar' %}التالي{% else %}{% trans "Next" %}{% endif %}
                                 </a>
                             </li>

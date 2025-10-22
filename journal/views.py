@@ -67,7 +67,7 @@ def account_list(request):
     
     # البحث
     search = request.GET.get('search')
-    if search:
+    if search and search != 'None' and search.strip():
         accounts = accounts.filter(
             Q(name__icontains=search) | 
             Q(code__icontains=search) |
@@ -76,7 +76,7 @@ def account_list(request):
     
     # فلترة النوع
     account_type = request.GET.get('type')
-    if account_type:
+    if account_type and account_type != 'None' and account_type.strip():
         accounts = accounts.filter(account_type=account_type)
     
     # الترتيب
@@ -128,7 +128,7 @@ def export_accounts_excel(request):
     
     # البحث
     search = request.GET.get('search')
-    if search:
+    if search and search != 'None' and search.strip():
         accounts = accounts.filter(
             Q(name__icontains=search) | 
             Q(code__icontains=search) |
@@ -137,7 +137,7 @@ def export_accounts_excel(request):
     
     # فلترة النوع
     account_type = request.GET.get('type')
-    if account_type:
+    if account_type and account_type != 'None' and account_type.strip():
         accounts = accounts.filter(account_type=account_type)
     
     # الترتيب
