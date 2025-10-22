@@ -664,10 +664,13 @@ def journal_entry_edit(request, pk):
     """تعديل قيد محاسبي"""
     entry = get_object_or_404(JournalEntry, pk=pk)
     if request.method == 'POST':
-        form = JournalEntryForm(request.POST, instance=entry)
+        form = JournalEntryForm(request.POST, instance=entry, user=request.user)
         formset = JournalLineFormSet(request.POST, instance=entry)
         try:
-            if form.is_valid() and formset.is_valid():
+            form_valid = form.is_valid()
+            formset_valid = formset.is_valid()
+            
+            if form_valid and formset_valid:
                 with transaction.atomic():
                     entry = form.save()
                     formset.instance = entry
@@ -691,7 +694,20 @@ def journal_entry_edit(request, pk):
                 messages.success(request, _('Entry modified successfully'))
                 return redirect('journal:entry_detail', pk=entry.pk)
             else:
-                messages.error(request, _('Please correct the errors in the form'))
+                # إضافة تفاصيل الأخطاء للمستخدم
+                error_msg = _('Please correct the errors in the form')
+                if not form_valid and form.errors:
+                    for field, errors in form.errors.items():
+                        messages.error(request, f"{field}: {', '.join(errors)}")
+                if not formset_valid:
+                    if formset.non_form_errors():
+                        for error in formset.non_form_errors():
+                            messages.error(request, str(error))
+                    for i, form_errors in enumerate(formset.errors):
+                        if form_errors:
+                            messages.error(request, f"بند {i+1}: {form_errors}")
+                if not (form.errors or formset.errors or formset.non_form_errors()):
+                    messages.error(request, error_msg)
         except Exception as e:
             messages.error(request, _('An error occurred while modifying the entry: ') + str(e))
     else:

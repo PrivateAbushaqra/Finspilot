@@ -355,7 +355,7 @@ class JournalService:
         })
         
         # حساب المخزون (دائن)
-        inventory_account = JournalService.get_inventory_account()
+        inventory_account = JournalService.get_warehouse_account(invoice.warehouse)
         lines_data.append({
             'account_id': inventory_account.id,
             'debit': 0,
@@ -388,7 +388,7 @@ class JournalService:
         lines_data = []
         
         # حساب المخزون (مدين) - بقيمة المشتريات
-        inventory_account = JournalService.get_inventory_account()
+        inventory_account = JournalService.get_warehouse_account(invoice.warehouse)
         lines_data.append({
             'account_id': inventory_account.id,
             'debit': invoice.subtotal,
@@ -782,11 +782,11 @@ class JournalService:
     
     @staticmethod
     def get_tax_receivable_account():
-        """الحصول على حساب ضريبة مستحقة القبض"""
+        """الحصول على حساب ضريبة القيمة المضافة المدخلة"""
         account, created = Account.objects.get_or_create(
             code='1070',
             defaults={
-                'name': 'ضريبة القيمة المضافة مستحقة القبض',
+                'name': 'ضريبة القيمة المضافة مدخلة',
                 'account_type': 'asset',
                 'description': 'ضريبة القيمة المضافة على المشتريات'
             }
@@ -802,6 +802,24 @@ class JournalService:
                 'name': 'المخزون',
                 'account_type': 'asset',
                 'description': 'حساب المخزون السلعي'
+            }
+        )
+        return account
+    
+    @staticmethod
+    def get_warehouse_account(warehouse):
+        """الحصول على حساب المستودع"""
+        if not warehouse:
+            return JournalService.get_inventory_account()
+        
+        code = f"1201{warehouse.id:04d}"
+        account, created = Account.objects.get_or_create(
+            code=code,
+            defaults={
+                'name': f'مستودع - {warehouse.name}',
+                'account_type': 'asset',
+                'parent': Account.objects.filter(code='1201').first(),
+                'description': f'حساب المستودع {warehouse.name}'
             }
         )
         return account
@@ -1072,7 +1090,7 @@ class JournalService:
         lines_data = []
         
         # حساب المخزون (مدين) - بقيمة المشتريات
-        inventory_account = JournalService.get_inventory_account()
+        inventory_account = JournalService.get_warehouse_account(invoice.warehouse)
         lines_data.append({
             'account_id': inventory_account.id,
             'debit': invoice.subtotal,
@@ -1466,11 +1484,11 @@ class JournalService:
     
     @staticmethod
     def get_tax_receivable_account():
-        """الحصول على حساب ضريبة مستحقة القبض"""
+        """الحصول على حساب ضريبة القيمة المضافة المدخلة"""
         account, created = Account.objects.get_or_create(
             code='1070',
             defaults={
-                'name': 'ضريبة القيمة المضافة مستحقة القبض',
+                'name': 'ضريبة القيمة المضافة مدخلة',
                 'account_type': 'asset',
                 'description': 'ضريبة القيمة المضافة على المشتريات'
             }
@@ -1756,7 +1774,7 @@ class JournalService:
         lines_data = []
         
         # حساب المخزون (مدين) - بقيمة المشتريات
-        inventory_account = JournalService.get_inventory_account()
+        inventory_account = JournalService.get_warehouse_account(invoice.warehouse)
         lines_data.append({
             'account_id': inventory_account.id,
             'debit': invoice.subtotal,

@@ -605,7 +605,8 @@ class ProductUpdateView(LoginRequiredMixin, View):
             'warehouses': Warehouse.objects.filter(is_active=True).exclude(code='MAIN'),
             'current_opening_balance': current_opening_balance,
             'current_stock': product.current_stock,
-            'maximum_quantity': product.maximum_quantity
+            'maximum_quantity': product.maximum_quantity,
+            'has_movements': product.has_movements
         }
         return render(request, self.template_name, context)
     
@@ -631,6 +632,17 @@ class ProductUpdateView(LoginRequiredMixin, View):
             is_active = request.POST.get('is_active') == 'on'
             image = request.FILES.get('image')
             opening_balance_warehouse_id = request.POST.get('opening_balance_warehouse')
+            
+            # التحقق من وجود حركات على المنتج
+            if product.has_movements:
+                # إذا كان هناك حركات، لا نسمح بتعديل الرصيد الافتتاحي
+                old_opening_balance = float(product.opening_balance_quantity)
+                old_opening_balance_cost = float(product.opening_balance_cost)
+                
+                if (float(opening_balance) != old_opening_balance or 
+                    float(opening_balance_cost) != old_opening_balance_cost):
+                    messages.error(request, _('لا يمكنك تعديل الرصيد الافتتاحي لوجود حركات على هذا المنتج'))
+                    return self.get(request, pk)
             
             # التحقق من صحة البيانات
             if not name:
@@ -673,6 +685,11 @@ class ProductUpdateView(LoginRequiredMixin, View):
                 
                 minimum_quantity = float(minimum_quantity) if minimum_quantity else 0
                 maximum_quantity = float(maximum_quantity) if maximum_quantity else 0
+                
+                # التحقق من صحة تكلفة الرصيد الافتتاحي - يجب أن يكون الرصيد أكبر من صفر إذا كانت التكلفة أكبر من صفر
+                if opening_balance_cost > 0 and opening_balance <= 0:
+                    messages.error(request, _('The Opening Balance Must be Greater Than Zero!'))
+                    return self.get(request, pk)
                 
                 # التحقق من صحة نسبة الضريبة
                 if tax_rate < 0 or tax_rate > 100:

@@ -30,14 +30,24 @@ class AccountForm(forms.ModelForm):
 
 
 class JournalEntryForm(forms.ModelForm):
+    # حقول مخصصة غير مقيدة بالخيارات
+    entry_type = forms.CharField(
+        label=_('Entry Type'),
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+        required=True
+    )
+    reference_type = forms.CharField(
+        label=_('Reference Type'),
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+        required=True
+    )
+    
     class Meta:
         model = JournalEntry
-        fields = ['entry_number', 'entry_date', 'entry_type', 'reference_type', 'reference_id', 'description']
+        fields = ['entry_number', 'entry_date', 'reference_id', 'description']
         widgets = {
             'entry_number': forms.TextInput(attrs={'class': 'form-control'}),
             'entry_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'entry_type': forms.Select(attrs={'class': 'form-control'}),
-            'reference_type': forms.Select(attrs={'class': 'form-control'}),
             'reference_id': forms.NumberInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
@@ -46,18 +56,12 @@ class JournalEntryForm(forms.ModelForm):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         
-        # تصفية أنواع العمليات - إزالة أنواع الفواتير التي تُنشأ تلقائياً
-        # حسب معايير IFRS: القيود المرتبطة بالفواتير يجب أن تُنشأ آلياً من الفواتير فقط
-        # لا يجوز إنشاء قيود مبيعات/مشتريات يدوياً بدون مستندات داعمة (فواتير)
-        EXCLUDED_TYPES = ['sales_invoice', 'purchase_invoice', 'sales_return', 'purchase_return']
-        allowed_choices = [
-            (key, value) for key, value in JournalEntry.REFERENCE_TYPES 
-            if key not in EXCLUDED_TYPES
-        ]
-        self.fields['reference_type'].choices = allowed_choices
-        
         # إذا كان التعديل وليس إنشاء جديد
         if self.instance and self.instance.pk:
+            # تعيين القيم الأولية للحقول المخصصة
+            self.fields['entry_type'].initial = self.instance.entry_type
+            self.fields['reference_type'].initial = self.instance.reference_type
+            
             # تحقق من صلاحية تعديل رقم القيد
             if self.user and not self.user.has_perm('journal.change_entry_number'):
                 # إذا لم يكن لديه الصلاحية، اجعل الحقل غير قابل للتعديل
@@ -71,6 +75,27 @@ class JournalEntryForm(forms.ModelForm):
                 self.fields['entry_number'].initial = seq.peek_next_number()
             except DocumentSequence.DoesNotExist:
                 pass  # سيتم توليد رقم افتراضي في النموذج
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        
+        # التحقق من صحة القيم
+        entry_type = cleaned_data.get('entry_type')
+        reference_type = cleaned_data.get('reference_type')
+        
+        # التحقق من أن entry_type صحيح
+        if entry_type and entry_type not in dict(JournalEntry.ENTRY_TYPES):
+            # إذا لم يكن في القائمة الرسمية، تأكد أنه مسموح (مثل القيم القديمة)
+            if not (self.instance and self.instance.pk and entry_type == self.instance.entry_type):
+                raise forms.ValidationError(_('نوع القيد غير صحيح'))
+        
+        # التحقق من أن reference_type صحيح
+        if reference_type and reference_type not in dict(JournalEntry.REFERENCE_TYPES):
+            # إذا لم يكن في القائمة الرسمية، تأكد أنه مسموح (مثل القيم القديمة)
+            if not (self.instance and self.instance.pk and reference_type == self.instance.reference_type):
+                raise forms.ValidationError(_('نوع العملية غير صحيح'))
+        
+        return cleaned_data
     
     def save(self, commit=True):
         instance = super().save(commit=False)
@@ -115,12 +140,40 @@ class JournalLineForm(forms.ModelForm):
             self.fields['debit'].initial = ''
             self.fields['credit'].initial = ''
             self.fields['account_search'].initial = ''
+        else:  # نموذج موجود - تعيين قيمة البحث باسم الحساب
+            if self.instance.account:
+                self.fields['account_search'].initial = self.instance.account.name
+                self.fields['account'].initial = self.instance.account.id
+            # تعيين القيم الأولية للمدين والدائن - تأكد من أن القيمة تُعرض بشكل صحيح
+            # استخدام float بدلاً من Decimal لتجنب مشاكل JSON serialization
+            debit_val = float(self.instance.debit)
+            credit_val = float(self.instance.credit)
+            
+            # تعيين initial و widget value للتأكد من ظهور القيمة
+            if debit_val > 0:
+                self.fields['debit'].initial = debit_val
+                self.fields['debit'].widget.attrs['value'] = '{:.3f}'.format(debit_val)
+            else:
+                self.fields['debit'].initial = ''
+                
+            if credit_val > 0:
+                self.fields['credit'].initial = credit_val
+                self.fields['credit'].widget.attrs['value'] = '{:.3f}'.format(credit_val)
+            else:
+                self.fields['credit'].initial = ''
     
     def clean(self):
         """تخطي التحقق من البنود الفارغة تماماً"""
         cleaned_data = super().clean()
         account = cleaned_data.get('account')
         account_search = cleaned_data.get('account_search')
+        
+        # إذا كان هذا نموذج موجود (تعديل) وليس لديه account في cleaned_data
+        # حاول استخدام الحساب من instance
+        if self.instance and self.instance.pk and not account:
+            if self.instance.account:
+                cleaned_data['account'] = self.instance.account
+                account = self.instance.account
         
         # إذا كان account_search موجود ولا يوجد account، نبحث عن الحساب
         if account_search and not account:
@@ -166,29 +219,33 @@ BaseJournalLineFormSet = inlineformset_factory(
     JournalEntry, 
     JournalLine,
     form=JournalLineForm,
-    extra=2,
+    extra=0,  # لا نضيف صفوف فارغة تلقائياً - المستخدم يضيفها يدوياً
     min_num=0,
     validate_min=False,
-    can_delete=True
+    can_delete=True,
+    fk_name='journal_entry'  # تحديد اسم ForeignKey بشكل صريح
 )
 
 class JournalLineFormSet(BaseJournalLineFormSet):
     def clean(self):
         """التحقق من توازن البنود"""
-        super().clean()
+        # لا نستدعي super().clean() لأننا نريد التحكم الكامل في التحقق
+        if any(self.errors):
+            # إذا كانت هناك أخطاء في النماذج الفردية، لا نتحقق من التوازن
+            # نسمح للمستخدم برؤية الأخطاء أولاً
+            return
         
-        # تجاهل أخطاء النماذج الفردية للحقول الفارغة
         total_debit = Decimal('0')
         total_credit = Decimal('0')
         valid_lines_count = 0
         
         for form in self.forms:
             # تجاهل النماذج المحذوفة
-            if form.cleaned_data and form.cleaned_data.get('DELETE', False):
+            if self.can_delete and self._should_delete_form(form):
                 continue
             
-            # إذا لم يكن هناك cleaned_data، تجاهل
-            if not form.cleaned_data:
+            # إذا لم يكن هناك cleaned_data أو كان فارغاً، تجاهل
+            if not hasattr(form, 'cleaned_data') or not form.cleaned_data:
                 continue
             
             account = form.cleaned_data.get('account')

@@ -181,6 +181,22 @@
                     <!-- قائمة النسخ الاحتياطية الموجودة -->
                     <!-- قسم حذف بيانات الجداول -->
                     {% if perms.backup.can_delete_advanced_data %}
+                    <!-- زر إنشاء الحسابات الأساسية حسب IFRS -->
+                    <div class="mb-3">
+                        {% if user.is_superuser %}
+                        <form method="post" action="{% url 'backup:create_basic_accounts' %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn {% if basic_accounts_exist %}btn-secondary{% else %}btn-outline-primary{% endif %} mb-3" id="createBasicAccountsBtn" {% if basic_accounts_exist %}disabled{% endif %}>
+                                <i class="fas fa-coins me-2"></i>
+                                {% trans "Create Basic IFRS Accounts" %}
+                                {% if basic_accounts_exist %}
+                                <small class="text-muted">({% trans "Accounts already exist" %})</small>
+                                {% endif %}
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+
                     <div class="card mb-4">
                         <div class="card-header bg-danger text-white">
                             <h5 class="mb-0">

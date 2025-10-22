@@ -29,13 +29,31 @@ class InventoryListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         # Get filtering parameters
         search = self.request.GET.get('search', '')
         stock_level_filter = self.request.GET.get('stock_level', '')
+        warehouse_id = self.request.GET.get('warehouse', '')
+        
+        # Get selected warehouse if provided
+        selected_warehouse = None
+        if warehouse_id:
+            try:
+                selected_warehouse = Warehouse.objects.get(id=warehouse_id, is_active=True)
+                context['selected_warehouse'] = selected_warehouse
+            except Warehouse.DoesNotExist:
+                pass
         
         # Get all warehouses
         warehouses = Warehouse.objects.filter(is_active=True)
         context['total_warehouses'] = warehouses.count()
         
-        # Get all products
-        products = Product.objects.filter(is_active=True)
+        # Get products - filter by warehouse if selected
+        if selected_warehouse:
+            # Get products that have movements in this warehouse
+            product_ids = InventoryMovement.objects.filter(
+                warehouse=selected_warehouse
+            ).values_list('product_id', flat=True).distinct()
+            products = Product.objects.filter(is_active=True, id__in=product_ids)
+        else:
+            # Get all products
+            products = Product.objects.filter(is_active=True)
         context['total_products'] = products.count()
         
         # Calculate inventory statistics
@@ -44,14 +62,18 @@ class InventoryListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         
         for product in products:
             # Calculate current stock for this product
+            movement_filter = {'product': product}
+            if selected_warehouse:
+                movement_filter['warehouse'] = selected_warehouse
+            
             in_movements = InventoryMovement.objects.filter(
-                product=product,
-                movement_type='in'
+                movement_type='in',
+                **movement_filter
             ).exclude(reference_type='opening_balance').aggregate(total=Sum('quantity'))['total'] or 0
             
             out_movements = InventoryMovement.objects.filter(
-                product=product,
-                movement_type='out'
+                movement_type='out',
+                **movement_filter
             ).aggregate(total=Sum('quantity'))['total'] or 0
             
             current_stock = in_movements - out_movements + product.opening_balance_quantity
@@ -72,23 +94,28 @@ class InventoryListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         
         # Get today's movements
         today = timezone.now().date()
-        today_movements = InventoryMovement.objects.filter(
-            date=today
-        ).count()
+        today_movements_filter = {'date': today}
+        if selected_warehouse:
+            today_movements_filter['warehouse'] = selected_warehouse
+        today_movements = InventoryMovement.objects.filter(**today_movements_filter).count()
         context['today_movements'] = today_movements
         
         # Get inventory items with current stock levels
         inventory_items = []
-        for product in products:  # Show all products
+        for product in products:  # Show products filtered by warehouse if selected
             # Calculate current stock for this product
+            movement_filter = {'product': product}
+            if selected_warehouse:
+                movement_filter['warehouse'] = selected_warehouse
+            
             in_movements = InventoryMovement.objects.filter(
-                product=product,
-                movement_type='in'
+                movement_type='in',
+                **movement_filter
             ).exclude(reference_type='opening_balance').aggregate(total=Sum('quantity'))['total'] or 0
             
             out_movements = InventoryMovement.objects.filter(
-                product=product,
-                movement_type='out'
+                movement_type='out',
+                **movement_filter
             ).aggregate(total=Sum('quantity'))['total'] or 0
             
             current_stock = in_movements - out_movements + product.opening_balance_quantity
@@ -137,7 +164,7 @@ class InventoryListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
                 'value': float(value),
                 'unit_price': float(value / current_stock) if current_stock > 0 else 0,
                 'sale_price': float(product.sale_price),
-                'warehouse_name': 'المستودع الرئيسي',
+                'warehouse_name': selected_warehouse.name if selected_warehouse else 'المستودع الرئيسي',
                 'stock_level': stock_level
             })
         
@@ -161,7 +188,10 @@ class InventoryListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         
         # Get recent movements
         recent_movements = []
-        movements = InventoryMovement.objects.select_related('product').order_by('-created_at')[:5]
+        movements_filter = {}
+        if selected_warehouse:
+            movements_filter['warehouse'] = selected_warehouse
+        movements = InventoryMovement.objects.filter(**movements_filter).select_related('product').order_by('-created_at')[:5]
         for movement in movements:
             recent_movements.append({
                 'product_name': movement.product.name,
@@ -173,12 +203,18 @@ class InventoryListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         context['recent_movements'] = recent_movements
         
         # Calculate totals for quick stats
+        totals_filter = {}
+        if selected_warehouse:
+            totals_filter['warehouse'] = selected_warehouse
+        
         total_in = InventoryMovement.objects.filter(
-            movement_type='in'
+            movement_type='in',
+            **totals_filter
         ).aggregate(total=Sum('total_cost'))['total'] or 0
         
         total_out = InventoryMovement.objects.filter(
-            movement_type='out'
+            movement_type='out',
+            **totals_filter
         ).aggregate(total=Sum('total_cost'))['total'] or 0
         
         # Calculate totals with tax
@@ -186,7 +222,7 @@ class InventoryListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         total_out_with_tax = 0
         
         # Calculate incoming with tax
-        in_movements = InventoryMovement.objects.filter(movement_type='in').select_related('product')
+        in_movements = InventoryMovement.objects.filter(movement_type='in', **totals_filter).select_related('product')
         for movement in in_movements:
             cost_without_tax = movement.total_cost
             tax_rate = movement.product.tax_rate if movement.product else 0
@@ -197,7 +233,7 @@ class InventoryListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             total_in_with_tax += cost_without_tax_decimal + tax_amount
         
         # Calculate outgoing with tax
-        out_movements = InventoryMovement.objects.filter(movement_type='out').select_related('product')
+        out_movements = InventoryMovement.objects.filter(movement_type='out', **totals_filter).select_related('product')
         for movement in out_movements:
             cost_without_tax = movement.total_cost
             tax_rate = movement.product.tax_rate if movement.product else 0
@@ -247,7 +283,81 @@ class WarehouseListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         ).count()
         context['month_movements'] = month_movements
         
+        # Calculate inventory stats for each warehouse
+        warehouses_with_stats = []
+        for warehouse in all_warehouses:
+            total_value, total_quantity = self._calculate_warehouse_inventory(warehouse)
+            warehouses_with_stats.append({
+                'warehouse': warehouse,
+                'total_value': total_value,
+                'total_quantity': total_quantity
+            })
+        
+        context['warehouses_with_stats'] = warehouses_with_stats
+        
         return context
+    
+    def _calculate_warehouse_inventory(self, warehouse):
+        """حساب إجمالي قيمة وكمية المخزون في المستودع"""
+        from products.models import Product
+        from purchases.models import PurchaseInvoiceItem
+        from decimal import Decimal
+        
+        # Get products that have movements in this warehouse
+        product_ids = InventoryMovement.objects.filter(warehouse=warehouse).values_list('product_id', flat=True).distinct()
+        products = Product.objects.filter(is_active=True, id__in=product_ids)
+        
+        total_value = Decimal('0.0')
+        total_quantity = Decimal('0.0')
+        
+        for product in products:
+            # Calculate current stock for this product in this warehouse
+            in_movements = InventoryMovement.objects.filter(
+                product=product,
+                warehouse=warehouse,
+                movement_type='in'
+            ).exclude(reference_type='opening_balance').aggregate(total=Sum('quantity'))['total'] or 0
+            
+            out_movements = InventoryMovement.objects.filter(
+                product=product,
+                warehouse=warehouse,
+                movement_type='out'
+            ).aggregate(total=Sum('quantity'))['total'] or 0
+            
+            current_stock = in_movements - out_movements + product.opening_balance_quantity
+            
+            if current_stock <= 0:
+                continue
+            
+            total_quantity += Decimal(current_stock)
+            
+            # Calculate value using FIFO
+            remaining_qty = Decimal(current_stock)
+            value = Decimal('0.0')
+            
+            # Opening balance first
+            if product.opening_balance_quantity > 0 and remaining_qty > 0:
+                used_qty = min(Decimal(product.opening_balance_quantity), remaining_qty)
+                unit_cost = Decimal(product.opening_balance_cost) / Decimal(product.opening_balance_quantity) if product.opening_balance_quantity > 0 else Decimal('0')
+                value += used_qty * unit_cost
+                remaining_qty -= used_qty
+            
+            # Then purchase invoices (FIFO)
+            purchase_items = PurchaseInvoiceItem.objects.filter(product=product).order_by('invoice__date', 'invoice__id')
+            for item in purchase_items:
+                if remaining_qty <= 0:
+                    break
+                used_qty = min(item.quantity, remaining_qty)
+                value += used_qty * item.unit_price
+                remaining_qty -= used_qty
+            
+            # Fallback to cost price
+            if remaining_qty > 0:
+                value += remaining_qty * Decimal(product.cost_price)
+            
+            total_value += value
+        
+        return total_value, total_quantity
 
 class WarehouseCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     model = Warehouse
@@ -402,8 +512,26 @@ class MovementListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Calculate statistics
+        # Calculate statistics - filter by warehouse if specified
+        warehouse_id = self.request.GET.get('warehouse')
+        
+        # استخدم نفس الفلتر المطبق على queryset الرئيسي
         all_movements = InventoryMovement.objects.all()
+        
+        # تطبيق فلاتر البحث على الإحصائيات
+        movement_type = self.request.GET.get('movement_type')
+        date_from = self.request.GET.get('date_from')
+        date_to = self.request.GET.get('date_to')
+        
+        if warehouse_id:
+            all_movements = all_movements.filter(warehouse_id=warehouse_id)
+        if movement_type:
+            all_movements = all_movements.filter(movement_type=movement_type)
+        if date_from:
+            all_movements = all_movements.filter(date__gte=date_from)
+        if date_to:
+            all_movements = all_movements.filter(date__lte=date_to)
+        
         total_in = all_movements.filter(movement_type='in').aggregate(
             total=Sum('quantity'))['total'] or 0
         total_out = all_movements.filter(movement_type='out').aggregate(
@@ -418,6 +546,7 @@ class MovementListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
             'today_movements': today_movements,
             'warehouses': Warehouse.objects.filter(is_active=True),
             'is_superadmin': getattr(self.request.user, 'is_superadmin', False),
+            'selected_warehouse': warehouse_id,  # لعرض المستودع المختار في القالب
         })
         
         # تسجيل النشاط في سجل الأنشطة

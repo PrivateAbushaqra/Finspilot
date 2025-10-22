@@ -19,4 +19,5 @@ urlpatterns = [
     path('list-backups/', views.list_backups, name='list_backups'),
     path('clear-all-data/', views.clear_all_data, name='clear_all_data'),
     path('clear-progress/', views.get_clear_progress, name='clear_progress'),
+    path('create-basic-accounts/', views.create_basic_accounts_view, name='create_basic_accounts'),
 ]

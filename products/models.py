@@ -236,3 +236,11 @@ class Product(models.Model):
     def get_opening_balance(self):
         """الحصول على الرصيد الافتتاحي الحالي"""
         return self.opening_balance_quantity
+
+    @property
+    def has_movements(self):
+        """التحقق من وجود حركات على المنتج (باستثناء الرصيد الافتتاحي)"""
+        from inventory.models import InventoryMovement
+        return InventoryMovement.objects.filter(
+            product=self
+        ).exclude(reference_type='opening_balance').exists()

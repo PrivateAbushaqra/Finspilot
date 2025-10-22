@@ -7,10 +7,8 @@
 {% block title %}{% trans "Edit Product" %} - {{ block.super }}{% endblock %}
 
 {% block content %}
-<div class="container-fluid">                                    <div class="input-group">
-                                        <input type="number" class="form-control" id="tax_rate" name="tax_rate" 
-                                               step="0.01" min="0" max="100" value="{{ product.tax_rate|unlocalize }}" 
-                                               placeholder="{% trans 'Example: 15' %}"> <div class="row">
+<div class="container-fluid">
+    <div class="row">
         <div class="col-12">
             <!-- Page Header -->
             <div class="d-flex justify-content-between align-items-center mb-4">
@@ -40,6 +38,7 @@
                 <div class="card-body">
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
+                        <input type="hidden" id="has_movements" value="{% if has_movements %}true{% else %}false{% endif %}">
                         
                         <!-- Basic Information -->
                         <div class="row">
@@ -236,13 +235,26 @@
                                         <label for="opening_balance" class="form-label">
                                             <i class="fas fa-balance-scale text-success me-1"></i>
                                             {% trans "Opening Balance" %}
+                                            {% if has_movements %}
+                                                <span class="badge bg-warning text-dark ms-2">
+                                                    <i class="fas fa-lock me-1"></i>{% trans "Locked" %}
+                                                </span>
+                                            {% endif %}
                                         </label>
                                         <input type="number" class="form-control" id="opening_balance" name="opening_balance_quantity" 
-                                               step="0.001" min="0" value="{{ product.opening_balance_quantity|unlocalize }}">
-                                        <small class="form-text text-muted">
-                                            <i class="fas fa-info-circle me-1"></i>
-                                            {% trans "Initial stock when starting to use the system" %}
-                                        </small>
+                                               step="0.001" min="0" value="{{ product.opening_balance_quantity|unlocalize }}"
+                                               {% if has_movements %}readonly style="background-color: #f8f9fa; cursor: not-allowed;"{% endif %}>
+                                        {% if has_movements %}
+                                            <div class="alert alert-warning mt-2 py-2">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                                {% trans "You Cannot Modify the Opening Balance Because There are Transactions on This Product." %}
+                                            </div>
+                                        {% else %}
+                                            <small class="form-text text-muted">
+                                                <i class="fas fa-info-circle me-1"></i>
+                                                {% trans "Initial stock when starting to use the system" %}
+                                            </small>
+                                        {% endif %}
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -250,13 +262,27 @@
                                         <label for="opening_balance_cost" class="form-label">
                                             <i class="fas fa-dollar-sign text-warning me-1"></i>
                                             {% trans "Opening Balance Cost" %} <span class="text-danger">*</span>
+                                            {% if has_movements %}
+                                                <span class="badge bg-warning text-dark ms-2">
+                                                    <i class="fas fa-lock me-1"></i>{% trans "Locked" %}
+                                                </span>
+                                            {% endif %}
                                         </label>
                                         <input type="number" class="form-control" id="opening_balance_cost" name="opening_balance_cost" 
-                                               step="0.001" min="0" value="{{ product.opening_balance_cost|unlocalize }}" required>
-                                        <small class="form-text text-muted">
-                                            <i class="fas fa-info-circle me-1"></i>
-                                            {% trans "Total cost of the opening balance for FIFO inventory calculation" %}
-                                        </small>
+                                               step="0.001" min="0" value="{{ product.opening_balance_cost|unlocalize }}" 
+                                               {% if has_movements %}readonly style="background-color: #f8f9fa; cursor: not-allowed;"{% endif %}
+                                                required>
+                                        {% if has_movements %}
+                                            <small class="form-text text-muted">
+                                                <i class="fas fa-info-circle me-1"></i>
+                                                {% trans "Total cost of the opening balance for FIFO inventory calculation" %}
+                                            </small>
+                                        {% else %}
+                                            <small class="form-text text-muted">
+                                                <i class="fas fa-info-circle me-1"></i>
+                                                {% trans "Total cost of the opening balance for FIFO inventory calculation" %}
+                                            </small>
+                                        {% endif %}
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -437,17 +463,23 @@ $(document).ready(function() {
         }
     }
     
-    // تبديل متطلب مستودع الرصيد الافتتاحي
-    function toggleOpeningBalanceWarehouse() {
-        var openingBalance = parseFloat($('#opening_balance_quantity').val()) || 0;
-        var warehouseField = $('#opening_balance_warehouse');
+    // تبديل تفعيل حقل تكلفة الرصيد الافتتاحي
+    function toggleOpeningBalanceCostField() {
+        var costField = $('#opening_balance_cost');
+        var hasMovements = $('#has_movements').val() === 'true';
         
-        if (openingBalance > 0) {
-            warehouseField.prop('required', true);
-            warehouseField.closest('.mb-3').find('label').addClass('required');
+        if (hasMovements) {
+            // إذا كان هناك حركات، الحقل معطل وغير قابل للتعديل
+            costField.prop('disabled', true);
+            costField.prop('readonly', true);
+            costField.css('background-color', '#f8f9fa');
+            costField.css('cursor', 'not-allowed');
         } else {
-            warehouseField.prop('required', false);
-            warehouseField.closest('.mb-3').find('label').removeClass('required');
+            // إذا لم يكن هناك حركات، الحقل قابل للتعديل دائماً
+            costField.prop('disabled', false);
+            costField.prop('readonly', false);
+            costField.css('background-color', '');
+            costField.css('cursor', '');
         }
     }
     
@@ -462,6 +494,7 @@ $(document).ready(function() {
         // تهيئة الرصيد الافتتاحي والمستودع
         // calculateOpeningBalanceCost(); // لا نستدعيها عند تحميل الصفحة للحفاظ على القيمة من قاعدة البيانات
         toggleOpeningBalanceWarehouse();
+        toggleOpeningBalanceCostField();
         
         $('#unit').on('change', function() {
             toggleSerialNumberField();
@@ -480,6 +513,7 @@ $(document).ready(function() {
     
     // ربط حدث تغيير الرصيد الافتتاحي لمتطلب المستودع
     $('#opening_balance_quantity').on('input change', toggleOpeningBalanceWarehouse);
+    $('#opening_balance_quantity').on('input change', toggleOpeningBalanceCostField);
     
     // حساب مبدئي عند تحميل الصفحة
     calculateTax();

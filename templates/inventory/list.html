@@ -228,11 +228,27 @@
                 <div>
                     <h1 class="h3 mb-0 text-gray-800">
                         <i class="fas fa-warehouse text-primary me-2"></i>
-                        {% trans "Inventory Management" %}
+                        {% if selected_warehouse %}
+                            {% trans "Inventory" %} - {{ selected_warehouse.name }}
+                        {% else %}
+                            {% trans "Inventory Management" %}
+                        {% endif %}
                     </h1>
-                    <p class="mb-0 text-muted">{% trans "Comprehensive overview of inventory and movements" %}</p>
+                    <p class="mb-0 text-muted">
+                        {% if selected_warehouse %}
+                            {% trans "Products in warehouse:" %} {{ selected_warehouse.name }}
+                        {% else %}
+                            {% trans "Comprehensive overview of inventory and movements" %}
+                        {% endif %}
+                    </p>
                 </div>
                 <div class="print-controls">
+                    {% if selected_warehouse %}
+                        <a href="{% url 'inventory:list' %}" class="btn btn-outline-secondary me-2">
+                            <i class="fas fa-list me-2"></i>
+                            {% trans "View All Inventory" %}
+                        </a>
+                    {% endif %}
                     <button type="button" class="btn btn-outline-primary" onclick="printInventoryReport()">
                         <i class="fas fa-print me-2"></i>
                         {% trans "Print" %} {% trans "Inventory Report" %}

@@ -193,7 +193,7 @@
                         <select class="form-select" id="warehouse" name="warehouse">
                             <option value="">{% trans "All Warehouses" %}</option>
                             {% for warehouse in warehouses %}
-                            <option value="{{ warehouse.id }}">{{ warehouse.name }}</option>
+                            <option value="{{ warehouse.id }}" {% if request.GET.warehouse == warehouse.id|stringformat:"s" %}selected{% endif %}>{{ warehouse.name }}</option>
                             {% endfor %}
                         </select>
                     </div>

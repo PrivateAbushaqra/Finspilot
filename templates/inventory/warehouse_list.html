@@ -263,11 +263,14 @@
                                         <th>{% trans "Status" %}</th>
                                         <th>{% trans "Default" %}</th>
                                         <th>{% trans "Address" %}</th>
+                                        <th>{% trans "Total Units" %}</th>
+                                        <th>{% trans "Total Value" %}</th>
                                         <th class="text-center">{% trans "Actions" %}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {% for warehouse in warehouses %}
+                                    {% for item in warehouses_with_stats %}
+                                    {% with warehouse=item.warehouse %}
                                     <tr>
                                         <td>
                                             <div class="d-flex align-items-center">
@@ -310,6 +313,12 @@
                                             {% endif %}
                                         </td>
                                         <td class="text-center">
+                                            {{ item.total_quantity|floatformat:0 }}
+                                        </td>
+                                        <td class="text-center">
+                                            {{ item.total_value|floatformat:2 }}
+                                        </td>
+                                        <td class="text-center">
                                             <div class="btn-group btn-group-sm">
                                                 <button class="btn btn-outline-primary" title="{% trans "View Details" %}" onclick="viewWarehouse({{ warehouse.id }})">
                                                     <i class="fas fa-eye"></i>
@@ -323,6 +332,7 @@
                                             </div>
                                         </td>
                                     </tr>
+                                    {% endwith %}
                                     {% endfor %}
                                 </tbody>
                             </table>

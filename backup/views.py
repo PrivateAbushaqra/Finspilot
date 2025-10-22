@@ -24,6 +24,7 @@ import logging
 from datetime import datetime as dt_module
 from openpyxl import Workbook
 from decimal import Decimal
+from django.core.management import call_command
 
 # إضافة AuditLog import مع حماية من تضارب الـ IDs
 try:
@@ -50,105 +51,44 @@ try:
         except Exception as e:
             error_msg = str(e)
             # إذا كنا داخل atomic block، لا نستطيع تنفيذ استعلامات
+            # بعد حدوث خطأ حتى نهاية الـ block، لذلك نتجاهل الخطأ ببساطة
+            # سيتم تسجيل الحدث في السجلات العادية (logger) بدلاً من AuditLog
             if 'atomic' in error_msg.lower() or 'transaction' in error_msg.lower():
-                logger.debug(f"تم تخطي إعادة تعيين AuditLog sequence (داخل transaction)")
+                logger.debug(f"تم تخطي تسجيل الحدث في AuditLog (داخل transaction): {description}")
+            elif 'duplicate key' in error_msg.lower() or 'unique constraint' in error_msg.lower():
+                logger.debug(f"تم تخطي تسجيل الحدث في AuditLog (تضارب في المفاتيح): {description}")
             else:
-                logger.warning(f"فشل في إعادة تعيين sequence للـ AuditLog: {e}")
-    
-    def reset_all_sequences():
-        """إعادة تعيين جميع sequences في قاعدة البيانات بعد استعادة النسخة الاحتياطية"""
-        try:
-            with connection.cursor() as cursor:
-                logger.info("بدء إعادة تعيين جميع sequences...")
-                sequences_reset = 0
-                
-                # استخدام استعلام محسّن للحصول على العلاقة بين sequence والجدول
-                cursor.execute("""
-                    SELECT 
-                        c.relname as table_name,
-                        s.relname as sequence_name
-                    FROM pg_class s
-                    JOIN pg_depend d ON d.objid = s.oid
-                    JOIN pg_class c ON d.refobjid = c.oid
-                    WHERE s.relkind = 'S'
-                    AND c.relkind = 'r'
-                    AND s.relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
-                    ORDER BY c.relname;
-                """)
-                
-                sequences = cursor.fetchall()
-                
-                for table_name, seq_name in sequences:
-                    try:
-                        # افتراض أن العمود هو 'id' (المعيار في Django)
-                        column_name = 'id'
-                        
-                        # جلب أعلى قيمة في الجدول
-                        cursor.execute(f"SELECT MAX({column_name}) FROM {table_name}")
-                        max_id = cursor.fetchone()[0]
-                        
-                        if max_id is not None:
-                            # جلب قيمة sequence الحالية
-                            cursor.execute(f"SELECT last_value FROM {seq_name}")
-                            seq_value = cursor.fetchone()[0]
-                            
-                            # إعادة تعيين sequence فقط إذا كان أقل من max_id
-                            if seq_value <= max_id:
-                                cursor.execute(f"SELECT setval('{seq_name}', {max_id + 1}, false)")
-                                sequences_reset += 1
-                                logger.debug(f"تم إعادة تعيين {seq_name} من {seq_value} إلى {max_id + 1}")
-                        else:
-                            # الجدول فارغ، تأكد من أن sequence عند 1
-                            cursor.execute(f"SELECT setval('{seq_name}', 1, false)")
-                            sequences_reset += 1
-                            logger.debug(f"تم إعادة تعيين {seq_name} إلى 1 (جدول فارغ)")
-                            
-                    except Exception as seq_error:
-                        logger.warning(f"فشل في إعادة تعيين {seq_name}: {seq_error}")
-                        continue
-                
-                logger.info(f"تم إعادة تعيين {sequences_reset} sequence بنجاح من أصل {len(sequences)}")
-                return sequences_reset
-                
-        except Exception as e:
-            logger.error(f"فشل في إعادة تعيين sequences: {e}")
-            return 0
-    
-except ImportError:
+                logger.warning(f"فشل في تسجيل الحدث في سجل المراجعة: {error_msg}")
+
+except Exception:
+    # AuditLog model or related DB objects not available
     AUDIT_AVAILABLE = False
-    def reset_audit_sequence_if_needed():
-        pass
-    def reset_all_sequences():
-        pass
+    logger = logging.getLogger(__name__)
+    logger.debug('AuditLog not available or import failed in backup.views')
 
-logger = logging.getLogger(__name__)
-
-
-def log_audit(user, action, description, obj_id=None):
-    """دالة مساعدة لتسجيل الأحداث في سجل المراجعة"""
-    if not AUDIT_AVAILABLE or not user:
-        return
-    
-    try:
-        AuditLog.objects.create(
-            user=user,
-            action_type=action,
-            content_type='backup_system',
-            object_id=obj_id,
-            description=description
-        )
-    except Exception as e:
-        # 🔧 إذا كنا داخل transaction atomic block، لا يمكن تنفيذ استعلامات جديدة
-        # بعد حدوث خطأ حتى نهاية الـ block، لذلك نتجاهل الخطأ ببساطة
-        # سيتم تسجيل الحدث في السجلات العادية (logger) بدلاً من AuditLog
-        error_msg = str(e)
-        if 'atomic' in error_msg.lower() or 'transaction' in error_msg.lower():
-            logger.debug(f"تم تخطي تسجيل الحدث في AuditLog (داخل transaction): {description}")
-        elif 'duplicate key' in error_msg.lower() or 'unique constraint' in error_msg.lower():
-            logger.debug(f"تم تخطي تسجيل الحدث في AuditLog (تضارب في المفاتيح): {description}")
-        else:
-            logger.warning(f"فشل في تسجيل الحدث في سجل المراجعة: {error_msg}")
-
+def log_audit(user, action, description):
+    """تسجيل الحدث في سجل المراجعة"""
+    if AUDIT_AVAILABLE:
+        try:
+            AuditLog.objects.create(
+                user=user,
+                action=action,
+                description=description,
+                timestamp=timezone.now()
+            )
+        except Exception as e:
+            error_msg = str(e)
+            # إذا كنا داخل atomic block، لا نستطيع تنفيذ استعلامات
+            # بعد حدوث خطأ حتى نهاية الـ block، لذلك نتجاهل الخطأ ببساطة
+            # سيتم تسجيل الحدث في السجلات العادية (logger) بدلاً من AuditLog
+            if 'atomic' in error_msg.lower() or 'transaction' in error_msg.lower():
+                logger.debug(f"تم تخطي تسجيل الحدث في AuditLog (داخل transaction): {description}")
+            elif 'duplicate key' in error_msg.lower() or 'unique constraint' in error_msg.lower():
+                logger.debug(f"تم تخطي تسجيل الحدث في AuditLog (تضارب في المفاتيح): {description}")
+            else:
+                logger.warning(f"فشل في تسجيل الحدث في سجل المراجعة: {error_msg}")
+    else:
+        logger.info(f"Audit: {action} - {description}")
 
 def get_backup_progress_data():
     """الحصول على بيانات تقدم النسخ الاحتياطي من cache"""
@@ -219,6 +159,42 @@ def get_restore_progress_data():
         'tables_status': [],
         'estimated_time': ''
     })
+
+
+@login_required
+def create_basic_accounts_view(request):
+    """View to create basic IFRS accounts using management command.
+    Protected to superuser only.
+    """
+    logger = logging.getLogger(__name__)
+    
+    # permission check
+    if not request.user.is_superuser:
+        messages.error(request, _('ليس لديك صلاحية لإنشاء الحسابات الأساسية'))
+        return redirect('backup:backup_restore')
+
+    try:
+        # call management command; this will skip existing accounts
+        call_command('create_basic_accounts')
+        # سجل في الـ AuditLog إن كان متوفرًا
+        try:
+            if AUDIT_AVAILABLE:
+                AuditLog.objects.create(
+                    user=request.user, 
+                    action_type='create', 
+                    content_type='account',
+                    description=_('Created basic IFRS accounts')
+                )
+        except Exception:
+            # ignore audit log failures but inform user
+            logger.warning('Failed to write AuditLog for create_basic_accounts')
+
+        messages.success(request, _('تم إنشاء الحسابات الأساسية بنجاح (أو كانت موجودة بالفعل)'))
+    except Exception as e:
+        logger.exception('Failed to create basic accounts')
+        messages.error(request, _('فشل أثناء إنشاء الحسابات الأساسية: %s') % str(e))
+
+    return redirect('backup:backup_restore')
 
 
 @login_required
@@ -556,6 +532,19 @@ class BackupRestoreView(LoginRequiredMixin, TemplateView):
 
         # ترتيب النسخ حسب تاريخ الإنشاء (الأحدث أولاً)
         backups.sort(key=lambda x: x['created_at'], reverse=True)
+
+        # التحقق من وجود الحسابات الأساسية
+        basic_accounts_codes = [
+            '101', '102', '1201', '1301', '1401',  # الأصول
+            '2101', '2201',  # المطلوبات
+            '301',  # حقوق الملكية
+            '401',  # الإيرادات
+            '501', '502', '503'  # المصروفات
+        ]
+        
+        from journal.models import Account
+        existing_accounts = Account.objects.filter(code__in=basic_accounts_codes).values_list('code', flat=True)
+        context['basic_accounts_exist'] = set(existing_accounts) == set(basic_accounts_codes)
 
         context['backups'] = backups
         context['latest_backup'] = backups[0] if backups else None
@@ -1365,7 +1354,7 @@ def save_backup_as_xlsx(backup_content, filepath):
                                     content_type='backup_system',
                                     description=f'خطأ في إنشاء ورقة عمل {app_name}_{model_name}: {str(e)}'
                                 )
-                            except Exception as audit_e:
+                            except Exception:
                                 logger.warning(f"فشل في تسجيل خطأ النسخ الاحتياطي في AuditLog: {audit_e}")
                         continue
         
@@ -1381,7 +1370,8 @@ def save_backup_as_xlsx(backup_content, filepath):
             AuditLog.objects.create(
                 user=None,  # سيتم تعيينه لاحقاً بواسطة المستخدم الذي أنشأ النسخة
                 action='backup_xlsx_save_error',
-                details=f'خطأ كبير في حفظ ملف XLSX: {str(e)}'
+                content_type='backup_system',
+                description=f'خطأ كبير في حفظ ملف XLSX: {str(e)}'
             )
         except Exception:
             pass
@@ -1606,6 +1596,9 @@ def convert_field_value(field, value):
     except Exception:
         # في حالة فشل التحويل، أعد القيمة الأصلية
         return value
+
+
+
 
 
 def perform_backup_restore(backup_data, clear_data=False, user=None):
