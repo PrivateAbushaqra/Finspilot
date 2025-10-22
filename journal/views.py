@@ -87,12 +87,12 @@ def account_list(request):
         order_by = '-' + order_by
     
     # ترتيب حسب الحقل المطلوب مع الترتيب الهرمي
-    if order_by in ['code', '-code', 'name', '-name', 'account_type', '-account_type', 'balance', '-balance', 'parent__name', '-parent__name']:
-        # ترتيب هرمي: الحسابات الرئيسية أولاً، ثم الفرعية
+    if order_by in ['code', '-code', 'name', '-name', 'account_type', '-account_type', 'balance', '-balance', 'parent__name', '-parent__name', 'parent__code', '-parent__code']:
+        # ترتيب حسب الحقل المطلوب
         accounts = accounts.order_by(order_by)
     else:
-        # الترتيب الهرمي الافتراضي
-        accounts = accounts.order_by('parent__code', 'code')
+        # الترتيب الافتراضي حسب الكود
+        accounts = accounts.order_by('code')
     
     # الترقيم
     paginator = Paginator(accounts, 20)
