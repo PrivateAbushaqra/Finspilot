@@ -594,7 +594,6 @@ def sales_invoice_create(request):
             'products': request.POST.getlist('products[]'),
             'quantities': request.POST.getlist('quantities[]'),
             'prices': request.POST.getlist('prices[]'),
-            'tax_rates': request.POST.getlist('tax_rates[]'),
             'tax_amounts': request.POST.getlist('tax_amounts[]'),
         }
         
@@ -737,7 +736,6 @@ def sales_invoice_create(request):
                         products = request.POST.getlist('products[]')
                         quantities = request.POST.getlist('quantities[]')
                         prices = request.POST.getlist('prices[]')
-                        tax_rates = request.POST.getlist('tax_rates[]')
                         tax_amounts = request.POST.getlist('tax_amounts[]')
 
                         # التحقق من وجود منتجات
@@ -777,7 +775,7 @@ def sales_invoice_create(request):
                                     product = Product.objects.get(id=product_id)
                                     quantity = parse_decimal_input(quantities[i], name='quantity', default=Decimal('0'))
                                     unit_price = parse_decimal_input(prices[i], name='price', default=Decimal('0'))
-                                    tax_rate = parse_decimal_input(tax_rates[i] if i < len(tax_rates) else '0', name='tax_rate', default=Decimal('0'))
+                                    tax_rate = product.tax_rate or Decimal('0')
 
                                     if quantity <= 0 or unit_price < 0:
                                         continue
@@ -939,7 +937,7 @@ def sales_invoice_create(request):
                                     # parse quantity/price/tax robustly to accept '1.5' or '1,5' etc.
                                     quantity = parse_decimal_input(quantities[i], name='quantity', default=Decimal('0'))
                                     unit_price = parse_decimal_input(prices[i], name='price', default=Decimal('0'))
-                                    tax_rate = parse_decimal_input(tax_rates[i] if i < len(tax_rates) else '0', name='tax_rate', default=Decimal('0'))
+                                    tax_rate = product.tax_rate or Decimal('0')
 
                                     # Safeguard: if submitted unit_price differs from product.sale_price
                                     # and appears to be a cost/last-purchase/zero value, prefer product.sale_price
@@ -1956,7 +1954,6 @@ def sales_return_create(request):
             'products': request.POST.getlist('products[]'),
             'quantities': request.POST.getlist('quantities[]'),
             'prices': request.POST.getlist('prices[]'),
-            'tax_rates': request.POST.getlist('tax_rates[]'),
             'tax_amounts': request.POST.getlist('tax_amounts[]'),
         }
         
@@ -2046,7 +2043,6 @@ def sales_return_create(request):
                         return_products = request.POST.getlist('products[]')
                         return_quantities = request.POST.getlist('quantities[]')
                         return_prices = request.POST.getlist('prices[]')
-                        return_tax_rates = request.POST.getlist('tax_rates[]')
                         return_tax_amounts = request.POST.getlist('tax_amounts[]')
 
                         # التحقق من وجود منتجات للإرجاع
@@ -2079,7 +2075,17 @@ def sales_return_create(request):
                                     product = Product.objects.get(id=product_id)
                                     quantity = parse_decimal_input(return_quantities[i], name='quantity', default=Decimal('0'))
                                     unit_price = parse_decimal_input(return_prices[i], name='price', default=Decimal('0'))
-                                    tax_rate = parse_decimal_input(return_tax_rates[i] if i < len(return_tax_rates) else '0', name='tax_rate', default=Decimal('0'))
+                                    
+                                    # البحث عن tax_rate من الفاتورة الأصلية للمنتج نفسه
+                                    tax_rate = Decimal('0')
+                                    try:
+                                        original_item = original_invoice.items.filter(product=product).first()
+                                        if original_item:
+                                            tax_rate = original_item.tax_rate or Decimal('0')
+                                        else:
+                                            tax_rate = product.tax_rate or Decimal('0')
+                                    except:
+                                        tax_rate = product.tax_rate or Decimal('0')
 
                                     if quantity <= 0 or unit_price < 0:
                                         continue
@@ -2145,7 +2151,17 @@ def sales_return_create(request):
                                     # parse quantity/price/tax robustly to accept '1.5' or '1,5' etc.
                                     quantity = parse_decimal_input(return_quantities[i], name='quantity', default=Decimal('0'))
                                     unit_price = parse_decimal_input(return_prices[i], name='price', default=Decimal('0'))
-                                    tax_rate = parse_decimal_input(return_tax_rates[i] if i < len(return_tax_rates) else '0', name='tax_rate', default=Decimal('0'))
+                                    
+                                    # البحث عن tax_rate من الفاتورة الأصلية للمنتج نفسه
+                                    tax_rate = Decimal('0')
+                                    try:
+                                        original_item = original_invoice.items.filter(product=product).first()
+                                        if original_item:
+                                            tax_rate = original_item.tax_rate or Decimal('0')
+                                        else:
+                                            tax_rate = product.tax_rate or Decimal('0')
+                                    except:
+                                        tax_rate = product.tax_rate or Decimal('0')
 
                                     # حساب مبلغ الضريبة لهذا السطر
                                     line_subtotal = quantity * unit_price

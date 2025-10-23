@@ -189,3 +189,50 @@ def create_bank_transaction_journal_entry(sender, instance, created, **kwargs):
                 )
         except Exception as e:
             print(f"خطأ في إنشاء قيد المعاملة البنكية: {e}")
+
+
+@receiver(post_delete, sender=BankAccount)
+def delete_bank_account(sender, instance, **kwargs):
+    """
+    حذف أو تعطيل حساب البنك عند حذفه
+    """
+    try:
+        from journal.models import Account
+        from journal.services import JournalService
+        from core.signals import log_activity
+        from core.middleware import get_current_user
+
+        # البحث عن الحساب المرتبط بالحساب البنكي
+        account = JournalService.get_or_create_bank_account(instance)
+
+        if account:
+            # التحقق من وجود حركات في الحساب
+            has_movements = account.journal_lines.exists()
+
+            if has_movements:
+                # إذا كان الحساب يحتوي على حركات، عطلها بدلاً من حذفها
+                account.is_active = False
+                account.save(update_fields=['is_active'])
+                
+                # تسجيل النشاط
+                user = get_current_user()
+                if user:
+                    log_activity(user, 'UPDATE', account, f'تم تعطيل حساب البنك {account.name} (يحتوي على حركات)')
+                
+                print(f"✓ تم تعطيل حساب {account.code} - {account.name} (يحتوي على حركات)")
+            else:
+                # إذا لم يكن يحتوي على حركات، احذفه
+                account_name = account.name
+                
+                # تسجيل النشاط قبل الحذف
+                user = get_current_user()
+                if user:
+                    log_activity(user, 'DELETE', account, f'تم حذف حساب البنك {account_name}')
+                
+                account.delete()
+                print(f"✓ تم حذف حساب {account.code} - {account.name}")
+
+    except Exception as e:
+        print(f"❌ خطأ في حذف/تعطيل حساب البنك: {e}")
+        import traceback
+        traceback.print_exc()

@@ -2,6 +2,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth import get_user_model
 from customers.models import CustomerSupplier
+from decimal import Decimal, ROUND_HALF_UP
 
 User = get_user_model()
 
@@ -13,6 +14,13 @@ class PurchaseInvoice(models.Model):
         ('credit', _('Credit')),
     ]
 
+    PAYMENT_METHODS = [
+        ('cash', _('Cash Payment')),
+        ('check', _('Check Payment')),
+        ('transfer', _('Bank Transfer')),
+        ('credit', _('Credit Payment')),
+    ]
+
     invoice_number = models.CharField(_('Invoice Number'), max_length=50)
     supplier_invoice_number = models.CharField(_('Supplier Invoice Number'), max_length=50)
     date = models.DateField(_('Date'))
@@ -21,6 +29,13 @@ class PurchaseInvoice(models.Model):
     warehouse = models.ForeignKey('inventory.Warehouse', on_delete=models.PROTECT, 
                                 verbose_name=_('Warehouse'), default=1)
     payment_type = models.CharField(_('Payment Type'), max_length=20, choices=PAYMENT_TYPES)
+    payment_method = models.CharField(_('Payment Method'), max_length=20, choices=PAYMENT_METHODS, blank=True)
+    cashbox = models.ForeignKey('cashboxes.Cashbox', on_delete=models.PROTECT, 
+                               verbose_name=_('Cash Box'), null=True, blank=True)
+    bank_account = models.ForeignKey('banks.BankAccount', on_delete=models.PROTECT, 
+                                   verbose_name=_('Bank Account'), null=True, blank=True)
+    check_number = models.CharField(_('Check Number'), max_length=50, blank=True)
+    check_date = models.DateField(_('Check Date'), null=True, blank=True)
     is_tax_inclusive = models.BooleanField(_('Tax Inclusive'), default=True, 
                                          help_text=_('When selected, prices will include tax'))
     subtotal = models.DecimalField(_('Subtotal'), max_digits=15, decimal_places=3, default=0)
@@ -38,11 +53,57 @@ class PurchaseInvoice(models.Model):
         permissions = [
             ('can_view_purchases', _('Can View Purchase')),
             ('can_view_purchase_statement', _('Can View Purchase Statement')),
+            ('can_toggle_purchase_tax', _('Can Toggle Purchase Tax Inclusive')),
         ]
     # لا يجب تعريف صلاحية view_purchaseinvoice هنا لأنها افتراضية من Django
 
     def __str__(self):
         return f"{self.supplier_invoice_number} - {self.supplier.name}"
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.payment_type == 'cash':
+            if self.payment_method == 'cash' and not self.cashbox:
+                raise ValidationError(_('Cash box must be selected for cash payment'))
+            elif self.payment_method in ['check', 'transfer'] and not self.bank_account:
+                raise ValidationError(_('Bank account must be selected for check or transfer payment'))
+            if self.payment_method == 'check' and not self.check_number:
+                raise ValidationError(_('Check number is required for check payment'))
+            if self.payment_method == 'check' and not self.check_date:
+                raise ValidationError(_('Check date is required for check payment'))
+
+    def save(self, *args, **kwargs):
+        from decimal import Decimal, ROUND_HALF_UP
+        # حفظ الفاتورة أولاً للحصول على primary key
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+
+        # حساب المجاميع من العناصر بعد الحفظ
+        if self.items.exists():
+            subtotal = Decimal('0')
+            tax_amount = Decimal('0')
+            total_amount = Decimal('0')
+
+            for item in self.items.all():
+                subtotal += item.quantity * item.unit_price
+                tax_amount += item.tax_amount
+                total_amount += item.total_amount
+
+            self.subtotal = subtotal.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+            self.tax_amount = tax_amount.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+            self.total_amount = total_amount.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+
+            # حفظ مرة أخرى مع المجاميع المحدثة
+            if not is_new:  # تجنب الدورة اللانهائية
+                super().save(update_fields=['subtotal', 'tax_amount', 'total_amount'])
+        else:
+            # إعادة تعيين المجاميع إلى صفر إذا لم تكن هناك عناصر
+            if self.subtotal != 0 or self.tax_amount != 0 or self.total_amount != 0:
+                self.subtotal = Decimal('0')
+                self.tax_amount = Decimal('0')
+                self.total_amount = Decimal('0')
+                if not is_new:  # تجنب الدورة اللانهائية
+                    super().save(update_fields=['subtotal', 'tax_amount', 'total_amount'])
 
 
 class PurchaseInvoiceItem(models.Model):

@@ -131,6 +131,9 @@
                                 <th>{% trans "رقم القيد" %}</th>
                                 <th>{% trans "البيان" %}</th>
                                 <th>{% trans "النوع" %}</th>
+                                {% if account.children.all|length > 0 and not page_obj.0.account == account %}
+                                <th>{% trans "الحساب" %}</th>
+                                {% endif %}
                                 <th>{% trans "مدين" %}</th>
                                 <th>{% trans "دائن" %}</th>
                                 <th>{% trans "الرصيد" %}</th>
@@ -152,6 +155,11 @@
                                             {{ line.journal_entry.get_reference_type_display }}
                                         </small>
                                     </td>
+                                    {% if account.children.all|length > 0 and not page_obj.0.account == account %}
+                                    <td>
+                                        <small>{{ line.account.code }} - {{ line.account.name }}</small>
+                                    </td>
+                                    {% endif %}
                                     <td class="text-right">
                                         {% if line.debit > 0 %}
                                             <span class="text-success font-weight-bold">

@@ -44,7 +44,19 @@ class Account(models.Model):
         return f"{self.code} - {self.name}"
 
     def get_balance(self, as_of_date=None):
-        """حساب الرصيد الحالي للحساب حتى تاريخ معين"""
+        """حساب الرصيد الحالي للحساب حتى تاريخ معين
+        
+        للحسابات الرئيسية (التي لها حسابات فرعية): يجمع أرصدة الحسابات الفرعية النشطة
+        للحسابات الفرعية: يحسب من قيوده الخاصة
+        """
+        # إذا كان الحساب له حسابات فرعية، اجمع أرصدة الحسابات الفرعية النشطة
+        if self.children.filter(is_active=True).exists():
+            balance = Decimal('0')
+            for child in self.children.filter(is_active=True):
+                balance += child.get_balance(as_of_date)
+            return balance
+        
+        # إلا إذا كان حساب فرعي، احسب من قيوده الخاصة
         lines = JournalLine.objects.filter(account=self)
         if as_of_date:
             lines = lines.filter(journal_entry__entry_date__lte=as_of_date)

@@ -336,6 +336,12 @@ def account_detail(request, pk):
     # الحصول على حركات الحساب
     lines = JournalLine.objects.filter(account=account).order_by('-created_at')
     
+    # إذا كان الحساب رئيسي وليس له حركات مباشرة، أظهر حركات الحسابات الفرعية
+    if not lines.exists() and account.children.filter(is_active=True).exists():
+        # الحصول على جميع الحسابات الفرعية النشطة
+        child_accounts = account.children.filter(is_active=True)
+        lines = JournalLine.objects.filter(account__in=child_accounts).select_related('account', 'journal_entry').order_by('-created_at')
+    
     # البحث في الحركات
     date_from = request.GET.get('date_from')
     date_to = request.GET.get('date_to')

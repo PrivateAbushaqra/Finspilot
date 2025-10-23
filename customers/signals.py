@@ -3,7 +3,7 @@
 تنشئ القيود المحاسبية تلقائياً عند الإنشاء
 """
 
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from decimal import Decimal
 from .models import CustomerSupplier
@@ -199,5 +199,60 @@ def create_opening_balance_journal_entry(sender, instance, created, **kwargs):
         
     except Exception as e:
         print(f"❌ خطأ في إنشاء القيد المحاسبي للرصيد الافتتاحي: {e}")
+        import traceback
+        traceback.print_exc()
+
+
+@receiver(post_delete, sender=CustomerSupplier)
+def delete_customer_supplier_account(sender, instance, **kwargs):
+    """
+    حذف أو تعطيل حساب العميل/المورد عند حذفه
+    """
+    try:
+        from journal.models import Account
+        from core.signals import log_activity
+        from core.middleware import get_current_user
+
+        # البحث عن الحساب المرتبط بالعميل/المورد
+        # الحسابات تُنشأ بأكواد مثل 1301xxxx للعملاء أو 2101xxxx للموردين
+        if instance.is_customer:
+            code_prefix = '1301'
+        elif instance.is_supplier:
+            code_prefix = '2101'
+        else:
+            code_prefix = '1301'  # افتراضي
+
+        code = f"{code_prefix}{instance.id:04d}"
+        account = Account.objects.filter(code=code).first()
+
+        if account:
+            # التحقق من وجود حركات في الحساب
+            has_movements = account.journal_lines.exists()
+
+            if has_movements:
+                # إذا كان الحساب يحتوي على حركات، عطلها بدلاً من حذفها
+                account.is_active = False
+                account.save(update_fields=['is_active'])
+                
+                # تسجيل النشاط
+                user = get_current_user()
+                if user:
+                    log_activity(user, 'UPDATE', account, f'تم تعطيل حساب العميل/المورد {account.name} (يحتوي على حركات)')
+                
+                print(f"✓ تم تعطيل حساب {account.code} - {account.name} (يحتوي على حركات)")
+            else:
+                # إذا لم يكن يحتوي على حركات، احذفه
+                account_name = account.name
+                
+                # تسجيل النشاط قبل الحذف
+                user = get_current_user()
+                if user:
+                    log_activity(user, 'DELETE', account, f'تم حذف حساب العميل/المورد {account_name}')
+                
+                account.delete()
+                print(f"✓ تم حذف حساب {account.code} - {account_name}")
+
+    except Exception as e:
+        print(f"❌ خطأ في حذف/تعطيل حساب العميل/المورد: {e}")
         import traceback
         traceback.print_exc()

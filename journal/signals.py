@@ -484,12 +484,45 @@ def update_account_balance_on_save(sender, instance, **kwargs):
         except Exception as audit_error:
             logger.error(f"خطأ في تسجيل تحديث الرصيد في audit log: {audit_error}")
         
-        # مزامنة رصيد الصندوق أو البنك إذا كان الحساب مرتبطاً بهم
-        logger.debug(f"استدعاء مزامنة رصيد الصندوق/البنك لحساب {instance.account.code} بعد تحديث الرصيد")
-        sync_cashbox_or_bank_balance(instance.account)
+        # تحديث رصيد الحساب الرئيسي إذا كان موجوداً
+        if instance.account.parent:
+            old_parent_balance = instance.account.parent.balance
+            instance.account.parent.update_account_balance()
+            new_parent_balance = instance.account.parent.balance
+            logger.info(f"تم تحديث رصيد الحساب الرئيسي {instance.account.parent.code} - {instance.account.parent.name}: من {old_parent_balance} إلى {new_parent_balance}")
+            
+            # تسجيل في audit log للحساب الرئيسي
+            try:
+                AuditLog.objects.create(
+                    user=system_user,
+                    action_type='update',
+                    content_type='Account',
+                    object_id=instance.account.parent.pk,
+                    description=f'تحديث رصيد الحساب الرئيسي {instance.account.parent.code} - {instance.account.parent.name}: من {old_parent_balance} إلى {new_parent_balance} (بسبب تحديث حساب فرعي {instance.account.code})'
+                )
+            except Exception as audit_error:
+                logger.error(f"خطأ في تسجيل تحديث رصيد الحساب الرئيسي في audit log: {audit_error}")
         
-        # إنشاء حركة صندوق/بنك إذا كان الحساب مرتبطاً بهم
-        create_cashbox_bank_transaction(instance)
+        # تحديث رصيد الحساب الرئيسي إذا كان موجوداً
+        if instance.account.parent:
+            old_parent_balance = instance.account.parent.balance
+            instance.account.parent.update_account_balance()
+            new_parent_balance = instance.account.parent.balance
+            logger.info(f"تم تحديث رصيد الحساب الرئيسي {instance.account.parent.code} - {instance.account.parent.name} بعد الحذف: من {old_parent_balance} إلى {new_parent_balance}")
+            
+            # تسجيل في audit log للحساب الرئيسي
+            try:
+                AuditLog.objects.create(
+                    user=system_user,
+                    action_type='update',
+                    content_type='Account',
+                    object_id=instance.account.parent.pk,
+                    description=f'تحديث رصيد الحساب الرئيسي بعد حذف بند قيد: {instance.account.parent.code} - {instance.account.parent.name}: من {old_parent_balance} إلى {new_parent_balance} (بسبب حذف من حساب فرعي {instance.account.code})'
+                )
+            except Exception as audit_error:
+                logger.error(f"خطأ في تسجيل تحديث رصيد الحساب الرئيسي في audit log: {audit_error}")
+        
+        # مزامنة رصيد الصندوق أو البنك إذا كان الحساب مرتبطاً بهم
         
     except Exception as e:
         logger.error(f"خطأ في تحديث رصيد الحساب {instance.account.code}: {e}")
@@ -874,3 +907,42 @@ def sync_cashbox_or_bank_balance(account):
             
     except Exception as e:
         logger.error(f"خطأ في مزامنة رصيد الصندوق/البنك للحساب {account.code}: {e}")
+
+
+@receiver(post_save, sender=Account)
+def log_account_creation(sender, instance, created, **kwargs):
+    """
+    تسجيل إنشاء أو تحديث الحساب في سجل الأنشطة
+    """
+    try:
+        from core.signals import log_activity
+        from core.middleware import get_current_user
+
+        if created:
+            # إنشاء حساب جديد
+            user = get_current_user()
+            if user:
+                log_activity(user, 'CREATE', instance, f'تم إنشاء حساب محاسبي جديد: {instance.name} ({instance.code})')
+        else:
+            # تحديث حساب موجود
+            user = get_current_user()
+            if user:
+                log_activity(user, 'UPDATE', instance, f'تم تحديث حساب محاسبي: {instance.name} ({instance.code})')
+    except Exception as e:
+        logger.error(f"خطأ في تسجيل نشاط الحساب {instance.code}: {e}")
+
+
+@receiver(post_delete, sender=Account)
+def log_account_deletion(sender, instance, **kwargs):
+    """
+    تسجيل حذف الحساب في سجل الأنشطة
+    """
+    try:
+        from core.signals import log_activity
+        from core.middleware import get_current_user
+
+        user = get_current_user()
+        if user:
+            log_activity(user, 'DELETE', instance, f'تم حذف حساب محاسبي: {instance.name} ({instance.code})')
+    except Exception as e:
+        logger.error(f"خطأ في تسجيل حذف الحساب {instance.code}: {e}")

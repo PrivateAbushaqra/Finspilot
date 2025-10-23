@@ -18,6 +18,8 @@ from .models import PurchaseInvoice, PurchaseInvoiceItem, PurchaseReturn, Purcha
 from customers.models import CustomerSupplier
 from products.models import Product, Category
 from inventory.models import InventoryMovement, Warehouse
+from cashboxes.models import Cashbox
+from banks.models import BankAccount
 from accounts.services import create_purchase_invoice_transaction, create_purchase_return_transaction, delete_transaction_by_reference
 from journal.models import JournalEntry
 from journal.services import JournalService
@@ -433,12 +435,19 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
             ).order_by('name'),
             'warehouses': Warehouse.objects.filter(
                 is_active=True
+            ).exclude(code='MAIN').order_by('name'),
+            'cashboxes': Cashbox.objects.filter(
+                is_active=True
+            ).order_by('name'),
+            'bank_accounts': BankAccount.objects.filter(
+                is_active=True
             ).order_by('name'),
             'default_warehouse': request.user.default_purchase_warehouse,
             'products': products_with_prices,
             'products_json': json.dumps(products_data),
             'categories': Category.objects.filter(is_active=True).order_by('name'),
-            'next_invoice_number': next_invoice_number
+            'next_invoice_number': next_invoice_number,
+            'can_toggle_invoice_tax': request.user.is_superuser or request.user.has_perm('purchases.can_toggle_purchase_tax')
         }
         
         # إضافة البيانات المُدخلة إذا كانت موجودة
@@ -468,7 +477,16 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
             supplier_id = request.POST.get('supplier')
             warehouse_id = request.POST.get('warehouse')
             payment_type = request.POST.get('payment_type')
-            is_tax_inclusive = request.POST.get('is_tax_inclusive') == 'on'  # checkbox value
+            payment_method = request.POST.get('payment_method', '').strip()
+            cashbox_id = request.POST.get('cashbox')
+            bank_account_id = request.POST.get('bank_account')
+            check_number = request.POST.get('check_number', '').strip()
+            check_date = request.POST.get('check_date')
+            # التحقق من صلاحية تغيير خيار شمول الضريبة
+            if request.user.is_superuser or request.user.has_perm('purchases.can_toggle_purchase_tax'):
+                is_tax_inclusive = request.POST.get('is_tax_inclusive') == 'on'  # checkbox value
+            else:
+                is_tax_inclusive = False  # المستخدمون العاديون لا يمكنهم تغيير هذا الخيار
             notes = request.POST.get('notes', '').strip()
             
             # جمع البيانات المُدخلة لإعادة عرضها في حالة الأخطاء
@@ -478,6 +496,11 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
                 'supplier_id': supplier_id,
                 'warehouse_id': warehouse_id,
                 'payment_type': payment_type,
+                'payment_method': payment_method,
+                'cashbox_id': cashbox_id,
+                'bank_account_id': bank_account_id,
+                'check_number': check_number,
+                'check_date': check_date,
                 'is_tax_inclusive': is_tax_inclusive,
                 'notes': notes,
             }
@@ -518,6 +541,44 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
                     context = self.get_invoice_create_context(request, form_data)
                     return render(request, self.template_name, context)
             
+            # التحقق من صحة طريقة الدفع وحقولها المرتبطة
+            cashbox = None
+            bank_account = None
+            
+            if payment_method:
+                if payment_method == 'cash':
+                    if not cashbox_id:
+                        messages.error(request, 'يجب تحديد الصندوق عند اختيار الدفع النقدي!')
+                        context = self.get_invoice_create_context(request, form_data)
+                        return render(request, self.template_name, context)
+                    try:
+                        cashbox = Cashbox.objects.get(id=cashbox_id, is_active=True)
+                    except Cashbox.DoesNotExist:
+                        messages.error(request, 'الصندوق المحدد غير موجود!')
+                        context = self.get_invoice_create_context(request, form_data)
+                        return render(request, self.template_name, context)
+                elif payment_method in ['check', 'transfer']:
+                    if not bank_account_id:
+                        messages.error(request, f'يجب تحديد الحساب البنكي عند اختيار {dict(PurchaseInvoice.PAYMENT_METHODS)[payment_method]}!')
+                        context = self.get_invoice_create_context(request, form_data)
+                        return render(request, self.template_name, context)
+                    try:
+                        bank_account = BankAccount.objects.get(id=bank_account_id, is_active=True)
+                    except BankAccount.DoesNotExist:
+                        messages.error(request, 'الحساب البنكي المحدد غير موجود!')
+                        context = self.get_invoice_create_context(request, form_data)
+                        return render(request, self.template_name, context)
+                    
+                    if payment_method == 'check':
+                        if not check_number:
+                            messages.error(request, 'يجب إدخال رقم الشيك!')
+                            context = self.get_invoice_create_context(request, form_data)
+                            return render(request, self.template_name, context)
+                        if not check_date:
+                            messages.error(request, 'يجب إدخال تاريخ الشيك!')
+                            context = self.get_invoice_create_context(request, form_data)
+                            return render(request, self.template_name, context)
+            
             # الحصول على المستخدم الحالي
             created_by = request.user
             
@@ -526,7 +587,6 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
             product_ids = request.POST.getlist('product_id[]')
             quantities = request.POST.getlist('quantity[]')
             unit_prices = request.POST.getlist('unit_price[]')
-            tax_rates = request.POST.getlist('tax_rate[]')
             row_taxes = request.POST.getlist('row_tax[]')
             
             # التحقق من وجود منتجات قبل إنشاء الفاتورة
@@ -564,7 +624,7 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
                             row_subtotal = quantity * unit_price
                             
                             # الحصول على نسبة الضريبة وقيمة الضريبة
-                            tax_rate = Decimal(str(tax_rates[i])) if i < len(tax_rates) and tax_rates[i] else Decimal('0')
+                            tax_rate = product.tax_rate or Decimal('0')
                             tax_amount = Decimal(str(row_taxes[i])) if i < len(row_taxes) and row_taxes[i] else Decimal('0')
                             
                             subtotal += row_subtotal
@@ -623,6 +683,11 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
                     supplier=supplier,
                     warehouse=warehouse,
                     payment_type=payment_type,
+                    payment_method=payment_method,
+                    cashbox=cashbox,
+                    bank_account=bank_account,
+                    check_number=check_number,
+                    check_date=check_date,
                     is_tax_inclusive=is_tax_inclusive,
                     notes=notes,
                     created_by=created_by,
@@ -647,7 +712,7 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
                             row_subtotal = quantity * unit_price
                             
                             # الحصول على نسبة الضريبة وقيمة الضريبة
-                            tax_rate = Decimal(str(tax_rates[i])) if i < len(tax_rates) and tax_rates[i] else Decimal('0')
+                            tax_rate = product.tax_rate or Decimal('0')
                             tax_amount = Decimal(str(row_taxes[i])) if i < len(row_taxes) and row_taxes[i] else Decimal('0')
                             
                             # المجموع الإجمالي للمنتج (المجموع الفرعي + الضريبة)
@@ -905,8 +970,12 @@ class PurchaseInvoiceUpdateView(LoginRequiredMixin, View):
                 ).order_by('name'),
                 'warehouses': Warehouse.objects.filter(
                     is_active=True
-                ).exclude(
-                    code__in=['MAIN', 'DEFAULT', 'SYSTEM', '1000']  # استبعاد المستودعات النظامية/الافتراضية
+                ).exclude(code='MAIN').order_by('name'),
+                'cashboxes': Cashbox.objects.filter(
+                    is_active=True
+                ).order_by('name'),
+                'bank_accounts': BankAccount.objects.filter(
+                    is_active=True
                 ).order_by('name'),
                 'default_warehouse': Warehouse.get_default_warehouse(),
                 'products': products_with_prices,
@@ -929,6 +998,11 @@ class PurchaseInvoiceUpdateView(LoginRequiredMixin, View):
             supplier_id = request.POST.get('supplier')
             warehouse_id = request.POST.get('warehouse')
             payment_type = request.POST.get('payment_type')
+            payment_method = request.POST.get('payment_method', '').strip()
+            cashbox_id = request.POST.get('cashbox')
+            bank_account_id = request.POST.get('bank_account')
+            check_number = request.POST.get('check_number', '').strip()
+            check_date = request.POST.get('check_date')
             is_tax_inclusive = request.POST.get('is_tax_inclusive') == 'on'  # checkbox value
             notes = request.POST.get('notes', '').strip()
             
@@ -953,12 +1027,49 @@ class PurchaseInvoiceUpdateView(LoginRequiredMixin, View):
                     messages.error(request, 'المستودع المحدد غير موجود!')
                     return self.get(request, pk)
             
+            # التحقق من صحة طريقة الدفع وحقولها المرتبطة
+            cashbox = None
+            bank_account = None
+            
+            if payment_method:
+                if payment_method == 'cash':
+                    if not cashbox_id:
+                        messages.error(request, 'يجب تحديد الصندوق عند اختيار الدفع النقدي!')
+                        return self.get(request, pk)
+                    try:
+                        cashbox = Cashbox.objects.get(id=cashbox_id, is_active=True)
+                    except Cashbox.DoesNotExist:
+                        messages.error(request, 'الصندوق المحدد غير موجود!')
+                        return self.get(request, pk)
+                elif payment_method in ['check', 'transfer']:
+                    if not bank_account_id:
+                        messages.error(request, f'يجب تحديد الحساب البنكي عند اختيار {dict(PurchaseInvoice.PAYMENT_METHODS)[payment_method]}!')
+                        return self.get(request, pk)
+                    try:
+                        bank_account = BankAccount.objects.get(id=bank_account_id, is_active=True)
+                    except BankAccount.DoesNotExist:
+                        messages.error(request, 'الحساب البنكي المحدد غير موجود!')
+                        return self.get(request, pk)
+                    
+                    if payment_method == 'check':
+                        if not check_number:
+                            messages.error(request, 'يجب إدخال رقم الشيك!')
+                            return self.get(request, pk)
+                        if not check_date:
+                            messages.error(request, 'يجب إدخال تاريخ الشيك!')
+                            return self.get(request, pk)
+            
             # تحديث بيانات الفاتورة الأساسية
             invoice.supplier_invoice_number = supplier_invoice_number
             invoice.date = date
             invoice.supplier = supplier
             invoice.warehouse = warehouse
             invoice.payment_type = payment_type
+            invoice.payment_method = payment_method
+            invoice.cashbox = cashbox
+            invoice.bank_account = bank_account
+            invoice.check_number = check_number
+            invoice.check_date = check_date
             invoice.is_tax_inclusive = is_tax_inclusive
             invoice.notes = notes
             

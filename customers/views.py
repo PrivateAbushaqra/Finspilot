@@ -467,13 +467,22 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
                     from journal.models import Account
                     
                     # الحصول على الحساب المحاسبي الفرعي للعميل/المورد
-                    account_obj = Account.objects.filter(name=customer_supplier.name).first()
-                    
-                    # إذا لم يوجد حساب فرعي، استخدم الحساب الرئيسي كاحتياطي
-                    if not account_obj:
-                        if customer_supplier.type in ['customer', 'both']:
+                    # البحث تحت الحساب الرئيسي المناسب لتجنب الالتباس
+                    if customer_supplier.type in ['customer', 'both']:
+                        # البحث تحت حساب العملاء الرئيسي 1301
+                        account_obj = Account.objects.filter(
+                            name=customer_supplier.name, 
+                            parent__code='1301'
+                        ).first()
+                        if not account_obj:
                             account_obj = Account.objects.filter(code='1301').first()
-                        elif customer_supplier.type == 'supplier':
+                    elif customer_supplier.type == 'supplier':
+                        # البحث تحت حساب الموردين الرئيسي 2101
+                        account_obj = Account.objects.filter(
+                            name=customer_supplier.name, 
+                            parent__code='2101'
+                        ).first()
+                        if not account_obj:
                             account_obj = Account.objects.filter(code='2101').first()
                     
                     # تحديد الحساب المقابل حسب نوع التعديل (IFRS compliant)

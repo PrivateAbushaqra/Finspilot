@@ -1,4 +1,4 @@
-from django.db.models.signals import post_save, pre_save, pre_delete
+from django.db.models.signals import post_save, pre_save, pre_delete, post_delete
 from django.dispatch import receiver
 from .models import PurchaseInvoice, PurchaseInvoiceItem, PurchaseReturn, PurchaseReturnItem, PurchaseDebitNote
 from django.db import transaction
@@ -91,6 +91,67 @@ def create_supplier_account_transaction(sender, instance, created, **kwargs):
                 )
         except Exception as e:
             print(f"خطأ في إنشاء معاملة حساب المورد للفاتورة {instance.invoice_number}: {e}")
+    
+    # التعامل مع المدفوعات النقدية والشيكات والتحويلات
+    if instance.payment_type == 'cash' and instance.payment_method and instance.items.count() > 0 and instance.total_amount > 0:
+        try:
+            from accounts.models import AccountTransaction
+            from cashboxes.models import CashboxTransaction
+            from banks.models import BankTransaction
+            import uuid
+            
+            # التحقق من عدم وجود معاملات مسبقة
+            existing_transaction = AccountTransaction.objects.filter(
+                reference_type='purchase_invoice_payment',
+                reference_id=instance.id
+            ).first()
+            
+            if not existing_transaction:
+                transaction_number = f"PP-{uuid.uuid4().hex[:8].upper()}"
+                
+                # إنشاء معاملة حساب المورد (دائن - نحن ندفع للمورد)
+                AccountTransaction.objects.create(
+                    transaction_number=transaction_number,
+                    date=instance.date,
+                    customer_supplier=instance.supplier,
+                    transaction_type='purchase',
+                    direction='debit',  # مدين (نحن ندفع للمورد)
+                    amount=instance.total_amount,
+                    reference_type='purchase_payment',
+                    reference_id=instance.id,
+                    description=f'دفع فاتورة مشتريات رقم {instance.invoice_number}',
+                    notes=instance.notes or '',
+                    created_by=instance.created_by
+                )
+                
+                # إنشاء معاملة الصندوق أو الحساب البنكي حسب طريقة الدفع
+                if instance.payment_method == 'cash' and instance.cashbox:
+                    # معاملة الصندوق
+                    CashboxTransaction.objects.create(
+                        cashbox=instance.cashbox,
+                        transaction_type='withdrawal',
+                        date=instance.date,
+                        amount=instance.total_amount,
+                        description=f'دفع فاتورة مشتريات رقم {instance.invoice_number}',
+                        created_by=instance.created_by
+                    )
+                elif instance.payment_method in ['check', 'transfer'] and instance.bank_account:
+                    # معاملة الحساب البنكي
+                    transaction_type = 'check' if instance.payment_method == 'check' else 'transfer'
+                # إنشاء معاملة الحساب البنكي
+                    BankTransaction.objects.create(
+                        bank=instance.bank_account,
+                        transaction_type='withdrawal',
+                        amount=instance.total_amount,
+                        reference_number=instance.check_number if instance.payment_method == 'check' else f'PI-{instance.invoice_number}',
+                        description=f'دفع فاتورة مشتريات رقم {instance.invoice_number}',
+                        date=instance.date,
+                        created_by=instance.created_by
+                    )
+        except Exception as e:
+            print(f"خطأ في إنشاء معاملات الدفع للفاتورة {instance.invoice_number}: {e}")
+            import traceback
+            traceback.print_exc()
 
 
 @receiver(post_save, sender=PurchaseInvoice)
@@ -393,12 +454,26 @@ def update_inventory_on_purchase_invoice_item(sender, instance, created, **kwarg
         
         print(f"تم تحديث المخزون لفاتورة الشراء {invoice.invoice_number}")
         
+        # تحديث مجاميع الفاتورة
+        invoice.save(update_fields=['subtotal', 'tax_amount', 'total_amount'])
+        
     except Exception as e:
         try:
             print(f"خطأ في تحديث المخزون لفاتورة الشراء {instance.invoice.invoice_number}: {e}")
         except:
             print(f"خطأ في تحديث المخزون: {e}")
         pass
+
+
+@receiver(post_delete, sender=PurchaseInvoiceItem)
+def update_invoice_totals_on_item_delete(sender, instance, **kwargs):
+    """تحديث مجاميع الفاتورة عند حذف عنصر"""
+    try:
+        from decimal import Decimal
+        invoice = instance.invoice
+        invoice.save(update_fields=['subtotal', 'tax_amount', 'total_amount'])
+    except Exception as e:
+        print(f"خطأ في تحديث مجاميع الفاتورة عند حذف العنصر: {e}")
 
 
 @receiver(post_save, sender=PurchaseReturnItem)
@@ -600,3 +675,42 @@ def delete_purchase_debit_note_journal_entry(sender, instance, **kwargs):
         print(f"✓ تم حذف القيد المحاسبي لإشعار المدين {instance.note_number}")
     except Exception as e:
         print(f"✗ خطأ في حذف قيد إشعار المدين: {e}")
+
+
+@receiver(post_delete, sender=PurchaseInvoice)
+def delete_purchase_invoice_related_records(sender, instance, **kwargs):
+    """حذف السجلات المرتبطة عند حذف فاتورة المشتريات"""
+    try:
+        from inventory.models import InventoryMovement
+        from journal.models import JournalEntry
+        from accounts.models import AccountTransaction
+        
+        # حذف حركات المخزون
+        inventory_movements = InventoryMovement.objects.filter(
+            reference_type='purchase_invoice',
+            reference_id=instance.id
+        )
+        deleted_inventory = inventory_movements.count()
+        inventory_movements.delete()
+        
+        # حذف القيود المحاسبية
+        journal_entries = JournalEntry.objects.filter(
+            reference_type='purchase_invoice',
+            reference_id=instance.id
+        )
+        deleted_journal = journal_entries.count()
+        journal_entries.delete()
+        
+        # حذف معاملات الحساب
+        account_transactions = AccountTransaction.objects.filter(
+            reference_type='purchase_invoice',
+            reference_id=instance.id
+        )
+        deleted_transactions = account_transactions.count()
+        account_transactions.delete()
+        
+        print(f"✓ تم حذف {deleted_inventory} حركة مخزون، {deleted_journal} قيد محاسبي، و {deleted_transactions} معاملة حساب لفاتورة المشتريات {instance.invoice_number}")
+    except Exception as e:
+        print(f"✗ خطأ في حذف السجلات المرتبطة بفاتورة المشتريات {instance.invoice_number}: {e}")
+        import traceback
+        traceback.print_exc()

@@ -161,6 +161,18 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="mb-3">
+                                    <label class="form-label"><i class="fas fa-money-bill-wave me-1"></i> {% trans "Payment Method" %}</label>
+                                    <select class="form-select" name="payment_method" id="id_payment_method">
+                                        <option value="">{% trans "Select Payment Method" %}</option>
+                                        <option value="cash" {% if invoice.payment_method == 'cash' %}selected{% endif %}>{% trans "Cash Payment" %}</option>
+                                        <option value="check" {% if invoice.payment_method == 'check' %}selected{% endif %}>{% trans "Check Payment" %}</option>
+                                        <option value="transfer" {% if invoice.payment_method == 'transfer' %}selected{% endif %}>{% trans "Bank Transfer" %}</option>
+                                        <option value="credit" {% if invoice.payment_method == 'credit' %}selected{% endif %}>{% trans "Credit Payment" %}</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
                                     <label class="form-label"><i class="fas fa-percentage me-1"></i> {% trans "Tax Settings" %}</label>
                                     <div class="form-check form-switch">
                                         <input class="form-check-input" type="checkbox" name="is_tax_inclusive" id="is_tax_inclusive" 
@@ -172,6 +184,52 @@
                                     <div class="form-text">
                                         <strong>{% trans "Tax Calculation" %}:</strong> {% trans "When checked, tax is calculated and added. When unchecked, no tax is calculated." %}
                                         <br><small class="text-muted">الافتراضي: مُختار (يحسب الضريبة)</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- صف طريقة الدفع التفصيلية -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <!-- Cashbox selection (shown when cash is selected) -->
+                                <div class="mb-3" id="cashbox_field" style="display: none;">
+                                    <label class="form-label"><i class="fas fa-cash-register me-1"></i> {% trans "Cash Box" %} *</label>
+                                    <select class="form-select" name="cashbox" id="id_cashbox">
+                                        <option value="">{% trans "Select Cash Box" %}</option>
+                                        {% for cashbox in cashboxes %}
+                                        <option value="{{ cashbox.id }}" {% if invoice.cashbox and invoice.cashbox.id == cashbox.id %}selected{% endif %}>{{ cashbox.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <!-- Bank account selection (shown when check or transfer is selected) -->
+                                <div class="mb-3" id="bank_account_field" style="display: none;">
+                                    <label class="form-label"><i class="fas fa-university me-1"></i> {% trans "Bank Account" %} *</label>
+                                    <select class="form-select" name="bank_account" id="id_bank_account">
+                                        <option value="">{% trans "Select Bank Account" %}</option>
+                                        {% for account in bank_accounts %}
+                                        <option value="{{ account.id }}" {% if invoice.bank_account and invoice.bank_account.id == account.id %}selected{% endif %}>{{ account.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <!-- Check details (shown when check is selected) -->
+                                <div id="check_fields" style="display: none;">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label"><i class="fas fa-hashtag me-1"></i> {% trans "Check Number" %} *</label>
+                                                <input type="text" class="form-control" name="check_number" id="id_check_number" value="{{ invoice.check_number|default:'' }}">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label"><i class="fas fa-calendar-check me-1"></i> {% trans "Check Date" %} *</label>
+                                                <input type="date" class="form-control" name="check_date" id="id_check_date" value="{{ invoice.check_date|default:'' }}">
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -615,6 +673,54 @@ document.getElementById('invoiceForm').addEventListener('submit', function(e) {
         alert('يجب {% trans "Add" %} منتج واحد على الأقل لل{% trans "Invoice" %}!');
         return false;
     }
+});
+
+// Payment method field toggling
+$(document).ready(function() {
+    const paymentMethodSelect = $('#id_payment_method');
+    const cashboxField = $('#cashbox_field');
+    const bankAccountField = $('#bank_account_field');
+    const checkFields = $('#check_fields');
+    const cashboxSelect = $('#id_cashbox');
+    const bankAccountSelect = $('#id_bank_account');
+    const checkNumberInput = $('#id_check_number');
+    const checkDateInput = $('#id_check_date');
+
+    function togglePaymentFields() {
+        const selectedMethod = paymentMethodSelect.val();
+        
+        // Hide all payment-related fields first
+        cashboxField.hide();
+        bankAccountField.hide();
+        checkFields.hide();
+        
+        // Remove required attributes
+        cashboxSelect.prop('required', false);
+        bankAccountSelect.prop('required', false);
+        checkNumberInput.prop('required', false);
+        checkDateInput.prop('required', false);
+        
+        // Show relevant fields based on selection
+        if (selectedMethod === 'cash') {
+            cashboxField.show();
+            cashboxSelect.prop('required', true);
+        } else if (selectedMethod === 'check') {
+            bankAccountField.show();
+            checkFields.show();
+            bankAccountSelect.prop('required', true);
+            checkNumberInput.prop('required', true);
+            checkDateInput.prop('required', true);
+        } else if (selectedMethod === 'transfer') {
+            bankAccountField.show();
+            bankAccountSelect.prop('required', true);
+        }
+    }
+
+    // Initial toggle on page load
+    togglePaymentFields();
+
+    // Toggle on change
+    paymentMethodSelect.on('change', togglePaymentFields);
 });
 </script>
 {% endblock %}

@@ -373,8 +373,10 @@ class JournalService:
         )
     
     @staticmethod
+    @staticmethod
     def create_purchase_invoice_entry(invoice, user=None):
         """إنشاء قيد فاتورة المشتريات"""
+        print(f"DEBUG: Line 376 create_purchase_invoice_entry called for invoice {invoice.invoice_number if invoice else 'None'}")
         # التحقق من صحة بيانات الفاتورة
         if not invoice or invoice.total_amount <= 0:
             print(f"تجاهل إنشاء قيد لفاتورة مشتريات {invoice.invoice_number if invoice else 'غير محدد'} - إجمالي صفر أو سالب")
@@ -406,8 +408,8 @@ class JournalService:
                 'description': f'ضريبة مشتريات - فاتورة رقم {invoice.invoice_number}'
             })
         
-        # حسب نوع الدفع
-        if invoice.payment_type == 'cash':
+        # حسب نوع الدفع أو طريقة الدفع
+        if invoice.payment_type == 'cash' or invoice.payment_method == 'cash':
             # للدفع النقدي: دائن للصندوق أو البنك
             cash_account = JournalService.get_cash_account()
             lines_data.append({
@@ -416,8 +418,35 @@ class JournalService:
                 'credit': invoice.total_amount,
                 'description': f'دفع نقدي لفاتورة مشتريات رقم {invoice.invoice_number}'
             })
-        else:
+        elif invoice.payment_type == 'credit' or invoice.payment_method == 'credit':
             # للدفع الائتماني: دائن للمورد
+            supplier_account = JournalService.get_or_create_supplier_account(invoice.supplier)
+            lines_data.append({
+                'account_id': supplier_account.id,
+                'debit': 0,
+                'credit': invoice.total_amount,
+                'description': f'فاتورة مشتريات رقم {invoice.invoice_number}'
+            })
+        elif invoice.payment_method == 'check':
+            # للدفع بالشيك: دائن لحساب البنك
+            bank_account = JournalService.get_or_create_bank_account(invoice.bank_account)
+            lines_data.append({
+                'account_id': bank_account.id,
+                'debit': 0,
+                'credit': invoice.total_amount,
+                'description': f'دفع شيك لفاتورة مشتريات رقم {invoice.invoice_number}'
+            })
+        elif invoice.payment_method == 'transfer':
+            # للحوالة البنكية: دائن لحساب البنك
+            bank_account = JournalService.get_or_create_bank_account(invoice.bank_account)
+            lines_data.append({
+                'account_id': bank_account.id,
+                'debit': 0,
+                'credit': invoice.total_amount,
+                'description': f'حوالة بنكية لفاتورة مشتريات رقم {invoice.invoice_number}'
+            })
+        else:
+            # افتراضياً اذا لم يتم تحديد طريقة دفع: دائن للمورد (ذمم)
             supplier_account = JournalService.get_or_create_supplier_account(invoice.supplier)
             lines_data.append({
                 'account_id': supplier_account.id,
@@ -433,9 +462,7 @@ class JournalService:
             description=f'فاتورة مشتريات رقم {invoice.invoice_number} - {invoice.supplier.name}',
             lines_data=lines_data,
             user=user
-        )
-    
-    @staticmethod
+        )    @staticmethod
     def create_receipt_voucher_entry(receipt, user=None):
         """إنشاء قيد سند القبض"""
         lines_data = []
@@ -770,15 +797,28 @@ class JournalService:
     @staticmethod
     def get_tax_payable_account():
         """الحصول على حساب ضريبة مستحقة الدفع"""
-        account, created = Account.objects.get_or_create(
+        # أولاً، التأكد من وجود الحساب الرئيسي
+        parent_account, created = Account.objects.get_or_create(
             code='2030',
+            defaults={
+                'name': 'الضرائب المستحقة الدفع',
+                'account_type': 'liability',
+                'description': 'حساب رئيسي للضرائب المستحقة الدفع'
+            }
+        )
+        
+        # إنشاء حساب فرعي لضريبة القيمة المضافة
+        vat_code = '203001'
+        vat_account, created = Account.objects.get_or_create(
+            code=vat_code,
             defaults={
                 'name': 'ضريبة القيمة المضافة مستحقة الدفع',
                 'account_type': 'liability',
+                'parent': parent_account,
                 'description': 'ضريبة القيمة المضافة على المبيعات'
             }
         )
-        return account
+        return vat_account
     
     @staticmethod
     def get_tax_receivable_account():
@@ -853,7 +893,7 @@ class JournalService:
     @staticmethod
     def get_or_create_customer_account(customer):
         """الحصول على حساب العميل أو إنشاؤه"""
-        code = f"1050{customer.id:04d}"
+        code = f"1301{customer.id:04d}"
         account, created = Account.objects.get_or_create(
             code=code,
             defaults={
@@ -867,7 +907,7 @@ class JournalService:
     @staticmethod
     def get_or_create_supplier_account(supplier):
         """الحصول على حساب المورد أو إنشاؤه"""
-        code = f"2050{supplier.id:04d}"
+        code = f"2101{supplier.id:04d}"
         account, created = Account.objects.get_or_create(
             code=code,
             defaults={
@@ -1079,12 +1119,10 @@ class JournalService:
         """إنشاء قيد فاتورة المشتريات"""
         # التحقق من صحة بيانات الفاتورة
         if not invoice or invoice.total_amount <= 0:
-            print(f"تجاهل إنشاء قيد لفاتورة مشتريات {invoice.invoice_number if invoice else 'غير محدد'} - إجمالي صفر أو سالب")
             return None
         
         # التحقق من صحة البيانات المطلوبة
         if not hasattr(invoice, 'subtotal') or invoice.subtotal < 0:
-            print(f"تجاهل إنشاء قيد لفاتورة مشتريات {invoice.invoice_number} - subtotal غير صحيح")
             return None
         
         lines_data = []
@@ -1109,7 +1147,7 @@ class JournalService:
             })
         
         # حسب نوع الدفع
-        if invoice.payment_type == 'cash':
+        if invoice.payment_method == 'cash':
             # للدفع النقدي: دائن للصندوق أو البنك
             cash_account = JournalService.get_cash_account()
             lines_data.append({
@@ -1118,8 +1156,35 @@ class JournalService:
                 'credit': invoice.total_amount,
                 'description': f'دفع نقدي لفاتورة مشتريات رقم {invoice.invoice_number}'
             })
-        else:
+        elif invoice.payment_method == 'check':
+            # للدفع بالشيك: دائن للبنك
+            bank_account = JournalService.get_or_create_bank_account(invoice.bank if hasattr(invoice, 'bank') else 'البنك الافتراضي')
+            lines_data.append({
+                'account_id': bank_account.id,
+                'debit': 0,
+                'credit': invoice.total_amount,
+                'description': f'دفع شيك لفاتورة مشتريات رقم {invoice.invoice_number}'
+            })
+        elif invoice.payment_method == 'transfer':
+            # للتحويل البنكي: دائن للبنك
+            bank_account = JournalService.get_or_create_bank_account(invoice.bank if hasattr(invoice, 'bank') else 'البنك الافتراضي')
+            lines_data.append({
+                'account_id': bank_account.id,
+                'debit': 0,
+                'credit': invoice.total_amount,
+                'description': f'تحويل بنكي لفاتورة مشتريات رقم {invoice.invoice_number}'
+            })
+        elif invoice.payment_method == 'credit':
             # للدفع الائتماني: دائن للمورد
+            supplier_account = JournalService.get_or_create_supplier_account(invoice.supplier)
+            lines_data.append({
+                'account_id': supplier_account.id,
+                'debit': 0,
+                'credit': invoice.total_amount,
+                'description': f'فاتورة مشتريات رقم {invoice.invoice_number} - ذمم'
+            })
+        else:
+            # للدفع الائتماني: دائن للمورد (افتراضي)
             supplier_account = JournalService.get_or_create_supplier_account(invoice.supplier)
             lines_data.append({
                 'account_id': supplier_account.id,
@@ -1128,698 +1193,21 @@ class JournalService:
                 'description': f'فاتورة مشتريات رقم {invoice.invoice_number}'
             })
         
-        return JournalService.create_journal_entry(
-            entry_date=invoice.date,
-            reference_type='purchase_invoice',
-            reference_id=invoice.id,
-            description=f'فاتورة مشتريات رقم {invoice.invoice_number} - {invoice.supplier.name}',
-            lines_data=lines_data,
-            user=user
-        )
-    
-    @staticmethod
-    def create_receipt_voucher_entry(receipt, user=None):
-        """إنشاء قيد سند القبض"""
-        lines_data = []
-        
-        # حساب الصندوق أو البنك (مدين)
-        if receipt.payment_type == 'cash':
-            cash_account = JournalService.get_cash_account()
-            lines_data.append({
-                'account_id': cash_account.id,
-                'debit': receipt.amount,
-                'credit': 0,
-                'description': f'قبض نقدي - سند رقم {receipt.receipt_number}'
-            })
-        elif receipt.payment_type == 'bank_transfer':
-            # للتحويل البنكي - استخدام الحساب البنكي المحدد
-            if receipt.bank_account:
-                bank_account = JournalService.get_or_create_bank_account_by_name(
-                    receipt.bank_account.name,
-                    receipt.bank_account.bank_name
-                )
-                lines_data.append({
-                    'account_id': bank_account.id,
-                    'debit': receipt.amount,
-                    'credit': 0,
-                    'description': f'تحويل بنكي رقم {receipt.bank_transfer_reference} - سند رقم {receipt.receipt_number}'
-                })
-            else:
-                # في حالة عدم وجود حساب بنكي، استخدم حساب عام
-                bank_account = JournalService.get_cash_account()
-                lines_data.append({
-                    'account_id': bank_account.id,
-                    'debit': receipt.amount,
-                    'credit': 0,
-                    'description': f'تحويل بنكي - سند رقم {receipt.receipt_number}'
-                })
-        else:  # check
-            # للشيكات - استخدام حساب شيكات تحت التحصيل
-            checks_account = JournalService.get_or_create_checks_in_transit_account()
-            lines_data.append({
-                'account_id': checks_account.id,
-                'debit': receipt.amount,
-                'credit': 0,
-                'description': f'شيك رقم {receipt.check_number} - سند رقم {receipt.receipt_number}'
-            })
-        
-        # حساب العميل (دائن)
-        customer_account = JournalService.get_or_create_customer_account(receipt.customer)
-        lines_data.append({
-            'account_id': customer_account.id,
-            'debit': 0,
-            'credit': receipt.amount,
-            'description': f'سند قبض رقم {receipt.receipt_number}'
-        })
-        
-        return JournalService.create_journal_entry(
-            entry_date=receipt.date,
-            reference_type='receipt_voucher',
-            reference_id=receipt.id,
-            description=f'سند قبض رقم {receipt.receipt_number} - {receipt.customer.name}',
-            lines_data=lines_data,
-            user=user
-        )
-    
-    @staticmethod
-    def create_payment_voucher_entry(payment, user=None):
-        """إنشاء قيد سند الصرف"""
-        lines_data = []
-        
-        # حساب المورد أو المصروف (مدين)
-        if hasattr(payment, 'supplier') and payment.supplier:
-            supplier_account = JournalService.get_or_create_supplier_account(payment.supplier)
-            lines_data.append({
-                'account_id': supplier_account.id,
-                'debit': payment.amount,
-                'credit': 0,
-                'description': f'سند دفع رقم {payment.voucher_number}'
-            })
-        else:
-            # للمصروفات الأخرى - استخدام حساب مصروفات عام
-            expense_account = JournalService.get_or_create_expense_account('other')
-            lines_data.append({
-                'account_id': expense_account.id,
-                'debit': payment.amount,
-                'credit': 0,
-                'description': f'مصروف - سند رقم {payment.voucher_number}'
-            })
-        
-        # حساب الصندوق أو البنك (دائن)
-        if payment.payment_type == 'cash':
-            if payment.cashbox:
-                cashbox_account = JournalService.get_cashbox_account(payment.cashbox)
-                lines_data.append({
-                    'account_id': cashbox_account.id,
-                    'debit': 0,
-                    'credit': payment.amount,
-                    'description': f'دفع نقدي من {payment.cashbox.name} - سند رقم {payment.voucher_number}'
-                })
-            else:
-                # في حالة عدم وجود صندوق محدد - استخدام الصندوق العام
-                cash_account = JournalService.get_cash_account()
-                lines_data.append({
-                    'account_id': cash_account.id,
-                    'debit': 0,
-                    'credit': payment.amount,
-                    'description': f'دفع نقدي - سند رقم {payment.voucher_number}'
-                })
-        elif payment.payment_type == 'bank_transfer':
-            # للتحويل البنكي
-            if payment.bank:
-                bank_account = JournalService.get_bank_account(payment.bank)
-                lines_data.append({
-                    'account_id': bank_account.id,
-                    'debit': 0,
-                    'credit': payment.amount,
-                    'description': f'تحويل بنكي من {payment.bank.name} - سند رقم {payment.voucher_number}'
-                })
-            else:
-                # في حالة عدم وجود بنك محدد - استخدام حساب بنك عام
-                bank_account = JournalService.get_bank_account()
-                lines_data.append({
-                    'account_id': bank_account.id,
-                    'debit': 0,
-                    'credit': payment.amount,
-                    'description': f'تحويل بنكي - سند رقم {payment.voucher_number}'
-                })
-        
-        return JournalService.create_journal_entry(
-            date=payment.date,
-            reference_type='payment_voucher',
-            reference_id=payment.id,
-            description=f'قيد سند الصرف رقم {payment.voucher_number}',
-            lines_data=lines_data,
-            user=user
-        )
-    
-    @staticmethod
-    def create_bank_transfer_entry(transfer, user=None):
-        """إنشاء قيد محاسبي لتحويل بنكي"""
-        # التحقق من عدم وجود قيد سابق لهذا التحويل
-        existing_entry = JournalEntry.objects.filter(
-            reference_type='bank_transfer',
-            reference_id=transfer.id
-        ).first()
-        
-        if existing_entry:
-            print(f"قيد التحويل موجود بالفعل للتحويل {transfer.transfer_number}: {existing_entry.entry_number}")
-            return existing_entry
-        
-        # الحصول على الحسابات المحاسبية للحسابات البنكية
-        from_account_obj = JournalService.get_or_create_bank_account(transfer.from_account)
-        to_account_obj = JournalService.get_or_create_bank_account(transfer.to_account)
-        
-        # القيد: مدين لحساب البنك المستقبل، دائن لحساب البنك المرسل
-        lines_data = [
-            {
-                'account_id': to_account_obj.id,
-                'debit': transfer.amount,
-                'credit': Decimal('0'),
-                'description': f'تحويل من {transfer.from_account.name} إلى {transfer.to_account.name} - رقم التحويل: {transfer.transfer_number}'
-            },
-            {
-                'account_id': from_account_obj.id,
-                'debit': Decimal('0'),
-                'credit': transfer.amount,
-                'description': f'تحويل إلى {transfer.to_account.name} من {transfer.from_account.name} - رقم التحويل: {transfer.transfer_number}'
-            }
-        ]
-        
-        # إذا كانت هناك رسوم، أضف قيدًا للرسوم
-        if transfer.fees > 0:
-            # الرسوم تُخصم من الحساب المرسل
-            expense_account = JournalService.get_or_create_expense_account('bank_fees')
-            lines_data.append({
-                'account_id': expense_account.id,
-                'debit': transfer.fees,
-                'credit': Decimal('0'),
-                'description': f'رسوم تحويل بنكي - رقم التحويل: {transfer.transfer_number}'
-            })
-            # تعديل الدائن للحساب المرسل ليشمل الرسوم
-            lines_data[1]['credit'] = transfer.amount + transfer.fees
-        
-        return JournalService.create_journal_entry(
-            entry_date=transfer.date,
-            reference_type='bank_transfer',
-            reference_id=transfer.id,
-            description=f'تحويل بنكي من {transfer.from_account.name} إلى {transfer.to_account.name} - رقم التحويل: {transfer.transfer_number}',
-            lines_data=lines_data,
-            user=user
-        )
-    
-    # دوال مساعدة للحصول على الحسابات أو إنشاؤها
-    @staticmethod
-    def get_cash_account():
-        """الحصول على حساب الصندوق"""
-        account, created = Account.objects.get_or_create(
-            code='1010',
-            defaults={
-                'name': 'الصندوق',
-                'account_type': 'asset',
-                'description': 'حساب الصندوق النقدي'
-            }
-        )
-        return account
-    
-    @staticmethod
-    def get_sales_account():
-        """الحصول على حساب المبيعات"""
-        account, created = Account.objects.get_or_create(
-            code='4010',
-            defaults={
-                'name': 'المبيعات',
-                'account_type': 'sales',
-                'description': 'حساب المبيعات'
-            }
-        )
-        return account
-    
-    @staticmethod
-    def get_sales_discount_account():
-        """الحصول على حساب خصم المبيعات"""
-        account, created = Account.objects.get_or_create(
-            code='4020',
-            defaults={
-                'name': 'خصم المبيعات',
-                'account_type': 'expense',
-                'description': 'حساب خصم المبيعات'
-            }
-        )
-        return account
-    
-    @staticmethod
-    def get_cashbox_account(cashbox):
-        """الحصول على حساب الصندوق"""
-        account, created = Account.objects.get_or_create(
-            code=f'101{cashbox.id:03d}',
-            defaults={
-                'name': f'صندوق - {cashbox.name}',
-                'account_type': 'asset',
-                'description': f'حساب الصندوق {cashbox.name}'
-            }
-        )
-        return account
-    
-    @staticmethod
-    def create_cashbox_transfer_entry(transfer, user=None):
-        """إنشاء قيد تحويل الصناديق"""
-        # التحقق من عدم وجود قيد سابق لهذا التحويل
-        existing_entry = JournalEntry.objects.filter(
-            reference_type='cashbox_transfer',
-            reference_id=transfer.id
-        ).first()
-        
-        if existing_entry:
-            print(f"قيد التحويل موجود بالفعل للتحويل {transfer.transfer_number}: {existing_entry.entry_number}")
-            return existing_entry
-        
-        lines_data = []
-        
-        if transfer.transfer_type == 'cashbox_to_cashbox':
-            # تحويل من صندوق إلى صندوق
-            from_account = JournalService.get_cashbox_account(transfer.from_cashbox)
-            to_account = JournalService.get_cashbox_account(transfer.to_cashbox)
-            
-            # المدين: الصندوق المستقبل
-            lines_data.append({
-                'account_id': to_account.id,
-                'debit': transfer.amount,
-                'credit': 0,
-                'description': f'تحويل من {transfer.from_cashbox.name} إلى {transfer.to_cashbox.name}'
-            })
-            
-            # الدائن: الصندوق المرسل
-            lines_data.append({
-                'account_id': from_account.id,
-                'debit': 0,
-                'credit': transfer.amount,
-                'description': f'تحويل إلى {transfer.to_cashbox.name}'
-            })
-        
-        elif transfer.transfer_type == 'cashbox_to_bank':
-            # تحويل من صندوق إلى بنك
-            from_account = JournalService.get_cashbox_account(transfer.from_cashbox)
-            to_account = JournalService.get_bank_account(transfer.to_bank)
-            
-            # المدين: حساب البنك
-            lines_data.append({
-                'account_id': to_account.id,
-                'debit': transfer.amount,
-                'credit': 0,
-                'description': f'إيداع من {transfer.from_cashbox.name} إلى {transfer.to_bank.name}'
-            })
-            
-            # الدائن: الصندوق
-            lines_data.append({
-                'account_id': from_account.id,
-                'debit': 0,
-                'credit': transfer.amount,
-                'description': f'سحب للإيداع في {transfer.to_bank.name}'
-            })
-        
-        elif transfer.transfer_type == 'bank_to_cashbox':
-            # تحويل من بنك إلى صندوق
-            from_account = JournalService.get_bank_account(transfer.from_bank)
-            to_account = JournalService.get_cashbox_account(transfer.to_cashbox)
-            
-            # المدين: الصندوق
-            lines_data.append({
-                'account_id': to_account.id,
-                'debit': transfer.amount,
-                'credit': 0,
-                'description': f'سحب من {transfer.from_bank.name} إلى {transfer.to_cashbox.name}'
-            })
-            
-            # الدائن: حساب البنك
-            lines_data.append({
-                'account_id': from_account.id,
-                'debit': 0,
-                'credit': transfer.amount,
-                'description': f'سحب للصندوق {transfer.to_cashbox.name}'
-            })
-        
-        # إنشاء القيد
-        return JournalService.create_journal_entry(
-            entry_date=transfer.date,
-            reference_type='cashbox_transfer',
-            description=f'تحويل الصناديق: {transfer.transfer_number}',
-            lines_data=lines_data,
-            reference_id=transfer.id,
-            user=user
-        )
-    
-    @staticmethod
-    def get_tax_payable_account():
-        """الحصول على حساب ضريبة مستحقة الدفع"""
-        account, created = Account.objects.get_or_create(
-            code='2030',
-            defaults={
-                'name': 'ضريبة القيمة المضافة مستحقة الدفع',
-                'account_type': 'liability',
-                'description': 'ضريبة القيمة المضافة على المبيعات'
-            }
-        )
-        return account
-    
-    @staticmethod
-    def get_tax_receivable_account():
-        """الحصول على حساب ضريبة القيمة المضافة المدخلة"""
-        account, created = Account.objects.get_or_create(
-            code='1070',
-            defaults={
-                'name': 'ضريبة القيمة المضافة مدخلة',
-                'account_type': 'asset',
-                'description': 'ضريبة القيمة المضافة على المشتريات'
-            }
-        )
-        return account
-    
-    @staticmethod
-    def get_inventory_account():
-        """الحصول على حساب المخزون"""
-        account, created = Account.objects.get_or_create(
-            code='1020',
-            defaults={
-                'name': 'المخزون',
-                'account_type': 'asset',
-                'description': 'حساب المخزون السلعي'
-            }
-        )
-        return account
-    
-    @staticmethod
-    def get_cogs_account():
-        """الحصول على حساب تكلفة البضاعة المباعة"""
-        account, created = Account.objects.get_or_create(
-            code='5001',
-            defaults={
-                'name': 'تكلفة البضاعة المباعة',
-                'account_type': 'expense',
-                'description': 'تكلفة البضاعة المباعة (COGS)'
-            }
-        )
-        return account
-    
-    @staticmethod
-    def get_purchases_account():
-        """الحصول على حساب المشتريات"""
-        account, created = Account.objects.get_or_create(
-            code='5000',
-            defaults={
-                'name': 'المشتريات',
-                'account_type': 'expense',
-                'description': 'حساب المشتريات'
-            }
-        )
-        return account
-    
-    @staticmethod
-    def get_or_create_customer_account(customer):
-        """الحصول على حساب العميل أو إنشاؤه"""
-        code = f"1050{customer.id:04d}"
-        account, created = Account.objects.get_or_create(
-            code=code,
-            defaults={
-                'name': f'العميل - {customer.name}',
-                'account_type': 'asset',
-                'description': f'حساب العميل {customer.name}'
-            }
-        )
-        return account
-    
-    @staticmethod
-    def get_or_create_supplier_account(supplier):
-        """الحصول على حساب المورد أو إنشاؤه"""
-        code = f"2050{supplier.id:04d}"
-        account, created = Account.objects.get_or_create(
-            code=code,
-            defaults={
-                'name': f'المورد - {supplier.name}',
-                'account_type': 'liability',
-                'description': f'حساب المورد {supplier.name}'
-            }
-        )
-        return account
-    
-    @staticmethod
-    def get_or_create_bank_account(bank_name_or_obj):
-        """الحصول على الحساب البنكي أو إنشاؤه"""
-        if bank_name_or_obj:
-            # إذا كان string (اسم البنك)
-            if isinstance(bank_name_or_obj, str):
-                bank_name = bank_name_or_obj
-                # إنشاء رمز فريد بناءً على hash الاسم
-                import hashlib
-                name_hash = hashlib.md5(bank_name.encode()).hexdigest()[:4]
-                code = f"1020{name_hash}"
-                account, created = Account.objects.get_or_create(
-                    code=code,
-                    defaults={
-                        'name': f'البنك - {bank_name}',
-                        'account_type': 'asset',
-                        'description': f'حساب البنك {bank_name}'
-                    }
-                )
-                return account
-            else:
-                # إذا كان كائن بنك
-                bank = bank_name_or_obj
-                code = f"1020{bank.id:04d}"
-                account, created = Account.objects.get_or_create(
-                    code=code,
-                    defaults={
-                        'name': f'البنك - {bank.name}',
-                        'account_type': 'asset',
-                        'description': f'حساب البنك {bank.name}'
-                    }
-                )
-                return account
-        return JournalService.get_cash_account()
-    
-    @staticmethod
-    def get_or_create_expense_account(expense_type):
-        """الحصول على حساب المصروف أو إنشاؤه"""
-        code = "6010"  # رمز افتراضي للمصاريف
-        account, created = Account.objects.get_or_create(
-            code=code,
-            defaults={
-                'name': 'المصاريف العامة',
-                'account_type': 'expense',
-                'description': 'حساب المصاريف العامة'
-            }
-        )
-        return account
-    
-    @staticmethod
-    def get_bank_account(bank=None):
-        """
-        الحصول على الحساب المحاسبي للبنك
-        إذا تم تمرير كائن بنك، يتم الحصول على حسابه المحدد
-        وإلا يتم إرجاع الحساب النقدي العام
-        """
-        if bank:
-            return JournalService.get_or_create_bank_account(bank)
-        else:
-            # إرجاع حساب نقدي عام في حالة عدم وجود بنك محدد
-            return JournalService.get_cash_account()
-
-
-    @staticmethod
-    def create_sales_return_entry(sales_return, user=None):
-        """إنشاء قيد مردود المبيعات"""
-        lines_data = []
-        
-        # حساب المبيعات (مدين) - تخفيض المبيعات
-        sales_account = JournalService.get_sales_account()
-        lines_data.append({
-            'account_id': sales_account.id,
-            'debit': sales_return.subtotal,
-            'credit': 0,
-            'description': f'مردود مبيعات - تخفيض مبيعات رقم {sales_return.return_number}'
-        })
-        
-        # حساب الضريبة إذا وجدت (مدين) - تخفيض الضريبة
-        if sales_return.tax_amount > 0:
-            tax_account = JournalService.get_tax_payable_account()
-            lines_data.append({
-                'account_id': tax_account.id,
-                'debit': sales_return.tax_amount,
-                'credit': 0,
-                'description': f'مردود مبيعات - تخفيض ضريبة رقم {sales_return.return_number}'
-            })
-        
-        # دائماً دائن لحساب العميل (مردود المبيعات يعني استرداد المبلغ للعميل)
-        customer_account = JournalService.get_or_create_customer_account(sales_return.customer)
-        lines_data.append({
-            'account_id': customer_account.id,
-            'debit': 0,
-            'credit': sales_return.total_amount,
-            'description': f'مردود مبيعات رقم {sales_return.return_number}'
-        })
-        
-        return JournalService.create_journal_entry(
-            entry_date=sales_return.date,
-            reference_type='sales_return',
-            reference_id=sales_return.id,
-            description=f'مردود مبيعات رقم {sales_return.return_number} - {sales_return.customer.name}',
-            lines_data=lines_data,
-            user=user
-        )
-    
-    @staticmethod
-    def create_sales_return_cogs_entry(sales_return, user=None):
-        """إنشاء قيد تكلفة البضاعة المسترجعة (عكس COGS)"""
-        from inventory.models import InventoryMovement
-        from decimal import Decimal
-        
-        # حساب إجمالي تكلفة البضاعة المسترجعة من حركات المخزون
-        movements = InventoryMovement.objects.filter(
-            reference_type='sales_return',
-            reference_id=sales_return.id,
-            movement_type='in'
-        )
-        
-        total_cogs = Decimal('0')
-        for movement in movements:
-            total_cogs += movement.total_cost
-        
-        if total_cogs <= 0:
-            return None  # لا يوجد تكلفة للتسجيل
-        
-        lines_data = []
-        
-        # حساب المخزون (مدين) - زيادة المخزون
-        inventory_account = JournalService.get_inventory_account()
-        lines_data.append({
-            'account_id': inventory_account.id,
-            'debit': total_cogs,
-            'credit': 0,
-            'description': f'زيادة المخزون - مردود مبيعات رقم {sales_return.return_number}'
-        })
-        
-        # حساب تكلفة البضاعة المباعة (دائن) - تخفيض COGS
-        cogs_account = JournalService.get_cogs_account()
-        lines_data.append({
-            'account_id': cogs_account.id,
-            'debit': 0,
-            'credit': total_cogs,
-            'description': f'تخفيض تكلفة البضاعة المباعة - مردود رقم {sales_return.return_number}'
-        })
-        
-        return JournalService.create_journal_entry(
-            entry_date=sales_return.date,
-            reference_type='sales_return_cogs',
-            reference_id=sales_return.id,
-            description=f'تكلفة البضاعة المسترجعة - مردود مبيعات رقم {sales_return.return_number}',
-            lines_data=lines_data,
-            user=user
-        )
-    
-    @staticmethod
-    def create_purchase_return_entry(purchase_return, user=None):
-        """إنشاء قيد مردود المشتريات"""
-        lines_data = []
-        
-        # حساب المورد (مدين) - تخفيض الذمم الدائنة
-        supplier_account = JournalService.get_or_create_supplier_account(purchase_return.supplier)
-        lines_data.append({
-            'account_id': supplier_account.id,
-            'debit': purchase_return.total_amount,
-            'credit': 0,
-            'description': f'مردود مشتريات رقم {purchase_return.return_number}'
-        })
-        
-        # حساب المشتريات (دائن) - تخفيض المشتريات
-        purchases_account = JournalService.get_purchases_account()
-        lines_data.append({
-            'account_id': purchases_account.id,
-            'debit': 0,
-            'credit': purchase_return.subtotal,
-            'description': f'مردود مشتريات - تخفيض مشتريات رقم {purchase_return.return_number}'
-        })
-        
-        # حساب الضريبة إذا وجدت (دائن) - تخفيض الضريبة
-        if purchase_return.tax_amount > 0:
-            tax_account = JournalService.get_tax_receivable_account()
-            lines_data.append({
-                'account_id': tax_account.id,
-                'debit': 0,
-                'credit': purchase_return.tax_amount,
-                'description': f'مردود مشتريات - تخفيض ضريبة رقم {purchase_return.return_number}'
-            })
-        
-        return JournalService.create_journal_entry(
-            entry_date=purchase_return.date,
-            reference_type='purchase_return',
-            reference_id=purchase_return.id,
-            description=f'مردود مشتريات رقم {purchase_return.return_number} - {purchase_return.supplier.name}',
-            lines_data=lines_data,
-            user=user
-        )
-    
-    @staticmethod
-    def create_purchase_invoice_entry(invoice, user=None):
-        """إنشاء قيد فاتورة المشتريات"""
-        # التحقق من صحة بيانات الفاتورة
-        if not invoice or invoice.total_amount <= 0:
-            print(f"تجاهل إنشاء قيد لفاتورة مشتريات {invoice.invoice_number if invoice else 'غير محدد'} - إجمالي صفر أو سالب")
+        try:
+            result = JournalService.create_journal_entry(
+                entry_date=invoice.date,
+                reference_type='purchase_invoice',
+                reference_id=invoice.id,
+                description=f'فاتورة مشتريات رقم {invoice.invoice_number} - {invoice.supplier.name}',
+                lines_data=lines_data,
+                user=invoice.created_by if hasattr(invoice, 'created_by') else None
+            )
+            return result
+        except Exception as e:
+            print(f"خطأ في create_journal_entry: {e}")
+            import traceback
+            traceback.print_exc()
             return None
-        
-        # التحقق من صحة البيانات المطلوبة
-        if not hasattr(invoice, 'subtotal') or invoice.subtotal < 0:
-            print(f"تجاهل إنشاء قيد لفاتورة مشتريات {invoice.invoice_number} - subtotal غير صحيح")
-            return None
-        
-        lines_data = []
-        
-        # حساب المخزون (مدين) - بقيمة المشتريات
-        inventory_account = JournalService.get_warehouse_account(invoice.warehouse)
-        lines_data.append({
-            'account_id': inventory_account.id,
-            'debit': invoice.subtotal,
-            'credit': 0,
-            'description': f'زيادة المخزون - فاتورة مشتريات رقم {invoice.invoice_number}'
-        })
-        
-        # حساب الضريبة إذا وجدت (مدين)
-        if invoice.tax_amount > 0:
-            tax_account = JournalService.get_tax_receivable_account()
-            lines_data.append({
-                'account_id': tax_account.id,
-                'debit': invoice.tax_amount,
-                'credit': 0,
-                'description': f'ضريبة مشتريات - فاتورة رقم {invoice.invoice_number}'
-            })
-        
-        # حسب نوع الدفع
-        if invoice.payment_type == 'cash':
-            # للدفع النقدي: دائن للصندوق أو البنك
-            cash_account = JournalService.get_cash_account()
-            lines_data.append({
-                'account_id': cash_account.id,
-                'debit': 0,
-                'credit': invoice.total_amount,
-                'description': f'دفع نقدي لفاتورة مشتريات رقم {invoice.invoice_number}'
-            })
-        else:
-            # للدفع الائتماني: دائن للمورد
-            supplier_account = JournalService.get_or_create_supplier_account(invoice.supplier)
-            lines_data.append({
-                'account_id': supplier_account.id,
-                'debit': 0,
-                'credit': invoice.total_amount,
-                'description': f'فاتورة مشتريات رقم {invoice.invoice_number}'
-            })
-        
-        return JournalService.create_journal_entry(
-            entry_date=invoice.date,
-            reference_type='purchase_invoice',
-            reference_id=invoice.id,
-            description=f'فاتورة مشتريات رقم {invoice.invoice_number} - {invoice.supplier.name}',
-            lines_data=lines_data,
-            user=user
-        )
     
     @staticmethod
     def create_receipt_voucher_entry(receipt, user=None):
@@ -1991,4 +1379,64 @@ class JournalService:
         ]
         
         # إذا كانت هناك رسوم، أضف قيدًا للرسوم
-       
+        if transfer.fees > 0:
+            # الرسوم تُخصم من الحساب المرسل
+            expense_account = JournalService.get_or_create_expense_account('bank_fees')
+            lines_data.append({
+                'account_id': expense_account.id,
+                'debit': transfer.fees,
+                'credit': Decimal('0'),
+                'description': f'رسوم تحويل بنكي - رقم التحويل: {transfer.transfer_number}'
+            })
+            # تعديل الدائن للحساب المرسل ليشمل الرسوم
+            lines_data[1]['credit'] = transfer.amount + transfer.fees
+        
+        return JournalService.create_journal_entry(
+            entry_date=transfer.date,
+            reference_type='bank_transfer',
+            reference_id=transfer.id,
+            description=f'تحويل بنكي من {transfer.from_account.name} إلى {transfer.to_account.name} - رقم التحويل: {transfer.transfer_number}',
+            lines_data=lines_data,
+            user=user
+        )
+    
+    # دوال مساعدة للحصول على الحسابات أو إنشاؤها
+    @staticmethod
+    def get_cash_account():
+        """الحصول على حساب الصندوق"""
+        account, created = Account.objects.get_or_create(
+            code='1010',
+            defaults={
+                'name': 'الصندوق',
+                'account_type': 'asset',
+                'description': 'حساب الصندوق النقدي'
+            }
+        )
+        return account
+    
+    @staticmethod
+    def get_sales_account():
+        """الحصول على حساب المبيعات"""
+        account, created = Account.objects.get_or_create(
+            code='4010',
+            defaults={
+                'name': 'المبيعات',
+                'account_type': 'sales',
+                'description': 'حساب المبيعات'
+            }
+        )
+        return account
+    
+    @staticmethod
+    def get_sales_discount_account():
+        """الحصول على حساب خصم المبيعات"""
+        account, created = Account.objects.get_or_create(
+            code='4020',
+            defaults={
+                'name': 'خصم المبيعات',
+                'account_type': 'expense',
+                'description': 'حساب خصم المبيعات'
+            }
+        )
+        return account
+    
