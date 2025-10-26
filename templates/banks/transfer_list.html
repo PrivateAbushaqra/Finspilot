@@ -425,11 +425,19 @@
                                                 <strong>{{ transfer.from_account.name }}</strong>
                                                 <br>
                                                 <small class="text-muted">{{ transfer.from_account.bank_name }}</small>
+                                                {% if transfer.from_account.account_number %}
+                                                <br>
+                                                <small class="text-muted">{% trans "Account" %}: {{ transfer.from_account.account_number }}</small>
+                                                {% endif %}
                                             </td>
                                             <td>
                                                 <strong>{{ transfer.to_account.name }}</strong>
                                                 <br>
                                                 <small class="text-muted">{{ transfer.to_account.bank_name }}</small>
+                                                {% if transfer.to_account.account_number %}
+                                                <br>
+                                                <small class="text-muted">{% trans "Account" %}: {{ transfer.to_account.account_number }}</small>
+                                                {% endif %}
                                             </td>
                                             <td class="text-end">
                                                 <strong>{{ transfer.amount|floatformat:3 }} {% get_currency_symbol %}</strong>
@@ -491,6 +499,10 @@
                                                     <strong>{{ transfer.from_bank.name }}</strong>
                                                     <br>
                                                     <small class="text-muted">{{ transfer.from_bank.bank_name }}</small>
+                                                    {% if transfer.from_bank.account_number %}
+                                                    <br>
+                                                    <small class="text-muted">{% trans "Account" %}: {{ transfer.from_bank.account_number }}</small>
+                                                    {% endif %}
                                                 {% else %}
                                                     <strong>{{ transfer.from_cashbox.name }}</strong>
                                                     <br>
@@ -506,6 +518,10 @@
                                                     <strong>{{ transfer.to_bank.name }}</strong>
                                                     <br>
                                                     <small class="text-muted">{{ transfer.to_bank.bank_name }}</small>
+                                                    {% if transfer.to_bank.account_number %}
+                                                    <br>
+                                                    <small class="text-muted">{% trans "Account" %}: {{ transfer.to_bank.account_number }}</small>
+                                                    {% endif %}
                                                 {% endif %}
                                             </td>
                                             <td class="text-end">

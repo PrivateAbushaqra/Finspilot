@@ -36,6 +36,18 @@ class CompanySettings(models.Model):
         help_text=_('إنهاء الجلسة تلقائياً عند إغلاق المتصفح')
     )
     
+    # إعدادات سلامة البيانات
+    enable_integrity_checks = models.BooleanField(
+        _('Enable Data Integrity Checks'),
+        default=True,
+        help_text=_('تفعيل الفحوصات التلقائية لسلامة البيانات المحاسبية')
+    )
+    integrity_check_frequency = models.PositiveIntegerField(
+        _('Integrity Check Frequency (Hours)'),
+        default=24,
+        help_text=_('عدد الساعات بين كل فحص لسلامة البيانات')
+    )
+    
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
     updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
 
@@ -313,6 +325,7 @@ class AuditLog(models.Model):
         ('update', _('Update')),
         ('delete', _('Delete')),
         ('view', _('View')),
+        ('access', _('Access')),
         ('export', _('Export')),
         ('import', _('Import')),
         ('reset', _('Reset')),

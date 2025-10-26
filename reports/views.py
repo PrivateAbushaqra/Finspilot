@@ -14,6 +14,21 @@ from core.signals import log_view_activity, log_export_activity
 from journal.models import Account
 
 
+@login_required
+def reports_index(request):
+    """صفحة رئيسية للتقارير"""
+    if not request.user.has_perm('users.can_access_reports'):
+        raise PermissionDenied("ليس لديك صلاحية الوصول للتقارير")
+    
+    # تسجيل النشاط
+    log_view_activity(request, 'view', None, 'عرض صفحة التقارير الرئيسية')
+    
+    context = {
+        'title': 'التقارير المالية',
+    }
+    return render(request, 'reports/index.html', context)
+
+
 def _parse_date(value, default):
     try:
         # Expecting YYYY-MM-DD from input[type=date]

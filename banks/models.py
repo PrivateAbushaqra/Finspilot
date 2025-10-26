@@ -68,21 +68,24 @@ class BankAccount(models.Model):
         # Use initial balance saved in database
         initial_balance = self.initial_balance or Decimal('0')
         
-        # Calculate total deposits
+        # Calculate total deposits (exclude opening balance transactions)
         deposits = self.transactions.filter(
-            transaction_type='deposit'
+            transaction_type='deposit',
+            is_opening_balance=False
         ).aggregate(
             total=models.Sum('amount')
         )['total'] or Decimal('0')
         
-        # Calculate total withdrawals
+        # Calculate total withdrawals (exclude opening balance transactions)
         withdrawals = self.transactions.filter(
-            transaction_type='withdrawal'
+            transaction_type='withdrawal',
+            is_opening_balance=False
         ).aggregate(
             total=models.Sum('amount')
         )['total'] or Decimal('0')
         
         # Actual balance = initial balance + deposits - withdrawals
+        # Opening balance transactions are not counted as they represent the initial balance
         actual_balance = initial_balance + deposits - withdrawals
         return actual_balance
     
@@ -161,6 +164,11 @@ class BankTransaction(models.Model):
         default=False,
         help_text=_('Is this a manual balance adjustment?')
     )
+    is_opening_balance = models.BooleanField(
+        _('Opening Balance'),
+        default=False,
+        help_text=_('Is this an opening balance transaction?')
+    )
     
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name=_('Created By'))
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
@@ -174,13 +182,23 @@ class BankTransaction(models.Model):
         return f"{self.bank.name} - {self.get_transaction_type_display()} - {self.amount}"
     
     def save(self, *args, **kwargs):
+        """
+        حفظ المعاملة البنكية
+        
+        ملاحظة: تحديث الرصيد يتم تلقائياً عبر الإشارة (signal) update_bank_balance_on_transaction
+        في ملف banks/signals.py، لذا لا حاجة لاستدعاء update_bank_balance هنا
+        
+        هذا يمنع التكرار في تحديث الرصيد ويضمن التوافق مع IFRS
+        """
         super().save(*args, **kwargs)
-        # Update bank balance
-        self.update_bank_balance()
     
     def update_bank_balance(self):
-        """Update bank account balance"""
-        # Use sync_balance instead of manual calculation
+        """
+        تحديث رصيد الحساب البنكي
+        
+        ملاحظة: هذه الطريقة متاحة للاستدعاء اليدوي عند الحاجة فقط،
+        لكن التحديث التلقائي يتم عبر الإشارة في signals.py
+        """
         self.bank.sync_balance()
 
 

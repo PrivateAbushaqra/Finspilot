@@ -282,3 +282,8 @@ def create_account_transactions_for_existing_invoices(request):
             })
     
     return JsonResponse({'success': False, 'message': 'طلب غير صحيح'})
+
+
+class LogoutView(auth_views.LogoutView):
+    """صفحة تسجيل الخروج - يدعم GET فقط لتجنب مشاكل CSRF"""
+    http_method_names = ['get']

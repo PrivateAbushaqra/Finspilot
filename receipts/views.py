@@ -199,13 +199,16 @@ def receipt_add(request):
         # Bank transfer data
         bank_account_id = request.POST.get('bank_account')
         bank_transfer_reference = request.POST.get('bank_transfer_reference', '')
-        bank_transfer_date = request.POST.get('bank_transfer_date')
+        bank_transfer_date_raw = request.POST.get('bank_transfer_date', '').strip() if request.POST.get('bank_transfer_date') else ''
+        bank_transfer_date = bank_transfer_date_raw if bank_transfer_date_raw else None  # تحويل السلسلة الفارغة إلى None
         bank_transfer_notes = request.POST.get('bank_transfer_notes', '')
         
         # Check data
         check_number = request.POST.get('check_number', '')
-        check_date = request.POST.get('check_date')
-        check_due_date = request.POST.get('check_due_date')
+        check_date_raw = request.POST.get('check_date', '').strip() if request.POST.get('check_date') else ''
+        check_date = check_date_raw if check_date_raw else None  # تحويل السلسلة الفارغة إلى None
+        check_due_date_raw = request.POST.get('check_due_date', '').strip() if request.POST.get('check_due_date') else ''
+        check_due_date = check_due_date_raw if check_due_date_raw else None  # تحويل السلسلة الفارغة إلى None
         bank_name = request.POST.get('bank_name', '')
         check_cashbox_id = request.POST.get('check_cashbox')
         

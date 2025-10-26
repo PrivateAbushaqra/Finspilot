@@ -56,7 +56,7 @@ class Command(BaseCommand):
             {'code': '3204', 'name': 'خسائر متراكمة', 'type': 'equity'},
 
             # الإيرادات (Revenues)
-            {'code': '401', 'name': 'المبيعات', 'type': 'revenue'},
+            {'code': '4010', 'name': 'المبيعات', 'type': 'revenue'},  # تم تعديل من 401 إلى 4010 للتوافق مع النظام
             {'code': '4011', 'name': 'إيرادات الفوائد البنكية', 'type': 'revenue'},
             {'code': '4012', 'name': 'إيرادات أخرى', 'type': 'revenue'},
             {'code': '4022', 'name': 'إيرادات الخصم المستلم', 'type': 'revenue'},
@@ -84,15 +84,22 @@ class Command(BaseCommand):
             {'code': '6101', 'name': 'مشتريات البضائع', 'type': 'purchases'},
 
             # المبيعات (Sales)
-            {'code': '7101', 'name': 'مردودات ومسموحات المبيعات', 'type': 'sales'},
+            {'code': '7101', 'name': 'مردودات ومسموحات المبيعات', 'type': 'revenue'},
         ]
 
         created_count = 0
         for account_data in accounts_data:
+            base_name = account_data['name']
+            name = base_name
+            counter = 1
+            while Account.objects.filter(name=name).exists():
+                name = f'{base_name} ({counter})'
+                counter += 1
+            
             account, created = Account.objects.get_or_create(
                 code=account_data['code'],
                 defaults={
-                    'name': account_data['name'],
+                    'name': name,
                     'account_type': account_data['type'],
                     'description': f'حساب أساسي - {account_data["name"]}',
                     'is_active': True

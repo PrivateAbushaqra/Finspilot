@@ -345,7 +345,7 @@ def create_payment_transaction(voucher):
         BankTransaction.objects.create(
             bank=voucher.bank,
             transaction_type='withdrawal',
-            amount=-voucher.amount,  # المبلغ سالب للسحب
+            amount=abs(voucher.amount),  # المبلغ يجب أن يكون موجباً دائماً، نوع المعاملة يحدد الاتجاه
             description=f'Payment voucher {voucher.voucher_number} - {voucher.beneficiary_display}',
             reference_number=voucher.bank_reference or voucher.voucher_number,
             date=voucher.date,

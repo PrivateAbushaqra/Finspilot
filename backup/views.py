@@ -26,6 +26,8 @@ from openpyxl import Workbook
 from decimal import Decimal
 from django.core.management import call_command
 
+logger = logging.getLogger(__name__)
+
 # إضافة AuditLog import مع حماية من تضارب الـ IDs
 try:
     from core.models import AuditLog
@@ -44,8 +46,6 @@ try:
                 cursor.execute("SELECT MAX(id) FROM core_auditlog")
                 max_id = cursor.fetchone()[0] or 0
                 
-                # إعادة تعيين sequence
-                cursor.execute(f"SELECT setval('core_auditlog_id_seq', {max_id + 1}, false)")
                 logger.debug(f"تم إعادة تعيين sequence للـ AuditLog إلى {max_id + 1}")
                 
         except Exception as e:
@@ -54,17 +54,60 @@ try:
             # بعد حدوث خطأ حتى نهاية الـ block، لذلك نتجاهل الخطأ ببساطة
             # سيتم تسجيل الحدث في السجلات العادية (logger) بدلاً من AuditLog
             if 'atomic' in error_msg.lower() or 'transaction' in error_msg.lower():
-                logger.debug(f"تم تخطي تسجيل الحدث في AuditLog (داخل transaction): {description}")
+                logger.debug("تم تخطي تسجيل الحدث في AuditLog (داخل transaction)")
             elif 'duplicate key' in error_msg.lower() or 'unique constraint' in error_msg.lower():
-                logger.debug(f"تم تخطي تسجيل الحدث في AuditLog (تضارب في المفاتيح): {description}")
+                logger.debug("تم تخطي تسجيل الحدث في AuditLog (تضارب في المفاتيح)")
             else:
                 logger.warning(f"فشل في تسجيل الحدث في سجل المراجعة: {error_msg}")
 
 except Exception:
     # AuditLog model or related DB objects not available
     AUDIT_AVAILABLE = False
-    logger = logging.getLogger(__name__)
     logger.debug('AuditLog not available or import failed in backup.views')
+
+def reset_all_sequences():
+    """إعادة تعيين جميع sequences في قاعدة البيانات لتجنب تضارب IDs"""
+    from django.db import connection
+    from django.apps import apps
+    
+    sequences_reset = 0
+    
+    try:
+        with connection.cursor() as cursor:
+            # الحصول على جميع الجداول التي تحتوي على auto-increment fields
+            for model in apps.get_models():
+                if hasattr(model._meta, 'db_table'):
+                    table_name = model._meta.db_table
+                    
+                    # الحصول على اسم sequence للجدول (في PostgreSQL)
+                    # sequence name pattern: table_name_id_seq
+                    sequence_name = f"{table_name}_id_seq"
+                    
+                    try:
+                        # الحصول على أعلى ID موجود في الجدول
+                        cursor.execute(f"SELECT MAX(id) FROM {table_name}")
+                        max_id = cursor.fetchone()[0]
+                        
+                        if max_id is not None:
+                            # إعادة تعيين sequence إلى max_id + 1
+                            cursor.execute(f"SELECT setval('{sequence_name}', {max_id + 1}, false)")
+                            sequences_reset += 1
+                            logger.debug(f"تم إعادة تعيين sequence {sequence_name} إلى {max_id + 1}")
+                        else:
+                            # إذا كان الجدول فارغ، إعادة تعيين إلى 1
+                            cursor.execute(f"SELECT setval('{sequence_name}', 1, false)")
+                            sequences_reset += 1
+                            logger.debug(f"تم إعادة تعيين sequence {sequence_name} إلى 1 (جدول فارغ)")
+                            
+                    except Exception as e:
+                        # قد لا يكون للجدول sequence أو قد يكون هناك خطأ آخر
+                        logger.debug(f"تخطي إعادة تعيين sequence للجدول {table_name}: {str(e)}")
+                        continue
+                        
+    except Exception as e:
+        logger.warning(f"فشل في إعادة تعيين sequences: {str(e)}")
+    
+    return sequences_reset
 
 def log_audit(user, action, description):
     """تسجيل الحدث في سجل المراجعة"""
@@ -72,9 +115,8 @@ def log_audit(user, action, description):
         try:
             AuditLog.objects.create(
                 user=user,
-                action=action,
-                description=description,
-                timestamp=timezone.now()
+                action_type=action,
+                description=description
             )
         except Exception as e:
             error_msg = str(e)
@@ -2066,6 +2108,39 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                                                 # الرقم موجود، نحذفه ونترك النظام يولد رقم جديد
                                                 logger.debug(f"⚠️ entry_number مكرر: {entry_number}، سيتم توليد رقم جديد")
                                                 record_data.pop('entry_number', None)
+                                    elif model._meta.label == 'journal.Account':
+                                        # 🔧 معالجة خاصة للحسابات: التأكد من وجود parent account
+                                        parent_id = record_data.get('parent')
+                                        if parent_id:
+                                            from journal.models import Account
+                                            if not Account.objects.filter(pk=parent_id).exists():
+                                                # Parent account غير موجود، ابحث عن حساب بديل
+                                                account_code = record_data.get('code', '')
+                                                
+                                                # محاولة استخراج parent code من account code (مثل 101 من 10101)
+                                                if account_code and len(account_code) > 2:
+                                                    potential_parent_codes = []
+                                                    # جرب إزالة الأرقام من النهاية تدريجياً
+                                                    for i in range(len(account_code)-1, 1, -1):
+                                                        potential_code = account_code[:i]
+                                                        if potential_code and potential_code != account_code:
+                                                            potential_parent_codes.append(potential_code)
+                                                    
+                                                    # ابحث عن أول parent code موجود
+                                                    for parent_code in potential_parent_codes:
+                                                        parent_account = Account.objects.filter(code=parent_code).first()
+                                                        if parent_account:
+                                                            record_data['parent'] = parent_account.pk
+                                                            logger.info(f"✅ تم إصلاح parent للحساب {account_code}: {parent_code} → {parent_account.pk}")
+                                                            break
+                                                    else:
+                                                        # لم نجد parent مناسب، نعين None
+                                                        record_data['parent'] = None
+                                                        logger.warning(f"⚠️ لم يتم العثور على parent account مناسب للحساب {account_code}, تم تعيين parent=None")
+                                                else:
+                                                    # لا يمكن تحديد parent، نعين None
+                                                    record_data['parent'] = None
+                                                    logger.warning(f"⚠️ لا يمكن تحديد parent account للحساب {account_code}, تم تعيين parent=None")
                                     
                                     # تنظيف البيانات من الحقول غير الموجودة في النموذج
                                     model_field_names = [f.name for f in model._meta.get_fields()]

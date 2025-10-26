@@ -955,7 +955,8 @@ class BankCashboxTransferCreateView(LoginRequiredMixin, View):
             exchange_rate = request.POST.get('exchange_rate', '1')
             description = request.POST.get('description', '').strip()
             check_number = request.POST.get('check_number', '').strip()
-            check_date = request.POST.get('check_date', '').strip()
+            check_date_raw = request.POST.get('check_date', '').strip()
+            check_date = check_date_raw if check_date_raw else None  # تحويل السلسلة الفارغة إلى None
             check_bank_name = request.POST.get('check_bank_name', '').strip()
             
             # التحقق من وجود تحويل مشابه حديث

@@ -8,12 +8,13 @@ from .models import Account, JournalEntry, JournalLine
 class AccountForm(forms.ModelForm):
     class Meta:
         model = Account
-        fields = ['code', 'name', 'account_type', 'parent', 'description', 'is_active']
+        fields = ['code', 'name', 'account_type', 'parent', 'bank_account', 'description', 'is_active']
         widgets = {
             'code': forms.TextInput(attrs={'class': 'form-control'}),
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'account_type': forms.Select(attrs={'class': 'form-control'}),
             'parent': forms.Select(attrs={'class': 'form-control'}),
+            'bank_account': forms.Select(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
@@ -27,18 +28,24 @@ class AccountForm(forms.ModelForm):
             ).exclude(pk=self.instance.pk)
         else:
             self.fields['parent'].queryset = Account.objects.filter(is_active=True)
+        
+        # تصفية الحسابات البنكية
+        from banks.models import BankAccount
+        self.fields['bank_account'].queryset = BankAccount.objects.filter(is_active=True)
 
 
 class JournalEntryForm(forms.ModelForm):
-    # حقول مخصصة غير مقيدة بالخيارات
-    entry_type = forms.CharField(
+    # حقول مخصصة مع خيارات منسدلة
+    entry_type = forms.ChoiceField(
         label=_('Entry Type'),
-        widget=forms.TextInput(attrs={'class': 'form-control'}),
+        choices=JournalEntry.ENTRY_TYPES,
+        widget=forms.Select(attrs={'class': 'form-control'}),
         required=True
     )
-    reference_type = forms.CharField(
+    reference_type = forms.ChoiceField(
         label=_('Reference Type'),
-        widget=forms.TextInput(attrs={'class': 'form-control'}),
+        choices=JournalEntry.REFERENCE_TYPES,
+        widget=forms.Select(attrs={'class': 'form-control'}),
         required=True
     )
     
@@ -55,6 +62,9 @@ class JournalEntryForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
+        
+        # جعل reference_id غير مطلوب
+        self.fields['reference_id'].required = False
         
         # إذا كان التعديل وليس إنشاء جديد
         if self.instance and self.instance.pk:
@@ -122,7 +132,7 @@ class JournalLineForm(forms.ModelForm):
         model = JournalLine
         fields = ['account', 'debit', 'credit', 'line_description']
         widgets = {
-            'account': forms.HiddenInput(),  # إخفاء الحقل الأصلي
+            'account': forms.Select(attrs={'class': 'form-control d-none'}),  # إخفاء الحقل بـ CSS فقط وليس HiddenInput
             'debit': forms.NumberInput(attrs={'class': 'form-control debit-input', 'step': '0.001', 'min': '0', 'placeholder': '0'}),
             'credit': forms.NumberInput(attrs={'class': 'form-control credit-input', 'step': '0.001', 'min': '0', 'placeholder': '0'}),
             'line_description': forms.TextInput(attrs={'class': 'form-control'}),
@@ -130,43 +140,42 @@ class JournalLineForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # إزالة queryset لأن الحقل أصبح مخفي
+        # تحميل جميع الحسابات النشطة
+        from .models import Account
+        self.fields['account'].queryset = Account.objects.filter(is_active=True).order_by('code')
         # جعل الحقول غير مطلوبة (سيتم التحقق في clean)
         self.fields['account'].required = False
         self.fields['debit'].required = False
         self.fields['credit'].required = False
         # عدم تعيين قيمة افتراضية للحقول - نتركها فارغة
         if not self.instance.pk:  # نموذج جديد فقط
-            self.fields['debit'].initial = ''
-            self.fields['credit'].initial = ''
+            self.fields['debit'].initial = None
+            self.fields['credit'].initial = None
             self.fields['account_search'].initial = ''
         else:  # نموذج موجود - تعيين قيمة البحث باسم الحساب
             if self.instance.account:
-                self.fields['account_search'].initial = self.instance.account.name
+                self.fields['account_search'].initial = str(self.instance.account)
                 self.fields['account'].initial = self.instance.account.id
-            # تعيين القيم الأولية للمدين والدائن - تأكد من أن القيمة تُعرض بشكل صحيح
-            # استخدام float بدلاً من Decimal لتجنب مشاكل JSON serialization
-            debit_val = float(self.instance.debit)
-            credit_val = float(self.instance.credit)
+            # تعيين القيم الأولية للمدين والدائن
+            debit_val = self.instance.debit
+            credit_val = self.instance.credit
             
-            # تعيين initial و widget value للتأكد من ظهور القيمة
-            if debit_val > 0:
+            # تعيين القيم بشكل صحيح
+            if debit_val and debit_val > 0:
                 self.fields['debit'].initial = debit_val
-                self.fields['debit'].widget.attrs['value'] = '{:.3f}'.format(debit_val)
             else:
-                self.fields['debit'].initial = ''
+                self.fields['debit'].initial = None
                 
-            if credit_val > 0:
+            if credit_val and credit_val > 0:
                 self.fields['credit'].initial = credit_val
-                self.fields['credit'].widget.attrs['value'] = '{:.3f}'.format(credit_val)
             else:
-                self.fields['credit'].initial = ''
+                self.fields['credit'].initial = None
     
     def clean(self):
-        """تخطي التحقق من البنود الفارغة تماماً"""
+        """التحقق من صحة البيانات وتحويل القيم"""
         cleaned_data = super().clean()
         account = cleaned_data.get('account')
-        account_search = cleaned_data.get('account_search')
+        account_search = cleaned_data.get('account_search', '').strip()
         
         # إذا كان هذا نموذج موجود (تعديل) وليس لديه account في cleaned_data
         # حاول استخدام الحساب من instance
@@ -180,10 +189,19 @@ class JournalLineForm(forms.ModelForm):
             try:
                 from django.db import models
                 from .models import Account
+                # البحث بالاسم الكامل أولاً
                 account = Account.objects.filter(
-                    models.Q(name__icontains=account_search) | 
-                    models.Q(code__icontains=account_search)
+                    models.Q(name__iexact=account_search) |
+                    models.Q(code__iexact=account_search)
                 ).first()
+                
+                # إذا لم نجد، نبحث بالاحتواء
+                if not account:
+                    account = Account.objects.filter(
+                        models.Q(name__icontains=account_search) | 
+                        models.Q(code__icontains=account_search)
+                    ).first()
+                
                 if account:
                     cleaned_data['account'] = account
             except:
@@ -197,19 +215,40 @@ class JournalLineForm(forms.ModelForm):
         if debit is None or debit == '':
             debit = Decimal('0')
             cleaned_data['debit'] = debit
+        else:
+            try:
+                debit = Decimal(str(debit))
+                cleaned_data['debit'] = debit
+            except:
+                debit = Decimal('0')
+                cleaned_data['debit'] = debit
+                
         if credit is None or credit == '':
             credit = Decimal('0')
             cleaned_data['credit'] = credit
+        else:
+            try:
+                credit = Decimal(str(credit))
+                cleaned_data['credit'] = credit
+            except:
+                credit = Decimal('0')
+                cleaned_data['credit'] = credit
         
-        # إذا كان البند فارغاً تماماً (بغض النظر عن الحساب)، نتجاهله
-        # هذا يسمح للمستخدم باختيار حساب وترك القيم فارغة
-        if debit == 0 and credit == 0:
-            # لا نرفع ValidationError - نترك الـ formset يتعامل معه
+        # إذا كان البند فارغاً تماماً (لا حساب ولا مبلغ)، نتجاهله
+        if not account and debit == 0 and credit == 0:
             return cleaned_data
         
         # إذا كانت هناك قيمة ولكن لا يوجد حساب، نرفع خطأ
         if not account and (debit > 0 or credit > 0):
-            raise forms.ValidationError(_('يجب اختيار حساب'))
+            raise forms.ValidationError(_('يجب اختيار حساب عند إدخال مبلغ'))
+        
+        # إذا كان هناك حساب ولكن لا يوجد مبلغ، نرفع خطأ
+        if account and debit == 0 and credit == 0:
+            raise forms.ValidationError(_('يجب إدخال مبلغ في المدين أو الدائن'))
+        
+        # التحقق من عدم إدخال مبلغ في المدين والدائن معاً
+        if debit > 0 and credit > 0:
+            raise forms.ValidationError(_('لا يمكن إدخال مبلغ في المدين والدائن معاً'))
         
         return cleaned_data
 
@@ -219,7 +258,7 @@ BaseJournalLineFormSet = inlineformset_factory(
     JournalEntry, 
     JournalLine,
     form=JournalLineForm,
-    extra=0,  # لا نضيف صفوف فارغة تلقائياً - المستخدم يضيفها يدوياً
+    extra=2,  # إضافة سطرين فارغين افتراضياً للمستخدم
     min_num=0,
     validate_min=False,
     can_delete=True,
@@ -276,9 +315,11 @@ class JournalLineFormSet(BaseJournalLineFormSet):
         
         # التحقق من وجود بنود صالحة
         if valid_lines_count == 0:
-            raise forms.ValidationError(_('يجب إدخال بنود القيد المحاسبي'))
+            # لا نرفع خطأ هنا - سيتم التحقق في الـ view
+            # هذا يسمح للمستخدم بإضافة البنود دون مشاكل
+            return
         
-        # التحقق من التوازن
+        # التحقق من التوازن فقط إذا كانت هناك بنود
         if abs(total_debit - total_credit) > Decimal('0.001'):
             raise forms.ValidationError(_('يجب أن يساوي مجموع المدين مجموع الدائن'))
 

@@ -270,6 +270,10 @@ class ProductListView(LoginRequiredMixin, ListView):
         # إضافة التصنيفات للفلترة
         context['categories'] = Category.objects.filter(is_active=True).order_by('name')
         
+        # إضافة المستودعات للشاشة المنبثقة
+        from inventory.models import Warehouse
+        context['warehouses'] = Warehouse.objects.filter(is_active=True).exclude(code='MAIN')
+        
         # إضافة معاملات البحث والفلترة
         context['search_query'] = self.request.GET.get('search', '')
         context['selected_category'] = self.request.GET.get('category', '')
@@ -282,7 +286,7 @@ class ProductCreateView(LoginRequiredMixin, View):
     
     def get(self, request, *args, **kwargs):
         context = {
-            'categories': Category.objects.filter(is_active=True),
+            'categories': Category.objects.filter(is_active=True).order_by('name'),
             'warehouses': Warehouse.objects.filter(is_active=True).exclude(code='MAIN')
         }
         return render(request, self.template_name, context)
@@ -1874,20 +1878,23 @@ class ProductAddAjaxView(LoginRequiredMixin, View):
             name = request.POST.get('name', '').strip()
             name_en = request.POST.get('name_en', '').strip()
             sku = request.POST.get('sku', '').strip()
-            product_type = request.POST.get('product_type', 'goods')
+            product_type = request.POST.get('product_type', 'physical')
             barcode = request.POST.get('barcode', '').strip()
             serial_number = request.POST.get('serial_number', '').strip()
             category_id = request.POST.get('category', '')
+            unit = request.POST.get('unit', 'piece')
             description = request.POST.get('description', '').strip()
             cost_price = request.POST.get('cost_price', '0')
-            selling_price = request.POST.get('selling_price', '0')
+            sale_price = request.POST.get('selling_price', '0')
             wholesale_price = request.POST.get('wholesale_price', '0')
             tax_rate = request.POST.get('tax_rate', '0')
             min_stock = request.POST.get('min_stock', '0')
+            max_stock = request.POST.get('max_stock', '0')
             opening_balance = request.POST.get('opening_balance', '0')
             opening_balance_cost = request.POST.get('opening_balance_cost', '0')
             opening_balance_warehouse_id = request.POST.get('opening_balance_warehouse')
             is_active = request.POST.get('is_active', 'true').lower() == 'true'
+            track_stock = request.POST.get('track_stock', 'true').lower() == 'true'
             
             # التحقق من صحة البيانات الأساسية
             if not name:
@@ -1896,11 +1903,28 @@ class ProductAddAjaxView(LoginRequiredMixin, View):
                     'error': 'اسم المنتج مطلوب!'
                 })
             
-            if not sku:
+            if not sale_price or float(sale_price) <= 0:
                 return JsonResponse({
                     'success': False,
-                    'error': 'رمز المنتج مطلوب!'
+                    'error': 'سعر البيع مطلوب ويجب أن يكون أكبر من صفر!'
                 })
+            
+            # التحقق من التصنيف
+            if not category_id:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'التصنيف مطلوب!'
+                })
+            
+            # إنشاء رمز تلقائي إذا لم يُدخل
+            if not sku:
+                # إنشاء رمز تلقائي بناءً على آخر منتج
+                last_product = Product.objects.order_by('-id').first()
+                if last_product:
+                    last_number = int(last_product.code.split('-')[-1]) if '-' in last_product.code else 0
+                    sku = f"PROD-{last_number + 1:04d}"
+                else:
+                    sku = "PROD-0001"
             
             # التحقق من عدم تكرار الرمز
             if Product.objects.filter(code=sku).exists():
@@ -1909,15 +1933,58 @@ class ProductAddAjaxView(LoginRequiredMixin, View):
                     'error': 'رمز المنتج موجود مسبقاً!'
                 })
             
+            # التحقق من عدم تكرار الباركود
+            if barcode and Product.objects.filter(barcode=barcode).exists():
+                return JsonResponse({
+                    'success': False,
+                    'error': 'الباركود موجود مسبقاً!'
+                })
+            
+            # التحقق من عدم تكرار الرقم التسلسلي
+            if serial_number and Product.objects.filter(serial_number=serial_number).exists():
+                return JsonResponse({
+                    'success': False,
+                    'error': 'الرقم التسلسلي موجود مسبقاً!'
+                })
+            
             # التحقق من صحة الأسعار والنسب
             try:
-                cost_price = float(cost_price) if cost_price else 0
-                selling_price = float(selling_price) if selling_price else 0
+                # سعر التكلفة يُحسب تلقائياً - نبدأ بصفر
+                cost_price = 0
+                sale_price = float(sale_price) if sale_price else 0
                 wholesale_price = float(wholesale_price) if wholesale_price else 0
                 tax_rate = float(tax_rate) if tax_rate else 0
                 min_stock = float(min_stock) if min_stock else 0
+                max_stock = float(max_stock) if max_stock else 0
                 opening_balance = float(opening_balance) if opening_balance else 0
                 opening_balance_cost = float(opening_balance_cost) if opening_balance_cost else 0
+                
+                # التحقق من صحة نسبة الضريبة
+                if tax_rate < 0 or tax_rate > 100:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'نسبة الضريبة يجب أن تكون بين 0 و 100!'
+                    })
+                
+                # التحقق من صحة رصيد بداية المدة
+                if opening_balance < 0:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'رصيد بداية المدة يجب أن يكون صفر أو أكبر!'
+                    })
+                
+                # التحقق من تكلفة الرصيد الافتتاحي إذا كان الرصيد أكبر من صفر
+                if opening_balance > 0 and not opening_balance_warehouse_id:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'مستودع الرصيد الافتتاحي مطلوب عند وجود رصيد افتتاحي!'
+                    })
+                
+            except ValueError:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'يرجى إدخال أسعار ونسبة ضريبة صحيحة!'
+                })
             except ValueError:
                 return JsonResponse({
                     'success': False,
@@ -1965,7 +2032,8 @@ class ProductAddAjaxView(LoginRequiredMixin, View):
                 description=description,
                 cost_price=cost_price,
                 minimum_quantity=min_stock,
-                sale_price=selling_price,
+                maximum_quantity=max_stock,
+                sale_price=sale_price,
                 wholesale_price=wholesale_price,
                 tax_rate=tax_rate,
                 opening_balance_quantity=opening_balance,
@@ -1977,8 +2045,6 @@ class ProductAddAjaxView(LoginRequiredMixin, View):
             # إنشاء حركة مخزون للرصيد الافتتاحي إذا كان أكبر من صفر
             if opening_balance > 0:
                 try:
-                    from inventory.models import InventoryMovement, Warehouse
-                    
                     # استخدام مستودع الرصيد الافتتاحي المحدد
                     unit_cost = opening_balance_cost / opening_balance if opening_balance > 0 else 0
                     InventoryMovement.objects.create(
@@ -1999,6 +2065,84 @@ class ProductAddAjaxView(LoginRequiredMixin, View):
                     import logging
                     logger = logging.getLogger(__name__)
                     logger.warning(f"فشل في إنشاء حركة المخزون للرصيد الافتتاحي للمنتج {product.id}: {str(e)}")
+            
+            # إنشاء القيد المحاسبي للرصيد الافتتاحي إذا كان هناك رصيد افتتاحي
+            if opening_balance > 0 and opening_balance_cost > 0:
+                try:
+                    from journal.models import JournalEntry, JournalLine, Account
+                    from core.models import DocumentSequence
+                    from django.utils import timezone
+                    
+                    # البحث عن حساب المخزون (1501) - Current Assets
+                    inventory_account = Account.objects.filter(code='1501').first()
+                    # البحث عن حساب حقوق الملكية (301) - Equity
+                    equity_account = Account.objects.filter(code='301').first()
+                    
+                    if inventory_account and equity_account:
+                        # توليد رقم القيد
+                        try:
+                            seq = DocumentSequence.objects.get(document_type='journal')
+                            entry_number = seq.get_next_number()
+                        except DocumentSequence.DoesNotExist:
+                            last_entry = JournalEntry.objects.order_by('-id').first()
+                            if last_entry and last_entry.entry_number:
+                                try:
+                                    last_num = int(last_entry.entry_number.split('-')[-1])
+                                    entry_number = f'JE-{last_num + 1:06d}'
+                                except:
+                                    entry_number = f'JE-{timezone.now().strftime("%Y%m%d%H%M%S")}'
+                            else:
+                                entry_number = f'JE-{timezone.now().strftime("%Y%m%d%H%M%S")}'
+                        
+                        # إنشاء قيد اليومية (IFRS Compliant)
+                        journal_entry = JournalEntry.objects.create(
+                            entry_number=entry_number,
+                            entry_date=timezone.now().date(),
+                            entry_type='daily',
+                            reference_type='manual',
+                            description=f'رصيد افتتاحي - {product.name} ({product.code})',
+                            total_amount=opening_balance_cost,
+                            created_by=request.user,
+                        )
+                        
+                        # إنشاء أطراف القيد
+                        # من ح/ المخزون (أصل متداول - مدين)
+                        JournalLine.objects.create(
+                            journal_entry=journal_entry,
+                            account=inventory_account,
+                            debit=opening_balance_cost,
+                            credit=0,
+                            line_description=f'رصيد افتتاحي - {product.name}'
+                        )
+                        
+                        # إلى ح/ حقوق الملكية (دائن)
+                        JournalLine.objects.create(
+                            journal_entry=journal_entry,
+                            account=equity_account,
+                            debit=0,
+                            credit=opening_balance_cost,
+                            line_description=f'رصيد افتتاحي - {product.name}'
+                        )
+                        
+                        # تحديث أرصدة الحسابات
+                        inventory_account.update_account_balance()
+                        equity_account.update_account_balance()
+                        
+                        # تسجيل النشاط في سجل الأنشطة
+                        AuditLog.objects.create(
+                            user=request.user,
+                            action_type='create',
+                            content_type='JournalEntry',
+                            object_id=journal_entry.id,
+                            description=f'تم إنشاء قيد محاسبي للرصيد الافتتاحي: {journal_entry.entry_number}',
+                            ip_address=request.META.get('REMOTE_ADDR')
+                        )
+                        
+                except Exception as e:
+                    # تسجيل تحذير في حالة فشل إنشاء القيد المحاسبي
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.warning(f"فشل في إنشاء القيد المحاسبي للرصيد الافتتاحي للمنتج {product.id}: {str(e)}")
             
             # معالجة رفع الصورة
             if 'image' in request.FILES:

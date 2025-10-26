@@ -7,7 +7,7 @@ app_name = 'accounts'
 
 urlpatterns = [
     path('login/', views.LoginView.as_view(), name='login'),
-    path('logout/', auth_views.LogoutView.as_view(
+    path('logout/', views.LogoutView.as_view(
         next_page=settings.LOGOUT_REDIRECT_URL
     ), name='logout'),
     path('password-change/', auth_views.PasswordChangeView.as_view(

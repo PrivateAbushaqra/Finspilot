@@ -11,12 +11,19 @@
     <div class="row">
         <div class="col-12">
             <div class="d-sm-flex align-items-center justify-content-between mb-4">
-                <h1 class="h3 mb-0 text-gray-800">{% if LANGUAGE_CODE == 'ar' %}قائمة الحسابات{% else %}{% trans "Accounts List" %}{% endif %}</h1>
-                {% if perms.journal.add_account %}
-                <a href="{% url 'journal:account_create' %}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> {% if LANGUAGE_CODE == 'ar' %}حساب جديد{% else %}{% trans "New Account" %}{% endif %}
-                </a>
-                {% endif %}
+                <h1 class="h3 mb-0 text-gray-800">{% if LANGUAGE_CODE == 'ar' %}قائمة الحسابات ({{ total_accounts }}){% else %}{% trans "Accounts List" %} ({{ total_accounts }}){% endif %}</h1>
+                <div>
+                    {% if perms.journal.change_account %}
+                    <button type="button" class="btn btn-warning mr-2" onclick="fixHierarchy()">
+                        <i class="fas fa-wrench"></i> {% trans "إصلاح الهرمية" %}
+                    </button>
+                    {% endif %}
+                    {% if perms.journal.add_account %}
+                    <a href="{% url 'journal:account_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> {% if LANGUAGE_CODE == 'ar' %}حساب جديد{% else %}{% trans "New Account" %}{% endif %}
+                    </a>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
@@ -136,6 +143,7 @@
                                         {% endif %}
                                     </a>
                                 </th>
+                                <th>{% trans "المسار الهرمي" %}</th>
                                 <th>
                                     <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if current_type %}type={{ current_type }}&{% endif %}order_by=balance&direction={% if order_by == 'balance' and direction == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none">
                                         {% if LANGUAGE_CODE == 'ar' %}الرصيد{% else %}{% trans "Balance" %}{% endif %}
@@ -161,6 +169,11 @@
                                 <td>
                                     <a href="{% url 'journal:account_detail' account.pk %}">
                                         {{ account.name }}
+                                        {% if account.is_child_account and not account.has_parent %}
+                                            <span class="badge badge-danger ml-1" title="{% trans 'هذا الحساب الفرعي غير مرتبط بحساب أب' %}">
+                                                <i class="fas fa-exclamation-triangle"></i>
+                                            </span>
+                                        {% endif %}
                                     </a>
                                 </td>
                                 <td>
@@ -168,9 +181,15 @@
                                 </td>
                                 <td>
                                     {% if account.parent %}
-                                        {{ account.parent.name }}
+                                        {{ account.parent.code }} - {{ account.parent.name }}
                                     {% else %}
                                         <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small class="text-muted">{{ account.get_hierarchy_path }}</small>
+                                    {% if account.get_hierarchy_codes != account.code %}
+                                        <br><small class="text-info">{{ account.get_hierarchy_codes }}</small>
                                     {% endif %}
                                 </td>
                                 <td class="text-right">
@@ -381,6 +400,28 @@ function printTable() {
     printWindow.document.write(tableHTML);
     printWindow.document.close();
     printWindow.print();
+}
+
+function fixHierarchy() {
+    if (confirm('{% trans "هل أنت متأكد من رغبتك في إصلاح الهرمية المكسورة للحسابات؟ سيتم ربط الحسابات الفرعية تلقائياً بحساباتها الأب المناسبة." %}')) {
+        // إنشاء نموذج مخفي لإرسال الطلب
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{% url "journal:fix_hierarchy" %}';
+        
+        // إضافة CSRF token
+        var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (csrfToken) {
+            var csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrfmiddlewaretoken';
+            csrfInput.value = csrfToken.value;
+            form.appendChild(csrfInput);
+        }
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
 }
 </script>
 {% endblock %}

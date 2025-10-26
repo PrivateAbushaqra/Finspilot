@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Financial Reports" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">{% trans "Financial Reports" %}</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card border-primary">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-balance-scale fa-3x text-primary mb-3"></i>
+                                    <h5 class="card-title">{% trans "Trial Balance" %}</h5>
+                                    <p class="card-text">{% trans "View trial balance report" %}</p>
+                                    <a href="{% url 'reports:trial_balance' %}" class="btn btn-primary">
+                                        {% trans "View Report" %}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card border-success">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-chart-line fa-3x text-success mb-3"></i>
+                                    <h5 class="card-title">{% trans "Balance Sheet" %}</h5>
+                                    <p class="card-text">{% trans "View balance sheet report" %}</p>
+                                    <a href="{% url 'reports:balance_sheet' %}" class="btn btn-success">
+                                        {% trans "View Report" %}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card border-info">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-dollar-sign fa-3x text-info mb-3"></i>
+                                    <h5 class="card-title">{% trans "Income Statement" %}</h5>
+                                    <p class="card-text">{% trans "View income statement report" %}</p>
+                                    <a href="{% url 'reports:income_statement' %}" class="btn btn-info">
+                                        {% trans "View Report" %}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card border-warning">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-cash-register fa-3x text-warning mb-3"></i>
+                                    <h5 class="card-title">{% trans "Cash Flow" %}</h5>
+                                    <p class="card-text">{% trans "View cash flow report" %}</p>
+                                    <a href="{% url 'reports:cash_flow' %}" class="btn btn-warning">
+                                        {% trans "View Report" %}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card border-danger">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-calculator fa-3x text-danger mb-3"></i>
+                                    <h5 class="card-title">{% trans "Financial Ratios" %}</h5>
+                                    <p class="card-text">{% trans "View financial ratios report" %}</p>
+                                    <a href="{% url 'reports:financial_ratios' %}" class="btn btn-danger">
+                                        {% trans "View Report" %}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card border-secondary">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-users fa-3x text-secondary mb-3"></i>
+                                    <h5 class="card-title">{% trans "Customer Statement" %}</h5>
+                                    <p class="card-text">{% trans "View customer statement report" %}</p>
+                                    <a href="{% url 'reports:customer_statement' %}" class="btn btn-secondary">
+                                        {% trans "View Report" %}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card border-dark">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-clock fa-3x text-dark mb-3"></i>
+                                    <h5 class="card-title">{% trans "Aging Report" %}</h5>
+                                    <p class="card-text">{% trans "View aging report" %}</p>
+                                    <a href="{% url 'reports:aging_report' %}" class="btn btn-dark">
+                                        {% trans "View Report" %}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card border-primary">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-boxes fa-3x text-primary mb-3"></i>
+                                    <h5 class="card-title">{% trans "Inventory Report" %}</h5>
+                                    <p class="card-text">{% trans "View inventory report" %}</p>
+                                    <a href="{% url 'reports:inventory_report' %}" class="btn btn-primary">
+                                        {% trans "View Report" %}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card border-success">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-user-tie fa-3x text-success mb-3"></i>
+                                    <h5 class="card-title">{% trans "Sales by Salesperson" %}</h5>
+                                    <p class="card-text">{% trans "View sales by salesperson report" %}</p>
+                                    <a href="{% url 'reports:sales_by_salesperson' %}" class="btn btn-success">
+                                        {% trans "View Report" %}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        transition: transform 0.2s;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .fa-3x {
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}

@@ -71,39 +71,107 @@ class PurchaseInvoice(models.Model):
                 raise ValidationError(_('Check number is required for check payment'))
             if self.payment_method == 'check' and not self.check_date:
                 raise ValidationError(_('Check date is required for check payment'))
+        
+        # التحقق من تطابق المجاميع مع العناصر (للفواتير الموجودة فقط)
+        if self.pk and self.items.exists():
+            calculated_subtotal = Decimal('0')
+            calculated_tax_amount = Decimal('0')
+            calculated_total_amount = Decimal('0')
+
+            for item in self.items.all():
+                calculated_subtotal += item.quantity * item.unit_price
+                calculated_tax_amount += item.tax_amount
+                calculated_total_amount += item.total_amount
+
+            calculated_subtotal = calculated_subtotal.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+            calculated_tax_amount = calculated_tax_amount.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+            calculated_total_amount = calculated_total_amount.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+
+            # السماح بهامش خطأ صغير بسبب التقريب
+            tolerance = Decimal('0.01')
+            
+            if abs(self.subtotal - calculated_subtotal) > tolerance:
+                raise ValidationError(_('Subtotal does not match calculated value from items. Expected: %(expected)s, Current: %(current)s') % {
+                    'expected': calculated_subtotal, 'current': self.subtotal})
+            
+            if abs(self.tax_amount - calculated_tax_amount) > tolerance:
+                raise ValidationError(_('Tax amount does not match calculated value from items. Expected: %(expected)s, Current: %(current)s') % {
+                    'expected': calculated_tax_amount, 'current': self.tax_amount})
+            
+            if abs(self.total_amount - calculated_total_amount) > tolerance:
+                raise ValidationError(_('Total amount does not match calculated value from items. Expected: %(expected)s, Current: %(current)s') % {
+                    'expected': calculated_total_amount, 'current': self.total_amount})
+
+    def verify_totals_integrity(self):
+        """
+        التحقق من تطابق المجاميع مع العناصر
+        يرجع True إذا كانت المجاميع صحيحة، False إذا كانت خاطئة
+        """
+        if not self.items.exists():
+            return True  # لا توجد عناصر للمقارنة
+        
+        calculated_subtotal = Decimal('0')
+        calculated_tax_amount = Decimal('0')
+        calculated_total_amount = Decimal('0')
+
+        for item in self.items.all():
+            calculated_subtotal += item.quantity * item.unit_price
+            calculated_tax_amount += item.tax_amount
+            calculated_total_amount += item.total_amount
+
+        calculated_subtotal = calculated_subtotal.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+        calculated_tax_amount = calculated_tax_amount.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+        calculated_total_amount = calculated_total_amount.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+
+        # السماح بهامش خطأ صغير بسبب التقريب
+        tolerance = Decimal('0.01')
+        
+        return (abs(self.subtotal - calculated_subtotal) <= tolerance and
+                abs(self.tax_amount - calculated_tax_amount) <= tolerance and
+                abs(self.total_amount - calculated_total_amount) <= tolerance)
+
+    def calculate_subtotal_from_items(self):
+        """حساب المجموع الفرعي من العناصر"""
+        if not self.items.exists():
+            return Decimal('0')
+        return sum(item.quantity * item.unit_price for item in self.items.all()).quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+
+    def calculate_tax_from_items(self):
+        """حساب مبلغ الضريبة من العناصر"""
+        if not self.items.exists():
+            return Decimal('0')
+        return sum(item.tax_amount for item in self.items.all()).quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+
+    def calculate_total_from_items(self):
+        """حساب المجموع الكلي من العناصر"""
+        if not self.items.exists():
+            return Decimal('0')
+        return sum(item.total_amount for item in self.items.all()).quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
 
     def save(self, *args, **kwargs):
         from decimal import Decimal, ROUND_HALF_UP
-        # حفظ الفاتورة أولاً للحصول على primary key
-        is_new = self.pk is None
-        super().save(*args, **kwargs)
+        
+        # حساب المجاميع من العناصر فقط للفاتورة الجديدة
+        if not self.pk:  # فاتورة جديدة
+            super().save(*args, **kwargs)
+            # حساب المجاميع بعد الحفظ الأول
+            if self.items.exists():
+                subtotal = Decimal('0')
+                tax_amount = Decimal('0')
+                total_amount = Decimal('0')
 
-        # حساب المجاميع من العناصر بعد الحفظ
-        if self.items.exists():
-            subtotal = Decimal('0')
-            tax_amount = Decimal('0')
-            total_amount = Decimal('0')
+                for item in self.items.all():
+                    subtotal += item.quantity * item.unit_price
+                    tax_amount += item.tax_amount
+                    total_amount += item.total_amount
 
-            for item in self.items.all():
-                subtotal += item.quantity * item.unit_price
-                tax_amount += item.tax_amount
-                total_amount += item.total_amount
-
-            self.subtotal = subtotal.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
-            self.tax_amount = tax_amount.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
-            self.total_amount = total_amount.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
-
-            # حفظ مرة أخرى مع المجاميع المحدثة
-            if not is_new:  # تجنب الدورة اللانهائية
+                self.subtotal = subtotal.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+                self.tax_amount = tax_amount.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+                self.total_amount = total_amount.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
                 super().save(update_fields=['subtotal', 'tax_amount', 'total_amount'])
         else:
-            # إعادة تعيين المجاميع إلى صفر إذا لم تكن هناك عناصر
-            if self.subtotal != 0 or self.tax_amount != 0 or self.total_amount != 0:
-                self.subtotal = Decimal('0')
-                self.tax_amount = Decimal('0')
-                self.total_amount = Decimal('0')
-                if not is_new:  # تجنب الدورة اللانهائية
-                    super().save(update_fields=['subtotal', 'tax_amount', 'total_amount'])
+            # للفاتورة الموجودة، لا نعيد حساب المجاميع إلا إذا تم طلب ذلك صراحة
+            super().save(*args, **kwargs)
 
 
 class PurchaseInvoiceItem(models.Model):

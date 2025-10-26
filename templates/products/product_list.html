@@ -838,8 +838,8 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="productSku" class="form-label">{% trans "Product Code (SKU)" %} <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="productSku" name="sku" placeholder="{% trans 'Example: PROD-001' %}" required>
+                                <label for="productSku" class="form-label">{% trans "Product Code (SKU)" %}</label>
+                                <input type="text" class="form-control" id="productSku" name="sku" placeholder="{% trans 'Example: PROD-001' %}">
                             </div>
                         </div>
                     </div>
@@ -877,7 +877,7 @@
                                 <label for="productCategory" class="form-label">{% trans "Category" %} <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <div class="position-relative flex-grow-1">
-                                        <input type="text" class="form-control" id="productCategorySearch" placeholder="اكتب للبحث عن الفئات..." autocomplete="off"
+                                        <input type="text" class="form-control" id="productCategorySearch" placeholder="{% trans 'Type to search categories...' %}" autocomplete="off"
                                                data-categories="{% for category in categories %}{{ category.id }}|{{ category.name|escapejs }}|{{ category.code|escapejs }}{% if not forloop.last %}||{% endif %}{% endfor %}">
                                         <div id="productCategoryDropdown" class="dropdown-menu w-100" style="display: none; max-height: 200px; overflow-y: auto;">
                                             <!-- Category options will be populated here -->
@@ -887,14 +887,14 @@
                                         <i class="fas fa-search"></i>
                                     </button>
                                     <input type="hidden" id="productCategory" name="category" required>
-                                    <button type="button" class="btn btn-outline-primary" id="productAddCategoryBtn" title="إضافة فئة جديدة"
+                                    <button type="button" class="btn btn-outline-primary" id="productAddCategoryBtn" title="{% trans "Add New Category" %}"
                                             data-bs-toggle="modal" data-bs-target="#addCategoryModal">
                                         <i class="fas fa-plus"></i>
-                                        إضافة فئة
+                                        {% trans "Add Category" %}
                                     </button>
                                 </div>
                                 <div class="form-text">
-                                    <small class="text-muted">ابدأ الكتابة للبحث عن الفئات أو اضغط زر البحث</small>
+                                    <small class="text-muted">{% trans "Start typing to search for categories or click search button" %}</small>
                                 </div>
                             </div>
                         </div>
@@ -980,7 +980,7 @@
                     <!-- Inventory -->
                     <h6 class="mt-4 mb-3"><i class="fas fa-warehouse me-2"></i>{% trans "Inventory" %}</h6>
                     <div class="row">
-                        <div class="col-md-4">
+                        <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="productOpeningBalance" class="form-label">
                                     <i class="fas fa-balance-scale text-success me-1"></i>
@@ -988,6 +988,39 @@
                                 </label>
                                 <input type="number" class="form-control" id="productOpeningBalance" name="opening_balance" step="0.001" min="0" value="0">
                                 <small class="form-text text-muted">{% trans "Initial stock when starting to use the system" %}</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="productOpeningBalanceCost" class="form-label">
+                                    <i class="fas fa-dollar-sign text-warning me-1"></i>
+                                    {% trans "Opening Balance Cost" %} <span class="text-danger">*</span>
+                                </label>
+                                <input type="number" class="form-control" id="productOpeningBalanceCost" name="opening_balance_cost" step="0.001" min="0" value="0" required>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    {% trans "Total cost of the opening balance for FIFO inventory calculation" %}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="productOpeningBalanceWarehouse" class="form-label">
+                                    <i class="fas fa-warehouse text-info me-1"></i>
+                                    {% trans "Opening Balance Warehouse" %}
+                                </label>
+                                <select class="form-control" id="productOpeningBalanceWarehouse" name="opening_balance_warehouse">
+                                    <option value="">{% trans "Select Warehouse" %}</option>
+                                    {% for warehouse in warehouses %}
+                                    <option value="{{ warehouse.id }}">{{ warehouse.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    {% trans "Warehouse where the opening balance will be placed" %}
+                                </small>
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -1006,13 +1039,21 @@
                     
                     <!-- Description and Settings -->
                     <div class="row">
-                        <div class="col-md-8">
+                        <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="productDescription" class="form-label">{% trans "Description" %}</label>
                                 <textarea class="form-control" id="productDescription" name="description" rows="3"></textarea>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="productImage" class="form-label">{% trans "Product Image" %}</label>
+                                <input type="file" class="form-control" id="productImage" name="image" accept="image/*">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
                             <div class="mb-3">
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="productIsActive" name="is_active" checked>
@@ -1021,6 +1062,8 @@
                                     </label>
                                 </div>
                             </div>
+                        </div>
+                        <div class="col-md-6">
                             <div class="mb-3">
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" id="productTrackStock" name="track_stock" checked>
@@ -1769,11 +1812,11 @@ function exportToExcel() {
 $(document).ready(function() {
     // Parse categories from data attribute
     var productCategoriesData = $('#productCategorySearch').data('categories') || '';
-    window.productCategories = [];
+    var productCategories = [];
     
     if (productCategoriesData) {
         var categoryStrings = productCategoriesData.split('||');
-        window.productCategories = categoryStrings.map(function(catStr) {
+        productCategories = categoryStrings.map(function(catStr) {
             var parts = catStr.split('|');
             return {
                 id: parts[0],
@@ -1845,7 +1888,7 @@ $(document).ready(function() {
         productCategoryDropdown.empty();
 
         // Filter categories
-        var filteredCategories = window.productCategories.filter(function(category) {
+        var filteredCategories = productCategories.filter(function(category) {
             return category.name.toLowerCase().includes(searchTerm) ||
                    (category.code && category.code.toLowerCase().includes(searchTerm));
         });
@@ -1885,7 +1928,7 @@ $(document).ready(function() {
         if (productCategorySearch.val().trim() === '') {
             // Show all categories
             productCategoryDropdown.empty();
-            window.productCategories.slice(0, 10).forEach(function(category) {
+            productCategories.slice(0, 10).forEach(function(category) {
                 var option = $('<button type="button" class="dropdown-item"></button>');
                 option.html('<strong>' + category.name + '</strong>' + (category.code ? ' (' + category.code + ')' : ''));
                 option.attr('data-category', JSON.stringify(category));
@@ -1923,7 +1966,7 @@ $(document).ready(function() {
     // Update search input when hidden field changes (e.g., from new category modal)
     productCategoryHidden.on('change', function() {
         if (productCategoryHidden.val()) {
-            var selectedCategory = window.productCategories.find(function(cat) {
+            var selectedCategory = productCategories.find(function(cat) {
                 return cat.id == productCategoryHidden.val();
             });
             if (selectedCategory) {
@@ -1939,7 +1982,7 @@ $(document).ready(function() {
         productCategorySearch.focus();
         if (productCategorySearch.val().trim() === '') {
             productCategoryDropdown.empty();
-            window.productCategories.slice(0, 10).forEach(function(category) {
+            productCategories.slice(0, 10).forEach(function(category) {
                 var option = $('<button type="button" class="dropdown-item"></button>');
                 option.html('<strong>' + category.name + '</strong>' + (category.code ? ' (' + category.code + ')' : ''));
                 option.attr('data-category', JSON.stringify(category));

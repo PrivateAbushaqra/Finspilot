@@ -28,7 +28,7 @@ def log_activity(user, action_type, obj, description, request=None):
             return
         
         # تحديد نوع المحتوى
-        content_type = obj.__class__.__name__ if obj else None
+        content_type = obj.__class__.__name__ if obj else ''
         object_id = getattr(obj, 'id', None) or getattr(obj, 'pk', None) if obj else None
         
         # الحصول على عنوان IP

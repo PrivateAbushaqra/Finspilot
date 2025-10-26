@@ -91,11 +91,15 @@ def account_list(request):
         # ترتيب حسب الحقل المطلوب
         accounts = accounts.order_by(order_by)
     else:
-        # الترتيب الافتراضي حسب الكود
-        accounts = accounts.order_by('code')
+        # الترتيب الافتراضي: الحسابات الأب أولاً، ثم الحسابات الفرعية
+        parent_accounts = accounts.filter(parent__isnull=True).order_by('code')
+        child_accounts = accounts.filter(parent__isnull=False).order_by('code')
+        # دمج الاستعلامات
+        accounts = list(parent_accounts) + list(child_accounts)
     
     # الترقيم
-    paginator = Paginator(accounts, 20)
+    total_accounts = accounts.count()  # عدد الحسابات الكلي
+    paginator = Paginator(accounts, 30)  # زيادة عدد الحسابات في الصفحة إلى 30
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
@@ -106,6 +110,7 @@ def account_list(request):
         'search_query': search,
         'order_by': request.GET.get('order_by', 'code'),
         'direction': direction,
+        'total_accounts': total_accounts,
     }
     
     # سجل النشاط: فتح صفحة قائمة الحسابات
@@ -233,6 +238,10 @@ def account_create(request):
         if form.is_valid():
             account = form.save()
 
+            # تحديث رصيد parent إذا كان موجوداً
+            if account.parent:
+                account.parent.update_account_balance()
+
             # سجل النشاط عند الإنشاء
             try:
                 from core.models import AuditLog
@@ -252,6 +261,7 @@ def account_create(request):
                     'id': account.id,
                     'code': account.code,
                     'name': account.name,
+                    'account_type': account.get_account_type_display(),
                     'display': f"{account.code} - {account.name}"
                 })
             else:
@@ -275,10 +285,40 @@ def account_create(request):
 def account_edit(request, pk):
     """تعديل حساب"""
     account = get_object_or_404(Account, pk=pk)
+    old_parent = account.parent  # حفظ parent القديم
+    
     if request.method == 'POST':
         form = AccountForm(request.POST, instance=account)
         if form.is_valid():
-            form.save()
+            # حفظ التغييرات
+            account = form.save()
+            
+            # إذا تغير parent، نحتاج لتحديث أرصدة كل من parent القديم والجديد
+            new_parent = account.parent
+            if old_parent != new_parent:
+                from journal.services import JournalService
+                # تحديث parent القديم إذا كان موجوداً
+                if old_parent:
+                    old_parent.update_account_balance()
+                # تحديث parent الجديد إذا كان موجوداً
+                if new_parent:
+                    new_parent.update_account_balance()
+                # تحديث الحساب نفسه
+                account.update_account_balance()
+            
+            # سجل النشاط
+            try:
+                from core.models import AuditLog
+                AuditLog.objects.create(
+                    user=request.user,
+                    action_type='update',
+                    content_type='Account',
+                    object_id=account.pk,
+                    description=f"تم تعديل الحساب: {account.code} - {account.name}"
+                )
+            except Exception:
+                pass
+            
             messages.success(request, _('Account updated successfully'))
             return redirect('journal:account_list')
     else:
@@ -308,6 +348,11 @@ def account_delete(request, pk):
     
     if request.method == 'POST':
         account_name = account.name
+        
+        # تحديث رصيد parent قبل الحذف إذا كان موجوداً
+        if account.parent:
+            account.parent.update_account_balance()
+        
         account.delete()
         
         # تسجيل النشاط
@@ -451,65 +496,29 @@ def journal_entry_create(request):
         pass
     
     if request.method == 'POST':
-        # تشخيص بسيط
-        import sys
-        print("\n" + "="*100, file=sys.stderr)
-        print("🔥 POST REQUEST RECEIVED", file=sys.stderr)
-        print("="*100, file=sys.stderr)
-        
-        # 🔧 إصلاح: استعادة القيم من backup fields إذا كانت الحقول الأصلية فارغة
-        post_data = request.POST.copy()
-        for key in list(post_data.keys()):
-            if key.endswith('_backup'):
-                original_key = key.replace('_backup', '')
-                backup_value = post_data.get(key)
-                original_value = post_data.get(original_key, '')
-                
-                # إذا كان الحقل الأصلي فارغاً والـ backup موجود، استخدم backup
-                if (not original_value or original_value == '') and backup_value:
-                    post_data[original_key] = backup_value
-                    print(f"🔧 استعادة {original_key} من backup: {backup_value}", file=sys.stderr)
+        # طباعة البيانات المستلمة للتشخيص
+        print("\n" + "="*80)
+        print("📥 بيانات POST المستلمة:")
+        print("="*80)
+        for key, value in request.POST.items():
+            if 'account' in key or 'debit' in key or 'credit' in key:
+                print(f"  {key} = {value}")
+        print("="*80 + "\n")
         
         # إنشاء كائن مؤقت بدون حفظه لربط النماذج
         temp_entry = JournalEntry(created_by=request.user)
-        form = JournalEntryForm(post_data, instance=temp_entry, user=request.user)
-        formset = JournalLineFormSet(post_data, instance=temp_entry)
-
-        # طباعة البيانات المرسلة (بعد الاستعادة من backup)
-        print("\n📋 POST Data (after backup restoration):", file=sys.stderr)
-        for key, value in post_data.items():
-            if not key.endswith('_backup'):  # لا نطبع backup fields
-                print(f"  {key} = {value}", file=sys.stderr)
-        
-        print("\n📊 Management Form Data:", file=sys.stderr)
-        print(f"  TOTAL_FORMS: {request.POST.get('form-TOTAL_FORMS')}", file=sys.stderr)
-        print(f"  INITIAL_FORMS: {request.POST.get('form-INITIAL_FORMS')}", file=sys.stderr)
-        print(f"  MIN_NUM_FORMS: {request.POST.get('form-MIN_NUM_FORMS')}", file=sys.stderr)
-        print(f"  MAX_NUM_FORMS: {request.POST.get('form-MAX_NUM_FORMS')}", file=sys.stderr)
+        form = JournalEntryForm(request.POST, instance=temp_entry, user=request.user)
+        formset = JournalLineFormSet(request.POST, instance=temp_entry, prefix='form')
 
         # التحقق من صحة النماذج
-        print("\n✅ Validating forms...", file=sys.stderr)
         form_valid = form.is_valid()
         formset_valid = formset.is_valid()
         
-        print(f"  Form valid: {form_valid}", file=sys.stderr)
-        print(f"  Formset valid: {formset_valid}", file=sys.stderr)
-        
-        # طباعة الأخطاء
-        if not form_valid:
-            print("\n❌ Form Errors:", file=sys.stderr)
-            for field, errors in form.errors.items():
-                print(f"  {field}: {errors}", file=sys.stderr)
-                
+        print(f"✓ form_valid: {form_valid}")
+        print(f"✓ formset_valid: {formset_valid}")
         if not formset_valid:
-            print("\n❌ Formset Errors:", file=sys.stderr)
-            for i, form_errors in enumerate(formset.errors):
-                if form_errors:
-                    print(f"  Form {i}: {form_errors}", file=sys.stderr)
-            if formset.non_form_errors():
-                print(f"  Non-form errors: {formset.non_form_errors()}", file=sys.stderr)
-        
-        print("="*100 + "\n", file=sys.stderr)
+            print(f"❌ formset.errors: {formset.errors}")
+            print(f"❌ formset.non_form_errors: {formset.non_form_errors()}")
         
         if form_valid and formset_valid:
             try:
@@ -539,6 +548,14 @@ def journal_entry_create(request):
                     # حفظ جميع البنود الصالحة
                     for line in lines_to_save:
                         line.save()
+
+                    # التحقق من وجود بنود صالحة
+                    if not lines_to_save:
+                        # لا توجد بنود صالحة - أضف خطأ
+                        messages.error(request, _('يجب إدخال بنود القيد المحاسبي'))
+                        # حذف القيد الفارغ
+                        entry.delete()
+                        return redirect('journal:entry_create')
 
                     # حساب الإجمالي
                     total_debit = entry.lines.aggregate(total=Sum('debit'))['total'] or Decimal('0')
@@ -605,7 +622,7 @@ def journal_entry_create(request):
         # طلب GET - إنشاء نماذج فارغة
         form = JournalEntryForm(user=request.user)
         temp_entry = JournalEntry()
-        formset = JournalLineFormSet(instance=temp_entry)
+        formset = JournalLineFormSet(instance=temp_entry, prefix='form')
     
     # إعداد السياق وعرض الصفحة (سواء كان GET أو POST مع أخطاء)
     context = {
@@ -618,50 +635,12 @@ def journal_entry_create(request):
 
 
 @login_required
-@permission_required('journal.add_journalentry', raise_exception=True)
-def journal_entry_create_simple(request):
-    """
-    نسخة مبسطة جداً من صفحة إنشاء القيد - للاختبار فقط!
-    بدون JavaScript معقد - لمعرفة سبب المشكلة
-    """
-    from .models import JournalEntry, Account
-    from .forms import JournalEntryForm, JournalLineFormSet
-    
-    if request.method == 'POST':
-        # طباعة القيم المستلمة
-        print("\n" + "="*80)
-        print("🧪 نموذج الاختبار البسيط - POST Data:")
-        for key, value in request.POST.items():
-            if 'debit' in key or 'credit' in key or 'account' in key:
-                print(f"  {key} = {value}")
-        print("="*80 + "\n")
-        
-        temp_entry = JournalEntry(created_by=request.user)
-        form = JournalEntryForm(request.POST, instance=temp_entry, user=request.user)
-        formset = JournalLineFormSet(request.POST, instance=temp_entry)
-        
-        if form.is_valid() and formset.is_valid():
-            entry = form.save()
-            formset.instance = entry
-            formset.save()
-            messages.success(request, _('Journal entry created successfully'))
-            return redirect('journal:entry_detail', pk=entry.pk)
-        else:
-            print("❌ Form errors:", form.errors)
-            print("❌ Formset errors:", formset.errors)
-            print("❌ Non-form errors:", formset.non_form_errors())
-    else:
-        form = JournalEntryForm(user=request.user)
-        temp_entry = JournalEntry()
-        formset = JournalLineFormSet(instance=temp_entry)
-    
+def test_accounts(request):
+    """صفحة اختبار البحث عن الحسابات"""
     context = {
-        'form': form,
-        'formset': formset,
         'accounts': Account.objects.filter(is_active=True).order_by('code'),
-        'title': _('Create journal entry - simple version')
     }
-    return render(request, 'journal/entry_create_simple.html', context)
+    return render(request, 'journal/test_accounts.html', context)
 
 
 @login_required
@@ -671,7 +650,7 @@ def journal_entry_edit(request, pk):
     entry = get_object_or_404(JournalEntry, pk=pk)
     if request.method == 'POST':
         form = JournalEntryForm(request.POST, instance=entry, user=request.user)
-        formset = JournalLineFormSet(request.POST, instance=entry)
+        formset = JournalLineFormSet(request.POST, instance=entry, prefix='form')
         try:
             form_valid = form.is_valid()
             formset_valid = formset.is_valid()
@@ -718,7 +697,7 @@ def journal_entry_edit(request, pk):
             messages.error(request, _('An error occurred while modifying the entry: ') + str(e))
     else:
         form = JournalEntryForm(instance=entry, user=request.user)
-        formset = JournalLineFormSet(instance=entry)
+        formset = JournalLineFormSet(instance=entry, prefix='form')
     context = {
         'form': form,
         'formset': formset,
@@ -1216,3 +1195,44 @@ def year_end_closing(request):
         pass
     
     return render(request, 'journal/year_end_closing.html', context)
+
+
+@login_required
+@permission_required('journal.change_account', raise_exception=True)
+def fix_account_hierarchy(request):
+    """إصلاح الهرمية المكسورة للحسابات المحاسبية"""
+    if request.method == 'POST':
+        try:
+            fixed_count = Account.fix_broken_hierarchy()
+            
+            if fixed_count > 0:
+                messages.success(
+                    request, 
+                    _('تم إصلاح {} حساب بنجاح. تم ربط الحسابات الفرعية بحساباتها الأب المناسبة.').format(fixed_count)
+                )
+            else:
+                messages.info(
+                    request, 
+                    _('لم يتم العثور على حسابات تحتاج إصلاح. جميع الحسابات مرتبطة بشكل صحيح.')
+                )
+            
+            # تسجيل النشاط
+            try:
+                from core.signals import log_view_activity
+                class FixObj:
+                    id = 0
+                    pk = 0
+                    def __str__(self):
+                        return str(_('Account Hierarchy Fix'))
+                log_view_activity(request, 'change', FixObj(), 
+                                f'تم إصلاح {fixed_count} حساب في الهرمية المحاسبية')
+            except Exception:
+                pass
+                
+        except Exception as e:
+            messages.error(
+                request, 
+                _('حدث خطأ أثناء إصلاح الهرمية: {}').format(str(e))
+            )
+    
+    return redirect('journal:account_list')

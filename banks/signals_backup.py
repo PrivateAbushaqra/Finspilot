@@ -102,28 +102,12 @@ def create_bank_transaction_journal_entry(sender, instance, created, **kwargs):
         # التحقق من عدم وجود قيد محاسبي بالفعل لهذه المعاملة لتجنب التكرار
         from journal.models import JournalEntry
         existing_entry = JournalEntry.objects.filter(
-            reference_type='bank_transaction' if not instance.is_opening_balance else 'bank_opening_balance',
+            reference_type='bank_transaction',
             reference_id=instance.id
         ).exists()
 
         if existing_entry:
             print(f"⚠ تم العثور على قيد محاسبي موجود بالفعل للمعاملة البنكية {instance.id}، تم تخطي الإنشاء")
-            return
-
-        # إذا كانت معاملة رصيد افتتاحي، ننشئ قيد خاص لها
-        if instance.is_opening_balance:
-            try:
-                journal_entry = JournalService.create_bank_opening_balance_entry(
-                    bank_account=instance.bank,
-                    opening_transaction=instance,
-                    user=instance.created_by
-                )
-                if journal_entry:
-                    print(f"✓ تم إنشاء قيد الرصيد الافتتاحي {journal_entry.entry_number} للحساب {instance.bank.name}")
-            except Exception as e:
-                print(f"❌ خطأ في إنشاء قيد الرصيد الافتتاحي: {e}")
-                import traceback
-                traceback.print_exc()
             return
 
         # إذا تم وضع علامة داخل الكائن لعدم إنشاء القيد (عند إنشاء المعاملات كجزء من تحويل)، تجاهل

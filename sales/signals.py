@@ -593,3 +593,43 @@ def delete_sales_credit_note_journal_entry(sender, instance, **kwargs):
         print(f"✓ تم حذف القيد المحاسبي لإشعار الدائن {instance.note_number}")
     except Exception as e:
         print(f"✗ خطأ في حذف قيد إشعار الدائن: {e}")
+
+
+@receiver(pre_delete, sender=SalesInvoice)
+def delete_journal_entries_on_invoice_delete(sender, instance, **kwargs):
+    """حذف القيود المحاسبية عند حذف فاتورة المبيعات"""
+    try:
+        from journal.models import JournalEntry
+        
+        # البحث عن القيود المرتبطة بالفاتورة
+        journal_entries = JournalEntry.objects.filter(
+            sales_invoice=instance
+        )
+        
+        for journal_entry in journal_entries:
+            print(f"حذف القيد المحاسبي {journal_entry.entry_number} المرتبط بفاتورة {instance.invoice_number}")
+            journal_entry.delete()
+            
+    except Exception as e:
+        print(f"خطأ في حذف القيود المحاسبية لفاتورة {instance.invoice_number}: {e}")
+        pass
+
+
+@receiver(pre_delete, sender=SalesReturn)
+def delete_journal_entries_on_return_delete(sender, instance, **kwargs):
+    """حذف القيود المحاسبية عند حذف مردود المبيعات"""
+    try:
+        from journal.models import JournalEntry
+        
+        # البحث عن القيود المرتبطة بمردود المبيعات
+        journal_entries = JournalEntry.objects.filter(
+            sales_return=instance
+        )
+        
+        for journal_entry in journal_entries:
+            print(f"حذف القيد المحاسبي {journal_entry.entry_number} المرتبط بمردود {instance.return_number}")
+            journal_entry.delete()
+            
+    except Exception as e:
+        print(f"خطأ في حذف القيود المحاسبية لمردود {instance.return_number}: {e}")
+        pass

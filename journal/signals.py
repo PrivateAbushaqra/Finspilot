@@ -522,7 +522,11 @@ def update_account_balance_on_save(sender, instance, **kwargs):
             except Exception as audit_error:
                 logger.error(f"خطأ في تسجيل تحديث رصيد الحساب الرئيسي في audit log: {audit_error}")
         
+        # إنشاء حركة بنك أو صندوق إذا لزم الأمر
+        create_cashbox_bank_transaction(instance)
+        
         # مزامنة رصيد الصندوق أو البنك إذا كان الحساب مرتبطاً بهم
+        sync_cashbox_or_bank_balance(instance.account)
         
     except Exception as e:
         logger.error(f"خطأ في تحديث رصيد الحساب {instance.account.code}: {e}")
@@ -576,8 +580,8 @@ def create_cashbox_bank_transaction(journal_line):
         if journal_line.account.code.startswith('101'):
             create_cashbox_transaction_from_journal_line(journal_line)
         
-        # التحقق إذا كان حساب بنك (يبدأ بـ 1101)
-        elif journal_line.account.code.startswith('1101'):
+        # التحقق إذا كان حساب بنك (يبدأ بـ 102)
+        elif journal_line.account.code.startswith('102'):
             create_bank_transaction_from_journal_line(journal_line)
         else:
             logger.debug(f"الحساب {journal_line.account.code} ليس حساب صندوق أو بنك")
@@ -677,73 +681,81 @@ def create_bank_transaction_from_journal_line(journal_line):
         from banks.models import BankAccount, BankTransaction
         
         # تجاهل القيود التي تم إنشاء معاملاتها يدوياً
-        ignored_reference_types = ['transfer', 'cashbox_transfer', 'bank_transfer']
+        ignored_reference_types = ['cashbox_transfer', 'bank_transfer']
         if journal_line.journal_entry.reference_type in ignored_reference_types:
             logger.debug(f"تجاهل إنشاء معاملة بنك من القيد {journal_line.journal_entry.entry_number} - النوع: {journal_line.journal_entry.reference_type} (تم إنشاء المعاملة يدوياً)")
             return
         
-        # استخراج رقم البنك من كود الحساب
-        if journal_line.account.code.startswith('1101'):
+        # تجاهل القيود التي تحتوي على كلمة "تحويل" في الوصف
+        if 'تحويل' in journal_line.journal_entry.description:
+            logger.debug(f"تجاهل إنشاء معاملة بنك من القيد {journal_line.journal_entry.entry_number} - الوصف: {journal_line.journal_entry.description} (قيد تحويل)")
+            return
+        
+        # تجاهل القيود التي تم إنشاؤها تلقائياً من معاملات بنكية
+        if 'معاملة بنكية' in journal_line.journal_entry.description or journal_line.journal_entry.reference_type == 'bank_transaction':
+            logger.debug(f"تجاهل إنشاء معاملة بنك من القيد {journal_line.journal_entry.entry_number} - الوصف: {journal_line.journal_entry.description} (تم إنشاء القيد من معاملة بنكية)")
+            return
+        
+        # التحقق من أن الحساب مرتبط بحساب بنكي
+        if journal_line.account.code.startswith('102') and journal_line.account.bank_account:
+            bank = journal_line.account.bank_account
+            
+            # تحديد نوع الحركة بناءً على المدين/الدائن
+            if journal_line.debit > 0:
+                # مدين - إيداع أو تحويل وارد
+                transaction_type = 'deposit'
+                amount = journal_line.debit
+            elif journal_line.credit > 0:
+                # دائن - سحب أو تحويل صادر
+                transaction_type = 'withdrawal'
+                amount = journal_line.credit
+            else:
+                logger.debug(f"بند القيد بدون مبلغ للحساب {journal_line.account.code}")
+                return
+            
+            # التحقق من عدم وجود حركة مكررة
+            existing_transaction = BankTransaction.objects.filter(
+                bank=bank,
+                description__icontains=f"قيد رقم {journal_line.journal_entry.entry_number}",
+                date=journal_line.journal_entry.entry_date
+            ).first()
+            
+            if existing_transaction:
+                logger.debug(f"حركة البنك موجودة بالفعل للقيد {journal_line.journal_entry.entry_number}")
+                return
+            
+            # إنشاء الحركة
+            BankTransaction.objects.create(
+                bank=bank,
+                transaction_type=transaction_type,
+                date=journal_line.journal_entry.entry_date,
+                amount=amount,
+                description=f"قيد رقم {journal_line.journal_entry.entry_number}: {journal_line.line_description or journal_line.journal_entry.description}",
+                created_by=journal_line.journal_entry.created_by
+            )
+            
+            logger.info(f"تم إنشاء حركة بنك للقيد {journal_line.journal_entry.entry_number}: {bank.name} - {amount}")
+            
+            # تسجيل في audit log
             try:
-                bank_id = int(journal_line.account.code[4:])  # إزالة '1101'
-                bank = BankAccount.objects.get(id=bank_id)
+                from core.models import AuditLog
+                from django.contrib.auth import get_user_model
+                User = get_user_model()
                 
-                # تحديد نوع الحركة بناءً على المدين/الدائن
-                if journal_line.debit > 0:
-                    # مدين - إيداع
-                    transaction_type = 'deposit'
-                    amount = journal_line.debit
-                elif journal_line.credit > 0:
-                    # دائن - سحب
-                    transaction_type = 'withdrawal'
-                    amount = -journal_line.credit
-                else:
-                    logger.debug(f"بند القيد بدون مبلغ للحساب {journal_line.account.code}")
-                    return
+                system_user = User.objects.filter(is_superuser=True).first()
+                if system_user:
+                    AuditLog.objects.create(
+                        user=system_user,
+                        action_type='create',
+                        content_type='BankTransaction',
+                        object_id=bank.id,
+                        description=f'إنشاء حركة بنك تلقائياً من قيد {journal_line.journal_entry.entry_number}: {bank.name}'
+                    )
+            except Exception as audit_error:
+                logger.error(f"خطأ في تسجيل إنشاء حركة البنك في audit log: {audit_error}")
                 
-                # التحقق من عدم وجود حركة مكررة
-                existing_transaction = BankTransaction.objects.filter(
-                    bank=bank,
-                    description__icontains=f"قيد رقم {journal_line.journal_entry.entry_number}",
-                    date=journal_line.journal_entry.entry_date
-                ).first()
-                
-                if existing_transaction:
-                    logger.debug(f"حركة البنك موجودة بالفعل للقيد {journal_line.journal_entry.entry_number}")
-                    return
-                
-                # إنشاء الحركة
-                BankTransaction.objects.create(
-                    bank=bank,
-                    transaction_type=transaction_type,
-                    date=journal_line.journal_entry.entry_date,
-                    amount=amount,
-                    description=f"قيد رقم {journal_line.journal_entry.entry_number}: {journal_line.line_description or journal_line.journal_entry.description}",
-                    created_by=journal_line.journal_entry.created_by
-                )
-                
-                logger.info(f"تم إنشاء حركة بنك للقيد {journal_line.journal_entry.entry_number}: {bank.name} - {amount}")
-                
-                # تسجيل في audit log
-                try:
-                    from core.models import AuditLog
-                    from django.contrib.auth import get_user_model
-                    User = get_user_model()
-                    
-                    system_user = User.objects.filter(is_superuser=True).first()
-                    if system_user:
-                        AuditLog.objects.create(
-                            user=system_user,
-                            action_type='create',
-                            content_type='BankTransaction',
-                            object_id=bank.id,
-                            description=f'إنشاء حركة بنك تلقائياً من قيد {journal_line.journal_entry.entry_number}: {bank.name}'
-                        )
-                except Exception as audit_error:
-                    logger.error(f"خطأ في تسجيل إنشاء حركة البنك في audit log: {audit_error}")
-                    
-            except (ValueError, BankAccount.DoesNotExist) as e:
-                logger.warning(f"لم يتم العثور على البنك المرتبط بحساب {journal_line.account.code}: {e}")
+        else:
+            logger.debug(f"الحساب {journal_line.account.code} ليس حساب بنك أو غير مرتبط بحساب بنكي")
                 
     except Exception as e:
         logger.error(f"خطأ في إنشاء حركة البنك: {e}")
@@ -828,27 +840,27 @@ def sync_bank_balance_from_account(account):
         # البحث عن الحساب البنكي المرتبط بهذا الحساب
         bank_account = None
         
-        if account.code.startswith('1101'):
-            try:
-                # استخراج رقم البنك من الكود (11010002 -> 2)
-                bank_id = int(account.code[4:])  # إزالة '1101' والحصول على الرقم
-                bank_account = BankAccount.objects.get(id=bank_id)
-                logger.debug(f"تم العثور على البنك {bank_account.name} من كود الحساب {account.code}")
-            except (ValueError, BankAccount.DoesNotExist) as e:
-                logger.warning(f"فشل استخراج رقم البنك من كود {account.code}: {e}")
-                # محاولة البحث من خلال اسم الحساب كطريقة احتياطية
+        if account.code.startswith('102'):
+            # البحث عن الحساب البنكي المرتبط مباشرة من الحقل
+            bank_account = account.bank_account
+            
+            if not bank_account:
+                # إذا لم يكن مرتبط، حاول البحث بالاسم كطريقة احتياطية
+                logger.debug(f'الحساب {account.code} غير مرتبط بحساب بنكي، محاولة البحث بالاسم')
                 account_name_parts = account.name.split('-')
-                if len(account_name_parts) >= 2:
-                    # محاولة البحث بالاسم الأول
+                bank_name = account_name_parts[0].strip()
+                
+                if bank_name.startswith('البنك'):
+                    bank_name = bank_name[5:].strip()
+                
+                bank_account = BankAccount.objects.filter(
+                    name__icontains=bank_name
+                ).first()
+                
+                if not bank_account and len(account_name_parts) > 1:
                     bank_account = BankAccount.objects.filter(
-                        name__icontains=account_name_parts[0].strip()
+                        name__icontains=account_name_parts[-1].strip()
                     ).first()
-                    
-                    if not bank_account:
-                        # محاولة البحث باسم البنك
-                        bank_account = BankAccount.objects.filter(
-                            bank_name__icontains=account_name_parts[-1].strip()
-                        ).first()
         
         if bank_account:
             # تحديث رصيد البنك ليطابق رصيد الحساب المحاسبي
@@ -898,8 +910,8 @@ def sync_cashbox_or_bank_balance(account):
             logger.debug(f"الحساب {account.code} هو حساب صندوق - بدء المزامنة")
             sync_cashbox_balance_from_account(account)
         
-        # التحقق إذا كان حساب بنك (يبدأ بـ 1101)
-        elif account.code.startswith('1101'):
+        # التحقق إذا كان حساب بنك (يبدأ بـ 102)
+        elif account.code.startswith('102'):
             logger.debug(f"الحساب {account.code} هو حساب بنك - بدء المزامنة")
             sync_bank_balance_from_account(account)
         else:
@@ -946,3 +958,111 @@ def log_account_deletion(sender, instance, **kwargs):
             log_activity(user, 'DELETE', instance, f'تم حذف حساب محاسبي: {instance.name} ({instance.code})')
     except Exception as e:
         logger.error(f"خطأ في تسجيل حذف الحساب {instance.code}: {e}")
+
+
+@receiver(post_save, sender='journal.JournalEntry')
+def create_bank_transfer_from_journal_entry(sender, instance, created, **kwargs):
+    """
+    إنشاء BankTransfer تلقائياً عند إنشاء قيد محاسبي يمثل تحويلاً بين حسابات بنكية
+    """
+    if not created:
+        return  # فقط للقيود الجديدة
+
+    try:
+        from banks.models import BankTransfer
+        # تجاهل القيود التي تم إنشاؤها تلقائياً من معاملات بنكية أو تحويلات
+        if instance.reference_type in ['bank_transaction', 'bank_transfer', 'cashbox_transfer']:
+            logger.debug(f"تجاهل إنشاء BankTransfer من القيد {instance.entry_number} - نوع المرجع: {instance.reference_type}")
+            return
+
+        # التحقق من أن القيد يحتوي على حسابين بنكيين فقط (تحويل بين بنكين)
+        bank_lines = []
+        for line in instance.lines.all():
+            if line.account.code.startswith('102') and line.account.bank_account:
+                bank_lines.append(line)
+
+        # يجب أن يكون هناك حسابان بنكيان فقط
+        if len(bank_lines) != 2:
+            return
+
+        # التحقق من أن أحدهما مدين والآخر دائن (تحويل)
+        debit_bank = None
+        credit_bank = None
+        amount = 0
+
+        for line in bank_lines:
+            if line.debit > 0:
+                debit_bank = line.account.bank_account
+                amount = line.debit
+            elif line.credit > 0:
+                credit_bank = line.account.bank_account
+
+        if not debit_bank or not credit_bank or debit_bank == credit_bank:
+            return
+
+        # التحقق من عدم وجود BankTransfer مكرر
+        existing_transfer = BankTransfer.objects.filter(
+            from_account=credit_bank,  # الحساب الدائن هو المرسل
+            to_account=debit_bank,     # الحساب المدين هو المستقبل
+            amount=amount,
+            date=instance.entry_date
+        ).first()
+
+        if existing_transfer:
+            logger.debug(f"BankTransfer موجود بالفعل للقيد {instance.entry_number}")
+            return
+
+        # إنشاء BankTransfer
+        from core.models import DocumentSequence
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+
+        try:
+            # الحصول على تسلسل التحويلات البنكية
+            sequence = DocumentSequence.objects.get(document_type='bank_transfer')
+            transfer_number = sequence.get_next_number()
+        except DocumentSequence.DoesNotExist:
+            logger.warning(f"تسلسل التحويلات البنكية غير موجود، تخطي إنشاء BankTransfer للقيد {instance.entry_number}")
+            return
+
+        # الحصول على المستخدم (افتراضياً superuser إذا لم يكن محدد)
+        user = instance.created_by
+        if not user:
+            user = User.objects.filter(is_superuser=True).first()
+            if not user:
+                user = User.objects.filter(is_active=True).first()
+
+        if not user:
+            logger.warning(f"لا يمكن العثور على مستخدم لإنشاء BankTransfer للقيد {instance.entry_number}")
+            return
+
+        # إنشاء BankTransfer
+        transfer = BankTransfer.objects.create(
+            transfer_number=transfer_number,
+            date=instance.entry_date,
+            from_account=credit_bank,  # الحساب الدائن هو المرسل
+            to_account=debit_bank,     # الحساب المدين هو المستقبل
+            amount=amount,
+            description=f"تحويل من قيد {instance.entry_number}: {instance.description}",
+            created_by=user
+        )
+
+        logger.info(f"تم إنشاء BankTransfer تلقائياً من القيد {instance.entry_number}: {transfer.transfer_number}")
+
+        # تسجيل في audit log
+        try:
+            from core.models import AuditLog
+            system_user = User.objects.filter(is_superuser=True).first()
+            if system_user:
+                AuditLog.objects.create(
+                    user=system_user,
+                    action_type='create',
+                    content_type='BankTransfer',
+                    object_id=transfer.id,
+                    description=f'إنشاء تحويل بنكي تلقائياً من قيد {instance.entry_number}: {transfer.transfer_number}'
+                )
+        except Exception as audit_error:
+            logger.error(f"خطأ في تسجيل إنشاء BankTransfer في audit log: {audit_error}")
+
+    except Exception as e:
+        logger.error(f"خطأ في إنشاء BankTransfer من القيد {instance.entry_number}: {e}")

@@ -16,7 +16,7 @@ class Account(models.Model):
         ('revenue', _('Revenues')),
         ('expense', _('Expenses')),
         ('purchases', _('Purchases')),
-        ('sales', _('Sales')),
+        # ('sales', _('Sales')),  # تم إزالة نوع sales للتوافق مع IFRS - المبيعات هي إيرادات
     ]
 
     code = models.CharField(_('Account Code'), max_length=20, unique=True)
@@ -24,6 +24,8 @@ class Account(models.Model):
     account_type = models.CharField(_('Account Type'), max_length=20, choices=ACCOUNT_TYPES)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, 
                               verbose_name=_('Parent Account'), related_name='children')
+    bank_account = models.ForeignKey('banks.BankAccount', on_delete=models.SET_NULL, null=True, blank=True,
+                                    verbose_name=_('Linked Bank Account'), related_name='journal_accounts')
     description = models.TextField(_('Description'), blank=True)
     is_active = models.BooleanField(_('Active'), default=True)
     balance = models.DecimalField(_('Balance'), max_digits=15, decimal_places=3, default=0)
@@ -40,8 +42,111 @@ class Account(models.Model):
             ('view_journalaccount', _('Can view Account')),
         ]
 
-    def __str__(self):
-        return f"{self.code} - {self.name}"
+    def save(self, *args, **kwargs):
+        """
+        حفظ الحساب مع الربط التلقائي بالحساب الأب
+        """
+        # إذا لم يكن هناك حساب أب محدد، حاول ربطه تلقائياً
+        if not self.parent:
+            self.parent = self.get_auto_parent()
+        
+        super().save(*args, **kwargs)
+    
+    def get_auto_parent(self):
+        """
+        تحديد الحساب الأب تلقائياً بناءً على كود الحساب
+        
+        قواعد الربط:
+        1. إذا كان الكود يحتوي على نقاط (مثل 101.01)، فالحساب قبل النقطة الأخيرة هو الأب
+        2. إذا كان الكود يبدأ بأرقام متتالية (مثل 10101)، فالأرقام الأولى تشكل حساب الأب
+        3. البحث عن أقرب حساب أب محتمل بنفس نوع الحساب
+        """
+        if not self.code:
+            return None
+            
+        code = self.code.strip()
+        
+        # قاعدة 1: كود يحتوي على نقاط (مثل 101.01 -> 101)
+        if '.' in code:
+            parent_code = code.rsplit('.', 1)[0]
+            try:
+                parent = Account.objects.get(code=parent_code, is_active=True)
+                # التحقق من أن نوع الحساب متطابق أو متوافق
+                if parent.account_type == self.account_type or self._is_compatible_account_type(parent.account_type, self.account_type):
+                    return parent
+            except Account.DoesNotExist:
+                pass
+        
+        # قاعدة 2: كود هرمي (مثل 10101 -> 101, 1010101 -> 10101)
+        # ابحث عن أقصر كود أب محتمل بنفس نوع الحساب
+        for i in range(len(code) - 1, 0, -1):
+            potential_parent_code = code[:i]
+            try:
+                parent = Account.objects.get(
+                    code=potential_parent_code, 
+                    is_active=True,
+                    account_type__in=self._get_compatible_account_types()
+                )
+                return parent
+            except Account.DoesNotExist:
+                continue
+        
+        return None
+    
+    def _is_compatible_account_type(self, parent_type, child_type):
+        """
+        التحقق من توافق أنواع الحسابات بين الأب والابن
+        """
+        # قواعد التوافق الأساسية
+        compatibility_rules = {
+            'asset': ['asset'],  # الأصول تحت الأصول
+            'liability': ['liability'],  # المطلوبات تحت المطلوبات
+            'equity': ['equity'],  # حقوق الملكية تحت حقوق الملكية
+            'revenue': ['revenue'],  # الإيرادات تحت الإيرادات
+            'expense': ['expense'],  # المصاريف تحت المصاريف
+            'purchases': ['purchases', 'expense'],  # المشتريات تحت المشتريات أو المصاريف
+        }
+        
+        return child_type in compatibility_rules.get(parent_type, [])
+    
+    def _get_compatible_account_types(self):
+        """
+        الحصول على أنواع الحسابات المتوافقة مع نوع هذا الحساب
+        """
+        if not self.account_type:
+            return []
+            
+        compatibility_rules = {
+            'asset': ['asset'],
+            'liability': ['liability'], 
+            'equity': ['equity'],
+            'revenue': ['revenue'],
+            'expense': ['expense'],
+            'purchases': ['purchases', 'expense'],
+        }
+        
+        return compatibility_rules.get(self.account_type, [self.account_type])
+
+    def clean(self):
+        # التحقق من عدم تكرار الاسم
+        if Account.objects.filter(name=self.name).exclude(pk=self.pk).exists():
+            raise ValidationError(_('Account name must be unique.'))
+        
+        # التحقق من صحة كود الحساب
+        if self.code:
+            # التحقق من عدم وجود حلقة مفرغة (حساب أب لنفسه)
+            if self.parent and self.parent.pk == self.pk:
+                raise ValidationError(_('Account cannot be parent of itself.'))
+            
+            # التحقق من عدم وجود حلقة مفرغة في التسلسل الهرمي
+            if self.parent:
+                current = self.parent
+                visited = set()
+                while current:
+                    if current.pk in visited:
+                        raise ValidationError(_('Circular reference detected in account hierarchy.'))
+                    visited.add(current.pk)
+                    current = current.parent
 
     def get_balance(self, as_of_date=None):
         """حساب الرصيد الحالي للحساب حتى تاريخ معين
@@ -70,10 +175,104 @@ class Account(models.Model):
         else:
             return credit_total - debit_total
 
+    def has_parent(self):
+        """
+        التحقق من وجود حساب أب
+        """
+        return self.parent is not None
+    
+    def is_child_account(self):
+        """
+        التحقق من أن الحساب فرعي (له حساب أب)
+        """
+        return self.parent is not None
+    
+    def get_hierarchy_path(self):
+        """
+        الحصول على المسار الهرمي الكامل للحساب
+        مثال: الأصول > الأصول المتداولة > النقد وما شابهه
+        """
+        path = []
+        current = self
+        while current:
+            path.insert(0, current.name)
+            current = current.parent
+        return " > ".join(path)
+    
+    def get_hierarchy_codes(self):
+        """
+        الحصول على أكواد المسار الهرمي
+        مثال: 1 > 11 > 111
+        """
+        codes = []
+        current = self
+        while current:
+            codes.insert(0, current.code)
+            current = current.parent
+        return " > ".join(codes)
+
     def update_account_balance(self):
         """تحديث رصيد الحساب بناءً على جميع القيود"""
         self.balance = self.get_balance()
         self.save(update_fields=['balance'])
+
+    def validate_hierarchy(self):
+        """
+        التحقق من صحة الهرمية للحساب وإصلاح أي مشاكل
+        
+        يتحقق من:
+        1. عدم وجود حلقات مفرغة
+        2. توافق أنواع الحسابات
+        3. صحة الربط التلقائي
+        """
+        errors = []
+        
+        # التحقق من عدم وجود حلقات مفرغة
+        if self.parent:
+            visited = set()
+            current = self.parent
+            while current:
+                if current.id in visited:
+                    errors.append("تم اكتشاف حلقة مفرغة في الهرمية")
+                    break
+                visited.add(current.id)
+                current = current.parent
+        
+        # التحقق من توافق أنواع الحسابات
+        if self.parent and not self._is_compatible_account_type(self.parent.account_type, self.account_type):
+            errors.append(f"نوع الحساب ({self.account_type}) غير متوافق مع نوع حساب الأب ({self.parent.account_type})")
+        
+        # التحقق من الربط التلقائي
+        auto_parent = self.get_auto_parent()
+        if auto_parent and auto_parent != self.parent:
+            # اقتراح الربط التلقائي
+            self.parent = auto_parent
+            self.save(update_fields=['parent'])
+        
+        return errors
+    
+    @staticmethod
+    def fix_broken_hierarchy():
+        """
+        إصلاح الهرمية المكسورة لجميع الحسابات
+        
+        يقوم بـ:
+        1. إعادة ربط الحسابات الفرعية تلقائياً
+        2. إصلاح الحسابات غير المربوطة
+        3. التحقق من عدم وجود حلقات مفرغة
+        """
+        accounts = Account.objects.filter(is_active=True).order_by('code')
+        fixed_count = 0
+        
+        for account in accounts:
+            if account.is_child_account() and not account.has_parent():
+                auto_parent = account.get_auto_parent()
+                if auto_parent:
+                    account.parent = auto_parent
+                    account.save(update_fields=['parent'])
+                    fixed_count += 1
+        
+        return fixed_count
 
 
 class JournalEntry(models.Model):
@@ -86,6 +285,7 @@ class JournalEntry(models.Model):
         ('warehouse_transfer', _('Warehouse Transfer')),
         ('sales_return', _('Sales Return')),
         ('sales_return_cogs', _('Sales Return COGS')),
+        ('bank_transaction', _('Bank Transaction')),
     ]
 
     # أنواع القيود

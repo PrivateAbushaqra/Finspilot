@@ -22,30 +22,74 @@ def should_log_activity(user, action_type, content_type, object_id, description_
 @receiver(post_save, sender=PurchaseInvoice)
 def create_journal_entry_for_purchase_invoice(sender, instance, created, **kwargs):
     """إنشاء القيد المحاسبي تلقائياً عند إنشاء أو تحديث فاتورة مشتريات"""
-    try:
-        # 🔧 تعطيل السيجنال أثناء عملية استعادة النسخة الاحتياطية
+    def _create_entry():
+        print(f"DEBUG: create_journal_entry_for_purchase_invoice called for {instance.invoice_number}, created={created}")
         try:
-            from backup.restore_context import is_restoring
-            if is_restoring():
-                return
-        except ImportError:
-            pass
-        
-        from journal.models import JournalEntry
-        from journal.services import JournalService
-        
-        # التحقق من وجود عناصر وعدم وجود قيد محاسبي مسبقاً
-        if instance.items.count() > 0:
-            existing_entry = JournalEntry.objects.filter(
-                reference_type='purchase_invoice',
-                reference_id=instance.id
-            ).first()
+            # 🔧 تعطيل السيجنال أثناء عملية استعادة النسخة الاحتياطية
+            try:
+                from backup.restore_context import is_restoring
+                if is_restoring():
+                    return
+            except ImportError:
+                pass
             
-            # إنشاء القيد فقط إذا لم يكن موجوداً من قبل
-            if not existing_entry:
-                JournalService.create_purchase_invoice_entry(instance, instance.created_by)
-    except Exception as e:
-        print(f"خطأ في إنشاء القيد المحاسبي لفاتورة المشتريات {instance.invoice_number}: {e}")
+            from journal.models import JournalEntry
+            from journal.services import JournalService
+            
+            print(f"DEBUG: items.count() = {instance.items.count()}")
+            # التحقق من وجود عناصر
+            if instance.items.count() > 0:
+                # إعادة حساب المجاميع من العناصر لضمان الدقة
+                from decimal import Decimal, ROUND_HALF_UP
+                subtotal = Decimal('0')
+                tax_amount = Decimal('0')
+                total_amount = Decimal('0')
+
+                for item in instance.items.all():
+                    subtotal += item.quantity * item.unit_price
+                    tax_amount += item.tax_amount
+                    total_amount += item.total_amount
+
+                # تحديث المجاميع في الفاتورة
+                instance.subtotal = subtotal.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+                instance.tax_amount = tax_amount.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+                instance.total_amount = total_amount.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
+                instance.save(update_fields=['subtotal', 'tax_amount', 'total_amount'])
+                
+                existing_entry = JournalEntry.objects.filter(
+                    reference_type='purchase_invoice',
+                    reference_id=instance.id
+                ).first()
+                
+                print(f"DEBUG: existing_entry = {existing_entry}")
+                # حذف القيد القديم إذا كان موجوداً
+                if existing_entry:
+                    existing_entry.delete()
+                    print("DEBUG: existing_entry deleted")
+                
+                # إنشاء قيد جديد دائماً
+                print("DEBUG: calling JournalService.create_purchase_invoice_entry")
+                try:
+                    JournalService.create_purchase_invoice_entry(instance, instance.created_by)
+                    print("DEBUG: create_purchase_invoice_entry completed successfully")
+                except Exception as e:
+                    print(f"DEBUG: Exception in create_purchase_invoice_entry: {e}")
+                    import traceback
+                    traceback.print_exc()
+        except Exception as e:
+            print(f"خطأ في إنشاء القيد المحاسبي لفاتورة المشتريات {instance.invoice_number}: {e}")
+    
+    # استخدام transaction.on_commit لتجنب الاستدعاء المتكرر
+    import threading
+    if not hasattr(threading.current_thread(), '_purchase_signal_called'):
+        threading.current_thread()._purchase_signal_called = set()
+    
+    signal_key = f"purchase_{instance.id}"
+    if signal_key not in threading.current_thread()._purchase_signal_called:
+        threading.current_thread()._purchase_signal_called.add(signal_key)
+        transaction.on_commit(_create_entry)
+    else:
+        print(f"DEBUG: Skipping duplicate signal call for {instance.invoice_number}")
 
 
 @receiver(post_save, sender=PurchaseInvoice)

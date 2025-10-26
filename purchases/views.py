@@ -447,7 +447,8 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
             'products_json': json.dumps(products_data),
             'categories': Category.objects.filter(is_active=True).order_by('name'),
             'next_invoice_number': next_invoice_number,
-            'can_toggle_invoice_tax': request.user.is_superuser or request.user.has_perm('purchases.can_toggle_purchase_tax')
+            'can_toggle_invoice_tax': request.user.is_superuser or request.user.has_perm('purchases.can_toggle_purchase_tax'),
+            'today': timezone.now().date()
         }
         
         # إضافة البيانات المُدخلة إذا كانت موجودة
@@ -473,7 +474,7 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
             
             # استلام البيانات الأساسية للفاتورة
             supplier_invoice_number = request.POST.get('supplier_invoice_number', '').strip()
-            date = request.POST.get('date')
+            date = request.POST.get('date', '').strip()  # تنظيف التاريخ
             supplier_id = request.POST.get('supplier')
             warehouse_id = request.POST.get('warehouse')
             payment_type = request.POST.get('payment_type')
@@ -481,7 +482,8 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
             cashbox_id = request.POST.get('cashbox')
             bank_account_id = request.POST.get('bank_account')
             check_number = request.POST.get('check_number', '').strip()
-            check_date = request.POST.get('check_date')
+            check_date_raw = request.POST.get('check_date', '').strip()
+            check_date = check_date_raw if check_date_raw else None  # تحويل السلسلة الفارغة إلى None
             # التحقق من صلاحية تغيير خيار شمول الضريبة
             if request.user.is_superuser or request.user.has_perm('purchases.can_toggle_purchase_tax'):
                 is_tax_inclusive = request.POST.get('is_tax_inclusive') == 'on'  # checkbox value
@@ -520,6 +522,21 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
                 except Exception:
                     pass
                 messages.error(request, 'جميع الحقول الأساسية مطلوبة!')
+                context = self.get_invoice_create_context(request, form_data)
+                return render(request, self.template_name, context)
+            
+            # التحقق من صحة تنسيق التاريخ
+            if not date or (isinstance(date, str) and date.strip() == '') or date is None:
+                messages.error(request, 'تاريخ الفاتورة مطلوب!')
+                context = self.get_invoice_create_context(request, form_data)
+                return render(request, self.template_name, context)
+            
+            # محاولة تحويل التاريخ للتأكد من صحته
+            try:
+                from datetime import datetime
+                datetime.strptime(date, '%Y-%m-%d')
+            except ValueError:
+                messages.error(request, 'تنسيق التاريخ غير صحيح! يجب أن يكون بالصيغة YYYY-MM-DD')
                 context = self.get_invoice_create_context(request, form_data)
                 return render(request, self.template_name, context)
             
@@ -735,11 +752,11 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
                         except (Product.DoesNotExist, ValueError):
                             continue
                 
-                # إنشاء حركة حساب للمورد
-                create_purchase_invoice_account_transaction(invoice, request.user)
+                # إنشاء حركة حساب للمورد - تم نقله إلى الإشارات
+                # create_purchase_invoice_account_transaction(invoice, request.user)
                 
-                # إنشاء القيد المحاسبي
-                create_purchase_invoice_journal_entry(invoice, request.user)
+                # إنشاء القيد المحاسبي - تم نقله إلى الإشارات
+                # create_purchase_invoice_journal_entry(invoice, request.user)
             
             # حفظ المستودع الافتراضي إذا تم تحديده
             set_default_warehouse = request.POST.get('set_default_warehouse')
@@ -1002,7 +1019,8 @@ class PurchaseInvoiceUpdateView(LoginRequiredMixin, View):
             cashbox_id = request.POST.get('cashbox')
             bank_account_id = request.POST.get('bank_account')
             check_number = request.POST.get('check_number', '').strip()
-            check_date = request.POST.get('check_date')
+            check_date_raw = request.POST.get('check_date', '').strip()
+            check_date = check_date_raw if check_date_raw else None  # تحويل السلسلة الفارغة إلى None
             is_tax_inclusive = request.POST.get('is_tax_inclusive') == 'on'  # checkbox value
             notes = request.POST.get('notes', '').strip()
             
@@ -1150,9 +1168,9 @@ class PurchaseInvoiceUpdateView(LoginRequiredMixin, View):
                 except Exception as e:
                     print(f"تحذير: فشل في حذف القيود المحاسبية القديمة: {e}")
                 
-                # إنشاء المعاملات المحاسبية الجديدة
-                create_purchase_invoice_account_transaction(invoice, request.user)
-                create_purchase_invoice_journal_entry(invoice, request.user)
+                # إنشاء المعاملات المحاسبية الجديدة - تم نقله إلى الإشارات
+                # create_purchase_invoice_account_transaction(invoice, request.user)
+                # create_purchase_invoice_journal_entry(invoice, request.user)
                 
                 # تسجيل النشاط
                 try:

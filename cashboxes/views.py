@@ -569,7 +569,8 @@ def transfer_create(request):
             messages.error(request, _(f'{sequence_type.replace("_", " ").title()} sequence must be configured in settings before creating any transfer.'))
             return redirect('cashboxes:transfer_list')
         transfer_type = request.POST.get('transfer_type')
-        date = request.POST.get('date')
+        date_raw = request.POST.get('date', '').strip() if request.POST.get('date') else ''
+        date = date_raw if date_raw else None  # تحويل السلسلة الفارغة إلى None
         amount = request.POST.get('amount')
         fees = request.POST.get('fees', 0)
         exchange_rate = request.POST.get('exchange_rate', 1)
@@ -580,7 +581,8 @@ def transfer_create(request):
         deposit_document_number = request.POST.get('deposit_document_number', '').strip()
         deposit_type = request.POST.get('deposit_type', '').strip()
         check_number = request.POST.get('check_number', '').strip()
-        check_date = request.POST.get('check_date', '')
+        check_date_raw = request.POST.get('check_date', '').strip() if request.POST.get('check_date') else ''
+        check_date = check_date_raw if check_date_raw else None  # تحويل السلسلة الفارغة إلى None
         check_bank_name = request.POST.get('check_bank_name', '').strip()
         
         # معرفات المصدر والهدف

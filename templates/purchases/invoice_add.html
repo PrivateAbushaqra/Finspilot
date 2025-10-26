@@ -160,7 +160,7 @@
                             <div class="col-md-4">
                                 <div class="mb-3">
                                     <label class="form-label"><i class="fas fa-calendar me-1"></i> {% trans "Date" %} *</label>
-                                    <input type="date" class="form-control" name="date" value="{{ form_data.date|default:'' }}" required>
+                                    <input type="date" class="form-control" name="date" value="{% if form_data.date %}{{ form_data.date }}{% else %}{{ today|date:'Y-m-d' }}{% endif %}" required>
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -516,7 +516,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // {% trans "Set current date" %}
     const dateInput = document.querySelector('input[name="date"]');
-    if (dateInput) {
+    if (dateInput && !dateInput.value) {
         dateInput.value = new Date().toISOString().split('T')[0];
     }
     

@@ -599,7 +599,8 @@ class TransferCreateView(LoginRequiredMixin, UserPassesTestMixin, View):
         try:
             from_warehouse_id = request.POST.get('from_warehouse')
             to_warehouse_id = request.POST.get('to_warehouse')
-            transfer_date = request.POST.get('transfer_date')
+            transfer_date_raw = request.POST.get('transfer_date', '').strip() if request.POST.get('transfer_date') else ''
+            transfer_date = transfer_date_raw if transfer_date_raw else None  # تحويل السلسلة الفارغة إلى None
             notes = request.POST.get('notes', '')
             transfer_number = request.POST.get('transfer_number', '').strip()
             
@@ -815,7 +816,8 @@ def full_transfer_ajax(request):
     try:
         from_warehouse_id = request.POST.get('from_warehouse')
         to_warehouse_id = request.POST.get('to_warehouse')
-        transfer_date = request.POST.get('transfer_date')
+        transfer_date_raw = request.POST.get('transfer_date', '').strip() if request.POST.get('transfer_date') else ''
+        transfer_date = transfer_date_raw if transfer_date_raw else None  # تحويل السلسلة الفارغة إلى None
         notes = request.POST.get('notes', '')
         
         if from_warehouse_id == to_warehouse_id:
