@@ -42,6 +42,9 @@ class Account(models.Model):
             ('view_journalaccount', _('Can view Account')),
         ]
 
+    def __str__(self):
+        return f"{self.code} - {self.name}"
+
     def save(self, *args, **kwargs):
         """
         حفظ الحساب مع الربط التلقائي بالحساب الأب

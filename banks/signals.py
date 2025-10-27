@@ -20,9 +20,16 @@ def update_bank_balance_on_transaction(sender, instance, created, **kwargs):
     Update bank balance automatically when bank transaction is created
     """
     if created and instance.bank:
-        # لا تحديث الرصيد للمعاملات الافتتاحية لأنها تمثل الرصيد الافتتاحي نفسه
+        # تجاهل تحديث الرصيد لجميع المعاملات الافتتاحية
+        # الرصيد الافتتاحي يتم تعيينه مباشرة في النموذج
         if instance.is_opening_balance:
             print(f"DEBUG: تجاهل تحديث الرصيد للمعاملة الافتتاحية {instance.id}")
+            return
+
+        # تجاهل أيضاً المعاملات التي تم إنشاؤها كجزء من إنشاء حساب بنكي
+        # هذه المعاملات تكون للقيود المحاسبية وليس للمعاملات الفعلية
+        if hasattr(instance, '_skip_balance_update') and instance._skip_balance_update:
+            print(f"DEBUG: تجاهل تحديث الرصيد للمعاملة {instance.id} (تم تعيين _skip_balance_update)")
             return
 
         bank = instance.bank
@@ -99,36 +106,25 @@ def update_bank_balance_on_transaction_delete(sender, instance, **kwargs):
 def create_bank_transaction_journal_entry(sender, instance, created, **kwargs):
     """إنشاء قيد محاسبي عند إنشاء معاملة بنكية"""
     if created:
+        # تجاهل جميع المعاملات الافتتاحية - لا تنشئ قيود لها
+        if instance.is_opening_balance:
+            print(f"DEBUG: تجاهل إنشاء قيد للمعاملة الافتتاحية {instance.id}")
+            return
+
+        # تجاهل المعاملات التي تم إنشاؤها كجزء من إنشاء حساب بنكي
+        if hasattr(instance, '_skip_journal') and instance._skip_journal:
+            print(f"DEBUG: تجاهل إنشاء القيد التلقائي للمعاملة البنكية {getattr(instance, 'reference_number', '')} بسبب _skip_journal")
+            return
+
         # التحقق من عدم وجود قيد محاسبي بالفعل لهذه المعاملة لتجنب التكرار
         from journal.models import JournalEntry
         existing_entry = JournalEntry.objects.filter(
-            reference_type='bank_transaction' if not instance.is_opening_balance else 'bank_opening_balance',
+            reference_type='bank_transaction',
             reference_id=instance.id
         ).exists()
 
         if existing_entry:
             print(f"⚠ تم العثور على قيد محاسبي موجود بالفعل للمعاملة البنكية {instance.id}، تم تخطي الإنشاء")
-            return
-
-        # إذا كانت معاملة رصيد افتتاحي، ننشئ قيد خاص لها
-        if instance.is_opening_balance:
-            try:
-                journal_entry = JournalService.create_bank_opening_balance_entry(
-                    bank_account=instance.bank,
-                    opening_transaction=instance,
-                    user=instance.created_by
-                )
-                if journal_entry:
-                    print(f"✓ تم إنشاء قيد الرصيد الافتتاحي {journal_entry.entry_number} للحساب {instance.bank.name}")
-            except Exception as e:
-                print(f"❌ خطأ في إنشاء قيد الرصيد الافتتاحي: {e}")
-                import traceback
-                traceback.print_exc()
-            return
-
-        # إذا تم وضع علامة داخل الكائن لعدم إنشاء القيد (عند إنشاء المعاملات كجزء من تحويل)، تجاهل
-        if getattr(instance, '_skip_journal', False):
-            print(f"DEBUG: تخطي إنشاء القيد التلقائي للمعاملة البنكية {getattr(instance, 'reference_number', '')} بسبب _skip_journal")
             return
 
         # تحقق إضافي: إذا كانت المعاملة مرتبطة بتحويل بنكي، لا تنشئ قيد
@@ -284,49 +280,89 @@ def delete_bank_transfer_journal_entry(sender, instance, **kwargs):
 
 @receiver(post_save, sender=BankAccount)
 def create_bank_account_opening_balance_entry(sender, instance, created, **kwargs):
-    """إنشاء حركة افتتاحية (BankTransaction) عند إنشاء حساب بنكي إذا كان هناك رصيد افتتاحي"""
+    """إنشاء قيد محاسبي للرصيد الافتتاحي عند إنشاء حساب بنكي - متوافق مع IFRS"""
+    
+    # التحقق من أن هذا حساب جديد وليس تحديث
+    if not created:
+        return
+    
+    # التحقق من وجود رصيد افتتاحي
+    if not instance.initial_balance or instance.initial_balance == 0:
+        return
+    
+    # التحقق من وجود علم لتعطيل Signal (لتجنب التكرار عند الإنشاء من View)
+    if hasattr(instance, '_skip_opening_balance_signal') and instance._skip_opening_balance_signal:
+        print(f"DEBUG: تخطي Signal للحساب {instance.name} - سيتم إنشاء القيد من View")
+        return
+
     if created and instance.initial_balance and instance.initial_balance != 0:
-        # التحقق من عدم وجود معاملة افتتاحية بالفعل لتجنب التكرار
-        existing_transaction = BankTransaction.objects.filter(
-            bank=instance,
-            reference_number=f'OPENING-{instance.id}'
+        # التحقق من عدم وجود قيد افتتاحي بالفعل لتجنب التكرار المطلق
+        from journal.models import JournalEntry
+        existing_entry = JournalEntry.objects.filter(
+            reference_type='bank_initial',
+            reference_id=instance.id
         ).exists()
 
-        if existing_transaction:
-            print(f"⚠ تم العثور على معاملة افتتاحية موجودة بالفعل للحساب {instance.name}، تم تخطي الإنشاء")
+        if existing_entry:
+            print(f"⚠ تم العثور على قيد افتتاحي موجود بالفعل للحساب {instance.name}، تم تخطي الإنشاء")
             return
 
         try:
-            # إنشاء حركة بنكية افتتاحية بدلاً من إنشاء قيد محاسبي يدوي
-            amount = instance.initial_balance
-            transaction_type = 'deposit' if amount > 0 else 'withdrawal'
-            amount = abs(amount)
-
-            try:
-                entry_date = instance.created_at.date()
-            except Exception:
-                from django.utils import timezone
-                entry_date = timezone.now().date()
-
-            bt = BankTransaction.objects.create(
-                bank=instance,
-                transaction_type=transaction_type,
-                amount=amount,
-                description=f'رصيد افتتاحي لحساب {instance.name}',
-                reference_number=f'OPENING-{instance.id}',
-                date=entry_date,
-                is_opening_balance=True,  # تحديد أن هذه معاملة رصيد افتتاحي
-                created_by=instance.created_by
-            )
-
-            # تسجيل النشاط
-            user = get_current_user() or instance.created_by
-            if user:
-                log_activity(user, 'CREATE', bt, f'إنشاء حركة رصيد افتتاحي لحساب {instance.name} بقيمة {amount}')
-
-            print(f"✓ تم إنشاء حركة افتتاحية للحساب {instance.name}: {amount} ({transaction_type})")
+            from journal.services import JournalService
+            from journal.models import Account
+            from decimal import Decimal
+            
+            # إنشاء الحساب الفرعي في journal.Account
+            bank_account_obj = JournalService.get_or_create_bank_account(instance)
+            
+            # الحصول على حساب رأس المال (IFRS: IAS 1 - Opening balance is equity)
+            capital_account = Account.objects.filter(code='301').first()
+            
+            if not capital_account:
+                print(f"⚠ حساب رأس المال (301) غير موجود - لا يمكن إنشاء قيد الرصيد الافتتاحي")
+                return
+            
+            if bank_account_obj and instance.initial_balance > 0:
+                lines_data = [
+                    {
+                        'account_id': bank_account_obj.id,
+                        'debit': instance.initial_balance,
+                        'credit': Decimal('0'),
+                        'description': f'رصيد افتتاحي: {instance.name}'
+                    },
+                    {
+                        'account_id': capital_account.id,
+                        'debit': Decimal('0'),
+                        'credit': instance.initial_balance,
+                        'description': f'رصيد افتتاحي - مساهمة رأس المال - {instance.name}'
+                    }
+                ]
+                
+                # الحصول على تاريخ الإنشاء
+                try:
+                    entry_date = instance.created_at.date()
+                except Exception:
+                    from django.utils import timezone
+                    entry_date = timezone.now().date()
+                
+                # إنشاء القيد المحاسبي
+                journal_entry = JournalService.create_journal_entry(
+                    entry_date=entry_date,
+                    description=f'رصيد افتتاحي - حساب بنكي: {instance.name}',
+                    reference_type='bank_initial',
+                    reference_id=instance.id,
+                    lines_data=lines_data,
+                    user=instance.created_by
+                )
+                
+                print(f"✓ تم إنشاء قيد الرصيد الافتتاحي {journal_entry.entry_number} للحساب {instance.name} بقيمة {instance.initial_balance}")
+                
+                # تسجيل النشاط
+                user = get_current_user() or instance.created_by
+                if user:
+                    log_activity(user, 'CREATE', journal_entry, f'إنشاء قيد رصيد افتتاحي للحساب البنكي {instance.name} بقيمة {instance.initial_balance}')
 
         except Exception as e:
-            print(f"❌ خطأ في إنشاء الحركة الافتتاحية للحساب {instance.name}: {e}")
+            print(f"❌ خطأ في إنشاء القيد الافتتاحي للحساب {instance.name}: {e}")
             import traceback
             traceback.print_exc()

@@ -186,57 +186,83 @@ class BankAccountCreateView(LoginRequiredMixin, View):
             from django.db import transaction as db_transaction
             
             with db_transaction.atomic():
-                account = BankAccount.objects.create(
+                # تعيين علم لمنع Signal من إنشاء قيد مكرر
+                # سننشئ القيد هنا في الـ View لضمان التحكم الكامل
+                will_create_opening_entry = balance > 0
+                
+                account = BankAccount(
                     name=name,
                     bank_name=bank_name,
                     account_number=account_number,
                     iban=iban,
                     swift_code=swift_code,
                     balance=balance,
-                    currency=currency_code,  # CharField
+                    initial_balance=balance,  # تعيين الرصيد الافتتاحي
+                    currency=currency_code,
                     is_active=is_active,
                     notes=notes,
                     created_by=request.user if request.user.is_authenticated else None
                 )
                 
+                # تعيين علم لمنع Signal من إنشاء قيد مكرر
+                if will_create_opening_entry:
+                    account._skip_opening_balance_signal = True
+                
+                account.save()
+                
+                # إنشاء الحساب الفرعي في journal.Account دائماً
+                bank_account_obj = JournalService.get_or_create_bank_account(account)
+                
                 # إنشاء قيد محاسبي للرصيد الافتتاحي إذا كان أكبر من صفر
-                # متوافق مع IFRS - يتم استخدام حساب رأس المال فقط للرصيد الافتتاحي
+                # متوافق مع IFRS - يتم استخدام حساب رأس المال للرصيد الافتتاحي (IAS 1)
                 if balance > 0:
-                    try:
-                        from accounts.models import Account
-                        bank_account_obj = JournalService.get_or_create_bank_account(account)
-                        
-                        # استخدام حساب رأس المال للرصيد الافتتاحي فقط (IFRS IAS 1)
-                        # الرصيد الافتتاحي يعتبر مساهمة من رأس المال
-                        capital_account = Account.objects.filter(code='301').first()
-                        
-                        if bank_account_obj and capital_account:
-                            lines_data = [
-                                {
-                                    'account_id': bank_account_obj.id,
-                                    'debit': balance,
-                                    'credit': Decimal('0'),
-                                    'description': f'{_("Opening Balance")}: {account.name}'
-                                },
-                                {
-                                    'account_id': capital_account.id,
-                                    'debit': Decimal('0'),
-                                    'credit': balance,
-                                    'description': f'{_("Opening Balance - Capital Contribution")} - {account.name}'
-                                }
-                            ]
+                    # التحقق من عدم وجود قيد افتتاحي بالفعل لهذا الحساب
+                    from journal.models import JournalEntry
+                    existing_entry = JournalEntry.objects.filter(
+                        reference_type='bank_initial',
+                        reference_id=account.id
+                    ).exists()
+                    
+                    if existing_entry:
+                        print(f"⚠ قيد الرصيد الافتتاحي موجود بالفعل للحساب {account.name}، تم تخطي الإنشاء")
+                    else:
+                        try:
+                            from journal.models import Account
                             
-                            journal_entry = JournalService.create_journal_entry(
-                                entry_date=timezone.now().date(),
-                                description=f'{_("Opening Balance - Bank Account")}: {account.name}',
-                                reference_type='bank_initial',
-                                reference_id=account.id,
-                                lines_data=lines_data,
-                                user=request.user
-                            )
-                    except Exception as e:
-                        # لا نريد إيقاف العملية إذا فشل إنشاء القيد
-                        print(f"خطأ في إنشاء القيد المحاسبي للرصيد الافتتاحي: {e}")
+                            # استخدام حساب رأس المال للرصيد الافتتاحي (IFRS IAS 1)
+                            # الرصيد الافتتاحي يمثل مساهمة في رأس المال
+                            capital_account = Account.objects.filter(code='301').first()
+                            
+                            if bank_account_obj and capital_account:
+                                lines_data = [
+                                    {
+                                        'account_id': bank_account_obj.id,
+                                        'debit': balance,
+                                        'credit': Decimal('0'),
+                                        'description': f'{_("Opening Balance")}: {account.name}'
+                                    },
+                                    {
+                                        'account_id': capital_account.id,
+                                        'debit': Decimal('0'),
+                                        'credit': balance,
+                                        'description': f'{_("Opening Balance - Capital Contribution")} - {account.name}'
+                                    }
+                                ]
+                                
+                                journal_entry = JournalService.create_journal_entry(
+                                    entry_date=timezone.now().date(),
+                                    description=f'{_("Opening Balance - Bank Account")}: {account.name}',
+                                    reference_type='bank_initial',
+                                    reference_id=account.id,
+                                    lines_data=lines_data,
+                                    user=request.user
+                                )
+                                print(f"✓ تم إنشاء قيد الرصيد الافتتاحي {journal_entry.entry_number} للحساب {account.name}")
+                        except Exception as e:
+                            # لا نريد إيقاف العملية إذا فشل إنشاء القيد
+                            print(f"خطأ في إنشاء القيد المحاسبي للرصيد الافتتاحي: {e}")
+                            import traceback
+                            traceback.print_exc()
 
             # Log activity in activity log
             log_user_activity(
@@ -1546,8 +1572,12 @@ class BankAccountTransactionsView(LoginRequiredMixin, TemplateView):
         
         # حساب الرصيد المتراكم لكل حركة
         from decimal import Decimal
-        running_balance = account.initial_balance or Decimal('0')
+        running_balance = account.initial_balance
         for transaction in transactions:
+            # للمعاملات الافتتاحية، الرصيد المتراكم هو قيمة المعاملة نفسها
+            if transaction.is_opening_balance:
+                transaction.running_balance = transaction.amount
+                continue
             # حساب الرصيد المتراكم بناءً على نوع المعاملة
             if transaction.transaction_type == 'deposit':
                 running_balance += transaction.amount

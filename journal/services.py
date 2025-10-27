@@ -1044,7 +1044,8 @@ class JournalService:
                     defaults={
                         'name': f'البنك - {bank.name}',
                         'account_type': 'asset',
-                        'description': f'حساب البنك {bank.name}'
+                        'description': f'حساب البنك {bank.name}',
+                        'bank_account': bank
                     }
                 )
                 return account

@@ -1278,6 +1278,28 @@ def save_backup_as_xlsx(backup_content, filepath):
     try:
         logger.info(f"بدء حفظ النسخة الاحتياطية كـ XLSX: {filepath}")
         
+        # تسجيل معلومات مفصلة عن البيانات الواردة
+        data = backup_content.get('data', {})
+        total_apps = len(data)
+        total_models = sum(len(app_data) for app_data in data.values())
+        total_records = sum(
+            len(model_data) if isinstance(model_data, list) else 0
+            for app_data in data.values()
+            for model_data in app_data.values()
+        )
+        
+        logger.info(f"إحصائيات البيانات الواردة - تطبيقات: {total_apps}, نماذج: {total_models}, سجلات: {total_records}")
+        
+        # تسجيل تفاصيل كل تطبيق
+        for app_name, app_data in data.items():
+            app_records = sum(len(model_data) if isinstance(model_data, list) else 0 for model_data in app_data.values())
+            logger.info(f"تطبيق {app_name}: {len(app_data)} نموذج، {app_records} سجل")
+            for model_name, model_data in app_data.items():
+                if isinstance(model_data, list):
+                    logger.info(f"  نموذج {model_name}: {len(model_data)} سجل")
+                    if len(model_data) > 0 and isinstance(model_data[0], dict):
+                        logger.info(f"    عينة من البيانات: pk={model_data[0].get('pk')}, fields={list(model_data[0].get('fields', {}).keys())}")
+        
         workbook = Workbook()
         
         # حذف الورقة الافتراضية
@@ -1303,9 +1325,15 @@ def save_backup_as_xlsx(backup_content, filepath):
         sheet_count = 0
         used_sheet_names = set()  # تتبع الأسماء المستخدمة
         
+        logger.info(f"بدء إنشاء الأوراق - عدد التطبيقات: {len(data)}")
+        
         for app_name, app_data in data.items():
+            logger.info(f"معالجة تطبيق: {app_name} - عدد النماذج: {len(app_data)}")
             for model_name, model_data in app_data.items():
+                logger.info(f"معالجة نموذج: {model_name} - نوع البيانات: {type(model_data)} - عدد العناصر: {len(model_data) if isinstance(model_data, list) else 'غير قائمة'}")
+                
                 if isinstance(model_data, list):  # إزالة شرط التحقق من أن القائمة غير فارغة
+                    logger.info(f"إنشاء ورقة للنموذج: {app_name}.{model_name}")
                     try:
                         # تنظيف اسم ورقة العمل لضمان التوافق مع Excel
                         raw_sheet_name = f"{app_name}_{model_name}"
@@ -1327,6 +1355,8 @@ def save_backup_as_xlsx(backup_content, filepath):
                         sheet = workbook.create_sheet(title=sheet_name)
                         sheet_count += 1
                         
+                        logger.info(f"تم إنشاء ورقة العمل: {sheet_name} - عدد السجلات: {len(model_data)}")
+                        
                         if len(model_data) > 0:
                             # كتابة الرؤوس
                             first_record = model_data[0]
@@ -1340,6 +1370,8 @@ def save_backup_as_xlsx(backup_content, filepath):
                                     filtered_fields[field_name] = field_value
                                 
                                 headers = ['ID'] + list(filtered_fields.keys())
+                                logger.info(f"كتابة الرؤوس للورقة {sheet_name}: {headers}")
+                                
                                 for col, header in enumerate(headers, 1):
                                     # تنظيف اسم العمود
                                     clean_header = str(header) if header else f'Column_{col}'
@@ -1350,10 +1382,14 @@ def save_backup_as_xlsx(backup_content, filepath):
                                     sheet.cell(row=1, column=col, value=clean_header)
                                 
                                 # كتابة البيانات
+                                logger.info(f"بدء كتابة {len(model_data)} سجل للورقة {sheet_name}")
                                 for row_idx, record in enumerate(model_data, 2):
                                     if isinstance(record, dict):
-                                        sheet.cell(row=row_idx, column=1, value=record.get('pk', ''))
+                                        pk_value = record.get('pk', '')
+                                        sheet.cell(row=row_idx, column=1, value=str(pk_value))
                                         record_fields = record.get('fields', {})
+                                        
+                                        logger.debug(f"كتابة السجل {row_idx-1}: pk={pk_value}, fields={list(record_fields.keys())}")
                                         
                                         # فلترة الحقول المحذوفة قبل الكتابة
                                         filtered_record_fields = {}
@@ -1405,8 +1441,26 @@ def save_backup_as_xlsx(backup_content, filepath):
                         continue
         
         # حفظ الملف
+        logger.info(f"بدء حفظ الملف: {filepath}")
         workbook.save(filepath)
-        logger.info(f"تم حفظ النسخة الاحتياطية XLSX بنجاح: {filepath} - تم إنشاء {sheet_count} ورقة عمل")
+        
+        # التحقق من حفظ الملف
+        if os.path.exists(filepath):
+            file_size = os.path.getsize(filepath)
+            logger.info(f"تم حفظ النسخة الاحتياطية XLSX بنجاح: {filepath} - الحجم: {file_size} بايت - تم إنشاء {sheet_count} ورقة عمل")
+            
+            # تسجيل معلومات إضافية عن الأوراق
+            sheet_names = workbook.sheetnames
+            logger.info(f"أسماء الأوراق المحفوظة: {sheet_names}")
+            
+            # قراءة أول ورقة للتحقق
+            if len(sheet_names) > 1:  # أول ورقة هي Backup Info
+                first_data_sheet = workbook[sheet_names[1]]
+                row_count = first_data_sheet.max_row
+                col_count = first_data_sheet.max_column
+                logger.info(f"عينة من أول ورقة بيانات ({sheet_names[1]}): {row_count} صف، {col_count} عمود")
+        else:
+            logger.error(f"فشل في حفظ الملف: {filepath} غير موجود بعد الحفظ")
         
     except Exception as e:
         logger.error(f"خطأ في حفظ النسخة الاحتياطية كـ XLSX: {str(e)}")
@@ -2109,38 +2163,10 @@ def perform_backup_restore(backup_data, clear_data=False, user=None):
                                                 logger.debug(f"⚠️ entry_number مكرر: {entry_number}، سيتم توليد رقم جديد")
                                                 record_data.pop('entry_number', None)
                                     elif model._meta.label == 'journal.Account':
-                                        # 🔧 معالجة خاصة للحسابات: التأكد من وجود parent account
-                                        parent_id = record_data.get('parent')
-                                        if parent_id:
-                                            from journal.models import Account
-                                            if not Account.objects.filter(pk=parent_id).exists():
-                                                # Parent account غير موجود، ابحث عن حساب بديل
-                                                account_code = record_data.get('code', '')
-                                                
-                                                # محاولة استخراج parent code من account code (مثل 101 من 10101)
-                                                if account_code and len(account_code) > 2:
-                                                    potential_parent_codes = []
-                                                    # جرب إزالة الأرقام من النهاية تدريجياً
-                                                    for i in range(len(account_code)-1, 1, -1):
-                                                        potential_code = account_code[:i]
-                                                        if potential_code and potential_code != account_code:
-                                                            potential_parent_codes.append(potential_code)
-                                                    
-                                                    # ابحث عن أول parent code موجود
-                                                    for parent_code in potential_parent_codes:
-                                                        parent_account = Account.objects.filter(code=parent_code).first()
-                                                        if parent_account:
-                                                            record_data['parent'] = parent_account.pk
-                                                            logger.info(f"✅ تم إصلاح parent للحساب {account_code}: {parent_code} → {parent_account.pk}")
-                                                            break
-                                                    else:
-                                                        # لم نجد parent مناسب، نعين None
-                                                        record_data['parent'] = None
-                                                        logger.warning(f"⚠️ لم يتم العثور على parent account مناسب للحساب {account_code}, تم تعيين parent=None")
-                                                else:
-                                                    # لا يمكن تحديد parent، نعين None
-                                                    record_data['parent'] = None
-                                                    logger.warning(f"⚠️ لا يمكن تحديد parent account للحساب {account_code}, تم تعيين parent=None")
+                                        # 🔧 معالجة خاصة للحسابات: نترك parent كما هو
+                                        # سيتم التعامل مع parent من خلال معالجة FK العادية
+                                        # إذا كان parent غير موجود وكان الحقل nullable، سيُعين None تلقائياً
+                                        pass
                                     
                                     # تنظيف البيانات من الحقول غير الموجودة في النموذج
                                     model_field_names = [f.name for f in model._meta.get_fields()]

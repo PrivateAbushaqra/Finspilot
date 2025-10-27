@@ -8,6 +8,14 @@ import logging
 User = get_user_model()
 logger = logging.getLogger(__name__)
 
+# استيراد دالة التحقق من حالة الاستعادة
+try:
+    from backup.restore_context import is_restoring
+except ImportError:
+    # في حالة عدم توفر الوحدة، نفترض أننا لسنا في وضع الاستعادة
+    def is_restoring():
+        return False
+
 
 @receiver(post_save, sender='sales.SalesInvoice')
 def create_sales_invoice_journal_entry(sender, instance, created, **kwargs):
@@ -16,6 +24,10 @@ def create_sales_invoice_journal_entry(sender, instance, created, **kwargs):
     - عند الإنشاء: نُنشئ قيد المبيعات وCOGS.
     - عند التعديل: نُحدّث القيد الموجود إذا وُجد، أو نُنشئه إذا كان مفقوداً.
     """
+    # تجاهل أثناء استعادة النسخة الاحتياطية
+    if is_restoring():
+        return
+    
     try:
         # البحث عن المستخدم الذي أنشأ/عدّل الفاتورة
         user = getattr(instance, 'created_by', None)
@@ -41,6 +53,11 @@ def create_purchase_invoice_journal_entry(sender, instance, created, **kwargs):
     # ⚠️ تم تعطيل هذه الإشارة لتجنب التداخل مع purchases/signals.py
     # القيود المحاسبية لفواتير المشتريات تُدار من purchases/signals.py
     return
+    
+    # تجاهل أثناء استعادة النسخة الاحتياطية
+    if is_restoring():
+        return
+    
     if created and instance.id:
         try:
             user = getattr(instance, 'created_by', None)
@@ -54,6 +71,10 @@ def create_purchase_invoice_journal_entry(sender, instance, created, **kwargs):
 @receiver(post_save, sender='receipts.PaymentReceipt')
 def create_receipt_voucher_journal_entry(sender, instance, created, **kwargs):
     """إنشاء قيد محاسبي تلقائياً عند إنشاء سند قبض"""
+    # تجاهل أثناء استعادة النسخة الاحتياطية
+    if is_restoring():
+        return
+    
     if created and instance.id:
         try:
             user = getattr(instance, 'created_by', None)
@@ -67,6 +88,10 @@ def create_receipt_voucher_journal_entry(sender, instance, created, **kwargs):
 @receiver(post_save, sender='payments.PaymentVoucher')
 def create_payment_voucher_journal_entry(sender, instance, created, **kwargs):
     """إنشاء قيد محاسبي تلقائياً عند إنشاء سند صرف"""
+    # تجاهل أثناء استعادة النسخة الاحتياطية
+    if is_restoring():
+        return
+    
     if created and instance.id:
         try:
             user = getattr(instance, 'created_by', None)
@@ -86,6 +111,10 @@ def create_purchase_return_journal_entry(sender, instance, created, **kwargs):
     # الحل: القيد يُنشأ في purchases/views.py -> PurchaseReturnCreateView.form_valid()
     return
     
+    # تجاهل أثناء استعادة النسخة الاحتياطية
+    if is_restoring():
+        return
+    
     if created and instance.id:
         try:
             user = getattr(instance, 'created_by', None)
@@ -99,6 +128,10 @@ def create_purchase_return_journal_entry(sender, instance, created, **kwargs):
 @receiver(post_save, sender='purchases.PurchaseDebitNote')
 def create_purchase_debit_note_journal_entry(sender, instance, created, **kwargs):
     """إنشاء قيد محاسبي تلقائياً عند إنشاء إشعار مدين للمشتريات"""
+    # تجاهل أثناء استعادة النسخة الاحتياطية
+    if is_restoring():
+        return
+    
     if created and instance.id:
         try:
             user = getattr(instance, 'created_by', None)
@@ -112,6 +145,10 @@ def create_purchase_debit_note_journal_entry(sender, instance, created, **kwargs
 @receiver(post_delete, sender='sales.SalesInvoice')
 def delete_sales_invoice_journal_entry(sender, instance, **kwargs):
     """حذف القيد المحاسبي تلقائياً عند حذف فاتورة مبيعات"""
+    # تجاهل أثناء استعادة النسخة الاحتياطية
+    if is_restoring():
+        return
+    
     try:
         JournalService.delete_journal_entry_by_reference('sales_invoice', instance.id)
         logger.info(f"تم حذف القيد المحاسبي لفاتورة المبيعات {instance.invoice_number}")
@@ -122,6 +159,10 @@ def delete_sales_invoice_journal_entry(sender, instance, **kwargs):
 @receiver(post_delete, sender='purchases.PurchaseInvoice')
 def delete_purchase_invoice_journal_entry(sender, instance, **kwargs):
     """حذف القيد المحاسبي تلقائياً عند حذف فاتورة مشتريات"""
+    # تجاهل أثناء استعادة النسخة الاحتياطية
+    if is_restoring():
+        return
+    
     try:
         JournalService.delete_journal_entry_by_reference('purchase_invoice', instance.id)
         logger.info(f"تم حذف القيد المحاسبي لفاتورة المشتريات {instance.invoice_number}")
@@ -132,6 +173,10 @@ def delete_purchase_invoice_journal_entry(sender, instance, **kwargs):
 @receiver(post_delete, sender='receipts.PaymentReceipt')
 def delete_receipt_voucher_journal_entry(sender, instance, **kwargs):
     """حذف القيد المحاسبي تلقائياً عند حذف سند قبض"""
+    # تجاهل أثناء استعادة النسخة الاحتياطية
+    if is_restoring():
+        return
+    
     try:
         JournalService.delete_journal_entry_by_reference('receipt_voucher', instance.id)
         logger.info(f"تم حذف القيد المحاسبي لسند القبض {instance.receipt_number}")
@@ -142,6 +187,10 @@ def delete_receipt_voucher_journal_entry(sender, instance, **kwargs):
 @receiver(post_delete, sender='payments.PaymentVoucher')
 def delete_payment_voucher_journal_entry(sender, instance, **kwargs):
     """حذف القيد المحاسبي تلقائياً عند حذف سند صرف"""
+    # تجاهل أثناء استعادة النسخة الاحتياطية
+    if is_restoring():
+        return
+    
     try:
         JournalService.delete_journal_entry_by_reference('payment_voucher', instance.id)
         logger.info(f"تم حذف القيد المحاسبي لسند الصرف {instance.voucher_number}")
@@ -152,6 +201,10 @@ def delete_payment_voucher_journal_entry(sender, instance, **kwargs):
 @receiver(post_delete, sender='sales.SalesReturn')
 def delete_sales_return_journal_entry(sender, instance, **kwargs):
     """حذف القيد المحاسبي تلقائياً عند حذف مردود مبيعات"""
+    # تجاهل أثناء استعادة النسخة الاحتياطية
+    if is_restoring():
+        return
+    
     try:
         JournalService.delete_journal_entry_by_reference('sales_return', instance.id)
         logger.info(f"تم حذف القيد المحاسبي لمردود المبيعات {instance.return_number}")
@@ -162,6 +215,10 @@ def delete_sales_return_journal_entry(sender, instance, **kwargs):
 @receiver(post_delete, sender='purchases.PurchaseReturn')
 def delete_purchase_return_journal_entry(sender, instance, **kwargs):
     """حذف القيد المحاسبي تلقائياً عند حذف مردود مشتريات"""
+    # تجاهل أثناء استعادة النسخة الاحتياطية
+    if is_restoring():
+        return
+    
     try:
         JournalService.delete_journal_entry_by_reference('purchase_return', instance.id)
         logger.info(f"تم حذف القيد المحاسبي لمردود المشتريات {instance.return_number}")
@@ -175,6 +232,11 @@ def create_bank_transfer_journal_entry(sender, instance, created, **kwargs):
     # تم تعطيل هذا الإشارة لأن القيد يتم إنشاؤه يدوياً في banks/views.py
     # لتجنب إنشاء قيدين لنفس التحويل
     return
+    
+    # تجاهل أثناء استعادة النسخة الاحتياطية
+    if is_restoring():
+        return
+    
     if created and instance.id:
         try:
             user = getattr(instance, 'created_by', None)
@@ -188,6 +250,10 @@ def create_bank_transfer_journal_entry(sender, instance, created, **kwargs):
 @receiver(post_delete, sender='banks.BankTransfer')
 def delete_bank_transfer_journal_entry(sender, instance, **kwargs):
     """حذف القيد المحاسبي تلقائياً عند حذف تحويل بنكي"""
+    # تجاهل أثناء استعادة النسخة الاحتياطية
+    if is_restoring():
+        return
+    
     try:
         JournalService.delete_journal_entry_by_reference('bank_transfer', instance.id)
         logger.info(f"تم حذف القيد المحاسبي للتحويل البنكي {instance.transfer_number}")
@@ -199,6 +265,10 @@ def delete_bank_transfer_journal_entry(sender, instance, **kwargs):
 @receiver(post_save, sender='revenues_expenses.RevenueExpenseEntry')
 def create_revenue_expense_journal_entry(sender, instance, created, **kwargs):
     """إنشاء قيد محاسبي تلقائياً عند إنشاء قيد إيراد أو مصروف"""
+    # تجاهل أثناء استعادة النسخة الاحتياطية
+    if is_restoring():
+        return
+    
     if created and instance.id:
         try:
             user = getattr(instance, 'created_by', None)
@@ -255,6 +325,10 @@ def create_revenue_expense_journal_entry(sender, instance, created, **kwargs):
 @receiver(post_delete, sender='revenues_expenses.RevenueExpenseEntry')
 def delete_revenue_expense_journal_entry(sender, instance, **kwargs):
     """حذف القيد المحاسبي تلقائياً عند حذف قيد إيراد أو مصروف"""
+    # تجاهل أثناء استعادة النسخة الاحتياطية
+    if is_restoring():
+        return
+    
     try:
         JournalService.delete_journal_entry_by_reference('revenue_expense', instance.id)
         logger.info(f"تم حذف القيد المحاسبي لقيد الإيراد/المصروف {instance.id}")
@@ -266,6 +340,10 @@ def delete_revenue_expense_journal_entry(sender, instance, **kwargs):
 @receiver(post_save, sender='assets_liabilities.Asset')
 def create_asset_journal_entry(sender, instance, created, **kwargs):
     """إنشاء قيد محاسبي تلقائياً عند إنشاء أصل جديد"""
+    # تجاهل أثناء استعادة النسخة الاحتياطية
+    if is_restoring():
+        return
+    
     if created and instance.id and instance.purchase_cost:
         try:
             user = getattr(instance, 'created_by', None)
@@ -304,6 +382,10 @@ def create_asset_journal_entry(sender, instance, created, **kwargs):
 @receiver(post_delete, sender='assets_liabilities.Asset')
 def delete_asset_journal_entry(sender, instance, **kwargs):
     """حذف القيد المحاسبي تلقائياً عند حذف أصل"""
+    # تجاهل أثناء استعادة النسخة الاحتياطية
+    if is_restoring():
+        return
+    
     try:
         JournalService.delete_journal_entry_by_reference('asset_purchase', instance.id)
         logger.info(f"تم حذف القيد المحاسبي للأصل {instance.name}")
@@ -315,6 +397,10 @@ def delete_asset_journal_entry(sender, instance, **kwargs):
 @receiver(post_save, sender='assets_liabilities.Liability')
 def create_liability_journal_entry(sender, instance, created, **kwargs):
     """إنشاء قيد محاسبي تلقائياً عند إنشاء التزام جديد"""
+    # تجاهل أثناء استعادة النسخة الاحتياطية
+    if is_restoring():
+        return
+    
     if created and instance.id and instance.original_amount:
         try:
             user = getattr(instance, 'created_by', None)
@@ -357,6 +443,10 @@ def create_liability_journal_entry(sender, instance, created, **kwargs):
 @receiver(post_delete, sender='assets_liabilities.Liability')
 def delete_liability_journal_entry(sender, instance, **kwargs):
     """حذف القيد المحاسبي تلقائياً عند حذف التزام"""
+    # تجاهل أثناء استعادة النسخة الاحتياطية
+    if is_restoring():
+        return
+    
     try:
         JournalService.delete_journal_entry_by_reference('liability', instance.id)
         logger.info(f"تم حذف القيد المحاسبي للالتزام {instance.description}")
@@ -368,6 +458,10 @@ def delete_liability_journal_entry(sender, instance, **kwargs):
 @receiver(post_save, sender='assets_liabilities.DepreciationEntry')
 def create_depreciation_journal_entry(sender, instance, created, **kwargs):
     """إنشاء قيد محاسبي تلقائياً عند إنشاء قيد إهلاك"""
+    # تجاهل أثناء استعادة النسخة الاحتياطية
+    if is_restoring():
+        return
+    
     if created and instance.id and instance.depreciation_amount:
         try:
             user = getattr(instance, 'created_by', None)
@@ -407,6 +501,10 @@ def create_depreciation_journal_entry(sender, instance, created, **kwargs):
 @receiver(post_delete, sender='assets_liabilities.DepreciationEntry')
 def delete_depreciation_journal_entry(sender, instance, **kwargs):
     """حذف القيد المحاسبي تلقائياً عند حذف قيد إهلاك"""
+    # تجاهل أثناء استعادة النسخة الاحتياطية
+    if is_restoring():
+        return
+    
     try:
         JournalService.delete_journal_entry_by_reference('depreciation', instance.id)
         logger.info(f"تم حذف القيد المحاسبي لإهلاك {instance.asset.name if instance.asset else 'غير محدد'}")
@@ -418,6 +516,10 @@ def delete_depreciation_journal_entry(sender, instance, **kwargs):
 @receiver(post_save, sender='cashboxes.CashboxTransfer')
 def create_cashbox_transfer_journal_entry(sender, instance, created, **kwargs):
     """إنشاء قيد محاسبي تلقائياً عند إنشاء تحويل صندوق"""
+    # تجاهل أثناء استعادة النسخة الاحتياطية
+    if is_restoring():
+        return
+    
     if created and instance.id:
         try:
             user = getattr(instance, 'created_by', None)
@@ -447,6 +549,10 @@ def create_cashbox_transfer_journal_entry(sender, instance, created, **kwargs):
 @receiver(post_delete, sender='cashboxes.CashboxTransfer')
 def delete_cashbox_transfer_journal_entry(sender, instance, **kwargs):
     """حذف القيد المحاسبي تلقائياً عند حذف تحويل صندوق"""
+    # تجاهل أثناء استعادة النسخة الاحتياطية
+    if is_restoring():
+        return
+    
     try:
         JournalService.delete_journal_entry_by_reference('cashbox_transfer', instance.id)
         logger.info(f"تم حذف القيد المحاسبي للتحويل {instance.transfer_number}")
@@ -458,6 +564,10 @@ def delete_cashbox_transfer_journal_entry(sender, instance, **kwargs):
 @receiver(post_save, sender='journal.JournalLine')
 def update_account_balance_on_save(sender, instance, **kwargs):
     """تحديث رصيد الحساب عند حفظ بند قيد محاسبي"""
+    # تجاهل أثناء استعادة النسخة الاحتياطية
+    if is_restoring():
+        return
+    
     try:
         old_balance = instance.account.balance
         instance.account.update_account_balance()
@@ -535,6 +645,10 @@ def update_account_balance_on_save(sender, instance, **kwargs):
 @receiver(post_delete, sender='journal.JournalLine')
 def update_account_balance_on_delete(sender, instance, **kwargs):
     """تحديث رصيد الحساب عند حذف بند قيد محاسبي"""
+    # تجاهل أثناء استعادة النسخة الاحتياطية
+    if is_restoring():
+        return
+    
     try:
         old_balance = instance.account.balance
         instance.account.update_account_balance()
@@ -681,7 +795,7 @@ def create_bank_transaction_from_journal_line(journal_line):
         from banks.models import BankAccount, BankTransaction
         
         # تجاهل القيود التي تم إنشاء معاملاتها يدوياً
-        ignored_reference_types = ['cashbox_transfer', 'bank_transfer']
+        ignored_reference_types = ['cashbox_transfer', 'bank_transfer', 'bank_initial', 'bank_adjustment']
         if journal_line.journal_entry.reference_type in ignored_reference_types:
             logger.debug(f"تجاهل إنشاء معاملة بنك من القيد {journal_line.journal_entry.entry_number} - النوع: {journal_line.journal_entry.reference_type} (تم إنشاء المعاملة يدوياً)")
             return
@@ -926,6 +1040,10 @@ def log_account_creation(sender, instance, created, **kwargs):
     """
     تسجيل إنشاء أو تحديث الحساب في سجل الأنشطة
     """
+    # تجاهل أثناء استعادة النسخة الاحتياطية
+    if is_restoring():
+        return
+    
     try:
         from core.signals import log_activity
         from core.middleware import get_current_user
@@ -949,6 +1067,10 @@ def log_account_deletion(sender, instance, **kwargs):
     """
     تسجيل حذف الحساب في سجل الأنشطة
     """
+    # تجاهل أثناء استعادة النسخة الاحتياطية
+    if is_restoring():
+        return
+    
     try:
         from core.signals import log_activity
         from core.middleware import get_current_user
@@ -965,6 +1087,10 @@ def create_bank_transfer_from_journal_entry(sender, instance, created, **kwargs)
     """
     إنشاء BankTransfer تلقائياً عند إنشاء قيد محاسبي يمثل تحويلاً بين حسابات بنكية
     """
+    # تجاهل أثناء استعادة النسخة الاحتياطية
+    if is_restoring():
+        return
+    
     if not created:
         return  # فقط للقيود الجديدة
 

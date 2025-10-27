@@ -24,10 +24,14 @@ class AccountForm(forms.ModelForm):
         # تصفية الحسابات الرئيسية لتجنب الحلقات المفرغة
         if self.instance.pk:
             self.fields['parent'].queryset = Account.objects.filter(
-                is_active=True
-            ).exclude(pk=self.instance.pk)
+                is_active=True,
+                parent__isnull=True
+            ).exclude(pk=self.instance.pk).order_by('code')
         else:
-            self.fields['parent'].queryset = Account.objects.filter(is_active=True)
+            self.fields['parent'].queryset = Account.objects.filter(
+                is_active=True,
+                parent__isnull=True
+            ).order_by('code')
         
         # تصفية الحسابات البنكية
         from banks.models import BankAccount

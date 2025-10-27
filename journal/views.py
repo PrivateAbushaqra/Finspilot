@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.db.models import Q, Sum
 from django.db import transaction
 from django.utils.translation import gettext_lazy as _
+from django.utils.safestring import mark_safe
 from django.http import JsonResponse, HttpResponse
 from django.core.paginator import Paginator
 from decimal import Decimal
@@ -527,6 +528,45 @@ def journal_entry_create(request):
                     entry = form.save(commit=False)
                     entry.created_by = request.user
                     entry.total_amount = Decimal('0')
+                    
+                    # التحقق من البنود قبل الحفظ - فحص إذا كان القيد يمس حسابين بنكيين
+                    bank_accounts_touched = []
+                    for form_line in formset:
+                        if form_line.cleaned_data and not form_line.cleaned_data.get('DELETE', False):
+                            account = form_line.cleaned_data.get('account')
+                            if account and account.code.startswith('102'):  # حساب بنكي
+                                bank_accounts_touched.append(account)
+                    
+                    # إذا كان القيد يمس حسابين بنكيين أو أكثر، منع الحفظ تماماً
+                    if len(bank_accounts_touched) >= 2:
+                        error_msg = mark_safe(
+                            _('❌ خطأ: لا يمكن إنشاء قيد محاسبي يمس حسابين بنكيين أو أكثر. '
+                              'للقيام بتحويل بين حسابات بنكية، يجب استخدام صفحة التحويلات البنكية '
+                              '<a href="/ar/banks/transfers/add/" class="alert-link" target="_blank">من هنا</a>. '
+                              '<br><br>عند التحويل من خلال صفحة البنوك، سيتم إنشاء القيد المحاسبي تلقائياً '
+                              'وضمان انعكاس التحويل بشكل صحيح على جميع الأنظمة.')
+                        )
+                        messages.error(request, error_msg)
+                        # تسجيل في سجل الأنشطة
+                        try:
+                            from core.models import AuditLog
+                            AuditLog.objects.create(
+                                user=request.user,
+                                action_type='error',
+                                content_type='JournalEntry',
+                                description=f'محاولة إنشاء قيد محاسبي يمس {len(bank_accounts_touched)} حسابات بنكية - تم منع الحفظ'
+                            )
+                        except Exception:
+                            pass
+                        # إعادة عرض النموذج مع البيانات المدخلة
+                        context = {
+                            'form': form,
+                            'formset': formset,
+                            'accounts': Account.objects.filter(is_active=True).order_by('code'),
+                            'title': _('Create new journal entry')
+                        }
+                        return render(request, 'journal/entry_create.html', context)
+                    
                     entry.save()
 
                     # حفظ البنود يدوياً - استبعاد البنود الفارغة
