@@ -229,7 +229,7 @@ table.dataTable thead th.sorting:after {
                                 {% endif %}
                             </td>
                             <td>{{ transaction.description|truncatechars:60 }}</td>
-                            <td class="{% if transaction.amount > 0 %}text-success{% elif transaction.amount < 0 %}text-danger{% endif %}">
+                            <td class="{% if transaction.transaction_type == 'deposit' %}text-success{% else %}text-danger{% endif %}">
                                 {{ transaction.amount|floatformat:3 }}
                             </td>
                             <td class="{% if transaction.running_balance > 0 %}text-success{% elif transaction.running_balance < 0 %}text-danger{% else %}text-muted{% endif %}">

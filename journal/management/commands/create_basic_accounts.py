@@ -48,6 +48,9 @@ class Command(BaseCommand):
 
             # حقوق الملكية (Equity)
             {'code': '301', 'name': 'رأس المال', 'type': 'equity'},
+            {'code': '30101', 'name': 'رأس المال المصرح به', 'type': 'equity'},
+            {'code': '30102', 'name': 'رأس المال المدفوع', 'type': 'equity'},
+            {'code': '30103', 'name': 'مساهمات إضافية', 'type': 'equity'},
             {'code': '305', 'name': 'الأرباح المحتجزة', 'type': 'equity'},
             {'code': '3101', 'name': 'الأرباح والخسائر', 'type': 'equity'},
             {'code': '3102', 'name': 'صافي الربح أو الخسارة', 'type': 'equity'},

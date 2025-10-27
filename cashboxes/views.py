@@ -633,6 +633,26 @@ def transfer_create(request):
                 messages.error(request, _('Transfer number already exists! Please use another number.'))
                 return redirect('cashboxes:transfer_list')
         
+        # حماية من الطلبات المكررة - التحقق من وجود طلب مشابه في آخر 10 ثوان
+        from datetime import datetime, timedelta
+        current_time = datetime.now()
+        recent_time = current_time - timedelta(seconds=10)
+        
+        try:
+            amount_decimal = Decimal(str(amount))
+            recent_transfer = CashboxTransfer.objects.filter(
+                transfer_type=transfer_type,
+                amount=amount_decimal,
+                created_by=request.user,
+                created_at__gte=recent_time
+            ).first()
+            
+            if recent_transfer:
+                messages.warning(request, _('A similar transfer was created recently! Please check the transfer list.'))
+                return redirect('cashboxes:transfer_list')
+        except (ValueError, TypeError):
+            pass  # تجاهل أخطاء التحويل إذا حدثت
+        
         try:
             amount = Decimal(amount)
             fees = Decimal(fees or 0)
@@ -706,47 +726,8 @@ def transfer_create(request):
                         messages.error(request, _('Insufficient balance in the sender cashbox'))
                         return redirect('cashboxes:transfer_list')
                     
-                    # تحديث الأرصدة (لن يتم تحديثها مباشرة، بل من خلال المعاملات)
-                    # from_cashbox.balance -= amount  # سيتم تحديثه من خلال CashboxTransaction
-                    # to_cashbox.balance += amount  # سيتم تحديثه من خلال CashboxTransaction
-                    
-                    # إضافة الحركات
-                    CashboxTransaction.objects.create(
-                        cashbox=from_cashbox,
-                        transaction_type='transfer_out',
-                        date=date,
-                        amount=-amount,
-                        description=f'{description} - {_("Transfer to")} {to_cashbox.name}',
-                        related_transfer=transfer,
-                        reference_type='transfer',
-                        reference_id=transfer.id,
-                        created_by=request.user
-                    )
-                    
-                    CashboxTransaction.objects.create(
-                        cashbox=to_cashbox,
-                        transaction_type='transfer_in',
-                        date=date,
-                        amount=amount,
-                        description=f'{description} - {_("Transfer from")} {from_cashbox.name}',
-                        related_transfer=transfer,
-                        reference_type='transfer',
-                        reference_id=transfer.id,
-                        created_by=request.user
-                    )
-                    
-                    # تحديث الأرصدة من المعاملات
-                    from_cashbox.sync_balance()
-                    to_cashbox.sync_balance()
-                    
-                    # إنشاء قيد محاسبي للتحويل بين الصناديق
-                    try:
-                        from journal.services import JournalService
-                        journal_entry = JournalService.create_cashbox_transfer_entry(transfer, request.user)
-                        print(f"تم إنشاء القيد المحاسبي للتحويل: {journal_entry.entry_number}")
-                    except Exception as e:
-                        print(f"خطأ في إنشاء القيد المحاسبي: {e}")
-                        # يمكن الاستمرار لأن التحويل تم بنجاح
+                    # القيد المحاسبي ومعاملات الصناديق سيتم إنشاؤها تلقائياً من خلال الإشارة
+                    # لا حاجة لإنشائها يدوياً هنا
                 
                 elif transfer_type == 'cashbox_to_bank':
                     from_cashbox = get_object_or_404(Cashbox, id=from_cashbox_id)
@@ -757,47 +738,8 @@ def transfer_create(request):
                         messages.error(request, _('Insufficient balance in the cashbox'))
                         return redirect('cashboxes:transfer_list')
                     
-                    # تحديث الأرصدة (لن يتم تحديثها مباشرة، بل من خلال المعاملات)
-                    # from_cashbox.balance -= amount  # سيتم تحديثه من خلال CashboxTransaction
-                    # to_bank.balance += amount  # سيتم تحديثه من خلال BankTransaction
-                    
-                    # إضافة حركة الصندوق
-                    CashboxTransaction.objects.create(
-                        cashbox=from_cashbox,
-                        transaction_type='transfer_out',
-                        date=date,
-                        amount=-amount,
-                        description=f'{description} - {_("Transfer to Bank")} {to_bank.name}',
-                        related_transfer=transfer,
-                        reference_type='transfer',
-                        reference_id=transfer.id,
-                        created_by=request.user
-                    )
-                    
-                    # إضافة حركة البنك (مهم: لضمان تتبع المعاملات البنكية بشكل صحيح)
-                    from banks.models import BankTransaction
-                    BankTransaction.objects.create(
-                        bank=to_bank,
-                        transaction_type='deposit',
-                        amount=amount,
-                        description=f'{description} - {_("Transfer from Cashbox")} {from_cashbox.name}',
-                        reference_number=transfer.transfer_number,
-                        date=date,
-                        created_by=request.user
-                    )
-                    
-                    # تحديث الأرصدة من المعاملات
-                    from_cashbox.sync_balance()
-                    to_bank.sync_balance()
-                    
-                    # إنشاء قيد محاسبي للتحويل من الصندوق للبنك
-                    try:
-                        from journal.services import JournalService
-                        journal_entry = JournalService.create_cashbox_transfer_entry(transfer, request.user)
-                        print(f"تم إنشاء القيد المحاسبي للتحويل: {journal_entry.entry_number}")
-                    except Exception as e:
-                        print(f"خطأ في إنشاء القيد المحاسبي: {e}")
-                        # يمكن الاستمرار لأن التحويل تم بنجاح
+                    # القيد المحاسبي ومعاملات الصندوق والبنك سيتم إنشاؤها تلقائياً من خلال الإشارة
+                    # لا حاجة لإنشائها يدوياً هنا
                 
                 elif transfer_type == 'bank_to_cashbox':
                     from_bank = get_object_or_404(BankAccount, id=from_bank_id)
@@ -808,47 +750,8 @@ def transfer_create(request):
                         messages.error(request, _('Insufficient balance in the bank'))
                         return redirect('cashboxes:transfer_list')
                     
-                    # تحديث الأرصدة (لن يتم تحديثها مباشرة، بل من خلال المعاملات)
-                    # from_bank.balance -= amount  # سيتم تحديثه من خلال BankTransaction
-                    # to_cashbox.balance += amount  # سيتم تحديثه من خلال CashboxTransaction
-                    
-                    # إضافة حركة البنك
-                    from banks.models import BankTransaction
-                    BankTransaction.objects.create(
-                        bank=from_bank,
-                        transaction_type='withdrawal',
-                        amount=amount,
-                        description=f'{description} - {_("Transfer to Cashbox")} {to_cashbox.name}',
-                        reference_number=transfer.transfer_number,
-                        date=date,
-                        created_by=request.user
-                    )
-                    
-                    # إضافة حركة الصندوق
-                    CashboxTransaction.objects.create(
-                        cashbox=to_cashbox,
-                        transaction_type='transfer_in',
-                        date=date,
-                        amount=amount,
-                        description=f'{description} - {_("Transfer from Bank")} {from_bank.name}',
-                        related_transfer=transfer,
-                        reference_type='transfer',
-                        reference_id=transfer.id,
-                        created_by=request.user
-                    )
-                    
-                    # تحديث الأرصدة من المعاملات
-                    from_bank.sync_balance()
-                    to_cashbox.sync_balance()
-                    
-                    # إنشاء قيد محاسبي للتحويل من البنك للصندوق
-                    try:
-                        from journal.services import JournalService
-                        journal_entry = JournalService.create_cashbox_transfer_entry(transfer, request.user)
-                        print(f"تم إنشاء القيد المحاسبي للتحويل: {journal_entry.entry_number}")
-                    except Exception as e:
-                        print(f"خطأ في إنشاء القيد المحاسبي: {e}")
-                        # يمكن الاستمرار لأن التحويل تم بنجاح
+                    # القيد المحاسبي ومعاملات البنك والصندوق سيتم إنشاؤها تلقائياً من خلال الإشارة
+                    # لا حاجة لإنشائها يدوياً هنا
                 
                 messages.success(request, _('Transfer created successfully'))
                 
