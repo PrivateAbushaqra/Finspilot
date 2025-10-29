@@ -43,14 +43,9 @@ class JournalService:
             # ملاحظة: entry_type موجود في قاعدة البيانات كـ NOT NULL
             # لكنه ليس في النموذج، لذا نضيفه يدوياً
             entry_type_value = 'daily'  # القيمة الافتراضية
-            if reference_type == 'sales_invoice':
-                entry_type_value = 'sales'
-            elif reference_type == 'purchase_invoice':
-                entry_type_value = 'purchase'
             
             journal_entry = JournalEntry.objects.create(
                 entry_date=entry_date,
-                reference_type=reference_type,
                 reference_id=reference_id,
                 description=description,
                 total_amount=total_debit,
@@ -76,7 +71,6 @@ class JournalService:
         """إنشاء قيد محاسبي لتحويل المستودعات"""
         # التحقق من عدم وجود قيد سابق لهذا التحويل
         existing_entry = JournalEntry.objects.filter(
-            reference_type='warehouse_transfer',
             reference_id=transfer.id
         ).first()
         

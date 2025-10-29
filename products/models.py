@@ -62,6 +62,70 @@ class Category(models.Model):
             return f"{self.parent.full_path} -> {self.name}"
         return self.name
 
+    @property
+    def total_available_quantity(self):
+        """إجمالي الكمية المتوفرة لجميع المنتجات في الفئة"""
+        from django.db.models import Sum
+        from inventory.models import InventoryMovement
+        
+        # حساب الكمية الواردة ناقص الكمية الصادرة للمنتجات في هذه الفئة
+        products = self.product_set.filter(is_active=True)
+        
+        total_quantity = 0
+        for product in products:
+            # استخدام نفس منطق current_stock
+            incoming = InventoryMovement.objects.filter(
+                product=product,
+                movement_type='in'
+            ).exclude(reference_type='opening_balance').aggregate(total=Sum('quantity'))['total'] or 0
+            
+            outgoing = InventoryMovement.objects.filter(
+                product=product,
+                movement_type='out'
+            ).aggregate(total=Sum('quantity'))['total'] or 0
+            
+            # إضافة الرصيد الافتتاحي
+            product_stock = (incoming - outgoing) + product.opening_balance_quantity
+            total_quantity += product_stock
+        
+        return total_quantity
+
+    @property
+    def total_available_cost(self):
+        """إجمالي تكلفة الكمية المتوفرة لجميع المنتجات في الفئة"""
+        from django.db.models import Sum
+        from inventory.models import InventoryMovement
+        
+        products = self.product_set.filter(is_active=True)
+        
+        total_cost = 0
+        for product in products:
+            # حساب الكمية المتوفرة
+            incoming = InventoryMovement.objects.filter(
+                product=product,
+                movement_type='in'
+            ).exclude(reference_type='opening_balance').aggregate(total=Sum('quantity'))['total'] or 0
+            
+            outgoing = InventoryMovement.objects.filter(
+                product=product,
+                movement_type='out'
+            ).aggregate(total=Sum('quantity'))['total'] or 0
+            
+            available_quantity = (incoming - outgoing) + product.opening_balance_quantity
+            
+            # حساب التكلفة باستخدام متوسط التكلفة المرجح
+            if available_quantity > 0:
+                # استخدام تكلفة المنتج الحالية أو حساب متوسط مرجح
+                product_cost = product.calculate_weighted_average_cost() if hasattr(product, 'calculate_weighted_average_cost') else product.cost_price
+                total_cost += available_quantity * product_cost
+        
+        return total_cost
+
+    @property
+    def products_count(self):
+        """عدد المنتجات في الفئة"""
+        return self.product_set.filter(is_active=True).count()
+
 
 class Product(models.Model):
     """المنتج"""

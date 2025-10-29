@@ -712,10 +712,10 @@ def create_cashbox_transaction_from_journal_line(journal_line):
         from cashboxes.models import Cashbox, CashboxTransaction
         
         # تجاهل القيود التي تم إنشاء معاملاتها يدوياً
-        ignored_reference_types = ['cashbox_initial', 'cashbox_adjustment', 'transfer']
-        if journal_line.journal_entry.reference_type in ignored_reference_types:
-            logger.debug(f"تجاهل إنشاء معاملة صندوق من القيد {journal_line.journal_entry.entry_number} - النوع: {journal_line.journal_entry.reference_type} (تم إنشاء المعاملة يدوياً)")
-            return
+        # (تم تعطيل هذا التحقق بسبب إزالة reference_type)
+        # if journal_line.journal_entry.reference_type in ignored_reference_types:
+        #     logger.debug(f"تجاهل إنشاء معاملة صندوق من القيد {journal_line.journal_entry.entry_number} - النوع: {journal_line.journal_entry.reference_type} (تم إنشاء المعاملة يدوياً)")
+        #     return
         
         # استخراج رقم الصندوق من كود الحساب
         if journal_line.account.code.startswith('101'):
@@ -795,10 +795,11 @@ def create_bank_transaction_from_journal_line(journal_line):
         from banks.models import BankAccount, BankTransaction
         
         # تجاهل القيود التي تم إنشاء معاملاتها يدوياً
-        ignored_reference_types = ['cashbox_transfer', 'bank_transfer', 'bank_initial', 'bank_adjustment']
-        if journal_line.journal_entry.reference_type in ignored_reference_types:
-            logger.debug(f"تجاهل إنشاء معاملة بنك من القيد {journal_line.journal_entry.entry_number} - النوع: {journal_line.journal_entry.reference_type} (تم إنشاء المعاملة يدوياً)")
-            return
+        # (تم تعطيل هذا التحقق بسبب إزالة reference_type)
+        # ignored_reference_types = ['cashbox_transfer', 'bank_transfer', 'bank_initial', 'bank_adjustment']
+        # if journal_line.journal_entry.reference_type in ignored_reference_types:
+        #     logger.debug(f"تجاهل إنشاء معاملة بنك من القيد {journal_line.journal_entry.entry_number} - النوع: {journal_line.journal_entry.reference_type} (تم إنشاء المعاملة يدوياً)")
+        #     return
         
         # تجاهل القيود التي تحتوي على كلمة "تحويل" في الوصف
         if 'تحويل' in journal_line.journal_entry.description:
@@ -806,7 +807,8 @@ def create_bank_transaction_from_journal_line(journal_line):
             return
         
         # تجاهل القيود التي تم إنشاؤها تلقائياً من معاملات بنكية
-        if 'معاملة بنكية' in journal_line.journal_entry.description or journal_line.journal_entry.reference_type == 'bank_transaction':
+        # (تم تعطيل التحقق بـ reference_type)
+        if 'معاملة بنكية' in journal_line.journal_entry.description:
             logger.debug(f"تجاهل إنشاء معاملة بنك من القيد {journal_line.journal_entry.entry_number} - الوصف: {journal_line.journal_entry.description} (تم إنشاء القيد من معاملة بنكية)")
             return
         
@@ -1097,8 +1099,8 @@ def create_bank_transfer_from_journal_entry(sender, instance, created, **kwargs)
     try:
         from banks.models import BankTransfer
         # تجاهل القيود التي تم إنشاؤها تلقائياً من معاملات بنكية أو تحويلات
-        if instance.reference_type in ['bank_transaction', 'bank_transfer', 'cashbox_transfer']:
-            logger.debug(f"تجاهل إنشاء BankTransfer من القيد {instance.entry_number} - نوع المرجع: {instance.reference_type}")
+        if instance.bank_transfer or instance.cashbox_transfer:
+            logger.debug(f"تجاهل إنشاء BankTransfer من القيد {instance.entry_number}")
             return
 
         # التحقق من أن القيد يحتوي على حسابين بنكيين فقط (تحويل بين بنكين)

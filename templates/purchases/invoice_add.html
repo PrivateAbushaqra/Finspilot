@@ -172,7 +172,7 @@
                                         </button>
                                     </label>
                                     <div class="position-relative">
-                                        <input type="text" class="form-control" id="supplier_search" placeholder="{% trans 'Type supplier name...' %}" autocomplete="off">
+                                        <input type="text" class="form-control" id="supplier_search" placeholder="{% trans 'Choose supplier name...' %}" autocomplete="off">
                                         <div id="supplier-dropdown" class="dropdown-menu w-100" style="display: none; max-height: 200px; overflow-y: auto;">
                                             <!-- Supplier options will be populated here -->
                                         </div>
@@ -201,7 +201,8 @@
                                         </label>
                                     </div>
                                     <div class="form-text">
-                                        <strong>{% trans "Tax Calculation" %}:</strong> {% trans "When checked, tax is calculated and added. When unchecked, no tax is calculated." %}
+                                        <strong>{% trans "Tax Calculation" %}:</strong> 
+                                        {% trans "When checked, tax is calculated and added. When unchecked, no tax is calculated." %}
                                         <br><small class="text-muted">{% trans "Default: Selected (calculates tax)" %}</small>
                                     </div>
                                 </div>

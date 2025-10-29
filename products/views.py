@@ -795,7 +795,6 @@ class ProductUpdateView(LoginRequiredMixin, View):
                 
                 # 2. حذف القيد المحاسبي القديم للرصيد الافتتاحي (إن وجد)
                 old_journal_entries = JournalEntry.objects.filter(
-                    reference_type='manual',
                     description__icontains=f'{product.code}'
                 ).filter(
                     description__icontains='رصيد افتتاحي'
@@ -901,7 +900,6 @@ class ProductUpdateView(LoginRequiredMixin, View):
                                 entry_number=entry_number,
                                 entry_date=timezone.now().date(),
                                 entry_type='daily',
-                                reference_type='manual',
                                 description=f'رصيد افتتاحي - {product.name} ({product.code})',
                                 total_amount=new_opening_balance_cost,
                                 created_by=request.user,

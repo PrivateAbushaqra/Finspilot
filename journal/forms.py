@@ -39,27 +39,12 @@ class AccountForm(forms.ModelForm):
 
 
 class JournalEntryForm(forms.ModelForm):
-    # حقول مخصصة مع خيارات منسدلة
-    entry_type = forms.ChoiceField(
-        label=_('Entry Type'),
-        choices=JournalEntry.ENTRY_TYPES,
-        widget=forms.Select(attrs={'class': 'form-control'}),
-        required=True
-    )
-    reference_type = forms.ChoiceField(
-        label=_('Reference Type'),
-        choices=JournalEntry.REFERENCE_TYPES,
-        widget=forms.Select(attrs={'class': 'form-control'}),
-        required=True
-    )
-    
     class Meta:
         model = JournalEntry
-        fields = ['entry_number', 'entry_date', 'reference_id', 'description']
+        fields = ['entry_number', 'entry_date', 'description']
         widgets = {
             'entry_number': forms.TextInput(attrs={'class': 'form-control'}),
             'entry_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'reference_id': forms.NumberInput(attrs={'class': 'form-control'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
     
@@ -67,14 +52,10 @@ class JournalEntryForm(forms.ModelForm):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         
-        # جعل reference_id غير مطلوب
-        self.fields['reference_id'].required = False
-        
         # إذا كان التعديل وليس إنشاء جديد
         if self.instance and self.instance.pk:
             # تعيين القيم الأولية للحقول المخصصة
             self.fields['entry_type'].initial = self.instance.entry_type
-            self.fields['reference_type'].initial = self.instance.reference_type
             
             # تحقق من صلاحية تعديل رقم القيد
             if self.user and not self.user.has_perm('journal.change_entry_number'):
@@ -95,19 +76,12 @@ class JournalEntryForm(forms.ModelForm):
         
         # التحقق من صحة القيم
         entry_type = cleaned_data.get('entry_type')
-        reference_type = cleaned_data.get('reference_type')
         
         # التحقق من أن entry_type صحيح
         if entry_type and entry_type not in dict(JournalEntry.ENTRY_TYPES):
             # إذا لم يكن في القائمة الرسمية، تأكد أنه مسموح (مثل القيم القديمة)
             if not (self.instance and self.instance.pk and entry_type == self.instance.entry_type):
                 raise forms.ValidationError(_('نوع القيد غير صحيح'))
-        
-        # التحقق من أن reference_type صحيح
-        if reference_type and reference_type not in dict(JournalEntry.REFERENCE_TYPES):
-            # إذا لم يكن في القائمة الرسمية، تأكد أنه مسموح (مثل القيم القديمة)
-            if not (self.instance and self.instance.pk and reference_type == self.instance.reference_type):
-                raise forms.ValidationError(_('نوع العملية غير صحيح'))
         
         return cleaned_data
     
@@ -144,9 +118,12 @@ class JournalLineForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # تحميل جميع الحسابات النشطة
+        # تحميل الحسابات الفرعية فقط (التي لا تكون حسابات رئيسية)
         from .models import Account
-        self.fields['account'].queryset = Account.objects.filter(is_active=True).order_by('code')
+        self.fields['account'].queryset = Account.objects.filter(
+            is_active=True,
+            parent__isnull=False  # استثناء الحسابات الرئيسية (parent is null)
+        ).order_by('code')
         # جعل الحقول غير مطلوبة (سيتم التحقق في clean)
         self.fields['account'].required = False
         self.fields['debit'].required = False
@@ -339,12 +316,6 @@ class JournalSearchForm(forms.Form):
         label=_('To Date'),
         required=False,
         widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'})
-    )
-    reference_type = forms.ChoiceField(
-        label=_('نوع العملية'),
-        choices=[('', _('All'))] + JournalEntry.REFERENCE_TYPES,
-        required=False,
-        widget=forms.Select(attrs={'class': 'form-control'})
     )
     account = forms.ModelChoiceField(
         label=_('الحساب'),

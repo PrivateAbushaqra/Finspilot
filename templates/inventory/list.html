@@ -238,7 +238,7 @@
                         {% if selected_warehouse %}
                             {% trans "Products in warehouse:" %} {{ selected_warehouse.name }}
                         {% else %}
-                            {% trans "Comprehensive overview of inventory and movements" %}
+                            {% trans "Comprehensive Overview of Inventory and Movements" %}
                         {% endif %}
                     </p>
                 </div>
@@ -425,7 +425,7 @@
                                 <div class="col-6">
                                     <div class="text-center">
                                         <h4 class="text-success">{{ total_in_value|default:0|currency_format }}</h4>
-                                        <small class="text-muted">{% trans "Incoming value (without tax)" %}</small>
+                                        <small class="text-muted">{% trans "Incoming Value (Without Tax)" %}</small>
                                         <div class="mt-2">
                                             <h6 class="text-success mb-0">{{ total_in_value_with_tax|default:0|currency_format }}</h6>
                                             <small class="text-muted">({% trans "Including" %} {% trans "Tax" %})</small>
@@ -435,7 +435,7 @@
                                 <div class="col-6">
                                     <div class="text-center">
                                         <h4 class="text-danger">{{ total_out_value|default:0|currency_format }}</h4>
-                                        <small class="text-muted">{% trans "Outgoing value (without tax)" %}</small>
+                                        <small class="text-muted">{% trans "Outgoing Value (Without Tax)" %}</small>
                                         <div class="mt-2">
                                             <h6 class="text-danger mb-0">{{ total_out_value_with_tax|default:0|currency_format }}</h6>
                                             <small class="text-muted">({% trans "Including" %} {% trans "Tax" %})</small>
@@ -446,7 +446,7 @@
                                     <hr>
                                     <div class="text-center">
                                         <h4 class="text-primary">{{ total_inventory_value|default:0|currency_format }}</h4>
-                                        <small class="text-muted">{% trans "Total inventory value (without tax)" %}</small>
+                                        <small class="text-muted">{% trans "Total Inventory Value (Without Tax)" %}</small>
                                         <div class="mt-2">
                                             <h5 class="text-primary mb-0">{{ total_inventory_value_with_tax|default:0|currency_format }}</h5>
                                             <small class="text-muted">({% trans "Including" %} {% trans "Tax" %})</small>
@@ -485,7 +485,7 @@
                                 <div class="mb-3">
                                     <form method="get" class="row g-3">
                                         <div class="col-md-6">
-                                            <input type="text" name="search" value="{{ search }}" class="form-control" placeholder="{% trans 'Search by product name or code' %}">
+                                            <input type="text" name="search" value="{{ search }}" class="form-control" placeholder="{% trans 'Search by Product Name or Code' %}">
                                         </div>
                                         <div class="col-md-4">
                                             <select name="stock_level" class="form-control">

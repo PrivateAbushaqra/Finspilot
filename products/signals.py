@@ -135,7 +135,6 @@ def create_opening_balance_on_new_product(sender, instance, created, **kwargs):
                 entry_number=entry_number,
                 entry_date=timezone.now().date(),
                 entry_type='daily',
-                reference_type='manual',
                 description=f'رصيد افتتاحي - {instance.name} ({instance.code})',
                 total_amount=instance.opening_balance_cost,
                 created_by=user,

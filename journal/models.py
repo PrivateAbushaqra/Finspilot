@@ -280,17 +280,6 @@ class Account(models.Model):
 
 class JournalEntry(models.Model):
     """قيد محاسبي"""
-    REFERENCE_TYPES = [
-        ('asset_depreciation', _('Asset Depreciation')),
-        ('manual', _('Manual Entry')),
-        ('adjustment', _('Adjustment Entry')),
-        ('customer_supplier_adjustment', _('Customer/Supplier Balance Adjustment')),
-        ('warehouse_transfer', _('Warehouse Transfer')),
-        ('sales_return', _('Sales Return')),
-        ('sales_return_cogs', _('Sales Return COGS')),
-        ('bank_transaction', _('Bank Transaction')),
-    ]
-
     # أنواع القيود
     ENTRY_TYPES = [
         ('receipt', _('Receipt')),
@@ -303,7 +292,6 @@ class JournalEntry(models.Model):
     entry_number = models.CharField(_('Entry Number'), max_length=50, unique=True, blank=True)
     entry_date = models.DateField(_('Entry Date'))
     entry_type = models.CharField(_('Entry Type'), max_length=20, choices=ENTRY_TYPES, default='daily')
-    reference_type = models.CharField(_('Reference Type'), max_length=30, choices=REFERENCE_TYPES)
     reference_id = models.PositiveIntegerField(_('Reference ID'), null=True, blank=True)
     sales_invoice = models.ForeignKey('sales.SalesInvoice', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('Sales Invoice'))
     sales_return = models.ForeignKey('sales.SalesReturn', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('Sales Return'))
@@ -335,42 +323,7 @@ class JournalEntry(models.Model):
             self.entry_number = self.generate_entry_number()
         
         # تحديث الحقول المرتبطة بالفواتير
-        if self.reference_type in ['sales_invoice', 'sales_invoice_cogs'] and self.reference_id:
-            try:
-                from sales.models import SalesInvoice
-                self.sales_invoice = SalesInvoice.objects.get(id=self.reference_id)
-            except SalesInvoice.DoesNotExist:
-                pass
-        elif self.reference_type in ['sales_return', 'sales_return_cogs'] and self.reference_id:
-            try:
-                from sales.models import SalesReturn
-                self.sales_return = SalesReturn.objects.get(id=self.reference_id)
-            except SalesReturn.DoesNotExist:
-                pass
-        elif self.reference_type == 'purchase_invoice' and self.reference_id:
-            try:
-                from purchases.models import PurchaseInvoice
-                self.purchase_invoice = PurchaseInvoice.objects.get(id=self.reference_id)
-            except PurchaseInvoice.DoesNotExist:
-                pass
-        elif self.reference_type == 'purchase_return' and self.reference_id:
-            try:
-                from purchases.models import PurchaseReturn
-                self.purchase_return = PurchaseReturn.objects.get(id=self.reference_id)
-            except PurchaseReturn.DoesNotExist:
-                pass
-        elif self.reference_type == 'cashbox_transfer' and self.reference_id:
-            try:
-                from cashboxes.models import CashboxTransfer
-                self.cashbox_transfer = CashboxTransfer.objects.get(id=self.reference_id)
-            except CashboxTransfer.DoesNotExist:
-                pass
-        elif self.reference_type == 'bank_transfer' and self.reference_id:
-            try:
-                from banks.models import BankTransfer
-                self.bank_transfer = BankTransfer.objects.get(id=self.reference_id)
-            except BankTransfer.DoesNotExist:
-                pass
+        # إزالة منطق reference_type بسبب إزالة الحقل
         
         super().save(*args, **kwargs)
 

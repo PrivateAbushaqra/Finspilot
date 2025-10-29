@@ -28,12 +28,6 @@ def journal_dashboard(request):
     total_accounts = Account.objects.filter(is_active=True).count()
     recent_entries = JournalEntry.objects.select_related().order_by('-created_at')[:5]
     
-    # إحصائيات القيود حسب النوع
-    entries_by_type = {}
-    for ref_type, ref_name in JournalEntry.REFERENCE_TYPES:
-        count = JournalEntry.objects.filter(reference_type=ref_type).count()
-        entries_by_type[ref_name] = count
-    
     # إحصائيات الحسابات حسب النوع
     account_types_count = {}
     for account_type, type_name in Account.ACCOUNT_TYPES:
@@ -55,7 +49,6 @@ def journal_dashboard(request):
         'total_accounts': total_accounts,
         'recent_entries': recent_entries_with_totals,
         'account_types_count': account_types_count,
-        'entries_by_type': entries_by_type,
     }
     return render(request, 'journal/dashboard.html', context)
 
@@ -443,8 +436,6 @@ def journal_entry_list(request):
             entries = entries.filter(entry_date__gte=form.cleaned_data['date_from'])
         if form.cleaned_data['date_to']:
             entries = entries.filter(entry_date__lte=form.cleaned_data['date_to'])
-        if form.cleaned_data['reference_type']:
-            entries = entries.filter(reference_type=form.cleaned_data['reference_type'])
         if form.cleaned_data['account']:
             entries = entries.filter(lines__account=form.cleaned_data['account']).distinct()
         if form.cleaned_data['entry_number']:
@@ -470,7 +461,6 @@ def journal_entry_list(request):
     context = {
         'entries': page_obj,
         'form': form,
-        'reference_types': JournalEntry.REFERENCE_TYPES,
         'total_amount': total_amount,
         'order_by': order_by,
         'direction': direction,
@@ -701,7 +691,10 @@ def journal_entry_create(request):
     context = {
         'form': form,
         'formset': formset,
-        'accounts': Account.objects.filter(is_active=True).order_by('code'),
+        'accounts': Account.objects.filter(
+            is_active=True,
+            parent__isnull=False  # استثناء الحسابات الرئيسية (parent is null)
+        ).order_by('code'),
         'title': _('Create new journal entry')
     }
     return render(request, 'journal/entry_create.html', context)
@@ -959,7 +952,7 @@ def journal_entries_by_type(request):
     
     # تصفية حسب النوع
     if entry_type:
-        entries = entries.filter(reference_type=entry_type)
+        entries = entries.filter(entry_type=entry_type)
     
     # تصفية حسب التاريخ
     if date_from:
@@ -973,43 +966,6 @@ def journal_entries_by_type(request):
     total_entries = entries.count()
     total_amount = entries.aggregate(total=Sum('total_amount'))['total'] or 0
     
-    # إحصائيات حسب النوع
-    types_statistics = []
-    reference_types = JournalEntry.REFERENCE_TYPES
-    for type_value, type_name in reference_types:
-        count = JournalEntry.objects.filter(reference_type=type_value).count()
-        total_for_type = JournalEntry.objects.filter(reference_type=type_value).aggregate(
-            total=Sum('total_amount'))['total'] or 0
-        
-        # تحديد الأيقونة
-        icon = 'file-invoice'  # افتراضي
-        if type_value == 'sales_invoice':
-            icon = 'shopping-cart'
-        elif type_value == 'purchase_invoice':
-            icon = 'truck'
-        elif type_value == 'receipt':
-            icon = 'money-bill-wave'
-        elif type_value == 'payment':
-            icon = 'credit-card'
-        elif type_value == 'manual':
-            icon = 'edit'
-        
-        types_statistics.append({
-            'value': type_value,
-            'name': type_name,
-            'count': count,
-            'total_amount': total_for_type,
-            'icon': icon
-        })
-    
-    # اسم النوع المحدد
-    selected_type_name = ''
-    if entry_type:
-        for type_value, type_name in reference_types:
-            if type_value == entry_type:
-                selected_type_name = type_name
-                break
-    
     # الترقيم
     paginator = Paginator(entries, 20)
     page_number = request.GET.get('page')
@@ -1018,10 +974,7 @@ def journal_entries_by_type(request):
     context = {
         'entries': page_obj,
         'page_obj': page_obj,
-        'reference_types': reference_types,
-        'types_statistics': types_statistics,
         'selected_type': entry_type,
-        'selected_type_name': selected_type_name,
         'date_from': date_from,
         'date_to': date_to,
         'total_entries': total_entries,
@@ -1063,7 +1016,6 @@ def delete_journal_entry(request, pk):
             with transaction.atomic():
                 entry_number = entry.entry_number
                 entry_description = entry.description
-                entry_type = entry.get_reference_type_display()
                 entry_amount = entry.total_amount
                 # تسجيل النشاط قبل الحذف
                 try:
@@ -1073,7 +1025,7 @@ def delete_journal_entry(request, pk):
                         action_type='delete',
                         content_type='JournalEntry',
                         object_id=entry.pk,
-                        description=f"تم حذف القيد المحاسبي رقم {entry_number} - النوع: {entry_type} - المبلغ: {entry_amount} - الوصف: {entry_description[:50]}"
+                        description=f"تم حذف القيد المحاسبي رقم {entry_number} - المبلغ: {entry_amount} - الوصف: {entry_description[:50]}"
                     )
                 except Exception:
                     pass

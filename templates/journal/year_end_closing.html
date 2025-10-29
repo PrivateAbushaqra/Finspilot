@@ -29,11 +29,11 @@
                                         
                                         <div class="alert alert-info">
                                             <i class="fas fa-info-circle"></i>
-                                            {% trans "All revenue and expense accounts will be closed and net profit/loss will be transferred to capital" %}
+                                            {% trans "All Revenue and Expense Accounts Will be Closed and Net Profit/Loss Will be Transferred to Capital" %}
                                         </div>
                                         
                                         <div class="form-group">
-                                            <label for="{{ form.year.id_for_label }}">{% trans "Fiscal year" %}</label>
+                                            <label for="{{ form.year.id_for_label }}">{% trans "Fiscal Year" %}</label>
                                             {{ form.year }}
                                             {% if form.year.errors %}
                                                 <div class="text-danger">{{ form.year.errors }}</div>
@@ -41,7 +41,7 @@
                                         </div>
                                         
                                         <div class="form-group">
-                                            <label for="{{ form.closing_date.id_for_label }}">{% trans "Closing date" %}</label>
+                                            <label for="{{ form.closing_date.id_for_label }}">{% trans "Closing Date" %}</label>
                                             {{ form.closing_date }}
                                             {% if form.closing_date.errors %}
                                                 <div class="text-danger">{{ form.closing_date.errors }}</div>
@@ -51,7 +51,7 @@
                                         <div class="form-group form-check">
                                             {{ form.confirm }}
                                             <label class="form-check-label" for="{{ form.confirm.id_for_label }}">
-                                                {% trans "I confirm performing the annual closing" %}
+                                                {% trans "I Confirm Performing the Annual Closing" %}
                                             </label>
                                             {% if form.confirm.errors %}
                                                 <div class="text-danger">{{ form.confirm.errors }}</div>
@@ -60,7 +60,7 @@
                                         
                                         <button type="submit" class="btn btn-primary">
                                             <i class="fas fa-check"></i>
-                                            {% trans "Perform closing" %}
+                                            {% trans "Perform Closing" %}
                                         </button>
                                     </form>
                                 </div>
@@ -96,14 +96,14 @@
                             
                             <div class="card mt-3">
                                 <div class="card-header">
-                                    <h5 class="card-title">{% trans "Important notes" %}</h5>
+                                    <h5 class="card-title">{% trans "Important Notes" %}</h5>
                                 </div>
                                 <div class="card-body">
                                     <ul class="list-unstyled">
-                                        <li><i class="fas fa-exclamation-triangle text-warning"></i> {% trans "The closing cannot be undone after execution" %}</li>
-                                        <li><i class="fas fa-info-circle text-info"></i> {% trans "Make sure all entries are closed before closing" %}</li>
-                                        <li><i class="fas fa-check-circle text-success"></i> {% trans "An accounting entry will be created automatically" %}</li>
-                                        <li><i class="fas fa-file-alt text-primary"></i> {% trans "The operation will be recorded in the activity log" %}</li>
+                                        <li><i class="fas fa-exclamation-triangle text-warning"></i> {% trans "The Closing Cannot be Un done After Execution" %}</li>
+                                        <li><i class="fas fa-info-circle text-info"></i> {% trans "Make Sure All Entries are Closed Before Closing" %}</li>
+                                        <li><i class="fas fa-check-circle text-success"></i> {% trans "An Accounting Entry Will be Created Automatically" %}</li>
+                                        <li><i class="fas fa-file-alt text-primary"></i> {% trans "The Operation Will be Recorded in The Activity Log" %}</li>
                                     </ul>
                                 </div>
                             </div>
@@ -115,7 +115,7 @@
                         <div class="col-12">
                             <div class="card">
                                 <div class="card-header">
-                                    <h5 class="card-title">{% trans "Previous closings" %}</h5>
+                                    <h5 class="card-title">{% trans "Previous Closings" %}</h5>
                                 </div>
                                 <div class="card-body">
                                     {% if closings %}
@@ -124,7 +124,7 @@
                                                 <thead>
                                                     <tr>
                                                         <th>{% trans "Year" %}</th>
-                                                        <th>{% trans "Closing date" %}</th>
+                                                        <th>{% trans "Closing Date" %}</th>
                                                         <th>{% trans "Net profit/loss" %}</th>
                                                         <th>{% trans "Status" %}</th>
                                                         <th>{% trans "Details" %}</th>
@@ -156,7 +156,7 @@
                                             </table>
                                         </div>
                                     {% else %}
-                                        <p class="text-muted text-center">{% trans "No previous closings" %}</p>
+                                        <p class="text-muted text-center">{% trans "No Previous Closings" %}</p>
                                     {% endif %}
                                 </div>
                             </div>

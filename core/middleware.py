@@ -248,7 +248,7 @@ class SessionTimeoutMiddleware:
         if request.user.is_authenticated and not any(request.path.startswith(path) for path in excluded_paths):
             # الحصول على إعدادات الشركة
             try:
-                from settings.models import CompanySettings
+                from core.models import CompanySettings
                 company_settings = CompanySettings.objects.first()
                 
                 # التحقق من تفعيل انتهاء الجلسة التلقائي

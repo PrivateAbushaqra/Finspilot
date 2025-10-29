@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-28 01:05+0300\n"
+"POT-Creation-Date: 2025-10-28 22:43+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -20,21 +20,21 @@ msgstr ""
 "&& n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5;\n"
 
 #: .\accounts\models.py:13 .\cashboxes\models.py:316 .\core\models.py:71
-#: .\inventory\models.py:62 .\journal\models.py:308 .\sales\models.py:50
+#: .\inventory\models.py:62 .\journal\models.py:296 .\sales\models.py:50
 #: .\settings\views.py:993 .\settings\views.py:1156
 #: .\templates\core\dashboard.html:450
 msgid "Sales Invoice"
 msgstr "فاتورة مبيعات"
 
 #: .\accounts\models.py:14 .\cashboxes\models.py:317 .\core\models.py:76
-#: .\inventory\models.py:64 .\journal\models.py:310 .\purchases\models.py:50
+#: .\inventory\models.py:64 .\journal\models.py:298 .\purchases\models.py:50
 #: .\templates\core\dashboard.html:458
 msgid "Purchase Invoice"
 msgstr "فاتورة شراء"
 
 #: .\accounts\models.py:15 .\core\models.py:73 .\inventory\models.py:63
-#: .\journal\models.py:289 .\journal\models.py:309 .\sales\models.py:151
-#: .\sales\models.py:162 .\templates\sales\return_delete.html:55
+#: .\journal\models.py:297 .\sales\models.py:151 .\sales\models.py:162
+#: .\templates\sales\return_delete.html:55
 #: .\templates\sales\return_detail.html:60
 #: .\templates\sales\return_detail.html:62
 #: .\templates\sales\return_detail.html:90 .\templates\sales\return_edit.html:5
@@ -44,7 +44,7 @@ msgid "Sales Return"
 msgstr "مردود المبيعات"
 
 #: .\accounts\models.py:16 .\core\models.py:77 .\inventory\models.py:65
-#: .\journal\models.py:311 .\purchases\models.py:249 .\purchases\models.py:277
+#: .\journal\models.py:299 .\purchases\models.py:249 .\purchases\models.py:277
 msgid "Purchase Return"
 msgstr "إرجاع شراء"
 
@@ -116,7 +116,7 @@ msgid "Revaluation"
 msgstr "إعادة التقييم"
 
 #: .\accounts\models.py:36 .\banks\models.py:142 .\cashboxes\models.py:285
-#: .\hr\models.py:509 .\journal\models.py:301 .\payments\models.py:26
+#: .\hr\models.py:509 .\journal\models.py:290 .\payments\models.py:26
 #: .\purchases\models.py:229 .\templates\assets_liabilities\dashboard.html:334
 #: .\templates\banks\account_edit.html:273
 #: .\templates\cashboxes\cashbox_detail.html:265
@@ -427,14 +427,13 @@ msgid "Is this a manual balance adjustment?"
 msgstr ""
 
 #: .\accounts\models.py:63 .\cashboxes\models.py:314 .\inventory\models.py:76
-#: .\journal\forms.py:50 .\journal\models.py:306
 #, fuzzy
 #| msgid "Reference"
 msgid "Reference Type"
 msgstr "المرجع"
 
 #: .\accounts\models.py:64 .\cashboxes\models.py:322 .\inventory\models.py:77
-#: .\journal\models.py:307
+#: .\journal\models.py:295
 #, fuzzy
 #| msgid "Reference"
 msgid "Reference ID"
@@ -559,7 +558,7 @@ msgstr "الوصف"
 #: .\banks\templates\banks\statement_form.html:120 .\customers\models.py:25
 #: .\hr\forms.py:55 .\hr\models.py:126 .\hr\models.py:232 .\hr\models.py:264
 #: .\hr\models.py:377 .\hr\models.py:423 .\inventory\models.py:81
-#: .\inventory\models.py:187 .\journal\models.py:515 .\payments\models.py:67
+#: .\inventory\models.py:187 .\journal\models.py:468 .\payments\models.py:67
 #: .\purchases\models.py:44 .\purchases\models.py:243 .\purchases\models.py:334
 #: .\receipts\models.py:68 .\receipts\models.py:265 .\receipts\models.py:285
 #: .\sales\models.py:36 .\sales\models.py:145 .\sales\models.py:197
@@ -622,8 +621,8 @@ msgstr "الرصيد بعد المعاملة"
 #: .\cashboxes\models.py:141 .\cashboxes\models.py:324
 #: .\cashboxes\views.py:1185 .\hr\models.py:131 .\hr\models.py:236
 #: .\hr\models.py:269 .\hr\models.py:352 .\hr\models.py:381 .\hr\models.py:427
-#: .\inventory\models.py:82 .\inventory\models.py:188 .\journal\models.py:317
-#: .\journal\models.py:511 .\payments\models.py:70 .\provisions\models.py:16
+#: .\inventory\models.py:82 .\inventory\models.py:188 .\journal\models.py:305
+#: .\journal\models.py:464 .\payments\models.py:70 .\provisions\models.py:16
 #: .\provisions\models.py:63 .\provisions\models.py:95 .\purchases\models.py:45
 #: .\purchases\models.py:244 .\purchases\models.py:335 .\receipts\models.py:71
 #: .\receipts\models.py:267 .\receipts\models.py:287
@@ -677,8 +676,8 @@ msgstr "أنشئ بواسطة"
 #: .\hr\models.py:19 .\hr\models.py:42 .\hr\models.py:129 .\hr\models.py:234
 #: .\hr\models.py:267 .\hr\models.py:316 .\hr\models.py:350 .\hr\models.py:379
 #: .\hr\models.py:425 .\inventory\models.py:19 .\inventory\models.py:83
-#: .\inventory\models.py:189 .\journal\models.py:33 .\journal\models.py:318
-#: .\journal\models.py:450 .\journal\models.py:512 .\payments\models.py:71
+#: .\inventory\models.py:189 .\journal\models.py:33 .\journal\models.py:306
+#: .\journal\models.py:403 .\journal\models.py:465 .\payments\models.py:71
 #: .\provisions\models.py:15 .\provisions\models.py:61
 #: .\provisions\models.py:94 .\purchases\models.py:46 .\purchases\models.py:245
 #: .\purchases\models.py:336 .\receipts\models.py:72 .\receipts\models.py:268
@@ -707,7 +706,7 @@ msgstr "أنشئ في"
 #: .\hr\models.py:43 .\hr\models.py:130 .\hr\models.py:235 .\hr\models.py:268
 #: .\hr\models.py:317 .\hr\models.py:351 .\hr\models.py:380 .\hr\models.py:426
 #: .\inventory\models.py:20 .\inventory\models.py:190 .\journal\models.py:34
-#: .\journal\models.py:319 .\journal\models.py:513 .\payments\models.py:72
+#: .\journal\models.py:307 .\journal\models.py:466 .\payments\models.py:72
 #: .\provisions\models.py:62 .\purchases\models.py:47 .\purchases\models.py:246
 #: .\purchases\models.py:337 .\receipts\models.py:73
 #: .\revenues_expenses\models.py:89 .\sales\models.py:39 .\sales\models.py:148
@@ -1140,7 +1139,7 @@ msgstr "الشخص المسؤول"
 #: .\banks\templates\banks\reconciliation_form.html:137
 #: .\banks\templates\banks\reconciliation_list.html:40
 #: .\banks\templates\banks\reconciliation_list.html:82 .\hr\models.py:109
-#: .\hr\models.py:230 .\hr\models.py:344 .\journal\models.py:505
+#: .\hr\models.py:230 .\hr\models.py:344 .\journal\models.py:458
 #: .\receipts\views.py:576 .\revenues_expenses\views.py:940
 #: .\templates\assets_liabilities\asset_create.html:149
 #: .\templates\assets_liabilities\asset_detail.html:111
@@ -1290,7 +1289,7 @@ msgid "Overdue"
 msgstr "متأخر"
 
 #: .\assets_liabilities\models.py:162 .\banks\models.py:249 .\hr\models.py:333
-#: .\journal\models.py:499 .\payments\models.py:32
+#: .\journal\models.py:452 .\payments\models.py:32
 msgid "Cancelled"
 msgstr "ملغي"
 
@@ -1469,7 +1468,7 @@ msgid "Liability created successfully"
 msgstr "تم إنشاء الخصم بنجاح"
 
 #: .\assets_liabilities\views.py:583 .\assets_liabilities\views.py:633
-#: .\journal\views.py:756 .\revenues_expenses\views.py:45
+#: .\journal\views.py:746 .\revenues_expenses\views.py:45
 #: .\revenues_expenses\views.py:292 .\revenues_expenses\views.py:338
 #: .\revenues_expenses\views.py:380 .\revenues_expenses\views.py:523
 #: .\revenues_expenses\views.py:575
@@ -1897,7 +1896,7 @@ msgstr "الرسوم"
 msgid "Exchange Rate"
 msgstr "سعر الصرف"
 
-#: .\banks\models.py:120 .\journal\models.py:313 .\payments\models.py:19
+#: .\banks\models.py:120 .\journal\models.py:301 .\payments\models.py:19
 #: .\purchases\models.py:20 .\sales\models.py:14
 #: .\templates\banks\transfer_detail.html:134
 #: .\templates\banks\transfer_list.html:341
@@ -1978,7 +1977,7 @@ msgstr "الرصيد الافتتاحي"
 msgid "Is this an opening balance transaction?"
 msgstr ""
 
-#: .\banks\models.py:177 .\journal\models.py:291
+#: .\banks\models.py:177
 msgid "Bank Transaction"
 msgstr "معاملة بنكية"
 
@@ -1995,7 +1994,7 @@ msgstr "تاريخ البيان"
 
 #: .\banks\models.py:212 .\banks\templates\banks\reconciliation_detail.html:117
 #: .\banks\templates\banks\statement_form.html:76
-#: .\banks\templates\banks\statement_list.html:75 .\journal\models.py:446
+#: .\banks\templates\banks\statement_list.html:75 .\journal\models.py:399
 #: .\reports\views.py:187 .\reports\views.py:223
 #: .\templates\accounts\customer_statement.html:203
 #: .\templates\accounts\transaction_list.html:137
@@ -2003,7 +2002,7 @@ msgstr "تاريخ البيان"
 #: .\templates\customers\supplier_list.html:453
 #: .\templates\customers\transactions.html:356
 #: .\templates\journal\entry_confirm_delete.html:119
-#: .\templates\journal\entry_create.html:151
+#: .\templates\journal\entry_create.html:128
 #: .\templates\journal\trial_balance.html:182
 #: .\templates\journal\trial_balance.html:213
 #: .\templates\journal\trial_balance.html:251
@@ -2015,13 +2014,13 @@ msgstr "مدين"
 
 #: .\banks\models.py:213 .\banks\templates\banks\reconciliation_detail.html:118
 #: .\banks\templates\banks\statement_form.html:85
-#: .\banks\templates\banks\statement_list.html:76 .\journal\models.py:447
+#: .\banks\templates\banks\statement_list.html:76 .\journal\models.py:400
 #: .\purchases\models.py:14 .\reports\views.py:187 .\reports\views.py:223
 #: .\sales\models.py:13 .\templates\accounts\customer_statement.html:204
 #: .\templates\accounts\transaction_list.html:138
 #: .\templates\customers\transactions.html:364
 #: .\templates\journal\entry_confirm_delete.html:120
-#: .\templates\journal\entry_create.html:152
+#: .\templates\journal\entry_create.html:129
 #: .\templates\journal\trial_balance.html:183
 #: .\templates\journal\trial_balance.html:215
 #: .\templates\journal\trial_balance.html:259
@@ -2093,7 +2092,7 @@ msgstr "الفرق"
 msgid "Draft"
 msgstr "مسودة"
 
-#: .\banks\models.py:248 .\journal\models.py:498
+#: .\banks\models.py:248 .\journal\models.py:451
 #: .\templates\inventory\transfer_list.html:76
 #, fuzzy
 #| msgid "Total Tables"
@@ -2379,7 +2378,7 @@ msgstr "تسويات البنوك"
 #: .\templates\inventory\warehouse_add.html:95
 #: .\templates\inventory\warehouse_edit.html:234
 #: .\templates\journal\account_form_modal.html:40
-#: .\templates\journal\entry_create.html:259
+#: .\templates\journal\entry_create.html:236
 #: .\templates\payments\voucher_form.html:234
 #: .\templates\payments\voucher_list.html:294
 #: .\templates\products\category_add.html:102
@@ -2445,8 +2444,8 @@ msgid "All Status"
 msgstr "جميع الحالات"
 
 #: .\banks\templates\banks\reconciliation_list.html:51
-#: .\banks\templates\banks\statement_list.html:45 .\journal\forms.py:334
-#: .\journal\forms.py:366 .\payments\forms.py:200
+#: .\banks\templates\banks\statement_list.html:45 .\journal\forms.py:308
+#: .\journal\forms.py:334 .\payments\forms.py:200
 #: .\templates\accounts\customer_statement.html:43
 #: .\templates\accounts\transaction_list.html:56
 #: .\templates\assets_liabilities\dashboard.html:373
@@ -2485,8 +2484,8 @@ msgid "From Date"
 msgstr "من تاريخ"
 
 #: .\banks\templates\banks\reconciliation_list.html:55
-#: .\banks\templates\banks\statement_list.html:49 .\journal\forms.py:339
-#: .\journal\forms.py:370 .\payments\forms.py:209
+#: .\banks\templates\banks\statement_list.html:49 .\journal\forms.py:313
+#: .\journal\forms.py:338 .\payments\forms.py:209
 #: .\templates\accounts\customer_statement.html:48
 #: .\templates\accounts\transaction_list.html:61
 #: .\templates\assets_liabilities\dashboard.html:377
@@ -2581,7 +2580,7 @@ msgstr "مسح"
 #: .\templates\inventory\transfer_list.html:43
 #: .\templates\inventory\warehouse_list.html:268
 #: .\templates\journal\entries_by_type.html:110
-#: .\templates\journal\entry_create.html:153
+#: .\templates\journal\entry_create.html:130
 #: .\templates\journal\entry_list.html:229
 #: .\templates\payments\voucher_list.html:145
 #: .\templates\products\category_list.html:333
@@ -2714,9 +2713,8 @@ msgstr "إنشاء قسم"
 msgid "Add Statement"
 msgstr "كشف حساب"
 
-#: .\banks\templates\banks\statement_list.html:39 .\journal\forms.py:345
-#: .\payments\forms.py:187 .\payments\forms.py:194
-#: .\templates\accounts\transaction_list.html:36
+#: .\banks\templates\banks\statement_list.html:39 .\payments\forms.py:187
+#: .\payments\forms.py:194 .\templates\accounts\transaction_list.html:36
 #: .\templates\accounts\transaction_list.html:47 .\templates\base.html:2886
 #: .\templates\base.html:2888 .\templates\cashboxes\transfer_list.html:74
 #: .\templates\payments\voucher_list.html:43
@@ -3046,6 +3044,7 @@ msgid "Transactions Count"
 msgstr "عدد المعاملات"
 
 #: .\banks\views.py:2277 .\cashboxes\views.py:1174
+#: .\templates\products\category_list.html:524
 #, fuzzy
 #| msgid "Report Date"
 msgid "Export Date"
@@ -3259,7 +3258,7 @@ msgstr "تاريخ الشيك"
 msgid "Check Bank Name"
 msgstr "اسم بنك الشيك"
 
-#: .\cashboxes\models.py:146 .\core\models.py:80 .\journal\models.py:312
+#: .\cashboxes\models.py:146 .\core\models.py:80 .\journal\models.py:300
 msgid "Cashbox Transfer"
 msgstr "تحويل صندوق"
 
@@ -3334,12 +3333,12 @@ msgstr "تسوية النقدية"
 msgid "Related Transfer"
 msgstr "التحويل المرتبط"
 
-#: .\cashboxes\models.py:318 .\journal\models.py:296 .\settings\views.py:997
+#: .\cashboxes\models.py:318 .\journal\models.py:285 .\settings\views.py:997
 #: .\settings\views.py:1160 .\templates\revenues_expenses\dashboard.html:187
 msgid "Receipt"
 msgstr "إيصال استلام"
 
-#: .\cashboxes\models.py:319 .\journal\models.py:297
+#: .\cashboxes\models.py:319 .\journal\models.py:286
 #: .\templates\assets_liabilities\dashboard.html:672
 #: .\templates\assets_liabilities\dashboard.html:680
 #: .\templates\assets_liabilities\dashboard.html:688 .\templates\base.html:2919
@@ -3359,7 +3358,7 @@ msgid "Payment"
 msgstr "دفعة"
 
 #: .\cashboxes\models.py:320 .\inventory\models.py:57 .\inventory\models.py:204
-#: .\journal\models.py:298 .\templates\assets_liabilities\dashboard.html:697
+#: .\journal\models.py:287 .\templates\assets_liabilities\dashboard.html:697
 #: .\templates\banks\account_detail.html:114
 #: .\templates\banks\bank_cashbox_transfer_add.html:6
 #: .\templates\banks\bank_cashbox_transfer_add.html:153
@@ -3833,7 +3832,7 @@ msgstr "التحويل بين الحسابات البنكية"
 msgid "Bank to Cashbox Transfer"
 msgstr "التحويل بين البنوك والصناديق"
 
-#: .\core\models.py:81 .\journal\models.py:323 .\templates\base.html:735
+#: .\core\models.py:81 .\journal\models.py:311 .\templates\base.html:735
 #: .\templates\base.html:1402 .\templates\journal\entry_list.html:13
 msgid "Journal Entries"
 msgstr "القيود اليومية"
@@ -3944,7 +3943,7 @@ msgstr "تحديث"
 #: .\templates\inventory\warehouse_detail.html:140
 #: .\templates\inventory\warehouse_list.html:329
 #: .\templates\journal\account_list.html:219
-#: .\templates\journal\entry_create.html:154
+#: .\templates\journal\entry_create.html:131
 #: .\templates\payments\voucher_detail.html:27
 #: .\templates\payments\voucher_detail.html:280
 #: .\templates\payments\voucher_list.html:208
@@ -4118,7 +4117,7 @@ msgstr "استيراد"
 #: .\templates\customers\add.html:242
 #: .\templates\customers\customer_list.html:204
 #: .\templates\customers\supplier_list.html:187
-#: .\templates\journal\entry_create.html:254
+#: .\templates\journal\entry_create.html:231
 #: .\templates\purchases\invoice_list.html:299
 #: .\templates\purchases\purchase_statement.html:122
 #: .\templates\purchases\return_list.html:126
@@ -5130,7 +5129,7 @@ msgstr "ساعات العمل"
 msgid "Overtime Hours"
 msgstr "ساعات العمل الإضافية"
 
-#: .\hr\models.py:265 .\journal\models.py:285
+#: .\hr\models.py:265
 msgid "Manual Entry"
 msgstr "إدخال يدوي"
 
@@ -5197,7 +5196,7 @@ msgstr "نوع الإجازة"
 msgid "Leave Types"
 msgstr "أنواع الإجازة"
 
-#: .\hr\models.py:330 .\journal\models.py:497 .\payments\models.py:30
+#: .\hr\models.py:330 .\journal\models.py:450 .\payments\models.py:30
 #: .\templates\hr\dashboard.html:188
 #: .\templates\hr\payroll_period_form.html:253
 #: .\templates\hr\payroll_period_list.html:60
@@ -5310,7 +5309,7 @@ msgstr "إجمالي الخصومات"
 msgid "Net Salary"
 msgstr "صافي الراتب"
 
-#: .\hr\models.py:417 .\journal\models.py:322 .\journal\models.py:443
+#: .\hr\models.py:417 .\journal\models.py:310 .\journal\models.py:396
 #: .\settings\views.py:999 .\settings\views.py:1162
 #: .\templates\banks\transfer_list.html:406
 #: .\templates\banks\transfer_list.html:859
@@ -5706,11 +5705,11 @@ msgstr "وارد"
 msgid "Out"
 msgstr "صادر"
 
-#: .\inventory\models.py:66 .\inventory\models.py:193 .\journal\models.py:288
+#: .\inventory\models.py:66 .\inventory\models.py:193
 msgid "Warehouse Transfer"
 msgstr "تحويل المستودع"
 
-#: .\inventory\models.py:67 .\journal\models.py:299
+#: .\inventory\models.py:67 .\journal\models.py:288
 #: .\templates\customers\transactions.html:563
 #: .\templates\inventory\movement_list.html:180
 #: .\templates\inventory\movement_list.html:334
@@ -5747,6 +5746,29 @@ msgstr "تعديل"
 #: .\templates\sales\invoice_detail.html:223
 #: .\templates\sales\return_detail.html:191
 #: .\templates\sales\return_edit.html:186
+#: .\templates\base.html:1139 .\templates\base.html:1201
+#: .\templates\purchases\invoice_add.html:303
+#: .\templates\base.html:1146 .\templates\base.html:1208
+#: .\templates\products\product_list.html:7
+#: .\templates\products\product_list.html:377
+#: .\templates\products\product_list.html:525
+#: .\templates\core\dashboard.html:465
+#: .\templates\inventory\transfer_add.html:144
+#: .\templates\products\product_add.html:81
+#: .\templates\products\product_detail.html:83
+#: .\templates\products\product_edit.html:64
+#: .\templates\products\product_list.html:628
+#: .\templates\products\product_list.html:834
+#: .\templates\purchases\invoice_add.html:2683
+#: .\templates\products\product_add.html:366
+#: .\templates\products\product_list.html:1086
+#: .\templates\products\product_list.html:1475
+#: .\templates\purchases\invoice_add.html:2891
+#: .\templates\products\product_edit.html:7
+#: .\templates\products\product_edit.html:18
+#: .\templates\products\product_list.html:527
+#: .\templates\products\product_list.html:529
+#: .\templates\settings\print_design.html:434
 msgid "Product"
 msgstr "المنتج"
 
@@ -5966,68 +5988,53 @@ msgstr ""
 msgid "معلومات النظام"
 msgstr ""
 
-#: .\journal\forms.py:44 .\journal\models.py:305
-#: .\templates\revenues_expenses\entry_create.html:47
-msgid "Entry Type"
-msgstr "نوع الإدخال"
-
-#: .\journal\forms.py:83
+#: .\journal\forms.py:64
 msgid "لا تملك صلاحية تعديل رقم القيد"
 msgstr ""
 
-#: .\journal\forms.py:104
+#: .\journal\forms.py:84
 #, fuzzy
 #| msgid "قيم المبالغ المالية غير صحيحة!"
 msgid "نوع القيد غير صحيح"
 msgstr "قيم المبالغ المالية غير صحيحة!"
 
-#: .\journal\forms.py:110
-#, fuzzy
-#| msgid "قيم المبالغ المالية غير صحيحة!"
-msgid "نوع العملية غير صحيح"
-msgstr "قيم المبالغ المالية غير صحيحة!"
-
-#: .\journal\forms.py:130 .\templates\journal\entry_create.html:295
+#: .\journal\forms.py:104 .\templates\journal\entry_create.html:272
 msgid "اكتب للبحث عن الحساب..."
 msgstr ""
 
-#: .\journal\forms.py:247
+#: .\journal\forms.py:221
 #, fuzzy
 #| msgid "إحصائيات المبيعات"
 msgid "يجب اختيار حساب عند إدخال مبلغ"
 msgstr "إحصائيات المبيعات"
 
-#: .\journal\forms.py:251
+#: .\journal\forms.py:225
 #, fuzzy
 #| msgid "يرجى إدخال رقم إشعار المدين (مصدر)"
 msgid "يجب إدخال مبلغ في المدين أو الدائن"
 msgstr "يرجى إدخال رقم إشعار المدين (مصدر)"
 
-#: .\journal\forms.py:255
+#: .\journal\forms.py:229
 #, fuzzy
 #| msgid "لم يتم تحديد العملية المطلوبة"
 msgid "لا يمكن إدخال مبلغ في المدين والدائن معاً"
 msgstr "لم يتم تحديد العملية المطلوبة"
 
-#: .\journal\forms.py:328
+#: .\journal\forms.py:302
 msgid "يجب أن يساوي مجموع المدين مجموع الدائن"
 msgstr ""
 
-#: .\journal\forms.py:344 .\templates\journal\entry_detail.html:61
-msgid "نوع العملية"
-msgstr ""
-
-#: .\journal\forms.py:350 .\templates\journal\account_detail.html:135
+#: .\journal\forms.py:318 .\templates\journal\account_detail.html:135
 #: .\templates\journal\entry_detail.html:124
 #: .\templates\reports\balance_sheet.html:186
 msgid "الحساب"
 msgstr ""
 
-#: .\journal\forms.py:353
+#: .\journal\forms.py:321
 msgid "جميع الحسابات"
 msgstr ""
 
-#: .\journal\forms.py:357 .\revenues_expenses\models.py:64
+#: .\journal\forms.py:325 .\revenues_expenses\models.py:64
 #: .\templates\banks\transfer_detail.html:427
 #: .\templates\journal\account_detail.html:131
 #: .\templates\journal\dashboard.html:146
@@ -6041,7 +6048,7 @@ msgstr ""
 msgid "رقم القيد"
 msgstr ""
 
-#: .\journal\forms.py:374 .\journal\models.py:24
+#: .\journal\forms.py:342 .\journal\models.py:24
 #: .\templates\financial_reports\trial_balance.html:38
 #: .\templates\financial_reports\trial_balance.html:81
 #: .\templates\journal\account_detail.html:44
@@ -6049,7 +6056,7 @@ msgstr ""
 msgid "Account Type"
 msgstr "نوع الحساب"
 
-#: .\journal\forms.py:375 .\templates\journal\account_list.html:42
+#: .\journal\forms.py:343 .\templates\journal\account_list.html:42
 msgid "جميع الأنواع"
 msgstr ""
 
@@ -6151,7 +6158,7 @@ msgstr "الحساب الرئيسي"
 msgid "Linked Bank Account"
 msgstr "الحساب البنكي المرتبط"
 
-#: .\journal\models.py:37 .\journal\models.py:445
+#: .\journal\models.py:37 .\journal\models.py:398
 #: .\templates\banks\account_edit.html:94
 #: .\templates\banks\account_edit.html:112
 #: .\templates\banks\account_edit.html:141
@@ -6171,7 +6178,7 @@ msgstr "الحساب البنكي المرتبط"
 #: .\templates\customers\delete.html:90 .\templates\customers\edit.html:300
 #: .\templates\customers\edit.html:316
 #: .\templates\journal\entry_confirm_delete.html:117
-#: .\templates\journal\entry_create.html:149
+#: .\templates\journal\entry_create.html:126
 msgid "Account"
 msgstr "الحساب"
 
@@ -6200,34 +6207,13 @@ msgstr "لا يمكن تغيير نوع الحساب بعد الإنشاء"
 msgid "Circular reference detected in account hierarchy."
 msgstr ""
 
-#: .\journal\models.py:284
-msgid "Asset Depreciation"
-msgstr "إهلاك الأصول"
-
-#: .\journal\models.py:286
-msgid "Adjustment Entry"
-msgstr "إدخال التعديل"
-
-# Cashbox adjustments
-#: .\journal\models.py:287
-#, fuzzy
-#| msgid "Adjustment of Opening Balance"
-msgid "Customer/Supplier Balance Adjustment"
-msgstr "تعديل الرصيد الافتتاحي"
-
-#: .\journal\models.py:290
-#, fuzzy
-#| msgid "Sales Return"
-msgid "Sales Return COGS"
-msgstr "مردود المبيعات"
-
-#: .\journal\models.py:300
+#: .\journal\models.py:289
 #, fuzzy
 #| msgid "Daily Sales"
 msgid "Daily"
 msgstr "المبيعات اليومية"
 
-#: .\journal\models.py:303 .\revenues_expenses\views.py:837
+#: .\journal\models.py:292 .\revenues_expenses\views.py:837
 #: .\revenues_expenses\views.py:1010
 #: .\templates\journal\entries_by_type.html:105
 #: .\templates\journal\entry_confirm_delete.html:71
@@ -6242,15 +6228,19 @@ msgstr "المبيعات اليومية"
 msgid "Entry Number"
 msgstr "رقم القيد"
 
-#: .\journal\models.py:304
+#: .\journal\models.py:293
 msgid "Entry Date"
 msgstr "تاريخ القيد"
 
-#: .\journal\models.py:314
+#: .\journal\models.py:294 .\templates\revenues_expenses\entry_create.html:47
+msgid "Entry Type"
+msgstr "نوع الإدخال"
+
+#: .\journal\models.py:302
 msgid "Entry Description"
 msgstr "وصف القيد"
 
-#: .\journal\models.py:315 .\purchases\models.py:43 .\purchases\models.py:186
+#: .\journal\models.py:303 .\purchases\models.py:43 .\purchases\models.py:186
 #: .\purchases\models.py:242 .\purchases\models.py:285
 #: .\purchases\models.py:333 .\reports\views.py:410 .\reports\views.py:447
 #: .\revenues_expenses\views.py:1014 .\sales\models.py:33 .\sales\models.py:111
@@ -6280,78 +6270,81 @@ msgstr "وصف القيد"
 msgid "Total Amount"
 msgstr "المبلغ الإجمالي"
 
-#: .\journal\models.py:327
+#: .\journal\models.py:315
 msgid "Change Entry Number"
 msgstr "تعديل رقم القيد"
 
-#: .\journal\models.py:437
+#: .\journal\models.py:390
 msgid "Debit and credit totals must be equal"
 msgstr "يجب أن يكون مجموع المدين مساوياً لمجموع الدائن"
 
-#: .\journal\models.py:448
+#: .\journal\models.py:401
 msgid "Line Description"
 msgstr "تفاصيل البند"
 
-#: .\journal\models.py:453
+#: .\journal\models.py:406
 msgid "Journal Line"
 msgstr "بند قيد"
 
-#: .\journal\models.py:454
+#: .\journal\models.py:407
 msgid "Journal Lines"
 msgstr "بنود القيود"
 
-#: .\journal\models.py:462
+#: .\journal\models.py:415
 msgid "Amounts must be positive"
 msgstr "المبالغ يجب أن تكون موجبة"
 
-#: .\journal\models.py:465
+#: .\journal\models.py:418
 msgid "Line cannot be both debit and credit"
 msgstr "لا يمكن أن يكون البند مدين ودائن في نفس الوقت"
 
-#: .\journal\models.py:468
+#: .\journal\models.py:421
 #, fuzzy
 #| msgid "Enter the deposit document number"
 msgid "Must enter debit or credit amount"
 msgstr "أدخل رقم مستند الإيداع"
 
-#: .\journal\models.py:502 .\journal\views.py:1179
+#: .\journal\models.py:455 .\journal\views.py:1128
 #: .\templates\provisions\provision_confirm_delete.html:44
 #: .\templates\provisions\provision_detail.html:50
 #: .\templates\provisions\provision_form.html:117
 #: .\templates\provisions\provision_list.html:42
 #: .\templates\provisions\provision_report.html:163
+#: .\templates\journal\year_end_closing.html:36
 msgid "Fiscal Year"
 msgstr "السنة المالية"
 
-#: .\journal\models.py:503 .\journal\views.py:1185
+#: .\journal\models.py:456 .\journal\views.py:1134
+#: .\templates\journal\year_end_closing.html:44
+#: .\templates\journal\year_end_closing.html:127
 msgid "Closing Date"
 msgstr "تاريخ الإقفال"
 
-#: .\journal\models.py:504 .\templates\core\profit_loss_report.html:330
+#: .\journal\models.py:457 .\templates\core\profit_loss_report.html:330
 msgid "Net Profit/Loss"
 msgstr "صافي الربح/الخسارة"
 
-#: .\journal\models.py:509
+#: .\journal\models.py:462
 msgid "Closing Entry"
 msgstr "قيد الإقفال"
 
-#: .\journal\models.py:518
+#: .\journal\models.py:471
 msgid "Year End Closing"
 msgstr "إقفال سنوي"
 
-#: .\journal\models.py:519
+#: .\journal\models.py:472
 msgid "Year End Closings"
 msgstr "الإقفالات السنوية"
 
-#: .\journal\models.py:524
+#: .\journal\models.py:477
 msgid "Can perform year end closing"
 msgstr ""
 
-#: .\journal\models.py:555
+#: .\journal\models.py:508
 msgid "Closing already completed"
 msgstr "الإقفال مكتمل مسبقاً"
 
-#: .\journal\models.py:628
+#: .\journal\models.py:581
 msgid "Year end closing performed successfully"
 msgstr "تم إجراء الإقفال السنوي بنجاح"
 
@@ -6359,136 +6352,136 @@ msgstr "تم إجراء الإقفال السنوي بنجاح"
 msgid "مجموع المدين يجب أن يساوي مجموع الدائن"
 msgstr ""
 
-#: .\journal\views.py:123 .\templates\base.html:651 .\templates\base.html:890
+#: .\journal\views.py:116 .\templates\base.html:651 .\templates\base.html:890
 #: .\templates\journal\account_list.html:7
 #: .\templates\journal\account_list.html:14
 msgid "Accounts List"
 msgstr "قائمة الحسابات"
 
-#: .\journal\views.py:124
+#: .\journal\views.py:117
 msgid "Viewing accounts list"
 msgstr "عرض قائمة الحسابات"
 
-#: .\journal\views.py:165 .\templates\journal\account_list.html:329
+#: .\journal\views.py:158 .\templates\journal\account_list.html:329
 #: .\templates\journal\account_list.html:344
 #, fuzzy
 #| msgid "إحصائيات المبيعات"
 msgid "قائمة الحسابات"
 msgstr "إحصائيات المبيعات"
 
-#: .\journal\views.py:175 .\templates\journal\account_list.html:92
+#: .\journal\views.py:168 .\templates\journal\account_list.html:92
 #: .\templates\journal\account_list.html:349
 #: .\templates\journal\entry_detail.html:125
 msgid "كود الحساب"
 msgstr ""
 
-#: .\journal\views.py:176 .\templates\journal\account_list.html:350
+#: .\journal\views.py:169 .\templates\journal\account_list.html:350
 #, fuzzy
 #| msgid "إحصائيات المبيعات"
 msgid "اسم الحساب"
 msgstr "إحصائيات المبيعات"
 
-#: .\journal\views.py:177 .\templates\documents\report.html:25
+#: .\journal\views.py:170 .\templates\documents\report.html:25
 #: .\templates\journal\account_detail.html:133
 #: .\templates\journal\account_list.html:351
 msgid "النوع"
 msgstr ""
 
-#: .\journal\views.py:178 .\templates\journal\account_list.html:134
+#: .\journal\views.py:171 .\templates\journal\account_list.html:134
 #: .\templates\journal\account_list.html:352
 msgid "الحساب الرئيسي"
 msgstr ""
 
-#: .\journal\views.py:179 .\templates\journal\account_detail.html:139
+#: .\journal\views.py:172 .\templates\journal\account_detail.html:139
 #: .\templates\journal\account_list.html:353
 #: .\templates\reports\balance_sheet.html:187
 msgid "الرصيد"
 msgstr ""
 
-#: .\journal\views.py:180 .\templates\journal\account_detail.html:60
+#: .\journal\views.py:173 .\templates\journal\account_detail.html:60
 #: .\templates\journal\account_list.html:354
 msgid "الحالة"
 msgstr ""
 
-#: .\journal\views.py:198 .\products\models.py:16 .\products\models.py:102
+#: .\journal\views.py:191 .\products\models.py:16 .\products\models.py:102
 #: .\revenues_expenses\views.py:958 .\settings\models.py:277
 #: .\settings\models.py:319 .\templates\journal\account_detail.html:63
 msgid "نشط"
 msgstr ""
 
-#: .\journal\views.py:198 .\revenues_expenses\views.py:958
+#: .\journal\views.py:191 .\revenues_expenses\views.py:958
 #: .\templates\journal\account_detail.html:65
 msgid "غير نشط"
 msgstr ""
 
-#: .\journal\views.py:213
+#: .\journal\views.py:206
 #, fuzzy
 #| msgid "Bank Accounts List"
 msgid "Accounts Export"
 msgstr "قائمة الحسابات البنكية"
 
-#: .\journal\views.py:214
+#: .\journal\views.py:207
 msgid "Export account list to Excel"
 msgstr "تصدير قائمة الحسابات إلى Excel"
 
-#: .\journal\views.py:232
+#: .\journal\views.py:225
 msgid "Create Account"
 msgstr "إنشاء حساب"
 
-#: .\journal\views.py:233
+#: .\journal\views.py:226
 msgid "Open account creation screen"
 msgstr "فتح شاشة إنشاء حساب"
 
-#: .\journal\views.py:269
+#: .\journal\views.py:262
 msgid "Account created successfully"
 msgstr "تم إنشاء الحساب بنجاح"
 
-#: .\journal\views.py:274 .\journal\views.py:281 .\journal\views.py:282
+#: .\journal\views.py:267 .\journal\views.py:274 .\journal\views.py:275
 msgid "Create new account"
 msgstr "إنشاء حساب جديد"
 
-#: .\journal\views.py:323
+#: .\journal\views.py:316
 msgid "Account updated successfully"
 msgstr "تم تحديث الحساب بنجاح"
 
-#: .\journal\views.py:330 .\templates\banks\account_list.html:351
+#: .\journal\views.py:323 .\templates\banks\account_list.html:351
 #: .\templates\banks\account_list.html:355
 #: .\templates\journal\account_detail.html:19
 msgid "Edit Account"
 msgstr "تعديل الحساب"
 
-#: .\journal\views.py:342
+#: .\journal\views.py:335
 msgid "You do not have permission to delete accounts"
 msgstr "ليس لديك صلاحية لحذف الحسابات"
 
-#: .\journal\views.py:347
+#: .\journal\views.py:340
 msgid "Cannot delete account because it has transactions"
 msgstr "لا يمكن حذف الحساب لوجود حركات عليه"
 
-#: .\journal\views.py:371
+#: .\journal\views.py:364
 msgid "Account deleted successfully"
 msgstr "تم حذف الحساب بنجاح"
 
-#: .\journal\views.py:429
+#: .\journal\views.py:422
 msgid "Viewing account details: {}"
 msgstr "عرض تفاصيل الحساب: {}"
 
-#: .\journal\views.py:480
+#: .\journal\views.py:470
 #, fuzzy
 #| msgid "Viewing accounts list"
 msgid "Viewing journal entries list"
 msgstr "عرض قائمة الحسابات"
 
-#: .\journal\views.py:494 .\templates\journal\entry_create.html:5
+#: .\journal\views.py:484 .\templates\journal\entry_create.html:5
 #: .\templates\journal\entry_create.html:25
 msgid "Create Journal Entry"
 msgstr "إنشاء قيد يومية"
 
-#: .\journal\views.py:495
+#: .\journal\views.py:485
 msgid "Viewing create journal entry page"
 msgstr "عرض صفحة إنشاء قيد يومية"
 
-#: .\journal\views.py:546
+#: .\journal\views.py:536
 msgid ""
 "❌ خطأ: لا يمكن إنشاء قيد محاسبي يمس حسابين بنكيين أو أكثر. للقيام بتحويل "
 "بين حسابات بنكية، يجب استخدام صفحة التحويلات البنكية <a href=\"/ar/banks/"
@@ -6497,11 +6490,11 @@ msgid ""
 "وضمان انعكاس التحويل بشكل صحيح على جميع الأنظمة."
 msgstr ""
 
-#: .\journal\views.py:569 .\journal\views.py:599 .\journal\views.py:705
+#: .\journal\views.py:559 .\journal\views.py:589 .\journal\views.py:695
 msgid "Create new journal entry"
 msgstr "إنشاء قيد يومية جديد"
 
-#: .\journal\views.py:576
+#: .\journal\views.py:566
 msgid ""
 "❌ خطأ: لا يمكن إنشاء قيد محاسبي يمس حسابين أو أكثر من حسابات الصناديق. "
 "للقيام بتحويل بين الصناديق، يجب استخدام صفحة التحويلات بين الصناديق <a "
@@ -6510,99 +6503,99 @@ msgid ""
 "وضمان انعكاس التحويل بشكل صحيح على جميع الأنظمة."
 msgstr ""
 
-#: .\journal\views.py:628
+#: .\journal\views.py:618
 msgid "يجب إدخال بنود القيد المحاسبي"
 msgstr ""
 
-#: .\journal\views.py:651 .\revenues_expenses\views.py:335
+#: .\journal\views.py:641 .\revenues_expenses\views.py:335
 msgid "Entry created successfully"
 msgstr "تم إنشاء القيد بنجاح"
 
-#: .\journal\views.py:666
+#: .\journal\views.py:656
 msgid ""
 "An unexpected error occurred while creating the entry. Please try again."
 msgstr "حدث خطأ غير متوقع أثناء إنشاء القيد. يرجى المحاولة مرة أخرى."
 
-#: .\journal\views.py:670
+#: .\journal\views.py:660
 msgid "Please correct the errors in the basic entry information"
 msgstr "يرجى تصحيح الأخطاء في معلومات القيد الأساسية"
 
-#: .\journal\views.py:678
+#: .\journal\views.py:668
 msgid "Please correct the errors in the entry lines"
 msgstr "يرجى تصحيح الأخطاء في بنود القيد"
 
-#: .\journal\views.py:752
+#: .\journal\views.py:742
 #, fuzzy
 #| msgid "Entry created successfully"
 msgid "Entry modified successfully"
 msgstr "تم إنشاء القيد بنجاح"
 
-#: .\journal\views.py:770
+#: .\journal\views.py:760
 #, fuzzy
 #| msgid "An error occurred while adding the category."
 msgid "An error occurred while modifying the entry: "
 msgstr "حدث خطأ أثناء إضافة الفئة."
 
-#: .\journal\views.py:778
+#: .\journal\views.py:768
 #, fuzzy
 #| msgid "Edit Journal Entry"
 msgid "Modify journal entry"
 msgstr "تعديل قيد يومية"
 
-#: .\journal\views.py:923
+#: .\journal\views.py:913
 msgid "Account not found"
 msgstr "الحساب غير موجود"
 
-#: .\journal\views.py:1056
+#: .\journal\views.py:1006
 msgid "You do not have permission to delete journal entries."
 msgstr "ليس لديك صلاحية لحذف القيود المحاسبية."
 
-#: .\journal\views.py:1082
+#: .\journal\views.py:1031
 #, fuzzy
 #| msgid "Account deleted successfully"
 msgid "The Accounting Entry was Deleted Successfully"
 msgstr "تم حذف الحساب بنجاح"
 
-#: .\journal\views.py:1084
+#: .\journal\views.py:1033
 msgid "Error deleting journal entry: "
 msgstr "خطأ في حذف القيد المحاسبي: "
 
-#: .\journal\views.py:1190
+#: .\journal\views.py:1139
 msgid "I confirm performing the year-end closing"
 msgstr "أؤكد إجراء الإقفال السنوي"
 
-#: .\journal\views.py:1202
+#: .\journal\views.py:1151
 msgid "Closing has already been performed for this year"
 msgstr "تم إجراء الإقفال لهذه السنة مسبقاً"
 
-#: .\journal\views.py:1225
+#: .\journal\views.py:1174
 msgid "Year-End Closing"
 msgstr "إقفال سنوي"
 
-#: .\journal\views.py:1265
+#: .\journal\views.py:1214
 msgid "Year-End Closing Page"
 msgstr "صفحة الإقفال السنوي"
 
-#: .\journal\views.py:1266
+#: .\journal\views.py:1215
 msgid "Viewing Year-End Closing Page"
 msgstr "عرض صفحة الإقفال السنوي"
 
-#: .\journal\views.py:1284
+#: .\journal\views.py:1233
 msgid ""
 "تم إصلاح {} حساب بنجاح. تم ربط الحسابات الفرعية بحساباتها الأب المناسبة."
 msgstr ""
 
-#: .\journal\views.py:1289
+#: .\journal\views.py:1238
 msgid "لم يتم العثور على حسابات تحتاج إصلاح. جميع الحسابات مرتبطة بشكل صحيح."
 msgstr ""
 
-#: .\journal\views.py:1299
+#: .\journal\views.py:1248
 #, fuzzy
 #| msgid "Account Details"
 msgid "Account Hierarchy Fix"
 msgstr "تفاصيل الحساب"
 
-#: .\journal\views.py:1308
+#: .\journal\views.py:1257
 #, fuzzy
 #| msgid "حدث خطأ أثناء حذف المجموعة: {}"
 msgid "حدث خطأ أثناء إصلاح الهرمية: {}"
@@ -6974,10 +6967,6 @@ msgstr ""
 #: .\templates\products\product_add.html:69
 msgid "Name in English"
 msgstr "الاسم بالإنجليزية"
-
-#: .\products\models.py:12
-msgid "Classification code"
-msgstr "رمز التصنيف"
 
 #: .\products\models.py:14
 msgid "الفئة الأساسية"
@@ -7675,10 +7664,8 @@ msgid "Return Number"
 msgstr "رقم المرتجع"
 
 #: .\purchases\models.py:233 .\templates\purchases\return_add.html:43
-#, fuzzy
-#| msgid "Supplier Invoice Number"
 msgid "Supplier Return Number (Source)"
-msgstr "رقم إشعار المدين (مصدر)"
+msgstr "رقم مرتجع المورد (المصدر)"
 
 #: .\purchases\models.py:234
 msgid "The return number issued by the supplier"
@@ -8415,7 +8402,7 @@ msgstr "الرصيد الدائن"
 #: .\templates\financial_reports\trial_balance.html:122
 #: .\templates\inventory\list.html:581 .\templates\inventory\list.html:874
 #: .\templates\journal\entries_by_type.html:148
-#: .\templates\journal\entry_create.html:219
+#: .\templates\journal\entry_create.html:196
 #: .\templates\journal\entry_detail.html:171
 #: .\templates\products\product_detail.html:386
 #: .\templates\purchases\invoice_add.html:318
@@ -10035,6 +10022,7 @@ msgstr "كشف الحساب"
 #: .\templates\sales\invoice_list.html:184
 #: .\templates\sales\invoice_list.html:299 .\templates\sales\pos.html:1630
 #: .\templates\sales\pos.html:1775
+#: .\templates\products\category_list.html:181
 msgid "Print"
 msgstr "طباعة"
 
@@ -10355,7 +10343,7 @@ msgid "Optional description for the category"
 msgstr "وصف اختياري للفئة"
 
 #: .\templates\assets_liabilities\asset_create.html:435
-#: .\templates\products\category_list.html:219
+#: .\templates\products\category_list.html:220
 msgid "Active Category"
 msgstr "فئة نشطة"
 
@@ -12540,6 +12528,7 @@ msgstr "حدث خطأ في الشبكة"
 
 #: .\templates\banks\account_transactions.html:483
 #: .\templates\cashboxes\cashbox_detail.html:412
+#: .\templates\products\category_list.html:167
 #, fuzzy
 #| msgid "Print Date:"
 msgid "Print Date"
@@ -13429,26 +13418,20 @@ msgstr "إجمالي العناصر"
 #: .\templates\purchases\return_list.html:71
 #: .\templates\sales\invoice_list.html:345
 #: .\templates\sales\return_list.html:96
-#, fuzzy
-#| msgid "Deposits This Month"
 msgid "This Month"
-msgstr "الإيداعات هذا الشهر"
+msgstr "هذا الشهر"
 
 #: .\templates\banks\transfer_list.html:701
-#, fuzzy
-#| msgid "Preparing..."
 msgid "Searching..."
-msgstr "جاري التحضير..."
+msgstr "جاري البحث..."
 
 #: .\templates\banks\transfer_list.html:708
-#, fuzzy
-#| msgid "No backups found"
 msgid "No search results found"
-msgstr "لم يتم العثور على نسخ احتياطية"
+msgstr "لم يتم العثور على نتائج البحث"
 
 #: .\templates\banks\transfer_list.html:709
 msgid "Try changing search criteria"
-msgstr ""
+msgstr "حاول تغيير معايير البحث"
 
 #: .\templates\banks\transfer_list.html:732
 #, fuzzy
@@ -13557,10 +13540,8 @@ msgid "Global Search"
 msgstr "بحث"
 
 #: .\templates\base.html:621
-#, fuzzy
-#| msgid "Financial"
 msgid "Finance"
-msgstr "مالي"
+msgstr "المالية"
 
 #: .\templates\base.html:647 .\templates\base.html:768
 #: .\templates\base.html:886 .\templates\base.html:1434
@@ -13622,8 +13603,6 @@ msgstr "تاريخ السند"
 #: .\templates\journal\entry_list.html:6
 #: .\templates\journal\entry_list.html:123
 #: .\templates\journal\entry_list.html:673
-#, fuzzy
-#| msgid "Journal Entries"
 msgid "Journal Entries List"
 msgstr "القيود اليومية"
 
@@ -13635,10 +13614,8 @@ msgid "Chart of Accounts"
 msgstr "الحساب الرئيسي"
 
 #: .\templates\base.html:752 .\templates\base.html:1418
-#, fuzzy
-#| msgid "Journal Entry"
 msgid "Add Journal Entry"
-msgstr "قيد يومية"
+msgstr "إضافة قيد"
 
 #: .\templates\base.html:758 .\templates\base.html:1424
 #, fuzzy
@@ -13688,10 +13665,8 @@ msgstr "الأصول والخصوم"
 #: .\templates\base.html:858 .\templates\base.html:1457
 #: .\templates\journal\year_end_closing.html:5
 #: .\templates\journal\year_end_closing.html:15
-#, fuzzy
-#| msgid "Fiscal Year"
 msgid "Closing the Fiscal Year"
-msgstr "السنة المالية"
+msgstr "إغلاق السنة المالية"
 
 #: .\templates\base.html:977
 #, fuzzy
@@ -13844,28 +13819,12 @@ msgstr ""
 msgid "Add Category"
 msgstr "إضافة فئة جديدة"
 
-#: .\templates\base.html:1139 .\templates\base.html:1201
-#: .\templates\purchases\invoice_add.html:303
-#, fuzzy
-#| msgid "Product"
-msgid "Add Product"
-msgstr "المنتج"
-
 #: .\templates\base.html:1143 .\templates\base.html:1205
 #: .\templates\products\category_list.html:301
 #, fuzzy
 #| msgid "All Categories"
 msgid "Categories List"
 msgstr "جميع الفئات"
-
-#: .\templates\base.html:1146 .\templates\base.html:1208
-#: .\templates\products\product_list.html:7
-#: .\templates\products\product_list.html:377
-#: .\templates\products\product_list.html:525
-#, fuzzy
-#| msgid "Product"
-msgid "Products List"
-msgstr "المنتج"
 
 #: .\templates\base.html:1157 .\templates\base.html:1334
 #: .\templates\inventory\list.html:232
@@ -14044,7 +14003,7 @@ msgid "Backup"
 msgstr "العودة"
 
 #: .\templates\base.html:1892 .\templates\inventory\list.html:705
-#: .\templates\journal\entry_create.html:342
+#: .\templates\journal\entry_create.html:319
 #, fuzzy
 #| msgid "Loading"
 msgid "Loading..."
@@ -14372,10 +14331,9 @@ msgid "New Transfer"
 msgstr "تحويل"
 
 #: .\templates\cashboxes\transfer_list.html:191
-#, fuzzy
-#| msgid "No transactions found"
-msgid "No transfers found"
-msgstr "لا توجد معاملات"
+#: .\templates\inventory\transfer_list.html:86
+msgid "No Transfers Found"
+msgstr "لم يتم العثور على أي تحويلات"
 
 #: .\templates\cashboxes\transfer_list.html:465
 #: .\templates\cashboxes\transfer_list.html:574
@@ -14486,10 +14444,8 @@ msgid "Half Year"
 msgstr "نصف يوم"
 
 #: .\templates\core\dashboard.html:181 .\templates\core\dashboard.html:234
-#, fuzzy
-#| msgid "Fiscal Year"
 msgid "This Year"
-msgstr "السنة المالية"
+msgstr "هذه السنة"
 
 #: .\templates\core\dashboard.html:199
 #, fuzzy
@@ -14580,12 +14536,6 @@ msgstr "الصناديق النقدية"
 #| msgid "Quick List"
 msgid "Quick Links"
 msgstr "القائمة السريعة"
-
-#: .\templates\core\dashboard.html:465
-#, fuzzy
-#| msgid "Product"
-msgid "New Product"
-msgstr "المنتج"
 
 #: .\templates\core\dashboard.html:489
 msgid "Sales and Purchases Distribution (Current Month)"
@@ -16113,13 +16063,6 @@ msgstr "المصروفات"
 msgid "Revenue Growth"
 msgstr "الإيرادات"
 
-#: .\templates\financial_reports\income_statement.html:232
-#: .\templates\financial_reports\trial_balance.html:164
-#, fuzzy
-#| msgid "and Notes"
-msgid "Important Notes"
-msgstr "والملاحظات"
-
 #: .\templates\financial_reports\income_statement.html:235
 msgid ""
 "The income statement shows revenues and expenses for the specified period "
@@ -16182,7 +16125,7 @@ msgid "Expense"
 msgstr "المصروفات"
 
 #: .\templates\financial_reports\trial_balance.html:137
-#: .\templates\journal\entry_create.html:427
+#: .\templates\journal\entry_create.html:404
 #, fuzzy
 #| msgid "Balance"
 msgid "Balanced"
@@ -16195,8 +16138,8 @@ msgid "Total Debit = Total Credit"
 msgstr "إجمالي الدائن"
 
 #: .\templates\financial_reports\trial_balance.html:141
-#: .\templates\journal\entry_create.html:228
-#: .\templates\journal\entry_create.html:431
+#: .\templates\journal\entry_create.html:205
+#: .\templates\journal\entry_create.html:408
 #, fuzzy
 #| msgid "Balance"
 msgid "Unbalanced"
@@ -17534,10 +17477,9 @@ msgid "Employee Document Details"
 msgstr "مستندات الموظف"
 
 #: .\templates\hr\employee_document_detail.html:81
-#, fuzzy
-#| msgid "Available"
+#: .\templates\products\category_list.html:364
 msgid "No description available"
-msgstr "متاح"
+msgstr "لا يوجد وصف"
 
 #: .\templates\hr\employee_document_detail.html:109
 #, fuzzy
@@ -18280,18 +18222,14 @@ msgid "Turnover Report"
 msgstr "تقرير دوران الموظفين"
 
 #: .\templates\hr\reports.html:191 .\templates\inventory\list.html:420
-#, fuzzy
-#| msgid "Statistics"
 msgid "Quick Statistics"
-msgstr "الإحصائيات"
+msgstr "إحصائيات سريعة"
 
 #: .\templates\hr\reports.html:198
 #: .\templates\hr\reports\headcount_report.html:30
 #: .\templates\hr\reports\payroll_summary_report.html:75
-#, fuzzy
-#| msgid "Employees"
 msgid "Total Employees"
-msgstr "الموظفون"
+msgstr "إجمالي الموظفين"
 
 #: .\templates\hr\reports.html:214
 #, fuzzy
@@ -18641,10 +18579,8 @@ msgstr "تم عرض تقرير الإجازات القادمة"
 #: .\templates\inventory\list.html:234
 #: .\templates\products\product_add.html:259
 #: .\templates\products\product_edit.html:226
-#, fuzzy
-#| msgid "Inventory Movement"
 msgid "Inventory Management"
-msgstr "حركة المخزون"
+msgstr "إدارة المخزون"
 
 #: .\templates\inventory\list.html:239
 #, fuzzy
@@ -18653,25 +18589,21 @@ msgid "Products in warehouse:"
 msgstr "المستودع الأصلي"
 
 #: .\templates\inventory\list.html:241
-msgid "Comprehensive overview of inventory and movements"
-msgstr ""
+msgid "Comprehensive Overview of Inventory and Movements"
+msgstr "نظرة عامة شاملة على المخزون والحركات"
 
 #: .\templates\inventory\list.html:249
 msgid "View All Inventory"
-msgstr ""
+msgstr "عرض جميع المخزون"
 
 #: .\templates\inventory\list.html:266
-#, fuzzy
-#| msgid "Quick Actions"
 msgid "Quick Operations"
-msgstr "الإجراءات السريعة"
+msgstr "العمليات السريعة"
 
 #: .\templates\inventory\list.html:274
 #: .\templates\inventory\warehouse_list.html:151
-#, fuzzy
-#| msgid "Warehouse Manager"
 msgid "Warehouse Management"
-msgstr "مدير المستودع"
+msgstr "إدارةالمستودع"
 
 #: .\templates\inventory\list.html:286
 #, fuzzy
@@ -18696,83 +18628,68 @@ msgstr "المستودعات"
 
 #: .\templates\inventory\list.html:359
 #: .\templates\inventory\movement_list.html:273
-#, fuzzy
-#| msgid "Inventory Movements"
 msgid "Today's Movements"
-msgstr "حركات الجرد"
+msgstr "حركات اليوم"
 
 #: .\templates\inventory\list.html:361
 #: .\templates\inventory\movement_list.html:258
 #: .\templates\inventory\movement_list.html:275
 #: .\templates\inventory\warehouse_delete.html:114
 #: .\templates\inventory\warehouse_list.html:231
-#, fuzzy
-#| msgid "Movement Number"
 msgid "Movement"
-msgstr "رقم الحركة"
+msgstr "حركة"
 
 #: .\templates\inventory\list.html:380
-#, fuzzy
-#| msgid "Inventory Movements"
 msgid "Latest Movements"
-msgstr "حركات الجرد"
+msgstr "أحدث الحركات"
 
 #: .\templates\inventory\list.html:393
 #: .\templates\products\product_edit.html:317
 #: .\templates\products\product_movements.html:172
 #: .\templates\products\product_movements.html:244
-#, fuzzy
-#| msgid "Incoming Transfer"
+#: .\templates\inventory\list.html:819
 msgid "Incoming"
-msgstr "تحويل وارد"
+msgstr "وارد"
 
 #: .\templates\inventory\list.html:394
 #: .\templates\products\product_edit.html:317
 #: .\templates\products\product_movements.html:186
 #: .\templates\products\product_movements.html:246
-#, fuzzy
-#| msgid "Outgoing Transfer"
 msgid "Outgoing"
-msgstr "تحويل صادر"
+msgstr "صادر"
 
 #: .\templates\inventory\list.html:407 .\templates\inventory\list.html:850
-#, fuzzy
-#| msgid "Account Statement"
 msgid "No recent movements"
-msgstr "كشف الحساب"
+msgstr "لا توجد تحركات حديثة"
 
 #: .\templates\inventory\list.html:428
-msgid "Incoming value (without tax)"
-msgstr ""
+msgid "Incoming Value (Without Tax)"
+msgstr "القيمة الواردة (بدون ضريبة)"
 
 #: .\templates\inventory\list.html:431 .\templates\inventory\list.html:441
 #: .\templates\inventory\list.html:452
-#, fuzzy
-#| msgid "Pending"
 msgid "Including"
-msgstr "معلق"
+msgstr "شامل"
 
 #: .\templates\inventory\list.html:438
-msgid "Outgoing value (without tax)"
-msgstr ""
+msgid "Outgoing Value (Without Tax)"
+msgstr "القيمة الصادرة (بدون ضريبة)"
 
 #: .\templates\inventory\list.html:449
-msgid "Total inventory value (without tax)"
-msgstr ""
+msgid "Total Inventory Value (Without Tax)"
+msgstr "إجمالي قيمة المخزون (بدون احتساب الضريبة)"
 
 #: .\templates\inventory\list.html:470
-#, fuzzy
-#| msgid "Inventory Movement"
 msgid "Inventory Overview"
-msgstr "حركة المخزون"
+msgstr "نظرة عامة على المخزون"
 
 #: .\templates\inventory\list.html:488
 msgid "Search by product name or code"
-msgstr ""
+msgstr "البحث حسب اسم المنتج أو رمزه"
 
 #: .\templates\inventory\list.html:492
 msgid "All Stock Levels"
-msgstr ""
+msgstr "جميع مستويات المخزون"
 
 #: .\templates\inventory\list.html:625
 #: .\templates\inventory\product_detail.html:256
@@ -18878,20 +18795,16 @@ msgstr "حالة المخزون"
 #: .\templates\inventory\low_stock.html:148
 #: .\templates\inventory\low_stock.html:442
 #: .\templates\inventory\low_stock.html:513
-#, fuzzy
-#| msgid "Low Stock"
 msgid "Low Stock Report"
-msgstr "مخزون منخفض"
+msgstr "تقرير المخزون المنخفض"
 
 #: .\templates\inventory\low_stock.html:153
-#, fuzzy
-#| msgid "Print Full Report"
 msgid "Print Low Stock Report"
-msgstr "طباعة التقرير الكامل"
+msgstr "طباعة تقرير المخزون المنخفض"
 
 #: .\templates\inventory\low_stock.html:157
 msgid "Replenish All"
-msgstr ""
+msgstr "تجديد الكل"
 
 #: .\templates\inventory\low_stock.html:161
 #, fuzzy
@@ -18905,35 +18818,29 @@ msgstr "تقرير الضرائب"
 #: .\templates\inventory\product_detail.html:163
 #: .\templates\inventory\transfer_list.html:22
 #: .\templates\inventory\warehouse_list.html:164
-#, fuzzy
-#| msgid "Back to List"
 msgid "Back to Inventory"
-msgstr "العودة إلى القائمة"
+msgstr "العودة إلى المخزون"
 
 #: .\templates\inventory\low_stock.html:250
 msgid "Products That Need Replenishment"
-msgstr ""
+msgstr "المنتجات التي تحتاج إلى إعادة التعبئة"
 
 #: .\templates\inventory\low_stock.html:272
 #: .\templates\inventory\low_stock.html:450
-#, fuzzy
-#| msgid "Returned Quantity"
 msgid "Current Quantity"
-msgstr "الكمية المرتجعة"
+msgstr "الكمية الحالية"
 
 #: .\templates\inventory\low_stock.html:278
 #: .\templates\inventory\low_stock.html:451
 #: .\templates\inventory\product_detail.html:185
-#, fuzzy
-#| msgid "Minimum Salary"
 msgid "Minimum Quantity"
-msgstr "الراتب الأدنى"
+msgstr "الحد الأدنى للكمية"
 
 #: .\templates\inventory\low_stock.html:286
 #: .\templates\inventory\low_stock.html:314
 #: .\templates\inventory\low_stock.html:452
 msgid "Stock Level"
-msgstr ""
+msgstr "مستوى المخزون"
 
 #: .\templates\inventory\low_stock.html:293
 #, fuzzy
@@ -18943,17 +18850,15 @@ msgstr "مخزون حرج"
 
 #: .\templates\inventory\low_stock.html:294
 msgid "Low"
-msgstr ""
+msgstr "منخفض"
 
 #: .\templates\inventory\low_stock.html:300
 msgid "Replenish"
-msgstr ""
+msgstr "تجديد"
 
 #: .\templates\inventory\low_stock.html:337
-#, fuzzy
-#| msgid "Account Statement"
 msgid "Last Movement"
-msgstr "كشف الحساب"
+msgstr "الحركة الأخيرة"
 
 #: .\templates\inventory\low_stock.html:350
 msgid "All Products Are at Safe Levels"
@@ -19124,10 +19029,8 @@ msgstr "يمكن عرض مردودات المشتريات"
 #: .\templates\inventory\movement_bulk_delete.html:98
 #: .\templates\inventory\movement_list.html:176
 #: .\templates\inventory\product_detail.html:390
-#, fuzzy
-#| msgid "Account Statement"
 msgid "All Movements"
-msgstr "كشف الحساب"
+msgstr "جميع الحركات"
 
 #: .\templates\inventory\movement_bulk_delete.html:107
 #, fuzzy
@@ -19143,27 +19046,19 @@ msgstr "تاريخ المرتجع"
 
 #: .\templates\inventory\movement_bulk_delete.html:112
 #: .\templates\inventory\product_detail.html:289
-#, fuzzy
-#| msgid "Investments"
 msgid "Movements"
-msgstr "استثمارات"
+msgstr "الحركات"
 
 #: .\templates\inventory\movement_list.html:147
-#, fuzzy
-#| msgid "Print Full Report"
 msgid "Print Movement Report"
 msgstr "طباعة التقرير الكامل"
 
 #: .\templates\inventory\movement_list.html:152
 #: .\templates\inventory\movement_list.html:444
-#, fuzzy
-#| msgid "Add New Account"
 msgid "Add New Movement"
 msgstr "إضافة حساب جديد"
 
 #: .\templates\inventory\movement_list.html:156
-#, fuzzy
-#| msgid "Delete Account"
 msgid "Delete All Movements"
 msgstr "حذف الحساب"
 
@@ -19171,8 +19066,6 @@ msgstr "حذف الحساب"
 #: .\templates\inventory\movement_list.html:480
 #: .\templates\inventory\movement_list.html:550
 #: .\templates\receipts\receipt_detail.html:244
-#, fuzzy
-#| msgid "Document Type"
 msgid "Movement Type"
 msgstr "نوع المستند"
 
@@ -19181,14 +19074,14 @@ msgstr "نوع المستند"
 #: .\templates\inventory\movement_list.html:483
 #: .\templates\inventory\product_detail.html:333
 msgid "Inbound"
-msgstr ""
+msgstr "وارد"
 
 #: .\templates\inventory\movement_list.html:178
 #: .\templates\inventory\movement_list.html:328
 #: .\templates\inventory\movement_list.html:484
 #: .\templates\inventory\product_detail.html:336
 msgid "Outbound"
-msgstr ""
+msgstr "صادر"
 
 #: .\templates\inventory\movement_list.html:194
 #, fuzzy
@@ -19197,10 +19090,8 @@ msgid "All Warehouses"
 msgstr "المستودعات"
 
 #: .\templates\inventory\movement_list.html:203
-#, fuzzy
-#| msgid "Clear Filter"
 msgid "Apply Filter"
-msgstr "إلغاء الفلتر"
+msgstr "تطبيق الفلتر"
 
 #: .\templates\inventory\movement_list.html:222
 #: .\templates\inventory\product_detail.html:213
@@ -19237,10 +19128,9 @@ msgstr "حركات الجرد"
 #: .\templates\purchases\invoice_add.html:409
 #: .\templates\sales\invoice_add.html:421
 #: .\templates\sales\invoice_add.html:762
-#, fuzzy
-#| msgid "Available Backups"
+#: .\templates\products\category_list.html:333
 msgid "Available Quantity"
-msgstr "النسخ الاحتياطية المتوفرة"
+msgstr "الكمية المتوفرة"
 
 #: .\templates\inventory\movement_list.html:365
 #: .\templates\inventory\movement_list.html:373
@@ -19432,12 +19322,6 @@ msgstr "رمز المنتج"
 msgid "Available Qty"
 msgstr "متاح"
 
-#: .\templates\inventory\transfer_add.html:144
-#, fuzzy
-#| msgid "Product"
-msgid "Another Product"
-msgstr "المنتج"
-
 #: .\templates\inventory\transfer_add.html:155
 #, fuzzy
 #| msgid "Create Transfer"
@@ -19523,20 +19407,12 @@ msgstr "حدث خطأ في الشبكة"
 
 #: .\templates\inventory\transfer_list.html:4
 #: .\templates\inventory\transfer_list.html:13
-#, fuzzy
-#| msgid "Transfer Between Warehouses"
 msgid "Transfers Between Warehouses"
 msgstr "التحويل بين المستودعات"
 
-#: .\templates\inventory\transfer_list.html:86
-#, fuzzy
-#| msgid "No Assets Found"
-msgid "No Transfers Found"
-msgstr "لم يتم العثور على أصول"
-
 #: .\templates\inventory\transfer_list.html:87
-msgid "No transfers between warehouses have been recorded yet."
-msgstr ""
+msgid "No Transfers Between Warehouses Have Been Recorded Yet."
+msgstr "لم يتم تسجيل أي عمليات نقل بين المستودعات حتى الآن."
 
 #: .\templates\inventory\warehouse_add.html:5
 #, fuzzy
@@ -19825,30 +19701,22 @@ msgid "Total Warehouses"
 msgstr "إلى المستودع"
 
 #: .\templates\inventory\warehouse_list.html:212
-#, fuzzy
-#| msgid "Warehouses"
 msgid "Sub Warehouses"
-msgstr "المستودعات"
+msgstr "المستودعات الفرعية"
 
 #: .\templates\inventory\warehouse_list.html:229
-#, fuzzy
-#| msgid "Deposits This Month"
 msgid "Movements This Month"
-msgstr "الإيداعات هذا الشهر"
+msgstr "الحركات هذا الشهر"
 
 #: .\templates\inventory\warehouse_list.html:264
 #: .\templates\inventory\warehouse_list.html:299
 #: .\templates\purchases\invoice_list.html:410
-#, fuzzy
-#| msgid "Default Tax Rate"
 msgid "Default"
-msgstr "نسبة الضريبة الافتراضية"
+msgstr "الافتراضي"
 
 #: .\templates\inventory\warehouse_list.html:266
-#, fuzzy
-#| msgid "Total Tables"
 msgid "Total Units"
-msgstr "إجمالي المدين"
+msgstr "إجمالي الوحدات"
 
 #: .\templates\inventory\warehouse_list.html:345
 #, fuzzy
@@ -19989,7 +19857,7 @@ msgid "إصلاح الهرمية"
 msgstr "An error occurred while deleting the group: {}"
 
 #: .\templates\journal\account_list.html:23
-#: .\templates\journal\entry_create.html:140
+#: .\templates\journal\entry_create.html:117
 #, fuzzy
 #| msgid "Add New Account"
 msgid "New Account"
@@ -20056,7 +19924,7 @@ msgid "No accounts found matching the search criteria"
 msgstr "لم يتم العثور على أصول بناءً على معايير البحث المحددة"
 
 #: .\templates\journal\account_list.html:276
-#: .\templates\journal\entry_create.html:337
+#: .\templates\journal\entry_create.html:314
 #, fuzzy
 #| msgid "Create new account"
 msgid "Create New Account"
@@ -20312,65 +20180,65 @@ msgstr "عرض التفاصيل"
 msgid "Basic Entry Information"
 msgstr "المعلومات الأساسية"
 
-#: .\templates\journal\entry_create.html:134
+#: .\templates\journal\entry_create.html:111
 #, fuzzy
 #| msgid "Journal Entries"
 msgid "Journal Entry Items"
 msgstr "القيود اليومية"
 
-#: .\templates\journal\entry_create.html:137
+#: .\templates\journal\entry_create.html:114
 #, fuzzy
 #| msgid "Statement"
 msgid "Add Item"
 msgstr "كشف حساب"
 
-#: .\templates\journal\entry_create.html:150
+#: .\templates\journal\entry_create.html:127
 #, fuzzy
 #| msgid "View Details"
 msgid "Item Details"
 msgstr "عرض التفاصيل"
 
-#: .\templates\journal\entry_create.html:170
-#: .\templates\journal\entry_create.html:300
+#: .\templates\journal\entry_create.html:147
+#: .\templates\journal\entry_create.html:277
 #, fuzzy
 #| msgid "Search in accounts..."
 msgid "Search accounts"
 msgstr "البحث في الحسابات..."
 
-#: .\templates\journal\entry_create.html:203
-#: .\templates\journal\entry_create.html:318
+#: .\templates\journal\entry_create.html:180
+#: .\templates\journal\entry_create.html:295
 #, fuzzy
 #| msgid "Clear Filter"
 msgid "Clear Item"
 msgstr "إلغاء الفلتر"
 
-#: .\templates\journal\entry_create.html:210
-#: .\templates\journal\entry_create.html:325
+#: .\templates\journal\entry_create.html:187
+#: .\templates\journal\entry_create.html:302
 #, fuzzy
 #| msgid "Delete"
 msgid "Delete Item"
 msgstr "حذف"
 
-#: .\templates\journal\entry_create.html:239
+#: .\templates\journal\entry_create.html:216
 msgid ""
 "Warning: Debit total does not equal Credit total. They must be equal to save "
 "the entry."
 msgstr ""
 
-#: .\templates\journal\entry_create.html:262
+#: .\templates\journal\entry_create.html:239
 #: .\templates\revenues_expenses\entry_create.html:253
 #, fuzzy
 #| msgid "Save Category"
 msgid "Save Entry"
 msgstr "حفظ الفئة"
 
-#: .\templates\journal\entry_create.html:468
+#: .\templates\journal\entry_create.html:445
 #, fuzzy
 #| msgid "Are you sure you want to delete all transactions for account"
 msgid "Are you sure you want to reset the form? All entered data will be lost."
 msgstr "هل أنت متأكد من أنك تريد حذف جميع المعاملات للحساب"
 
-#: .\templates\journal\entry_create.html:574
+#: .\templates\journal\entry_create.html:551
 #, fuzzy
 #| msgid "Failed to load tables"
 msgid "Failed to load form"
@@ -20390,6 +20258,10 @@ msgstr ""
 
 #: .\templates\journal\entry_detail.html:41
 msgid "المعلومات"
+msgstr ""
+
+#: .\templates\journal\entry_detail.html:61
+msgid "نوع العملية"
 msgstr ""
 
 #: .\templates\journal\entry_detail.html:68
@@ -20499,7 +20371,7 @@ msgstr "إنشاء قيد يومية"
 
 #: .\templates\journal\year_end_closing.html:24
 msgid "Annual closing procedure"
-msgstr ""
+msgstr "إجراءات الإغلاق السنوية"
 
 #: .\templates\journal\year_end_closing.html:32
 msgid ""
@@ -20507,74 +20379,59 @@ msgid ""
 "transferred to capital"
 msgstr ""
 
-#: .\templates\journal\year_end_closing.html:36
-#, fuzzy
-#| msgid "Fiscal Year"
-msgid "Fiscal year"
-msgstr "السنة المالية"
-
-#: .\templates\journal\year_end_closing.html:44
-#: .\templates\journal\year_end_closing.html:127
-#, fuzzy
-#| msgid "Closing Date"
-msgid "Closing date"
-msgstr "تاريخ الإقفال"
-
 #: .\templates\journal\year_end_closing.html:54
-#, fuzzy
-#| msgid "I confirm performing the year-end closing"
-msgid "I confirm performing the annual closing"
+msgid "I Confirm Performing the Annual Closing"
 msgstr "أؤكد إجراء الإقفال السنوي"
 
+#: .\templates\journal\year_end_closing.html:32
+msgid "All Revenue and Expense Accounts Will be Closed and Net Profit/Loss Will be Transferred to Capital"
+msgstr "سيتم إغلاق جميع حسابات الإيرادات والمصروفات وسيتم تحويل صافي الربح/الخسارة إلى حساب رأس المال."
+
+#: .\templates\journal\year_end_closing.html:103
+msgid "The Closing Cannot be Un done After Execution"
+msgstr "لا يمكن التراجع عن عملية الإغلاق بعد تنفيذها."
+
 #: .\templates\journal\year_end_closing.html:63
-msgid "Perform closing"
-msgstr ""
+msgid "Perform Closing"
+msgstr "تنفيذ الإغلاق"
 
 #: .\templates\journal\year_end_closing.html:74
 msgid "Estimate net profit for the current year"
-msgstr ""
+msgstr "تقدير صافي الربح للسنة الحالية."
 
 #: .\templates\journal\year_end_closing.html:87
 msgid "Expected profit"
-msgstr ""
+msgstr "الربح المتوقع"
 
 #: .\templates\journal\year_end_closing.html:89
 msgid "Expected loss"
-msgstr ""
+msgstr "الخسارة المتوقعة"
 
 #: .\templates\journal\year_end_closing.html:99
-#, fuzzy
-#| msgid "Important warning:"
-msgid "Important notes"
-msgstr "تحذير مهم:"
+#: .\templates\financial_reports\income_statement.html:232
+#: .\templates\financial_reports\trial_balance.html:164
+msgid "Important Notes"
+msgstr "تحذيرات مهمة:"
 
 #: .\templates\journal\year_end_closing.html:103
-#, fuzzy
-#| msgid "This action cannot be undone!"
-msgid "The closing cannot be undone after execution"
-msgstr "لا يمكن التراجع عن هذا الإجراء!"
+msgid "The Closing Cannot be Undone After Execution"
+msgstr "لا يمكن التراجع عن عملية الإغلاق بعد تنفيذها.!"
 
 #: .\templates\journal\year_end_closing.html:104
-msgid "Make sure all entries are closed before closing"
-msgstr ""
+msgid "Make Sure All Entries are Closed Before Closing"
+msgstr "تأكد من إغلاق جميع الإدخالات قبل الإغلاق."
 
 #: .\templates\journal\year_end_closing.html:105
-#, fuzzy
-#| msgid "All affected account balances will be automatically reset"
-msgid "An accounting entry will be created automatically"
-msgstr "سيتم إعادة تعيين جميع أرصدة الحسابات المتأثرة تلقائياً"
+msgid "An Accounting Entry Will be Created Automatically"
+msgstr "سيتم إنشاء قيد محاسبي تلقائيًا."
 
 #: .\templates\journal\year_end_closing.html:106
-#, fuzzy
-#| msgid "This operation will be logged in the audit log."
-msgid "The operation will be recorded in the activity log"
-msgstr "سيتم تسجيل هذه العملية في سجل التدقيق."
+msgid "The Operation Will be Recorded in The Activity Log"
+msgstr "سيتم تسجيل العملية في سجل الأنشطة.."
 
-#: .\templates\journal\year_end_closing.html:118
-#, fuzzy
-#| msgid "Previous"
-msgid "Previous closings"
-msgstr "السابق"
+#: .\templates\journal\year_end_closing.html:113
+msgid "Previous Closings"
+msgstr "الإغلاقات السابقة"
 
 #: .\templates\journal\year_end_closing.html:128
 #, fuzzy
@@ -20589,8 +20446,8 @@ msgid "View entry"
 msgstr "عرض التفاصيل"
 
 #: .\templates\journal\year_end_closing.html:159
-msgid "No previous closings"
-msgstr ""
+msgid "No Previous Closings"
+msgstr "لا يوجد إغلاقات سابقة"
 
 #: .\templates\journal\year_end_closing.html:177
 #, fuzzy
@@ -20915,9 +20772,9 @@ msgstr "رمز المنتج"
 msgid "قائمة فئات المنتجات"
 msgstr "إحصائيات المبيعات"
 
-#: .\templates\products\category_list.html:175
-msgid "Manage and organize product categories"
-msgstr ""
+#: .\templates\products\category_list.html:176
+msgid "Manage and Organize Product Categories"
+msgstr "إدارة وتنظيم فئات المنتجات"
 
 #: .\templates\products\category_list.html:184
 #: .\templates\products\product_list.html:388
@@ -20951,23 +20808,18 @@ msgstr "جميع الفئات"
 msgid "Active Categories"
 msgstr "فئة نشطة"
 
-#: .\templates\products\category_list.html:234
-#, fuzzy
-#| msgid "Defective Product"
+#: .\templates\products\category_list.html:235
 msgid "Related Products"
 msgstr "منتج معيب"
 
-#: .\templates\products\category_list.html:251
-#, fuzzy
-#| msgid "All Categories"
+#: .\templates\products\category_list.html:252
 msgid "Subcategories"
-msgstr "جميع الفئات"
+msgstr "الفئات"
 
-#: .\templates\products\category_list.html:253
-#, fuzzy
-#| msgid "Category"
+#: .\templates\products\category_list.html:254
+#: .\templates\products\category_list.html:349
 msgid "Subcategory"
-msgstr "الفئة"
+msgstr "فئة"
 
 #: .\templates\products\category_list.html:274
 #, fuzzy
@@ -20993,16 +20845,9 @@ msgid "Print Complete Report"
 msgstr "طباعة التقرير الكامل"
 
 #: .\templates\products\category_list.html:328
-#, fuzzy
-#| msgid "Classification code"
+#: .\products\models.py:12
 msgid "Classification Code"
 msgstr "رمز التصنيف"
-
-#: .\templates\products\category_list.html:346
-#, fuzzy
-#| msgid "Category"
-msgid "Subcategory of"
-msgstr "الفئة"
 
 #: .\templates\products\category_list.html:375
 #: .\templates\revenues_expenses\category_list.html:88
@@ -21066,17 +20911,6 @@ msgstr "معلومات الاتصال"
 #| msgid "Product Name"
 msgid "Product Type"
 msgstr "اسم المنتج"
-
-#: .\templates\products\product_add.html:81
-#: .\templates\products\product_detail.html:83
-#: .\templates\products\product_edit.html:64
-#: .\templates\products\product_list.html:628
-#: .\templates\products\product_list.html:834
-#: .\templates\purchases\invoice_add.html:2683
-#, fuzzy
-#| msgid "Product"
-msgid "Physical Product"
-msgstr "المنتج"
 
 #: .\templates\products\product_add.html:82
 #: .\templates\products\product_add.html:174
@@ -21243,10 +21077,13 @@ msgstr ""
 #: .\templates\products\product_list.html:961
 #: .\templates\purchases\invoice_add.html:204
 #: .\templates\purchases\invoice_edit.html:185
-#, fuzzy
-#| msgid "Calculating..."
 msgid "Tax Calculation"
-msgstr "حساب..."
+msgstr "حساب الضرائب"
+
+#: .\templates\purchases\invoice_add.html:205
+#: .\templates\purchases\invoice_edit.html:185
+msgid "When checked, tax is calculated and added. When unchecked, no tax is calculated."
+msgstr "عند تحديد هذا الخيار، يتم حساب الضريبة وإضافتها. وعند إلغاء تحديد هذا الخيار، لا يتم حساب أي ضريبة."
 
 #: .\templates\products\product_add.html:248
 #: .\templates\products\product_edit.html:215
@@ -21325,15 +21162,6 @@ msgstr "اسم المنتج"
 #| msgid "Can access inventory"
 msgid "Track Inventory"
 msgstr "يمكن الوصول إلى المخزون"
-
-#: .\templates\products\product_add.html:366
-#: .\templates\products\product_list.html:1086
-#: .\templates\products\product_list.html:1475
-#: .\templates\purchases\invoice_add.html:2891
-#, fuzzy
-#| msgid "Product"
-msgid "Save Product"
-msgstr "المنتج"
 
 #: .\templates\products\product_add.html:379
 msgid "Selling price is lower than cost price. Are you sure?"
@@ -21421,13 +21249,6 @@ msgstr "منتج معيب"
 #| msgid "Sale Price"
 msgid "Price"
 msgstr "سعر البيع"
-
-#: .\templates\products\product_edit.html:7
-#: .\templates\products\product_edit.html:18
-#, fuzzy
-#| msgid "Product"
-msgid "Edit Product"
-msgstr "المنتج"
 
 #: .\templates\products\product_edit.html:20
 #, fuzzy
@@ -21539,8 +21360,8 @@ msgid "قائمة المنتجات"
 msgstr "إحصائيات المبيعات"
 
 #: .\templates\products\product_list.html:379
-msgid "Manage and organize products"
-msgstr ""
+msgid "Manage and Organize Products"
+msgstr "إدارة وتنظيم المنتجات"
 
 #: .\templates\products\product_list.html:425
 #, fuzzy
@@ -21558,33 +21379,23 @@ msgstr ""
 msgid "Not Active"
 msgstr "الحساب نشط"
 
-#: .\templates\products\product_list.html:527
-#: .\templates\products\product_list.html:529
-#, fuzzy
-#| msgid "Product"
-msgid "product"
-msgstr "المنتج"
-
 #: .\templates\products\product_list.html:534
 #: .\templates\sales\sales_report.html:183
-#, fuzzy
-#| msgid "Print Full Report"
+
 msgid "Print Report"
-msgstr "طباعة التقرير الكامل"
+msgstr "طباعة التقرير"
 
 #: .\templates\products\product_list.html:549
 #: .\templates\products\product_list.html:594
 #: .\templates\products\product_list.html:1653
 msgid "Price with Tax"
-msgstr ""
+msgstr "السعر مع الضريبة"
 
 #: .\templates\products\product_list.html:550
 #: .\templates\products\product_list.html:598
 #: .\templates\products\product_list.html:1654 .\templates\sales\pos.html:1065
-#, fuzzy
-#| msgid "Low Stock"
 msgid "Stock"
-msgstr "مخزون منخفض"
+msgstr "مخزون"
 
 #: .\templates\products\product_list.html:575
 msgid "Image"
@@ -22075,10 +21886,8 @@ msgid "Provisions by Type"
 msgstr "الصلاحيات"
 
 #: .\templates\provisions\provision_report.html:79
-#, fuzzy
-#| msgid "Fiscal Year"
 msgid "Provisions by Fiscal Year"
-msgstr "السنة المالية"
+msgstr "المخصصات حسب السنة المالية"
 
 #: .\templates\provisions\provision_report.html:93
 #, fuzzy
@@ -22097,7 +21906,7 @@ msgstr "المبلغ"
 #, fuzzy
 #| msgid "Fiscal Year"
 msgid "By Fiscal Year"
-msgstr "السنة المالية"
+msgstr "حسب السنة المالية"
 
 #: .\templates\purchases\debitnote_add.html:3
 #: .\templates\purchases\debitnote_add.html:6
@@ -22262,10 +22071,8 @@ msgstr "المعلومات الأساسية"
 
 #: .\templates\purchases\invoice_add.html:147
 #: .\templates\purchases\invoice_add.html:148
-#, fuzzy
-#| msgid "Generated automatically from the sequencing system"
 msgid "Invoice number is automatically generated from sequence settings"
-msgstr "تم إنشاؤه تلقائياً من نظام التسلسل"
+msgstr "يتم إنشاء رقم الفاتورة تلقائيًا بناءً على إعدادات التسلسل."
 
 #: .\templates\purchases\invoice_add.html:170
 #, fuzzy
@@ -22274,9 +22081,7 @@ msgid "Create Supplier"
 msgstr "المورد"
 
 #: .\templates\purchases\invoice_add.html:175
-#, fuzzy
-#| msgid "Select supplier..."
-msgid "Type supplier name..."
+msgid "Choose supplier name..."
 msgstr "اختر المورد..."
 
 #: .\templates\purchases\invoice_add.html:181
@@ -22292,18 +22097,9 @@ msgstr "المورد"
 msgid "Tax Settings"
 msgstr "إعدادات الشركة"
 
-#: .\templates\purchases\invoice_add.html:204
-#: .\templates\purchases\invoice_edit.html:185
-msgid ""
-"When checked, tax is calculated and added. When unchecked, no tax is "
-"calculated."
-msgstr ""
-
-#: .\templates\purchases\invoice_add.html:205
-#, fuzzy
-#| msgid "Delete Selected Tables"
+#: .\templates\purchases\invoice_add.html:206
 msgid "Default: Selected (calculates tax)"
-msgstr "حذف الجداول المحددة"
+msgstr "الخيار الافتراضي: محدد (يتم احتساب الضريبة)"
 
 #: .\templates\purchases\invoice_add.html:211
 #: .\templates\sales\invoice_add.html:323
@@ -22312,16 +22108,14 @@ msgstr "حذف الجداول المحددة"
 msgid "Warehouse Row"
 msgstr "المستودع"
 
-#: .\templates\purchases\invoice_add.html:227
-#, fuzzy
-#| msgid "Please select a customer"
+#: .\templates\purchases\invoice_add.html:228
 msgid "Set as default purchase warehouse"
-msgstr "يرجى اختيار عميل"
+msgstr "تعيين كمخزن شراء افتراضي"
 
-#: .\templates\purchases\invoice_add.html:230
+#: .\templates\purchases\invoice_add.html:231
 #: .\templates\purchases\invoice_edit.html:252
 msgid "Select the warehouse where products will be stored."
-msgstr ""
+msgstr "اختر المستودع الذي سيتم فيه تخزين المنتجات."
 
 #: .\templates\purchases\invoice_add.html:237
 #: .\templates\purchases\invoice_edit.html:166
@@ -22386,10 +22180,8 @@ msgstr ""
 #: .\templates\purchases\invoice_add.html:336
 #: .\templates\purchases\return_add.html:97
 #: .\templates\sales\return_add.html:93
-#, fuzzy
-#| msgid "Additional Notes"
 msgid "Enter any additional notes..."
-msgstr "ملاحظات إضافية"
+msgstr "أدخل أي ملاحظات إضافية..."
 
 #: .\templates\purchases\invoice_add.html:342
 #, fuzzy
@@ -23016,11 +22808,12 @@ msgid "لا يوجد وصف"
 msgstr ""
 
 #: .\templates\purchases\invoice_list.html:163
+msgid "Manage All Purchase Invoices"
+msgstr "إدارة جميع فواتير الشراء"
+
 #: .\templates\sales\invoice_list.html:286
-#, fuzzy
-#| msgid "Manager"
-msgid "Manage all"
-msgstr "المدير"
+msgid "Manage All Sales Invoices"
+msgstr "إدارة جميع فواتير المبيعات"
 
 #: .\templates\purchases\invoice_list.html:168
 #: .\templates\purchases\invoice_list.html:509
@@ -23040,10 +22833,8 @@ msgstr ""
 #: .\templates\purchases\invoice_list.html:184
 #: .\templates\sales\invoice_list.html:311
 #: .\templates\sales\sales_report.html:220
-#, fuzzy
-#| msgid "Sales Invoices"
 msgid "Total Invoices"
-msgstr "فواتير المبيعات"
+msgstr "إجمالي الفواتير"
 
 #: .\templates\purchases\invoice_list.html:271
 #: .\templates\purchases\return_list.html:107
@@ -23136,10 +22927,8 @@ msgstr "إجمالي الضريبة"
 
 #: .\templates\purchases\purchase_statement.html:257
 #: .\templates\sales\sales_statement.html:173
-#, fuzzy
-#| msgid "Number of Currencies"
 msgid "Number of Invoices"
-msgstr "عدد العملات"
+msgstr "عدد الفواتير"
 
 #: .\templates\purchases\purchase_statement.html:274
 #, fuzzy
@@ -23175,10 +22964,8 @@ msgstr "الفاتورة الأصلية"
 
 #: .\templates\purchases\return_add.html:84
 #: .\templates\sales\return_add.html:80
-#, fuzzy
-#| msgid "Return Reason"
 msgid "Select Return Reason"
-msgstr "سبب المرتجع"
+msgstr "حدد سبب الإرجاع"
 
 #: .\templates\purchases\return_add.html:105
 #: .\templates\sales\return_add.html:125
@@ -23217,14 +23004,12 @@ msgstr "الكمية المرتجعة"
 
 #: .\templates\purchases\return_add.html:162
 #: .\templates\sales\return_add.html:182
-#, fuzzy
-#| msgid "Sales Return"
 msgid "Save Return"
-msgstr "مردود المبيعات"
+msgstr "حفظ المردود"
 
 #: .\templates\purchases\return_add.html:194
 msgid "Search by invoice number or supplier name..."
-msgstr ""
+msgstr "البحث عن طريق رقم الفاتورة أو اسم المورد..."
 
 #: .\templates\purchases\return_add.html:248
 #: .\templates\sales\return_add.html:271
@@ -23815,6 +23600,7 @@ msgstr "تصدير"
 #: .\templates\reports\customer_statement.html:16
 #: .\templates\reports\sales_by_salesperson.html:62
 #: .\templates\reports\trial_balance.html:15
+#: .\templates\products\category_list.html:185
 #, fuzzy
 #| msgid "Export to Excel"
 msgid "Export Excel"
@@ -24082,10 +23868,8 @@ msgid "لا توجد منتجات في المخزون في الفترة المح
 msgstr ""
 
 #: .\templates\reports\sales_by_salesperson.html:21
-#, fuzzy
-#| msgid "Sales Person"
 msgid "Select Sales Person"
-msgstr "مندوب المبيعات"
+msgstr "إختر مندوب المبيعات"
 
 #: .\templates\reports\sales_by_salesperson.html:54
 #, fuzzy
@@ -25268,10 +25052,10 @@ msgid "Set as default cash box"
 msgstr "اختر الصندوق..."
 
 #: .\templates\sales\invoice_add.html:402 .\templates\sales\pos.html:1027
-#, fuzzy
-#| msgid "Product"
+#: .\templates\products\category_list.html:235
+#: .\templates\search\search.html:211
 msgid "Products"
-msgstr "المنتج"
+msgstr "المنتجات"
 
 #: .\templates\sales\invoice_add.html:405
 #, fuzzy
@@ -26120,16 +25904,12 @@ msgid "Start date must be less than end date"
 msgstr "تاريخ الميلاد يجب أن يكون في الماضي."
 
 #: .\templates\sales\sales_report.html:253
-#, fuzzy
-#| msgid "Total Accounts"
 msgid "Total Discounts"
-msgstr "إجمالي الحسابات"
+msgstr "إجمالي الخصومات"
 
 #: .\templates\sales\sales_report.html:266
-#, fuzzy
-#| msgid "Customer"
 msgid "Top Customers"
-msgstr "العميل"
+msgstr "أفضل العملاء"
 
 #: .\templates\sales\sales_report.html:274
 #: .\templates\sales\sales_report.html:380
@@ -26140,10 +25920,8 @@ msgstr "المبيعات اليومية"
 
 #: .\templates\sales\sales_report.html:324
 #: .\templates\sales\sales_statement.html:191
-#, fuzzy
-#| msgid "No Sales Invoices Found"
 msgid "No sales invoices found for the selected period"
-msgstr "لم يتم العثور على فواتير مبيعات"
+msgstr "لم يتم العثور على أي فواتير مبيعات للفترة المحددة."
 
 #: .\templates\sales\sales_return_statement.html:5
 #: .\templates\sales\sales_return_statement.html:85
@@ -26203,12 +25981,6 @@ msgstr "بحث"
 #: .\templates\search\search.html:210
 msgid ""
 "You can search using invoice number, customer name, or any part of the data"
-msgstr ""
-
-#: .\templates\search\search.html:211
-msgid ""
-"Search includes all documents: invoices, receipts, entries, customers, "
-"products"
 msgstr ""
 
 #: .\templates\search\search.html:212
@@ -27176,12 +26948,6 @@ msgid ""
 "This content represents the actual document data such as invoices and "
 "receipts"
 msgstr ""
-
-#: .\templates\settings\print_design.html:434
-#, fuzzy
-#| msgid "Product"
-msgid "Sample Product"
-msgstr "المنتج"
 
 #: .\templates\settings\print_design.html:447
 msgid "Left Footer"
@@ -28931,3 +28697,34 @@ msgstr ""
 #: .\users\views.py:1619
 msgid "High privileged users are shown."
 msgstr ""
+
+#, fuzzy
+#~| msgid "قيم المبالغ المالية غير صحيحة!"
+#~ msgid "نوع العملية غير صحيح"
+#~ msgstr "قيم المبالغ المالية غير صحيحة!"
+
+#~ msgid "Asset Depreciation"
+#~ msgstr "إهلاك الأصول"
+
+#~ msgid "Adjustment Entry"
+#~ msgstr "إدخال التعديل"
+
+# Cashbox adjustments
+#, fuzzy
+#~| msgid "Adjustment of Opening Balance"
+#~ msgid "Customer/Supplier Balance Adjustment"
+#~ msgstr "تعديل الرصيد الافتتاحي"
+
+#, fuzzy
+#~| msgid "Sales Return"
+#~ msgid "Sales Return COGS"
+#~ msgstr "مردود المبيعات"
+
+#: .\templates\products\category_list.html:166
+#: .\templates\products\category_list.html:523
+msgid "Product Categories List"
+msgstr "قائمة فئات المنتجات"
+
+#: .\templates\products\category_list.html:334
+msgid "Cost"
+msgstr "التكلفة"
