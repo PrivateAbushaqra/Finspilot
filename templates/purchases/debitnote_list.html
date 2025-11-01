@@ -21,7 +21,7 @@
                         {% endif %}
                         {% if perms.purchases.add_purchasedebitnote or perms.purchases.change_purchasedebitnote or perms.purchases.delete_purchasedebitnote or user.is_superuser %}
                         <a href="{% url 'purchases:debitnote_report' %}" class="btn btn-info btn-sm">
-                            <i class="fas fa-chart-line me-2"></i>{% trans "Debit Note Report" %}
+                            <i class="fas fa-chart-line me-2"></i>{% trans "Debit Notes Report" %}
                         </a>
                         {% endif %}
                     </div>
@@ -91,16 +91,16 @@
                         <ul class="pagination justify-content-center">
                             {% if page_obj.has_previous %}
                                 <li class="page-item">
-                                    <a class="page-link" href="?page=1">الأول</a>
+                                    <a class="page-link" href="?page=1">{% trans "First" %}</a>
                                 </li>
                                 <li class="page-item">
-                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">السابق</a>
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">{% trans "Previous" %}</a>
                                 </li>
                             {% endif %}
 
                             <li class="page-item active">
                                 <span class="page-link">
-                                    صفحة {{ page_obj.number }} من {{ page_obj.paginator.num_pages }}
+                                    {% trans "Page" %} {{ page_obj.number }} {% trans "From" %} {{ page_obj.paginator.num_pages }}
                                 </span>
                             </li>
 

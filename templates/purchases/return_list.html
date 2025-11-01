@@ -20,11 +20,11 @@
         <div>
             <a href="{% url 'purchases:return_add' %}" class="btn btn-success">
                 <i class="fas fa-plus me-1"></i>
-                {% trans "New Purchase Return" %}
+                {% trans "Create Purchase Return" %}
             </a>
             <button type="button" onclick="printPage()" class="btn btn-outline-secondary ms-2">
                 <i class="fas fa-print me-1"></i>
-                {% trans "Print" %} {% trans "the list" %}
+                {% trans "Print The List" %}
             </button>
         </div>
     </div>
@@ -68,7 +68,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1">
-                            <h6 class="mb-0">{% trans "Returns" %} {% trans "This Month" %}</h6>
+                            <h6 class="mb-0">{% trans "Returns This Month" %}</h6>
                             <h3 class="mb-0">{{ monthly_returns|default:0 }}</h3>
                         </div>
                         <div class="ms-3">

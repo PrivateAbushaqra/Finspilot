@@ -136,7 +136,7 @@ class SalesReturn(models.Model):
     """مردود المبيعات"""
     return_number = models.CharField(_('Sales Return Number'), max_length=50, unique=True)
     date = models.DateField(_('Date'))
-    original_invoice = models.ForeignKey(SalesInvoice, on_delete=models.PROTECT, 
+    original_invoice = models.ForeignKey(SalesInvoice, on_delete=models.CASCADE, 
                                        verbose_name=_('Original Invoice'))
     customer = models.ForeignKey(CustomerSupplier, on_delete=models.PROTECT, verbose_name=_('Customer'))
     subtotal = models.DecimalField(_('Subtotal'), max_digits=15, decimal_places=3, default=0)

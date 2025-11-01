@@ -368,7 +368,7 @@
         <div class="col-md-3">
             <div class="card stats-card">
                 <div class="card-body text-center">
-                    <h4 class="{% if closing_balance > 0 %}text-success{% elif closing_balance < 0 %}text-danger{% else %}text-muted{% endif %}">{{ closing_balance|floatformat:3 }}</h4>
+                    <h4 class="{% if closing_balance > 0 %}text-success{% elif closing_balance < 0 %}text-danger{% else %}text-muted{% endif %} closing-balance-value">{{ closing_balance|floatformat:3 }}</h4>
                     <p class="text-muted mb-0">{% trans "Balance" %} الختامي</p>
                 </div>
             </div>
@@ -460,13 +460,13 @@
                                     </div>
                                     <div class="col-md-2">
                                         <small class="text-muted">{% trans "Amount" %}:</small>
-                                        <div class="{% if transaction.direction == 'debit' %}text-danger{% else %}text-success{% endif %} fw-bold">
+                                        <div class="{% if transaction.direction == 'debit' %}text-danger debit-amount{% else %}text-success credit-amount{% endif %} fw-bold">
                                             {{ transaction.amount|floatformat:3 }}
                                         </div>
                                     </div>
                                     <div class="col-md-2">
                                         <small class="text-muted">{% trans "Balance After" %}:</small>
-                                        <div class="{% if transaction.balance_after > 0 %}text-success{% elif transaction.balance_after < 0 %}text-danger{% else %}text-muted{% endif %} fw-bold">
+                                        <div class="{% if transaction.balance_after > 0 %}text-success{% elif transaction.balance_after < 0 %}text-danger{% else %}text-muted{% endif %} fw-bold balance-after">
                                             {{ transaction.balance_after|floatformat:3 }}
                                         </div>
                                     </div>
@@ -925,5 +925,106 @@
             deleteBtn.disabled = false;
         });
     }
+
+// فحص تطابق الرصيد مع مجموع الحركات
+function checkBalanceConsistency() {
+    const transactions = document.querySelectorAll('.transaction-card');
+    const openingBalance = parseFloat('{{ opening_balance|default:0 }}') || 0;
+    let totalDebit = 0;
+    let totalCredit = 0;
+    let hasMismatch = false;
+
+    // حساب إجماليات المعاملات المعروضة
+    transactions.forEach((transaction, index) => {
+        const debitElement = transaction.querySelector('.debit-amount');
+        const creditElement = transaction.querySelector('.credit-amount');
+
+        const debit = debitElement ? parseFloat(debitElement.textContent.replace(/[^\d.-]/g, '')) || 0 : 0;
+        const credit = creditElement ? parseFloat(creditElement.textContent.replace(/[^\d.-]/g, '')) || 0 : 0;
+
+        totalDebit += debit;
+        totalCredit += credit;
+    });
+
+    // حساب الرصيد الختامي المتوقع
+    const expectedClosingBalance = openingBalance + totalDebit - totalCredit;
+
+    // فحص الرصيد الختامي المعروض
+    const closingBalanceElement = document.querySelector('.closing-balance-value');
+    const displayedClosingBalance = closingBalanceElement ? parseFloat(closingBalanceElement.textContent.replace(/[^\d.-]/g, '')) || 0 : 0;
+
+    console.log('فحص الرصيد:', {
+        openingBalance: openingBalance.toFixed(3),
+        totalDebit: totalDebit.toFixed(3),
+        totalCredit: totalCredit.toFixed(3),
+        expectedClosingBalance: expectedClosingBalance.toFixed(3),
+        displayedClosingBalance: displayedClosingBalance.toFixed(3)
+    });
+
+    if (Math.abs(expectedClosingBalance - displayedClosingBalance) > 0.001) {
+        hasMismatch = true;
+        console.error(`🚨 عدم تطابق في الرصيد الختامي: متوقع=${expectedClosingBalance.toFixed(3)}, معروض=${displayedClosingBalance.toFixed(3)}`);
+
+        // إضافة تنبيه في ملخص الرصيد
+        const summaryCard = document.querySelector('.customer-summary');
+        if (summaryCard && !summaryCard.querySelector('.closing-balance-warning')) {
+            const warning = document.createElement('div');
+            warning.className = 'closing-balance-warning alert alert-danger mt-3';
+            warning.innerHTML = '<strong>🚨 خطأ في الرصيد الختامي:</strong> الرصيد المحسوب من مجموع الحركات لا يتطابق مع الرصيد المعروض. يرجى التواصل مع الدعم الفني.';
+            summaryCard.appendChild(warning);
+        }
+    }
+
+    if (hasMismatch) {
+        // إضافة زر للإبلاغ عن المشكلة
+        if (!document.querySelector('.report-issue-btn')) {
+            const reportBtn = document.createElement('button');
+            reportBtn.className = 'report-issue-btn btn btn-warning mt-3';
+            reportBtn.innerHTML = '🚨 الإبلاغ عن مشكلة في الرصيد';
+            reportBtn.onclick = function() {
+                const details = `تم اكتشاف مشكلة في الرصيد. يرجى التواصل مع الدعم الفني لإصلاح هذه المشكلة.\n\nتفاصيل:\n- العميل: {{ customer_supplier.name }}\n- الرصيد الافتتاحي: ${openingBalance.toFixed(3)}\n- إجمالي المدين: ${totalDebit.toFixed(3)}\n- إجمالي الدائن: ${totalCredit.toFixed(3)}\n- الرصيد المتوقع: ${expectedClosingBalance.toFixed(3)}\n- الرصيد المعروض: ${displayedClosingBalance.toFixed(3)}`;
+                alert(details);
+
+                // تسجيل الإبلاغ في سجل الأنشطة (إرسال طلب للخادم)
+                fetch('{% url "customers:report_balance_issue" customer_supplier.pk %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        opening_balance: openingBalance,
+                        total_debit: totalDebit,
+                        total_credit: totalCredit,
+                        expected_balance: expectedClosingBalance,
+                        displayed_balance: displayedClosingBalance
+                    })
+                }).then(response => {
+                    if (response.ok) {
+                        reportBtn.disabled = true;
+                        reportBtn.innerHTML = '✅ تم الإبلاغ';
+                    }
+                }).catch(error => {
+                    console.error('فشل في تسجيل الإبلاغ:', error);
+                });
+            };
+
+            const summaryCard = document.querySelector('.customer-summary');
+            if (summaryCard) {
+                summaryCard.appendChild(reportBtn);
+            }
+        }
+    }
+
+    return !hasMismatch;
+}
+
+// تشغيل الفحص عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', function() {
+    checkBalanceConsistency();
+});
+
+// إعادة الفحص عند تغيير حجم النافذة أو التمرير (للتأكد من عدم وجود مشاكل في العرض)
+window.addEventListener('resize', checkBalanceConsistency);
 </script>
 {% endblock %}

@@ -292,6 +292,7 @@ class JournalEntry(models.Model):
     entry_number = models.CharField(_('Entry Number'), max_length=50, unique=True, blank=True)
     entry_date = models.DateField(_('Entry Date'))
     entry_type = models.CharField(_('Entry Type'), max_length=20, choices=ENTRY_TYPES, default='daily')
+    reference_type = models.CharField(_('Reference Type'), max_length=20, blank=True)
     reference_id = models.PositiveIntegerField(_('Reference ID'), null=True, blank=True)
     sales_invoice = models.ForeignKey('sales.SalesInvoice', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('Sales Invoice'))
     sales_return = models.ForeignKey('sales.SalesReturn', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('Sales Return'))

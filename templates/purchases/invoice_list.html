@@ -165,11 +165,11 @@
         <div>
             <a href="{% url 'purchases:invoice_add' %}" class="btn btn-primary">
                 <i class="fas fa-plus me-1"></i>
-                {% trans "New Invoice" %}
+                {% trans "Create New Invoice" %}
             </a>
             <button type="button" onclick="printPage()" class="btn btn-outline-secondary ms-2">
                 <i class="fas fa-print me-1"></i>
-                {% trans "Print" %} {% trans "the list" %}
+                {% trans "Print The List" %}
             </button>
         </div>
     </div>
@@ -215,7 +215,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1">
-                            <h6 class="mb-0">{% trans "Invoices" %} {% trans "This Month" %}</h6>
+                            <h6 class="mb-0">{% trans "This Month Invoices" %}</h6>
                             <h3 class="mb-0">{{ month_invoices|default:0 }}</h3>
                             <small>{% trans "Invoice" %}</small>
                         </div>
@@ -506,7 +506,7 @@
                     <p class="text-muted">{% trans "No purchase invoices have been recorded yet." %}</p>
                     <a href="{% url 'purchases:invoice_add' %}" class="btn btn-success">
                         <i class="fas fa-plus me-2"></i>
-                        {% trans "Add" %} {% trans "New Invoice" %}
+                        {% trans "Add" %} {% trans "Create New Invoice" %}
                     </a>
                 </div>
             {% endif %}

@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-25 12:37+0300\n"
+"POT-Creation-Date: 2025-10-31 18:01+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -14,21 +14,21 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: .\accounts\models.py:13 .\cashboxes\models.py:316 .\core\models.py:71
-#: .\inventory\models.py:62 .\journal\models.py:112 .\sales\models.py:50
+#: .\inventory\models.py:62 .\journal\models.py:297 .\sales\models.py:50
 #: .\settings\views.py:993 .\settings\views.py:1156
 #: .\templates\core\dashboard.html:450
 msgid "Sales Invoice"
 msgstr ""
 
 #: .\accounts\models.py:14 .\cashboxes\models.py:317 .\core\models.py:76
-#: .\inventory\models.py:64 .\journal\models.py:114 .\purchases\models.py:50
+#: .\inventory\models.py:64 .\journal\models.py:299 .\purchases\models.py:50
 #: .\templates\core\dashboard.html:458
 msgid "Purchase Invoice"
 msgstr ""
 
 #: .\accounts\models.py:15 .\core\models.py:73 .\inventory\models.py:63
-#: .\journal\models.py:94 .\journal\models.py:113 .\sales\models.py:151
-#: .\sales\models.py:162 .\templates\sales\return_delete.html:55
+#: .\journal\models.py:298 .\sales\models.py:151 .\sales\models.py:162
+#: .\templates\sales\return_delete.html:55
 #: .\templates\sales\return_detail.html:60
 #: .\templates\sales\return_detail.html:62
 #: .\templates\sales\return_detail.html:90 .\templates\sales\return_edit.html:5
@@ -38,7 +38,7 @@ msgid "Sales Return"
 msgstr ""
 
 #: .\accounts\models.py:16 .\core\models.py:77 .\inventory\models.py:65
-#: .\journal\models.py:115 .\purchases\models.py:249 .\purchases\models.py:277
+#: .\journal\models.py:300 .\purchases\models.py:249 .\purchases\models.py:277
 msgid "Purchase Return"
 msgstr ""
 
@@ -77,7 +77,7 @@ msgstr ""
 msgid "creditor"
 msgstr ""
 
-#: .\accounts\models.py:30 .\banks\models.py:147 .\cashboxes\models.py:280
+#: .\accounts\models.py:30 .\banks\models.py:136 .\cashboxes\models.py:280
 #: .\templates\banks\account_edit.html:267
 #: .\templates\cashboxes\cashbox_detail.html:260
 #: .\templates\cashboxes\cashbox_list.html:235
@@ -85,7 +85,7 @@ msgstr ""
 msgid "Capital Contribution"
 msgstr ""
 
-#: .\accounts\models.py:31 .\banks\models.py:148 .\cashboxes\models.py:281
+#: .\accounts\models.py:31 .\banks\models.py:137 .\cashboxes\models.py:281
 #: .\templates\banks\account_edit.html:268
 #: .\templates\cashboxes\cashbox_detail.html:261
 #: .\templates\cashboxes\cashbox_list.html:236
@@ -109,8 +109,8 @@ msgstr ""
 msgid "Revaluation"
 msgstr ""
 
-#: .\accounts\models.py:36 .\banks\models.py:153 .\cashboxes\models.py:285
-#: .\hr\models.py:509 .\journal\models.py:105 .\payments\models.py:26
+#: .\accounts\models.py:36 .\banks\models.py:142 .\cashboxes\models.py:285
+#: .\hr\models.py:509 .\journal\models.py:290 .\payments\models.py:26
 #: .\purchases\models.py:229 .\templates\assets_liabilities\dashboard.html:334
 #: .\templates\banks\account_edit.html:273
 #: .\templates\cashboxes\cashbox_detail.html:265
@@ -131,12 +131,12 @@ msgstr ""
 msgid "Movement Number"
 msgstr ""
 
-#: .\accounts\models.py:40 .\banks\models.py:117 .\banks\models.py:162
+#: .\accounts\models.py:40 .\banks\models.py:106 .\banks\models.py:151
 #: .\banks\templates\banks\reconciliation_detail.html:114
 #: .\banks\templates\banks\statement_form.html:43
-#: .\banks\templates\banks\statement_list.html:72 .\banks\views.py:2252
+#: .\banks\templates\banks\statement_list.html:72 .\banks\views.py:2282
 #: .\cashboxes\models.py:104 .\cashboxes\models.py:290
-#: .\cashboxes\views.py:1276 .\core\views.py:621 .\core\views.py:695
+#: .\cashboxes\views.py:1179 .\core\views.py:621 .\core\views.py:695
 #: .\hr\models.py:258 .\inventory\models.py:72 .\inventory\models.py:182
 #: .\provisions\models.py:87 .\purchases\models.py:26 .\purchases\models.py:328
 #: .\reports\views.py:187 .\reports\views.py:223 .\reports\views.py:409
@@ -270,8 +270,8 @@ msgstr ""
 msgid "Customer/Supplier"
 msgstr ""
 
-#: .\accounts\models.py:43 .\banks\models.py:158 .\banks\views.py:2253
-#: .\cashboxes\models.py:289 .\cashboxes\views.py:1277 .\inventory\models.py:75
+#: .\accounts\models.py:43 .\banks\models.py:147 .\banks\views.py:2283
+#: .\cashboxes\models.py:289 .\cashboxes\views.py:1180 .\inventory\models.py:75
 #: .\templates\accounts\customer_statement.html:201
 #: .\templates\accounts\transaction_list.html:34
 #: .\templates\accounts\transaction_list.html:135
@@ -291,9 +291,9 @@ msgstr ""
 msgid "Direction"
 msgstr ""
 
-#: .\accounts\models.py:45 .\banks\models.py:122 .\banks\models.py:159
-#: .\banks\views.py:2256 .\cashboxes\models.py:136 .\cashboxes\models.py:291
-#: .\cashboxes\views.py:1280 .\payments\models.py:40 .\receipts\models.py:33
+#: .\accounts\models.py:45 .\banks\models.py:111 .\banks\models.py:148
+#: .\banks\views.py:2286 .\cashboxes\models.py:136 .\cashboxes\models.py:291
+#: .\cashboxes\views.py:1183 .\payments\models.py:40 .\receipts\models.py:33
 #: .\receipts\views.py:571 .\revenues_expenses\models.py:68
 #: .\revenues_expenses\models.py:163 .\revenues_expenses\views.py:841
 #: .\templates\accounts\customer_statement.html:427
@@ -390,7 +390,7 @@ msgstr ""
 msgid "Amount"
 msgstr ""
 
-#: .\accounts\models.py:49 .\banks\models.py:166 .\cashboxes\models.py:296
+#: .\accounts\models.py:49 .\banks\models.py:155 .\cashboxes\models.py:296
 #: .\templates\banks\account_edit.html:261
 #: .\templates\banks\account_edit.html:387
 #: .\templates\banks\account_edit.html:397
@@ -404,37 +404,37 @@ msgstr ""
 msgid "Adjustment Type"
 msgstr ""
 
-#: .\accounts\models.py:54 .\banks\models.py:171 .\cashboxes\models.py:301
+#: .\accounts\models.py:54 .\banks\models.py:160 .\cashboxes\models.py:301
 msgid "Type of manual adjustment (IFRS compliant)"
 msgstr ""
 
-#: .\accounts\models.py:57 .\banks\models.py:174 .\cashboxes\models.py:304
+#: .\accounts\models.py:57 .\banks\models.py:163 .\cashboxes\models.py:304
 msgid "Manual Adjustment"
 msgstr ""
 
-#: .\accounts\models.py:59 .\banks\models.py:176 .\cashboxes\models.py:306
+#: .\accounts\models.py:59 .\banks\models.py:165 .\cashboxes\models.py:306
 msgid "Is this a manual balance adjustment?"
 msgstr ""
 
 #: .\accounts\models.py:63 .\cashboxes\models.py:314 .\inventory\models.py:76
-#: .\journal\forms.py:46 .\journal\models.py:110
+#: .\journal\models.py:295
 msgid "Reference Type"
 msgstr ""
 
 #: .\accounts\models.py:64 .\cashboxes\models.py:322 .\inventory\models.py:77
-#: .\journal\models.py:111
+#: .\journal\models.py:296
 msgid "Reference ID"
 msgstr ""
 
 #: .\accounts\models.py:66 .\assets_liabilities\models.py:24
 #: .\assets_liabilities\models.py:61 .\assets_liabilities\models.py:142
-#: .\assets_liabilities\models.py:168 .\banks\models.py:125
-#: .\banks\models.py:160 .\banks\models.py:206
+#: .\assets_liabilities\models.py:168 .\banks\models.py:114
+#: .\banks\models.py:149 .\banks\models.py:210
 #: .\banks\templates\banks\reconciliation_detail.html:115
 #: .\banks\templates\banks\statement_form.html:55
-#: .\banks\templates\banks\statement_list.html:73 .\banks\views.py:2255
+#: .\banks\templates\banks\statement_list.html:73 .\banks\views.py:2285
 #: .\cashboxes\models.py:11 .\cashboxes\models.py:139 .\cashboxes\models.py:292
-#: .\cashboxes\views.py:1259 .\cashboxes\views.py:1279 .\core\models.py:337
+#: .\cashboxes\views.py:1162 .\cashboxes\views.py:1182 .\core\models.py:338
 #: .\hr\models.py:15 .\hr\models.py:36 .\hr\models.py:313 .\hr\models.py:516
 #: .\journal\models.py:29 .\payments\admin.py:40 .\payments\models.py:66
 #: .\provisions\models.py:13 .\provisions\models.py:41
@@ -495,7 +495,7 @@ msgstr ""
 #: .\templates\payments\voucher_detail.html:122
 #: .\templates\products\category_add.html:76
 #: .\templates\products\category_edit.html:76
-#: .\templates\products\category_list.html:331
+#: .\templates\products\category_list.html:332
 #: .\templates\products\product_add.html:330
 #: .\templates\products\product_add.html:641
 #: .\templates\products\product_detail.html:131
@@ -510,8 +510,8 @@ msgstr ""
 #: .\templates\provisions\provision_entry_form.html:67
 #: .\templates\provisions\provision_form.html:69
 #: .\templates\provisions\provision_movement_report.html:115
-#: .\templates\purchases\invoice_add.html:408
-#: .\templates\purchases\invoice_add.html:2954
+#: .\templates\purchases\invoice_add.html:409
+#: .\templates\purchases\invoice_add.html:2955
 #: .\templates\purchases\invoice_edit.html:364
 #: .\templates\purchases\purchase_statement.html:170
 #: .\templates\receipts\receipt_add.html:175
@@ -539,13 +539,13 @@ msgid "Description"
 msgstr ""
 
 #: .\accounts\models.py:67 .\assets_liabilities\models.py:237
-#: .\banks\models.py:19 .\banks\models.py:213 .\banks\models.py:255
+#: .\banks\models.py:19 .\banks\models.py:217 .\banks\models.py:259
 #: .\banks\templates\banks\reconciliation_detail.html:101
 #: .\banks\templates\banks\reconciliation_form.html:150
 #: .\banks\templates\banks\statement_form.html:120 .\customers\models.py:25
 #: .\hr\forms.py:55 .\hr\models.py:126 .\hr\models.py:232 .\hr\models.py:264
 #: .\hr\models.py:377 .\hr\models.py:423 .\inventory\models.py:81
-#: .\inventory\models.py:187 .\journal\models.py:319 .\payments\models.py:67
+#: .\inventory\models.py:187 .\journal\models.py:469 .\payments\models.py:67
 #: .\purchases\models.py:44 .\purchases\models.py:243 .\purchases\models.py:334
 #: .\receipts\models.py:68 .\receipts\models.py:265 .\receipts\models.py:285
 #: .\sales\models.py:36 .\sales\models.py:145 .\sales\models.py:197
@@ -570,8 +570,8 @@ msgstr ""
 #: .\templates\inventory\transfer_add.html:97
 #: .\templates\products\product_movements.html:231
 #: .\templates\purchases\debitnote_add.html:41
-#: .\templates\purchases\invoice_add.html:335
-#: .\templates\purchases\invoice_add.html:1272
+#: .\templates\purchases\invoice_add.html:336
+#: .\templates\purchases\invoice_add.html:1273
 #: .\templates\purchases\return_add.html:95
 #: .\templates\purchases\return_edit.html:75
 #: .\templates\purchases\return_edit.html:77
@@ -592,7 +592,7 @@ msgstr ""
 msgid "Notes"
 msgstr ""
 
-#: .\accounts\models.py:70 .\banks\views.py:2257 .\cashboxes\views.py:1281
+#: .\accounts\models.py:70 .\banks\views.py:2287 .\cashboxes\views.py:1184
 #: .\templates\banks\account_transactions.html:194
 #: .\templates\banks\account_transactions.html:494
 #: .\templates\cashboxes\cashbox_detail.html:146
@@ -603,13 +603,13 @@ msgstr ""
 #: .\accounts\models.py:72 .\assets_liabilities\models.py:38
 #: .\assets_liabilities\models.py:90 .\assets_liabilities\models.py:145
 #: .\assets_liabilities\models.py:194 .\assets_liabilities\models.py:244
-#: .\banks\models.py:22 .\banks\models.py:126 .\banks\models.py:179
-#: .\banks\models.py:214 .\banks\models.py:256 .\banks\views.py:2258
+#: .\banks\models.py:22 .\banks\models.py:115 .\banks\models.py:173
+#: .\banks\models.py:218 .\banks\models.py:260 .\banks\views.py:2288
 #: .\cashboxes\models.py:141 .\cashboxes\models.py:324
-#: .\cashboxes\views.py:1282 .\hr\models.py:131 .\hr\models.py:236
+#: .\cashboxes\views.py:1185 .\hr\models.py:131 .\hr\models.py:236
 #: .\hr\models.py:269 .\hr\models.py:352 .\hr\models.py:381 .\hr\models.py:427
-#: .\inventory\models.py:82 .\inventory\models.py:188 .\journal\models.py:121
-#: .\journal\models.py:315 .\payments\models.py:70 .\provisions\models.py:16
+#: .\inventory\models.py:82 .\inventory\models.py:188 .\journal\models.py:306
+#: .\journal\models.py:465 .\payments\models.py:70 .\provisions\models.py:16
 #: .\provisions\models.py:63 .\provisions\models.py:95 .\purchases\models.py:45
 #: .\purchases\models.py:244 .\purchases\models.py:335 .\receipts\models.py:71
 #: .\receipts\models.py:267 .\receipts\models.py:287
@@ -656,15 +656,15 @@ msgstr ""
 #: .\accounts\models.py:73 .\assets_liabilities\models.py:37
 #: .\assets_liabilities\models.py:88 .\assets_liabilities\models.py:144
 #: .\assets_liabilities\models.py:192 .\assets_liabilities\models.py:243
-#: .\banks\models.py:20 .\banks\models.py:127 .\banks\models.py:180
-#: .\banks\models.py:215 .\banks\models.py:257 .\cashboxes\models.py:18
+#: .\banks\models.py:20 .\banks\models.py:116 .\banks\models.py:174
+#: .\banks\models.py:219 .\banks\models.py:261 .\cashboxes\models.py:18
 #: .\cashboxes\models.py:142 .\cashboxes\models.py:325 .\core\models.py:51
-#: .\core\models.py:91 .\core\models.py:365 .\customers\models.py:26
+#: .\core\models.py:91 .\core\models.py:366 .\customers\models.py:26
 #: .\hr\models.py:19 .\hr\models.py:42 .\hr\models.py:129 .\hr\models.py:234
 #: .\hr\models.py:267 .\hr\models.py:316 .\hr\models.py:350 .\hr\models.py:379
 #: .\hr\models.py:425 .\inventory\models.py:19 .\inventory\models.py:83
-#: .\inventory\models.py:189 .\journal\models.py:33 .\journal\models.py:122
-#: .\journal\models.py:254 .\journal\models.py:316 .\payments\models.py:71
+#: .\inventory\models.py:189 .\journal\models.py:33 .\journal\models.py:307
+#: .\journal\models.py:404 .\journal\models.py:466 .\payments\models.py:71
 #: .\provisions\models.py:15 .\provisions\models.py:61
 #: .\provisions\models.py:94 .\purchases\models.py:46 .\purchases\models.py:245
 #: .\purchases\models.py:336 .\receipts\models.py:72 .\receipts\models.py:268
@@ -687,13 +687,13 @@ msgstr ""
 
 #: .\accounts\models.py:74 .\assets_liabilities\models.py:89
 #: .\assets_liabilities\models.py:193 .\banks\models.py:21
-#: .\banks\models.py:128 .\banks\models.py:216 .\banks\models.py:258
+#: .\banks\models.py:117 .\banks\models.py:220 .\banks\models.py:262
 #: .\cashboxes\models.py:19 .\cashboxes\models.py:143 .\core\models.py:52
 #: .\core\models.py:92 .\customers\models.py:27 .\hr\models.py:20
 #: .\hr\models.py:43 .\hr\models.py:130 .\hr\models.py:235 .\hr\models.py:268
 #: .\hr\models.py:317 .\hr\models.py:351 .\hr\models.py:380 .\hr\models.py:426
 #: .\inventory\models.py:20 .\inventory\models.py:190 .\journal\models.py:34
-#: .\journal\models.py:123 .\journal\models.py:317 .\payments\models.py:72
+#: .\journal\models.py:308 .\journal\models.py:467 .\payments\models.py:72
 #: .\provisions\models.py:62 .\purchases\models.py:47 .\purchases\models.py:246
 #: .\purchases\models.py:337 .\receipts\models.py:73
 #: .\revenues_expenses\models.py:89 .\sales\models.py:39 .\sales\models.py:148
@@ -757,12 +757,12 @@ msgstr ""
 #: .\templates\assets_liabilities\liability_category_create_ajax.html:22
 #: .\templates\assets_liabilities\liability_create.html:396
 #: .\templates\products\category_add.html:43
-#: .\templates\products\category_list.html:320
+#: .\templates\products\category_list.html:321
 #: .\templates\products\product_add.html:608
 #: .\templates\products\product_add.html:1039
 #: .\templates\products\product_edit.html:616
 #: .\templates\products\product_list.html:1111
-#: .\templates\purchases\invoice_add.html:2919
+#: .\templates\purchases\invoice_add.html:2920
 #: .\templates\revenues_expenses\category_create.html:38
 #: .\templates\revenues_expenses\category_list.html:41
 msgid "Category Name"
@@ -840,12 +840,12 @@ msgstr ""
 #: .\templates\inventory\warehouse_list.html:292
 #: .\templates\journal\account_form.html:310
 #: .\templates\journal\account_form.html:350
-#: .\templates\journal\account_list.html:181
+#: .\templates\journal\account_list.html:200
 #: .\templates\payments\voucher_list.html:188
 #: .\templates\products\category_add.html:92
 #: .\templates\products\category_edit.html:92
-#: .\templates\products\category_list.html:280
-#: .\templates\products\category_list.html:363
+#: .\templates\products\category_list.html:281
+#: .\templates\products\category_list.html:374
 #: .\templates\products\product_add.html:344
 #: .\templates\products\product_add.html:655
 #: .\templates\products\product_detail.html:125
@@ -857,8 +857,8 @@ msgstr ""
 #: .\templates\products\product_list.html:1061
 #: .\templates\products\product_list.html:1158
 #: .\templates\provisions\provision_form.html:128
-#: .\templates\purchases\invoice_add.html:2868
-#: .\templates\purchases\invoice_add.html:2963
+#: .\templates\purchases\invoice_add.html:2869
+#: .\templates\purchases\invoice_add.html:2964
 #: .\templates\receipts\receipt_list.html:65
 #: .\templates\receipts\receipt_list.html:122
 #: .\templates\revenues_expenses\category_create.html:63
@@ -1096,7 +1096,7 @@ msgid "Warranty Expiry"
 msgstr ""
 
 #: .\assets_liabilities\models.py:79 .\cashboxes\models.py:15
-#: .\cashboxes\views.py:1262
+#: .\cashboxes\views.py:1165
 #: .\templates\assets_liabilities\asset_create.html:347
 #: .\templates\assets_liabilities\asset_detail.html:126
 #: .\templates\cashboxes\cashbox_detail.html:91
@@ -1116,12 +1116,13 @@ msgid "Responsible Person"
 msgstr ""
 
 #: .\assets_liabilities\models.py:81 .\assets_liabilities\models.py:189
-#: .\banks\models.py:242 .\banks\templates\banks\reconciliation_detail.html:38
+#: .\banks\models.py:246 .\banks\templates\banks\reconciliation_detail.html:38
 #: .\banks\templates\banks\reconciliation_form.html:137
 #: .\banks\templates\banks\reconciliation_list.html:40
-#: .\banks\templates\banks\reconciliation_list.html:82 .\hr\models.py:109
-#: .\hr\models.py:230 .\hr\models.py:344 .\journal\models.py:309
-#: .\receipts\views.py:576 .\revenues_expenses\views.py:940
+#: .\banks\templates\banks\reconciliation_list.html:82 .\customers\admin.py:20
+#: .\hr\models.py:109 .\hr\models.py:230 .\hr\models.py:344
+#: .\journal\models.py:459 .\receipts\views.py:576
+#: .\revenues_expenses\views.py:940
 #: .\templates\assets_liabilities\asset_create.html:149
 #: .\templates\assets_liabilities\asset_detail.html:111
 #: .\templates\assets_liabilities\asset_list.html:96
@@ -1169,11 +1170,11 @@ msgstr ""
 #: .\templates\inventory\warehouse_list.html:404
 #: .\templates\journal\account_form.html:350
 #: .\templates\journal\account_form.html:365
-#: .\templates\journal\account_list.html:153
+#: .\templates\journal\account_list.html:161
 #: .\templates\journal\year_end_closing.html:129
 #: .\templates\payments\voucher_list.html:144
 #: .\templates\payments\voucher_list.html:370
-#: .\templates\products\category_list.html:332
+#: .\templates\products\category_list.html:335
 #: .\templates\products\product_detail.html:122
 #: .\templates\products\product_edit.html:488
 #: .\templates\products\product_list.html:346
@@ -1269,8 +1270,8 @@ msgstr ""
 msgid "Overdue"
 msgstr ""
 
-#: .\assets_liabilities\models.py:162 .\banks\models.py:245 .\hr\models.py:333
-#: .\journal\models.py:303 .\payments\models.py:32
+#: .\assets_liabilities\models.py:162 .\banks\models.py:249 .\hr\models.py:333
+#: .\journal\models.py:453 .\payments\models.py:32
 msgid "Cancelled"
 msgstr ""
 
@@ -1290,8 +1291,8 @@ msgstr ""
 msgid "Original Amount"
 msgstr ""
 
-#: .\assets_liabilities\models.py:172 .\banks\views.py:2240
-#: .\cashboxes\views.py:1268 .\templates\accounts\customer_statement.html:87
+#: .\assets_liabilities\models.py:172 .\banks\views.py:2270
+#: .\cashboxes\views.py:1171 .\templates\accounts\customer_statement.html:87
 #: .\templates\assets_liabilities\liability_create.html:206
 #: .\templates\assets_liabilities\liability_list.html:121
 #: .\templates\banks\account_detail.html:172
@@ -1449,7 +1450,7 @@ msgid "Liability created successfully"
 msgstr ""
 
 #: .\assets_liabilities\views.py:583 .\assets_liabilities\views.py:633
-#: .\journal\views.py:683 .\revenues_expenses\views.py:45
+#: .\journal\views.py:749 .\revenues_expenses\views.py:45
 #: .\revenues_expenses\views.py:292 .\revenues_expenses\views.py:338
 #: .\revenues_expenses\views.py:380 .\revenues_expenses\views.py:523
 #: .\revenues_expenses\views.py:575
@@ -1569,71 +1570,71 @@ msgstr ""
 msgid "Deleted all records from table %(table)s - count: %(count)s"
 msgstr ""
 
-#: .\backup\views.py:1660
+#: .\backup\views.py:1714
 msgid "بدء عملية استعادة النسخة الاحتياطية"
 msgstr ""
 
-#: .\backup\views.py:2575
+#: .\backup\views.py:2601
 msgid "بدء عملية مسح جميع البيانات"
 msgstr ""
 
-#: .\backup\views.py:3072 .\backup\views.py:3340
+#: .\backup\views.py:3098 .\backup\views.py:3366
 msgid "طريقة طلب غير صحيحة"
 msgstr ""
 
-#: .\backup\views.py:3112
+#: .\backup\views.py:3138
 msgid "عملية نسخ احتياطي قيد التشغيل بالفعل"
 msgstr ""
 
-#: .\backup\views.py:3344
+#: .\backup\views.py:3370
 msgid "غير مسموح لك بإجراء هذه العملية"
 msgstr ""
 
-#: .\backup\views.py:3348
+#: .\backup\views.py:3374
 msgid "يرجى اختيار ملف النسخة الاحتياطية"
 msgstr ""
 
-#: .\backup\views.py:3369
+#: .\backup\views.py:3395
 msgid "الملف غير موجود"
 msgstr ""
 
-#: .\backup\views.py:3381 .\backup\views.py:3419
+#: .\backup\views.py:3407 .\backup\views.py:3445
 msgid "نوع الملف غير مدعوم"
 msgstr ""
 
-#: .\backup\views.py:3465
+#: .\backup\views.py:3491
 msgid "تم بدء عملية الاستعادة في الخلفية"
 msgstr ""
 
-#: .\backup\views.py:3468
+#: .\backup\views.py:3494
 msgid "تم بدء عملية الاستعادة في الخلفية، يمكن متابعة التقدم على هذه الصفحة"
 msgstr ""
 
-#: .\backup\views.py:3472
+#: .\backup\views.py:3498
 msgid "ملف JSON غير صحيح"
 msgstr ""
 
-#: .\backup\views.py:3765
+#: .\backup\views.py:3791
 msgid "تم بدء عملية المسح في الخلفية"
 msgstr ""
 
-#: .\backup\views.py:3768
+#: .\backup\views.py:3794
 msgid "تم بدء عملية المسح في الخلفية، يمكن متابعة التقدم على هذه الصفحة"
 msgstr ""
 
-#: .\banks\models.py:10 .\banks\views.py:2231 .\journal\models.py:23
+#: .\banks\models.py:10 .\banks\views.py:2261 .\journal\models.py:23
 #: .\reports\views.py:575 .\reports\views.py:621
 #: .\templates\banks\account_add.html:137
 #: .\templates\banks\account_list.html:106
 #: .\templates\banks\account_list.html:726
 #: .\templates\financial_reports\trial_balance.html:80
 #: .\templates\journal\account_detail.html:40
-#: .\templates\journal\account_list.html:99
+#: .\templates\journal\account_list.html:106
 #: .\templates\reports\trial_balance.html:60
 msgid "Account Name"
 msgstr ""
 
-#: .\banks\models.py:11 .\banks\views.py:2234 .\payments\models.py:61
+#: .\banks\models.py:11 .\banks\views.py:2264 .\payments\models.py:61
 #: .\receipts\models.py:51 .\receipts\views.py:574
 #: .\templates\banks\account_add.html:147
 #: .\templates\banks\account_list.html:727
@@ -1645,7 +1646,7 @@ msgstr ""
 msgid "Bank Name"
 msgstr ""
 
-#: .\banks\models.py:12 .\banks\views.py:2237
+#: .\banks\models.py:12 .\banks\views.py:2267
 #: .\templates\banks\account_add.html:167
 #: .\templates\banks\account_detail.html:140
 #: .\templates\banks\account_list.html:106
@@ -1672,7 +1673,7 @@ msgstr ""
 msgid "SWIFT Code"
 msgstr ""
 
-#: .\banks\models.py:15 .\banks\models.py:210
+#: .\banks\models.py:15 .\banks\models.py:214
 #: .\banks\templates\banks\reconciliation_detail.html:119
 #: .\banks\templates\banks\statement_form.html:94
 #: .\banks\templates\banks\statement_list.html:77 .\cashboxes\models.py:12
@@ -1724,12 +1725,11 @@ msgstr ""
 #: .\templates\customers\supplier_list.html:803
 #: .\templates\customers\transactions.html:335
 #: .\templates\customers\transactions.html:372
-#: .\templates\journal\account_list.html:141
+#: .\templates\journal\account_list.html:149
 #: .\templates\journal\trial_balance.html:184
 #: .\templates\purchases\invoice_add.html:189
 #: .\templates\purchases\purchase_return_statement.html:89
 #: .\templates\purchases\purchase_return_statement.html:144
-#: .\templates\purchases\purchase_statement.html:89
 #: .\templates\purchases\purchase_statement.html:212
 #: .\templates\receipts\check_collect.html:120
 #: .\templates\sales\sales_return_statement.html:87
@@ -1743,7 +1743,7 @@ msgstr ""
 #: .\templates\banks\account_add.html:234
 #: .\templates\cashboxes\cashbox_list.html:153
 #: .\templates\customers\add.html:199
-#: .\templates\purchases\invoice_add.html:1254
+#: .\templates\purchases\invoice_add.html:1255
 #: .\templates\sales\invoice_add.html:1762
 msgid "Initial Balance"
 msgstr ""
@@ -1752,8 +1752,8 @@ msgstr ""
 msgid "Initial account balance at the start of operations"
 msgstr ""
 
-#: .\banks\models.py:25 .\banks\models.py:157 .\banks\models.py:204
-#: .\banks\models.py:236 .\banks\templates\banks\reconciliation_detail.html:30
+#: .\banks\models.py:25 .\banks\models.py:146 .\banks\models.py:208
+#: .\banks\models.py:240 .\banks\templates\banks\reconciliation_detail.html:30
 #: .\banks\templates\banks\reconciliation_form.html:25
 #: .\banks\templates\banks\reconciliation_form.html:35
 #: .\banks\templates\banks\reconciliation_list.html:29
@@ -1766,7 +1766,7 @@ msgstr ""
 #: .\templates\banks\account_edit.html:111
 #: .\templates\banks\account_edit.html:122
 #: .\templates\banks\bank_cashbox_transfer_add.html:224
-#: .\templates\purchases\invoice_add.html:258
+#: .\templates\purchases\invoice_add.html:259
 #: .\templates\purchases\invoice_edit.html:208
 #: .\templates\receipts\receipt_add.html:138
 #: .\templates\receipts\receipt_detail.html:72
@@ -1783,7 +1783,7 @@ msgstr ""
 msgid "Bank Accounts"
 msgstr ""
 
-#: .\banks\models.py:116 .\cashboxes\models.py:102 .\inventory\models.py:181
+#: .\banks\models.py:105 .\cashboxes\models.py:102 .\inventory\models.py:181
 #: .\templates\banks\transfer_add.html:212
 #: .\templates\banks\transfer_edit.html:212
 #: .\templates\banks\transfer_list.html:154
@@ -1803,7 +1803,7 @@ msgstr ""
 msgid "Transfer Number"
 msgstr ""
 
-#: .\banks\models.py:119 .\templates\banks\transfer_add.html:258
+#: .\banks\models.py:108 .\templates\banks\transfer_add.html:258
 #: .\templates\banks\transfer_detail.html:147
 #: .\templates\banks\transfer_detail.html:319
 #: .\templates\banks\transfer_edit.html:246
@@ -1814,7 +1814,7 @@ msgstr ""
 msgid "From Account"
 msgstr ""
 
-#: .\banks\models.py:121 .\templates\banks\transfer_add.html:275
+#: .\banks\models.py:110 .\templates\banks\transfer_add.html:275
 #: .\templates\banks\transfer_detail.html:171
 #: .\templates\banks\transfer_detail.html:327
 #: .\templates\banks\transfer_edit.html:264
@@ -1825,7 +1825,7 @@ msgstr ""
 msgid "To Account"
 msgstr ""
 
-#: .\banks\models.py:123 .\cashboxes\models.py:137
+#: .\banks\models.py:112 .\cashboxes\models.py:137
 #: .\templates\banks\bank_cashbox_transfer_add.html:302
 #: .\templates\banks\cashbox_transfer_detail.html:245
 #: .\templates\banks\cashbox_transfer_detail.html:316
@@ -1852,7 +1852,7 @@ msgstr ""
 msgid "Fees"
 msgstr ""
 
-#: .\banks\models.py:124 .\cashboxes\models.py:138 .\settings\models.py:47
+#: .\banks\models.py:113 .\cashboxes\models.py:138 .\settings\models.py:47
 #: .\templates\banks\bank_cashbox_transfer_add.html:311
 #: .\templates\banks\cashbox_transfer_detail.html:258
 #: .\templates\banks\cashbox_transfer_detail.html:421
@@ -1867,20 +1867,20 @@ msgstr ""
 msgid "Exchange Rate"
 msgstr ""
 
-#: .\banks\models.py:131 .\journal\models.py:117 .\payments\models.py:19
+#: .\banks\models.py:120 .\journal\models.py:302 .\payments\models.py:19
 #: .\purchases\models.py:20 .\sales\models.py:14
 #: .\templates\banks\transfer_detail.html:134
 #: .\templates\banks\transfer_list.html:341
 #: .\templates\banks\transfer_list.html:421
 #: .\templates\payments\voucher_list.html:46
-#: .\templates\purchases\invoice_add.html:240
+#: .\templates\purchases\invoice_add.html:241
 #: .\templates\purchases\invoice_edit.html:169
 #: .\templates\receipts\receipt_add.html:56
 #: .\templates\sales\invoice_add.html:361
 msgid "Bank Transfer"
 msgstr ""
 
-#: .\banks\models.py:132 .\templates\banks\transfer_add.html:140
+#: .\banks\models.py:121 .\templates\banks\transfer_add.html:140
 #: .\templates\banks\transfer_detail.html:94
 #: .\templates\banks\transfer_edit.html:140
 #: .\templates\banks\transfer_list.html:7
@@ -1890,38 +1890,38 @@ msgstr ""
 msgid "Bank Transfers"
 msgstr ""
 
-#: .\banks\models.py:142 .\cashboxes\models.py:271
+#: .\banks\models.py:131 .\cashboxes\models.py:271
 #: .\templates\banks\account_detail.html:229
 msgid "Deposit"
 msgstr ""
 
-#: .\banks\models.py:143 .\cashboxes\models.py:272
+#: .\banks\models.py:132 .\cashboxes\models.py:272
 #: .\templates\banks\account_detail.html:232
 msgid "Withdrawal"
 msgstr ""
 
-#: .\banks\models.py:149 .\templates\banks\account_edit.html:269
+#: .\banks\models.py:138 .\templates\banks\account_edit.html:269
 msgid "Bank Interest"
 msgstr ""
 
-#: .\banks\models.py:150 .\banks\models.py:251
+#: .\banks\models.py:139 .\banks\models.py:255
 #: .\banks\templates\banks\reconciliation_detail.html:86
 #: .\banks\templates\banks\reconciliation_form.html:106
 #: .\templates\banks\account_edit.html:270
 msgid "Bank Charges"
 msgstr ""
 
-#: .\banks\models.py:151 .\banks\models.py:261
+#: .\banks\models.py:140 .\banks\models.py:265
 #: .\templates\banks\account_edit.html:271
 msgid "Bank Reconciliation"
 msgstr ""
 
-#: .\banks\models.py:152 .\templates\banks\account_edit.html:272
+#: .\banks\models.py:141 .\templates\banks\account_edit.html:272
 msgid "Exchange Difference"
 msgstr ""
 
-#: .\banks\models.py:161 .\banks\models.py:207
-#: .\banks\templates\banks\statement_form.html:64 .\banks\views.py:2254
+#: .\banks\models.py:150 .\banks\models.py:211
+#: .\banks\templates\banks\statement_form.html:64 .\banks\views.py:2284
 #: .\templates\assets_liabilities\dashboard.html:400
 #: .\templates\banks\account_transactions.html:191
 #: .\templates\banks\account_transactions.html:491
@@ -1932,24 +1932,40 @@ msgstr ""
 msgid "Reference Number"
 msgstr ""
 
-#: .\banks\models.py:183
+#: .\banks\models.py:168 .\banks\views.py:242 .\cashboxes\views.py:332
+#: .\cashboxes\views.py:350 .\cashboxes\views.py:362 .\inventory\models.py:68
+#: .\inventory\models.py:128 .\reports\views.py:191 .\reports\views.py:224
+#: .\templates\banks\account_add.html:233 .\templates\customers\edit.html:266
+#: .\templates\products\product_add.html:270
+#: .\templates\products\product_edit.html:237
+#: .\templates\products\product_edit.html:317
+#: .\templates\products\product_list.html:987
+#: .\templates\reports\customer_statement.html:87
+msgid "Opening Balance"
+msgstr ""
+
+#: .\banks\models.py:170
+msgid "Is this an opening balance transaction?"
+msgstr ""
+
+#: .\banks\models.py:177
 msgid "Bank Transaction"
 msgstr ""
 
-#: .\banks\models.py:184
+#: .\banks\models.py:178
 msgid "Bank Transactions"
 msgstr ""
 
-#: .\banks\models.py:205 .\banks\models.py:237
+#: .\banks\models.py:209 .\banks\models.py:241
 #: .\banks\templates\banks\reconciliation_detail.html:34
 #: .\banks\templates\banks\reconciliation_form.html:43
 #: .\banks\templates\banks\reconciliation_list.html:78
 msgid "Statement Date"
 msgstr ""
 
-#: .\banks\models.py:208 .\banks\templates\banks\reconciliation_detail.html:117
+#: .\banks\models.py:212 .\banks\templates\banks\reconciliation_detail.html:117
 #: .\banks\templates\banks\statement_form.html:76
-#: .\banks\templates\banks\statement_list.html:75 .\journal\models.py:250
+#: .\banks\templates\banks\statement_list.html:75 .\journal\models.py:400
 #: .\reports\views.py:187 .\reports\views.py:223
 #: .\templates\accounts\customer_statement.html:203
 #: .\templates\accounts\transaction_list.html:137
@@ -1957,7 +1973,7 @@ msgstr ""
 #: .\templates\customers\supplier_list.html:453
 #: .\templates\customers\transactions.html:356
 #: .\templates\journal\entry_confirm_delete.html:119
-#: .\templates\journal\entry_create.html:151
+#: .\templates\journal\entry_create.html:128
 #: .\templates\journal\trial_balance.html:182
 #: .\templates\journal\trial_balance.html:213
 #: .\templates\journal\trial_balance.html:251
@@ -1967,15 +1983,15 @@ msgstr ""
 msgid "Debit"
 msgstr ""
 
-#: .\banks\models.py:209 .\banks\templates\banks\reconciliation_detail.html:118
+#: .\banks\models.py:213 .\banks\templates\banks\reconciliation_detail.html:118
 #: .\banks\templates\banks\statement_form.html:85
-#: .\banks\templates\banks\statement_list.html:76 .\journal\models.py:251
+#: .\banks\templates\banks\statement_list.html:76 .\journal\models.py:401
 #: .\purchases\models.py:14 .\reports\views.py:187 .\reports\views.py:223
 #: .\sales\models.py:13 .\templates\accounts\customer_statement.html:204
 #: .\templates\accounts\transaction_list.html:138
 #: .\templates\customers\transactions.html:364
 #: .\templates\journal\entry_confirm_delete.html:120
-#: .\templates\journal\entry_create.html:152
+#: .\templates\journal\entry_create.html:129
 #: .\templates\journal\trial_balance.html:183
 #: .\templates\journal\trial_balance.html:215
 #: .\templates\journal\trial_balance.html:259
@@ -1991,80 +2007,80 @@ msgstr ""
 msgid "Credit"
 msgstr ""
 
-#: .\banks\models.py:211 .\banks\templates\banks\statement_form.html:107
+#: .\banks\models.py:215 .\banks\templates\banks\statement_form.html:107
 #: .\banks\templates\banks\statement_list.html:37
 #: .\banks\templates\banks\statement_list.html:78
 msgid "Reconciled"
 msgstr ""
 
-#: .\banks\models.py:212
+#: .\banks\models.py:216
 msgid "Reconciled Date"
 msgstr ""
 
-#: .\banks\models.py:219
+#: .\banks\models.py:223
 msgid "Bank Statement"
 msgstr ""
 
-#: .\banks\models.py:220 .\banks\templates\banks\statement_list.html:5
+#: .\banks\models.py:224 .\banks\templates\banks\statement_list.html:5
 #: .\banks\templates\banks\statement_list.html:13
 msgid "Bank Statements"
 msgstr ""
 
-#: .\banks\models.py:238 .\banks\templates\banks\reconciliation_detail.html:50
+#: .\banks\models.py:242 .\banks\templates\banks\reconciliation_detail.html:50
 #: .\banks\templates\banks\reconciliation_form.html:56
 #: .\banks\templates\banks\reconciliation_form.html:65
 #: .\banks\templates\banks\reconciliation_list.html:79
 msgid "Book Balance"
 msgstr ""
 
-#: .\banks\models.py:239 .\banks\templates\banks\reconciliation_detail.html:54
+#: .\banks\models.py:243 .\banks\templates\banks\reconciliation_detail.html:54
 #: .\banks\templates\banks\reconciliation_form.html:73
 #: .\banks\templates\banks\reconciliation_list.html:80
 msgid "Statement Balance"
 msgstr ""
 
-#: .\banks\models.py:240 .\banks\templates\banks\reconciliation_detail.html:58
+#: .\banks\models.py:244 .\banks\templates\banks\reconciliation_detail.html:58
 #: .\banks\templates\banks\reconciliation_form.html:164
 msgid "Reconciled Balance"
 msgstr ""
 
-#: .\banks\models.py:241 .\banks\templates\banks\reconciliation_detail.html:62
+#: .\banks\models.py:245 .\banks\templates\banks\reconciliation_detail.html:62
 #: .\banks\templates\banks\reconciliation_form.html:170
 #: .\banks\templates\banks\reconciliation_list.html:81
 #: .\templates\accounts\transaction_list.html:109
 msgid "Difference"
 msgstr ""
 
-#: .\banks\models.py:243 .\hr\models.py:214
+#: .\banks\models.py:247 .\hr\models.py:214
 msgid "Draft"
 msgstr ""
 
-#: .\banks\models.py:244 .\journal\models.py:302
+#: .\banks\models.py:248 .\journal\models.py:452
 #: .\templates\inventory\transfer_list.html:76
 msgid "Completed"
 msgstr ""
 
-#: .\banks\models.py:249 .\banks\templates\banks\reconciliation_detail.html:78
+#: .\banks\models.py:253 .\banks\templates\banks\reconciliation_detail.html:78
 #: .\banks\templates\banks\reconciliation_form.html:85
 msgid "Deposits in Transit"
 msgstr ""
 
-#: .\banks\models.py:250 .\banks\templates\banks\reconciliation_detail.html:82
+#: .\banks\models.py:254 .\banks\templates\banks\reconciliation_detail.html:82
 #: .\banks\templates\banks\reconciliation_form.html:94
 msgid "Outstanding Checks"
 msgstr ""
 
-#: .\banks\models.py:252 .\banks\templates\banks\reconciliation_detail.html:90
+#: .\banks\models.py:256 .\banks\templates\banks\reconciliation_detail.html:90
 #: .\banks\templates\banks\reconciliation_form.html:115
 msgid "Interest Earned"
 msgstr ""
 
-#: .\banks\models.py:253 .\banks\templates\banks\reconciliation_detail.html:94
+#: .\banks\models.py:257 .\banks\templates\banks\reconciliation_detail.html:94
 #: .\banks\templates\banks\reconciliation_form.html:127
 msgid "Other Adjustments"
 msgstr ""
 
-#: .\banks\models.py:262 .\banks\templates\banks\reconciliation_list.html:6
+#: .\banks\models.py:266 .\banks\templates\banks\reconciliation_list.html:6
 #: .\banks\templates\banks\reconciliation_list.html:14
 #: .\templates\base.html:657 .\templates\base.html:896
 msgid "Bank Reconciliations"
@@ -2116,14 +2132,14 @@ msgstr ""
 #: .\templates\inventory\warehouse_detail.html:136
 #: .\templates\inventory\warehouse_edit.html:108
 #: .\templates\inventory\warehouse_list.html:326
-#: .\templates\journal\account_list.html:194
+#: .\templates\journal\account_list.html:213
 #: .\templates\payments\voucher_detail.html:19
 #: .\templates\payments\voucher_list.html:200
 #: .\templates\payments\voucher_list.html:201
 #: .\templates\products\category_edit.html:17
 #: .\templates\products\category_edit.html:19
-#: .\templates\products\category_list.html:369
-#: .\templates\products\category_list.html:371
+#: .\templates\products\category_list.html:380
+#: .\templates\products\category_list.html:382
 #: .\templates\products\product_delete.html:88
 #: .\templates\products\product_delete.html:113
 #: .\templates\products\product_detail.html:36
@@ -2305,7 +2321,7 @@ msgstr ""
 #: .\templates\inventory\warehouse_add.html:95
 #: .\templates\inventory\warehouse_edit.html:234
 #: .\templates\journal\account_form_modal.html:40
-#: .\templates\journal\entry_create.html:259
+#: .\templates\journal\entry_create.html:237
 #: .\templates\payments\voucher_form.html:234
 #: .\templates\payments\voucher_list.html:294
 #: .\templates\products\category_add.html:102
@@ -2319,10 +2335,10 @@ msgstr ""
 #: .\templates\provisions\provision_entry_confirm_delete.html:59
 #: .\templates\provisions\provision_entry_form.html:77
 #: .\templates\provisions\provision_form.html:170
-#: .\templates\purchases\invoice_add.html:366
-#: .\templates\purchases\invoice_add.html:1289
-#: .\templates\purchases\invoice_add.html:2886
-#: .\templates\purchases\invoice_add.html:2973
+#: .\templates\purchases\invoice_add.html:367
+#: .\templates\purchases\invoice_add.html:1290
+#: .\templates\purchases\invoice_add.html:2887
+#: .\templates\purchases\invoice_add.html:2974
 #: .\templates\purchases\return_add.html:166
 #: .\templates\receipts\check_collect.html:161
 #: .\templates\receipts\receipt_add.html:193
@@ -2371,8 +2387,8 @@ msgid "All Status"
 msgstr ""
 
 #: .\banks\templates\banks\reconciliation_list.html:51
-#: .\banks\templates\banks\statement_list.html:45 .\journal\forms.py:330
-#: .\journal\forms.py:362 .\payments\forms.py:200
+#: .\banks\templates\banks\statement_list.html:45 .\journal\forms.py:315
+#: .\journal\forms.py:341 .\payments\forms.py:200
 #: .\templates\accounts\customer_statement.html:43
 #: .\templates\accounts\transaction_list.html:56
 #: .\templates\assets_liabilities\dashboard.html:373
@@ -2411,8 +2427,8 @@ msgid "From Date"
 msgstr ""
 
 #: .\banks\templates\banks\reconciliation_list.html:55
-#: .\banks\templates\banks\statement_list.html:49 .\journal\forms.py:335
-#: .\journal\forms.py:366 .\payments\forms.py:209
+#: .\banks\templates\banks\statement_list.html:49 .\journal\forms.py:320
+#: .\journal\forms.py:345 .\payments\forms.py:209
 #: .\templates\accounts\customer_statement.html:48
 #: .\templates\accounts\transaction_list.html:61
 #: .\templates\assets_liabilities\dashboard.html:377
@@ -2507,10 +2523,10 @@ msgstr ""
 #: .\templates\inventory\transfer_list.html:43
 #: .\templates\inventory\warehouse_list.html:268
 #: .\templates\journal\entries_by_type.html:110
-#: .\templates\journal\entry_create.html:153
+#: .\templates\journal\entry_create.html:130
 #: .\templates\journal\entry_list.html:229
 #: .\templates\payments\voucher_list.html:145
-#: .\templates\products\category_list.html:333
+#: .\templates\products\category_list.html:336
 #: .\templates\products\product_list.html:602
 #: .\templates\provisions\provision_detail.html:116
 #: .\templates\provisions\provision_list.html:45
@@ -2553,7 +2569,7 @@ msgstr ""
 #: .\templates\hr\payroll_period_list.html:107
 #: .\templates\hr\position_list.html:90
 #: .\templates\inventory\movement_list.html:413
-#: .\templates\journal\account_list.html:222
+#: .\templates\journal\account_list.html:241
 #: .\templates\payments\voucher_list.html:245
 #: .\templates\products\product_movements.html:290
 #: .\templates\provisions\provision_list.html:94
@@ -2587,7 +2603,7 @@ msgstr ""
 #: .\templates\hr\payroll_period_list.html:119
 #: .\templates\hr\position_list.html:102
 #: .\templates\inventory\movement_list.html:429
-#: .\templates\journal\account_list.html:242
+#: .\templates\journal\account_list.html:261
 #: .\templates\payments\voucher_list.html:265
 #: .\templates\products\category_delete.html:25
 #: .\templates\products\product_movements.html:308
@@ -2628,9 +2644,8 @@ msgstr ""
 msgid "Add Statement"
 msgstr ""
 
-#: .\banks\templates\banks\statement_list.html:39 .\journal\forms.py:341
-#: .\payments\forms.py:187 .\payments\forms.py:194
-#: .\templates\accounts\transaction_list.html:36
+#: .\banks\templates\banks\statement_list.html:39 .\payments\forms.py:187
+#: .\payments\forms.py:194 .\templates\accounts\transaction_list.html:36
 #: .\templates\accounts\transaction_list.html:47 .\templates\base.html:2886
 #: .\templates\base.html:2888 .\templates\cashboxes\transfer_list.html:74
 #: .\templates\payments\voucher_list.html:43
@@ -2717,7 +2732,7 @@ msgstr ""
 #: .\templates\products\product_list.html:1450
 #: .\templates\products\product_list.html:1525
 #: .\templates\products\product_list.html:1578
-#: .\templates\purchases\invoice_add.html:381
+#: .\templates\purchases\invoice_add.html:382
 #: .\templates\purchases\invoice_detail.html:223
 #: .\templates\purchases\invoice_detail.html:264
 #: .\templates\purchases\invoice_detail.html:375
@@ -2766,173 +2781,162 @@ msgstr ""
 msgid "Bank Account Add Page Accessed"
 msgstr ""
 
-#: .\banks\views.py:219 .\cashboxes\views.py:332 .\cashboxes\views.py:350
-#: .\cashboxes\views.py:362 .\inventory\models.py:68 .\inventory\models.py:128
-#: .\reports\views.py:191 .\reports\views.py:224
-#: .\templates\banks\account_add.html:233 .\templates\customers\edit.html:266
-#: .\templates\products\product_add.html:270
-#: .\templates\products\product_edit.html:237
-#: .\templates\products\product_edit.html:317
-#: .\templates\products\product_list.html:987
-#: .\templates\reports\customer_statement.html:87
-msgid "Opening Balance"
-msgstr ""
-
-#: .\banks\views.py:225
+#: .\banks\views.py:248
 msgid "Opening Balance - Capital Contribution"
 msgstr ""
 
-#: .\banks\views.py:231
+#: .\banks\views.py:254
 msgid "Opening Balance - Bank Account"
 msgstr ""
 
-#: .\banks\views.py:261 .\banks\views.py:287
+#: .\banks\views.py:287 .\banks\views.py:313
 msgid "You do not have permission to edit bank accounts."
 msgstr ""
 
-#: .\banks\views.py:372
+#: .\banks\views.py:398
 msgid ""
 "يجب اختيار نوع التعديل عند تغيير الرصيد الحالي لضمان التوافق مع معايير IFRS"
 msgstr ""
 
-#: .\banks\views.py:389
+#: .\banks\views.py:415
 #, python-format
 msgid "تعديل يدوي للرصيد - زيادة: %(amount)s - نوع: %(type)s"
 msgstr ""
 
-#: .\banks\views.py:395
+#: .\banks\views.py:421
 #, python-format
 msgid "تعديل يدوي للرصيد - نقص: %(amount)s - نوع: %(type)s"
 msgstr ""
 
-#: .\banks\views.py:432 .\cashboxes\views.py:497 .\customers\views.py:502
+#: .\banks\views.py:458 .\cashboxes\views.py:497 .\customers\views.py:502
 msgid "Increase in balance"
 msgstr ""
 
-#: .\banks\views.py:454 .\cashboxes\views.py:519 .\customers\views.py:524
+#: .\banks\views.py:480 .\cashboxes\views.py:519 .\customers\views.py:524
 msgid "Decrease in balance"
 msgstr ""
 
-#: .\banks\views.py:460
+#: .\banks\views.py:486
 msgid "Adjustment of Bank Balance"
 msgstr ""
 
-#: .\banks\views.py:477
+#: .\banks\views.py:503
 #, python-format
 msgid ""
 "تعديل رصيد الحساب البنكي: %(name)s من %(old)s إلى %(new)s (فرق: %(diff)s)"
 msgstr ""
 
-#: .\banks\views.py:492
+#: .\banks\views.py:518
 #, python-format
 msgid "تم تحديث الحساب البنكي \"%(name)s\" بنجاح!"
 msgstr ""
 
-#: .\banks\views.py:518 .\banks\views.py:1773
+#: .\banks\views.py:544 .\banks\views.py:1803
 msgid "You do not have permission to delete bank accounts."
 msgstr ""
 
-#: .\banks\views.py:568
+#: .\banks\views.py:594
 msgid ""
 "Cannot delete account \"{}\" because it has {} financial transactions and "
 "non-zero balance ({}). You can use the eraser button to delete all "
 "transactions first."
 msgstr ""
 
-#: .\banks\views.py:570
+#: .\banks\views.py:596
 msgid ""
 "Cannot delete account \"{}\" because it has {} financial transactions and "
 "non-zero balance ({}). You must transfer the balance or delete all "
 "transactions first."
 msgstr ""
 
-#: .\banks\views.py:729
+#: .\banks\views.py:755
 msgid "You do not have permission to add bank transfers."
 msgstr ""
 
-#: .\banks\views.py:747
+#: .\banks\views.py:773
 msgid ""
 "Warning: Bank transfer number sequence not configured! Please add \"Bank "
 "Account Transfer\" sequence from settings page before creating any transfer."
 msgstr ""
 
-#: .\banks\views.py:973
+#: .\banks\views.py:999 .\cashboxes\views.py:651
 msgid ""
 "A similar transfer was created recently! Please check the transfer list."
 msgstr ""
 
-#: .\banks\views.py:1537
+#: .\banks\views.py:1563
 msgid "Bank Account Transactions Accessed: {}"
 msgstr ""
 
-#: .\banks\views.py:1710
+#: .\banks\views.py:1740
 msgid "Only superadmin can perform absolute deletion."
 msgstr ""
 
-#: .\banks\views.py:2005
+#: .\banks\views.py:2035
 msgid "Bank Reconciliations List Accessed"
 msgstr ""
 
-#: .\banks\views.py:2043
+#: .\banks\views.py:2073
 msgid "New Bank Reconciliation Created: {}"
 msgstr ""
 
-#: .\banks\views.py:2046
+#: .\banks\views.py:2076
 msgid "Bank reconciliation created successfully."
 msgstr ""
 
-#: .\banks\views.py:2074
+#: .\banks\views.py:2104
 msgid "Bank Reconciliation Details Viewed: {}"
 msgstr ""
 
-#: .\banks\views.py:2094
+#: .\banks\views.py:2124
 msgid "Bank Reconciliation Updated: {}"
 msgstr ""
 
-#: .\banks\views.py:2097
+#: .\banks\views.py:2127
 msgid "Bank reconciliation updated successfully."
 msgstr ""
 
-#: .\banks\views.py:2141
+#: .\banks\views.py:2171
 msgid "Bank Statements List Accessed"
 msgstr ""
 
-#: .\banks\views.py:2161
+#: .\banks\views.py:2191
 msgid "New Bank Statement Created: {}"
 msgstr ""
 
-#: .\banks\views.py:2164
+#: .\banks\views.py:2194
 msgid "Bank statement created successfully."
 msgstr ""
 
-#: .\banks\views.py:2184
+#: .\banks\views.py:2214
 msgid "Bank Statement Updated: {}"
 msgstr ""
 
-#: .\banks\views.py:2187
+#: .\banks\views.py:2217
 msgid "Bank statement updated successfully."
 msgstr ""
 
-#: .\banks\views.py:2212
+#: .\banks\views.py:2242
 msgid "Bank Account Transactions Exported to Excel: {}"
 msgstr ""
 
-#: .\banks\views.py:2218 .\banks\views.py:2226
+#: .\banks\views.py:2248 .\banks\views.py:2256
 #: .\templates\banks\account_transactions.html:460
 #: .\templates\banks\account_transactions.html:475
 msgid "Bank Account Statement"
 msgstr ""
 
-#: .\banks\views.py:2243 .\templates\banks\account_transactions.html:161
+#: .\banks\views.py:2273 .\templates\banks\account_transactions.html:161
 #: .\templates\banks\account_transactions.html:482
 msgid "Transactions Count"
 msgstr ""
 
-#: .\banks\views.py:2247 .\cashboxes\views.py:1271
+#: .\banks\views.py:2277 .\cashboxes\views.py:1174
+#: .\templates\products\category_list.html:526
 msgid "Export Date"
 msgstr ""
 
-#: .\banks\views.py:2317 .\cashboxes\views.py:1340
+#: .\banks\views.py:2347 .\cashboxes\views.py:1243
 msgid "An error occurred while exporting: {}"
 msgstr ""
 
@@ -2946,7 +2950,7 @@ msgid "Responsible User"
 msgstr ""
 
 #: .\cashboxes\models.py:22 .\cashboxes\models.py:288 .\purchases\models.py:34
-#: .\templates\purchases\invoice_add.html:247
+#: .\templates\purchases\invoice_add.html:248
 #: .\templates\purchases\invoice_edit.html:197
 #: .\templates\receipts\check_collect.html:115
 #: .\templates\receipts\receipt_add.html:81
@@ -3108,7 +3112,7 @@ msgstr ""
 #: .\templates\cashboxes\cashbox_list.html:682
 #: .\templates\cashboxes\transfer_list.html:345
 #: .\templates\cashboxes\transfer_list.html:346
-#: .\templates\purchases\invoice_add.html:272
+#: .\templates\purchases\invoice_add.html:273
 #: .\templates\purchases\invoice_edit.html:223
 #: .\templates\receipts\check_collect.html:40
 #: .\templates\receipts\check_list.html:75
@@ -3124,7 +3128,7 @@ msgstr ""
 #: .\templates\banks\cashbox_transfer_edit.html:282
 #: .\templates\cashboxes\cashbox_list.html:687
 #: .\templates\cashboxes\transfer_list.html:351
-#: .\templates\purchases\invoice_add.html:278
+#: .\templates\purchases\invoice_add.html:279
 #: .\templates\purchases\invoice_edit.html:229
 #: .\templates\receipts\check_collect.html:52
 #: .\templates\receipts\check_list.html:78
@@ -3138,11 +3142,11 @@ msgstr ""
 msgid "Check Bank Name"
 msgstr ""
 
-#: .\cashboxes\models.py:146 .\core\models.py:80 .\journal\models.py:116
+#: .\cashboxes\models.py:146 .\core\models.py:80 .\journal\models.py:301
 msgid "Cashbox Transfer"
 msgstr ""
 
-#: .\cashboxes\models.py:147 .\cashboxes\views.py:932
+#: .\cashboxes\models.py:147 .\cashboxes\views.py:835
 #: .\templates\banks\transfer_list.html:909
 #: .\templates\cashboxes\transfer_list.html:5
 #: .\templates\cashboxes\transfer_list.html:51
@@ -3213,12 +3217,12 @@ msgstr ""
 msgid "Related Transfer"
 msgstr ""
 
-#: .\cashboxes\models.py:318 .\journal\models.py:100 .\settings\views.py:997
+#: .\cashboxes\models.py:318 .\journal\models.py:285 .\settings\views.py:997
 #: .\settings\views.py:1160 .\templates\revenues_expenses\dashboard.html:187
 msgid "Receipt"
 msgstr ""
 
-#: .\cashboxes\models.py:319 .\journal\models.py:101
+#: .\cashboxes\models.py:319 .\journal\models.py:286
 #: .\templates\assets_liabilities\dashboard.html:672
 #: .\templates\assets_liabilities\dashboard.html:680
 #: .\templates\assets_liabilities\dashboard.html:688 .\templates\base.html:2919
@@ -3238,7 +3242,7 @@ msgid "Payment"
 msgstr ""
 
 #: .\cashboxes\models.py:320 .\inventory\models.py:57 .\inventory\models.py:204
-#: .\journal\models.py:102 .\templates\assets_liabilities\dashboard.html:697
+#: .\journal\models.py:287 .\templates\assets_liabilities\dashboard.html:697
 #: .\templates\banks\account_detail.html:114
 #: .\templates\banks\bank_cashbox_transfer_add.html:6
 #: .\templates\banks\bank_cashbox_transfer_add.html:153
@@ -3383,128 +3387,104 @@ msgstr ""
 msgid "Transfer number already exists! Please use another number."
 msgstr ""
 
-#: .\cashboxes\views.py:642
+#: .\cashboxes\views.py:662
 msgid "Amount must be greater than zero"
 msgstr ""
 
-#: .\cashboxes\views.py:706
+#: .\cashboxes\views.py:726
 msgid "Insufficient balance in the sender cashbox"
 msgstr ""
 
-#: .\cashboxes\views.py:719
-msgid "Transfer to"
-msgstr ""
-
-#: .\cashboxes\views.py:731
-msgid "Transfer from"
-msgstr ""
-
-#: .\cashboxes\views.py:757
+#: .\cashboxes\views.py:738
 msgid "Insufficient balance in the cashbox"
 msgstr ""
 
-#: .\cashboxes\views.py:770
-msgid "Transfer to Bank"
-msgstr ""
-
-#: .\cashboxes\views.py:783 .\templates\banks\account_detail.html:332
-msgid "Transfer from Cashbox"
-msgstr ""
-
-#: .\cashboxes\views.py:808
+#: .\cashboxes\views.py:750
 msgid "Insufficient balance in the bank"
 msgstr ""
 
-#: .\cashboxes\views.py:821 .\templates\banks\account_detail.html:312
-msgid "Transfer to Cashbox"
-msgstr ""
-
-#: .\cashboxes\views.py:833
-msgid "Transfer from Bank"
-msgstr ""
-
-#: .\cashboxes\views.py:853
+#: .\cashboxes\views.py:756
 msgid "Transfer created successfully"
 msgstr ""
 
-#: .\cashboxes\views.py:878
+#: .\cashboxes\views.py:781
 msgid "An error occurred while creating the transfer"
 msgstr ""
 
-#: .\cashboxes\views.py:950 .\templates\banks\transfer_add.html:205
+#: .\cashboxes\views.py:853 .\templates\banks\transfer_add.html:205
 #: .\templates\banks\transfer_edit.html:205
 msgid "Transfer Details"
 msgstr ""
 
-#: .\cashboxes\views.py:1038
+#: .\cashboxes\views.py:941
 msgid ""
 "Transaction deleted successfully and all related balances have been updated."
 msgstr ""
 
-#: .\cashboxes\views.py:1041
+#: .\cashboxes\views.py:944
 msgid "An error occurred while deleting the transaction: {}"
 msgstr ""
 
-#: .\cashboxes\views.py:1100
+#: .\cashboxes\views.py:1003
 msgid ""
 "Transfer deleted successfully and all related balances have been updated."
 msgstr ""
 
-#: .\cashboxes\views.py:1103
+#: .\cashboxes\views.py:1006
 msgid "An error occurred while deleting the transfer: {}"
 msgstr ""
 
-#: .\cashboxes\views.py:1117
+#: .\cashboxes\views.py:1020
 msgid "You do not have permission to clear cashbox transactions"
 msgstr ""
 
-#: .\cashboxes\views.py:1161
+#: .\cashboxes\views.py:1064
 msgid ""
 "All transactions for cashbox \"{}\" were cleared successfully and all "
 "related balances were updated."
 msgstr ""
 
-#: .\cashboxes\views.py:1164
+#: .\cashboxes\views.py:1067
 msgid "An error occurred while clearing cashbox transactions: {}"
 msgstr ""
 
-#: .\cashboxes\views.py:1174
+#: .\cashboxes\views.py:1077
 msgid "You do not have permission to delete cashboxes"
 msgstr ""
 
-#: .\cashboxes\views.py:1193
+#: .\cashboxes\views.py:1096
 msgid "Cannot delete the cashbox because the balance is not zero"
 msgstr ""
 
-#: .\cashboxes\views.py:1202
+#: .\cashboxes\views.py:1105
 msgid "Deleted cashbox: {}"
 msgstr ""
 
-#: .\cashboxes\views.py:1209
+#: .\cashboxes\views.py:1112
 msgid ""
 "Cashbox \"{}\" was deleted successfully while preserving transfers and "
 "balances in other cashboxes"
 msgstr ""
 
-#: .\cashboxes\views.py:1213
+#: .\cashboxes\views.py:1116
 msgid "Cannot delete the cashbox due to protected related transactions"
 msgstr ""
 
-#: .\cashboxes\views.py:1215
+#: .\cashboxes\views.py:1118
 msgid "An error occurred while deleting the cashbox: {}"
 msgstr ""
 
-#: .\cashboxes\views.py:1237
+#: .\cashboxes\views.py:1140
 msgid "تم تصدير معاملات الصندوق إلى Excel: {}"
 msgstr ""
 
-#: .\cashboxes\views.py:1243 .\cashboxes\views.py:1251
+#: .\cashboxes\views.py:1146 .\cashboxes\views.py:1154
 #: .\templates\cashboxes\cashbox_detail.html:388
 #: .\templates\cashboxes\cashbox_detail.html:403
 msgid "Cashbox Statement"
 msgstr ""
 
-#: .\cashboxes\views.py:1256 .\templates\cashboxes\cashbox_detail.html:83
+#: .\cashboxes\views.py:1159 .\templates\cashboxes\cashbox_detail.html:83
 #: .\templates\cashboxes\cashbox_detail.html:239
 #: .\templates\cashboxes\cashbox_list.html:57
 #: .\templates\cashboxes\cashbox_list.html:145
@@ -3513,7 +3493,7 @@ msgstr ""
 msgid "Cashbox Name"
 msgstr ""
 
-#: .\cashboxes\views.py:1265 .\hr\models.py:17
+#: .\cashboxes\views.py:1168 .\hr\models.py:17
 #: .\templates\cashboxes\cashbox_detail.html:95
 #: .\templates\cashboxes\cashbox_detail.html:410
 #: .\templates\cashboxes\cashbox_list.html:61
@@ -3527,7 +3507,7 @@ msgstr ""
 msgid "Manager"
 msgstr ""
 
-#: .\cashboxes\views.py:1278 .\core\views.py:621 .\core\views.py:695
+#: .\cashboxes\views.py:1181 .\core\views.py:621 .\core\views.py:695
 #: .\reports\views.py:409 .\reports\views.py:447
 #: .\templates\cashboxes\cashbox_detail.html:143
 #: .\templates\cashboxes\cashbox_detail.html:420
@@ -3579,7 +3559,7 @@ msgstr ""
 #: .\templates\partials\print_header.html:31
 #: .\templates\payments\voucher_detail.html:103
 #: .\templates\purchases\debitnote_detail.html:75
-#: .\templates\purchases\invoice_add.html:1226
+#: .\templates\purchases\invoice_add.html:1227
 #: .\templates\purchases\invoice_detail.html:397
 #: .\templates\sales\creditnote_detail.html:75
 #: .\templates\sales\invoice_add.html:1734
@@ -3631,7 +3611,7 @@ msgstr ""
 #: .\templates\hr\employee_detail.html:107
 #: .\templates\hr\reports\employee_report.html:39
 #: .\templates\partials\print_header.html:39
-#: .\templates\purchases\invoice_add.html:1214
+#: .\templates\purchases\invoice_add.html:1215
 #: .\templates\sales\creditnote_detail.html:71
 #: .\templates\sales\invoice_add.html:1722
 #: .\templates\sales\invoice_detail.html:144
@@ -3646,7 +3626,7 @@ msgstr ""
 #: .\templates\customers\add.html:165 .\templates\customers\delete.html:141
 #: .\templates\customers\edit.html:182
 #: .\templates\partials\print_header.html:45
-#: .\templates\purchases\invoice_add.html:1220
+#: .\templates\purchases\invoice_add.html:1221
 #: .\templates\sales\invoice_add.html:1728 .\templates\settings\company.html:40
 #: .\templates\settings\company_fixed.html:39
 msgid "Tax Number"
@@ -3715,7 +3695,7 @@ msgstr ""
 msgid "Bank to Cashbox Transfer"
 msgstr ""
 
-#: .\core\models.py:81 .\journal\models.py:127 .\templates\base.html:735
+#: .\core\models.py:81 .\journal\models.py:312 .\templates\base.html:735
 #: .\templates\base.html:1402 .\templates\journal\entry_list.html:13
 msgid "Journal Entries"
 msgstr ""
@@ -3825,8 +3805,8 @@ msgstr ""
 #: .\templates\inventory\warehouse_delete.html:75
 #: .\templates\inventory\warehouse_detail.html:140
 #: .\templates\inventory\warehouse_list.html:329
-#: .\templates\journal\account_list.html:200
-#: .\templates\journal\entry_create.html:154
+#: .\templates\journal\account_list.html:219
+#: .\templates\journal\entry_create.html:131
 #: .\templates\payments\voucher_detail.html:27
 #: .\templates\payments\voucher_detail.html:280
 #: .\templates\payments\voucher_list.html:208
@@ -3840,8 +3820,8 @@ msgstr ""
 #: .\templates\products\category_delete.html:44
 #: .\templates\products\category_delete.html:56
 #: .\templates\products\category_delete.html:58
-#: .\templates\products\category_list.html:378
-#: .\templates\products\category_list.html:381
+#: .\templates\products\category_list.html:389
+#: .\templates\products\category_list.html:392
 #: .\templates\products\product_delete.html:16
 #: .\templates\products\product_delete.html:23
 #: .\templates\products\product_delete.html:88
@@ -3852,7 +3832,7 @@ msgstr ""
 #: .\templates\products\product_list.html:659
 #: .\templates\provisions\provision_detail.html:130
 #: .\templates\provisions\provision_list.html:71
-#: .\templates\purchases\invoice_add.html:320
+#: .\templates\purchases\invoice_add.html:321
 #: .\templates\purchases\invoice_delete.html:16
 #: .\templates\purchases\invoice_delete.html:41
 #: .\templates\purchases\invoice_delete.html:119
@@ -3939,7 +3919,6 @@ msgstr ""
 #: .\templates\purchases\purchase_report.html:210
 #: .\templates\purchases\purchase_return_statement.html:89
 #: .\templates\purchases\purchase_return_statement.html:119
-#: .\templates\purchases\purchase_statement.html:89
 #: .\templates\purchases\purchase_statement.html:119
 #: .\templates\purchases\return_detail.html:262
 #: .\templates\reports\aging_report.html:171
@@ -3972,7 +3951,11 @@ msgstr ""
 msgid "View"
 msgstr ""
 
-#: .\core\models.py:328 .\templates\assets_liabilities\dashboard.html:417
+#: .\core\models.py:328
+msgid "Access"
+msgstr ""
+
+#: .\core\models.py:329 .\templates\assets_liabilities\dashboard.html:417
 #: .\templates\assets_liabilities\dashboard.html:730
 #: .\templates\assets_liabilities\dashboard.html:732
 #: .\templates\assets_liabilities\dashboard.html:733
@@ -3984,17 +3967,17 @@ msgstr ""
 msgid "Export"
 msgstr ""
 
-#: .\core\models.py:329
+#: .\core\models.py:330
 msgid "Import"
 msgstr ""
 
-#: .\core\models.py:330 .\templates\banks\cashbox_transfer_edit.html:342
+#: .\core\models.py:331 .\templates\banks\cashbox_transfer_edit.html:342
 #: .\templates\banks\transfer_list.html:389
 #: .\templates\core\profit_loss_report.html:360
 #: .\templates\customers\add.html:242
 #: .\templates\customers\customer_list.html:204
 #: .\templates\customers\supplier_list.html:187
-#: .\templates\journal\entry_create.html:254
+#: .\templates\journal\entry_create.html:232
 #: .\templates\purchases\invoice_list.html:299
 #: .\templates\purchases\purchase_statement.html:122
 #: .\templates\purchases\return_list.html:126
@@ -4006,30 +3989,30 @@ msgstr ""
 msgid "Reset"
 msgstr ""
 
-#: .\core\models.py:333 .\core\models.py:366 .\templates\core\audit_log.html:37
+#: .\core\models.py:334 .\core\models.py:367 .\templates\core\audit_log.html:37
 #: .\templates\core\audit_log.html:103 .\templates\users\user_delete.html:52
 #: .\templates\users\user_list.html:124 .\users\models.py:111
 #: .\users\models.py:138
 msgid "User"
 msgstr ""
 
-#: .\core\models.py:334
+#: .\core\models.py:335
 msgid "Action Type"
 msgstr ""
 
-#: .\core\models.py:335
+#: .\core\models.py:336
 msgid "Content Type"
 msgstr ""
 
-#: .\core\models.py:336
+#: .\core\models.py:337
 msgid "Object ID"
 msgstr ""
 
-#: .\core\models.py:338 .\templates\core\audit_log.html:107
+#: .\core\models.py:339 .\templates\core\audit_log.html:107
 msgid "IP Address"
 msgstr ""
 
-#: .\core\models.py:339 .\templates\core\audit_log.html:102
+#: .\core\models.py:340 .\templates\core\audit_log.html:102
 #: .\templates\hr\attendance_upload.html:339
 #: .\templates\hr\attendance_upload.html:346
 #: .\templates\inventory\movement_list.html:309
@@ -4038,19 +4021,19 @@ msgstr ""
 msgid "Time"
 msgstr ""
 
-#: .\core\models.py:342
+#: .\core\models.py:343
 msgid "Audit Log"
 msgstr ""
 
-#: .\core\models.py:343
+#: .\core\models.py:344
 msgid "Audit Logs"
 msgstr ""
 
-#: .\core\models.py:346
+#: .\core\models.py:347
 msgid "Can view audit log"
 msgstr ""
 
-#: .\core\models.py:356 .\inventory\views.py:1427
+#: .\core\models.py:357 .\inventory\views.py:1427
 #: .\templates\inventory\list.html:292 .\templates\inventory\list.html:342
 #: .\templates\inventory\list.html:494 .\templates\inventory\list.html:646
 #: .\templates\inventory\low_stock.html:4
@@ -4059,19 +4042,19 @@ msgstr ""
 msgid "Low Stock"
 msgstr ""
 
-#: .\core\models.py:357
+#: .\core\models.py:358
 msgid "System Alert"
 msgstr ""
 
-#: .\core\models.py:358
+#: .\core\models.py:359
 msgid "User Action"
 msgstr ""
 
-#: .\core\models.py:361
+#: .\core\models.py:362
 msgid "Notification Type"
 msgstr ""
 
-#: .\core\models.py:362 .\hr\models.py:515
+#: .\core\models.py:363 .\hr\models.py:515
 #: .\templates\hr\employee_document_confirm_delete.html:63
 #: .\templates\hr\employee_document_detail.html:66
 #: .\templates\hr\employee_document_list.html:30
@@ -4080,19 +4063,19 @@ msgstr ""
 msgid "Title"
 msgstr ""
 
-#: .\core\models.py:363
+#: .\core\models.py:364
 msgid "Message"
 msgstr ""
 
-#: .\core\models.py:364
+#: .\core\models.py:365
 msgid "Read"
 msgstr ""
 
-#: .\core\models.py:369
+#: .\core\models.py:370
 msgid "System Notification"
 msgstr ""
 
-#: .\core\models.py:370
+#: .\core\models.py:371
 msgid "System Notifications"
 msgstr ""
 
@@ -4116,7 +4099,7 @@ msgstr ""
 #: .\templates\inventory\list.html:452
 #: .\templates\products\product_list.html:1352
 #: .\templates\products\product_list.html:1367
-#: .\templates\purchases\invoice_add.html:825
+#: .\templates\purchases\invoice_add.html:826
 #: .\templates\purchases\return_add.html:141
 #: .\templates\sales\creditnote_list.html:36
 #: .\templates\sales\creditnote_report.html:81
@@ -4153,6 +4136,42 @@ msgstr ""
 #: .\core\views.py:1186
 msgid "عرض تقرير المبيعات حسب البائع"
 msgstr ""
+
+#: .\customers\admin.py:14 .\templates\assets_liabilities\asset_create.html:89
+#: .\templates\assets_liabilities\asset_detail.html:93
+#: .\templates\assets_liabilities\liability_create.html:89
+#: .\templates\banks\account_add.html:130 .\templates\customers\add.html:146
+#: .\templates\customers\supplier_list.html:399
+#: .\templates\hr\payroll_period_form.html:132
+#: .\templates\inventory\warehouse_edit.html:121
+#: .\templates\purchases\invoice_add.html:2663
+#: .\templates\purchases\invoice_add.html:2916
+#: .\templates\revenues_expenses\recurring_create.html:57
+#: .\templates\revenues_expenses\recurring_detail.html:96
+#: .\templates\revenues_expenses\recurring_edit.html:63
+#: .\templates\sales\invoice_add.html:1703
+#: .\templates\settings\document_print_settings.html:415
+#: .\templates\users\user_add.html:39 .\templates\users\user_edit.html:39
+msgid "Basic Information"
+msgstr ""
+
+#: .\customers\admin.py:17 .\templates\assets_liabilities\asset_create.html:178
+#: .\templates\assets_liabilities\liability_create.html:178
+#: .\templates\banks\account_add.html:214 .\templates\customers\add.html:186
+#: .\templates\revenues_expenses\recurring_create.html:94
+#: .\templates\revenues_expenses\recurring_detail.html:138
+#: .\templates\revenues_expenses\recurring_edit.html:100
+#: .\templates\sales\invoice_add.html:1746
+msgid "Financial Information"
+msgstr ""
+
+#: .\customers\admin.py:41
+#, fuzzy
+#| msgid "لا يمكنك تعديل الرصيد الافتتاحي لوجود حركات على هذا المنتج"
+msgid "لا يمكن تعديل الرصيد يدوياً. تم إعادة حساب الرصيد من المعاملات."
+msgstr ""
+"You cannot edit the opening balance because there are movements on this "
+"product"
 
 #: .\customers\models.py:9 .\receipts\models.py:31 .\receipts\views.py:570
 #: .\reports\views.py:220 .\reports\views.py:409 .\reports\views.py:447
@@ -4209,7 +4228,7 @@ msgstr ""
 msgid "Customer and Supplier"
 msgstr ""
 
-#: .\customers\models.py:14 .\templates\products\category_list.html:316
+#: .\customers\models.py:14 .\templates\products\category_list.html:317
 msgid "Sequence Number"
 msgstr ""
 
@@ -4269,7 +4288,7 @@ msgstr ""
 #: .\templates\hr\attendance_upload.html:316
 #: .\templates\inventory\movement_list.html:303
 #: .\templates\inventory\product_detail.html:317
-#: .\templates\journal\account_list.html:113
+#: .\templates\journal\account_list.html:120
 #: .\templates\journal\entry_confirm_delete.html:79
 #: .\templates\products\product_detail.html:371
 #: .\templates\products\product_list.html:546
@@ -4299,7 +4318,7 @@ msgstr ""
 #: .\customers\models.py:20 .\templates\base.html:2752
 #: .\templates\customers\add.html:175 .\templates\customers\edit.html:192
 #: .\templates\customers\supplier_list.html:434
-#: .\templates\purchases\invoice_add.html:1230
+#: .\templates\purchases\invoice_add.html:1231
 #: .\templates\sales\invoice_add.html:1738
 msgid "City"
 msgstr ""
@@ -4307,7 +4326,7 @@ msgstr ""
 #: .\customers\models.py:22 .\templates\customers\add.html:190
 #: .\templates\customers\delete.html:147 .\templates\customers\edit.html:207
 #: .\templates\customers\edit.html:271 .\templates\customers\edit.html:273
-#: .\templates\purchases\invoice_add.html:1243
+#: .\templates\purchases\invoice_add.html:1244
 #: .\templates\sales\invoice_add.html:1751
 msgid "Credit Limit"
 msgstr ""
@@ -4462,6 +4481,18 @@ msgstr ""
 #: .\customers\views.py:713
 #, python-format
 msgid "حدث خطأ أثناء حذف البيانات: %(error)s"
+msgstr ""
+
+#: .\customers\views.py:1083
+#, python-format
+msgid ""
+"Balance issue reported for customer/supplier %(name)s. Opening: "
+"%(opening).3f, Debit: %(debit).3f, Credit: %(credit).3f, Expected: "
+"%(expected).3f, Displayed: %(displayed).3f"
+msgstr ""
+
+#: .\customers\views.py:1101
+msgid "Balance issue reported successfully"
 msgstr ""
 
 #: .\hr\forms.py:32 .\hr\models.py:82 .\templates\hr\contract_detail.html:154
@@ -4779,9 +4810,9 @@ msgstr ""
 #: .\templates\inventory\warehouse_detail.html:107
 #: .\templates\inventory\warehouse_detail.html:239
 #: .\templates\inventory\warehouse_list.html:293
-#: .\templates\journal\account_list.html:183
-#: .\templates\products\category_list.html:281
-#: .\templates\products\category_list.html:363
+#: .\templates\journal\account_list.html:202
+#: .\templates\products\category_list.html:282
+#: .\templates\products\category_list.html:374
 #: .\templates\products\product_list.html:564
 #: .\templates\revenues_expenses\category_list.html:74
 #: .\templates\revenues_expenses\recurring_detail.html:124
@@ -4997,7 +5028,7 @@ msgstr ""
 msgid "Overtime Hours"
 msgstr ""
 
-#: .\hr\models.py:265 .\journal\models.py:90
+#: .\hr\models.py:265
 msgid "Manual Entry"
 msgstr ""
 
@@ -5064,7 +5095,7 @@ msgstr ""
 msgid "Leave Types"
 msgstr ""
 
-#: .\hr\models.py:330 .\journal\models.py:301 .\payments\models.py:30
+#: .\hr\models.py:330 .\journal\models.py:451 .\payments\models.py:30
 #: .\templates\hr\dashboard.html:188
 #: .\templates\hr\payroll_period_form.html:253
 #: .\templates\hr\payroll_period_list.html:60
@@ -5177,7 +5208,7 @@ msgstr ""
 msgid "Net Salary"
 msgstr ""
 
-#: .\hr\models.py:417 .\journal\models.py:126 .\journal\models.py:247
+#: .\hr\models.py:417 .\journal\models.py:311 .\journal\models.py:397
 #: .\settings\views.py:999 .\settings\views.py:1162
 #: .\templates\banks\transfer_list.html:406
 #: .\templates\banks\transfer_list.html:859
@@ -5189,7 +5220,7 @@ msgid "Payment Date"
 msgstr ""
 
 #: .\hr\models.py:422 .\purchases\models.py:32 .\revenues_expenses\views.py:844
-#: .\templates\purchases\invoice_add.html:235
+#: .\templates\purchases\invoice_add.html:236
 #: .\templates\purchases\invoice_edit.html:164
 #: .\templates\revenues_expenses\entry_create.html:124
 #: .\templates\revenues_expenses\entry_detail.html:158
@@ -5547,7 +5578,7 @@ msgstr ""
 #: .\templates\inventory\warehouse_list.html:214
 #: .\templates\inventory\warehouse_list.html:259
 #: .\templates\products\product_movements.html:226
-#: .\templates\purchases\invoice_add.html:215
+#: .\templates\purchases\invoice_add.html:216
 #: .\templates\purchases\invoice_list.html:357
 #: .\templates\reports\inventory_report.html:139
 #: .\templates\sales\invoice_add.html:327
@@ -5573,11 +5604,11 @@ msgstr ""
 msgid "Out"
 msgstr ""
 
-#: .\inventory\models.py:66 .\inventory\models.py:193 .\journal\models.py:93
+#: .\inventory\models.py:66 .\inventory\models.py:193
 msgid "Warehouse Transfer"
 msgstr ""
 
-#: .\inventory\models.py:67 .\journal\models.py:103
+#: .\inventory\models.py:67 .\journal\models.py:288
 #: .\templates\customers\transactions.html:563
 #: .\templates\inventory\movement_list.html:180
 #: .\templates\inventory\movement_list.html:334
@@ -5601,12 +5632,12 @@ msgstr ""
 #: .\templates\inventory\product_detail.html:285
 #: .\templates\inventory\transfer_add.html:110
 #: .\templates\inventory\warehouse_delete.html:135
-#: .\templates\products\category_list.html:236
+#: .\templates\products\category_list.html:237
 #: .\templates\products\product_list.html:410
 #: .\templates\products\product_list.html:427
 #: .\templates\products\product_list.html:444
 #: .\templates\products\product_list.html:461
-#: .\templates\purchases\invoice_add.html:313
+#: .\templates\purchases\invoice_add.html:314
 #: .\templates\reports\inventory_report.html:148
 #: .\templates\reports\inventory_report.html:198
 #: .\templates\sales\invoice_add.html:407
@@ -5627,8 +5658,8 @@ msgstr ""
 #: .\templates\inventory\transfer_add.html:123
 #: .\templates\products\product_detail.html:380
 #: .\templates\products\product_movements.html:227
-#: .\templates\purchases\invoice_add.html:315
-#: .\templates\purchases\invoice_add.html:796
+#: .\templates\purchases\invoice_add.html:316
+#: .\templates\purchases\invoice_add.html:797
 #: .\templates\purchases\invoice_delete.html:92
 #: .\templates\purchases\invoice_detail.html:421
 #: .\templates\purchases\invoice_edit.html:276
@@ -5735,8 +5766,8 @@ msgstr ""
 #: .\templates\products\product_list.html:817
 #: .\templates\products\product_list.html:1649
 #: .\templates\products\product_movements.html:125
-#: .\templates\purchases\invoice_add.html:407
-#: .\templates\purchases\invoice_add.html:2666
+#: .\templates\purchases\invoice_add.html:408
+#: .\templates\purchases\invoice_add.html:2667
 #: .\templates\purchases\return_add.html:111
 #: .\templates\sales\invoice_add.html:760 .\templates\sales\return_add.html:107
 #: .\templates\sales\return_add.html:131
@@ -5746,8 +5777,8 @@ msgstr ""
 #: .\inventory\views.py:1399 .\products\forms.py:19
 #: .\templates\inventory\list.html:869 .\templates\inventory\low_stock.html:448
 #: .\templates\inventory\product_detail.html:180
-#: .\templates\purchases\invoice_add.html:312
-#: .\templates\purchases\invoice_add.html:406
+#: .\templates\purchases\invoice_add.html:313
+#: .\templates\purchases\invoice_add.html:407
 #: .\templates\purchases\return_add.html:110
 #: .\templates\sales\invoice_add.html:419
 #: .\templates\sales\invoice_add.html:759
@@ -5822,58 +5853,45 @@ msgstr ""
 msgid "معلومات النظام"
 msgstr ""
 
-#: .\journal\forms.py:40 .\journal\models.py:109
-#: .\templates\revenues_expenses\entry_create.html:47
-msgid "Entry Type"
-msgstr ""
-
-#: .\journal\forms.py:79
+#: .\journal\forms.py:64
 msgid "لا تملك صلاحية تعديل رقم القيد"
 msgstr ""
 
-#: .\journal\forms.py:100
+#: .\journal\forms.py:84
 msgid "نوع القيد غير صحيح"
 msgstr ""
 
-#: .\journal\forms.py:106
-msgid "نوع العملية غير صحيح"
-msgstr ""
-
-#: .\journal\forms.py:126 .\templates\journal\entry_create.html:295
+#: .\journal\forms.py:104 .\templates\journal\entry_create.html:273
 msgid "اكتب للبحث عن الحساب..."
 msgstr ""
 
-#: .\journal\forms.py:243
+#: .\journal\forms.py:228
 msgid "يجب اختيار حساب عند إدخال مبلغ"
 msgstr ""
 
-#: .\journal\forms.py:247
+#: .\journal\forms.py:232
 msgid "يجب إدخال مبلغ في المدين أو الدائن"
 msgstr ""
 
-#: .\journal\forms.py:251
+#: .\journal\forms.py:236
 msgid "لا يمكن إدخال مبلغ في المدين والدائن معاً"
 msgstr ""
 
-#: .\journal\forms.py:324
+#: .\journal\forms.py:309
 msgid "يجب أن يساوي مجموع المدين مجموع الدائن"
 msgstr ""
 
-#: .\journal\forms.py:340 .\templates\journal\entry_detail.html:61
-msgid "نوع العملية"
-msgstr ""
-
-#: .\journal\forms.py:346 .\templates\journal\account_detail.html:135
+#: .\journal\forms.py:325 .\templates\journal\account_detail.html:135
 #: .\templates\journal\entry_detail.html:124
 #: .\templates\reports\balance_sheet.html:186
 msgid "الحساب"
 msgstr ""
 
-#: .\journal\forms.py:349
+#: .\journal\forms.py:328
 msgid "جميع الحسابات"
 msgstr ""
 
-#: .\journal\forms.py:353 .\revenues_expenses\models.py:64
+#: .\journal\forms.py:332 .\revenues_expenses\models.py:64
 #: .\templates\banks\transfer_detail.html:427
 #: .\templates\journal\account_detail.html:131
 #: .\templates\journal\dashboard.html:146
@@ -5887,7 +5905,7 @@ msgstr ""
 msgid "رقم القيد"
 msgstr ""
 
-#: .\journal\forms.py:370 .\journal\models.py:24
+#: .\journal\forms.py:349 .\journal\models.py:24
 #: .\templates\financial_reports\trial_balance.html:38
 #: .\templates\financial_reports\trial_balance.html:81
 #: .\templates\journal\account_detail.html:44
@@ -5895,7 +5913,7 @@ msgstr ""
 msgid "Account Type"
 msgstr ""
 
-#: .\journal\forms.py:371 .\templates\journal\account_list.html:35
+#: .\journal\forms.py:350 .\templates\journal\account_list.html:42
 msgid "جميع الأنواع"
 msgstr ""
 
@@ -5993,7 +6011,7 @@ msgstr ""
 msgid "Linked Bank Account"
 msgstr ""
 
-#: .\journal\models.py:37 .\journal\models.py:249
+#: .\journal\models.py:37 .\journal\models.py:399
 #: .\templates\banks\account_edit.html:94
 #: .\templates\banks\account_edit.html:112
 #: .\templates\banks\account_edit.html:141
@@ -6013,7 +6031,7 @@ msgstr ""
 #: .\templates\customers\delete.html:90 .\templates\customers\edit.html:300
 #: .\templates\customers\edit.html:316
 #: .\templates\journal\entry_confirm_delete.html:117
-#: .\templates\journal\entry_create.html:149
+#: .\templates\journal\entry_create.html:126
 msgid "Account"
 msgstr ""
 
@@ -6026,31 +6044,23 @@ msgstr ""
 msgid "Can view Account"
 msgstr ""
 
-#: .\journal\models.py:51
+#: .\journal\models.py:136
 msgid "Account name must be unique."
 msgstr ""
 
-#: .\journal\models.py:89
-msgid "Asset Depreciation"
+#: .\journal\models.py:142
+msgid "Account cannot be parent of itself."
 msgstr ""
 
-#: .\journal\models.py:91
-msgid "Adjustment Entry"
+#: .\journal\models.py:150
+msgid "Circular reference detected in account hierarchy."
 msgstr ""
 
-#: .\journal\models.py:92
-msgid "Customer/Supplier Balance Adjustment"
-msgstr ""
-
-#: .\journal\models.py:95
-msgid "Sales Return COGS"
-msgstr ""
-
-#: .\journal\models.py:104
+#: .\journal\models.py:289
 msgid "Daily"
 msgstr ""
 
-#: .\journal\models.py:107 .\revenues_expenses\views.py:837
+#: .\journal\models.py:292 .\revenues_expenses\views.py:837
 #: .\revenues_expenses\views.py:1010
 #: .\templates\journal\entries_by_type.html:105
 #: .\templates\journal\entry_confirm_delete.html:71
@@ -6065,15 +6075,19 @@ msgstr ""
 msgid "Entry Number"
 msgstr ""
 
-#: .\journal\models.py:108
+#: .\journal\models.py:293
 msgid "Entry Date"
 msgstr ""
 
-#: .\journal\models.py:118
+#: .\journal\models.py:294 .\templates\revenues_expenses\entry_create.html:47
+msgid "Entry Type"
+msgstr ""
+
+#: .\journal\models.py:303
 msgid "Entry Description"
 msgstr ""
 
-#: .\journal\models.py:119 .\purchases\models.py:43 .\purchases\models.py:186
+#: .\journal\models.py:304 .\purchases\models.py:43 .\purchases\models.py:186
 #: .\purchases\models.py:242 .\purchases\models.py:285
 #: .\purchases\models.py:333 .\reports\views.py:410 .\reports\views.py:447
 #: .\revenues_expenses\views.py:1014 .\sales\models.py:33 .\sales\models.py:111
@@ -6089,7 +6103,7 @@ msgstr ""
 #: .\templates\provisions\provision_report.html:102
 #: .\templates\provisions\provision_report.html:131
 #: .\templates\purchases\debitnote_list.html:41
-#: .\templates\purchases\invoice_add.html:353
+#: .\templates\purchases\invoice_add.html:354
 #: .\templates\purchases\invoice_list.html:201
 #: .\templates\reports\sales_by_salesperson.html:82
 #: .\templates\sales\creditnote_delete.html:29
@@ -6103,39 +6117,40 @@ msgstr ""
 msgid "Total Amount"
 msgstr ""
 
-#: .\journal\models.py:131
+#: .\journal\models.py:316
 msgid "Change Entry Number"
 msgstr ""
 
-#: .\journal\models.py:241
+#: .\journal\models.py:391
 msgid "Debit and credit totals must be equal"
 msgstr ""
 
-#: .\journal\models.py:252
+#: .\journal\models.py:402
 msgid "Line Description"
 msgstr ""
 
-#: .\journal\models.py:257
+#: .\journal\models.py:407
 msgid "Journal Line"
 msgstr ""
 
-#: .\journal\models.py:258
+#: .\journal\models.py:408
 msgid "Journal Lines"
 msgstr ""
 
-#: .\journal\models.py:266
+#: .\journal\models.py:416
 msgid "Amounts must be positive"
 msgstr ""
 
-#: .\journal\models.py:269
+#: .\journal\models.py:419
 msgid "Line cannot be both debit and credit"
 msgstr ""
 
-#: .\journal\models.py:272
+#: .\journal\models.py:422
 msgid "Must enter debit or credit amount"
 msgstr ""
 
-#: .\journal\models.py:306 .\journal\views.py:1106
+#: .\journal\models.py:456 .\journal\views.py:1131
+#: .\templates\journal\year_end_closing.html:36
 #: .\templates\provisions\provision_confirm_delete.html:44
 #: .\templates\provisions\provision_detail.html:50
 #: .\templates\provisions\provision_form.html:117
@@ -6144,234 +6159,271 @@ msgstr ""
 msgid "Fiscal Year"
 msgstr ""
 
-#: .\journal\models.py:307 .\journal\views.py:1112
+#: .\journal\models.py:457 .\journal\views.py:1137
+#: .\templates\journal\year_end_closing.html:44
+#: .\templates\journal\year_end_closing.html:127
 msgid "Closing Date"
 msgstr ""
 
-#: .\journal\models.py:308 .\templates\core\profit_loss_report.html:330
+#: .\journal\models.py:458 .\templates\core\profit_loss_report.html:330
 msgid "Net Profit/Loss"
 msgstr ""
 
-#: .\journal\models.py:313
+#: .\journal\models.py:463
 msgid "Closing Entry"
 msgstr ""
 
-#: .\journal\models.py:322
+#: .\journal\models.py:472
 msgid "Year End Closing"
 msgstr ""
 
-#: .\journal\models.py:323
+#: .\journal\models.py:473
 msgid "Year End Closings"
 msgstr ""
 
-#: .\journal\models.py:328
+#: .\journal\models.py:478
 msgid "Can perform year end closing"
 msgstr ""
 
-#: .\journal\models.py:359
+#: .\journal\models.py:509
 msgid "Closing already completed"
 msgstr ""
 
-#: .\journal\models.py:432
+#: .\journal\models.py:582
 msgid "Year end closing performed successfully"
 msgstr ""
 
-#: .\journal\services.py:40
+#: .\journal\services.py:43
 msgid "مجموع المدين يجب أن يساوي مجموع الدائن"
 msgstr ""
 
-#: .\journal\views.py:122 .\templates\base.html:651 .\templates\base.html:890
+#: .\journal\views.py:116 .\templates\base.html:651 .\templates\base.html:890
 #: .\templates\journal\account_list.html:7
 #: .\templates\journal\account_list.html:14
 msgid "Accounts List"
 msgstr ""
 
-#: .\journal\views.py:123
+#: .\journal\views.py:117
 msgid "Viewing accounts list"
 msgstr ""
 
-#: .\journal\views.py:164 .\templates\journal\account_list.html:310
-#: .\templates\journal\account_list.html:325
+#: .\journal\views.py:158 .\templates\journal\account_list.html:329
+#: .\templates\journal\account_list.html:344
 msgid "قائمة الحسابات"
 msgstr ""
 
-#: .\journal\views.py:174 .\templates\journal\account_list.html:85
-#: .\templates\journal\account_list.html:330
+#: .\journal\views.py:168 .\templates\journal\account_list.html:92
+#: .\templates\journal\account_list.html:349
 #: .\templates\journal\entry_detail.html:125
 msgid "كود الحساب"
 msgstr ""
 
-#: .\journal\views.py:175 .\templates\journal\account_list.html:331
+#: .\journal\views.py:169 .\templates\journal\account_list.html:350
 msgid "اسم الحساب"
 msgstr ""
 
-#: .\journal\views.py:176 .\templates\documents\report.html:25
+#: .\journal\views.py:170 .\templates\documents\report.html:25
 #: .\templates\journal\account_detail.html:133
-#: .\templates\journal\account_list.html:332
+#: .\templates\journal\account_list.html:351
 msgid "النوع"
 msgstr ""
 
-#: .\journal\views.py:177 .\templates\journal\account_list.html:127
-#: .\templates\journal\account_list.html:333
+#: .\journal\views.py:171 .\templates\journal\account_list.html:134
+#: .\templates\journal\account_list.html:352
 msgid "الحساب الرئيسي"
 msgstr ""
 
-#: .\journal\views.py:178 .\templates\journal\account_detail.html:139
-#: .\templates\journal\account_list.html:334
+#: .\journal\views.py:172 .\templates\journal\account_detail.html:139
+#: .\templates\journal\account_list.html:353
 #: .\templates\reports\balance_sheet.html:187
 msgid "الرصيد"
 msgstr ""
 
-#: .\journal\views.py:179 .\templates\journal\account_detail.html:60
-#: .\templates\journal\account_list.html:335
+#: .\journal\views.py:173 .\templates\journal\account_detail.html:60
+#: .\templates\journal\account_list.html:354
 msgid "الحالة"
 msgstr ""
 
-#: .\journal\views.py:197 .\products\models.py:16 .\products\models.py:102
+#: .\journal\views.py:191 .\products\models.py:16 .\products\models.py:166
 #: .\revenues_expenses\views.py:958 .\settings\models.py:277
 #: .\settings\models.py:319 .\templates\journal\account_detail.html:63
 msgid "نشط"
 msgstr ""
 
-#: .\journal\views.py:197 .\revenues_expenses\views.py:958
+#: .\journal\views.py:191 .\revenues_expenses\views.py:958
 #: .\templates\journal\account_detail.html:65
 msgid "غير نشط"
 msgstr ""
 
-#: .\journal\views.py:212
+#: .\journal\views.py:206
 msgid "Accounts Export"
 msgstr ""
 
-#: .\journal\views.py:213
+#: .\journal\views.py:207
 msgid "Export account list to Excel"
 msgstr ""
 
-#: .\journal\views.py:231
+#: .\journal\views.py:225
 msgid "Create Account"
 msgstr ""
 
-#: .\journal\views.py:232
+#: .\journal\views.py:226
 msgid "Open account creation screen"
 msgstr ""
 
-#: .\journal\views.py:268
+#: .\journal\views.py:262
 msgid "Account created successfully"
 msgstr ""
 
-#: .\journal\views.py:273 .\journal\views.py:280 .\journal\views.py:281
+#: .\journal\views.py:267 .\journal\views.py:274 .\journal\views.py:275
 msgid "Create new account"
 msgstr ""
 
-#: .\journal\views.py:322
+#: .\journal\views.py:316
 msgid "Account updated successfully"
 msgstr ""
 
-#: .\journal\views.py:329 .\templates\banks\account_list.html:351
+#: .\journal\views.py:323 .\templates\banks\account_list.html:351
 #: .\templates\banks\account_list.html:355
 #: .\templates\journal\account_detail.html:19
 msgid "Edit Account"
 msgstr ""
 
-#: .\journal\views.py:341
+#: .\journal\views.py:335
 msgid "You do not have permission to delete accounts"
 msgstr ""
 
-#: .\journal\views.py:346
+#: .\journal\views.py:340
 msgid "Cannot delete account because it has transactions"
 msgstr ""
 
-#: .\journal\views.py:370
+#: .\journal\views.py:364
 msgid "Account deleted successfully"
 msgstr ""
 
-#: .\journal\views.py:428
+#: .\journal\views.py:422
 msgid "Viewing account details: {}"
 msgstr ""
 
-#: .\journal\views.py:479
+#: .\journal\views.py:470
 msgid "Viewing journal entries list"
 msgstr ""
 
-#: .\journal\views.py:493 .\templates\journal\entry_create.html:5
+#: .\journal\views.py:484 .\templates\journal\entry_create.html:5
 #: .\templates\journal\entry_create.html:25
 msgid "Create Journal Entry"
 msgstr ""
 
-#: .\journal\views.py:494
+#: .\journal\views.py:485
 msgid "Viewing create journal entry page"
 msgstr ""
 
-#: .\journal\views.py:555
+#: .\journal\views.py:536
+msgid ""
+"❌ خطأ: لا يمكن إنشاء قيد محاسبي يمس حسابين بنكيين أو أكثر. للقيام بتحويل "
+"بين حسابات بنكية، يجب استخدام صفحة التحويلات البنكية <a href=\"/ar/banks/"
+"transfers/add/\" class=\"alert-link\" target=\"_blank\">من هنا</a>. "
+"<br><br>عند التحويل من خلال صفحة البنوك، سيتم إنشاء القيد المحاسبي تلقائياً "
+"وضمان انعكاس التحويل بشكل صحيح على جميع الأنظمة."
+msgstr ""
+
+#: .\journal\views.py:559 .\journal\views.py:589 .\journal\views.py:698
+msgid "Create new journal entry"
+msgstr ""
+
+#: .\journal\views.py:566
+msgid ""
+"❌ خطأ: لا يمكن إنشاء قيد محاسبي يمس حسابين أو أكثر من حسابات الصناديق. "
+"للقيام بتحويل بين الصناديق، يجب استخدام صفحة التحويلات بين الصناديق <a "
+"href=\"/ar/cashboxes/\" class=\"alert-link\" target=\"_blank\">من هنا</a>. "
+"<br><br>عند التحويل من خلال صفحة الصناديق، سيتم إنشاء القيد المحاسبي تلقائياً "
+"وضمان انعكاس التحويل بشكل صحيح على جميع الأنظمة."
+msgstr ""
+
+#: .\journal\views.py:618
 msgid "يجب إدخال بنود القيد المحاسبي"
 msgstr ""
 
-#: .\journal\views.py:578 .\revenues_expenses\views.py:335
+#: .\journal\views.py:641 .\revenues_expenses\views.py:335
 msgid "Entry created successfully"
 msgstr ""
 
-#: .\journal\views.py:593
+#: .\journal\views.py:656
 msgid ""
 "An unexpected error occurred while creating the entry. Please try again."
 msgstr ""
 
-#: .\journal\views.py:597
+#: .\journal\views.py:660
 msgid "Please correct the errors in the basic entry information"
 msgstr ""
 
-#: .\journal\views.py:605
+#: .\journal\views.py:668
 msgid "Please correct the errors in the entry lines"
 msgstr ""
 
-#: .\journal\views.py:632
-msgid "Create new journal entry"
-msgstr ""
-
-#: .\journal\views.py:679
+#: .\journal\views.py:745
 msgid "Entry modified successfully"
 msgstr ""
 
-#: .\journal\views.py:697
+#: .\journal\views.py:763
 msgid "An error occurred while modifying the entry: "
 msgstr ""
 
-#: .\journal\views.py:705
+#: .\journal\views.py:771
 msgid "Modify journal entry"
 msgstr ""
 
-#: .\journal\views.py:850
+#: .\journal\views.py:916
 msgid "Account not found"
 msgstr ""
 
-#: .\journal\views.py:983
+#: .\journal\views.py:1009
 msgid "You do not have permission to delete journal entries."
 msgstr ""
 
-#: .\journal\views.py:1009
+#: .\journal\views.py:1034
 msgid "The Accounting Entry was Deleted Successfully"
 msgstr ""
 
-#: .\journal\views.py:1011
+#: .\journal\views.py:1036
 msgid "Error deleting journal entry: "
 msgstr ""
 
-#: .\journal\views.py:1117
+#: .\journal\views.py:1142
 msgid "I confirm performing the year-end closing"
 msgstr ""
 
-#: .\journal\views.py:1129
+#: .\journal\views.py:1154
 msgid "Closing has already been performed for this year"
 msgstr ""
 
-#: .\journal\views.py:1152
+#: .\journal\views.py:1177
 msgid "Year-End Closing"
 msgstr ""
 
-#: .\journal\views.py:1192
+#: .\journal\views.py:1217
 msgid "Year-End Closing Page"
 msgstr ""
 
-#: .\journal\views.py:1193
+#: .\journal\views.py:1218
 msgid "Viewing Year-End Closing Page"
+msgstr ""
+
+#: .\journal\views.py:1236
+msgid ""
+"تم إصلاح {} حساب بنجاح. تم ربط الحسابات الفرعية بحساباتها الأب المناسبة."
+msgstr ""
+
+#: .\journal\views.py:1241
+msgid "لم يتم العثور على حسابات تحتاج إصلاح. جميع الحسابات مرتبطة بشكل صحيح."
+msgstr ""
+
+#: .\journal\views.py:1251
+msgid "Account Hierarchy Fix"
+msgstr ""
+
+#: .\journal\views.py:1260
+msgid "حدث خطأ أثناء إصلاح الهرمية: {}"
 msgstr ""
 
 #: .\payments\admin.py:37 .\templates\payments\voucher_detail.html:94
@@ -6697,21 +6749,21 @@ msgstr ""
 #: .\products\forms.py:21 .\templates\products\category_add.html:49
 #: .\templates\products\product_add.html:615
 #: .\templates\products\product_edit.html:53
-#: .\templates\purchases\invoice_add.html:2672
-#: .\templates\purchases\invoice_add.html:2925
+#: .\templates\purchases\invoice_add.html:2673
+#: .\templates\purchases\invoice_add.html:2926
 msgid "English Name"
 msgstr ""
 
 #: .\products\forms.py:23 .\templates\products\product_add.html:98
 #: .\templates\products\product_edit.html:80
 #: .\templates\products\product_list.html:850
-#: .\templates\purchases\invoice_add.html:2699
+#: .\templates\purchases\invoice_add.html:2700
 msgid "Barcode"
 msgstr ""
 
 #: .\products\forms.py:24 .\templates\products\product_add.html:110
 #: .\templates\products\product_list.html:861
-#: .\templates\purchases\invoice_add.html:2710
+#: .\templates\purchases\invoice_add.html:2711
 msgid "Serial Number"
 msgstr ""
 
@@ -6723,7 +6775,7 @@ msgstr ""
 msgid "Category Description"
 msgstr ""
 
-#: .\products\models.py:9 .\products\models.py:78
+#: .\products\models.py:9 .\products\models.py:142
 msgid "الرقم التسلسلي"
 msgstr ""
 
@@ -6731,8 +6783,8 @@ msgstr ""
 msgid "اسم الفئة"
 msgstr ""
 
-#: .\products\models.py:11 .\products\models.py:75
-#: .\templates\products\category_list.html:324
+#: .\products\models.py:11 .\products\models.py:139
+#: .\templates\products\category_list.html:325
 #: .\templates\products\product_add.html:69
 msgid "Name in English"
 msgstr ""
@@ -6745,7 +6797,7 @@ msgstr ""
 msgid "الفئة الأساسية"
 msgstr ""
 
-#: .\products\models.py:15 .\products\models.py:81
+#: .\products\models.py:15 .\products\models.py:145
 #: .\revenues_expenses\forms.py:76 .\templates\banks\transfer_detail.html:429
 #: .\templates\journal\account_detail.html:75
 #: .\templates\purchases\debitnote_detail.html:194
@@ -6757,14 +6809,14 @@ msgstr ""
 msgid "الوصف"
 msgstr ""
 
-#: .\products\models.py:17 .\products\models.py:103 .\settings\models.py:278
+#: .\products\models.py:17 .\products\models.py:167 .\settings\models.py:278
 #: .\settings\models.py:321 .\templates\journal\account_detail.html:70
 #: .\templates\journal\entry_detail.html:87
 #: .\templates\payments\voucher_detail.html:112
 msgid "تاريخ الإنشاء"
 msgstr ""
 
-#: .\products\models.py:18 .\products\models.py:104 .\settings\models.py:279
+#: .\products\models.py:18 .\products\models.py:168 .\settings\models.py:279
 #: .\settings\models.py:322
 msgid "تاريخ التحديث"
 msgstr ""
@@ -6777,19 +6829,19 @@ msgstr ""
 msgid "الفئات"
 msgstr ""
 
-#: .\products\models.py:25 .\products\models.py:111
+#: .\products\models.py:25 .\products\models.py:175
 msgid "يمكن عرض الفئات والمنتجات"
 msgstr ""
 
-#: .\products\models.py:26 .\products\models.py:112
+#: .\products\models.py:26 .\products\models.py:176
 msgid "يمكن إضافة المنتجات"
 msgstr ""
 
-#: .\products\models.py:27 .\products\models.py:113
+#: .\products\models.py:27 .\products\models.py:177
 msgid "يمكن تعديل المنتجات"
 msgstr ""
 
-#: .\products\models.py:28 .\products\models.py:114
+#: .\products\models.py:28 .\products\models.py:178
 msgid "يمكن إضافة الفئات"
 msgstr ""
 
@@ -6797,128 +6849,128 @@ msgstr ""
 msgid "يمكن إضافة الفئات من خلال النوافذ المنبثقة"
 msgstr ""
 
-#: .\products\models.py:30 .\products\models.py:115
+#: .\products\models.py:30 .\products\models.py:179
 msgid "يمكن تعديل الفئات"
 msgstr ""
 
-#: .\products\models.py:31 .\products\models.py:116
+#: .\products\models.py:31 .\products\models.py:180
 msgid "يمكن حذف الفئات"
 msgstr ""
 
-#: .\products\models.py:32 .\products\models.py:117
+#: .\products\models.py:32 .\products\models.py:181
 msgid "يمكن حذف المنتجات"
 msgstr ""
 
-#: .\products\models.py:69 .\products\models.py:126
+#: .\products\models.py:133 .\products\models.py:190
 msgid "سلعة"
 msgstr ""
 
-#: .\products\models.py:70
+#: .\products\models.py:134
 msgid "خدمة"
 msgstr ""
 
-#: .\products\models.py:73
+#: .\products\models.py:137
 msgid "رقم المنتج"
 msgstr ""
 
-#: .\products\models.py:74
+#: .\products\models.py:138
 msgid "اسم المنتج"
 msgstr ""
 
-#: .\products\models.py:76
+#: .\products\models.py:140
 msgid "نوع المنتج"
 msgstr ""
 
-#: .\products\models.py:77
+#: .\products\models.py:141
 msgid "الباركود"
 msgstr ""
 
-#: .\products\models.py:79
+#: .\products\models.py:143
 msgid "للمنتجات التي تُباع بالقطعة وتحتاج كفالة"
 msgstr ""
 
-#: .\products\models.py:80 .\revenues_expenses\forms.py:73
+#: .\products\models.py:144 .\revenues_expenses\forms.py:73
 #: .\revenues_expenses\models.py:66 .\revenues_expenses\models.py:161
 msgid "الفئة"
 msgstr ""
 
-#: .\products\models.py:82
+#: .\products\models.py:146
 msgid "صورة المنتج"
 msgstr ""
 
-#: .\products\models.py:83
+#: .\products\models.py:147
 msgid "سعر التكلفة"
 msgstr ""
 
-#: .\products\models.py:85
+#: .\products\models.py:149
 msgid "الحد الأدنى للكمية"
 msgstr ""
 
-#: .\products\models.py:87
+#: .\products\models.py:151
 msgid "الحد الأقصى للكمية"
 msgstr ""
 
-#: .\products\models.py:89
+#: .\products\models.py:153
 msgid "سعر البيع"
 msgstr ""
 
-#: .\products\models.py:91
+#: .\products\models.py:155
 msgid "سعر الجملة"
 msgstr ""
 
-#: .\products\models.py:93
+#: .\products\models.py:157
 msgid "نسبة الضريبة"
 msgstr ""
 
-#: .\products\models.py:95
+#: .\products\models.py:159
 msgid "كمية الرصيد الافتتاحي"
 msgstr ""
 
-#: .\products\models.py:97
+#: .\products\models.py:161
 msgid "تكلفة الرصيد الافتتاحي"
 msgstr ""
 
-#: .\products\models.py:100
+#: .\products\models.py:164
 msgid "مستودع الرصيد الافتتاحي"
 msgstr ""
 
-#: .\products\models.py:101
+#: .\products\models.py:165
 msgid "تفعيل التنبيهات"
 msgstr ""
 
-#: .\products\models.py:107 .\templates\products\product_list.html:678
+#: .\products\models.py:171 .\templates\products\product_list.html:678
 msgid "منتج"
 msgstr ""
 
-#: .\products\models.py:108 .\users\views.py:1120 .\users\views.py:1520
+#: .\products\models.py:172 .\users\views.py:1120 .\users\views.py:1520
 msgid "المنتجات"
 msgstr ""
 
-#: .\products\views.py:648
+#: .\products\views.py:662
 msgid "لا يمكنك تعديل الرصيد الافتتاحي لوجود حركات على هذا المنتج"
 msgstr ""
 "You cannot edit the opening balance because there are movements on this "
 "product"
 
-#: .\products\views.py:695
+#: .\products\views.py:709
 msgid "The Opening Balance Must be Greater Than Zero!"
 msgstr ""
 
-#: .\products\views.py:788
+#: .\products\views.py:802
 #, python-format
 msgid ""
 "حذف الرصيد الافتتاحي القديم للمنتج: %(product_name)s - الكمية القديمة: "
 "%(old_quantity)s - التكلفة القديمة: %(old_cost)s"
 msgstr ""
 
-#: .\products\views.py:862
+#: .\products\views.py:875
 #, python-format
 msgid ""
 "إنشاء رصيد افتتاحي جديد للمنتج: %(product_name)s - الكمية: %(quantity)s - "
 "التكلفة: %(cost)s"
 msgstr ""
 
-#: .\products\views.py:1775
+#: .\products\views.py:1787
 msgid "الاسم بالإنجليزية مطلوب!"
 msgstr ""
 
@@ -7096,17 +7148,17 @@ msgstr ""
 msgid "تم حذف إدخال المخصص بنجاح"
 msgstr ""
 
-#: .\purchases\models.py:18 .\templates\purchases\invoice_add.html:238
+#: .\purchases\models.py:18 .\templates\purchases\invoice_add.html:239
 #: .\templates\purchases\invoice_edit.html:167
 msgid "Cash Payment"
 msgstr ""
 
-#: .\purchases\models.py:19 .\templates\purchases\invoice_add.html:239
+#: .\purchases\models.py:19 .\templates\purchases\invoice_add.html:240
 #: .\templates\purchases\invoice_edit.html:168
 msgid "Check Payment"
 msgstr ""
 
-#: .\purchases\models.py:21 .\templates\purchases\invoice_add.html:241
+#: .\purchases\models.py:21 .\templates\purchases\invoice_add.html:242
 #: .\templates\purchases\invoice_edit.html:170
 msgid "Credit Payment"
 msgstr ""
@@ -7130,8 +7182,8 @@ msgstr ""
 #: .\templates\accounts\customer_statement.html:298
 #: .\templates\accounts\customer_statement.html:363
 #: .\templates\purchases\debitnote_list.html:39
-#: .\templates\purchases\invoice_add.html:344
-#: .\templates\purchases\invoice_add.html:825
+#: .\templates\purchases\invoice_add.html:345
+#: .\templates\purchases\invoice_add.html:826
 #: .\templates\purchases\return_add.html:137
 #: .\templates\reports\sales_by_salesperson.html:79
 #: .\templates\sales\creditnote_edit.html:36
@@ -7152,8 +7204,8 @@ msgstr ""
 #: .\sales\models.py:167 .\templates\products\product_add.html:243
 #: .\templates\products\product_edit.html:210
 #: .\templates\products\product_list.html:968
-#: .\templates\purchases\invoice_add.html:319
-#: .\templates\purchases\invoice_add.html:348
+#: .\templates\purchases\invoice_add.html:320
+#: .\templates\purchases\invoice_add.html:349
 #: .\templates\reports\sales_by_salesperson.html:80
 #: .\templates\sales\creditnote_edit.html:40
 #: .\templates\sales\invoice_add.html:425
@@ -7171,7 +7223,6 @@ msgstr ""
 #: .\templates\core\tax_report.html:339
 #: .\templates\purchases\invoice_list.html:7
 #: .\templates\purchases\invoice_list.html:161
-#: .\templates\purchases\invoice_list.html:163
 #: .\templates\purchases\invoice_list.html:311
 msgid "Purchase Invoices"
 msgstr ""
@@ -7307,7 +7358,7 @@ msgstr ""
 #: .\templates\inventory\movement_list.html:310
 #: .\templates\inventory\product_detail.html:322
 #: .\templates\products\product_detail.html:383
-#: .\templates\purchases\invoice_add.html:316
+#: .\templates\purchases\invoice_add.html:317
 #: .\templates\purchases\return_add.html:116
 #: .\templates\purchases\return_edit.html:100
 #: .\templates\sales\invoice_detail.html:225
@@ -7320,8 +7371,8 @@ msgstr ""
 #: .\purchases\models.py:184 .\purchases\models.py:283 .\sales\models.py:109
 #: .\sales\models.py:166 .\templates\products\product_edit.html:181
 #: .\templates\products\product_list.html:944
-#: .\templates\purchases\invoice_add.html:317
-#: .\templates\purchases\invoice_add.html:411
+#: .\templates\purchases\invoice_add.html:318
+#: .\templates\purchases\invoice_add.html:412
 #: .\templates\purchases\return_add.html:117
 #: .\templates\sales\invoice_add.html:764
 #: .\templates\sales\invoice_detail.html:226 .\templates\sales\pos.html:1072
@@ -8103,11 +8154,11 @@ msgstr ""
 #: .\templates\financial_reports\trial_balance.html:122
 #: .\templates\inventory\list.html:581 .\templates\inventory\list.html:874
 #: .\templates\journal\entries_by_type.html:148
-#: .\templates\journal\entry_create.html:219
+#: .\templates\journal\entry_create.html:197
 #: .\templates\journal\entry_detail.html:171
 #: .\templates\products\product_detail.html:386
-#: .\templates\purchases\invoice_add.html:318
-#: .\templates\purchases\invoice_add.html:825
+#: .\templates\purchases\invoice_add.html:319
+#: .\templates\purchases\invoice_add.html:826
 #: .\templates\purchases\invoice_delete.html:94
 #: .\templates\purchases\invoice_detail.html:423
 #: .\templates\purchases\invoice_detail.html:464
@@ -8391,8 +8442,8 @@ msgstr ""
 #: .\templates\assets_liabilities\liability_create.html:387
 #: .\templates\products\category_add.html:6
 #: .\templates\products\category_add.html:17
-#: .\templates\products\category_list.html:188
-#: .\templates\products\category_list.html:398
+#: .\templates\products\category_list.html:189
+#: .\templates\products\category_list.html:409
 #: .\templates\products\product_add.html:140
 #: .\templates\products\product_add.html:598
 #: .\templates\products\product_edit.html:111
@@ -8600,7 +8651,6 @@ msgstr ""
 #: .\templates\core\tax_report.html:338 .\templates\sales\invoice_list.html:7
 #: .\templates\sales\invoice_list.html:175
 #: .\templates\sales\invoice_list.html:284
-#: .\templates\sales\invoice_list.html:286
 msgid "Sales Invoices"
 msgstr ""
 
@@ -8786,7 +8836,7 @@ msgstr ""
 #: .\templates\inventory\low_stock.html:479
 #: .\templates\inventory\low_stock.html:482
 #: .\templates\inventory\warehouse_list.html:287
-#: .\templates\purchases\invoice_add.html:430
+#: .\templates\purchases\invoice_add.html:431
 #: .\templates\sales\creditnote_detail.html:273
 #: .\templates\sales\invoice_detail.html:460
 #: .\templates\sales\invoice_list.html:551
@@ -9585,6 +9635,7 @@ msgstr ""
 #: .\templates\inventory\warehouse_list.html:156
 #: .\templates\journal\trial_balance.html:124
 #: .\templates\partials\document_creator_info.html:87
+#: .\templates\products\category_list.html:181
 #: .\templates\products\product_detail.html:326
 #: .\templates\products\product_list.html:232
 #: .\templates\products\product_list.html:234
@@ -9595,7 +9646,6 @@ msgstr ""
 #: .\templates\purchases\invoice_detail.html:47
 #: .\templates\purchases\invoice_detail.html:264
 #: .\templates\purchases\invoice_detail.html:319
-#: .\templates\purchases\invoice_list.html:172
 #: .\templates\purchases\purchase_report.html:185
 #: .\templates\purchases\return_detail.html:211
 #: .\templates\purchases\return_list.html:27
@@ -9837,24 +9887,6 @@ msgstr ""
 msgid "Back to Assets List"
 msgstr ""
 
-#: .\templates\assets_liabilities\asset_create.html:89
-#: .\templates\assets_liabilities\asset_detail.html:93
-#: .\templates\assets_liabilities\liability_create.html:89
-#: .\templates\banks\account_add.html:130 .\templates\customers\add.html:146
-#: .\templates\customers\supplier_list.html:399
-#: .\templates\hr\payroll_period_form.html:132
-#: .\templates\inventory\warehouse_edit.html:121
-#: .\templates\purchases\invoice_add.html:2662
-#: .\templates\purchases\invoice_add.html:2915
-#: .\templates\revenues_expenses\recurring_create.html:57
-#: .\templates\revenues_expenses\recurring_detail.html:96
-#: .\templates\revenues_expenses\recurring_edit.html:63
-#: .\templates\sales\invoice_add.html:1703
-#: .\templates\settings\document_print_settings.html:415
-#: .\templates\users\user_add.html:39 .\templates\users\user_edit.html:39
-msgid "Basic Information"
-msgstr ""
-
 #: .\templates\assets_liabilities\asset_create.html:99
 #: .\templates\assets_liabilities\liability_create.html:99
 msgid "Leave empty to auto-generate"
@@ -9868,16 +9900,6 @@ msgstr ""
 #: .\templates\assets_liabilities\asset_create.html:142
 #: .\templates\assets_liabilities\liability_create.html:142
 msgid "Select an existing category or add a new one first"
-msgstr ""
-
-#: .\templates\assets_liabilities\asset_create.html:178
-#: .\templates\assets_liabilities\liability_create.html:178
-#: .\templates\banks\account_add.html:214 .\templates\customers\add.html:186
-#: .\templates\revenues_expenses\recurring_create.html:94
-#: .\templates\revenues_expenses\recurring_detail.html:138
-#: .\templates\revenues_expenses\recurring_edit.html:100
-#: .\templates\sales\invoice_add.html:1746
-msgid "Financial Information"
 msgstr ""
 
 #: .\templates\assets_liabilities\asset_create.html:219
@@ -9907,7 +9929,7 @@ msgid "Optional description for the category"
 msgstr ""
 
 #: .\templates\assets_liabilities\asset_create.html:435
-#: .\templates\products\category_list.html:219
+#: .\templates\products\category_list.html:220
 msgid "Active Category"
 msgstr ""
 
@@ -9919,7 +9941,7 @@ msgstr ""
 #: .\templates\products\product_edit.html:658
 #: .\templates\products\product_list.html:1173
 #: .\templates\products\product_list.html:1307
-#: .\templates\purchases\invoice_add.html:2978
+#: .\templates\purchases\invoice_add.html:2979
 msgid "Save Category"
 msgstr ""
 
@@ -10271,7 +10293,7 @@ msgstr ""
 #: .\templates\assets_liabilities\dashboard.html:956
 #: .\templates\backup\backup_restore.html:1297 .\templates\base.html:2407
 #: .\templates\financial_reports\trial_balance.html:179
-#: .\templates\journal\account_list.html:75
+#: .\templates\journal\account_list.html:82
 #: .\templates\products\product_list.html:285
 #: .\templates\products\product_list.html:540
 #: .\templates\purchases\invoice_detail.html:152
@@ -10356,7 +10378,7 @@ msgstr ""
 #: .\templates\products\product_edit.html:689
 #: .\templates\purchases\invoice_add.html:170
 #: .\templates\purchases\invoice_add.html:171
-#: .\templates\purchases\invoice_add.html:1178
+#: .\templates\purchases\invoice_add.html:1179
 #: .\templates\revenues_expenses\category_create.html:12
 #: .\templates\sales\invoice_add.html:280
 #: .\templates\sales\invoice_add.html:1686 .\templates\sales\pos.html:1303
@@ -10408,7 +10430,7 @@ msgstr ""
 #: .\templates\assets_liabilities\dashboard.html:383
 #: .\templates\journal\entries_by_type.html:77
 #: .\templates\journal\entry_list.html:48
-#: .\templates\products\category_list.html:286
+#: .\templates\products\category_list.html:287
 #: .\templates\reports\trial_balance.html:33
 #: .\templates\revenues_expenses\entry_list.html:42
 #: .\templates\revenues_expenses\recurring_list.html:153
@@ -10532,8 +10554,8 @@ msgstr ""
 #: .\templates\products\product_add.html:1052
 #: .\templates\products\product_edit.html:488
 #: .\templates\products\product_list.html:1551
-#: .\templates\purchases\invoice_add.html:412
-#: .\templates\purchases\invoice_add.html:437
+#: .\templates\purchases\invoice_add.html:413
+#: .\templates\purchases\invoice_add.html:438
 #: .\templates\reports\customer_statement.html:32
 #: .\templates\revenues_expenses\category_create.html:110
 #: .\templates\sales\invoice_add.html:765
@@ -10553,7 +10575,7 @@ msgstr ""
 #: .\templates\inventory\product_detail.html:156
 #: .\templates\inventory\product_detail.html:167
 #: .\templates\inventory\warehouse_detail.html:4
-#: .\templates\journal\account_list.html:189
+#: .\templates\journal\account_list.html:208
 #: .\templates\journal\year_end_closing.html:130
 #: .\templates\payments\voucher_detail.html:140
 #: .\templates\products\product_detail.html:19
@@ -11236,6 +11258,14 @@ msgstr ""
 msgid "Incoming Transfer"
 msgstr ""
 
+#: .\templates\banks\account_detail.html:312
+msgid "Transfer to Cashbox"
+msgstr ""
+
+#: .\templates\banks\account_detail.html:332
+msgid "Transfer from Cashbox"
+msgstr ""
+
 #: .\templates\banks\account_detail.html:348
 msgid "No bank transfers"
 msgstr ""
@@ -11330,8 +11360,8 @@ msgstr ""
 #: .\templates\products\product_detail.html:186
 #: .\templates\products\product_list.html:83
 #: .\templates\products\product_list.html:813
-#: .\templates\purchases\invoice_add.html:1238
-#: .\templates\purchases\invoice_add.html:1269
+#: .\templates\purchases\invoice_add.html:1239
+#: .\templates\purchases\invoice_add.html:1270
 #: .\templates\purchases\invoice_detail.html:121
 #: .\templates\purchases\invoice_detail.html:337
 #: .\templates\purchases\invoice_detail.html:341
@@ -11606,7 +11636,7 @@ msgid "Total Accounts"
 msgstr ""
 
 #: .\templates\banks\account_list.html:295
-#: .\templates\journal\account_list.html:30
+#: .\templates\journal\account_list.html:37
 msgid "Search in accounts..."
 msgstr ""
 
@@ -12040,6 +12070,7 @@ msgstr ""
 
 #: .\templates\banks\account_transactions.html:483
 #: .\templates\cashboxes\cashbox_detail.html:412
+#: .\templates\products\category_list.html:167
 msgid "Print Date"
 msgstr ""
 
@@ -12168,7 +12199,7 @@ msgid "Bind events to update preview"
 msgstr ""
 
 #: .\templates\banks\bank_cashbox_transfer_add.html:498
-#: .\templates\purchases\invoice_add.html:953
+#: .\templates\purchases\invoice_add.html:954
 #: .\templates\revenues_expenses\entry_create.html:492
 msgid "Validate form before submission"
 msgstr ""
@@ -12246,12 +12277,12 @@ msgstr ""
 #: .\templates\products\product_list.html:1464
 #: .\templates\products\product_list.html:1468
 #: .\templates\products\product_list.html:1569
-#: .\templates\purchases\invoice_add.html:510
-#: .\templates\purchases\invoice_add.html:698
-#: .\templates\purchases\invoice_add.html:1008
-#: .\templates\purchases\invoice_add.html:1075
-#: .\templates\purchases\invoice_add.html:1079
+#: .\templates\purchases\invoice_add.html:511
+#: .\templates\purchases\invoice_add.html:699
+#: .\templates\purchases\invoice_add.html:1009
+#: .\templates\purchases\invoice_add.html:1076
 #: .\templates\purchases\invoice_add.html:1080
+#: .\templates\purchases\invoice_add.html:1081
 #: .\templates\purchases\return_add.html:282
 #: .\templates\sales\invoice_add.html:1581
 #: .\templates\sales\invoice_add.html:1589 .\templates\sales\pos.html:1528
@@ -12406,7 +12437,7 @@ msgstr ""
 #: .\templates\banks\cashbox_transfer_edit.html:439 .\templates\base.html:2786
 #: .\templates\journal\account_form.html:184
 #: .\templates\products\product_list.html:1569
-#: .\templates\purchases\invoice_add.html:509
+#: .\templates\purchases\invoice_add.html:510
 msgid "Available"
 msgstr ""
 
@@ -12696,7 +12727,7 @@ msgstr ""
 #: .\templates\banks\transfer_detail.html:431
 #: .\templates\documents\list.html:33 .\templates\documents\report.html:29
 #: .\templates\journal\account_detail.html:140
-#: .\templates\journal\account_list.html:154
+#: .\templates\journal\account_list.html:162
 #: .\templates\purchases\debitnote_detail.html:196
 #: .\templates\purchases\invoice_detail.html:527
 #: .\templates\purchases\return_detail.html:250
@@ -12794,7 +12825,6 @@ msgstr ""
 
 #: .\templates\banks\transfer_list.html:662 .\templates\core\dashboard.html:160
 #: .\templates\core\dashboard.html:213 .\templates\hr\dashboard.html:220
-#: .\templates\purchases\invoice_list.html:218
 #: .\templates\purchases\return_list.html:71
 #: .\templates\sales\invoice_list.html:345
 #: .\templates\sales\return_list.html:96
@@ -13106,12 +13136,12 @@ msgid "Add Category"
 msgstr ""
 
 #: .\templates\base.html:1139 .\templates\base.html:1201
-#: .\templates\purchases\invoice_add.html:303
+#: .\templates\purchases\invoice_add.html:304
 msgid "Add Product"
 msgstr ""
 
 #: .\templates\base.html:1143 .\templates\base.html:1205
-#: .\templates\products\category_list.html:301
+#: .\templates\products\category_list.html:302
 msgid "Categories List"
 msgstr ""
 
@@ -13249,7 +13279,7 @@ msgid "Backup"
 msgstr ""
 
 #: .\templates\base.html:1892 .\templates\inventory\list.html:705
-#: .\templates\journal\entry_create.html:342
+#: .\templates\journal\entry_create.html:320
 msgid "Loading..."
 msgstr ""
 
@@ -14013,7 +14043,7 @@ msgstr ""
 #: .\templates\customers\edit.html:172
 #: .\templates\customers\supplier_list.html:410
 #: .\templates\hr\employee_detail.html:111
-#: .\templates\purchases\invoice_add.html:1206
+#: .\templates\purchases\invoice_add.html:1207
 #: .\templates\sales\invoice_add.html:1714
 msgid "Phone Number"
 msgstr ""
@@ -14176,7 +14206,6 @@ msgid "Related Data to be Deleted"
 msgstr ""
 
 #: .\templates\customers\delete.html:195
-#: .\templates\purchases\invoice_list.html:218
 #: .\templates\sales\invoice_list.html:345
 msgid "Invoices"
 msgstr ""
@@ -14505,7 +14534,7 @@ msgid "Pages of"
 msgstr ""
 
 #: .\templates\customers\supplier_list.html:404
-#: .\templates\purchases\invoice_add.html:1200
+#: .\templates\purchases\invoice_add.html:1201
 msgid "Supplier Name"
 msgstr ""
 
@@ -14711,12 +14740,12 @@ msgid "هل أنت متأكد من حذف المستند"
 msgstr ""
 
 #: .\templates\documents\delete.html:27 .\templates\documents\list.html:53
-#: .\templates\journal\account_list.html:290
+#: .\templates\journal\account_list.html:309
 msgid "حذف"
 msgstr ""
 
 #: .\templates\documents\delete.html:32
-#: .\templates\journal\account_list.html:285
+#: .\templates\journal\account_list.html:304
 msgid "إلغاء"
 msgstr ""
 
@@ -14866,6 +14895,7 @@ msgstr ""
 
 #: .\templates\financial_reports\income_statement.html:232
 #: .\templates\financial_reports\trial_balance.html:164
+#: .\templates\journal\year_end_closing.html:99
 msgid "Important Notes"
 msgstr ""
 
@@ -14919,7 +14949,7 @@ msgid "Expense"
 msgstr ""
 
 #: .\templates\financial_reports\trial_balance.html:137
-#: .\templates\journal\entry_create.html:427
+#: .\templates\journal\entry_create.html:405
 msgid "Balanced"
 msgstr ""
 
@@ -14928,8 +14958,8 @@ msgid "Total Debit = Total Credit"
 msgstr ""
 
 #: .\templates\financial_reports\trial_balance.html:141
-#: .\templates\journal\entry_create.html:228
-#: .\templates\journal\entry_create.html:431
+#: .\templates\journal\entry_create.html:206
+#: .\templates\journal\entry_create.html:409
 msgid "Unbalanced"
 msgstr ""
 
@@ -15939,6 +15969,7 @@ msgid "Employee Document Details"
 msgstr ""
 
 #: .\templates\hr\employee_document_detail.html:81
+#: .\templates\products\category_list.html:362
 msgid "No description available"
 msgstr ""
 
@@ -16782,7 +16813,7 @@ msgid "Products in warehouse:"
 msgstr ""
 
 #: .\templates\inventory\list.html:241
-msgid "Comprehensive overview of inventory and movements"
+msgid "Comprehensive Overview of Inventory and Movements"
 msgstr ""
 
 #: .\templates\inventory\list.html:249
@@ -16849,7 +16880,7 @@ msgid "No recent movements"
 msgstr ""
 
 #: .\templates\inventory\list.html:428
-msgid "Incoming value (without tax)"
+msgid "Incoming Value (Without Tax)"
 msgstr ""
 
 #: .\templates\inventory\list.html:431 .\templates\inventory\list.html:441
@@ -16858,11 +16889,11 @@ msgid "Including"
 msgstr ""
 
 #: .\templates\inventory\list.html:438
-msgid "Outgoing value (without tax)"
+msgid "Outgoing Value (Without Tax)"
 msgstr ""
 
 #: .\templates\inventory\list.html:449
-msgid "Total inventory value (without tax)"
+msgid "Total Inventory Value (Without Tax)"
 msgstr ""
 
 #: .\templates\inventory\list.html:470
@@ -16870,7 +16901,7 @@ msgid "Inventory Overview"
 msgstr ""
 
 #: .\templates\inventory\list.html:488
-msgid "Search by product name or code"
+msgid "Search by Product Name or Code"
 msgstr ""
 
 #: .\templates\inventory\list.html:492
@@ -17056,7 +17087,7 @@ msgstr ""
 
 #: .\templates\inventory\low_stock.html:483
 #: .\templates\inventory\warehouse_list.html:286
-#: .\templates\products\category_list.html:287
+#: .\templates\products\category_list.html:288
 msgid "Main"
 msgstr ""
 
@@ -17229,9 +17260,10 @@ msgid "Inventory Movement List"
 msgstr ""
 
 #: .\templates\inventory\movement_list.html:312
+#: .\templates\products\category_list.html:333
 #: .\templates\products\product_detail.html:389
-#: .\templates\purchases\invoice_add.html:314
-#: .\templates\purchases\invoice_add.html:409
+#: .\templates\purchases\invoice_add.html:315
+#: .\templates\purchases\invoice_add.html:410
 #: .\templates\sales\invoice_add.html:421
 #: .\templates\sales\invoice_add.html:762
 msgid "Available Quantity"
@@ -17279,7 +17311,7 @@ msgstr ""
 #: .\templates\products\product_add.html:301
 #: .\templates\products\product_edit.html:295
 #: .\templates\products\product_list.html:1015
-#: .\templates\purchases\invoice_add.html:217
+#: .\templates\purchases\invoice_add.html:218
 #: .\templates\purchases\invoice_edit.html:244
 #: .\templates\sales\invoice_add.html:329
 #: .\templates\sales\invoice_edit.html:229
@@ -17443,7 +17475,7 @@ msgid "HTTP Error"
 msgstr ""
 
 #: .\templates\inventory\transfer_add.html:363
-#: .\templates\purchases\invoice_add.html:1169
+#: .\templates\purchases\invoice_add.html:1170
 msgid "Network error"
 msgstr ""
 
@@ -17457,7 +17489,7 @@ msgid "No Transfers Found"
 msgstr ""
 
 #: .\templates\inventory\transfer_list.html:87
-msgid "No transfers between warehouses have been recorded yet."
+msgid "No Transfers Between Warehouses Have Been Recorded Yet."
 msgstr ""
 
 #: .\templates\inventory\warehouse_add.html:5
@@ -17737,7 +17769,7 @@ msgid "تصفية"
 msgstr ""
 
 #: .\templates\journal\account_detail.html:102
-#: .\templates\journal\account_list.html:50
+#: .\templates\journal\account_list.html:57
 msgid "إعادة تعيين"
 msgstr ""
 
@@ -17806,29 +17838,32 @@ msgstr ""
 msgid "لا توجد حركات لهذا الحساب حتى الآن"
 msgstr ""
 
-#: .\templates\journal\account_list.html:17
-#: .\templates\journal\entry_create.html:140
+#: .\templates\journal\account_list.html:18
+msgid "إصلاح الهرمية"
+msgstr ""
+
+#: .\templates\journal\account_list.html:23
+#: .\templates\journal\entry_create.html:117
 msgid "New Account"
 msgstr ""
 
-#: .\templates\journal\account_list.html:45
+#: .\templates\journal\account_list.html:52
 msgid "بحث"
 msgstr ""
 
-#: .\templates\journal\account_list.html:61
+#: .\templates\journal\account_list.html:68
 msgid "خيارات التصدير والطباعة"
 msgstr ""
 
-#: .\templates\journal\account_list.html:65
+#: .\templates\journal\account_list.html:72
 #: .\templates\revenues_expenses\category_list.html:21
 #: .\templates\revenues_expenses\dashboard.html:156
 #: .\templates\revenues_expenses\entry_list.html:22
 msgid "تصدير إلى Excel"
 msgstr ""
 
-#: .\templates\journal\account_list.html:68
+#: .\templates\journal\account_list.html:75
 #: .\templates\journal\entry_detail.html:34
-#: .\templates\products\category_list.html:180
 #: .\templates\products\product_list.html:384
 #: .\templates\reports\aging_report.html:127
 #: .\templates\reports\balance_sheet.html:146
@@ -17845,37 +17880,44 @@ msgstr ""
 msgid "طباعة"
 msgstr ""
 
-#: .\templates\journal\account_list.html:217
+#: .\templates\journal\account_list.html:146
+msgid "المسار الهرمي"
+msgstr ""
+
+#: .\templates\journal\account_list.html:173
+msgid "هذا الحساب الفرعي غير مرتبط بحساب أب"
+msgstr ""
+
+#: .\templates\journal\account_list.html:236
 msgid "ترقيم الصفحات"
 msgstr ""
 
-#: .\templates\journal\account_list.html:252
+#: .\templates\journal\account_list.html:271
 msgid "لا توجد حسابات"
 msgstr ""
 
-#: .\templates\journal\account_list.html:253
+#: .\templates\journal\account_list.html:272
 msgid "No accounts found matching the search criteria"
 msgstr ""
 
-#: .\templates\journal\account_list.html:257
-#: .\templates\journal\entry_create.html:337
+#: .\templates\journal\account_list.html:276
+#: .\templates\journal\entry_create.html:315
 msgid "Create New Account"
 msgstr ""
 
-#: .\templates\journal\account_list.html:271
+#: .\templates\journal\account_list.html:290
 msgid "تأكيد الحذف"
 msgstr ""
 
-#: .\templates\journal\account_list.html:277
+#: .\templates\journal\account_list.html:296
 msgid "هل أنت متأكد من رغبتك في حذف الحساب"
 msgstr ""
 
-#: .\templates\journal\account_list.html:280
+#: .\templates\journal\account_list.html:299
 msgid "تحذير: هذا الإجراء لا يمكن التراجع عنه."
 msgstr ""
 
-#: .\templates\journal\account_list.html:326
-#: .\templates\products\category_list.html:166
+#: .\templates\journal\account_list.html:345
 #: .\templates\products\product_list.html:369
 #: .\templates\reports\aging_report.html:112
 #: .\templates\reports\balance_sheet.html:131
@@ -17884,6 +17926,12 @@ msgstr ""
 #: .\templates\reports\income_statement.html:102
 #: .\templates\reports\inventory_report.html:105
 msgid "تاريخ الطباعة"
+msgstr ""
+
+#: .\templates\journal\account_list.html:406
+msgid ""
+"هل أنت متأكد من رغبتك في إصلاح الهرمية المكسورة للحسابات؟ سيتم ربط الحسابات "
+"الفرعية تلقائياً بحساباتها الأب المناسبة."
 msgstr ""
 
 #: .\templates\journal\dashboard.html:5
@@ -18052,49 +18100,49 @@ msgstr ""
 msgid "Basic Entry Information"
 msgstr ""
 
-#: .\templates\journal\entry_create.html:134
+#: .\templates\journal\entry_create.html:111
 msgid "Journal Entry Items"
 msgstr ""
 
-#: .\templates\journal\entry_create.html:137
+#: .\templates\journal\entry_create.html:114
 msgid "Add Item"
 msgstr ""
 
-#: .\templates\journal\entry_create.html:150
+#: .\templates\journal\entry_create.html:127
 msgid "Item Details"
 msgstr ""
 
-#: .\templates\journal\entry_create.html:170
-#: .\templates\journal\entry_create.html:300
+#: .\templates\journal\entry_create.html:148
+#: .\templates\journal\entry_create.html:278
 msgid "Search accounts"
 msgstr ""
 
-#: .\templates\journal\entry_create.html:203
-#: .\templates\journal\entry_create.html:318
+#: .\templates\journal\entry_create.html:181
+#: .\templates\journal\entry_create.html:296
 msgid "Clear Item"
 msgstr ""
 
-#: .\templates\journal\entry_create.html:210
-#: .\templates\journal\entry_create.html:325
+#: .\templates\journal\entry_create.html:188
+#: .\templates\journal\entry_create.html:303
 msgid "Delete Item"
 msgstr ""
 
-#: .\templates\journal\entry_create.html:239
+#: .\templates\journal\entry_create.html:217
 msgid ""
 "Warning: Debit total does not equal Credit total. They must be equal to save "
 "the entry."
 msgstr ""
 
-#: .\templates\journal\entry_create.html:262
+#: .\templates\journal\entry_create.html:240
 #: .\templates\revenues_expenses\entry_create.html:253
 msgid "Save Entry"
 msgstr ""
 
-#: .\templates\journal\entry_create.html:468
+#: .\templates\journal\entry_create.html:446
 msgid "Are you sure you want to reset the form? All entered data will be lost."
 msgstr ""
 
-#: .\templates\journal\entry_create.html:574
+#: .\templates\journal\entry_create.html:552
 msgid "Failed to load form"
 msgstr ""
 
@@ -18112,6 +18160,10 @@ msgstr ""
 
 #: .\templates\journal\entry_detail.html:41
 msgid "المعلومات"
+msgstr ""
+
+#: .\templates\journal\entry_detail.html:61
+msgid "نوع العملية"
 msgstr ""
 
 #: .\templates\journal\entry_detail.html:68
@@ -18201,25 +18253,16 @@ msgstr ""
 
 #: .\templates\journal\year_end_closing.html:32
 msgid ""
-"All revenue and expense accounts will be closed and net profit/loss will be "
-"transferred to capital"
-msgstr ""
-
-#: .\templates\journal\year_end_closing.html:36
-msgid "Fiscal year"
-msgstr ""
-
-#: .\templates\journal\year_end_closing.html:44
-#: .\templates\journal\year_end_closing.html:127
-msgid "Closing date"
+"All Revenue and Expense Accounts Will be Closed and Net Profit/Loss Will be "
+"Transferred to Capital"
 msgstr ""
 
 #: .\templates\journal\year_end_closing.html:54
-msgid "I confirm performing the annual closing"
+msgid "I Confirm Performing the Annual Closing"
 msgstr ""
 
 #: .\templates\journal\year_end_closing.html:63
-msgid "Perform closing"
+msgid "Perform Closing"
 msgstr ""
 
 #: .\templates\journal\year_end_closing.html:74
@@ -18234,28 +18277,24 @@ msgstr ""
 msgid "Expected loss"
 msgstr ""
 
-#: .\templates\journal\year_end_closing.html:99
-msgid "Important notes"
-msgstr ""
-
 #: .\templates\journal\year_end_closing.html:103
-msgid "The closing cannot be undone after execution"
+msgid "The Closing Cannot be Un done After Execution"
 msgstr ""
 
 #: .\templates\journal\year_end_closing.html:104
-msgid "Make sure all entries are closed before closing"
+msgid "Make Sure All Entries are Closed Before Closing"
 msgstr ""
 
 #: .\templates\journal\year_end_closing.html:105
-msgid "An accounting entry will be created automatically"
+msgid "An Accounting Entry Will be Created Automatically"
 msgstr ""
 
 #: .\templates\journal\year_end_closing.html:106
-msgid "The operation will be recorded in the activity log"
+msgid "The Operation Will be Recorded in The Activity Log"
 msgstr ""
 
 #: .\templates\journal\year_end_closing.html:118
-msgid "Previous closings"
+msgid "Previous Closings"
 msgstr ""
 
 #: .\templates\journal\year_end_closing.html:128
@@ -18267,7 +18306,7 @@ msgid "View entry"
 msgstr ""
 
 #: .\templates\journal\year_end_closing.html:159
-msgid "No previous closings"
+msgid "No Previous Closings"
 msgstr ""
 
 #: .\templates\journal\year_end_closing.html:177
@@ -18473,7 +18512,7 @@ msgstr ""
 #: .\templates\products\product_add.html:624
 #: .\templates\products\product_add.html:1040
 #: .\templates\products\product_list.html:1126
-#: .\templates\purchases\invoice_add.html:2934
+#: .\templates\purchases\invoice_add.html:2935
 msgid "Category Code"
 msgstr ""
 
@@ -18487,12 +18526,12 @@ msgstr ""
 #: .\templates\products\product_add.html:631
 #: .\templates\products\product_edit.html:634
 #: .\templates\products\product_list.html:1132
-#: .\templates\purchases\invoice_add.html:2941
+#: .\templates\purchases\invoice_add.html:2942
 msgid "Parent Category"
 msgstr ""
 
 #: .\templates\products\category_add.html:66
-#: .\templates\products\category_list.html:348
+#: .\templates\products\category_list.html:351
 #: .\templates\products\product_add.html:633
 #: .\templates\products\product_list.html:1134
 #: .\templates\products\product_list.html:1204
@@ -18517,106 +18556,96 @@ msgstr ""
 msgid "Sort"
 msgstr ""
 
-#: .\templates\products\category_list.html:5
-#: .\templates\products\category_list.html:173
+#: .\templates\products\category_list.html:6
+#: .\templates\products\category_list.html:174
 msgid "Product Categories"
 msgstr ""
 
-#: .\templates\products\category_list.html:165
-#: .\templates\products\category_list.html:514
-msgid "قائمة فئات المنتجات"
+#: .\templates\products\category_list.html:166
+#: .\templates\products\category_list.html:525
+msgid "Product Categories List"
 msgstr ""
 
-#: .\templates\products\category_list.html:175
-msgid "Manage and organize product categories"
+#: .\templates\products\category_list.html:176
+msgid "Manage and Organize Product Categories"
 msgstr ""
 
-#: .\templates\products\category_list.html:184
-#: .\templates\products\product_list.html:388
-#: .\templates\reports\aging_report.html:131
-#: .\templates\reports\balance_sheet.html:150
-#: .\templates\reports\cash_flow.html:121
-#: .\templates\reports\financial_ratios.html:141
-#: .\templates\reports\income_statement.html:121
-#: .\templates\reports\inventory_report.html:124
-#: .\templates\revenues_expenses\category_list.html:23
-#: .\templates\revenues_expenses\dashboard.html:158
-#: .\templates\revenues_expenses\entry_list.html:24
-msgid "تصدير Excel"
+#: .\templates\products\category_list.html:185
+#: .\templates\reports\customer_statement.html:16
+#: .\templates\reports\sales_by_salesperson.html:62
+#: .\templates\reports\trial_balance.html:15
+msgid "Export Excel"
 msgstr ""
 
-#: .\templates\products\category_list.html:200
+#: .\templates\products\category_list.html:201
 msgid "Total Categories"
 msgstr ""
 
-#: .\templates\products\category_list.html:202
+#: .\templates\products\category_list.html:203
 msgid "Categories"
 msgstr ""
 
-#: .\templates\products\category_list.html:217
+#: .\templates\products\category_list.html:218
 msgid "Active Categories"
 msgstr ""
 
-#: .\templates\products\category_list.html:234
-msgid "Related Products"
+#: .\templates\products\category_list.html:235
+#: .\templates\sales\invoice_add.html:402 .\templates\sales\pos.html:1027
+msgid "Products"
 msgstr ""
 
-#: .\templates\products\category_list.html:251
+#: .\templates\products\category_list.html:252
 msgid "Subcategories"
 msgstr ""
 
-#: .\templates\products\category_list.html:253
+#: .\templates\products\category_list.html:254
+#: .\templates\products\category_list.html:349
 msgid "Subcategory"
 msgstr ""
 
-#: .\templates\products\category_list.html:274
+#: .\templates\products\category_list.html:275
 msgid "Search in categories"
 msgstr ""
 
-#: .\templates\products\category_list.html:279
+#: .\templates\products\category_list.html:280
 #: .\templates\products\product_list.html:499
 msgid "All Statuses"
 msgstr ""
 
-#: .\templates\products\category_list.html:288
+#: .\templates\products\category_list.html:289
 msgid "Sub"
 msgstr ""
 
-#: .\templates\products\category_list.html:305
+#: .\templates\products\category_list.html:306
 msgid "Print Complete Report"
 msgstr ""
 
-#: .\templates\products\category_list.html:328
+#: .\templates\products\category_list.html:329
 msgid "Classification Code"
 msgstr ""
 
-#: .\templates\products\category_list.html:346
-msgid "Subcategory of"
+#: .\templates\products\category_list.html:334
+msgid "Cost"
 msgstr ""
 
-#: .\templates\products\category_list.html:375
+#: .\templates\products\category_list.html:386
 #: .\templates\revenues_expenses\category_list.html:88
 msgid "Are you sure you want to delete this category?"
 msgstr ""
 
-#: .\templates\products\category_list.html:394
+#: .\templates\products\category_list.html:405
 msgid "No categories found"
 msgstr ""
 
-#: .\templates\products\category_list.html:395
+#: .\templates\products\category_list.html:406
 msgid ""
 "No categories have been created yet. Click \"Add New Category\" to start "
 "creating categories."
 msgstr ""
 
-#: .\templates\products\category_list.html:504
+#: .\templates\products\category_list.html:515
 #: .\templates\products\product_list.html:1756
 msgid "No data to export"
-msgstr ""
-
-#: .\templates\products\category_list.html:515
-#: .\templates\products\product_list.html:1767
-msgid "تاريخ التصدير"
 msgstr ""
 
 #: .\templates\products\product_add.html:7
@@ -18625,7 +18654,7 @@ msgstr ""
 #: .\templates\products\product_list.html:750
 #: .\templates\products\product_list.html:753
 #: .\templates\products\product_list.html:804
-#: .\templates\purchases\invoice_add.html:2653
+#: .\templates\purchases\invoice_add.html:2654
 msgid "Create New Product"
 msgstr ""
 
@@ -18641,7 +18670,7 @@ msgstr ""
 #: .\templates\products\product_add.html:79
 #: .\templates\products\product_edit.html:62
 #: .\templates\products\product_list.html:832
-#: .\templates\purchases\invoice_add.html:2681
+#: .\templates\purchases\invoice_add.html:2682
 msgid "Product Type"
 msgstr ""
 
@@ -18650,7 +18679,7 @@ msgstr ""
 #: .\templates\products\product_edit.html:64
 #: .\templates\products\product_list.html:628
 #: .\templates\products\product_list.html:834
-#: .\templates\purchases\invoice_add.html:2683
+#: .\templates\purchases\invoice_add.html:2684
 msgid "Physical Product"
 msgstr ""
 
@@ -18661,13 +18690,13 @@ msgstr ""
 #: .\templates\products\product_edit.html:142
 #: .\templates\products\product_list.html:623
 #: .\templates\products\product_list.html:835
-#: .\templates\purchases\invoice_add.html:2684
+#: .\templates\purchases\invoice_add.html:2685
 msgid "Service"
 msgstr ""
 
 #: .\templates\products\product_add.html:88
 #: .\templates\products\product_list.html:841
-#: .\templates\purchases\invoice_add.html:2690
+#: .\templates\purchases\invoice_add.html:2691
 msgid "Product Code (SKU)"
 msgstr ""
 
@@ -18876,7 +18905,7 @@ msgstr ""
 #: .\templates\products\product_add.html:366
 #: .\templates\products\product_list.html:1086
 #: .\templates\products\product_list.html:1475
-#: .\templates\purchases\invoice_add.html:2891
+#: .\templates\purchases\invoice_add.html:2892
 msgid "Save Product"
 msgstr ""
 
@@ -18943,7 +18972,7 @@ msgstr ""
 #: .\templates\products\product_detail.html:181
 #: .\templates\products\product_detail.html:202
 #: .\templates\products\product_edit.html:396
-#: .\templates\purchases\invoice_add.html:796
+#: .\templates\purchases\invoice_add.html:797
 #: .\templates\sales\invoice_add.html:423
 #: .\templates\sales\pos_invoice_print.html:227
 #: .\templates\settings\print_design.html:428
@@ -18973,7 +19002,7 @@ msgstr ""
 
 #: .\templates\products\product_edit.html:94
 #: .\templates\products\product_list.html:868
-#: .\templates\purchases\invoice_add.html:2717
+#: .\templates\purchases\invoice_add.html:2718
 msgid "This field is for products sold per piece that need warranty (optional)"
 msgstr ""
 
@@ -19028,7 +19057,7 @@ msgstr ""
 
 #: .\templates\products\product_edit.html:734
 #: .\templates\products\product_list.html:1301
-#: .\templates\purchases\invoice_add.html:1080
+#: .\templates\purchases\invoice_add.html:1081
 #: .\templates\search\search.html:298
 msgid "Please try again"
 msgstr ""
@@ -19047,7 +19076,20 @@ msgid "قائمة المنتجات"
 msgstr ""
 
 #: .\templates\products\product_list.html:379
-msgid "Manage and organize products"
+msgid "Manage and Organize Products"
+msgstr ""
+
+#: .\templates\products\product_list.html:388
+#: .\templates\reports\aging_report.html:131
+#: .\templates\reports\balance_sheet.html:150
+#: .\templates\reports\cash_flow.html:121
+#: .\templates\reports\financial_ratios.html:141
+#: .\templates\reports\income_statement.html:121
+#: .\templates\reports\inventory_report.html:124
+#: .\templates\revenues_expenses\category_list.html:23
+#: .\templates\revenues_expenses\dashboard.html:158
+#: .\templates\revenues_expenses\entry_list.html:24
+msgid "تصدير Excel"
 msgstr ""
 
 #: .\templates\products\product_list.html:425
@@ -19137,7 +19179,7 @@ msgid "Maximum Stock"
 msgstr ""
 
 #: .\templates\products\product_list.html:1071
-#: .\templates\purchases\invoice_add.html:2876
+#: .\templates\purchases\invoice_add.html:2877
 msgid "Track Stock"
 msgstr ""
 
@@ -19160,6 +19202,10 @@ msgstr ""
 #: .\templates\products\product_list.html:1611
 #: .\templates\products\product_list.html:1644
 msgid "Products Report"
+msgstr ""
+
+#: .\templates\products\product_list.html:1767
+msgid "تاريخ التصدير"
 msgstr ""
 
 #: .\templates\products\product_movements.html:5
@@ -19550,7 +19596,7 @@ msgid "Ensure button is always visible and styled"
 msgstr ""
 
 #: .\templates\purchases\invoice_add.html:107
-msgid "Add New Purchase Invoice"
+msgid "Create New Purchase Invoice"
 msgstr ""
 
 #: .\templates\purchases\invoice_add.html:123
@@ -19595,6 +19641,10 @@ msgstr ""
 msgid "Create Supplier"
 msgstr ""
 
+#: .\templates\purchases\invoice_add.html:175
+msgid "Choose supplier name..."
+msgstr ""
+
 #: .\templates\purchases\invoice_add.html:181
 msgid "Choose Supplier"
 msgstr ""
@@ -19604,38 +19654,38 @@ msgstr ""
 msgid "Tax Settings"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:204
+#: .\templates\purchases\invoice_add.html:205
 #: .\templates\purchases\invoice_edit.html:185
 msgid ""
 "When checked, tax is calculated and added. When unchecked, no tax is "
 "calculated."
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:205
+#: .\templates\purchases\invoice_add.html:206
 msgid "Default: Selected (calculates tax)"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:211
+#: .\templates\purchases\invoice_add.html:212
 #: .\templates\sales\invoice_add.html:323
 msgid "Warehouse Row"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:227
+#: .\templates\purchases\invoice_add.html:228
 msgid "Set as default purchase warehouse"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:230
+#: .\templates\purchases\invoice_add.html:231
 #: .\templates\purchases\invoice_edit.html:252
 msgid "Select the warehouse where products will be stored."
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:237
+#: .\templates\purchases\invoice_add.html:238
 #: .\templates\purchases\invoice_edit.html:166
 #: .\templates\sales\invoice_add.html:357
 msgid "Select Payment Method"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:249
+#: .\templates\purchases\invoice_add.html:250
 #: .\templates\purchases\invoice_edit.html:199
 #: .\templates\receipts\check_collect.html:117
 #: .\templates\receipts\receipt_add.html:83
@@ -19644,535 +19694,535 @@ msgstr ""
 msgid "Select Cash Box"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:260
+#: .\templates\purchases\invoice_add.html:261
 #: .\templates\purchases\invoice_edit.html:210
 #: .\templates\receipts\receipt_add.html:140
 msgid "Select Bank Account"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:287
+#: .\templates\purchases\invoice_add.html:288
 msgid "Products Table"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:290
+#: .\templates\purchases\invoice_add.html:291
 msgid "Invoice Products"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:294
-#: .\templates\purchases\invoice_add.html:2906
+#: .\templates\purchases\invoice_add.html:295
+#: .\templates\purchases\invoice_add.html:2907
 msgid "أضف فئة"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:298
+#: .\templates\purchases\invoice_add.html:299
 msgid "Create Product"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:301
+#: .\templates\purchases\invoice_add.html:302
 msgid "Click here to add a new product"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:324
+#: .\templates\purchases\invoice_add.html:325
 msgid "Rows will be added here by JavaScript"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:336
+#: .\templates\purchases\invoice_add.html:337
 #: .\templates\purchases\return_add.html:97
 #: .\templates\sales\return_add.html:93
 msgid "Enter any additional notes..."
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:342
+#: .\templates\purchases\invoice_add.html:343
 msgid "Invoice Summary"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:370
+#: .\templates\purchases\invoice_add.html:371
 #: .\templates\sales\invoice_add.html:566
 msgid "Save Invoice"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:388
+#: .\templates\purchases\invoice_add.html:389
 msgid "Select Product for Invoice"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:399
+#: .\templates\purchases\invoice_add.html:400
 msgid "Search for product by name, code, or description..."
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:410
+#: .\templates\purchases\invoice_add.html:411
 msgid "Last Purchase Price"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:446
+#: .\templates\purchases\invoice_add.html:447
 msgid "No products available"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:456
+#: .\templates\purchases\invoice_add.html:457
 msgid "Available products count"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:510
+#: .\templates\purchases\invoice_add.html:511
 msgid "Bootstrap library is not loaded. Please reload the page."
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:517
+#: .\templates\purchases\invoice_add.html:518
 msgid "Set current date"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:523
+#: .\templates\purchases\invoice_add.html:524
 msgid "Add initial product row"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:526
+#: .\templates\purchases\invoice_add.html:527
 msgid "Add event listener for tax inclusive checkbox change"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:530
+#: .\templates\purchases\invoice_add.html:531
 msgid "Recalculate all rows when checkbox state changes"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:541
+#: .\templates\purchases\invoice_add.html:542
 msgid "Set focus on supplier field"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:550
+#: .\templates\purchases\invoice_add.html:551
 msgid "Purchase invoice add page loaded"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:559
+#: .\templates\purchases\invoice_add.html:560
 msgid "Products table not found"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:585
+#: .\templates\purchases\invoice_add.html:586
 #: .\templates\sales\invoice_add.html:440
 #: .\templates\sales\invoice_add.html:982
 msgid "Product code..."
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:590
+#: .\templates\purchases\invoice_add.html:591
 msgid "Select product"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:598
+#: .\templates\purchases\invoice_add.html:599
 #: .\templates\sales\invoice_add.html:453
 #: .\templates\sales\invoice_add.html:995
 msgid "Type product name..."
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:622
+#: .\templates\purchases\invoice_add.html:623
 msgid "Delete product"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:662
+#: .\templates\purchases\invoice_add.html:663
 msgid "Error adding product row"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:663
+#: .\templates\purchases\invoice_add.html:664
 msgid "Error adding new product row"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:673
+#: .\templates\purchases\invoice_add.html:674
 #: .\templates\sales\invoice_add.html:1076
 msgid "Invoice must contain at least one product"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:694
+#: .\templates\purchases\invoice_add.html:695
 msgid "Ensure modal exists"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:697
+#: .\templates\purchases\invoice_add.html:698
 msgid "Product modal not found"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:698
+#: .\templates\purchases\invoice_add.html:699
 msgid "Product selection window not found"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:706
+#: .\templates\purchases\invoice_add.html:707
 msgid "Error opening product modal"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:707
+#: .\templates\purchases\invoice_add.html:708
 msgid "Error opening product selection window"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:713
+#: .\templates\purchases\invoice_add.html:714
 msgid "Current row not selected"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:720
+#: .\templates\purchases\invoice_add.html:721
 msgid "Product row not found"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:733
+#: .\templates\purchases\invoice_add.html:734
 msgid "Product fields not found in row"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:737
+#: .\templates\purchases\invoice_add.html:738
 msgid "Fill product data"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:742
+#: .\templates\purchases\invoice_add.html:743
 msgid "Fill available quantity"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:747
+#: .\templates\purchases\invoice_add.html:748
 msgid "Update tax rate"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:748
+#: .\templates\purchases\invoice_add.html:749
 msgid "Filling tax rate"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:751
+#: .\templates\purchases\invoice_add.html:752
 msgid "taxRateInput filled"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:755
+#: .\templates\purchases\invoice_add.html:756
 msgid "hiddenTaxRateInput filled"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:758
+#: .\templates\purchases\invoice_add.html:759
 msgid "Fill last purchase price as suggested value"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:761
+#: .\templates\purchases\invoice_add.html:762
 msgid "Unit price filled"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:764
+#: .\templates\purchases\invoice_add.html:765
 msgid "Wait a bit to ensure all data is filled then calculate total"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:769
+#: .\templates\purchases\invoice_add.html:770
 msgid "Close modal"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:778
+#: .\templates\purchases\invoice_add.html:779
 msgid "Focus on quantity field"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:785
 #: .\templates\purchases\invoice_add.html:786
+#: .\templates\purchases\invoice_add.html:787
 msgid "Error selecting product"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:791
+#: .\templates\purchases\invoice_add.html:792
 msgid "Calculating row total"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:798
+#: .\templates\purchases\invoice_add.html:799
 msgid "Get tax rate from visible or hidden field"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:805
+#: .\templates\purchases\invoice_add.html:806
 msgid "Tax rate from visible field"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:808
+#: .\templates\purchases\invoice_add.html:809
 msgid "Tax rate from hidden field"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:811
+#: .\templates\purchases\invoice_add.html:812
 msgid "Final tax rate"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:813
+#: .\templates\purchases\invoice_add.html:814
 msgid "Calculate subtotal (without tax)"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:816
+#: .\templates\purchases\invoice_add.html:817
 msgid "Check tax inclusive checkbox state"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:819
+#: .\templates\purchases\invoice_add.html:820
 msgid "Calculate tax amount"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:822
+#: .\templates\purchases\invoice_add.html:823
 msgid "Total amount"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:827
+#: .\templates\purchases\invoice_add.html:828
 msgid "Update subtotal field"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:833
+#: .\templates\purchases\invoice_add.html:834
 msgid "Update tax field if exists"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:837
+#: .\templates\purchases\invoice_add.html:838
 msgid "Visible tax field updated"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:840
+#: .\templates\purchases\invoice_add.html:841
 msgid "Update hidden tax field"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:844
+#: .\templates\purchases\invoice_add.html:845
 msgid "Hidden tax field updated"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:854
+#: .\templates\purchases\invoice_add.html:855
 msgid "Calculate subtotal and total taxes"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:864
+#: .\templates\purchases\invoice_add.html:865
 msgid "If visible tax field not found, look for hidden field"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:876
+#: .\templates\purchases\invoice_add.html:877
 msgid "Update display using currency settings"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:925
+#: .\templates\purchases\invoice_add.html:926
 msgid "Search in products"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:936
+#: .\templates\purchases\invoice_add.html:937
 msgid "Search in available text only"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:939
+#: .\templates\purchases\invoice_add.html:940
 msgid "Add tax rate to search if exists"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:940
+#: .\templates\purchases\invoice_add.html:941
 msgid "means tax column exists"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:959
+#: .\templates\purchases\invoice_add.html:960
 msgid "يرجى اختيار المورد"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:967
+#: .\templates\purchases\invoice_add.html:968
 #: .\templates\sales\invoice_add.html:620
 msgid "يرجى اختيار طريقة الدفع"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:975
+#: .\templates\purchases\invoice_add.html:976
 #: .\templates\sales\invoice_add.html:630
 msgid "يرجى اختيار المستودع"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:993
+#: .\templates\purchases\invoice_add.html:994
 msgid "At least one product must be added to the invoice"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:998
+#: .\templates\purchases\invoice_add.html:999
 msgid "Supplier management functions"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1000
+#: .\templates\purchases\invoice_add.html:1001
 msgid "New supplier creation button clicked"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1005
+#: .\templates\purchases\invoice_add.html:1006
 msgid "Modal opened successfully"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1007
+#: .\templates\purchases\invoice_add.html:1008
 msgid "Modal not found"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1008
+#: .\templates\purchases\invoice_add.html:1009
 msgid "Supplier creation window not found"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1013
+#: .\templates\purchases\invoice_add.html:1014
 msgid "Starting to save new supplier"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1017
+#: .\templates\purchases\invoice_add.html:1018
 #: .\templates\sales\invoice_add.html:1502
 msgid "Add CSRF token"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1021
+#: .\templates\purchases\invoice_add.html:1022
 msgid "Sending data to server"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1037
+#: .\templates\purchases\invoice_add.html:1038
 msgid "Add new supplier to list"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1066
+#: .\templates\purchases\invoice_add.html:1067
 msgid "Close modal and reset form"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1071
+#: .\templates\purchases\invoice_add.html:1072
 msgid "Supplier created successfully"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1072
+#: .\templates\purchases\invoice_add.html:1073
 msgid "Supplier saved successfully"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1074
+#: .\templates\purchases\invoice_add.html:1075
 msgid "Server error"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1075
+#: .\templates\purchases\invoice_add.html:1076
 msgid "Error occurred while creating supplier"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1084
+#: .\templates\purchases\invoice_add.html:1085
 msgid "Function to update supplier balance"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1095
+#: .\templates\purchases\invoice_add.html:1096
 msgid "Call API to get supplier information"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1102
+#: .\templates\purchases\invoice_add.html:1103
 msgid "Error getting supplier data"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1107
+#: .\templates\purchases\invoice_add.html:1108
 #: .\templates\sales\invoice_add.html:1622
 msgid "Get currency information from company"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1118
+#: .\templates\purchases\invoice_add.html:1119
 #: .\templates\sales\invoice_add.html:1626
 msgid "View current balance"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1125
+#: .\templates\purchases\invoice_add.html:1126
 msgid "Use currency from company settings"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1135
+#: .\templates\purchases\invoice_add.html:1136
 #: .\templates\sales\invoice_add.html:1643
 msgid "Change text color based on balance"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1147
+#: .\templates\purchases\invoice_add.html:1148
 msgid "Error getting currency data"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1148
+#: .\templates\purchases\invoice_add.html:1149
 msgid "In case of failure to get currency, use default currency"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1174
+#: .\templates\purchases\invoice_add.html:1175
 msgid "Bind event to supplier change"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1184
+#: .\templates\purchases\invoice_add.html:1185
 msgid "Create New Supplier"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1195
+#: .\templates\purchases\invoice_add.html:1196
 msgid "Basic Supplier Information"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1249
+#: .\templates\purchases\invoice_add.html:1250
 msgid "Maximum amount the supplier can be debited"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1260
+#: .\templates\purchases\invoice_add.html:1261
 msgid "Current Balance (positive: credit, negative: debit)"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1274
+#: .\templates\purchases\invoice_add.html:1275
 #: .\templates\sales\invoice_add.html:1782
 msgid "Any additional notes or information"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1279
+#: .\templates\purchases\invoice_add.html:1280
 msgid "Active Supplier"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1281
+#: .\templates\purchases\invoice_add.html:1282
 msgid "Deactivating hides the supplier from lists"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1291
+#: .\templates\purchases\invoice_add.html:1292
 msgid "Save Supplier"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1298
+#: .\templates\purchases\invoice_add.html:1299
 msgid "Critical JavaScript for Purchase Invoice - Enhanced"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1374
+#: .\templates\purchases\invoice_add.html:1375
 msgid "addProductRow function not found"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1375
+#: .\templates\purchases\invoice_add.html:1376
 msgid "Error: Product addition function not available. Please reload the page."
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1378
+#: .\templates\purchases\invoice_add.html:1379
 msgid "Error adding product row in purchase invoice"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1379
+#: .\templates\purchases\invoice_add.html:1380
 msgid "Error occurred while adding product. Please try again."
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1383
+#: .\templates\purchases\invoice_add.html:1384
 msgid "Ensure button styling"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1484
+#: .\templates\purchases\invoice_add.html:1485
 msgid "Re-applying purchase invoice button styling"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1490
+#: .\templates\purchases\invoice_add.html:1491
 msgid "Purchase Invoice Critical JavaScript loaded and monitoring started"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1955
+#: .\templates\purchases\invoice_add.html:1956
 #: .\templates\sales\invoice_add.html:2354
 msgid ""
 "Cannot delete the last product row. At least one product row must remain."
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1960
+#: .\templates\purchases\invoice_add.html:1961
 #: .\templates\sales\invoice_add.html:2359
 msgid "Are you sure you want to delete this product row?"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:1980
+#: .\templates\purchases\invoice_add.html:1981
 #: .\templates\sales\invoice_add.html:2379
 msgid ""
 "Please select a product row to delete by clicking on any field in that row."
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:2005
+#: .\templates\purchases\invoice_add.html:2006
 #: .\templates\sales\invoice_add.html:2404
 msgid "إضافة سطر منتج جديد"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:2006
+#: .\templates\purchases\invoice_add.html:2007
 #: .\templates\sales\invoice_add.html:2405
 msgid "حذف سطر المنتج الحالي"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:2007
+#: .\templates\purchases\invoice_add.html:2008
 #: .\templates\sales\invoice_add.html:2406
 msgid "حفظ الفاتورة"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:2008
+#: .\templates\purchases\invoice_add.html:2009
 #: .\templates\sales\invoice_add.html:2407
 msgid "عرض اختصارات لوحة المفاتيح"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:2711
+#: .\templates\purchases\invoice_add.html:2712
 msgid "- For Warranty"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:2935
+#: .\templates\purchases\invoice_add.html:2936
 msgid "Example: CAT-001"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:2936
+#: .\templates\purchases\invoice_add.html:2937
 msgid "Unique code for the category (optional)"
 msgstr ""
 
-#: .\templates\purchases\invoice_add.html:2943
+#: .\templates\purchases\invoice_add.html:2944
 msgid "Choose Parent Category (Optional)"
 msgstr ""
 
@@ -20198,8 +20248,7 @@ msgid "لا يوجد وصف"
 msgstr ""
 
 #: .\templates\purchases\invoice_list.html:163
-#: .\templates\sales\invoice_list.html:286
-msgid "Manage all"
+msgid "Manage All Purchase Invoices"
 msgstr ""
 
 #: .\templates\purchases\invoice_list.html:168
@@ -20210,15 +20259,17 @@ msgid "New Invoice"
 msgstr ""
 
 #: .\templates\purchases\invoice_list.html:172
-#: .\templates\purchases\return_list.html:27
-#: .\templates\sales\invoice_list.html:299
-msgid "the list"
+msgid "Print The List"
 msgstr ""
 
 #: .\templates\purchases\invoice_list.html:184
 #: .\templates\sales\invoice_list.html:311
 #: .\templates\sales\sales_report.html:220
 msgid "Total Invoices"
+msgstr ""
+
+#: .\templates\purchases\invoice_list.html:218
+msgid "This Month Invoices"
 msgstr ""
 
 #: .\templates\purchases\invoice_list.html:271
@@ -20265,19 +20316,7 @@ msgid "Purchase Invoice Statement"
 msgstr ""
 
 #: .\templates\purchases\purchase_statement.html:89
-msgid "Detailed"
-msgstr ""
-
-#: .\templates\purchases\purchase_statement.html:89
-msgid "All Purchase Invoices"
-msgstr ""
-
-#: .\templates\purchases\purchase_statement.html:89
-msgid "with"
-msgstr ""
-
-#: .\templates\purchases\purchase_statement.html:89
-msgid "Cumulative"
+msgid "Detailed View All Purchase Invoices with Balance Cumulative"
 msgstr ""
 
 #: .\templates\purchases\purchase_statement.html:198
@@ -20407,6 +20446,11 @@ msgstr ""
 
 #: .\templates\purchases\return_list.html:23
 msgid "New Purchase Return"
+msgstr ""
+
+#: .\templates\purchases\return_list.html:27
+#: .\templates\sales\invoice_list.html:299
+msgid "the list"
 msgstr ""
 
 #: .\templates\purchases\return_list.html:39
@@ -20797,12 +20841,6 @@ msgstr ""
 #: .\templates\reports\customer_statement.html:13
 #: .\templates\reports\sales_by_salesperson.html:58
 msgid "Export CSV"
-msgstr ""
-
-#: .\templates\reports\customer_statement.html:16
-#: .\templates\reports\sales_by_salesperson.html:62
-#: .\templates\reports\trial_balance.html:15
-msgid "Export Excel"
 msgstr ""
 
 #: .\templates\reports\customer_statement.html:103
@@ -21920,10 +21958,6 @@ msgstr ""
 msgid "Set as default cash box"
 msgstr ""
 
-#: .\templates\sales\invoice_add.html:402 .\templates\sales\pos.html:1027
-msgid "Products"
-msgstr ""
-
 #: .\templates\sales\invoice_add.html:405
 msgid "Click to add a new product"
 msgstr ""
@@ -22339,6 +22373,10 @@ msgstr ""
 #: .\templates\sales\invoice_edit_BACKUP.html:9
 #: .\templates\sales\invoice_edit_BACKUP.html:18
 msgid "Edit Invoice"
+msgstr ""
+
+#: .\templates\sales\invoice_list.html:286
+msgid "Manage All Sales Invoices"
 msgstr ""
 
 #: .\templates\sales\invoice_list.html:398

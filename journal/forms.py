@@ -55,7 +55,7 @@ class JournalEntryForm(forms.ModelForm):
         # إذا كان التعديل وليس إنشاء جديد
         if self.instance and self.instance.pk:
             # تعيين القيم الأولية للحقول المخصصة
-            self.fields['entry_type'].initial = self.instance.entry_type
+            # entry_type غير موجود في النموذج، تم إزالته
             
             # تحقق من صلاحية تعديل رقم القيد
             if self.user and not self.user.has_perm('journal.change_entry_number'):
@@ -108,8 +108,9 @@ class JournalLineForm(forms.ModelForm):
     
     class Meta:
         model = JournalLine
-        fields = ['account', 'debit', 'credit', 'line_description']
+        fields = ['id', 'account', 'debit', 'credit', 'line_description']
         widgets = {
+            'id': forms.HiddenInput(),
             'account': forms.Select(attrs={'class': 'form-control d-none'}),  # إخفاء الحقل بـ CSS فقط وليس HiddenInput
             'debit': forms.NumberInput(attrs={'class': 'form-control debit-input', 'step': '0.001', 'min': '0', 'placeholder': '0'}),
             'credit': forms.NumberInput(attrs={'class': 'form-control credit-input', 'step': '0.001', 'min': '0', 'placeholder': '0'}),
@@ -125,6 +126,9 @@ class JournalLineForm(forms.ModelForm):
             parent__isnull=False  # استثناء الحسابات الرئيسية (parent is null)
         ).order_by('code')
         # جعل الحقول غير مطلوبة (سيتم التحقق في clean)
+        # ملاحظة: حقل id موجود فقط للبنود الموجودة (existing instances)
+        if 'id' in self.fields:
+            self.fields['id'].required = False  # مهم: id غير مطلوب للبنود الجديدة
         self.fields['account'].required = False
         self.fields['debit'].required = False
         self.fields['credit'].required = False

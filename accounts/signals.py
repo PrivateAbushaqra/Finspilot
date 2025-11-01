@@ -81,26 +81,52 @@ def log_account_transaction_activity(sender, instance, created, **kwargs):
 
 
 @receiver(post_delete, sender=AccountTransaction)
-def log_account_transaction_deletion(sender, instance, **kwargs):
-    """تسجيل حذف المعاملات المالية في سجل الأنشطة"""
+def recalculate_balance_and_log_deletion(sender, instance, **kwargs):
+    """إعادة حساب رصيد العميل/المورد وتسجيل حذف المعاملة المالية في سجل الأنشطة"""
     try:
         from core.models import AuditLog
         from django.contrib.auth import get_user_model
+        from decimal import Decimal
         
         User = get_user_model()
         
         # محاولة الحصول على المستخدم الحالي
         user = User.objects.filter(is_active=True).first()
         
+        # إعادة حساب رصيد العميل/المورد من جميع الحركات المتبقية
+        customer_supplier = instance.customer_supplier
+        old_balance = customer_supplier.balance
+        
+        # حساب الرصيد الجديد بناءً على جميع الحركات المتبقية
+        transactions = AccountTransaction.objects.filter(
+            customer_supplier=customer_supplier
+        ).order_by('date', 'created_at')
+        
+        new_balance = Decimal('0')
+        for transaction in transactions:
+            if transaction.direction == 'debit':
+                new_balance += transaction.amount
+            else:
+                new_balance -= transaction.amount
+        
+        # تحديث رصيد العميل/المورد
+        customer_supplier.balance = new_balance
+        customer_supplier.save(update_fields=['balance'])
+        
+        print(f"✅ تم تحديث رصيد {customer_supplier.name} بعد حذف المعاملة: {old_balance} → {new_balance}")
+        
         description = _(
             'تم حذف معاملة %(transaction_type)s رقم %(transaction_number)s '
-            'للعميل/المورد %(customer_supplier)s بمبلغ %(amount)s %(direction)s'
+            'للعميل/المورد %(customer_supplier)s بمبلغ %(amount)s %(direction)s. '
+            'الرصيد تم تحديثه من %(old_balance)s إلى %(new_balance)s'
         ) % {
             'transaction_type': instance.get_transaction_type_display(),
             'transaction_number': instance.transaction_number,
             'customer_supplier': instance.customer_supplier.name,
             'amount': instance.amount,
-            'direction': instance.get_direction_display()
+            'direction': instance.get_direction_display(),
+            'old_balance': old_balance,
+            'new_balance': new_balance
         }
         
         AuditLog.objects.create(
@@ -112,6 +138,10 @@ def log_account_transaction_deletion(sender, instance, **kwargs):
             ip_address='127.0.0.1'
         )
         
-    except Exception:
-        # تجاهل أخطاء تسجيل الأنشطة
-        pass
+    except Exception as e:
+        # تسجيل الخطأ
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f'خطأ في إعادة حساب الرصيد بعد حذف المعاملة: {e}')
+        import traceback
+        traceback.print_exc()

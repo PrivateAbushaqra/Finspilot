@@ -33,7 +33,7 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <h6 class="m-0 font-weight-bold text-primary">{% trans "Search and Filter" %}</h6>
+                    <h6 class="m-0 font-weight-bold text-white">{% trans "Search and Filter" %}</h6>
                 </div>
                 <div class="card-body">
                     <form method="get" class="row g-3">
@@ -120,7 +120,7 @@
         <div class="col-12">
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">{% trans "Journal Entries List" %}</h6>
+                    <h6 class="m-0 font-weight-bold text-white">{% trans "Journal Entries List" %}</h6>
                 </div>
                 <div class="card-body">
                     {% if entries %}
@@ -525,7 +525,7 @@ $(document).ready(function() {
         "language": {
             "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Arabic.json"
         },
-        "order": [[ 1, "desc" ]],  // Sort by date descending
+        "order": [[ 0, "desc" ]],  // Sort by entry number descending
         "pageLength": 25,
         "searching": false,  // Hide built-in search as we have custom filter
         "info": false

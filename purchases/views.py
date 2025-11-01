@@ -1946,23 +1946,6 @@ def send_debitnote_to_jofotara(request, pk):
         })
 
 
-class PurchaseDebitNoteDetailView(LoginRequiredMixin, DetailView):
-    """عرض تفاصيل مذكرة الدين"""
-    model = PurchaseDebitNote
-    template_name = 'purchases/debitnote_detail.html'
-    context_object_name = 'debitnote'
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        try:
-            company_settings = CompanySettings.objects.first()
-            if company_settings and company_settings.base_currency:
-                context['base_currency'] = company_settings.base_currency
-        except Exception:
-            pass
-        return context
-
-
 class PurchaseDebitNoteReportView(LoginRequiredMixin, ListView):
     """كشف مذكرات الدين"""
     model = PurchaseDebitNote

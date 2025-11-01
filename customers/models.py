@@ -115,7 +115,53 @@ class CustomerSupplier(models.Model):
         
         # تحديث الرصيد إذا كان مختلفاً
         if self.balance != new_balance:
+            old_balance = self.balance
             self.balance = new_balance
             self.save(update_fields=['balance'])
+            
+            # تسجيل في سجل الأنشطة
+            from core.models import AuditLog
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            system_user = User.objects.filter(username='super').first() or User.objects.first()
+            if system_user:
+                AuditLog.objects.create(
+                    user=system_user,
+                    action_type='update',
+                    content_type='customer_supplier',
+                    object_id=self.id,
+                    description=f'إصلاح رصيد {self.name}: من {old_balance} إلى {new_balance} (مزامنة مع المعاملات)',
+                    ip_address=None
+                )
+            
+            print(f"🔧 تم إصلاح رصيد {self.name}: {old_balance} → {new_balance}")
         
         return new_balance
+
+    def check_balance_integrity(self):
+        """فحص سلامة الرصيد وإصلاح أي عدم تطابق"""
+        from decimal import Decimal
+        from django.db.models import Sum
+        from django.apps import apps
+        
+        AccountTransaction = apps.get_model('accounts', 'AccountTransaction')
+        
+        # حساب الرصيد من المعاملات
+        debits = AccountTransaction.objects.filter(
+            customer_supplier=self,
+            direction='debit'
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+        
+        credits = AccountTransaction.objects.filter(
+            customer_supplier=self,
+            direction='credit'
+        ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
+        
+        calculated_balance = debits - credits
+        
+        # فحص التطابق
+        if self.balance != calculated_balance:
+            print(f"⚠️ عدم تطابق في رصيد {self.name}: محفوظ={self.balance}, محسوب={calculated_balance}")
+            return False, calculated_balance
+        
+        return True, self.balance

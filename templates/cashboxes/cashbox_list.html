@@ -21,7 +21,7 @@
                         {% if user.is_superuser or user.user_type in 'superadmin,admin' or perms.cashboxes.can_add_cashboxes %}
                         <button type="button" class="btn btn-warning btn-sm me-2" data-bs-toggle="modal" data-bs-target="#createTransferModal">
                             <i class="fas fa-exchange-alt me-1"></i>
-                            {% trans "Create a New Transformation" %}
+                            {% trans "Create New Transfer" %}
                         </button>
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCashboxModal">
                             <i class="fas fa-plus"></i> {% trans "Create New Cashbox" %}
@@ -118,7 +118,7 @@
                         </div>
                     {% else %}
                         <div class="text-center">
-                            <p class="mb-3">{% trans "No cashboxes available" %}</p>
+                            <p class="mb-3">{% trans "No Cashboxes Available" %}</p>
                             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCashboxModal">
                                 <i class="fas fa-plus"></i> {% trans "Create New Cashbox" %}
                             </button>

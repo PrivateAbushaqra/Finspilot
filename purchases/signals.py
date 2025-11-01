@@ -23,7 +23,6 @@ def should_log_activity(user, action_type, content_type, object_id, description_
 def create_journal_entry_for_purchase_invoice(sender, instance, created, **kwargs):
     """إنشاء القيد المحاسبي تلقائياً عند إنشاء أو تحديث فاتورة مشتريات"""
     def _create_entry():
-        print(f"DEBUG: create_journal_entry_for_purchase_invoice called for {instance.invoice_number}, created={created}")
         try:
             # 🔧 تعطيل السيجنال أثناء عملية استعادة النسخة الاحتياطية
             try:
@@ -36,7 +35,6 @@ def create_journal_entry_for_purchase_invoice(sender, instance, created, **kwarg
             from journal.models import JournalEntry
             from journal.services import JournalService
             
-            print(f"DEBUG: items.count() = {instance.items.count()}")
             # التحقق من وجود عناصر
             if instance.items.count() > 0:
                 # إعادة حساب المجاميع من العناصر لضمان الدقة
@@ -57,25 +55,15 @@ def create_journal_entry_for_purchase_invoice(sender, instance, created, **kwarg
                 instance.save(update_fields=['subtotal', 'tax_amount', 'total_amount'])
                 
                 existing_entry = JournalEntry.objects.filter(
-                    reference_type='purchase_invoice',
-                    reference_id=instance.id
+                    purchase_invoice=instance
                 ).first()
                 
-                print(f"DEBUG: existing_entry = {existing_entry}")
                 # حذف القيد القديم إذا كان موجوداً
                 if existing_entry:
                     existing_entry.delete()
-                    print("DEBUG: existing_entry deleted")
                 
                 # إنشاء قيد جديد دائماً
-                print("DEBUG: calling JournalService.create_purchase_invoice_entry")
-                try:
-                    JournalService.create_purchase_invoice_entry(instance, instance.created_by)
-                    print("DEBUG: create_purchase_invoice_entry completed successfully")
-                except Exception as e:
-                    print(f"DEBUG: Exception in create_purchase_invoice_entry: {e}")
-                    import traceback
-                    traceback.print_exc()
+                JournalService.create_purchase_invoice_entry(instance, instance.created_by)
         except Exception as e:
             print(f"خطأ في إنشاء القيد المحاسبي لفاتورة المشتريات {instance.invoice_number}: {e}")
     
@@ -300,16 +288,15 @@ def create_journal_entry_for_purchase_return(sender, instance, created, **kwargs
         from journal.models import JournalEntry
         from journal.services import JournalService
         
-        # التحقق من وجود عناصر وعدم وجود قيد محاسبي مسبقاً
-        if instance.items.count() > 0:
-            existing_entry = JournalEntry.objects.filter(
-                reference_type='purchase_return',
-                reference_id=instance.id
-            ).first()
-            
-            # إنشاء القيد فقط إذا لم يكن موجوداً من قبل
-            if not existing_entry:
-                JournalService.create_purchase_return_entry(instance, instance.created_by)
+        # التحقق من عدم وجود قيد محاسبي مسبقاً
+        existing_entry = JournalEntry.objects.filter(
+            reference_type='purchase_return',
+            reference_id=instance.id
+        ).first()
+        
+        # إنشاء القيد فقط إذا لم يكن موجوداً من قبل
+        if not existing_entry:
+            JournalService.create_purchase_return_entry(instance, instance.created_by)
     except Exception as e:
         print(f"خطأ في إنشاء القيد المحاسبي لمردود المشتريات {instance.return_number}: {e}")
 
@@ -328,35 +315,21 @@ def create_supplier_account_transaction_for_return(sender, instance, created, **
     except:
         pass
     
-    if instance.items.count() > 0 and instance.total_amount > 0:
-        try:
-            from accounts.models import AccountTransaction
-            import uuid
-            
-            # التحقق من عدم وجود معاملة مسبقاً
-            existing_transaction = AccountTransaction.objects.filter(
-                reference_type='purchase_return',
-                reference_id=instance.id
-            ).first()
-            
-            # إنشاء المعاملة فقط إذا لم تكن موجودة من قبل
-            if not existing_transaction:
-                transaction_number = f"RTN-{uuid.uuid4().hex[:8].upper()}"
-                AccountTransaction.objects.create(
-                    transaction_number=transaction_number,
-                    date=instance.date,
-                    customer_supplier=instance.original_invoice.supplier,
-                    transaction_type='purchase_return',
-                    direction='debit',  # مدين (تقليل دين المورد)
-                    amount=instance.total_amount,
-                    reference_type='purchase_return',
-                    reference_id=instance.id,
-                    description=f'مردود مشتريات رقم {instance.return_number}',
-                    notes=instance.notes or '',
-                    created_by=instance.created_by
-                )
-        except Exception as e:
-            print(f"خطأ في إنشاء معاملة حساب المورد للمردود {instance.return_number}: {e}")
+    try:
+        from accounts.models import AccountTransaction
+        from accounts.services import create_purchase_return_transaction
+        
+        # التحقق من عدم وجود معاملة مسبقاً
+        existing_transaction = AccountTransaction.objects.filter(
+            reference_type='purchase_return',
+            reference_id=instance.id
+        ).first()
+        
+        # إنشاء المعاملة فقط إذا لم تكن موجودة من قبل
+        if not existing_transaction:
+            create_purchase_return_transaction(instance, instance.created_by)
+    except Exception as e:
+        print(f"خطأ في إنشاء معاملة حساب المورد للمردود {instance.return_number}: {e}")
 
 
 @receiver(post_save, sender=PurchaseReturn)
@@ -645,18 +618,20 @@ def create_purchase_debit_note_entry(sender, instance, created, **kwargs):
         return
         
     try:
-        from journal.services import JournalService
+        from purchases.views import create_debit_note_journal_entry
+        from journal.models import JournalEntry
+        from accounts.models import AccountTransaction
+        import uuid
         
         if created:
             # إنشاء قيد جديد
-            JournalService.create_purchase_debit_note_entry(instance, instance.created_by)
+            create_debit_note_journal_entry(instance, instance.created_by)
             print(f"✓ تم إنشاء قيد محاسبي لإشعار خصم المشتريات رقم {instance.note_number}")
         else:
             # تحديث قيد موجود
             # حذف القيد القديم أولاً
-            from journal.models import JournalEntry
             old_entries = JournalEntry.objects.filter(
-                reference_type='purchase_debit_note',
+                reference_type='debit_note',
                 reference_id=instance.id
             )
             if old_entries.exists():
@@ -664,16 +639,13 @@ def create_purchase_debit_note_entry(sender, instance, created, **kwargs):
                 print(f"تم حذف القيد القديم لإشعار خصم المشتريات {instance.note_number}")
             
             # إنشاء قيد جديد
-            JournalService.create_purchase_debit_note_entry(instance, instance.created_by)
+            create_debit_note_journal_entry(instance, instance.created_by)
             print(f"✓ تم تحديث قيد محاسبي لإشعار خصم المشتريات رقم {instance.note_number}")
             
         # إنشاء أو تحديث معاملة حساب المورد
-        from accounts.models import AccountTransaction
-        import uuid
-        
         # حذف المعاملة القديمة إذا كانت موجودة
         AccountTransaction.objects.filter(
-            reference_type='purchase_debit_note',
+            reference_type='debit_note',
             reference_id=instance.id
         ).delete()
         
@@ -686,7 +658,7 @@ def create_purchase_debit_note_entry(sender, instance, created, **kwargs):
             transaction_type='debit_note',
             direction='debit',  # مدين (زيادة المدينية من المورد)
             amount=instance.total_amount,
-            reference_type='purchase_debit_note',
+            reference_type='debit_note',
             reference_id=instance.id,
             description=f'إشعار مدين رقم {instance.note_number}',
             notes=instance.notes or '',
@@ -704,21 +676,36 @@ def delete_purchase_debit_note_journal_entry(sender, instance, **kwargs):
         from journal.models import JournalEntry
         from accounts.models import AccountTransaction
         
-        # حذف القيد المحاسبي
-        JournalEntry.objects.filter(
-            reference_type='purchase_debit_note',
+        # حذف القيد المحاسبي - البحث بـ reference_type='debit_note'
+        deleted_entries = JournalEntry.objects.filter(
+            reference_type='debit_note',
             reference_id=instance.id
         ).delete()
         
-        # حذف معاملات الحساب
-        AccountTransaction.objects.filter(
-            reference_type='purchase_debit_note',
+        # حذف معاملات الحساب - البحث بـ reference_type='debit_note'
+        deleted_trans = AccountTransaction.objects.filter(
+            reference_type='debit_note',
             reference_id=instance.id
         ).delete()
         
-        print(f"✓ تم حذف القيد المحاسبي لإشعار المدين {instance.note_number}")
+        print(f"✓ تم حذف القيد المحاسبي ({deleted_entries[0]} قيود) ومعاملات الحساب ({deleted_trans[0]} معاملات) لإشعار المدين {instance.note_number}")
     except Exception as e:
         print(f"✗ خطأ في حذف قيد إشعار المدين: {e}")
+
+
+@receiver(pre_delete, sender=PurchaseInvoice)
+def delete_purchase_invoice_returns_before_deletion(sender, instance, **kwargs):
+    """حذف مردودات المشتريات المرتبطة قبل حذف فاتورة المشتريات"""
+    try:
+        # حذف جميع مردودات المشتريات المرتبطة بهذه الفاتورة
+        related_returns = PurchaseReturn.objects.filter(original_invoice=instance)
+        deleted_returns = related_returns.count()
+        related_returns.delete()
+        
+        if deleted_returns > 0:
+            print(f"✓ تم حذف {deleted_returns} مردود مشتريات مرتبط بفاتورة المشتريات {instance.invoice_number}")
+    except Exception as e:
+        print(f"✗ خطأ في حذف مردودات المشتريات المرتبطة بفاتورة {instance.invoice_number}: {e}")
 
 
 @receiver(post_delete, sender=PurchaseInvoice)
@@ -728,6 +715,8 @@ def delete_purchase_invoice_related_records(sender, instance, **kwargs):
         from inventory.models import InventoryMovement
         from journal.models import JournalEntry
         from accounts.models import AccountTransaction
+        from cashboxes.models import CashboxTransaction
+        from banks.models import BankTransaction
         
         # حذف حركات المخزون
         inventory_movements = InventoryMovement.objects.filter(
@@ -737,9 +726,59 @@ def delete_purchase_invoice_related_records(sender, instance, **kwargs):
         deleted_inventory = inventory_movements.count()
         inventory_movements.delete()
         
+        # حذف القيود المحاسبية - استخدام ForeignKey
+        journal_entries = JournalEntry.objects.filter(purchase_invoice=instance)
+        deleted_journal = journal_entries.count()
+        journal_entries.delete()
+        
+        # حذف معاملات حساب المورد - جميع الأنواع المرتبطة بالفاتورة
+        account_transactions = AccountTransaction.objects.filter(
+            reference_type__in=['purchase_invoice', 'purchase_payment'],
+            reference_id=instance.id
+        )
+        deleted_transactions = account_transactions.count()
+        account_transactions.delete()
+        
+        # حذف معاملات الصندوق المرتبطة بالفاتورة
+        cashbox_transactions = CashboxTransaction.objects.filter(
+            description__icontains=f'فاتورة مشتريات رقم {instance.invoice_number}'
+        )
+        deleted_cashbox = cashbox_transactions.count()
+        cashbox_transactions.delete()
+        
+        # حذف معاملات الحساب البنكي المرتبطة بالفاتورة
+        bank_transactions = BankTransaction.objects.filter(
+            description__icontains=f'فاتورة مشتريات رقم {instance.invoice_number}'
+        )
+        deleted_bank = bank_transactions.count()
+        bank_transactions.delete()
+        
+        print(f"✓ تم حذف {deleted_inventory} حركة مخزون، {deleted_journal} قيد محاسبي، {deleted_transactions} معاملة حساب، {deleted_cashbox} معاملة صندوق، و {deleted_bank} معاملة بنكية لفاتورة المشتريات {instance.invoice_number}")
+    except Exception as e:
+        print(f"✗ خطأ في حذف السجلات المرتبطة بفاتورة المشتريات {instance.invoice_number}: {e}")
+        import traceback
+        traceback.print_exc()
+
+
+@receiver(post_delete, sender=PurchaseReturn)
+def delete_purchase_return_related_records(sender, instance, **kwargs):
+    """حذف السجلات المرتبطة عند حذف مردود المشتريات"""
+    try:
+        from inventory.models import InventoryMovement
+        from journal.models import JournalEntry
+        from accounts.models import AccountTransaction
+        
+        # حذف حركات المخزون
+        inventory_movements = InventoryMovement.objects.filter(
+            reference_type='purchase_return',
+            reference_id=instance.id
+        )
+        deleted_inventory = inventory_movements.count()
+        inventory_movements.delete()
+        
         # حذف القيود المحاسبية
         journal_entries = JournalEntry.objects.filter(
-            reference_type='purchase_invoice',
+            reference_type='purchase_return',
             reference_id=instance.id
         )
         deleted_journal = journal_entries.count()
@@ -747,14 +786,63 @@ def delete_purchase_invoice_related_records(sender, instance, **kwargs):
         
         # حذف معاملات الحساب
         account_transactions = AccountTransaction.objects.filter(
-            reference_type='purchase_invoice',
+            reference_type='purchase_return',
             reference_id=instance.id
         )
         deleted_transactions = account_transactions.count()
         account_transactions.delete()
         
-        print(f"✓ تم حذف {deleted_inventory} حركة مخزون، {deleted_journal} قيد محاسبي، و {deleted_transactions} معاملة حساب لفاتورة المشتريات {instance.invoice_number}")
+        print(f"✓ تم حذف {deleted_inventory} حركة مخزون، {deleted_journal} قيد محاسبي، و {deleted_transactions} معاملة حساب لمردود المشتريات {instance.return_number}")
     except Exception as e:
-        print(f"✗ خطأ في حذف السجلات المرتبطة بفاتورة المشتريات {instance.invoice_number}: {e}")
+        print(f"✗ خطأ في حذف السجلات المرتبطة بمردود المشتريات {instance.return_number}: {e}")
         import traceback
         traceback.print_exc()
+
+
+@receiver(post_save, sender=PurchaseInvoiceItem)
+def create_journal_entry_after_item_added(sender, instance, created, **kwargs):
+    """إنشاء أو تحديث القيد المحاسبي بعد إضافة أو تحديث عنصر فاتورة المشتريات"""
+    def _create_entry():
+        try:
+            invoice = instance.invoice
+            
+            # 🔧 تعطيل السيجنال أثناء عملية استعادة النسخة الاحتياطية
+            try:
+                from backup.restore_context import is_restoring
+                if is_restoring():
+                    return
+            except ImportError:
+                pass
+            
+            from journal.models import JournalEntry
+            from journal.services import JournalService
+            
+            # التحقق من وجود عناصر
+            if invoice.items.count() > 0:
+                existing_entry = JournalEntry.objects.filter(
+                    purchase_invoice=invoice
+                ).first()
+                
+                # حذف القيد القديم إذا كان موجوداً
+                if existing_entry:
+                    existing_entry.delete()
+                
+                # إنشاء قيد جديد
+                try:
+                    JournalService.create_purchase_invoice_entry(invoice, invoice.created_by)
+                except Exception as e:
+                    print(f"خطأ في إنشاء قيد فاتورة المشتريات {invoice.invoice_number}: {e}")
+                    import traceback
+                    traceback.print_exc()
+        except Exception as e:
+            print(f"خطأ في إنشاء القيد المحاسبي لعنصر فاتورة المشتريات: {e}")
+    
+    # استخدام transaction.on_commit لضمان حفظ جميع العناصر
+    import threading
+    if not hasattr(threading.current_thread(), '_item_signal_called'):
+        threading.current_thread()._item_signal_called = set()
+    
+    signal_key = f"item_{instance.invoice.id}"
+    if signal_key not in threading.current_thread()._item_signal_called:
+        threading.current_thread()._item_signal_called.add(signal_key)
+        transaction.on_commit(_create_entry)

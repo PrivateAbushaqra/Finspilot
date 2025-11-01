@@ -150,22 +150,58 @@ class AccountTransaction(models.Model):
         return balance
 
     def update_customer_supplier_balance(self):
-        """تحديث رصيد العميل/المورد"""
-        # حساب الرصيد الجديد بناءً على جميع الحركات
-        transactions = AccountTransaction.objects.filter(
-            customer_supplier=self.customer_supplier
-        ).order_by('date', 'created_at')
-        
-        new_balance = Decimal('0')
-        for transaction in transactions:
-            if transaction.direction == 'debit':
-                new_balance += transaction.amount
+        """تحديث رصيد العميل/المورد مع فحوصات وتسجيل"""
+        try:
+            # حساب الرصيد الجديد بناءً على جميع الحركات
+            transactions = AccountTransaction.objects.filter(
+                customer_supplier=self.customer_supplier
+            ).order_by('date', 'created_at')
+
+            new_balance = Decimal('0')
+            for transaction in transactions:
+                if transaction.direction == 'debit':
+                    new_balance += transaction.amount
+                else:
+                    new_balance -= transaction.amount
+
+            # فحص إذا كان الرصيد مختلفاً
+            old_balance = self.customer_supplier.balance
+            if old_balance != new_balance:
+                # تسجيل التغيير في سجل الأنشطة
+                from core.models import AuditLog
+                AuditLog.objects.create(
+                    user=self.created_by,
+                    action_type='update',
+                    content_type='customer_supplier',
+                    object_id=self.customer_supplier.id,
+                    description=f'تحديث رصيد {self.customer_supplier.name}: من {old_balance} إلى {new_balance} (بسبب معاملة {self.transaction_number})',
+                    ip_address='system'
+                )
+
+                # تحديث رصيد العميل/المورد
+                self.customer_supplier.balance = new_balance
+                self.customer_supplier.save(update_fields=['balance'])
+
+                print(f"✅ تم تحديث رصيد {self.customer_supplier.name}: {old_balance} → {new_balance}")
             else:
-                new_balance -= transaction.amount
-        
-        # تحديث رصيد العميل/المورد
-        self.customer_supplier.balance = new_balance
-        self.customer_supplier.save()
+                print(f"ℹ️ رصيد {self.customer_supplier.name} محدث بالفعل: {new_balance}")
+
+        except Exception as e:
+            print(f"❌ خطأ في تحديث رصيد {self.customer_supplier.name}: {e}")
+            # تسجيل الخطأ في سجل الأنشطة
+            try:
+                from core.models import AuditLog
+                AuditLog.objects.create(
+                    user=self.created_by,
+                    action_type='error',
+                    content_type='account_transaction',
+                    object_id=self.id,
+                    description=f'خطأ في تحديث الرصيد: {str(e)}',
+                    ip_address='system'
+                )
+            except:
+                pass
+            raise
 
     @staticmethod
     def create_transaction(customer_supplier, transaction_type, direction, amount, 

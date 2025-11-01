@@ -167,7 +167,7 @@ function updatePreview() {
 
 function resetSequence() {
     if (confirm('{% trans "Are you sure you want to reset the sequence to 1? This action cannot be undone." %}')) {
-        document.getElementById('current_number').value = 0;
+        document.getElementById('current_number').value = 1;
         updatePreview();
     }
 }

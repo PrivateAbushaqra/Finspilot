@@ -711,11 +711,17 @@ def create_cashbox_transaction_from_journal_line(journal_line):
     try:
         from cashboxes.models import Cashbox, CashboxTransaction
         
-        # تجاهل القيود التي تم إنشاء معاملاتها يدوياً
-        # (تم تعطيل هذا التحقق بسبب إزالة reference_type)
-        # if journal_line.journal_entry.reference_type in ignored_reference_types:
-        #     logger.debug(f"تجاهل إنشاء معاملة صندوق من القيد {journal_line.journal_entry.entry_number} - النوع: {journal_line.journal_entry.reference_type} (تم إنشاء المعاملة يدوياً)")
-        #     return
+        # تجاهل القيود التي تم إنشاء معاملاتها يدوياً أو الافتتاحية
+        # متوافق مع IFRS - الرصيد الافتتاحي لا يعتبر معاملة
+        ignored_reference_types = ['cashbox_transfer', 'bank_transfer', 'bank_initial', 'cashbox_initial', 'bank_adjustment', 'cashbox_adjustment']
+        if hasattr(journal_line.journal_entry, 'reference_type') and journal_line.journal_entry.reference_type in ignored_reference_types:
+            logger.debug(f"تجاهل إنشاء معاملة صندوق من القيد {journal_line.journal_entry.entry_number} - النوع: {journal_line.journal_entry.reference_type} (تم إنشاء المعاملة يدوياً أو قيد افتتاحي)")
+            return
+        
+        # تجاهل القيود الافتتاحية (IFRS - Opening Balance is equity, not a transaction)
+        if 'رصيد افتتاحي' in journal_line.journal_entry.description or 'Opening Balance' in journal_line.journal_entry.description:
+            logger.debug(f"تجاهل إنشاء معاملة صندوق من القيد {journal_line.journal_entry.entry_number} - الوصف: {journal_line.journal_entry.description} (قيد رصيد افتتاحي)")
+            return
         
         # استخراج رقم الصندوق من كود الحساب
         if journal_line.account.code.startswith('101'):
@@ -794,12 +800,12 @@ def create_bank_transaction_from_journal_line(journal_line):
     try:
         from banks.models import BankAccount, BankTransaction
         
-        # تجاهل القيود التي تم إنشاء معاملاتها يدوياً
-        # (تم تعطيل هذا التحقق بسبب إزالة reference_type)
-        # ignored_reference_types = ['cashbox_transfer', 'bank_transfer', 'bank_initial', 'bank_adjustment']
-        # if journal_line.journal_entry.reference_type in ignored_reference_types:
-        #     logger.debug(f"تجاهل إنشاء معاملة بنك من القيد {journal_line.journal_entry.entry_number} - النوع: {journal_line.journal_entry.reference_type} (تم إنشاء المعاملة يدوياً)")
-        #     return
+        # تجاهل القيود التي تم إنشاء معاملاتها يدوياً أو الافتتاحية
+        # متوافق مع IFRS - الرصيد الافتتاحي لا يعتبر معاملة بنكية
+        ignored_reference_types = ['cashbox_transfer', 'bank_transfer', 'bank_initial', 'bank_adjustment', 'bank_transaction']
+        if hasattr(journal_line.journal_entry, 'reference_type') and journal_line.journal_entry.reference_type in ignored_reference_types:
+            logger.debug(f"تجاهل إنشاء معاملة بنك من القيد {journal_line.journal_entry.entry_number} - النوع: {journal_line.journal_entry.reference_type} (تم إنشاء المعاملة يدوياً أو قيد افتتاحي)")
+            return
         
         # تجاهل القيود التي تحتوي على كلمة "تحويل" في الوصف
         if 'تحويل' in journal_line.journal_entry.description:
@@ -807,9 +813,13 @@ def create_bank_transaction_from_journal_line(journal_line):
             return
         
         # تجاهل القيود التي تم إنشاؤها تلقائياً من معاملات بنكية
-        # (تم تعطيل التحقق بـ reference_type)
         if 'معاملة بنكية' in journal_line.journal_entry.description:
             logger.debug(f"تجاهل إنشاء معاملة بنك من القيد {journal_line.journal_entry.entry_number} - الوصف: {journal_line.journal_entry.description} (تم إنشاء القيد من معاملة بنكية)")
+            return
+        
+        # تجاهل القيود الافتتاحية (IFRS - Opening Balance is equity, not a transaction)
+        if 'رصيد افتتاحي' in journal_line.journal_entry.description or 'Opening Balance' in journal_line.journal_entry.description:
+            logger.debug(f"تجاهل إنشاء معاملة بنك من القيد {journal_line.journal_entry.entry_number} - الوصف: {journal_line.journal_entry.description} (قيد رصيد افتتاحي)")
             return
         
         # التحقق من أن الحساب مرتبط بحساب بنكي

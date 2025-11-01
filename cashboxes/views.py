@@ -173,7 +173,7 @@ def cashbox_list(request):
     # تسلسل التحويلات بين الصناديق
     try:
         sequence = DocumentSequence.objects.get(document_type='cashbox_transfer')
-        next_transfer_numbers['cashbox_transfer'] = sequence.get_next_number()
+        next_transfer_numbers['cashbox_transfer'] = sequence.peek_next_number()
     except DocumentSequence.DoesNotExist:
         # في حالة عدم وجود تسلسل، استخدم الطريقة القديمة
         prefix = 'CT'
@@ -195,7 +195,7 @@ def cashbox_list(request):
     # تسلسل التحويلات بين البنوك والصناديق
     try:
         sequence = DocumentSequence.objects.get(document_type='bank_cash_transfer')
-        next_transfer_numbers['bank_cash_transfer'] = sequence.get_next_number()
+        next_transfer_numbers['bank_cash_transfer'] = sequence.peek_next_number()
     except DocumentSequence.DoesNotExist:
         # في حالة عدم وجود تسلسل، استخدم الطريقة القديمة
         prefix = 'BCT'

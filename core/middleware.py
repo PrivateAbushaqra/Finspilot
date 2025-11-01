@@ -96,13 +96,14 @@ class AuditMiddleware(MiddlewareMixin):
                 
                 view_obj = ViewActivity(request.path)
                 
-                AuditLog.objects.create(
+                # استخدام log_activity بدلاً من إنشاء مباشر لمعالجة أخطاء sequence
+                from .signals import log_activity
+                log_activity(
                     user=request.user,
                     action_type='view',
-                    content_type='صفحة',
-                    object_id=view_obj.id,
+                    obj=view_obj,
                     description=description,
-                    ip_address=get_client_ip(request)
+                    request=request
                 )
                 
         except Exception as e:

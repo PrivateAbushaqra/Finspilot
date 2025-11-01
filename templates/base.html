@@ -995,12 +995,12 @@
                                             <ul class="nav flex-column ms-3">
                                                     {% if perms.purchases.add_purchaseinvoice or user.is_superuser %}
                                                         <li class="nav-item">
-                                                            <a class="nav-link {% if active_menu == 'purchases' and 'invoice_add' in request.path %}active{% endif %}" href="{% url 'purchases:invoice_add' %}">{% trans "Add Purchase Invoice" %}</a>
+                                                            <a class="nav-link {% if active_menu == 'purchases' and 'invoice_add' in request.path %}active{% endif %}" href="{% url 'purchases:invoice_add' %}">{% trans "Create Purchase Invoice" %}</a>
                                                         </li>
                                                     {% endif %}
                                                     {% if perms.purchases.add_purchasereturn or user.is_superuser %}
                                                         <li class="nav-item">
-                                                            <a class="nav-link {% if active_menu == 'purchases' and 'return_add' in request.path %}active{% endif %}" href="{% url 'purchases:return_add' %}">{% trans "Add Purchase Return" %}</a>
+                                                            <a class="nav-link {% if active_menu == 'purchases' and 'return_add' in request.path %}active{% endif %}" href="{% url 'purchases:return_add' %}">{% trans "Create Purchase Return" %}</a>
                                                         </li>
                                                     {% endif %}
                                                          {% if perms.purchases.view_purchaseinvoice or user.is_superuser %}

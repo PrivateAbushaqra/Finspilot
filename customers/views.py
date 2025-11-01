@@ -943,7 +943,7 @@ class CustomerSupplierTransactionsView(LoginRequiredMixin, TemplateView):
                 except ValueError:
                     pass
             
-            # حساب الإحصائيات
+            # حساب إجماليات المعاملات المفلترة
             total_debit = transactions.filter(direction='debit').aggregate(
                 total=Sum('amount'))['total'] or 0
             total_credit = transactions.filter(direction='credit').aggregate(
@@ -951,13 +951,39 @@ class CustomerSupplierTransactionsView(LoginRequiredMixin, TemplateView):
             
             # حساب الرصيد الافتتاحي والختامي
             net_filtered = total_debit - total_credit
-            opening_balance = customer_supplier.balance - net_filtered
-            closing_balance = customer_supplier.balance
+            
+            # حساب الرصيد الافتتاحي (الرصيد قبل تاريخ البداية)
+            if date_from:
+                try:
+                    date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+                    # حساب المعاملات قبل تاريخ البداية
+                    prior_transactions = AccountTransaction.objects.filter(
+                        query,
+                        date__lt=date_from_obj
+                    )
+                    prior_debit = prior_transactions.filter(direction='debit').aggregate(
+                        total=Sum('amount'))['total'] or 0
+                    prior_credit = prior_transactions.filter(direction='credit').aggregate(
+                        total=Sum('amount'))['total'] or 0
+                    opening_balance = prior_debit - prior_credit
+                except ValueError:
+                    opening_balance = 0
+            else:
+                opening_balance = 0
+            
+            # الرصيد الختامي = افتتاحي + صافي المعاملات المفلترة
+            closing_balance = opening_balance + net_filtered
+            
+            # إذا لم تكن هناك فلترة تاريخ، يجب أن يطابق الرصيد الختامي الرصيد الحالي
+            if not date_from and not date_to:
+                closing_balance = customer_supplier.balance
+            
+            # لا نقوم بإصلاح تلقائي - الفحص يكون من جانب العميل فقط
             
             context.update({
                 'customer_supplier': customer_supplier,
                 'transactions': transactions,
-                'opening_balance': customer_supplier.balance,  # الرصيد الافتتاحي
+                'opening_balance': opening_balance,  # الرصيد الافتتاحي المحسوب
                 'closing_balance': closing_balance,  # الرصيد الختامي = افتتاحي + معاملات
                 'total_debit': total_debit,
                 'total_credit': total_credit,
@@ -1041,7 +1067,45 @@ def get_customer_supplier_ajax(request, customer_id):
 
 @login_required
 @require_http_methods(["POST"])
-def delete_transaction(request, customer_pk, transaction_id):
+def report_balance_issue(request, customer_pk):
+    """الإبلاغ عن مشكلة في الرصيد من جانب العميل"""
+    
+    try:
+        from django.http import JsonResponse
+        import json
+        
+        # الحصول على العميل/المورد
+        customer_supplier = get_object_or_404(CustomerSupplier, pk=customer_pk)
+        
+        # قراءة البيانات المرسلة
+        data = json.loads(request.body)
+        
+        # تسجيل الإبلاغ في سجل الأنشطة
+        from core.models import AuditLog
+        from django.utils.translation import gettext as _
+        
+        description = _('Balance issue reported for customer/supplier %(name)s. Opening: %(opening).3f, Debit: %(debit).3f, Credit: %(credit).3f, Expected: %(expected).3f, Displayed: %(displayed).3f') % {
+            'name': customer_supplier.name,
+            'opening': data.get('opening_balance', 0),
+            'debit': data.get('total_debit', 0),
+            'credit': data.get('total_credit', 0),
+            'expected': data.get('expected_balance', 0),
+            'displayed': data.get('displayed_balance', 0)
+        }
+        
+        AuditLog.objects.create(
+            user=request.user,
+            action_type='report',
+            content_type='customer_supplier_balance_issue',
+            object_id=customer_supplier.id,
+            description=description,
+            ip_address=request.META.get('REMOTE_ADDR', '')
+        )
+        
+        return JsonResponse({'success': True, 'message': _('Balance issue reported successfully')})
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
     """حذف حركة - للمدراء فقط"""
     
     # التحقق من أن المستخدم مدير عام
@@ -1439,3 +1503,67 @@ def preview_transaction_document(request, customer_pk, transaction_id):
     
     # العودة إلى صفحة المعاملات
     return redirect('customers:transactions', pk=customer_pk)
+
+
+@login_required
+def delete_transaction(request, customer_pk, transaction_id):
+    """حذف معاملة فردية"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'طريقة غير مسموحة'}, status=405)
+    
+    # التحقق من الصلاحيات - فقط للسوبر أدمين
+    if not request.user.is_superuser:
+        return JsonResponse({'success': False, 'error': 'ليس لديك صلاحية لحذف المعاملات'}, status=403)
+    
+    try:
+        # التحقق من صحة العميل/المورد والمعاملة
+        customer_supplier = get_object_or_404(CustomerSupplier, pk=customer_pk)
+        transaction = get_object_or_404(AccountTransaction, id=transaction_id, customer_supplier=customer_supplier)
+        
+        # حفظ بيانات المعاملة للتسجيل
+        transaction_data = {
+            'number': transaction.transaction_number,
+            'amount': str(transaction.amount),
+            'type': transaction.transaction_type,
+            'description': transaction.description
+        }
+        
+        # حذف المعاملة
+        transaction.delete()
+        
+        # إعادة حساب رصيد العميل/المورد
+        from accounts.services import recalculate_customer_supplier_balance
+        recalculate_customer_supplier_balance(customer_supplier)
+        
+        # تسجيل النشاط في سجل الأنشطة
+        from core.models import AuditLog
+        AuditLog.objects.create(
+            user=request.user,
+            action_type='delete',
+            content_type='AccountTransaction',
+            object_id=transaction_id,
+            description=f'حذف المعاملة {transaction_data["number"]} للعميل/المورد {customer_supplier.name} - المبلغ: {transaction_data["amount"]} - النوع: {transaction_data["type"]}',
+            ip_address=request.META.get('REMOTE_ADDR', '')
+        )
+        
+        return JsonResponse({
+            'success': True, 
+            'message': f'تم حذف المعاملة {transaction_data["number"]} بنجاح'
+        })
+        
+    except Exception as e:
+        # تسجيل الخطأ في سجل الأنشطة
+        try:
+            from core.models import AuditLog
+            AuditLog.objects.create(
+                user=request.user,
+                action_type='error',
+                content_type='AccountTransaction',
+                object_id=transaction_id,
+                description=f'خطأ في حذف المعاملة {transaction_id}: {str(e)}',
+                ip_address=request.META.get('REMOTE_ADDR', '')
+            )
+        except:
+            pass  # تجاهل الأخطاء في تسجيل الخطأ
+        
+        return JsonResponse({'success': False, 'error': f'حدث خطأ أثناء حذف المعاملة: {str(e)}'}, status=500)

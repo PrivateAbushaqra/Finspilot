@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load currency_tags %}
 
-{% block title %}{% trans "List" %} {% trans "Suppliers" %} - {{ block.super }}{% endblock %}
+{% block title %}{% trans "Suppliers List" %} - {{ block.super }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -80,7 +80,7 @@
             <div class="d-flex justify-content-between align-items-center">
                 <h2 class="mb-0">
                     <i class="fas fa-truck me-2"></i>
-                    {% trans "Suppliers" %} {% trans "List" %}
+                    {% trans "Suppliers List" %}
                 </h2>
                 <div class="btn-group">
                     <button type="button" onclick="printPage()" class="btn btn-info btn-sm me-2">
@@ -157,7 +157,7 @@
                         <div class="col-md-3">
                             <label for="search" class="form-label">{% trans "Search" %}:</label>
                             <input type="text" class="form-control" id="search" name="search" 
-                                   placeholder="{% trans "Supplier name or phone" %}..." 
+                                   placeholder="{% trans "Supplier Name or Phone" %}..." 
                                    value="{{ request.GET.search }}">
                         </div>
                         <div class="col-md-3">
@@ -172,9 +172,9 @@
                             <label for="balance" class="form-label">{% trans "Balance" %}:</label>
                             <select class="form-select" id="balance" name="balance">
                                 <option value="">{% trans "All Balances" %}</option>
-                                <option value="positive">{% trans "Positive Balance" %}</option>
-                                <option value="negative">{% trans "Negative Balance" %}</option>
-                                <option value="zero">{% trans "Zero Balance" %}</option>
+                                <option value="positive">{% trans "Positive Balances" %}</option>
+                                <option value="negative">{% trans "Negative Balances" %}</option>
+                                <option value="zero">{% trans "Zero Balances" %}</option>
                             </select>
                         </div>
                         <div class="col-md-3 d-flex align-items-end">
@@ -200,7 +200,7 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h6 class="mb-0">
                         <i class="fas fa-list me-2"></i>
-                        {% trans "List" %} {% trans "Suppliers" %} ({{ total_suppliers }} {% trans "Suppliers" %})
+                        {% trans "List of Suppliers" %} ({{ total_suppliers }} {% trans "Suppliers" %})
                     </h6>
                     <div class="btn-group btn-group-sm">
                         <button class="btn btn-outline-primary active" data-view="card">
@@ -329,11 +329,11 @@
                         <div class="mb-4">
                             <i class="fas fa-truck fa-5x text-muted"></i>
                         </div>
-                        <h5 class="text-muted">{% trans "No" %} {% trans "Supplier" %}s {% trans "currently" %}</h5>
-                        <p class="text-muted">{% trans "You can" %} {% trans "Add" %} {% trans "Supplier" %} {% trans "New" %} {% trans "from" %} {% trans "No" %}l {% trans "by clicking on the button" %} "{% trans "Add" %} {% trans "Supplier" %} {% trans "New" %}"</p>
+                        <h5 class="text-muted">{% trans "No Supplier Currently" %}</h5>
+                        <p class="text-muted">{% trans "You can Add Supplier New from No by clicking on the button Add Supplier New" %}"</p>
                         <a href="{% url 'customers:add' %}" class="btn btn-primary">
                             <i class="fas fa-plus me-2"></i>
-                            {% trans "Add" %} {% trans "first" %} {% trans "Supplier" %}
+                            {% trans "Add First Supplier" %}
                         </a>
                     </div>
                     {% endif %}

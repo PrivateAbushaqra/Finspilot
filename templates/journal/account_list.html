@@ -4,23 +4,23 @@
 {% load currency_tags %}
 
 {% get_current_language as LANGUAGE_CODE %}
-{% block title %}{% if LANGUAGE_CODE == 'ar' %}قائمة الحسابات{% else %}{% trans "Accounts List" %}{% endif %}{% endblock %}
+{% block title %}{% trans "Accounts List" %}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
             <div class="d-sm-flex align-items-center justify-content-between mb-4">
-                <h1 class="h3 mb-0 text-gray-800">{% if LANGUAGE_CODE == 'ar' %}قائمة الحسابات ({{ total_accounts }}){% else %}{% trans "Accounts List" %} ({{ total_accounts }}){% endif %}</h1>
+                <h1 class="h3 mb-0 text-gray-800">{% trans "Accounts List" %} ({{ total_accounts }})</h1>
                 <div>
                     {% if perms.journal.change_account %}
                     <button type="button" class="btn btn-warning mr-2" onclick="fixHierarchy()">
-                        <i class="fas fa-wrench"></i> {% trans "إصلاح الهرمية" %}
+                        <i class="fas fa-wrench"></i> {% trans "Reforming the hierarchy" %}
                     </button>
                     {% endif %}
                     {% if perms.journal.add_account %}
                     <a href="{% url 'journal:account_create' %}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> {% if LANGUAGE_CODE == 'ar' %}حساب جديد{% else %}{% trans "New Account" %}{% endif %}
+                        <i class="fas fa-plus"></i> {% trans "New Account" %}
                     </a>
                     {% endif %}
                 </div>
@@ -34,12 +34,12 @@
             <form method="get" class="row">
                 <div class="col-md-4">
               <input type="text" name="search" class="form-control" 
-                  placeholder="{% if LANGUAGE_CODE == 'ar' %}ابحث في الحسابات...{% else %}{% trans "Search in accounts..." %}{% endif %}" 
+                  placeholder="{% trans "Account Name" %}..." 
                            value="{{ search_query }}">
                 </div>
                 <div class="col-md-3">
                     <select name="type" class="form-control">
-                        <option value="">{% trans "جميع الأنواع" %}</option>
+                        <option value="">{% trans "All Types" %}</option>
                         {% for type_code, type_name in account_types %}
                             <option value="{{ type_code }}" {% if current_type == type_code %}selected{% endif %}>
                                 {{ type_name }}
@@ -65,7 +65,7 @@
     <div class="card shadow mb-4">
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">{% trans "خيارات التصدير والطباعة" %}</h5>
+                <h5 class="mb-0">{% trans "Export and Printing Options" %}</h5>
                 <div class="btn-group" role="group">
                     <a href="{% url 'journal:export_accounts_excel' %}{% if search_query %}?search={{ search_query }}{% if current_type %}&type={{ current_type }}{% endif %}{% if order_by %}&order_by={{ order_by }}&direction={{ direction }}{% endif %}{% endif %}{% if current_type and not search_query %}?type={{ current_type }}{% if order_by %}&order_by={{ order_by }}&direction={{ direction }}{% endif %}{% endif %}{% if order_by and not search_query and not current_type %}?order_by={{ order_by }}&direction={{ direction }}{% endif %}" 
                        class="btn btn-success" target="_blank">
@@ -131,7 +131,7 @@
                                 </th>
                                 <th>
                                     <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if current_type %}type={{ current_type }}&{% endif %}order_by=parent__name&direction={% if order_by == 'parent__name' and direction == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none">
-                                        {% trans "الحساب الرئيسي" %}
+                                        {% trans "Main Account" %}
                                         {% if order_by == 'parent__name' %}
                                             {% if direction == 'asc' %}
                                                 <i class="fas fa-sort-up"></i>
@@ -143,7 +143,7 @@
                                         {% endif %}
                                     </a>
                                 </th>
-                                <th>{% trans "المسار الهرمي" %}</th>
+                                <th>{% trans "Hermetic Path" %}</th>
                                 <th>
                                     <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if current_type %}type={{ current_type }}&{% endif %}order_by=balance&direction={% if order_by == 'balance' and direction == 'asc' %}desc{% else %}asc{% endif %}" class="text-decoration-none">
                                         {% if LANGUAGE_CODE == 'ar' %}الرصيد{% else %}{% trans "Balance" %}{% endif %}
@@ -349,7 +349,7 @@ function printTable() {
                         <th>{% trans "كود الحساب" %}</th>
                         <th>{% trans "اسم الحساب" %}</th>
                         <th>{% trans "النوع" %}</th>
-                        <th>{% trans "الحساب الرئيسي" %}</th>
+                        <th>{% trans "Main Account" %}</th>
                         <th>{% trans "الرصيد" %}</th>
                         <th>{% trans "الحالة" %}</th>
                     </tr>

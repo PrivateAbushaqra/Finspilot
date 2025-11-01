@@ -232,7 +232,7 @@ class PurchaseReturn(models.Model):
     return_number = models.CharField(_('Return Number'), max_length=50, unique=True)
     supplier_return_number = models.CharField(_('Supplier Return Number (Source)'), max_length=50, 
                                             help_text=_('The return number issued by the supplier'))
-    original_invoice = models.ForeignKey(PurchaseInvoice, on_delete=models.PROTECT, 
+    original_invoice = models.ForeignKey(PurchaseInvoice, on_delete=models.CASCADE, 
                                        verbose_name=_('Original Invoice'), related_name='returns')
     date = models.DateField(_('Return Date'))
     return_type = models.CharField(_('Return Type'), max_length=20, choices=RETURN_TYPES, default='partial')

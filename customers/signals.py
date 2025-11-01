@@ -3,7 +3,7 @@
 تنشئ القيود المحاسبية تلقائياً عند الإنشاء
 """
 
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
 from decimal import Decimal
 from .models import CustomerSupplier
@@ -58,33 +58,34 @@ def create_opening_balance_journal_entry(sender, instance, created, **kwargs):
     """
     إنشاء قيد محاسبي للرصيد الافتتاحي عند إنشاء عميل/مورد جديد
     """
-    
+
     # فقط عند الإنشاء وليس التحديث
     if not created:
         return
-    
+
     # فقط إذا كان هناك رصيد افتتاحي
     if instance.balance == 0:
         return
-    
+
     try:
         from journal.services import JournalService
         from journal.models import Account
         from django.utils import timezone
         from accounts.models import AccountTransaction
         from django.contrib.auth import get_user_model
-        
+        from core.models import AuditLog
+
         # الحصول على المستخدم الذي أنشأ الحساب (إن وجد)
         User = get_user_model()
         creator_user = getattr(instance, '_creator_user', None)
         if not creator_user:
             # استخدام أول مستخدم في النظام كـ fallback
             creator_user = User.objects.first()
-        
+
         if not creator_user:
             print("⚠️ لا يوجد مستخدمين في النظام")
             return
-        
+
         # إنشاء معاملة الرصيد الافتتاحي
         if instance.balance > 0:
             direction = 'debit'
@@ -92,43 +93,54 @@ def create_opening_balance_journal_entry(sender, instance, created, **kwargs):
         else:
             direction = 'credit'
             amount = abs(instance.balance)
-        
+
         # إنشاء المعاملة إذا لم تكن موجودة
-        if not AccountTransaction.objects.filter(
+        transaction, created_transaction = AccountTransaction.objects.get_or_create(
             customer_supplier=instance,
-            reference_type='opening_balance'
-        ).exists():
-            AccountTransaction.objects.create(
-                customer_supplier=instance,
-                transaction_type='opening_balance',
-                reference_type='opening_balance',
-                reference_id=instance.id,
-                date=timezone.now().date(),
-                amount=amount,
-                direction=direction,
-                description=f'رصيد افتتاحي لـ {instance.name}',
-                notes=f'تم إنشاء المعاملة تلقائياً عند إنشاء الحساب',
-                created_by=creator_user
+            reference_type='opening_balance',
+            defaults={
+                'transaction_type': 'adjustment',
+                'reference_id': instance.id,
+                'date': timezone.now().date(),
+                'amount': amount,
+                'direction': direction,
+                'description': f'رصيد افتتاحي لـ {instance.name}',
+                'notes': f'تم إنشاء المعاملة تلقائياً عند إنشاء الحساب',
+                'created_by': creator_user,
+                'is_manual_adjustment': False,
+                'adjustment_type': 'capital_contribution'
+            }
+        )
+
+        if created_transaction:
+            # تسجيل في سجل الأنشطة
+            AuditLog.objects.create(
+                user=creator_user,
+                action_type='create',
+                content_type='account_transaction',
+                object_id=transaction.id,
+                description=f'إنشاء معاملة رصيد افتتاحي للعميل/المورد: {instance.name}',
+                ip_address='system'
             )
-        
+
         # تحديث الرصيد بعد إنشاء المعاملة الافتتاحية
         instance.sync_balance()
-        
+
         # الحصول على الحسابات المحاسبية
         customer_account = None
         supplier_account = None
-        
+
         if instance.is_customer:
             customer_account = Account.objects.filter(code='1301').first()
         if instance.is_supplier:
             supplier_account = Account.objects.filter(code='2101').first()
-        
+
         capital_account = Account.objects.filter(code='301').first()
-        
+
         if not capital_account:
             print(f"⚠️ لا يوجد حساب رأس المال (301)")
             return
-        
+
         # تحديد الحساب المناسب
         if instance.type == 'customer':
             account_obj = customer_account
@@ -137,22 +149,23 @@ def create_opening_balance_journal_entry(sender, instance, created, **kwargs):
         elif instance.type == 'both':
             # للحسابات المشتركة، نستخدم حساب العملاء
             account_obj = customer_account
-        
+
         if not account_obj:
             print(f"⚠️ لا يوجد حساب محاسبي للنوع {instance.type}")
             return
-        
+
         # إنشاء القيد المحاسبي فقط إذا لم يكن موجوداً
         from journal.models import JournalEntry
         existing_entry = JournalEntry.objects.filter(
-            reference_type='cs_opening',  # استخدام الاسم المختصر
-            reference_id=instance.id
+            description__icontains=f'رصيد افتتاحي - {instance.get_type_display()}: {instance.name}',
+            entry_date=timezone.now().date()
         ).first()
+
         if existing_entry:
             return
-        
+
         lines_data = []
-        
+
         if instance.balance > 0:
             # رصيد موجب = مدين الحساب / دائن رأس المال
             lines_data = [
@@ -185,22 +198,47 @@ def create_opening_balance_journal_entry(sender, instance, created, **kwargs):
                     'description': f'رصيد افتتاحي - {instance.get_type_display()}: {instance.name}'
                 }
             ]
-        
+
         # إنشاء القيد
-        # ملاحظة: reference_type محدود بـ 20 حرف في قاعدة البيانات
         journal_entry = JournalService.create_journal_entry(
             entry_date=timezone.now().date(),
             description=f'رصيد افتتاحي - {instance.get_type_display()}: {instance.name}',
-            reference_type='cs_opening',  # customer_supplier_opening (مختصر)
-            reference_id=instance.id,
             lines_data=lines_data,
             user=creator_user
         )
-        
+
+        # تسجيل في سجل الأنشطة
+        AuditLog.objects.create(
+            user=creator_user,
+            action_type='create',
+            content_type='journal_entry',
+            object_id=journal_entry.id if journal_entry else 0,
+            description=f'إنشاء قيد رصيد افتتاحي للعميل/المورد: {instance.name}',
+            ip_address='system'
+        )
+
     except Exception as e:
         print(f"❌ خطأ في إنشاء القيد المحاسبي للرصيد الافتتاحي: {e}")
         import traceback
         traceback.print_exc()
+
+        # تسجيل الخطأ في سجل الأنشطة
+        try:
+            from core.models import AuditLog
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            system_user = User.objects.filter(username='super').first() or User.objects.first()
+            if system_user:
+                AuditLog.objects.create(
+                    user=system_user,
+                    action_type='error',
+                    content_type='customer_supplier',
+                    object_id=instance.id,
+                    description=f'خطأ في إنشاء رصيد افتتاحي: {str(e)}',
+                    ip_address='system'
+                )
+        except:
+            pass
 
 
 @receiver(post_delete, sender=CustomerSupplier)
@@ -256,3 +294,53 @@ def delete_customer_supplier_account(sender, instance, **kwargs):
         print(f"❌ خطأ في حذف/تعطيل حساب العميل/المورد: {e}")
         import traceback
         traceback.print_exc()
+
+
+@receiver(pre_save, sender=CustomerSupplier)
+def check_balance_modification(sender, instance, **kwargs):
+    """فحص أي تعديل يدوي على الرصيد وإصلاحه"""
+    if instance.pk:  # إذا كان الكائن موجوداً (تحديث وليس إنشاء)
+        try:
+            old_instance = CustomerSupplier.objects.get(pk=instance.pk)
+            if old_instance.balance != instance.balance:
+                # تم تعديل الرصيد يدوياً
+                print(f"⚠️ تم اكتشاف تعديل يدوي على رصيد {instance.name}: {old_instance.balance} → {instance.balance}")
+                
+                # إعادة حساب الرصيد من المعاملات
+                instance.sync_balance()
+                
+                # تسجيل في سجل الأنشطة
+                from core.models import AuditLog
+                from django.contrib.auth import get_user_model
+                User = get_user_model()
+                system_user = User.objects.filter(username='super').first() or User.objects.first()
+                if system_user:
+                    AuditLog.objects.create(
+                        user=system_user,
+                        action_type='update',
+                        content_type='customer_supplier',
+                        object_id=instance.id,
+                        description=f'تصحيح رصيد {instance.name} من {old_instance.balance} إلى {instance.balance} (تم اكتشاف تعديل يدوي)',
+                        ip_address=None
+                    )
+                
+        except CustomerSupplier.DoesNotExist:
+            pass
+        except Exception as e:
+            print(f"خطأ في فحص تعديل الرصيد: {e}")
+
+
+@receiver(post_save, sender=CustomerSupplier)
+def validate_balance_integrity(sender, instance, created, **kwargs):
+    """التحقق من سلامة الرصيد بعد الحفظ"""
+    try:
+        # فحص سلامة الرصيد
+        is_integrity_ok, calculated_balance = instance.check_balance_integrity()
+        
+        if not is_integrity_ok:
+            print(f"🔧 إصلاح عدم تطابق في رصيد {instance.name}")
+            instance.balance = calculated_balance
+            instance.save(update_fields=['balance'])
+            
+    except Exception as e:
+        print(f"خطأ في التحقق من سلامة الرصيد: {e}")

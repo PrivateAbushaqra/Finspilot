@@ -444,15 +444,30 @@ class ProductCreateView(LoginRequiredMixin, View):
                     # وفقاً لـ IAS 2 (Inventories): يجب قياس المخزون بالتكلفة
                     # وفقاً لـ IAS 1 (Presentation of Financial Statements): الرصيد الافتتاحي يؤثر على حقوق الملكية
                     try:
-                        # البحث عن حساب المخزون (1501) - Current Assets
-                        inventory_account = Account.objects.filter(code='1501').first()
+                        # البحث عن حساب المستودع المحدد (IFRS Compliant - تفصيل حسب الموقع)
+                        warehouse_code = f"1201{opening_balance_warehouse.id:04d}"
+                        warehouse_account = Account.objects.filter(code=warehouse_code).first()
+                        
+                        # إذا لم يكن حساب المستودع موجوداً، إنشاؤه
+                        if not warehouse_account:
+                            # الحصول على حساب المخزون الرئيسي
+                            parent_account = Account.objects.filter(code='1201').first()
+                            if parent_account:
+                                warehouse_account = Account.objects.create(
+                                    code=warehouse_code,
+                                    name=f'مستودع - {opening_balance_warehouse.name}',
+                                    account_type='asset',
+                                    parent=parent_account,
+                                    description=f'حساب المستودع {opening_balance_warehouse.name}'
+                                )
+                        
                         # البحث عن حساب حقوق الملكية (301) - Equity
                         equity_account = Account.objects.filter(code='301').first()
                         
-                        if inventory_account and equity_account and opening_balance_cost > 0:
+                        if warehouse_account and equity_account and opening_balance_cost > 0:
                             # توليد رقم القيد
                             try:
-                                seq = DocumentSequence.objects.get(document_type='journal')
+                                seq = DocumentSequence.objects.get(document_type='journal_entry')
                                 entry_number = seq.get_next_number()
                             except DocumentSequence.DoesNotExist:
                                 last_entry = JournalEntry.objects.order_by('-id').first()
@@ -470,17 +485,16 @@ class ProductCreateView(LoginRequiredMixin, View):
                                 entry_number=entry_number,
                                 entry_date=timezone.now().date(),
                                 entry_type='daily',
-                                reference_type='manual',
                                 description=f'رصيد افتتاحي - {product.name} ({product.code})',
                                 total_amount=opening_balance_cost,
                                 created_by=request.user,
                             )
                             
                             # إنشاء أطراف القيد
-                            # من ح/ المخزون (أصل متداول - مدين)
+                            # من ح/ المستودع (أصل متداول - مدين) - IFRS Compliant
                             JournalLine.objects.create(
                                 journal_entry=journal_entry,
-                                account=inventory_account,
+                                account=warehouse_account,
                                 debit=opening_balance_cost,
                                 credit=0,
                                 line_description=f'رصيد افتتاحي - {product.name}'
@@ -496,7 +510,7 @@ class ProductCreateView(LoginRequiredMixin, View):
                             )
                             
                             # تحديث أرصدة الحسابات
-                            inventory_account.update_account_balance()
+                            warehouse_account.update_account_balance()
                             equity_account.update_account_balance()
                             
                             # تسجيل النشاط
@@ -881,7 +895,7 @@ class ProductUpdateView(LoginRequiredMixin, View):
                         if inventory_account and equity_account and new_opening_balance_cost > 0:
                             # توليد رقم القيد
                             try:
-                                seq = DocumentSequence.objects.get(document_type='journal')
+                                seq = DocumentSequence.objects.get(document_type='journal_entry')
                                 entry_number = seq.get_next_number()
                             except DocumentSequence.DoesNotExist:
                                 last_entry = JournalEntry.objects.order_by('-id').first()
@@ -1097,7 +1111,7 @@ class ProductDeleteView(LoginRequiredMixin, View):
             
             # 2. حذف القيود المحاسبية للرصيد الافتتاحي
             opening_journal_entries = JournalEntry.objects.filter(
-                reference_type='manual'
+                entry_type='daily'
             ).filter(
                 description__icontains=product_code
             ).filter(
@@ -2079,7 +2093,7 @@ class ProductAddAjaxView(LoginRequiredMixin, View):
                     if inventory_account and equity_account:
                         # توليد رقم القيد
                         try:
-                            seq = DocumentSequence.objects.get(document_type='journal')
+                            seq = DocumentSequence.objects.get(document_type='journal_entry')
                             entry_number = seq.get_next_number()
                         except DocumentSequence.DoesNotExist:
                             last_entry = JournalEntry.objects.order_by('-id').first()
