@@ -890,6 +890,8 @@ def create_bank_transaction_from_journal_line(journal_line):
 def sync_cashbox_balance_from_account(account):
     """
     مزامنة رصيد الصندوق مع رصيد حسابه المحاسبي
+    ⚠️ ملاحظة: تم تعطيل التحديث التلقائي لأن CashboxTransaction هو مصدر الحقيقة
+    هذه الدالة الآن تُستخدم فقط للمراقبة والتنبيه
     """
     try:
         from cashboxes.models import Cashbox
@@ -919,32 +921,15 @@ def sync_cashbox_balance_from_account(account):
                     cashbox = Cashbox.objects.filter(name__icontains=account_name_part).first()
         
         if cashbox:
-            # تحديث رصيد الصندوق ليطابق رصيد الحساب المحاسبي
+            # مراقبة التطابق فقط - لا تحديث تلقائي
+            # CashboxTransaction هو مصدر الحقيقة للأرصدة
             old_balance = cashbox.balance
             new_balance = account.balance
             
             if old_balance != new_balance:
-                cashbox.balance = new_balance
-                cashbox.save(update_fields=['balance'])
-                logger.info(f"✅ تم مزامنة رصيد الصندوق '{cashbox.name}' من {old_balance} إلى {new_balance}")
-                
-                # تسجيل في audit log
-                try:
-                    from core.models import AuditLog
-                    from django.contrib.auth import get_user_model
-                    User = get_user_model()
-                    
-                    system_user = User.objects.filter(is_superuser=True).first()
-                    if system_user:
-                        AuditLog.objects.create(
-                            user=system_user,
-                            action_type='update',
-                            content_type='Cashbox',
-                            object_id=cashbox.pk,
-                            description=f'مزامنة رصيد الصندوق {cashbox.name}: من {old_balance} إلى {new_balance} (من حساب {account.code})'
-                        )
-                except Exception as audit_error:
-                    logger.error(f"خطأ في تسجيل مزامنة رصيد الصندوق في audit log: {audit_error}")
+                # ⚠️ تحذير فقط - لا تحديث تلقائي
+                logger.warning(f"⚠️ عدم تطابق: رصيد الصندوق '{cashbox.name}' ({old_balance}) != رصيد الحساب ({new_balance})")
+                # ⚠️ لا نقوم بالتحديث - المعاملات هي مصدر الحقيقة
             else:
                 logger.debug(f"رصيد الصندوق '{cashbox.name}' متطابق مع حسابه ({new_balance})")
         else:

@@ -312,8 +312,11 @@ def cashbox_create(request):
         
         try:
             with transaction.atomic():
+                # تعيين علم لمنع Signal من إنشاء قيد مكرر إذا كان هناك رصيد افتتاحي
+                will_create_opening_entry = initial_balance_decimal > 0
+                
                 # إنشاء الصندوق برصيد صفر - سيتم تحديثه تلقائياً من المعاملات
-                cashbox = Cashbox.objects.create(
+                cashbox = Cashbox(
                     name=name,
                     description=description,
                     balance=Decimal('0'),  # برصيد صفر
@@ -322,52 +325,74 @@ def cashbox_create(request):
                     responsible_user=responsible_user
                 )
                 
-                # إضافة حركة الرصيد الافتتاحي إذا كان أكبر من صفر
+                # تعيين علم لمنع Signal من التدخل عند إنشاء القيد
+                if will_create_opening_entry:
+                    cashbox._skip_opening_balance_signal = True
+                
+                cashbox.save()
+                
+                # إنشاء الحساب الفرعي في journal.Account دائماً
+                from journal.services import JournalService
+                cashbox_account = JournalService.get_cashbox_account(cashbox)
+                
+                # إضافة حركة الرصيد الافتتاحي وقيد محاسبي فقط إذا كان أكبر من صفر
+                # متوافق مع IFRS - IAS 1 (عرض القوائم المالية)
                 if initial_balance_decimal > 0:
-                    CashboxTransaction.objects.create(
-                        cashbox=cashbox,
-                        transaction_type='initial_balance',
-                        date=timezone.now().date(),
-                        amount=initial_balance_decimal,
-                        description=_('Opening Balance'),
-                        created_by=request.user
-                    )
+                    # التحقق من عدم وجود قيد افتتاحي بالفعل لهذا الصندوق
+                    from journal.models import JournalEntry
+                    existing_entry = JournalEntry.objects.filter(
+                        reference_type='cashbox_initial',
+                        reference_id=cashbox.id
+                    ).exists()
                     
-                    # إنشاء قيد محاسبي للرصيد الافتتاحي
-                    from journal.services import JournalService
-                    cashbox_account = JournalService.get_cashbox_account(cashbox)
-                    
-                    # الحصول على حساب رأس المال
-                    from journal.models import Account
-                    capital_account = Account.objects.filter(code='301').first()
-                    
-                    if cashbox_account and capital_account:
-                        lines_data = [
-                            {
-                                'account_id': cashbox_account.id,
-                                'debit': initial_balance_decimal,
-                                'credit': Decimal('0'),
-                                'description': f'{_("Opening Balance")}: {cashbox.name}'
-                            },
-                            {
-                                'account_id': capital_account.id,
-                                'debit': Decimal('0'),
-                                'credit': initial_balance_decimal,
-                                'description': f'{_("Capital")}'
-                            }
-                        ]
-                        
-                        journal_entry = JournalService.create_journal_entry(
-                            entry_date=timezone.now().date(),
-                            description=f'{_("Opening Balance")}: {cashbox.name}',
-                            reference_type='cashbox_initial',
-                            reference_id=cashbox.id,
-                            lines_data=lines_data,
-                            user=request.user
+                    if existing_entry:
+                        print(f"⚠ قيد الرصيد الافتتاحي موجود بالفعل للصندوق {cashbox.name}، تم تخطي الإنشاء")
+                    else:
+                        # إنشاء حركة الرصيد الافتتاحي
+                        CashboxTransaction.objects.create(
+                            cashbox=cashbox,
+                            transaction_type='initial_balance',
+                            date=timezone.now().date(),
+                            amount=initial_balance_decimal,
+                            description=_('Opening Balance'),
+                            created_by=request.user
                         )
-                    
-                    # مزامنة رصيد الصندوق من المعاملات
-                    cashbox.sync_balance()
+                        
+                        # الحصول على حساب رأس المال
+                        # حسب IFRS IAS 1 - الرصيد الافتتاحي يمثل مساهمة في رأس المال
+                        from journal.models import Account
+                        capital_account = Account.objects.filter(code='301').first()
+                        
+                        if cashbox_account and capital_account:
+                            lines_data = [
+                                {
+                                    'account_id': cashbox_account.id,
+                                    'debit': initial_balance_decimal,
+                                    'credit': Decimal('0'),
+                                    'description': f'{_("Opening Balance")}: {cashbox.name}'
+                                },
+                                {
+                                    'account_id': capital_account.id,
+                                    'debit': Decimal('0'),
+                                    'credit': initial_balance_decimal,
+                                    'description': f'{_("Opening Balance - Capital Contribution")} - {cashbox.name}'
+                                }
+                            ]
+                            
+                            journal_entry = JournalService.create_journal_entry(
+                                entry_date=timezone.now().date(),
+                                description=f'{_("Opening Balance")}: {cashbox.name}',
+                                reference_type='cashbox_initial',
+                                reference_id=cashbox.id,
+                                lines_data=lines_data,
+                                user=request.user
+                            )
+                            
+                            if journal_entry:
+                                print(f"✓ تم إنشاء قيد الرصيد الافتتاحي للصندوق {cashbox.name}: {journal_entry.entry_number}")
+                        
+                        # مزامنة رصيد الصندوق من المعاملات
+                        cashbox.sync_balance()
                 
                 # تسجيل النشاط في سجل الأنشطة
                 AuditLog.objects.create(
@@ -726,8 +751,7 @@ def transfer_create(request):
                         messages.error(request, _('Insufficient balance in the sender cashbox'))
                         return redirect('cashboxes:transfer_list')
                     
-                    # القيد المحاسبي ومعاملات الصناديق سيتم إنشاؤها تلقائياً من خلال الإشارة
-                    # لا حاجة لإنشائها يدوياً هنا
+                    # المعاملات سيتم إنشاؤها تلقائياً من خلال signal create_cashbox_transfer_transactions
                 
                 elif transfer_type == 'cashbox_to_bank':
                     from_cashbox = get_object_or_404(Cashbox, id=from_cashbox_id)
@@ -738,8 +762,7 @@ def transfer_create(request):
                         messages.error(request, _('Insufficient balance in the cashbox'))
                         return redirect('cashboxes:transfer_list')
                     
-                    # القيد المحاسبي ومعاملات الصندوق والبنك سيتم إنشاؤها تلقائياً من خلال الإشارة
-                    # لا حاجة لإنشائها يدوياً هنا
+                    # المعاملات سيتم إنشاؤها تلقائياً من خلال signal create_cashbox_transfer_transactions
                 
                 elif transfer_type == 'bank_to_cashbox':
                     from_bank = get_object_or_404(BankAccount, id=from_bank_id)
@@ -750,8 +773,7 @@ def transfer_create(request):
                         messages.error(request, _('Insufficient balance in the bank'))
                         return redirect('cashboxes:transfer_list')
                     
-                    # القيد المحاسبي ومعاملات البنك والصندوق سيتم إنشاؤها تلقائياً من خلال الإشارة
-                    # لا حاجة لإنشائها يدوياً هنا
+                    # المعاملات سيتم إنشاؤها تلقائياً من خلال signal create_cashbox_transfer_transactions
                 
                 messages.success(request, _('Transfer created successfully'))
                 
@@ -951,6 +973,11 @@ class CashboxTransferDeleteView(View):
     """حذف تحويل صندوق مع تحديث جميع الحسابات المرتبطة"""
     
     def post(self, request, transfer_id):
+        # التحقق من صلاحيات SUPERADMIN فقط
+        if not request.user.is_superuser:
+            messages.error(request, _('Only superadmin can delete transfers'))
+            return redirect('cashboxes:transfer_list')
+        
         cashbox_transfer = get_object_or_404(CashboxTransfer, id=transfer_id)
         
         try:
@@ -1005,7 +1032,7 @@ class CashboxTransferDeleteView(View):
         except Exception as e:
             messages.error(request, _('An error occurred while deleting the transfer: {}').format(str(e)))
         
-        return redirect('cashboxes:cashbox_list')
+        return redirect('cashboxes:transfer_list')
 
 
 @method_decorator(login_required, name='dispatch')

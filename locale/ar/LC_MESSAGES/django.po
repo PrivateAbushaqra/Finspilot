@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-31 18:01+0300\n"
+"POT-Creation-Date: 2025-11-02 08:33+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -142,7 +142,7 @@ msgstr "رقم الحركة"
 #: .\banks\templates\banks\statement_form.html:43
 #: .\banks\templates\banks\statement_list.html:72 .\banks\views.py:2282
 #: .\cashboxes\models.py:104 .\cashboxes\models.py:290
-#: .\cashboxes\views.py:1179 .\core\views.py:621 .\core\views.py:695
+#: .\cashboxes\views.py:1204 .\core\views.py:621 .\core\views.py:695
 #: .\hr\models.py:258 .\inventory\models.py:72 .\inventory\models.py:182
 #: .\provisions\models.py:87 .\purchases\models.py:26 .\purchases\models.py:328
 #: .\reports\views.py:187 .\reports\views.py:223 .\reports\views.py:409
@@ -277,7 +277,7 @@ msgid "Customer/Supplier"
 msgstr "العميل/المورد"
 
 #: .\accounts\models.py:43 .\banks\models.py:147 .\banks\views.py:2283
-#: .\cashboxes\models.py:289 .\cashboxes\views.py:1180 .\inventory\models.py:75
+#: .\cashboxes\models.py:289 .\cashboxes\views.py:1205 .\inventory\models.py:75
 #: .\templates\accounts\customer_statement.html:201
 #: .\templates\accounts\transaction_list.html:34
 #: .\templates\accounts\transaction_list.html:135
@@ -301,7 +301,7 @@ msgstr "الاتجاه"
 
 #: .\accounts\models.py:45 .\banks\models.py:111 .\banks\models.py:148
 #: .\banks\views.py:2286 .\cashboxes\models.py:136 .\cashboxes\models.py:291
-#: .\cashboxes\views.py:1183 .\payments\models.py:40 .\receipts\models.py:33
+#: .\cashboxes\views.py:1208 .\payments\models.py:40 .\receipts\models.py:33
 #: .\receipts\views.py:571 .\revenues_expenses\models.py:68
 #: .\revenues_expenses\models.py:163 .\revenues_expenses\views.py:841
 #: .\templates\accounts\customer_statement.html:427
@@ -448,7 +448,7 @@ msgstr "المرجع"
 #: .\banks\templates\banks\statement_form.html:55
 #: .\banks\templates\banks\statement_list.html:73 .\banks\views.py:2285
 #: .\cashboxes\models.py:11 .\cashboxes\models.py:139 .\cashboxes\models.py:292
-#: .\cashboxes\views.py:1162 .\cashboxes\views.py:1182 .\core\models.py:338
+#: .\cashboxes\views.py:1187 .\cashboxes\views.py:1207 .\core\models.py:338
 #: .\hr\models.py:15 .\hr\models.py:36 .\hr\models.py:313 .\hr\models.py:516
 #: .\journal\models.py:29 .\payments\admin.py:40 .\payments\models.py:66
 #: .\provisions\models.py:13 .\provisions\models.py:41
@@ -606,7 +606,7 @@ msgstr "الوصف"
 msgid "Notes"
 msgstr "الملاحظات"
 
-#: .\accounts\models.py:70 .\banks\views.py:2287 .\cashboxes\views.py:1184
+#: .\accounts\models.py:70 .\banks\views.py:2287 .\cashboxes\views.py:1209
 #: .\templates\banks\account_transactions.html:194
 #: .\templates\banks\account_transactions.html:494
 #: .\templates\cashboxes\cashbox_detail.html:146
@@ -620,7 +620,7 @@ msgstr "الرصيد بعد المعاملة"
 #: .\banks\models.py:22 .\banks\models.py:115 .\banks\models.py:173
 #: .\banks\models.py:218 .\banks\models.py:260 .\banks\views.py:2288
 #: .\cashboxes\models.py:141 .\cashboxes\models.py:324
-#: .\cashboxes\views.py:1185 .\hr\models.py:131 .\hr\models.py:236
+#: .\cashboxes\views.py:1210 .\hr\models.py:131 .\hr\models.py:236
 #: .\hr\models.py:269 .\hr\models.py:352 .\hr\models.py:381 .\hr\models.py:427
 #: .\inventory\models.py:82 .\inventory\models.py:188 .\journal\models.py:306
 #: .\journal\models.py:465 .\payments\models.py:70 .\provisions\models.py:16
@@ -741,11 +741,12 @@ msgid ""
 "المورد %(customer_supplier)s"
 msgstr ""
 
-#: .\accounts\signals.py:96
+#: .\accounts\signals.py:119
 #, python-format
 msgid ""
 "تم حذف معاملة %(transaction_type)s رقم %(transaction_number)s للعميل/المورد "
-"%(customer_supplier)s بمبلغ %(amount)s %(direction)s"
+"%(customer_supplier)s بمبلغ %(amount)s %(direction)s. الرصيد تم تحديثه من "
+"%(old_balance)s إلى %(new_balance)s"
 msgstr ""
 
 #: .\assets_liabilities\models.py:14
@@ -893,9 +894,7 @@ msgstr "حساب مجمع الإهلاك"
 #: .\templates\settings\currency_add.html:88
 #: .\templates\settings\currency_edit.html:87
 #: .\templates\settings\currency_edit.html:90
-#: .\templates\settings\currency_list.html:62
-#: .\templates\settings\currency_list.html:64
-#: .\templates\settings\currency_list.html:141
+#: .\templates\settings\currency_list.html:63
 #: .\templates\users\group_delete.html:128 .\templates\users\group_edit.html:97
 #: .\templates\users\user_edit.html:375 .\templates\users\user_edit.html:386
 #: .\templates\users\user_list.html:130 .\users\views.py:68
@@ -1055,9 +1054,6 @@ msgstr "تاريخ الشراء"
 #: .\templates\customers\edit.html:169 .\templates\customers\edit.html:189
 #: .\templates\customers\edit.html:194 .\templates\customers\list.html:209
 #: .\templates\customers\supplier_list.html:93
-#: .\templates\customers\supplier_list.html:332
-#: .\templates\customers\supplier_list.html:333
-#: .\templates\customers\supplier_list.html:336
 #: .\templates\customers\supplier_list.html:349
 #: .\templates\customers\supplier_list.html:388
 #: .\templates\customers\supplier_list.html:453
@@ -1116,7 +1112,7 @@ msgid "Warranty Expiry"
 msgstr "انتهاء الضمان"
 
 #: .\assets_liabilities\models.py:79 .\cashboxes\models.py:15
-#: .\cashboxes\views.py:1165
+#: .\cashboxes\views.py:1190
 #: .\templates\assets_liabilities\asset_create.html:347
 #: .\templates\assets_liabilities\asset_detail.html:126
 #: .\templates\cashboxes\cashbox_detail.html:91
@@ -1216,7 +1212,7 @@ msgstr "الشخص المسؤول"
 #: .\templates\revenues_expenses\recurring_list.html:180
 #: .\templates\revenues_expenses\recurring_list.html:269
 #: .\templates\sales\invoice_list.html:234
-#: .\templates\settings\currency_list.html:34
+#: .\templates\settings\currency_list.html:35
 #: .\templates\users\user_list.html:107
 msgid "Status"
 msgstr "الحالة"
@@ -1312,7 +1308,7 @@ msgid "Original Amount"
 msgstr "المبلغ الأصلي"
 
 #: .\assets_liabilities\models.py:172 .\banks\views.py:2270
-#: .\cashboxes\views.py:1171 .\templates\accounts\customer_statement.html:87
+#: .\cashboxes\views.py:1196 .\templates\accounts\customer_statement.html:87
 #: .\templates\assets_liabilities\liability_create.html:206
 #: .\templates\assets_liabilities\liability_list.html:121
 #: .\templates\banks\account_detail.html:172
@@ -1659,9 +1655,9 @@ msgstr ""
 #: .\templates\banks\account_list.html:726
 #: .\templates\financial_reports\trial_balance.html:80
 #: .\templates\journal\account_detail.html:40
+#: .\templates\journal\account_list.html:37
 #: .\templates\journal\account_list.html:106
 #: .\templates\reports\trial_balance.html:60
-#: .\templates\journal\account_list.html:37
 msgid "Account Name"
 msgstr "اسم الحساب"
 
@@ -1895,6 +1891,7 @@ msgstr "الرسوم"
 #: .\templates\cashboxes\cashbox_list.html:594
 #: .\templates\cashboxes\transfer_detail.html:70
 #: .\templates\cashboxes\transfer_list.html:258
+#: .\templates\settings\currency_list.html:34
 msgid "Exchange Rate"
 msgstr "سعر الصرف"
 
@@ -1963,8 +1960,8 @@ msgstr "فرق الصرف"
 msgid "Reference Number"
 msgstr "رقم المرجع"
 
-#: .\banks\models.py:168 .\banks\views.py:242 .\cashboxes\views.py:332
-#: .\cashboxes\views.py:350 .\cashboxes\views.py:362 .\inventory\models.py:68
+#: .\banks\models.py:168 .\banks\views.py:242 .\cashboxes\views.py:357
+#: .\cashboxes\views.py:372 .\cashboxes\views.py:384 .\inventory\models.py:68
 #: .\inventory\models.py:128 .\reports\views.py:191 .\reports\views.py:224
 #: .\templates\banks\account_add.html:233 .\templates\customers\edit.html:266
 #: .\templates\products\product_add.html:270
@@ -2600,6 +2597,7 @@ msgstr "مسح"
 #: .\templates\sales\creditnote_report.html:84
 #: .\templates\sales\invoice_list.html:517
 #: .\templates\sales\return_list.html:263
+#: .\templates\settings\currency_list.html:37
 #: .\templates\settings\document_sequences.html:45
 #: .\templates\users\group_list.html:40 .\templates\users\user_list.html:109
 msgid "Actions"
@@ -2632,6 +2630,7 @@ msgstr "لم يتم العثور على وظائف"
 #: .\templates\products\product_movements.html:290
 #: .\templates\provisions\provision_list.html:94
 #: .\templates\provisions\provision_movement_report.html:154
+#: .\templates\purchases\debitnote_list.html:97
 #: .\templates\purchases\invoice_list.html:475
 #: .\templates\purchases\return_list.html:264
 #: .\templates\receipts\check_list.html:145
@@ -2641,7 +2640,6 @@ msgstr "لم يتم العثور على وظائف"
 #: .\templates\sales\creditnote_report.html:123
 #: .\templates\sales\invoice_list.html:613
 #: .\templates\sales\return_list.html:333
-#: .\templates\purchases\debitnote_list.html:97
 msgid "Previous"
 msgstr "السابق"
 
@@ -2779,8 +2777,6 @@ msgstr "نعم"
 #: .\templates\base.html:2870 .\templates\base.html:2933
 #: .\templates\base.html:2934 .\templates\base.html:2943
 #: .\templates\base.html:2944 .\templates\core\notifications.html:277
-#: .\templates\customers\supplier_list.html:332
-#: .\templates\customers\supplier_list.html:333
 #: .\templates\customers\transactions.html:5
 #: .\templates\customers\transactions.html:498
 #: .\templates\financial_reports\balance_sheet.html:8
@@ -2816,10 +2812,6 @@ msgstr "نعم"
 #: .\templates\settings\currency_edit.html:17
 #: .\templates\settings\currency_edit.html:74
 #: .\templates\settings\currency_edit.html:90
-#: .\templates\settings\currency_list.html:14
-#: .\templates\settings\currency_list.html:109
-#: .\templates\settings\currency_list.html:137
-#: .\templates\settings\currency_list.html:141
 #: .\templates\settings\document_print_settings.html:1055
 #: .\templates\settings\document_print_settings.html:1059
 #: .\templates\settings\document_print_settings.html:1063
@@ -2854,11 +2846,9 @@ msgstr "ليس لديك صلاحية لإضافة حسابات بنكية."
 msgid "Bank Account Add Page Accessed"
 msgstr "تم الوصول إلى قائمة الحسابات المصرفية"
 
-#: .\banks\views.py:248
-#, fuzzy
-#| msgid "Capital Contribution"
+#: .\banks\views.py:248 .\cashboxes\views.py:378
 msgid "Opening Balance - Capital Contribution"
-msgstr "مساهمة رأس المال"
+msgstr "رصيد افتتاحي - مساهمة رأس المال"
 
 #: .\banks\views.py:254
 #, fuzzy
@@ -2888,11 +2878,11 @@ msgstr "تعديل يدوي للرصيد - زيادة: %(amount)s"
 msgid "تعديل يدوي للرصيد - نقص: %(amount)s - نوع: %(type)s"
 msgstr "تعديل يدوي للرصيد - نقص: %(amount)s"
 
-#: .\banks\views.py:458 .\cashboxes\views.py:497 .\customers\views.py:502
+#: .\banks\views.py:458 .\cashboxes\views.py:522 .\customers\views.py:502
 msgid "Increase in balance"
 msgstr "زيادة في الرصيد"
 
-#: .\banks\views.py:480 .\cashboxes\views.py:519 .\customers\views.py:524
+#: .\banks\views.py:480 .\cashboxes\views.py:544 .\customers\views.py:524
 msgid "Decrease in balance"
 msgstr "نقص في الرصيد"
 
@@ -2943,7 +2933,7 @@ msgid ""
 "Account Transfer\" sequence from settings page before creating any transfer."
 msgstr ""
 
-#: .\banks\views.py:999 .\cashboxes\views.py:651
+#: .\banks\views.py:999 .\cashboxes\views.py:676
 msgid ""
 "A similar transfer was created recently! Please check the transfer list."
 msgstr ""
@@ -3043,14 +3033,14 @@ msgstr "كشف الحساب"
 msgid "Transactions Count"
 msgstr "عدد المعاملات"
 
-#: .\banks\views.py:2277 .\cashboxes\views.py:1174
+#: .\banks\views.py:2277 .\cashboxes\views.py:1199
 #: .\templates\products\category_list.html:526
 #, fuzzy
 #| msgid "Report Date"
 msgid "Export Date"
 msgstr "تاريخ التقرير"
 
-#: .\banks\views.py:2347 .\cashboxes\views.py:1243
+#: .\banks\views.py:2347 .\cashboxes\views.py:1268
 #, fuzzy
 #| msgid "An error occurred while updating the group: {}"
 msgid "An error occurred while exporting: {}"
@@ -3262,7 +3252,7 @@ msgstr "اسم بنك الشيك"
 msgid "Cashbox Transfer"
 msgstr "تحويل صندوق"
 
-#: .\cashboxes\models.py:147 .\cashboxes\views.py:835
+#: .\cashboxes\models.py:147 .\cashboxes\views.py:860
 #: .\templates\banks\transfer_list.html:909
 #: .\templates\cashboxes\transfer_list.html:5
 #: .\templates\cashboxes\transfer_list.html:51
@@ -3281,19 +3271,19 @@ msgstr "لا يمكن التحويل من صندوق إلى نفسه"
 msgid "Sender cashbox and receiver bank must be specified"
 msgstr "يجب تحديد صندوق المرسل وبنك المستقبل"
 
-#: .\cashboxes\models.py:172 .\cashboxes\views.py:607
+#: .\cashboxes\models.py:172 .\cashboxes\views.py:632
 msgid "Deposit type is required"
 msgstr "نوع الإيداع مطلوب"
 
-#: .\cashboxes\models.py:176 .\cashboxes\views.py:611
+#: .\cashboxes\models.py:176 .\cashboxes\views.py:636
 msgid "Check number is required when deposit type is \"Check\""
 msgstr "رقم الشيك مطلوب عندما يكون نوع الإيداع \"شيك\""
 
-#: .\cashboxes\models.py:178 .\cashboxes\views.py:614 .\payments\forms.py:135
+#: .\cashboxes\models.py:178 .\cashboxes\views.py:639 .\payments\forms.py:135
 msgid "Check date is required"
 msgstr "تاريخ الشيك مطلوب"
 
-#: .\cashboxes\models.py:180 .\cashboxes\views.py:617
+#: .\cashboxes\models.py:180 .\cashboxes\views.py:642
 msgid "Check bank name is required"
 msgstr "اسم بنك الشيك مطلوب"
 
@@ -3429,31 +3419,27 @@ msgstr "الصناديق النقدية"
 msgid "Cashbox Details"
 msgstr "تفاصيل الصندوق النقدي"
 
-#: .\cashboxes\views.py:295 .\cashboxes\views.py:411
+#: .\cashboxes\views.py:295 .\cashboxes\views.py:436
 msgid "Cashbox name is required"
 msgstr "اسم الصندوق النقدي مطلوب"
 
-#: .\cashboxes\views.py:301 .\cashboxes\views.py:418
+#: .\cashboxes\views.py:301 .\cashboxes\views.py:443
 msgid "Initial balance must be a valid number"
 msgstr "يجب أن يكون الرصيد الافتتاحي رقمًا صحيحًا"
 
-#: .\cashboxes\views.py:310 .\cashboxes\views.py:427
+#: .\cashboxes\views.py:310 .\cashboxes\views.py:452
 msgid "Selected responsible user does not exist"
 msgstr "المستخدم المسؤول المحدد غير موجود"
 
-#: .\cashboxes\views.py:356
-msgid "Capital"
-msgstr "رأس المال"
-
-#: .\cashboxes\views.py:382
+#: .\cashboxes\views.py:407
 msgid "Cashbox created successfully"
 msgstr "تم إنشاء الصندوق النقدي بنجاح"
 
-#: .\cashboxes\views.py:391 .\cashboxes\views.py:392
+#: .\cashboxes\views.py:416 .\cashboxes\views.py:417
 msgid "An error occurred while creating the cashbox"
 msgstr "حدث خطأ أثناء إنشاء الصندوق النقدي"
 
-#: .\cashboxes\views.py:454
+#: .\cashboxes\views.py:479
 #, fuzzy
 #| msgid "Please select the adjustment type for IFRS compliance."
 msgid ""
@@ -3462,152 +3448,152 @@ msgid ""
 msgstr "يجب اختيار نوع التعديل عند تغيير الرصيد لضمان الامتثال مع معايير IFRS."
 
 # Cashbox adjustments
-#: .\cashboxes\views.py:459 .\cashboxes\views.py:525
+#: .\cashboxes\views.py:484 .\cashboxes\views.py:550
 msgid "Adjustment of Opening Balance"
 msgstr "تعديل الرصيد الافتتاحي"
 
-#: .\cashboxes\views.py:461
+#: .\cashboxes\views.py:486
 msgid "Increase"
 msgstr "زيادة"
 
-#: .\cashboxes\views.py:464
+#: .\cashboxes\views.py:489
 msgid "Decrease"
 msgstr "نقصان"
 
-#: .\cashboxes\views.py:545
+#: .\cashboxes\views.py:570
 msgid "Cashbox updated successfully"
 msgstr "تم تحديث الصندوق النقدي بنجاح"
 
-#: .\cashboxes\views.py:549
+#: .\cashboxes\views.py:574
 msgid "An error occurred while updating the cashbox"
 msgstr "حدث خطأ أثناء تحديث الصندوق النقدي"
 
-#: .\cashboxes\views.py:595
+#: .\cashboxes\views.py:620
 msgid "All fields are required"
 msgstr "جميع الحقول مطلوبة"
 
-#: .\cashboxes\views.py:601
+#: .\cashboxes\views.py:626
 #, fuzzy
 #| msgid "Cashbox name is required"
 msgid "Sender cashbox is required"
 msgstr "اسم الصندوق النقدي مطلوب"
 
-#: .\cashboxes\views.py:604
+#: .\cashboxes\views.py:629
 #, fuzzy
 #| msgid "Reversal reason is required"
 msgid "Receiver bank is required"
 msgstr "سبب الإلغاء مطلوب"
 
-#: .\cashboxes\views.py:623
+#: .\cashboxes\views.py:648
 #, fuzzy
 #| msgid "Check bank name is required"
 msgid "Sender bank is required"
 msgstr "اسم بنك الشيك مطلوب"
 
-#: .\cashboxes\views.py:626
+#: .\cashboxes\views.py:651
 #, fuzzy
 #| msgid "Reversal reason is required"
 msgid "Receiver cashbox is required"
 msgstr "سبب الإلغاء مطلوب"
 
-#: .\cashboxes\views.py:633 .\inventory\views.py:613
+#: .\cashboxes\views.py:658 .\inventory\views.py:613
 msgid "Transfer number already exists! Please use another number."
 msgstr "رقم التحويل موجود بالفعل! يرجى استخدام رقم آخر."
 
-#: .\cashboxes\views.py:662
+#: .\cashboxes\views.py:687
 msgid "Amount must be greater than zero"
 msgstr "المبلغ يجب أن يكون أكبر من صفر"
 
-#: .\cashboxes\views.py:726
+#: .\cashboxes\views.py:751
 msgid "Insufficient balance in the sender cashbox"
 msgstr "رصيد غير كافٍ في صندوق المرسل"
 
-#: .\cashboxes\views.py:738
+#: .\cashboxes\views.py:763
 msgid "Insufficient balance in the cashbox"
 msgstr "رصيد غير كافٍ في الصندوق"
 
-#: .\cashboxes\views.py:750
+#: .\cashboxes\views.py:775
 msgid "Insufficient balance in the bank"
 msgstr "رصيد غير كافٍ في البنك"
 
-#: .\cashboxes\views.py:756
+#: .\cashboxes\views.py:781
 msgid "Transfer created successfully"
 msgstr "تم إنشاء التحويل بنجاح"
 
-#: .\cashboxes\views.py:781
+#: .\cashboxes\views.py:806
 msgid "An error occurred while creating the transfer"
 msgstr "حدث خطأ أثناء إنشاء التحويل"
 
-#: .\cashboxes\views.py:853 .\templates\banks\transfer_add.html:205
+#: .\cashboxes\views.py:878 .\templates\banks\transfer_add.html:205
 #: .\templates\banks\transfer_edit.html:205
 msgid "Transfer Details"
 msgstr "تفاصيل التحويل"
 
-#: .\cashboxes\views.py:941
+#: .\cashboxes\views.py:966
 msgid ""
 "Transaction deleted successfully and all related balances have been updated."
 msgstr ""
 
-#: .\cashboxes\views.py:944
+#: .\cashboxes\views.py:969
 msgid "An error occurred while deleting the transaction: {}"
 msgstr "حدث خطأ أثناء حذف المعاملة: {}"
 
-#: .\cashboxes\views.py:1003
+#: .\cashboxes\views.py:1028
 msgid ""
 "Transfer deleted successfully and all related balances have been updated."
-msgstr ""
+msgstr "تم حذف عملية التحويل بنجاح وتم تحديث جميع الأرصدة ذات الصلة."
 
-#: .\cashboxes\views.py:1006
+#: .\cashboxes\views.py:1031
 msgid "An error occurred while deleting the transfer: {}"
 msgstr "حدث خطأ أثناء حذف التحويل: {}"
 
-#: .\cashboxes\views.py:1020
+#: .\cashboxes\views.py:1045
 msgid "You do not have permission to clear cashbox transactions"
 msgstr "ليس لديك صلاحية لمسح معاملات الصناديق النقدية"
 
-#: .\cashboxes\views.py:1064
+#: .\cashboxes\views.py:1089
 msgid ""
 "All transactions for cashbox \"{}\" were cleared successfully and all "
 "related balances were updated."
 msgstr ""
 
-#: .\cashboxes\views.py:1067
+#: .\cashboxes\views.py:1092
 msgid "An error occurred while clearing cashbox transactions: {}"
 msgstr "حدث خطأ أثناء مسح معاملات الصناديق النقدية: {}"
 
-#: .\cashboxes\views.py:1077
+#: .\cashboxes\views.py:1102
 msgid "You do not have permission to delete cashboxes"
 msgstr "ليس لديك صلاحية لحذف الصناديق النقدية"
 
-#: .\cashboxes\views.py:1096
+#: .\cashboxes\views.py:1121
 msgid "Cannot delete the cashbox because the balance is not zero"
 msgstr "لا يمكن حذف الصندوق النقدي لأن الرصيد ليس صفراً"
 
-#: .\cashboxes\views.py:1105
+#: .\cashboxes\views.py:1130
 msgid "Deleted cashbox: {}"
 msgstr "تم حذف الصندوق: {}"
 
-#: .\cashboxes\views.py:1112
+#: .\cashboxes\views.py:1137
 msgid ""
 "Cashbox \"{}\" was deleted successfully while preserving transfers and "
 "balances in other cashboxes"
 msgstr ""
 
-#: .\cashboxes\views.py:1116
+#: .\cashboxes\views.py:1141
 msgid "Cannot delete the cashbox due to protected related transactions"
 msgstr "لا يمكن حذف الصندوق النقدي بسبب معاملات ذات صلة محمية"
 
-#: .\cashboxes\views.py:1118
+#: .\cashboxes\views.py:1143
 msgid "An error occurred while deleting the cashbox: {}"
 msgstr "حدث خطأ أثناء حذف الصندوق النقدي: {}"
 
-#: .\cashboxes\views.py:1140
+#: .\cashboxes\views.py:1165
 #, fuzzy
 #| msgid "لم يتم تحديد العملية المطلوبة"
 msgid "تم تصدير معاملات الصندوق إلى Excel: {}"
 msgstr "لم يتم تحديد العملية المطلوبة"
 
-#: .\cashboxes\views.py:1146 .\cashboxes\views.py:1154
+#: .\cashboxes\views.py:1171 .\cashboxes\views.py:1179
 #: .\templates\cashboxes\cashbox_detail.html:388
 #: .\templates\cashboxes\cashbox_detail.html:403
 #, fuzzy
@@ -3615,7 +3601,7 @@ msgstr "لم يتم تحديد العملية المطلوبة"
 msgid "Cashbox Statement"
 msgstr "بيان التدفق النقدي"
 
-#: .\cashboxes\views.py:1159 .\templates\cashboxes\cashbox_detail.html:83
+#: .\cashboxes\views.py:1184 .\templates\cashboxes\cashbox_detail.html:83
 #: .\templates\cashboxes\cashbox_detail.html:239
 #: .\templates\cashboxes\cashbox_list.html:57
 #: .\templates\cashboxes\cashbox_list.html:145
@@ -3624,7 +3610,7 @@ msgstr "بيان التدفق النقدي"
 msgid "Cashbox Name"
 msgstr "اسم الصندوق"
 
-#: .\cashboxes\views.py:1168 .\hr\models.py:17
+#: .\cashboxes\views.py:1193 .\hr\models.py:17
 #: .\templates\cashboxes\cashbox_detail.html:95
 #: .\templates\cashboxes\cashbox_detail.html:410
 #: .\templates\cashboxes\cashbox_list.html:61
@@ -3638,7 +3624,7 @@ msgstr "اسم الصندوق"
 msgid "Manager"
 msgstr "المدير"
 
-#: .\cashboxes\views.py:1181 .\core\views.py:621 .\core\views.py:695
+#: .\cashboxes\views.py:1206 .\core\views.py:621 .\core\views.py:695
 #: .\reports\views.py:409 .\reports\views.py:447
 #: .\templates\cashboxes\cashbox_detail.html:143
 #: .\templates\cashboxes\cashbox_detail.html:420
@@ -4005,8 +3991,6 @@ msgstr "تحديث"
 #: .\templates\sales\return_detail.html:76
 #: .\templates\sales\return_detail.html:264
 #: .\templates\sales\return_list.html:311
-#: .\templates\settings\currency_list.html:92
-#: .\templates\settings\currency_list.html:165
 #: .\templates\settings\document_print_settings.html:495
 #: .\templates\settings\document_sequences.html:61
 #: .\templates\settings\document_sequences.html:92
@@ -4393,6 +4377,7 @@ msgstr "رقم التسلسل"
 #: .\templates\revenues_expenses\recurring_create.html:62
 #: .\templates\revenues_expenses\recurring_detail.html:101
 #: .\templates\revenues_expenses\recurring_edit.html:68
+#: .\templates\settings\currency_list.html:32
 msgid "Name"
 msgstr "الاسم"
 
@@ -4625,7 +4610,7 @@ msgstr ""
 msgid "حدث خطأ أثناء حذف البيانات: %(error)s"
 msgstr ""
 
-#: .\customers\views.py:1083
+#: .\customers\views.py:1087
 #, python-format
 msgid ""
 "Balance issue reported for customer/supplier %(name)s. Opening: "
@@ -4633,7 +4618,7 @@ msgid ""
 "%(expected).3f, Displayed: %(displayed).3f"
 msgstr ""
 
-#: .\customers\views.py:1101
+#: .\customers\views.py:1105
 #, fuzzy
 #| msgid "Employee deleted successfully."
 msgid "Balance issue reported successfully"
@@ -6077,7 +6062,7 @@ msgstr ""
 msgid "Account Type"
 msgstr "نوع الحساب"
 
-#: .\journal\forms.py:350 .\templates\journal\account_list.html:42
+#: .\journal\forms.py:350
 msgid "جميع الأنواع"
 msgstr ""
 
@@ -6369,7 +6354,7 @@ msgstr "الإقفال مكتمل مسبقاً"
 msgid "Year end closing performed successfully"
 msgstr "تم إجراء الإقفال السنوي بنجاح"
 
-#: .\journal\services.py:43
+#: .\journal\services.py:44
 msgid "مجموع المدين يجب أن يساوي مجموع الدائن"
 msgstr ""
 
@@ -6408,8 +6393,7 @@ msgstr "إحصائيات المبيعات"
 msgid "النوع"
 msgstr ""
 
-#: .\journal\views.py:171 
-#: .\templates\journal\account_list.html:134
+#: .\journal\views.py:171 .\templates\journal\account_list.html:134
 #: .\templates\journal\account_list.html:352
 msgid "Main Account"
 msgstr "الحساب الرئيسي"
@@ -8127,7 +8111,6 @@ msgstr "نوع الدفع"
 #: .\receipts\views.py:284 .\receipts\views.py:302
 #: .\templates\banks\account_edit.html:213
 #: .\templates\core\profit_loss_report.html:496
-#: .\templates\customers\supplier_list.html:333
 #: .\templates\hr\contract_detail.html:227
 #: .\templates\reports\income_statement.html:112
 msgid "from"
@@ -8311,8 +8294,8 @@ msgstr "الرصيد الختامي"
 #: .\templates\cashboxes\transfer_list.html:113
 #: .\templates\cashboxes\transfer_list.html:585
 #: .\templates\core\profit_loss_report.html:309
-#: .\templates\reports\customer_statement.html:42
 #: .\templates\purchases\debitnote_list.html:103
+#: .\templates\reports\customer_statement.html:42
 msgid "From"
 msgstr "من"
 
@@ -9208,6 +9191,7 @@ msgstr ""
 #: .\templates\sales\invoice_detail.html:460
 #: .\templates\sales\invoice_list.html:551
 #: .\templates\sales\invoice_list.html:561
+#: .\templates\settings\currency_list.html:133
 msgid "Not specified"
 msgstr "غير محدد"
 
@@ -10030,7 +10014,6 @@ msgstr "كشف الحساب"
 #: .\templates\purchases\invoice_detail.html:319
 #: .\templates\purchases\purchase_report.html:185
 #: .\templates\purchases\return_detail.html:211
-#: .\templates\purchases\return_list.html:27
 #: .\templates\receipts\check_list.html:21
 #: .\templates\reports\customer_statement.html:19
 #: .\templates\reports\trial_balance.html:18
@@ -10240,12 +10223,11 @@ msgstr "قائمة المعاملات"
 #: .\templates\hr\position_list.html:87
 #: .\templates\journal\account_form.html:365
 #: .\templates\products\product_edit.html:488
+#: .\templates\purchases\debitnote_list.html:94
 #: .\templates\purchases\return_list.html:261
 #: .\templates\sales\creditnote_list.html:115
 #: .\templates\sales\creditnote_report.html:120
 #: .\templates\sales\return_list.html:330
-#: .\templates\settings\currency_list.html:109
-#: .\templates\purchases\debitnote_list.html:94
 msgid "First"
 msgstr "الأول"
 
@@ -10628,8 +10610,6 @@ msgstr "إدارة الأصول"
 #: .\templates\base.html:2217 .\templates\customers\add.html:100
 #: .\templates\customers\add.html:294 .\templates\customers\add.html:298
 #: .\templates\customers\supplier_list.html:93
-#: .\templates\customers\supplier_list.html:333
-#: .\templates\customers\supplier_list.html:336
 #: .\templates\customers\supplier_list.html:388
 #: .\templates\customers\supplier_list.html:627
 #: .\templates\customers\transactions.html:510
@@ -10664,7 +10644,6 @@ msgstr "إدارة الأصول"
 #: .\templates\sales\sales_statement.html:193
 #: .\templates\settings\currency_add.html:14
 #: .\templates\settings\currency_add.html:111
-#: .\templates\settings\currency_list.html:17
 msgid "Add"
 msgstr "إضافة"
 
@@ -10770,7 +10749,6 @@ msgstr "لم يتم إضافة خصوم بعد"
 #: .\templates\core\notifications.html:165 .\templates\customers\add.html:100
 #: .\templates\customers\add.html:294
 #: .\templates\customers\supplier_list.html:93
-#: .\templates\customers\supplier_list.html:333
 #: .\templates\customers\supplier_list.html:388
 #: .\templates\customers\supplier_list.html:623
 #: .\templates\customers\supplier_list.html:655
@@ -10790,7 +10768,6 @@ msgstr "لم يتم إضافة خصوم بعد"
 #: .\templates\sales\pos.html:1637 .\templates\sales\return_list.html:52
 #: .\templates\sales\return_list.html:360
 #: .\templates\settings\currency_add.html:14
-#: .\templates\settings\currency_list.html:161
 msgid "New"
 msgstr "جديد"
 
@@ -10833,13 +10810,13 @@ msgid "Deduction Description"
 msgstr "وصف الخصم"
 
 #: .\templates\assets_liabilities\dashboard.html:383
+#: .\templates\journal\account_list.html:42
 #: .\templates\journal\entries_by_type.html:77
 #: .\templates\journal\entry_list.html:48
 #: .\templates\products\category_list.html:287
 #: .\templates\reports\trial_balance.html:33
 #: .\templates\revenues_expenses\entry_list.html:42
 #: .\templates\revenues_expenses\recurring_list.html:153
-#: .\templates\journal\account_list.html:42
 msgid "All Types"
 msgstr "جميع الأنواع"
 
@@ -11579,6 +11556,9 @@ msgstr "رمز البنك الدولي (اختياري)"
 #: .\templates\cashboxes\cashbox_list.html:251
 #: .\templates\settings\company.html:116
 #: .\templates\settings\company_fixed.html:115
+#: .\templates\settings\currency_list.html:36
+#: .\templates\settings\currency_list.html:71
+#: .\templates\settings\currency_list.html:129
 msgid "Base Currency"
 msgstr "العملة الأساسية"
 
@@ -11725,7 +11705,6 @@ msgstr "إلى"
 #: .\templates\banks\bank_cashbox_transfer_add.html:164
 #: .\templates\banks\cashbox_transfer_detail.html:126
 #: .\templates\customers\edit.html:117
-#: .\templates\customers\supplier_list.html:203
 #: .\templates\customers\transactions.html:306
 #: .\templates\customers\transactions.html:425
 #: .\templates\customers\transactions.html:911
@@ -11814,8 +11793,7 @@ msgstr "قائمة"
 #: .\templates\sales\invoice_add.html:1743
 #: .\templates\sales\invoice_add.html:1774
 #: .\templates\sales\return_detail.html:105
-#: .\templates\settings\currency_list.html:117
-#: .\templates\settings\currency_list.html:122
+#: .\templates\settings\currency_list.html:118
 msgid "Information"
 msgstr "معلومات"
 
@@ -11945,8 +11923,7 @@ msgstr "محدد"
 #: .\templates\revenues_expenses\recurring_edit.html:185
 #: .\templates\sales\invoice_list.html:128
 #: .\templates\settings\company_fixed.html:141
-#: .\templates\settings\currency_list.html:20 .\templates\settings\index.html:4
-#: .\templates\settings\index.html:65
+#: .\templates\settings\index.html:4 .\templates\settings\index.html:65
 #: .\templates\settings\jofotara_settings.html:170
 msgid "Settings"
 msgstr ""
@@ -12071,7 +12048,6 @@ msgid "Total Accounts"
 msgstr "إجمالي الحسابات"
 
 #: .\templates\banks\account_list.html:295
-#: .\templates\journal\account_list.html:37
 msgid "Search in accounts..."
 msgstr "البحث في الحسابات..."
 
@@ -12386,7 +12362,7 @@ msgstr "المعاملات"
 #: .\templates\banks\account_transactions.html:122
 #: .\templates\customers\delete.html:260
 msgid "Delete Account Permanently"
-msgstr "حذف الحساب نهائياً"
+msgstr "حذف القيد نهائياً"
 
 #: .\templates\banks\account_transactions.html:141
 msgid "Account Deletion Mode"
@@ -12952,7 +12928,8 @@ msgstr "تنبيه هام:"
 msgid ""
 "Make sure the transfer data is correct before saving. Account balances will "
 "be updated automatically."
-msgstr "تأكد من صحة بيانات التحويل قبل الحفظ. سيتم تحديث أرصدة الحسابات تلقائيًا."
+msgstr ""
+"تأكد من صحة بيانات التحويل قبل الحفظ. سيتم تحديث أرصدة الحسابات تلقائيًا."
 
 #: .\templates\banks\transfer_add.html:169
 msgid "Bank Transfer Information"
@@ -12968,10 +12945,9 @@ msgid "Transfer Preview"
 msgstr "معاينة التحويل"
 
 #: .\templates\banks\transfer_add.html:180
-#: .\templates\banks\transfer_add.html:261
-#: .\templates\banks\transfer_add.html:422
-#: .\templates\banks\transfer_edit.html:249
-msgid "Select Sender Account"
+#, fuzzy
+#| msgid "Select Sender Account"
+msgid "Select sender account"
 msgstr "حدد حساب المرسل"
 
 #: .\templates\banks\transfer_add.html:190
@@ -13012,6 +12988,12 @@ msgstr "تحويل التحويل"
 #: .\templates\banks\transfer_edit.html:229
 msgid "Transfer execution date"
 msgstr "تاريخ تنفيذ التحويل"
+
+#: .\templates\banks\transfer_add.html:261
+#: .\templates\banks\transfer_add.html:422
+#: .\templates\banks\transfer_edit.html:249
+msgid "Select Sender Account"
+msgstr "حدد حساب المرسل"
 
 #: .\templates\banks\transfer_add.html:268
 #: .\templates\banks\transfer_edit.html:257
@@ -13314,7 +13296,9 @@ msgstr "لا توجد تحويلات بنكية"
 msgid ""
 "Start by adding a new bank transfer between your accounts or between banks "
 "and cashboxes"
-msgstr "ابدأ بإضافة عملية تحويل بنكي جديدة بين حساباتك أو بين البنوك والصناديق النقدية."
+msgstr ""
+"ابدأ بإضافة عملية تحويل بنكي جديدة بين حساباتك أو بين البنوك والصناديق "
+"النقدية."
 
 #: .\templates\banks\transfer_list.html:589
 msgid "Transfer Between Banks"
@@ -13330,10 +13314,6 @@ msgstr "إجمالي الرسوم"
 #: .\templates\sales\return_list.html:96
 msgid "This Month"
 msgstr "هذا الشهر"
-
-#: .\templates\purchases\return_list.html:71
-msgid "Returns This Month"
-msgstr "مرتجعات هذا الشهر"
 
 #: .\templates\banks\transfer_list.html:701
 msgid "Searching..."
@@ -13584,14 +13564,12 @@ msgstr "إغلاق السنة المالية"
 msgid "Sales & Purchases"
 msgstr "المبيعات و المشتريات"
 
-#: .\templates\base.html:998 .\templates\base.html:1254
-#: .\templates\purchases\invoice_add.html:7
+#: .\templates\base.html:998 .\templates\purchases\invoice_add.html:7
 #: .\templates\purchases\invoice_detail.html:307
 msgid "Create Purchase Invoice"
 msgstr "إنشاء فاتورة شراء"
 
-#: .\templates\base.html:1003 .\templates\base.html:1259
-#: .\templates\purchases\return_add.html:11
+#: .\templates\base.html:1003 .\templates\purchases\return_add.html:11
 #: .\templates\purchases\return_add.html:21
 #: .\templates\purchases\return_list.html:23
 msgid "Create Purchase Return"
@@ -13619,10 +13597,6 @@ msgstr "كشف المشتريات"
 #: .\templates\sales\invoice_edit.html:109
 #: .\templates\sales\invoice_edit.html:131
 #: .\templates\sales\sales_statement.html:193
-msgid "sales"
-msgstr "المبيعات"
-
-#: .\templates\sales\invoice_list.html:640
 msgid "Sales"
 msgstr "المبيعات"
 
@@ -13675,6 +13649,12 @@ msgstr "إنشاء العميل/المورد"
 #: .\templates\customers\customer_list.html:220
 msgid "Customers List"
 msgstr "قائمة العملاء"
+
+#: .\templates\base.html:1091 .\templates\base.html:1233
+#: .\templates\customers\supplier_list.html:5
+#: .\templates\customers\supplier_list.html:83
+msgid "Suppliers List"
+msgstr "قائمة الموردين"
 
 #: .\templates\base.html:1094 .\templates\base.html:1236
 msgid "All Customers & Suppliers"
@@ -13741,6 +13721,18 @@ msgstr "عرض تقرير أرصدة المخزون"
 #| msgid "System Alert"
 msgid "Stock Alerts"
 msgstr "تنبيه النظام"
+
+#: .\templates\base.html:1254
+#, fuzzy
+#| msgid "Purchase Invoice"
+msgid "Add Purchase Invoice"
+msgstr "فاتورة شراء"
+
+#: .\templates\base.html:1259
+#, fuzzy
+#| msgid "Purchase Return"
+msgid "Add Purchase Return"
+msgstr "إرجاع شراء"
 
 #: .\templates\base.html:1496 .\templates\hr\attendance_list.html:58
 #: .\templates\provisions\provision_list.html:22
@@ -13887,10 +13879,8 @@ msgid "Print Design"
 msgstr "تاريخ الطباعة:"
 
 #: .\templates\base.html:1643 .\templates\settings\jofotara_settings.html:5
-#, fuzzy
-#| msgid "Company Settings"
 msgid "JoFotara Settings"
-msgstr "إعدادات الشركة"
+msgstr "إعدادات JoFotara"
 
 #: .\templates\base.html:1652 .\templates\settings\index.html:114
 #, fuzzy
@@ -14013,7 +14003,7 @@ msgstr "الصندوق"
 #: .\templates\cashboxes\cashbox_detail.html:251
 #: .\templates\cashboxes\cashbox_list.html:225
 msgid "Modifying the balance will create an adjustment entry"
-msgstr ""
+msgstr "سيؤدي تعديل الرصيد إلى إنشاء قيد تسوية."
 
 #: .\templates\cashboxes\cashbox_detail.html:259
 #: .\templates\cashboxes\cashbox_list.html:234
@@ -14125,10 +14115,8 @@ msgstr "إجمالي الأرصدة"
 
 #: .\templates\cashboxes\cashbox_list.html:561
 #: .\templates\cashboxes\transfer_list.html:225
-#, fuzzy
-#| msgid "Transfer Type"
 msgid "Select Transfer Type"
-msgstr "نوع التحويل"
+msgstr "إختر نوع التحويل"
 
 #: .\templates\cashboxes\cashbox_list.html:607
 #: .\templates\cashboxes\cashbox_list.html:631
@@ -14201,21 +14189,15 @@ msgid "No related transactions found"
 msgstr "لا توجد معاملات"
 
 #: .\templates\cashboxes\transfer_list.html:59
-#, fuzzy
-#| msgid "Cash Boxes"
 msgid "Cash Box List"
-msgstr "الصناديق النقدية"
+msgstr "قائمة الصناديق"
 
 #: .\templates\cashboxes\transfer_list.html:62
 #: .\templates\cashboxes\transfer_list.html:193
-#, fuzzy
-#| msgid "Transfer"
 msgid "New Transfer"
-msgstr "تحويل"
+msgstr " تحويل جديد"
 
 #: .\templates\cashboxes\transfer_list.html:191
-#, fuzzy
-#| msgid "No Transfers Found"
 msgid "No transfers found"
 msgstr "لم يتم العثور على أي تحويلات"
 
@@ -14613,9 +14595,9 @@ msgstr "نوع الإشعار"
 #: .\templates\hr\leave_request_list.html:107
 #: .\templates\hr\payroll_period_list.html:113
 #: .\templates\hr\position_list.html:96
+#: .\templates\purchases\debitnote_list.html:103
 #: .\templates\sales\creditnote_list.html:124
 #: .\templates\sales\creditnote_report.html:129
-#: .\templates\purchases\debitnote_list.html:103
 msgid "Page"
 msgstr "صفحة"
 
@@ -14938,7 +14920,7 @@ msgstr "جاري الإرسال..."
 #: .\templates\customers\customer_list.html:404
 #: .\templates\customers\list.html:228
 msgid "Add New Customer"
-msgstr "إضافة فئة جديدة"
+msgstr "إضافة عميل جديد"
 
 #: .\templates\customers\customer_list.html:127
 #: .\templates\customers\list.html:144
@@ -14976,12 +14958,6 @@ msgstr "الميزان التجريبي"
 #: .\templates\customers\customer_list.html:169
 msgid "Filter Customers"
 msgstr "فلترة العملاء"
-
-#: .\templates\sales\creditnote_detail.html:59
-#: .\templates\sales\invoice_add.html:1708
-#: .\templates\sales\invoice_detail.html:132
-msgid "Customer Name"
-msgstr "إسم العميل"
 
 #: .\templates\customers\customer_list.html:177
 msgid "Customer Name or Phone"
@@ -15034,7 +15010,9 @@ msgid ""
 "This action will delete the account and all associated data permanently and "
 "cannot be undone. Please confirm your intention to proceed before confirming "
 "the deletion."
-msgstr "سيؤدي هذا الإجراء إلى حذف الحساب وجميع البيانات المرتبطة به نهائيًا ولا يمكن التراجع عنه. يرجى تأكيد رغبتك في المتابعة قبل تأكيد الحذف."
+msgstr ""
+"سيؤدي هذا الإجراء إلى حذف الحساب وجميع البيانات المرتبطة به نهائيًا ولا يمكن "
+"التراجع عنه. يرجى تأكيد رغبتك في المتابعة قبل تأكيد الحذف."
 
 #: .\templates\customers\delete.html:119
 msgid "Account Data to be Deleted"
@@ -15085,7 +15063,9 @@ msgstr "يجب عليك كتابة كلمة \"DELETE\" تمامًا للتأكي
 msgid ""
 "Are you absolutely sure you want to delete this account?\\n\\nThis action "
 "cannot be undone!"
-msgstr "هل أنت متأكد تمامًا من رغبتك في حذف هذا الحساب؟ لا يمكن التراجع عن هذا الإجراء!"
+msgstr ""
+"هل أنت متأكد تمامًا من رغبتك في حذف هذا الحساب؟ لا يمكن التراجع عن هذا "
+"الإجراء!"
 
 #: .\templates\customers\delete.html:248
 #: .\templates\inventory\warehouse_delete.html:179
@@ -15256,85 +15236,65 @@ msgid "Please select the adjustment type for IFRS compliance."
 msgstr ""
 
 #: .\templates\customers\list.html:112
-#, fuzzy
-#| msgid "Customers and Suppliers"
 msgid "Customer and Supplier Management System"
-msgstr "العملاء والموردين"
-
-#: .\templates\customers\supplier_list.html:203
-msgid "List of Suppliers"
-msgstr "قائمة الموردين"
+msgstr "نظام إدارة العملاء والموردين"
 
 #: .\templates\customers\list.html:114
 msgid ""
 "Comprehensive management of all your customers and suppliers in one place"
-msgstr ""
+msgstr "إدارة شاملة لجميع عملائك ومورديك في مكان واحد."
 
 #: .\templates\customers\list.html:128
 msgid "Welcome to the Customer and Supplier Management System"
-msgstr ""
+msgstr "مرحباً بكم في نظام إدارة العملاء والموردين"
 
 #: .\templates\customers\list.html:130
 msgid ""
 "From here you can manage all your customers and suppliers, track their "
 "balances, and generate financial reports. Use the buttons below for quick "
 "access to different features."
-msgstr ""
+msgstr "من هنا يمكنك إدارة جميع عملائك ومورديك، وتتبع أرصدتهم، وإنشاء التقارير المالية. استخدم الأزرار أدناه للوصول السريع إلى الميزات المختلفة."
 
 #: .\templates\customers\list.html:150
 #: .\templates\customers\supplier_list.html:110
-#, fuzzy
-#| msgid "Supplier"
 msgid "Total Suppliers"
-msgstr "المورد"
+msgstr "إجمالي الموردين"
 
 #: .\templates\customers\list.html:156
-#, fuzzy
-#| msgid "Credit Balance"
 msgid "Customer Credit Balances"
-msgstr "الرصيد الدائن"
+msgstr "أرصدة الدائنة للعملاء"
 
 #: .\templates\customers\list.html:162
-#, fuzzy
-#| msgid "Customers List"
 msgid "Customer Debt"
-msgstr "قائمة العملاء"
+msgstr "ديون العملاء"
 
 #: .\templates\customers\list.html:168
-#, fuzzy
-#| msgid "Credit Balance"
 msgid "Supplier Credit Balances"
-msgstr "الرصيد الدائن"
+msgstr "الرصيد الدائن للموردون"
 
 #: .\templates\customers\list.html:174
-#, fuzzy
-#| msgid "Supplier"
 msgid "Supplier Debt"
-msgstr "المورد"
+msgstr "ديون الموردين"
 
 #: .\templates\customers\list.html:187
-#, fuzzy
-#| msgid "Customer Statement"
 msgid "Customer Management"
-msgstr "كشف حساب العميل"
+msgstr "إدارة العملاء"
 
 #: .\templates\customers\list.html:189
 msgid ""
 "View and manage all your customers, track their balances, and add new "
 "customers. You can filter customers by status and balance."
-msgstr ""
+msgstr "يمكنك عرض جميع عملائك وإدارتهم، وتتبع أرصدتهم، وإضافة عملاء جدد. يمكنك تصفية العملاء حسب الحالة والرصيد."
 
 #: .\templates\customers\list.html:204
-#, fuzzy
-#| msgid "Supplier Statement"
 msgid "Supplier Management"
-msgstr "كشف حساب مورد"
+msgstr "إدارة الموردين"
 
 #: .\templates\customers\list.html:206
 msgid ""
 "View and manage all your suppliers, track their balances, and add new "
 "suppliers. You can filter suppliers by status and balance."
-msgstr ""
+msgstr "يمكنك عرض جميع مورديك وإدارتهم، وتتبع أرصدتهم، وإضافة موردين جدد. يمكنك تصفية الموردين حسب الحالة والرصيد."
 
 #: .\templates\customers\list.html:229
 msgid "Add a new customer to the database"
@@ -15346,7 +15306,7 @@ msgstr "إضافة مورد جديد"
 
 #: .\templates\customers\list.html:240
 msgid "Add a new supplier to the database"
-msgstr ""
+msgstr "أضف موردًا جديدًا إلى قاعدة البيانات."
 
 #: .\templates\customers\list.html:252
 msgid "Customer Balances Report"
@@ -15354,17 +15314,15 @@ msgstr "تقرير أرصدة العملاء"
 
 #: .\templates\customers\list.html:253
 msgid "View a comprehensive report of customer balances"
-msgstr ""
+msgstr "اطلع على تقرير شامل لأرصدة العملاء."
 
 #: .\templates\customers\list.html:263
-#, fuzzy
-#| msgid "Inventory Balances Report"
 msgid "Supplier Balances Report"
-msgstr "تقرير أرصدة المخزون"
+msgstr "تقرير أرصدة الموردين"
 
 #: .\templates\customers\list.html:264
 msgid "View a comprehensive report of supplier balances"
-msgstr ""
+msgstr "عرض تقرير شامل عن أرصدة الموردين."
 
 #: .\templates\customers\list.html:279
 #, fuzzy
@@ -15373,45 +15331,23 @@ msgid "Recent Activities"
 msgstr "الخصوم الحديثة"
 
 #: .\templates\customers\list.html:287
-#, fuzzy
-#| msgid "Recent Liabilities"
 msgid "No recent activities"
-msgstr "الخصوم الحديثة"
+msgstr "لا يوجد أنشطة حديثة"
 
 #: .\templates\customers\list.html:288
-#, fuzzy
-#| msgid "Manage financial transactions for customers and suppliers"
 msgid "Recent operations on customers and suppliers will appear here"
-msgstr "إدارة المعاملات المالية للعملاء والموردين"
-
-#: .\templates\customers\supplier_list.html:152
-#: .\templates\customers\supplier_list.html:203
-msgid "Suppliers"
-msgstr "المورد"
-
-#: .\templates\customers\supplier_list.html:83
-#: .\templates\customers\supplier_list.html:5
-#: .\templates\base.html:1091 .\templates\base.html:1233
-msgid "Suppliers List"
-msgstr "قائمة الموردين"
-
-#: .\templates\customers\supplier_list.html:332
-msgid "No Supplier Currently"
-msgstr "لا يوجد مورد حاليًا"
-
-#: .\templates\customers\supplier_list.html:333
-msgid "You can Add Supplier New from No by clicking on the button Add Supplier New"
-msgstr "يمكنك إضافة مورد جديد من خلال النقر على زر إضافة مورد جديد."
-
-#: .\templates\customers\supplier_list.html:336
-msgid "Add First Supplier"
-msgstr "إضافة مورد جديد"
+msgstr "ستظهر هنا أحدث العمليات المتعلقة بالعملاء والموردين."
 
 #: .\templates\customers\supplier_list.html:116
 #: .\templates\customers\supplier_list.html:167
 #: .\templates\purchases\invoice_list.html:235
 msgid "Active Suppliers"
 msgstr "الموردين النشطين"
+
+#: .\templates\customers\supplier_list.html:152
+#: .\templates\customers\supplier_list.html:203
+msgid "Suppliers"
+msgstr "المورد"
 
 #: .\templates\customers\supplier_list.html:160
 msgid "Supplier Name or Phone"
@@ -15425,6 +15361,10 @@ msgstr "جميع الموردين"
 msgid "Inactive Suppliers"
 msgstr "الموردين غير النشطين"
 
+#: .\templates\customers\supplier_list.html:203
+msgid "List of Suppliers"
+msgstr "قائمة الموردين"
+
 #: .\templates\customers\supplier_list.html:247
 #: .\templates\inventory\warehouse_delete.html:101
 msgid "Not"
@@ -15437,24 +15377,17 @@ msgid "Account statement"
 msgstr "كشف الحساب"
 
 #: .\templates\customers\supplier_list.html:332
-#, fuzzy
-#| msgid "Current"
-msgid "currently"
-msgstr "حالي"
+msgid "No Supplier Currently"
+msgstr "لا يوجد مورد حاليًا"
 
 #: .\templates\customers\supplier_list.html:333
-msgid "You can"
-msgstr ""
-
-#: .\templates\customers\supplier_list.html:333
-msgid "by clicking on the button"
-msgstr ""
+msgid ""
+"You can Add Supplier New from No by clicking on the button Add Supplier New"
+msgstr "يمكنك إضافة مورد جديد من خلال النقر على زر إضافة مورد جديد."
 
 #: .\templates\customers\supplier_list.html:336
-#, fuzzy
-#| msgid "First"
-msgid "first"
-msgstr "الأول"
+msgid "Add First Supplier"
+msgstr "إضافة مورد جديد"
 
 #: .\templates\customers\supplier_list.html:349
 msgid "Pages of"
@@ -18825,7 +18758,7 @@ msgstr "فقدان جميع السجلات الواردة والصادرة."
 msgid "Loss of all transfer and adjustment records"
 msgstr "فقدان جميع سجلات التحويل والتسوية."
 
-#: .\templates\inventory\movement_bulk_delete.html:70"
+#: .\templates\inventory\movement_bulk_delete.html:70
 msgid "This data cannot be recovered"
 msgstr "لا يمكن استرداد هذه البيانات"
 
@@ -18835,7 +18768,6 @@ msgstr "للمتابعة اكتب"
 
 #: .\templates\inventory\movement_bulk_delete.html:79
 #: .\templates\inventory\warehouse_delete.html:169
-#: .\templates\customers\delete.html:236
 msgid "in the field below"
 msgstr "في الحقل أدناه"
 
@@ -19219,10 +19151,8 @@ msgid "No Transfers Between Warehouses Have Been Recorded Yet."
 msgstr "لم يتم تسجيل أي عمليات نقل بين المستودعات حتى الآن."
 
 #: .\templates\inventory\warehouse_add.html:5
-#, fuzzy
-#| msgid "Warehouse"
 msgid "Add Warehouse"
-msgstr "المستودع"
+msgstr "إضافة المستودع"
 
 #: .\templates\inventory\warehouse_add.html:14
 #: .\templates\products\product_list.html:797
@@ -19909,10 +19839,10 @@ msgstr "لم يتم العثور على معاملات مالية"
 msgid "No entries found for type"
 msgstr ""
 
-#, fuzzy
-#| msgid "No Sales Invoices Found"
-msgid "No journal entries found"
-msgstr "لم يتم العثور على فواتير مبيعات"
+#: .\templates\journal\entries_by_type.html:218
+#: .\templates\journal\entry_list.html:324
+msgid "No Journal Entries Found"
+msgstr "لم يتم العثور قيود"
 
 #: .\templates\journal\entries_by_type.html:219
 #, fuzzy
@@ -19940,8 +19870,11 @@ msgid "Journal Entry Lines"
 msgstr "أسطر قيد اليومية"
 
 #: .\templates\journal\entry_confirm_delete.html:165
-msgid "This action cannot be undone. The journal entry and all its lines will be permanently deleted."
-msgstr "لا يمكن التراجع عن هذا الإجراء. سيتم حذف قيد اليومية وجميع بنوده نهائيًا."
+msgid ""
+"This action cannot be undone. The journal entry and all its lines will be "
+"permanently deleted."
+msgstr ""
+"لا يمكن التراجع عن هذا الإجراء. سيتم حذف قيد اليومية وجميع بنوده نهائيًا."
 
 #: .\templates\journal\entry_confirm_delete.html:169
 msgid "This operation is only available for SuperAdmin users."
@@ -20111,7 +20044,6 @@ msgstr "نوع العملية"
 
 #: .\templates\journal\entry_list.html:88
 #: .\templates\journal\entry_list.html:675
-#: .\templates\journal\entry_list.html:735
 #: .\templates\provisions\provision_detail.html:89
 #: .\templates\provisions\provision_movement_report.html:32
 msgid "Total Entries"
@@ -20128,11 +20060,6 @@ msgstr "القيود اليومية"
 #| msgid "Edit Account"
 msgid "Edit Entry"
 msgstr "تعديل الحساب"
-
-#: .\templates\journal\entry_list.html:324
-#: .\templates\journal\entries_by_type.html:218
-msgid "No Journal Entries Found"
-msgstr "لم يتم العثور قيود"
 
 #: .\templates\journal\entry_list.html:325
 msgid "No journal entries were found based on the specified search criteria"
@@ -20691,7 +20618,6 @@ msgid "Example: PROD-001"
 msgstr "مثال: PROD-001"
 
 #: .\templates\products\product_add.html:111
-#: .\templates\products\product_list.html:862
 msgid "For Warranty"
 msgstr "للضمان"
 
@@ -20727,8 +20653,12 @@ msgid "Service Product (Non-countable)"
 msgstr "منتج الخدمة (غير قابل للعد)"
 
 #: .\templates\products\product_add.html:161
-msgid "Service products do not affect inventory Service products do not need quantities"
-msgstr "المنتجات الخدمية لا تؤثر على المخزون، ولا تحتاج المنتجات الخدمية إلى تحديد كميات."
+msgid ""
+"Service products do not affect inventory Service products do not need "
+"quantities"
+msgstr ""
+"المنتجات الخدمية لا تؤثر على المخزون، ولا تحتاج المنتجات الخدمية إلى تحديد "
+"كميات."
 
 #: .\templates\products\product_add.html:171
 #: .\templates\products\product_edit.html:139
@@ -20815,11 +20745,6 @@ msgstr ""
 msgid "Will be calculated automatically in invoices"
 msgstr "سيتم احتسابها تلقائيًا في الفواتير."
 
-#: .\templates\products\product_add.html:263
-#: .\templates\products\product_edit.html:230
-msgid "This section is for countable products only. Service products do not need inventory management."
-msgstr "هذا القسم مخصص للمنتجات القابلة للعد فقط. منتجات الخدمات لا تحتاج إلى إدارة المخزون.."
-
 #: .\templates\products\product_add.html:236
 #: .\templates\products\product_edit.html:203
 #: .\templates\products\product_list.html:961
@@ -20834,6 +20759,15 @@ msgstr "حساب الضرائب"
 #| msgid "Inclusive Tax"
 msgid "Price Including Tax"
 msgstr "ضريبة شاملة"
+
+#: .\templates\products\product_add.html:263
+#: .\templates\products\product_edit.html:230
+msgid ""
+"This section is for countable products only. Service products do not need "
+"inventory management."
+msgstr ""
+"هذا القسم مخصص للمنتجات القابلة للعد فقط. منتجات الخدمات لا تحتاج إلى إدارة "
+"المخزون.."
 
 #: .\templates\products\product_add.html:276
 #: .\templates\products\product_edit.html:255
@@ -21125,6 +21059,7 @@ msgid "Search by name, code, barcode, or serial number"
 msgstr ""
 
 #: .\templates\products\product_list.html:501
+#: .\templates\settings\currency_list.html:65
 #, fuzzy
 #| msgid "Account Active"
 msgid "Not Active"
@@ -21195,6 +21130,12 @@ msgstr ""
 #| msgid "Are you sure you want to delete the backup"
 msgid "Are you sure you want to delete product"
 msgstr "هل أنت متأكد من حذف النسخة الاحتياطية"
+
+#: .\templates\products\product_list.html:862
+#, fuzzy
+#| msgid "For Warranty"
+msgid "for warranty"
+msgstr "للضمان"
 
 #: .\templates\products\product_list.html:973
 msgid "Price including Tax"
@@ -21357,10 +21298,8 @@ msgstr "المعلومات الأساسية"
 
 #: .\templates\provisions\provision_detail.html:44
 #: .\templates\provisions\provision_form.html:47
-#, fuzzy
-#| msgid "Customer"
 msgid "Custom Type"
-msgstr "العميل"
+msgstr "نوع العميل"
 
 #: .\templates\provisions\provision_detail.html:62
 #: .\templates\provisions\provision_form.html:81
@@ -22767,10 +22706,6 @@ msgstr ""
 msgid "Manage all purchase returns"
 msgstr "إدارة جميع مرتجعات المشتريات"
 
-#: .\templates\sales\invoice_list.html:299
-msgid "the list"
-msgstr "القائمة"
-
 #: .\templates\purchases\return_list.html:39
 #: .\templates\sales\return_list.html:64
 msgid "Total Returns"
@@ -22781,9 +22716,9 @@ msgstr "إجمالي المرتجعات"
 msgid "Total Returns Value"
 msgstr "إجمالي قيمة المرتجعات"
 
-#: .\templates\sales\return_list.html:96 .\templates\sales\return_list.html:112
-msgid "Returns"
-msgstr "المرتجعات"
+#: .\templates\purchases\return_list.html:71
+msgid "Returns This Month"
+msgstr "مرتجعات هذا الشهر"
 
 #: .\templates\purchases\return_list.html:89
 msgid "Return number or supplier name"
@@ -22948,16 +22883,12 @@ msgstr "معلومات الشراء"
 #: .\templates\receipts\receipt_add.html:38
 #: .\templates\sales\creditnote_edit.html:25
 #: .\templates\sales\invoice_add.html:290
-#, fuzzy
-#| msgid "Customer"
 msgid "Select Customer"
-msgstr "العميل"
+msgstr "إختر العميل"
 
 #: .\templates\receipts\receipt_add.html:46
-#, fuzzy
-#| msgid "Current Balance"
 msgid "Current Customer Balance"
-msgstr "الرصيد الحالي"
+msgstr "رصيد العميل الحالي"
 
 #: .\templates\receipts\receipt_add.html:53
 #, fuzzy
@@ -23576,8 +23507,9 @@ msgstr "اسم الفئة"
 
 #: .\templates\revenues_expenses\category_create.html:93
 #: .\templates\revenues_expenses\entry_create.html:274
+#: .\templates\settings\currency_list.html:152
 msgid "Tips"
-msgstr ""
+msgstr "نصائح"
 
 #: .\templates\revenues_expenses\category_create.html:95
 msgid "Choose clear and understandable names for categories"
@@ -24383,6 +24315,12 @@ msgstr "معلومات الدائن"
 msgid "Customer Data"
 msgstr "قائمة العملاء"
 
+#: .\templates\sales\creditnote_detail.html:59
+#: .\templates\sales\invoice_add.html:1708
+#: .\templates\sales\invoice_detail.html:132
+msgid "Customer Name"
+msgstr "إسم العميل"
+
 #: .\templates\sales\creditnote_detail.html:63
 #: .\templates\sales\invoice_detail.html:136
 #, fuzzy
@@ -24976,16 +24914,12 @@ msgid "Success: Customer created"
 msgstr ""
 
 #: .\templates\sales\invoice_add.html:1535
-#, fuzzy
-#| msgid "View customer list"
 msgid "Add new customer to list"
-msgstr "عرض قائمة العملاء"
+msgstr "إضافة عميل جديد إلى القائمة"
 
 #: .\templates\sales\invoice_add.html:1540
-#, fuzzy
-#| msgid "Customer Statement"
 msgid "Customer select not found"
-msgstr "كشف حساب العميل"
+msgstr "لم يتم العثور على العميل المختار"
 
 #: .\templates\sales\invoice_add.html:1555
 #, fuzzy
@@ -25222,6 +25156,10 @@ msgstr "فاتورة"
 msgid "Manage All Sales Invoices"
 msgstr "إدارة جميع فواتير المبيعات"
 
+#: .\templates\sales\invoice_list.html:299
+msgid "the list"
+msgstr "القائمة"
+
 #: .\templates\sales\invoice_list.html:398
 #, fuzzy
 #| msgid "Cashboxes"
@@ -25249,6 +25187,10 @@ msgstr "أُرسل إلى JoFotara في"
 #: .\templates\sales\invoice_list.html:579
 msgid "Not sent to JoFotara yet"
 msgstr "لم يتم إرسالها إلى JoFotara بعد"
+
+#: .\templates\sales\invoice_list.html:640
+msgid "sales"
+msgstr "المبيعات"
 
 #: .\templates\sales\invoice_list.html:641
 msgid "Start by creating a new sales invoice"
@@ -25512,6 +25454,10 @@ msgstr "مردود المبيعات"
 msgid "Manage all sales returns"
 msgstr "يمكن عرض مردودات المشتريات"
 
+#: .\templates\sales\return_list.html:96 .\templates\sales\return_list.html:112
+msgid "Returns"
+msgstr "المرتجعات"
+
 #: .\templates\sales\return_list.html:130
 #, fuzzy
 #| msgid "Enter your username"
@@ -25687,6 +25633,7 @@ msgid "Company Information"
 msgstr "معلومات الاتصال"
 
 #: .\templates\settings\company_fixed.html:15
+#: .\templates\settings\currency_list.html:21
 #: .\templates\settings\document_sequences.html:17
 #: .\templates\settings\jofotara_settings.html:225
 #: .\templates\settings\superadmin_management.html:299
@@ -25712,19 +25659,17 @@ msgstr "حذف مطلق (مدير فائق فقط)"
 msgid ""
 "Users will be automatically logged out after this period of inactivity "
 "(5-1440 minutes)"
-msgstr ""
+msgstr "سيتم تسجيل خروجك تلقائيًا بعد هذه الفترة من عدم النشاط (5-1440 دقيقة)."
 
 #: .\templates\settings\company_fixed.html:183
 #: .\templates\settings\superadmin_management.html:270
-#, fuzzy
-#| msgid "Logout on Browser Close"
 msgid "Logout When Browser Closes"
 msgstr "تسجيل الخروج عند إغلاق المتصفح"
 
 #: .\templates\settings\company_fixed.html:186
 #: .\templates\settings\superadmin_management.html:273
 msgid "Users will be logged out when they close the browser"
-msgstr ""
+msgstr "سيتم تسجيل خروج المستخدمين عند إغلاق المتصفح."
 
 #: .\templates\settings\company_fixed.html:196
 #: .\templates\settings\superadmin_management.html:283
@@ -25732,31 +25677,88 @@ msgid ""
 "These security settings affect all users in the system and can only be "
 "modified by super administrators."
 msgstr ""
+"تؤثر إعدادات الأمان هذه على جميع المستخدمين في النظام ولا يمكن تعديلها إلا "
+"من قبل مديري النظام الرئيسيين."
 
 #: .\templates\settings\currency_add.html:6
-#, fuzzy
-#| msgid "Base Currency"
 msgid "Add New Currency"
-msgstr "العملة الأساسية"
+msgstr "أضف عملة جديدة"
 
 #: .\templates\settings\currency_edit.html:6
-#, fuzzy
-#| msgid "Currency"
 msgid "Edit Currency"
-msgstr "العملة"
+msgstr "تعديل العملة"
 
 #: .\templates\settings\currency_list.html:6
+#: .\templates\settings\currency_list.html:14
+#: .\templates\settings\currency_list.html:15
 #: .\templates\settings\superadmin_management.html:48
-#, fuzzy
-#| msgid "Asset Management"
 msgid "Currency Management"
-msgstr "إدارة الأصول"
+msgstr "إدارة العملات"
+
+#: .\templates\settings\currency_list.html:18
+#, fuzzy
+#| msgid "Add New Currency"
+msgid "Add Currency"
+msgstr "أضف عملة جديدة"
+
+#: .\templates\settings\currency_list.html:31
+#, fuzzy
+#| msgid "Currency"
+msgid "Currency Code"
+msgstr "العملة"
+
+#: .\templates\settings\currency_list.html:33
+msgid "Symbol"
+msgstr ""
+
+#: .\templates\settings\currency_list.html:76
+#, fuzzy
+#| msgid "Are you sure you want to delete this asset?"
+msgid "Are you sure you want to set this currency as base currency?"
+msgstr "هل أنت متأكد من أنك تريد حذف هذا الأصل؟"
+
+#: .\templates\settings\currency_list.html:79
+msgid "Set as Base"
+msgstr ""
+
+#: .\templates\settings\currency_list.html:93
+#, fuzzy
+#| msgid "Are you sure you want to delete this asset?"
+msgid "Are you sure you want to delete this currency?"
+msgstr "هل أنت متأكد من أنك تريد حذف هذا الأصل؟"
+
+#: .\templates\settings\currency_list.html:110
+msgid "No currencies found. Add the first currency to get started."
+msgstr "لم يتم العثور على أي عملات. أضف العملة الأولى للبدء."
+
+#: .\templates\settings\currency_list.html:123
+msgid "Currency Information"
+msgstr "معلومات العملة"
+
+#: .\templates\settings\currency_list.html:138
+msgid "Total Currencies"
+msgstr "إجمالي العملات"
+
+#: .\templates\settings\currency_list.html:142
+msgid "Active Currencies"
+msgstr "العملات النشطة"
+
+#: .\templates\settings\currency_list.html:158
+msgid "The base currency is used as a reference for all exchange rates."
+msgstr "العملة الأساسية تُستخدم كمرجع لجميع أسعار الصرف."
+
+#: .\templates\settings\currency_list.html:162
+msgid ""
+"Exchange rates are updated automatically when setting a new base currency."
+msgstr "أسعار الصرف تُحدث تلقائياً عند تعيين عملة أساسية جديدة."
+
+#: .\templates\settings\currency_list.html:166
+msgid "The base currency cannot be deleted."
+msgstr "لا يمكن حذف العملة الأساسية."
 
 #: .\templates\settings\document_print_settings.html:5
-#, fuzzy
-#| msgid "Create Department"
 msgid "Print Design Management"
-msgstr "إنشاء قسم"
+msgstr "إدارة تصميم المطبوعات"
 
 #: .\templates\settings\document_print_settings.html:290
 #: .\templates\settings\print_design.html:5
@@ -26218,8 +26220,6 @@ msgid "Electronic Integration with Income and Sales Tax Department"
 msgstr ""
 
 #: .\templates\settings\jofotara_settings.html:96
-#, fuzzy
-#| msgid "Company Settings"
 msgid "JoFotara System Settings"
 msgstr "إعدادات الشركة"
 
@@ -26626,63 +26626,49 @@ msgid "Document name (English)"
 msgstr "الاسم الأخير (بالإنجليزية)"
 
 #: .\templates\settings\print_design.html:528
-#, fuzzy
-#| msgid "Edit Bank Account"
 msgid "Edit Element"
-msgstr "تعديل الحساب البنكي"
+msgstr "تحرير العنصر"
 
 #: .\templates\settings\superadmin_management.html:6
 #: .\templates\settings\superadmin_management.html:18
 msgid "System Management - Advanced System Settings"
-msgstr ""
+msgstr "إدارة النظام - إعدادات النظام المتقدمة"
 
 #: .\templates\settings\superadmin_management.html:20
 msgid "For Superadmin and Managers Only"
-msgstr ""
+msgstr "للمسؤولين SuperAdmin والمديرين فقط."
 
 #: .\templates\settings\superadmin_management.html:34
-#, fuzzy
-#| msgid "Company Settings"
 msgid "Advanced System Settings"
-msgstr "إعدادات الشركة"
+msgstr "إعدادات النظام المتقدمة"
 
 #: .\templates\settings\superadmin_management.html:54
-#, fuzzy
-#| msgid "Backup & Restore System"
 msgid "Backup and Restore"
 msgstr "نظام النسخ الاحتياطي والاستعادة"
 
 #: .\templates\settings\superadmin_management.html:73
-#, fuzzy
-#| msgid "System Notifications"
 msgid "System Interface Settings"
-msgstr "إشعارات النظام"
+msgstr "إعدادات واجهة النظام"
 
 #: .\templates\settings\superadmin_management.html:79
-#, fuzzy
-#| msgid "System Alert"
 msgid "System Title"
-msgstr "تنبيه النظام"
+msgstr "عنوان النظام"
 
 #: .\templates\settings\superadmin_management.html:87
-#, fuzzy
-#| msgid "System Alert"
 msgid "System Subtitle"
-msgstr "تنبيه النظام"
+msgstr "العنوان الفرعي للنظام"
 
 #: .\templates\settings\superadmin_management.html:90
-#, fuzzy
-#| msgid "Select User (Optional)"
 msgid "System subtitle (optional)"
-msgstr "اختر المستخدم (اختياري)"
+msgstr "عنوان فرعي للنظام (اختياري)"
 
 #: .\templates\settings\superadmin_management.html:95
 msgid "System Logo (Interface)"
-msgstr ""
+msgstr "شعار النظام (الواجهة)"
 
 #: .\templates\settings\superadmin_management.html:98
 msgid "Image will appear in system interface"
-msgstr ""
+msgstr "ستظهر الصورة في واجهة النظام."
 
 #: .\templates\settings\superadmin_management.html:101
 #: .\templates\settings\superadmin_management.html:103
@@ -26692,14 +26678,12 @@ msgid "Current Logo"
 msgstr "حالي"
 
 #: .\templates\settings\superadmin_management.html:110
-#, fuzzy
-#| msgid "Backup Manager"
 msgid "Background Image"
 msgstr "مدير النسخ الاحتياطي"
 
 #: .\templates\settings\superadmin_management.html:113
 msgid "System background image"
-msgstr ""
+msgstr "صورة خلفية النظام"
 
 #: .\templates\settings\superadmin_management.html:116
 #: .\templates\settings\superadmin_management.html:118
@@ -26710,59 +26694,51 @@ msgstr "الرصيد الحالي"
 
 #: .\templates\settings\superadmin_management.html:126
 msgid "Background Opacity"
-msgstr ""
+msgstr "شفافية الخلفية"
 
 #: .\templates\settings\superadmin_management.html:132
 msgid "Background transparency level (0.1 = very transparent, 1.0 = opaque)"
-msgstr ""
+msgstr "مستوى شفافية الخلفية (0.1 = شفاف للغاية، 1.0 = معتم)"
 
 #: .\templates\settings\superadmin_management.html:142
 msgid "Show company information in interface"
-msgstr ""
+msgstr "إظهار معلومات الشركة في الواجهة"
 
 #: .\templates\settings\superadmin_management.html:156
-#, fuzzy
-#| msgid "Company Settings"
 msgid "Color Settings"
-msgstr "إعدادات الشركة"
+msgstr "إعدادات الألوان"
 
 #: .\templates\settings\superadmin_management.html:162
 msgid "Primary Color"
-msgstr ""
+msgstr "اللون الأساسي"
 
 #: .\templates\settings\superadmin_management.html:175
 msgid "Secondary Color"
-msgstr ""
+msgstr "اللون الثانوي"
 
 #: .\templates\settings\superadmin_management.html:188
-#, fuzzy
-#| msgid "Account Code"
 msgid "Accent Color"
-msgstr "كود الحساب"
+msgstr "لون مميز"
 
 #: .\templates\settings\superadmin_management.html:201
 msgid "Color Preview"
-msgstr ""
+msgstr "معاينة اللون"
 
 #: .\templates\settings\superadmin_management.html:205
 msgid "Primary"
-msgstr ""
+msgstr "أساسي"
 
 #: .\templates\settings\superadmin_management.html:209
 msgid "Secondary"
-msgstr ""
+msgstr "ثانوي"
 
 #: .\templates\settings\superadmin_management.html:213
-#, fuzzy
-#| msgid "Accent"
 msgid "Accent"
 msgstr "تمييز"
 
 #: .\templates\settings\superadmin_management.html:295
-#, fuzzy
-#| msgid "Calculating..."
 msgid "Save All Settings"
-msgstr "إعدادات الحساب"
+msgstr "حفظ جميع الإعدادات"
 
 #: .\templates\settings\superadmin_management.html:328
 #, fuzzy
@@ -27175,7 +27151,6 @@ msgstr ""
 
 #: .\templates\users\user_add.html:257
 #, fuzzy
-#| msgid "Quick Actions"
 msgid "Quick Shortcuts:"
 msgstr "الإجراءات السريعة"
 
@@ -28335,6 +28310,24 @@ msgstr ""
 #: .\users\views.py:1619
 msgid "High privileged users are shown."
 msgstr ""
+
+#~ msgid "Capital"
+#~ msgstr "رأس المال"
+
+#, fuzzy
+#~| msgid "Current"
+#~ msgid "currently"
+#~ msgstr "حالي"
+
+#, fuzzy
+#~| msgid "First"
+#~ msgid "first"
+#~ msgstr "الأول"
+
+#, fuzzy
+#~| msgid "No Sales Invoices Found"
+#~ msgid "No journal entries found"
+#~ msgstr "لم يتم العثور على فواتير مبيعات"
 
 #, python-format
 #~ msgid ""

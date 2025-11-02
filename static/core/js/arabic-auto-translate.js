@@ -170,7 +170,7 @@ document.addEventListener('DOMContentLoaded', function() {
         'Document Number Management': 'إدارة أرقام المستندات',
         'System Settings': 'إعدادات النظام',
         'Print Design': 'تصميم الطباعة',
-        'JoFotara Settings': 'إعدادات الجوفطارة',
+        'JoFotara Settings': 'إعدادات JoFotara',
         'Backup': 'النسخ الاحتياطي',
         'Preview': 'معاينة', 
         'Configuration': 'التكوين', 

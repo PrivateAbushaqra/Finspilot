@@ -19,7 +19,11 @@ def update_customer_supplier_balance(sender, instance, created, **kwargs):
                 # دائن - يقلل من رصيد العميل (دفع من العميل)
                 customer_supplier.balance -= instance.amount
             
-            customer_supplier.save()
+            # استخدام flag لتجنب الفحص التلقائي
+            customer_supplier._skip_balance_check = True
+            customer_supplier.save(update_fields=['balance'])
+            if hasattr(customer_supplier, '_skip_balance_check'):
+                delattr(customer_supplier, '_skip_balance_check')
         except Exception as e:
             # تسجيل الخطأ دون إيقاف العملية
             import logging

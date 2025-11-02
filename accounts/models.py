@@ -98,7 +98,9 @@ class AccountTransaction(models.Model):
         super().save(*args, **kwargs)
         
         # تحديث رصيد العميل/المورد
-        self.update_customer_supplier_balance()
+        # تجاهل التحديث إذا كان هناك flag
+        if not getattr(self, '_skip_balance_update', False):
+            self.update_customer_supplier_balance()
 
     def generate_transaction_number(self):
         """توليد رقم الحركة"""
@@ -175,7 +177,7 @@ class AccountTransaction(models.Model):
                     content_type='customer_supplier',
                     object_id=self.customer_supplier.id,
                     description=f'تحديث رصيد {self.customer_supplier.name}: من {old_balance} إلى {new_balance} (بسبب معاملة {self.transaction_number})',
-                    ip_address='system'
+                    ip_address='127.0.0.1'
                 )
 
                 # تحديث رصيد العميل/المورد

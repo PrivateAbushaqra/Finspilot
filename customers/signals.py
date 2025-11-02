@@ -95,22 +95,24 @@ def create_opening_balance_journal_entry(sender, instance, created, **kwargs):
             amount = abs(instance.balance)
 
         # إنشاء المعاملة إذا لم تكن موجودة
-        transaction, created_transaction = AccountTransaction.objects.get_or_create(
+        # استخدام flag لتجنب تحديث الرصيد مرتين
+        transaction = AccountTransaction(
             customer_supplier=instance,
             reference_type='opening_balance',
-            defaults={
-                'transaction_type': 'adjustment',
-                'reference_id': instance.id,
-                'date': timezone.now().date(),
-                'amount': amount,
-                'direction': direction,
-                'description': f'رصيد افتتاحي لـ {instance.name}',
-                'notes': f'تم إنشاء المعاملة تلقائياً عند إنشاء الحساب',
-                'created_by': creator_user,
-                'is_manual_adjustment': False,
-                'adjustment_type': 'capital_contribution'
-            }
+            transaction_type='adjustment',
+            reference_id=instance.id,
+            date=timezone.now().date(),
+            amount=amount,
+            direction=direction,
+            description=f'رصيد افتتاحي لـ {instance.name}',
+            notes=f'تم إنشاء المعاملة تلقائياً عند إنشاء الحساب',
+            created_by=creator_user,
+            is_manual_adjustment=False,
+            adjustment_type='capital_contribution'
         )
+        transaction._skip_balance_update = True
+        transaction.save()
+        created_transaction = True
 
         if created_transaction:
             # تسجيل في سجل الأنشطة
@@ -120,11 +122,14 @@ def create_opening_balance_journal_entry(sender, instance, created, **kwargs):
                 content_type='account_transaction',
                 object_id=transaction.id,
                 description=f'إنشاء معاملة رصيد افتتاحي للعميل/المورد: {instance.name}',
-                ip_address='system'
+                ip_address='127.0.0.1'
             )
 
         # تحديث الرصيد بعد إنشاء المعاملة الافتتاحية
+        # استخدام flag لتجنب الفحص التلقائي
+        instance._skip_balance_check = True
         instance.sync_balance()
+        delattr(instance, '_skip_balance_check')
 
         # الحصول على الحسابات المحاسبية
         customer_account = None
@@ -214,7 +219,7 @@ def create_opening_balance_journal_entry(sender, instance, created, **kwargs):
             content_type='journal_entry',
             object_id=journal_entry.id if journal_entry else 0,
             description=f'إنشاء قيد رصيد افتتاحي للعميل/المورد: {instance.name}',
-            ip_address='system'
+            ip_address='127.0.0.1'
         )
 
     except Exception as e:
@@ -235,7 +240,7 @@ def create_opening_balance_journal_entry(sender, instance, created, **kwargs):
                     content_type='customer_supplier',
                     object_id=instance.id,
                     description=f'خطأ في إنشاء رصيد افتتاحي: {str(e)}',
-                    ip_address='system'
+                    ip_address='127.0.0.1'
                 )
         except:
             pass
@@ -299,6 +304,10 @@ def delete_customer_supplier_account(sender, instance, **kwargs):
 @receiver(pre_save, sender=CustomerSupplier)
 def check_balance_modification(sender, instance, **kwargs):
     """فحص أي تعديل يدوي على الرصيد وإصلاحه"""
+    # تجاهل الفحص إذا كان هناك flag لتجاهل التحديث التلقائي
+    if getattr(instance, '_skip_balance_check', False):
+        return
+        
     if instance.pk:  # إذا كان الكائن موجوداً (تحديث وليس إنشاء)
         try:
             old_instance = CustomerSupplier.objects.get(pk=instance.pk)
@@ -333,14 +342,21 @@ def check_balance_modification(sender, instance, **kwargs):
 @receiver(post_save, sender=CustomerSupplier)
 def validate_balance_integrity(sender, instance, created, **kwargs):
     """التحقق من سلامة الرصيد بعد الحفظ"""
+    # تجاهل الفحص إذا كان هناك flag
+    if getattr(instance, '_skip_balance_check', False):
+        return
+        
     try:
         # فحص سلامة الرصيد
         is_integrity_ok, calculated_balance = instance.check_balance_integrity()
         
         if not is_integrity_ok:
             print(f"🔧 إصلاح عدم تطابق في رصيد {instance.name}")
+            instance._skip_balance_check = True
             instance.balance = calculated_balance
             instance.save(update_fields=['balance'])
+            if hasattr(instance, '_skip_balance_check'):
+                delattr(instance, '_skip_balance_check')
             
     except Exception as e:
         print(f"خطأ في التحقق من سلامة الرصيد: {e}")

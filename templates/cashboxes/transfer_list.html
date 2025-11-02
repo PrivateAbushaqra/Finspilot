@@ -149,6 +149,11 @@ table.dataTable thead th.sorting:after {
                                             <a href="{% url 'cashboxes:transfer_detail' transfer.id %}" class="btn btn-sm btn-info">
                                                 <i class="fas fa-eye"></i>
                                             </a>
+                                            {% if user.is_superuser %}
+                                            <button type="button" class="btn btn-sm btn-danger" onclick="confirmDelete({{ transfer.id }}, '{{ transfer.transfer_number }}')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                            {% endif %}
                                         </td>
                                     </tr>
                                     {% endfor %}
@@ -697,6 +702,29 @@ function checkSequenceAndOpenModal() {
     // فتح الـ modal
     var modal = new bootstrap.Modal(document.getElementById('createTransferModal'));
     modal.show();
+}
+
+// دالة تأكيد الحذف
+function confirmDelete(transferId, transferNumber) {
+    if (confirm('{% trans "هل أنت متأكد من حذف التحويل" %} ' + transferNumber + '?\n\n{% trans "سيتم حذف جميع المعاملات المرتبطة بهذا التحويل وتحديث الأرصدة." %}')) {
+        // إنشاء نموذج وإرساله
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/ar/cashboxes/transfers/' + transferId + '/delete/';
+        
+        // إضافة CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (csrfToken) {
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrfmiddlewaretoken';
+            csrfInput.value = csrfToken.value;
+            form.appendChild(csrfInput);
+        }
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
 }
 </script>
 {% endblock %}
