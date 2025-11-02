@@ -3,7 +3,7 @@
 {% load static %}
 {% load tax_tags %}
 
-{% block title %}{% trans "Product Categories" %}{% endblock %}
+{% block title %}{% trans "Categories List" %}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -171,7 +171,7 @@
                 <div>
                     <h1 class="h3 mb-0 text-gray-800">
                         <i class="fas fa-tags text-primary me-2"></i>
-                        {% trans "Product Categories" %}
+                        {% trans "Categories List" %}
                     </h1>
                     <p class="mb-0 text-muted">{% trans "Manage and Organize Product Categories" %}</p>
                 </div>
@@ -300,10 +300,15 @@
                         <h5 class="mb-0">
                             <i class="fas fa-list me-2"></i>
                             {% trans "Categories List" %}
+                            {% if filtered_count is not None %}
+                                <span class="badge bg-info ms-2">{{ filtered_count }} {% trans "category" %}</span>
+                            {% else %}
+                                <span class="badge bg-info ms-2">{{ categories.count }} {% trans "category" %}</span>
+                            {% endif %}
                         </h5>
                         <button type="button" onclick="printPage()" class="btn btn-warning btn-sm">
                             <i class="fas fa-print me-1"></i>
-                            {% trans "Print Complete Report" %}
+                            {% trans "Print Report" %}
                         </button>
                     </div>
                 </div>

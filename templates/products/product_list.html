@@ -747,7 +747,7 @@
                         <div class="empty-state">
                             <i class="fas fa-box"></i>
                             <h4>{% trans "No products found" %}</h4>
-                            <p>{% trans "No products have been created yet. Click" %} "{% trans "Create New Product" %}" {% trans "to start creating products" %}.</p>
+                            <p>{% trans "No products have been created yet. Click Create New Product to start creating products" %}.</p>
                             <a href="{% url 'products:product_add' %}" class="btn btn-primary">
                                 <i class="fas fa-plus me-2"></i>
                                 {% trans "Create New Product" %}
@@ -1763,7 +1763,7 @@ function exportToExcel() {
     html += 'th, td { border: 1px solid #000; padding: 8px; text-align: right; }';
     html += 'th { background-color: #4472C4; color: white; font-weight: bold; }';
     html += '</style></head><body>';
-    html += '<h2>{% trans "قائمة المنتجات" %}</h2>';
+    html += '<h2>{% trans "Product List" %}</h2>';
     html += '<p>{% trans "تاريخ التصدير" %}: ' + new Date().toLocaleString('ar-EG') + '</p>';
     
     // Get table headers

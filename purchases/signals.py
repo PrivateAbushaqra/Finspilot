@@ -82,7 +82,7 @@ def create_journal_entry_for_purchase_invoice(sender, instance, created, **kwarg
 
 @receiver(post_save, sender=PurchaseInvoice)
 def create_supplier_account_transaction(sender, instance, created, **kwargs):
-    """إنشاء معاملة حساب المورد تلقائياً"""
+    """إنشاء أو تحديث معاملة حساب المورد تلقائياً - متوافق مع IFRS"""
     # 🔧 تعطيل السيجنال أثناء عملية استعادة النسخة الاحتياطية
     try:
         try:
@@ -99,14 +99,23 @@ def create_supplier_account_transaction(sender, instance, created, **kwargs):
             from accounts.models import AccountTransaction
             import uuid
             
-            # التحقق من عدم وجود معاملة مسبقاً
+            # البحث عن معاملة موجودة
             existing_transaction = AccountTransaction.objects.filter(
                 reference_type='purchase_invoice',
                 reference_id=instance.id
             ).first()
             
-            # إنشاء المعاملة فقط إذا لم تكن موجودة من قبل
-            if not existing_transaction:
+            if existing_transaction:
+                # تحديث المعاملة الموجودة (IFRS: تعديل التقديرات المحاسبية)
+                existing_transaction.date = instance.date
+                existing_transaction.customer_supplier = instance.supplier
+                existing_transaction.amount = instance.total_amount
+                existing_transaction.description = f'فاتورة مشتريات رقم {instance.invoice_number}'
+                existing_transaction.notes = instance.notes or ''
+                existing_transaction.save()
+                print(f"✓ تم تحديث معاملة حساب المورد للفاتورة {instance.invoice_number}")
+            else:
+                # إنشاء معاملة جديدة
                 transaction_number = f"PT-{uuid.uuid4().hex[:8].upper()}"
                 AccountTransaction.objects.create(
                     transaction_number=transaction_number,
@@ -121,8 +130,11 @@ def create_supplier_account_transaction(sender, instance, created, **kwargs):
                     notes=instance.notes or '',
                     created_by=instance.created_by
                 )
+                print(f"✓ تم إنشاء معاملة حساب المورد للفاتورة {instance.invoice_number}")
         except Exception as e:
-            print(f"خطأ في إنشاء معاملة حساب المورد للفاتورة {instance.invoice_number}: {e}")
+            print(f"✗ خطأ في إنشاء/تحديث معاملة حساب المورد للفاتورة {instance.invoice_number}: {e}")
+            import traceback
+            traceback.print_exc()
     
     # التعامل مع المدفوعات النقدية والشيكات والتحويلات
     if instance.payment_type == 'cash' and instance.payment_method and instance.items.count() > 0 and instance.total_amount > 0:
@@ -132,16 +144,47 @@ def create_supplier_account_transaction(sender, instance, created, **kwargs):
             from banks.models import BankTransaction
             import uuid
             
-            # التحقق من عدم وجود معاملات مسبقة
+            # البحث عن معاملة دفع موجودة
             existing_transaction = AccountTransaction.objects.filter(
-                reference_type='purchase_invoice_payment',
+                reference_type='purchase_payment',
                 reference_id=instance.id
             ).first()
             
-            if not existing_transaction:
+            if existing_transaction:
+                # تحديث المعاملة الموجودة
+                existing_transaction.date = instance.date
+                existing_transaction.customer_supplier = instance.supplier
+                existing_transaction.amount = instance.total_amount
+                existing_transaction.description = f'دفع فاتورة مشتريات رقم {instance.invoice_number}'
+                existing_transaction.notes = instance.notes or ''
+                existing_transaction.save()
+                print(f"✓ تم تحديث معاملة دفع المورد للفاتورة {instance.invoice_number}")
+                
+                # تحديث معاملات الصندوق/البنك
+                if instance.payment_method == 'cash' and instance.cashbox:
+                    cashbox_trans = CashboxTransaction.objects.filter(
+                        description__icontains=f'فاتورة مشتريات رقم {instance.invoice_number}'
+                    ).first()
+                    if cashbox_trans:
+                        cashbox_trans.cashbox = instance.cashbox
+                        cashbox_trans.date = instance.date
+                        cashbox_trans.amount = instance.total_amount
+                        cashbox_trans.save()
+                elif instance.payment_method in ['check', 'transfer'] and instance.bank_account:
+                    bank_trans = BankTransaction.objects.filter(
+                        description__icontains=f'فاتورة مشتريات رقم {instance.invoice_number}'
+                    ).first()
+                    if bank_trans:
+                        bank_trans.bank = instance.bank_account
+                        bank_trans.date = instance.date
+                        bank_trans.amount = instance.total_amount
+                        bank_trans.reference_number = instance.check_number if instance.payment_method == 'check' else f'PI-{instance.invoice_number}'
+                        bank_trans.save()
+            else:
+                # إنشاء معاملات جديدة
                 transaction_number = f"PP-{uuid.uuid4().hex[:8].upper()}"
                 
-                # إنشاء معاملة حساب المورد (دائن - نحن ندفع للمورد)
+                # إنشاء معاملة حساب المورد (مدين - نحن ندفع للمورد)
                 AccountTransaction.objects.create(
                     transaction_number=transaction_number,
                     date=instance.date,
@@ -170,7 +213,7 @@ def create_supplier_account_transaction(sender, instance, created, **kwargs):
                 elif instance.payment_method in ['check', 'transfer'] and instance.bank_account:
                     # معاملة الحساب البنكي
                     transaction_type = 'check' if instance.payment_method == 'check' else 'transfer'
-                # إنشاء معاملة الحساب البنكي
+                    # إنشاء معاملة الحساب البنكي
                     BankTransaction.objects.create(
                         bank=instance.bank_account,
                         transaction_type='withdrawal',
@@ -180,6 +223,7 @@ def create_supplier_account_transaction(sender, instance, created, **kwargs):
                         date=instance.date,
                         created_by=instance.created_by
                     )
+                print(f"✓ تم إنشاء معاملات دفع المورد للفاتورة {instance.invoice_number}")
         except Exception as e:
             print(f"خطأ في إنشاء معاملات الدفع للفاتورة {instance.invoice_number}: {e}")
             import traceback
@@ -276,34 +320,52 @@ def update_inventory_on_purchase_invoice(sender, instance, created, **kwargs):
 @receiver(post_save, sender=PurchaseReturn)
 def create_journal_entry_for_purchase_return(sender, instance, created, **kwargs):
     """إنشاء القيد المحاسبي تلقائياً عند إنشاء أو تحديث مردود مشتريات"""
-    try:
-        # 🔧 تعطيل السيجنال أثناء عملية استعادة النسخة الاحتياطية
+    def _create_entry():
         try:
-            from backup.restore_context import is_restoring
-            if is_restoring():
-                return
-        except ImportError:
-            pass
-        
-        from journal.models import JournalEntry
-        from journal.services import JournalService
-        
-        # التحقق من عدم وجود قيد محاسبي مسبقاً
-        existing_entry = JournalEntry.objects.filter(
-            reference_type='purchase_return',
-            reference_id=instance.id
-        ).first()
-        
-        # إنشاء القيد فقط إذا لم يكن موجوداً من قبل
-        if not existing_entry:
+            # 🔧 تعطيل السيجنال أثناء عملية استعادة النسخة الاحتياطية
+            try:
+                from backup.restore_context import is_restoring
+                if is_restoring():
+                    return
+            except ImportError:
+                pass
+            
+            from journal.models import JournalEntry
+            from journal.services import JournalService
+            
+            # التحقق من وجود قيد محاسبي سابق
+            existing_entry = JournalEntry.objects.filter(
+                reference_type='purchase_return',
+                reference_id=instance.id
+            ).first()
+            
+            # حذف القيد القديم إذا كان موجوداً وإنشاء قيد جديد
+            if existing_entry:
+                existing_entry.delete()
+                print(f"✓ تم حذف القيد المحاسبي القديم لمردود المشتريات {instance.return_number}")
+            
+            # إنشاء قيد جديد دائماً
             JournalService.create_purchase_return_entry(instance, instance.created_by)
-    except Exception as e:
-        print(f"خطأ في إنشاء القيد المحاسبي لمردود المشتريات {instance.return_number}: {e}")
+            print(f"✓ تم {'إنشاء' if not existing_entry else 'تحديث'} القيد المحاسبي لمردود المشتريات {instance.return_number}")
+        except Exception as e:
+            print(f"✗ خطأ في إنشاء القيد المحاسبي لمردود المشتريات {instance.return_number}: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    # استخدام transaction.on_commit لتجنب الاستدعاء المتكرر
+    import threading
+    if not hasattr(threading.current_thread(), '_purchase_return_signal_called'):
+        threading.current_thread()._purchase_return_signal_called = set()
+    
+    signal_key = f"purchase_return_{instance.id}"
+    if signal_key not in threading.current_thread()._purchase_return_signal_called:
+        threading.current_thread()._purchase_return_signal_called.add(signal_key)
+        transaction.on_commit(_create_entry)
 
 
 @receiver(post_save, sender=PurchaseReturn)
 def create_supplier_account_transaction_for_return(sender, instance, created, **kwargs):
-    """إنشاء معاملة حساب المورد للمردود تلقائياً"""
+    """إنشاء أو تحديث معاملة حساب المورد للمردود تلقائياً - متوافق مع IFRS"""
     # 🔧 تعطيل السيجنال أثناء عملية استعادة النسخة الاحتياطية
     try:
         try:
@@ -317,19 +379,56 @@ def create_supplier_account_transaction_for_return(sender, instance, created, **
     
     try:
         from accounts.models import AccountTransaction
-        from accounts.services import create_purchase_return_transaction
+        import uuid
         
-        # التحقق من عدم وجود معاملة مسبقاً
+        # التحقق من وجود معاملة سابقة
         existing_transaction = AccountTransaction.objects.filter(
             reference_type='purchase_return',
             reference_id=instance.id
         ).first()
         
-        # إنشاء المعاملة فقط إذا لم تكن موجودة من قبل
-        if not existing_transaction:
-            create_purchase_return_transaction(instance, instance.created_by)
+        # تحديد الاتجاه والوصف بناءً على نوع الفاتورة الأصلية
+        original_invoice = instance.original_invoice
+        if original_invoice and original_invoice.payment_type == 'credit':
+            # الفاتورة الأصلية ذمم -> المردود يقلل الدين للمورد (مدين)
+            direction = 'debit'
+            description = f'مردود مشتريات ذمم رقم {instance.return_number}'
+        else:
+            # الفاتورة الأصلية نقدي -> المردود يقلل الرصيد (دائن)
+            direction = 'credit'
+            description = f'مردود مشتريات نقدي رقم {instance.return_number}'
+        
+        if existing_transaction:
+            # تحديث المعاملة الموجودة (IFRS: تعديل التقديرات المحاسبية)
+            existing_transaction.date = instance.date
+            existing_transaction.customer_supplier = instance.supplier
+            existing_transaction.amount = instance.total_amount
+            existing_transaction.direction = direction
+            existing_transaction.description = description
+            existing_transaction.notes = instance.notes or ''
+            existing_transaction.save()
+            print(f"✓ تم تحديث معاملة حساب المورد لمردود المشتريات {instance.return_number}")
+        else:
+            # إنشاء معاملة جديدة
+            transaction_number = f"PRET-{uuid.uuid4().hex[:8].upper()}"
+            AccountTransaction.objects.create(
+                transaction_number=transaction_number,
+                date=instance.date,
+                customer_supplier=instance.supplier,
+                transaction_type='purchase_return',
+                direction=direction,
+                amount=instance.total_amount,
+                reference_type='purchase_return',
+                reference_id=instance.id,
+                description=description,
+                notes=instance.notes or '',
+                created_by=instance.created_by
+            )
+            print(f"✓ تم إنشاء معاملة حساب المورد لمردود المشتريات {instance.return_number}")
     except Exception as e:
-        print(f"خطأ في إنشاء معاملة حساب المورد للمردود {instance.return_number}: {e}")
+        print(f"✗ خطأ في إنشاء/تحديث معاملة حساب المورد للمردود {instance.return_number}: {e}")
+        import traceback
+        traceback.print_exc()
 
 
 @receiver(post_save, sender=PurchaseReturn)

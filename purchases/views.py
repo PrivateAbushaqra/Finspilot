@@ -228,7 +228,12 @@ def create_purchase_invoice_account_transaction(invoice, user):
 
 
 def create_purchase_return_account_transaction(return_invoice, user):
-    """إنشاء حركة حساب للمورد عند إنشاء مردود مشتريات"""
+    """
+    ⚠️ هذه الدالة لم تعد تُستخدم - تم نقل المنطق إلى السيجنالات (purchases/signals.py)
+    للتوافق مع IFRS وتجنب التكرار
+    
+    إنشاء حركة حساب للمورد عند إنشاء مردود مشتريات
+    """
     try:
         from accounts.models import AccountTransaction
         from customers.models import CustomerSupplier
@@ -1420,11 +1425,8 @@ class PurchaseReturnCreateView(LoginRequiredMixin, CreateView):
         # Create inventory movements (subtract returned items)
         self.create_inventory_movements()
         
-        # إنشاء حركة حساب للمورد
-        create_purchase_return_account_transaction(self.object, self.request.user)
-        
-        # إنشاء القيد المحاسبي
-        create_purchase_return_journal_entry(self.object, self.request.user)
+        # ملاحظة: حركة حساب المورد والقيد المحاسبي يتم إنشاؤهما تلقائيًا عبر السيجنالات
+        # في purchases/signals.py لتجنب التكرار (IFRS Compliance)
         
         # تسجيل النشاط
         from core.signals import log_activity
