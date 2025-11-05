@@ -131,7 +131,7 @@
             <i class="fas fa-info-circle text-primary me-3 fa-2x"></i>
             <div>
                 <h6 class="mb-1">{% trans "Edit" %} {% trans "Account Data" %}</h6>
-                <p class="mb-0 text-muted">{% trans "You can edit all data except account type. If you need to change the type, please create a new account." %}</p>
+                <p class="mb-0 text-muted">{% trans "You can edit all account data including the account type. Be careful when changing the type as it may affect financial reports." %}</p>
             </div>
         </div>
     </div>
@@ -147,13 +147,18 @@
                 
                 <!-- Current Type Display -->
                 <div class="type-display">
-                    <h5 class="mb-3">{% trans "Current Account Type" %}:</h5>
-                    <div class="current-type">
-                        <i class="fas fa-user fa-2x d-block mb-2"></i>
-                        {% trans "Customer" %}
+                    <h5 class="mb-3">{% trans "Account Type" %}:</h5>
+                    <div class="mb-3">
+                        <select class="form-select form-select-lg" name="type" id="type" required>
+                            <option value="customer" {% if customer_supplier.type == 'customer' %}selected{% endif %}>{% trans "Customer" %}</option>
+                            <option value="supplier" {% if customer_supplier.type == 'supplier' %}selected{% endif %}>{% trans "Supplier" %}</option>
+                            <option value="both" {% if customer_supplier.type == 'both' %}selected{% endif %}>{% trans "Customer and Supplier" %}</option>
+                        </select>
+                        <div class="form-text text-warning">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            {% trans "Warning: Changing the account type may affect financial reports and account numbering" %}
+                        </div>
                     </div>
-                    <input type="hidden" name="type" value="customer">
-                    <p class="text-muted mt-3 mb-0">{% trans "Account type cannot be changed after creation" %}</p>
                 </div>
 
                 <!-- Basic Information -->

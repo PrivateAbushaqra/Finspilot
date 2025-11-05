@@ -56,42 +56,22 @@
                         <div class="row">
                             <div class="col-12">
                                 <div class="mb-3">
-                                    <label for="{{ form.description.id_for_label }}" class="form-label">الوصف</label>
-                                    <textarea class="form-control" name="description" id="{{ form.description.id_for_label }}" rows="3">{{ form.description.value|default:'' }}</textarea>
-                                    {% if form.description.errors %}
-                                        <div class="text-danger">{{ form.description.errors }}</div>
+                                    <label for="{{ form.supplier_debit_note_number.id_for_label }}" class="form-label">رقم مذكرة الدين من المورد</label>
+                                    <input type="text" class="form-control" name="supplier_debit_note_number" id="{{ form.supplier_debit_note_number.id_for_label }}" value="{{ form.supplier_debit_note_number.value }}">
+                                    {% if form.supplier_debit_note_number.errors %}
+                                        <div class="text-danger">{{ form.supplier_debit_note_number.errors }}</div>
                                     {% endif %}
                                 </div>
                             </div>
                         </div>
                         
                         <div class="row">
-                            <div class="col-md-4">
+                            <div class="col-12">
                                 <div class="mb-3">
-                                    <label for="{{ form.subtotal.id_for_label }}" class="form-label">المجموع الفرعي *</label>
-                                    <input type="number" step="0.01" class="form-control" name="subtotal" id="{{ form.subtotal.id_for_label }}" value="{{ form.subtotal.value|default:'' }}" required>
-                                    {% if form.subtotal.errors %}
-                                        <div class="text-danger">{{ form.subtotal.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label for="{{ form.tax_rate.id_for_label }}" class="form-label">معدل الضريبة (%)</label>
-                                    <input type="number" step="0.01" class="form-control" name="tax_rate" id="{{ form.tax_rate.id_for_label }}" value="{{ form.tax_rate.value|default:'' }}">
-                                    {% if form.tax_rate.errors %}
-                                        <div class="text-danger">{{ form.tax_rate.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label for="{{ form.tax_amount.id_for_label }}" class="form-label">مبلغ الضريبة</label>
-                                    <input type="number" step="0.01" class="form-control" name="tax_amount" id="{{ form.tax_amount.id_for_label }}" value="{{ form.tax_amount.value|default:'' }}">
-                                    {% if form.tax_amount.errors %}
-                                        <div class="text-danger">{{ form.tax_amount.errors }}</div>
+                                    <label for="{{ form.notes.id_for_label }}" class="form-label">الملاحظات</label>
+                                    <textarea class="form-control" name="notes" id="{{ form.notes.id_for_label }}" rows="3">{{ form.notes.value }}</textarea>
+                                    {% if form.notes.errors %}
+                                        <div class="text-danger">{{ form.notes.errors }}</div>
                                     {% endif %}
                                 </div>
                             </div>
@@ -100,10 +80,10 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="{{ form.total_amount.id_for_label }}" class="form-label">المجموع الإجمالي *</label>
-                                    <input type="number" step="0.01" class="form-control" name="total_amount" id="{{ form.total_amount.id_for_label }}" value="{{ form.total_amount.value|default:'' }}" required>
-                                    {% if form.total_amount.errors %}
-                                        <div class="text-danger">{{ form.total_amount.errors }}</div>
+                                    <label for="{{ form.subtotal.id_for_label }}" class="form-label">المبلغ *</label>
+                                    <input type="number" step="0.001" class="form-control" name="subtotal" id="{{ form.subtotal.id_for_label }}" value="{{ form.subtotal.value|stringformat:'.3f' }}" required>
+                                    {% if form.subtotal.errors %}
+                                        <div class="text-danger">{{ form.subtotal.errors }}</div>
                                     {% endif %}
                                 </div>
                             </div>
@@ -131,26 +111,6 @@
 </div>
 
 <script>
-// Auto-calculate tax amount and total
-document.addEventListener('DOMContentLoaded', function() {
-    const subtotalInput = document.querySelector('input[name="subtotal"]');
-    const taxRateInput = document.querySelector('input[name="tax_rate"]');
-    const taxAmountInput = document.querySelector('input[name="tax_amount"]');
-    const totalAmountInput = document.querySelector('input[name="total_amount"]');
-    
-    function calculateTotals() {
-        const subtotal = parseFloat(subtotalInput.value) || 0;
-        const taxRate = parseFloat(taxRateInput.value) || 0;
-        
-        const taxAmount = subtotal * (taxRate / 100);
-        const totalAmount = subtotal + taxAmount;
-        
-        taxAmountInput.value = taxAmount.toFixed(2);
-        totalAmountInput.value = totalAmount.toFixed(2);
-    }
-    
-    subtotalInput.addEventListener('input', calculateTotals);
-    taxRateInput.addEventListener('input', calculateTotals);
-});
+// No calculations needed for debit notes - total_amount = subtotal
 </script>
 {% endblock %}

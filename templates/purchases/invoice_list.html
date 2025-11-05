@@ -52,6 +52,17 @@
         margin-bottom: 1rem;
     }
 
+    /* رابط المورد */
+    .supplier-link {
+        transition: all 0.2s ease;
+        font-weight: 500;
+    }
+
+    .supplier-link:hover {
+        color: #0056b3 !important;
+        text-decoration: underline !important;
+    }
+
     /* تحسينات للأجهزة المحمولة */
     @media (max-width: 768px) {
         .filters-section .row .col-md-3,
@@ -398,7 +409,17 @@
                                 <strong>{{ invoice.supplier_invoice_number }}</strong>
                                 <br><small class="text-muted">{{ invoice.invoice_number }}</small>
                             </td>
-                            <td>{{ invoice.supplier.name|default:"{% trans 'Not specified' %}" }}</td>
+                            <td>
+                                {% if invoice.supplier %}
+                                    <a href="{% url 'customers:transactions' invoice.supplier.id %}" 
+                                       class="text-primary text-decoration-none supplier-link" 
+                                       title="{% trans "View supplier transactions" %}">
+                                        <i class="fas fa-user me-1"></i>{{ invoice.supplier.name }}
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted">{% trans 'Not specified' %}</span>
+                                {% endif %}
+                            </td>
                             <td>{{ invoice.date|date:"Y-m-d" }}</td>
                             <td>
                                 {% if invoice.warehouse %}

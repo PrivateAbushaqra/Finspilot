@@ -37,6 +37,23 @@
         border-radius: 20px;
         font-size: 0.85rem;
         font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    
+    .supplier-type-badge:hover {
+        transform: scale(1.05);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .supplier-type-badge a {
+        color: inherit !important;
+        text-decoration: none !important;
+        display: block;
+        cursor: pointer;
+    }
+    
+    .supplier-type-badge a:hover {
+        color: inherit !important;
     }
     
     .type-supplier {
@@ -221,7 +238,9 @@
                                 <div class="d-flex justify-content-between align-items-start mb-3">
                                     <h6 class="card-title mb-0">{{ supplier.name }}</h6>
                                     <span class="supplier-type-badge type-{{ supplier.type }}">
-                                        {{ supplier.get_type_display }}
+                                        <a href="{% url 'customers:transactions' supplier.pk %}" class="text-decoration-none" title="كشف حساب المورد">
+                                            {{ supplier.get_type_display }}
+                                        </a>
                                     </span>
                                 </div>
                                 
@@ -288,7 +307,9 @@
                                     <td><strong>{{ supplier.name }}</strong></td>
                                     <td>
                                         <span class="supplier-type-badge type-{{ supplier.type }}">
-                                            {{ supplier.get_type_display }}
+                                            <a href="{% url 'customers:transactions' supplier.pk %}" class="text-decoration-none" title="كشف حساب المورد">
+                                                {{ supplier.get_type_display }}
+                                            </a>
                                         </span>
                                     </td>
                                     <td>{{ supplier.phone|default:"غير محدد" }}</td>

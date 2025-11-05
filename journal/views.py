@@ -442,7 +442,7 @@ def journal_entry_list(request):
             entries = entries.filter(entry_number__icontains=form.cleaned_data['entry_number'])
     
     # الترتيب
-    order_by = request.GET.get('order_by', 'entry_date')
+    order_by = request.GET.get('order_by', 'entry_number')
     direction = request.GET.get('direction', 'desc')
     
     if direction == 'asc':
@@ -688,12 +688,14 @@ def journal_entry_create(request):
         formset = JournalLineFormSet(instance=temp_entry, prefix='form')
     
     # إعداد السياق وعرض الصفحة (سواء كان GET أو POST مع أخطاء)
+    # عرض الحسابات الفرعية فقط (التي لها parent) - حسب IFRS
+    # الحسابات الرئيسية للتجميع فقط ولا يجوز الترحيل عليها
     context = {
         'form': form,
         'formset': formset,
         'accounts': Account.objects.filter(
             is_active=True,
-            parent__isnull=False  # استثناء الحسابات الرئيسية (parent is null)
+            parent__isnull=False  # فقط الحسابات الفرعية
         ).order_by('code'),
         'title': _('Create new journal entry')
     }

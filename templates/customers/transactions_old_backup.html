@@ -1,0 +1,1030 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load currency_tags %}
+
+{% block title %}{% trans "Transactions Customer/Supplier" %} - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .transactions-container {
+        background: #fff;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .transactions-header {
+        background: linear-gradient(135deg, #6610f2 0%, #6f42c1 100%);
+        color: white;
+        padding: 1.5rem;
+    }
+    
+    .customer-summary {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .transaction-card {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        margin-bottom: 1rem;
+    }
+    
+    .transaction-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .transaction-header {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .transaction-body {
+        padding: 1rem;
+    }
+    
+    .transaction-type {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    .type-invoice {
+        background-color: #cce5ff;
+        color: #004085;
+    }
+    
+    .type-payment {
+        background-color: #d4edda;
+        color: #155724;
+    }
+    
+    .type-adjustment {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+    
+    .amount-positive {
+        color: #28a745;
+        font-weight: bold;
+    }
+    
+    .amount-negative {
+        color: #dc3545;
+        font-weight: bold;
+    }
+    
+    .btn-add {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-add:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+    }
+
+/* تنسيقات الطباعة - تحويل البطاقات إلى جدول */
+@media print {
+    .container-fluid {
+        max-width: none !important;
+        width: 100% !important;
+    }
+    
+    /* إخفاء العناصر غير المرغوبة في الطباعة */
+    .breadcrumb, .btn-add, .search-section, .no-print,
+    .btn-group, .alert, .pagination, .filter-section {
+        display: none !important;
+    }
+    
+    /* إنشاء رأس جدول قابل للطباعة */
+    .transactions-container .card-body::before {
+        content: "{% trans 'Description' %}\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0 {% trans 'Date' %}\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0 {% trans 'Type' %}\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0 {% trans 'Amount' %}\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0 {% trans 'Balance After' %}";
+        display: block;
+        background-color: #f8f9fa !important;
+        border: 2px solid #000 !important;
+        padding: 8px !important;
+        font-weight: bold !important;
+        text-align: center !important;
+        font-size: 10pt !important;
+        border-bottom: 2px solid #000 !important;
+        margin-bottom: 10px !important;
+    }
+    
+    /* تحويل كل بطاقة معاملة إلى صف جدول */
+    .transaction-card {
+        display: block !important;
+        border: 1px solid #000 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+        page-break-inside: avoid !important;
+        box-shadow: none !important;
+        margin-bottom: 5px !important;
+    }
+    
+    .transaction-card .card-body {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    
+    .transaction-card .row {
+        display: table-row !important;
+        margin: 0 !important;
+        border-bottom: 1px solid #ddd !important;
+    }
+    
+    .transaction-card .col-md-3:first-child,
+    .transaction-card .col-md-2,
+    .transaction-card .col-md-1 {
+        display: table-cell !important;
+        border-right: 1px solid #ddd !important;
+        padding: 6px 4px !important;
+        vertical-align: middle !important;
+        font-size: 8pt !important;
+        width: auto !important;
+        float: none !important;
+    }
+    
+    /* تخصيص عرض الأعمدة */
+    .transaction-card .col-md-3:first-child {
+        width: 35% !important;
+    }
+    
+    .transaction-card .col-md-2:nth-child(2) {
+        width: 15% !important;
+    }
+    
+    .transaction-card .col-md-2:nth-child(3) {
+        width: 15% !important;
+    }
+    
+    .transaction-card .col-md-2:nth-child(4) {
+        width: 15% !important;
+    }
+    
+    .transaction-card .col-md-2:nth-child(5) {
+        width: 15% !important;
+    }
+    
+    .transaction-card .col-md-1 {
+        width: 5% !important;
+        text-align: center !important;
+    }
+    
+    /* تنسيق النصوص في الطباعة */
+    .transaction-card .fw-bold {
+        font-weight: bold !important;
+        font-size: 8pt !important;
+    }
+    
+    .transaction-card .text-muted {
+        color: #666 !important;
+        font-size: 7pt !important;
+    }
+    
+    .transaction-card .badge {
+        font-size: 7pt !important;
+        padding: 2px 6px !important;
+    }
+    
+    /* تنسيق الألوان في الطباعة */
+    .text-success {
+        color: #000 !important;
+        font-weight: bold !important;
+    }
+    
+    .text-danger {
+        color: #000 !important;
+        font-weight: bold !important;
+    }
+    
+    .text-muted {
+        color: #666 !important;
+    }
+    
+    /* إعدادات الصفحة للطباعة */
+    @page {
+        size: A4 landscape !important;
+        margin: 0.5cm !important;
+    }
+    
+    body {
+        font-size: 8pt !important;
+        line-height: 1.1 !important;
+    }
+    
+    .transactions-header {
+        background: white !important;
+        color: black !important;
+        border-bottom: 2px solid #000 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    .transactions-header h2 {
+        color: black !important;
+        font-size: 14pt !important;
+        text-align: center !important;
+    }
+}
+    
+    .stats-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .filter-section {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .transaction-actions {
+        display: flex;
+        gap: 0.25rem;
+        justify-content: center;
+    }
+    
+    .btn-preview {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+        color: white;
+        transition: all 0.3s ease;
+        min-width: 120px;
+    }
+    
+    .btn-preview:hover {
+        background-color: #0b5ed7;
+        border-color: #0a58ca;
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3);
+    }
+    
+    .transaction-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="transactions-container mb-4">
+        <div class="transactions-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="mb-0">
+                    <i class="fas fa-receipt me-2"></i>
+                    {% trans "Transactions Customer/Supplier" %}
+                </h2>
+                <div class="btn-group">
+                    <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#addTransactionModal">
+                        <i class="fas fa-plus me-2"></i>
+                        {% trans "Add Transaction" %}
+                    </button>
+                    <a href="{% url 'customers:list' %}" class="btn btn-outline-light">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        {% trans "Back to List" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Summary -->
+    <div class="customer-summary">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h5 class="mb-2">
+                    <i class="fas fa-user me-2 text-primary"></i>
+                    {{ customer_supplier.name }}
+                </h5>
+                <p class="text-muted mb-0">
+                    {% if customer_supplier.phone %}
+                        <i class="fas fa-phone me-2"></i>{{ customer_supplier.phone }}
+                    {% endif %}
+                    {% if customer_supplier.email %}
+                        {% if customer_supplier.phone %} | {% endif %}
+                        <i class="fas fa-envelope me-2"></i>{{ customer_supplier.email }}
+                    {% endif %}
+                    {% if not customer_supplier.phone and not customer_supplier.email %}
+                        <i class="fas fa-info-circle me-2"></i>لا توجد {% trans "Information" %} اتصال
+                    {% endif %}
+                </p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <h6 class="text-muted mb-1">{% trans "Balance" %} الحالي</h6>
+                <h3 class="{% if customer_supplier.current_balance > 0 %}text-success{% elif customer_supplier.current_balance < 0 %}text-danger{% else %}text-muted{% endif %} mb-0">{{ customer_supplier.current_balance|currency_format }}</h3>
+                <small class="text-muted">{% trans "Last Update" %}: {{ customer_supplier.updated_at|date:"Y-m-d" }}</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <h4 class="text-primary">{{ total_transactions }}</h4>
+                    <p class="text-muted mb-0">{% trans "Total Transactions" %}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <h4 class="text-danger">{{ total_debit|floatformat:3 }}</h4>
+                    <p class="text-muted mb-0">{% trans "Total Debit Amounts" %}ة</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <h4 class="text-success">{{ total_credit|floatformat:3 }}</h4>
+                    <p class="text-muted mb-0">{% trans "Total Credit Amounts" %}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <h4 class="{% if closing_balance > 0 %}text-success{% elif closing_balance < 0 %}text-danger{% else %}text-muted{% endif %} closing-balance-value">{{ closing_balance|floatformat:3 }}</h4>
+                    <p class="text-muted mb-0">{% trans "Closing Balance" %}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="filter-section">
+        <h6 class="mb-3">
+            <i class="fas fa-filter me-2"></i>
+            {% trans "Transactions Filter" %}
+        </h6>
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="transaction_type" class="form-label">{% trans "Transaction Type" %}:</label>
+                <select class="form-select" id="transaction_type" name="transaction_type">
+                    <option value="">{% trans "All Transactions" %}</option>
+                    <option value="sales_invoice">{% trans "Sales Invoices" %}</option>
+                    <option value="purchase_invoice">{% trans "Purchase Invoices" %}</option>
+                    <option value="sales_return">{% trans "Sales Returns" %}</option>
+                    <option value="purchase_return">{% trans "Purchase Returns" %}</option>
+                    <option value="payment">{% trans "Payments" %}</option>
+                    <option value="adjustment">{% trans "Settlements" %}</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="date_from" class="form-label">{% trans "From Date" %}:</label>
+                <input type="date" class="form-control" id="date_from" name="date_from" value="{{ date_from }}">
+            </div>
+            <div class="col-md-3">
+                <label for="date_to" class="form-label">{% trans "To Date" %}:</label>
+                <input type="date" class="form-control" id="date_to" name="date_to" value="{{ date_to }}">
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2">
+                    <i class="fas fa-search me-1"></i>
+                    {% trans "Search" %}
+                </button>
+                <a href="{% url 'customers:transactions' customer_supplier.pk %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-undo me-1"></i>
+                    {% trans "Reset" %}
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Transactions List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-list me-2"></i>
+                        {% trans "Transactions List" %} ({{ total_transactions }}) {% trans "Transaction" %}
+                    </h6>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-success" onclick="exportTransactions()">
+                            <i class="fas fa-file-excel me-1"></i>
+                            {% trans "Export" %}
+                        </button>
+                        <button class="btn btn-outline-primary" onclick="printTransactions()">
+                            <i class="fas fa-print me-1"></i>
+                            {% trans "Print" %}
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- {% trans "View" %} {% trans "Transactions" %} الحقيقية فقط -->
+                    {% if transactions %}
+                        {% for transaction in transactions %}
+                        <div class="transaction-card">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-3">
+                                        <h6 class="mb-1 fw-bold">{{ transaction.description }}</h6>
+                                        <small class="text-muted">{{ transaction.transaction_number }}</small>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <small class="text-muted">{% trans "Date" %}:</small>
+                                        <div class="fw-bold">{{ transaction.date|date:"Y-m-d" }}</div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <small class="text-muted">{% trans "Type" %}:</small>
+                                        <div>
+                                            <span class="badge bg-{% if transaction.direction == 'debit' %}danger{% else %}success{% endif %}">
+                                                {{ transaction.get_transaction_type_display }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <small class="text-muted">{% trans "Amount" %}:</small>
+                                        <div class="{% if transaction.direction == 'debit' %}text-danger debit-amount{% else %}text-success credit-amount{% endif %} fw-bold">
+                                            {{ transaction.amount|floatformat:3 }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <small class="text-muted">{% trans "Balance After" %}:</small>
+                                        <div class="{% if transaction.balance_after > 0 %}text-success{% elif transaction.balance_after < 0 %}text-danger{% else %}text-muted{% endif %} fw-bold balance-after">
+                                            {{ transaction.balance_after|floatformat:3 }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-1 text-end">
+                                        <div class="btn-group btn-group-sm no-print">
+                                            {% if transaction.reference_type and transaction.reference_id %}
+                                            <a href="{% url 'customers:preview_transaction' customer_supplier.pk transaction.id %}" 
+                                               class="btn btn-outline-primary" 
+                                               title="{% trans 'Preview Document' %}: {{ transaction.reference_type }} #{{ transaction.reference_id }}"
+                                               data-bs-toggle="tooltip">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% endif %}
+                                            {% if user.is_superuser %}
+                                            <button class="btn btn-outline-danger" 
+                                                    onclick="confirmDeleteTransaction({{ transaction.id }}, '{{ transaction.transaction_number|escapejs }}')"
+                                                    title="{% trans "Delete" %} {% trans "Transaction" %}"
+                                                    data-bs-toggle="tooltip">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <!-- {% trans "View" %} رسالة عند عدم وجود معام{% trans "No" %}ت -->
+                        <div class="text-center py-5">
+                            {% if error_message %}
+                                <div class="alert alert-warning" role="alert">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    {{ error_message }}
+                                </div>
+                            {% endif %}
+                            <div class="mb-4">
+                                <i class="fas fa-receipt fa-5x text-muted"></i>
+                            </div>
+                            <h5 class="text-muted">{% trans "No transactions" %} {% trans "for this" %} {% trans "Customer" %}/{% trans "Supplier" %}</h5>
+                            <p class="text-muted">{% trans "Will be" %} {% trans "View" %} {% trans "Transactions" %} {% trans "here when" %} {% trans "Add" %} {% trans "invoices or payments for this account" %}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if transactions and total_transactions > 0 %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <nav aria-label="{% trans "Pages" %} {% trans "Transactions" %}">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item disabled">
+                        <span class="page-link">{% trans "Previous" %}</span>
+                    </li>
+                    <li class="page-item active">
+                        <span class="page-link">1</span>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">2</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">{% trans "Next" %}</a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Add Transaction Modal -->
+<div class="modal fade" id="addTransactionModal" tabindex="-1" aria-labelledby="addTransactionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="addTransactionModalLabel">
+                    <i class="fas fa-plus me-2"></i>
+                    {% trans "Add Transaction" %} {% trans "New" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="{% trans "Close" %}e"></button>
+            </div>
+            <div class="modal-body">
+                <form id="transactionForm">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="transactionType" class="form-label">{% trans "Transaction Type" %} *</label>
+                            <select class="form-select" id="transactionType" name="type" required>
+                                <option value="">{% trans "Choose Transaction Type" %}</option>
+                                <option value="payment">{% trans "Payment" %}</option>
+                                <option value="adjustment">{% trans "Adjustment" %}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="transactionAmount" class="form-label">{% trans "Amount" %} *</label>
+                            <input type="number" class="form-control" id="transactionAmount" name="amount" 
+                                   step="0.001" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="transactionDate" class="form-label">{% trans "Date" %} *</label>
+                            <input type="date" class="form-control" id="transactionDate" name="date" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="transactionReference" class="form-label">{% trans "Reference Number" %}</label>
+                            <input type="text" class="form-control" id="transactionReference" name="reference">
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label for="transactionNotes" class="form-label">{% trans "Notes" %}</label>
+                            <textarea class="form-control" id="transactionNotes" name="notes" rows="3"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" class="btn btn-primary" onclick="saveTransaction()">
+                    <i class="fas fa-save me-2"></i>
+                    {% trans "Save Transaction" %}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Save transaction function
+    function saveTransaction() {
+        const form = document.getElementById('transactionForm');
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData);
+        
+        // Validate required fields
+        if (!data.type || !data.amount || !data.date) {
+            alert('{% trans "Please fill all required fields" %}');
+            return;
+        }
+        
+        console.log('Transaction data:', data);
+        alert('{% trans "Will be Save Transaction when connecting the form to the server" %}');
+        
+        // Close modal and reset form
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addTransactionModal'));
+        modal.hide();
+        form.reset();
+    }
+
+    // Export transactions
+    function exportTransactions() {
+        alert('{% trans "Will be Export Transactions to Excel file" %}');
+        console.log('Exporting transactions...');
+    }
+
+    // Print transactions
+    function printTransactions() {
+        // Create a new window for printing
+        const printWindow = window.open('', '_blank');
+
+        // Get current date and time
+        const now = new Date();
+        const dateString = now.toLocaleDateString('ar-SA');
+        const timeString = now.toLocaleTimeString('ar-SA');
+
+        // Get customer info
+        const customerName = document.querySelector('.customer-summary h5')?.textContent?.trim() || '';
+        const currentBalanceElement = document.querySelector('.customer-summary .col-md-6.text-md-end h3');
+        const currentBalance = currentBalanceElement?.textContent?.trim() || '0.000';
+
+        // Build the printable content
+        let printContent = `
+            <!DOCTYPE html>
+            <html lang="ar" dir="rtl">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>{% trans "Customer Transactions Report" %}</title>
+                <style>
+                    body {
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                        margin: 20px;
+                        direction: rtl;
+                        font-size: 12px;
+                    }
+                    .header {
+                        text-align: center;
+                        margin-bottom: 30px;
+                        border-bottom: 2px solid #333;
+                        padding-bottom: 20px;
+                    }
+                    .header h1 {
+                        color: #333;
+                        margin: 0;
+                        font-size: 24px;
+                    }
+                    .header p {
+                        color: #666;
+                        margin: 5px 0;
+                        font-size: 14px;
+                    }
+                    .customer-info {
+                        background: #f8f9fa;
+                        padding: 15px;
+                        border-radius: 5px;
+                        margin-bottom: 20px;
+                        border: 1px solid #ddd;
+                    }
+                    .customer-info h3 {
+                        margin: 0 0 10px 0;
+                        color: #333;
+                    }
+                    .balance-info {
+                        font-size: 16px;
+                        font-weight: bold;
+                    }
+                    .balance-positive {
+                        color: #28a745;
+                    }
+                    .balance-negative {
+                        color: #dc3545;
+                    }
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-top: 20px;
+                        font-size: 11px;
+                    }
+                    th, td {
+                        border: 1px solid #ddd;
+                        padding: 8px;
+                        text-align: center;
+                    }
+                    th {
+                        background-color: #f8f9fa;
+                        font-weight: bold;
+                        color: #333;
+                    }
+                    tr:nth-child(even) {
+                        background-color: #f9f9f9;
+                    }
+                    .amount-positive {
+                        color: #28a745;
+                        font-weight: bold;
+                    }
+                    .amount-negative {
+                        color: #dc3545;
+                        font-weight: bold;
+                    }
+                    .summary {
+                        margin-top: 30px;
+                        padding: 15px;
+                        background-color: #f8f9fa;
+                        border-radius: 5px;
+                        border: 1px solid #ddd;
+                    }
+                    .summary h3 {
+                        margin: 0 0 15px 0;
+                        color: #333;
+                    }
+                    .summary-row {
+                        display: flex;
+                        justify-content: space-around;
+                        margin-bottom: 10px;
+                    }
+                    .summary-item {
+                        text-align: center;
+                    }
+                    .summary-value {
+                        font-size: 18px;
+                        font-weight: bold;
+                        color: #007bff;
+                    }
+                    .footer {
+                        margin-top: 50px;
+                        text-align: center;
+                        font-size: 14px;
+                        color: #666;
+                        border-top: 1px solid #ddd;
+                        padding-top: 20px;
+                    }
+                    @media print {
+                        body { margin: 0; }
+                        .header { page-break-after: avoid; }
+                        table { page-break-inside: auto; }
+                        tr { page-break-inside: avoid; page-break-after: auto; }
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>{% trans "Customer Transactions Report" %}</h1>
+                    <p>{% trans "Generated on" %}: ${dateString} {% trans "at" %} ${timeString}</p>
+                    <p>{% trans "Total Transactions" %}: {{ total_transactions }}</p>
+                </div>
+
+                <div class="customer-info">
+                    <h3>${customerName}</h3>
+                    <div class="balance-info">
+                        {% trans "Current Balance" %}: <span class="${currentBalance.includes('-') ? 'balance-negative' : 'balance-positive'}">${currentBalance}</span>
+                    </div>
+                </div>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>{% trans "Date" %}</th>
+                            <th>{% trans "Transaction Type" %}</th>
+                            <th>{% trans "Transaction Number" %}</th>
+                            <th>{% trans "Description" %}</th>
+                            <th>{% trans "Amount" %}</th>
+                            <th>{% trans "Balance After" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        // Get all transaction cards and convert to table rows
+        const transactionCards = document.querySelectorAll('.transaction-card');
+        transactionCards.forEach(card => {
+            const cols = card.querySelectorAll('.col-md-3, .col-md-2, .col-md-1');
+            
+            // Extract data from the new layout
+            const descriptionElement = cols[0]?.querySelector('h6');
+            const description = descriptionElement?.textContent?.trim() || '';
+            const transactionNumber = cols[0]?.querySelector('small')?.textContent?.trim() || '';
+            
+            const dateElement = cols[1]?.querySelector('.fw-bold');
+            const date = dateElement?.textContent?.trim() || '';
+            
+            const typeElement = cols[2]?.querySelector('.badge');
+            const type = typeElement?.textContent?.trim() || '';
+            
+            const amountElement = cols[3]?.querySelector('.fw-bold');
+            const amount = amountElement?.textContent?.trim() || '';
+            
+            const balanceElement = cols[4]?.querySelector('.fw-bold');
+            const balance = balanceElement?.textContent?.trim() || '';
+
+            printContent += `
+                <tr>
+                    <td>${date}</td>
+                    <td>${type}</td>
+                    <td>${transactionNumber}</td>
+                    <td>${description}</td>
+                    <td class="${amount.includes('-') ? 'amount-negative' : 'amount-positive'}">${amount}</td>
+                    <td class="${balance.includes('-') ? 'amount-negative' : 'amount-positive'}">${balance}</td>
+                </tr>
+            `;
+        });
+
+        printContent += `
+                    </tbody>
+                </table>
+
+                <div class="summary">
+                    <h3>{% trans "Summary" %}</h3>
+                    <div class="summary-row">
+                        <div class="summary-item">
+                            <div>{% trans "Total Transactions" %}</div>
+                            <div class="summary-value">{{ total_transactions }}</div>
+                        </div>
+                        <div class="summary-item">
+                            <div>{% trans "Total Debit" %}</div>
+                            <div class="summary-value">{{ total_debit|floatformat:3 }}</div>
+                        </div>
+                        <div class="summary-item">
+                            <div>{% trans "Total Credit" %}</div>
+                            <div class="summary-value">{{ total_credit|floatformat:3 }}</div>
+                        </div>
+                    </div>
+                    <div class="summary-row">
+                        <div class="summary-item">
+                            <div>{% trans "Closing Balance" %}</div>
+                            <div class="summary-value {% if closing_balance < 0 %}text-danger{% else %}text-success{% endif %}">{{ closing_balance|floatformat:3 }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="footer">
+                    <p class="text-center">{% trans "FinsPilot Software" %}</p>
+                </div>
+            </body>
+            </html>
+        `;
+
+        // Write content to print window
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+
+        // Wait for content to load then print
+        printWindow.onload = function() {
+            printWindow.print();
+            printWindow.close();
+        };
+    }    // Set today's date as default
+    document.addEventListener('DOMContentLoaded', function() {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('transactionDate').value = today;
+        
+        // {% trans "Enable tooltips" %}
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+    });
+
+    // Auto-format amounts
+    document.getElementById('transactionAmount').addEventListener('blur', function() {
+        if (this.value) {
+            this.value = parseFloat(this.value).toFixed(3);
+        }
+    });
+
+    // Delete transaction functions
+    function confirmDeleteTransaction(transactionId, transactionNumber) {
+        if (confirm(`{% trans "Are you sure to" %} {% trans "Delete" %} {% trans "Transaction" %} "${transactionNumber}"?\n\n{% trans "Warning" %}: {% trans "Will be" %} {% trans "Delete" %} {% trans "Transaction" %} {% trans "permanently and cannot be undone" %}.`)) {
+            deleteTransaction(transactionId);
+        }
+    }
+
+    function deleteTransaction(transactionId) {
+        // {% trans "Show loading indicator" %}
+        const deleteBtn = document.querySelector(`button[onclick*="${transactionId}"]`);
+        const originalContent = deleteBtn.innerHTML;
+        deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        deleteBtn.disabled = true;
+
+        // إرسال طلب الحذف
+        fetch(`{% url 'customers:delete_transaction' customer_supplier.pk 0 %}`.replace('0', transactionId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // {% trans "Reload page to update the" %} {% trans "List" %}
+                window.location.reload();
+            } else {
+                alert('{% trans "Error" %} {% trans "in" %} {% trans "Delete" %} {% trans "Transaction" %}: ' + (data.error || '{% trans "Error" %} {% trans "unknown" %}'));
+                // استعادة الزر
+                deleteBtn.innerHTML = originalContent;
+                deleteBtn.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('{% trans "Error" %} {% trans "in co" %}nnecting to the server');
+            // استعادة الزر
+            deleteBtn.innerHTML = originalContent;
+            deleteBtn.disabled = false;
+        });
+    }
+
+// فحص تطابق الرصيد مع مجموع الحركات
+function checkBalanceConsistency() {
+    const transactions = document.querySelectorAll('.transaction-card');
+    const openingBalance = parseFloat('{{ opening_balance|default:0 }}') || 0;
+    let totalDebit = 0;
+    let totalCredit = 0;
+    let hasMismatch = false;
+
+    // حساب إجماليات المعاملات المعروضة
+    transactions.forEach((transaction, index) => {
+        const debitElement = transaction.querySelector('.debit-amount');
+        const creditElement = transaction.querySelector('.credit-amount');
+
+        const debit = debitElement ? parseFloat(debitElement.textContent.replace(/[^\d.-]/g, '')) || 0 : 0;
+        const credit = creditElement ? parseFloat(creditElement.textContent.replace(/[^\d.-]/g, '')) || 0 : 0;
+
+        totalDebit += debit;
+        totalCredit += credit;
+    });
+
+    // حساب الرصيد الختامي المتوقع
+    const expectedClosingBalance = openingBalance + totalDebit - totalCredit;
+
+    // فحص الرصيد الختامي المعروض
+    const closingBalanceElement = document.querySelector('.closing-balance-value');
+    const displayedClosingBalance = closingBalanceElement ? parseFloat(closingBalanceElement.textContent.replace(/[^\d.-]/g, '')) || 0 : 0;
+
+    console.log('فحص الرصيد:', {
+        openingBalance: openingBalance.toFixed(3),
+        totalDebit: totalDebit.toFixed(3),
+        totalCredit: totalCredit.toFixed(3),
+        expectedClosingBalance: expectedClosingBalance.toFixed(3),
+        displayedClosingBalance: displayedClosingBalance.toFixed(3)
+    });
+
+    if (Math.abs(expectedClosingBalance - displayedClosingBalance) > 0.001) {
+        hasMismatch = true;
+        console.error(`🚨 عدم تطابق في الرصيد الختامي: متوقع=${expectedClosingBalance.toFixed(3)}, معروض=${displayedClosingBalance.toFixed(3)}`);
+
+        // إضافة تنبيه في ملخص الرصيد
+        const summaryCard = document.querySelector('.customer-summary');
+        if (summaryCard && !summaryCard.querySelector('.closing-balance-warning')) {
+            const warning = document.createElement('div');
+            warning.className = 'closing-balance-warning alert alert-danger mt-3';
+            warning.innerHTML = '<strong>🚨 خطأ في الرصيد الختامي:</strong> الرصيد المحسوب من مجموع الحركات لا يتطابق مع الرصيد المعروض. يرجى التواصل مع الدعم الفني.';
+            summaryCard.appendChild(warning);
+        }
+    }
+
+    if (hasMismatch) {
+        // إضافة زر للإبلاغ عن المشكلة
+        if (!document.querySelector('.report-issue-btn')) {
+            const reportBtn = document.createElement('button');
+            reportBtn.className = 'report-issue-btn btn btn-warning mt-3';
+            reportBtn.innerHTML = '🚨 الإبلاغ عن مشكلة في الرصيد';
+            reportBtn.onclick = function() {
+                const details = `تم اكتشاف مشكلة في الرصيد. يرجى التواصل مع الدعم الفني لإصلاح هذه المشكلة.\n\nتفاصيل:\n- العميل: {{ customer_supplier.name }}\n- الرصيد الافتتاحي: ${openingBalance.toFixed(3)}\n- إجمالي المدين: ${totalDebit.toFixed(3)}\n- إجمالي الدائن: ${totalCredit.toFixed(3)}\n- الرصيد المتوقع: ${expectedClosingBalance.toFixed(3)}\n- الرصيد المعروض: ${displayedClosingBalance.toFixed(3)}`;
+                alert(details);
+
+                // تسجيل الإبلاغ في سجل الأنشطة (إرسال طلب للخادم)
+                fetch('{% url "customers:report_balance_issue" customer_supplier.pk %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        opening_balance: openingBalance,
+                        total_debit: totalDebit,
+                        total_credit: totalCredit,
+                        expected_balance: expectedClosingBalance,
+                        displayed_balance: displayedClosingBalance
+                    })
+                }).then(response => {
+                    if (response.ok) {
+                        reportBtn.disabled = true;
+                        reportBtn.innerHTML = '✅ تم الإبلاغ';
+                    }
+                }).catch(error => {
+                    console.error('فشل في تسجيل الإبلاغ:', error);
+                });
+            };
+
+            const summaryCard = document.querySelector('.customer-summary');
+            if (summaryCard) {
+                summaryCard.appendChild(reportBtn);
+            }
+        }
+    }
+
+    return !hasMismatch;
+}
+
+// تشغيل الفحص عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', function() {
+    checkBalanceConsistency();
+});
+
+// إعادة الفحص عند تغيير حجم النافذة أو التمرير (للتأكد من عدم وجود مشاكل في العرض)
+window.addEventListener('resize', checkBalanceConsistency);
+</script>
+{% endblock %}

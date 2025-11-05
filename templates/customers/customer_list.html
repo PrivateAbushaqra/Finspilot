@@ -37,6 +37,23 @@
         border-radius: 20px;
         font-size: 0.85rem;
         font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    
+    .customer-type-badge:hover {
+        transform: scale(1.05);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .customer-type-badge a {
+        color: inherit !important;
+        text-decoration: none !important;
+        display: block;
+        cursor: pointer;
+    }
+    
+    .customer-type-badge a:hover {
+        color: inherit !important;
     }
     
     .type-customer {
@@ -238,7 +255,9 @@
                                 <div class="d-flex justify-content-between align-items-start mb-3">
                                     <h6 class="card-title mb-0">{{ customer.name }}</h6>
                                     <span class="customer-type-badge type-{{ customer.type }}">
-                                        {{ customer.get_type_display }}
+                                        <a href="{% url 'customers:transactions' customer.pk %}" class="text-decoration-none" title="كشف حساب العميل">
+                                            {{ customer.get_type_display }}
+                                        </a>
                                     </span>
                                 </div>
                                 
@@ -304,7 +323,9 @@
                                     <td><strong>{{ customer.name }}</strong></td>
                                     <td>
                                         <span class="customer-type-badge type-{{ customer.type }}">
-                                            {{ customer.get_type_display }}
+                                            <a href="{% url 'customers:transactions' customer.pk %}" class="text-decoration-none" title="كشف حساب العميل">
+                                                {{ customer.get_type_display }}
+                                            </a>
                                         </span>
                                     </td>
                                     <td>{{ customer.phone|default:"غير محدد" }}</td>

@@ -44,12 +44,12 @@
                 <i class="fas fa-undo-alt text-success me-2"></i>
                 {% trans "Sales Returns" %}
             </h2>
-            <p class="text-muted mb-0">{% trans "Manage all sales returns" %}</p>
+            <p class="text-muted mb-0">{% trans "Manage All Sales Returns" %}</p>
         </div>
         <div>
             <a href="{% url 'sales:return_add' %}" class="btn btn-success">
                 <i class="fas fa-plus me-1"></i>
-                {% trans "Return" %} {% trans "New" %}
+                {% trans "Create New Return" %}
             </a>
         </div>
     </div>
@@ -93,7 +93,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1">
-                            <h6 class="mb-0">{% trans "Returns" %} {% trans "This Month" %}</h6>
+                            <h6 class="mb-0">{% trans "Returns This Month" %}</h6>
                             <h3 class="mb-0">{{ monthly_returns|default:0 }}</h3>
                         </div>
                         <div class="ms-3">
@@ -109,7 +109,7 @@
                 <div class="card-body">
                     <div class="d-flex align-items-center">
                         <div class="flex-grow-1">
-                            <h6 class="mb-0">{% trans "Returns" %} {% trans "Today" %}</h6>
+                            <h6 class="mb-0">{% trans "Returns Today" %}</h6>
                             <h3 class="mb-0">{{ daily_returns|default:0 }}</h3>
                         </div>
                         <div class="ms-3">
@@ -357,7 +357,7 @@
                         <p class="text-muted mb-3">{% trans "No sales returns found" %}</p>
                         <a href="{% url 'sales:return_add' %}" class="btn btn-success">
                             <i class="fas fa-plus me-1"></i>
-                            {% trans "Add" %} {% trans "New" %} {% trans "Return" %}
+                            {% trans "Create New Return" %}
                         </a>
                     </div>
                 </div>

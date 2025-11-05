@@ -116,28 +116,34 @@ class AccountTransaction(models.Model):
     def calculate_balance_after(self):
         """حساب الرصيد بعد الحركة - الرصيد المتراكم حتى هذه المعاملة"""
         # حساب الرصيد من الصفر بناءً على جميع المعاملات حتى هذه المعاملة
-        transactions = AccountTransaction.objects.filter(
-            customer_supplier=self.customer_supplier,
-            date__lt=self.date
-        ).order_by('date', 'created_at')
+        # نستخدم Q objects لتحديد المعاملات السابقة بدقة
+        from django.db.models import Q
         
-        # إضافة معاملات في نفس التاريخ قبل هذه المعاملة
-        if self.created_at:
-            transactions_same_date = AccountTransaction.objects.filter(
-                customer_supplier=self.customer_supplier,
-                date=self.date,
-                created_at__lt=self.created_at
-            ).order_by('created_at')
-        else:
-            transactions_same_date = AccountTransaction.objects.none()
-        
-        all_prior_transactions = list(transactions) + list(transactions_same_date)
+        # جلب جميع المعاملات السابقة (قبل تاريخ هذه المعاملة، أو في نفس التاريخ ولكن قبل created_at)
+        if self.pk:  # إذا كانت المعاملة محفوظة بالفعل
+            # نستثني المعاملة الحالية ونأخذ فقط ما قبلها
+            transactions = AccountTransaction.objects.filter(
+                customer_supplier=self.customer_supplier
+            ).filter(
+                Q(date__lt=self.date) |  # معاملات قبل هذا التاريخ
+                Q(date=self.date, created_at__lt=self.created_at) |  # معاملات في نفس التاريخ قبل هذه
+                Q(date=self.date, created_at=self.created_at, id__lt=self.pk)  # نفس الوقت لكن ID أصغر
+            ).exclude(pk=self.pk).order_by('date', 'created_at', 'id')
+        else:  # معاملة جديدة لم تحفظ بعد
+            from django.utils import timezone
+            current_time = timezone.now()
+            transactions = AccountTransaction.objects.filter(
+                customer_supplier=self.customer_supplier
+            ).filter(
+                Q(date__lt=self.date) |  # معاملات قبل هذا التاريخ
+                Q(date=self.date, created_at__lt=current_time)  # معاملات في نفس التاريخ قبل الآن
+            ).order_by('date', 'created_at', 'id')
         
         # الرصيد الافتتاحي = 0
         balance = Decimal('0')
         
         # إضافة جميع المعاملات السابقة
-        for transaction in all_prior_transactions:
+        for transaction in transactions:
             if transaction.direction == 'debit':
                 balance += transaction.amount
             else:

@@ -6,6 +6,31 @@
 
 {% block title %}{% trans "Create New Product" %} - {{ block.super }}{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Styling for keyboard navigation in category dropdown */
+    #categoryDropdown .dropdown-item.active {
+        background-color: #0d6efd !important;
+        color: white !important;
+    }
+    
+    #categoryDropdown .dropdown-item:hover {
+        background-color: #e9ecef;
+        color: #212529;
+    }
+    
+    #categoryDropdown .dropdown-item.active:hover {
+        background-color: #0d6efd !important;
+        color: white !important;
+    }
+    
+    #categoryDropdown {
+        position: absolute;
+        z-index: 1050;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
     <div class="row">
@@ -697,12 +722,16 @@ $(document).ready(function() {
     var categoryDropdown = $('#categoryDropdown');
     var categoryHidden = $('#category');
 
+    // Variable to track currently selected index in dropdown
+    var selectedIndex = -1;
+
     // Function to filter and show categories
     function filterCategories() {
         var searchTerm = categorySearch.val().toLowerCase().trim();
 
         if (searchTerm === '') {
             categoryDropdown.hide();
+            selectedIndex = -1;
             return;
         }
 
@@ -717,20 +746,23 @@ $(document).ready(function() {
 
         if (filteredCategories.length === 0) {
             categoryDropdown.hide();
+            selectedIndex = -1;
             return;
         }
 
         // Create dropdown options
-        filteredCategories.forEach(function(category) {
+        filteredCategories.forEach(function(category, index) {
             var option = $('<button type="button" class="dropdown-item"></button>');
             option.html('<strong>' + category.name + '</strong>' + (category.code ? ' (' + category.code + ')' : ''));
             option.attr('data-category', JSON.stringify(category));
+            option.attr('data-index', index);
 
             option.on('click', function() {
                 // Fill category data
                 categoryHidden.val(category.id);
                 categorySearch.val(category.name);
                 categoryDropdown.hide();
+                selectedIndex = -1;
 
                 // Trigger change event for validation
                 categoryHidden.trigger('change');
@@ -740,26 +772,96 @@ $(document).ready(function() {
         });
 
         categoryDropdown.show();
+        selectedIndex = -1; // Reset selection
+    }
+
+    // Function to highlight selected item in dropdown
+    function highlightSelectedItem() {
+        var items = categoryDropdown.find('.dropdown-item');
+        items.removeClass('active');
+        
+        if (selectedIndex >= 0 && selectedIndex < items.length) {
+            var selectedItem = items.eq(selectedIndex);
+            selectedItem.addClass('active');
+            
+            // Scroll to selected item
+            var dropdownHeight = categoryDropdown.height();
+            var itemTop = selectedItem.position().top;
+            var itemHeight = selectedItem.outerHeight();
+            
+            if (itemTop < 0) {
+                categoryDropdown.scrollTop(categoryDropdown.scrollTop() + itemTop);
+            } else if (itemTop + itemHeight > dropdownHeight) {
+                categoryDropdown.scrollTop(categoryDropdown.scrollTop() + (itemTop + itemHeight - dropdownHeight));
+            }
+        }
+    }
+
+    // Function to select category by Enter key
+    function selectCurrentCategory() {
+        if (selectedIndex >= 0) {
+            var selectedItem = categoryDropdown.find('.dropdown-item').eq(selectedIndex);
+            if (selectedItem.length) {
+                selectedItem.click();
+            }
+        }
     }
 
     // Handle input changes
     categorySearch.on('input', filterCategories);
+
+    // Handle keyboard navigation
+    categorySearch.on('keydown', function(e) {
+        var items = categoryDropdown.find('.dropdown-item');
+        
+        if (items.length === 0) {
+            return;
+        }
+
+        // Arrow Down: Move to next item
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+            highlightSelectedItem();
+        }
+        // Arrow Up: Move to previous item
+        else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            selectedIndex = Math.max(selectedIndex - 1, 0);
+            highlightSelectedItem();
+        }
+        // Enter: Select current item
+        else if (e.key === 'Enter') {
+            e.preventDefault();
+            selectCurrentCategory();
+        }
+        // Escape: Close dropdown
+        else if (e.key === 'Escape') {
+            e.preventDefault();
+            categoryDropdown.hide();
+            selectedIndex = -1;
+        }
+    });
 
     // Handle focus to show all categories if empty
     categorySearch.on('focus', function() {
         if (categorySearch.val().trim() === '') {
             // Show all categories
             categoryDropdown.empty();
-            categories.slice(0, 10).forEach(function(category) { // Show first 10 categories
+            selectedIndex = -1;
+            
+            categories.slice(0, 10).forEach(function(category, index) { // Show first 10 categories
                 var option = $('<button type="button" class="dropdown-item"></button>');
                 option.html('<strong>' + category.name + '</strong>' + (category.code ? ' (' + category.code + ')' : ''));
                 option.attr('data-category', JSON.stringify(category));
+                option.attr('data-index', index);
 
                 option.on('click', function() {
                     // Fill category data
                     categoryHidden.val(category.id);
                     categorySearch.val(category.name);
                     categoryDropdown.hide();
+                    selectedIndex = -1;
 
                     // Trigger change event for validation
                     categoryHidden.trigger('change');
@@ -916,14 +1018,25 @@ $(document).ready(function() {
         $('#categoryForm')[0].reset();
         $('#categoryIsActive').prop('checked', true);
     });
+    
+    // Category Search Modal - Bind search button
+    $('#searchCategoryBtn').on('click', function() {
+        openCategorySearchModal();
+    });
+    
+    // Category Search Modal - Bind search input for filtering
+    $('#categorySearchInput').on('input keyup', function() {
+        filterCategoriesInModal();
+    });
 });
 
 // Category Search Modal Functions
 function openCategorySearchModal() {
     $('#categorySearchModal').modal('show');
-    // Focus on search input
+    // Focus on search input and reset search
     setTimeout(function() {
-        $('#categorySearchInput').focus();
+        $('#categorySearchInput').val('').focus();
+        filterCategoriesInModal();
     }, 500);
 }
 
@@ -958,63 +1071,6 @@ function filterCategoriesInModal() {
         }
     });
 }
-
-// Bind search button
-$('#searchCategoryBtn').on('click', function() {
-    openCategorySearchModal();
-});
-
-// Bind search input in modal
-$('#categorySearchInput').on('input', filterCategoriesInModal);
-
-// Category Search Modal Functions
-function openCategorySearchModal() {
-    $('#categorySearchModal').modal('show');
-    // Focus on search input
-    setTimeout(function() {
-        $('#categorySearchInput').focus();
-    }, 500);
-}
-
-function selectCategory(categoryId, categoryName, categoryCode) {
-    $('#category').val(categoryId);
-    $('#categorySearch').val(categoryName);
-    $('#categoryDropdown').hide();
-    $('#categorySearchModal').modal('hide');
-    
-    // Trigger change event for validation
-    $('#category').trigger('change');
-}
-
-// Filter categories in modal
-function filterCategoriesInModal() {
-    const searchTerm = $('#categorySearchInput').val().toLowerCase().trim();
-    const categoryItems = $('#categoryList .category-item');
-    
-    if (searchTerm === '') {
-        categoryItems.show();
-        return;
-    }
-    
-    categoryItems.each(function() {
-        const categoryName = $(this).data('name').toLowerCase();
-        const categoryCode = $(this).data('code').toLowerCase();
-        
-        if (categoryName.includes(searchTerm) || categoryCode.includes(searchTerm)) {
-            $(this).show();
-        } else {
-            $(this).hide();
-        }
-    });
-}
-
-// Bind search button
-$('#searchCategoryBtn').on('click', function() {
-    openCategorySearchModal();
-});
-
-// Bind search input in modal
-$('#categorySearchInput').on('input', filterCategoriesInModal);
 </script>
 
 <!-- Category Search Modal -->

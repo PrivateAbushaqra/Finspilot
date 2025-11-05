@@ -148,7 +148,7 @@
                                             <small class="text-muted">{{ transaction.transaction_number }}</small>
                                         </td>
                                         <td>
-                                            <a href="{% url 'accounts:customer_statement' transaction.customer_supplier.id %}" 
+                                            <a href="{% url 'customers:transactions' transaction.customer_supplier.id %}" 
                                                class="text-decoration-none">
                                                 {{ transaction.customer_supplier.name }}
                                             </a>
@@ -204,7 +204,7 @@
                                         </td>
                                         <td class="text-center">
                                             <div class="btn-group btn-group-sm">
-                                                <a href="{% url 'accounts:customer_statement' transaction.customer_supplier.id %}" 
+                                                <a href="{% url 'customers:transactions' transaction.customer_supplier.id %}" 
                                                    class="btn btn-outline-primary btn-sm" title="{% trans 'Account Statement' %}">
                                                     <i class="fas fa-file-invoice"></i>
                                                 </a>

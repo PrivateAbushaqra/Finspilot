@@ -1897,7 +1897,7 @@ class ProductAddAjaxView(LoginRequiredMixin, View):
             unit = request.POST.get('unit', 'piece')
             description = request.POST.get('description', '').strip()
             cost_price = request.POST.get('cost_price', '0')
-            sale_price = request.POST.get('selling_price', '0')
+            sale_price = request.POST.get('sale_price', '0')  # Changed from selling_price
             wholesale_price = request.POST.get('wholesale_price', '0')
             tax_rate = request.POST.get('tax_rate', '0')
             min_stock = request.POST.get('min_stock', '0')
@@ -1905,8 +1905,13 @@ class ProductAddAjaxView(LoginRequiredMixin, View):
             opening_balance = request.POST.get('opening_balance', '0')
             opening_balance_cost = request.POST.get('opening_balance_cost', '0')
             opening_balance_warehouse_id = request.POST.get('opening_balance_warehouse')
-            is_active = request.POST.get('is_active', 'true').lower() == 'true'
-            track_stock = request.POST.get('track_stock', 'true').lower() == 'true'
+            is_active = request.POST.get('is_active') == 'on' or request.POST.get('is_active', '').lower() == 'true'
+            track_stock = request.POST.get('track_stock') == 'on' or request.POST.get('track_stock', '').lower() == 'true'
+            is_service = request.POST.get('is_service') == 'on' or request.POST.get('is_service', '').lower() == 'true'
+            
+            # If is_service checkbox is checked, set product_type to 'service'
+            if is_service:
+                product_type = 'service'
             
             # التحقق من صحة البيانات الأساسية
             if not name:
@@ -2167,7 +2172,7 @@ class ProductAddAjaxView(LoginRequiredMixin, View):
                 action_type='create',
                 content_type='Product',
                 object_id=product.id,
-                description=f'تم إنشاء المنتج من فاتورة المشتريات: {product.name} - رمز المنتج: {product.code} - سعر البيع: {product.sale_price}',
+                description=f'تم إنشاء المنتج من الشاشة المنبثقة: {product.name} - رمز المنتج: {product.code} - سعر البيع: {product.sale_price}',
                 ip_address=request.META.get('REMOTE_ADDR')
             )
             
@@ -2175,11 +2180,11 @@ class ProductAddAjaxView(LoginRequiredMixin, View):
             success_message = f'تم إنشاء المنتج "{product.name}" بنجاح!'
             if tax_rate > 0:
                 from decimal import Decimal
-                selling_price_decimal = Decimal(str(selling_price))
+                sale_price_decimal = Decimal(str(sale_price))
                 tax_rate_decimal = Decimal(str(tax_rate))
-                tax_amount = selling_price_decimal * (tax_rate_decimal / Decimal('100'))
-                price_with_tax = selling_price_decimal + tax_amount
-                success_message += f' (سعر البيع: {selling_price:.3f}، الضريبة: {tax_rate}%، السعر شامل الضريبة: {price_with_tax:.3f})'
+                tax_amount = sale_price_decimal * (tax_rate_decimal / Decimal('100'))
+                price_with_tax = sale_price_decimal + tax_amount
+                success_message += f' (سعر البيع: {sale_price:.3f}، الضريبة: {tax_rate}%، السعر شامل الضريبة: {price_with_tax:.3f})'
             
             return JsonResponse({
                 'success': True,

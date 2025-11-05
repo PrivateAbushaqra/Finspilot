@@ -52,13 +52,13 @@
                 <div class="danger-header">
                     <div class="text-center">
                         <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
-                        <h3 class="mb-0">{% trans "Confirmation" %} {% trans "Delete" %} {% trans "Invoice" %} المبيعات</h3>
+                        <h3 class="mb-0">{% trans "Confirmation Delete Sales Invoice" %}</h3>
                     </div>
                 </div>
 
                 <div class="text-center mb-4">
-                    <h5 class="text-danger">هل أنت متأكد من {% trans "Delete" %} هذه ال{% trans "Invoice" %}؟</h5>
-                    <p class="text-muted">هذا الإجراء لا يمكن التراجع عنه</p>
+                    <h5 class="text-danger">{% trans "Are You Sure You Want to Delete This Invoice?" %}</h5>
+                    <p class="text-muted">{% trans "This Action Cannot be Undone." %}</p>
                 </div>
 
                 <!-- Invoice Information -->
@@ -67,7 +67,7 @@
                         <div class="col-md-6">
                             <h6 class="text-primary mb-2">
                                 <i class="fas fa-hashtag me-1"></i>
-                                رقم ال{% trans "Invoice" %}
+                                {% trans "Invoice No." %}
                             </h6>
                             <p class="mb-3"><strong>{{ object.invoice_number }}</strong></p>
                         </div>
@@ -84,14 +84,14 @@
                         <div class="col-md-6">
                             <h6 class="text-primary mb-2">
                                 <i class="fas fa-user me-1"></i>
-                                العميل
+                                {% trans "Customer" %}
                             </h6>
                             <p class="mb-3">{{ object.customer.name }}</p>
                         </div>
                         <div class="col-md-6">
                             <h6 class="text-primary mb-2">
                                 <i class="fas fa-money-bill-wave me-1"></i>
-                                {% trans "Amount" %} الإجمالي
+                                {% trans "Total Amount" %}
                             </h6>
                             <p class="mb-3"><strong class="text-success">{{ object.total_amount|currency_format }}</strong></p>
                         </div>
@@ -101,20 +101,20 @@
                         <div class="col-md-6">
                             <h6 class="text-primary mb-2">
                                 <i class="fas fa-credit-card me-1"></i>
-                                نوع ال{% trans "Payment" %}
+                                {% trans "Payment Type" %}
                             </h6>
                             <p class="mb-3">
                                 {% if object.payment_type == 'cash' %}
-                                    <span class="badge bg-success">كاش</span>
+                                    <span class="badge bg-success">{% trans "Cash" %}</span>
                                 {% else %}
-                                    <span class="badge bg-warning">ذمم</span>
+                                    <span class="badge bg-warning">{% trans "Credit" %}</span>
                                 {% endif %}
                             </p>
                         </div>
                         <div class="col-md-6">
                             <h6 class="text-primary mb-2">
                                 <i class="fas fa-user-tie me-1"></i>
-                                أنشئ بواسطة
+                                {% trans "Created By" %}
                             </h6>
                             <p class="mb-3">{{ object.created_by.get_full_name|default:object.created_by.username }}</p>
                         </div>
@@ -125,7 +125,7 @@
                         <div class="col-12">
                             <h6 class="text-primary mb-2">
                                 <i class="fas fa-sticky-note me-1"></i>
-                                ملاحظات
+                                {% trans "Notes" %}
                             </h6>
                             <p class="mb-0">{{ object.notes|linebreaks }}</p>
                         </div>
@@ -139,9 +139,9 @@
                     <div class="d-flex align-items-center">
                         <i class="fas fa-info-circle text-warning me-2"></i>
                         <div>
-                            <strong>تحتوي هذه ال{% trans "Invoice" %} على {{ object.items.count }} عنصر</strong>
+                            <strong>{% trans "This Invoice Contains Items." %} {{ object.items.count }}</strong>
                             <br>
-                            <small class="text-muted">سيتم {% trans "Delete" %} جميع العناصر المرتبطة بهذه ال{% trans "Invoice" %}</small>
+                            <small class="text-muted"> {% trans "All Items Associated With This Invoice Will be Deleted." %} </small>
                         </div>
                     </div>
                 </div>
@@ -153,17 +153,17 @@
                     <div class="d-flex justify-content-between">
                         <a href="{% url 'sales:invoice_detail' object.pk %}" class="btn btn-secondary">
                             <i class="fas fa-arrow-right me-1"></i>
-                            إلغاء
+                            {% trans "Cancel" %}
                         </a>
                         
                         <div>
                             <a href="{% url 'sales:invoice_list' %}" class="btn btn-outline-secondary me-2">
                                 <i class="fas fa-list me-1"></i>
-                                العودة لل{% trans "List" %}
+                                {% trans "Back to List" %}
                             </a>
                             <button type="submit" class="btn btn-danger">
                                 <i class="fas fa-trash me-1"></i>
-                                {% trans "Confirmation" %} الحذف
+                                {% trans "Delete confirmation" %}
                             </button>
                         </div>
                     </div>
@@ -182,14 +182,14 @@ $(document).ready(function() {
         e.preventDefault();
         
         Swal.fire({
-            title: '{% trans "Confirmation" %} الحذف',
-            text: 'هل أنت متأكد من {% trans "Delete" %} {% trans "Invoice" %} المبيعات رقم {{ object.invoice_number }}؟',
+            title: '{% trans "Delete confirmation" %}',
+            text: '{% trans "Are You Sure You Want to Delete This Invoice Number" %}{{ object.invoice_number }}؟',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#dc3545',
             cancelButtonColor: '#6c757d',
             confirmButtonText: '{% trans "Yes" %}، ا{% trans "Delete" %}',
-            cancelButtonText: 'إلغاء',
+            cancelButtonText: 'Cancel',
             reverseButtons: true
         }).then((result) => {
             if (result.isConfirmed) {

@@ -465,109 +465,8 @@ class JournalService:
             user=user
         )
     
-    @staticmethod
-    def create_purchase_invoice_entry(invoice, user=None):
-        """إنشاء قيد فاتورة المشتريات"""
-        try:
-            # التحقق من صحة بيانات الفاتورة
-            if not invoice or invoice.total_amount <= 0:
-                print(f"تجاهل إنشاء قيد لفاتورة مشتريات {invoice.invoice_number if invoice else 'غير محدد'} - إجمالي صفر أو سالب")
-                return None
-            
-            # التحقق من صحة البيانات المطلوبة
-            if not hasattr(invoice, 'subtotal') or invoice.subtotal < 0:
-                print(f"تجاهل إنشاء قيد لفاتورة مشتريات {invoice.invoice_number} - subtotal غير صحيح")
-                return None
-            
-            # التحقق من عدم وجود قيد سابق لهذه الفاتورة
-            existing_entry = JournalEntry.objects.filter(purchase_invoice=invoice).first()
-            if existing_entry:
-                print(f"قيد المشتريات موجود بالفعل للفاتورة {invoice.invoice_number}: {existing_entry.entry_number}")
-                return existing_entry
-            
-            lines_data = []
-            
-            # حساب المشتريات (مدين) - بقيمة المشتريات
-            purchases_account = JournalService.get_purchases_account()
-            lines_data.append({
-                'account_id': purchases_account.id,
-                'debit': invoice.subtotal,
-                'credit': 0,
-                'description': f'مشتريات - فاتورة {invoice.invoice_number}'
-            })
-            
-            # حساب الضريبة إذا وجدت (مدين)
-            if invoice.tax_amount > 0:
-                tax_account = JournalService.get_tax_receivable_account()
-                lines_data.append({
-                    'account_id': tax_account.id,
-                    'debit': invoice.tax_amount,
-                    'credit': 0,
-                    'description': f'ضريبة القيمة المضافة المدخلة - فاتورة {invoice.invoice_number}'
-                })
-            
-            # حسب نوع الدفع أو طريقة الدفع
-            if invoice.payment_type == 'cash' or invoice.payment_method == 'cash':
-                # للدفع النقدي: دائن للصندوق أو البنك
-                cash_account = JournalService.get_cash_account()
-                lines_data.append({
-                    'account_id': cash_account.id,
-                    'debit': 0,
-                    'credit': invoice.total_amount,
-                    'description': f'دفع نقدي لفاتورة مشتريات {invoice.invoice_number}'
-                })
-            elif invoice.payment_type == 'credit' or invoice.payment_method == 'credit':
-                # للدفع الائتماني: دائن للمورد
-                supplier_account = JournalService.get_or_create_supplier_account(invoice.supplier)
-                lines_data.append({
-                    'account_id': supplier_account.id,
-                    'debit': 0,
-                    'credit': invoice.total_amount,
-                    'description': f'مشتريات بالائتمان - فاتورة {invoice.invoice_number}'
-                })
-            elif invoice.payment_method == 'check':
-                # للدفع بالشيك: دائن لحساب البنك
-                bank_account = JournalService.get_or_create_bank_account(invoice.bank_account)
-                lines_data.append({
-                    'account_id': bank_account.id,
-                    'debit': 0,
-                    'credit': invoice.total_amount,
-                    'description': f'دفع شيك لفاتورة مشتريات {invoice.invoice_number}'
-                })
-            elif invoice.payment_method == 'transfer':
-                # للحوالة البنكية: دائن لحساب البنك
-                bank_account = JournalService.get_or_create_bank_account(invoice.bank_account)
-                lines_data.append({
-                    'account_id': bank_account.id,
-                    'debit': 0,
-                    'credit': invoice.total_amount,
-                    'description': f'حوالة بنكية لفاتورة مشتريات {invoice.invoice_number}'
-                })
-            else:
-                # افتراضياً اذا لم يتم تحديد طريقة دفع: دائن للمورد (ذمم)
-                supplier_account = JournalService.get_or_create_supplier_account(invoice.supplier)
-                lines_data.append({
-                    'account_id': supplier_account.id,
-                    'debit': 0,
-                    'credit': invoice.total_amount,
-                    'description': f'فاتورة مشتريات {invoice.invoice_number}'
-                })
-            
-            # إنشاء القيد المحاسبي
-            result = JournalService.create_journal_entry(
-                entry_date=invoice.date,
-                description=f'قيد فاتورة مشتريات {invoice.invoice_number} - {invoice.supplier.name}',
-                lines_data=lines_data,
-                user=user,
-                reference_id=invoice.id,
-                purchase_invoice=invoice
-            )
-            return result
-        except Exception as e:
-            print(f"ERROR in create_purchase_invoice_entry: {e}")
-            import traceback
-            traceback.print_exc()
-            return None
+    # ملاحظة: تم نقل دالة create_purchase_invoice_entry إلى نهاية الكلاس لتجنب التكرار
+    # انظر السطر 1410 للدالة المحسّنة التي تحسب من جميع البنود
     
     @staticmethod
     def create_purchase_return_entry(purchase_return, user=None):
@@ -1428,7 +1327,9 @@ class JournalService:
             total_amount = Decimal('0')
             
             for item in invoice.items.all():
-                subtotal += item.quantity * item.unit_price
+                # المجموع الفرعي = الإجمالي - الضريبة (لأن total_amount قد يكون شامل الضريبة)
+                item_subtotal = item.total_amount - item.tax_amount
+                subtotal += item_subtotal
                 tax_amount += item.tax_amount
                 total_amount += item.total_amount
             
@@ -1438,21 +1339,35 @@ class JournalService:
             
             lines_data = []
             
-            # إذا كانت الفاتورة نقدية
+            # إذا كانت الفاتورة نقدية أو بشيك أو تحويل
             if invoice.payment_type == 'cash':
-                # حساب الصندوق (مدين)
-                if invoice.cashbox:
-                    cash_account = invoice.cashbox.account
-                else:
-                    # حساب الصندوق الافتراضي
+                if invoice.payment_method == 'cash' and invoice.cashbox:
+                    # حساب الصندوق (دائن - صرف من الصندوق)
                     cash_account = JournalService.get_cash_account()
-                
-                lines_data.append({
-                    'account_id': cash_account.id,
-                    'debit': total_amount,
-                    'credit': 0,
-                    'description': f'مشتريات نقدية - فاتورة {invoice.invoice_number}'
-                })
+                    lines_data.append({
+                        'account_id': cash_account.id,
+                        'debit': 0,
+                        'credit': total_amount,
+                        'description': f'صرف نقدي - فاتورة مشتريات {invoice.invoice_number}'
+                    })
+                elif invoice.payment_method in ['check', 'transfer'] and invoice.bank_account:
+                    # حساب البنك (دائن - صرف من البنك)
+                    bank_account = JournalService.get_or_create_bank_account(invoice.bank_account)
+                    lines_data.append({
+                        'account_id': bank_account.id,
+                        'debit': 0,
+                        'credit': total_amount,
+                        'description': f'صرف بنكي - فاتورة مشتريات {invoice.invoice_number}'
+                    })
+                else:
+                    # حساب نقدي افتراضي
+                    cash_account = JournalService.get_cash_account()
+                    lines_data.append({
+                        'account_id': cash_account.id,
+                        'debit': 0,
+                        'credit': total_amount,
+                        'description': f'صرف - فاتورة مشتريات {invoice.invoice_number}'
+                    })
             
             # إذا كانت الفاتورة بالائتمان
             elif invoice.payment_type == 'credit':
@@ -1504,6 +1419,7 @@ class JournalService:
                 description=f'قيد فاتورة مشتريات رقم {invoice.invoice_number} - {invoice.supplier.name}',
                 lines_data=lines_data,
                 user=user,
+                reference_type='purchase_invoice',
                 reference_id=invoice.id
             )
             

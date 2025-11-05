@@ -2,7 +2,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView, View
 from django.contrib import messages
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.http import JsonResponse
 from django.db.models import Q, Sum, Count
 from django.contrib.auth.decorators import login_required
@@ -99,6 +99,7 @@ class CustomerListView(LoginRequiredMixin, ListView):
     paginate_by = 20
     
     def get_queryset(self):
+        # فلتر الحسابات النشطة فقط بشكل افتراضي (IFRS Compliant)
         queryset = CustomerSupplier.objects.filter(type__in=['customer', 'both'])
         
         # تطبيق الفلاتر
@@ -113,10 +114,13 @@ class CustomerListView(LoginRequiredMixin, ListView):
                 Q(email__icontains=search)
             )
             
-        if status == 'active':
-            queryset = queryset.filter(is_active=True)
+        # إظهار الحسابات النشطة فقط بشكل افتراضي (متوافق مع IFRS)
+        if status == 'all':
+            pass  # إظهار جميع الحسابات (نشطة وغير نشطة)
         elif status == 'inactive':
             queryset = queryset.filter(is_active=False)
+        else:  # active or no filter
+            queryset = queryset.filter(is_active=True)
             
         if balance == 'positive':
             queryset = queryset.filter(balance__gt=0)
@@ -177,6 +181,7 @@ class SupplierListView(LoginRequiredMixin, ListView):
     paginate_by = 20
     
     def get_queryset(self):
+        # فلتر الحسابات النشطة فقط بشكل افتراضي (IFRS Compliant)
         queryset = CustomerSupplier.objects.filter(type__in=['supplier', 'both'])
         
         # تطبيق الفلاتر
@@ -191,10 +196,13 @@ class SupplierListView(LoginRequiredMixin, ListView):
                 Q(email__icontains=search)
             )
             
-        if status == 'active':
-            queryset = queryset.filter(is_active=True)
+        # إظهار الحسابات النشطة فقط بشكل افتراضي (متوافق مع IFRS)
+        if status == 'all':
+            pass  # إظهار جميع الحسابات (نشطة وغير نشطة)
         elif status == 'inactive':
             queryset = queryset.filter(is_active=False)
+        else:  # active or no filter
+            queryset = queryset.filter(is_active=True)
             
         if balance == 'positive':
             queryset = queryset.filter(balance__gt=0)
@@ -369,6 +377,7 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
             
             # الحصول على البيانات من النموذج
             name = request.POST.get('name', '').strip()
+            type_value = request.POST.get('type', customer_supplier.type)  # النوع الجديد أو القديم
             email = request.POST.get('email', '').strip()
             phone = request.POST.get('phone', '').strip()
             address = request.POST.get('address', '').strip()
@@ -402,6 +411,8 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
                 return redirect('customers:edit', pk=pk)
             
             # تحديث البيانات الأساسية
+            old_type = customer_supplier.type  # حفظ النوع القديم
+            customer_supplier.type = type_value
             customer_supplier.name = name
             customer_supplier.email = email
             customer_supplier.phone = phone
@@ -412,6 +423,18 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
             customer_supplier.notes = notes
             customer_supplier.is_active = is_active
             customer_supplier.save()
+            
+            # معالجة تغيير النوع إذا لزم الأمر
+            if old_type != type_value:
+                # إعادة توليد الرقم التسلسلي للنوع الجديد
+                # نحتاج إلى إعادة تعيين sequence_number إلى None أولاً ثم حفظ
+                customer_supplier.sequence_number = None
+                customer_supplier.save()  # سيستدعي _get_next_sequence_number() تلقائياً
+                messages.warning(request, _('Account type changed from %(old)s to %(new)s. Sequence number updated to %(seq)s') % {
+                    'old': dict(CustomerSupplier.TYPES)[old_type],
+                    'new': dict(CustomerSupplier.TYPES)[type_value],
+                    'seq': customer_supplier.sequence_number
+                })
             
             # معالجة تغيير الرصيد الحالي
             from decimal import Decimal
@@ -660,12 +683,6 @@ class CustomerSupplierDeleteView(LoginRequiredMixin, View):
         customer_supplier = get_object_or_404(CustomerSupplier, pk=pk)
         
         try:
-            # التحقق من تأكيد الحذف
-            confirm = request.POST.get('confirm_delete')
-            if confirm != 'DELETE':
-                messages.error(request, _('يجب كتابة "DELETE" للتأكيد!'))
-                return redirect('customers:delete', pk=pk)
-            
             # التحقق من الصلاحيات - فقط للسوبر أدمين
             if not request.user.is_superuser:
                 messages.error(request, _('ليس لديك صلاحية لحذف العملاء/الموردين'))
@@ -676,27 +693,98 @@ class CustomerSupplierDeleteView(LoginRequiredMixin, View):
             type_display = customer_supplier.get_type_display()
             customer_id = customer_supplier.id
             
-            # الحذف الإجباري باستخدام Raw SQL مباشرة
-            self._force_delete_customer_supplier(customer_supplier)
+            # الحصول على إحصائيات البيانات المرتبطة
+            related_count = self._get_related_data_count(customer_supplier)
+            total_records = related_count['invoices'] + related_count['payments'] + related_count['transactions']
             
-            # تسجيل عملية الحذف في سجل الأنشطة
-            from core.models import AuditLog
-            AuditLog.objects.create(
-                user=request.user,
-                action_type='delete',
-                content_type='CustomerSupplier',
-                object_id=customer_id,
-                description=_('تم حذف العميل/المورد وجميع البيانات المرتبطة نهائياً: %(name)s (%(type)s)') % {'name': name, 'type': type_display},
-                ip_address=self.get_client_ip(request)
-            )
+            # التحقق من وجود حركات
+            if total_records > 0:
+                # يوجد حركات - منع الحذف واقتراح التعطيل
+                action = request.POST.get('action')
+                
+                if action == 'deactivate':
+                    # المستخدم اختار التعطيل
+                    customer_supplier.is_active = False
+                    customer_supplier.save()
+                    
+                    # تسجيل عملية التعطيل
+                    from core.models import AuditLog
+                    AuditLog.objects.create(
+                        user=request.user,
+                        action_type='deactivate',
+                        content_type='CustomerSupplier',
+                        object_id=customer_id,
+                        description=_('تم تعطيل العميل/المورد مع الحفاظ على جميع السجلات التاريخية: %(name)s (%(type)s). البيانات المحفوظة: %(invoices)s فاتورة، %(returns)s مرتجع، %(transactions)s معاملة. متوافق مع IFRS (IAS 1, IAS 8).') % {
+                            'name': name, 
+                            'type': type_display,
+                            'invoices': related_count['invoices'],
+                            'returns': related_count['payments'],
+                            'transactions': related_count['transactions']
+                        },
+                        ip_address=self.get_client_ip(request)
+                    )
+                    
+                    messages.success(
+                        request, 
+                        _('تم تعطيل %(type)s "%(name)s" بنجاح! جميع السجلات التاريخية محفوظة (%(invoices)s فاتورة، %(returns)s مرتجع، %(transactions)s معاملة). متوافق مع معايير IFRS.') % {
+                            'type': type_display, 
+                            'name': name,
+                            'invoices': related_count['invoices'],
+                            'returns': related_count['payments'],
+                            'transactions': related_count['transactions']
+                        }
+                    )
+                    
+                    return redirect('customers:list')
+                else:
+                    # عرض رسالة تحذيرية مع خيار التعطيل
+                    messages.error(
+                        request,
+                        _('⚠️ لا يمكن حذف %(type)s "%(name)s" لأنه يحتوي على معاملات مرتبطة:\n• %(invoices)s فاتورة\n• %(returns)s مرتجع\n• %(transactions)s معاملة مالية\n\n✅ يمكنك تعطيل الحساب بدلاً من حذفه للحفاظ على السجلات المحاسبية (متوافق مع IFRS).') % {
+                            'type': type_display,
+                            'name': name,
+                            'invoices': related_count['invoices'],
+                            'returns': related_count['payments'],
+                            'transactions': related_count['transactions']
+                        }
+                    )
+                    
+                    # إعادة توجيه إلى صفحة الحذف مع عرض خيار التعطيل
+                    return redirect('customers:delete', pk=pk)
             
-            # رسالة نجاح
-            messages.success(
-                request, 
-                _('تم حذف %(type)s "%(name)s" بنجاح!\nجميع البيانات المرتبطة تم حذفها نهائياً.') % {'type': type_display, 'name': name}
-            )
-            
-            return redirect('customers:list')
+            else:
+                # لا توجد حركات - السماح بالحذف النهائي
+                confirm = request.POST.get('confirm_delete')
+                if confirm != 'DELETE':
+                    messages.error(request, _('يجب كتابة "DELETE" للتأكيد!'))
+                    return redirect('customers:delete', pk=pk)
+                
+                # حذف نهائي
+                customer_supplier.delete()
+                
+                # تسجيل عملية الحذف
+                from core.models import AuditLog
+                AuditLog.objects.create(
+                    user=request.user,
+                    action_type='delete',
+                    content_type='CustomerSupplier',
+                    object_id=customer_id,
+                    description=_('تم حذف العميل/المورد نهائياً (لا توجد معاملات مرتبطة): %(name)s (%(type)s)') % {
+                        'name': name, 
+                        'type': type_display
+                    },
+                    ip_address=self.get_client_ip(request)
+                )
+                
+                messages.success(
+                    request, 
+                    _('✅ تم حذف %(type)s "%(name)s" بنجاح! (لم تكن هناك معاملات مرتبطة)') % {
+                        'type': type_display, 
+                        'name': name
+                    }
+                )
+                
+                return redirect('customers:list')
             
         except Exception as e:
             # تسجيل الخطأ في سجل الأنشطة
@@ -706,167 +794,12 @@ class CustomerSupplierDeleteView(LoginRequiredMixin, View):
                 action_type='delete_failed',
                 content_type='CustomerSupplier',
                 object_id=customer_supplier.id,
-                description=_('فشل حذف العميل/المورد: %(error)s') % {'error': str(e)},
+                description=_('فشل حذف/تعطيل العميل/المورد: %(error)s') % {'error': str(e)},
                 ip_address=self.get_client_ip(request)
             )
             
-            messages.error(request, _('حدث خطأ أثناء حذف البيانات: %(error)s') % {'error': str(e)})
+            messages.error(request, _('حدث خطأ أثناء العملية: %(error)s') % {'error': str(e)})
             return redirect('customers:delete', pk=pk)
-    
-    def _force_delete_customer_supplier(self, customer_supplier):
-        """حذف إجباري للعميل/المورد وجميع بياناته بـ Raw SQL"""
-        from django.db import connection, transaction
-        
-        with transaction.atomic():
-            with connection.cursor() as cursor:
-                customer_id = customer_supplier.id
-                
-                # 1. حذف مردودات الشراء والمبيعات
-                cursor.execute("""
-                    DELETE FROM purchases_purchasereturnitem 
-                    WHERE return_invoice_id IN (
-                        SELECT id FROM purchases_purchasereturn 
-                        WHERE original_invoice_id IN (
-                            SELECT id FROM purchases_purchaseinvoice WHERE supplier_id = %s
-                        )
-                    )
-                """, [customer_id])
-                
-                cursor.execute("""
-                    DELETE FROM purchases_purchasereturn 
-                    WHERE original_invoice_id IN (
-                        SELECT id FROM purchases_purchaseinvoice WHERE supplier_id = %s
-                    )
-                """, [customer_id])
-                
-                cursor.execute("""
-                    DELETE FROM sales_salesreturnitem 
-                    WHERE return_invoice_id IN (
-                        SELECT id FROM sales_salesreturn 
-                        WHERE customer_id = %s
-                    )
-                """, [customer_id])
-                
-                cursor.execute("""
-                    DELETE FROM sales_salesreturn WHERE customer_id = %s
-                """, [customer_id])
-                
-                # حذف إشعارات خصم المشتريات
-                cursor.execute("""
-                    DELETE FROM purchases_purchasedebitnote WHERE supplier_id = %s
-                """, [customer_id])
-                
-                # حذف إشعارات ائتمان المبيعات
-                cursor.execute("""
-                    DELETE FROM sales_salescreditnote WHERE customer_id = %s
-                """, [customer_id])
-                
-                # حذف القيود المحاسبية للرصيد الافتتاحي وتعديلات الرصيد
-                # أولاً حذف سطور القيود
-                cursor.execute("""
-                    DELETE FROM journal_journalline 
-                    WHERE journal_entry_id IN (
-                        SELECT id FROM journal_journalentry 
-                        WHERE reference_type IN ('cs_opening', 'cs_adjustment')
-                        AND reference_id = %s
-                    )
-                """, [customer_id])
-                
-                # ثم حذف القيود نفسها
-                cursor.execute("""
-                    DELETE FROM journal_journalentry 
-                    WHERE reference_type IN ('cs_opening', 'cs_adjustment')
-                    AND reference_id = %s
-                """, [customer_id])
-                
-                # حذف سطور القيود المحاسبية أولاً (قبل حذف القيود نفسها)
-                cursor.execute("""
-                    DELETE FROM journal_journalline 
-                    WHERE journal_entry_id IN (
-                        SELECT id FROM journal_journalentry 
-                        WHERE sales_invoice_id IN (
-                            SELECT id FROM sales_salesinvoice WHERE customer_id = %s
-                        )
-                    )
-                """, [customer_id])
-                
-                cursor.execute("""
-                    DELETE FROM journal_journalline 
-                    WHERE journal_entry_id IN (
-                        SELECT id FROM journal_journalentry 
-                        WHERE purchase_invoice_id IN (
-                            SELECT id FROM purchases_purchaseinvoice WHERE supplier_id = %s
-                        )
-                    )
-                """, [customer_id])
-                
-                # الآن حذف القيود المحاسبية نفسها
-                cursor.execute("""
-                    DELETE FROM journal_journalentry 
-                    WHERE sales_invoice_id IN (
-                        SELECT id FROM sales_salesinvoice WHERE customer_id = %s
-                    )
-                """, [customer_id])
-                
-                cursor.execute("""
-                    DELETE FROM journal_journalentry 
-                    WHERE purchase_invoice_id IN (
-                        SELECT id FROM purchases_purchaseinvoice WHERE supplier_id = %s
-                    )
-                """, [customer_id])
-                
-                # 2. حذف حركات المخزون المرتبطة
-                cursor.execute("""
-                    DELETE FROM inventory_inventorymovement 
-                    WHERE reference_id IN (
-                        SELECT id FROM purchases_purchaseinvoice WHERE supplier_id = %s
-                    ) AND reference_type = 'purchase_invoice'
-                """, [customer_id])
-                
-                cursor.execute("""
-                    DELETE FROM inventory_inventorymovement 
-                    WHERE reference_id IN (
-                        SELECT id FROM sales_salesinvoice WHERE customer_id = %s
-                    ) AND reference_type = 'sales_invoice'
-                """, [customer_id])
-                
-                # 3. حذف عناصر الفواتير
-                cursor.execute("""
-                    DELETE FROM purchases_purchaseinvoiceitem 
-                    WHERE invoice_id IN (
-                        SELECT id FROM purchases_purchaseinvoice WHERE supplier_id = %s
-                    )
-                """, [customer_id])
-                
-                cursor.execute("""
-                    DELETE FROM sales_salesinvoiceitem 
-                    WHERE invoice_id IN (
-                        SELECT id FROM sales_salesinvoice WHERE customer_id = %s
-                    )
-                """, [customer_id])
-                
-                # 4. حذف الفواتير نفسها (تجاوز PROTECT)
-                cursor.execute("""
-                    DELETE FROM purchases_purchaseinvoice WHERE supplier_id = %s
-                """, [customer_id])
-                
-                cursor.execute("""
-                    DELETE FROM sales_salesinvoice WHERE customer_id = %s
-                """, [customer_id])
-                
-                # 5. حذف معاملات الحساب
-                cursor.execute("""
-                    DELETE FROM accounts_accounttransaction WHERE customer_supplier_id = %s
-                """, [customer_id])
-                
-                # 6. حذف أي حركات مخزون مرتبطة بفواتير هذا العميل/المورد
-                # (حركات المخزون لا تربط مباشرة بالعميل/المورد بل بالفواتير)
-                # تم حذفها بالفعل عندما تم حذف الفواتير أعلاه
-                
-                # 7. أخيراً حذف العميل/المورد نفسه
-                cursor.execute("""
-                    DELETE FROM customers_customersupplier WHERE id = %s
-                """, [customer_id])
     
     def get_client_ip(self, request):
         """الحصول على عنوان IP الخاص بالعميل"""
@@ -929,6 +862,9 @@ class CustomerSupplierTransactionsView(LoginRequiredMixin, TemplateView):
             transactions = AccountTransaction.objects.filter(query).order_by('-date', '-id')
             
             # تطبيق فلترة التاريخ
+            date_from_obj = None
+            date_to_obj = None
+            
             if date_from:
                 try:
                     date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
@@ -980,20 +916,233 @@ class CustomerSupplierTransactionsView(LoginRequiredMixin, TemplateView):
             
             # لا نقوم بإصلاح تلقائي - الفحص يكون من جانب العميل فقط
             
+            # الحصول على المستندات الأصلية (للعرض الموسع)
+            from sales.models import SalesInvoice, SalesReturn
+            from purchases.models import PurchaseInvoice, PurchaseReturn
+            from receipts.models import PaymentReceipt
+            from payments.models import PaymentVoucher
+            
+            # فواتير المبيعات (جميع أنواع الدفع)
+            sales_invoices = SalesInvoice.objects.filter(customer=customer_supplier)
+            
+            # فواتير المشتريات (جميع أنواع الدفع)
+            purchase_invoices = PurchaseInvoice.objects.filter(supplier=customer_supplier)
+            
+            # سندات القبض
+            receipts = PaymentReceipt.objects.filter(customer=customer_supplier)
+            
+            # سندات الصرف
+            payments = PaymentVoucher.objects.filter(supplier=customer_supplier)
+            
+            # مردودات المبيعات
+            sales_returns = SalesReturn.objects.filter(customer=customer_supplier)
+            
+            # مردودات المشتريات
+            purchase_returns = PurchaseReturn.objects.filter(original_invoice__supplier=customer_supplier)
+            
+            # تطبيق فلتر التاريخ على المستندات
+            if date_from_obj:
+                sales_invoices = sales_invoices.filter(date__gte=date_from_obj)
+                purchase_invoices = purchase_invoices.filter(date__gte=date_from_obj)
+                receipts = receipts.filter(date__gte=date_from_obj)
+                payments = payments.filter(date__gte=date_from_obj)
+                sales_returns = sales_returns.filter(date__gte=date_from_obj)
+                purchase_returns = purchase_returns.filter(date__gte=date_from_obj)
+            
+            if date_to_obj:
+                sales_invoices = sales_invoices.filter(date__lte=date_to_obj)
+                purchase_invoices = purchase_invoices.filter(date__lte=date_to_obj)
+                receipts = receipts.filter(date__lte=date_to_obj)
+                payments = payments.filter(date__lte=date_to_obj)
+                sales_returns = sales_returns.filter(date__lte=date_to_obj)
+                purchase_returns = purchase_returns.filter(date__lte=date_to_obj)
+            
+            # إنشاء قائمة موحدة من جميع المستندات مع تصنيف IFRS
+            all_documents = []
+            
+            # إضافة معاملات الرصيد الافتتاحي والتعديلات اليدوية - متوافق مع IFRS
+            opening_transactions = transactions.filter(
+                reference_type__in=['opening_balance', 'cs_opening', 'cs_adjustment', 'balance_adjustment']
+            )
+            
+            # تطبيق فلتر التاريخ على معاملات الرصيد الافتتاحي
+            if date_from_obj:
+                opening_transactions = opening_transactions.filter(date__gte=date_from_obj)
+            if date_to_obj:
+                opening_transactions = opening_transactions.filter(date__lte=date_to_obj)
+            
+            for trans in opening_transactions:
+                # تحديد نوع المعاملة والعرض المناسب
+                if trans.reference_type in ['opening_balance', 'cs_opening']:
+                    type_display = _('Opening Balance')
+                    icon = 'fa-balance-scale'
+                    type_key = 'opening_balance'
+                else:  # balance_adjustment, cs_adjustment
+                    type_display = _('Balance Adjustment')
+                    icon = 'fa-edit'
+                    type_key = 'balance_adjustment'
+                
+                all_documents.append({
+                    'date': trans.date,
+                    'type': type_key,
+                    'type_display': type_display,
+                    'number': trans.transaction_number,
+                    'amount': trans.amount,
+                    'direction': trans.direction,
+                    'payment_type': '-',
+                    'url': '#',  # لا يوجد رابط مباشر لمعاملة الرصيد الافتتاحي/التعديل
+                    'icon': icon,
+                    'color': 'info',
+                    'description': trans.description,
+                    'object': trans
+                })
+            
+            # فواتير المبيعات - دائن (Credit) حسب IFRS (إيراد)
+            for invoice in sales_invoices:
+                all_documents.append({
+                    'date': invoice.date,
+                    'type': 'sales_invoice',
+                    'type_display': _('Sales Invoice'),
+                    'number': invoice.invoice_number,
+                    'amount': invoice.total_amount,
+                    'direction': 'credit',  # IFRS: المبيعات = إيراد = دائن
+                    'payment_type': invoice.get_payment_type_display(),
+                    'url': reverse('sales:invoice_detail', args=[invoice.id]),
+                    'icon': 'fa-file-invoice',
+                    'color': 'success',
+                    'object': invoice
+                })
+            
+            # فواتير المشتريات - مدين (Debit) حسب IFRS (مصروف/أصل)
+            for invoice in purchase_invoices:
+                all_documents.append({
+                    'date': invoice.date,
+                    'type': 'purchase_invoice',
+                    'type_display': _('Purchase Invoice'),
+                    'number': invoice.invoice_number,
+                    'amount': invoice.total_amount,
+                    'direction': 'debit',  # IFRS: المشتريات = مصروف/أصل = مدين
+                    'payment_type': invoice.get_payment_type_display(),
+                    'url': reverse('purchases:invoice_detail', args=[invoice.id]),
+                    'icon': 'fa-shopping-cart',
+                    'color': 'danger',
+                    'object': invoice
+                })
+            
+            # سندات القبض - دائن (Credit) حسب IFRS (تحصيل نقدية)
+            for receipt in receipts:
+                all_documents.append({
+                    'date': receipt.date,
+                    'type': 'receipt',
+                    'type_display': _('Receipt Voucher'),
+                    'number': receipt.receipt_number,
+                    'amount': receipt.amount,
+                    'direction': 'credit',  # IFRS: قبض نقدية = تخفيض ذمم = دائن
+                    'payment_type': receipt.get_payment_type_display(),
+                    'url': reverse('receipts:receipt_detail', args=[receipt.id]),
+                    'icon': 'fa-money-bill-wave',
+                    'color': 'success',
+                    'object': receipt
+                })
+            
+            # سندات الصرف - مدين (Debit) حسب IFRS (صرف نقدية)
+            for payment in payments:
+                all_documents.append({
+                    'date': payment.date,
+                    'type': 'payment',
+                    'type_display': _('Payment Voucher'),
+                    'number': payment.voucher_number,
+                    'amount': payment.amount,
+                    'direction': 'debit',  # IFRS: صرف نقدية = تخفيض دائنين = مدين
+                    'payment_type': payment.get_payment_type_display(),
+                    'url': reverse('payments:payment_detail', args=[payment.id]),
+                    'icon': 'fa-hand-holding-usd',
+                    'color': 'danger',
+                    'object': payment
+                })
+            
+            # مردودات المبيعات - مدين (Debit) حسب IFRS (عكس الإيراد)
+            for return_inv in sales_returns:
+                all_documents.append({
+                    'date': return_inv.date,
+                    'type': 'sales_return',
+                    'type_display': _('Sales Return'),
+                    'number': return_inv.return_number,
+                    'amount': return_inv.total_amount,
+                    'direction': 'debit',  # IFRS: مرتجع مبيعات = عكس الإيراد = مدين
+                    'payment_type': '-',
+                    'url': reverse('sales:return_detail', args=[return_inv.id]),
+                    'icon': 'fa-undo',
+                    'color': 'warning',
+                    'object': return_inv
+                })
+            
+            # مردودات المشتريات - دائن (Credit) حسب IFRS (عكس المصروف)
+            for return_inv in purchase_returns:
+                all_documents.append({
+                    'date': return_inv.date,
+                    'type': 'purchase_return',
+                    'type_display': _('Purchase Return'),
+                    'number': return_inv.return_number,
+                    'amount': return_inv.total_amount,
+                    'direction': 'credit',  # IFRS: مرتجع مشتريات = عكس المصروف = دائن
+                    'payment_type': '-',
+                    'url': reverse('purchases:return_detail', args=[return_inv.id]),
+                    'icon': 'fa-undo',
+                    'color': 'info',
+                    'object': return_inv
+                })
+            
+            # ترتيب جميع المستندات حسب التاريخ (الأحدث أولاً)
+            all_documents.sort(key=lambda x: x['date'], reverse=True)
+            
+            # حساب إجماليات المستندات حسب IFRS
+            total_documents_debit = sum(doc['amount'] for doc in all_documents if doc['direction'] == 'debit')
+            total_documents_credit = sum(doc['amount'] for doc in all_documents if doc['direction'] == 'credit')
+            
+            # استخدام إجماليات المستندات للإحصائيات العلوية (للتوافق مع الجدول)
+            total_debit = total_documents_debit
+            total_credit = total_documents_credit
+            
+            # إعادة حساب الرصيد الختامي بناءً على المستندات الفعلية
+            net_filtered = total_debit - total_credit
+            closing_balance = opening_balance + net_filtered
+            
+            # حساب إجمالي المستندات (عدد المستندات)
+            total_documents_count = len(all_documents)
+            
             context.update({
                 'customer_supplier': customer_supplier,
                 'transactions': transactions,
                 'opening_balance': opening_balance,  # الرصيد الافتتاحي المحسوب
-                'closing_balance': closing_balance,  # الرصيد الختامي = افتتاحي + معاملات
+                'closing_balance': closing_balance,  # الرصيد الختامي = افتتاحي + صافي المستندات
                 'total_debit': total_debit,
                 'total_credit': total_credit,
-                'total_transactions': transactions.count(),
+                'total_transactions': total_documents_count,
                 'date_from': date_from,
                 'date_to': date_to,
+                # إجماليات المستندات
+                'total_documents_debit': total_documents_debit,
+                'total_documents_credit': total_documents_credit,
+                'total_documents_count': total_documents_count,
+                # إضافة المستندات الأصلية
+                'sales_invoices': sales_invoices.order_by('-date'),
+                'purchase_invoices': purchase_invoices.order_by('-date'),
+                'receipts': receipts.order_by('-date'),
+                'payments': payments.order_by('-date'),
+                'sales_returns': sales_returns.order_by('-date'),
+                'purchase_returns': purchase_returns.order_by('-date'),
+                # إضافة القائمة الموحدة
+                'all_documents': all_documents,
             })
             
         except ImportError as e:
             # في حالة عدم وجود نموذج الحسابات
+            from sales.models import SalesInvoice, SalesReturn
+            from purchases.models import PurchaseInvoice, PurchaseReturn
+            from receipts.models import PaymentReceipt
+            from payments.models import PaymentVoucher
+            
             context.update({
                 'customer_supplier': customer_supplier,
                 'transactions': [],
@@ -1004,9 +1153,22 @@ class CustomerSupplierTransactionsView(LoginRequiredMixin, TemplateView):
                 'total_transactions': 0,
                 'date_from': date_from,
                 'date_to': date_to,
-                'error_message': 'نموذج الحسابات غير متوفر'
+                'error_message': 'نموذج الحسابات غير متوفر',
+                # إضافة المستندات حتى في حالة الخطأ
+                'sales_invoices': SalesInvoice.objects.filter(customer=customer_supplier),
+                'purchase_invoices': PurchaseInvoice.objects.filter(supplier=customer_supplier),
+                'receipts': PaymentReceipt.objects.filter(customer=customer_supplier),
+                'payments': PaymentVoucher.objects.filter(supplier=customer_supplier),
+                'sales_returns': SalesReturn.objects.filter(customer=customer_supplier),
+                'purchase_returns': PurchaseReturn.objects.filter(original_invoice__supplier=customer_supplier),
             })
         except Exception as e:
+            # في حالة أي خطأ آخر
+            from sales.models import SalesInvoice, SalesReturn
+            from purchases.models import PurchaseInvoice, PurchaseReturn
+            from receipts.models import PaymentReceipt
+            from payments.models import PaymentVoucher
+            
             context.update({
                 'customer_supplier': customer_supplier,
                 'transactions': [],
@@ -1017,7 +1179,14 @@ class CustomerSupplierTransactionsView(LoginRequiredMixin, TemplateView):
                 'total_transactions': 0,
                 'date_from': date_from,
                 'date_to': date_to,
-                'error_message': f'خطأ في تحميل البيانات: {str(e)}'
+                'error_message': f'خطأ في تحميل البيانات: {str(e)}',
+                # إضافة المستندات حتى في حالة الخطأ
+                'sales_invoices': SalesInvoice.objects.filter(customer=customer_supplier),
+                'purchase_invoices': PurchaseInvoice.objects.filter(supplier=customer_supplier),
+                'receipts': PaymentReceipt.objects.filter(customer=customer_supplier),
+                'payments': PaymentVoucher.objects.filter(supplier=customer_supplier),
+                'sales_returns': SalesReturn.objects.filter(customer=customer_supplier),
+                'purchase_returns': PurchaseReturn.objects.filter(original_invoice__supplier=customer_supplier),
             })
         
         # تسجيل النشاط في سجل الأنشطة

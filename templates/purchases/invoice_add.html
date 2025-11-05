@@ -94,6 +94,22 @@
     .btn-remove-product:hover {
         background: #c82333;
     }
+    
+    /* Supplier Dropdown Arrow Navigation Styles */
+    #supplier-dropdown .dropdown-item.active {
+        background-color: #007bff !important;
+        color: white !important;
+    }
+    
+    #supplier-dropdown .dropdown-item {
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+    
+    #supplier-dropdown .dropdown-item:hover {
+        background-color: #0056b3 !important;
+        color: white !important;
+    }
 </style>
 {% endblock %}
 
@@ -1505,6 +1521,9 @@ document.addEventListener('DOMContentLoaded', function() {
         {% endfor %}
     ];
     
+    // Variable to track current selected index for arrow navigation
+    let currentSelectedIndex = -1;
+    
     if (supplierSearch && supplierSelect && supplierDropdown) {
         // Function to filter and show suppliers
         function filterSuppliers() {
@@ -1512,11 +1531,13 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (searchTerm === '') {
                 supplierDropdown.style.display = 'none';
+                currentSelectedIndex = -1;
                 return;
             }
             
             // Clear previous options
             supplierDropdown.innerHTML = '';
+            currentSelectedIndex = -1;
             
             // Filter suppliers
             const filteredSuppliers = suppliers.filter(supplier => 
@@ -1537,11 +1558,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 option.setAttribute('data-id', supplier.id);
                 
                 option.addEventListener('click', function() {
-                    supplierSearch.value = supplier.name;
-                    supplierSelect.value = supplier.id;
-                    supplierDropdown.style.display = 'none';
-                    // Trigger change event for balance update
-                    supplierSelect.dispatchEvent(new Event('change'));
+                    selectSupplier(supplier);
                 });
                 
                 supplierDropdown.appendChild(option);
@@ -1549,6 +1566,73 @@ document.addEventListener('DOMContentLoaded', function() {
             
             supplierDropdown.style.display = 'block';
         }
+        
+        // Function to select a supplier
+        function selectSupplier(supplier) {
+            supplierSearch.value = supplier.name;
+            supplierSelect.value = supplier.id;
+            supplierDropdown.style.display = 'none';
+            currentSelectedIndex = -1;
+            // Trigger change event for balance update
+            supplierSelect.dispatchEvent(new Event('change'));
+        }
+        
+        // Function to highlight an item in the dropdown
+        function highlightItem(index) {
+            const items = supplierDropdown.querySelectorAll('.dropdown-item');
+            
+            // Remove active class from all items
+            items.forEach(item => item.classList.remove('active'));
+            
+            // Add active class to selected item
+            if (index >= 0 && index < items.length) {
+                items[index].classList.add('active');
+                items[index].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+        }
+        
+        // Handle keyboard navigation
+        supplierSearch.addEventListener('keydown', function(e) {
+            const items = supplierDropdown.querySelectorAll('.dropdown-item');
+            
+            if (items.length === 0) return;
+            
+            // Arrow Down
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                currentSelectedIndex = Math.min(currentSelectedIndex + 1, items.length - 1);
+                highlightItem(currentSelectedIndex);
+            }
+            // Arrow Up
+            else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                currentSelectedIndex = Math.max(currentSelectedIndex - 1, 0);
+                highlightItem(currentSelectedIndex);
+            }
+            // Enter
+            else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (currentSelectedIndex >= 0 && currentSelectedIndex < items.length) {
+                    const selectedItem = items[currentSelectedIndex];
+                    const supplierId = parseInt(selectedItem.getAttribute('data-id'));
+                    const supplier = suppliers.find(s => s.id === supplierId);
+                    if (supplier) {
+                        selectSupplier(supplier);
+                    }
+                }
+            }
+            // Escape
+            else if (e.key === 'Escape') {
+                e.preventDefault();
+                supplierDropdown.style.display = 'none';
+                currentSelectedIndex = -1;
+            }
+            // Tab - allow default behavior but close dropdown
+            else if (e.key === 'Tab') {
+                supplierDropdown.style.display = 'none';
+                currentSelectedIndex = -1;
+            }
+        });
         
         // Handle input changes
         supplierSearch.addEventListener('input', filterSuppliers);
@@ -1558,6 +1642,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (supplierSearch.value.trim() === '') {
                 // Show all suppliers
                 supplierDropdown.innerHTML = '';
+                currentSelectedIndex = -1;
+                
                 suppliers.forEach(supplier => {
                     const option = document.createElement('button');
                     option.type = 'button';
@@ -1566,16 +1652,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     option.setAttribute('data-id', supplier.id);
                     
                     option.addEventListener('click', function() {
-                        supplierSearch.value = supplier.name;
-                        supplierSelect.value = supplier.id;
-                        supplierDropdown.style.display = 'none';
-                        // Trigger change event for balance update
-                        supplierSelect.dispatchEvent(new Event('change'));
+                        selectSupplier(supplier);
                     });
                     
                     supplierDropdown.appendChild(option);
                 });
                 supplierDropdown.style.display = 'block';
+            } else {
+                // Re-filter with current search term
+                filterSuppliers();
             }
         });
         
@@ -1583,6 +1668,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.addEventListener('click', function(e) {
             if (!supplierSearch.contains(e.target) && !supplierDropdown.contains(e.target)) {
                 supplierDropdown.style.display = 'none';
+                currentSelectedIndex = -1;
             }
         });
         
@@ -1594,6 +1680,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     supplierSearch.value = '';
                     supplierSelect.value = '';
                 }
+                currentSelectedIndex = -1;
             }, 200);
         });
         

@@ -199,13 +199,23 @@ class PurchaseInvoiceItem(models.Model):
         subtotal = self.quantity * self.unit_price
         
         if self.invoice.is_tax_inclusive:
-            # عند تفعيل "شامل ضريبة": يحسب الضريبة بشكل طبيعي
-            tax_amount = subtotal * (self.tax_rate / Decimal('100'))
-            total_amount = subtotal + tax_amount
+            # السعر شامل الضريبة: نستخرج الضريبة من المبلغ
+            # الصيغة: الضريبة = المبلغ × (نسبة الضريبة ÷ (100 + نسبة الضريبة))
+            if self.tax_rate > 0:
+                tax_amount = subtotal * (self.tax_rate / (Decimal('100') + self.tax_rate))
+                total_amount = subtotal  # المبلغ الإجمالي هو نفسه المبلغ المدخل (شامل الضريبة)
+            else:
+                tax_amount = Decimal('0')
+                total_amount = subtotal
         else:
-            # عند إلغاء "شامل ضريبة": لا يحسب أي ضريبة
-            tax_amount = Decimal('0')
-            total_amount = subtotal
+            # السعر غير شامل الضريبة: نضيف الضريبة للمبلغ
+            # الصيغة: الضريبة = المبلغ × (نسبة الضريبة ÷ 100)
+            if self.tax_rate > 0:
+                tax_amount = subtotal * (self.tax_rate / Decimal('100'))
+                total_amount = subtotal + tax_amount
+            else:
+                tax_amount = Decimal('0')
+                total_amount = subtotal
         
         # تقريب إلى 3 خانات عشرية
         self.tax_amount = tax_amount.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)

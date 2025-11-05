@@ -805,9 +805,10 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="addProductForm">
+            <form id="addProductForm" enctype="multipart/form-data">
                 <div class="modal-body">
                     {% csrf_token %}
+                    <input type="hidden" name="form_id" value="product_modal_form_{{ random_id }}">
                     
                     <!-- Basic Information -->
                     <h6 class="mb-3"><i class="fas fa-info-circle me-2"></i>ال{% trans "Information" %} الأساسية</h6>
@@ -838,8 +839,9 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label for="productSku" class="form-label">{% trans "Product Code (SKU)" %}</label>
-                                <input type="text" class="form-control" id="productSku" name="sku" placeholder="{% trans 'Example: PROD-001' %}">
+                                <label for="productSku" class="form-label">{% trans "Product Code (SKU)" %} <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="productSku" name="sku" placeholder="{% trans 'Example: PROD-001' %}" required 
+                                       autocomplete="off" data-form-type="other" spellcheck="false">
                             </div>
                         </div>
                     </div>
@@ -848,7 +850,8 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="productBarcode" class="form-label">{% trans "Barcode" %}</label>
-                                <input type="text" class="form-control" id="productBarcode" name="barcode">
+                                <input type="text" class="form-control" id="productBarcode" name="barcode" 
+                                       autocomplete="off" data-form-type="other" spellcheck="false">
                             </div>
                         </div>
                     </div>
@@ -900,9 +903,28 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
+                                <div class="form-check mt-4">
+                                    <input class="form-check-input" type="checkbox" id="productIsService" name="is_service">
+                                    <label class="form-check-label" for="productIsService">
+                                        <i class="fas fa-concierge-bell text-primary me-2"></i>
+                                        <strong>{% trans "Service Product (Non-countable)" %}</strong>
+                                    </label>
+                                    <div class="form-text">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        {% trans "Service products do not affect inventory Service products do not need quantities" %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
                                 <label for="productUnit" class="form-label">{% trans "Unit of Measurement" %} <span class="text-danger">*</span></label>
                                 <select class="form-select" id="productUnit" name="unit" required>
                                     <option value="piece">{% trans "Piece" %}</option>
+                                    <option value="service">{% trans "Service" %}</option>
                                     <option value="kg">{% trans "Kilogram" %}</option>
                                     <option value="liter">{% trans "Liter" %}</option>
                                     <option value="meter">{% trans "Meter" %}</option>
@@ -918,14 +940,15 @@
                     <div class="row">
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="productCostPrice" class="form-label">{% trans "Cost Price" %}</label>
-                                <input type="number" class="form-control" id="productCostPrice" name="cost_price" step="0.001" min="0">
+                                <label class="form-label">{% trans "Cost Price" %}</label>
+                                <input type="text" class="form-control" value="{% trans 'Calculated automatically from purchases' %}" readonly disabled>
+                                <small class="form-text text-muted">{% trans "Cost is calculated from purchase invoices using weighted average method" %}</small>
                             </div>
                         </div>
                         <div class="col-md-4">
                             <div class="mb-3">
-                                <label for="productSellingPrice" class="form-label">{% trans "Sale Price" %} <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="productSellingPrice" name="selling_price" step="0.001" min="0" required>
+                                <label for="productSellingPrice" class="form-label">{% trans "Selling Price" %} <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="productSellingPrice" name="sale_price" step="0.001" min="0" required>
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -1315,6 +1338,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const addProductForm = document.getElementById('addProductForm');
     const saveProductBtn = document.getElementById('saveProductBtn');
     const productCategorySelect = document.getElementById('productCategory');
+    
+    console.log('🔍 Elements initialized:');
+    console.log('  addProductModal:', addProductModal);
+    console.log('  addProductForm:', addProductForm);
+    console.log('  saveProductBtn:', saveProductBtn);
+    console.log('  productCategorySelect:', productCategorySelect);
 
     // تحميل {% trans "List" %} الفئات عند {% trans "Open" %} النافذة
     if (addProductModal) {
@@ -1394,34 +1423,155 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('productSerialNumber').value = ''; // مسح القيمة عند ال{% trans "Hide" %}
         }
     }
+    
+    // Toggle inventory fields for service products
+    function toggleProductInventoryFields() {
+        const isService = document.getElementById('productIsService').checked;
+        const unit = document.getElementById('productUnit');
+        
+        // Inventory fields
+        const openingBalance = document.getElementById('productOpeningBalance');
+        const openingBalanceCost = document.getElementById('productOpeningBalanceCost');
+        const openingBalanceWarehouse = document.getElementById('productOpeningBalanceWarehouse');
+        const minStock = document.getElementById('productMinStock');
+        const maxStock = document.getElementById('productMaxStock');
+        const trackStock = document.getElementById('productTrackStock');
+        
+        if (isService) {
+            // Disable inventory fields for service products
+            if (openingBalance) {
+                openingBalance.value = '0';
+                openingBalance.disabled = true;
+                openingBalance.parentElement.style.opacity = '0.6';
+            }
+            if (openingBalanceCost) {
+                openingBalanceCost.value = '0';
+                openingBalanceCost.disabled = true;
+                openingBalanceCost.removeAttribute('required');
+                openingBalanceCost.parentElement.style.opacity = '0.6';
+            }
+            if (openingBalanceWarehouse) {
+                openingBalanceWarehouse.value = '';
+                openingBalanceWarehouse.disabled = true;
+                openingBalanceWarehouse.parentElement.style.opacity = '0.6';
+            }
+            if (minStock) {
+                minStock.value = '0';
+                minStock.disabled = true;
+                minStock.parentElement.style.opacity = '0.6';
+            }
+            if (maxStock) {
+                maxStock.value = '';
+                maxStock.disabled = true;
+                maxStock.parentElement.style.opacity = '0.6';
+            }
+            if (trackStock) {
+                trackStock.checked = false;
+                trackStock.disabled = true;
+                trackStock.parentElement.style.opacity = '0.6';
+            }
+            
+            // Auto-select service unit
+            if (unit) {
+                unit.value = 'service';
+            }
+        } else {
+            // Enable inventory fields for physical products
+            if (openingBalance) {
+                openingBalance.disabled = false;
+                openingBalance.parentElement.style.opacity = '1';
+            }
+            if (openingBalanceCost) {
+                openingBalanceCost.disabled = false;
+                openingBalanceCost.setAttribute('required', 'required');
+                openingBalanceCost.parentElement.style.opacity = '1';
+            }
+            if (openingBalanceWarehouse) {
+                openingBalanceWarehouse.disabled = false;
+                openingBalanceWarehouse.parentElement.style.opacity = '1';
+            }
+            if (minStock) {
+                minStock.disabled = false;
+                minStock.parentElement.style.opacity = '1';
+            }
+            if (maxStock) {
+                maxStock.disabled = false;
+                maxStock.parentElement.style.opacity = '1';
+            }
+            if (trackStock) {
+                trackStock.disabled = false;
+                trackStock.checked = true;
+                trackStock.parentElement.style.opacity = '1';
+            }
+        }
+    }
 
     // ربط الأحداث للمنتج
     if (document.getElementById('productSellingPrice')) {
         document.getElementById('productSellingPrice').addEventListener('input', calculateProductTax);
         document.getElementById('productTaxRate').addEventListener('input', calculateProductTax);
-        document.getElementById('productUnit').addEventListener('change', toggleProductSerialNumberField);
+        document.getElementById('productUnit').addEventListener('change', function() {
+            toggleProductSerialNumberField();
+            // Auto-check service product if service unit is selected
+            if (this.value === 'service') {
+                document.getElementById('productIsService').checked = true;
+                toggleProductInventoryFields();
+            }
+        });
+        
+        // Bind service product checkbox
+        if (document.getElementById('productIsService')) {
+            document.getElementById('productIsService').addEventListener('change', toggleProductInventoryFields);
+        }
         
         // تطبيق التحكم عند تحميل الصفحة
         toggleProductSerialNumberField();
+        toggleProductInventoryFields();
     }
 
+    // دالة لإضافة منتج جديد إلى القائمة بدون إعادة تحميل الصفحة
+    function addProductToList(product) {
+        console.log('➕ Adding product to list:', product);
+        // Simply reload the page to show the new product
+        location.reload();
+    }
+    
     // معالجة إرسال نموذج المنتج
     if (addProductForm) {
         addProductForm.addEventListener('submit', function(e) {
             e.preventDefault();
+            
+            console.log('📝 Form submitted!');
+            console.log('🔍 saveProductBtn:', saveProductBtn);
+            
+            if (!saveProductBtn) {
+                console.error('❌ saveProductBtn is null!');
+                alert('خطأ: زر الحفظ غير موجود!');
+                return;
+            }
             
             // تعطيل الزر وإظهار التحميل
             const spinner = saveProductBtn.querySelector('.spinner-border');
             const btnText = saveProductBtn.querySelector('.btn-text');
             const icon = saveProductBtn.querySelector('.fas');
             
+            console.log('🔍 spinner:', spinner);
+            console.log('🔍 btnText:', btnText);
+            console.log('🔍 icon:', icon);
+            
             saveProductBtn.disabled = true;
-            spinner.classList.remove('d-none');
-            btnText.textContent = 'جاري ال{% trans "Save" %}...';
-            icon.style.display = 'none';
+            if (spinner) spinner.classList.remove('d-none');
+            if (btnText) btnText.textContent = 'جاري ال{% trans "Save" %}...';
+            if (icon) icon.style.display = 'none';
 
             // إرسال البيانات
             const formData = new FormData(addProductForm);
+            
+            // طباعة البيانات المرسلة للتحقق
+            console.log('📤 Sending data:');
+            for (let [key, value] of formData.entries()) {
+                console.log(`  ${key}: ${value}`);
+            }
             
             fetch('{% url "products:product_add_ajax" %}', {
                 method: 'POST',
@@ -1431,8 +1581,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
                 }
             })
-            .then(response => response.json())
+            .then(response => {
+                console.log('📥 Response status:', response.status);
+                return response.json();
+            })
             .then(data => {
+                console.log('📦 Response data:', data);
                 if (data.success) {
                     // إظهار رسالة نجاح
                     const alertDiv = document.createElement('div');
@@ -1465,15 +1619,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             })
             .catch(error => {
-                console.error('{% trans "Error" %}:', error);
-                alert('{% trans "Network error occurred. Please try again." %}');
+                console.error('❌ Error:', error);
+                console.error('Error stack:', error.stack);
+                // Don't show alert for JavaScript errors during success handling
+                if (!error.message.includes('addProductToList')) {
+                    alert('{% trans "Network error occurred. Please try again." %}');
+                }
             })
             .finally(() => {
+                console.log('✅ Request completed');
+
                 // إعادة تفعيل الزر
-                saveProductBtn.disabled = false;
-                spinner.classList.add('d-none');
-                btnText.textContent = '{% trans "Save Product" %}';
-                icon.style.display = 'inline';
+                if (saveProductBtn) {
+                    saveProductBtn.disabled = false;
+                    const spinner = saveProductBtn.querySelector('.spinner-border');
+                    const btnText = saveProductBtn.querySelector('.btn-text');
+                    const icon = saveProductBtn.querySelector('.fas');
+                    if (spinner) spinner.classList.add('d-none');
+                    if (btnText) btnText.textContent = '{% trans "Save Product" %}';
+                    if (icon) icon.style.display = 'inline';
+                }
             });
         });
     }

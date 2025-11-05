@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبار حفظ المنتج</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4">اختبار حفظ منتج من Modal</h1>
+        
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#testModal">
+            فتح نافذة إنشاء منتج
+        </button>
+        
+        <div id="resultArea" class="mt-4"></div>
+    </div>
+    
+    <!-- Modal -->
+    <div class="modal fade" id="testModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">إنشاء منتج جديد</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="testForm">
+                    <div class="modal-body">
+                        <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                        
+                        <div class="mb-3">
+                            <label class="form-label">اسم المنتج *</label>
+                            <input type="text" class="form-control" name="name" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">رمز المنتج (SKU) *</label>
+                            <input type="text" class="form-control" name="sku" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">الفئة *</label>
+                            <select class="form-control" name="category" required id="categorySelect">
+                                <option value="">اختر...</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">سعر البيع *</label>
+                            <input type="number" step="0.01" class="form-control" name="sale_price" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">الوحدة *</label>
+                            <select class="form-control" name="unit" required>
+                                <option value="piece">قطعة</option>
+                                <option value="kg">كجم</option>
+                                <option value="liter">لتر</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                        <button type="submit" class="btn btn-primary">
+                            <span class="spinner-border spinner-border-sm d-none me-2" id="spinner"></span>
+                            حفظ
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // تحميل الفئات
+        fetch('/ar/products/product-add-ajax/', {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.categories) {
+                const select = document.getElementById('categorySelect');
+                data.categories.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat.id;
+                    option.textContent = cat.name;
+                    select.appendChild(option);
+                });
+            }
+        });
+        
+        // معالجة النموذج
+        document.getElementById('testForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            console.log('📝 نموذج تم إرساله');
+            
+            const spinner = document.getElementById('spinner');
+            spinner.classList.remove('d-none');
+            
+            const formData = new FormData(this);
+            
+            // طباعة البيانات
+            console.log('📤 البيانات المرسلة:');
+            for (let [key, value] of formData.entries()) {
+                console.log(`  ${key}: ${value}`);
+            }
+            
+            // الحصول على CSRF token من cookie
+            const csrftoken = document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
+            console.log('🔑 CSRF Token:', csrftoken);
+            
+            fetch('/ar/products/product-add-ajax/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrftoken || formData.get('csrfmiddlewaretoken')
+                }
+            })
+            .then(response => {
+                console.log('📥 كود الاستجابة:', response.status);
+                console.log('📥 نوع المحتوى:', response.headers.get('content-type'));
+                return response.text();
+            })
+            .then(text => {
+                console.log('📦 نص الاستجابة:', text);
+                try {
+                    const data = JSON.parse(text);
+                    console.log('📦 بيانات JSON:', data);
+                    
+                    const resultArea = document.getElementById('resultArea');
+                    if (data.success) {
+                        resultArea.innerHTML = `
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-2"></i>
+                                ${data.message || 'تم الحفظ بنجاح!'}
+                                <br>
+                                <strong>ID:</strong> ${data.product?.id}<br>
+                                <strong>الاسم:</strong> ${data.product?.name}<br>
+                                <strong>الرمز:</strong> ${data.product?.code}
+                            </div>
+                        `;
+                        // إغلاق النافذة
+                        bootstrap.Modal.getInstance(document.getElementById('testModal')).hide();
+                    } else {
+                        resultArea.innerHTML = `
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-circle me-2"></i>
+                                خطأ: ${data.error || 'فشل الحفظ'}
+                            </div>
+                        `;
+                    }
+                } catch (error) {
+                    console.error('❌ خطأ في تحليل JSON:', error);
+                    document.getElementById('resultArea').innerHTML = `
+                        <div class="alert alert-danger">
+                            خطأ في تحليل الاستجابة: ${error.message}
+                            <pre>${text.substring(0, 500)}</pre>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('❌ خطأ في الشبكة:', error);
+                document.getElementById('resultArea').innerHTML = `
+                    <div class="alert alert-danger">
+                        خطأ في الشبكة: ${error.message}
+                    </div>
+                `;
+            })
+            .finally(() => {
+                spinner.classList.add('d-none');
+            });
+        });
+    </script>
+</body>
+</html>

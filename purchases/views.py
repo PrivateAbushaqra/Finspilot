@@ -121,19 +121,20 @@ def create_debit_note_journal_entry(debit_note, user):
             'description': f'مذكرة دين رقم {debit_note.note_number}'
         })
         
-        # حساب المصروفات أو الحساب المقابل (دائن)
-        expenses_account = Account.objects.filter(code='4100').first()  # حساب المصروفات العامة
-        if not expenses_account:
-            # إنشاء حساب المصروفات إذا لم يكن موجوداً
-            expenses_account = Account.objects.create(
-                code='4100',
-                name='مصروفات عامة',
-                account_type='expense',
-                description='المصروفات العامة والإدارية'
+        # حساب مرتجع المشتريات (دائن) - الحساب الصحيح لمذكرة الدين
+        # مذكرة الدين تعني تخفيض مديونيتنا للمورد (إرجاع بضاعة أو تخفيض)
+        purchase_returns_account = Account.objects.filter(code='502').first()  # حساب مرتجع المشتريات
+        if not purchase_returns_account:
+            # إنشاء حساب مرتجع المشتريات إذا لم يكن موجوداً
+            purchase_returns_account = Account.objects.create(
+                code='502',
+                name='مرتجع المشتريات',
+                account_type='purchases',
+                description='مرتجعات المشتريات من الموردين'
             )
         
         lines_data.append({
-            'account_id': expenses_account.id,
+            'account_id': purchase_returns_account.id,
             'debit': 0,
             'credit': float(debit_note.total_amount),
             'description': f'مذكرة دين رقم {debit_note.note_number}'
@@ -522,7 +523,7 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
                         request,
                         'error',
                         dummy,
-                        _('فشل إنشاء فاتورة شراء: الحقول المطلوبة مفقودة (رقم فاتورة المورد أو التاريخ أو المورد أو المستودع أو طريقة الدفع)')
+                        _('Failed to create purchase invoice: Required fields are missing (supplier invoice number or date or supplier or warehouse or payment method)')
                     )
                 except Exception:
                     pass
@@ -620,7 +621,7 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
                         request,
                         'error',
                         dummy,
-                        _('فشل إنشاء فاتورة شراء: لا توجد منتجات مضافة')
+                        _('Failed to create purchase invoice: No products added')
                     )
                 except Exception:
                     pass
@@ -669,7 +670,7 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
                     
                     if final_total > available_credit:
                         error_message = _(
-                            'لا يمكن إنشاء الفاتورة لأن المبلغ الإجمالي (%(total)s) يتجاوز الحد الائتماني المتاح للمورد (%(available)s).\n\nاقتراحات:\n1. زيادة الحد الائتماني للمورد\n2. تسديد المستحقات المتأخرة للمورد\n3. تحويل الفاتورة إلى دفع نقدي'
+                            'Cannot create the invoice because the total amount (%(total)s) exceeds the available credit limit for the supplier (%(available)s).\n\nSuggestions:\n1. Increase the supplier\'s credit limit\n2. Pay outstanding dues to the supplier\n3. Convert the invoice to cash payment'
                         ) % {
                             'total': f"{final_total:.3f}",
                             'available': f"{available_credit:.3f}"
@@ -685,7 +686,7 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
                                 request,
                                 'error',
                                 supplier,
-                                _('فشل في إنشاء فاتورة شراء: تجاوز الحد الائتماني - المبلغ %(total)s > المتاح %(available)s') % {
+                                _('Failed to create purchase invoice: Credit limit exceeded - Amount %(total)s > Available %(available)s') % {
                                     'total': f"{final_total:.3f}",
                                     'available': f"{available_credit:.3f}"
                                 }
@@ -806,7 +807,7 @@ class PurchaseDebitNoteListView(LoginRequiredMixin, ListView):
         ):
             from django.contrib import messages
             from django.shortcuts import redirect
-            messages.error(request, _('ليس لديك صلاحية لعرض اشعارات المدين'))
+            messages.error(request, _('You do not have permission to view debit notes'))
             return redirect('/')
         return super().dispatch(request, *args, **kwargs)
     model = PurchaseDebitNote
@@ -831,21 +832,21 @@ def purchase_debitnote_create(request):
         request.user.has_perm('purchases.add_purchasedebitnote') or
         request.user.is_superuser
     ):
-        messages.error(request, _('ليس لديك صلاحية لإنشاء مذكرة دين'))
+        messages.error(request, _('You do not have permission to create a debit note'))
         return redirect('/')
     if request.method == 'POST':
         try:
             with transaction.atomic():
                 supplier_id = request.POST.get('supplier')
                 if not supplier_id:
-                    messages.error(request, _('يرجى اختيار مورد'))
+                    messages.error(request, _('Please select a supplier'))
                     return redirect('purchases:debitnote_add')
 
                 supplier = get_object_or_404(CustomerSupplier, id=supplier_id)
 
                 supplier_debit_note_number = request.POST.get('supplier_debit_note_number', '').strip()
                 if not supplier_debit_note_number:
-                    messages.error(request, _('يرجى إدخال رقم إشعار المدين (مصدر)'))
+                    messages.error(request, _('Please enter the debit note number (source)'))
                     return redirect('purchases:debitnote_add')
 
                 # توليد الرقم
@@ -853,7 +854,7 @@ def purchase_debitnote_create(request):
                     seq = DocumentSequence.objects.get(document_type='debit_note')
                     note_number = seq.get_next_number()
                 except DocumentSequence.DoesNotExist:
-                    messages.error(request, _('يجب إعداد تسلسل "إشعار مدين" أولاً قبل إنشاء إشعارات مدين جديدة'))
+                    messages.error(request, _('Debit note sequence must be set up first before creating new debit notes'))
                     return redirect('purchases:debitnote_add')
 
                 debit = PurchaseDebitNote.objects.create(
@@ -866,25 +867,19 @@ def purchase_debitnote_create(request):
                     created_by=request.user
                 )
 
-                # إنشاء القيد المحاسبي
-                try:
-                    create_debit_note_journal_entry(debit, request.user)
-                    messages.success(request, f'تم إنشاء القيد المحاسبي لمذكرة الدين رقم {debit.note_number}')
-                except Exception as e:
-                    error_msg = f"Error creating journal entry for debit note: {str(e)}"
-                    logging.getLogger(__name__).error(error_msg)
-                    messages.warning(request, f'تم إنشاء مذكرة الدين ولكن حدث خطأ في القيد المحاسبي: {str(e)}')
+                # ملاحظة: القيد المحاسبي و AccountTransaction يتم إنشاؤهما تلقائياً عبر signal
+                # لا حاجة للاستدعاء اليدوي هنا لتجنب التكرار
 
                 try:
                     from core.signals import log_user_activity
-                    log_user_activity(request, 'create', debit, _('إنشاء اشعار مدين رقم %(number)s') % {'number': debit.note_number})
+                    log_user_activity(request, 'create', debit, _('Create debit note number %(number)s') % {'number': debit.note_number})
                 except Exception:
                     pass
 
-                messages.success(request, _('تم إنشاء اشعار مدين رقم %(number)s') % {'number': debit.note_number})
+                messages.success(request, _('Debit note number %(number)s has been created') % {'number': debit.note_number})
                 return redirect('purchases:debitnote_detail', pk=debit.pk)
         except Exception as e:
-            messages.error(request, _('حدث خطأ أثناء حفظ الإشعار: %(error)s') % {'error': str(e)})
+            messages.error(request, _('An error occurred while saving the note: %(error)s') % {'error': str(e)})
             return redirect('purchases:debitnote_add')
 
     context = {
@@ -895,7 +890,7 @@ def purchase_debitnote_create(request):
         seq = DocumentSequence.objects.get(document_type='debit_note')
         context['next_note_number'] = seq.peek_next_number() if hasattr(seq, 'peek_next_number') else seq.get_formatted_number()
     except DocumentSequence.DoesNotExist:
-        context['sequence_error'] = _('يجب إعداد تسلسل "إشعار مدين" أولاً قبل إنشاء إشعارات مدين جديدة')
+        context['sequence_error'] = _('Debit note sequence must be set up first before creating new debit notes')
 
     return render(request, 'purchases/debitnote_add.html', context)
 
@@ -1200,68 +1195,80 @@ class PurchaseInvoiceDeleteView(LoginRequiredMixin, DeleteView):
     success_url = reverse_lazy('purchases:invoice_list')
     context_object_name = 'invoice'
     
+    def get_object(self, queryset=None):
+        """استرجاع الفاتورة مع معالجة الأخطاء"""
+        # تخزين الكائن في cache لتجنب استدعاءات متعددة
+        if hasattr(self, '_cached_object'):
+            return self._cached_object
+            
+        pk = self.kwargs.get(self.pk_url_kwarg)
+        try:
+            self._cached_object = PurchaseInvoice.objects.get(pk=pk)
+            return self._cached_object
+        except PurchaseInvoice.DoesNotExist:
+            self._cached_object = None
+            return None
+    
+    def get(self, request, *args, **kwargs):
+        """معالجة طلب GET - عرض صفحة التأكيد"""
+        self.object = self.get_object()
+        if self.object is None:
+            messages.error(request, _('The requested invoice does not exist or has been previously deleted'))
+            return redirect('purchases:invoice_list')
+        
+        context = self.get_context_data(object=self.object)
+        return self.render_to_response(context)
+    
+    def post(self, request, *args, **kwargs):
+        """معالجة طلب POST - تنفيذ الحذف"""
+        self.object = self.get_object()
+        if self.object is None:
+            messages.error(request, _('The requested invoice does not exist or has been previously deleted'))
+            return redirect('purchases:invoice_list')
+        return self.delete(request, *args, **kwargs)
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        invoice = self.get_object()
         
         # Get invoice items for display using related_name
-        context['invoice_items'] = invoice.items.select_related('product')
+        if self.object:
+            context['invoice_items'] = self.object.items.select_related('product')
         
         return context
     
     def delete(self, request, *args, **kwargs):
-        invoice = self.get_object()
+        """تنفيذ عملية الحذف"""
+        invoice = self.object
         invoice_number = invoice.invoice_number
+        invoice_id = invoice.id
         
+        # حفظ رسالة النجاح قبل الحذف
+        success_message = f'تم حذف فاتورة المشتريات رقم {invoice_number} بنجاح'
+        
+        # تسجيل النشاط قبل الحذف - مباشرة مع حفظ البيانات اللازمة
         try:
-            # حذف حركات المخزون المرتبطة بالفاتورة (فقط إذا كانت موجودة)
-            try:
-                from inventory.models import InventoryMovement
-                inventory_movements = InventoryMovement.objects.filter(
-                    reference_type='purchase_invoice',
-                    reference_id=invoice.id
-                )
-                if inventory_movements.exists():
-                    movement_count = inventory_movements.count()
-                    inventory_movements.delete()
-                    print(f"تم حذف {movement_count} حركة مخزون لفاتورة المشتريات {invoice_number}")
-                else:
-                    print(f"لا توجد حركات مخزون لفاتورة المشتريات {invoice_number} (فاتورة قديمة)")
-            except ImportError:
-                pass
-            except Exception as e:
-                print(f"خطأ في حذف حركات المخزون: {e}")
+            from core.models import AuditLog
+            from core.signals import get_client_ip
             
-            # حذف حركة حساب المورد المرتبطة بالفاتورة
-            delete_transaction_by_reference('purchase_invoice', invoice.id)
-            
-            # تسجيل النشاط قبل الحذف
-            from core.signals import log_activity
-            log_activity(
+            AuditLog.objects.create(
                 user=request.user,
                 action_type='DELETE',
-                obj=invoice,
+                content_type='PurchaseInvoice',
+                object_id=invoice_id,
                 description=f'تم حذف فاتورة مشتريات رقم: {invoice_number}',
-                request=request
+                ip_address=get_client_ip(request) if request else None
             )
-            
-            # The items will be deleted automatically due to CASCADE relationship
-            # Delete the invoice
-            result = super().delete(request, *args, **kwargs)
-            
-            messages.success(
-                request, 
-                f'تم حذف فاتورة المشتريات رقم {invoice_number} بنجاح'
-            )
-            
-            return result
-            
         except Exception as e:
-            messages.error(
-                request, 
-                f'حدث خطأ أثناء حذف الفاتورة: {str(e)}'
-            )
-            return redirect('purchases:invoice_list')
+            print(f"خطأ في تسجيل النشاط: {e}")
+        
+        # حذف الفاتورة - السجنلات ستتولى حذف السجلات المرتبطة
+        invoice.delete()
+        
+        # إضافة رسالة النجاح
+        messages.success(request, success_message)
+        
+        # إعادة التوجيه إلى صفحة القائمة
+        return redirect(self.success_url)
 
 
 # =================== Purchase Returns Views ===================
@@ -2008,7 +2015,7 @@ class PurchaseDebitNoteReportView(LoginRequiredMixin, ListView):
 
 class PurchaseDebitNoteUpdateView(LoginRequiredMixin, UpdateView):
     model = PurchaseDebitNote
-    fields = ['supplier', 'date', 'description', 'subtotal', 'tax_rate', 'tax_amount', 'total_amount']
+    fields = ['supplier', 'date', 'supplier_debit_note_number', 'subtotal', 'notes']
     template_name = 'purchases/debitnote_form.html'
     context_object_name = 'debitnote'
     

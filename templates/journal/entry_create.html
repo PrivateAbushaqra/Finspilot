@@ -4,6 +4,31 @@
 {% get_current_language as LANGUAGE_CODE %}
 {% block title %}{% if LANGUAGE_CODE == 'ar' %}إنشاء قيد محاسبي{% else %}{% trans "Create Journal Entry" %}{% endif %}{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* تحسين مظهر القائمة المنسدلة للحسابات */
+    .account-dropdown .dropdown-item {
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+    
+    .account-dropdown .dropdown-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    /* تمييز العنصر النشط (المحدد بالأسهم) */
+    .account-dropdown .dropdown-item.active {
+        background-color: #007bff !important;
+        color: white !important;
+    }
+    
+    .account-dropdown .dropdown-item.active strong,
+    .account-dropdown .dropdown-item.active small {
+        color: white !important;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid">
     <!-- Script to store accounts data -->
@@ -347,6 +372,10 @@ function addJournalLine() {
     // تهيئة فلترة الحسابات للبند الجديد
     initializeAccountSearchForRow(lineCount);
     
+    // تهيئة أزرار البحث للبند الجديد (أزرار المكبر)
+    initializeSearchButtons();
+    console.log('✓ تمت إضافة بند جديد وتهيئة زر البحث');
+    
     lineCount++;
 }
 
@@ -658,6 +687,83 @@ function initializeAccountSearch() {
         filterAccounts(searchInput, dropdown);
     });
 
+    // Handle keyboard navigation (Arrow keys and Enter)
+    $(document).on('keydown', '.account-search-input', function(e) {
+        var searchInput = $(this);
+        var formPrefix = searchInput.closest('.journal-line-row').data('form-prefix');
+        var dropdown = $('#accountDropdown-' + formPrefix);
+        
+        // إذا كانت القائمة مخفية، لا تفعل شيئاً
+        if (!dropdown.is(':visible')) {
+            return;
+        }
+        
+        var items = dropdown.find('.dropdown-item');
+        if (items.length === 0) {
+            return;
+        }
+        
+        var currentIndex = items.index(items.filter('.active'));
+        
+        // Arrow Down - الانتقال للأسفل
+        if (e.keyCode === 40) {
+            e.preventDefault();
+            items.removeClass('active');
+            if (currentIndex < items.length - 1) {
+                $(items[currentIndex + 1]).addClass('active');
+            } else {
+                $(items[0]).addClass('active'); // العودة للأول
+            }
+            // التمرير التلقائي للعنصر النشط
+            var activeItem = items.filter('.active')[0];
+            if (activeItem) {
+                activeItem.scrollIntoView({ block: 'nearest' });
+            }
+        }
+        // Arrow Up - الانتقال للأعلى
+        else if (e.keyCode === 38) {
+            e.preventDefault();
+            items.removeClass('active');
+            if (currentIndex > 0) {
+                $(items[currentIndex - 1]).addClass('active');
+            } else {
+                $(items[items.length - 1]).addClass('active'); // الذهاب للأخير
+            }
+            // التمرير التلقائي للعنصر النشط
+            var activeItem = items.filter('.active')[0];
+            if (activeItem) {
+                activeItem.scrollIntoView({ block: 'nearest' });
+            }
+        }
+        // Enter - اختيار العنصر النشط
+        else if (e.keyCode === 13) {
+            e.preventDefault();
+            var activeItem = items.filter('.active');
+            if (activeItem.length > 0) {
+                activeItem.click();
+            } else if (items.length > 0) {
+                // إذا لم يكن هناك عنصر نشط، اختر الأول
+                $(items[0]).click();
+            }
+        }
+        // Escape - إخفاء القائمة
+        else if (e.keyCode === 27) {
+            e.preventDefault();
+            dropdown.hide();
+            items.removeClass('active');
+        }
+        // Tab - منع الإخفاء التلقائي، السماح بالتنقل
+        else if (e.keyCode === 9) {
+            // لا تمنع السلوك الافتراضي لـ Tab
+            // لكن أخفِ القائمة فقط إذا لم يكن هناك عنصر محدد
+            var accountHidden = $('[name="' + formPrefix + '-account"]');
+            if (!accountHidden.val()) {
+                dropdown.hide();
+                items.removeClass('active');
+            }
+        }
+    });
+
     // Handle focus to show all accounts if empty
     $(document).on('focus', '.account-search-input', function() {
         var searchInput = $(this);
@@ -756,6 +862,65 @@ function initializeAccountSearchForRow(formPrefix) {
     });
 }
 
+// تهيئة أزرار البحث (المكبر)
+function initializeSearchButtons() {
+    // إزالة المعالجات القديمة أولاً
+    $(document).off('click', '[id^="searchAccountBtn-"]');
+    
+    // إضافة معالج لجميع أزرار البحث
+    $(document).on('click', '[id^="searchAccountBtn-"]', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        var btn = $(this);
+        var btnId = btn.attr('id');
+        var formPrefix = btnId.replace('searchAccountBtn-', '');
+        
+        console.log('🔍 تم الضغط على زر البحث للبند:', formPrefix);
+        
+        var row = $('[data-form-prefix="' + formPrefix + '"]');
+        var searchInput = row.find('.account-search-input');
+        var dropdown = $('#accountDropdown-' + formPrefix);
+        
+        if (!searchInput.length) {
+            console.error('لم يتم العثور على حقل البحث');
+            return;
+        }
+        
+        // إظهار جميع الحسابات
+        dropdown.empty();
+        
+        if (accounts.length === 0) {
+            dropdown.append('<div class="dropdown-item disabled">' + 
+                (IS_AR ? 'لا توجد حسابات متاحة' : 'No accounts available') + 
+                '</div>');
+        } else {
+            accounts.forEach(function(account) {
+                var option = $('<button type="button" class="dropdown-item"></button>');
+                option.html('<strong>' + account.name + '</strong>' + 
+                           (account.code ? ' (' + account.code + ')' : '') + 
+                           '<br><small class="text-muted">' + account.account_type + '</small>');
+                option.attr('data-account', JSON.stringify(account));
+
+                option.on('click', function(e) {
+                    e.preventDefault();
+                    var accountHidden = row.find('[name="' + formPrefix + '-account"]');
+                    accountHidden.val(account.id);
+                    searchInput.val(account.name);
+                    dropdown.hide();
+                    accountHidden.trigger('change');
+                    console.log('✓ تم اختيار الحساب:', account.name);
+                });
+
+                dropdown.append(option);
+            });
+        }
+        
+        dropdown.show();
+        searchInput.focus();
+    });
+}
+
 // Page load
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 تحميل الصفحة - بدء التهيئة');
@@ -765,6 +930,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // تهيئة فلترة الحسابات
     initializeAccountSearch();
+    
+    // تهيئة أزرار البحث (المكبر) - الإصلاح الجديد
+    initializeSearchButtons();
+    console.log('✓ تم تهيئة أزرار البحث');
     
     // ثانياً: تعيين التاريخ الافتراضي فقط إذا كان فارغاً
     const dateInput = document.querySelector('[name="entry_date"]');

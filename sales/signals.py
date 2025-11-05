@@ -386,6 +386,27 @@ def update_inventory_on_sales_return(sender, instance, created, **kwargs):
         if created:
             for item in instance.items.all():
                 if item.product.product_type == 'physical':
+                    # حساب التكلفة الفعلية من حركة المخزون الأصلية للفاتورة
+                    # استخدام متوسط التكلفة المرجح أو FIFO
+                    unit_cost = item.product.cost_price
+                    
+                    # محاولة الحصول على التكلفة من حركة المخزون الأصلية
+                    if instance.original_invoice:
+                        original_movement = InventoryMovement.objects.filter(
+                            reference_type='sales_invoice',
+                            reference_id=instance.original_invoice.id,
+                            product=item.product,
+                            movement_type='out'
+                        ).first()
+                        
+                        if original_movement and original_movement.unit_cost > 0:
+                            unit_cost = original_movement.unit_cost
+                        elif hasattr(item.product, 'calculate_weighted_average_cost'):
+                            # استخدام المتوسط المرجح إذا كان متوفراً
+                            weighted_cost = item.product.calculate_weighted_average_cost()
+                            if weighted_cost > 0:
+                                unit_cost = weighted_cost
+                    
                     InventoryMovement.objects.create(
                         date=instance.date,
                         product=item.product,
@@ -394,7 +415,7 @@ def update_inventory_on_sales_return(sender, instance, created, **kwargs):
                         reference_type='sales_return',
                         reference_id=instance.id,
                         quantity=item.quantity,
-                        unit_cost=item.product.cost_price,  # استخدام تكلفة المنتج الحقيقية
+                        unit_cost=unit_cost,
                         notes=f'مردود مبيعات - رقم {instance.return_number}',
                         created_by=instance.created_by
                     )
@@ -407,6 +428,26 @@ def update_inventory_on_sales_return(sender, instance, created, **kwargs):
             
             for item in instance.items.all():
                 if item.product.product_type == 'physical':
+                    # حساب التكلفة الفعلية من حركة المخزون الأصلية للفاتورة
+                    unit_cost = item.product.cost_price
+                    
+                    # محاولة الحصول على التكلفة من حركة المخزون الأصلية
+                    if instance.original_invoice:
+                        original_movement = InventoryMovement.objects.filter(
+                            reference_type='sales_invoice',
+                            reference_id=instance.original_invoice.id,
+                            product=item.product,
+                            movement_type='out'
+                        ).first()
+                        
+                        if original_movement and original_movement.unit_cost > 0:
+                            unit_cost = original_movement.unit_cost
+                        elif hasattr(item.product, 'calculate_weighted_average_cost'):
+                            # استخدام المتوسط المرجح إذا كان متوفراً
+                            weighted_cost = item.product.calculate_weighted_average_cost()
+                            if weighted_cost > 0:
+                                unit_cost = weighted_cost
+                    
                     InventoryMovement.objects.create(
                         date=instance.date,
                         product=item.product,
@@ -415,7 +456,7 @@ def update_inventory_on_sales_return(sender, instance, created, **kwargs):
                         reference_type='sales_return',
                         reference_id=instance.id,
                         quantity=item.quantity,
-                        unit_cost=item.product.cost_price,  # استخدام تكلفة المنتج الحقيقية
+                        unit_cost=unit_cost,
                         notes=f'مردود مبيعات - رقم {instance.return_number}',
                         created_by=instance.created_by
                     )
