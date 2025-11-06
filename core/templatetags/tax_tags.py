@@ -27,27 +27,52 @@ def currency_format(amount, currency=None):
     elif not isinstance(amount, Decimal):
         amount = Decimal(str(amount))
     
-    # تنسيق المبلغ
-    formatted_amount = f"{amount:,.2f}"
+    # تحديد عدد المنازل العشرية من العملة
+    decimal_places = 2  # القيمة الافتراضية
+    currency_display = None
     
     # الحصول على العملة
     if currency:
         # إذا تم تمرير عملة محددة
+        if hasattr(currency, 'decimal_places'):
+            decimal_places = currency.decimal_places
         if hasattr(currency, 'symbol') and currency.symbol:
-            return f"{formatted_amount} {currency.symbol}"
+            currency_display = currency.symbol
         elif hasattr(currency, 'code'):
-            return f"{formatted_amount} {currency.code}"
+            currency_display = currency.code
+    else:
+        # إذا لم تُمرر عملة، استخدم العملة الأساسية
+        try:
+            # محاولة الحصول على العملة من إعدادات الشركة أولاً
+            company_settings = CompanySettings.objects.first()
+            if company_settings and hasattr(company_settings, 'base_currency') and company_settings.base_currency:
+                base_currency = company_settings.base_currency
+                if hasattr(base_currency, 'decimal_places'):
+                    decimal_places = base_currency.decimal_places
+                if base_currency.symbol:
+                    currency_display = base_currency.symbol
+                else:
+                    currency_display = base_currency.code
+            else:
+                # إذا لم توجد إعدادات الشركة، ابحث عن العملة الأساسية مباشرة
+                from settings.models import Currency as CurrencyModel
+                base_currency = CurrencyModel.objects.filter(is_base_currency=True).first()
+                if base_currency:
+                    if hasattr(base_currency, 'decimal_places'):
+                        decimal_places = base_currency.decimal_places
+                    if base_currency.symbol:
+                        currency_display = base_currency.symbol
+                    else:
+                        currency_display = base_currency.code
+        except:
+            pass
     
-    # إذا لم تُمرر عملة، استخدم العملة الأساسية
-    try:
-        company_settings = CompanySettings.objects.first()
-        if company_settings and company_settings.base_currency:
-            base_currency = company_settings.base_currency
-            if base_currency.symbol:
-                return f"{formatted_amount} {base_currency.symbol}"
-            return f"{formatted_amount} {base_currency.code}"
-    except:
-        pass
+    # تنسيق المبلغ بعدد المنازل العشرية الصحيح
+    formatted_amount = f"{amount:,.{decimal_places}f}"
+    
+    # إضافة رمز العملة إذا وُجد
+    if currency_display:
+        return f"{formatted_amount} {currency_display}"
     
     # إذا لم نجد أي عملة، أرجع المبلغ فقط
     return formatted_amount

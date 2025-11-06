@@ -314,12 +314,12 @@
                                         </td>
                                         <td>
                                             <input type="number" class="form-control form-control-sm quantity-input" 
-                                                   value="{{ item.quantity|unlocalize }}" min="0.01" step="0.01" 
+                                                   value="{{ item.quantity|unlocalize }}" min="0.001" step="0.001" 
                                                    data-item-id="{{ item.id }}">
                                         </td>
                                         <td>
                                             <input type="number" class="form-control form-control-sm price-input" 
-                                                   value="{{ item.unit_price|unlocalize }}" min="0" step="0.01" 
+                                                   value="{{ item.unit_price|unlocalize }}" min="0" step="0.001" 
                                                    data-item-id="{{ item.id }}">
                                         </td>
                                         <td>{{ item.tax_rate }}%</td>
@@ -356,10 +356,11 @@
                                             <label class="form-label">المنتج</label>
                                             <select class="form-select" id="new-product-select">
                                                 <option value="">اختر المنتج...</option>
+                                                {% load l10n %}
                                                 {% for product in products %}
                                                 <option value="{{ product.id }}" data-code="{{ product.code }}" 
-                                                        data-price="{{ product.sale_price }}" 
-                                                        data-tax="{{ product.tax_rate }}">
+                                                        data-price="{{ product.sale_price|unlocalize }}" 
+                                                        data-tax="{{ product.tax_rate|unlocalize }}">
                                                     {{ product.name }} ({{ product.code }})
                                                 </option>
                                                 {% endfor %}
@@ -368,12 +369,12 @@
                                         <div class="col-md-2">
                                             <label class="form-label">الكمية</label>
                                             <input type="number" class="form-control" id="new-quantity" 
-                                                   min="0.01" step="0.01" placeholder="0.00">
+                                                   min="0.001" step="0.001" placeholder="0.000">
                                         </div>
                                         <div class="col-md-2">
                                             <label class="form-label">سعر الوحدة</label>
                                             <input type="number" class="form-control" id="new-price" 
-                                                   min="0" step="0.01" placeholder="0.00">
+                                                   min="0" step="0.001" placeholder="0.000">
                                         </div>
                                         <div class="col-md-2">
                                             <label class="form-label">نسبة الضريبة</label>
@@ -466,7 +467,8 @@ $(document).ready(function() {
         }
         return cookieValue;
     }
-    const csrftoken = getCookie('csrftoken');
+    const csrftoken = getCookie('finspilot_csrftoken') || getCookie('csrftoken');
+    console.log('🔐 CSRF Token:', csrftoken ? 'موجود' : 'مفقود');
 
     // Add item button click
     $('#add-item-btn').click(function() {
@@ -543,10 +545,19 @@ $(document).ready(function() {
         const price = parseFloat($('#new-price').val());
         const taxRate = parseFloat($('#new-tax-rate').val());
 
-        if (!productId || !quantity || !price || taxRate === null) {
-            alert('يرجى ملء جميع الحقول');
+        // التحقق من الحقول - السماح بالصفر للسعر والضريبة
+        if (!productId || isNaN(quantity) || quantity <= 0 || isNaN(price) || price < 0 || isNaN(taxRate) || taxRate < 0) {
+            alert('يرجى ملء جميع الحقول بشكل صحيح');
             return;
         }
+
+        console.log('🔄 إرسال طلب إضافة منتج:', {
+            url: `${apiBaseUrl}/items/add/`,
+            product_id: productId,
+            quantity: quantity,
+            unit_price: price,
+            tax_rate: taxRate
+        });
 
         $.ajax({
             url: `${apiBaseUrl}/items/add/`,
@@ -559,14 +570,21 @@ $(document).ready(function() {
                 tax_rate: taxRate
             },
             success: function(response) {
+                console.log('✅ استجابة الخادم:', response);
                 if (response.success) {
                     location.reload(); // Reload to show updated items
                 } else {
                     alert('خطأ: ' + response.message);
                 }
             },
-            error: function() {
-                alert('حدث خطأ أثناء إضافة المنتج');
+            error: function(xhr, status, error) {
+                console.error('❌ خطأ في الطلب:', {
+                    status: status,
+                    error: error,
+                    responseText: xhr.responseText,
+                    statusCode: xhr.status
+                });
+                alert('حدث خطأ أثناء إضافة المنتج: ' + error);
             }
         });
     });
@@ -595,6 +613,7 @@ $(document).ready(function() {
     const language = pathMatch ? pathMatch[1] : 'ar';
     const invoiceId = '{{ object.pk }}';
     const apiBaseUrl = `/${language}/sales/invoices/${invoiceId}`;
+    console.log('🌐 API Base URL:', apiBaseUrl);
     const getDiscountAmount = () => parseFloat($('#invoice-discount-input').val()) || 0;
 
     // Function to calculate item totals in real-time

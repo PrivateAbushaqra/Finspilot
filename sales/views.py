@@ -210,8 +210,12 @@ def create_sales_return_inventory_movements(return_invoice, user):
                 is_active=True
             )
         
-        # إنشاء حركة مخزون واردة لكل عنصر في المردود
+        # إنشاء حركة مخزون واردة لكل عنصر في المردود (فقط للكميات الأكبر من صفر)
         for item in return_invoice.items.all():
+            # تخطي المنتجات ذات الكمية صفر أو السالبة
+            if item.quantity <= 0:
+                continue
+                
             # توليد رقم الحركة
             movement_number = f"RETURN-IN-{uuid.uuid4().hex[:8].upper()}"
             
@@ -1265,6 +1269,16 @@ class SalesInvoiceUpdateView(LoginRequiredMixin, UpdateView):
         else:
             context['can_change_creator'] = False
         
+        # Add decimal places from currency settings
+        try:
+            company_settings = CompanySettings.objects.first()
+            if company_settings and company_settings.base_currency:
+                context['decimal_places'] = company_settings.base_currency.decimal_places
+            else:
+                context['decimal_places'] = 3  # Default to 3 if not set
+        except:
+            context['decimal_places'] = 3  # Default to 3 if error
+        
         return context
     
     def form_valid(self, form):
@@ -1435,17 +1449,18 @@ class SalesInvoiceUpdateView(LoginRequiredMixin, UpdateView):
                         from inventory.models import InventoryMovement
                         quantity_diff = change['quantity'] - old_quantity
                         
-                        # Create inventory movement for the difference
-                        InventoryMovement.objects.create(
-                            product=item.product,
-                            warehouse=form.instance.warehouse,
-                            movement_type='out' if quantity_diff > 0 else 'in',
-                            quantity=abs(quantity_diff),
-                            date=form.instance.date,
-                            reference_type='sales_invoice',
-                            reference_id=form.instance.id,
-                            notes=f'تعديل فاتورة المبيعات {form.instance.invoice_number} - تغيير الكمية'
-                        )
+                        # Create inventory movement for the difference (only if not zero)
+                        if quantity_diff != 0:
+                            InventoryMovement.objects.create(
+                                product=item.product,
+                                warehouse=form.instance.warehouse,
+                                movement_type='out' if quantity_diff > 0 else 'in',
+                                quantity=abs(quantity_diff),
+                                date=form.instance.date,
+                                reference_type='sales_invoice',
+                                reference_id=form.instance.id,
+                                notes=f'تعديل فاتورة المبيعات {form.instance.invoice_number} - تغيير الكمية'
+                            )
                         
                         # Update product stock
                         item.product.current_stock -= quantity_diff
@@ -1668,14 +1683,22 @@ class SalesInvoiceDeleteView(LoginRequiredMixin, DeleteView):
                 from django.db.models import Q
                 
                 # حذف جميع القيود المرتبطة بالفاتورة (المبيعات و COGS)
+                # البحث عن القيود بطرق متعددة للتأكد من حذف الكل
                 journal_entries = JournalEntry.objects.filter(
                     Q(sales_invoice=invoice) | 
-                    Q(reference_type__in=['sales_invoice', 'sales_invoice_cogs'], reference_id=invoice.id)
+                    Q(reference_type='sales_invoice', reference_id=invoice.id) |
+                    Q(reference_type='sales_invoice_cogs', reference_id=invoice.id)
                 ).distinct()
                 
                 if journal_entries.exists():
                     entry_count = journal_entries.count()
                     entry_numbers = ', '.join([entry.entry_number for entry in journal_entries])
+                    
+                    # طباعة تفاصيل القيود قبل الحذف للتصحيح
+                    print(f"🔍 القيود المراد حذفها للفاتورة {invoice_number}:")
+                    for entry in journal_entries:
+                        print(f"   - {entry.entry_number}: reference_type={entry.reference_type}, reference_id={entry.reference_id}")
+                    
                     journal_entries.delete()
                     
                     # تسجيل في سجل الأنشطة
@@ -3511,12 +3534,15 @@ class SalesCreditNoteReportView(LoginRequiredMixin, UserPassesTestMixin, ListVie
 @require_POST
 def invoice_add_item(request, invoice_id):
     """إضافة عنصر جديد لفاتورة المبيعات عبر AJAX"""
+    import logging
+    logger = logging.getLogger(__name__)
+    
     try:
         invoice = get_object_or_404(SalesInvoice, pk=invoice_id)
         
         # Check permissions
         if not request.user.has_sales_permission():
-            return JsonResponse({'success': False, 'message': 'ليس لديك صلاحية لتعديل فواتير المبيعات'})
+            return JsonResponse({'success': False, 'message': _('ليس لديك صلاحية لتعديل فواتير المبيعات')})
         
         # Handle both JSON and form-data POST requests
         if request.content_type == 'application/json':
@@ -3532,8 +3558,10 @@ def invoice_add_item(request, invoice_id):
             unit_price = request.POST.get('unit_price')
             tax_rate = request.POST.get('tax_rate')
         
-        if not all([product_id, quantity, unit_price, tax_rate]):
-            return JsonResponse({'success': False, 'message': 'جميع الحقول مطلوبة'})
+        # التحقق من الحقول المطلوبة (tax_rate يمكن أن يكون صفر)
+        if not product_id or not quantity or not unit_price or (tax_rate is None or tax_rate == ''):
+            logger.error(f"إضافة منتج فشلت - بيانات ناقصة: product_id={product_id}, quantity={quantity}, unit_price={unit_price}, tax_rate={tax_rate}")
+            return JsonResponse({'success': False, 'message': _('جميع الحقول مطلوبة')})
         
         product = get_object_or_404(Product, pk=product_id)
         
@@ -3592,7 +3620,7 @@ def invoice_add_item(request, invoice_id):
         
         return JsonResponse({
             'success': True, 
-            'message': 'تم إضافة المنتج بنجاح',
+            'message': _('تم إضافة المنتج بنجاح'),
             'item': {
                 'id': item.id,
                 'product_name': product.name,
@@ -3605,7 +3633,8 @@ def invoice_add_item(request, invoice_id):
         })
         
     except Exception as e:
-        return JsonResponse({'success': False, 'message': f'خطأ: {str(e)}'})
+        logger.error(f"خطأ في إضافة منتج للفاتورة {invoice_id}: {str(e)}", exc_info=True)
+        return JsonResponse({'success': False, 'message': _('حدث خطأ أثناء إضافة المنتج')})
 
 
 @login_required

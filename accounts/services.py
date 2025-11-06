@@ -131,22 +131,36 @@ def create_purchase_return_transaction(purchase_return, user):
 
 
 def delete_transaction_by_reference(reference_type, reference_id):
-    """حذف الحركة المرتبطة بمرجع معين"""
+    """حذف جميع الحركات المرتبطة بمرجع معين"""
     try:
-        transaction = AccountTransaction.objects.get(
+        # البحث عن جميع المعاملات المرتبطة بهذا المرجع
+        transactions = AccountTransaction.objects.filter(
             reference_type=reference_type,
             reference_id=reference_id
         )
         
-        # حفظ بيانات العميل/المورد للتحديث
-        customer_supplier = transaction.customer_supplier
-        transaction.delete()
+        if not transactions.exists():
+            return False
         
-        # إعادة حساب رصيد العميل/المورد
-        recalculate_customer_supplier_balance(customer_supplier)
+        # جمع جميع العملاء/الموردين المتأثرين
+        affected_customers = set()
+        for transaction in transactions:
+            affected_customers.add(transaction.customer_supplier)
+        
+        # حذف جميع المعاملات
+        deleted_count = transactions.count()
+        transactions.delete()
+        
+        print(f"✅ تم حذف {deleted_count} معاملة للمرجع {reference_type}:{reference_id}")
+        
+        # إعادة حساب رصيد جميع العملاء/الموردين المتأثرين
+        for customer_supplier in affected_customers:
+            recalculate_customer_supplier_balance(customer_supplier)
+            print(f"✅ تم تحديث رصيد {customer_supplier.name}")
         
         return True
-    except AccountTransaction.DoesNotExist:
+    except Exception as e:
+        print(f"❌ خطأ في حذف المعاملات: {e}")
         return False
 
 
@@ -156,6 +170,7 @@ def recalculate_customer_supplier_balance(customer_supplier):
         customer_supplier=customer_supplier
     ).order_by('date', 'created_at')
     
+    old_balance = customer_supplier.balance
     new_balance = Decimal('0')
     for transaction in transactions:
         if transaction.direction == 'debit':
@@ -165,7 +180,10 @@ def recalculate_customer_supplier_balance(customer_supplier):
     
     # تحديث رصيد العميل/المورد
     customer_supplier.balance = new_balance
-    customer_supplier.save()
+    customer_supplier.save(update_fields=['balance'])
+    
+    if old_balance != new_balance:
+        print(f"🔄 تم تحديث رصيد {customer_supplier.name}: {old_balance} → {new_balance}")
 
 
 def get_customer_supplier_statement(customer_supplier, date_from=None, date_to=None):

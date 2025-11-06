@@ -3145,6 +3145,43 @@
             "Active departments": "الأقسام النشطة",
             "Manage employees, attendance, payroll, and HR operations": "إدارة الموظفين والحضور وكشوف الرواتب وعمليات الموارد البشرية",
             "View All Leave Requests": "عرض جميع طلبات الإجازة",
+            
+            // Journal Entry Descriptions and System Terms
+            "قيد": "Entry",
+            "فاتورة": "Invoice",
+            "مشتريات": "Purchase",
+            "مشتريات": "Purchases",
+            "مبيعات": "Sales",
+            "رقم": "Number",
+            "مؤسسة": "Company",
+            "شركة": "Company",
+            "مردود": "Return",
+            "المشتريات": "Purchases",
+            "سند": "Voucher",
+            "صرف": "Payment",
+            "قبض": "Receipt",
+            "دفع": "Payment",
+            "تكلفة": "Cost",
+            "البضاعة": "Goods",
+            "المباعة": "Sold",
+            "نقدي": "Cash",
+            "رصيد": "Balance",
+            "افتتاحي": "Opening",
+            "ختامي": "Closing",
+            "إجمالي": "Total",
+            "الإجمالي": "Total",
+            "المجموع": "Sum",
+            "الرصيد": "Balance",
+            "رصيد افتتاحي": "Opening Balance",
+            "رصيد ختامي": "Closing Balance",
+            "تعديل": "Adjustment",
+            "العميل": "Customer",
+            "المورد": "Supplier",
+            "عميل": "Customer",
+            "مورد": "Supplier",
+            "تصحيح": "Correction",
+            "الخطأ": "Error",
+            "خطأ": "Error",
         };
     }
     
@@ -3164,8 +3201,13 @@
         let hasTranslation = false;
         
         const translatedWords = words.map(word => {
+            // Skip if word contains numbers or special document codes
+            if (/[A-Z]{2,}-\d+/.test(word) || /^\d+$/.test(word)) {
+                return word;
+            }
+            
             // Clean the word from punctuation for translation
-            const cleanWord = word.replace(/[،؛:.!?()[\]{}"""''`~@#$%^&*+=<>]/g, '');
+            const cleanWord = word.replace(/[،؛:.!?()[\]{}"""''`~@#$%^&*+=<>-]/g, '');
             
             // Check if cleaned word exists in translations
             if (TRANSLATIONS[cleanWord]) {
@@ -3173,16 +3215,15 @@
                 return word.replace(cleanWord, TRANSLATIONS[cleanWord]);
             }
             
-            // Check for variations with "ال" prefix
+            // Check for variations with "ال" prefix - ONLY if the word itself is not in translations
+            // This prevents "The" being added unnecessarily
             if (cleanWord.startsWith('ال') && cleanWord.length > 2) {
                 const withoutAl = cleanWord.substring(2);
+                // Only translate if the base word (without ال) has a translation
                 if (TRANSLATIONS[withoutAl]) {
                     hasTranslation = true;
-                    return word.replace(cleanWord, 'The ' + TRANSLATIONS[withoutAl]);
-                }
-                if (TRANSLATIONS['ال' + withoutAl]) {
-                    hasTranslation = true;
-                    return word.replace(cleanWord, TRANSLATIONS['ال' + withoutAl]);
+                    // Don't add "The " - just use the translation directly
+                    return word.replace(cleanWord, TRANSLATIONS[withoutAl]);
                 }
             }
             

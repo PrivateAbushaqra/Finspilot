@@ -110,6 +110,25 @@
         background-color: #0056b3 !important;
         color: white !important;
     }
+
+    /* Product Dropdown Arrow Navigation Styles */
+    .product-dropdown .dropdown-item.active,
+    .product-code-dropdown .dropdown-item.active {
+        background-color: #007bff !important;
+        color: white !important;
+    }
+    
+    .product-dropdown .dropdown-item,
+    .product-code-dropdown .dropdown-item {
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+    
+    .product-dropdown .dropdown-item:hover,
+    .product-code-dropdown .dropdown-item:hover {
+        background-color: #0056b3 !important;
+        color: white !important;
+    }
 </style>
 {% endblock %}
 
@@ -1194,108 +1213,104 @@ document.getElementById('supplierSelect').addEventListener('change', updateSuppl
 
 <!-- نافذة إنشاء مورد {% trans "New" %} -->
 <div class="modal fade" id="newSupplierModal" tabindex="-1" aria-labelledby="newSupplierModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="newSupplierModalLabel">
-                    <i class="fas fa-plus me-2"></i>{% trans "Create New Supplier" %}
+                    <i class="fas fa-truck me-2"></i>{% trans "Add" %} {% trans "Supplier" %} {% trans "New" %}
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <form id="newSupplierForm">
                     {% csrf_token %}
                     
-                    <!-- معلومات المورد الأساسية -->
-                    <div class="mb-4">
-                        <h6 class="text-primary border-bottom pb-2 mb-3">
-                            <i class="fas fa-user me-2"></i>{% trans "Basic Supplier Information" %}
+                    <!-- Basic Information -->
+                    <div class="form-section mb-4" style="border: 1px solid #e9ecef; border-radius: 8px; padding: 1.5rem; background: #f8f9fa;">
+                        <h6 class="section-title" style="color: #495057; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #e9ecef;">
+                            <i class="fas fa-info-circle me-2"></i>{% trans "Basic Information" %}
                         </h6>
                         <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">{% trans "Supplier Name" %} *</label>
-                                    <input type="text" class="form-control" name="name" required>
-                                </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">{% trans "Full Name" %} <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="name" required>
+                                <div class="form-text">{% trans "Customer Name or Supplier Name as it appears in invoices" %}</div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">{% trans "Phone Number" %}</label>
-                                    <input type="text" class="form-control" name="phone">
-                                </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">{% trans "Phone Number" %}</label>
+                                <input type="tel" class="form-control" name="phone">
+                                <div class="form-text">{% trans "Primary phone number for communication" %}</div>
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">{% trans "Email" %}</label>
-                                    <input type="email" class="form-control" name="email">
-                                </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">{% trans "Email" %}</label>
+                                <input type="email" class="form-control" name="email">
+                                <div class="form-text">{% trans "Email for sending invoices and reports" %}</div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">{% trans "Tax Number" %}</label>
-                                    <input type="text" class="form-control" name="tax_number">
-                                </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">{% trans "Tax Number" %}</label>
+                                <input type="text" class="form-control" name="tax_number">
+                                <div class="form-text">{% trans "Registered tax number for company or individual" %}</div>
                             </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">{% trans "Address" %}</label>
-                            <textarea class="form-control" name="address" rows="2"></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">{% trans "City" %} <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="city" required>
-                        </div>
-                    </div>
-                    
-                    <!-- معلومات المورد المالية -->
-                    <div class="mb-4">
-                        <h6 class="text-success border-bottom pb-2 mb-3">
-                            <i class="fas fa-money-bill-wave me-2"></i>ال{% trans "Information" %} المالية
-                        </h6>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">{% trans "Credit Limit" %}</label>
-                                    <div class="input-group">
-                                        <input type="number" class="form-control" name="credit_limit" 
-                                               value="0" step="0.001" min="0">
-                                        <span class="input-group-text">{% get_currency_symbol %}</span>
-                                    </div>
-                                    <div class="form-text">{% trans "Maximum amount the supplier can be debited" %}</div>
-                                </div>
+                            <div class="col-12 mb-3">
+                                <label class="form-label">{% trans "Address" %}</label>
+                                <textarea class="form-control" name="address" rows="3"></textarea>
+                                <div class="form-text">{% trans "Complete address for customer or supplier" %}</div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="form-label">{% trans "Initial Balance" %}</label>
-                                    <div class="input-group">
-                                        <input type="number" class="form-control" name="balance" 
-                                               value="0" step="0.001">
-                                        <span class="input-group-text">{% get_currency_symbol %}</span>
-                                    </div>
-                                    <div class="form-text">{% trans "Current Balance (positive: credit, negative: debit)" %}</div>
-                                </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">{% trans "City" %} <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="city" required>
+                                <div class="form-text">{% trans "City where the customer or supplier is located" %}</div>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- معلومات إضافية -->
-                    <div class="mb-3">
-                        <h6 class="text-info border-bottom pb-2 mb-3">
-                            <i class="fas fa-sticky-note me-2"></i>{% trans "Information" %} إضافية
+                    <!-- Financial Information -->
+                    <div class="form-section mb-4" style="border: 1px solid #e9ecef; border-radius: 8px; padding: 1.5rem; background: #f8f9fa;">
+                        <h6 class="section-title" style="color: #495057; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #e9ecef;">
+                            <i class="fas fa-money-bill-wave me-2"></i>{% trans "Financial Information" %}
                         </h6>
-                        <div class="mb-3">
-                            <label class="form-label">{% trans "Notes" %}</label>
-                            <textarea class="form-control" name="notes" rows="2"></textarea>
-                            <div class="form-text">{% trans "Any additional notes or information" %}</div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">{% trans "Credit Limit" %}</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">{% get_currency_symbol %}</span>
+                                    <input type="number" class="form-control" name="credit_limit" 
+                                           value="0" step="0.001" min="0">
+                                </div>
+                                <div class="form-text">{% trans "Maximum amount the customer can owe" %}</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">{% trans "Initial Balance" %}</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">{% get_currency_symbol %}</span>
+                                    <input type="number" class="form-control" name="balance" 
+                                           value="0" step="0.001">
+                                </div>
+                                <div class="form-text">{% trans "الرصيد الافتتاحي (موجب: العميل مدين للشركة، سالب: الشركة مدينة للعميل)" %}</div>
+                            </div>
                         </div>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" name="is_active" id="supplierIsActive" checked>
-                            <label class="form-check-label" for="supplierIsActive">
-                                {% trans "Active Supplier" %}
-                            </label>
-                            <div class="form-text">{% trans "Deactivating hides the supplier from lists" %}</div>
+                    </div>
+                    
+                    <!-- Additional Information -->
+                    <div class="form-section mb-3" style="border: 1px solid #e9ecef; border-radius: 8px; padding: 1.5rem; background: #f8f9fa;">
+                        <h6 class="section-title" style="color: #495057; font-weight: 600; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #e9ecef;">
+                            <i class="fas fa-sticky-note me-2"></i>{% trans "Additional Information" %}
+                        </h6>
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label class="form-label">{% trans "Notes" %}</label>
+                                <textarea class="form-control" name="notes" rows="3"></textarea>
+                                <div class="form-text">{% trans "Any notes or additional information" %}</div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="is_active" id="supplierIsActive" checked>
+                                    <label class="form-check-label" for="supplierIsActive">
+                                        {% trans "Active Account" %}
+                                    </label>
+                                    <div class="form-text">{% trans "Deactivating hides the account from lists" %}</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
@@ -1303,9 +1318,11 @@ document.getElementById('supplierSelect').addEventListener('change', updateSuppl
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>{% trans "Cancel" %}
+                </button>
                 <button type="button" class="btn btn-success" onclick="saveNewSupplier()">
-                    <i class="fas fa-save me-1"></i>{% trans "Save Supplier" %}
+                    <i class="fas fa-save me-2"></i>{% trans "Save Account" %}
                 </button>
             </div>
         </div>
@@ -1804,6 +1821,51 @@ document.addEventListener('DOMContentLoaded', function() {
         // Handle input changes
         nameInput.addEventListener('input', filterProducts);
 
+        // Handle keyboard navigation (Arrow keys and Enter)
+        nameInput.addEventListener('keydown', function(e) {
+            const items = dropdown.querySelectorAll('.dropdown-item');
+            if (items.length === 0) return;
+
+            let currentIndex = -1;
+            items.forEach((item, index) => {
+                if (item.classList.contains('active')) {
+                    currentIndex = index;
+                }
+            });
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                // Remove active class from current item
+                if (currentIndex >= 0) {
+                    items[currentIndex].classList.remove('active');
+                }
+                // Add active class to next item
+                currentIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0;
+                items[currentIndex].classList.add('active');
+                items[currentIndex].scrollIntoView({ block: 'nearest' });
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                // Remove active class from current item
+                if (currentIndex >= 0) {
+                    items[currentIndex].classList.remove('active');
+                }
+                // Add active class to previous item
+                currentIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
+                items[currentIndex].classList.add('active');
+                items[currentIndex].scrollIntoView({ block: 'nearest' });
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                // Click the active item or the first item if none is active
+                const activeItem = dropdown.querySelector('.dropdown-item.active') || items[0];
+                if (activeItem) {
+                    activeItem.click();
+                }
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                dropdown.style.display = 'none';
+            }
+        });
+
         // Handle focus to show all products if empty
         nameInput.addEventListener('focus', function() {
             if (nameInput.value.trim() === '') {
@@ -1936,6 +1998,51 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Handle input changes
         codeInput.addEventListener('input', filterProductsByCode);
+
+        // Handle keyboard navigation (Arrow keys and Enter)
+        codeInput.addEventListener('keydown', function(e) {
+            const items = dropdown.querySelectorAll('.dropdown-item');
+            if (items.length === 0) return;
+
+            let currentIndex = -1;
+            items.forEach((item, index) => {
+                if (item.classList.contains('active')) {
+                    currentIndex = index;
+                }
+            });
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                // Remove active class from current item
+                if (currentIndex >= 0) {
+                    items[currentIndex].classList.remove('active');
+                }
+                // Add active class to next item
+                currentIndex = currentIndex < items.length - 1 ? currentIndex + 1 : 0;
+                items[currentIndex].classList.add('active');
+                items[currentIndex].scrollIntoView({ block: 'nearest' });
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                // Remove active class from current item
+                if (currentIndex >= 0) {
+                    items[currentIndex].classList.remove('active');
+                }
+                // Add active class to previous item
+                currentIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
+                items[currentIndex].classList.add('active');
+                items[currentIndex].scrollIntoView({ block: 'nearest' });
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                // Click the active item or the first item if none is active
+                const activeItem = dropdown.querySelector('.dropdown-item.active') || items[0];
+                if (activeItem) {
+                    activeItem.click();
+                }
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                dropdown.style.display = 'none';
+            }
+        });
 
         // Handle focus to show matching products if not empty
         codeInput.addEventListener('focus', function() {

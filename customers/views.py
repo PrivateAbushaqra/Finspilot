@@ -1105,8 +1105,17 @@ class CustomerSupplierTransactionsView(LoginRequiredMixin, TemplateView):
             total_credit = total_documents_credit
             
             # إعادة حساب الرصيد الختامي بناءً على المستندات الفعلية
-            net_filtered = total_debit - total_credit
-            closing_balance = opening_balance + net_filtered
+            net_filtered_documents = total_debit - total_credit
+            
+            # إذا لم تكن هناك فلترة تاريخ، استخدم الرصيد من قاعدة البيانات
+            # لأن closing_balance تم حسابه مسبقاً من AccountTransaction
+            if not date_from and not date_to:
+                # الرصيد الختامي يبقى كما هو من السطر 917
+                # closing_balance = customer_supplier.balance (تم تعيينه مسبقاً)
+                pass
+            else:
+                # إذا كانت هناك فلترة، احسب من المستندات
+                closing_balance = opening_balance + net_filtered_documents
             
             # حساب إجمالي المستندات (عدد المستندات)
             total_documents_count = len(all_documents)
@@ -1372,12 +1381,13 @@ def ajax_add_supplier(request):
             is_active = request.POST.get('is_active') == 'on'
             
             # تحويل القيم المالية
+            from decimal import Decimal
             try:
-                credit_limit = float(credit_limit) if credit_limit else 0
-                balance = float(balance) if balance else 0
-            except ValueError:
-                credit_limit = 0
-                balance = 0
+                credit_limit = Decimal(str(credit_limit)) if credit_limit else Decimal('0')
+                balance = Decimal(str(balance)) if balance else Decimal('0')
+            except (ValueError, Exception):
+                credit_limit = Decimal('0')
+                balance = Decimal('0')
             
             print(f"محاولة إنشاء مورد جديد: {name}")  # للتتبع
             
@@ -1467,12 +1477,13 @@ def ajax_add_customer(request):
             is_active = request.POST.get('is_active') == 'on'
             
             # تحويل القيم المالية
+            from decimal import Decimal
             try:
-                credit_limit = float(credit_limit) if credit_limit else 0
-                balance = float(balance) if balance else 0
-            except ValueError:
-                credit_limit = 0
-                balance = 0
+                credit_limit = Decimal(str(credit_limit)) if credit_limit else Decimal('0')
+                balance = Decimal(str(balance)) if balance else Decimal('0')
+            except (ValueError, Exception):
+                credit_limit = Decimal('0')
+                balance = Decimal('0')
             
             print(f"محاولة إنشاء عميل جديد: {name}, city: {city}, type: {customer_type}")  # للتتبع
             print(f"البيانات المستلمة: credit_limit={credit_limit}, balance={balance}, is_active={is_active}")

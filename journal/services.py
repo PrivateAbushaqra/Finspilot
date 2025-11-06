@@ -1416,7 +1416,10 @@ class JournalService:
             
             journal_entry = JournalService.create_journal_entry(
                 entry_date=invoice.date,
-                description=f'قيد فاتورة مشتريات رقم {invoice.invoice_number} - {invoice.supplier.name}',
+                description=_('Entry for purchase invoice number %(invoice_number)s - %(supplier_name)s') % {
+                    'invoice_number': invoice.invoice_number,
+                    'supplier_name': invoice.supplier.name
+                },
                 lines_data=lines_data,
                 user=user,
                 reference_type='purchase_invoice',
@@ -1476,4 +1479,76 @@ class JournalService:
             import traceback
             traceback.print_exc()
             return False
+
+    @staticmethod
+    def create_sales_credit_note_entry(credit_note, user=None):
+        """
+        إنشاء قيد محاسبي لإشعار دائن المبيعات
+        
+        إشعار الدائن = تخفيض من مديونية العميل
+        
+        القيد:
+        - من ح/ المبيعات (مدين) - تخفيض الإيراد
+        - إلى ح/ العميل (دائن) - تخفيض المديونية
+        """
+        try:
+            from decimal import Decimal
+            
+            # التحقق من صحة البيانات
+            if not credit_note or not credit_note.customer:
+                raise ValueError("بيانات إشعار الدائن غير صحيحة")
+            
+            if credit_note.total_amount <= 0:
+                print(f"تجاهل إنشاء قيد لإشعار الدائن {credit_note.note_number} - مبلغ صفر أو سالب")
+                return None
+            
+            # الحصول على الحسابات المطلوبة
+            sales_account = JournalService.get_sales_account()
+            customer_account = JournalService.get_or_create_customer_account(credit_note.customer)
+            
+            if not sales_account or not customer_account:
+                raise ValueError("لم يتم العثور على الحسابات المطلوبة")
+            
+            # بناء سطور القيد
+            lines_data = []
+            
+            # حساب المبيعات (مدين) - تخفيض الإيراد
+            lines_data.append({
+                'account_id': sales_account.id,
+                'debit': credit_note.total_amount,
+                'credit': Decimal('0'),
+                'description': f'إشعار دائن - تخفيض مبيعات {credit_note.note_number}'
+            })
+            
+            # حساب العميل (دائن) - تخفيض المديونية
+            lines_data.append({
+                'account_id': customer_account.id,
+                'debit': Decimal('0'),
+                'credit': credit_note.total_amount,
+                'description': f'إشعار دائن - {credit_note.customer.name}'
+            })
+            
+            # إنشاء القيد
+            description = f'إشعار دائن - {credit_note.note_number} - {credit_note.customer.name}'
+            
+            entry = JournalService.create_journal_entry(
+                entry_date=credit_note.date,
+                description=description,
+                lines_data=lines_data,
+                user=user or credit_note.created_by,
+                reference_id=credit_note.id,
+                reference_type='credit_note'
+            )
+            
+            if entry:
+                print(f"✅ تم إنشاء قيد إشعار الدائن {entry.entry_number} للإشعار {credit_note.note_number}")
+            
+            return entry
+            
+        except Exception as e:
+            print(f"خطأ في إنشاء قيد إشعار الدائن {credit_note.note_number}: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
+
 

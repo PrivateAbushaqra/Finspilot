@@ -289,6 +289,10 @@ def update_inventory_on_sales_invoice(sender, instance, created, **kwargs):
         if created:
             for item in instance.items.all():
                 if item.product.product_type == 'physical':
+                    # حساب متوسط التكلفة من حركات المخزون السابقة
+                    from inventory.models import get_product_average_cost
+                    avg_cost = get_product_average_cost(item.product, warehouse)
+                    
                     InventoryMovement.objects.create(
                         date=instance.date,
                         product=item.product,
@@ -297,7 +301,7 @@ def update_inventory_on_sales_invoice(sender, instance, created, **kwargs):
                         reference_type='sales_invoice',
                         reference_id=instance.id,
                         quantity=item.quantity,
-                        unit_cost=item.product.cost_price,  # استخدام تكلفة المنتج الحقيقية
+                        unit_cost=avg_cost,  # استخدام متوسط التكلفة
                         notes=f'مبيعات - فاتورة رقم {instance.invoice_number}',
                         created_by=instance.created_by
                     )
@@ -310,6 +314,10 @@ def update_inventory_on_sales_invoice(sender, instance, created, **kwargs):
             
             for item in instance.items.all():
                 if item.product.product_type == 'physical':
+                    # حساب متوسط التكلفة من حركات المخزون السابقة
+                    from inventory.models import get_product_average_cost
+                    avg_cost = get_product_average_cost(item.product, warehouse)
+                    
                     InventoryMovement.objects.create(
                         date=instance.date,
                         product=item.product,
@@ -318,7 +326,7 @@ def update_inventory_on_sales_invoice(sender, instance, created, **kwargs):
                         reference_type='sales_invoice',
                         reference_id=instance.id,
                         quantity=item.quantity,
-                        unit_cost=item.product.cost_price,  # استخدام تكلفة المنتج الحقيقية
+                        unit_cost=avg_cost,  # استخدام متوسط التكلفة
                         notes=f'مبيعات - فاتورة رقم {instance.invoice_number}',
                         created_by=instance.created_by
                     )
@@ -479,43 +487,56 @@ def create_sales_credit_note_journal_entry(sender, instance, created, **kwargs):
     except ImportError:
         pass
     
+    # 🔧 منع التنفيذ المتكرر
+    if hasattr(instance, '_signal_processing'):
+        return
+    
     try:
-        from journal.services import JournalService
+        instance._signal_processing = True
         
-        if created:
+        from journal.services import JournalService
+        from journal.models import JournalEntry
+        from accounts.models import AccountTransaction
+        import uuid
+        
+        # التحقق من وجود قيد موجود
+        existing_entry = JournalEntry.objects.filter(
+            reference_type='credit_note',
+            reference_id=instance.id
+        ).first()
+        
+        if created or not existing_entry:
             # إنشاء قيد جديد
             entry = JournalService.create_sales_credit_note_entry(instance, instance.created_by)
             if entry:
-                print(f"تم إنشاء قيد {entry.entry_number} لإشعار الدائن {instance.note_number}")
+                print(f"✅ تم إنشاء قيد {entry.entry_number} لإشعار الدائن {instance.note_number}")
         else:
             # تحديث قيد موجود
             # حذف القيد القديم أولاً
-            from journal.models import JournalEntry
-            old_entries = JournalEntry.objects.filter(
-                reference_type='sales_credit_note',
+            JournalEntry.objects.filter(
+                reference_type='credit_note',
                 reference_id=instance.id
-            )
-            if old_entries.exists():
-                old_entries.delete()
-                print(f"تم حذف القيد القديم لإشعار الدائن {instance.note_number}")
+            ).delete()
+            print(f"🗑️ تم حذف القيد القديم لإشعار الدائن {instance.note_number}")
             
             # إنشاء قيد جديد
             entry = JournalService.create_sales_credit_note_entry(instance, instance.created_by)
             if entry:
-                print(f"تم تحديث قيد {entry.entry_number} لإشعار الدائن {instance.note_number}")
+                print(f"✅ تم تحديث قيد {entry.entry_number} لإشعار الدائن {instance.note_number}")
                 
         # إنشاء أو تحديث معاملة حساب العميل
-        from accounts.models import AccountTransaction
-        import uuid
-        
         # حذف المعاملة القديمة إذا كانت موجودة
-        AccountTransaction.objects.filter(
-            reference_type='sales_credit_note',
+        existing_trans = AccountTransaction.objects.filter(
+            reference_type='credit_note',
             reference_id=instance.id
-        ).delete()
+        )
+        
+        if existing_trans.exists() and not created:
+            existing_trans.delete()
+            print(f"🗑️ تم حذف المعاملة القديمة لإشعار الدائن {instance.note_number}")
         
         # إنشاء معاملة جديدة
-        transaction_number = f"SCN-{uuid.uuid4().hex[:8].upper()}"
+        transaction_number = f"CN-{uuid.uuid4().hex[:8].upper()}"
         AccountTransaction.objects.create(
             transaction_number=transaction_number,
             date=instance.date,
@@ -523,16 +544,22 @@ def create_sales_credit_note_journal_entry(sender, instance, created, **kwargs):
             transaction_type='credit_note',
             direction='credit',  # دائن (تقليل المدينية من العميل)
             amount=instance.total_amount,
-            reference_type='sales_credit_note',
+            reference_type='credit_note',
             reference_id=instance.id,
             description=f'إشعار دائن رقم {instance.note_number}',
             notes=instance.notes or '',
             created_by=instance.created_by
         )
-        print(f"تم إنشاء معاملة حساب {transaction_number} لإشعار الدائن {instance.note_number}")
+        print(f"✅ تم إنشاء معاملة {transaction_number} لإشعار الدائن {instance.note_number}")
+        
     except Exception as e:
-        print(f"خطأ في إنشاء قيد إشعار الدائن {instance.note_number}: {e}")
-        pass
+        print(f"❌ خطأ في إنشاء قيد إشعار الدائن {instance.note_number}: {e}")
+        import traceback
+        traceback.print_exc()
+    finally:
+        # إزالة الـ flag
+        if hasattr(instance, '_signal_processing'):
+            delattr(instance, '_signal_processing')
 
 
 @receiver(post_save, sender=SalesInvoiceItem)
@@ -641,18 +668,29 @@ def delete_journal_entries_on_invoice_delete(sender, instance, **kwargs):
     """حذف القيود المحاسبية عند حذف فاتورة المبيعات"""
     try:
         from journal.models import JournalEntry
+        from django.db.models import Q
         
-        # البحث عن القيود المرتبطة بالفاتورة
+        # البحث عن جميع القيود المرتبطة بالفاتورة (المبيعات + COGS)
         journal_entries = JournalEntry.objects.filter(
-            sales_invoice=instance
-        )
+            Q(sales_invoice=instance) |
+            Q(reference_type='sales_invoice', reference_id=instance.id) |
+            Q(reference_type='sales_invoice_cogs', reference_id=instance.id)
+        ).distinct()
         
-        for journal_entry in journal_entries:
-            print(f"حذف القيد المحاسبي {journal_entry.entry_number} المرتبط بفاتورة {instance.invoice_number}")
-            journal_entry.delete()
+        entry_count = journal_entries.count()
+        if entry_count > 0:
+            entry_numbers = ', '.join([entry.entry_number for entry in journal_entries])
+            print(f"🗑️ حذف {entry_count} قيد محاسبي للفاتورة {instance.invoice_number}: {entry_numbers}")
+            
+            for journal_entry in journal_entries:
+                journal_entry.delete()
+        else:
+            print(f"⚠️ لا توجد قيود محاسبية للفاتورة {instance.invoice_number}")
             
     except Exception as e:
-        print(f"خطأ في حذف القيود المحاسبية لفاتورة {instance.invoice_number}: {e}")
+        print(f"❌ خطأ في حذف القيود المحاسبية لفاتورة {instance.invoice_number}: {e}")
+        import traceback
+        traceback.print_exc()
         pass
 
 
@@ -678,6 +716,7 @@ def delete_sales_invoice_related_records(sender, instance, **kwargs):
         from inventory.models import InventoryMovement
         from journal.models import JournalEntry
         from accounts.models import AccountTransaction
+        from django.db.models import Q
         
         # حذف حركات المخزون
         inventory_movements = InventoryMovement.objects.filter(
@@ -687,11 +726,15 @@ def delete_sales_invoice_related_records(sender, instance, **kwargs):
         deleted_inventory = inventory_movements.count()
         inventory_movements.delete()
         
-        # حذف القيود المحاسبية
+        # حذف جميع القيود المحاسبية (المبيعات + COGS)
         journal_entries = JournalEntry.objects.filter(
-            sales_invoice=instance
-        )
+            Q(sales_invoice=instance) |
+            Q(reference_type='sales_invoice', reference_id=instance.id) |
+            Q(reference_type='sales_invoice_cogs', reference_id=instance.id)
+        ).distinct()
         deleted_journal = journal_entries.count()
+        if deleted_journal > 0:
+            print(f"🗑️ [post_delete] حذف {deleted_journal} قيد محاسبي")
         journal_entries.delete()
         
         # حذف معاملات الحساب
@@ -714,14 +757,21 @@ def delete_journal_entries_on_return_delete(sender, instance, **kwargs):
     """حذف القيود المحاسبية عند حذف مردود المبيعات"""
     try:
         from journal.models import JournalEntry
+        from django.db.models import Q
         
-        # البحث عن القيود المرتبطة بمردود المبيعات
+        # البحث عن جميع القيود المرتبطة بمردود المبيعات (المردود + COGS)
         journal_entries = JournalEntry.objects.filter(
-            sales_return=instance
-        )
+            Q(sales_return=instance) |
+            Q(reference_type='sales_return', reference_id=instance.id) |
+            Q(reference_type='sales_return_cogs', reference_id=instance.id)
+        ).distinct()
+        
+        deleted_count = journal_entries.count()
+        if deleted_count > 0:
+            print(f"🗑️ [pre_delete] حذف {deleted_count} قيد محاسبي لمردود {instance.return_number}")
         
         for journal_entry in journal_entries:
-            print(f"حذف القيد المحاسبي {journal_entry.entry_number} المرتبط بمردود {instance.return_number}")
+            print(f"  - حذف القيد {journal_entry.entry_number} ({journal_entry.reference_type})")
             journal_entry.delete()
             
     except Exception as e:
@@ -736,6 +786,7 @@ def delete_sales_return_related_records(sender, instance, **kwargs):
         from inventory.models import InventoryMovement
         from journal.models import JournalEntry
         from accounts.models import AccountTransaction
+        from django.db.models import Q
         
         # حذف حركات المخزون
         inventory_movements = InventoryMovement.objects.filter(
@@ -745,11 +796,15 @@ def delete_sales_return_related_records(sender, instance, **kwargs):
         deleted_inventory = inventory_movements.count()
         inventory_movements.delete()
         
-        # حذف القيود المحاسبية
+        # حذف جميع القيود المحاسبية (المردود + COGS)
         journal_entries = JournalEntry.objects.filter(
-            sales_return=instance
-        )
+            Q(sales_return=instance) |
+            Q(reference_type='sales_return', reference_id=instance.id) |
+            Q(reference_type='sales_return_cogs', reference_id=instance.id)
+        ).distinct()
         deleted_journal = journal_entries.count()
+        if deleted_journal > 0:
+            print(f"🗑️ [post_delete] حذف {deleted_journal} قيد محاسبي")
         journal_entries.delete()
         
         # حذف معاملات الحساب

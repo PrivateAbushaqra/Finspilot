@@ -1,8 +1,44 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth import get_user_model
+from django.db.models import Sum, Q, F
+from decimal import Decimal
 
 User = get_user_model()
+
+
+def get_product_average_cost(product, warehouse=None):
+    """
+    حساب متوسط تكلفة المنتج من حركات المخزون
+    
+    Args:
+        product: المنتج
+        warehouse: المستودع (اختياري)
+    
+    Returns:
+        Decimal: متوسط التكلفة
+    """
+    from inventory.models import InventoryMovement
+    
+    # البحث عن حركات الشراء (الدخول)
+    query = Q(product=product, movement_type='in', unit_cost__gt=0)
+    if warehouse:
+        query &= Q(warehouse=warehouse)
+    
+    movements = InventoryMovement.objects.filter(query)
+    
+    if not movements.exists():
+        # إذا لم توجد حركات، استخدم سعر التكلفة من بيانات المنتج
+        return product.cost_price if hasattr(product, 'cost_price') else Decimal('0')
+    
+    # حساب المتوسط المرجح
+    total_cost = movements.aggregate(total=Sum('total_cost'))['total'] or Decimal('0')
+    total_quantity = movements.aggregate(total=Sum('quantity'))['total'] or Decimal('0')
+    
+    if total_quantity > 0:
+        return (total_cost / total_quantity).quantize(Decimal('0.001'))
+    
+    return product.cost_price if hasattr(product, 'cost_price') else Decimal('0')
 
 
 class Warehouse(models.Model):
