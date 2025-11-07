@@ -827,6 +827,7 @@ class CustomerSupplierTransactionsView(LoginRequiredMixin, TemplateView):
             from accounts.models import AccountTransaction
             from datetime import datetime
             from django.db.models import Sum
+            from decimal import Decimal
             
             # الحصول على المعاملات
             from django.db.models import Q
@@ -879,16 +880,7 @@ class CustomerSupplierTransactionsView(LoginRequiredMixin, TemplateView):
                 except ValueError:
                     pass
             
-            # حساب إجماليات المعاملات المفلترة
-            total_debit = transactions.filter(direction='debit').aggregate(
-                total=Sum('amount'))['total'] or 0
-            total_credit = transactions.filter(direction='credit').aggregate(
-                total=Sum('amount'))['total'] or 0
-            
-            # حساب الرصيد الافتتاحي والختامي
-            net_filtered = total_debit - total_credit
-            
-            # حساب الرصيد الافتتاحي (الرصيد قبل تاريخ البداية)
+            # حساب الرصيد الافتتاحي
             if date_from:
                 try:
                     date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
@@ -898,29 +890,32 @@ class CustomerSupplierTransactionsView(LoginRequiredMixin, TemplateView):
                         date__lt=date_from_obj
                     )
                     prior_debit = prior_transactions.filter(direction='debit').aggregate(
-                        total=Sum('amount'))['total'] or 0
+                        total=Sum('amount'))['total'] or Decimal('0')
                     prior_credit = prior_transactions.filter(direction='credit').aggregate(
-                        total=Sum('amount'))['total'] or 0
+                        total=Sum('amount'))['total'] or Decimal('0')
                     opening_balance = prior_debit - prior_credit
                 except ValueError:
-                    opening_balance = 0
+                    opening_balance = Decimal('0')
             else:
-                opening_balance = 0
-            
-            # الرصيد الختامي = افتتاحي + صافي المعاملات المفلترة
-            closing_balance = opening_balance + net_filtered
-            
-            # إذا لم تكن هناك فلترة تاريخ، يجب أن يطابق الرصيد الختامي الرصيد الحالي
-            if not date_from and not date_to:
-                closing_balance = customer_supplier.balance
+                # عندما لا يكون هناك فلترة تاريخ، الرصيد الافتتاحي = معاملات opening_balance فقط
+                opening_trans = AccountTransaction.objects.filter(
+                    query,
+                    reference_type__in=['opening_balance', 'cs_opening']
+                )
+                opening_debit = opening_trans.filter(direction='debit').aggregate(
+                    total=Sum('amount'))['total'] or Decimal('0')
+                opening_credit = opening_trans.filter(direction='credit').aggregate(
+                    total=Sum('amount'))['total'] or Decimal('0')
+                opening_balance = opening_debit - opening_credit
             
             # لا نقوم بإصلاح تلقائي - الفحص يكون من جانب العميل فقط
             
             # الحصول على المستندات الأصلية (للعرض الموسع)
             from sales.models import SalesInvoice, SalesReturn
-            from purchases.models import PurchaseInvoice, PurchaseReturn
+            from purchases.models import PurchaseInvoice, PurchaseReturn, PurchaseDebitNote
             from receipts.models import PaymentReceipt
             from payments.models import PaymentVoucher
+            from sales.models import SalesCreditNote
             
             # فواتير المبيعات (جميع أنواع الدفع)
             sales_invoices = SalesInvoice.objects.filter(customer=customer_supplier)
@@ -940,6 +935,12 @@ class CustomerSupplierTransactionsView(LoginRequiredMixin, TemplateView):
             # مردودات المشتريات
             purchase_returns = PurchaseReturn.objects.filter(original_invoice__supplier=customer_supplier)
             
+            # مذكرات الدين للمبيعات (Sales Credit Notes)
+            sales_credit_notes = SalesCreditNote.objects.filter(customer=customer_supplier)
+            
+            # مذكرات الخصم للمشتريات (Purchase Debit Notes)
+            purchase_debit_notes = PurchaseDebitNote.objects.filter(supplier=customer_supplier)
+            
             # تطبيق فلتر التاريخ على المستندات
             if date_from_obj:
                 sales_invoices = sales_invoices.filter(date__gte=date_from_obj)
@@ -948,6 +949,8 @@ class CustomerSupplierTransactionsView(LoginRequiredMixin, TemplateView):
                 payments = payments.filter(date__gte=date_from_obj)
                 sales_returns = sales_returns.filter(date__gte=date_from_obj)
                 purchase_returns = purchase_returns.filter(date__gte=date_from_obj)
+                sales_credit_notes = sales_credit_notes.filter(date__gte=date_from_obj)
+                purchase_debit_notes = purchase_debit_notes.filter(date__gte=date_from_obj)
             
             if date_to_obj:
                 sales_invoices = sales_invoices.filter(date__lte=date_to_obj)
@@ -956,48 +959,42 @@ class CustomerSupplierTransactionsView(LoginRequiredMixin, TemplateView):
                 payments = payments.filter(date__lte=date_to_obj)
                 sales_returns = sales_returns.filter(date__lte=date_to_obj)
                 purchase_returns = purchase_returns.filter(date__lte=date_to_obj)
+                sales_credit_notes = sales_credit_notes.filter(date__lte=date_to_obj)
+                purchase_debit_notes = purchase_debit_notes.filter(date__lte=date_to_obj)
             
             # إنشاء قائمة موحدة من جميع المستندات مع تصنيف IFRS
             all_documents = []
             
-            # إضافة معاملات الرصيد الافتتاحي والتعديلات اليدوية - متوافق مع IFRS
-            opening_transactions = transactions.filter(
-                reference_type__in=['opening_balance', 'cs_opening', 'cs_adjustment', 'balance_adjustment']
+            # إضافة معاملات التعديلات اليدوية فقط (ليس الرصيد الافتتاحي)
+            # الرصيد الافتتاحي يُحسب في opening_balance ولا يظهر في قائمة المستندات
+            adjustment_transactions = transactions.filter(
+                reference_type__in=['cs_adjustment', 'balance_adjustment']
             )
             
-            # تطبيق فلتر التاريخ على معاملات الرصيد الافتتاحي
+            # تطبيق فلتر التاريخ على معاملات التعديلات
             if date_from_obj:
-                opening_transactions = opening_transactions.filter(date__gte=date_from_obj)
+                adjustment_transactions = adjustment_transactions.filter(date__gte=date_from_obj)
             if date_to_obj:
-                opening_transactions = opening_transactions.filter(date__lte=date_to_obj)
+                adjustment_transactions = adjustment_transactions.filter(date__lte=date_to_obj)
             
-            for trans in opening_transactions:
-                # تحديد نوع المعاملة والعرض المناسب
-                if trans.reference_type in ['opening_balance', 'cs_opening']:
-                    type_display = _('Opening Balance')
-                    icon = 'fa-balance-scale'
-                    type_key = 'opening_balance'
-                else:  # balance_adjustment, cs_adjustment
-                    type_display = _('Balance Adjustment')
-                    icon = 'fa-edit'
-                    type_key = 'balance_adjustment'
-                
+            for trans in adjustment_transactions:
                 all_documents.append({
                     'date': trans.date,
-                    'type': type_key,
-                    'type_display': type_display,
+                    'type': 'balance_adjustment',
+                    'type_display': _('Balance Adjustment'),
                     'number': trans.transaction_number,
                     'amount': trans.amount,
                     'direction': trans.direction,
                     'payment_type': '-',
-                    'url': '#',  # لا يوجد رابط مباشر لمعاملة الرصيد الافتتاحي/التعديل
-                    'icon': icon,
+                    'url': '#',  # لا يوجد رابط مباشر لمعاملة التعديل
+                    'icon': 'fa-edit',
                     'color': 'info',
                     'description': trans.description,
                     'object': trans
                 })
             
-            # فواتير المبيعات - دائن (Credit) حسب IFRS (إيراد)
+            # فواتير المبيعات - مدين (Debit) في حساب العميل
+            # لأن العميل مدين للشركة (الذمم المدينة)
             for invoice in sales_invoices:
                 all_documents.append({
                     'date': invoice.date,
@@ -1005,7 +1002,7 @@ class CustomerSupplierTransactionsView(LoginRequiredMixin, TemplateView):
                     'type_display': _('Sales Invoice'),
                     'number': invoice.invoice_number,
                     'amount': invoice.total_amount,
-                    'direction': 'credit',  # IFRS: المبيعات = إيراد = دائن
+                    'direction': 'debit',  # مدين في حساب العميل (الذمم المدينة)
                     'payment_type': invoice.get_payment_type_display(),
                     'url': reverse('sales:invoice_detail', args=[invoice.id]),
                     'icon': 'fa-file-invoice',
@@ -1013,15 +1010,22 @@ class CustomerSupplierTransactionsView(LoginRequiredMixin, TemplateView):
                     'object': invoice
                 })
             
-            # فواتير المشتريات - مدين (Debit) حسب IFRS (مصروف/أصل)
+            # فواتير المشتريات - الاتجاه يعتمد على نوع العميل/المورد
             for invoice in purchase_invoices:
+                # إذا كان العميل من نوع "supplier" أو "both"، فاتورة المشتريات = دائن (Credit)
+                # لأننا ندين للمورد (الذمم الدائنة)
+                if customer_supplier.type in ['supplier', 'both']:
+                    direction = 'credit'  # IFRS: نحن ندين للمورد = دائن في حساب المورد
+                else:
+                    direction = 'debit'   # IFRS: المشتريات = مصروف/أصل = مدين
+                
                 all_documents.append({
                     'date': invoice.date,
                     'type': 'purchase_invoice',
                     'type_display': _('Purchase Invoice'),
                     'number': invoice.invoice_number,
                     'amount': invoice.total_amount,
-                    'direction': 'debit',  # IFRS: المشتريات = مصروف/أصل = مدين
+                    'direction': direction,
                     'payment_type': invoice.get_payment_type_display(),
                     'url': reverse('purchases:invoice_detail', args=[invoice.id]),
                     'icon': 'fa-shopping-cart',
@@ -1061,7 +1065,8 @@ class CustomerSupplierTransactionsView(LoginRequiredMixin, TemplateView):
                     'object': payment
                 })
             
-            # مردودات المبيعات - مدين (Debit) حسب IFRS (عكس الإيراد)
+            # مردودات المبيعات - دائن (Credit) في حساب العميل
+            # لأنها تقلل الذمم المدينة (عكس فاتورة المبيعات)
             for return_inv in sales_returns:
                 all_documents.append({
                     'date': return_inv.date,
@@ -1069,7 +1074,7 @@ class CustomerSupplierTransactionsView(LoginRequiredMixin, TemplateView):
                     'type_display': _('Sales Return'),
                     'number': return_inv.return_number,
                     'amount': return_inv.total_amount,
-                    'direction': 'debit',  # IFRS: مرتجع مبيعات = عكس الإيراد = مدين
+                    'direction': 'credit',  # دائن في حساب العميل (تقليل الذمم)
                     'payment_type': '-',
                     'url': reverse('sales:return_detail', args=[return_inv.id]),
                     'icon': 'fa-undo',
@@ -1093,29 +1098,124 @@ class CustomerSupplierTransactionsView(LoginRequiredMixin, TemplateView):
                     'object': return_inv
                 })
             
+            # مذكرات الدين للمبيعات - دائن (Credit) في حساب العميل
+            # مذكرة الدين تُستخدم لتقليل المبلغ المستحق على العميل (تخفيض الذمم المدينة)
+            for credit_note in sales_credit_notes:
+                all_documents.append({
+                    'date': credit_note.date,
+                    'type': 'sales_credit_note',
+                    'type_display': _('Sales Credit Note'),
+                    'number': credit_note.note_number,
+                    'amount': credit_note.total_amount,
+                    'direction': 'credit',  # IFRS: تخفيض ذمم مدينة = دائن
+                    'payment_type': '-',
+                    'url': reverse('sales:creditnote_detail', args=[credit_note.id]),
+                    'icon': 'fa-file-invoice-dollar',
+                    'color': 'primary',
+                    'object': credit_note
+                })
+            
+            # مذكرات الخصم للمشتريات - مدين (Debit) في حساب المورد
+            # مذكرة الخصم تُستخدم لتقليل المبلغ المستحق للمورد (تخفيض الذمم الدائنة)
+            for debit_note in purchase_debit_notes:
+                all_documents.append({
+                    'date': debit_note.date,
+                    'type': 'purchase_debit_note',
+                    'type_display': _('Purchase Debit Note'),
+                    'number': debit_note.note_number,
+                    'amount': debit_note.total_amount,
+                    'direction': 'debit',  # IFRS: تخفيض ذمم دائنة = مدين
+                    'payment_type': '-',
+                    'url': reverse('purchases:debitnote_detail', args=[debit_note.id]),
+                    'icon': 'fa-file-invoice-dollar',
+                    'color': 'secondary',
+                    'object': debit_note
+                })
+            
+            # ⭐ إضافة المعاملات التي ليس لها مستند أصلي (محذوف أو مفقود)
+            # هذا يحل مشكلة عدم ظهور المعاملات للفواتير المحذوفة
+            displayed_transaction_ids = set()
+            
+            # جمع IDs المعاملات التي تم عرضها بالفعل من خلال المستندات
+            for trans in adjustment_transactions:
+                displayed_transaction_ids.add(trans.id)
+            
+            # البحث عن المعاملات المتبقية التي لم يتم عرضها
+            # استثناء الرصيد الافتتاحي والتعديلات لأنها تُحسب بشكل منفصل
+            orphaned_transactions = transactions.exclude(
+                id__in=displayed_transaction_ids
+            ).exclude(
+                reference_type__in=['opening_balance', 'cs_opening', 'cs_adjustment', 'balance_adjustment']
+            )
+            
+            # إضافة المعاملات اليتيمة (بدون مستند أصلي)
+            for trans in orphaned_transactions:
+                # التحقق من أن المستند الأصلي محذوف
+                document_exists = False
+                
+                if trans.reference_type == 'sales_invoice' and trans.reference_id:
+                    document_exists = sales_invoices.filter(id=trans.reference_id).exists()
+                elif trans.reference_type == 'purchase_invoice' and trans.reference_id:
+                    document_exists = purchase_invoices.filter(id=trans.reference_id).exists()
+                elif trans.reference_type == 'receipt' and trans.reference_id:
+                    document_exists = receipts.filter(id=trans.reference_id).exists()
+                elif trans.reference_type == 'payment' and trans.reference_id:
+                    document_exists = payments.filter(id=trans.reference_id).exists()
+                elif trans.reference_type == 'sales_return' and trans.reference_id:
+                    document_exists = sales_returns.filter(id=trans.reference_id).exists()
+                elif trans.reference_type == 'purchase_return' and trans.reference_id:
+                    document_exists = purchase_returns.filter(id=trans.reference_id).exists()
+                elif trans.reference_type == 'credit_note' and trans.reference_id:
+                    document_exists = sales_credit_notes.filter(id=trans.reference_id).exists()
+                elif trans.reference_type == 'debit_note' and trans.reference_id:
+                    document_exists = purchase_debit_notes.filter(id=trans.reference_id).exists()
+                
+                # إذا كان المستند محذوف أو لا يوجد reference_id، أضف المعاملة
+                if not document_exists:
+                    all_documents.append({
+                        'date': trans.date,
+                        'type': 'orphaned_transaction',
+                        'type_display': trans.get_transaction_type_display() + ' ' + _('(Deleted Document)'),
+                        'number': trans.transaction_number,
+                        'amount': trans.amount,
+                        'direction': trans.direction,
+                        'payment_type': '-',
+                        'url': '#',
+                        'icon': 'fa-exclamation-triangle',
+                        'color': 'warning',
+                        'description': trans.description,
+                        'object': trans
+                    })
+            
             # ترتيب جميع المستندات حسب التاريخ (الأحدث أولاً)
             all_documents.sort(key=lambda x: x['date'], reverse=True)
             
-            # حساب إجماليات المستندات حسب IFRS
+            # ⭐ حساب إجماليات المستندات (بدون الرصيد الافتتاحي فقط)
+            # وفقاً لـ IFRS: نفصل الرصيد الافتتاحي عن المعاملات الفعلية
+            # لكن التعديلات (balance_adjustment) تُحسب ضمن الإجماليات
+            total_debit = Decimal('0')
+            total_credit = Decimal('0')
+            
+            for doc in all_documents:
+                # استثناء الرصيد الافتتاحي فقط من الإجماليات
+                # التعديلات تُحسب ضمن المعاملات
+                if doc['type'] != 'opening_balance':
+                    if doc['direction'] == 'debit':
+                        total_debit += doc['amount']
+                    elif doc['direction'] == 'credit':
+                        total_credit += doc['amount']
+            
+            # حساب إجماليات جميع المستندات (بما فيها الرصيد الافتتاحي) للعرض
             total_documents_debit = sum(doc['amount'] for doc in all_documents if doc['direction'] == 'debit')
             total_documents_credit = sum(doc['amount'] for doc in all_documents if doc['direction'] == 'credit')
+
+            # حساب الرصيد الختامي وفقاً لـ IFRS
+            # الرصيد الختامي = الرصيد الافتتاحي + (إجمالي المدين - إجمالي الدائن)
+            closing_balance = opening_balance + (total_debit - total_credit)
             
-            # استخدام إجماليات المستندات للإحصائيات العلوية (للتوافق مع الجدول)
-            total_debit = total_documents_debit
-            total_credit = total_documents_credit
-            
-            # إعادة حساب الرصيد الختامي بناءً على المستندات الفعلية
-            net_filtered_documents = total_debit - total_credit
-            
-            # إذا لم تكن هناك فلترة تاريخ، استخدم الرصيد من قاعدة البيانات
-            # لأن closing_balance تم حسابه مسبقاً من AccountTransaction
+            # إذا لم تكن هناك فلترة تاريخ، يجب أن يطابق الرصيد الختامي الرصيد الحالي
             if not date_from and not date_to:
-                # الرصيد الختامي يبقى كما هو من السطر 917
-                # closing_balance = customer_supplier.balance (تم تعيينه مسبقاً)
-                pass
-            else:
-                # إذا كانت هناك فلترة، احسب من المستندات
-                closing_balance = opening_balance + net_filtered_documents
+                closing_balance = customer_supplier.balance
             
             # حساب إجمالي المستندات (عدد المستندات)
             total_documents_count = len(all_documents)
@@ -1141,6 +1241,8 @@ class CustomerSupplierTransactionsView(LoginRequiredMixin, TemplateView):
                 'payments': payments.order_by('-date'),
                 'sales_returns': sales_returns.order_by('-date'),
                 'purchase_returns': purchase_returns.order_by('-date'),
+                'sales_credit_notes': sales_credit_notes.order_by('-date'),
+                'purchase_debit_notes': purchase_debit_notes.order_by('-date'),
                 # إضافة القائمة الموحدة
                 'all_documents': all_documents,
             })
@@ -1155,10 +1257,10 @@ class CustomerSupplierTransactionsView(LoginRequiredMixin, TemplateView):
             context.update({
                 'customer_supplier': customer_supplier,
                 'transactions': [],
-                'opening_balance': 0,
+                'opening_balance': Decimal('0'),
                 'closing_balance': customer_supplier.balance,
-                'total_debit': 0,
-                'total_credit': 0,
+                'total_debit': Decimal('0'),
+                'total_credit': Decimal('0'),
                 'total_transactions': 0,
                 'date_from': date_from,
                 'date_to': date_to,
@@ -1181,10 +1283,10 @@ class CustomerSupplierTransactionsView(LoginRequiredMixin, TemplateView):
             context.update({
                 'customer_supplier': customer_supplier,
                 'transactions': [],
-                'opening_balance': 0,
+                'opening_balance': Decimal('0'),
                 'closing_balance': customer_supplier.balance,
-                'total_debit': 0,
-                'total_credit': 0,
+                'total_debit': Decimal('0'),
+                'total_credit': Decimal('0'),
                 'total_transactions': 0,
                 'date_from': date_from,
                 'date_to': date_to,

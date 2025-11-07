@@ -517,8 +517,16 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Form validation
+    // Form validation with double-submission prevention
+    let isSubmitting = false;
     document.getElementById('returnForm').addEventListener('submit', function(e) {
+        // Prevent double submission
+        if (isSubmitting) {
+            e.preventDefault();
+            console.log('نموذج قيد الإرسال بالفعل - تم منع الإرسال المزدوج');
+            return false;
+        }
+        
         const hasReturnedItems = Array.from(document.querySelectorAll('.returned-qty'))
             .some(input => parseFloat(input.value) > 0);
         
@@ -526,6 +534,14 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             alert('{% trans "You must enter a quantity for at least one item to return" %}');
             return false;
+        }
+        
+        // Mark as submitting and disable submit button
+        isSubmitting = true;
+        const submitBtn = document.getElementById('saveButton');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>{% trans "Processing..." %}';
         }
         
         updateReturnedQuantities();

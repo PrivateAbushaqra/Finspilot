@@ -352,34 +352,41 @@
                                 </div>
                                 <div class="card-body">
                                     <div class="row">
-                                        <div class="col-md-4">
+                                        <div class="col-md-3">
                                             <label class="form-label">المنتج</label>
-                                            <select class="form-select" id="new-product-select">
-                                                <option value="">اختر المنتج...</option>
-                                                {% load l10n %}
-                                                {% for product in products %}
-                                                <option value="{{ product.id }}" data-code="{{ product.code }}" 
-                                                        data-price="{{ product.sale_price|unlocalize }}" 
-                                                        data-tax="{{ product.tax_rate|unlocalize }}">
-                                                    {{ product.name }} ({{ product.code }})
-                                                </option>
-                                                {% endfor %}
-                                            </select>
+                                            <div class="position-relative">
+                                                <input type="text" class="form-control" id="new-product-name" 
+                                                       placeholder="اكتب اسم المنتج...">
+                                                <div class="product-dropdown dropdown-menu w-100" id="new-product-dropdown" 
+                                                     style="display: none; max-height: 200px; overflow-y: auto;">
+                                                    <!-- Product options will be populated here -->
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div class="col-md-2">
+                                        <div class="col-md-1">
                                             <label class="form-label">الكمية</label>
                                             <input type="number" class="form-control" id="new-quantity" 
                                                    min="0.001" step="0.001" placeholder="0.000">
                                         </div>
-                                        <div class="col-md-2">
+                                        <div class="col-md-1">
                                             <label class="form-label">سعر الوحدة</label>
                                             <input type="number" class="form-control" id="new-price" 
                                                    min="0" step="0.001" placeholder="0.000">
                                         </div>
-                                        <div class="col-md-2">
+                                        <div class="col-md-1">
                                             <label class="form-label">نسبة الضريبة</label>
                                             <input type="number" class="form-control" id="new-tax-rate" 
                                                    min="0" max="100" step="0.01" placeholder="0.00">
+                                        </div>
+                                        <div class="col-md-1">
+                                            <label class="form-label">مبلغ الضريبة</label>
+                                            <input type="text" class="form-control" id="new-tax-amount" 
+                                                   readonly style="background-color: #e9ecef;" placeholder="0.000">
+                                        </div>
+                                        <div class="col-md-1">
+                                            <label class="form-label">الأجمالي</label>
+                                            <input type="text" class="form-control" id="new-total" 
+                                                   readonly style="background-color: #e9ecef;" placeholder="0.000">
                                         </div>
                                         <div class="col-md-2 d-flex align-items-end">
                                             <button type="button" class="btn btn-success me-2" id="save-new-item-btn">
@@ -473,87 +480,151 @@ $(document).ready(function() {
     // Add item button click
     $('#add-item-btn').click(function() {
         $('#add-item-form').slideDown();
-        $('#new-product-select').focus();
+        $('#new-product-name').focus();
     });
 
     // Cancel add item
     $('#cancel-add-item-btn').click(function() {
         $('#add-item-form').slideUp();
-        $('#add-item-form input, #add-item-form select').val('');
+        $('#add-item-form input').val('');
+        $('#new-product-dropdown').hide();
     });
 
-    // Product selection change - استخدام POS API (بنفس طريقة POS وصفحة الإضافة)
-    $('#new-product-select').change(function() {
-        const productId = $(this).val();
-        
-        if (!productId) {
-            $('#new-price').val('');
-            $('#new-tax-rate').val('');
-            return;
-        }
-        
-        // عرض رسالة تحميل
-        $('#new-price').val('...').prop('disabled', true);
-        $('#new-tax-rate').val('...').prop('disabled', true);
-        
-        // استدعاء POS API للحصول على السعر الصحيح (بدون ضريبة)
-        $.ajax({
-            url: `/sales/pos/product/${productId}/`,
-            type: 'GET',
-            success: function(data) {
-                $('#new-price').prop('disabled', false);
-                $('#new-tax-rate').prop('disabled', false);
+    // Product search and dropdown functionality
+    const products = [
+        {% for product in products %}
+        {
+            id: '{{ product.id }}',
+            code: '{{ product.code|escapejs }}',
+            name: '{{ product.name|escapejs }}',
+            description: '{{ product.description|escapejs|truncatechars:50|default:"No description available"|escapejs }}',
+            sale_price: '{{ product.sale_price }}',
+            tax_rate: '{{ product.tax_rate }}',
+            current_stock: '{{ product.current_stock }}'
+        },
+        {% endfor %}
+    ];
+
+    // Setup product search for new item form
+    function setupNewProductSearch() {
+        const nameInput = document.getElementById('new-product-name');
+        const dropdown = document.getElementById('new-product-dropdown');
+        const quantityInput = document.getElementById('new-quantity');
+        const priceInput = document.getElementById('new-price');
+        const taxRateInput = document.getElementById('new-tax-rate');
+        const taxAmountInput = document.getElementById('new-tax-amount');
+        const totalInput = document.getElementById('new-total');
+
+        if (!nameInput || !dropdown) return;
+
+        // Function to filter and show products
+        function filterProducts() {
+            const searchTerm = nameInput.value.toLowerCase().trim();
+
+            if (searchTerm === '') {
+                dropdown.style.display = 'none';
+                return;
+            }
+
+            // Clear previous options
+            dropdown.innerHTML = '';
+
+            // Filter products
+            const filteredProducts = products.filter(product =>
+                product.name.toLowerCase().includes(searchTerm) ||
+                product.code.toLowerCase().includes(searchTerm) ||
+                product.description.toLowerCase().includes(searchTerm)
+            );
+
+            if (filteredProducts.length === 0) {
+                dropdown.style.display = 'none';
+                return;
+            }
+
+            // Create dropdown options
+            filteredProducts.forEach(product => {
+                const option = document.createElement('button');
+                option.type = 'button';
+                option.className = 'dropdown-item';
+                option.textContent = product.name;
+                option.setAttribute('data-id', product.id);
                 
-                if (data && data.success && data.product) {
-                    // استخدام السعر من API (بدون ضريبة)
-                    $('#new-price').val(parseFloat(data.product.price || 0).toFixed(3));
-                    $('#new-tax-rate').val(parseFloat(data.product.tax_rate || 0).toFixed(2));
-                    console.info('✅ السعر من POS API:', data.product.price);
-                } else {
-                    // في حالة فشل API، استخدام القيم من الـ template
-                    const selectedOption = $('#new-product-select').find('option:selected');
-                    const fallbackPrice = parseFloat(selectedOption.data('price')) || 0;
-                    const fallbackTax = parseFloat(selectedOption.data('tax')) || 0;
-                    const calculatedPrice = fallbackTax > 0 ? fallbackPrice / (1 + fallbackTax / 100) : fallbackPrice;
+                option.addEventListener('click', function() {
+                    // Fill product fields
+                    nameInput.value = product.name;
                     
-                    $('#new-price').val(calculatedPrice.toFixed(3));
-                    $('#new-tax-rate').val(fallbackTax.toFixed(2));
-                    console.warn('⚠️ استخدام القيم الاحتياطية');
-                }
-            },
-            error: function(xhr, status, error) {
-                $('#new-price').prop('disabled', false);
-                $('#new-tax-rate').prop('disabled', false);
-                
-                // في حالة خطأ، استخدام القيم من الـ template
-                const selectedOption = $('#new-product-select').find('option:selected');
-                const fallbackPrice = parseFloat(selectedOption.data('price')) || 0;
-                const fallbackTax = parseFloat(selectedOption.data('tax')) || 0;
-                const calculatedPrice = fallbackTax > 0 ? fallbackPrice / (1 + fallbackTax / 100) : fallbackPrice;
-                
-                $('#new-price').val(calculatedPrice.toFixed(3));
-                $('#new-tax-rate').val(fallbackTax.toFixed(2));
-                console.error('❌ خطأ في استدعاء POS API:', error);
+                    // Calculate displayed price as sale_price / (1 + tax_rate/100)
+                    const salePrice = parseFloat(product.sale_price || 0);
+                    const taxRate = parseFloat(product.tax_rate || 0);
+                    const displayedPrice = taxRate > 0 ? salePrice / (1 + taxRate / 100) : salePrice;
+                    
+                    priceInput.value = formatCurrency(displayedPrice, 3);
+                    taxRateInput.value = parseFloat(product.tax_rate) || 0;
+
+                    dropdown.style.display = 'none';
+
+                    // Calculate tax amount and total
+                    calculateNewItemTotals();
+                });
+
+                dropdown.appendChild(option);
+            });
+
+            dropdown.style.display = 'block';
+        }
+
+        // Function to calculate tax amount and total for new item
+        function calculateNewItemTotals() {
+            const quantity = parseFloat(quantityInput.value) || 0;
+            const price = parseFloat(priceInput.value) || 0;
+            const taxRate = parseFloat(taxRateInput.value) || 0;
+
+            const subtotal = quantity * price;
+            const taxAmount = subtotal * (taxRate / 100);
+            const total = subtotal + taxAmount;
+
+            taxAmountInput.value = formatCurrency(taxAmount, 3);
+            totalInput.value = formatCurrency(total, 3);
+        }
+
+        // Event listeners
+        nameInput.addEventListener('input', filterProducts);
+        nameInput.addEventListener('focus', filterProducts);
+        
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!nameInput.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.style.display = 'none';
             }
         });
-    });
+
+        // Calculate totals when quantity, price, or tax rate changes
+        quantityInput.addEventListener('input', calculateNewItemTotals);
+        priceInput.addEventListener('input', calculateNewItemTotals);
+        taxRateInput.addEventListener('input', calculateNewItemTotals);
+    }
+
+    // Initialize product search
+    setupNewProductSearch();
 
     // Save new item
     $('#save-new-item-btn').click(function() {
-        const productId = $('#new-product-select').val();
+        const productName = $('#new-product-name').val().trim();
         const quantity = parseFloat($('#new-quantity').val());
         const price = parseFloat($('#new-price').val());
         const taxRate = parseFloat($('#new-tax-rate').val());
 
-        // التحقق من الحقول - السماح بالصفر للسعر والضريبة
-        if (!productId || isNaN(quantity) || quantity <= 0 || isNaN(price) || price < 0 || isNaN(taxRate) || taxRate < 0) {
-            alert('يرجى ملء جميع الحقول بشكل صحيح');
+        // Find product by name
+        const selectedProduct = products.find(p => p.name === productName);
+        
+        if (!selectedProduct || isNaN(quantity) || quantity <= 0 || isNaN(price) || price < 0 || isNaN(taxRate) || taxRate < 0) {
+            alert('يرجى ملء جميع الحقول بشكل صحيح واختيار منتج صحيح');
             return;
         }
 
         console.log('🔄 إرسال طلب إضافة منتج:', {
             url: `${apiBaseUrl}/items/add/`,
-            product_id: productId,
+            product_id: selectedProduct.id,
             quantity: quantity,
             unit_price: price,
             tax_rate: taxRate
@@ -564,7 +635,7 @@ $(document).ready(function() {
             type: 'POST',
             data: {
                 csrfmiddlewaretoken: csrftoken,
-                product_id: productId,
+                product_id: selectedProduct.id,
                 quantity: quantity,
                 unit_price: price,
                 tax_rate: taxRate

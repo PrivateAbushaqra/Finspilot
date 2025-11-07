@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load currency_tags %}
 
-{% block title %}{% trans "Delete" %} {% trans "Customer" %}/{% trans "Supplier" %} - {{ block.super }}{% endblock %}
+{% block title %}{% trans "Delete Customer Supplier" %} - {{ block.super }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -87,7 +87,7 @@
             <div class="d-flex justify-content-between align-items-center">
                 <h2 class="mb-0">
                     <i class="fas fa-exclamation-triangle me-2"></i>
-                    {% trans "Delete" %} {% trans "Customer" %}/{% trans "Supplier" %} {% trans "Account" %}
+                    {% trans "Delete Customer/Supplier Account" %}
                 </h2>
                 <a href="{% url 'customers:list' %}" class="btn btn-outline-light">
                     <i class="fas fa-arrow-left me-2"></i>
@@ -102,7 +102,7 @@
         <div class="d-flex align-items-center">
             <i class="fas fa-exclamation-triangle text-danger me-3 fa-3x"></i>
             <div>
-                <h4 class="text-danger mb-2">{% trans "Warning" %}: {% trans "Delete Operation is Final" %}</h4>
+                <h4 class="text-danger mb-2">{% trans "Warning: Delete Operation is Final" %}</h4>
                 <p class="mb-0">
                     {% trans "This action will delete the account and all associated data permanently and cannot be undone. Please confirm your intention to proceed before confirming the deletion." %}
                 </p>
@@ -291,7 +291,7 @@
                             </a>
                             <button type="submit" class="btn btn-danger" id="deleteButton" disabled>
                                 <i class="fas fa-trash me-2"></i>
-                                {% trans "Delete Account Permanently" %}
+                                {% trans "Delete Customer Permanently" %}
                             </button>
                         </div>
                     </form>

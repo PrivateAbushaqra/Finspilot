@@ -171,7 +171,7 @@
                         <div class="col-md-6 mb-3">
                             <label for="name" class="form-label">{% trans "Full Name" %} *</label>
                             <input type="text" class="form-control" id="name" name="name" value="{{ customer_supplier.name }}" required>
-                            <div class="form-text">{% trans "Customer" %} {% trans "Name" %} {% trans "or" %} {% trans "Supplier" %} {% trans "as it will appear on invoices" %}</div>
+                            <div class="form-text">{% trans "Customer Name or Supplier Name as it will appear on invoices" %}</div>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="phone" class="form-label">{% trans "Phone Number" %}</label>
@@ -191,12 +191,12 @@
                         <div class="col-12 mb-3">
                             <label for="address" class="form-label">{% trans "Address" %}</label>
                             <textarea class="form-control" id="address" name="address" rows="3">{{ customer_supplier.address }}</textarea>
-                            <div class="form-text">{% trans "Full address of the" %} {% trans "Customer" %} {% trans "or" %} {% trans "Supplier" %}</div>
+                            <div class="form-text">{% trans "Full address of the Customer or Supplier" %}</div>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="city" class="form-label">{% trans "City" %} <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="city" name="city" value="{{ customer_supplier.city }}" required>
-                            <div class="form-text">{% trans "City where the" %} {% trans "Customer" %} {% trans "or" %} {% trans "Supplier" %} {% trans "is located" %}</div>
+                            <div class="form-text">{% trans "City where the Customer or Supplier is located" %}</div>
                         </div>
                     </div>
                 </div>
@@ -215,7 +215,7 @@
                                 <input type="number" class="form-control" id="credit_limit" name="credit_limit" 
                                        value="{% if customer_supplier.credit_limit %}{{ customer_supplier.credit_limit|unlocalize }}{% else %}0{% endif %}" step="0.001" min="0">
                             </div>
-                            <div class="form-text">{% trans "Maximum amount the" %} {% trans "Customer" %} {% trans "can be" %} {% trans "debited" %}</div>
+                            <div class="form-text">{% trans "Maximum amount the Customer can be debited" %}</div>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="current_balance" class="form-label">{% trans "Current Balance" %} ({% trans "Editable" %})</label>

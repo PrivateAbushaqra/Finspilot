@@ -260,6 +260,70 @@ def update_cashbox_transaction_on_invoice_change(sender, instance, created, **kw
 
 
 @receiver(post_save, sender=SalesInvoice)
+def create_account_transaction_for_sales_invoice(sender, instance, created, **kwargs):
+    """إنشاء أو تحديث حركة حساب للعميل عند إنشاء أو تعديل فاتورة مبيعات آجلة"""
+    # 🔧 تجاهل أثناء استعادة النسخة الاحتياطية
+    try:
+        from backup.restore_context import is_restoring
+        if is_restoring():
+            return
+    except ImportError:
+        pass
+    
+    try:
+        from accounts.models import AccountTransaction
+        import uuid
+        
+        # إذا كانت طريقة الدفع ليست نقداً ولديها عميل، نسجل حركة في حساب العميل
+        if instance.payment_type != 'cash' and instance.customer and instance.total_amount > 0:
+            # البحث عن حركة موجودة
+            existing_transaction = AccountTransaction.objects.filter(
+                reference_type='sales_invoice',
+                reference_id=instance.id
+            ).first()
+            
+            if existing_transaction:
+                # تحديث المعاملة الموجودة إذا تغير المبلغ
+                if existing_transaction.amount != instance.total_amount:
+                    old_amount = existing_transaction.amount
+                    existing_transaction.amount = instance.total_amount
+                    existing_transaction.date = instance.date
+                    existing_transaction.description = f'مبيعات - فاتورة رقم {instance.invoice_number}'
+                    existing_transaction.save()
+                    print(f"✅ تم تحديث حركة الحساب {existing_transaction.transaction_number} للفاتورة {instance.invoice_number} من {old_amount} إلى {instance.total_amount}")
+                return  # الحركة موجودة وتم تحديثها أو لا تحتاج تحديث
+            
+            # إنشاء حركة جديدة للفواتير الجديدة فقط
+            if created:
+                # توليد رقم الحركة
+                transaction_number = f"SALE-{uuid.uuid4().hex[:8].upper()}"
+                
+                # إنشاء حركة مدينة للعميل (زيادة الذمم المدينة)
+                AccountTransaction.objects.create(
+                    transaction_number=transaction_number,
+                    date=instance.date,
+                    customer_supplier=instance.customer,
+                    transaction_type='sales_invoice',
+                    direction='debit',
+                    amount=instance.total_amount,
+                    reference_type='sales_invoice',
+                    reference_id=instance.id,
+                    description=f'مبيعات - فاتورة رقم {instance.invoice_number}',
+                    created_by=instance.created_by
+                )
+                
+                print(f"✅ تم إنشاء حركة حساب {transaction_number} للفاتورة {instance.invoice_number}")
+            
+    except ImportError:
+        # في حالة عدم وجود نموذج الحسابات
+        pass
+    except Exception as e:
+        print(f"خطأ في إنشاء/تحديث حركة الحساب للفاتورة {instance.invoice_number}: {e}")
+        # لا نوقف العملية في حالة فشل تسجيل الحركة المالية
+        pass
+
+
+@receiver(post_save, sender=SalesInvoice)
 def update_inventory_on_sales_invoice(sender, instance, created, **kwargs):
     """تحديث المخزون عند إنشاء أو تعديل فاتورة مبيعات"""
     # 🔧 تجاهل أثناء استعادة النسخة الاحتياطية
@@ -476,90 +540,6 @@ def update_inventory_on_sales_return(sender, instance, created, **kwargs):
         pass
 
 
-@receiver(post_save, sender=SalesCreditNote)
-def create_sales_credit_note_journal_entry(sender, instance, created, **kwargs):
-    """إنشاء أو تحديث قيد محاسبي لإشعار الدائن"""
-    # 🔧 تجاهل أثناء استعادة النسخة الاحتياطية
-    try:
-        from backup.restore_context import is_restoring
-        if is_restoring():
-            return
-    except ImportError:
-        pass
-    
-    # 🔧 منع التنفيذ المتكرر
-    if hasattr(instance, '_signal_processing'):
-        return
-    
-    try:
-        instance._signal_processing = True
-        
-        from journal.services import JournalService
-        from journal.models import JournalEntry
-        from accounts.models import AccountTransaction
-        import uuid
-        
-        # التحقق من وجود قيد موجود
-        existing_entry = JournalEntry.objects.filter(
-            reference_type='credit_note',
-            reference_id=instance.id
-        ).first()
-        
-        if created or not existing_entry:
-            # إنشاء قيد جديد
-            entry = JournalService.create_sales_credit_note_entry(instance, instance.created_by)
-            if entry:
-                print(f"✅ تم إنشاء قيد {entry.entry_number} لإشعار الدائن {instance.note_number}")
-        else:
-            # تحديث قيد موجود
-            # حذف القيد القديم أولاً
-            JournalEntry.objects.filter(
-                reference_type='credit_note',
-                reference_id=instance.id
-            ).delete()
-            print(f"🗑️ تم حذف القيد القديم لإشعار الدائن {instance.note_number}")
-            
-            # إنشاء قيد جديد
-            entry = JournalService.create_sales_credit_note_entry(instance, instance.created_by)
-            if entry:
-                print(f"✅ تم تحديث قيد {entry.entry_number} لإشعار الدائن {instance.note_number}")
-                
-        # إنشاء أو تحديث معاملة حساب العميل
-        # حذف المعاملة القديمة إذا كانت موجودة
-        existing_trans = AccountTransaction.objects.filter(
-            reference_type='credit_note',
-            reference_id=instance.id
-        )
-        
-        if existing_trans.exists() and not created:
-            existing_trans.delete()
-            print(f"🗑️ تم حذف المعاملة القديمة لإشعار الدائن {instance.note_number}")
-        
-        # إنشاء معاملة جديدة
-        transaction_number = f"CN-{uuid.uuid4().hex[:8].upper()}"
-        AccountTransaction.objects.create(
-            transaction_number=transaction_number,
-            date=instance.date,
-            customer_supplier=instance.customer,
-            transaction_type='credit_note',
-            direction='credit',  # دائن (تقليل المدينية من العميل)
-            amount=instance.total_amount,
-            reference_type='credit_note',
-            reference_id=instance.id,
-            description=f'إشعار دائن رقم {instance.note_number}',
-            notes=instance.notes or '',
-            created_by=instance.created_by
-        )
-        print(f"✅ تم إنشاء معاملة {transaction_number} لإشعار الدائن {instance.note_number}")
-        
-    except Exception as e:
-        print(f"❌ خطأ في إنشاء قيد إشعار الدائن {instance.note_number}: {e}")
-        import traceback
-        traceback.print_exc()
-    finally:
-        # إزالة الـ flag
-        if hasattr(instance, '_signal_processing'):
-            delattr(instance, '_signal_processing')
 
 
 @receiver(post_save, sender=SalesInvoiceItem)
@@ -646,15 +626,15 @@ def delete_sales_credit_note_journal_entry(sender, instance, **kwargs):
         from journal.models import JournalEntry
         from accounts.models import AccountTransaction
         
-        # حذف القيد المحاسبي
+        # حذف القيد المحاسبي (استخدام نفس reference_type المستخدم عند الإنشاء)
         JournalEntry.objects.filter(
-            reference_type='sales_credit_note',
+            reference_type='credit_note',
             reference_id=instance.id
         ).delete()
         
         # حذف معاملات الحساب
         AccountTransaction.objects.filter(
-            reference_type='sales_credit_note',
+            reference_type='credit_note',
             reference_id=instance.id
         ).delete()
         
@@ -716,6 +696,7 @@ def delete_sales_invoice_related_records(sender, instance, **kwargs):
         from inventory.models import InventoryMovement
         from journal.models import JournalEntry
         from accounts.models import AccountTransaction
+        from accounts.services import recalculate_customer_supplier_balance
         from django.db.models import Q
         
         # حذف حركات المخزون
@@ -727,25 +708,54 @@ def delete_sales_invoice_related_records(sender, instance, **kwargs):
         inventory_movements.delete()
         
         # حذف جميع القيود المحاسبية (المبيعات + COGS)
-        journal_entries = JournalEntry.objects.filter(
-            Q(sales_invoice=instance) |
-            Q(reference_type='sales_invoice', reference_id=instance.id) |
-            Q(reference_type='sales_invoice_cogs', reference_id=instance.id)
-        ).distinct()
-        deleted_journal = journal_entries.count()
-        if deleted_journal > 0:
-            print(f"🗑️ [post_delete] حذف {deleted_journal} قيد محاسبي")
-        journal_entries.delete()
+        # لا نستخدم .distinct() قبل الحذف - نحذف كل مجموعة على حدة
+        journal_entries_count = 0
         
-        # حذف معاملات الحساب
+        # حذف القيود المرتبطة بالفاتورة مباشرة
+        je1 = JournalEntry.objects.filter(sales_invoice=instance)
+        journal_entries_count += je1.count()
+        je1.delete()
+        
+        # حذف القيود المرتبطة كمرجع sales_invoice
+        je2 = JournalEntry.objects.filter(
+            reference_type='sales_invoice',
+            reference_id=instance.id
+        )
+        journal_entries_count += je2.count()
+        je2.delete()
+        
+        # حذف القيود المرتبطة كمرجع sales_invoice_cogs
+        je3 = JournalEntry.objects.filter(
+            reference_type='sales_invoice_cogs',
+            reference_id=instance.id
+        )
+        journal_entries_count += je3.count()
+        je3.delete()
+        
+        if journal_entries_count > 0:
+            print(f"🗑️ [post_delete] حذف {journal_entries_count} قيد محاسبي")
+        
+        # حذف معاملات الحساب وإعادة حساب رصيد العميل
         account_transactions = AccountTransaction.objects.filter(
             reference_type='sales_invoice',
             reference_id=instance.id
         )
         deleted_transactions = account_transactions.count()
+        
+        # جمع العملاء المتأثرين قبل الحذف
+        affected_customers = set()
+        for transaction in account_transactions:
+            affected_customers.add(transaction.customer_supplier)
+        
+        # حذف المعاملات
         account_transactions.delete()
         
-        print(f"✓ تم حذف {deleted_inventory} حركة مخزون، {deleted_journal} قيد محاسبي، و {deleted_transactions} معاملة حساب لفاتورة المبيعات {instance.invoice_number}")
+        # إعادة حساب رصيد جميع العملاء المتأثرين
+        for customer in affected_customers:
+            recalculate_customer_supplier_balance(customer)
+            print(f"✅ تم إعادة حساب رصيد العميل {customer.name} بعد حذف الفاتورة")
+        
+        print(f"✓ تم حذف {deleted_inventory} حركة مخزون، {journal_entries_count} قيد محاسبي، و {deleted_transactions} معاملة حساب لفاتورة المبيعات {instance.invoice_number}")
     except Exception as e:
         print(f"✗ خطأ في حذف السجلات المرتبطة بفاتورة المبيعات {instance.invoice_number}: {e}")
         import traceback
@@ -987,27 +997,3 @@ def create_journal_entry_for_credit_note(sender, instance, created, **kwargs):
         db_transaction.on_commit(_create_entry_and_transaction)
     except Exception as e:
         print(f"خطأ في إنشاء قيد إشعار الدائن {instance.note_number}: {e}")
-
-
-@receiver(pre_delete, sender=SalesCreditNote)
-def delete_credit_note_journal_entry(sender, instance, **kwargs):
-    """حذف القيد المحاسبي عند حذف إشعار الدائن"""
-    try:
-        from journal.models import JournalEntry
-        from accounts.models import AccountTransaction
-        
-        # حذف القيد المحاسبي
-        deleted_entries = JournalEntry.objects.filter(
-            reference_type='credit_note',
-            reference_id=instance.id
-        ).delete()
-        
-        # حذف معاملات الحساب
-        deleted_trans = AccountTransaction.objects.filter(
-            reference_type='credit_note',
-            reference_id=instance.id
-        ).delete()
-        
-        print(f"✓ تم حذف القيد المحاسبي لإشعار الدائن {instance.note_number}")
-    except Exception as e:
-        print(f"✗ خطأ في حذف قيد إشعار الدائن: {e}")

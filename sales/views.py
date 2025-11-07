@@ -2405,7 +2405,7 @@ class SalesCreditNoteDetailView(LoginRequiredMixin, DetailView):
         # إضافة القيود المحاسبية المرتبطة
         from journal.models import JournalEntry
         context['journal_entries'] = JournalEntry.objects.filter(
-            reference_type='sales_credit_note',
+            reference_type='credit_note',
             reference_id=self.object.id
         ).select_related('created_by')
         

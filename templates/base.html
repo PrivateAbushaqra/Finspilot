@@ -686,7 +686,7 @@
                                     <li class="nav-item">
                                         <a class="nav-link" data-bs-toggle="collapse" href="#receiptsMenu">
                                             <i class="fas fa-receipt me-2"></i>
-                                            {% trans "Payment Receipts" %}
+                                            {% trans "Receipt Vouchers List" %}
                                             <i class="fas fa-chevron-down small"></i>
                                         </a>
                                         <div class="collapse {% if active_menu == 'receipts' %}show{% endif %}" id="receiptsMenu">
@@ -695,7 +695,7 @@
                                                     <a class="nav-link {% if active_menu == 'receipts' and 'receipt_add' in request.path %}active{% endif %}" href="{% url 'receipts:receipt_add' %}">{% trans "Add Payment Receipt" %}</a>
                                                 </li>
                                                 <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'receipts' and 'receipt_list' in request.path %}active{% endif %}" href="{% url 'receipts:receipt_list' %}">{% trans "Receipts List" %}</a>
+                                                    <a class="nav-link {% if active_menu == 'receipts' and 'receipt_list' in request.path %}active{% endif %}" href="{% url 'receipts:receipt_list' %}">{% trans "Receipt Vouchers List" %}</a>
                                                 </li>
                                                 <li class="nav-item">
                                                     <a class="nav-link {% if active_menu == 'receipts' and 'check_list' in request.path %}active{% endif %}" href="{% url 'receipts:check_list' %}">{% trans "Checks Management" %}</a>
@@ -958,7 +958,7 @@
                                     </li>
                                     {% endif %}
                                         <li class="nav-item">
-                                            <a class="nav-link {% if active_menu == 'payments' and 'voucher_list' in request.path %}active{% endif %}" href="{% url 'payments:voucher_list' %}">{% trans "Vouchers List" %}</a>
+                                            <a class="nav-link {% if active_menu == 'payments' and 'Receipt Vouchers List' in request.path %}active{% endif %}" href="{% url 'payments:voucher_list' %}">{% trans "Vouchers List" %}</a>
                                         </li>
                                 </ul>
                             </div>

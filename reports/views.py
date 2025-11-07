@@ -11,7 +11,7 @@ from django.utils.translation import gettext as _
 from accounts.models import AccountTransaction
 from customers.models import CustomerSupplier
 from core.signals import log_view_activity, log_export_activity
-from journal.models import Account
+from journal.models import Account, JournalEntry
 
 
 @login_required
@@ -878,8 +878,34 @@ def cash_flow(request):
     end_date = _parse_date(request.GET.get('end_date'), today)
 
     # حساب التدفقات النقدية من العمليات التشغيلية
-    # افتراضيًا، التدفقات النقدية من المبيعات والمشتريات
-    operating_cash_flow = Decimal('0')
+    # حساب التغيير في أرصدة الحسابات النقدية خلال الفترة
+    
+    # تحديد الحسابات النقدية (الأصول النقدية)
+    # الحسابات التي تحتوي على نقد أو بنوك أو صناديق
+    cash_accounts = Account.objects.filter(
+        is_active=True,
+        account_type='asset'
+    ).filter(
+        Q(name__icontains='نقد') |
+        Q(name__icontains='صندوق') |
+        Q(name__icontains='بنك') |
+        Q(code__startswith='101') |  # صناديق
+        Q(code__startswith='102')    # بنوك
+    )
+    
+    # حساب أرصدة نهاية الفترة
+    cash_end_balance = Decimal('0')
+    for account in cash_accounts.distinct():
+        cash_end_balance += account.get_balance(end_date)
+    
+    # حساب أرصدة بداية الفترة (يوم قبل start_date)
+    start_minus_one = start_date - timedelta(days=1)
+    cash_start_balance = Decimal('0')
+    for account in cash_accounts.distinct():
+        cash_start_balance += account.get_balance(start_minus_one)
+    
+    # التدفق النقدي من العمليات التشغيلية = التغيير في النقد
+    operating_cash_flow = cash_end_balance - cash_start_balance
 
     # حساب التدفقات النقدية من الاستثمارات
     investment_cash_flow = Decimal('0')

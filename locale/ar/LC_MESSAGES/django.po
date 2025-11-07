@@ -1041,7 +1041,7 @@ msgstr "تاريخ الشراء"
 #: .\templates\customers\add.html:298 .\templates\customers\delete.html:5
 #: .\templates\customers\delete.html:90 .\templates\customers\edit.html:112
 #: .\templates\customers\edit.html:169 .\templates\customers\edit.html:189
-#: .\templates\customers\edit.html:194 .\templates\customers\list.html:209
+#: .\templates\customers\list.html:209
 #: .\templates\customers\supplier_list.html:110
 #: .\templates\customers\supplier_list.html:370
 #: .\templates\customers\supplier_list.html:409
@@ -2045,7 +2045,7 @@ msgstr "مدين"
 #: .\templates\sales\sales_report.html:317
 #: .\templates\sales\sales_statement.html:141
 msgid "Credit"
-msgstr "ذمم"
+msgstr "دائن"
 
 #: .\banks\models.py:215 .\banks\templates\banks\statement_form.html:107
 #: .\banks\templates\banks\statement_list.html:37
@@ -3827,7 +3827,7 @@ msgstr "تحديث"
 #: .\templates\cashboxes\cashbox_list.html:323
 #: .\templates\customers\customer_list.html:295
 #: .\templates\customers\customer_list.html:352
-#: .\templates\customers\delete.html:5 .\templates\customers\delete.html:90
+#: .\templates\customers\delete.html:90
 #: .\templates\customers\edit.html:316
 #: .\templates\customers\supplier_list.html:278
 #: .\templates\customers\supplier_list.html:336
@@ -3914,6 +3914,18 @@ msgstr "تحديث"
 #: .\templates\users\group_list.html:88
 msgid "Delete"
 msgstr "حذف"
+
+# .\templates\customers\delete.html:5
+msgid "Delete Customer Supplier"
+msgstr "حذف العميل أو المورد"
+
+# .\templates\customers\delete.html:90
+msgid "Delete Customer/Supplier Account"
+msgstr "حذف حساب العميل/المورد"
+
+# .\templates\customers\delete.html:105
+msgid "Warning: Delete Operation is Final"
+msgstr "تحذير: عملية الحذف نهائية."
 
 #: .\core\models.py:327 .\templates\assets_liabilities\dashboard.html:117
 #: .\templates\assets_liabilities\dashboard.html:163
@@ -4218,7 +4230,7 @@ msgstr ""
 #: .\templates\customers\delete.html:5 .\templates\customers\delete.html:90
 #: .\templates\customers\edit.html:112 .\templates\customers\edit.html:153
 #: .\templates\customers\edit.html:169 .\templates\customers\edit.html:189
-#: .\templates\customers\edit.html:194 .\templates\customers\edit.html:213
+#: .\templates\customers\edit.html:213
 #: .\templates\customers\list.html:192
 #: .\templates\customers\transactions.html:88
 #: .\templates\customers\transactions_old_backup.html:509
@@ -7881,6 +7893,7 @@ msgstr ""
 #: .\templates\accounts\customer_statement.html:173
 #: .\templates\accounts\customer_statement.html:414
 #: .\templates\receipts\receipt_list.html:14
+#: .\templates\base.html:698 .\templates\base.html:936
 msgid "Receipt Vouchers"
 msgstr "سندات القبض"
 
@@ -9805,7 +9818,7 @@ msgstr "لم يتم العثور على فواتير شراء"
 #: .\templates\accounts\customer_statement.html:466
 #: .\templates\receipts\receipt_list.html:174
 msgid "No receipt vouchers found"
-msgstr "لم يتم العثور على قسائم إيصال"
+msgstr "لم يتم العثور على قسائم المقبوضات"
 
 #: .\templates\accounts\customer_statement.html:487
 msgid "Payment Number"
@@ -11990,6 +12003,11 @@ msgstr "المعاملات"
 msgid "Delete Account Permanently"
 msgstr "حذف القيد نهائياً"
 
+#: .\templates\customers\delete.html:294
+msgid "Delete Customer Permanently"
+msgstr "حذف العميل نهائياً"
+
+
 #: .\templates\banks\account_transactions.html:141
 msgid "Account Deletion Mode"
 msgstr "وضع حذف الحساب"
@@ -12449,7 +12467,7 @@ msgstr "إلغاء التعديل"
 #: .\templates\banks\cashbox_transfer_edit.html:342
 #: .\templates\customers\edit.html:112 .\templates\sales\invoice_edit.html:109
 msgid "Data"
-msgstr ""
+msgstr "بيانات"
 
 #: .\templates\banks\cashbox_transfer_edit.html:112
 msgid "Please review all data before"
@@ -12992,11 +13010,7 @@ msgstr "سندات الصرف"
 
 #: .\templates\base.html:695 .\templates\base.html:933
 msgid "Add Payment Receipt"
-msgstr "إضافة سند صرف"
-
-#: .\templates\base.html:698 .\templates\base.html:936
-msgid "Receipts List"
-msgstr "قائمة الإيصالات"
+msgstr "إضافة سند قبض"
 
 #: .\templates\base.html:701 .\templates\base.html:939
 msgid "Checks Management"
@@ -13006,9 +13020,9 @@ msgstr "إدارة الشيكات"
 msgid "Add Payment Voucher"
 msgstr "إضافة سند صرف"
 
-#: .\templates\base.html:724 .\templates\base.html:961
-msgid "Vouchers List"
-msgstr "قائمة السندات"
+#: .\templates\base.html:698 .\templates\base.html:961
+msgid "Receipt Vouchers List"
+msgstr "قائمة السندات القبض"
 
 #: .\templates\base.html:742 .\templates\base.html:1408
 #: .\templates\journal\entry_list.html:6
@@ -13656,15 +13670,15 @@ msgstr ""
 #: .\templates\sales\creditnote_report.html:129
 #: .\templates\sales\return_list.html:338
 msgid "of"
-msgstr ""
+msgstr "ل"
 
 #: .\templates\core\audit_log.html:219
 msgid "No activities found"
-msgstr "لم يتم العثور على خصوم"
+msgstr "لم يتم العثور على أي أنشطة  "
 
 #: .\templates\core\audit_log.html:220
 msgid "No activity matches the selected filters"
-msgstr ""
+msgstr "لا توجد أنشطة تتطابق مع عوامل التصفية المحددة."
 
 #: .\templates\core\audit_log.html:234
 msgid "Activity details"
@@ -13672,11 +13686,11 @@ msgstr "تفاصيل الخصم"
 
 #: .\templates\core\dashboard.html:146
 msgid "Sales Statistics"
-msgstr "الإحصائيات"
+msgstr "إحصائيات المبيعات"
 
 #: .\templates\core\dashboard.html:167 .\templates\core\dashboard.html:220
 msgid "Quarter"
-msgstr ""
+msgstr "ربع"
 
 #: .\templates\core\dashboard.html:174 .\templates\core\dashboard.html:227
 msgid "Half Year"
@@ -13688,7 +13702,7 @@ msgstr "هذه السنة"
 
 #: .\templates\core\dashboard.html:199
 msgid "Purchase Statistics"
-msgstr "الإحصائيات"
+msgstr "إحصائيات المشتريات"
 
 #: .\templates\core\dashboard.html:249 .\templates\core\dashboard.html:256
 msgid "Bank and Cashbox Balances"
@@ -14116,15 +14130,15 @@ msgstr "رقم الهاتف"
 
 #: .\templates\customers\add.html:157 .\templates\customers\edit.html:174
 msgid "Primary phone number for communication"
-msgstr ""
+msgstr "رقم الهاتف الأساسي للتواصل"
 
 #: .\templates\customers\add.html:162 .\templates\customers\edit.html:179
 msgid "Email for sending invoices and reports"
-msgstr ""
+msgstr "البريد الإلكتروني لإرسال الفواتير والتقارير"
 
 #: .\templates\customers\add.html:167
 msgid "Registered tax number for company or individual"
-msgstr ""
+msgstr "رقم التسجيل الضريبي للشركة أو الفرد."
 
 #: .\templates\customers\add.html:172
 msgid "Complete address for customer or supplier"
@@ -14150,9 +14164,9 @@ msgstr ""
 msgid "Active Account"
 msgstr "حساب نشط"
 
-#: .\templates\customers\add.html:228 .\templates\customers\edit.html:302
+#: .\templates\customers\add.html:228 .\templates\customers\edit.html:307
 msgid "Deactivating hides the account from lists"
-msgstr ""
+msgstr "يؤدي إلغاء التفعيل إلى إخفاء الحساب من القوائم."
 
 #: .\templates\customers\add.html:266
 msgid "Please enter customer/supplier name"
@@ -14276,14 +14290,9 @@ msgid "Invoices"
 msgstr "الفاتير"
 
 #: .\templates\customers\delete.html:218
-#: .\templates\revenues_expenses\entry_create.html:286
-msgid "Note"
-msgstr "الملاحظات"
-
-#: .\templates\customers\delete.html:218
-msgid ""
-"All this data will be deleted permanently along with the account deletion."
-msgstr "سيتم حذف جميع هذه البيانات نهائيًا مع حذف الحساب."
+msgid "This account has related transactions and cannot be permanently deleted according"
+" to IFRS standards (IAS 1, IAS 8). You can deactivate it instead to preserve financial records."
+msgstr "يحتوي هذا الحساب على معاملات مرتبطة به ولا يمكن حذفه نهائيًا وفقًا لمعايير التقارير المالية الدولية (IAS 1، IAS 8). يمكنك إلغاء تنشيطه بدلاً من ذلك للحفاظ على السجلات المالية."
 
 #: .\templates\customers\delete.html:223
 msgid "No Related Data"
@@ -14293,9 +14302,21 @@ msgstr "لا توجد بيانات ذات صلة"
 msgid "This account can be deleted safely."
 msgstr "يمكن حذف هذا الحساب بأمان."
 
-#: .\templates\customers\delete.html:236
-msgid "To confirm deletion, type \\"
-msgstr "لتأكيد الحذف، اكتب \\"
+#: .\templates\customers\delete.html:270
+msgid "To confirm deletion, type \"DELETE\" in the field below:"
+msgstr "لتأكيد الحذف، اكتب \"DELETE\" في الحقل أدناه:"
+
+#: .\templates\customers\delete.html:238
+msgid "This account has related transactions. You can deactivate it to hide it from lists while preserving all financial records (IFRS compliant)."
+msgstr "يحتوي هذا الحساب على معاملات مرتبطة به. يمكنك إلغاء تنشيطه لإخفائه من القوائم مع الاحتفاظ بجميع السجلات المالية (المتوافقة مع المعايير الدولية لإعداد التقارير المالية)."
+
+#: .\templates\customers\delete.html:235
+msgid "Deactivate Account"
+msgstr "إلغاء تنشيط الحساب"
+
+#: .\templates\customers\delete.html:260
+msgid "Deactivated accounts can be reactivated later. All financial records will be preserved."
+msgstr "يمكن إعادة تفعيل الحسابات المعطلة لاحقًا. سيتم الاحتفاظ بجميع السجلات المالية."
 
 #: .\templates\customers\delete.html:240
 msgid "You must type \"DELETE\" exactly to confirm"
@@ -14331,11 +14352,17 @@ msgstr "تحرير العميل/المورد"
 msgid "Account Data"
 msgstr "بيانات الحساب"
 
+#: .\templates\customers\edit.html:174
+msgid "Customer Name or Supplier Name as it will appear on invoices"
+msgstr "اسم العميل أو اسم المورد كما سيظهر في الفواتير."
+
 #: .\templates\customers\edit.html:134
-msgid ""
-"You can edit all data except account type. If you need to change the type, "
-"please create a new account."
-msgstr ""
+msgid "You can edit all account data including the account type. Be careful when changing the type as it may affect financial reports."
+msgstr "يمكنك تعديل جميع بيانات الحساب بما في ذلك نوع الحساب. كن حذرًا عند تغيير النوع لأنه قد يؤثر على التقارير المالية."
+
+#: .\templates\customers\edit.html:159
+msgid "Warning: Changing the account type may affect financial reports and account numbering"
+msgstr "تحذير: قد يؤثر تغيير نوع الحساب على التقارير المالية وترقيم الحسابات."
 
 #: .\templates\customers\edit.html:143
 msgid "Are you sure you want to delete this account?"
@@ -14366,40 +14393,26 @@ msgid "Tax number registered for the company or individual"
 msgstr ""
 
 #: .\templates\customers\edit.html:189
-msgid "Full address of the"
-msgstr ""
+msgid "Full address of the Customer or Supplier"
+msgstr "العنوان الكامل للعميل أو المورد"
 
 #: .\templates\customers\edit.html:194
-msgid "City where the"
-msgstr ""
+msgid "City where the Customer or Supplier is located"
+msgstr "المدينة التي يقع فيها العميل أو المورد."
 
-#: .\templates\customers\edit.html:194
-msgid "is located"
-msgstr ""
-
-#: .\templates\customers\edit.html:213
-#: .\templates\customers\supplier_list.html:474
-msgid "Maximum amount the"
-msgstr ""
-
-#: .\templates\customers\edit.html:213
-#: .\templates\customers\supplier_list.html:474
-msgid "can be"
-msgstr ""
-
-#: .\templates\customers\edit.html:213
-msgid "debited"
-msgstr "مدين"
+#: .\templates\customers\edit.html:218
+msgid "Maximum amount the Customer can be debited"
+msgstr "الحد الأقصى للمبلغ سقف دين العميل."
 
 #: .\templates\customers\edit.html:221
 msgid "IFRS Compliance:"
-msgstr ""
+msgstr "مطابق لـIFRS"
 
 #: .\templates\customers\edit.html:221
 msgid ""
 "Balance adjustments must use appropriate accounts according to International "
 "Financial Reporting Standards. Select the correct adjustment type below."
-msgstr ""
+msgstr "يجب أن تتم تسويات الأرصدة باستخدام الحسابات المناسبة وفقًا للمعايير الدولية لإعداد التقارير المالية. اختر نوع التسوية الصحيح أدناه."
 
 #: .\templates\customers\edit.html:235
 msgid ""
@@ -14715,52 +14728,38 @@ msgid "Suppliers Report"
 msgstr "تقرير الموردين"
 
 #: .\templates\customers\transactions.html:6
-#, fuzzy
-#| msgid "Please enter customer/supplier name"
 msgid "Comprehensive Customer/Supplier Statement"
-msgstr "يرجى إدخال اسم العميل/المورد"
+msgstr "بيان شامل للعميل/المورد"
 
 #: .\templates\customers\transactions.html:83
-#, fuzzy
-#| msgid "Bank Account Statement"
 msgid "Comprehensive Account Statement"
-msgstr "كشف حساب البنك"
+msgstr "كشف حساب شامل"
 
 #: .\templates\customers\transactions.html:151
-#, fuzzy
-#| msgid "Before"
 msgid "Before period"
-msgstr "قبل"
+msgstr "قبل الدورة"
 
 #: .\templates\customers\transactions.html:160
 #: .\templates\customers\transactions.html:169
-#, fuzzy
-#| msgid "No documents"
 msgid "From documents"
-msgstr "مستندات الموظف"
+msgstr "من الوثائق"
 
 #: .\templates\customers\transactions.html:180
-#, fuzzy
-#| msgid "Opening Balance"
 msgid "Opening + Net"
-msgstr "الرصيد الافتتاحي"
+msgstr "الافتتاح + صافي"
 
 #: .\templates\customers\transactions.html:189
-#, fuzzy
-#| msgid "Document Title"
 msgid "Document count"
-msgstr "عنوان المستند"
+msgstr "عدد المستندات"
 
 #: .\templates\customers\transactions.html:200
-#, fuzzy
-#| msgid "Latest Transactions"
 msgid "Same as transactions"
-msgstr "آخر المعاملات"
+msgstr "نفس المعاملات"
 
 #: .\templates\customers\transactions.html:295
 #: .\templates\hr\employee_document_list.html:148
 msgid "No documents found"
-msgstr "لم يتم العثور على أقسام"
+msgstr "لم يتم العثور على أي مستندات"
 
 #: .\templates\customers\transactions_old_backup.html:5
 #: .\templates\customers\transactions_old_backup.html:297
@@ -18870,85 +18869,73 @@ msgid "Delete Confirmation"
 msgstr "تأكيد"
 
 #: .\templates\payments\voucher_list.html:290
-#, fuzzy
-#| msgid "Are you sure you want to delete the backup"
 msgid "Are you sure you want to delete payment voucher number"
-msgstr "هل أنت متأكد من حذف النسخة الاحتياطية"
+msgstr "هل أنت متأكد من أنك تريد حذف سند القبض رقم؟"
 
 #: .\templates\payments\voucher_list.html:327
 #: .\templates\payments\voucher_list.html:360
-#, fuzzy
-#| msgid "Payment Vouchers"
 msgid "Payment Vouchers Report"
-msgstr "سندات الصرف"
+msgstr "تقرير قسائم الدفع"
 
 #: .\templates\products\category_add.html:19
 msgid "Create a new category for products"
-msgstr ""
+msgstr "إنشاء فئة جديدة للمنتجات"
 
 #: .\templates\products\category_add.html:34
-#, fuzzy
-#| msgid "Date Information"
 msgid "Category Information"
-msgstr "معلومات التاريخ"
+msgstr "معلومات الفئة"
 
+#: .\templates\products\category_add.html:45
+#: .\templates\products\product_add.html:612
+#: .\templates\products\product_list.html:1122
+#: .\templates\purchases\invoice_add.html:2928
 #: .\templates\products\category_add.html:58
 #: .\templates\products\product_add.html:624
 #: .\templates\products\product_add.html:1040
 #: .\templates\products\product_list.html:1126
 #: .\templates\purchases\invoice_add.html:2935
-#, fuzzy
-#| msgid "Category Name"
 msgid "Category Code"
-msgstr "اسم الفئة"
+msgstr "رمز الفئة"
 
 #: .\templates\products\category_add.html:59
 #: .\templates\products\product_add.html:625
 #: .\templates\products\product_list.html:1127
 msgid "Example: ELECTRONICS"
-msgstr ""
+msgstr "مثال: ELECTRONICS"
 
 #: .\templates\products\category_add.html:64
 #: .\templates\products\product_add.html:631
 #: .\templates\products\product_edit.html:634
 #: .\templates\products\product_list.html:1132
 #: .\templates\purchases\invoice_add.html:2942
-#, fuzzy
-#| msgid "Save Category"
 msgid "Parent Category"
-msgstr "حفظ الفئة"
+msgstr "الفئة الرئيسية"
 
 #: .\templates\products\category_add.html:66
 #: .\templates\products\category_list.html:356
 #: .\templates\products\product_add.html:633
 #: .\templates\products\product_list.html:1134
 #: .\templates\products\product_list.html:1204
-#, fuzzy
-#| msgid "Save Category"
 msgid "Main Category"
-msgstr "حفظ الفئة"
+msgstr "الفئة الرئيسية"
 
 #: .\templates\products\category_add.html:83
 #: .\templates\products\product_add.html:648
 msgid "Sort Order"
-msgstr ""
+msgstr "ترتيب الفرز"
 
 #: .\templates\products\category_delete.html:6
-#, fuzzy
-#| msgid "Asset Category"
 msgid "Delete Category"
-msgstr "فئة الأصل"
+msgstr "حذف الفئة"
 
 #: .\templates\products\category_edit.html:6
-#, fuzzy
-#| msgid "Category"
 msgid "Edit Category"
-msgstr "الفئة"
+msgstr "تعديل الفئة"
 
 #: .\templates\products\category_edit.html:83
 #: .\templates\products\product_list.html:1149
 msgid "Sort"
-msgstr ""
+msgstr "ترتيب"
 
 #: .\templates\products\category_list.html:166
 #: .\templates\products\category_list.html:530
@@ -19611,10 +19598,8 @@ msgstr ""
 "لم يتم إنشاء أي منتجات بعد. انقر على إنشاء منتج جديد للبدء في إنشاء المنتجات."
 
 #: .\templates\products\product_list.html:772
-#, fuzzy
-#| msgid "Are you sure you want to delete the backup"
 msgid "Are you sure you want to delete product"
-msgstr "هل أنت متأكد من حذف النسخة الاحتياطية"
+msgstr "هل أنت متأكد أنك تريد حذف المنتج؟"
 
 #: .\templates\products\product_list.html:862
 #, fuzzy
@@ -20819,12 +20804,13 @@ msgid "Basic Supplier Information"
 msgstr "المعلومات الأساسية"
 
 #: .\templates\purchases\invoice_add.html:1250
+#: .\templates\customers\supplier_list.html:474
 msgid "Maximum amount the supplier can be debited"
-msgstr ""
+msgstr "الحد الأقصى للمبلغ الذي يمكن خصمه من حساب المورد."
 
 #: .\templates\purchases\invoice_add.html:1261
 msgid "Current Balance (positive: credit, negative: debit)"
-msgstr ""
+msgstr "الرصيد الحالي (موجب: دائن، سالب: مدين)"
 
 #: .\templates\purchases\invoice_add.html:1275
 #: .\templates\sales\invoice_add.html:1782
@@ -21009,24 +20995,12 @@ msgid "Grand Total"
 msgstr "المجموع الإجمالي"
 
 #: .\templates\purchases\invoice_list.html:416
-#, fuzzy
-#| msgid "View Account Transactions"
 msgid "View supplier transactions"
-msgstr "عرض معاملات الحساب"
-
-#: .\templates\purchases\invoice_list.html:467
-#: .\templates\sales\invoice_detail.html:334
-#: .\templates\sales\invoice_list.html:596
-#, fuzzy
-#| msgid "Are you sure you want to delete this document?"
-msgid "Are you sure you want to delete this invoice?"
-msgstr "هل أنت متأكد من أنك تريد حذف هذا الأصل؟"
+msgstr "عرض معاملات الموردين"
 
 #: .\templates\purchases\invoice_list.html:480
-#, fuzzy
-#| msgid "Total"
 msgid "Page Total"
-msgstr "الإجمالي"
+msgstr "إجمالي الصفحة"
 
 #: .\templates\purchases\invoice_list.html:526
 #: .\templates\sales\invoice_list.html:640
@@ -21398,47 +21372,37 @@ msgstr ""
 
 #: .\templates\receipts\check_collect.html:149
 msgid "ECL will be calculated automatically"
-msgstr ""
+msgstr "سيتم احتساب ECL تلقائيًا."
 
 #: .\templates\receipts\check_collect.html:150
 msgid "Journal entries will be created according to IFRS 9"
-msgstr ""
+msgstr "سيتم إنشاء قيود اليومية وفقًا لمعايير IFRS 9."
 
 #: .\templates\receipts\check_collect.html:151
 msgid "Late collection warnings will be logged"
-msgstr ""
+msgstr "سيتم تسجيل تنبيهات التأخر في عملية التحصيل."
 
 #: .\templates\receipts\check_collect.html:152
 msgid "Early collection will be verified against invoices"
-msgstr ""
+msgstr "سيتم التحقق من عملية التحصيل المبكر بمقارنتها بالفواتير."
 
 #: .\templates\receipts\check_collect.html:158
-#, fuzzy
-#| msgid "Check collection"
 msgid "Process Collection"
 msgstr "تحصيل الشيك"
 
 #: .\templates\receipts\check_list.html:18
-#, fuzzy
-#| msgid "Export"
 msgid "Export XLSX"
-msgstr "تصدير"
+msgstr "تصدير إلى XLEX"
 
 #: .\templates\receipts\check_list.html:24
-#, fuzzy
-#| msgid "Back to List"
 msgid "Back to Receipts"
-msgstr "العودة إلى القائمة"
+msgstr "العودة إلى السندات"
 
 #: .\templates\receipts\check_list.html:51
-#, fuzzy
-#| msgid "Due Date"
 msgid "Due Date From"
-msgstr "تاريخ الاستحقاق"
+msgstr "تاريخ الاستحقاق من"
 
 #: .\templates\receipts\check_list.html:55
-#, fuzzy
-#| msgid "Due Date"
 msgid "Due Date To"
 msgstr "تاريخ الاستحقاق"
 
@@ -21448,17 +21412,13 @@ msgid "Collect Check"
 msgstr ""
 
 #: .\templates\receipts\check_list.html:166
-#, fuzzy
-#| msgid "No backups found"
 msgid "No checks found"
-msgstr "لم يتم العثور على نسخ احتياطية"
+msgstr "لم يتم العثور على أي شيكات"
 
 #: .\templates\receipts\receipt_add.html:27
 #: .\templates\receipts\receipt_detail.html:36
-#, fuzzy
-#| msgid "Purchase Information"
 msgid "Voucher Information"
-msgstr "معلومات الشراء"
+msgstr "معلومات سند القبض"
 
 #: .\templates\receipts\receipt_add.html:38
 #: .\templates\sales\creditnote_edit.html:25
@@ -21471,10 +21431,8 @@ msgid "Current Customer Balance"
 msgstr "رصيد العميل الحالي"
 
 #: .\templates\receipts\receipt_add.html:53
-#, fuzzy
-#| msgid "Payment Type"
 msgid "Select Payment Type"
-msgstr "نوع الدفع"
+msgstr "إختار نوع الدفع"
 
 #: .\templates\receipts\receipt_add.html:126
 msgid "The cash box where the check will be deposited upon collection"
@@ -21495,28 +21453,20 @@ msgstr "رقم المعاملة"
 
 #: .\templates\receipts\receipt_add.html:158
 #: .\templates\receipts\receipt_detail.html:85
-#, fuzzy
-#| msgid "Transfers"
 msgid "Transfer Notes"
-msgstr "التحويلات"
+msgstr "ملاحظات التحويل"
 
 #: .\templates\receipts\receipt_add.html:159
-#, fuzzy
-#| msgid "Any additional notes about the bank account"
 msgid "Additional notes about the transfer"
-msgstr "أي ملاحظات إضافية حول الحساب البنكي"
+msgstr "ملاحظات إضافية حول التحويل"
 
 #: .\templates\receipts\receipt_add.html:196
-#, fuzzy
-#| msgid "Payment Voucher"
 msgid "Save Voucher"
-msgstr "سند صرف"
+msgstr "حفظ سند القبض"
 
 #: .\templates\receipts\receipt_add.html:303
-#, fuzzy
-#| msgid "Error deleting tables:"
 msgid "Error fetching balance"
-msgstr "خطأ في حذف الجداول:"
+msgstr "خطأ في جلب الرصيد"
 
 #: .\templates\receipts\receipt_add.html:313
 #, fuzzy
@@ -21551,10 +21501,8 @@ msgid "Check Collections"
 msgstr "تحصيل الشيك"
 
 #: .\templates\receipts\receipt_detail.html:236
-#, fuzzy
-#| msgid "Account Statement"
 msgid "Related Account Movements"
-msgstr "كشف الحساب"
+msgstr "حركات الحسابات ذات الصلة"
 
 #: .\templates\receipts\receipt_detail.html:284
 #, fuzzy
@@ -21569,10 +21517,8 @@ msgid ""
 msgstr ""
 
 #: .\templates\receipts\receipt_list.html:6
-#, fuzzy
-#| msgid "Receipt"
 msgid "Receipt List"
-msgstr "إيصال استلام"
+msgstr "سندات القبض"
 
 #: .\templates\receipts\receipt_list.html:132
 #, fuzzy
@@ -21581,28 +21527,22 @@ msgid "Collect"
 msgstr "اختر"
 
 #: .\templates\receipts\receipt_list.html:176
-#, fuzzy
-#| msgid "Add Receipt Voucher"
 msgid "Add New Receipt Voucher"
 msgstr "إضافة سند قبض"
 
 #: .\templates\receipts\receipt_list.html:197
 #: .\templates\receipts\receipt_list.html:218
-#, fuzzy
-#| msgid "Receipt Vouchers"
 msgid "Receipt Vouchers Report"
-msgstr "سندات القبض"
+msgstr "تقرير إيصالات المقبوضات"
 
 #: .\templates\registration\login.html:5
 #: .\templates\registration\login.html:146
 msgid "Sign In"
-msgstr ""
+msgstr "تسجيل الدخول"
 
 #: .\templates\registration\login.html:81
-#, fuzzy
-#| msgid "Integrated Accounting System"
 msgid "Finspilot - Accounting System"
-msgstr "نظام المحاسبة المتكامل"
+msgstr "Finspilot - نظام محاسبة"
 
 #: .\templates\registration\login.html:82
 msgid "Welcome, please login"
@@ -21881,150 +21821,106 @@ msgid "مشاكل سيولة"
 msgstr ""
 
 #: .\templates\reports\income_statement.html:100
-#, fuzzy
-#| msgid "إحصائيات المبيعات"
 msgid "قائمة الدخل"
 msgstr "إحصائيات المبيعات"
 
 #: .\templates\reports\income_statement.html:110
-#, fuzzy
-#| msgid "Income_Statement"
 msgid "Income statement"
-msgstr "قائمة_الدخل"
+msgstr "بيان الدخل"
 
 #: .\templates\reports\income_statement.html:168
 #: .\templates\sales\sales_report.html:231
-#, fuzzy
-#| msgid "Total Tables"
 msgid "Total Sales"
-msgstr "إجمالي الجداول"
+msgstr "إجمالي المبيعات"
 
 #: .\templates\reports\income_statement.html:187
 msgid "Total cost of goods sold"
-msgstr ""
+msgstr "إجمالي تكلفة البضائع المباعة"
 
 #: .\templates\reports\income_statement.html:191
-#, fuzzy
-#| msgid "Net Profit/Loss"
 msgid "Net Gross Profit"
-msgstr "صافي الربح/الخسارة"
+msgstr "صافي الربح الإجمالي"
 
 #: .\templates\reports\income_statement.html:218
-#, fuzzy
-#| msgid "Revenues"
 msgid "Other Revenues"
-msgstr "الإيرادات"
+msgstr "الإيرادات الأخرى"
 
 #: .\templates\reports\income_statement.html:229
 msgid "Total Other Revenues"
-msgstr ""
+msgstr "إجمالي الإيرادات الأخرى"
 
 #: .\templates\reports\income_statement.html:237
 #: .\templates\revenues_expenses\dashboard.html:54
-#, fuzzy
-#| msgid "Net Profit/Loss"
 msgid "Net Profit"
-msgstr "صافي الربح/الخسارة"
+msgstr "صافي الربح"
 
 #: .\templates\reports\index.html:4 .\templates\reports\index.html:12
-#, fuzzy
-#| msgid "Financial Report"
 msgid "Financial Reports"
-msgstr "تقرير مالي"
+msgstr "التقارير المالية"
 
 #: .\templates\reports\index.html:21
-#, fuzzy
-#| msgid "Viewing trial balance report page"
 msgid "View trial balance report"
-msgstr "عرض صفحة تقرير الميزان المراجعة"
+msgstr "عرض تقرير ميزان المراجعة"
 
 #: .\templates\reports\index.html:23 .\templates\reports\index.html:36
 #: .\templates\reports\index.html:49 .\templates\reports\index.html:62
 #: .\templates\reports\index.html:75 .\templates\reports\index.html:88
 #: .\templates\reports\index.html:101 .\templates\reports\index.html:114
 #: .\templates\reports\index.html:127 .\templates\sales\sales_report.html:208
-#, fuzzy
-#| msgid "Sales Report"
 msgid "View Report"
-msgstr "تقرير المبيعات"
+msgstr "عرض التقرير"
 
 #: .\templates\reports\index.html:34
-#, fuzzy
-#| msgid "Viewing trial balance report page"
 msgid "View balance sheet report"
-msgstr "عرض صفحة تقرير الميزان المراجعة"
+msgstr "عرض تقرير الميزانية العمومية"
 
 #: .\templates\reports\index.html:47
-#, fuzzy
-#| msgid "Viewing customer statement page"
 msgid "View income statement report"
-msgstr "عرض صفحة كشف حساب العميل"
+msgstr "عرض تقرير بيان الدخل"
 
 #: .\templates\reports\index.html:59
-#, fuzzy
-#| msgid "Cash Box"
 msgid "Cash Flow"
-msgstr "صندوق نقدي"
+msgstr "التدفق النقدي"
 
 #: .\templates\reports\index.html:60
-#, fuzzy
-#| msgid "Viewing customer statement page"
 msgid "View cash flow report"
-msgstr "عرض صفحة كشف حساب العميل"
+msgstr "عرض تقرير التدفق النقدي"
 
 #: .\templates\reports\index.html:73
-#, fuzzy
-#| msgid "Viewed probation report"
 msgid "View financial ratios report"
-msgstr "تم عرض تقرير فترة التجربة"
+msgstr "عرض تقرير النسب المالية"
 
 #: .\templates\reports\index.html:86
-#, fuzzy
-#| msgid "Viewing customer statement page"
 msgid "View customer statement report"
 msgstr "عرض صفحة كشف حساب العميل"
 
 #: .\templates\reports\index.html:98
-#, fuzzy
-#| msgid "Financial Report"
 msgid "Aging Report"
-msgstr "تقرير مالي"
+msgstr "تقرير تحليل أعمار الذمم"
 
 #: .\templates\reports\index.html:99
-#, fuzzy
-#| msgid "Viewed probation report"
 msgid "View aging report"
-msgstr "تم عرض تقرير فترة التجربة"
+msgstr "عرض تقرير تحليل أعمار الذمم"
 
 #: .\templates\reports\index.html:112
-#, fuzzy
-#| msgid "View Inventory Ralance Report"
 msgid "View inventory report"
-msgstr "عرض تقرير أرصدة المخزون"
+msgstr "عرض تقرير المخزون"
 
 #: .\templates\reports\index.html:124
-#, fuzzy
-#| msgid "Sales Report By Sales Person"
 msgid "Sales by Salesperson"
-msgstr "تقرير المبيعات حسب مندوب المبيعات"
+msgstr "المبيعات حسب البائع"
 
 #: .\templates\reports\index.html:125
-#, fuzzy
-#| msgid "Viewing sales report by salesperson page"
 msgid "View sales by salesperson report"
-msgstr "عرض صفحة تقرير المبيعات حسب مندوب المبيعات"
+msgstr "عرض المبيعات حسب تقرير البائع"
 
 #: .\templates\reports\inventory_report.html:103
-#, fuzzy
-#| msgid "إحصائيات المشتريات"
 msgid "تقرير أرصدة المخزون"
 msgstr "إحصائيات المشتريات"
 
 #: .\templates\reports\inventory_report.html:190
-#, fuzzy
-#| msgid "Inventory Balances Report"
 msgid "Inventory Balances"
-msgstr "تقرير أرصدة المخزون"
+msgstr "أرصدة المخزون"
 
 #: .\templates\reports\inventory_report.html:202
 msgid "الكود"
@@ -22783,78 +22679,60 @@ msgid "إجمالي الإيرادات"
 msgstr ""
 
 #: .\templates\revenues_expenses\sector_analysis.html:120
-#, fuzzy
-#| msgid "إحصائيات المبيعات"
 msgid "إجمالي المصاريف"
 msgstr "إحصائيات المبيعات"
 
 #: .\templates\sales\creditnote_add.html:3
 #: .\templates\sales\creditnote_add.html:6
 #: .\templates\sales\creditnote_list.html:18
-#, fuzzy
-#| msgid "Can view Credit Note"
 msgid "Create Credit Note"
-msgstr "يمكن عرض إشعار دائن"
+msgstr "إنشاء مذكرة دائن"
 
 #: .\templates\sales\creditnote_add.html:21
 msgid "Type to search customer"
-msgstr ""
+msgstr "اكتب للبحث عن العميل"
 
 #: .\templates\sales\creditnote_add.html:24
 msgid "Start typing to filter customers, then choose from the list."
-msgstr ""
+msgstr "ابدأ بالكتابة لتصفية قائمة العملاء، ثم اختر من القائمة."
 
 #: .\templates\sales\creditnote_add.html:33
 msgid "The credit note amount (no tax is applied as per accounting rules)"
-msgstr ""
+msgstr "مبلغ إشعار الدائن (لا يتم تطبيق أي ضرائب وفقًا للقواعد المحاسبية)"
 
 #: .\templates\sales\creditnote_delete.html:3
 #: .\templates\sales\creditnote_delete.html:12
-#, fuzzy
-#| msgid "Credit Note"
 msgid "Delete Credit Note"
-msgstr "مذكرة دائن"
+msgstr "حذف مذكرة دائن"
 
 #: .\templates\sales\creditnote_delete.html:19
-#, fuzzy
-#| msgid "Are you sure you want to delete this transaction?"
 msgid ""
 "Are you sure you want to delete this credit note? This action cannot be "
 "undone."
-msgstr "هل أنت متأكد من أنك تريد حذف هذه المعاملة؟"
+msgstr "هل أنت متأكد من أنك تريد حذف هذه المذكرة الائتمانية؟ لا يمكن تنفيذ هذا الإجراء."
 
 #: .\templates\sales\creditnote_delete.html:24
 #: .\templates\sales\creditnote_detail.html:5
 #: .\templates\sales\creditnote_detail.html:15
-#, fuzzy
-#| msgid "Credit Notes"
 msgid "Credit Note Details"
-msgstr "إشعارات الدائن"
+msgstr "تفاصيل إشعار الدائن"
 
 #: .\templates\sales\creditnote_delete.html:52
-#, fuzzy
-#| msgid "Delete"
 msgid "Yes, Delete"
-msgstr "حذف"
+msgstr "نعم ,إحذف"
 
 #: .\templates\sales\creditnote_detail.html:30
-#, fuzzy
-#| msgid "Credit Note"
 msgid "Credit Note Data"
-msgstr "مذكرة دائن"
+msgstr "تاريخ مذكرة الدائن"
 
 #: .\templates\sales\creditnote_detail.html:35
-#, fuzzy
-#| msgid "Creditor Information"
 msgid "Credit Note Information"
-msgstr "معلومات الدائن"
+msgstr "معلومات مذكرة الدائن"
 
 #: .\templates\sales\creditnote_detail.html:56
 #: .\templates\sales\invoice_detail.html:129
-#, fuzzy
-#| msgid "Customers List"
 msgid "Customer Data"
-msgstr "قائمة العملاء"
+msgstr "بيانات العملاء"
 
 #: .\templates\sales\creditnote_detail.html:59
 #: .\templates\sales\invoice_add.html:1708
@@ -22943,103 +22821,77 @@ msgid "لا توجد قيود محاسبية مرتبطة بهذا الإشعا�
 msgstr ""
 
 #: .\templates\sales\creditnote_detail.html:225
-#, fuzzy
-#| msgid "Are you sure you want to delete this asset?"
 msgid "Are you sure you want to send this credit note to JoFotara?"
-msgstr "هل أنت متأكد من أنك تريد حذف هذا الأصل؟"
+msgstr "هل أنت متأكد أنك تريد إرسال إشعار الدائن هذا إلى JoFotara؟"
 
 #: .\templates\sales\creditnote_detail.html:273
-#, fuzzy
-#| msgid "Depreciation entry created successfully"
 msgid "Credit note sent to JoFotara successfully!"
-msgstr "تم إنشاء قيد الإهلاك بنجاح"
+msgstr "تم إرسال إشعار الدائن إلى JoFotara بنجاح!"
 
 #: .\templates\sales\creditnote_detail.html:276
 msgid "Failed to send credit note"
-msgstr ""
+msgstr "فشل في إرسال مذكرة الدائن"
 
 #: .\templates\sales\creditnote_detail.html:276
 #: .\templates\sales\invoice_detail.html:463
-#, fuzzy
-#| msgid "Unknown"
 msgid "Unknown error"
-msgstr "غير معروف"
+msgstr "خطأ غير معروف"
 
 #: .\templates\sales\creditnote_detail.html:281
 #: .\templates\sales\invoice_detail.html:468
-#, fuzzy
-#| msgid "Error creating payment voucher"
 msgid "Error connecting to server"
-msgstr "خطأ في إنشاء سند صرف"
+msgstr "خطأ في الاتصال بالخادم"
 
 #: .\templates\sales\creditnote_detail.html:299
 #: .\templates\sales\invoice_detail.html:486
 msgid "UUID copied to clipboard"
-msgstr ""
+msgstr "تم نسخ UUID إلى الحافظة"
 
 #: .\templates\sales\creditnote_detail.html:312
 #: .\templates\sales\invoice_detail.html:499
-#, fuzzy
-#| msgid "Failed to load tables"
 msgid "Failed to copy text"
-msgstr "فشل في تحميل الجداول"
+msgstr "فشل في نسخ النص"
 
 #: .\templates\sales\creditnote_edit.html:3
 #: .\templates\sales\creditnote_edit.html:6
-#, fuzzy
-#| msgid "Credit Note"
 msgid "Edit Credit Note"
-msgstr "مذكرة دائن"
+msgstr "تعديل مذكرة دائن"
 
 #: .\templates\sales\creditnote_list.html:21
 #: .\templates\sales\creditnote_report.html:4
 #: .\templates\sales\creditnote_report.html:14
-#, fuzzy
-#| msgid "Credit Notes"
 msgid "Credit Notes Report"
-msgstr "إشعارات الدائن"
+msgstr "تقرير مذكرات الدائن"
 
 #: .\templates\sales\creditnote_list.html:59
-#, fuzzy
-#| msgid "Sent to JoFotara At"
 msgid "Sent to JoFotara"
-msgstr "أُرسل إلى JoFotara في"
+msgstr "أُرسل إلى JoFotara"
 
 #: .\templates\sales\creditnote_list.html:72
 #: .\templates\sales\invoice_list.html:574
-#, fuzzy
-#| msgid "Sent to JoFotara At"
 msgid "Verify on JoFotara"
-msgstr "أُرسل إلى JoFotara في"
+msgstr "التحقق من JoFotara"
 
 #: .\templates\sales\creditnote_list.html:77
-#, fuzzy
-#| msgid "Content Type"
 msgid "Not sent yet"
-msgstr "نوع المحتوى"
+msgstr "لم يتم الإرسال بعد"
 
 #: .\templates\sales\creditnote_list.html:143
 #: .\templates\sales\creditnote_report.html:106
-#, fuzzy
-#| msgid "No receipt vouchers found"
 msgid "No credit notes found"
-msgstr "لم يتم العثور على قسائم إيصال"
+msgstr "لم يتم العثور على إشعارات دائنة"
 
 #: .\templates\sales\creditnote_list.html:144
 msgid "You can create a new credit note by clicking the button above"
-msgstr ""
+msgstr "يمكنك إنشاء إشعار ائتمان جديد بالنقر على الزر أعلاه."
 
 #: .\templates\sales\creditnote_list.html:146
-#, fuzzy
-#| msgid "Can view Credit Note"
 msgid "Create First Credit Note"
-msgstr "يمكن عرض إشعار دائن"
+msgstr "إنشاء أول مذكرة ائتمان"
 
 #: .\templates\sales\creditnote_report.html:57
-#, fuzzy
-#| msgid "Total Amount"
 msgid "Total Count"
-msgstr "المبلغ الإجمالي"
+msgstr "العدد الإجمالي"
 
 #: .\templates\sales\invoice_add.html:7 .\templates\sales\invoice_add.html:162
 msgid "Add Sales Invoice"
@@ -23577,6 +23429,9 @@ msgid "Confirmation Delete Sales Invoice"
 msgstr "تأكيد حذف فاتورة المبيعات"
 
 #: .\templates\sales\invoice_delete.html:60
+#: .\templates\purchases\invoice_list.html:467
+#: .\templates\sales\invoice_detail.html:334
+#: .\templates\sales\invoice_list.html:596
 msgid "Are You Sure You Want to Delete This Invoice?"
 msgstr "هل أنت متأكد أنك تريد حذف هذه الفاتورة؟"
 
@@ -23618,92 +23473,68 @@ msgstr "فاتورة"
 
 #: .\templates\sales\invoice_detail.html:120
 msgid "Edit invoice to change creator"
-msgstr ""
+msgstr "تعديل الفاتورة لتغيير المنشئ"
 
 #: .\templates\sales\invoice_detail.html:196
-#, fuzzy
-#| msgid "Sales Invoice"
 msgid "Verify Invoice"
-msgstr "فاتورة مبيعات"
+msgstr "التحقق من الفاتورة"
 
 #: .\templates\sales\invoice_detail.html:214
-#, fuzzy
-#| msgid "Sales Invoice Items"
 msgid "Invoice Items"
-msgstr "عناصر فواتير المبيعات"
+msgstr "عناصر الفاتورة"
 
 #: .\templates\sales\invoice_detail.html:270
-#, fuzzy
-#| msgid "No Purchase Invoices Found"
 msgid "No products in this invoice"
-msgstr "لم يتم العثور على فواتير شراء"
+msgstr "لا يوجد منتجات في هذه الفاتورة"
 
 #: .\templates\sales\invoice_detail.html:289
-#, fuzzy
-#| msgid "Notes"
 msgid "No notes"
-msgstr "الملاحظات"
+msgstr "لا يوجد ملاحظات"
 
 #: .\templates\sales\invoice_detail.html:296 .\templates\sales\pos.html:1190
-#, fuzzy
-#| msgid "Subtotal"
 msgid "Subtotal:"
-msgstr "المجموع الفرعي"
+msgstr "المجموع الفرعي:"
 
 #: .\templates\sales\invoice_detail.html:396
-#, fuzzy
-#| msgid "Are you sure you want to delete this asset?"
 msgid "Are you sure you want to send this invoice to JoFotara?"
-msgstr "هل أنت متأكد من أنك تريد حذف هذا الأصل؟"
+msgstr "هل أنت متأكد أنك تريد إرسال هذه الفاتورة إلى JoFotara؟"
 
 #: .\templates\sales\invoice_detail.html:460
-#, fuzzy
-#| msgid "Entry created successfully"
 msgid "Invoice sent to JoFotara successfully!"
-msgstr "تم إنشاء القيد بنجاح"
+msgstr "تم إرسال الفاتورة إلى JoFotara بنجاح!"
 
 #: .\templates\sales\invoice_detail.html:463
-#, fuzzy
-#| msgid "Sales Invoice"
 msgid "Failed to send invoice"
-msgstr "فاتورة مبيعات"
+msgstr "فشل في إرسال الفاتورة"
 
 #: .\templates\sales\invoice_edit.html:8
-#, fuzzy
-#| msgid "Sales Invoice"
 msgid "Edit Sales Invoice"
-msgstr "فاتورة مبيعات"
+msgstr "تعديل فاتورة مبيعات"
 
 #: .\templates\sales\invoice_edit.html:142
-#, fuzzy
-#| msgid "Please correct the errors in the form"
 msgid "There are errors in the form"
 msgstr "يرجى تصحيح الأخطاء في النموذج"
 
 #: .\templates\sales\invoice_edit.html:237
 msgid "Select the warehouse from which products will be sold."
-msgstr ""
+msgstr "توجد أخطاء في النموذج."
 
 #: .\templates\sales\invoice_edit.html:256
 msgid "Changing the creator requires special permission"
-msgstr ""
+msgstr "يتطلب تغيير منشئ المحتوى إذناً خاصاً."
 
 #: .\templates\sales\invoice_edit.html:411
 msgid "شامل ضريبة"
 msgstr ""
 
 #: .\templates\sales\invoice_edit.html:417
-#, fuzzy
-#| msgid "Discount"
 msgid "Amount Discount"
-msgstr "خصم"
+msgstr "مبلغ الخصم"
 
 #: .\templates\sales\invoice_edit_BACKUP.html:9
 #: .\templates\sales\invoice_edit_BACKUP.html:18
-#, fuzzy
-#| msgid "Invoice"
 msgid "Edit Invoice"
-msgstr "فاتورة"
+msgstr "تعديل الفاتورة"
 
 #: .\templates\sales\invoice_list.html:286
 msgid "Manage All Sales Invoices"
@@ -24054,132 +23885,110 @@ msgstr "لم يتم العثور على أي فواتير مبيعات للفت�
 
 #: .\templates\sales\sales_return_statement.html:5
 #: .\templates\sales\sales_return_statement.html:85
-#, fuzzy
-#| msgid "Sales Return Item"
 msgid "Sales Return Statement"
-msgstr "عنصر مردود المبيعات"
+msgstr "بيان مرتجعات المبيعات"
 
 #: .\templates\sales\sales_return_statement.html:87
 msgid "Detailed view of all sales returns with cumulative"
-msgstr ""
+msgstr "عرض تفصيلي لجميع مرتجعات المبيعات مع التراكمي"
 
 #: .\templates\sales\sales_return_statement.html:173
-#, fuzzy
-#| msgid "Number of Currencies"
 msgid "Number of Returns"
-msgstr "عدد العملات"
+msgstr "عدد المرتجعات"
 
 #: .\templates\sales\sales_return_statement.html:190
-#, fuzzy
-#| msgid "Sales Returns"
 msgid "No Sales Returns Found"
-msgstr "مردودات المبيعات"
+msgstr "لم يتم العثور على مرتجعات مبيعات"
 
 #: .\templates\sales\sales_return_statement.html:191
 msgid "No sales returns found for the selected period"
-msgstr ""
+msgstr "لم يتم العثور على أي مرتجعات مبيعات للفترة المحددة."
 
 #: .\templates\sales\sales_statement.html:87
 msgid "Detailed view of all sales invoices with"
-msgstr ""
+msgstr "عرض تفصيلي لجميع فواتير المبيعات مع"
 
 #: .\templates\sales\sales_statement.html:87
-#, fuzzy
-#| msgid "Calculating..."
 msgid "cumulative"
-msgstr "حساب..."
+msgstr "تراكمي"
 
 #: .\templates\sales\sales_statement.html:190
-#, fuzzy
-#| msgid "No Sales Invoices Found"
 msgid "No Sales Invoices Found"
-msgstr "لم يتم العثور على فواتير مبيعات"
+msgstr "لم يتم العثور على فواتير المبيعات"
 
 #: .\templates\search\search.html:199
-#, fuzzy
-#| msgid "Search in accounts..."
 msgid "Search in all documents and data..."
-msgstr "البحث في الحسابات..."
+msgstr "البحث في جميع المستندات والبيانات..."
 
 #: .\templates\search\search.html:208
-#, fuzzy
-#| msgid "Search"
 msgid "Search Tips:"
-msgstr "بحث"
+msgstr "نصائح البحث:"
 
 #: .\templates\search\search.html:210
 msgid ""
 "You can search using invoice number, customer name, or any part of the data"
-msgstr ""
+msgstr "يمكنك البحث باستخدام رقم الفاتورة أو اسم العميل أو أي جزء من البيانات."
 
 #: .\templates\search\search.html:211
 msgid ""
 "Search includes all documents: invoices, receipts, entries, customers, "
 "products"
-msgstr ""
+msgstr "يشمل البحث جميع المستندات: الفواتير والإيصالات والقيود والعملاء والمنتجات."
 
 #: .\templates\search\search.html:212
 msgid "Enter at least two characters to start searching"
-msgstr ""
+msgstr "أدخل حرفين على الأقل لبدء البحث."
 
 #: .\templates\search\search.html:213
 msgid "Results are sorted by newest date first"
-msgstr ""
+msgstr "يتم ترتيب النتائج حسب أحدث تاريخ أولاً."
 
 #: .\templates\search\search.html:312
 msgid "Group"
-msgstr ""
+msgstr "مجموعة"
 
 #: .\templates\settings\company.html:32
 #: .\templates\settings\company_fixed.html:31
-#, fuzzy
-#| msgid "Last Name (English)"
 msgid "Company Name (English)"
 msgstr "الاسم الأخير (بالإنجليزية)"
 
 #: .\templates\settings\company.html:93
 #: .\templates\settings\company_fixed.html:92
 msgid "No logo uploaded"
-msgstr ""
+msgstr "لم يتم تحميل الشعار"
 
 #: .\templates\settings\company.html:99
 #: .\templates\settings\company_fixed.html:98
 msgid "Recommended size: 300x200 pixels"
-msgstr ""
+msgstr "الحجم الموصى به: 300 × 200 بكسل"
 
 #: .\templates\settings\company.html:109
 #: .\templates\settings\company_fixed.html:108
-#, fuzzy
-#| msgid "Financial Report"
 msgid "Financial Settings"
-msgstr "تقرير مالي"
+msgstr "الإعدادات المالية"
 
 #: .\templates\settings\company.html:134
 #: .\templates\settings\company_fixed.html:133
 msgid "Show Currency Symbol"
-msgstr ""
+msgstr "إظهار رمز العملة"
 
 #: .\templates\settings\company.html:137
 #: .\templates\settings\company_fixed.html:136
 msgid "Display currency symbols in financial reports and transactions"
-msgstr ""
+msgstr "إظهار رموز العملات في التقارير والمعاملات المالية."
 
 #: .\templates\settings\company.html:144
 #: .\templates\settings\company_fixed.html:204
 #: .\templates\settings\document_print_settings.html:463
 #: .\templates\settings\jofotara_settings.html:214
 #: .\templates\settings\partials\document_form.html:232
-#, fuzzy
-#| msgid "Company Settings"
 msgid "Save Settings"
-msgstr "إعدادات الشركة"
+msgstr "حفظ الإعدادات"
 
 #: .\templates\settings\company_fixed.html:12
 #: .\templates\settings\document_print_settings.html:989
-#, fuzzy
-#| msgid "Contact Information"
 msgid "Company Information"
-msgstr "معلومات الاتصال"
+msgstr "معلومات الشركة"
 
 #: .\templates\settings\company_fixed.html:15
 #: .\templates\settings\currency_list.html:21
@@ -24685,224 +24494,182 @@ msgid "Add New Sequence"
 msgstr "إضافة تسلسل جديد"
 
 #: .\templates\settings\document_sequences.html:113
-#, fuzzy
-#| msgid "Are you sure you want to delete the backup"
 msgid "Are you sure you want to delete the document sequence"
-msgstr "هل أنت متأكد من حذف النسخة الاحتياطية"
+msgstr "هل أنت متأكد من أنك تريد حذف تسلسل المستندات؟"
 
 #: .\templates\settings\index.html:21
 msgid "Manage company information and preferences"
-msgstr ""
+msgstr "إدارة معلومات الشركة وتفضيلاتها"
 
 #: .\templates\settings\index.html:23 .\templates\settings\index.html:36
 #: .\templates\settings\index.html:130 .\templates\settings\index.html:134
-#, fuzzy
-#| msgid "Confirm"
 msgid "Configure"
-msgstr "تأكيد"
+msgstr "إعداد"
 
 #: .\templates\settings\index.html:34
 msgid "Configure document numbering sequences"
-msgstr ""
+msgstr "إعداد تسلسلات ترقيم المستندات"
 
 #: .\templates\settings\index.html:79 .\templates\users\user_list.html:5
 #: .\templates\users\user_list.html:72
-#, fuzzy
-#| msgid "Asset Management"
 msgid "User Management"
-msgstr "إدارة الأصول"
+msgstr "إدارة المستخدمين"
 
 #: .\templates\settings\index.html:80
 msgid "Manage user accounts and permissions"
-msgstr ""
+msgstr "إدارة حسابات المستخدمين والأذونات"
 
 #: .\templates\settings\index.html:82
-#, fuzzy
-#| msgid "Manager"
 msgid "Manage Users"
-msgstr "المدير"
+msgstr "إدارة المستخدمين"
 
 #: .\templates\settings\index.html:92
-#, fuzzy
-#| msgid "System Notification"
 msgid "System Configuration"
-msgstr "إشعار النظام"
+msgstr "إعدادات النظام"
 
 #: .\templates\settings\index.html:93
 msgid "Advanced system settings and configuration"
-msgstr ""
+msgstr "الإعدادات المتقدمة للنظام والتكوين"
 
 #: .\templates\settings\index.html:95
 msgid "Admin Panel"
-msgstr ""
+msgstr "لوحة الإدارة"
 
 #: .\templates\settings\index.html:105 .\templates\settings\index.html:110
-#, fuzzy
-#| msgid "Backup & Restore System"
 msgid "Backup & Restore"
-msgstr "نظام النسخ الاحتياطي والاستعادة"
+msgstr "النسخ الاحتياطي والاستعادة"
 
 #: .\templates\settings\index.html:106
-#, fuzzy
-#| msgid "Backup & Restore System"
 msgid "Backup and restore system data"
-msgstr "نظام النسخ الاحتياطي والاستعادة"
+msgstr "النسخ الاحتياطي واستعادة بيانات النظام"
 
 #: .\templates\settings\index.html:114 .\templates\settings\index.html:134
-#, fuzzy
-#| msgid "Permissions"
 msgid "No Permission"
-msgstr "الصلاحيات"
+msgstr "لا يوجدالصلاحيات"
 
 #: .\templates\settings\index.html:125
-#, fuzzy
-#| msgid "Confirmation"
 msgid "Reports Configuration"
-msgstr "تأكيد"
+msgstr "إعدادات التقارير"
 
 #: .\templates\settings\index.html:126
 msgid "Configure reporting settings and templates"
-msgstr ""
+msgstr "إعدادات التقارير والقوالب"
 
 #: .\templates\settings\jofotara_settings.html:95
 msgid "Electronic Integration with Income and Sales Tax Department"
-msgstr ""
+msgstr "التكامل الإلكتروني مع إدارة ضرائب الدخل والمبيعات"
 
 #: .\templates\settings\jofotara_settings.html:96
 msgid "JoFotara System Settings"
-msgstr "إعدادات الشركة"
+msgstr "إعدادات نظام JoFotara"
 
 #: .\templates\settings\jofotara_settings.html:106
-#, fuzzy
-#| msgid "Information"
 msgid "API Information"
-msgstr "معلومات"
+msgstr "معلومات الـ API"
 
 #: .\templates\settings\jofotara_settings.html:109
 msgid ""
 "Configure the connection settings for the Jordanian Income and Sales Tax "
 "Department electronic invoicing system (JoFotara)."
-msgstr ""
+msgstr "قم بتكوين إعدادات الاتصال الخاصة بنظام الفوترة الإلكترونية لدائرة ضريبة الدخل والمبيعات الأردنية (JoFotara)."
 
 #: .\templates\settings\jofotara_settings.html:129
 msgid "The base URL for JoFotara API endpoints"
-msgstr ""
+msgstr "عنوان URL الأساسي لنقاط نهاية واجهة برمجة تطبيقات JoFotara"
 
 #: .\templates\settings\jofotara_settings.html:142
 msgid "أدخل معرف العميل"
 msgstr ""
 
 #: .\templates\settings\jofotara_settings.html:144
-#, fuzzy
-#| msgid "UUID returned from JoFotara API"
 msgid "Your registered Client ID from JoFotara"
-msgstr "المعرف المُعاد من واجهة JoFotara"
+msgstr "معرف العميل المسجل الخاص بك من JoFotara"
 
 #: .\templates\settings\jofotara_settings.html:159
-#, fuzzy
-#| msgid "إحصائيات المبيعات"
 msgid "أدخل سر العميل"
 msgstr "إحصائيات المبيعات"
 
 #: .\templates\settings\jofotara_settings.html:161
 msgid "Your Client Secret from JoFotara (keep secure)"
-msgstr ""
+msgstr "مفتاح العميل السري الخاص بك من JoFotara (احتفظ به بأمان)"
 
 #: .\templates\settings\jofotara_settings.html:177
-#, fuzzy
-#| msgid "Enable JoFotara Integration"
 msgid "Enable JoFotara Integration"
-msgstr "تمكين تكامل JoFotara"
+msgstr "تفعيل تكامل JoFotara"
 
 #: .\templates\settings\jofotara_settings.html:185
 msgid "Use Mock API for Testing"
-msgstr ""
+msgstr "استخدام API الوهمية للاختبار"
 
 #: .\templates\settings\jofotara_settings.html:196
 msgid "Mock API Mode"
-msgstr ""
+msgstr "وضع API الوهمي"
 
 #: .\templates\settings\jofotara_settings.html:199
 msgid "When enabled, the system will use mock responses for testing purposes:"
-msgstr ""
+msgstr "عند تفعيل هذه الميزة، سيستخدم النظام استجابات وهمية لأغراض الاختبار:"
 
 #: .\templates\settings\jofotara_settings.html:202
 msgid "Generates fake UUID and QR codes"
-msgstr ""
+msgstr "يقوم بإنشاء رموز UUID ورموز QR مزيفة."
 
 #: .\templates\settings\jofotara_settings.html:203
 msgid "Saves XML files locally in invoices/ folder"
-msgstr ""
+msgstr "يقوم بحفظ ملفات XML محلياً في مجلد الفواتير (invoices/)."
 
 #: .\templates\settings\jofotara_settings.html:204
-#, fuzzy
-#| msgid "Verification Link"
 msgid "Provides mock verification URLs"
-msgstr "رابط التحقق"
+msgstr "يوفر عناوين URL للتحقق الوهمي"
 
 #: .\templates\settings\jofotara_settings.html:220
 #: .\templates\settings\jofotara_settings.html:352
-#, fuzzy
-#| msgid "Terms and Conditions"
 msgid "Test Connection"
-msgstr "الشروط والأحكام"
+msgstr "اختبار الاتصال"
 
 #: .\templates\settings\jofotara_settings.html:238
-#, fuzzy
-#| msgid "Calculating..."
 msgid "Connection Test Results"
-msgstr "نتائج الحساب"
+msgstr "نتائج اختبار الاتصال"
 
 #: .\templates\settings\jofotara_settings.html:303
-#, fuzzy
-#| msgid "Sending..."
 msgid "Testing..."
-msgstr "جاري الإرسال..."
+msgstr "اختبار..."
 
 #: .\templates\settings\jofotara_settings.html:324
 msgid "Connection Successful!"
-msgstr ""
+msgstr "تم الاتصال بنجاح!"
 
 #: .\templates\settings\jofotara_settings.html:325
 msgid "API connection is working properly."
-msgstr ""
+msgstr "اتصال واجهة برمجة التطبيقات يعمل بشكل صحيح."
 
 #: .\templates\settings\jofotara_settings.html:332
-#, fuzzy
-#| msgid "Connection error occurred"
 msgid "Connection Failed"
 msgstr "حدث خطأ في الاتصال"
 
 #: .\templates\settings\jofotara_settings.html:333
-#, fuzzy
-#| msgid "Sent to JoFotara At"
 msgid "Unable to connect to JoFotara API."
-msgstr "أُرسل إلى JoFotara في"
+msgstr "تعذر الاتصال بواجهة برمجة تطبيقات JoFotara."
 
 #: .\templates\settings\jofotara_settings.html:343
 msgid "Network Error"
-msgstr ""
+msgstr "خطأ في الشبكة"
 
 #: .\templates\settings\jofotara_settings.html:344
 msgid "Failed to connect to the server. Please check your network connection."
-msgstr ""
+msgstr "فشل الاتصال بالخادم. يرجى التحقق من اتصالك بالشبكة."
 
 #: .\templates\settings\jofotara_settings.html:367
-#, fuzzy
-#| msgid "Please fill all required fields"
 msgid "Please fill in all required fields."
 msgstr "يرجى ملء جميع الحقول المطلوبة"
 
 #: .\templates\settings\partials\document_form.html:12
 #: .\templates\settings\print_design.html:370
-#, fuzzy
-#| msgid "Company Settings"
 msgid "Paper Settings"
-msgstr "إعدادات الشركة"
+msgstr "إعدادات الورق"
 
 #: .\templates\settings\partials\document_form.html:38
 msgid "Top Margin (mm)"
-msgstr ""
+msgstr "الهامش العلوي (مم)"
 
 #: .\templates\settings\partials\document_form.html:43
 msgid "Bottom Margin (mm)"
@@ -24910,131 +24677,107 @@ msgstr ""
 
 #: .\templates\settings\partials\document_form.html:48
 msgid "Right Margin (mm)"
-msgstr ""
+msgstr "الهامش السفلي (مم)"
 
 #: .\templates\settings\partials\document_form.html:53
 msgid "Left Margin (mm)"
-msgstr ""
+msgstr "الهامش الأيسر (مم)"
 
 #: .\templates\settings\partials\document_form.html:62
-#, fuzzy
-#| msgid "Company Settings"
 msgid "Logo Settings"
-msgstr "إعدادات الشركة"
+msgstr "إعدادات الشعار"
 
 #: .\templates\settings\partials\document_form.html:70
 msgid "Show Logo in Document"
-msgstr ""
+msgstr "إظهار الشعار في المستند"
 
 #: .\templates\settings\partials\document_form.html:78
-#, fuzzy
-#| msgid "Position"
 msgid "Logo Position"
-msgstr "الوظيفة"
+msgstr "موضع الشعار"
 
 #: .\templates\settings\partials\document_form.html:85
 msgid "Left"
-msgstr ""
+msgstr "يسار"
 
 #: .\templates\settings\partials\document_form.html:90
-#, fuzzy
-#| msgid "Enter"
 msgid "Center"
-msgstr "أدخل"
+msgstr "وسط"
 
 #: .\templates\settings\partials\document_form.html:95
 msgid "Right"
-msgstr ""
+msgstr "يمين"
 
 #: .\templates\settings\partials\document_form.html:100
 msgid "Logo Width (mm)"
-msgstr ""
+msgstr "عرض الشعار (مم)"
 
 #: .\templates\settings\partials\document_form.html:105
 msgid "Logo Height (mm)"
-msgstr ""
+msgstr "ارتفاع الشعار (مم)"
 
 #: .\templates\settings\partials\document_form.html:114
-#, fuzzy
-#| msgid "Company Settings"
 msgid "Header Settings"
-msgstr "إعدادات الشركة"
+msgstr "إعدادات الترويسة"
 
 #: .\templates\settings\partials\document_form.html:122
 msgid "Show Page Header"
-msgstr ""
+msgstr "إظهار رأس الصفحة"
 
 #: .\templates\settings\partials\document_form.html:130
 #: .\templates\settings\partials\document_form.html:165
 msgid "Left Content"
-msgstr ""
+msgstr "المحتوى الأيسر"
 
 #: .\templates\settings\partials\document_form.html:132
-#, fuzzy
-#| msgid "Company Name"
 msgid "Example: Company Name"
-msgstr "اسم الشركة"
+msgstr "مثال: اسم الشركة"
 
 #: .\templates\settings\partials\document_form.html:135
 #: .\templates\settings\partials\document_form.html:170
 msgid "Center Content"
-msgstr ""
+msgstr "مركز المحتوى"
 
 #: .\templates\settings\partials\document_form.html:137
-#, fuzzy
-#| msgid "Document Title"
 msgid "Example: Document Title"
-msgstr "عنوان المستند"
+msgstr "مثال: عنوان المستند"
 
 #: .\templates\settings\partials\document_form.html:140
 #: .\templates\settings\partials\document_form.html:175
 msgid "Right Content"
-msgstr ""
+msgstr "المحتوى الايمن"
 
 #: .\templates\settings\partials\document_form.html:142
 msgid "Example: Date and Time"
-msgstr ""
+msgstr "مثال: التاريخ والوقت"
 
 #: .\templates\settings\partials\document_form.html:149
-#, fuzzy
-#| msgid "Company Settings"
 msgid "Footer Settings"
-msgstr "إعدادات الشركة"
+msgstr "إعدادات التذييل"
 
 #: .\templates\settings\partials\document_form.html:157
 msgid "Show Page Footer"
-msgstr ""
+msgstr "إظهار تذييل الصفحة"
 
 #: .\templates\settings\partials\document_form.html:167
-#, fuzzy
-#| msgid "Return Number"
 msgid "Example: Page Number"
-msgstr "رقم المرتجع"
+msgstr "مثال: رقم الصفحة"
 
 #: .\templates\settings\partials\document_form.html:172
-#, fuzzy
-#| msgid "Creditor Information"
 msgid "Example: Additional Information"
-msgstr "معلومات الدائن"
+msgstr "مثال: معلومات إضافية"
 
 #: .\templates\settings\partials\document_form.html:177
-#, fuzzy
-#| msgid "Contact Information"
 msgid "Example: Contact Information"
-msgstr "معلومات الاتصال"
+msgstr "مثال: معلومات الاتصال"
 
 #: .\templates\settings\partials\document_form.html:184
 #: .\templates\users\user_edit.html:228
-#, fuzzy
-#| msgid "Additional Notes"
 msgid "Additional Settings"
-msgstr "ملاحظات إضافية"
+msgstr "الإعدادات الإضافية"
 
 #: .\templates\settings\partials\document_form.html:192
-#, fuzzy
-#| msgid "Contact Information"
 msgid "Show Company Information"
-msgstr "معلومات الاتصال"
+msgstr "عرض معلومات الشركة"
 
 #: .\templates\settings\partials\document_form.html:201
 #, fuzzy

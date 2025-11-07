@@ -86,11 +86,22 @@ class JournalService:
             if account:
                 return account
             
+            # التأكد من وجود الحساب الأب (النقد وما في حكمه)
+            parent_account, _ = Account.objects.get_or_create(
+                code='10',
+                defaults={
+                    'name': 'النقد وما في حكمه',
+                    'account_type': 'asset',
+                    'description': 'حساب رئيسي للنقد والأرصدة النقدية - حسب IFRS'
+                }
+            )
+            
             # إنشاء حساب النقد إذا لم يكن موجوداً
             account = Account.objects.create(
                 code='101',
                 name='النقد في الصندوق',
                 account_type='asset',
+                parent=parent_account,  # ✅ إضافة الحساب الأب - متوافق مع IFRS
                 description='حساب النقد في الصندوق الرئيسي'
             )
             return account
@@ -107,11 +118,22 @@ class JournalService:
             if account:
                 return account
             
+            # التأكد من وجود الحساب الأب (المصاريف التشغيلية)
+            parent_account, _ = Account.objects.get_or_create(
+                code='50',
+                defaults={
+                    'name': 'تكلفة المبيعات والمشتريات',
+                    'account_type': 'expense',
+                    'description': 'حساب رئيسي للمشتريات وتكلفة المبيعات - حسب IFRS'
+                }
+            )
+            
             # إنشاء حساب المشتريات إذا لم يكن موجوداً
             account = Account.objects.create(
                 code='501',
                 name='المشتريات',
                 account_type='expense',
+                parent=parent_account,  # ✅ إضافة الحساب الأب - متوافق مع IFRS
                 description='حساب المشتريات والتكاليف'
             )
             return account
@@ -534,33 +556,40 @@ class JournalService:
         
     @staticmethod
     def create_receipt_voucher_entry(receipt, user=None):
-        """إنشاء قيد سند القبض"""
+        """إنشاء قيد سند القبض - متوافق مع IFRS"""
         lines_data = []
         
         # حساب الصندوق أو البنك (مدين)
         if receipt.payment_type == 'cash':
-            cash_account = JournalService.get_cash_account()
-            lines_data.append({
-                'account_id': cash_account.id,
-                'debit': receipt.amount,
-                'credit': 0,
-                'description': f'قبض نقدي - سند رقم {receipt.receipt_number}'
-            })
+            # للنقد - استخدام الصندوق المحدد أو الصندوق العام
+            if hasattr(receipt, 'cashbox') and receipt.cashbox:
+                cash_account = JournalService.get_cashbox_account(receipt.cashbox)
+                lines_data.append({
+                    'account_id': cash_account.id,
+                    'debit': receipt.amount,
+                    'credit': 0,
+                    'description': f'قبض نقدي من {receipt.cashbox.name} - سند رقم {receipt.receipt_number}'
+                })
+            else:
+                cash_account = JournalService.get_cash_account()
+                lines_data.append({
+                    'account_id': cash_account.id,
+                    'debit': receipt.amount,
+                    'credit': 0,
+                    'description': f'قبض نقدي - سند رقم {receipt.receipt_number}'
+                })
         elif receipt.payment_type == 'bank_transfer':
             # للتحويل البنكي - استخدام الحساب البنكي المحدد
-            if receipt.bank_account:
-                bank_account = JournalService.get_or_create_bank_account_by_name(
-                    receipt.bank_account.name,
-                    receipt.bank_account.bank_name
-                )
+            if hasattr(receipt, 'bank_account') and receipt.bank_account:
+                bank_account = JournalService.get_or_create_bank_account(receipt.bank_account)
                 lines_data.append({
                     'account_id': bank_account.id,
                     'debit': receipt.amount,
                     'credit': 0,
-                    'description': f'تحويل بنكي رقم {receipt.bank_transfer_reference} - سند رقم {receipt.receipt_number}'
+                    'description': f'تحويل بنكي إلى {receipt.bank_account.name} - سند رقم {receipt.receipt_number}'
                 })
             else:
-                # في حالة عدم وجود حساب بنكي، استخدم حساب عام
+                # في حالة عدم وجود حساب بنكي، استخدم حساب نقدي عام
                 bank_account = JournalService.get_cash_account()
                 lines_data.append({
                     'account_id': bank_account.id,
@@ -570,12 +599,13 @@ class JournalService:
                 })
         else:  # check
             # للشيكات - استخدام حساب شيكات تحت التحصيل
-            checks_account = JournalService.get_or_create_checks_in_transit_account()
+            checks_account = JournalService.get_or_create_checks_receivable_account()
+            check_number = getattr(receipt, 'check_number', 'غير محدد')
             lines_data.append({
                 'account_id': checks_account.id,
                 'debit': receipt.amount,
                 'credit': 0,
-                'description': f'شيك رقم {receipt.check_number} - سند رقم {receipt.receipt_number}'
+                'description': f'شيك تحت التحصيل رقم {check_number} - سند رقم {receipt.receipt_number}'
             })
         
         # حساب العميل (دائن)
@@ -584,7 +614,7 @@ class JournalService:
             'account_id': customer_account.id,
             'debit': 0,
             'credit': receipt.amount,
-            'description': f'سند قبض رقم {receipt.receipt_number}'
+            'description': f'سند قبض من {receipt.customer.name} - سند رقم {receipt.receipt_number}'
         })
         
         return JournalService.create_journal_entry(
@@ -844,11 +874,22 @@ class JournalService:
     @staticmethod
     def get_sales_account():
         """الحصول على حساب المبيعات"""
+        # التأكد من وجود الحساب الأب (الإيرادات)
+        parent_account, _ = Account.objects.get_or_create(
+            code='40',
+            defaults={
+                'name': 'الإيرادات',
+                'account_type': 'revenue',
+                'description': 'حساب رئيسي للإيرادات - حسب IFRS'
+            }
+        )
+        
         account, created = Account.objects.get_or_create(
             code='4010',
             defaults={
                 'name': 'المبيعات',
-                'account_type': 'sales',
+                'account_type': 'revenue',  # ✅ تصحيح: المبيعات هي إيرادات حسب IFRS
+                'parent': parent_account,  # ✅ إضافة الحساب الأب - متوافق مع IFRS
                 'description': 'حساب المبيعات'
             }
         )
@@ -857,11 +898,22 @@ class JournalService:
     @staticmethod
     def get_sales_discount_account():
         """الحصول على حساب خصم المبيعات"""
+        # التأكد من وجود الحساب الأب (الخصومات والمسموحات)
+        parent_account, _ = Account.objects.get_or_create(
+            code='42',
+            defaults={
+                'name': 'خصومات ومسموحات المبيعات',
+                'account_type': 'expense',
+                'description': 'حساب رئيسي لخصومات ومسموحات المبيعات - حسب IFRS'
+            }
+        )
+        
         account, created = Account.objects.get_or_create(
             code='4020',
             defaults={
                 'name': 'خصم المبيعات',
                 'account_type': 'expense',
+                'parent': parent_account,  # ✅ إضافة الحساب الأب - متوافق مع IFRS
                 'description': 'حساب خصم المبيعات'
             }
         )
@@ -869,15 +921,37 @@ class JournalService:
     
     @staticmethod
     def get_cashbox_account(cashbox):
-        """الحصول على حساب الصندوق"""
+        """الحصول على حساب الصندوق - متوافق مع IFRS"""
+        if not cashbox:
+            return JournalService.get_cash_account()
+        
+        # التأكد من وجود الحساب الأب (النقد في الصناديق) - رمز 1010
+        parent_account, _ = Account.objects.get_or_create(
+            code='1010',
+            defaults={
+                'name': 'الصندوق',
+                'account_type': 'asset',
+                'description': 'حساب رئيسي للنقد في الصناديق - حسب IFRS'
+            }
+        )
+        
+        # استخدام نفس نمط الرمز الأصلي: 101{id:03d}
+        code = f'101{cashbox.id:03d}'
         account, created = Account.objects.get_or_create(
-            code=f'101{cashbox.id:03d}',
+            code=code,
             defaults={
                 'name': f'صندوق - {cashbox.name}',
                 'account_type': 'asset',
+                'parent': parent_account,  # ✅ إضافة الحساب الأب - متوافق مع IFRS
                 'description': f'حساب الصندوق {cashbox.name}'
             }
         )
+        
+        # تحديث parent إذا لم يكن موجوداً (للحسابات القديمة)
+        if not account.parent and not created:
+            account.parent = parent_account
+            account.save(update_fields=['parent'])
+        
         return account
     
     @staticmethod
@@ -920,11 +994,22 @@ class JournalService:
     @staticmethod
     def get_or_create_supplier_account(supplier):
         """الحصول على حساب المورد أو إنشاؤه"""
+        # التأكد من وجود الحساب الأب (حسابات الموردين)
+        parent_account, _ = Account.objects.get_or_create(
+            code='210',
+            defaults={
+                'name': 'حسابات الموردين',
+                'account_type': 'liability',
+                'description': 'حساب رئيسي لحسابات الموردين - حسب IFRS'
+            }
+        )
+        
         account, created = Account.objects.get_or_create(
             code=f'210{supplier.sequence_number:04d}',
             defaults={
                 'name': supplier.name,
                 'account_type': 'liability',
+                'parent': parent_account,  # ✅ إضافة الحساب الأب - متوافق مع IFRS
                 'description': f'حساب المورد {supplier.name}'
             }
         )
@@ -933,11 +1018,22 @@ class JournalService:
     @staticmethod
     def get_or_create_bank_account(bank_account):
         """الحصول على حساب بنك أو إنشاؤه"""
+        # التأكد من وجود الحساب الأب (الحسابات البنكية)
+        parent_account, _ = Account.objects.get_or_create(
+            code='102',
+            defaults={
+                'name': 'الحسابات البنكية',
+                'account_type': 'asset',
+                'description': 'حساب رئيسي للحسابات البنكية - حسب IFRS'
+            }
+        )
+        
         account, created = Account.objects.get_or_create(
             code=f'102{str(bank_account.id).zfill(6)}',
             defaults={
                 'name': f'البنك - {bank_account.name}',
                 'account_type': 'asset',
+                'parent': parent_account,  # ✅ إضافة الحساب الأب - متوافق مع IFRS
                 'description': f'حساب بنك {bank_account.name}'
             }
         )
@@ -1066,11 +1162,22 @@ class JournalService:
             if account:
                 return account
             
+            # التأكد من وجود الحساب الأب (الذمم المدينة الأخرى)
+            parent_account, _ = Account.objects.get_or_create(
+                code='14',
+                defaults={
+                    'name': 'ذمم مدينة أخرى',
+                    'account_type': 'asset',
+                    'description': 'حساب رئيسي للذمم المدينة الأخرى - حسب IFRS'
+                }
+            )
+            
             # إنشاء حساب الضريبة المدخلة إذا لم يكن موجوداً
             account = Account.objects.create(
                 code='141',
                 name='ضريبة القيمة المضافة مدخلة',
                 account_type='asset',
+                parent=parent_account,  # ✅ إضافة الحساب الأب - متوافق مع IFRS
                 description='حساب ضريبة القيمة المضافة المدخلة من الموردين'
             )
             return account
@@ -1081,11 +1188,22 @@ class JournalService:
     @staticmethod
     def get_inventory_account():
         """الحصول على حساب المخزون العام"""
+        # التأكد من وجود الحساب الأب (الأصول المتداولة - المخزون)
+        parent_account, _ = Account.objects.get_or_create(
+            code='12',
+            defaults={
+                'name': 'المخزون',
+                'account_type': 'asset',
+                'description': 'حساب رئيسي للمخزون - حسب IFRS'
+            }
+        )
+        
         account, created = Account.objects.get_or_create(
             code='1020',
             defaults={
                 'name': 'المخزون العام',
                 'account_type': 'asset',
+                'parent': parent_account,  # ✅ إضافة الحساب الأب - متوافق مع IFRS
                 'description': 'حساب المخزون السلعي العام'
             }
         )
@@ -1112,11 +1230,22 @@ class JournalService:
     @staticmethod
     def get_cogs_account():
         """الحصول على حساب تكلفة البضاعة المباعة"""
+        # التأكد من وجود الحساب الأب (تكلفة المبيعات)
+        parent_account, _ = Account.objects.get_or_create(
+            code='50',
+            defaults={
+                'name': 'تكلفة المبيعات والمشتريات',
+                'account_type': 'expense',
+                'description': 'حساب رئيسي للمشتريات وتكلفة المبيعات - حسب IFRS'
+            }
+        )
+        
         account, created = Account.objects.get_or_create(
             code='5001',
             defaults={
                 'name': 'تكلفة البضاعة المباعة',
                 'account_type': 'expense',
+                'parent': parent_account,  # ✅ إضافة الحساب الأب - متوافق مع IFRS
                 'description': 'تكلفة البضاعة المباعة (COGS)'
             }
         )
@@ -1125,12 +1254,23 @@ class JournalService:
     @staticmethod
     def get_or_create_customer_account(customer):
         """الحصول على حساب العميل أو إنشاؤه"""
+        # التأكد من وجود الحساب الأب (حسابات العملاء)
+        parent_account, _ = Account.objects.get_or_create(
+            code='1301',
+            defaults={
+                'name': 'حسابات العملاء',
+                'account_type': 'asset',
+                'description': 'حساب رئيسي لحسابات العملاء - حسب IFRS'
+            }
+        )
+        
         code = f"1301{customer.id:04d}"
         account, created = Account.objects.get_or_create(
             code=code,
             defaults={
                 'name': f'العميل - {customer.name}',
                 'account_type': 'asset',
+                'parent': parent_account,  # ✅ إضافة الحساب الأب - متوافق مع IFRS
                 'description': f'حساب العميل {customer.name}'
             }
         )
@@ -1139,12 +1279,23 @@ class JournalService:
     @staticmethod
     def get_or_create_supplier_account(supplier):
         """الحصول على حساب المورد أو إنشاؤه"""
+        # التأكد من وجود الحساب الأب (حسابات الموردين)
+        parent_account, _ = Account.objects.get_or_create(
+            code='2101',
+            defaults={
+                'name': 'حسابات الموردين',
+                'account_type': 'liability',
+                'description': 'حساب رئيسي لحسابات الموردين - حسب IFRS'
+            }
+        )
+        
         code = f"2101{supplier.id:04d}"
         account, created = Account.objects.get_or_create(
             code=code,
             defaults={
                 'name': f'المورد - {supplier.name}',
                 'account_type': 'liability',
+                'parent': parent_account,  # ✅ إضافة الحساب الأب - متوافق مع IFRS
                 'description': f'حساب المورد {supplier.name}'
             }
         )
@@ -1188,13 +1339,48 @@ class JournalService:
     @staticmethod
     def get_or_create_expense_account(expense_type):
         """الحصول على حساب المصروف أو إنشاؤه"""
+        # التأكد من وجود الحساب الأب (المصاريف العمومية والإدارية)
+        parent_account, _ = Account.objects.get_or_create(
+            code='60',
+            defaults={
+                'name': 'المصاريف العمومية والإدارية',
+                'account_type': 'expense',
+                'description': 'حساب رئيسي للمصاريف العمومية والإدارية - حسب IFRS'
+            }
+        )
+        
         code = "6010"  # رمز افتراضي للمصاريف
         account, created = Account.objects.get_or_create(
             code=code,
             defaults={
                 'name': 'المصاريف العامة',
                 'account_type': 'expense',
+                'parent': parent_account,  # ✅ إضافة الحساب الأب - متوافق مع IFRS
                 'description': 'حساب المصاريف العامة'
+            }
+        )
+        return account
+    
+    @staticmethod
+    def get_or_create_checks_receivable_account():
+        """الحصول على حساب الشيكات تحت التحصيل - متوافق مع IFRS"""
+        # التأكد من وجود الحساب الأب (الأصول المتداولة الأخرى)
+        parent_account, _ = Account.objects.get_or_create(
+            code='15',
+            defaults={
+                'name': 'أصول متداولة أخرى',
+                'account_type': 'asset',
+                'description': 'حساب رئيسي للأصول المتداولة الأخرى - حسب IFRS'
+            }
+        )
+        
+        account, created = Account.objects.get_or_create(
+            code='1501',
+            defaults={
+                'name': 'شيكات تحت التحصيل',
+                'account_type': 'asset',
+                'parent': parent_account,  # ✅ إضافة الحساب الأب - متوافق مع IFRS
+                'description': 'حساب الشيكات المستلمة من العملاء وتحت التحصيل'
             }
         )
         return account

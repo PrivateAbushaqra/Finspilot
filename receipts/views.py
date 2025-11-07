@@ -324,8 +324,8 @@ def receipt_add(request):
                     receipt.check_status = 'pending'
                     receipt.save()
                 
-                # إنشاء القيد المحاسبي
-                create_receipt_journal_entry(receipt, request.user)
+                # القيد المحاسبي يتم إنشاؤه تلقائياً بواسطة الـ signal في journal/signals.py
+                # create_receipt_journal_entry(receipt, request.user)
                 
                 # تسجيل النشاط في سجل التدقيق
                 from core.models import AuditLog
