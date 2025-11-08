@@ -267,8 +267,11 @@ class JournalService:
         
         # تحديد الحساب المدين حسب نوع الدفع
         if invoice.payment_type == 'cash':
-            # البيع النقدي: حساب النقد/الصندوق (مدين)
-            cash_account = JournalService.get_cash_account()
+            # البيع النقدي: حساب الصندوق المحدد (مدين)
+            if invoice.cashbox:
+                cash_account = JournalService.get_cashbox_account(invoice.cashbox)
+            else:
+                cash_account = JournalService.get_cash_account()
             lines_data.append({
                 'account_id': cash_account.id,
                 'debit': invoice.total_amount,
@@ -362,8 +365,11 @@ class JournalService:
         
         # تحديد الحساب المدين حسب نوع الدفع
         if invoice.payment_type == 'cash':
-            # البيع النقدي: حساب النقد/الصندوق (مدين)
-            cash_account = JournalService.get_cash_account()
+            # البيع النقدي: حساب الصندوق المحدد (مدين)
+            if invoice.cashbox:
+                cash_account = JournalService.get_cashbox_account(invoice.cashbox)
+            else:
+                cash_account = JournalService.get_cash_account()
             lines_data.append({
                 'account_id': cash_account.id,
                 'debit': invoice.total_amount,
@@ -1528,8 +1534,8 @@ class JournalService:
             # إذا كانت الفاتورة نقدية أو بشيك أو تحويل
             if invoice.payment_type == 'cash':
                 if invoice.payment_method == 'cash' and invoice.cashbox:
-                    # حساب الصندوق (دائن - صرف من الصندوق)
-                    cash_account = JournalService.get_cash_account()
+                    # حساب الصندوق المحدد (دائن - صرف من الصندوق)
+                    cash_account = JournalService.get_cashbox_account(invoice.cashbox)
                     lines_data.append({
                         'account_id': cash_account.id,
                         'debit': 0,

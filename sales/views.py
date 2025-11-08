@@ -940,8 +940,17 @@ def sales_invoice_create(request):
                                     product = Product.objects.get(id=product_id)
                                     # parse quantity/price/tax robustly to accept '1.5' or '1,5' etc.
                                     quantity = parse_decimal_input(quantities[i], name='quantity', default=Decimal('0'))
-                                    unit_price = parse_decimal_input(prices[i], name='price', default=Decimal('0'))
+                                    unit_price_input = parse_decimal_input(prices[i], name='price', default=Decimal('0'))
                                     tax_rate = product.tax_rate or Decimal('0')
+                                    
+                                    # ✅ إذا كانت الضريبة شاملة والسعر المُدخل يحتوي على ضريبة، نستخرج السعر الأساسي
+                                    if inclusive_tax_flag and tax_rate > 0:
+                                        # السعر المُدخل شامل الضريبة، نحوله إلى سعر بدون ضريبة
+                                        # السعر الأساسي = السعر المُدخل ÷ (1 + نسبة الضريبة)
+                                        unit_price = unit_price_input / (Decimal('1') + (tax_rate / Decimal('100')))
+                                    else:
+                                        # السعر المُدخل لا يحتوي على ضريبة (الحالة العادية)
+                                        unit_price = unit_price_input
 
                                     # Safeguard: if submitted unit_price differs from product.sale_price
                                     # and appears to be a cost/last-purchase/zero value, prefer product.sale_price

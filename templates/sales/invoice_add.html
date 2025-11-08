@@ -439,7 +439,14 @@
                                 <th width="31%">{% trans "Product" %}</th>
                                 <th width="8%">{% trans "Available Quantity" %}</th>
                                 <th width="8%">{% trans "Quantity" %}</th>
-                                <th width="8%">{% trans "Price" %}</th>
+                                <th width="8%">
+                                    {% trans "Price" %}
+                                    <i class="fas fa-info-circle ms-1" 
+                                       data-bs-toggle="tooltip" 
+                                       data-bs-placement="top" 
+                                       title="{% trans 'When inclusive tax is enabled: Enter the price INCLUDING tax. The system will automatically calculate the base price. When not enabled: Enter the base price WITHOUT tax.' %}"
+                                       style="cursor: help; font-size: 0.85em;"></i>
+                                </th>
                                 <th width="10%">{% trans "Tax %" %}</th>
                                 <th width="8%">{% trans "Tax Amount" %}</th>
                                 <th width="8%">{% trans "Total" %}</th>
@@ -550,8 +557,13 @@
                                 {% if not can_toggle_invoice_tax %} disabled {% endif %}>
                             <label class="form-check-label" for="id_inclusive_tax">
                                 {% trans "Inclusive Tax" %}
+                                <i class="fas fa-info-circle ms-1" 
+                                   data-bs-toggle="tooltip" 
+                                   data-bs-placement="top" 
+                                   title="{% trans 'When checked: Enter prices WITH tax included, system will calculate base price automatically. When unchecked: Enter base prices WITHOUT tax.' %}"
+                                   style="cursor: help; font-size: 0.85em;"></i>
                             </label>
-                            <small class="d-block text-muted">{% trans "When unchecked by permitted users, totals will be calculated without tax" %}</small>
+                            <small class="d-block text-muted">{% trans "When checked: Prices entered include tax. System extracts base price automatically" %}</small>
                         </div>
                         <div class="summary-details">
                             <div class="d-flex justify-content-between mb-2">
@@ -1311,35 +1323,59 @@ function attachRowEventListeners(row) {
 
 function calculateRowTotal(row) {
     const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
-    const price = parseFloat(row.querySelector('.price-input').value) || 0;
+    const priceInput = parseFloat(row.querySelector('.price-input').value) || 0;
     const taxRate = parseFloat(row.querySelector('.tax-rate-input').value) || 0;
     
     // {% trans "Check inclusive tax status" %}
     const isInclusiveTax = document.getElementById('id_inclusive_tax').checked;
     
-    let taxAmount, total;
+    let taxAmount, total, actualUnitPrice;
     
-    if (isInclusiveTax) {
-        // {% trans "If tax is inclusive: Total = (Quantity × Price) + Tax" %}
-        // {% trans "Base total = Quantity × Price" %}
-        const baseTotal = quantity * price;
-        // {% trans "Tax = Base total × Tax rate ÷ 100" %}
+    if (isInclusiveTax && taxRate > 0) {
+        // {% trans "If tax is inclusive: User enters price WITH tax, we need to extract base price" %}
+        // {% trans "Entered price includes tax, so: Base Price = Entered Price ÷ (1 + Tax Rate)" %}
+        actualUnitPrice = priceInput / (1 + (taxRate / 100));
+        
+        // {% trans "Calculate base total (quantity × base price)" %}
+        const baseTotal = quantity * actualUnitPrice;
+        
+        // {% trans "Tax amount = Base total × Tax rate" %}
         taxAmount = baseTotal * (taxRate / 100);
-        // {% trans "Total = Base total + Tax" %}
-        total = baseTotal + taxAmount;
-    } else {
-        // {% trans "If tax is not inclusive: No tax" %}
+        
+        // {% trans "Total = quantity × entered price (price WITH tax)" %}
+        total = quantity * priceInput;
+    } else if (isInclusiveTax && taxRate === 0) {
+        // {% trans "If tax is inclusive but rate is 0, price remains as entered" %}
+        actualUnitPrice = priceInput;
         taxAmount = 0;
-        total = quantity * price;
+        total = quantity * priceInput;
+    } else {
+        // {% trans "If tax is not inclusive: No tax, price remains as entered" %}
+        actualUnitPrice = priceInput;
+        taxAmount = 0;
+        total = quantity * priceInput;
     }
     
     // {% trans "Display results" %}
     row.querySelector('.tax-amount-input').value = formatCurrency(taxAmount);
     row.querySelector('.total-input').value = formatCurrency(total);
     
+    // {% trans "Store the actual unit price (base price without tax) for backend processing" %}
+    if (!row.querySelector('.actual-unit-price-hidden')) {
+        const hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.className = 'actual-unit-price-hidden';
+        row.appendChild(hiddenInput);
+    }
+    row.querySelector('.actual-unit-price-hidden').value = actualUnitPrice;
+    
     // {% trans "Update hidden fields" %}
-    row.querySelector('.tax-rate-hidden-input').value = taxRate;
-    row.querySelector('.tax-amount-hidden-input').value = formatCurrency(taxAmount);
+    if (row.querySelector('.tax-rate-hidden-input')) {
+        row.querySelector('.tax-rate-hidden-input').value = taxRate;
+    }
+    if (row.querySelector('.tax-amount-hidden-input')) {
+        row.querySelector('.tax-amount-hidden-input').value = formatCurrency(taxAmount);
+    }
 }
 
 function calculateGrandTotal() {
@@ -1352,23 +1388,24 @@ function calculateGrandTotal() {
     // {% trans "Sum totals from all rows" %}
     document.querySelectorAll('#productsTableBody tr').forEach(row => {
         const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
-        const price = parseFloat(row.querySelector('.price-input').value) || 0;
+        const priceInput = parseFloat(row.querySelector('.price-input').value) || 0;
         const taxRate = parseFloat(row.querySelector('.tax-rate-input').value) || 0;
         
-        if (quantity > 0 && price > 0) {
-            if (isInclusiveTax) {
-                // {% trans "If tax is inclusive" %}
-                const baseTotal = quantity * price;
+        if (quantity > 0 && priceInput > 0) {
+            if (isInclusiveTax && taxRate > 0) {
+                // {% trans "If tax is inclusive: Extract base price from entered price" %}
+                const actualUnitPrice = priceInput / (1 + (taxRate / 100));
+                const baseTotal = quantity * actualUnitPrice;
                 const taxAmount = baseTotal * (taxRate / 100);
                 
                 subtotal += baseTotal;
                 totalTax += taxAmount;
             } else {
-                // {% trans "If tax is not inclusive: No tax" %}
-                const rowSubtotal = quantity * price;
+                // {% trans "If tax is not inclusive or rate is 0: No tax" %}
+                const rowSubtotal = quantity * priceInput;
                 
                 subtotal += rowSubtotal;
-                totalTax += 0; // {% trans "No tax in this case" %}
+                totalTax += 0;
             }
         }
     });
@@ -2739,6 +2776,12 @@ document.addEventListener('DOMContentLoaded', function() {
         attachRowEventListeners(row);
     });
     {% endif %}
+    
+    // ✅ تفعيل Bootstrap Tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
 });
 </script>
 
