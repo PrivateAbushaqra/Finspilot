@@ -29,6 +29,17 @@ class JournalService:
         Returns:
             JournalEntry: القيد المحاسبي المنشأ
         """
+        # التحقق من عدم وجود قيد مسبق لنفس reference_type و reference_id
+        if reference_type and reference_id:
+            existing_entry = JournalEntry.objects.filter(
+                reference_type=reference_type,
+                reference_id=reference_id
+            ).first()
+            
+            if existing_entry:
+                print(f"⚠️ قيد محاسبي موجود بالفعل للعملية {reference_type} رقم {reference_id}: {existing_entry.entry_number}")
+                return existing_entry
+        
         with transaction.atomic():
             # حساب إجمالي المبلغ
             total_debit = sum(Decimal(str(line.get('debit', 0))) for line in lines_data)

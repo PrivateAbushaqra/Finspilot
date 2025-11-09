@@ -127,13 +127,20 @@ def create_bank_transaction_journal_entry(sender, instance, created, **kwargs):
             print(f"⚠ تم العثور على قيد محاسبي موجود بالفعل للمعاملة البنكية {instance.id}، تم تخطي الإنشاء")
             return
 
-        # تحقق إضافي: إذا كانت المعاملة مرتبطة بتحويل بنكي، لا تنشئ قيد
-        # لأن التحويل البنكي ينشئ قيده الخاص
+        # تحقق إضافي: إذا كانت المعاملة مرتبطة بتحويل بنكي أو صندوق، لا تنشئ قيد
+        # لأن التحويل ينشئ قيده الخاص
         if instance.reference_number:
             from .models import BankTransfer
+            from cashboxes.models import CashboxTransfer
+            
             # تحقق إذا كان reference_number هو رقم تحويل بنكي
             if BankTransfer.objects.filter(transfer_number=instance.reference_number).exists():
                 print(f"DEBUG: تخطي إنشاء القيد للمعاملة البنكية {instance.reference_number} لأنها جزء من تحويل بنكي")
+                return
+            
+            # تحقق إذا كان reference_number هو رقم تحويل صندوق-بنك
+            if CashboxTransfer.objects.filter(transfer_number=instance.reference_number).exists():
+                print(f"DEBUG: تخطي إنشاء القيد للمعاملة البنكية {instance.reference_number} لأنها جزء من تحويل صندوق-بنك")
                 return
 
         try:

@@ -178,14 +178,49 @@ def create_cashbox_transfer_transactions(sender, instance, created, **kwargs):
                 
                 print(f"✓ تم إنشاء معاملة سحب من الصندوق للتحويل {instance.transfer_number}")
                 
+                # إنشاء معاملة إيداع في البنك
+                from banks.models import BankTransaction
+                bank_transaction = BankTransaction(
+                    bank=instance.to_bank,
+                    transaction_type='deposit',
+                    amount=instance.amount * instance.exchange_rate,
+                    description=f'تحويل من صندوق {instance.from_cashbox.name} - رقم التحويل: {instance.transfer_number}',
+                    reference_number=instance.transfer_number,
+                    date=instance.date,
+                    created_by=instance.created_by
+                )
+                # تعيين علم لتجنب إنشاء قيد تلقائي من signal (القيد سيُنشأ من JournalService)
+                bank_transaction._skip_journal = True
+                bank_transaction.save()
+                
+                print(f"✓ تم إنشاء معاملة إيداع في البنك للتحويل {instance.transfer_number}")
+                
             elif instance.transfer_type == 'bank_to_cashbox':
                 # تحويل من بنك إلى صندوق
+                # إنشاء معاملة سحب من البنك
+                from banks.models import BankTransaction
+                total_amount = instance.amount + instance.fees
+                bank_transaction = BankTransaction(
+                    bank=instance.from_bank,
+                    transaction_type='withdrawal',
+                    amount=total_amount,
+                    description=f'تحويل إلى صندوق {instance.to_cashbox.name} - رقم التحويل: {instance.transfer_number}',
+                    reference_number=instance.transfer_number,
+                    date=instance.date,
+                    created_by=instance.created_by
+                )
+                # تعيين علم لتجنب إنشاء قيد تلقائي من signal (القيد سيُنشأ من JournalService)
+                bank_transaction._skip_journal = True
+                bank_transaction.save()
+                
+                print(f"✓ تم إنشاء معاملة سحب من البنك للتحويل {instance.transfer_number}")
+                
                 # إنشاء معاملة إيداع في الصندوق
                 CashboxTransaction.objects.create(
                     cashbox=instance.to_cashbox,
                     transaction_type='deposit',
                     date=instance.date,
-                    amount=instance.amount,  # موجب لأنه إيداع
+                    amount=instance.amount * instance.exchange_rate,  # موجب لأنه إيداع
                     description=f'إيداع من {instance.from_bank.name} - رقم التحويل: {instance.transfer_number}',
                     related_transfer=instance,
                     reference_type='transfer',

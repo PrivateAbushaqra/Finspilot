@@ -1101,39 +1101,10 @@ class BankCashboxTransferCreateView(LoginRequiredMixin, View):
                         created_by=request.user
                     )
                     
-                    # إضافة حركة البنك (بدون تعديل الرصيد مباشرة)
-                    bank_transaction = BankTransaction(
-                        bank=bank,
-                        transaction_type='withdrawal',
-                        amount=total_amount,
-                        description=f'تحويل إلى صندوق {cashbox.name} - شيك: {check_number}',
-                        reference_number=transfer_number,
-                        date=date,
-                        created_by=request.user
-                    )
-                    # تعيين علم لتجنب إنشاء قيد تلقائي من signal
-                    bank_transaction._skip_journal = True
-                    bank_transaction.save()
-                    
-                    # مزامنة رصيد البنك من المعاملات
+                    # Signal سيتولى إنشاء BankTransaction و CashboxTransaction تلقائياً
+                    # مزامنة الأرصدة بعد Signal
                     bank.sync_balance()
-                    
-                    # إضافة حركة الصندوق
-                    CashboxTransaction.objects.create(
-                        cashbox=cashbox,
-                        transaction_type='transfer_in',
-                        date=date,
-                        amount=amount * exchange_rate,
-                        description=f'تحويل من بنك {bank.name} - شيك: {check_number}',
-                        related_transfer=transfer,
-                        reference_type='transfer',
-                        reference_id=transfer.id,
-                        created_by=request.user
-                    )
-                    
-                    # تحديث رصيد الصندوق (يمكن الإبقاء عليه لأن الصناديق لا تعتمد على نظام المعاملات)
-                    cashbox.balance += (amount * exchange_rate)
-                    cashbox.save()
+                    cashbox.sync_balance()
                     
                 else:  # cashbox_to_bank
                     # إنشاء تحويل من الصندوق إلى البنك
@@ -1150,40 +1121,10 @@ class BankCashboxTransferCreateView(LoginRequiredMixin, View):
                         created_by=request.user
                     )
                     
-                    # إضافة حركة الصندوق
-                    CashboxTransaction.objects.create(
-                        cashbox=cashbox,
-                        transaction_type='transfer_out',
-                        date=date,
-                        amount=-total_amount,
-                        description=f'تحويل إلى بنك {bank.name} - شيك: {check_number}',
-                        related_transfer=transfer,
-                        reference_type='transfer',
-                        reference_id=transfer.id,
-                        created_by=request.user
-                    )
-                    
-                    # إضافة حركة البنك
-                    bank_transaction = BankTransaction(
-                        bank=bank,
-                        transaction_type='deposit',
-                        amount=amount * exchange_rate,
-                        description=f'تحويل من صندوق {cashbox.name} - شيك: {check_number}',
-                        reference_number=transfer_number,
-                        date=date,
-                        created_by=request.user
-                    )
-                    # تعيين علم لتجنب إنشاء قيد تلقائي من signal
-                    bank_transaction._skip_journal = True
-                    bank_transaction.save()
-                    
-                    # تحديث الأرصدة من خلال حساب المعاملات
-                    # تحديث رصيد الصندوق بالطريقة الصحيحة (سيتم تطبيق هذا لاحقاً عند إصلاح الصناديق)
-                    cashbox.balance -= total_amount
-                    cashbox.save()
-                    
-                    # تحديث رصيد البنك بناءً على المعاملات الفعلية
+                    # Signal سيتولى إنشاء CashboxTransaction و BankTransaction تلقائياً
+                    # مزامنة الأرصدة بعد Signal
                     bank.sync_balance()
+                    cashbox.sync_balance()
                 
                 # إنشاء قيد محاسبي للتحويل بين البنك والصندوق
                 try:
