@@ -293,7 +293,7 @@
                         <i class="mdi mdi-alert"></i>
                         {% trans "Warning: Delete الVoucher سيؤدي إلى تعطيله نهائياً وعكس تأثيره على الحسابات. هذا الإجراء لا يمكن التراجع عنه." %}
                     </div>
-                    <p>{% trans "هل أنت متأكد من {% trans "Delete" %} {% trans "Voucher" %} الصرف رقم" %} <strong>{{ voucher.voucher_number }}</strong>؟</p>
+                    <p>{% blocktrans with voucher_number=voucher.voucher_number %}هل أنت متأكد من حذف Voucher الصرف رقم {{ voucher_number }}؟{% endblocktrans %}</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
