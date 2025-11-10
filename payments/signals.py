@@ -261,3 +261,38 @@ def create_account_transaction_on_payment(sender, instance, created, **kwargs):
         except Exception as e:
             print(f"خطأ في إنشاء حركة حساب المورد: {e}")
 
+
+@receiver(post_save, sender=PaymentVoucher)
+def create_journal_entry_on_payment(sender, instance, created, **kwargs):
+    """
+    إنشاء قيد محاسبي تلقائياً عند إنشاء سند صرف
+    Create journal entry automatically when payment voucher is created
+    
+    IFRS Compliance:
+    - IAS 1: Presentation of Financial Statements
+    - IAS 7: Statement of Cash Flows
+    - IFRS 7: Financial Instruments: Disclosures
+    """
+    # تطبيق فقط عند الإنشاء الجديد
+    if created:
+        try:
+            from journal.models import JournalEntry
+            
+            # التحقق من عدم وجود قيد مسبقاً
+            existing = JournalEntry.objects.filter(
+                reference_type='payment_voucher',
+                reference_id=instance.id
+            ).exists()
+            
+            if not existing:
+                from journal.services import JournalService
+                
+                # إنشاء القيد المحاسبي
+                JournalService.create_payment_voucher_entry(instance, instance.created_by)
+                print(f"✓ تم إنشاء قيد محاسبي لسند الصرف {instance.voucher_number}")
+        except Exception as e:
+            print(f"خطأ في إنشاء القيد المحاسبي: {e}")
+            import traceback
+            traceback.print_exc()
+
+

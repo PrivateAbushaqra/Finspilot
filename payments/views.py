@@ -191,14 +191,12 @@ def payment_voucher_create(request):
                     voucher.created_by = request.user
                     voucher.save()
                     
-                    # Create cash box or bank transaction
-                    create_payment_transaction(voucher)
-                    
-                    # Create account transaction for supplier
-                    create_payment_account_transaction(voucher, request.user)
-                    
-                    # Create journal entry
-                    create_payment_journal_entry(voucher, request.user)
+                    # جميع الحركات المالية والقيود تتم تلقائياً عبر signals:
+                    # - حركة الصندوق/البنك (cashbox/bank transaction)
+                    # - حركة حساب المورد (account transaction)  
+                    # - القيد المحاسبي (journal entry)
+                    # All financial transactions and journal entries are created automatically via signals
+
                     
                     # تسجيل النشاط في سجل التدقيق
                     from core.models import AuditLog
@@ -237,11 +235,29 @@ def payment_voucher_detail(request, pk):
         from django.core.exceptions import PermissionDenied
         messages.error(request, _('ليس لديك صلاحية عرض تفاصيل سندات الصرف'))
         raise PermissionDenied(_('ليس لديك صلاحية عرض تفاصيل سندات الصرف'))
+    
     voucher = get_object_or_404(PaymentVoucher, pk=pk)
     currency_symbol = get_currency_symbol()
+    
+    # الحصول على القيود المحاسبية المرتبطة بالسند
+    from journal.models import JournalEntry
+    journal_entries = JournalEntry.objects.filter(
+        reference_type='payment_voucher',
+        reference_id=voucher.id
+    ).prefetch_related('lines__account')
+    
+    # الحصول على حركات الصندوق المرتبطة بالسند
+    from cashboxes.models import CashboxTransaction
+    cashbox_transactions = CashboxTransaction.objects.filter(
+        reference_type__in=['payment', 'payment_reversal'],
+        reference_id=voucher.id
+    ).select_related('cashbox')
+    
     context = {
         'voucher': voucher,
         'currency_symbol': currency_symbol,
+        'journal_entries': journal_entries,
+        'cashbox_transactions': cashbox_transactions,
     }
     return render(request, 'payments/voucher_detail.html', context)
 

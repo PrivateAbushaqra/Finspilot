@@ -6512,6 +6512,10 @@ msgstr ""
 msgid "Enter voucher number manually"
 msgstr "إدخال رقم السند يدوياً"
 
+#: .\templates\payments\voucher_form.html:43
+msgid "Enter voucher number manually (e.g., PAY-2025-001)"
+msgstr "أدخل رقم القسيمة يدوياً (على سبيل المثال، PAY-2025-001)"
+
 #: .\payments\forms.py:70
 msgid "Select supplier..."
 msgstr "اختر المورد..."
@@ -18674,109 +18678,28 @@ msgstr "الموقع الالكتروني"
 
 #: .\templates\payments\voucher_detail.html:5
 #: .\templates\payments\voucher_detail.html:12
-msgid "Details Voucher الصرف"
-msgstr ""
+msgid "Details Payment Voucher "
+msgstr "تفاصيل سند الصرف"
 
 #: .\templates\payments\voucher_detail.html:15
 msgid "العودة للList"
 msgstr ""
 
 #: .\templates\payments\voucher_detail.html:22
-#: .\templates\payments\voucher_detail.html:271
-msgid "عكس الVoucher"
-msgstr ""
-
-#: .\templates\payments\voucher_detail.html:40
-#, fuzzy
-#| msgid "Information"
-msgid "Information الVoucher"
-msgstr "معلومات"
-
-#: .\templates\payments\voucher_detail.html:47
-msgid "رقم الVoucher"
-msgstr ""
-
-#: .\templates\payments\voucher_detail.html:55
-msgid "نوع الVoucher"
-msgstr ""
-
-#: .\templates\payments\voucher_detail.html:63
-msgid "نوع الPayment"
-msgstr ""
-
-#: .\templates\payments\voucher_detail.html:85
-msgid "معكوس"
-msgstr ""
-
-#: .\templates\payments\voucher_detail.html:99
-msgid "رقم Phone"
-msgstr ""
-
-#: .\templates\payments\voucher_detail.html:131
-msgid "الملاحظات"
-msgstr ""
-
-#: .\templates\payments\voucher_detail.html:144
-#, fuzzy
-#| msgid "Cash Payment Details"
-msgid "Details الPayment"
-msgstr "تفاصيل الدفع النقدي"
-
-#: .\templates\payments\voucher_detail.html:150
-#, fuzzy
-#| msgid "Payment"
-msgid "Payment نقدي"
-msgstr "دفعة"
-
-#: .\templates\payments\voucher_detail.html:154
-msgid "الصندوق"
-msgstr ""
-
-#: .\templates\payments\voucher_detail.html:161
-#, fuzzy
-#| msgid "Transfer In"
-msgid "Transfer بنكي"
-msgstr "تحويل وارد"
-
-#: .\templates\payments\voucher_detail.html:165
-msgid "البنك"
-msgstr ""
-
-#: .\templates\payments\voucher_detail.html:170
-msgid "مرجع الTransfer"
-msgstr ""
-
-#: .\templates\payments\voucher_detail.html:186
-#, fuzzy
-#| msgid "إحصائيات المبيعات"
-msgid "اسم البنك"
-msgstr "إحصائيات المبيعات"
-
-#: .\templates\payments\voucher_detail.html:194
-#, fuzzy
-#| msgid "أرصدة البنوك والصناديق النقدية"
-msgid "تاريخ الاستحقاق"
-msgstr "أرصدة البنوك والصناديق النقدية"
-
-#: .\templates\payments\voucher_detail.html:219
-#, fuzzy
-#| msgid "Information"
-msgid "Information العكس"
-msgstr "معلومات"
-
 #: .\templates\payments\voucher_detail.html:252
-msgid "عكس Voucher الصرف"
-msgstr ""
+#: .\templates\payments\voucher_detail.html:271
+msgid "عكس Payment Voucher"
+msgstr "عكس سند الصرف"
 
 #: .\templates\payments\voucher_detail.html:260
 msgid ""
-"Warning: عكس الVoucher سيؤدي إلى إلغاء تأثيره على الحسابات والصناديق. هذا "
+"Warning: عكس Payment Voucher سيؤدي إلى إلغاء تأثيره على الحسابات والصناديق. هذا "
 "الإجراء لا يمكن التراجع عنه."
-msgstr ""
+msgstr "تحذير: عكس سند الصرف سيؤدي إلى إلغاء تأثيره على الحسابات والصناديق. هذا الإجراء لا يمكن التراجع عنه."
 
 #: .\templates\payments\voucher_detail.html:265
-msgid "أدخل سبب عكس الVoucher..."
-msgstr ""
+msgid "أدخل سبب عكس Payment Voucher..."
+msgstr "أدخل سبب عكس سند الصرف..."
 
 #: .\templates\payments\voucher_detail.html:286
 #, fuzzy
@@ -18786,94 +18709,67 @@ msgstr "تأكيد"
 
 #: .\templates\payments\voucher_detail.html:294
 msgid ""
-"Warning: Delete الVoucher سيؤدي إلى تعطيله نهائياً وعكس تأثيره على الحسابات. "
+"Warning: Delete Payment Voucher سيؤدي إلى تعطيله نهائياً وعكس تأثيره على الحسابات. "
 "هذا الإجراء لا يمكن التراجع عنه."
-msgstr ""
+msgstr "تحذير: حذف سند الصرف سيؤدي إلى تعطيله نهائياً وعكس تأثيره على الحسابات. هذا الإجراء لا يمكن التراجع عنه."
 
 #: .\templates\payments\voucher_detail.html:296
-#, python-format
-msgid "هل أنت متأكد من {%% trans "
+msgid "هل أنت متأكد من"
 msgstr ""
 
 #: .\templates\payments\voucher_detail.html:301
-#, fuzzy
-#| msgid "Receipt Voucher"
-msgid "Delete الVoucher"
-msgstr "سند قبض"
-
-#: .\templates\payments\voucher_form.html:43
-#, fuzzy
-#| msgid "Enter voucher number manually"
-msgid "Enter voucher number manually (e.g., PAY-2025-001)"
-msgstr "إدخال رقم السند يدوياً"
+msgid "Delete Payment Voucher"
+msgstr "حذف سند الصرف"
 
 #: .\templates\payments\voucher_form.html:107
-#, fuzzy
-#| msgid "In case the beneficiary is not a registered supplier"
 msgid "If the beneficiary is not a registered supplier"
 msgstr "في حالة عدم تسجيل المستفيد كمورد"
 
 #: .\templates\payments\voucher_form.html:140
 #: .\templates\receipts\receipt_add.html:77
-#, fuzzy
-#| msgid "Cash Payment Details"
 msgid "Cash Payment Details"
 msgstr "تفاصيل الدفع النقدي"
 
 #: .\templates\payments\voucher_form.html:181
 #: .\templates\receipts\receipt_add.html:95
-#, fuzzy
-#| msgid "View Details"
 msgid "Check Details"
-msgstr "عرض التفاصيل"
+msgstr "تفاصيل الشيك"
 
 #: .\templates\payments\voucher_form.html:302
-#, fuzzy
-#| msgid "Failed to load tables"
 msgid "Failed to load supplier data"
-msgstr "فشل في تحميل الجداول"
+msgstr "فشل تحميل بيانات المورد"
 
 #: .\templates\payments\voucher_list.html:20
-#, fuzzy
-#| msgid "Create New Payment Voucher"
 msgid "Add New Payment Voucher"
 msgstr "إنشاء سند صرف جديد"
 
 #: .\templates\payments\voucher_list.html:99
-#, fuzzy
-#| msgid "Number of Currencies"
 msgid "Number of Vouchers"
-msgstr "عدد العملات"
+msgstr "عدد السندات"
 
 #: .\templates\payments\voucher_list.html:114
 #: .\templates\provisions\provision_report.html:50
-#, fuzzy
-#| msgid "Overtime Amount"
 msgid "Average Amount"
-msgstr "مبلغ العمل الإضافي"
+msgstr "متوسط ​​المبلغ"
 
 #: .\templates\payments\voucher_list.html:140
 #: .\templates\payments\voucher_list.html:366
-#, fuzzy
-#| msgid "Beneficiary Name"
 msgid "Beneficiary"
-msgstr "اسم المستفيد"
+msgstr "المستفيد"
 
 #: .\templates\payments\voucher_list.html:286
 #: .\templates\settings\document_print_settings.html:477
-#, fuzzy
-#| msgid "Confirmation"
 msgid "Delete Confirmation"
-msgstr "تأكيد"
+msgstr "تأكيد الحذف"
 
 #: .\templates\payments\voucher_list.html:290
 msgid "Are you sure you want to delete payment voucher number"
-msgstr "هل أنت متأكد من أنك تريد حذف سند القبض رقم؟"
+msgstr "هل أنت متأكد من أنك تريد حذف سند  الصرف رقم"
 
 #: .\templates\payments\voucher_list.html:327
 #: .\templates\payments\voucher_list.html:360
 msgid "Payment Vouchers Report"
-msgstr "تقرير قسائم الدفع"
+msgstr "تقرير سندات الصرف"
 
 #: .\templates\products\category_add.html:19
 msgid "Create a new category for products"

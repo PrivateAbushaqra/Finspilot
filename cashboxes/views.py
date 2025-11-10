@@ -128,7 +128,28 @@ def get_transaction_short_description(transaction):
 def get_transaction_document_number(transaction):
     """الحصول على رقم المستند البسيط للحركة"""
     if transaction.reference_type and transaction.reference_id:
-        return transaction.reference_id
+        # استرجاع رقم المستند الفعلي من النموذج المرتبط
+        try:
+            if transaction.reference_type == 'payment':
+                from payments.models import PaymentVoucher
+                voucher = PaymentVoucher.objects.get(id=transaction.reference_id)
+                return voucher.voucher_number
+            elif transaction.reference_type == 'receipt':
+                from receipts.models import Receipt
+                receipt = Receipt.objects.get(id=transaction.reference_id)
+                return receipt.receipt_number
+            elif transaction.reference_type == 'sales_invoice':
+                from sales.models import Invoice
+                invoice = Invoice.objects.get(id=transaction.reference_id)
+                return invoice.invoice_number
+            elif transaction.reference_type == 'purchase_invoice':
+                from purchases.models import PurchaseInvoice
+                invoice = PurchaseInvoice.objects.get(id=transaction.reference_id)
+                return invoice.invoice_number
+            else:
+                return transaction.reference_id
+        except Exception:
+            return transaction.reference_id
     elif transaction.related_transfer:
         return transaction.related_transfer.transfer_number
     else:

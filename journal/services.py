@@ -707,7 +707,7 @@ class JournalService:
                 })
         
         return JournalService.create_journal_entry(
-            date=payment.date,
+            entry_date=payment.date,
             reference_type='payment_voucher',
             reference_id=payment.id,
             description=f'قيد سند الصرف رقم {payment.voucher_number}',
