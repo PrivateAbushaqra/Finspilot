@@ -235,6 +235,17 @@ class JournalLineForm(forms.ModelForm):
         if debit > 0 and credit > 0:
             raise forms.ValidationError(_('لا يمكن إدخال مبلغ في المدين والدائن معاً'))
         
+        # IFRS Compliance: التحقق من أن الحساب ليس حساباً رئيسياً
+        # يجب تسجيل جميع القيود على الحسابات الفرعية فقط
+        if account:
+            has_active_children = account.children.filter(is_active=True).exists()
+            if has_active_children:
+                raise forms.ValidationError(
+                    _('❌ لا يمكن تسجيل قيود على الحساب الرئيسي "%(account)s". '
+                      'يجب تسجيل القيود على الحسابات الفرعية فقط لضمان التوافق مع معايير IFRS.') 
+                    % {'account': account.name}
+                )
+        
         return cleaned_data
 
 

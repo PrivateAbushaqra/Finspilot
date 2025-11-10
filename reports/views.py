@@ -517,10 +517,50 @@ def trial_balance(request):
     account_type_filter = request.GET.get('account_type', '')
     export = request.GET.get('export', '')  # pdf or excel
 
-    # Get all active accounts
-    accounts = Account.objects.filter(is_active=True).order_by('code')
+    # Get all active accounts for trial balance
+    # IFRS compliant: Include ALL accounts that have journal entries
+    # This includes both leaf accounts and parent accounts with direct entries
+    from django.db.models import Exists, OuterRef, Q
+
+    all_accounts = Account.objects.filter(is_active=True).order_by('code')
+    
+    # Get accounts that have journal entries (either direct or through children)
+    accounts = []
+    for account in all_accounts:
+        # Check if this account has direct journal entries
+        from journal.models import JournalLine
+        has_entries = JournalLine.objects.filter(account=account).exists()
+        
+        # Include account if it has entries AND doesn't have active children
+        # OR if it has entries AND has children (parent with direct entries - shouldn't happen but handle it)
+        has_active_children = account.children.filter(is_active=True).exists()
+        
+        if has_entries and not has_active_children:
+            # Leaf account with entries - include it
+            balance = account.get_balance(as_of_date=as_of_date)
+            if balance != 0:
+                accounts.append(account)
+        elif has_entries and has_active_children:
+            # Parent account with direct entries - SHOULD NOT HAPPEN but include anyway
+            # Calculate balance from direct entries only (not including children)
+            lines = JournalLine.objects.filter(account=account)
+            if as_of_date:
+                lines = lines.filter(journal_entry__entry_date__lte=as_of_date)
+            
+            from django.db.models import Sum
+            debit_total = lines.aggregate(total=Sum('debit'))['total'] or Decimal('0')
+            credit_total = lines.aggregate(total=Sum('credit'))['total'] or Decimal('0')
+            
+            if account.account_type in ['asset', 'expense', 'purchases']:
+                balance = debit_total - credit_total
+            else:
+                balance = credit_total - debit_total
+            
+            if balance != 0:
+                accounts.append(account)
+
     if account_type_filter:
-        accounts = accounts.filter(account_type=account_type_filter)
+        accounts = [acc for acc in accounts if acc.account_type == account_type_filter]
 
     # Calculate balances
     trial_balance_data = []
@@ -528,25 +568,50 @@ def trial_balance(request):
     total_credit = Decimal('0')
 
     for account in accounts:
-        balance = account.get_balance(as_of_date=as_of_date)
-        debit_balance = balance if balance > 0 and account.account_type in ['asset', 'expense', 'purchases'] else Decimal('0')
-        credit_balance = -balance if balance < 0 and account.account_type in ['asset', 'expense', 'purchases'] else (
-            balance if balance > 0 and account.account_type not in ['asset', 'expense', 'purchases'] else Decimal('0')
-        )
-        if account.account_type not in ['asset', 'expense', 'purchases']:
-            if balance > 0:
-                credit_balance = balance
-                debit_balance = Decimal('0')
+        # For parent accounts with direct entries, calculate from direct entries only
+        from journal.models import JournalLine
+        has_active_children = account.children.filter(is_active=True).exists()
+        
+        if has_active_children:
+            # Parent account - get balance from direct entries only (not children)
+            lines = JournalLine.objects.filter(account=account)
+            if as_of_date:
+                lines = lines.filter(journal_entry__entry_date__lte=as_of_date)
+            
+            from django.db.models import Sum
+            debit_total = lines.aggregate(total=Sum('debit'))['total'] or Decimal('0')
+            credit_total = lines.aggregate(total=Sum('credit'))['total'] or Decimal('0')
+            
+            if account.account_type in ['asset', 'expense', 'purchases']:
+                balance = debit_total - credit_total
             else:
-                debit_balance = -balance
-                credit_balance = Decimal('0')
+                balance = credit_total - debit_total
         else:
-            if balance > 0:
+            # Leaf account - use get_balance method
+            balance = account.get_balance(as_of_date=as_of_date)
+
+        # IFRS-compliant trial balance logic:
+        # Accounts with normal debit balances: Assets, Expenses, Purchases
+        # Accounts with normal credit balances: Liabilities, Equity, Revenue
+        
+        if account.account_type in ['asset', 'expense', 'purchases']:
+            # Normal debit balance accounts
+            if balance >= 0:
                 debit_balance = balance
                 credit_balance = Decimal('0')
             else:
-                credit_balance = -balance
+                # Negative balance = credit side
                 debit_balance = Decimal('0')
+                credit_balance = -balance
+        else:  # liability, equity, revenue
+            # Normal credit balance accounts
+            if balance >= 0:
+                debit_balance = Decimal('0')
+                credit_balance = balance
+            else:
+                # Negative balance = debit side
+                debit_balance = -balance
+                credit_balance = Decimal('0')
 
         trial_balance_data.append({
             'account': account,

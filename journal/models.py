@@ -420,6 +420,18 @@ class JournalLine(models.Model):
         
         if self.debit == 0 and self.credit == 0:
             raise ValidationError(_('Must enter debit or credit amount'))
+        
+        # IFRS Compliance: Prevent entries on parent accounts
+        # All entries must be recorded at the leaf (child) account level
+        if self.account:
+            has_active_children = self.account.children.filter(is_active=True).exists()
+            if has_active_children:
+                raise ValidationError(
+                    _('Cannot record entries on parent account "%(account)s". '
+                      'All entries must be recorded on leaf (child) accounts only '
+                      'to ensure IFRS compliance.') 
+                    % {'account': self.account.name}
+                )
 
     @property
     def get_running_balance(self):

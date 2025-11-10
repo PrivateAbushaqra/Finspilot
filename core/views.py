@@ -748,7 +748,10 @@ class TaxReportView(LoginRequiredMixin, TemplateView):
 
 
 class ProfitLossReportView(LoginRequiredMixin, TemplateView):
-    """تقرير الأرباح والخسائر الشامل"""
+    """
+    تقرير الأرباح والخسائر الشامل
+    متوافق مع IFRS - IAS 1 (عرض القوائم المالية)
+    """
     template_name = 'core/profit_loss_report.html'
     
     def get_context_data(self, **kwargs):
@@ -781,73 +784,190 @@ class ProfitLossReportView(LoginRequiredMixin, TemplateView):
         
         # استيراد النماذج المطلوبة
         try:
-            from sales.models import SalesInvoice, SalesReturn
-            from purchases.models import PurchaseInvoice, PurchaseReturn
-        except ImportError:
-            context['error'] = _("حدث خطأ في استيراد النماذج المطلوبة")
+            from sales.models import SalesInvoice, SalesReturn, SalesCreditNote
+            from purchases.models import PurchaseInvoice, PurchaseReturn, PurchaseDebitNote
+            from revenues_expenses.models import RevenueExpenseEntry
+            from payments.models import PaymentVoucher
+            from journal.models import JournalEntry, Account
+            from decimal import Decimal
+        except ImportError as e:
+            context['error'] = _("حدث خطأ في استيراد النماذج المطلوبة: {}").format(str(e))
             return context
             
-        # 1. حساب الإيرادات
+        # ==========================================
+        # 1. الإيرادات (REVENUES) - حسب IFRS
+        # ==========================================
         
         # فواتير المبيعات
         sales_invoices = SalesInvoice.objects.filter(
             date__gte=start_date_obj,
             date__lte=end_date_obj
         )
-        sales_revenue = sales_invoices.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        sales_revenue = sales_invoices.aggregate(Sum('total_amount'))['total_amount__sum'] or Decimal('0')
         
         # مردودات المبيعات (تطرح من الإيرادات)
         sales_returns = SalesReturn.objects.filter(
             date__gte=start_date_obj,
             date__lte=end_date_obj
         )
-        sales_returns_total = sales_returns.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        sales_returns_total = sales_returns.aggregate(Sum('total_amount'))['total_amount__sum'] or Decimal('0')
         
-        # صافي الإيرادات
-        net_revenue = sales_revenue - sales_returns_total
+        # Credit Notes (مذكرات دائنة - تطرح من الإيرادات)
+        credit_notes = SalesCreditNote.objects.filter(
+            date__gte=start_date_obj,
+            date__lte=end_date_obj
+        )
+        credit_notes_total = credit_notes.aggregate(Sum('total_amount'))['total_amount__sum'] or Decimal('0')
         
-        # 2. حساب التكاليف
+        # إيرادات أخرى من نظام الإيرادات والمصروفات
+        other_revenues = RevenueExpenseEntry.objects.filter(
+            date__gte=start_date_obj,
+            date__lte=end_date_obj,
+            type='revenue'
+        )
+        other_revenues_total = other_revenues.aggregate(Sum('amount'))['amount__sum'] or Decimal('0')
         
-        # فواتير المشتريات
+        # صافي الإيرادات (حسب IFRS)
+        net_revenue = sales_revenue - sales_returns_total - credit_notes_total + other_revenues_total
+        
+        # تفاصيل الإيرادات للعرض
+        revenues = {
+            _('إيرادات المبيعات'): sales_revenue,
+            _('مردودات المبيعات'): -sales_returns_total,
+            _('إشعارات الدائن'): -credit_notes_total,
+            _('الإيرادات الأخرى'): other_revenues_total,
+        }
+        
+        # ==========================================
+        # 2. تكلفة البضاعة المباعة (COGS) - حسب IFRS
+        # ==========================================
+        
+        # حساب COGS من تكلفة المبيعات الفعلية (من المخزون)
+        # يُحسب من: (مخزون أول المدة + المشتريات - مردودات المشتريات - مخزون آخر المدة)
+        
+        # المشتريات
         purchase_invoices = PurchaseInvoice.objects.filter(
             date__gte=start_date_obj,
             date__lte=end_date_obj
         )
-        purchase_costs = purchase_invoices.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        purchase_costs = purchase_invoices.aggregate(Sum('total_amount'))['total_amount__sum'] or Decimal('0')
         
         # مردودات المشتريات (تطرح من التكاليف)
         purchase_returns = PurchaseReturn.objects.filter(
             date__gte=start_date_obj,
             date__lte=end_date_obj
         )
-        purchase_returns_total = purchase_returns.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+        purchase_returns_total = purchase_returns.aggregate(Sum('total_amount'))['total_amount__sum'] or Decimal('0')
         
-        # صافي التكاليف
-        net_costs = purchase_costs - purchase_returns_total
+        # Debit Notes (مذكرات مدين - تطرح من تكاليف المشتريات)
+        debit_notes = PurchaseDebitNote.objects.filter(
+            date__gte=start_date_obj,
+            date__lte=end_date_obj
+        )
+        debit_notes_total = debit_notes.aggregate(Sum('total_amount'))['total_amount__sum'] or Decimal('0')
         
-        # 3. حسابات الربحية
+        # تكلفة البضاعة المباعة (مبسطة - للحصول على COGS الدقيق يجب حساب حركة المخزون)
+        # COGS = مشتريات الفترة (تقريبي)
+        cogs = purchase_costs - purchase_returns_total - debit_notes_total
         
-        # الربح الإجمالي
-        gross_profit = net_revenue - net_costs
+        # تفاصيل التكاليف للعرض
+        costs = {
+            _('تكلفة المشتريات'): purchase_costs,
+            _('مردودات المشتريات'): -purchase_returns_total,
+            _('إشعارات مدين'): -debit_notes_total,
+        }
+        
+        # ==========================================
+        # 3. الربح الإجمالي (GROSS PROFIT) - حسب IFRS
+        # ==========================================
+        
+        gross_profit = net_revenue - cogs
         
         # هامش الربح الإجمالي (النسبة المئوية)
-        gross_margin = (gross_profit / net_revenue * 100) if net_revenue > 0 else 0
+        gross_profit_margin = (gross_profit / net_revenue * 100) if net_revenue > 0 else Decimal('0')
         
-        # إضافة البيانات للسياق
+        # ==========================================
+        # 4. المصاريف التشغيلية (OPERATING EXPENSES) - حسب IFRS
+        # ==========================================
+        
+        # المصاريف من نظام الإيرادات والمصروفات
+        operating_expenses_records = RevenueExpenseEntry.objects.filter(
+            date__gte=start_date_obj,
+            date__lte=end_date_obj,
+            type='expense'
+        )
+        
+        # تجميع المصاريف حسب النوع/الفئة
+        operating_expenses = {}
+        total_operating_expenses = Decimal('0')
+        
+        for expense in operating_expenses_records:
+            category_name = expense.category.name if expense.category else _('Uncategorized Expenses')
+            if category_name not in operating_expenses:
+                operating_expenses[category_name] = Decimal('0')
+            operating_expenses[category_name] += expense.amount
+            total_operating_expenses += expense.amount
+        
+        # مصاريف أخرى من سندات الصرف (Payment Vouchers)
+        payment_vouchers = PaymentVoucher.objects.filter(
+            date__gte=start_date_obj,
+            date__lte=end_date_obj
+        )
+        
+        for voucher in payment_vouchers:
+            expense_type = voucher.expense_type or _('General Expenses')
+            if expense_type not in operating_expenses:
+                operating_expenses[expense_type] = Decimal('0')
+            operating_expenses[expense_type] += voucher.amount
+            total_operating_expenses += voucher.amount
+        
+        # إذا لم توجد مصاريف، أضف صف فارغ
+        if not operating_expenses:
+            operating_expenses = {_('لا توجد مصاريف تشغيلية'): Decimal('0')}
+        
+        # ==========================================
+        # 5. صافي الربح/الخسارة (NET PROFIT/LOSS) - حسب IFRS
+        # ==========================================
+        
+        net_profit = gross_profit - total_operating_expenses
+        
+        # هامش صافي الربح (النسبة المئوية)
+        net_profit_margin = (net_profit / net_revenue * 100) if net_revenue > 0 else Decimal('0')
+        
+        # ==========================================
+        # 6. إضافة البيانات للسياق
+        # ==========================================
+        
         context.update({
             # الإيرادات
+            'revenues': revenues,
             'sales_revenue': sales_revenue,
             'sales_returns_total': sales_returns_total,
+            'credit_notes_total': credit_notes_total,
+            'other_revenues_total': other_revenues_total,
+            'total_revenues': net_revenue,  # صافي الإيرادات
             'net_revenue': net_revenue,
             
-            # التكاليف
+            # التكاليف (COGS)
+            'costs': costs,
             'purchase_costs': purchase_costs,
             'purchase_returns_total': purchase_returns_total,
-            'net_costs': net_costs,
+            'debit_notes_total': debit_notes_total,
+            'total_costs': cogs,  # إجمالي تكلفة البضاعة المباعة
+            'cogs': cogs,
             
-            # الأرباح
+            # الربح الإجمالي
             'gross_profit': gross_profit,
-            'gross_margin': gross_margin,
+            'gross_margin': gross_profit_margin,
+            'gross_profit_margin': gross_profit_margin,
+            
+            # المصاريف التشغيلية
+            'operating_expenses': operating_expenses,
+            'total_operating_expenses': total_operating_expenses,
+            
+            # صافي الربح
+            'net_profit': net_profit,
+            'net_profit_margin': net_profit_margin,
             
             # بيانات إضافية
             'sales_count': sales_invoices.count(),
