@@ -12,14 +12,14 @@
                 <h4 class="page-title">{% trans "Details Payment Voucher " %} - {{ voucher.voucher_number }}</h4>
                 <div class="page-title-right">
                     <a href="{% url 'payments:voucher_list' %}" class="btn btn-secondary me-2">
-                        <i class="mdi mdi-arrow-left"></i> {% trans "العودة للList" %}
+                        <i class="mdi mdi-arrow-left"></i> {% trans "Back to List" %}
                     </a>
                     {% if not voucher.is_reversed %}
                     <a href="{% url 'payments:voucher_edit' voucher.pk %}" class="btn btn-warning me-2">
                         <i class="mdi mdi-pencil"></i> {% trans "Edit" %}
                     </a>
                     <button type="button" class="btn btn-danger me-2" data-bs-toggle="modal" data-bs-target="#reverseModal">
-                        <i class="mdi mdi-undo"></i> {% trans "عكس Payment Voucher" %}
+                        <i class="mdi mdi-undo"></i> {% trans "Reverse Payment Voucher" %}
                     </button>
                     {% endif %}
                     {% if user.is_superuser or user.is_staff %}
@@ -33,18 +33,18 @@
     </div>
 
     <div class="row">
-        <!-- ال{% trans "Information" %} الأساسية -->
+        <!-- Basic Information -->
         <div class="col-md-8">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">{% trans "Information Payment Voucher" %}</h5>
+                    <h5 class="card-title mb-0">{% trans "Payment Voucher Information" %}</h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
                             <table class="table table-borderless">
                                 <tr>
-                                    <td><strong>{% trans "رقم Payment Voucher" %}:</strong></td>
+                                    <td><strong>{% trans "Voucher Number" %}:</strong></td>
                                     <td>{{ voucher.voucher_number }}</td>
                                 </tr>
                                 <tr>
@@ -52,7 +52,7 @@
                                     <td>{{ voucher.date }}</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>{% trans "نوع Payment Voucher" %}:</strong></td>
+                                    <td><strong>{% trans "Voucher Type" %}:</strong></td>
                                     <td>
                                         <span class="badge badge-soft-secondary">
                                             {{ voucher.get_voucher_type_display }}
@@ -60,7 +60,7 @@
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td><strong>{% trans "نوع Payment" %}:</strong></td>
+                                    <td><strong>{% trans "Payment Type" %}:</strong></td>
                                     <td>
                                         {% if voucher.payment_type == 'cash' %}
                                             <span class="badge badge-soft-success">
@@ -82,7 +82,7 @@
                                     <td>
                                         <span class="h4 text-primary">{{ voucher.amount|floatformat:3|intcomma }} {{ currency_symbol }}</span>
                                         {% if voucher.is_reversed %}
-                                            <span class="badge badge-danger ms-2">{% trans "معكوس" %}</span>
+                                            <span class="badge badge-danger ms-2">{% trans "Reversed" %}</span>
                                         {% endif %}
                                     </td>
                                 </tr>
@@ -91,12 +91,12 @@
                         <div class="col-md-6">
                             <table class="table table-borderless">
                                 <tr>
-                                    <td><strong>{% trans "المستفيد" %}:</strong></td>
+                                    <td><strong>{% trans "Beneficiary" %}:</strong></td>
                                     <td>{{ voucher.beneficiary_display }}</td>
                                 </tr>
                                 {% if voucher.supplier %}
                                 <tr>
-                                    <td><strong>{% trans "رقم Phone" %}:</strong></td>
+                                    <td><strong>{% trans "Phone Number" %}:</strong></td>
                                     <td>{{ voucher.supplier.phone|default:"-" }}</td>
                                 </tr>
                                 <tr>
@@ -105,11 +105,11 @@
                                 </tr>
                                 {% endif %}
                                 <tr>
-                                    <td><strong>{% trans "أنشئ بواسطة" %}:</strong></td>
+                                    <td><strong>{% trans "Created By" %}:</strong></td>
                                     <td>{{ voucher.created_by.get_full_name|default:voucher.created_by.username }}</td>
                                 </tr>
                                 <tr>
-                                    <td><strong>{% trans "تاريخ الإنشاء" %}:</strong></td>
+                                    <td><strong>{% trans "Created At" %}:</strong></td>
                                     <td>{{ voucher.created_at }}</td>
                                 </tr>
                             </table>
@@ -128,7 +128,7 @@
                     {% if voucher.notes %}
                     <div class="row">
                         <div class="col-12">
-                            <h6>{% trans "الملاحظات" %}:</h6>
+                            <h6>{% trans "Notes" %}:</h6>
                             <p class="text-muted">{{ voucher.notes }}</p>
                         </div>
                     </div>
@@ -137,37 +137,37 @@
             </div>
         </div>
 
-        <!-- {% trans "Details" %} ال{% trans "Payment" %} -->
+        <!-- Payment Details -->
         <div class="col-md-4">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">{% trans "Details الPayment" %}</h5>
+                    <h5 class="card-title mb-0">{% trans "Payment Details" %}</h5>
                 </div>
                 <div class="card-body">
                     {% if voucher.payment_type == 'cash' %}
                         <div class="text-center mb-3">
                             <i class="mdi mdi-cash font-48 text-success"></i>
-                            <h6 class="mt-2">{% trans "Payment نقدي" %}</h6>
+                            <h6 class="mt-2">{% trans "Cash Payment" %}</h6>
                         </div>
                         <table class="table table-borderless table-sm">
                             <tr>
-                                <td><strong>{% trans "الصندوق" %}:</strong></td>
+                                <td><strong>{% trans "Cashbox" %}:</strong></td>
                                 <td>{{ voucher.cashbox.name|default:"-" }}</td>
                             </tr>
                         </table>
                     {% elif voucher.payment_type == 'bank_transfer' %}
                         <div class="text-center mb-3">
                             <i class="mdi mdi-bank font-48 text-info"></i>
-                            <h6 class="mt-2">{% trans "Transfer بنكي" %}</h6>
+                            <h6 class="mt-2">{% trans "Bank Transfer" %}</h6>
                         </div>
                         <table class="table table-borderless table-sm">
                             <tr>
-                                <td><strong>{% trans "البنك" %}:</strong></td>
+                                <td><strong>{% trans "Bank" %}:</strong></td>
                                 <td>{{ voucher.bank.name|default:"-" }}</td>
                             </tr>
                             {% if voucher.bank_reference %}
                             <tr>
-                                <td><strong>{% trans "مرجع الTransfer" %}:</strong></td>
+                                <td><strong>{% trans "Transfer Reference" %}:</strong></td>
                                 <td>{{ voucher.bank_reference }}</td>
                             </tr>
                             {% endif %}
@@ -175,27 +175,27 @@
                     {% elif voucher.payment_type == 'check' %}
                         <div class="text-center mb-3">
                             <i class="mdi mdi-checkbook font-48 text-warning"></i>
-                            <h6 class="mt-2">{% trans "شيك" %}</h6>
+                            <h6 class="mt-2">{% trans "Check" %}</h6>
                         </div>
                         <table class="table table-borderless table-sm">
                             <tr>
-                                <td><strong>{% trans "رقم الشيك" %}:</strong></td>
+                                <td><strong>{% trans "Check Number" %}:</strong></td>
                                 <td>{{ voucher.check_number|default:"-" }}</td>
                             </tr>
                             <tr>
-                                <td><strong>{% trans "اسم البنك" %}:</strong></td>
+                                <td><strong>{% trans "Bank Name" %}:</strong></td>
                                 <td>{{ voucher.check_bank_name|default:"-" }}</td>
                             </tr>
                             <tr>
-                                <td><strong>{% trans "تاريخ الشيك" %}:</strong></td>
+                                <td><strong>{% trans "Check Date" %}:</strong></td>
                                 <td>{{ voucher.check_date|default:"-" }}</td>
                             </tr>
                             <tr>
-                                <td><strong>{% trans "تاريخ الاستحقاق" %}:</strong></td>
+                                <td><strong>{% trans "Due Date" %}:</strong></td>
                                 <td>{{ voucher.check_due_date|default:"-" }}</td>
                             </tr>
                             <tr>
-                                <td><strong>{% trans "حالة الشيك" %}:</strong></td>
+                                <td><strong>{% trans "Check Status" %}:</strong></td>
                                 <td>
                                     {% if voucher.check_status == 'pending' %}
                                         <span class="badge badge-warning">{{ voucher.get_check_status_display }}</span>
@@ -211,27 +211,27 @@
                 </div>
             </div>
 
-            <!-- {% trans "Information" %} العكس -->
+            <!-- Reversal Information -->
             {% if voucher.is_reversed %}
             <div class="card border-danger">
                 <div class="card-header bg-danger text-white">
                     <h5 class="card-title mb-0">
-                        <i class="mdi mdi-undo"></i> {% trans "Information العكس" %}
+                        <i class="mdi mdi-undo"></i> {% trans "Reversal Information" %}
                     </h5>
                 </div>
                 <div class="card-body">
                     <table class="table table-borderless table-sm">
                         <tr>
-                            <td><strong>{% trans "عُكس بواسطة" %}:</strong></td>
+                            <td><strong>{% trans "Reversed By" %}:</strong></td>
                             <td>{{ voucher.reversed_by.get_full_name|default:voucher.reversed_by.username }}</td>
                         </tr>
                         <tr>
-                            <td><strong>{% trans "تاريخ العكس" %}:</strong></td>
+                            <td><strong>{% trans "Reversed At" %}:</strong></td>
                             <td>{{ voucher.reversed_at }}</td>
                         </tr>
                         {% if voucher.reversal_reason %}
                         <tr>
-                            <td><strong>{% trans "سبب العكس" %}:</strong></td>
+                            <td><strong>{% trans "Reversal Reason" %}:</strong></td>
                             <td>{{ voucher.reversal_reason }}</td>
                         </tr>
                         {% endif %}
@@ -242,14 +242,14 @@
         </div>
     </div>
 
-    <!-- القيود المحاسبية المرتبطة -->
+    <!-- Related Journal Entries -->
     {% if journal_entries %}
     <div class="row mt-3">
         <div class="col-12">
             <div class="card">
                 <div class="card-header bg-info text-white">
                     <h5 class="card-title mb-0">
-                        <i class="mdi mdi-book-open-variant"></i> {% trans "القيود المحاسبية المرتبطة" %}
+                        <i class="mdi mdi-book-open-variant"></i> {% trans "Related Journal Entries" %}
                     </h5>
                 </div>
                 <div class="card-body">
@@ -257,26 +257,26 @@
                     <div class="mb-3 p-3 border rounded">
                         <div class="row mb-2">
                             <div class="col-md-6">
-                                <strong>{% trans "رقم القيد" %}:</strong> 
+                                <strong>{% trans "Entry Number" %}:</strong> 
                                 <a href="{% url 'journal:entry_detail' entry.pk %}" class="text-primary">{{ entry.entry_number }}</a>
                             </div>
                             <div class="col-md-6">
-                                <strong>{% trans "التاريخ" %}:</strong> {{ entry.date }}
+                                <strong>{% trans "Date" %}:</strong> {{ entry.date }}
                             </div>
                         </div>
                         <div class="row mb-2">
                             <div class="col-12">
-                                <strong>{% trans "البيان" %}:</strong> {{ entry.description }}
+                                <strong>{% trans "Description" %}:</strong> {{ entry.description }}
                             </div>
                         </div>
                         <div class="table-responsive">
                             <table class="table table-sm table-bordered">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>{% trans "الحساب" %}</th>
-                                        <th class="text-end">{% trans "مدين" %}</th>
-                                        <th class="text-end">{% trans "دائن" %}</th>
-                                        <th>{% trans "البيان" %}</th>
+                                        <th>{% trans "Account" %}</th>
+                                        <th class="text-end">{% trans "Debit" %}</th>
+                                        <th class="text-end">{% trans "Credit" %}</th>
+                                        <th>{% trans "Description" %}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -303,7 +303,7 @@
                                 </tbody>
                                 <tfoot class="table-secondary">
                                     <tr>
-                                        <td><strong>{% trans "الإجمالي" %}</strong></td>
+                                        <td><strong>{% trans "Total" %}</strong></td>
                                         <td class="text-end"><strong>{{ entry.total_debit|floatformat:3|intcomma }} {{ currency_symbol }}</strong></td>
                                         <td class="text-end"><strong>{{ entry.total_credit|floatformat:3|intcomma }} {{ currency_symbol }}</strong></td>
                                         <td></td>
@@ -321,20 +321,20 @@
     <div class="row mt-3">
         <div class="col-12">
             <div class="alert alert-warning">
-                <i class="mdi mdi-alert"></i> {% trans "لا توجد قيود محاسبية مرتبطة بهذا السند" %}
+                <i class="mdi mdi-alert"></i> {% trans "No related journal entries found for this voucher" %}
             </div>
         </div>
     </div>
     {% endif %}
 
-    <!-- حركات الصندوق المرتبطة -->
+    <!-- Related Cashbox Transactions -->
     {% if cashbox_transactions %}
     <div class="row mt-3">
         <div class="col-12">
             <div class="card">
                 <div class="card-header bg-success text-white">
                     <h5 class="card-title mb-0">
-                        <i class="mdi mdi-cash-multiple"></i> {% trans "حركات الصندوق المرتبطة" %}
+                        <i class="mdi mdi-cash-multiple"></i> {% trans "Related Cashbox Transactions" %}
                     </h5>
                 </div>
                 <div class="card-body">
@@ -342,11 +342,11 @@
                         <table class="table table-sm table-bordered">
                             <thead class="table-light">
                                 <tr>
-                                    <th>{% trans "التاريخ" %}</th>
-                                    <th>{% trans "الصندوق" %}</th>
-                                    <th>{% trans "النوع" %}</th>
-                                    <th class="text-end">{% trans "المبلغ" %}</th>
-                                    <th>{% trans "البيان" %}</th>
+                                    <th>{% trans "Date" %}</th>
+                                    <th>{% trans "Cashbox" %}</th>
+                                    <th>{% trans "Type" %}</th>
+                                    <th class="text-end">{% trans "Amount" %}</th>
+                                    <th>{% trans "Description" %}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -356,9 +356,9 @@
                                     <td>{{ trans.cashbox.name }}</td>
                                     <td>
                                         {% if trans.transaction_type == 'withdrawal' %}
-                                            <span class="badge badge-danger">{% trans "صرف" %}</span>
+                                            <span class="badge badge-danger">{% trans "Withdrawal" %}</span>
                                         {% else %}
-                                            <span class="badge badge-success">{% trans "إيداع" %}</span>
+                                            <span class="badge badge-success">{% trans "Deposit" %}</span>
                                         {% endif %}
                                     </td>
                                     <td class="text-end">{{ trans.amount|floatformat:3|intcomma }} {{ currency_symbol }}</td>
@@ -375,13 +375,13 @@
     {% endif %}
 </div>
 
-<!-- Modal عكس ال{% trans "Voucher" %} -->
+<!-- Reverse Voucher Modal -->
 {% if not voucher.is_reversed %}
 <div class="modal fade" id="reverseModal" tabindex="-1" aria-labelledby="reverseModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="reverseModalLabel">{% trans "عكس Payment Voucher" %}</h5>
+                <h5 class="modal-title" id="reverseModalLabel">{% trans "Reverse Payment Voucher" %}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="post" action="{% url 'payments:voucher_reverse' voucher.pk %}">
@@ -389,18 +389,18 @@
                     {% csrf_token %}
                     <div class="alert alert-warning">
                         <i class="mdi mdi-alert-triangle"></i>
-                        {% trans "Warning: عكس Payment Voucher سيؤدي إلى إلغاء تأثيره على الحسابات والصناديق. هذا الإجراء لا يمكن التراجع عنه." %}
+                        {% trans "Warning: Reversing the payment voucher will cancel its effect on accounts and cashboxes. This action cannot be undone." %}
                     </div>
                     <div class="mb-3">
-                        <label for="reason" class="form-label">{% trans "سبب العكس" %} <span class="text-danger">*</span></label>
+                        <label for="reason" class="form-label">{% trans "Reversal Reason" %} <span class="text-danger">*</span></label>
                         <textarea name="reason" id="reason" class="form-control" rows="3" required 
-                                  placeholder="{% trans "أدخل سبب عكس Payment Voucher..." %}"></textarea>
+                                  placeholder="{% trans "Enter the reason for reversing the payment voucher..." %}"></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
                     <button type="submit" class="btn btn-danger">
-                        <i class="mdi mdi-undo"></i> {% trans "عكس Payment Voucher" %}
+                        <i class="mdi mdi-undo"></i> {% trans "Reverse Payment Voucher" %}
                     </button>
                 </div>
             </form>
@@ -409,13 +409,13 @@
 </div>
 {% endif %}
 
-<!-- Modal لل{% trans "Delete" %} -->
+<!-- Delete Modal -->
 {% if user.is_superuser or user.is_staff %}
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="deleteModalLabel">{% trans "Confirmation الحذف" %}</h5>
+                <h5 class="modal-title" id="deleteModalLabel">{% trans "Delete Confirmation" %}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="post" action="{% url 'payments:voucher_delete' voucher.pk %}">
@@ -423,12 +423,12 @@
                 <div class="modal-body">
                     <div class="alert alert-danger">
                         <i class="mdi mdi-alert"></i>
-                        {% trans "Warning: Delete Payment Voucher سيؤدي إلى تعطيله نهائياً وعكس تأثيره على الحسابات. هذا الإجراء لا يمكن التراجع عنه." %}
+                        {% trans "Warning: Deleting the payment voucher will permanently disable it and reverse its effect on accounts. This action cannot be undone." %}
                     </div>
-                    <p>{% blocktrans with voucher_number=voucher.voucher_number %}هل أنت متأكد من حذف Payment Voucher رقم {{ voucher_number }}؟{% endblocktrans %}</p>
+                    <p>{% blocktrans with voucher_number=voucher.voucher_number %}Are you sure you want to delete payment voucher number {{ voucher_number }}?{% endblocktrans %}</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
                     <button type="submit" class="btn btn-danger">
                         <i class="mdi mdi-delete"></i> {% trans "Delete Payment Voucher" %}
                     </button>
