@@ -16,15 +16,15 @@ from journal.models import Account, JournalEntry
 
 @login_required
 def reports_index(request):
-    """صفحة رئيسية للتقارير"""
+    """Main reports page"""
     if not request.user.has_perm('users.can_access_reports'):
-        raise PermissionDenied("ليس لديك صلاحية الوصول للتقارير")
+        raise PermissionDenied(_("You do not have permission to access reports"))
     
-    # تسجيل النشاط
-    log_view_activity(request, 'view', None, 'عرض صفحة التقارير الرئيسية')
+    # Log activity
+    log_view_activity(request, 'view', None, _('Viewing main reports page'))
     
     context = {
-        'title': 'التقارير المالية',
+        'title': _('Financial Reports'),
     }
     return render(request, 'reports/index.html', context)
 
@@ -278,12 +278,12 @@ def sales_by_salesperson(request):
     from sales.models import SalesInvoice
     User = get_user_model()
 
-    # All active users can be selected; النتائج قد تكون فارغة إذا لم ينشئ المستخدم فواتير
+    # All active users can be selected; results may be empty if user has not created invoices
     sales_users = User.objects.filter(
         is_active=True
     ).order_by('first_name', 'last_name', 'username')
 
-    # Defaults: last 90 days + next 30 days (لتغطية الفواتير المستقبلية أيضاً)
+    # Defaults: last 90 days + next 30 days (to cover future invoices as well)
     today = date.today()
     default_start = today - timedelta(days=90)
     default_end = today + timedelta(days=30)
@@ -349,10 +349,10 @@ def sales_by_salesperson(request):
                 'date': return_invoice.date,
                 'document_number': return_invoice.return_number,
                 'customer': return_invoice.customer.name if return_invoice.customer else _('Cash Customer'),
-                'payment_type': 'مردود',
-                'subtotal': -return_invoice.subtotal,  # سالب لأنه مردود
+                'payment_type': _('Return'),
+                'subtotal': -return_invoice.subtotal,  # negative because it's a return
                 'tax_amount': -return_invoice.tax_amount,
-                'discount_amount': Decimal('0'),  # المردودات لا تحتوي على خصم عادة
+                'discount_amount': Decimal('0'),  # returns usually don't contain discount
                 'total_amount': -return_invoice.total_amount,
                 'original_invoice': return_invoice.original_invoice.invoice_number if return_invoice.original_invoice else None,
             })
@@ -412,7 +412,7 @@ def sales_by_salesperson(request):
                     ws.append(headers)
                     for inv in sales_invoices:
                         ws.append([
-                            'فاتورة' if inv['type'] == 'invoice' else 'مردود',
+                            _('Invoice') if inv['type'] == 'invoice' else _('Return'),
                             str(inv['date']), inv['document_number'], inv['customer'], inv['payment_type'],
                             clean_numeric_value(inv['subtotal']), clean_numeric_value(inv['tax_amount']), clean_numeric_value(inv['discount_amount']), 
                             clean_numeric_value(inv['total_amount']), inv['original_invoice'] or ''
@@ -448,7 +448,7 @@ def sales_by_salesperson(request):
                 for inv in sales_invoices:
                     writer.writerow([
                         inv['date'], 
-                        'فاتورة' if inv['type'] == 'invoice' else 'مردود',
+                        _('Invoice') if inv['type'] == 'invoice' else _('Return'),
                         inv['document_number'], 
                         inv['customer'], 
                         inv['payment_type'], 
@@ -740,7 +740,7 @@ def trial_balance(request):
 @login_required
 def balance_sheet(request):
     """
-    الميزانية العمومية - Balance Sheet
+    Balance Sheet
     """
     user = request.user
     has_perm = (
@@ -751,11 +751,11 @@ def balance_sheet(request):
     if not has_perm:
         raise PermissionDenied
 
-    # فلاتر التاريخ
+    # Date filters
     today = date.today()
     as_of_date = _parse_date(request.GET.get('as_of_date'), today)
 
-    # حساب الأصول
+    # Calculate assets
     assets = Account.objects.filter(account_type='asset', is_active=True)
     total_assets = Decimal('0')
     asset_accounts = []
@@ -768,7 +768,7 @@ def balance_sheet(request):
             })
             total_assets += balance
 
-    # حساب المطلوبات
+    # Calculate liabilities
     liabilities = Account.objects.filter(account_type='liability', is_active=True)
     total_liabilities = Decimal('0')
     liability_accounts = []
@@ -781,7 +781,7 @@ def balance_sheet(request):
             })
             total_liabilities += balance
 
-    # حساب حقوق الملكية
+    # Calculate equity
     equities = Account.objects.filter(account_type='equity', is_active=True)
     total_equity = Decimal('0')
     equity_accounts = []
@@ -794,7 +794,7 @@ def balance_sheet(request):
             })
             total_equity += balance
 
-    # تسجيل النشاط
+    # Log activity
     try:
         class ReportObj:
             id = 0
@@ -822,7 +822,7 @@ def balance_sheet(request):
 @login_required
 def income_statement(request):
     """
-    قائمة الدخل - Income Statement
+    Income Statement
     """
     user = request.user
     has_perm = (
@@ -833,12 +833,12 @@ def income_statement(request):
     if not has_perm:
         raise PermissionDenied
 
-    # فلاتر التاريخ
+    # Date filters
     today = date.today()
     start_date = _parse_date(request.GET.get('start_date'), today.replace(day=1))
     end_date = _parse_date(request.GET.get('end_date'), today)
 
-    # حساب الإيرادات
+    # Calculate revenues
     revenues = Account.objects.filter(account_type='revenue', is_active=True)
     total_revenues = Decimal('0')
     revenue_accounts = []
@@ -851,7 +851,7 @@ def income_statement(request):
             })
             total_revenues += balance
 
-    # حساب المصاريف
+    # Calculate expenses
     expenses = Account.objects.filter(account_type='expense', is_active=True)
     total_expenses = Decimal('0')
     expense_accounts = []
@@ -864,7 +864,7 @@ def income_statement(request):
             })
             total_expenses += balance
 
-    # حساب المبيعات
+    # Calculate sales
     sales = Account.objects.filter(account_type='sales', is_active=True)
     total_sales = Decimal('0')
     sales_accounts = []
@@ -877,7 +877,7 @@ def income_statement(request):
             })
             total_sales += balance
 
-    # حساب المشتريات
+    # Calculate purchases
     purchases = Account.objects.filter(account_type='purchases', is_active=True)
     total_purchases = Decimal('0')
     purchase_accounts = []
@@ -890,11 +890,11 @@ def income_statement(request):
             })
             total_purchases += balance
 
-    # حساب صافي الربح
+    # Calculate net profit
     gross_profit = total_sales - total_purchases
     net_profit = total_revenues - total_expenses + gross_profit
 
-    # تسجيل النشاط
+    # Log activity
     try:
         class ReportObj:
             id = 0
@@ -926,7 +926,7 @@ def income_statement(request):
 @login_required
 def cash_flow(request):
     """
-    التدفقات النقدية - Cash Flow Statement
+    Cash Flow Statement
     """
     user = request.user
     has_perm = (
@@ -937,48 +937,48 @@ def cash_flow(request):
     if not has_perm:
         raise PermissionDenied
 
-    # فلاتر التاريخ
+    # Date filters
     today = date.today()
     start_date = _parse_date(request.GET.get('start_date'), today.replace(day=1))
     end_date = _parse_date(request.GET.get('end_date'), today)
 
-    # حساب التدفقات النقدية من العمليات التشغيلية
-    # حساب التغيير في أرصدة الحسابات النقدية خلال الفترة
+    # Calculate cash flows from operating activities
+    # Calculate the change in cash account balances during the period
     
-    # تحديد الحسابات النقدية (الأصول النقدية)
-    # الحسابات التي تحتوي على نقد أو بنوك أو صناديق
+    # Identify cash accounts (cash assets)
+    # Accounts that contain cash or banks or cash boxes
     cash_accounts = Account.objects.filter(
         is_active=True,
         account_type='asset'
     ).filter(
-        Q(name__icontains='نقد') |
-        Q(name__icontains='صندوق') |
-        Q(name__icontains='بنك') |
-        Q(code__startswith='101') |  # صناديق
-        Q(code__startswith='102')    # بنوك
+        Q(name__icontains='Cash') |
+        Q(name__icontains='Cash Box') |
+        Q(name__icontains='Bank') |
+        Q(code__startswith='101') |  # cash boxes
+        Q(code__startswith='102')    # banks
     )
     
-    # حساب أرصدة نهاية الفترة
+    # Calculate end of period balances
     cash_end_balance = Decimal('0')
     for account in cash_accounts.distinct():
         cash_end_balance += account.get_balance(end_date)
     
-    # حساب أرصدة بداية الفترة (يوم قبل start_date)
+    # Calculate beginning of period balances (day before start_date)
     start_minus_one = start_date - timedelta(days=1)
     cash_start_balance = Decimal('0')
     for account in cash_accounts.distinct():
         cash_start_balance += account.get_balance(start_minus_one)
     
-    # التدفق النقدي من العمليات التشغيلية = التغيير في النقد
+    # Cash flow from operating activities = change in cash
     operating_cash_flow = cash_end_balance - cash_start_balance
 
-    # حساب التدفقات النقدية من الاستثمارات
+    # Calculate cash flows from investments
     investment_cash_flow = Decimal('0')
 
-    # حساب التدفقات النقدية من التمويل
+    # Calculate cash flows from financing
     financing_cash_flow = Decimal('0')
 
-    # تسجيل النشاط
+    # Log activity
     try:
         class ReportObj:
             id = 0
@@ -1004,7 +1004,7 @@ def cash_flow(request):
 @login_required
 def financial_ratios(request):
     """
-    المؤشرات المالية - Financial Ratios
+    Financial Ratios
     """
     user = request.user
     has_perm = (
@@ -1015,15 +1015,15 @@ def financial_ratios(request):
     if not has_perm:
         raise PermissionDenied
 
-    # فلاتر التاريخ
+    # Date filters
     today = date.today()
     as_of_date = _parse_date(request.GET.get('as_of_date'), today)
 
-    # حساب المؤشرات
+    # Calculate indicators
     ratios = {}
 
-    # هامش الربح (Profit Margin)
-    # نحتاج إلى حساب صافي الربح والإيرادات
+    # Profit Margin
+    # We need to calculate net profit and revenues
     revenues = Account.objects.filter(account_type__in=['revenue', 'sales'], is_active=True)
     total_revenues = Decimal('0')
     for account in revenues:
@@ -1046,8 +1046,8 @@ def financial_ratios(request):
     else:
         ratios['profit_margin'] = Decimal('0')
 
-    # السيولة (Liquidity Ratio) - الأصول المتداولة / المطلوبات المتداولة
-    # افتراضيًا، جميع الأصول والمطلوبات
+    # Liquidity (Liquidity Ratio) - Current Assets / Current Liabilities
+    # By default, all assets and liabilities
     assets = Account.objects.filter(account_type='asset', is_active=True)
     total_assets = Decimal('0')
     for account in assets:
@@ -1063,7 +1063,7 @@ def financial_ratios(request):
     else:
         ratios['liquidity_ratio'] = Decimal('0')
 
-    # نسبة الدين إلى رأس المال (Debt to Equity)
+    # Debt to Equity Ratio
     equities = Account.objects.filter(account_type='equity', is_active=True)
     total_equity = Decimal('0')
     for account in equities:
@@ -1074,13 +1074,13 @@ def financial_ratios(request):
     else:
         ratios['debt_to_equity'] = Decimal('0')
 
-    # العائد على الأصول (Return on Assets)
+    # Return on Assets
     if total_assets > 0:
         ratios['return_on_assets'] = (net_profit / total_assets) * 100
     else:
         ratios['return_on_assets'] = Decimal('0')
 
-    # تسجيل النشاط
+    # Log activity
     try:
         class ReportObj:
             id = 0
@@ -1120,28 +1120,28 @@ def aging_report(request):
     from payments.models import PaymentVoucher
     from datetime import date, timedelta
 
-    # فلاتر
+    # Filters
     customer_filter = request.GET.get('customer', '')
     supplier_filter = request.GET.get('supplier', '')
     account_filter = request.GET.get('account', '')
     start_date = _parse_date(request.GET.get('start_date'), date.today() - timedelta(days=365))
     end_date = _parse_date(request.GET.get('end_date'), date.today())
 
-    # حساب المديونيات للعملاء
+    # Calculate customer receivables
     customers_data = []
     customers = CustomerSupplier.objects.filter(type__in=['customer', 'both'], is_active=True)
     if customer_filter:
         customers = customers.filter(id=customer_filter)
 
     for customer in customers:
-        # مجموع الفواتير الآجلة
+        # Total overdue invoices
         sales_invoices = SalesInvoice.objects.filter(
             customer=customer,
             payment_type='credit',
             date__lte=end_date
         ).aggregate(total=Sum('total_amount'))['total'] or Decimal('0')
 
-        # مجموع المدفوعات
+        # Total payments
         payments = PaymentReceipt.objects.filter(
             customer=customer,
             date__lte=end_date,
@@ -1153,13 +1153,13 @@ def aging_report(request):
         if outstanding <= 0:
             continue
 
-        # تصنيف حسب الأيام
+        # Classify by days
         aging_0_30 = Decimal('0')
         aging_31_60 = Decimal('0')
         aging_61_90 = Decimal('0')
         aging_over_90 = Decimal('0')
 
-        # افتراضياً، الفواتير القديمة أولاً
+        # By default, oldest invoices first
         invoices = SalesInvoice.objects.filter(
             customer=customer,
             payment_type='credit',
@@ -1191,21 +1191,21 @@ def aging_report(request):
             'aging_over_90': aging_over_90,
         })
 
-    # حساب المديونيات للموردين
+    # Calculate supplier payables
     suppliers_data = []
     suppliers = CustomerSupplier.objects.filter(type__in=['supplier', 'both'], is_active=True)
     if supplier_filter:
         suppliers = suppliers.filter(id=supplier_filter)
 
     for supplier in suppliers:
-        # مجموع الفواتير الآجلة
+        # Total overdue invoices
         purchase_invoices = PurchaseInvoice.objects.filter(
             supplier=supplier,
             payment_type='credit',
             date__lte=end_date
         ).aggregate(total=Sum('total_amount'))['total'] or Decimal('0')
 
-        # مجموع المدفوعات
+        # Total payments
         payments = PaymentVoucher.objects.filter(
             supplier=supplier,
             date__lte=end_date,
@@ -1217,7 +1217,7 @@ def aging_report(request):
         if outstanding <= 0:
             continue
 
-        # تصنيف حسب الأيام
+        # Classify by days
         aging_0_30 = Decimal('0')
         aging_31_60 = Decimal('0')
         aging_61_90 = Decimal('0')
@@ -1254,23 +1254,23 @@ def aging_report(request):
             'aging_over_90': aging_over_90,
         })
 
-    # إجماليات
+    # Totals
     total_customers_outstanding = sum(c['outstanding'] for c in customers_data)
     total_suppliers_outstanding = sum(s['outstanding'] for s in suppliers_data)
 
-    # إجماليات الفترات للعملاء
+    # Period totals for customers
     total_customers_aging_0_30 = sum(c['aging_0_30'] for c in customers_data)
     total_customers_aging_31_60 = sum(c['aging_31_60'] for c in customers_data)
     total_customers_aging_61_90 = sum(c['aging_61_90'] for c in customers_data)
     total_customers_aging_over_90 = sum(c['aging_over_90'] for c in customers_data)
 
-    # إجماليات الفترات للموردين
+    # Period totals for suppliers
     total_suppliers_aging_0_30 = sum(s['aging_0_30'] for s in suppliers_data)
     total_suppliers_aging_31_60 = sum(s['aging_31_60'] for s in suppliers_data)
     total_suppliers_aging_61_90 = sum(s['aging_61_90'] for s in suppliers_data)
     total_suppliers_aging_over_90 = sum(s['aging_over_90'] for s in suppliers_data)
 
-    # تسجيل النشاط
+    # Log activity
     try:
         class ReportObj:
             id = 0
@@ -1308,7 +1308,7 @@ def aging_report(request):
 @login_required
 def inventory_report(request):
     """
-    تقرير أرصدة المخزون: عرض أرصدة المنتجات في المستودعات مع فلترة
+    Inventory balances report: Display product balances in warehouses with filtering
     """
     # Permission gate: allow superuser or user_type admin/superadmin implicitly; else require explicit permission
     user = request.user
@@ -1324,12 +1324,12 @@ def inventory_report(request):
     from products.models import Product
     from django.db.models import Sum
 
-    # فلاتر
+    # Filters
     warehouse_filter = request.GET.get('warehouse', '')
     product_filter = request.GET.get('product', '')
     as_of_date = _parse_date(request.GET.get('as_of_date'), date.today())
 
-    # الحصول على المنتجات والمستودعات
+    # Get products and warehouses
     products = Product.objects.filter(is_active=True, product_type='physical')
     if product_filter:
         products = products.filter(id=product_filter)
@@ -1338,7 +1338,7 @@ def inventory_report(request):
     if warehouse_filter:
         warehouses = warehouses.filter(id=warehouse_filter)
 
-    # حساب الأرصدة
+    # Calculate balances
     inventory_data = []
     for product in products:
         product_data = {
@@ -1349,7 +1349,7 @@ def inventory_report(request):
         }
         
         for warehouse in warehouses:
-            # حساب الرصيد في المستودع حتى التاريخ المحدد
+            # Calculate balance in warehouse up to specified date
             incoming = InventoryMovement.objects.filter(
                 product=product,
                 warehouse=warehouse,
@@ -1378,11 +1378,11 @@ def inventory_report(request):
         if product_data['total_stock'] != 0:
             inventory_data.append(product_data)
 
-    # إجماليات
+    # Totals
     total_value = sum(p['total_value'] for p in inventory_data)
     total_products = len(inventory_data)
 
-    # تسجيل النشاط
+    # Log activity
     try:
         class ReportObj:
             id = 0

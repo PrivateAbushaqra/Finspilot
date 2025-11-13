@@ -24,7 +24,7 @@ User = get_user_model()
 
 @login_required
 def assets_liabilities_dashboard(request):
-    """لوحة تحكم الأصول والخصوم"""
+    """Assets and Liabilities Dashboard"""
     # الحصول على العملة الأساسية
     company_settings = CompanySettings.objects.first()
     base_currency = company_settings.base_currency if company_settings else None
@@ -84,7 +84,7 @@ def assets_liabilities_dashboard(request):
 
 @login_required
 def asset_list(request):
-    """قائمة الأصول"""
+    """Asset list"""
     assets = Asset.objects.select_related(
         'category', 'responsible_person', 'created_by', 'currency'
     ).order_by('-purchase_date')
@@ -120,7 +120,7 @@ def asset_list(request):
     )['total'] or 0
     
     context = {
-        'page_title': _('الأصول'),
+        'page_title': _('Assets'),
         'assets': assets_page,
         'categories': categories,
         'status_choices': Asset.STATUS_CHOICES,
@@ -132,7 +132,7 @@ def asset_list(request):
 
 @login_required
 def liability_list(request):
-    """قائمة الخصوم"""
+    """Liabilities list"""
     liabilities = Liability.objects.select_related(
         'category', 'created_by', 'currency'
     ).order_by('due_date')
@@ -168,7 +168,7 @@ def liability_list(request):
     )['total'] or 0
     
     context = {
-        'page_title': _('الخصوم'),
+        'page_title': _('Liabilities'),
         'liabilities': liabilities_page,
         'categories': categories,
         'status_choices': Liability.STATUS_CHOICES,
@@ -180,7 +180,7 @@ def liability_list(request):
 
 @login_required
 def asset_create(request):
-    """إضافة أصل جديد"""
+    """Add new asset"""
     if request.method == 'POST':
         # التحقق من نوع المحتوى
         if request.content_type == 'application/json':
@@ -198,7 +198,7 @@ def asset_create(request):
                         # إنشاء فئة جديدة إذا لم تكن موجودة
                         category = AssetCategory.objects.create(
                             name=data['category'],
-                            description=f'فئة تم إنشاؤها تلقائياً: {data["category"]}',
+                            description=f'Category automatically created: {data["category"]}',
                             created_by=request.user
                         )
                 
@@ -226,18 +226,22 @@ def asset_create(request):
                     currency=Currency.objects.filter(is_active=True).first()
                 )
                 
-                # تسجيل النشاط
+                # Log activity
                 from core.signals import log_activity
                 log_activity(
                     action_type='create',
                     obj=asset,
-                    description=f'إضافة أصل جديد من المودال: {asset.name} - رقم الأصل: {asset.asset_number} - القيمة: {asset.purchase_cost}',
+                    description=_('Add new asset from modal: %(name)s - Asset number: %(number)s - Value: %(value)s') % {
+                        'name': asset.name,
+                        'number': asset.asset_number,
+                        'value': asset.purchase_cost
+                    },
                     user=request.user
                 )
                 
                 return JsonResponse({
                     'success': True,
-                    'message': f'تم إنشاء الأصل "{asset.name}" بنجاح',
+                    'message': _('Asset "%(name)s" created successfully') % {'name': asset.name},
                     'asset_id': asset.pk,
                     'asset_name': asset.name,
                     'asset_number': asset.asset_number
@@ -273,22 +277,26 @@ def asset_create(request):
                         
                         asset.save()
                         
-                        # تسجيل النشاط
+                        # Log activity
                         from core.signals import log_activity
                         log_activity(
                             action_type='create',
                             obj=asset,
-                            description=f'إضافة أصل جديد: {asset.name} - رقم الأصل: {asset.asset_number} - القيمة: {asset.purchase_cost}',
+                            description=_('Add new asset: %(name)s - Asset number: %(number)s - Value: %(value)s') % {
+                                'name': asset.name,
+                                'number': asset.asset_number,
+                                'value': asset.purchase_cost
+                            },
                             user=request.user
                         )
                         
-                        messages.success(request, f'تم إنشاء الأصل "{asset.name}" بنجاح')
+                        messages.success(request, _('Asset "%(name)s" created successfully') % {'name': asset.name})
                         return redirect('assets_liabilities:asset_detail', pk=asset.pk)
                         
                 except Exception as e:
-                    messages.error(request, f'خطأ في إنشاء الأصل: {str(e)}')
+                    messages.error(request, _('Error creating asset: %(err)s') % {'err': str(e)})
             else:
-                messages.error(request, 'يرجى تصحيح الأخطاء في النموذج')
+                messages.error(request, _('Please correct the errors in the form'))
     else:
         form = AssetForm()
     
@@ -309,7 +317,7 @@ def asset_create(request):
 
 @login_required
 def asset_detail(request, pk):
-    """تفاصيل الأصل"""
+    """Asset details"""
     asset = get_object_or_404(
         Asset.objects.select_related(
             'category', 'responsible_person', 'created_by', 'currency'
@@ -325,14 +333,14 @@ def asset_detail(request, pk):
     context = {
         'asset': asset,
         'depreciation_entries': depreciation_entries,
-        'page_title': f'تفاصيل الأصل - {asset.name}',
+        'page_title': f'{_("Asset Details")} - {asset.name}',
     }
     return render(request, 'assets_liabilities/asset_detail.html', context)
 
 
 @login_required
 def asset_edit(request, pk):
-    """تعديل الأصل"""
+    """Edit asset"""
     asset = get_object_or_404(Asset, pk=pk)
     
     if request.method == 'POST':
@@ -342,22 +350,25 @@ def asset_edit(request, pk):
                 with transaction.atomic():
                     updated_asset = form.save()
                     
-                    # تسجيل النشاط
+                    # Log activity
                     from core.signals import log_activity
                     log_activity(
                         action_type='update',
                         obj=updated_asset,
-                        description=f'تعديل الأصل: {updated_asset.name} - رقم الأصل: {updated_asset.asset_number}',
+                        description=_('Edit asset: %(name)s - Asset number: %(number)s') % {
+                            'name': updated_asset.name,
+                            'number': updated_asset.asset_number
+                        },
                         user=request.user
                     )
                     
-                    messages.success(request, f'تم تحديث الأصل "{updated_asset.name}" بنجاح')
+                    messages.success(request, _('Asset "%(name)s" updated successfully') % {'name': updated_asset.name})
                     return redirect('assets_liabilities:asset_detail', pk=updated_asset.pk)
                     
             except Exception as e:
-                messages.error(request, f'خطأ في تحديث الأصل: {str(e)}')
+                messages.error(request, _('Error updating asset: %(err)s') % {'err': str(e)})
         else:
-            messages.error(request, 'يرجى تصحيح الأخطاء في النموذج')
+            messages.error(request, _('Please correct the errors in the form'))
     else:
         form = AssetForm(instance=asset)
     
@@ -372,14 +383,14 @@ def asset_edit(request, pk):
         'categories': categories,
         'currencies': currencies,
         'users': users,
-        'page_title': f'تعديل الأصل - {asset.name}',
+        'page_title': f'{_("Edit Asset")} - {asset.name}',
     }
     return render(request, 'assets_liabilities/asset_edit.html', context)
 
 
 @login_required
 def asset_delete(request, pk):
-    """حذف الأصل"""
+    """Delete asset"""
     asset = get_object_or_404(Asset, pk=pk)
     
     if request.method == 'POST':
@@ -388,47 +399,50 @@ def asset_delete(request, pk):
                 asset_name = asset.name
                 asset_number = asset.asset_number
                 
-                # تسجيل النشاط قبل الحذف
+                # Log activity before deletion
                 from core.signals import log_activity
                 log_activity(
                     action_type='delete',
                     obj=None,
-                    description=f'حذف الأصل: {asset_name} - رقم الأصل: {asset_number}',
+                    description=_('Delete asset: %(name)s - Asset number: %(number)s') % {
+                        'name': asset_name,
+                        'number': asset_number
+                    },
                     user=request.user
                 )
                 
                 asset.delete()
-                messages.success(request, f'تم حذف الأصل "{asset_name}" بنجاح')
+                messages.success(request, _('Asset "%(name)s" deleted successfully') % {'name': asset_name})
                 
         except Exception as e:
-            messages.error(request, f'خطأ في حذف الأصل: {str(e)}')
+            messages.error(request, _('Error deleting asset: %(err)s') % {'err': str(e)})
         
         return redirect('assets_liabilities:asset_list')
     
     context = {
         'asset': asset,
-        'page_title': f'حذف الأصل - {asset.name}',
+        'page_title': f'{_("Delete Asset")} - {asset.name}',
     }
     return render(request, 'assets_liabilities/asset_confirm_delete.html', context)
 
 
 @login_required
 def asset_category_list(request):
-    """قائمة فئات الأصول"""
+    """Asset category list"""
     categories = AssetCategory.objects.annotate(
         assets_count=Count('asset')
     ).order_by('type', 'name')
     
     context = {
         'categories': categories,
-        'page_title': 'فئات الأصول',
+        'page_title': _('Asset Categories'),
     }
     return render(request, 'assets_liabilities/asset_category_list.html', context)
 
 
 @login_required
 def asset_category_create(request):
-    """إضافة فئة أصول جديدة"""
+    """Add asset category"""
     if request.method == 'POST':
         form = AssetCategoryForm(request.POST)
         if form.is_valid():
@@ -438,35 +452,38 @@ def asset_category_create(request):
                     category.created_by = request.user
                     category.save()
                     
-                    # تسجيل النشاط
+                    # Log activity
                     from core.signals import log_activity
                     log_activity(
                         action_type='create',
                         obj=category,
-                        description=f'إضافة فئة أصول جديدة: {category.name} - النوع: {category.get_type_display()}',
+                        description=_('Add new asset category: %(name)s - Type: %(type)s') % {
+                            'name': category.name,
+                            'type': category.get_type_display()
+                        },
                         user=request.user
                     )
                     
-                    messages.success(request, f'تم إنشاء فئة الأصول "{category.name}" بنجاح')
+                    messages.success(request, _('Asset category "%(name)s" created successfully') % {'name': category.name})
                     return redirect('assets_liabilities:asset_category_list')
                     
             except Exception as e:
-                messages.error(request, f'خطأ في إنشاء فئة الأصول: {str(e)}')
+                messages.error(request, _('Error creating asset category: %(err)s') % {'err': str(e)})
         else:
-            messages.error(request, 'يرجى تصحيح الأخطاء في النموذج')
+            messages.error(request, _('Please correct the errors in the form'))
     else:
         form = AssetCategoryForm()
     
     context = {
         'form': form,
-        'page_title': 'إضافة فئة أصول جديدة',
+        'page_title': _('Add Asset Category'),
     }
     return render(request, 'assets_liabilities/asset_category_create.html', context)
 
 
 @login_required
 def asset_category_edit(request, pk):
-    """تعديل فئة الأصول"""
+    """Edit asset category"""
     category = get_object_or_404(AssetCategory, pk=pk)
     
     if request.method == 'POST':
@@ -476,29 +493,32 @@ def asset_category_edit(request, pk):
                 with transaction.atomic():
                     updated_category = form.save()
                     
-                    # تسجيل النشاط
+                    # Log activity
                     from core.signals import log_activity
                     log_activity(
                         action_type='update',
                         obj=updated_category,
-                        description=f'تعديل فئة الأصول: {updated_category.name} - النوع: {updated_category.get_type_display()}',
+                        description=_('Edit asset category: %(name)s - Type: %(type)s') % {
+                            'name': updated_category.name,
+                            'type': updated_category.get_type_display()
+                        },
                         user=request.user
                     )
                     
-                    messages.success(request, f'تم تحديث فئة الأصول "{updated_category.name}" بنجاح')
+                    messages.success(request, _('Asset category "%(name)s" updated successfully') % {'name': updated_category.name})
                     return redirect('assets_liabilities:asset_category_list')
                     
             except Exception as e:
-                messages.error(request, f'خطأ في تحديث فئة الأصول: {str(e)}')
+                messages.error(request, _('Error updating asset category: %(err)s') % {'err': str(e)})
         else:
-            messages.error(request, 'يرجى تصحيح الأخطاء في النموذج')
+            messages.error(request, _('Please correct the errors in the form'))
     else:
         form = AssetCategoryForm(instance=category)
     
     context = {
         'form': form,
         'category': category,
-        'page_title': f'تعديل فئة الأصول - {category.name}',
+        'page_title': f'{_("Edit Asset Category")} - {category.name}',
     }
     return render(request, 'assets_liabilities/asset_category_edit.html', context)
 
@@ -542,7 +562,7 @@ def liability_list(request):
     week_from_today = today + timedelta(days=7)
     
     context = {
-        'page_title': _('الخصوم'),
+        'page_title': _('Liabilities'),
         'liabilities': liabilities,
         'categories': categories,
         'status_choices': Liability.STATUS_CHOICES,
@@ -555,7 +575,7 @@ def liability_list(request):
 
 @login_required
 def liability_create(request):
-    """إضافة خصم جديد"""
+    """Add new liability"""
     if request.method == 'POST':
         form = LiabilityForm(request.POST)
         if form.is_valid():
@@ -593,7 +613,7 @@ def liability_create(request):
 
 @login_required
 def liability_detail(request, liability_id):
-    """تفاصيل الخصم"""
+    """Liability details"""
     liability = get_object_or_404(Liability.objects.select_related('category', 'created_by', 'currency'), id=liability_id)
     
     context = {
@@ -605,7 +625,7 @@ def liability_detail(request, liability_id):
 
 @login_required
 def depreciation_create(request, asset_id):
-    """إضافة قيد إهلاك جديد"""
+    """Add depreciation entry"""
     asset = get_object_or_404(Asset, id=asset_id)
     
     if request.method == 'POST':
@@ -644,7 +664,7 @@ def depreciation_create(request, asset_id):
 
 @login_required
 def category_create_ajax(request):
-    """إنشاء فئة أصل جديدة عبر AJAX"""
+    """Create asset category via AJAX"""
     if request.method == 'POST':
         try:
             # التحقق من البيانات المرسلة عبر FormData
@@ -655,14 +675,14 @@ def category_create_ajax(request):
             if not name:
                 return JsonResponse({
                     'success': False,
-                    'error': 'اسم الفئة مطلوب'
+                    'error': _('Category name is required')
                 })
             
             # التحقق من عدم وجود فئة بنفس الاسم
             if AssetCategory.objects.filter(name=name).exists():
                 return JsonResponse({
                     'success': False,
-                    'error': 'فئة بهذا الاسم موجودة مسبقاً'
+                    'error': _('A category with this name already exists')
                 })
             
             # إنشاء الفئة الجديدة
@@ -673,18 +693,18 @@ def category_create_ajax(request):
                 created_by=request.user
             )
             
-            # تسجيل النشاط
+            # Log activity
             from core.signals import log_activity
             log_activity(
                 action_type='create',
                 obj=category,
-                description=f'إضافة فئة أصل جديدة: {category.name}',
+                description=_('Add new asset category: %(name)s') % {'name': category.name},
                 user=request.user
             )
             
             return JsonResponse({
                 'success': True,
-                'message': f'تم إنشاء الفئة "{category.name}" بنجاح',
+                'message': _('Category "%(name)s" created successfully') % {'name': category.name},
                 'category': {
                     'id': category.pk,
                     'name': category.name
@@ -706,7 +726,7 @@ def category_create_ajax(request):
 
 @login_required
 def liability_category_create_ajax(request):
-    """إنشاء فئة خصم جديدة عبر AJAX"""
+    """Create liability category via AJAX"""
     if request.method == 'POST':
         try:
             # التحقق من البيانات المرسلة عبر FormData
@@ -717,14 +737,14 @@ def liability_category_create_ajax(request):
             if not name:
                 return JsonResponse({
                     'success': False,
-                    'error': 'اسم الفئة مطلوب'
+                    'error': _('Category name is required')
                 })
             
             # التحقق من عدم وجود فئة بنفس الاسم
             if LiabilityCategory.objects.filter(name=name).exists():
                 return JsonResponse({
                     'success': False,
-                    'error': 'فئة بهذا الاسم موجودة مسبقاً'
+                    'error': _('A category with this name already exists')
                 })
             
             # إنشاء الفئة الجديدة
@@ -735,17 +755,17 @@ def liability_category_create_ajax(request):
                 created_by=request.user
             )
             
-            # تسجيل النشاط
+            # Log activity
             from core.signals import log_activity
             log_activity(
                 action_type='create',
                 obj=category,
-                description=f'إضافة فئة خصم جديدة: {category.name}',
+                description=_('Add new liability category: %(name)s') % {'name': category.name},
                 user=request.user
             )
             return JsonResponse({
                 'success': True,
-                'message': f'تم إنشاء الفئة "{category.name}" بنجاح',
+                'message': _('Category "%(name)s" created successfully') % {'name': category.name},
                 'category': {
                     'id': category.pk,
                     'name': category.name

@@ -915,7 +915,12 @@ class ProfitLossReportView(LoginRequiredMixin, TemplateView):
         )
         
         for voucher in payment_vouchers:
-            expense_type = voucher.expense_type or _('General Expenses')
+            # PaymentVoucher does not have `expense_type` field; use `voucher_type` display
+            try:
+                expense_type = voucher.get_voucher_type_display() if hasattr(voucher, 'get_voucher_type_display') else (voucher.voucher_type or _('General Expenses'))
+            except Exception:
+                expense_type = getattr(voucher, 'voucher_type', None) or _('General Expenses')
+
             if expense_type not in operating_expenses:
                 operating_expenses[expense_type] = Decimal('0')
             operating_expenses[expense_type] += voucher.amount
