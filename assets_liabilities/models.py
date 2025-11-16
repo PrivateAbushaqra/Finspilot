@@ -41,6 +41,13 @@ class AssetCategory(models.Model):
         verbose_name = _('Asset Category')
         verbose_name_plural = _('Asset Categories')
         ordering = ['type', 'name']
+        default_permissions = []  # No default permissions
+        permissions = [
+            ("can_view_asset_categories", _("View Asset Categories")),
+            ("can_add_asset_categories", _("Add Asset Categories")),
+            ("can_edit_asset_categories", _("Edit Asset Categories")),
+            ("can_delete_asset_categories", _("Delete Asset Categories")),
+        ]
     
     def __str__(self):
         return f"{self.get_type_display()} - {self.name}"
@@ -93,6 +100,13 @@ class Asset(models.Model):
         verbose_name = _('Asset')
         verbose_name_plural = _('Assets')
         ordering = ['-purchase_date']
+        default_permissions = []  # No default permissions
+        permissions = [
+            ("can_view_assets", _("View Assets")),
+            ("can_add_assets", _("Add Assets")),
+            ("can_edit_assets", _("Edit Assets")),
+            ("can_delete_assets", _("Delete Assets")),
+        ]
     
     def __str__(self):
         return f"{self.asset_number} - {self.name}"
@@ -148,6 +162,13 @@ class LiabilityCategory(models.Model):
         verbose_name = _('Liability Category')
         verbose_name_plural = _('Liability Categories')
         ordering = ['type', 'name']
+        default_permissions = []  # No default permissions
+        permissions = [
+            ("can_view_liability_categories", _("View Liability Categories")),
+            ("can_add_liability_categories", _("Add Liability Categories")),
+            ("can_edit_liability_categories", _("Edit Liability Categories")),
+            ("can_delete_liability_categories", _("Delete Liability Categories")),
+        ]
     
     def __str__(self):
         return f"{self.get_type_display()} - {self.name}"
@@ -197,6 +218,13 @@ class Liability(models.Model):
         verbose_name = _('Liability')
         verbose_name_plural = _('Liabilities')
         ordering = ['due_date']
+        default_permissions = []  # No default permissions
+        permissions = [
+            ("can_view_liabilities", _("View Liabilities")),
+            ("can_add_liabilities", _("Add Liabilities")),
+            ("can_edit_liabilities", _("Edit Liabilities")),
+            ("can_delete_liabilities", _("Delete Liabilities")),
+        ]
     
     def __str__(self):
         return f"{self.liability_number} - {self.name}"
@@ -247,6 +275,13 @@ class DepreciationEntry(models.Model):
         verbose_name = _('Depreciation Entry')
         verbose_name_plural = _('Depreciation Entries')
         ordering = ['-depreciation_date']
+        default_permissions = []
+        permissions = [
+            ('can_view_depreciation_entries', _('View Depreciation Entries')),
+            ('can_add_depreciation_entries', _('Add Depreciation Entries')),
+            ('can_edit_depreciation_entries', _('Edit Depreciation Entries')),
+            ('can_delete_depreciation_entries', _('Delete Depreciation Entries')),
+        ]
     
     def __str__(self):
         return f"{self.asset.name} - {self.depreciation_date} - {self.depreciation_amount}"

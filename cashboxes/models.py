@@ -22,12 +22,13 @@ class Cashbox(models.Model):
         verbose_name = _('Cash Box')
         verbose_name_plural = _('Cash Boxes')
         ordering = ['name']
+        default_permissions = []  # No default permissions
         permissions = [
-            ('can_view_cashboxes', _('Cash boxes can be displayed')),
-            ('can_add_cashboxes', _('Cash boxes can be added')),
-            ('can_edit_cashboxes', _('Cash boxes can be edited')),
-            ('can_delete_cashboxes', _('Cash boxes can be deleted')),
-            ('can_modify_cashbox', _('Cash box can be modified')),
+            ("can_view_cashboxes", "Can View Cash Boxes"),
+            ("can_add_cashboxes", "Can Add Cash Boxes"),
+            ("can_create_cashboxes_transfers", "Can Create Cashbox Transfera"),
+            ("can_edit_cashboxes", "Can Edit Cash Boxes"),
+            ("can_delete_cashboxes", "Can Delete Cash Boxes"),
         ]
 
     def __str__(self):
@@ -146,6 +147,7 @@ class CashboxTransfer(models.Model):
         verbose_name = _('Cashbox Transfer')
         verbose_name_plural = _('Cashbox Transfers')
         ordering = ['-date', '-transfer_number']
+        default_permissions = []  # No permissions needed - available to everyone
 
     def __str__(self):
         from_name = self.get_from_display_name()
@@ -328,6 +330,7 @@ class CashboxTransaction(models.Model):
         verbose_name = _('Cashbox Transaction')
         verbose_name_plural = _('Cashbox Transactions')
         ordering = ['-date', '-created_at']
+        default_permissions = []  # No permissions needed - available to everyone
 
     def __str__(self):
         return f"{self.cashbox.name} - {self.get_transaction_type_display()} - {self.amount}"

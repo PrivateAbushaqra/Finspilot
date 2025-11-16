@@ -54,9 +54,13 @@ def journal_dashboard(request):
 
 
 @login_required
-@permission_required('journal.view_journalaccount', raise_exception=True)
 def account_list(request):
     """قائمة الحسابات"""
+    # التحقق من الصلاحية
+    if not (request.user.has_perm('journal.can_view_accounts') or request.user.has_perm('journal.view_account')):
+        messages.error(request, _('You do not have permission to view accounts'))
+        return redirect('core:dashboard')
+    
     accounts = Account.objects.filter(is_active=True)
     
     # البحث
@@ -211,9 +215,13 @@ def export_accounts_excel(request):
     return response
 
 @login_required
-@permission_required('journal.add_journalaccount', raise_exception=True)
 def account_create(request):
     """إنشاء حساب جديد"""
+    # التحقق من الصلاحية
+    if not (request.user.has_perm('journal.can_add_accounts') or request.user.has_perm('journal.add_account')):
+        messages.error(request, _('You do not have permission to add accounts'))
+        return redirect('journal:account_list')
+    
     is_modal = request.GET.get('modal') == '1'
 
     # تسجيل فتح نموذج الإنشاء (بما في ذلك منبثق)
@@ -278,6 +286,11 @@ def account_create(request):
 @login_required
 def account_edit(request, pk):
     """تعديل حساب"""
+    # التحقق من الصلاحية
+    if not (request.user.has_perm('journal.can_edit_accounts') or request.user.has_perm('journal.change_account')):
+        messages.error(request, _('You do not have permission to edit accounts'))
+        return redirect('journal:account_list')
+    
     account = get_object_or_404(Account, pk=pk)
     old_parent = account.parent  # حفظ parent القديم
     
@@ -331,7 +344,7 @@ def account_delete(request, pk):
     account = get_object_or_404(Account, pk=pk)
     
     # التحقق من الصلاحيات
-    if not (request.user.is_superuser or request.user.has_perm('users.can_delete_accounts')):
+    if not (request.user.has_perm('journal.can_delete_accounts') or request.user.has_perm('journal.delete_account')):
         messages.error(request, _('You do not have permission to delete accounts'))
         return redirect('journal:account_list')
     
@@ -427,6 +440,11 @@ def account_detail(request, pk):
 @login_required
 def journal_entry_list(request):
     """قائمة القيود المحاسبية"""
+    # التحقق من الصلاحية
+    if not (request.user.has_perm('journal.can_view_journal_entries') or request.user.has_perm('journal.view_journalentry')):
+        messages.error(request, _('You do not have permission to view journal entries'))
+        return redirect('core:dashboard')
+    
     entries = JournalEntry.objects.all().order_by('-entry_date', '-created_at')
     
     # البحث والتصفية
@@ -475,6 +493,11 @@ def journal_entry_list(request):
 @login_required
 def journal_entry_create(request):
     """إنشاء قيد محاسبي جديد"""
+    # التحقق من الصلاحية
+    if not (request.user.has_perm('journal.can_add_journal_entries') or request.user.has_perm('journal.add_journalentry')):
+        messages.error(request, _('You do not have permission to add journal entries'))
+        return redirect('journal:entry_list')
+    
     # سجل النشاط: فتح صفحة إنشاء القيد
     try:
         class Obj:
@@ -712,9 +735,13 @@ def test_accounts(request):
 
 
 @login_required
-@permission_required('journal.change_journalentry', raise_exception=True)
 def journal_entry_edit(request, pk):
     """تعديل قيد محاسبي"""
+    # التحقق من الصلاحية
+    if not (request.user.has_perm('journal.can_edit_journal_entries') or request.user.has_perm('journal.change_journalentry')):
+        messages.error(request, _('You do not have permission to edit journal entries'))
+        return redirect('journal:entry_list')
+    
     entry = get_object_or_404(JournalEntry, pk=pk)
     if request.method == 'POST':
         form = JournalEntryForm(request.POST, instance=entry, user=request.user)
@@ -1007,7 +1034,7 @@ def journal_entry_detail_with_lines(request, pk):
 def delete_journal_entry(request, pk):
     """حذف قيد محاسبي (للمشرفين العليين فقط)"""
     # التحقق من صلاحيات المستخدم
-    if not request.user.has_perm('journal.delete_journalentry'):
+    if not (request.user.has_perm('journal.can_delete_journal_entries') or request.user.has_perm('journal.delete_journalentry')):
         messages.error(request, _('You do not have permission to delete journal entries.'))
         return redirect('journal:entry_list')
     
@@ -1263,3 +1290,170 @@ def fix_account_hierarchy(request):
             )
     
     return redirect('journal:account_list')
+
+
+@login_required
+def open_new_fiscal_year(request):
+    """صفحة فتح سنة مالية جديدة"""
+    from .models import FiscalYear, YearEndClosing
+    from django.db.models import Sum, Q
+    from datetime import datetime
+    
+    # التحقق من الصلاحيات
+    user = request.user
+    has_perm = (
+        getattr(user, 'is_superuser', False) or
+        getattr(user, 'user_type', None) in ['superadmin', 'admin'] or
+        user.has_perm('journal.can_open_fiscal_year')
+    )
+    if not has_perm:
+        from django.core.exceptions import PermissionDenied
+        raise PermissionDenied
+    
+    # الحصول على السنة الحالية والسابقة
+    current_fiscal_year = FiscalYear.objects.filter(is_current=True).first()
+    previous_closing = YearEndClosing.objects.filter(status='completed').order_by('-year').first()
+    
+    if request.method == 'POST':
+        year = request.POST.get('year')
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+        
+        try:
+            year = int(year)
+            start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+            end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+            
+            # التحقق من عدم وجود سنة مالية بنفس الرقم
+            if FiscalYear.objects.filter(year=year).exists():
+                messages.error(request, _('Fiscal year already exists'))
+                return redirect('journal:open_new_fiscal_year')
+            
+            # إنشاء السنة الجديدة
+            new_fiscal_year = FiscalYear.objects.create(
+                year=year,
+                start_date=start_date,
+                end_date=end_date,
+                status='active',
+                is_current=True,  # تصبح السنة الحالية
+                created_by=request.user
+            )
+            
+            # إذا كان هناك إقفال سابق، إنشاء الأرصدة الافتتاحية
+            if previous_closing:
+                # البحث عن السنة المالية السابقة
+                try:
+                    previous_year = FiscalYear.objects.get(year=year-1)
+                    success, message = new_fiscal_year.create_opening_balances(previous_year)
+                    if success:
+                        messages.success(request, _('Fiscal year opened successfully with opening balances'))
+                    else:
+                        messages.warning(request, f"{_('Fiscal year opened but')}: {message}")
+                except FiscalYear.DoesNotExist:
+                    messages.warning(request, _('Fiscal year opened but previous year not found for opening balances'))
+            else:
+                messages.success(request, _('Fiscal year opened successfully'))
+            
+            # تسجيل النشاط
+            try:
+                from core.signals import log_view_activity
+                class FYObj:
+                    id = new_fiscal_year.id
+                    pk = new_fiscal_year.pk
+                    def __str__(self):
+                        return str(_('Fiscal Year'))
+                log_view_activity(request, 'add', FYObj(), 
+                                f"فتح السنة المالية {year} من {start_date} إلى {end_date}")
+            except Exception:
+                pass
+            
+            return redirect('journal:year_end_closing')
+            
+        except Exception as e:
+            messages.error(request, f"{_('Error opening fiscal year')}: {str(e)}")
+            return redirect('journal:open_new_fiscal_year')
+    
+    # حساب الأرصدة المتوقعة للانتقال
+    opening_balances = []
+    
+    # الحصول على جميع الحسابات (الميزانية العمومية فقط)
+    # يتم عرض الأرصدة سواء كان هناك إقفال سابق أم لا
+    balance_sheet_types = ['asset', 'liability', 'equity']
+    accounts = Account.objects.filter(
+        account_type__in=balance_sheet_types,
+        is_active=True
+    ).order_by('code')
+    
+    for account in accounts:
+        balance = account.get_balance()
+        if balance != 0:
+            # التحقق من وجود حركات
+            has_movements = JournalLine.objects.filter(account=account).exists()
+            if has_movements:
+                opening_balances.append({
+                    'account': account,
+                    'balance': balance,
+                    'debit': abs(balance) if (account.account_type == 'asset' and balance > 0) or (account.account_type in ['liability', 'equity'] and balance < 0) else 0,
+                    'credit': abs(balance) if (account.account_type in ['liability', 'equity'] and balance > 0) or (account.account_type == 'asset' and balance < 0) else 0,
+                })
+    
+    # تجميع حسب الفئات
+    customers_balances = []
+    suppliers_balances = []
+    banks_balances = []
+    cashboxes_balances = []
+    inventory_balances = []
+    other_balances = []
+    
+    for item in opening_balances:
+        account_name = item['account'].name.lower()
+        if 'عميل' in account_name or 'customer' in account_name or 'مدين' in account_name:
+            customers_balances.append(item)
+        elif 'مورد' in account_name or 'supplier' in account_name or 'دائن' in account_name:
+            suppliers_balances.append(item)
+        elif 'بنك' in account_name or 'bank' in account_name:
+            banks_balances.append(item)
+        elif 'صندوق' in account_name or 'cash' in account_name:
+            cashboxes_balances.append(item)
+        elif 'مخزون' in account_name or 'inventory' in account_name or 'مستودع' in account_name:
+            inventory_balances.append(item)
+        else:
+            other_balances.append(item)
+    
+    # الحصول على العملة الأساسية
+    from settings.models import Currency
+    base_currency = Currency.get_base_currency()
+    
+    # حساب الإجماليات
+    total_debit = sum(item['debit'] for item in opening_balances)
+    total_credit = sum(item['credit'] for item in opening_balances)
+    
+    context = {
+        'current_fiscal_year': current_fiscal_year,
+        'previous_closing': previous_closing,
+        'opening_balances': opening_balances,
+        'customers_balances': customers_balances,
+        'suppliers_balances': suppliers_balances,
+        'banks_balances': banks_balances,
+        'cashboxes_balances': cashboxes_balances,
+        'inventory_balances': inventory_balances,
+        'other_balances': other_balances,
+        'total_debit': total_debit,
+        'total_credit': total_credit,
+        'base_currency': base_currency,
+        'suggested_year': (current_fiscal_year.year + 1) if current_fiscal_year else datetime.now().year,
+    }
+    
+    # تسجيل عرض الصفحة
+    try:
+        from core.signals import log_view_activity
+        class PageObj:
+            id = 0
+            pk = 0
+            def __str__(self):
+                return str(_('Open New Fiscal Year Page'))
+        log_view_activity(request, 'view', PageObj(), str(_('Viewing Open New Fiscal Year Page')))
+    except Exception:
+        pass
+    
+    return render(request, 'journal/open_fiscal_year.html', context)

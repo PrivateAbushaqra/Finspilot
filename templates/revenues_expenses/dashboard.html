@@ -87,10 +87,12 @@
                     <i class="fas fa-tags me-2"></i>
                     {% trans "Category Management" %}
                 </h5>
+                {% if perms.revenues_expenses.can_add_categories %}
                 <a href="{% url 'revenues_expenses:category_create' %}" class="btn btn-primary btn-sm">
                     <i class="fas fa-plus me-1"></i>
                     {% trans "Add New Category" %}
                 </a>
+                {% endif %}
             </div>
             <div class="card-body">
                 <div class="list-group">
@@ -98,10 +100,12 @@
                         <i class="fas fa-list me-2"></i>
                         {% trans "View All Categories" %}
                     </a>
+                    {% if perms.revenues_expenses.can_add_categories %}
                     <a href="{% url 'revenues_expenses:category_create' %}" class="list-group-item list-group-item-action">
                         <i class="fas fa-plus me-2"></i>
                         {% trans "Add New Category" %}
                     </a>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -114,10 +118,12 @@
                     <i class="fas fa-file-invoice me-2"></i>
                     {% trans "Entry Management" %}
                 </h5>
+                {% if perms.revenues_expenses.can_add_entries %}
                 <a href="{% url 'revenues_expenses:entry_create' %}" class="btn btn-primary btn-sm">
                     <i class="fas fa-plus me-1"></i>
                     {% trans "Add New Entry" %}
                 </a>
+                {% endif %}
             </div>
             <div class="card-body">
                 <div class="list-group">
@@ -125,17 +131,19 @@
                         <i class="fas fa-list me-2"></i>
                         {% trans "View All Entries" %}
                     </a>
+                    {% if perms.revenues_expenses.can_add_entries %}
                     <a href="{% url 'revenues_expenses:entry_create' %}" class="list-group-item list-group-item-action">
                         <i class="fas fa-plus me-2"></i>
                         {% trans "Add New Entry" %}
                     </a>
+                    {% endif %}
                     <a href="{% url 'revenues_expenses:recurring_list' %}" class="list-group-item list-group-item-action">
                         <i class="fas fa-redo me-2"></i>
                         {% trans "Recurring Revenues and Expenses" %}
                     </a>
                     <a href="{% url 'revenues_expenses:sector_analysis' %}" class="list-group-item list-group-item-action">
                         <i class="fas fa-chart-bar me-2"></i>
-                        {% trans "تحليل القطاعات" %}
+                        {% trans "Sector Analysis" %}
                     </a>
                 </div>
             </div>
@@ -153,13 +161,13 @@
                     {% trans "Latest Added Entries" %}
                 </h5>
                 <div class="btn-group btn-group-sm">
-                    <a href="{% url 'revenues_expenses:dashboard_recent_entries_export_excel' %}" class="btn btn-success btn-sm" title="{% trans 'تصدير إلى Excel' %}">
+                    <a href="{% url 'revenues_expenses:dashboard_recent_entries_export_excel' %}" class="btn btn-success btn-sm" title="{% trans 'Export to Excel' %}">
                         <i class="fas fa-file-excel me-1"></i>
-                        {% trans "تصدير Excel" %}
+                        {% trans "Export Excel" %}
                     </a>
-                    <button onclick="window.print()" class="btn btn-info btn-sm" title="{% trans 'طباعة' %}">
+                    <button onclick="window.print()" class="btn btn-info btn-sm" title="{% trans 'Print' %}">
                         <i class="fas fa-print me-1"></i>
-                        {% trans "طباعة" %}
+                        {% trans "Print" %}
                     </button>
                 </div>
             </div>
@@ -213,10 +221,12 @@
                 <div class="text-center py-4">
                     <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
                     <p class="text-muted">{% trans "No entries added yet" %}</p>
+                    {% if perms.revenues_expenses.can_add_entries %}
                     <a href="{% url 'revenues_expenses:entry_create' %}" class="btn btn-primary">
                         <i class="fas fa-plus me-1"></i>
                         {% trans "Add First Entry" %}
                     </a>
+                    {% endif %}
                 </div>
                 {% endif %}
             </div>

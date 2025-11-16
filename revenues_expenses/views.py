@@ -16,26 +16,26 @@ from settings.models import CompanySettings
 
 @login_required
 def category_edit(request, category_id):
-    """تعديل فئة إيراد/مصروف"""
+    """Edit Revenue/Expense Category"""
     category = get_object_or_404(RevenueExpenseCategory, id=category_id)
-    # حماية الوصول حسب الصلاحية
-    if not request.user.is_admin and not request.user.has_perm('revenues_expenses.change_revenueexpensecategory'):
+    # Access control by permission
+    if not request.user.has_perm('revenues_expenses.can_edit_categories'):
         messages.error(request, _('You do not have permission to edit revenue/expense category'))
-        return redirect('revenues_expenses:category_list')
+        return redirect('core:dashboard')
     if request.method == 'POST':
         form = RevenueExpenseCategoryForm(request.POST, instance=category)
         if form.is_valid():
             old_name = category.name
             form.save()
             
-            # تسجيل في سجل الأنشطة
+            # Audit log
             from core.models import AuditLog
             AuditLog.objects.create(
                 user=request.user,
                 action_type='update',
                 content_type='RevenueExpenseCategory',
                 object_id=category.id,
-                description=f'تعديل فئة: {old_name} -> {category.name}',
+                description=_('Edit category: {old_name} -> {new_name}').format(old_name=old_name, new_name=category.name),
                 ip_address=request.META.get('REMOTE_ADDR')
             )
             
@@ -70,54 +70,54 @@ from settings.models import CompanySettings
 
 
 def create_journal_entry_for_revenue_expense(entry, user):
-    """إنشاء قيد محاسبي لقيد الإيرادات/المصروفات"""
+    """Create journal entry for a revenue/expense entry"""
     from journal.models import JournalEntry, JournalLine, Account
     
-    # البحث عن الحسابات المناسبة
+    # Find appropriate accounting accounts
     if entry.type == 'revenue':
-        # للإيرادات: نقدية مدين، إيرادات دائن
+        # For revenues: cash debit, revenue credit
         if entry.payment_method == 'cash':
-            debit_account = Account.objects.filter(code='1101').first()  # الصندوق
+            debit_account = Account.objects.filter(code='1101').first()  # Cashbox
         elif entry.payment_method == 'bank':
-            debit_account = Account.objects.filter(code='1102').first()  # البنك
+            debit_account = Account.objects.filter(code='1102').first()  # Bank
         else:
-            debit_account = Account.objects.filter(code='1101').first()  # افتراضي صندوق
+            debit_account = Account.objects.filter(code='1101').first()  # Default to cashbox
             
-        # حساب الإيرادات حسب الفئة
+        # Determine revenue account by category
         if 'مبيعات' in entry.category.name:
-            credit_account = Account.objects.filter(code='4001').first()  # إيرادات المبيعات
+            credit_account = Account.objects.filter(code='4001').first()  # Sales revenue
         elif 'خدمات' in entry.category.name:
-            credit_account = Account.objects.filter(code='4002').first()  # إيرادات الخدمات
+            credit_account = Account.objects.filter(code='4002').first()  # Services revenue
         else:
-            credit_account = Account.objects.filter(code='4999').first()  # إيرادات أخرى
+            credit_account = Account.objects.filter(code='4999').first()  # Other revenues
         
     else:  # expense
-        # للمصروفات: مصروفات مدين، نقدية دائن
-        # حساب المصروفات حسب الفئة
+        # For expenses: expense debit, cash credit
+        # Determine expense account by category
         if 'إدارية' in entry.category.name:
-            debit_account = Account.objects.filter(code='5001').first()  # مصروفات إدارية
+            debit_account = Account.objects.filter(code='5001').first()  # Administrative expenses
         elif 'تشغيل' in entry.category.name:
-            debit_account = Account.objects.filter(code='5002').first()  # مصروفات تشغيلية
+            debit_account = Account.objects.filter(code='5002').first()  # Operating expenses
         elif 'رواتب' in entry.category.name:
-            debit_account = Account.objects.filter(code='5003').first()  # الرواتب والأجور
+            debit_account = Account.objects.filter(code='5003').first()  # Salaries and wages
         elif 'إيجار' in entry.category.name:
-            debit_account = Account.objects.filter(code='5004').first()  # الإيجارات
+            debit_account = Account.objects.filter(code='5004').first()  # Rent
         elif 'مرافق' in entry.category.name:
-            debit_account = Account.objects.filter(code='5005').first()  # المرافق
+            debit_account = Account.objects.filter(code='5005').first()  # Utilities
         else:
-            debit_account = Account.objects.filter(code='5999').first()  # مصروفات أخرى
+            debit_account = Account.objects.filter(code='5999').first()  # Other expenses
         
         if entry.payment_method == 'cash':
-            credit_account = Account.objects.filter(code='1101').first()  # الصندوق
+            credit_account = Account.objects.filter(code='1101').first()  # Cashbox
         elif entry.payment_method == 'bank':
-            credit_account = Account.objects.filter(code='1102').first()  # البنك
+            credit_account = Account.objects.filter(code='1102').first()  # Bank
         else:
-            credit_account = Account.objects.filter(code='1101').first()  # افتراضي صندوق
+            credit_account = Account.objects.filter(code='1101').first()  # Default to cashbox
     
     if not debit_account or not credit_account:
         raise Exception(_('Appropriate accounting accounts not found'))
     
-    # إنشاء القيد المحاسبي
+    # Create the journal entry
     journal_entry = JournalEntry.objects.create(
         entry_date=entry.date,
         description=f'{entry.get_type_display()} - {entry.category.name} - {entry.description}',
@@ -127,7 +127,7 @@ def create_journal_entry_for_revenue_expense(entry, user):
         created_by=user
     )
     
-    # إنشاء بنود القيد
+    # Create journal lines
     JournalLine.objects.create(
         journal_entry=journal_entry,
         account=debit_account,
@@ -150,17 +150,17 @@ def create_journal_entry_for_revenue_expense(entry, user):
 @login_required
 def revenue_expense_dashboard(request):
     """{% trans "Revenues and Expenses Dashboard" %}"""
-    # الحصول على العملة الأساسية
+    # Get base currency
     company_settings = CompanySettings.objects.first()
     base_currency = company_settings.base_currency if company_settings else None
     
-    # الإحصائيات من النظام المحاسبي الرئيسي (IFRS Compliant)
+    # Statistics from the main accounting system (IFRS Compliant)
     current_month = date.today().month
     current_year = date.today().year
     
     from journal.models import JournalEntry, JournalLine, Account
     
-    # حساب الإيرادات من القيود المحاسبية
+    # Compute revenues from journal lines
     monthly_revenues = JournalLine.objects.filter(
         account__account_type='revenue',
         journal_entry__entry_date__month=current_month,
@@ -175,7 +175,7 @@ def revenue_expense_dashboard(request):
         debit__gt=0
     ).aggregate(total=Sum('debit'))['total'] or 0
     
-    # الإحصائيات السنوية
+    # Yearly statistics
     yearly_revenues = JournalLine.objects.filter(
         account__account_type='revenue',
         journal_entry__entry_date__year=current_year,
@@ -188,7 +188,7 @@ def revenue_expense_dashboard(request):
         debit__gt=0
     ).aggregate(total=Sum('debit'))['total'] or 0
     
-    # إجمالي الإيرادات والمصروفات من جميع الأوقات
+    # Total revenues and expenses from all time
     total_revenues = JournalLine.objects.filter(
         account__account_type='revenue',
         credit__gt=0
@@ -199,13 +199,13 @@ def revenue_expense_dashboard(request):
         debit__gt=0
     ).aggregate(total=Sum('debit'))['total'] or 0
     
-    # عدد القيود المحاسبية
+    # Count of journal entries
     entries_count = JournalEntry.objects.count()
     
-    # آخر القيود المحاسبية
+    # Recent journal entries
     recent_entries = JournalEntry.objects.select_related('created_by').order_by('-entry_date', '-id')[:10]
     
-    # العمليات المتكررة المستحقة (من نظام revenues_expenses إذا كان موجوداً)
+    # Pending recurring items (from revenues_expenses if present)
     pending_recurring = RecurringRevenueExpense.objects.filter(
         is_active=True,
         next_due_date__lte=date.today()
@@ -234,12 +234,12 @@ def revenue_expense_dashboard(request):
 @login_required
 def category_list(request):
     """{% trans "Revenue/Expense Categories List" %}"""
-    # حماية الوصول حسب الصلاحية (دالة مخصصة)
-    if not request.user.has_revenueexpensecategory_view_permission():
+    # Access control by permission
+    if not request.user.has_perm('revenues_expenses.can_view_categories'):
         messages.error(request, _('You do not have permission to view revenue/expense category'))
-        return redirect('revenues_expenses:dashboard')
+        return redirect('core:dashboard')
     categories = RevenueExpenseCategory.objects.filter(is_active=True).select_related('created_by')
-    # التصفية
+    # Filtering
     category_type = request.GET.get('type')
     if category_type:
         categories = categories.filter(type=category_type)
@@ -249,7 +249,7 @@ def category_list(request):
             Q(name__icontains=search) |
             Q(description__icontains=search)
         )
-    # الترقيم
+    # Pagination
     paginator = Paginator(categories, 25)
     page_number = request.GET.get('page')
     categories = paginator.get_page(page_number)
@@ -264,8 +264,8 @@ def category_list(request):
 @login_required
 def category_create(request):
     """{% trans "Add New Category" %}"""
-    # حماية الوصول حسب الصلاحية
-    if not request.user.is_admin and not request.user.has_revenueexpensecategory_add_permission():
+    # Access control by permission
+    if not request.user.has_perm('revenues_expenses.can_add_categories'):
         messages.error(request, _('You do not have permission to add revenue/expense category'))
         return redirect('revenues_expenses:category_list')
     if request.method == 'POST':
@@ -275,14 +275,14 @@ def category_create(request):
             category.created_by = request.user
             category.save()
             
-            # تسجيل في سجل الأنشطة
+            # Audit log
             from core.models import AuditLog
             AuditLog.objects.create(
                 user=request.user,
                 action_type='create',
                 content_type='RevenueExpenseCategory',
                 object_id=category.id,
-                description=f'إنشاء فئة جديدة: {category.name}',
+                description=_('Create new category: {name}').format(name=category.name),
                 ip_address=request.META.get('REMOTE_ADDR')
             )
             
@@ -303,10 +303,10 @@ def category_create(request):
 def category_delete(request, category_id):
     """{% trans "Delete Revenue/Expense Category" %}"""
     category = get_object_or_404(RevenueExpenseCategory, id=category_id)
-    # حماية الوصول حسب الصلاحية
-    if not request.user.is_admin and not request.user.has_perm('revenues_expenses.delete_revenueexpensecategory'):
+    # Access control by permission
+    if not request.user.has_perm('revenues_expenses.can_delete_categories'):
         messages.error(request, _('You do not have permission to delete revenue/expense category'))
-        return redirect('revenues_expenses:category_list')
+        return redirect('core:dashboard')
     if request.method == 'POST':
         category.is_active = False
         category.save()
@@ -322,10 +322,10 @@ def category_delete(request, category_id):
 @login_required
 def entry_create(request):
     """{% trans "Add New Entry" %}"""
-    # حماية الوصول حسب الصلاحية
-    if not request.user.is_admin and not request.user.has_revenueexpenseentry_add_permission():
+    # Access control by permission
+    if not request.user.has_perm('revenues_expenses.can_add_entries'):
         messages.error(request, _('You do not have permission to add revenue/expense entry'))
-        return redirect('revenues_expenses:entry_list')
+        return redirect('core:dashboard')
     if request.method == 'POST':
         form = RevenueExpenseEntryForm(request.POST)
         if form.is_valid():
@@ -347,11 +347,11 @@ def entry_create(request):
 
 @login_required
 def entry_delete(request, entry_id):
-    """حذف قيد الإيراد/المصروف"""
+    """Delete Revenue/Expense Entry"""
     entry = get_object_or_404(RevenueExpenseEntry, id=entry_id)
-    if not request.user.is_admin and not request.user.has_perm('revenues_expenses.delete_revenueexpenseentry'):
+    if not request.user.has_perm('revenues_expenses.can_delete_entries'):
         messages.error(request, _('You do not have permission to delete revenue/expense entry'))
-        return redirect('revenues_expenses:entry_list')
+        return redirect('core:dashboard')
     if request.method == 'POST':
         entry.delete()
         messages.success(request, _('Entry deleted successfully'))
@@ -365,11 +365,11 @@ def entry_delete(request, entry_id):
 
 @login_required
 def entry_edit(request, entry_id):
-    """تعديل قيد الإيراد/المصروف"""
+    """Edit Revenue/Expense Entry"""
     entry = get_object_or_404(RevenueExpenseEntry, id=entry_id)
-    if not request.user.is_admin and not request.user.has_perm('revenues_expenses.change_revenueexpenseentry'):
+    if not request.user.has_perm('revenues_expenses.can_edit_entries'):
         messages.error(request, _('You do not have permission to edit revenue/expense entry'))
-        return redirect('revenues_expenses:entry_list')
+        return redirect('core:dashboard')
     if request.method == 'POST':
         form = RevenueExpenseEntryForm(request.POST, instance=entry)
         if form.is_valid():
@@ -390,18 +390,18 @@ def entry_edit(request, entry_id):
 
 @login_required
 def entry_detail(request, entry_id):
-    """تفاصيل القيد"""
+    """Entry details"""
     entry = get_object_or_404(RevenueExpenseEntry.objects.select_related('category', 'created_by', 'approved_by', 'currency'), id=entry_id)
     context = {
         'entry': entry,
-        'page_title': f'{_("تفاصيل القيد")} - {entry.entry_number}',
+        'page_title': f'{_("Entry Details")} - {entry.entry_number}',
     }
     return render(request, 'revenues_expenses/entry_detail.html', context)
 
 
 @login_required
 def entry_approve(request, entry_id):
-    """اعتماد القيد"""
+    """Approve Entry"""
     entry = get_object_or_404(RevenueExpenseEntry, id=entry_id)
     if not entry.is_approved:
         entry.is_approved = True
@@ -414,12 +414,12 @@ def entry_approve(request, entry_id):
 
 @login_required
 def recurring_list(request):
-    """قائمة الإيرادات والمصروفات المتكررة"""
+    """Recurring Revenues and Expenses List"""
     recurring_items = RecurringRevenueExpense.objects.select_related(
         'category', 'created_by', 'currency'
     ).order_by('-created_at')
     
-    # التصفية
+    # Filtering
     category_type = request.GET.get('type')
     if category_type:
         recurring_items = recurring_items.filter(category__type=category_type)
@@ -445,15 +445,15 @@ def recurring_list(request):
             Q(description__icontains=search)
         )
     
-    # الترقيم
+    # Pagination
     paginator = Paginator(recurring_items, 25)
     page_number = request.GET.get('page')
     recurring_items = paginator.get_page(page_number)
     
-    # البيانات للتصفية
+    # Data for filtering
     categories = RevenueExpenseCategory.objects.filter(is_active=True).order_by('name')
     
-    # إحصائيات
+    # Statistics
     total_recurring = RecurringRevenueExpense.objects.filter(is_active=True).count()
     overdue_count = RecurringRevenueExpense.objects.filter(
         is_active=True,
@@ -479,7 +479,7 @@ def recurring_list(request):
 
 @login_required
 def recurring_create(request):
-    """إضافة إيراد/مصروف متكرر"""
+    """Add Recurring Revenue/Expense"""
     if request.method == 'POST':
         form = RecurringRevenueExpenseForm(request.POST)
         if form.is_valid():
@@ -487,7 +487,7 @@ def recurring_create(request):
                 recurring = form.save(commit=False)
                 recurring.created_by = request.user
                 
-                # حساب التاريخ المستحق التالي
+                # Calculate next due date
                 from dateutil.relativedelta import relativedelta
                 start_date = recurring.start_date
                 
@@ -508,12 +508,12 @@ def recurring_create(request):
                 
                 recurring.save()
                 
-                # تسجيل النشاط
+                # Log activity
                 from core.signals import log_activity
                 log_activity(
                     action_type='create',
                     obj=recurring,
-                    description=f'إضافة إيراد/مصروف متكرر جديد: {recurring.name}',
+                    description=_('Add recurring revenue/expense: {name}').format(name=recurring.name),
                     user=request.user
                 )
                 
@@ -533,16 +533,16 @@ def recurring_create(request):
 
 @login_required
 def recurring_detail(request, recurring_id):
-    """تفاصيل الإيراد/المصروف المتكرر"""
+    """Recurring Revenue/Expense Details"""
     recurring = get_object_or_404(RecurringRevenueExpense, id=recurring_id)
     
-    # الحصول على القيود المولدة من هذا المتكرر
+    # Get entries generated from this recurring
     generated_entries = RevenueExpenseEntry.objects.filter(
-        description__icontains=f"متكرر #{recurring.id}"
+        description__icontains=f"Generated from recurring #{recurring.id}"
     ).order_by('-date')
     
     context = {
-        'page_title': f'{recurring.name} - {_("تفاصيل الإيراد/المصروف المتكرر")}',
+        'page_title': f'{recurring.name} - {_("Recurring Revenue/Expense Details")}',
         'recurring': recurring,
         'generated_entries': generated_entries,
     }
@@ -551,7 +551,7 @@ def recurring_detail(request, recurring_id):
 
 @login_required
 def recurring_edit(request, recurring_id):
-    """تعديل الإيراد/المصروف المتكرر"""
+    """Edit Recurring Revenue/Expense"""
     recurring = get_object_or_404(RecurringRevenueExpense, id=recurring_id)
     
     if request.method == 'POST':
@@ -560,12 +560,12 @@ def recurring_edit(request, recurring_id):
             with transaction.atomic():
                 updated_recurring = form.save()
                 
-                # تسجيل النشاط
+                # Log activity
                 from core.signals import log_activity
                 log_activity(
                     action_type='update',
                     obj=updated_recurring,
-                    description=f'تعديل الإيراد/المصروف المتكرر: {updated_recurring.name}',
+                    description=_('Edit recurring revenue/expense: {name}').format(name=updated_recurring.name),
                     user=request.user
                 )
                 
@@ -579,32 +579,32 @@ def recurring_edit(request, recurring_id):
     context = {
         'form': form,
         'recurring': recurring,
-        'page_title': f'{recurring.name} - {_("تعديل الإيراد/المصروف المتكرر")}',
+        'page_title': f'{recurring.name} - {_("Edit Recurring Revenue/Expense")}',
     }
     return render(request, 'revenues_expenses/recurring_edit.html', context)
 
 
 @login_required
 def recurring_delete(request, recurring_id):
-    """حذف الإيراد/المصروف المتكرر"""
+    """Delete Recurring Revenue/Expense"""
     recurring = get_object_or_404(RecurringRevenueExpense, id=recurring_id)
     
     if request.method == 'POST':
         with transaction.atomic():
             recurring_name = recurring.name
             
-            # تسجيل النشاط قبل الحذف
+            # Log activity before deletion
             from core.signals import log_activity
             log_activity(
                 action_type='delete',
                 obj=None,
-                description=f'حذف الإيراد/المصروف المتكرر: {recurring_name}',
+                description=_('Delete recurring revenue/expense: {name}').format(name=recurring_name),
                 user=request.user
             )
             
             recurring.delete()
             
-            messages.success(request, f'تم حذف الإيراد/المصروف المتكرر "{recurring_name}" بنجاح')
+            messages.success(request, _('Recurring revenue/expense "{name}" deleted successfully').format(name=recurring_name))
             return redirect('revenues_expenses:recurring_list')
     
     return redirect('revenues_expenses:recurring_detail', recurring_id=recurring_id)
@@ -612,7 +612,7 @@ def recurring_delete(request, recurring_id):
 
 @login_required
 def recurring_toggle_status(request, recurring_id):
-    """تفعيل/إلغاء تفعيل الإيراد/المصروف المتكرر"""
+    """Toggle Recurring Revenue/Expense Status"""
     recurring = get_object_or_404(RecurringRevenueExpense, id=recurring_id)
     
     if request.method == 'POST':
@@ -620,45 +620,48 @@ def recurring_toggle_status(request, recurring_id):
             recurring.is_active = not recurring.is_active
             recurring.save()
             
-            status_text = 'تفعيل' if recurring.is_active else 'إلغاء تفعيل'
-            
-            # تسجيل النشاط
+            if recurring.is_active:
+                action_description = _('Activated recurring revenue/expense: {name}').format(name=recurring.name)
+                messages.success(request, _('Recurring revenue/expense {name} activated successfully').format(name=recurring.name))
+            else:
+                action_description = _('Deactivated recurring revenue/expense: {name}').format(name=recurring.name)
+                messages.success(request, _('Recurring revenue/expense {name} deactivated successfully').format(name=recurring.name))
+
+            # Audit log
             from core.signals import log_activity
             log_activity(
                 action_type='update',
                 obj=recurring,
-                description=f'{status_text} الإيراد/المصروف المتكرر: {recurring.name}',
+                description=action_description,
                 user=request.user
             )
-            
-            messages.success(request, f'تم {status_text} الإيراد/المصروف المتكرر بنجاح')
     
     return redirect('revenues_expenses:recurring_detail', recurring_id=recurring_id)
 
 
 @login_required
 def recurring_generate_entry(request, recurring_id):
-    """توليد قيد من الإيراد/المصروف المتكرر يدوياً"""
+    """Generate Journal Entry From Recurring Revenue/Expense Manually"""
     recurring = get_object_or_404(RecurringRevenueExpense, id=recurring_id)
     
     if request.method == 'POST':
         with transaction.atomic():
-            # إنشاء قيد جديد من المتكرر
+            # Create a new entry from the recurring
             entry = RevenueExpenseEntry.objects.create(
                 type=recurring.category.type,
                 category=recurring.category,
                 amount=recurring.amount,
                 currency=recurring.currency,
-                description=f"{recurring.description}\n(مولد من متكرر #{recurring.id}: {recurring.name})",
+                description=f"{recurring.description}\n(Generated from recurring #{recurring.id}: {recurring.name})",
                 payment_method=recurring.payment_method,
                 date=date.today(),
                 created_by=request.user
             )
             
-            # تحديث آخر تاريخ توليد
+            # Update last generated date
             recurring.last_generated = date.today()
             
-            # حساب التاريخ المستحق التالي
+                # Calculate next due date (recurrence)
             from dateutil.relativedelta import relativedelta
             
             if recurring.frequency == 'daily':
@@ -676,16 +679,16 @@ def recurring_generate_entry(request, recurring_id):
             
             recurring.save()
             
-            # تسجيل النشاط
+            # Log activity
             from core.signals import log_activity
             log_activity(
                 action_type='create',
                 obj=entry,
-                description=f'توليد قيد من المتكرر: {recurring.name} - رقم القيد: {entry.entry_number}',
+                description=_('Generated journal entry from recurring: {name} - Entry Number: {num}').format(name=recurring.name, num=entry.entry_number),
                 user=request.user
             )
             
-            messages.success(request, f'تم توليد القيد {entry.entry_number} من الإيراد/المصروف المتكرر بنجاح')
+            messages.success(request, _('Generated journal entry {num} from recurring revenue/expense successfully').format(num=entry.entry_number))
             return redirect('revenues_expenses:entry_detail', entry_id=entry.id)
     
     return redirect('revenues_expenses:recurring_detail', recurring_id=recurring_id)
@@ -693,11 +696,11 @@ def recurring_generate_entry(request, recurring_id):
 
 @login_required
 def entry_detail(request, entry_id):
-    """تفاصيل قيد الإيرادات/المصروفات"""
+    """Revenue/Expense Entry Details"""
     entry = get_object_or_404(RevenueExpenseEntry, id=entry_id)
     
     context = {
-        'page_title': f'{entry.entry_number} - {_("تفاصيل القيد")}',
+        'page_title': f'{entry.entry_number} - {_("Entry Details")}',
         'entry': entry,
     }
     return render(request, 'revenues_expenses/entry_detail.html', context)
@@ -705,18 +708,18 @@ def entry_detail(request, entry_id):
 
 @login_required
 def entry_list(request):
-    """قائمة قيود الإيرادات والمصروفات"""
-    # التحقق من الصلاحيات
-    if not request.user.has_revenueexpenseentry_view_permission():
+    """Revenue/Expense Entries List"""
+    # Permission check
+    if not request.user.has_perm('revenues_expenses.can_view_entries'):
         messages.error(request, _('You do not have permission to view revenue and expense entries'))
-        return redirect('revenues_expenses:dashboard')
+        return redirect('core:dashboard')
     
-    # الحصول على القيود
+    # Fetch entries
     entries = RevenueExpenseEntry.objects.select_related(
         'category', 'created_by', 'approved_by', 'currency'
     ).order_by('-date', '-created_at')
     
-    # التصفية
+    # Filtering
     entry_type = request.GET.get('type')
     if entry_type:
         entries = entries.filter(type=entry_type)
@@ -743,20 +746,20 @@ def entry_list(request):
             Q(category__name__icontains=search)
         )
     
-    # الترقيم
+    # Pagination
     paginator = Paginator(entries, 25)
     page_number = request.GET.get('page')
     entries = paginator.get_page(page_number)
     
-    # البيانات للتصفية
+    # Data for filtering
     categories = RevenueExpenseCategory.objects.filter(is_active=True).order_by('name')
     
-    # إحصائيات
+    # Statistics
     total_entries = RevenueExpenseEntry.objects.count()
     approved_count = RevenueExpenseEntry.objects.filter(is_approved=True).count()
     pending_count = RevenueExpenseEntry.objects.filter(is_approved=False).count()
     
-    # إجمالي المبالغ
+    # Totals
     total_revenue = RevenueExpenseEntry.objects.filter(type='revenue').aggregate(
         total=Sum('amount'))['total'] or 0
     total_expense = RevenueExpenseEntry.objects.filter(type='expense').aggregate(
@@ -780,18 +783,18 @@ def entry_list(request):
 
 @login_required
 def entry_list_export_excel(request):
-    """تصدير قيود الإيرادات والمصروفات إلى Excel"""
-    # التحقق من الصلاحيات
-    if not request.user.has_revenueexpenseentry_view_permission():
+    """Export Revenue/Expense Entries to Excel"""
+    # Permission check
+    if not request.user.has_perm('revenues_expenses.can_view_entries'):
         messages.error(request, _('You do not have permission to export revenue and expense entries'))
-        return redirect('revenues_expenses:entry_list')
+        return redirect('core:dashboard')
     
-    # الحصول على القيود
+    # Fetch entries
     entries = RevenueExpenseEntry.objects.select_related(
         'category', 'created_by', 'approved_by', 'currency'
     ).order_by('-date', '-created_at')
     
-    # التصفية
+    # Filtering
     entry_type = request.GET.get('type')
     if entry_type:
         entries = entries.filter(type=entry_type)
@@ -818,7 +821,7 @@ def entry_list_export_excel(request):
             Q(category__name__icontains=search)
         )
     
-    # إنشاء ملف Excel
+    # Create Excel file
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill, Alignment
     from django.http import HttpResponse
@@ -827,12 +830,12 @@ def entry_list_export_excel(request):
     ws = wb.active
     ws.title = str(_('Revenue and Expense Entries'))
     
-    # تنسيق العناوين
+    # Header formatting
     header_font = Font(bold=True, color="FFFFFF")
     header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
     center_alignment = Alignment(horizontal="center")
     
-    # إضافة العناوين
+    # Add headers
     headers = [
         _('Entry Number'),
         _('Date'),
@@ -854,7 +857,7 @@ def entry_list_export_excel(request):
         cell.alignment = center_alignment
         ws.column_dimensions[chr(64 + col_num)].width = 15
     
-    # إضافة البيانات
+    # Add data
     for row_num, entry in enumerate(entries, 2):
         ws.cell(row=row_num, column=1, value=entry.entry_number or f"#{entry.id}")
         ws.cell(row=row_num, column=2, value=entry.date.strftime('%Y-%m-%d'))
@@ -862,20 +865,20 @@ def entry_list_export_excel(request):
         ws.cell(row=row_num, column=4, value=entry.category.name if entry.category else '')
         ws.cell(row=row_num, column=5, value=float(entry.amount))
         ws.cell(row=row_num, column=6, value=entry.description)
-        ws.cell(row=row_num, column=7, value=str(_('معتمد')) if entry.is_approved else str(_('في الانتظار')))
+        ws.cell(row=row_num, column=7, value=str(_('Approved')) if entry.is_approved else str(_('Pending')))
         ws.cell(row=row_num, column=8, value=entry.get_payment_method_display())
         ws.cell(row=row_num, column=9, value=str(entry.currency) if entry.currency else '')
         ws.cell(row=row_num, column=10, value=str(entry.created_by) if entry.created_by else '')
         ws.cell(row=row_num, column=11, value=entry.created_at.strftime('%Y-%m-%d %H:%M'))
     
-    # إنشاء الاستجابة
+    # Build response
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     filename = f"revenues_expenses_entries_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     
     wb.save(response)
     
-    # تسجيل النشاط
+    # Log activity
     from core.models import AuditLog
     AuditLog.objects.create(
         user=request.user,
@@ -890,16 +893,16 @@ def entry_list_export_excel(request):
 
 @login_required
 def category_list_export_excel(request):
-    """تصدير فئات الإيرادات والمصروفات إلى Excel"""
-    # التحقق من الصلاحيات
-    if not request.user.has_revenueexpensecategory_view_permission():
+    """Export Revenue/Expense Categories to Excel"""
+    # Check permissions
+    if not request.user.has_perm('revenues_expenses.can_view_categories'):
         messages.error(request, _('You do not have permission to export revenue and expense categories'))
-        return redirect('revenues_expenses:category_list')
+        return redirect('core:dashboard')
     
-    # الحصول على الفئات
+    # Fetch categories
     categories = RevenueExpenseCategory.objects.select_related('account', 'created_by').order_by('type', 'name')
     
-    # التصفية
+    # Filtering
     category_type = request.GET.get('type')
     if category_type:
         categories = categories.filter(type=category_type)
@@ -917,7 +920,7 @@ def category_list_export_excel(request):
             Q(description__icontains=search)
         )
     
-    # إنشاء ملف Excel
+    # Create Excel file
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill, Alignment
     from django.http import HttpResponse
@@ -926,12 +929,12 @@ def category_list_export_excel(request):
     ws = wb.active
     ws.title = str(_('Revenue and Expense Categories'))
     
-    # تنسيق العناوين
+    # Format headers
     header_font = Font(bold=True, color="FFFFFF")
     header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
     center_alignment = Alignment(horizontal="center")
     
-    # إضافة العناوين
+    # Add headers
     headers = [
         _('Category Name'),
         _('Type'),
@@ -949,24 +952,24 @@ def category_list_export_excel(request):
         cell.alignment = center_alignment
         ws.column_dimensions[chr(64 + col_num)].width = 20
     
-    # إضافة البيانات
+    # Add data
     for row_num, category in enumerate(categories, 2):
         ws.cell(row=row_num, column=1, value=category.name)
         ws.cell(row=row_num, column=2, value=category.get_type_display())
-        ws.cell(row=row_num, column=3, value=f"{category.account.code} - {category.account.name}" if category.account else str(_('غير محدد')))
+        ws.cell(row=row_num, column=3, value=f"{category.account.code} - {category.account.name}" if category.account else str(_('Not specified')))
         ws.cell(row=row_num, column=4, value=category.description or '')
-        ws.cell(row=row_num, column=5, value=str(_('نشط')) if category.is_active else str(_('غير نشط')))
+        ws.cell(row=row_num, column=5, value=str(_('Active')) if category.is_active else str(_('Inactive')))
         ws.cell(row=row_num, column=6, value=str(category.created_by) if category.created_by else '')
         ws.cell(row=row_num, column=7, value=category.created_at.strftime('%Y-%m-%d %H:%M'))
     
-    # إنشاء الاستجابة
+    # Create response
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     filename = f"revenues_expenses_categories_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     
     wb.save(response)
     
-    # تسجيل النشاط
+    # Log activity
     from core.models import AuditLog
     AuditLog.objects.create(
         user=request.user,
@@ -981,17 +984,17 @@ def category_list_export_excel(request):
 
 @login_required
 def dashboard_recent_entries_export_excel(request):
-    """تصدير القيود الأخيرة من لوحة التحكم إلى Excel"""
-    # التحقق من الصلاحيات
-    if not request.user.has_revenueexpenseentry_view_permission():
+    """Export Recent Entries from Dashboard to Excel"""
+    # Check permissions
+    if not request.user.has_perm('revenues_expenses.can_view_entries'):
         messages.error(request, _('You do not have permission to export recent entries'))
-        return redirect('revenues_expenses:dashboard')
+        return redirect('core:dashboard')
     
-    # الحصول على القيود الأخيرة
+    # Get recent entries
     from journal.models import JournalEntry
-    recent_entries = JournalEntry.objects.select_related('created_by').order_by('-entry_date', '-id')[:50]  # زيادة العدد للتصدير
+    recent_entries = JournalEntry.objects.select_related('created_by').order_by('-entry_date', '-id')[:50]  # Increase count for export
     
-    # إنشاء ملف Excel
+    # Create Excel file
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill, Alignment
     from django.http import HttpResponse
@@ -1000,12 +1003,12 @@ def dashboard_recent_entries_export_excel(request):
     ws = wb.active
     ws.title = str(_('Recent Entries'))
     
-    # تنسيق العناوين
+    # Format headers
     header_font = Font(bold=True, color="FFFFFF")
     header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
     center_alignment = Alignment(horizontal="center")
     
-    # إضافة العناوين
+    # Add headers
     headers = [
         _('Entry Number'),
         _('Date'),
@@ -1024,7 +1027,7 @@ def dashboard_recent_entries_export_excel(request):
         cell.alignment = center_alignment
         ws.column_dimensions[chr(64 + col_num)].width = 20
     
-    # إضافة البيانات
+    # Add data
     for row_num, entry in enumerate(recent_entries, 2):
         ws.cell(row=row_num, column=1, value=entry.entry_number or f"#{entry.id}")
         ws.cell(row=row_num, column=2, value=entry.entry_date.strftime('%Y-%m-%d'))
@@ -1035,14 +1038,14 @@ def dashboard_recent_entries_export_excel(request):
         ws.cell(row=row_num, column=7, value=str(entry.created_by) if entry.created_by else '')
         ws.cell(row=row_num, column=8, value=entry.created_at.strftime('%Y-%m-%d %H:%M'))
     
-    # إنشاء الاستجابة
+    # Create response
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     filename = f"dashboard_recent_entries_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     
     wb.save(response)
     
-    # تسجيل النشاط
+    # Log activity
     from core.models import AuditLog
     AuditLog.objects.create(
         user=request.user,
@@ -1057,7 +1060,7 @@ def dashboard_recent_entries_export_excel(request):
 
 @login_required
 def entry_create(request):
-    """إضافة قيد إيرادات/مصروفات"""
+    """Add Revenue/Expense Entry"""
     if request.method == 'POST':
         form = RevenueExpenseEntryForm(request.POST)
         if form.is_valid():
@@ -1065,55 +1068,55 @@ def entry_create(request):
                 entry = form.save(commit=False)
                 entry.created_by = request.user
                 
-                # معالجة الخيارات الإضافية
+                # Process additional options
                 auto_approve = request.POST.get('auto_approve') == 'true'
                 create_journal = request.POST.get('create_journal') == 'true'
                 
                 entry.save()
                 
-                # الاعتماد التلقائي إذا تم تحديده
+                # Auto-approve if selected
                 if auto_approve:
                     entry.is_approved = True
                     entry.approved_by = request.user
                     entry.approved_at = datetime.now()
                     entry.save()
                 
-                # إنشاء القيد المحاسبي إذا تم تحديده
+                # Create journal entry if selected
                 if create_journal:
                     try:
                         journal_entry = create_journal_entry_for_revenue_expense(entry, request.user)
-                        messages.info(request, f'تم إنشاء القيد المحاسبي رقم {journal_entry.entry_number}')
+                        messages.info(request, _('Journal entry {num} created').format(num=journal_entry.entry_number))
                     except Exception as e:
-                        messages.warning(request, f'تم إنشاء القيد بنجاح لكن فشل في إنشاء القيد المحاسبي: {str(e)}')
+                        messages.warning(request, _('Entry created successfully but failed to create journal entry: {error}').format(error=str(e)))
                 
-                # تسجيل النشاط
+                # Log activity
                 from core.signals import log_activity
                 log_activity(
                     action_type='create',
                     obj=entry,
-                    description=f'إضافة قيد {entry.get_type_display()} جديد: {entry.entry_number} - {entry.description[:50]}',
+                    description=_('Add new {type} entry: {num} - {desc}').format(type=entry.get_type_display(), num=entry.entry_number, desc=entry.description[:50]),
                     user=request.user
                 )
                 
-                success_message = f'تم إنشاء القيد {entry.entry_number} بنجاح. المبلغ: {entry.amount:,.3f} {entry.currency.code if entry.currency else ""}'
+                success_message = _('Entry {num} created successfully. Amount: {amount} {currency}').format(num=entry.entry_number, amount=f"{entry.amount:,.3f}", currency=entry.currency.code if entry.currency else "")
                 if auto_approve:
-                    success_message += ' (معتمد تلقائياً)'
+                    success_message += ' (' + str(_('Auto-approved')) + ')'
                 
                 messages.success(request, success_message)
                 return redirect('revenues_expenses:entry_detail', entry_id=entry.id)
         else:
-            # إضافة رسائل خطأ مفصلة
+            # Add detailed error messages
             for field, errors in form.errors.items():
                 for error in errors:
                     field_label = form.fields[field].label if field in form.fields else field
                     messages.error(request, f'{field_label}: {error}')
     else:
         form = RevenueExpenseEntryForm()
-        # تعيين التاريخ الحالي كافتراضي
+        # Set current date as default
         from datetime import date
         form.fields['date'].initial = date.today()
     
-    # إحضار الإحصائيات للعرض
+    # Fetch statistics for display
     from django.db.models import Sum
     from datetime import date
     today = date.today()
@@ -1130,7 +1133,7 @@ def entry_create(request):
         is_approved=True
     ).aggregate(total=Sum('amount'))['total'] or 0
     
-    # إحضار الفئات النشطة للجافا سكريبت
+    # Fetch active categories for JavaScript
     revenue_categories = RevenueExpenseCategory.objects.filter(
         type='revenue', is_active=True
     ).values('id', 'name').order_by('name')
@@ -1152,7 +1155,7 @@ def entry_create(request):
 
 @login_required
 def get_categories_by_type(request, entry_type):
-    """API لجلب الفئات حسب النوع"""
+    """API to fetch categories by type"""
     categories = RevenueExpenseCategory.objects.filter(
         type=entry_type, 
         is_active=True
@@ -1165,7 +1168,7 @@ def get_categories_by_type(request, entry_type):
 
 @login_required
 def get_today_stats(request):
-    """API لجلب إحصائيات اليوم"""
+    """API to fetch today's statistics"""
     from django.db.models import Sum
     from datetime import date
     today = date.today()
@@ -1191,7 +1194,7 @@ def get_today_stats(request):
 
 @login_required
 def entry_approve(request, entry_id):
-    """اعتماد قيد الإيرادات/المصروفات"""
+    """Approve Revenue/Expense Entry"""
     entry = get_object_or_404(RevenueExpenseEntry, id=entry_id)
     
     if request.method == 'POST':
@@ -1201,32 +1204,32 @@ def entry_approve(request, entry_id):
             entry.approved_at = datetime.now()
             entry.save()
             
-            # تسجيل النشاط
+            # Log activity
             from core.signals import log_activity
             log_activity(
                 action_type='approve',
                 obj=entry,
-                description=f'اعتماد قيد {entry.get_type_display()}: {entry.entry_number}',
+                description=_('Approve {type} entry: {num}').format(type=entry.get_type_display(), num=entry.entry_number),
                 user=request.user
             )
             
-            messages.success(request, f'تم اعتماد القيد {entry.entry_number} بنجاح')
+            messages.success(request, _('Entry {num} approved successfully').format(num=entry.entry_number))
     
     return redirect('revenues_expenses:entry_detail', entry_id=entry_id)
 
 
 @login_required
 def entry_list(request):
-    # حماية الوصول حسب الصلاحية
-    if not request.user.is_admin and not request.user.has_revenueexpenseentry_view_permission():
+    # Protect access by permission
+    if not request.user.has_perm('revenues_expenses.can_view_entries'):
         messages.error(request, _('You do not have permission to view revenue/expense entry'))
-        return redirect('revenues_expenses:dashboard')
-    """قائمة قيود الإيرادات والمصروفات"""
+        return redirect('core:dashboard')
+    """Revenue and Expense Entries List"""
     entries = RevenueExpenseEntry.objects.select_related(
         'category', 'created_by', 'approved_by', 'currency'
     ).order_by('-date', '-created_at')
     
-    # التصفية
+    # Filtering
     entry_type = request.GET.get('type')
     if entry_type:
         entries = entries.filter(type=entry_type)
@@ -1249,16 +1252,16 @@ def entry_list(request):
             Q(reference_number__icontains=search)
         )
     
-    # الترقيم
+    # Pagination
     paginator = Paginator(entries, 25)
     page_number = request.GET.get('page')
     entries = paginator.get_page(page_number)
     
-    # فئات للتصفية
+    # Categories for filtering
     categories = RevenueExpenseCategory.objects.filter(is_active=True).order_by('name')
     
     context = {
-        'page_title': _('قيود الإيرادات والمصروفات'),
+        'page_title': _('Revenue and Expense Entries'),
         'entries': entries,
         'categories': categories,
         'entry_types': RevenueExpenseEntry.ENTRY_TYPES,
@@ -1269,7 +1272,7 @@ def entry_list(request):
 
 @login_required
 def sector_analysis(request):
-    """تحليل الإيرادات والمصاريف حسب القطاع"""
+    """Revenue and Expenses by Sector Analysis"""
     user = request.user
     has_perm = (
         getattr(user, 'is_superuser', False) or
@@ -1277,20 +1280,20 @@ def sector_analysis(request):
         user.has_revenues_expenses_permission()
     )
     if not has_perm:
-        messages.error(request, _('ليس لديك صلاحية عرض تحليل القطاعات'))
+        messages.error(request, _('You do not have permission to view sector analysis'))
         return redirect('revenues_expenses:dashboard')
 
     from datetime import date, timedelta
     from .models import Sector
 
-    # فلاتر التاريخ
+    # Date filters
     today = date.today()
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
     sector_filter = request.GET.get('sector')
 
     if not start_date:
-        start_date = today.replace(day=1)  # بداية الشهر الحالي
+        start_date = today.replace(day=1)  # Start of current month
     else:
         start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
 
@@ -1299,7 +1302,7 @@ def sector_analysis(request):
     else:
         end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
 
-    # تحليل حسب القطاع
+    # Analysis by sector
     sectors = Sector.objects.filter(is_active=True)
     if sector_filter:
         sectors = sectors.filter(id=sector_filter)
@@ -1309,7 +1312,7 @@ def sector_analysis(request):
     total_expense = Decimal('0')
 
     for sector in sectors:
-        # إيرادات القطاع
+        # Sector revenue
         sector_revenue = RevenueExpenseEntry.objects.filter(
             sector=sector,
             type='revenue',
@@ -1318,7 +1321,7 @@ def sector_analysis(request):
             is_approved=True
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
 
-        # مصاريف القطاع
+        # Sector expenses
         sector_expense = RevenueExpenseEntry.objects.filter(
             sector=sector,
             type='expense',
@@ -1327,10 +1330,10 @@ def sector_analysis(request):
             is_approved=True
         ).aggregate(total=Sum('amount'))['total'] or Decimal('0')
 
-        # صافي الربح للقطاع
+        # Sector net profit
         sector_profit = sector_revenue - sector_expense
 
-        # حساب النسبة المئوية للربح
+        # Calculate profit percentage
         profit_percentage = Decimal('0')
         if sector_revenue > 0:
             profit_percentage = (sector_profit / sector_revenue) * 100
@@ -1348,25 +1351,25 @@ def sector_analysis(request):
 
     total_profit = total_revenue - total_expense
 
-    # حساب النسبة المئوية للمجاميع
+    # Calculate totals percentage
     total_profit_percentage = Decimal('0')
     if total_revenue > 0:
         total_profit_percentage = (total_profit / total_revenue) * 100
 
-    # تسجيل النشاط
+    # Log activity
     try:
         from core.signals import log_view_activity
         class ReportObj:
             id = 0
             pk = 0
             def __str__(self):
-                return str(_('تحليل الإيرادات والمصاريف حسب القطاع'))
-        log_view_activity(request, 'view', ReportObj(), str(_('عرض تحليل القطاعات')))
+                return str(_('Revenue and Expenses Analysis by Sector'))
+        log_view_activity(request, 'view', ReportObj(), str(_('View sector analysis')))
     except Exception:
         pass
 
     context = {
-        'page_title': _('تحليل الإيرادات والمصاريف حسب القطاع'),
+        'page_title': _('Revenue and Expenses Analysis by Sector'),
         'analysis_data': analysis_data,
         'start_date': start_date,
         'end_date': end_date,
@@ -1379,3 +1382,4 @@ def sector_analysis(request):
     }
 
     return render(request, 'revenues_expenses/sector_analysis.html', context)
+

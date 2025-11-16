@@ -6,6 +6,7 @@ from django.views.generic import ListView, CreateView, UpdateView, DeleteView, T
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
+from django.http import JsonResponse
 from decimal import Decimal, InvalidOperation
 from .models import BankAccount, BankTransfer, BankTransaction, BankReconciliation, BankStatement
 from settings.models import Currency, CompanySettings
@@ -38,19 +39,27 @@ class BanksViewPermissionMixin:
         return super().dispatch(request, *args, **kwargs)
 
 # Temporary placeholder views
-class BankAccountListView(LoginRequiredMixin, BanksViewPermissionMixin, TemplateView):
+class BankAccountListView(LoginRequiredMixin, TemplateView):
     template_name = 'banks/account_list.html'
+    
+    def dispatch(self, request, *args, **kwargs):
+        # Check if user has permission to view bank accounts
+        if not request.user.has_perm('banks.can_view_bank_accounts'):
+            messages.error(request, _('You do not have permission to view bank accounts.'))
+            return redirect('core:dashboard')
+        return super().dispatch(request, *args, **kwargs)
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
         # Log activity in activity log
-        log_user_activity(
-            self.request,
-            'ACCESS',
-            None,
-            _('Bank Account List Accessed')
-        )
+        if self.request.user.is_authenticated:
+            log_user_activity(
+                self.request,
+                'ACCESS',
+                None,
+                _('Bank Account List Accessed')
+            )
         
         accounts = BankAccount.objects.all()
         
@@ -101,23 +110,22 @@ class BankAccountListView(LoginRequiredMixin, BanksViewPermissionMixin, Template
 class BankAccountCreateView(LoginRequiredMixin, View):
     template_name = 'banks/account_add.html'
     
-    def get(self, request, *args, **kwargs):
-        # Prevent view-only users from accessing the add page
-        if not (
-            request.user.is_superuser
-            or request.user.has_perm('banks.add_bankaccount')
-            or request.user.has_perm('banks.can_add_banks_account')
-        ):
+    def dispatch(self, request, *args, **kwargs):
+        # Check if user has permission to add bank accounts
+        if not (request.user.has_perm('banks.can_add_bank_accounts') or request.user.has_perm('banks.add_bankaccount')):
             messages.error(request, _('You do not have permission to add bank accounts.'))
             return redirect('banks:account_list')
-        
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get(self, request, *args, **kwargs):
         # Log activity in activity log
-        log_user_activity(
-            request,
-            'ACCESS',
-            None,
-            _('Bank Account Add Page Accessed')
-        )
+        if request.user.is_authenticated:
+            log_user_activity(
+                request,
+                'ACCESS',
+                None,
+                _('Bank Account Add Page Accessed')
+            )
         
         context = {
             'currencies': Currency.get_active_currencies(),
@@ -126,13 +134,6 @@ class BankAccountCreateView(LoginRequiredMixin, View):
         return render(request, self.template_name, context)
     
     def post(self, request, *args, **kwargs):
-        if not (
-            request.user.is_superuser
-            or request.user.has_perm('banks.add_bankaccount')
-            or request.user.has_perm('banks.can_add_banks_account')
-        ):
-            messages.error(request, _('You do not have permission to add bank accounts.'))
-            return redirect('banks:account_list')
         try:
             # Receive data from the form
             name = request.POST.get('name', '').strip()
@@ -282,10 +283,14 @@ class BankAccountCreateView(LoginRequiredMixin, View):
 class BankAccountUpdateView(LoginRequiredMixin, View):
     template_name = 'banks/account_edit.html'
     
-    def get(self, request, pk, *args, **kwargs):
-        if not (request.user.is_superuser or request.user.has_perm('banks.change_bankaccount') or request.user.has_perm('banks.can_edit_banks_account')):
+    def dispatch(self, request, *args, **kwargs):
+        # Check if user has permission to edit bank accounts
+        if not (request.user.has_perm('banks.can_edit_bank_accounts') or request.user.has_perm('banks.change_bankaccount')):
             messages.error(request, _('You do not have permission to edit bank accounts.'))
             return redirect('banks:account_list')
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get(self, request, pk, *args, **kwargs):
         account = get_object_or_404(BankAccount, pk=pk)
         # If he has only the custom permission (without change_bankaccount), allow him to edit any account
         # No restriction by creator as per client request
@@ -309,12 +314,8 @@ class BankAccountUpdateView(LoginRequiredMixin, View):
         return render(request, self.template_name, context)
     
     def post(self, request, pk, *args, **kwargs):
-        if not (request.user.is_superuser or request.user.has_perm('banks.change_bankaccount') or request.user.has_perm('banks.can_edit_banks_account')):
-            messages.error(request, _('You do not have permission to edit bank accounts.'))
-            return redirect('banks:account_list')
         try:
             account = get_object_or_404(BankAccount, pk=pk)
-            # Holder of can_edit_banks_account can edit any account even without change permission
             # Receive data from the form
             name = request.POST.get('name', '').strip()
             bank_name = request.POST.get('bank_name', '').strip()
@@ -533,16 +534,15 @@ class BankAccountUpdateView(LoginRequiredMixin, View):
             return self.get(request, pk, initial=initial)
 
 class BankAccountDeleteView(LoginRequiredMixin, View):
-    def post(self, request, pk, *args, **kwargs):
-        from django.db import transaction
-        if not (
-            request.user.is_superuser
-            or request.user.has_perm('banks.delete_bankaccount')
-            or request.user.has_perm('banks.can_delete_banks_account')
-            or request.user.has_perm('users.can_delete_accounts')
-        ):
+    def dispatch(self, request, *args, **kwargs):
+        # Check if user has permission to delete bank accounts
+        if not (request.user.has_perm('banks.can_delete_bank_accounts') or request.user.has_perm('banks.delete_bankaccount')):
             messages.error(request, _('You do not have permission to delete bank accounts.'))
             return redirect('banks:account_list')
+        return super().dispatch(request, *args, **kwargs)
+    
+    def post(self, request, pk, *args, **kwargs):
+        from django.db import transaction
         try:
             account = BankAccount.objects.get(pk=pk)
             account_name = account.name
@@ -659,8 +659,15 @@ class BankAccountDeleteView(LoginRequiredMixin, View):
         
         return redirect('banks:account_list')
 
-class BankTransferListView(LoginRequiredMixin, BanksViewPermissionMixin, TemplateView):
+class BankTransferListView(TemplateView):
     template_name = 'banks/transfer_list.html'
+    
+    def dispatch(self, request, *args, **kwargs):
+        # Check if user has permission to view bank accounts
+        if not (request.user.has_perm('banks.can_view_bank_accounts') or request.user.has_perm('banks.view_bankaccount')):
+            messages.error(request, _('You do not have permission to view bank accounts.'))
+            return redirect('core:dashboard')
+        return super().dispatch(request, *args, **kwargs)
     
     def get_context_data(self, **kwargs):
         from cashboxes.models import CashboxTransfer
@@ -747,13 +754,17 @@ class BankTransferListView(LoginRequiredMixin, BanksViewPermissionMixin, Templat
         
         return context
 
-class BankTransferCreateView(LoginRequiredMixin, View):
+class BankTransferCreateView(View):
     template_name = 'banks/transfer_add.html'
     
+    def dispatch(self, request, *args, **kwargs):
+        # Check if user has permission to view bank accounts
+        if not (request.user.has_perm('banks.can_view_bank_accounts') or request.user.has_perm('banks.view_bankaccount')):
+            messages.error(request, _('You do not have permission to view bank accounts.'))
+            return redirect('core:dashboard')
+        return super().dispatch(request, *args, **kwargs)
+    
     def get(self, request, *args, **kwargs):
-        if not (request.user.is_superuser or request.user.has_perm('banks.add_banktransfer')):
-            messages.error(request, _('You do not have permission to add bank transfers.'))
-            return redirect('banks:transfer_list')
         from core.models import DocumentSequence
         from cashboxes.models import Cashbox
         
@@ -1153,7 +1164,7 @@ class BankCashboxTransferCreateView(LoginRequiredMixin, View):
             messages.error(request, f'Error occurred while creating transfer: {str(e)}')
             return render(request, self.template_name, context)
 
-class BankAccountDetailView(LoginRequiredMixin, DetailView):
+class BankAccountDetailView(DetailView):
     """عرض تفاصيل الحساب البنكي"""
     model = BankAccount
     template_name = 'banks/account_detail.html'
@@ -1217,11 +1228,18 @@ class BankAccountDetailView(LoginRequiredMixin, DetailView):
 
 
 
-class BankTransferDetailView(LoginRequiredMixin, DetailView):
+class BankTransferDetailView(DetailView):
     """عرض تفاصيل التحويل البنكي"""
     model = BankTransfer
     template_name = 'banks/transfer_detail.html'
     context_object_name = 'transfer'
+    
+    def dispatch(self, request, *args, **kwargs):
+        # Check if user has permission to view bank accounts
+        if not (request.user.has_perm('banks.can_view_bank_accounts') or request.user.has_perm('banks.view_bankaccount')):
+            messages.error(request, _('You do not have permission to view bank accounts.'))
+            return redirect('core:dashboard')
+        return super().dispatch(request, *args, **kwargs)
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1237,12 +1255,19 @@ class BankTransferDetailView(LoginRequiredMixin, DetailView):
         return context
 
 
-class BankTransferUpdateView(LoginRequiredMixin, UpdateView):
+class BankTransferUpdateView(UpdateView):
     """تعديل التحويل البنكي"""
     model = BankTransfer
     template_name = 'banks/transfer_edit.html'
     fields = ['date', 'amount', 'fees', 'exchange_rate', 'description']
     success_url = reverse_lazy('banks:transfer_list')
+    
+    def dispatch(self, request, *args, **kwargs):
+        # Check if user has permission to view bank accounts
+        if not (request.user.has_perm('banks.can_view_bank_accounts') or request.user.has_perm('banks.view_bankaccount')):
+            messages.error(request, _('You do not have permission to view bank accounts.'))
+            return redirect('core:dashboard')
+        return super().dispatch(request, *args, **kwargs)
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1345,11 +1370,16 @@ class CashboxTransferUpdateView(LoginRequiredMixin, UpdateView):
         messages.success(self.request, 'تم تحديث التحويل بنجاح!')
         return super().form_valid(form)
 
-class BankTransferDeleteView(LoginRequiredMixin, View):
+class BankTransferDeleteView(View):
     """حذف التحويل البنكي مع إعادة ضبط الأرصدة"""
     
+    def dispatch(self, request, *args, **kwargs):
+        # Check if user has permission to view bank accounts
+        if not (request.user.has_perm('banks.can_view_bank_accounts') or request.user.has_perm('banks.view_bankaccount')):
+            return JsonResponse({'error': 'ليس لديك صلاحية للوصول إلى الحسابات البنكية'}, status=403)
+        return super().dispatch(request, *args, **kwargs)
+    
     def post(self, request, pk, *args, **kwargs):
-        from django.http import JsonResponse
         from django.db import transaction
         
         try:
@@ -1464,7 +1494,7 @@ class CashboxTransferDeleteView(LoginRequiredMixin, View):
         except Exception as e:
             return JsonResponse({'error': f'Error occurred while deleting transfer: {str(e)}'}, status=500)
 
-class BankAccountToggleStatusView(LoginRequiredMixin, View):
+class BankAccountToggleStatusView(View):
     """تفعيل/إلغاء تفعيل الحساب البنكي"""
     def post(self, request, pk, *args, **kwargs):
         try:
@@ -1487,7 +1517,7 @@ class BankAccountToggleStatusView(LoginRequiredMixin, View):
         
         return redirect('banks:account_list')
 
-class BankAccountTransactionsView(LoginRequiredMixin, TemplateView):
+class BankAccountTransactionsView(TemplateView):
     """عرض وإدارة حركات الحساب البنكي"""
     template_name = 'banks/account_transactions.html'
     
@@ -1497,7 +1527,8 @@ class BankAccountTransactionsView(LoginRequiredMixin, TemplateView):
         account = get_object_or_404(BankAccount, pk=account_id)
         
         # تسجيل النشاط في سجل الأنشطة
-        log_user_activity(
+        if self.request.user.is_authenticated:
+            log_user_activity(
             self.request,
             'ACCESS',
             account,
@@ -1589,9 +1620,7 @@ class BankAccountTransactionsView(LoginRequiredMixin, TemplateView):
                 and len(transactions) == 0
                 and (
                     self.request.user.is_superuser
-                    or self.request.user.has_perm('banks.delete_bankaccount')
-            or self.request.user.has_perm('banks.can_delete_banks_account')
-            or self.request.user.has_perm('users.can_delete_accounts')
+                    or self.request.user.has_perm('banks.can_delete_bank_accounts')
                 )
             ),
         })
@@ -1670,14 +1699,14 @@ class BankTransactionDeleteView(LoginRequiredMixin, View):
         except Exception as e:
             return JsonResponse({'error': f'Error occurred while deleting transaction: {str(e)}'}, status=500)
 
-class BankAccountSuperAdminDeleteView(LoginRequiredMixin, View):
+class BankAccountSuperAdminDeleteView(View):
     """حذف مطلق للحسابات البنكية - للـ superadmin فقط"""
     
     def post(self, request, pk, *args, **kwargs):
         from django.db import transaction
         
         # التحقق من أن المستخدم superadmin فقط
-        if not request.user.is_superuser:
+        if request.user.is_authenticated and not request.user.is_superuser:
             messages.error(request, _('Only superadmin can perform absolute deletion.'))
             return redirect('banks:account_list')
         
@@ -1728,21 +1757,12 @@ class BankAccountSuperAdminDeleteView(LoginRequiredMixin, View):
             messages.error(request, f'Error occurred while permanent deletion: {str(e)}')
             return redirect('banks:account_list')
 
-class BankAccountForceDeleteView(LoginRequiredMixin, View):
+class BankAccountForceDeleteView(View):
     """حذف الحساب البنكي بالقوة بعد إزالة جميع الحركات"""
     
     def post(self, request, pk, *args, **kwargs):
         from django.db import transaction
         try:
-            # تحقق صلاحيات الحذف: سوبر أو delete_bankaccount أو الصلاحية المخصصة
-            if not (
-                request.user.is_superuser
-                or request.user.has_perm('banks.delete_bankaccount')
-                or request.user.has_perm('banks.can_delete_banks_account')
-                or request.user.has_perm('users.can_delete_accounts')
-            ):
-                messages.error(request, _('You do not have permission to delete bank accounts.'))
-                return redirect('banks:account_list')
 
             account = BankAccount.objects.get(pk=pk)
             account_name = account.name
@@ -1939,11 +1959,18 @@ class ClearAccountTransactionsView(LoginRequiredMixin, View):
 
 
 # Bank Reconciliation Views
-class BankReconciliationListView(LoginRequiredMixin, BanksViewPermissionMixin, ListView):
+class BankReconciliationListView(ListView):
     model = BankReconciliation
     template_name = 'banks/reconciliation_list.html'
     context_object_name = 'reconciliations'
     paginate_by = 25
+    
+    def dispatch(self, request, *args, **kwargs):
+        # Check if user has permission to view bank accounts
+        if not (request.user.has_perm('banks.can_view_bank_accounts') or request.user.has_perm('banks.view_bankaccount')):
+            messages.error(request, _('You do not have permission to view bank accounts.'))
+            return redirect('core:dashboard')
+        return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -1979,11 +2006,18 @@ class BankReconciliationListView(LoginRequiredMixin, BanksViewPermissionMixin, L
         return context
 
 
-class BankReconciliationCreateView(LoginRequiredMixin, BanksViewPermissionMixin, CreateView):
+class BankReconciliationCreateView(CreateView):
     model = BankReconciliation
     template_name = 'banks/reconciliation_form.html'
     fields = ['bank_account', 'statement_date', 'statement_balance', 'deposits_in_transit',
              'outstanding_checks', 'bank_charges', 'interest_earned', 'other_adjustments', 'notes']
+    
+    def dispatch(self, request, *args, **kwargs):
+        # Check if user has permission to view bank accounts
+        if not (request.user.has_perm('banks.can_view_bank_accounts') or request.user.has_perm('banks.view_bankaccount')):
+            messages.error(request, _('You do not have permission to view bank accounts.'))
+            return redirect('core:dashboard')
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -2021,10 +2055,17 @@ class BankReconciliationCreateView(LoginRequiredMixin, BanksViewPermissionMixin,
         return reverse_lazy('banks:reconciliation_detail', kwargs={'pk': self.object.pk})
 
 
-class BankReconciliationDetailView(LoginRequiredMixin, BanksViewPermissionMixin, DetailView):
+class BankReconciliationDetailView(DetailView):
     model = BankReconciliation
     template_name = 'banks/reconciliation_detail.html'
     context_object_name = 'reconciliation'
+    
+    def dispatch(self, request, *args, **kwargs):
+        # Check if user has permission to view bank accounts
+        if not (request.user.has_perm('banks.can_view_bank_accounts') or request.user.has_perm('banks.view_bankaccount')):
+            messages.error(request, _('You do not have permission to view bank accounts.'))
+            return redirect('core:dashboard')
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -2048,11 +2089,18 @@ class BankReconciliationDetailView(LoginRequiredMixin, BanksViewPermissionMixin,
         return context
 
 
-class BankReconciliationUpdateView(LoginRequiredMixin, BanksViewPermissionMixin, UpdateView):
+class BankReconciliationUpdateView(UpdateView):
     model = BankReconciliation
     template_name = 'banks/reconciliation_form.html'
     fields = ['statement_balance', 'deposits_in_transit', 'outstanding_checks',
              'bank_charges', 'interest_earned', 'other_adjustments', 'status', 'notes']
+    
+    def dispatch(self, request, *args, **kwargs):
+        # Check if user has permission to view bank accounts
+        if not (request.user.has_perm('banks.can_view_bank_accounts') or request.user.has_perm('banks.view_bankaccount')):
+            messages.error(request, _('You do not have permission to view bank accounts.'))
+            return redirect('core:dashboard')
+        return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
         response = super().form_valid(form)

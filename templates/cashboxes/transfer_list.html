@@ -54,13 +54,15 @@ table.dataTable thead th.sorting:after {
                                 <i class="fas fa-print me-1"></i>
                                 {% trans "Print Full Report" %}
                             </button>
-                            <a href="{% url 'cashboxes:cashbox_list' %}" class="btn btn-success btn-sm me-2">
+                            <a href="{% url 'cashboxes:cashbox_list' %}" class="btn btn-secondary no-print">
                                 <i class="fas fa-list me-1"></i>
                                 {% trans "Cash Box List" %}
                             </a>
+                            {% if perms.cashboxes.can_create_cashboxes_transfers or user.is_superuser or user.user_type in 'superadmin,admin' %}
                             <button type="button" class="btn btn-primary no-print" onclick="checkSequenceAndOpenModal()">
                                 <i class="fas fa-plus"></i> {% trans "New Transfer" %}
                             </button>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -194,9 +196,11 @@ table.dataTable thead th.sorting:after {
                     {% else %}
                         <div class="text-center">
                             <p class="mb-3">{% trans "No transfers found" %}</p>
+                            {% if not perms.users.can_access_cashboxes or user.is_superuser or user.user_type in 'superadmin,admin' %}
                             <button type="button" class="btn btn-primary" onclick="checkSequenceAndOpenModal()">
                                 <i class="fas fa-plus"></i> {% trans "New Transfer" %}
                             </button>
+                            {% endif %}
                         </div>
                     {% endif %}
                 </div>

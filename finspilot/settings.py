@@ -84,9 +84,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'core.middleware.AuditMiddleware',
     'core.middleware.POSUserMiddleware',
+    'core.middleware.FiscalYearMiddleware',  # التحكم بالسنوات المالية
     'core.middleware.SessionTimeoutMiddleware',
     'core.middleware.SessionSecurityMiddleware',
-    'core.middleware.SessionExceptionMiddleware',
+    'core.middleware.SessionErrorMiddleware',  # تم تصحيح الاسم
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]

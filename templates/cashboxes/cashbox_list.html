@@ -18,11 +18,13 @@
                             <i class="fas fa-print me-1"></i>
                             {% trans "Print Full Report" %}
                         </button>
-                        {% if user.is_superuser or user.user_type in 'superadmin,admin' or perms.cashboxes.can_add_cashboxes %}
+                        {% if perms.cashboxes.can_create_cashboxes_transfers or user.is_superuser or user.user_type in 'superadmin,admin' %}
                         <button type="button" class="btn btn-warning btn-sm me-2" data-bs-toggle="modal" data-bs-target="#createTransferModal">
                             <i class="fas fa-exchange-alt me-1"></i>
                             {% trans "Create New Transfer" %}
                         </button>
+                        {% endif %}
+                        {% if perms.cashboxes.can_add_cashboxes %}
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCashboxModal">
                             <i class="fas fa-plus"></i> {% trans "Create New Cashbox" %}
                         </button>
@@ -119,9 +121,11 @@
                     {% else %}
                         <div class="text-center">
                             <p class="mb-3">{% trans "No Cashboxes Available" %}</p>
+                            {% if not perms.users.can_access_cashboxes or user.is_superuser or user.user_type in 'superadmin,admin' %}
                             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createCashboxModal">
                                 <i class="fas fa-plus"></i> {% trans "Create New Cashbox" %}
                             </button>
+                            {% endif %}
                         </div>
                     {% endif %}
                 </div>

@@ -415,7 +415,7 @@ class POSUserMiddleware:
         return response
 
 
-class SessionExceptionMiddleware:
+class SessionErrorMiddleware:
     """
     Middleware للتعامل مع أخطاء الجلسة مثل SessionInterrupted
     """
@@ -435,3 +435,59 @@ class SessionExceptionMiddleware:
             else:
                 # إعادة رفع الخطأ إذا لم يكن SessionInterrupted
                 raise
+
+
+class FiscalYearMiddleware:
+    """
+    Middleware للتحكم بالوصول إلى السنوات المالية المقفلة
+    فقط المستخدمون من نوع superadmin يمكنهم الوصول للسنوات المقفلة
+    """
+    def __init__(self, get_response):
+        self.get_response = get_response
+    
+    def __call__(self, request):
+        # السماح للمستخدمين غير المسجلين والصفحات المستثناة
+        if not request.user.is_authenticated:
+            return self.get_response(request)
+        
+        # استثناء مسارات معينة من الفحص
+        excluded_paths = [
+            '/static/',
+            '/media/',
+            '/admin/',
+            '/ar/auth/',
+            '/ar/journal/open-fiscal-year/',  # السماح بفتح سنة جديدة
+            '/ar/journal/year-end-closing/',  # السماح بالإقفال
+        ]
+        
+        if any(request.path.startswith(path) for path in excluded_paths):
+            return self.get_response(request)
+        
+        # التحقق من السنة الحالية
+        try:
+            from journal.models import FiscalYear
+            current_year = FiscalYear.objects.filter(is_current=True).first()
+            
+            # إذا كانت السنة الحالية مقفلة وليس superadmin
+            if current_year and current_year.status == 'closed':
+                user = request.user
+                is_superadmin = (
+                    getattr(user, 'is_superuser', False) or
+                    getattr(user, 'user_type', None) == 'superadmin'
+                )
+                
+                if not is_superadmin:
+                    # إعادة توجيه لصفحة تنبيه
+                    from django.contrib import messages
+                    from django.shortcuts import redirect
+                    messages.warning(
+                        request,
+                        'السنة المالية الحالية مقفلة. يرجى التواصل مع المدير لفتح سنة جديدة.'
+                    )
+                    return redirect('/ar/')
+        
+        except Exception:
+            # في حالة أي خطأ، نسمح بالمرور
+            pass
+        
+        return self.get_response(request)

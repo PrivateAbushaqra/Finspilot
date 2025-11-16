@@ -313,7 +313,7 @@ def create_purchase_return_account_transaction(return_invoice, user):
 
 class PurchaseInvoiceListView(LoginRequiredMixin, ListView):
     def dispatch(self, request, *args, **kwargs):
-        if not (request.user.has_perm('purchases.can_view_purchases') or request.user.has_perm('purchases.view_purchaseinvoice') or request.user.is_superuser):
+        if not (request.user.has_perm('purchases.can_view_purchases') or request.user.is_superuser):
             from django.contrib import messages
             from django.shortcuts import redirect
             messages.error(request, 'ليس لديك صلاحية لعرض فواتير المشتريات')
@@ -453,7 +453,6 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
             'products_json': json.dumps(products_data),
             'categories': Category.objects.filter(is_active=True).order_by('name'),
             'next_invoice_number': next_invoice_number,
-            'can_toggle_invoice_tax': request.user.is_superuser or request.user.has_perm('purchases.can_toggle_purchase_tax'),
             'today': timezone.now().date()
         }
         
@@ -490,11 +489,7 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
             check_number = request.POST.get('check_number', '').strip()
             check_date_raw = request.POST.get('check_date', '').strip()
             check_date = check_date_raw if check_date_raw else None  # تحويل السلسلة الفارغة إلى None
-            # التحقق من صلاحية تغيير خيار شمول الضريبة
-            if request.user.is_superuser or request.user.has_perm('purchases.can_toggle_purchase_tax'):
-                is_tax_inclusive = request.POST.get('is_tax_inclusive') == 'on'  # checkbox value
-            else:
-                is_tax_inclusive = False  # المستخدمون العاديون لا يمكنهم تغيير هذا الخيار
+            is_tax_inclusive = request.POST.get('is_tax_inclusive') == 'on'  # checkbox value
             notes = request.POST.get('notes', '').strip()
             
             # جمع البيانات المُدخلة لإعادة عرضها في حالة الأخطاء
@@ -800,11 +795,7 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
 
 class PurchaseDebitNoteListView(LoginRequiredMixin, ListView):
     def dispatch(self, request, *args, **kwargs):
-        if not (
-            request.user.has_perm('purchases.can_view_debitnote') or
-            request.user.has_perm('purchases.view_purchasedebitnote') or
-            request.user.is_superuser
-        ):
+        if not (request.user.has_perm('purchases.can_view_purchases') or request.user.is_superuser):
             from django.contrib import messages
             from django.shortcuts import redirect
             messages.error(request, _('You do not have permission to view debit notes'))
@@ -827,11 +818,7 @@ def purchase_debitnote_create(request):
     from django.contrib import messages
     from django.shortcuts import redirect
     
-    if not (
-        request.user.has_perm('purchases.can_view_debitnote') or
-        request.user.has_perm('purchases.add_purchasedebitnote') or
-        request.user.is_superuser
-    ):
+    if not (request.user.has_perm('purchases.can_add_purchases') or request.user.is_superuser):
         messages.error(request, _('You do not have permission to create a debit note'))
         return redirect('/')
     if request.method == 'POST':
@@ -1275,7 +1262,7 @@ class PurchaseInvoiceDeleteView(LoginRequiredMixin, DeleteView):
 
 class PurchaseReturnListView(LoginRequiredMixin, ListView):
     def dispatch(self, request, *args, **kwargs):
-        if not (request.user.has_perm('purchases.can_view_purchasereturn') or request.user.has_perm('purchases.view_purchasereturn') or request.user.is_superuser):
+        if not (request.user.has_perm('purchases.can_view_purchase_returns') or request.user.is_superuser):
             from django.contrib import messages
             from django.shortcuts import redirect
             messages.error(request, 'ليس لديك صلاحية لعرض مردودات المشتريات')
@@ -1767,7 +1754,7 @@ class PurchaseReportView(LoginRequiredMixin, TemplateView):
 
 class PurchaseStatementView(LoginRequiredMixin, TemplateView):
     def dispatch(self, request, *args, **kwargs):
-        if not request.user.has_perm('purchases.can_view_purchase_statement') and not request.user.is_superuser:
+        if not request.user.has_perm('purchases.can_view_purchases') and not request.user.is_superuser:
             from django.contrib import messages
             from django.shortcuts import redirect
             messages.error(request, 'ليس لديك صلاحية لعرض كشف المشتريات')
@@ -1920,7 +1907,7 @@ def send_debitnote_to_jofotara(request, pk):
         debit_note = get_object_or_404(PurchaseDebitNote, pk=pk)
         
         # Check if user has permission to send debit notes
-        if not request.user.has_perm('purchases.can_send_to_jofotara'):
+        if not (request.user.has_perm('purchases.can_add_purchases') or request.user.is_superuser):
             return JsonResponse({
                 'success': False,
                 'error': 'ليس لديك صلاحية إرسال الإشعارات الخصومات إلى JoFotara'

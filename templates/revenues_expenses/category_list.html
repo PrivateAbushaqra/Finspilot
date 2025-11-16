@@ -18,13 +18,13 @@
             {% trans "Add New Category" %}
         </a>
         <div class="btn-group ms-2">
-            <a href="{% url 'revenues_expenses:category_list_export_excel' %}" class="btn btn-success btn-sm" title="{% trans 'تصدير إلى Excel' %}">
+            <a href="{% url 'revenues_expenses:category_list_export_excel' %}" class="btn btn-success btn-sm" title="{% trans 'Export to Excel' %}">
                 <i class="fas fa-file-excel me-1"></i>
-                {% trans "تصدير Excel" %}
+                {% trans "Export Excel" %}
             </a>
-            <button onclick="window.print()" class="btn btn-info btn-sm" title="{% trans 'طباعة' %}">
+            <button onclick="window.print()" class="btn btn-info btn-sm" title="{% trans 'Print' %}">
                 <i class="fas fa-print me-1"></i>
-                {% trans "طباعة" %}
+                {% trans "Print" %}
             </button>
         </div>
     </div>

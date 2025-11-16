@@ -6,32 +6,39 @@ from django.core.validators import MinValueValidator
 
 
 class Sector(models.Model):
-    """القطاعات أو الباكدجات لتصنيف الإيرادات والمصاريف"""
-    name = models.CharField(max_length=200, verbose_name=_('اسم القطاع'))
+    """Sectors or packages for classifying revenues and expenses"""
+    name = models.CharField(max_length=200, verbose_name=_('Sector Name'))
     description = models.TextField(blank=True, null=True, verbose_name=_('Description'))
     is_active = models.BooleanField(default=True, verbose_name=_('Active'))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Created At'))
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name=_('Created By'))
     
     class Meta:
-        verbose_name = _('قطاع')
-        verbose_name_plural = _('القطاعات')
+        verbose_name = _('Sector')
+        verbose_name_plural = _('Sectors')
         ordering = ['name']
+        default_permissions = []  # No default permissions
+        permissions = [
+            ("can_view_sectors", _("View Sectors")),
+            ("can_add_sectors", _("Add Sectors")),
+            ("can_edit_sectors", _("Edit Sectors")),
+            ("can_delete_sectors", _("Delete Sectors")),
+        ]
     
     def __str__(self):
         return self.name
 
 
 class RevenueExpenseCategory(models.Model):
-    """فئات الإيرادات والمصروفات"""
+    """Revenue and Expense Categories"""
     CATEGORY_TYPES = [
-        ('revenue', _('إيراد')),
-        ('expense', _('مصروف')),
+        ('revenue', _('Revenue')),
+        ('expense', _('Expense')),
     ]
     
-    name = models.CharField(max_length=200, verbose_name=_('اسم الفئة'))
-    type = models.CharField(max_length=20, choices=CATEGORY_TYPES, verbose_name=_('نوع الفئة'))
-    account = models.ForeignKey('journal.Account', on_delete=models.PROTECT, verbose_name=_('الحساب المحاسبي'), 
+    name = models.CharField(max_length=200, verbose_name=_('Category Name'))
+    type = models.CharField(max_length=20, choices=CATEGORY_TYPES, verbose_name=_('Category Type'))
+    account = models.ForeignKey('journal.Account', on_delete=models.PROTECT, verbose_name=_('Accounting Account'), 
                                limit_choices_to={'account_type__in': ['revenue', 'expense']}, null=True, blank=True)
     description = models.TextField(blank=True, null=True, verbose_name=_('Description'))
     is_active = models.BooleanField(default=True, verbose_name=_('Active'))
@@ -39,66 +46,80 @@ class RevenueExpenseCategory(models.Model):
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name=_('Created By'))
     
     class Meta:
-        verbose_name = _('فئة الإيرادات والمصروفات')
-        verbose_name_plural = _('فئات الإيرادات والمصروفات')
+        verbose_name = _('Revenue/Expense Category')
+        verbose_name_plural = _('Revenue/Expense Categories')
         ordering = ['type', 'name']
+        default_permissions = []  # No default permissions
+        permissions = [
+            ("can_view_categories", _("View Revenue/Expense Categories")),
+            ("can_add_categories", _("Add Revenue/Expense Categories")),
+            ("can_edit_categories", _("Edit Revenue/Expense Categories")),
+            ("can_delete_categories", _("Delete Revenue/Expense Categories")),
+        ]
     
     def __str__(self):
         return f"{self.get_type_display()} - {self.name}"
 
 
 class RevenueExpenseEntry(models.Model):
-    """قيود الإيرادات والمصروفات"""
+    """Revenue and Expense Entries"""
     ENTRY_TYPES = [
-        ('revenue', _('إيراد')),
-        ('expense', _('مصروف')),
+        ('revenue', _('Revenue')),
+        ('expense', _('Expense')),
     ]
     
     PAYMENT_METHODS = [
-        ('cash', _('نقدي')),
-        ('bank', _('بنكي')),
-        ('cheque', _('شيك')),
-        ('transfer', _('تحويل')),
+        ('cash', _('Cash')),
+        ('bank', _('Bank')),
+        ('cheque', _('Cheque')),
+        ('transfer', _('Transfer')),
     ]
     
-    entry_number = models.CharField(max_length=50, unique=True, verbose_name=_('رقم القيد'))
-    type = models.CharField(max_length=20, choices=ENTRY_TYPES, verbose_name=_('نوع القيد'))
-    category = models.ForeignKey(RevenueExpenseCategory, on_delete=models.CASCADE, verbose_name=_('الفئة'))
-    sector = models.ForeignKey(Sector, on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('القطاع'))
+    entry_number = models.CharField(max_length=50, unique=True, verbose_name=_('Entry Number'))
+    type = models.CharField(max_length=20, choices=ENTRY_TYPES, verbose_name=_('Entry Type'))
+    category = models.ForeignKey(RevenueExpenseCategory, on_delete=models.CASCADE, verbose_name=_('Category'))
+    sector = models.ForeignKey(Sector, on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('Sector'))
     amount = models.DecimalField(max_digits=15, decimal_places=3, validators=[MinValueValidator(Decimal('0.001'))], verbose_name=_('Amount'))
     
-    # إضافة حقل العملة
+    # Add currency field
     currency = models.ForeignKey('settings.Currency', on_delete=models.PROTECT, null=True, blank=True, verbose_name=_('Currency'))
     
     description = models.TextField(verbose_name=_('Description'))
-    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS, default='cash', verbose_name=_('طريقة الدفع'))
-    reference_number = models.CharField(max_length=100, blank=True, null=True, verbose_name=_('رقم المرجع'))
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS, default='cash', verbose_name=_('Payment Method'))
+    reference_number = models.CharField(max_length=100, blank=True, null=True, verbose_name=_('Reference Number'))
     date = models.DateField(verbose_name=_('Date'))
     
-    # الحسابات المرتبطة - سيتم إضافتها لاحقاً
-    # debit_account = models.CharField(max_length=100, verbose_name=_('حساب المدين'))
-    # credit_account = models.CharField(max_length=100, verbose_name=_('حساب الدائن'))
+    # Related accounts - will be added later
+    # debit_account = models.CharField(max_length=100, verbose_name=_('Debit Account'))
+    # credit_account = models.CharField(max_length=100, verbose_name=_('Credit Account'))
     
-    # معلومات إضافية
-    is_approved = models.BooleanField(default=False, verbose_name=_('معتمد'))
-    approved_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_revenue_expenses', verbose_name=_('اعتمد بواسطة'))
-    approved_at = models.DateTimeField(null=True, blank=True, verbose_name=_('تاريخ الاعتماد'))
+    # Additional information
+    is_approved = models.BooleanField(default=False, verbose_name=_('Approved'))
+    approved_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_revenue_expenses', verbose_name=_('Approved By'))
+    approved_at = models.DateTimeField(null=True, blank=True, verbose_name=_('Approval Date'))
     
-    # معلومات التتبع
+    # Tracking information
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Created At'))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_('Updated At'))
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name=_('Created By'))
     
     class Meta:
-        verbose_name = _('قيد الإيرادات والمصروفات')
-        verbose_name_plural = _('قيود الإيرادات والمصروفات')
+        verbose_name = _('Revenue/Expense Entry')
+        verbose_name_plural = _('Revenue/Expense Entries')
         ordering = ['-date', '-created_at']
+        default_permissions = []  # No default permissions
+        permissions = [
+            ("can_view_entries", _("View Revenue/Expense Entries")),
+            ("can_add_entries", _("Add Revenue/Expense Entries")),
+            ("can_edit_entries", _("Edit Revenue/Expense Entries")),
+            ("can_delete_entries", _("Delete Revenue/Expense Entries")),
+        ]
     
     def __str__(self):
         return f"{self.entry_number} - {self.get_type_display()} - {self.amount}"
     
     def save(self, *args, **kwargs):
-        # إضافة العملة الافتراضية إذا لم تكن محددة
+        # Add default currency if not specified
         if not self.currency:
             from settings.models import CompanySettings
             company_settings = CompanySettings.objects.first()
@@ -106,7 +127,7 @@ class RevenueExpenseEntry(models.Model):
                 self.currency = company_settings.base_currency
         
         if not self.entry_number:
-            # توليد رقم قيد تلقائي
+            # Generate automatic entry number
             prefix = 'RE' if self.type == 'revenue' else 'EX'
             last_entry = RevenueExpenseEntry.objects.filter(
                 type=self.type,
@@ -127,7 +148,7 @@ class RevenueExpenseEntry(models.Model):
         super().save(*args, **kwargs)
     
     def generate_entry_number(self):
-        """توليد رقم قيد جديد"""
+        """Generate new entry number"""
         prefix = 'RE' if self.type == 'revenue' else 'EX'
         last_entry = RevenueExpenseEntry.objects.filter(
             type=self.type,
@@ -147,48 +168,55 @@ class RevenueExpenseEntry(models.Model):
 
 
 class RecurringRevenueExpense(models.Model):
-    """الإيرادات والمصروفات المتكررة"""
+    """Recurring Revenues and Expenses"""
     FREQUENCY_CHOICES = [
-        ('daily', _('يومي')),
-        ('weekly', _('أسبوعي')),
-        ('monthly', _('شهري')),
-        ('quarterly', _('ربع سنوي')),
-        ('semi_annual', _('نصف سنوي')),
-        ('annual', _('سنوي')),
+        ('daily', _('Daily')),
+        ('weekly', _('Weekly')),
+        ('monthly', _('Monthly')),
+        ('quarterly', _('Quarterly')),
+        ('semi_annual', _('Semi-Annual')),
+        ('annual', _('Annual')),
     ]
     
-    name = models.CharField(max_length=200, verbose_name=_('اسم الإيراد/المصروف المتكرر'))
-    category = models.ForeignKey(RevenueExpenseCategory, on_delete=models.CASCADE, verbose_name=_('الفئة'))
-    sector = models.ForeignKey(Sector, on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('القطاع'))
+    name = models.CharField(max_length=200, verbose_name=_('Recurring Revenue/Expense Name'))
+    category = models.ForeignKey(RevenueExpenseCategory, on_delete=models.CASCADE, verbose_name=_('Category'))
+    sector = models.ForeignKey(Sector, on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('Sector'))
     amount = models.DecimalField(max_digits=15, decimal_places=3, validators=[MinValueValidator(Decimal('0.001'))], verbose_name=_('Amount'))
     
-    # إضافة حقل العملة
+    # Add currency field
     currency = models.ForeignKey('settings.Currency', on_delete=models.PROTECT, null=True, blank=True, verbose_name=_('Currency'))
     
-    frequency = models.CharField(max_length=20, choices=FREQUENCY_CHOICES, verbose_name=_('التكرار'))
-    start_date = models.DateField(verbose_name=_('تاريخ البداية'))
-    end_date = models.DateField(null=True, blank=True, verbose_name=_('تاريخ النهاية'))
-    last_generated = models.DateField(null=True, blank=True, verbose_name=_('آخر تاريخ توليد'))
-    next_due_date = models.DateField(verbose_name=_('التاريخ المستحق التالي'))
+    frequency = models.CharField(max_length=20, choices=FREQUENCY_CHOICES, verbose_name=_('Frequency'))
+    start_date = models.DateField(verbose_name=_('Start Date'))
+    end_date = models.DateField(null=True, blank=True, verbose_name=_('End Date'))
+    last_generated = models.DateField(null=True, blank=True, verbose_name=_('Last Generation Date'))
+    next_due_date = models.DateField(verbose_name=_('Next Due Date'))
     description = models.TextField(verbose_name=_('Description'))
-    payment_method = models.CharField(max_length=20, choices=RevenueExpenseEntry.PAYMENT_METHODS, default='cash', verbose_name=_('طريقة الدفع'))
+    payment_method = models.CharField(max_length=20, choices=RevenueExpenseEntry.PAYMENT_METHODS, default='cash', verbose_name=_('Payment Method'))
     
     is_active = models.BooleanField(default=True, verbose_name=_('Active'))
-    auto_generate = models.BooleanField(default=True, verbose_name=_('توليد تلقائي'))
+    auto_generate = models.BooleanField(default=True, verbose_name=_('Auto Generate'))
     
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Created At'))
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name=_('Created By'))
     
     class Meta:
-        verbose_name = _('الإيراد/المصروف المتكرر')
+        verbose_name = _('Recurring Revenue/Expense')
         verbose_name_plural = _('Recurring revenues and expenses')
         ordering = ['next_due_date']
+        default_permissions = []  # No default permissions
+        permissions = [
+            ("can_view_recurring", _("View Recurring Revenue/Expense")),
+            ("can_add_recurring", _("Add Recurring Revenue/Expense")),
+            ("can_edit_recurring", _("Edit Recurring Revenue/Expense")),
+            ("can_delete_recurring", _("Delete Recurring Revenue/Expense")),
+        ]
     
     def __str__(self):
         return f"{self.name} - {self.get_frequency_display()}"
     
     def save(self, *args, **kwargs):
-        # إضافة العملة الافتراضية إذا لم تكن محددة
+        # Add default currency if not specified
         if not self.currency:
             from settings.models import CompanySettings
             company_settings = CompanySettings.objects.first()

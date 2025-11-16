@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404, redirect
+﻿from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView
 from django.urls import reverse_lazy
@@ -21,12 +21,12 @@ class UserCreateForm(forms.ModelForm):
     password1 = forms.CharField(
         label=_('Password'),
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
-        help_text=_('يجب أن تكون كلمة المرور 8 أحرف على الأقل')
+        help_text=_('Password must be at least 8 characters long')
     )
     password2 = forms.CharField(
         label=_('Confirm Password'),
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
-        help_text=_('أدخل كلمة المرور مرة أخرى للتأكيد')
+        help_text=_('Enter the password again to confirm')
     )
     
     groups = forms.ModelMultipleChoiceField(
@@ -125,11 +125,11 @@ class UserCreateForm(forms.ModelForm):
         
         # التحقق من عدم تكرار اسم المستخدم
         if User.objects.filter(username=username).exists():
-            raise forms.ValidationError(_('اسم المستخدم موجود بالفعل'))
+            raise forms.ValidationError(_('Username already exists'))
             
         # التحقق من طول اسم المستخدم
         if len(username) < 3:
-            raise forms.ValidationError(_('اسم المستخدم يجب أن يكون 3 أحرف على الأقل'))
+            raise forms.ValidationError(_('Username must be at least 3 characters long'))
             
         return username
 
@@ -138,13 +138,13 @@ class UserCreateForm(forms.ModelForm):
         if email:
             # التحقق من عدم تكرار البريد الإلكتروني
             if User.objects.filter(email=email).exists():
-                raise forms.ValidationError(_('البريد الإلكتروني موجود بالفعل'))
+                raise forms.ValidationError(_('Email already exists'))
         return email
 
     def clean_password1(self):
         password1 = self.cleaned_data.get('password1')
         if len(password1) < 8:
-            raise forms.ValidationError(_('كلمة المرور يجب أن تكون 8 أحرف على الأقل'))
+            raise forms.ValidationError(_('Password must be at least 8 characters long'))
         return password1
 
     def clean_password2(self):
@@ -152,7 +152,7 @@ class UserCreateForm(forms.ModelForm):
         password2 = self.cleaned_data.get('password2')
         
         if password1 and password2 and password1 != password2:
-            raise forms.ValidationError(_('كلمتا المرور غير متطابقتين'))
+            raise forms.ValidationError(_('Passwords do not match'))
         return password2
     
     def clean(self):
@@ -256,7 +256,7 @@ class UserEditForm(forms.ModelForm):
         
         # التحقق من عدم تكرار اسم المستخدم
         if User.objects.filter(username=username).exclude(pk=self.instance.pk).exists():
-            raise forms.ValidationError(_('اسم المستخدم موجود بالفعل'))
+            raise forms.ValidationError(_('Username already exists'))
             
         return username
 
@@ -265,7 +265,7 @@ class UserEditForm(forms.ModelForm):
         if email:
             # التحقق من عدم تكرار البريد الإلكتروني
             if User.objects.filter(email=email).exclude(pk=self.instance.pk).exists():
-                raise forms.ValidationError(_('البريد الإلكتروني موجود بالفعل'))
+                raise forms.ValidationError(_('Email already exists'))
         return email
     
     def clean(self):
@@ -297,103 +297,44 @@ class UserListView(LoginRequiredMixin, ListView):
     
     def get_context_data(self, **kwargs):
         permissions_by_app = {}
-        # إضافة صلاحيات قسم Revenues & Expenses بنفس منطق البنوك والصناديق والمشتريات
+        # Add Revenues & Expenses permissions with custom permissions
         revenues_content_types = ContentType.objects.filter(app_label='revenues_expenses')
         revenues_permissions = Permission.objects.filter(content_type__in=revenues_content_types)
         for perm in revenues_permissions:
             app_label = perm.content_type.app_label
             if app_label not in permissions_by_app:
                 permissions_by_app[app_label] = []
-            # فقط الصلاحيات الافتراضية والمخصصة
-            if perm.codename == 'add_revenueexpenseentry':
-                perm.translated_name = _('إضافة قيد إيراد/مصروف')
-                permissions_by_app[app_label].append(perm)
-            elif perm.codename == 'change_revenueexpenseentry':
-                perm.translated_name = _('تعديل قيد إيراد/مصروف')
-                permissions_by_app[app_label].append(perm)
-            elif perm.codename == 'delete_revenueexpenseentry':
-                perm.translated_name = _('حذف قيد إيراد/مصروف')
-                permissions_by_app[app_label].append(perm)
-            elif perm.codename == 'view_revenueexpenseentry':
-                perm.translated_name = _('عرض قيد إيراد/مصروف')
-                permissions_by_app[app_label].append(perm)
-            elif perm.codename == 'add_revenueexpensecategory':
-                perm.translated_name = _('إضافة فئة إيراد/مصروف')
-                permissions_by_app[app_label].append(perm)
-            elif perm.codename == 'change_revenueexpensecategory':
-                perm.translated_name = _('تعديل فئة إيراد/مصروف')
-                permissions_by_app[app_label].append(perm)
-            elif perm.codename == 'delete_revenueexpensecategory':
-                perm.translated_name = _('حذف فئة إيراد/مصروف')
-                permissions_by_app[app_label].append(perm)
-            elif perm.codename == 'view_revenueexpensecategory':
-                perm.translated_name = _('عرض فئة إيراد/مصروف')
-                permissions_by_app[app_label].append(perm)
-        # إضافة صلاحيات قسم Revenues & Expenses بنفس منطق البنوك والصناديق والمشتريات
-        revenues_content_types = ContentType.objects.filter(app_label='revenues_expenses')
-        revenues_permissions = Permission.objects.filter(content_type__in=revenues_content_types)
-        for perm in revenues_permissions:
-            app_label = perm.content_type.app_label
-            if app_label not in permissions_by_app:
-                permissions_by_app[app_label] = []
-            # فقط الصلاحيات الافتراضية والمخصصة
-            if perm.codename == 'add_revenueexpenseentry':
-                perm.translated_name = _('إضافة قيد إيراد/مصروف')
-                permissions_by_app[app_label].append(perm)
-            elif perm.codename == 'change_revenueexpenseentry':
-                perm.translated_name = _('تعديل قيد إيراد/مصروف')
-                permissions_by_app[app_label].append(perm)
-            elif perm.codename == 'delete_revenueexpenseentry':
-                perm.translated_name = _('حذف قيد إيراد/مصروف')
-                permissions_by_app[app_label].append(perm)
-            elif perm.codename == 'view_revenueexpenseentry':
-                perm.translated_name = _('عرض قيد إيراد/مصروف')
-                permissions_by_app[app_label].append(perm)
-            elif perm.codename == 'add_revenueexpensecategory':
-                perm.translated_name = _('إضافة فئة إيراد/مصروف')
-                permissions_by_app[app_label].append(perm)
-            elif perm.codename == 'change_revenueexpensecategory':
-                perm.translated_name = _('تعديل فئة إيراد/مصروف')
-                permissions_by_app[app_label].append(perm)
-            elif perm.codename == 'delete_revenueexpensecategory':
-                perm.translated_name = _('حذف فئة إيراد/مصروف')
-                permissions_by_app[app_label].append(perm)
-            elif perm.codename == 'view_revenueexpensecategory':
-                perm.translated_name = _('عرض فئة إيراد/مصروف')
-                permissions_by_app[app_label].append(perm)
-        revenues_content_types = ContentType.objects.filter(app_label='revenues_expenses')
-        revenues_permissions = Permission.objects.filter(content_type__in=revenues_content_types)
-        for perm in revenues_permissions:
-            app_label = perm.content_type.app_label
-            model_name = perm.content_type.model
-            # فقط الصلاحيات الافتراضية والمخصصة
-            if perm.codename in [
-                'add_revenueexpenseentry', 'change_revenueexpenseentry', 'delete_revenueexpenseentry', 'view_revenueexpenseentry',
-                'add_revenueexpensecategory', 'change_revenueexpensecategory', 'delete_revenueexpensecategory', 'view_revenueexpensecategory'
-            ]:
-                if app_label not in permissions_by_app:
-                    permissions_by_app[app_label] = []
-                # ترجمة ديناميكية
-                if perm.codename == 'add_revenueexpenseentry':
-                    verbose = _('إضافة قيد إيراد/مصروف')
-                elif perm.codename == 'change_revenueexpenseentry':
-                    verbose = _('تعديل قيد إيراد/مصروف')
-                elif perm.codename == 'delete_revenueexpenseentry':
-                    verbose = _('حذف قيد إيراد/مصروف')
-                elif perm.codename == 'view_revenueexpenseentry':
-                    verbose = _('عرض قيد إيراد/مصروف')
-                elif perm.codename == 'add_revenueexpensecategory':
-                    verbose = _('إضافة فئة إيراد/مصروف')
-                elif perm.codename == 'change_revenueexpensecategory':
-                    verbose = _('تعديل فئة إيراد/مصروف')
-                elif perm.codename == 'delete_revenueexpensecategory':
-                    verbose = _('حذف فئة إيراد/مصروف')
-                elif perm.codename == 'view_revenueexpensecategory':
-                    verbose = _('عرض فئة إيراد/مصروف')
-                else:
-                    verbose = perm.name
-                perm.translated_name = verbose
-                permissions_by_app[app_label].append(perm)
+
+            # Use a translation map for these codenames (custom permissions)
+            if perm.codename == 'can_add_sectors':
+                perm.translated_name = _('Add Sectors')
+            elif perm.codename == 'can_edit_sectors':
+                perm.translated_name = _('Edit Sectors')
+            elif perm.codename == 'can_delete_sectors':
+                perm.translated_name = _('Delete Sectors')
+            elif perm.codename == 'can_view_sectors':
+                perm.translated_name = _('View Sectors')
+            elif perm.codename == 'can_add_categories':
+                perm.translated_name = _('Add Revenue/Expense Categories')
+            elif perm.codename == 'can_edit_categories':
+                perm.translated_name = _('Edit Revenue/Expense Categories')
+            elif perm.codename == 'can_delete_categories':
+                perm.translated_name = _('Delete Revenue/Expense Categories')
+            elif perm.codename == 'can_view_categories':
+                perm.translated_name = _('View Revenue/Expense Categories')
+            elif perm.codename == 'can_add_entries':
+                perm.translated_name = _('Add Revenue/Expense Entries')
+            elif perm.codename == 'can_edit_entries':
+                perm.translated_name = _('Edit Revenue/Expense Entries')
+            elif perm.codename == 'can_delete_entries':
+                perm.translated_name = _('Delete Revenue/Expense Entries')
+            elif perm.codename == 'can_view_entries':
+                perm.translated_name = _('View Revenue/Expense Entries')
+            else:
+                perm.translated_name = perm.name
+
+            permissions_by_app[app_label].append(perm)
+        
         context = super().get_context_data(**kwargs)
         
         # إضافة معلومات للـ superadmin فقط
@@ -431,8 +372,8 @@ class UserCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
             user.save()
             
             messages.success(
-                self.request, 
-                _('تم إنشاء المستخدم "{}" بنجاح. يمكنه الآن تسجيل الدخول للنظام.').format(user.username)
+                self.request,
+                _('User "{}" created successfully. They can now log in to the system.').format(user.username)
             )
             
             # تسجيل النشاط
@@ -440,12 +381,12 @@ class UserCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
                 self.request,
                 'create',
                 user,
-                f'تم إنشاء مستخدم جديد: {user.username} ({user.get_full_name()})'
+                _('Created new user: {} ({})').format(user.username, user.get_full_name())
             )
         except Exception as e:
             messages.error(
                 self.request,
-                _('حدث خطأ أثناء إنشاء المستخدم: {}').format(str(e))
+                _('An error occurred while creating the user: {}').format(str(e))
             )
             return super().form_invalid(form)
         
@@ -457,10 +398,10 @@ class UserCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         
         # نصائح للمستخدم (قابلة للترجمة)
         context['creation_tips'] = [
-            _('اختر اسم مستخدم واضح وسهل التذكر'),
-            _('استخدم كلمة مرور قوية تحتوي على أرقام وحروف'),
-            _('حدد الصلاحيات بحذر حسب دور المستخدم'),
-            _('تأكد من صحة البريد الإلكتروني للتواصل'),
+            _('Choose a clear, easy-to-remember username'),
+            _('Use a strong password including letters and numbers'),
+            _('Assign permissions carefully according to user role'),
+            _('Ensure the email address is valid for contact'),
         ]
         
         return context
@@ -486,16 +427,16 @@ class UserUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         """معالجة النموذج عند صحته"""
         user = form.save()
         messages.success(
-            self.request, 
-            _('تم تحديث بيانات المستخدم "{}" بنجاح').format(user.username)
+            self.request,
+            _('User "{}" updated successfully').format(user.username)
         )
-        
+
         # تسجيل النشاط
         log_user_activity(
             self.request,
             'update',
             user,
-            f'تم تحديث بيانات المستخدم: {user.username} ({user.get_full_name()})'
+            _('Updated user: {} ({})').format(user.username, user.get_full_name())
         )
         
         return super().form_valid(form)
@@ -515,9 +456,9 @@ class UserUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         # تحذيرات التعديل
         context['edit_warnings'] = []
         if user_to_edit == self.request.user:
-            context['edit_warnings'].append('تقوم بتعديل بياناتك الشخصية')
+            context['edit_warnings'].append(_('You are editing your own profile'))
         if user_to_edit.username == 'superadmin':
-            context['edit_warnings'].append('هذا هو المستخدم الأساسي للنظام')
+            context['edit_warnings'].append(_('This is the main system user'))
             
         return context
 
@@ -568,14 +509,14 @@ class UserDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
                 from journal.models import JournalEntry
                 journal_count = JournalEntry.objects.filter(created_by=user_to_delete).count()
                 if journal_count > 0:
-                    related_objects['قيود اليومية'] = journal_count
+                    related_objects['Journal Entries'] = journal_count
                     has_protected_relations = True
                 
                 # فحص سجلات المراجعة
                 from core.models import AuditLog
                 audit_count = AuditLog.objects.filter(user=user_to_delete).count()
                 if audit_count > 0:
-                    related_objects['سجلات المراجعة'] = audit_count
+                    related_objects['Audit Logs'] = audit_count
                 
                 # يمكن إضافة فحوصات أخرى هنا للنماذج الأخرى
                 
@@ -586,18 +527,18 @@ class UserDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         context['can_delete'] = can_delete_basic and not has_protected_relations
         context['related_objects'] = related_objects
         
-        # أسباب عدم إمكانية الحذف
+        # Reasons why deletion is not allowed
         context['delete_warnings'] = []
         if user_to_delete.username == 'superadmin':
-            context['delete_warnings'].append('المستخدم الأساسي للنظام محمي من الحذف')
+            context['delete_warnings'].append(_('Primary system user is protected from deletion'))
         if user_to_delete == self.request.user:
-            context['delete_warnings'].append('لا يمكن للمستخدم حذف حسابه الخاص')
+            context['delete_warnings'].append(_('You cannot delete your own account'))
         if user_to_delete.is_superuser:
-            context['delete_warnings'].append('لا يمكن حذف المستخدمين ذوي صلاحيات Superuser')
+            context['delete_warnings'].append(_('Cannot delete users with Superuser privileges'))
         if has_protected_relations and related_objects:
             relations_text = "، ".join([f"{count} {name}" for name, count in related_objects.items()])
-            context['delete_warnings'].append(f'المستخدم مرتبط بـ: {relations_text}')
-            context['delete_warnings'].append('يمكنك إلغاء تفعيل المستخدم بدلاً من الحذف')
+            context['delete_warnings'].append(_('User is linked to: {}').format(relations_text))
+            context['delete_warnings'].append(_('You can deactivate the user instead of deleting to preserve historical records'))
             
         return context
     
@@ -606,15 +547,15 @@ class UserDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         user = self.get_object()
         # منع حذف المستخدم الحالي
         if user == request.user:
-            messages.error(request, _('لا يمكنك حذف نفسك'))
+            messages.error(request, _('You cannot delete yourself'))
             return self.get(request, *args, **kwargs)
         # منع حذف المستخدم الأساسي superadmin
         if user.username == 'superadmin':
-            messages.error(request, _('لا يمكن حذف المستخدم الأساسي'))
+            messages.error(request, _('Cannot delete the superadmin user'))
             return self.get(request, *args, **kwargs)
         # منع حذف أي مستخدم له صلاحيات superuser
         if user.is_superuser:
-            messages.error(request, _('لا يمكن حذف المستخدمين ذوي صلاحيات Superuser'))
+            messages.error(request, _('Cannot delete users with Superuser privileges'))
             return self.get(request, *args, **kwargs)
         
         username = user.username
@@ -626,12 +567,12 @@ class UserDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
                 request,
                 'delete',
                 user,
-                _('تم حذف المستخدم: {}').format(username)
+                _('Deleted user: {}').format(username)
             )
             
             # محاولة حذف المستخدم
             result = super().delete(request, *args, **kwargs)
-            messages.success(request, _('تم حذف المستخدم "{}" بنجاح').format(username))
+            messages.success(request, _('User "{}" deleted successfully').format(username))
             return result
             
         except ProtectedError as e:
@@ -650,27 +591,27 @@ class UserDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
             error_parts = []
             for model_name, count in protected_types.items():
                 if model_name == 'JournalEntry':
-                    error_parts.append(f"{count} قيد يومية")
+                    error_parts.append(f"{count} Journal Entry(ies)")
                 elif model_name == 'AuditLog':
-                    error_parts.append(f"{count} سجل مراجعة")
+                    error_parts.append(f"{count} Audit Log(s)")
                 elif model_name == 'Invoice':
-                    error_parts.append(f"{count} فاتورة")
+                    error_parts.append(f"{count} Invoice(s)")
                 else:
                     error_parts.append(f"{count} {model_name}")
             
-            error_message = _('لا يمكن حذف المستخدم "{}" لأنه مرتبط بـ: {}').format(
+            error_message = _('Cannot delete user "{}" because it is linked to: {}').format(
                 username, 
                 "، ".join(error_parts)
             )
             
             messages.error(request, error_message)
-            messages.info(request, _('يمكنك إلغاء تفعيل المستخدم بدلاً من حذفه للاحتفاظ بالسجلات التاريخية'))
+            messages.info(request, _('You can deactivate the user instead of deleting it to preserve historical records'))
             
             return self.get(request, *args, **kwargs)
         
         except Exception as e:
             # معالجة أي أخطاء أخرى
-            messages.error(request, _('حدث خطأ أثناء حذف المستخدم: {}').format(str(e)))
+            messages.error(request, _('An error occurred while deleting the user: {}').format(str(e)))
             return self.get(request, *args, **kwargs)
 
 class UserGroupListView(LoginRequiredMixin, ListView):
@@ -747,8 +688,8 @@ class GroupCreateForm(forms.ModelForm):
         if self.user and (getattr(self.user, 'user_type', None) == 'superadmin' or self.user.is_superuser):
             self.fields['is_system_group'] = forms.BooleanField(
                 required=False,
-                label=_('مجموعة نظام محمية'),
-                help_text=_('إذا تم تفعيل هذا الخيار، ستكون المجموعة محمية من الحذف إلا للسوبر أدمين'),
+                label=_('Protected system group'),
+                help_text=_('If enabled, this group is protected from deletion except for superadmin users'),
                 widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
             )
         
@@ -772,12 +713,12 @@ class GroupCreateForm(forms.ModelForm):
         # إضافة حقل dashboard_sections
         self.fields['dashboard_sections'] = forms.MultipleChoiceField(
             choices=[
-                ('sales_stats', _('إحصائيات المبيعات')),
-                ('purchases_stats', _('إحصائيات المشتريات')),
-                ('banks_balances', _('أرصدة البنوك والصناديق النقدية')),
-                ('quick_links', _('روابط سريعة')),
-                ('sales_purchases_distribution', _('توزيع المبيعات والمشتريات (الشهر الحالي)')),
-                ('monthly_performance', _('الأداء الشهري')),
+                ('sales_stats', _('Sales statistics')),
+                ('purchases_stats', _('Purchases statistics')),
+                ('banks_balances', _('Bank and cashbox balances')),
+                ('quick_links', _('Quick links')),
+                ('sales_purchases_distribution', _('Sales/Purchases distribution (current month)')),
+                ('monthly_performance', _('Monthly performance')),
             ],
             widget=forms.CheckboxSelectMultiple,
             required=False,
@@ -803,12 +744,12 @@ class UserGroupCreateForm(forms.ModelForm):
     
     dashboard_sections = forms.MultipleChoiceField(
         choices=[
-            ('sales_stats', _('إحصائيات المبيعات')),
-            ('purchases_stats', _('إحصائيات المشتريات')),
-            ('banks_balances', _('أرصدة البنوك والصناديق النقدية')),
-            ('quick_links', _('روابط سريعة')),
-            ('sales_purchases_distribution', _('توزيع المبيعات والمشتريات (الشهر الحالي)')),
-            ('monthly_performance', _('الأداء الشهري')),
+            ('sales_stats', _('Sales statistics')),
+            ('purchases_stats', _('Purchases statistics')),
+            ('banks_balances', _('Bank and cashbox balances')),
+            ('quick_links', _('Quick links')),
+            ('sales_purchases_distribution', _('Sales/Purchases distribution (current month)')),
+            ('monthly_performance', _('Monthly performance')),
         ],
         widget=forms.CheckboxSelectMultiple,
         required=False,
@@ -845,12 +786,12 @@ class UserGroupEditForm(forms.ModelForm):
     
     dashboard_sections = forms.MultipleChoiceField(
         choices=[
-            ('sales_stats', _('إحصائيات المبيعات')),
-            ('purchases_stats', _('إحصائيات المشتريات')),
-            ('banks_balances', _('أرصدة البنوك والصناديق النقدية')),
-            ('quick_links', _('روابط سريعة')),
-            ('sales_purchases_distribution', _('توزيع المبيعات والمشتريات (الشهر الحالي)')),
-            ('monthly_performance', _('الأداء الشهري')),
+            ('sales_stats', _('Sales statistics')),
+                ('purchases_stats', _('Purchases statistics')),
+                ('banks_balances', _('Bank and cashbox balances')),
+                ('quick_links', _('Quick links')),
+                ('sales_purchases_distribution', _('Sales/Purchases distribution (current month)')),
+                ('monthly_performance', _('Monthly performance')),
         ],
         widget=forms.CheckboxSelectMultiple,
         required=False,
@@ -929,16 +870,20 @@ class UserGroupCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
             
             # تسجيل النشاط في سجل الأنشطة
             log_user_activity(
-                self.request, 
-                'create', 
-                group, 
-                f'إنشاء مجموعة مستخدمين جديدة: {group.name} مع {len(form.cleaned_data["permissions"])} صلاحية وأقسام لوحة التحكم: {", ".join(form.cleaned_data.get("dashboard_sections", []))}'
+                self.request,
+                'create',
+                group,
+                _('Created new user group: {} with {} permissions and dashboard sections: {}').format(
+                    group.name,
+                    len(form.cleaned_data["permissions"]),
+                    ", ".join(form.cleaned_data.get("dashboard_sections", []))
+                )
             )
             
-            messages.success(self.request, _('تم إنشاء المجموعة بنجاح'))
+            messages.success(self.request, _('Group created successfully'))
             return redirect(self.success_url)
         except Exception as e:
-            messages.error(self.request, _('حدث خطأ أثناء إنشاء المجموعة: {}').format(str(e)))
+            messages.error(self.request, _('An error occurred while creating the group: {}').format(str(e)))
             return self.form_invalid(form)
     
     def get_context_data(self, **kwargs):
@@ -989,123 +934,157 @@ class UserGroupCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         """ترجمة اسم الصلاحية"""
         translations = {
             # صلاحيات القيود اليومية
-            'add_journalentry': _('إضافة قيد يومية'),
-            'change_journalentry': _('تعديل قيد يومية'),
-            'delete_journalentry': _('حذف قيد يومية'),
-            'view_journalentry': _('عرض قيد يومية'),
-            'change_journalentry_entry_number': _('تعديل رقم القيد'),
-            'add_account': _('إضافة حساب'),
-            'change_account': _('تعديل حساب'),
-            'delete_account': _('حذف حساب'),
-            'view_account': _('عرض حساب'),
+            'add_journalentry': _('Add Journal Entry'),
+            'change_journalentry': _('Change Journal Entry'),
+            'delete_journalentry': _('Delete Journal Entry'),
+            'view_journalentry': _('View Journal Entry'),
+            'change_journalentry_entry_number': _('Change Journal Entry Number'),
+            'add_account': _('Add Account'),
+            'change_account': _('Change Account'),
+            'delete_account': _('Delete Account'),
+            'view_account': _('View Account'),
             
             # صلاحيات الإيرادات والمصروفات
-            'add_revenueexpenseentry': _('إضافة قيد إيراد/مصروف'),
-            'change_revenueexpenseentry': _('تعديل قيد إيراد/مصروف'),
-            'delete_revenueexpenseentry': _('حذف قيد إيراد/مصروف'),
-            'view_revenueexpenseentry': _('عرض قيد إيراد/مصروف'),
-            'add_revenueexpensecategory': _('إضافة فئة إيراد/مصروف'),
-            'change_revenueexpensecategory': _('تعديل فئة إيراد/مصروف'),
-            'delete_revenueexpensecategory': _('حذف فئة إيراد/مصروف'),
-            'view_revenueexpensecategory': _('عرض فئة إيراد/مصروف'),
+            'can_add_sectors': _('Add Sectors'),
+            'can_edit_sectors': _('Edit Sectors'),
+            'can_delete_sectors': _('Delete Sectors'),
+            'can_view_sectors': _('View Sectors'),
+            'can_add_categories': _('Add Revenue/Expense Categories'),
+            'can_edit_categories': _('Edit Revenue/Expense Categories'),
+            'can_delete_categories': _('Delete Revenue/Expense Categories'),
+            'can_view_categories': _('View Revenue/Expense Categories'),
+            'can_add_entries': _('Add Revenue/Expense Entries'),
+            'can_edit_entries': _('Edit Revenue/Expense Entries'),
+            'can_delete_entries': _('Delete Revenue/Expense Entries'),
+            'can_view_entries': _('View Revenue/Expense Entries'),
+            'can_add_recurring': _('Add Recurring Revenue/Expense'),
+            'can_edit_recurring': _('Edit Recurring Revenue/Expense'),
+            'can_delete_recurring': _('Delete Recurring Revenue/Expense'),
+            'can_view_recurring': _('View Recurring Revenue/Expense'),
             
             # صلاحيات المبيعات
-            'add_salesinvoice': _('إضافة فاتورة مبيعات'),
-            'change_salesinvoice': _('تعديل فاتورة مبيعات'),
-            'delete_salesinvoice': _('حذف فاتورة مبيعات'),
-            'view_salesinvoice': _('عرض فاتورة مبيعات'),
-            'add_salesinvoiceitem': _('إضافة عنصر فاتورة مبيعات'),
-            'change_salesinvoiceitem': _('تعديل عنصر فاتورة مبيعات'),
-            'delete_salesinvoiceitem': _('حذف عنصر فاتورة مبيعات'),
-            'view_salesinvoiceitem': _('عرض عنصر فاتورة مبيعات'),
+            'add_salesinvoice': _('Add Sales Invoice'),
+            'change_salesinvoice': _('Change Sales Invoice'),
+            'delete_salesinvoice': _('Delete Sales Invoice'),
+            'view_salesinvoice': _('View Sales Invoice'),
+            'add_salesinvoiceitem': _('Add Sales Invoice Item'),
+            'change_salesinvoiceitem': _('Change Sales Invoice Item'),
+            'delete_salesinvoiceitem': _('Delete Sales Invoice Item'),
+            'view_salesinvoiceitem': _('View Sales Invoice Item'),
             
             # صلاحيات المشتريات
-            'add_purchaseinvoice': _('إضافة فاتورة مشتريات'),
-            'change_purchaseinvoice': _('تعديل فاتورة مشتريات'),
-            'delete_purchaseinvoice': _('حذف فاتورة مشتريات'),
-            'view_purchaseinvoice': _('عرض فاتورة مشتريات'),
-            'add_purchaseinvoiceitem': _('إضافة عنصر فاتورة مشتريات'),
-            'change_purchaseinvoiceitem': _('تعديل عنصر فاتورة مشتريات'),
-            'delete_purchaseinvoiceitem': _('حذف عنصر فاتورة مشتريات'),
-            'view_purchaseinvoiceitem': _('عرض عنصر فاتورة مشتريات'),
+            'add_purchaseinvoice': _('Add Purchase Invoice'),
+            'change_purchaseinvoice': _('Change Purchase Invoice'),
+            'delete_purchaseinvoice': _('Delete Purchase Invoice'),
+            'view_purchaseinvoice': _('View Purchase Invoice'),
+            'add_purchaseinvoiceitem': _('Add Purchase Invoice Item'),
+            'change_purchaseinvoiceitem': _('Change Purchase Invoice Item'),
+            'delete_purchaseinvoiceitem': _('Delete Purchase Invoice Item'),
+            'view_purchaseinvoiceitem': _('View Purchase Invoice Item'),
             
             # صلاحيات العملاء والموردين
-            'add_customersupplier': _('إضافة عميل/مورد'),
-            'change_customersupplier': _('تعديل عميل/مورد'),
-            'delete_customersupplier': _('حذف عميل/مورد'),
-            'view_customersupplier': _('عرض عميل/مورد'),
+            'add_customersupplier': _('Add Customer/Supplier'),
+            'change_customersupplier': _('Change Customer/Supplier'),
+            'delete_customersupplier': _('Delete Customer/Supplier'),
+            'view_customersupplier': _('View Customer/Supplier'),
             
             # صلاحيات المنتجات
-            'add_product': _('إضافة منتج'),
-            'change_product': _('تعديل منتج'),
-            'delete_product': _('حذف منتج'),
-            'view_product': _('عرض منتج'),
-            'add_category': _('إضافة تصنيف'),
-            'change_category': _('تعديل تصنيف'),
-            'delete_category': _('حذف تصنيف'),
-            'view_category': _('عرض تصنيف'),
+            'add_product': _('Add Product'),
+            'change_product': _('Change Product'),
+            'delete_product': _('Delete Product'),
+            'view_product': _('View Product'),
+            'add_category': _('Add Category'),
+            'change_category': _('Change Category'),
+            'delete_category': _('Delete Category'),
+            'view_category': _('View Category'),
             
             # صلاحيات المخزون
-            'add_warehouse': _('إضافة مستودع'),
-            'change_warehouse': _('تعديل مستودع'),
-            'delete_warehouse': _('حذف مستودع'),
-            'view_warehouse': _('عرض مستودع'),
-            'add_inventorymovement': _('إضافة حركة مخزون'),
-            'change_inventorymovement': _('تعديل حركة مخزون'),
-            'delete_inventorymovement': _('حذف حركة مخزون'),
-            'view_inventorymovement': _('عرض حركة مخزون'),
+            'add_warehouse': _('Add Warehouse'),
+            'change_warehouse': _('Change Warehouse'),
+            'delete_warehouse': _('Delete Warehouse'),
+            'view_warehouse': _('View Warehouse'),
+            'add_inventorymovement': _('Add Inventory Movement'),
+            'change_inventorymovement': _('Change Inventory Movement'),
+            'delete_inventorymovement': _('Delete Inventory Movement'),
+            'view_inventorymovement': _('View Inventory Movement'),
+            
+            # صلاحيات الأصول والخصوم
+            'can_view_asset_categories': _('View Asset Categories'),
+            'can_add_asset_categories': _('Add Asset Categories'),
+            'can_edit_asset_categories': _('Edit Asset Categories'),
+            'can_delete_asset_categories': _('Delete Asset Categories'),
+            'can_view_assets': _('View Assets'),
+            'can_add_assets': _('Add Assets'),
+            'can_edit_assets': _('Edit Assets'),
+            'can_delete_assets': _('Delete Assets'),
+            'can_view_liability_categories': _('View Liability Categories'),
+            'can_add_liability_categories': _('Add Liability Categories'),
+            'can_edit_liability_categories': _('Edit Liability Categories'),
+            'can_delete_liability_categories': _('Delete Liability Categories'),
+            'can_view_liabilities': _('View Liabilities'),
+            'can_add_liabilities': _('Add Liabilities'),
+            'can_edit_liabilities': _('Edit Liabilities'),
+            'can_delete_liabilities': _('Delete Liabilities'),
+            'can_view_depreciation_entries': _('View Depreciation Entries'),
+            'can_add_depreciation_entries': _('Add Depreciation Entries'),
+            'can_edit_depreciation_entries': _('Edit Depreciation Entries'),
+            'can_delete_depreciation_entries': _('Delete Depreciation Entries'),
             
             # صلاحيات البنوك
-            'add_bank': _('إضافة بنك'),
-            'change_bank': _('تعديل بنك'),
-            'delete_bank': _('حذف بنك'),
-            'view_bank': _('عرض بنك'),
-            'add_bankaccount': _('إضافة حساب بنكي'),
-            'change_bankaccount': _('تعديل حساب بنكي'),
-            'delete_bankaccount': _('حذف حساب بنكي'),
-            'view_bankaccount': _('عرض حساب بنكي'),
+            'add_bank': _('Add Bank'),
+            'change_bank': _('Change Bank'),
+            'delete_bank': _('Delete Bank'),
+            'view_bank': _('View Bank'),
+            'add_bankaccount': _('Add Bank Account'),
+            'change_bankaccount': _('Change Bank Account'),
+            'delete_bankaccount': _('Delete Bank Account'),
+            'view_bankaccount': _('View Bank Account'),
+            'can_view_bank_accounts': _('Can View Bank Accounts'),
+            'can_add_bank_accounts': _('Can Add Bank Accounts'),
+            'can_edit_bank_accounts': _('Can Edit Bank Accounts'),
+            'can_delete_bank_accounts': _('Can Delete Bank Accounts'),
             
             # صلاحيات الصناديق
-            'add_cashbox': _('إضافة صندوق'),
-            'change_cashbox': _('تعديل صندوق'),
-            'delete_cashbox': _('حذف صندوق'),
-            'view_cashbox': _('عرض صندوق'),
+            'add_cashbox': _('Add Cashbox'),
+            'change_cashbox': _('Change Cashbox'),
+            'delete_cashbox': _('Delete Cashbox'),
+            'view_cashbox': _('View Cashbox'),
             
             # صلاحيات المدفوعات والمقبوضات
-            'add_payment': _('إضافة دفعة'),
-            'change_payment': _('تعديل دفعة'),
-            'delete_payment': _('حذف دفعة'),
-            'view_payment': _('عرض دفعة'),
-            'add_receipt': _('إضافة مقبوضة'),
-            'change_receipt': _('تعديل مقبوضة'),
-            'delete_receipt': _('حذف مقبوضة'),
-            'view_receipt': _('عرض مقبوضة'),
+            'add_payment': _('Add Payment'),
+            'change_payment': _('Change Payment'),
+            'delete_payment': _('Delete Payment'),
+            'view_payment': _('View Payment'),
+            'add_receipt': _('Add Receipt'),
+            'change_receipt': _('Change Receipt'),
+            'delete_receipt': _('Delete Receipt'),
+            'view_receipt': _('View Receipt'),
             
             # صلاحيات المستخدمين
-            'add_user': _('إضافة مستخدم'),
-            'change_user': _('تعديل مستخدم'),
-            'delete_user': _('حذف مستخدم'),
-            'view_user': _('عرض مستخدم'),
-            'add_group': _('إضافة مجموعة'),
-            'change_group': _('تعديل مجموعة'),
-            'delete_group': _('حذف مجموعة'),
-            'view_group': _('عرض مجموعة'),
+            'add_user': _('Add User'),
+            'change_user': _('Change User'),
+            'delete_user': _('Delete User'),
+            'view_user': _('View User'),
+            'add_group': _('Add Group'),
+            'change_group': _('Change Group'),
+            'delete_group': _('Delete Group'),
+            'view_group': _('View Group'),
             
             # صلاحيات النظام الأساسي
-            'add_companysettings': _('إضافة إعدادات الشركة'),
-            'change_companysettings': _('تعديل إعدادات الشركة'),
-            'delete_companysettings': _('حذف إعدادات الشركة'),
-            'view_companysettings': _('عرض إعدادات الشركة'),
-            'add_auditlog': _('إضافة سجل مراجعة'),
-            'change_auditlog': _('تعديل سجل مراجعة'),
-            'delete_auditlog': _('حذف سجل مراجعة'),
-            'view_auditlog': _('عرض سجل مراجعة'),
+            'add_companysettings': _('Add Company Settings'),
+            'change_companysettings': _('Change Company Settings'),
+            'delete_companysettings': _('Delete Company Settings'),
+            'view_companysettings': _('View Company Settings'),
+            'add_auditlog': _('Add Audit Log'),
+            'change_auditlog': _('Change Audit Log'),
+            'delete_auditlog': _('Delete Audit Log'),
+            'view_auditlog': _('View Audit Log'),
             
             # صلاحيات النسخ الاحتياطية
-            'can_restore_backup': _('استعادة النسخ الاحتياطية'),
-            'delete_backup': _('حذف ملفات النسخ الاحتياطية'),
-            'can_delete_advanced_data': _('حذف البيانات المتقدمة'),
-            'can_backup_system': _('إنشاء نسخ احتياطية للنظام'),
+            'can_restore_backup': _('Restore Backups'),
+            'delete_backup': _('Delete Backup Files'),
+            'can_delete_advanced_data': _('Delete Advanced Data'),
+            'can_backup_system': _('Create System Backups'),
         }
         
         return translations.get(permission.codename, permission.name)
@@ -1113,23 +1092,24 @@ class UserGroupCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     def _get_app_names(self):
         """أسماء التطبيقات المترجمة"""
         return {
-            'journal': _('القيود اليومية'),
-            'sales': _('المبيعات'),
-            'purchases': _('المشتريات'),
-            'customers': _('العملاء والموردون'),
-            'products': _('المنتجات'),
-            'inventory': _('المخزون'),
-            'revenues_expenses': _('الإيرادات والمصروفات'),
-            'banks': _('البنوك'),
-            'cashboxes': _('الصناديق'),
-            'payments': _('المدفوعات'),
-            'receipts': _('المقبوضات'),
-            'users': _('المستخدمون'),
-            'core': _('النظام الأساسي'),
-            'backup': _('النسخ الاحتياطية'),
-            'hr': _('الموارد البشرية'),
-            'reports': _('التقارير'),
-            'settings': _('الإعدادات'),
+            'journal': _('Journal Entries'),
+            'sales': _('Sales'),
+            'purchases': _('Purchases'),
+            'customers': _('Customers and Suppliers'),
+            'products': _('Products'),
+            'inventory': _('Inventory'),
+            'assets_liabilities': _('Assets & Liabilities'),
+            'revenues_expenses': _('Revenues & Expenses'),
+            'banks': _('Banks'),
+            'cashboxes': _('Cashboxes'),
+            'payments': _('Payments'),
+            'receipts': _('Receipts'),
+            'users': _('Users'),
+            'core': _('Core'),
+            'backup': _('Backups'),
+            'hr': _('Human Resources'),
+            'reports': _('Reports'),
+            'settings': _('Settings'),
         }
 
 
@@ -1152,7 +1132,7 @@ class GroupEditForm(forms.ModelForm):
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': _('أدخل اسم المجموعة')
+                'placeholder': _('Enter the group name')
             })
         }
     
@@ -1164,8 +1144,8 @@ class GroupEditForm(forms.ModelForm):
         if self.user and (getattr(self.user, 'user_type', None) == 'superadmin' or self.user.is_superuser):
             self.fields['is_system_group'] = forms.BooleanField(
                 required=False,
-                label=_('مجموعة نظام محمية'),
-                help_text=_('إذا تم تفعيل هذا الخيار، ستكون المجموعة محمية من الحذف إلا للسوبر أدمين'),
+                label=_('Protected system group'),
+                help_text=_('If enabled, this group is protected from deletion except for superadmin users'),
                 widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
             )
             # تعيين القيمة الأولية من المجموعة الحالية
@@ -1205,12 +1185,12 @@ class GroupEditForm(forms.ModelForm):
         # إضافة حقل dashboard_sections
         self.fields['dashboard_sections'] = forms.MultipleChoiceField(
             choices=[
-                ('sales_stats', _('إحصائيات المبيعات')),
-                ('purchases_stats', _('إحصائيات المشتريات')),
-                ('banks_balances', _('أرصدة البنوك والصناديق النقدية')),
-                ('quick_links', _('روابط سريعة')),
-                ('sales_purchases_distribution', _('توزيع المبيعات والمشتريات (الشهر الحالي)')),
-                ('monthly_performance', _('الأداء الشهري')),
+                ('sales_stats', _('Sales statistics')),
+                    ('purchases_stats', _('Purchases statistics')),
+                    ('banks_balances', _('Bank and cashbox balances')),
+                    ('quick_links', _('Quick links')),
+                    ('sales_purchases_distribution', _('Sales/Purchases distribution (current month)')),
+                    ('monthly_performance', _('Monthly performance')),
             ],
             widget=forms.CheckboxSelectMultiple,
             required=False,
@@ -1315,7 +1295,7 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
                 ]
             )
             if superadmin_permissions_in_group.exists():
-                messages.error(self.request, _('لا يمكنك تعديل هذه المجموعة - تحتوي على صلاحيات مخصصة للسوبر أدمين فقط'))
+                messages.error(self.request, _('You cannot edit this group - it contains permissions reserved for superadmin only'))
                 return redirect('users:group_list')
         return super().dispatch(request, *args, **kwargs)
     
@@ -1361,12 +1341,12 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
                 old_protected = getattr(group, 'is_system_group', False)
                 group.is_system_group = form.cleaned_data['is_system_group']
                 if old_protected != group.is_system_group:
-                    protection_status = "محمية" if group.is_system_group else "غير محمية"
+                    protection_status = _('Protected') if group.is_system_group else _('Unprotected')
                     log_user_activity(
                         self.request,
                         'update',
                         group,
-                        f'تغيير حالة الحماية للمجموعة إلى: {protection_status}'
+                        _('Changed group protection status to: {}').format(protection_status)
                     )
             
             group.save()
@@ -1376,7 +1356,11 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
                 self.request, 
                 'update', 
                 group, 
-                f'تحديث مجموعة مستخدمين: {group.name} مع {len(form.cleaned_data["permissions"])} صلاحية وأقسام لوحة التحكم: {", ".join(form.cleaned_data.get("dashboard_sections", []))}'
+                _('Updated user group: {} with {} permissions and dashboard sections: {}').format(
+                    group.name,
+                    len(form.cleaned_data["permissions"]),
+                    ", ".join(form.cleaned_data.get("dashboard_sections", []))
+                )
             )
             
             messages.success(self.request, _('The group has been updated successfully.'))
@@ -1389,123 +1373,157 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         """ترجمة اسم الصلاحية"""
         translations = {
             # صلاحيات القيود اليومية
-            'add_journalentry': _('إضافة قيد يومية'),
-            'change_journalentry': _('تعديل قيد يومية'),
-            'delete_journalentry': _('حذف قيد يومية'),
-            'view_journalentry': _('عرض قيد يومية'),
-            'change_journalentry_entry_number': _('تعديل رقم القيد'),
-            'add_account': _('إضافة حساب'),
-            'change_account': _('تعديل حساب'),
-            'delete_account': _('حذف حساب'),
-            'view_account': _('عرض حساب'),
+            'add_journalentry': _('Add Journal Entry'),
+            'change_journalentry': _('Change Journal Entry'),
+            'delete_journalentry': _('Delete Journal Entry'),
+            'view_journalentry': _('View Journal Entry'),
+            'change_journalentry_entry_number': _('Change Journal Entry Number'),
+            'add_account': _('Add Account'),
+            'change_account': _('Change Account'),
+            'delete_account': _('Delete Account'),
+            'view_account': _('View Account'),
             
             # صلاحيات الإيرادات والمصروفات
-            'add_revenueexpenseentry': _('إضافة قيد إيراد/مصروف'),
-            'change_revenueexpenseentry': _('تعديل قيد إيراد/مصروف'),
-            'delete_revenueexpenseentry': _('حذف قيد إيراد/مصروف'),
-            'view_revenueexpenseentry': _('عرض قيد إيراد/مصروف'),
-            'add_revenueexpensecategory': _('إضافة فئة إيراد/مصروف'),
-            'change_revenueexpensecategory': _('تعديل فئة إيراد/مصروف'),
-            'delete_revenueexpensecategory': _('حذف فئة إيراد/مصروف'),
-            'view_revenueexpensecategory': _('عرض فئة إيراد/مصروف'),
+            'can_add_sectors': _('Add Sectors'),
+            'can_edit_sectors': _('Edit Sectors'),
+            'can_delete_sectors': _('Delete Sectors'),
+            'can_view_sectors': _('View Sectors'),
+            'can_add_categories': _('Add Revenue/Expense Categories'),
+            'can_edit_categories': _('Edit Revenue/Expense Categories'),
+            'can_delete_categories': _('Delete Revenue/Expense Categories'),
+            'can_view_categories': _('View Revenue/Expense Categories'),
+            'can_add_entries': _('Add Revenue/Expense Entries'),
+            'can_edit_entries': _('Edit Revenue/Expense Entries'),
+            'can_delete_entries': _('Delete Revenue/Expense Entries'),
+            'can_view_entries': _('View Revenue/Expense Entries'),
+            'can_add_recurring': _('Add Recurring Revenue/Expense'),
+            'can_edit_recurring': _('Edit Recurring Revenue/Expense'),
+            'can_delete_recurring': _('Delete Recurring Revenue/Expense'),
+            'can_view_recurring': _('View Recurring Revenue/Expense'),
             
             # صلاحيات المبيعات
-            'add_salesinvoice': _('إضافة فاتورة مبيعات'),
-            'change_salesinvoice': _('تعديل فاتورة مبيعات'),
-            'delete_salesinvoice': _('حذف فاتورة مبيعات'),
-            'view_salesinvoice': _('عرض فاتورة مبيعات'),
-            'add_salesinvoiceitem': _('إضافة عنصر فاتورة مبيعات'),
-            'change_salesinvoiceitem': _('تعديل عنصر فاتورة مبيعات'),
-            'delete_salesinvoiceitem': _('حذف عنصر فاتورة مبيعات'),
-            'view_salesinvoiceitem': _('عرض عنصر فاتورة مبيعات'),
+            'add_salesinvoice': _('Add Sales Invoice'),
+            'change_salesinvoice': _('Change Sales Invoice'),
+            'delete_salesinvoice': _('Delete Sales Invoice'),
+            'view_salesinvoice': _('View Sales Invoice'),
+            'add_salesinvoiceitem': _('Add Sales Invoice Item'),
+            'change_salesinvoiceitem': _('Change Sales Invoice Item'),
+            'delete_salesinvoiceitem': _('Delete Sales Invoice Item'),
+            'view_salesinvoiceitem': _('View Sales Invoice Item'),
             
             # صلاحيات المشتريات
-            'add_purchaseinvoice': _('إضافة فاتورة مشتريات'),
-            'change_purchaseinvoice': _('تعديل فاتورة مشتريات'),
-            'delete_purchaseinvoice': _('حذف فاتورة مشتريات'),
-            'view_purchaseinvoice': _('عرض فاتورة مشتريات'),
-            'add_purchaseinvoiceitem': _('إضافة عنصر فاتورة مشتريات'),
-            'change_purchaseinvoiceitem': _('تعديل عنصر فاتورة مشتريات'),
-            'delete_purchaseinvoiceitem': _('حذف عنصر فاتورة مشتريات'),
-            'view_purchaseinvoiceitem': _('عرض عنصر فاتورة مشتريات'),
+            'add_purchaseinvoice': _('Add Purchase Invoice'),
+            'change_purchaseinvoice': _('Change Purchase Invoice'),
+            'delete_purchaseinvoice': _('Delete Purchase Invoice'),
+            'view_purchaseinvoice': _('View Purchase Invoice'),
+            'add_purchaseinvoiceitem': _('Add Purchase Invoice Item'),
+            'change_purchaseinvoiceitem': _('Change Purchase Invoice Item'),
+            'delete_purchaseinvoiceitem': _('Delete Purchase Invoice Item'),
+            'view_purchaseinvoiceitem': _('View Purchase Invoice Item'),
             
             # صلاحيات العملاء والموردين
-            'add_customersupplier': _('إضافة عميل/مورد'),
-            'change_customersupplier': _('تعديل عميل/مورد'),
-            'delete_customersupplier': _('حذف عميل/مورد'),
-            'view_customersupplier': _('عرض عميل/مورد'),
+            'add_customersupplier': _('Add Customer/Supplier'),
+            'change_customersupplier': _('Change Customer/Supplier'),
+            'delete_customersupplier': _('Delete Customer/Supplier'),
+            'view_customersupplier': _('View Customer/Supplier'),
             
             # صلاحيات المنتجات
-            'add_product': _('إضافة منتج'),
-            'change_product': _('تعديل منتج'),
-            'delete_product': _('حذف منتج'),
-            'view_product': _('عرض منتج'),
-            'add_category': _('إضافة تصنيف'),
-            'change_category': _('تعديل تصنيف'),
-            'delete_category': _('حذف تصنيف'),
-            'view_category': _('عرض تصنيف'),
+            'add_product': _('Add Product'),
+            'change_product': _('Change Product'),
+            'delete_product': _('Delete Product'),
+            'view_product': _('View Product'),
+            'add_category': _('Add Category'),
+            'change_category': _('Change Category'),
+            'delete_category': _('Delete Category'),
+            'view_category': _('View Category'),
             
             # صلاحيات المخزون
-            'add_warehouse': _('إضافة مستودع'),
-            'change_warehouse': _('تعديل مستودع'),
-            'delete_warehouse': _('حذف مستودع'),
-            'view_warehouse': _('عرض مستودع'),
-            'add_inventorymovement': _('إضافة حركة مخزون'),
-            'change_inventorymovement': _('تعديل حركة مخزون'),
-            'delete_inventorymovement': _('حذف حركة مخزون'),
-            'view_inventorymovement': _('عرض حركة مخزون'),
+            'add_warehouse': _('Add Warehouse'),
+            'change_warehouse': _('Change Warehouse'),
+            'delete_warehouse': _('Delete Warehouse'),
+            'view_warehouse': _('View Warehouse'),
+            'add_inventorymovement': _('Add Inventory Movement'),
+            'change_inventorymovement': _('Change Inventory Movement'),
+            'delete_inventorymovement': _('Delete Inventory Movement'),
+            'view_inventorymovement': _('View Inventory Movement'),
+            
+            # صلاحيات الأصول والخصوم
+            'can_view_asset_categories': _('View Asset Categories'),
+            'can_add_asset_categories': _('Add Asset Categories'),
+            'can_edit_asset_categories': _('Edit Asset Categories'),
+            'can_delete_asset_categories': _('Delete Asset Categories'),
+            'can_view_assets': _('View Assets'),
+            'can_add_assets': _('Add Assets'),
+            'can_edit_assets': _('Edit Assets'),
+            'can_delete_assets': _('Delete Assets'),
+            'can_view_liability_categories': _('View Liability Categories'),
+            'can_add_liability_categories': _('Add Liability Categories'),
+            'can_edit_liability_categories': _('Edit Liability Categories'),
+            'can_delete_liability_categories': _('Delete Liability Categories'),
+            'can_view_liabilities': _('View Liabilities'),
+            'can_add_liabilities': _('Add Liabilities'),
+            'can_edit_liabilities': _('Edit Liabilities'),
+            'can_delete_liabilities': _('Delete Liabilities'),
+            'can_view_depreciation_entries': _('View Depreciation Entries'),
+            'can_add_depreciation_entries': _('Add Depreciation Entries'),
+            'can_edit_depreciation_entries': _('Edit Depreciation Entries'),
+            'can_delete_depreciation_entries': _('Delete Depreciation Entries'),
             
             # صلاحيات البنوك
-            'add_bank': _('إضافة بنك'),
-            'change_bank': _('تعديل بنك'),
-            'delete_bank': _('حذف بنك'),
-            'view_bank': _('عرض بنك'),
-            'add_bankaccount': _('إضافة حساب بنكي'),
-            'change_bankaccount': _('تعديل حساب بنكي'),
-            'delete_bankaccount': _('حذف حساب بنكي'),
-            'view_bankaccount': _('عرض حساب بنكي'),
+            'add_bank': _('Add Bank'),
+            'change_bank': _('Change Bank'),
+            'delete_bank': _('Delete Bank'),
+            'view_bank': _('View Bank'),
+            'add_bankaccount': _('Add Bank Account'),
+            'change_bankaccount': _('Change Bank Account'),
+            'delete_bankaccount': _('Delete Bank Account'),
+            'view_bankaccount': _('View Bank Account'),
+            'can_view_bank_accounts': _('Can View Bank Accounts'),
+            'can_add_bank_accounts': _('Can Add Bank Accounts'),
+            'can_edit_bank_accounts': _('Can Edit Bank Accounts'),
+            'can_delete_bank_accounts': _('Can Delete Bank Accounts'),
             
             # صلاحيات الصناديق
-            'add_cashbox': _('إضافة صندوق'),
-            'change_cashbox': _('تعديل صندوق'),
-            'delete_cashbox': _('حذف صندوق'),
-            'view_cashbox': _('عرض صندوق'),
+            'add_cashbox': _('Add Cashbox'),
+            'change_cashbox': _('Change Cashbox'),
+            'delete_cashbox': _('Delete Cashbox'),
+            'view_cashbox': _('View Cashbox'),
             
             # صلاحيات المدفوعات والمقبوضات
-            'add_payment': _('إضافة دفعة'),
-            'change_payment': _('تعديل دفعة'),
-            'delete_payment': _('حذف دفعة'),
-            'view_payment': _('عرض دفعة'),
-            'add_receipt': _('إضافة مقبوضة'),
-            'change_receipt': _('تعديل مقبوضة'),
-            'delete_receipt': _('حذف مقبوضة'),
-            'view_receipt': _('عرض مقبوضة'),
+            'add_payment': _('Add Payment'),
+            'change_payment': _('Change Payment'),
+            'delete_payment': _('Delete Payment'),
+            'view_payment': _('View Payment'),
+            'add_receipt': _('Add Receipt'),
+            'change_receipt': _('Change Receipt'),
+            'delete_receipt': _('Delete Receipt'),
+            'view_receipt': _('View Receipt'),
             
             # صلاحيات المستخدمين
-            'add_user': _('إضافة مستخدم'),
-            'change_user': _('تعديل مستخدم'),
-            'delete_user': _('حذف مستخدم'),
-            'view_user': _('عرض مستخدم'),
-            'add_group': _('إضافة مجموعة'),
-            'change_group': _('تعديل مجموعة'),
-            'delete_group': _('حذف مجموعة'),
-            'view_group': _('عرض مجموعة'),
+            'add_user': _('Add User'),
+            'change_user': _('Change User'),
+            'delete_user': _('Delete User'),
+            'view_user': _('View User'),
+            'add_group': _('Add Group'),
+            'change_group': _('Change Group'),
+            'delete_group': _('Delete Group'),
+            'view_group': _('View Group'),
             
             # صلاحيات النظام الأساسي
-            'add_companysettings': _('إضافة إعدادات الشركة'),
-            'change_companysettings': _('تعديل إعدادات الشركة'),
-            'delete_companysettings': _('حذف إعدادات الشركة'),
-            'view_companysettings': _('عرض إعدادات الشركة'),
-            'add_auditlog': _('إضافة سجل مراجعة'),
-            'change_auditlog': _('تعديل سجل مراجعة'),
-            'delete_auditlog': _('حذف سجل مراجعة'),
-            'view_auditlog': _('عرض سجل مراجعة'),
+            'add_companysettings': _('Add Company Settings'),
+            'change_companysettings': _('Change Company Settings'),
+            'delete_companysettings': _('Delete Company Settings'),
+            'view_companysettings': _('View Company Settings'),
+            'add_auditlog': _('Add Audit Log'),
+            'change_auditlog': _('Change Audit Log'),
+            'delete_auditlog': _('Delete Audit Log'),
+            'view_auditlog': _('View Audit Log'),
             
             # صلاحيات النسخ الاحتياطية
-            'can_restore_backup': _('استعادة النسخ الاحتياطية'),
-            'delete_backup': _('حذف ملفات النسخ الاحتياطية'),
-            'can_delete_advanced_data': _('حذف البيانات المتقدمة'),
-            'can_backup_system': _('إنشاء نسخ احتياطية للنظام'),
+            'can_restore_backup': _('Restore Backups'),
+            'delete_backup': _('Delete Backup Files'),
+            'can_delete_advanced_data': _('Delete Advanced Data'),
+            'can_backup_system': _('Create System Backups'),
         }
         
         return translations.get(permission.codename, permission.name)
@@ -1513,23 +1531,24 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     def _get_app_names(self):
         """أسماء التطبيقات المترجمة"""
         return {
-            'journal': _('القيود اليومية'),
-            'sales': _('المبيعات'),
-            'purchases': _('المشتريات'),
-            'customers': _('العملاء والموردون'),
-            'products': _('المنتجات'),
-            'inventory': _('المخزون'),
-            'revenues_expenses': _('الإيرادات والمصروفات'),
-            'banks': _('البنوك'),
-            'cashboxes': _('الصناديق'),
-            'payments': _('المدفوعات'),
-            'receipts': _('المقبوضات'),
-            'users': _('المستخدمون'),
-            'core': _('النظام الأساسي'),
-            'backup': _('النسخ الاحتياطية'),
-            'hr': _('الموارد البشرية'),
-            'reports': _('التقارير'),
-            'settings': _('الإعدادات'),
+            'journal': _('Journal Entries'),
+            'sales': _('Sales'),
+            'purchases': _('Purchases'),
+            'customers': _('Customers and Suppliers'),
+            'products': _('Products'),
+            'inventory': _('Inventory'),
+            'assets_liabilities': _('Assets & Liabilities'),
+            'revenues_expenses': _('Revenues & Expenses'),
+            'banks': _('Banks'),
+            'cashboxes': _('Cashboxes'),
+            'payments': _('Payments'),
+            'receipts': _('Receipts'),
+            'users': _('Users'),
+            'core': _('Core'),
+            'backup': _('Backups'),
+            'hr': _('Human Resources'),
+            'reports': _('Reports'),
+            'settings': _('Settings'),
         }
 
 
@@ -1548,7 +1567,7 @@ class UserGroupDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         
         # منع حذف مجموعات النظام المحمية إلا للسوبر أدمين
         if getattr(self.object, 'is_system_group', False) and not (getattr(request.user, 'user_type', None) == 'superadmin' or request.user.is_superuser):
-            messages.error(request, _('هذه المجموعة محمية من الحذف. يمكن للسوبر أدمين فقط حذفها.'))
+            messages.error(request, _('This group is protected from deletion. Only superadmin can delete it.'))
             return redirect('users:group_list')
         
         # منع المستخدمين غير superadmin من حذف المجموعات التي تحتوي على صلاحيات superadmin
@@ -1563,7 +1582,7 @@ class UserGroupDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
             )
             
             if superadmin_permissions_in_group.exists():
-                messages.error(request, _('لا يمكنك حذف هذه المجموعة - تحتوي على صلاحيات محجوزة للسوبر أدمين فقط.'))
+                messages.error(request, _('You cannot delete this group - it contains permissions reserved for superadmin only.'))
                 return redirect('users:group_list')
         
         return super().dispatch(request, *args, **kwargs)
@@ -1574,21 +1593,21 @@ class UserGroupDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
             user_count = self.object.user_set.count()
             
             if user_count > 0:
-                messages.warning(request, _('تحذير: هذه المجموعة تحتوي على {} مستخدم سيفقدون صلاحيات المجموعة').format(user_count))
+                messages.warning(request, _('Warning: This group contains {} users who will lose group permissions').format(user_count))
             
             # تسجيل النشاط قبل الحذف
             log_user_activity(
                 request, 
                 'delete', 
                 self.object, 
-                f'حذف مجموعة مستخدمين: {group_name}'
+                _('Deleted user group: {}').format(group_name)
             )
             
             response = super().delete(request, *args, **kwargs)
-            messages.success(request, _('تم حذف المجموعة "{}" بنجاح').format(group_name))
+            messages.success(request, _('Group "{}" deleted successfully').format(group_name))
             return response
         except Exception as e:
-            messages.error(request, _('حدث خطأ أثناء حذف المجموعة: {}').format(str(e)))
+            messages.error(request, _('An error occurred while deleting the group: {}').format(str(e)))
             return redirect('users:group_list')
     
     def get_context_data(self, **kwargs):
@@ -1604,7 +1623,7 @@ def toggle_superuser_visibility(request):
     """تبديل إظهار/إخفاء المستخدمين ذوي الصلاحيات العالية"""
     # التحقق من أن المستخدم الحالي هو superadmin
     if not request.user.is_superuser:
-        return JsonResponse({'success': False, 'error': 'غير مسموح'}, status=403)
+        return JsonResponse({'success': False, 'error': _('Not allowed')}, status=403)
     
     # الحصول على الحالة الحالية من الجلسة
     current_state = request.session.get('hide_superusers', False)

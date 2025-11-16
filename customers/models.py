@@ -30,11 +30,12 @@ class CustomerSupplier(models.Model):
         verbose_name = _('Customer/Supplier')
         verbose_name_plural = _('Customers and Suppliers')
         ordering = ['sequence_number']
+        default_permissions = []  # No default permissions
         permissions = [
-            ('can_view_customers_suppliers', _('Can view customers/suppliers')),
-            ('can_add_customers_suppliers', _('Can add customer/supplier')),
-            ('can_edit_customers_suppliers', _('Can edit customer/supplier')),
-            ('can_delete_customers_suppliers', _('Can delete customer/supplier')),
+            ('can_view_customers_suppliers', 'Can View Customers and Suppliers'),
+            ('can_add_customers_suppliers', 'Can Add Customers and Suppliers'),
+            ('can_edit_customers_suppliers', 'Can Edit Customers and Suppliers'),
+            ('can_delete_customers_suppliers', 'Can Delete Customers and Suppliers'),
         ]
 
     def save(self, *args, **kwargs):

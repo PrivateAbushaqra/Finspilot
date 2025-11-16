@@ -90,19 +90,19 @@
                     {% trans "Asset Management" %}
                 </h5>
                 <div class="d-flex gap-2">
-                    {% if perms.assets_liabilities.add_asset %}
+                    {% if perms.assets_liabilities.can_add_assets %}
                     <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addAssetModal">
                         <i class="fas fa-plus me-1"></i>
                         {% trans "Add" %} {% trans "Asset" %}
                     </button>
                     {% endif %}
-                    {% if perms.assets_liabilities.add_assetcategory %}
+                    {% if perms.assets_liabilities.can_add_asset_categories %}
                     <a href="{% url 'assets_liabilities:category_create_ajax' %}" class="btn btn-primary btn-sm">
                         <i class="fas fa-folder-plus me-1"></i>
                         {% trans "Add" %} {% trans "Asset Category" %}
                     </a>
                     {% endif %}
-                    {% if perms.assets_liabilities.add_depreciationentry %}
+                    {% if perms.assets_liabilities.can_add_depreciation_entries %}
                     <a href="#" class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#depreciationModal">
                         <i class="fas fa-percentage me-1"></i>
                         {% trans "Add" %} {% trans "Depreciation Entry" %}
@@ -112,20 +112,26 @@
             </div>
             <div class="card-body">
                 <div class="list-group">
+                    {% if perms.assets_liabilities.can_view_assets %}
                     <a href="{% url 'assets_liabilities:asset_list' %}" class="list-group-item list-group-item-action">
                         <i class="fas fa-list me-2"></i>
                         {% trans "View" %} 
                         {% trans "All Assets" %}
+                        {% endif %}
                     </a>
+                    {% if perms.assets_liabilities.can_add_assets %}
                     <a href="#" class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#addAssetModal">
                         <i class="fas fa-plus me-2"></i>
                         {% trans "Add" %} 
                         {% trans "New Asset" %}
+                        {% endif %}
                     </a>
+                    {% if perms.assets_liabilities.can_add_depreciation_entries %}
                     <a href="#" class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#depreciationModal">
                         <i class="fas fa-percentage me-2"></i>
                         {% trans "Add" %} 
                         {% trans "Depreciation Entry" %}
+                        {% endif %}
                     </a>
                 </div>
             </div>
@@ -140,14 +146,14 @@
                     {% trans "Liability Management" %}
                 </h5>
                 <div class="d-flex gap-2">
-                    {% if perms.assets_liabilities.add_liability %}
+                    {% if perms.assets_liabilities.can_add_liabilities %}
                     <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#addDeductionModal">
                         <i class="fas fa-plus me-1"></i>
                         {% trans "Add" %} 
                         {% trans "Liability" %}
                     </button>
                     {% endif %}
-                    {% if perms.assets_liabilities.add_liabilitycategory %}
+                    {% if perms.assets_liabilities.can_add_liability_categories %}
                     <a href="{% url 'assets_liabilities:liability_category_create_ajax' %}" class="btn btn-primary btn-sm">
                         <i class="fas fa-folder-plus me-1"></i>
                         {% trans "Add" %} 
@@ -158,16 +164,20 @@
             </div>
             <div class="card-body">
                 <div class="list-group">
+                    {% if perms.assets_liabilities.can_view_liabilities %}
                     <a href="{% url 'assets_liabilities:liability_list' %}" class="list-group-item list-group-item-action">
                         <i class="fas fa-list me-2"></i>
                         {% trans "View" %} 
                         {% trans "All Liabilities" %}
                     </a>
+                    {% endif %}
+                    {% if perms.assets_liabilities.can_add_depreciation_entries %}
                     <a href="#" class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#addDeductionModal">
                         <i class="fas fa-plus me-2"></i>
                         {% trans "Add" %} 
                         {% trans "New Deduction" %}
                     </a>
+                    {% endif %}
                     <a href="#" class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#paymentTableModal">
                         <i class="fas fa-calendar me-2"></i>
                         {% trans "Table" %} 
@@ -445,14 +455,14 @@
                                 <label class="form-label">{% trans "Asset Category" %}</label>
                                 <select class="form-select" name="asset_category" required>
                                     <option value="">{% trans "Choose asset category" %}</option>
-                                    <option value="معدات الكمبيوتر">{% trans "Computer Equipment" %}</option>
-                                    <option value="الأثاث المكتبي">{% trans "Office Furniture" %}</option>
-                                    <option value="مركبات النقل">{% trans "Transportation Vehicles" %}</option>
-                                    <option value="معدات التشغيل">{% trans "Operating Equipment" %}</option>
-                                    <option value="المباني والعقارات">{% trans "Buildings and Real Estate" %}</option>
-                                    <option value="البرمجيات والتراخيص">{% trans "Software and Licenses" %}</option>
-                                    <option value="الأجهزة الطبية">{% trans "Medical Equipment" %}</option>
-                                    <option value="أصول أخرى">{% trans "Other Assets" %}</option>
+                                    <option value="computer_equipment">{% trans "Computer Equipment" %}</option>
+                                    <option value="office_furniture">{% trans "Office Furniture" %}</option>
+                                    <option value="transportation_vehicles">{% trans "Transportation Vehicles" %}</option>
+                                    <option value="operating_equipment">{% trans "Operating Equipment" %}</option>
+                                    <option value="buildings_real_estate">{% trans "Buildings and Real Estate" %}</option>
+                                    <option value="software_licenses">{% trans "Software and Licenses" %}</option>
+                                    <option value="medical_equipment">{% trans "Medical Equipment" %}</option>
+                                    <option value="other_assets">{% trans "Other Assets" %}</option>
                                 </select>
                             </div>
                         </div>
@@ -506,7 +516,7 @@
             <div class="modal-header">
                 <h5 class="modal-title">
                     <i class="fas fa-calculator text-secondary"></i>
-                    حساب الإه{% trans "No" %}ك
+                    {% trans "Calculate Depreciation" %}
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
@@ -568,7 +578,7 @@
 
 {% block extra_js %}
 <script>
-// {% trans "Chart" %} للأصول
+// Chart for assets
 const assetsCtx = document.getElementById('assetsChart').getContext('2d');
 new Chart(assetsCtx, {
     type: 'pie',
@@ -596,7 +606,7 @@ new Chart(assetsCtx, {
     }
 });
 
-// {% trans "Chart" %} للخصوم
+// Chart for liabilities
 const liabilitiesCtx = document.getElementById('liabilitiesChart').getContext('2d');
 new Chart(liabilitiesCtx, {
     type: 'pie',
@@ -624,19 +634,19 @@ new Chart(liabilitiesCtx, {
     }
 });
 
-// وظائف الميزات ال{% trans "New" %}ة
+// New features functions
 
-// {% trans "Add" %} خصم {% trans "New" %}
+// Add new deduction
 function saveDeduction() {
     const form = document.getElementById('addDeductionForm');
     const formData = new FormData(form);
     
-    // {% trans "Select" %} {% trans "Date" %} الحالي إذا لم يتم {% trans "Select" %}ه
+    // Set current date if not selected
     if (!formData.get('deduction_date')) {
         formData.set('deduction_date', new Date().toISOString().split('T')[0]);
     }
     
-    // محاكاة {% trans "Save" %} البيانات
+    // Simulate saving data
     const deductionData = {
         name: formData.get('deduction_name'),
         amount: parseFloat(formData.get('deduction_amount')),
@@ -645,31 +655,31 @@ function saveDeduction() {
         description: formData.get('deduction_description')
     };
     
-    console.log('{% trans "Save" %} خصم {% trans "New" %}:', deductionData);
+    console.log('Saving new deduction:', deductionData);
     
-    // إظهار رسالة نجاح
-    alert('تم {% trans "Save" %} الخصم بنجاح!');
+    // Show success message
+    alert('{% trans "Deduction saved successfully!" %}');
     
-    // إغ{% trans "No" %}ق المودال وإعادة تعيين النموذج
+    // Close modal and reset form
     const modal = bootstrap.Modal.getInstance(document.getElementById('addDeductionModal'));
     modal.hide();
     form.reset();
     
-    // هنا يمكنك {% trans "Add" %} كود لإرسال البيانات إلى الخادم
+    // Here you can add code to send data to the server
 }
 
-// تحميل {% trans "Table" %} المدفوعات
+// Load payment table
 function loadPaymentTable() {
     const fromDate = document.getElementById('paymentFromDate').value;
     const toDate = document.getElementById('paymentToDate').value;
     const paymentType = document.getElementById('paymentType').value;
     
-    // بيانات تجريبية للمدفوعات
+    // Sample payment data
     const samplePayments = [
         {
             date: '15/1/2025',
             reference: 'PAY-001',
-            description: '{% trans "Payment" %}ة لمورد ABC',
+            description: '{% trans "Payment to supplier ABC" %}',
             type: 'bank',
             amount: 5000,
             status: 'completed'
@@ -677,7 +687,7 @@ function loadPaymentTable() {
         {
             date: '14/1/2025',
             reference: 'PAY-002',
-            description: '{% trans "Payment" %}ة نقدية لموظف',
+            description: '{% trans "Cash payment to employee" %}',
             type: 'cash',
             amount: 1500,
             status: 'completed'
@@ -685,7 +695,7 @@ function loadPaymentTable() {
         {
             date: '13/1/2025',
             reference: 'PAY-003',
-            description: '{% trans "Payment" %}ة بشيك للإيجار',
+            description: '{% trans "Check payment for rent" %}',
             type: 'check',
             amount: 8000,
             status: 'pending'
@@ -694,7 +704,7 @@ function loadPaymentTable() {
     
     const tbody = document.getElementById('paymentsTableBody');
     tbody.innerHTML = '';        samplePayments.forEach(payment => {
-            // فلترة بناءً على المعايير - {% trans "Transfer" %} {% trans "Date" %} للمقارنة
+            // Filter based on criteria - convert date for comparison
             const paymentDateParts = payment.date.split('/');
             const paymentDateFormatted = `${paymentDateParts[2]}-${paymentDateParts[1].padStart(2, '0')}-${paymentDateParts[0].padStart(2, '0')}`;
             
@@ -709,13 +719,13 @@ function loadPaymentTable() {
             <td>${payment.description}</td>
             <td>
                 <span class="badge bg-${payment.type === 'cash' ? 'success' : payment.type === 'bank' ? 'primary' : 'warning'}">
-                    ${payment.type === 'cash' ? 'نقدي' : payment.type === 'bank' ? 'بنكي' : 'شيك'}
+                    ${payment.type === 'cash' ? '{% trans "Cash" %}' : payment.type === 'bank' ? '{% trans "Bank" %}' : '{% trans "Check" %}'}
                 </span>
             </td>
-            <td>${payment.amount.toLocaleString()} ريال</td>
+            <td>${payment.amount.toLocaleString()} {% trans "SAR" %}</td>
             <td>
                 <span class="badge bg-${payment.status === 'completed' ? 'success' : 'warning'}">
-                    ${payment.status === 'completed' ? 'الكامل' : 'معلق'}
+                    ${payment.status === 'completed' ? '{% trans "Completed" %}' : '{% trans "Pending" %}'}
                 </span>
             </td>
         `;
@@ -723,17 +733,17 @@ function loadPaymentTable() {
     });
     
     if (tbody.children.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">لا توجد مدفوعات مطابقة للمعايير</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">{% trans "No payments match the criteria" %}</td></tr>';
     }
 }
 
-// {% trans "Export" %} {% trans "Table" %} المدفوعات
+// Export payment table
 function exportPaymentTable() {
-    alert('سيتم {% trans "Export" %} ال{% trans "Table" %} إلى Excel...');
-    // هنا يمكنك {% trans "Add" %} كود {% trans "Export" %} حقيقي
+    alert('{% trans "Table will be exported to Excel..." %}');
+    // Here you can add real export code
 }
 
-// وظيفة للحصول على قيمة من cookie
+// Function to get cookie value
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -749,32 +759,32 @@ function getCookie(name) {
     return cookieValue;
 }
 
-// {% trans "Add" %} أصل {% trans "New" %}
+// Add new asset
 function saveAsset() {
     const form = document.getElementById('addAssetForm');
     const formData = new FormData(form);
     
-    // التحقق من البيانات المطلوبة
+    // Validate required data
     if (!formData.get('asset_name') || !formData.get('asset_value') || !formData.get('asset_category')) {
-        alert('يرجى ملء جميع الحقول المطلوبة');
+        alert('{% trans "Please fill all required fields" %}');
         return;
     }
     
-    // إضافة CSRF token
+    // Add CSRF token
     let csrfToken = null;
     
-    // البحث عن CSRF token في أماكن مختلفة
+    // Search for CSRF token in different places
     if (document.querySelector('[name=csrfmiddlewaretoken]')) {
         csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
     } else if (document.querySelector('meta[name="csrf-token"]')) {
         csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     } else {
-        // الحصول على CSRF token من cookie
+        // Get CSRF token from cookie
         csrfToken = getCookie('csrftoken');
     }
     
     if (!csrfToken) {
-        alert('خطأ في الحصول على رمز الأمان. يرجى إعادة تحميل الصفحة.');
+        alert('{% trans "Error getting security token. Please reload the page." %}');
         return;
     }
     
@@ -789,7 +799,7 @@ function saveAsset() {
         csrfmiddlewaretoken: csrfToken
     };
     
-    // إرسال البيانات إلى السيرفر
+    // Send data to server
     fetch('{% url "assets_liabilities:asset_create" %}', {
         method: 'POST',
         headers: {
@@ -801,30 +811,30 @@ function saveAsset() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('تم حفظ الأصل بنجاح!');
-            // إغلاق المودال وإعادة تعيين النموذج
+            alert('{% trans "Asset saved successfully!" %}');
+            // Close modal and reset form
             const modal = bootstrap.Modal.getInstance(document.getElementById('addAssetModal'));
             modal.hide();
             form.reset();
-            // إعادة تحميل الصفحة لعرض الأصل الجديد
+            // Reload page to display new asset
             location.reload();
         } else {
-            alert('خطأ في حفظ الأصل: ' + (data.error || 'خطأ غير معروف'));
+            alert('{% trans "Error saving asset:" %}' + ' ' + (data.error || '{% trans "Unknown error" %}'));
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('حدث خطأ في الاتصال بالسيرفر');
+        alert('{% trans "Error connecting to server" %}');
     });
 }
     
-    // إغ{% trans "No" %}ق المودال وإعادة تعيين النموذج
+    // Close modal and reset form
     const modal = bootstrap.Modal.getInstance(document.getElementById('addAssetModal'));
     modal.hide();
     form.reset();
 }
 
-// تحميل {% trans "Details" %} الأصل
+// Load asset details
 function loadAssetDetails() {
     const assetId = document.getElementById('assetSelect').value;
     
@@ -832,23 +842,23 @@ function loadAssetDetails() {
         document.getElementById('depreciationResults').innerHTML = `
             <div class="text-center text-muted py-4">
                 <i class="fas fa-calculator fa-2x mb-2"></i>
-                <p>اختر أصل وطريقة الإه{% trans "No" %}ك ل{% trans "View" %} النتائج</p>
+                <p>{% trans "Choose asset and depreciation method to view results" %}</p>
             </div>
         `;
         return;
     }
     
-    // بيانات تجريبية للأصول
+    // Sample asset data
     const sampleAssets = {
         '1': {
-            name: 'جهاز كمبيوتر',
+            name: '{% trans "Computer Device" %}',
             value: 15000,
             purchaseDate: '1/1/2023',
             usefulLife: 5,
             salvageValue: 1000
         },
         '2': {
-            name: 'سيارة خدمات',
+            name: '{% trans "Service Vehicle" %}',
             value: 80000,
             purchaseDate: '1/6/2022',
             usefulLife: 8,
@@ -861,34 +871,34 @@ function loadAssetDetails() {
         document.getElementById('depreciationResults').innerHTML = `
             <div class="row">
                 <div class="col-md-6">
-                    <strong>اسم الأصل:</strong> ${asset.name}<br>
-                    <strong>قيمة الأصل:</strong> ${asset.value.toLocaleString()} ريال<br>
-                    <strong>تاريخ الشراء:</strong> ${asset.purchaseDate}
+                    <strong>{% trans "Asset Name:" %}</strong> ${asset.name}<br>
+                    <strong>{% trans "Asset Value:" %}</strong> ${asset.value.toLocaleString()} {% trans "SAR" %}<br>
+                    <strong>{% trans "Purchase Date:" %}</strong> ${asset.purchaseDate}
                 </div>
                 <div class="col-md-6">
-                    <strong>العمر ا{% trans "No" %}فتراضي:</strong> ${asset.usefulLife} سنوات<br>
-                    <strong>القيمة المتبقية:</strong> ${asset.salvageValue.toLocaleString()} ريال<br>
+                    <strong>{% trans "Useful Life:" %}</strong> ${asset.usefulLife} {% trans "years" %}<br>
+                    <strong>{% trans "Salvage Value:" %}</strong> ${asset.salvageValue.toLocaleString()} {% trans "SAR" %}<br>
                 </div>
             </div>
             <hr>
-            <p class="text-muted">اختر طريقة الإه{% trans "No" %}ك واضغط "احسب الإه{% trans "No" %}ك" ل{% trans "View" %} ال{% trans "Details" %}</p>
+            <p class="text-muted">{% trans "Choose depreciation method and click 'Calculate Depreciation' to view details" %}</p>
         `;
     }
 }
 
-// حساب الإه{% trans "No" %}ك
+// Calculate depreciation
 function calculateDepreciation() {
     const assetId = document.getElementById('assetSelect').value;
     const method = document.getElementById('depreciationMethod').value;
     
     if (!assetId) {
-        alert('يرجى اختيار أصل أو{% trans "No" %}ً');
+        alert('{% trans "Please select an asset first" %}');
         return;
     }
     
-    // بيانات تجريبية
+    // Sample data
     const asset = {
-        name: 'جهاز كمبيوتر',
+        name: '{% trans "Computer Device" %}',
         value: 15000,
         usefulLife: 5,
         salvageValue: 1000
@@ -900,48 +910,48 @@ function calculateDepreciation() {
     switch (method) {
         case 'straight':
             annualDepreciation = (asset.value - asset.salvageValue) / asset.usefulLife;
-            methodDescription = 'القسط الثابت';
+            methodDescription = '{% trans "Straight Line" %}';
             break;
         case 'declining':
             const rate = 2 / asset.usefulLife;
             annualDepreciation = asset.value * rate;
-            methodDescription = 'ال{% trans "Balance" %} المتناقص';
+            methodDescription = '{% trans "Declining Balance" %}';
             break;
         case 'units':
-            annualDepreciation = (asset.value - asset.salvageValue) / 10000; // وحدات افتراضية
-            methodDescription = 'وحدات الإنتاج';
+            annualDepreciation = (asset.value - asset.salvageValue) / 10000; // Default units
+            methodDescription = '{% trans "Units of Production" %}';
             break;
     }
     
     document.getElementById('depreciationResults').innerHTML = `
         <div class="row">
             <div class="col-md-6">
-                <h6>{% trans "Details" %} الحساب</h6>
-                <strong>طريقة الإه{% trans "No" %}ك:</strong> ${methodDescription}<br>
-                <strong>قيمة الأصل:</strong> ${asset.value.toLocaleString()} ريال<br>
-                <strong>القيمة المتبقية:</strong> ${asset.salvageValue.toLocaleString()} ريال<br>
-                <strong>العمر ا{% trans "No" %}فتراضي:</strong> ${asset.usefulLife} سنوات
+                <h6>{% trans "Calculation Details" %}</h6>
+                <strong>{% trans "Depreciation Method:" %}</strong> ${methodDescription}<br>
+                <strong>{% trans "Asset Value:" %}</strong> ${asset.value.toLocaleString()} {% trans "SAR" %}<br>
+                <strong>{% trans "Salvage Value:" %}</strong> ${asset.salvageValue.toLocaleString()} {% trans "SAR" %}<br>
+                <strong>{% trans "Useful Life:" %}</strong> ${asset.usefulLife} {% trans "years" %}
             </div>
             <div class="col-md-6">
-                <h6>النتائج</h6>
+                <h6>{% trans "Results" %}</h6>
                 <div class="alert alert-info">
-                    <strong>الإه{% trans "No" %}ك السنوي:</strong> ${annualDepreciation.toLocaleString()} ريال<br>
-                    <strong>الإه{% trans "No" %}ك الشهري:</strong> ${(annualDepreciation / 12).toLocaleString()} ريال<br>
-                    <strong>الإه{% trans "No" %}ك {% trans "Today" %}ي:</strong> ${(annualDepreciation / 365).toFixed(2)} ريال
+                    <strong>{% trans "Annual Depreciation:" %}</strong> ${annualDepreciation.toLocaleString()} {% trans "SAR" %}<br>
+                    <strong>{% trans "Monthly Depreciation:" %}</strong> ${(annualDepreciation / 12).toLocaleString()} {% trans "SAR" %}<br>
+                    <strong>{% trans "Daily Depreciation:" %}</strong> ${(annualDepreciation / 365).toFixed(2)} {% trans "SAR" %}
                 </div>
             </div>
         </div>
         <div class="mt-3">
-            <h6>{% trans "Table" %} الإه{% trans "No" %}ك السنوي</h6>
+            <h6>{% trans "Annual Depreciation Table" %}</h6>
             <div class="table-responsive">
                 <table class="table table-sm table-striped">
                     <thead>
                         <tr>
-                            <th>السنة</th>
-                            <th>القيمة في بداية السنة</th>
-                            <th>الإه{% trans "No" %}ك السنوي</th>
-                            <th>الإه{% trans "No" %}ك المتراكم</th>
-                            <th>القيمة في نهاية السنة</th>
+                            <th>{% trans "Year" %}</th>
+                            <th>{% trans "Beginning Value" %}</th>
+                            <th>{% trans "Annual Depreciation" %}</th>
+                            <th>{% trans "Accumulated Depreciation" %}</th>
+                            <th>{% trans "Ending Value" %}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -953,7 +963,7 @@ function calculateDepreciation() {
     `;
 }
 
-// توليد {% trans "Table" %} الإه{% trans "No" %}ك
+// Generate depreciation table
 function generateDepreciationTable(asset, method, annualDepreciation) {
     let html = '';
     let bookValue = asset.value;
@@ -991,37 +1001,37 @@ function generateDepreciationTable(asset, method, annualDepreciation) {
     return html;
 }
 
-// {% trans "Save" %} قيد الإه{% trans "No" %}ك
+// Save depreciation entry
 function saveDepreciationEntry() {
     const assetId = document.getElementById('assetSelect').value;
     const method = document.getElementById('depreciationMethod').value;
     
     if (!assetId) {
-        alert('يرجى اختيار أصل وحساب الإه{% trans "No" %}ك أو{% trans "No" %}ً');
+        alert('{% trans "Please select an asset and calculate depreciation first" %}');
         return;
     }
     
-    alert('تم {% trans "Save" %} قيد الإه{% trans "No" %}ك بنجاح!');
-    console.log('{% trans "Save" %} قيد إه{% trans "No" %}ك للأصل:', assetId, 'بطريقة:', method);
+    alert('{% trans "Depreciation entry saved successfully!" %}');
+    console.log('Saving depreciation entry for asset:', assetId, 'using method:', method);
 }
 
-// تهيئة التواريخ ا{% trans "No" %}فتراضية
+// Initialize default dates
 document.addEventListener('DOMContentLoaded', function() {
     const today = new Date();
-    const todayFormatted = today.toISOString().split('T')[0]; // للحقول من نوع date
+    const todayFormatted = today.toISOString().split('T')[0]; // For date type fields
     
-    // تعيين {% trans "Date" %} الحالي للحقول
+    // Set current date for fields
     document.querySelectorAll('input[type="date"]').forEach(input => {
         if (!input.value) {
             input.value = todayFormatted;
         }
     });
     
-    // تحديث {% trans "View" %} التواريخ في النتائج لتظهر بالتنسيق المي{% trans "No" %}دي
+    // Update date display in results to show in Gregorian format
     function formatDateToGregorian(dateString) {
         if (!dateString) return '';
         const date = new Date(dateString);
-        return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`; // تنسيق d/m/yyyy
+        return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`; // d/m/yyyy format
     }
 });
 </script>

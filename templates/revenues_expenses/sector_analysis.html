@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load static %}
 
-{% block title %}{% trans "تحليل الإيرادات والمصاريف حسب القطاع" %}{% endblock %}
+{% block title %}{% trans "Sector Revenue and Expense Analysis" %}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -12,7 +12,7 @@
                 <div class="card-header">
                     <h3 class="card-title">
                         <i class="fas fa-chart-bar"></i>
-                        {% trans "تحليل الإيرادات والمصاريف حسب القطاع" %}
+                        {% trans "Sector Revenue and Expense Analysis" %}
                     </h3>
                 </div>
                 <div class="card-body">
@@ -20,19 +20,19 @@
                     <form method="get" class="mb-4">
                         <div class="row">
                             <div class="col-md-3">
-                                <label for="start_date">{% trans "من تاريخ" %}</label>
+                                <label for="start_date">{% trans "From Date" %}</label>
                                 <input type="date" name="start_date" id="start_date" class="form-control"
                                        value="{{ start_date|date:'Y-m-d' }}">
                             </div>
                             <div class="col-md-3">
-                                <label for="end_date">{% trans "إلى تاريخ" %}</label>
+                                <label for="end_date">{% trans "To Date" %}</label>
                                 <input type="date" name="end_date" id="end_date" class="form-control"
                                        value="{{ end_date|date:'Y-m-d' }}">
                             </div>
                             <div class="col-md-3">
-                                <label for="sector">{% trans "القطاع" %}</label>
+                                <label for="sector">{% trans "Sector" %}</label>
                                 <select name="sector" id="sector" class="form-control">
-                                    <option value="">{% trans "جميع القطاعات" %}</option>
+                                    <option value="">{% trans "All Sectors" %}</option>
                                     {% for sector in sectors %}
                                     <option value="{{ sector.id }}" {% if sector_filter == sector.id|stringformat:"s" %}selected{% endif %}>
                                         {{ sector.name }}
@@ -43,7 +43,7 @@
                             <div class="col-md-3">
                                 <label>&nbsp;</label>
                                 <button type="submit" class="btn btn-primary btn-block">
-                                    <i class="fas fa-search"></i> {% trans "فلترة" %}
+                                    <i class="fas fa-search"></i> {% trans "Filter" %}
                                 </button>
                             </div>
                         </div>
@@ -54,11 +54,11 @@
                         <table class="table table-bordered table-striped">
                             <thead class="thead-dark">
                                 <tr>
-                                    <th>{% trans "القطاع" %}</th>
-                                    <th class="text-right">{% trans "الإيرادات" %}</th>
-                                    <th class="text-right">{% trans "المصاريف" %}</th>
-                                    <th class="text-right">{% trans "صافي الربح" %}</th>
-                                    <th class="text-center">{% trans "نسبة الربح" %}</th>
+                                    <th>{% trans "Sector" %}</th>
+                                    <th class="text-right">{% trans "Revenues" %}</th>
+                                    <th class="text-right">{% trans "Expenses" %}</th>
+                                    <th class="text-right">{% trans "Net Profit" %}</th>
+                                    <th class="text-center">{% trans "Profit Percentage" %}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -80,13 +80,13 @@
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="5" class="text-center">{% trans "لا توجد بيانات" %}</td>
+                                    <td colspan="5" class="text-center">{% trans "No data available" %}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
                             <tfoot class="font-weight-bold">
                                 <tr class="bg-light">
-                                    <td>{% trans "المجموع" %}</td>
+                                    <td>{% trans "Total" %}</td>
                                     <td class="text-right">{{ total_revenue|floatformat:2 }}</td>
                                     <td class="text-right">{{ total_expense|floatformat:2 }}</td>
                                     <td class="text-right {% if total_profit >= 0 %}text-success{% else %}text-danger{% endif %}">
@@ -109,7 +109,7 @@
                         <div class="col-md-3">
                             <div class="card bg-success text-white">
                                 <div class="card-body">
-                                    <h5 class="card-title">{% trans "إجمالي الإيرادات" %}</h5>
+                                    <h5 class="card-title">{% trans "Total Revenues" %}</h5>
                                     <h3>{{ total_revenue|floatformat:2 }}</h3>
                                 </div>
                             </div>
@@ -117,7 +117,7 @@
                         <div class="col-md-3">
                             <div class="card bg-danger text-white">
                                 <div class="card-body">
-                                    <h5 class="card-title">{% trans "إجمالي المصاريف" %}</h5>
+                                    <h5 class="card-title">{% trans "Total Expenses" %}</h5>
                                     <h3>{{ total_expense|floatformat:2 }}</h3>
                                 </div>
                             </div>
@@ -125,7 +125,7 @@
                         <div class="col-md-3">
                             <div class="card {% if total_profit >= 0 %}bg-primary{% else %}bg-warning{% endif %} text-white">
                                 <div class="card-body">
-                                    <h5 class="card-title">{% trans "صافي الربح" %}</h5>
+                                    <h5 class="card-title">{% trans "Net Profit" %}</h5>
                                     <h3>{{ total_profit|floatformat:2 }}</h3>
                                 </div>
                             </div>
@@ -133,7 +133,7 @@
                         <div class="col-md-3">
                             <div class="card bg-info text-white">
                                 <div class="card-body">
-                                    <h5 class="card-title">{% trans "هامش الربح" %}</h5>
+                                    <h5 class="card-title">{% trans "Profit Margin" %}</h5>
                                     <h3>
                                         {% if total_revenue > 0 %}
                                             {{ total_profit_percentage|floatformat:1 }}%

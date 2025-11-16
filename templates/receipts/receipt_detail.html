@@ -15,15 +15,15 @@
                         <a href="{% url 'receipts:receipt_list' %}" class="btn btn-secondary">
                             <i class="fas fa-arrow-left"></i> {% trans "Back to List" %}
                         </a>
-                        {% if not receipt.is_reversed %}
+                        {% if perms.receipts.can_edit_receipts %}
                         <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editReceiptModal">
                             <i class="fas fa-edit"></i> {% trans "Edit" %}
                         </button>
-                        {% if receipt.can_be_reversed %}
+                        {% endif %}
+                        {% if perms.receipts.can_delete_receipts %}
                         <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#reverseReceiptModal">
                             <i class="fas fa-undo"></i> {% trans "Reverse Voucher" %}
                         </button>
-                        {% endif %}
                         {% endif %}
                     </div>
                 </div>

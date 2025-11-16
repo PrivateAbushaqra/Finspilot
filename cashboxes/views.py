@@ -164,6 +164,11 @@ def get_transaction_document_number(transaction):
 @login_required
 def cashbox_list(request):
     """قائمة الصناديق"""
+    # التحقق من الصلاحيات
+    if not request.user.has_cashboxes_permission():
+        messages.error(request, _('You do not have permission to access cashboxes'))
+        return redirect('core:dashboard')
+    
     from settings.models import Currency
     from banks.models import BankAccount
     from django.utils import timezone
@@ -256,6 +261,11 @@ def cashbox_list(request):
 @login_required
 def cashbox_detail(request, cashbox_id):
     """تفاصيل الصندوق"""
+    # التحقق من الصلاحيات
+    if not request.user.has_cashboxes_permission():
+        messages.error(request, _('You do not have permission to access cashboxes'))
+        return redirect('core:dashboard')
+    
     from settings.models import Currency
     
     cashbox = get_object_or_404(Cashbox, id=cashbox_id)
@@ -304,6 +314,15 @@ def cashbox_detail(request, cashbox_id):
 @login_required
 def cashbox_create(request):
     """إنشاء صندوق جديد"""
+    # التحقق من الصلاحيات - يجب أن لا يكون لديه فقط صلاحية المشاهدة
+    if request.user.has_perm('users.can_access_cashboxes') and not (request.user.is_superuser or request.user.user_type in ['superadmin', 'admin']):
+        messages.error(request, _('You only have view permission. You cannot create cashboxes.'))
+        return redirect('cashboxes:cashbox_list')
+    
+    if not request.user.has_cashboxes_permission():
+        messages.error(request, _('You do not have permission to create cashboxes'))
+        return redirect('core:dashboard')
+    
     if request.method == 'POST':
         name = request.POST.get('name')
         description = request.POST.get('description', '')
@@ -443,6 +462,15 @@ def cashbox_create(request):
 @login_required
 def cashbox_edit(request, cashbox_id):
     """تعديل الصندوق"""
+    # التحقق من الصلاحيات - يجب أن لا يكون لديه فقط صلاحية المشاهدة
+    if request.user.has_perm('users.can_access_cashboxes') and not (request.user.is_superuser or request.user.user_type in ['superadmin', 'admin']):
+        messages.error(request, _('You only have view permission. You cannot edit cashboxes.'))
+        return redirect('cashboxes:cashbox_list')
+    
+    if not request.user.has_cashboxes_permission():
+        messages.error(request, _('You do not have permission to edit cashboxes'))
+        return redirect('core:dashboard')
+    
     cashbox = get_object_or_404(Cashbox, id=cashbox_id)
     
     if request.method == 'POST':
@@ -601,6 +629,14 @@ def cashbox_edit(request, cashbox_id):
 @login_required
 def transfer_create(request):
     """إنشاء تحويل"""
+    # التحقق من الصلاحيات - يجب أن لا يكون لديه فقط صلاحية المشاهدة
+    if request.user.has_perm('users.can_access_cashboxes') and not (request.user.is_superuser or request.user.user_type in ['superadmin', 'admin']):
+        messages.error(request, _('You only have view permission. You cannot create transfers.'))
+        return redirect('cashboxes:transfer_list')
+    
+    if not request.user.has_cashboxes_permission():
+        messages.error(request, _('You do not have permission to create transfers'))
+        return redirect('core:dashboard')
     if request.method == 'POST':
         transfer_type = request.POST.get('transfer_type')
         
@@ -829,6 +865,11 @@ def transfer_create(request):
 @login_required
 def transfer_list(request):
     """قائمة التحويلات"""
+    # التحقق من الصلاحيات
+    if not request.user.has_cashboxes_permission():
+        messages.error(request, _('You do not have permission to access transfers'))
+        return redirect('core:dashboard')
+    
     transfers = CashboxTransfer.objects.all().select_related(
         'from_cashbox', 'to_cashbox', 'from_bank', 'to_bank', 'created_by'
     ).order_by('-date', '-created_at')
@@ -883,6 +924,11 @@ def transfer_list(request):
 @login_required
 def transfer_detail(request, transfer_id):
     """تفاصيل التحويل"""
+    # التحقق من الصلاحيات
+    if not request.user.has_cashboxes_permission():
+        messages.error(request, _('You do not have permission to access transfers'))
+        return redirect('core:dashboard')
+    
     transfer = get_object_or_404(CashboxTransfer, id=transfer_id)
     
     # الحصول على الحركات المرتبطة
@@ -994,8 +1040,12 @@ class CashboxTransferDeleteView(View):
     """حذف تحويل صندوق مع تحديث جميع الحسابات المرتبطة"""
     
     def post(self, request, transfer_id):
-        # التحقق من صلاحيات SUPERADMIN فقط
-        if not request.user.is_superuser:
+        # التحقق من الصلاحيات - يجب أن لا يكون لديه فقط صلاحية المشاهدة
+        if request.user.has_perm('users.can_access_cashboxes') and not (request.user.is_superuser or request.user.user_type in ['superadmin', 'admin']):
+            messages.error(request, _('You only have view permission. You cannot delete transfers.'))
+            return redirect('cashboxes:transfer_list')
+        
+        if not (request.user.is_superuser or request.user.user_type in ['superadmin', 'admin']):
             messages.error(request, _('Only superadmin can delete transfers'))
             return redirect('cashboxes:transfer_list')
         
@@ -1061,12 +1111,16 @@ class ClearCashboxTransactionsView(View):
     """حذف جميع معاملات الصندوق مع تحديث الأرصدة"""
     
     def post(self, request, cashbox_id):
-        cashbox = get_object_or_404(Cashbox, id=cashbox_id)
+        # التحقق من الصلاحيات - يجب أن لا يكون لديه فقط صلاحية المشاهدة
+        if request.user.has_perm('users.can_access_cashboxes') and not (request.user.is_superuser or request.user.user_type in ['superadmin', 'admin']):
+            messages.error(request, _('You only have view permission. You cannot clear cashbox transactions.'))
+            return redirect('cashboxes:cashbox_detail', cashbox_id=cashbox_id)
         
-        # التحقق من الصلاحيات
         if not (request.user.is_superuser or request.user.is_staff):
             messages.error(request, _('You do not have permission to clear cashbox transactions'))
             return redirect('cashboxes:cashbox_detail', cashbox_id=cashbox_id)
+        
+        cashbox = get_object_or_404(Cashbox, id=cashbox_id)
         
         try:
             with transaction.atomic():
@@ -1120,11 +1174,15 @@ class ClearCashboxTransactionsView(View):
 @login_required
 def cashbox_delete(request, cashbox_id):
     """حذف الصندوق - محسّن للتعامل مع الحماية"""
-    # التحقق من الصلاحيات
-    if not (request.user.is_superuser or request.user.user_type in ['superadmin', 'admin'] or request.user.has_perm('cashboxes.can_delete_cashboxes')):
+    # التحقق من الصلاحيات - يجب أن لا يكون لديه فقط صلاحية المشاهدة
+    if request.user.has_perm('users.can_access_cashboxes') and not (request.user.is_superuser or request.user.user_type in ['superadmin', 'admin']):
+        messages.error(request, _('You only have view permission. You cannot delete cashboxes.'))
+        return redirect('cashboxes:cashbox_list')
+    
+    if not (request.user.is_superuser or request.user.user_type in ['superadmin', 'admin']):
         messages.error(request, _('You do not have permission to delete cashboxes'))
         return redirect('cashboxes:cashbox_list')
-        
+    
     cashbox = get_object_or_404(Cashbox, id=cashbox_id)
     
     if request.method == 'POST':
@@ -1171,6 +1229,11 @@ def cashbox_delete(request, cashbox_id):
 @login_required
 def cashbox_export_xlsx(request, cashbox_id):
     """تصدير معاملات الصندوق إلى ملف Excel"""
+    # التحقق من الصلاحيات
+    if not request.user.has_cashboxes_permission():
+        messages.error(request, _('You do not have permission to export cashbox data'))
+        return redirect('core:dashboard')
+    
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill, Alignment
     from django.http import HttpResponse

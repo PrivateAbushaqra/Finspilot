@@ -405,11 +405,11 @@ document.addEventListener('DOMContentLoaded', function() {
     typeField.addEventListener('change', function() {
         const selectedType = this.value;
         
-        // مسح الفئات الحالية
+        // {% trans "Clear current categories" %}
         categoryField.innerHTML = '<option value="">{% trans "Choose category..." %}</option>';
         
         if (selectedType) {
-            // جلب الفئات المتاحة للنوع المحدد
+            // {% trans "Fetch available categories for selected type" %}
             fetch(`/ar/revenues-expenses/api/categories/${selectedType}/`)
                 .then(response => response.json())
                 .then(data => {
@@ -545,7 +545,7 @@ function showFieldError(field, message) {
     errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle me-1"></i>${message}`;
     field.parentNode.appendChild(errorDiv);
     
-    // إزالة الخطأ عند التفاعل مع الحقل
+    // {% trans "Remove error on field interaction" %}
     field.addEventListener('focus', function() {
         this.classList.remove('is-invalid');
         const error = this.parentNode.querySelector('.field-error');

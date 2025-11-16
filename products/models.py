@@ -25,11 +25,11 @@ class Category(models.Model):
             ('can_view_products', _('يمكن عرض الفئات والمنتجات')),
             ('can_add_products', _('يمكن إضافة المنتجات')),
             ('can_edit_products', _('يمكن تعديل المنتجات')),
+            ('can_delete_products', _('يمكن حذف المنتجات')),
             ('can_add_categories', _('يمكن إضافة الفئات')),
             ('can_add_categories_inline', _('يمكن إضافة الفئات من خلال النوافذ المنبثقة')),
             ('can_edit_categories', _('يمكن تعديل الفئات')),
             ('can_delete_categories', _('يمكن حذف الفئات')),
-            ('can_delete_products', _('يمكن حذف المنتجات')),
         ]
 
     def save(self, *args, **kwargs):
@@ -171,15 +171,7 @@ class Product(models.Model):
         verbose_name = _('منتج')
         verbose_name_plural = _('المنتجات')
         ordering = ['code', 'name']
-        permissions = [
-            ('can_view_products', _('يمكن عرض الفئات والمنتجات')),
-            ('can_add_products', _('يمكن إضافة المنتجات')),
-            ('can_edit_products', _('يمكن تعديل المنتجات')),
-            ('can_add_categories', _('يمكن إضافة الفئات')),
-            ('can_edit_categories', _('يمكن تعديل الفئات')),
-            ('can_delete_categories', _('يمكن حذف الفئات')),
-            ('can_delete_products', _('يمكن حذف المنتجات')),
-        ]
+        default_permissions = []
 
     def __str__(self):
         return f"{self.code} - {self.name}"

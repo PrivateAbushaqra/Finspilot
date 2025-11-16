@@ -15,7 +15,7 @@
                         <i class="mdi mdi-printer me-1"></i>
                         {% trans "Print Full Report" %}
                     </button>
-                    {% if perms.payments.add_paymentvoucher %}
+                    {% if perms.payments.can_add_payments or perms.payments.add_paymentvoucher %}
                     <a href="{% url 'payments:voucher_create' %}" class="btn btn-primary">
                         <i class="mdi mdi-plus"></i> {% trans "Add New Payment Voucher" %}
                     </a>
@@ -195,14 +195,14 @@
                                                 <i class="mdi mdi-eye"></i> {% trans "View" %}
                                             </a>
                                             {% if not voucher.is_reversed %}
-                                            {% if perms.payments.change_paymentvoucher %}
+                                            {% if perms.payments.can_edit_payments %}
                                             <a href="{% url 'payments:voucher_edit' voucher.pk %}" 
                                                class="btn btn-sm btn-outline-warning" title="{% trans "Edit" %}">
                                                 <i class="mdi mdi-pencil"></i> {% trans "Edit" %}
                                             </a>
                                             {% endif %}
                                             {% endif %}
-                                            {% if perms.payments.delete_paymentvoucher %}
+                                            {% if perms.payments.can_delete_payments %}
                                             <button type="button" 
                                                     class="btn btn-sm btn-outline-danger" 
                                                     title="{% trans "Delete" %}"

@@ -61,6 +61,9 @@ class Warehouse(models.Model):
         ordering = ['name']
         permissions = [
             ('can_view_inventory', _('Can access inventory')),
+            ('can_add_inventory', _('Can add inventory')),
+            ('can_edit_inventory', _('Can edit inventory')),
+            ('can_delete_inventory', _('Can delete inventory')),
         ]
 
     def __str__(self):
@@ -122,9 +125,7 @@ class InventoryMovement(models.Model):
         verbose_name = _('Inventory Movement')
         verbose_name_plural = _('Inventory Movements')
         ordering = ['-date', '-movement_number']
-        permissions = [
-            ('can_view_inventory', _('Can access inventory')),
-        ]
+        default_permissions = []
 
     def __str__(self):
         return f"{self.movement_number} - {self.product.name}"
@@ -229,6 +230,7 @@ class WarehouseTransfer(models.Model):
         verbose_name = _('Warehouse Transfer')
         verbose_name_plural = _('Warehouse Transfers')
         ordering = ['-date', '-transfer_number']
+        default_permissions = []
 
     def __str__(self):
         return f"{self.transfer_number} - {self.from_warehouse.name} -> {self.to_warehouse.name}"
@@ -246,6 +248,7 @@ class WarehouseTransferItem(models.Model):
     class Meta:
         verbose_name = _('Warehouse Transfer Item')
         verbose_name_plural = _('Warehouse Transfer Items')
+        default_permissions = []
 
     def __str__(self):
         return f"{self.transfer.transfer_number} - {self.product.name}"

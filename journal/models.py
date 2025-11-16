@@ -34,12 +34,15 @@ class Account(models.Model):
     updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
 
     class Meta:
-        verbose_name = _('Account')
-        verbose_name_plural = _('Accounts')
+        verbose_name = _('Chart of Accounts')
+        verbose_name_plural = _('Chart of Accounts')
         ordering = ['code', 'name']
-        default_permissions = ('add', 'change', 'delete', 'view')
+        default_permissions = []  # No default permissions
         permissions = [
-            ('view_journalaccount', _('Can view Account')),
+            ("can_view_accounts", _("View Chart of Accounts")),
+            ("can_add_accounts", _("Add Account")),
+            ("can_edit_accounts", _("Edit Account")),
+            ("can_delete_accounts", _("Delete Account")),
         ]
 
     def __str__(self):
@@ -311,9 +314,12 @@ class JournalEntry(models.Model):
         verbose_name = _('Journal Entry')
         verbose_name_plural = _('Journal Entries')
         ordering = ['-entry_date', '-created_at']
-        default_permissions = ('add', 'change', 'delete', 'view')
+        default_permissions = []  # No default permissions
         permissions = [
-            ('change_entry_number', _('Change Entry Number')),
+            ("can_view_journal_entries", _("View Journal Entries")),
+            ("can_add_journal_entries", _("Add Journal Entry")),
+            ("can_edit_journal_entries", _("Edit Journal Entry")),
+            ("can_delete_journal_entries", _("Delete Journal Entry")),
         ]
 
     def __str__(self):
@@ -406,6 +412,7 @@ class JournalLine(models.Model):
     class Meta:
         verbose_name = _('Journal Line')
         verbose_name_plural = _('Journal Lines')
+        default_permissions = []  # No permissions needed
 
     def __str__(self):
         return f"{self.journal_entry.entry_number} - {self.account.name}"
@@ -485,9 +492,9 @@ class YearEndClosing(models.Model):
         verbose_name_plural = _('Year End Closings')
         ordering = ['-year', '-closing_date']
         unique_together = ['year']
-        default_permissions = ('add', 'change', 'delete', 'view')
+        default_permissions = []  # No default permissions
         permissions = [
-            ('can_perform_year_end_closing', _('Can perform year end closing')),
+            ("can_perform_year_end_closing", _("Perform Year End Closing")),
         ]
 
     def __str__(self):
@@ -532,16 +539,29 @@ class YearEndClosing(models.Model):
             created_by=self.created_by
         )
         
-        # إذا كان هناك ربح
-        if self.net_profit > 0:
-            # إقفال حسابات الإيرادات والمصروفات
-            revenue_accounts = Account.objects.filter(account_type__in=['revenue', 'sales'])
-            expense_accounts = Account.objects.filter(account_type__in=['expense', 'purchases'])
-            
-            # إقفال الإيرادات
-            for account in revenue_accounts:
-                balance = account.get_balance(as_of_date=self.closing_date.replace(month=12, day=31))
-                if balance > 0:
+        # الحصول على جميع حسابات الإيرادات والمصروفات النشطة
+        revenue_accounts = Account.objects.filter(
+            account_type__in=['revenue', 'sales'], 
+            is_active=True
+        )
+        expense_accounts = Account.objects.filter(
+            account_type__in=['expense', 'purchases'], 
+            is_active=True
+        )
+        
+        # إقفال حسابات الإيرادات (مدين)
+        # نقفل فقط الحسابات التي لها رصيد فعلي
+        for account in revenue_accounts:
+            balance = account.get_balance(as_of_date=self.closing_date)
+            # تجاهل الحسابات التي ليس لها رصيد أو التي هي حسابات رئيسية بدون حركات مباشرة
+            if balance > 0:
+                # التحقق من وجود حركات مباشرة على الحساب
+                has_direct_lines = JournalLine.objects.filter(
+                    account=account,
+                    journal_entry__entry_date__year=self.year
+                ).exists()
+                
+                if has_direct_lines:
                     JournalLine.objects.create(
                         journal_entry=closing_entry,
                         account=account,
@@ -549,11 +569,18 @@ class YearEndClosing(models.Model):
                         credit=Decimal('0'),
                         line_description=f"إقفال حساب {account.name}"
                     )
-            
-            # إقفال المصروفات
-            for account in expense_accounts:
-                balance = account.get_balance(as_of_date=self.closing_date.replace(month=12, day=31))
-                if balance > 0:
+        
+        # إقفال حسابات المصروفات (دائن)
+        for account in expense_accounts:
+            balance = account.get_balance(as_of_date=self.closing_date)
+            if balance > 0:
+                # التحقق من وجود حركات مباشرة على الحساب
+                has_direct_lines = JournalLine.objects.filter(
+                    account=account,
+                    journal_entry__entry_date__year=self.year
+                ).exists()
+                
+                if has_direct_lines:
                     JournalLine.objects.create(
                         journal_entry=closing_entry,
                         account=account,
@@ -561,10 +588,12 @@ class YearEndClosing(models.Model):
                         credit=balance,
                         line_description=f"إقفال حساب {account.name}"
                     )
-            
-            # نقل الربح إلى رأس المال
-            retained_earnings = Account.objects.filter(account_type='equity', name__icontains='رأس المال').first()
-            if retained_earnings:
+        
+        # نقل صافي الربح أو الخسارة إلى رأس المال
+        retained_earnings = Account.objects.filter(account_type='equity', name__icontains='رأس المال').first()
+        if retained_earnings:
+            if self.net_profit > 0:
+                # ربح: دائن في رأس المال
                 JournalLine.objects.create(
                     journal_entry=closing_entry,
                     account=retained_earnings,
@@ -572,13 +601,9 @@ class YearEndClosing(models.Model):
                     credit=self.net_profit,
                     line_description="نقل صافي الربح إلى رأس المال"
                 )
-        
-        # إذا كان هناك خسارة
-        elif self.net_profit < 0:
-            # نفس المنطق لكن عكسي
-            loss = abs(self.net_profit)
-            retained_earnings = Account.objects.filter(account_type='equity', name__icontains='رأس المال').first()
-            if retained_earnings:
+            elif self.net_profit < 0:
+                # خسارة: مدين في رأس المال
+                loss = abs(self.net_profit)
                 JournalLine.objects.create(
                     journal_entry=closing_entry,
                     account=retained_earnings,
@@ -592,3 +617,130 @@ class YearEndClosing(models.Model):
         self.save()
         
         return True, _("Year end closing performed successfully")
+
+
+class FiscalYear(models.Model):
+    """السنة المالية"""
+    STATUS_CHOICES = [
+        ('active', _('Active')),
+        ('closed', _('Closed')),
+    ]
+    
+    year = models.IntegerField(_('Fiscal Year'), unique=True)
+    start_date = models.DateField(_('Start Date'))
+    end_date = models.DateField(_('End Date'))
+    status = models.CharField(_('Status'), max_length=20, choices=STATUS_CHOICES, default='active')
+    is_current = models.BooleanField(_('Current Year'), default=False)
+    
+    # الأرصدة الافتتاحية
+    opening_entry = models.OneToOneField(JournalEntry, on_delete=models.SET_NULL, null=True, blank=True,
+                                        verbose_name=_('Opening Entry'), related_name='fiscal_year_opening')
+    
+    # مرتبط بالإقفال (إن وجد)
+    closing = models.OneToOneField(YearEndClosing, on_delete=models.SET_NULL, null=True, blank=True,
+                                  verbose_name=_('Year End Closing'), related_name='fiscal_year')
+    
+    created_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name=_('Created By'))
+    created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
+    updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
+    
+    class Meta:
+        verbose_name = _('Fiscal Year')
+        verbose_name_plural = _('Fiscal Years')
+        ordering = ['-year']
+        default_permissions = []  # No default permissions
+        permissions = [
+            ("can_open_fiscal_year", _("Open Fiscal Year")),
+            ("can_access_closed_years", _("Access Closed Fiscal Years")),
+        ]
+    
+    def __str__(self):
+        return f"{_('Fiscal Year')} {self.year}"
+    
+    def save(self, *args, **kwargs):
+        # إذا تم تعيين هذه السنة كالسنة الحالية، إلغاء التعيين من السنوات الأخرى
+        if self.is_current:
+            FiscalYear.objects.filter(is_current=True).exclude(pk=self.pk).update(is_current=False)
+        super().save(*args, **kwargs)
+    
+    def create_opening_balances(self, previous_year=None):
+        """
+        إنشاء الأرصدة الافتتاحية للسنة الجديدة
+        ينقل أرصدة الأصول والخصوم وحقوق الملكية من السنة السابقة
+        """
+        from datetime import datetime
+        
+        # إذا لم يتم تحديد السنة السابقة، استخدم السنة التي قبلها
+        if previous_year is None:
+            try:
+                previous_year = FiscalYear.objects.get(year=self.year - 1)
+            except FiscalYear.DoesNotExist:
+                return False, _("Previous fiscal year not found")
+        
+        # التأكد من أن السنة السابقة مقفلة
+        if previous_year.status != 'closed':
+            return False, _("Previous fiscal year must be closed first")
+        
+        # إنشاء قيد الأرصدة الافتتاحية
+        opening_entry = JournalEntry.objects.create(
+            entry_date=self.start_date,
+            description=f"الأرصدة الافتتاحية للسنة المالية {self.year}",
+            reference_type='opening_balance',
+            total_amount=Decimal('0'),
+            created_by=self.created_by
+        )
+        
+        # الحسابات التي تنتقل أرصدتها (الميزانية العمومية فقط - لا تنتقل الإيرادات والمصروفات)
+        balance_sheet_types = ['asset', 'liability', 'equity']
+        accounts = Account.objects.filter(
+            account_type__in=balance_sheet_types,
+            is_active=True
+        )
+        
+        total_debits = Decimal('0')
+        total_credits = Decimal('0')
+        
+        for account in accounts:
+            # حساب الرصيد في نهاية السنة السابقة
+            balance = account.get_balance(as_of_date=previous_year.end_date)
+            
+            if balance != 0:
+                # التحقق من وجود حركات على الحساب في السنة السابقة
+                has_movements = JournalLine.objects.filter(
+                    account=account,
+                    journal_entry__entry_date__range=[previous_year.start_date, previous_year.end_date]
+                ).exists()
+                
+                if has_movements or balance != 0:
+                    # حسابات الأصول والمصروفات طبيعتها مدينة
+                    # حسابات الخصوم والإيرادات وحقوق الملكية طبيعتها دائنة
+                    if account.account_type in ['asset']:
+                        # رصيد موجب = مدين
+                        debit = abs(balance) if balance > 0 else Decimal('0')
+                        credit = abs(balance) if balance < 0 else Decimal('0')
+                    else:  # liability, equity
+                        # رصيد موجب = دائن
+                        credit = abs(balance) if balance > 0 else Decimal('0')
+                        debit = abs(balance) if balance < 0 else Decimal('0')
+                    
+                    if debit > 0 or credit > 0:
+                        JournalLine.objects.create(
+                            journal_entry=opening_entry,
+                            account=account,
+                            debit=debit,
+                            credit=credit,
+                            line_description=f"رصيد افتتاحي من سنة {previous_year.year}"
+                        )
+                        
+                        total_debits += debit
+                        total_credits += credit
+        
+        # تحديث إجمالي القيد
+        opening_entry.total_amount = max(total_debits, total_credits)
+        opening_entry.save()
+        
+        # ربط القيد بالسنة المالية
+        self.opening_entry = opening_entry
+        self.save()
+        
+        return True, _("Opening balances created successfully")

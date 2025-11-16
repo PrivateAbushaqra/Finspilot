@@ -85,6 +85,11 @@ def assets_liabilities_dashboard(request):
 @login_required
 def asset_list(request):
     """Asset list"""
+    # Check permission
+    if not request.user.has_perm('assets_liabilities.can_view_assets'):
+        messages.error(request, _('You do not have permission to view assets'))
+        return redirect('core:dashboard')
+    
     assets = Asset.objects.select_related(
         'category', 'responsible_person', 'created_by', 'currency'
     ).order_by('-purchase_date')
@@ -133,6 +138,11 @@ def asset_list(request):
 @login_required
 def liability_list(request):
     """Liabilities list"""
+    # Check permission
+    if not request.user.has_perm('assets_liabilities.can_view_liabilities'):
+        messages.error(request, _('You do not have permission to view liabilities'))
+        return redirect('core:dashboard')
+    
     liabilities = Liability.objects.select_related(
         'category', 'created_by', 'currency'
     ).order_by('due_date')
@@ -181,6 +191,11 @@ def liability_list(request):
 @login_required
 def asset_create(request):
     """Add new asset"""
+    # Check permission
+    if not request.user.has_perm('assets_liabilities.can_add_assets'):
+        messages.error(request, _('You do not have permission to add assets'))
+        return redirect('core:dashboard')
+    
     if request.method == 'POST':
         # التحقق من نوع المحتوى
         if request.content_type == 'application/json':
@@ -343,6 +358,11 @@ def asset_edit(request, pk):
     """Edit asset"""
     asset = get_object_or_404(Asset, pk=pk)
     
+    # Check permission
+    if not request.user.has_perm('assets_liabilities.can_edit_assets'):
+        messages.error(request, _('You do not have permission to edit assets'))
+        return redirect('core:dashboard')
+    
     if request.method == 'POST':
         form = AssetForm(request.POST, instance=asset)
         if form.is_valid():
@@ -393,6 +413,11 @@ def asset_delete(request, pk):
     """Delete asset"""
     asset = get_object_or_404(Asset, pk=pk)
     
+    # Check permission
+    if not request.user.has_perm('assets_liabilities.can_delete_assets'):
+        messages.error(request, _('You do not have permission to delete assets'))
+        return redirect('core:dashboard')
+    
     if request.method == 'POST':
         try:
             with transaction.atomic():
@@ -429,6 +454,11 @@ def asset_delete(request, pk):
 @login_required
 def asset_category_list(request):
     """Asset category list"""
+    # Check permission
+    if not request.user.has_perm('assets_liabilities.can_view_asset_categories'):
+        messages.error(request, _('You do not have permission to view asset categories'))
+        return redirect('core:dashboard')
+    
     categories = AssetCategory.objects.annotate(
         assets_count=Count('asset')
     ).order_by('type', 'name')
@@ -443,6 +473,11 @@ def asset_category_list(request):
 @login_required
 def asset_category_create(request):
     """Add asset category"""
+    # Check permission
+    if not request.user.has_perm('assets_liabilities.can_add_asset_categories'):
+        messages.error(request, _('You do not have permission to add asset categories'))
+        return redirect('core:dashboard')
+    
     if request.method == 'POST':
         form = AssetCategoryForm(request.POST)
         if form.is_valid():
@@ -485,6 +520,11 @@ def asset_category_create(request):
 def asset_category_edit(request, pk):
     """Edit asset category"""
     category = get_object_or_404(AssetCategory, pk=pk)
+    
+    # Check permission
+    if not request.user.has_perm('assets_liabilities.can_edit_asset_categories'):
+        messages.error(request, _('You do not have permission to edit asset categories'))
+        return redirect('core:dashboard')
     
     if request.method == 'POST':
         form = AssetCategoryForm(request.POST, instance=category)
@@ -576,6 +616,11 @@ def liability_list(request):
 @login_required
 def liability_create(request):
     """Add new liability"""
+    # Check permission
+    if not request.user.has_perm('assets_liabilities.can_add_liabilities'):
+        messages.error(request, _('You do not have permission to add liabilities'))
+        return redirect('core:dashboard')
+    
     if request.method == 'POST':
         form = LiabilityForm(request.POST)
         if form.is_valid():

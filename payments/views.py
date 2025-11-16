@@ -33,24 +33,24 @@ def create_payment_journal_entry(voucher, user):
 
 
 def create_payment_account_transaction(voucher, user):
-    """إنشاء حركة حساب للمورد عند إنشاء سند دفع"""
+    """Create an account transaction for supplier when payment voucher is created"""
     try:
         from accounts.models import AccountTransaction
         import uuid
         
-        # إنشاء معاملة للموردين فقط
+        # Create transaction for suppliers only
         if voucher.supplier and voucher.voucher_type == 'supplier':
-            # توليد رقم الحركة
+            # Generate the transaction number
             transaction_number = f"PAY-{uuid.uuid4().hex[:8].upper()}"
             
-            # حساب الرصيد السابق
+            # Calculate the previous balance
             last_transaction = AccountTransaction.objects.filter(
                 customer_supplier=voucher.supplier
             ).order_by('-created_at').first()
             
             previous_balance = last_transaction.balance_after if last_transaction else 0
             
-            # إنشاء حركة مدينة للمورد (تقليل الذمم الدائنة)
+            # Create a debit transaction for the supplier (reduce payables)
             new_balance = previous_balance - voucher.amount
             
             AccountTransaction.objects.create(
@@ -62,17 +62,17 @@ def create_payment_account_transaction(voucher, user):
                 amount=voucher.amount,
                 reference_type='payment',
                 reference_id=voucher.id,
-                description=f'سند دفع رقم {voucher.voucher_number}',
+                description=_('Payment voucher %(number)s') % {'number': voucher.voucher_number},
                 balance_after=new_balance,
                 created_by=user
             )
             
     except ImportError:
-        # في حالة عدم وجود نموذج الحسابات
+        # In case the accounts model is not available
         pass
     except Exception as e:
-        print(f"خطأ في إنشاء حركة الحساب: {e}")
-        # لا نوقف العملية في حالة فشل تسجيل الحركة المالية
+        logger.error(_('Error creating account transaction: %(error)s') % {'error': e})
+        # Do not stop the operation if posting the financial transaction fails
         pass
 
 
@@ -99,6 +99,11 @@ def get_currency_symbol():
 @login_required
 def payment_voucher_list(request):
     """Payment vouchers list"""
+    if not (request.user.has_perm('payments.can_view_payments') or request.user.has_perm('payments.view_paymentvoucher')):
+        from django.core.exceptions import PermissionDenied
+        messages.error(request, _('You do not have permission to view payment vouchers'))
+        raise PermissionDenied(_('You do not have permission to view payment vouchers'))
+    
     vouchers = PaymentVoucher.objects.filter(is_active=True).select_related(
         'supplier', 'cashbox', 'bank', 'created_by'
     )
@@ -158,47 +163,47 @@ def payment_voucher_list(request):
 @login_required
 def payment_voucher_create(request):
     """Create new payment voucher"""
-    if not request.user.has_perm('payments.add_paymentvoucher'):
+    if not (request.user.has_perm('payments.can_add_payments') or request.user.has_perm('payments.add_paymentvoucher')):
         from django.core.exceptions import PermissionDenied
-        messages.error(request, _('ليس لديك صلاحية إضافة سند صرف'))
-        raise PermissionDenied(_('ليس لديك صلاحية إضافة سند صرف'))
+        messages.error(request, _('You do not have permission to add payment vouchers'))
+        raise PermissionDenied(_('You do not have permission to add payment vouchers'))
     if request.method == 'POST':
         form = PaymentVoucherForm(request.POST)
         if form.is_valid():
             try:
-                # التحقق من الرصيد قبل إنشاء السند
+                # Check balance before creating voucher
                 voucher = form.save(commit=False)
                 
-                # التحقق من رصيد الصندوق للدفع النقدي
+                # Check cashbox balance for cash payment
                 if voucher.payment_type == 'cash' and voucher.cashbox:
                     if voucher.cashbox.balance < voucher.amount:
-                        messages.error(request, _('رصيد الصندوق غير كافي لإتمام هذا الدفع'))
+                        messages.error(request, _('Insufficient cashbox balance to complete this payment'))
                         return render(request, 'payments/voucher_form.html', {'form': form})
                 
-                # التحقق من رصيد البنك للتحويل البنكي
+                # Check bank balance for bank transfer
                 elif voucher.payment_type == 'bank_transfer' and voucher.bank:
                     if voucher.bank.balance < voucher.amount:
-                        messages.error(request, _('رصيد البنك غير كافي لإتمام هذا الدفع'))
+                        messages.error(request, _('Insufficient bank balance to complete this payment'))
                         return render(request, 'payments/voucher_form.html', {'form': form})
                 
-                # التحقق من رصيد البنك للشيكات (إذا كان مرتبط ببنك معين)
+                # Check bank balance for checks (if linked to a bank)
                 elif voucher.payment_type == 'check' and voucher.bank:
                     if voucher.bank.balance < voucher.amount:
-                        messages.error(request, _('رصيد البنك غير كافي لإصدار هذا الشيك'))
+                        messages.error(request, _('Insufficient bank balance to issue this check'))
                         return render(request, 'payments/voucher_form.html', {'form': form})
                 
                 with transaction.atomic():
                     voucher.created_by = request.user
                     voucher.save()
                     
-                    # جميع الحركات المالية والقيود تتم تلقائياً عبر signals:
-                    # - حركة الصندوق/البنك (cashbox/bank transaction)
-                    # - حركة حساب المورد (account transaction)  
-                    # - القيد المحاسبي (journal entry)
+                    # All financial transactions and journal entries are created automatically via signals:
+                    # - Cashbox / bank transaction
+                    # - Supplier account transaction
+                    # - Journal entry
                     # All financial transactions and journal entries are created automatically via signals
 
                     
-                    # تسجيل النشاط في سجل التدقيق
+                    # Audit log entry
                     from core.models import AuditLog
                     payment_type_display = dict(PaymentVoucher.PAYMENT_TYPES).get(voucher.payment_type, voucher.payment_type)
                     beneficiary = voucher.supplier.name if voucher.supplier else voucher.beneficiary_name
@@ -207,7 +212,12 @@ def payment_voucher_create(request):
                         action_type='create',
                         content_type='PaymentVoucher',
                         object_id=voucher.id,
-                        description=f'إنشاء سند صرف رقم {voucher.voucher_number} - المستفيد: {beneficiary} - المبلغ: {voucher.amount} - نوع الدفع: {payment_type_display}'
+                        description=_('Create payment voucher %(number)s - Beneficiary: %(beneficiary)s - Amount: %(amount)s - Payment type: %(type)s') % {
+                            'number': voucher.voucher_number,
+                            'beneficiary': beneficiary,
+                            'amount': voucher.amount,
+                            'type': payment_type_display
+                        }
                     )
                     
                     messages.success(request, _('Payment voucher created successfully'))
@@ -230,23 +240,23 @@ def payment_voucher_create(request):
 
 @login_required
 def payment_voucher_detail(request, pk):
-    """عرض تفاصيل سند الصرف (يتطلب صلاحية عرض فقط)"""
-    if not request.user.has_perm('payments.view_paymentvoucher'):
+    """Payment voucher details (view permission required)"""
+    if not (request.user.has_perm('payments.can_view_payments') or request.user.has_perm('payments.view_paymentvoucher')):
         from django.core.exceptions import PermissionDenied
-        messages.error(request, _('ليس لديك صلاحية عرض تفاصيل سندات الصرف'))
-        raise PermissionDenied(_('ليس لديك صلاحية عرض تفاصيل سندات الصرف'))
+        messages.error(request, _('You do not have permission to view payment voucher details'))
+        raise PermissionDenied(_('You do not have permission to view payment voucher details'))
     
     voucher = get_object_or_404(PaymentVoucher, pk=pk)
     currency_symbol = get_currency_symbol()
     
-    # الحصول على القيود المحاسبية المرتبطة بالسند
+    # Get the journal entries related to the voucher
     from journal.models import JournalEntry
     journal_entries = JournalEntry.objects.filter(
         reference_type='payment_voucher',
         reference_id=voucher.id
     ).prefetch_related('lines__account')
     
-    # الحصول على حركات الصندوق المرتبطة بالسند
+    # Get cashbox transactions related to the voucher
     from cashboxes.models import CashboxTransaction
     cashbox_transactions = CashboxTransaction.objects.filter(
         reference_type__in=['payment', 'payment_reversal'],
@@ -265,6 +275,11 @@ def payment_voucher_detail(request, pk):
 @login_required
 def payment_voucher_edit(request, pk):
     """Edit payment voucher"""
+    if not (request.user.has_perm('payments.can_edit_payments') or request.user.has_perm('payments.change_paymentvoucher')):
+        from django.core.exceptions import PermissionDenied
+        messages.error(request, _('You do not have permission to edit payment vouchers'))
+        raise PermissionDenied(_('You do not have permission to edit payment vouchers'))
+    
     voucher = get_object_or_404(PaymentVoucher, pk=pk)
     
     if voucher.is_reversed:
@@ -306,6 +321,11 @@ def payment_voucher_edit(request, pk):
 @login_required
 def payment_voucher_reverse(request, pk):
     """Reverse payment voucher"""
+    if not (request.user.has_perm('payments.can_delete_payments') or request.user.has_perm('payments.delete_paymentvoucher')):
+        from django.core.exceptions import PermissionDenied
+        messages.error(request, _('You do not have permission to reverse payment vouchers'))
+        raise PermissionDenied(_('You do not have permission to reverse payment vouchers'))
+    
     voucher = get_object_or_404(PaymentVoucher, pk=pk)
     
     if not voucher.can_be_reversed:
@@ -341,19 +361,19 @@ def create_payment_transaction(voucher):
     """Create financial transaction for payment voucher"""
     if voucher.payment_type == 'cash' and voucher.cashbox:
         # Cashbox transaction (payment)
-        # Note: رصيد الصندوق يتم تحديثه تلقائياً من خلال signals في cashboxes/signals.py
+        # Note: Cashbox balance is updated automatically via signals in cashboxes/signals.py
         cashbox_trans = CashboxTransaction.objects.create(
             cashbox=voucher.cashbox,
             transaction_type='withdrawal',
-            amount=-voucher.amount,  # المبلغ سالب للسحب
+            amount=-voucher.amount,  # amount negative for withdrawal
             description=f'Payment voucher {voucher.voucher_number} - {voucher.beneficiary_display}',
             date=voucher.date,
             reference_type='payment',
             reference_id=voucher.id,
             created_by=voucher.created_by
         )
-        print(f"✓ تم إنشاء حركة صندوق: {cashbox_trans.id}")
-        # تم إزالة التحديث اليدوي - الآن يتم عبر signals
+        logger.info(_('Cashbox transaction created: %(id)s') % {'id': cashbox_trans.id})
+        # Manual update removed - now handled via signals
     
     elif voucher.payment_type == 'bank_transfer' and voucher.bank:
         # Bank transaction (payment) - using direct import to avoid circular problems
@@ -361,7 +381,7 @@ def create_payment_transaction(voucher):
         BankTransaction.objects.create(
             bank=voucher.bank,
             transaction_type='withdrawal',
-            amount=abs(voucher.amount),  # المبلغ يجب أن يكون موجباً دائماً، نوع المعاملة يحدد الاتجاه
+            amount=abs(voucher.amount),  # amount must be positive, transaction type defines direction
             description=f'Payment voucher {voucher.voucher_number} - {voucher.beneficiary_display}',
             reference_number=voucher.bank_reference or voucher.voucher_number,
             date=voucher.date,
@@ -372,7 +392,7 @@ def create_payment_transaction(voucher):
         # Check transaction (payment) - using direct import to avoid circular problems
         from banks.models import BankTransaction
         BankTransaction.objects.create(
-            bank=None,  # يمكن تحديد البنك لاحقاً أو تركه فارغ للشيكات
+            bank=None,  # bank can be set later or left empty for checks
             transaction_type='check_issued',
             amount=voucher.amount,
             description=f'Payment voucher {voucher.voucher_number} - Check {voucher.check_number} - {voucher.beneficiary_display}',
@@ -387,7 +407,7 @@ def reverse_payment_transaction(voucher):
     if voucher.payment_type == 'cash' and voucher.cashbox:
         # Find and reverse cash box transaction
         # Search for transaction using description since CashboxTransaction doesn't have reference_number
-        # Note: رصيد الصندوق يتم تحديثه تلقائياً من خلال signals
+        # Note: Cashbox balance is updated automatically via signals
         transactions = CashboxTransaction.objects.filter(
             cashbox=voucher.cashbox,
             description__contains=voucher.voucher_number,
@@ -397,12 +417,12 @@ def reverse_payment_transaction(voucher):
             CashboxTransaction.objects.create(
                 cashbox=transaction.cashbox,
                 transaction_type='deposit',
-                amount=abs(transaction.amount),  # المبلغ موجب للإيداع (نعيد المبلغ المسحوب)
+                amount=abs(transaction.amount),  # amount positive for deposit (restore withdrawn amount)
                 description=f'Reverse {transaction.description}',
                 date=django_timezone.now().date(),
                 created_by=voucher.reversed_by or voucher.created_by
             )
-            # تم إزالة التحديث اليدوي - الآن يتم عبر signals
+            # Manual update removed - now handled via signals
     
     elif voucher.payment_type == 'bank_transfer' and voucher.bank:
         # Find and reverse bank transaction - using direct import
@@ -427,6 +447,9 @@ def reverse_payment_transaction(voucher):
 @login_required
 def get_supplier_data(request):
     """Get supplier data via AJAX"""
+    if not (request.user.has_perm('payments.can_view_payments') or request.user.has_perm('payments.view_paymentvoucher')):
+        return JsonResponse({'error': _('You do not have permission to view payment vouchers')}, status=403)
+    
     supplier_id = request.GET.get('supplier_id')
     if supplier_id:
         try:
@@ -447,7 +470,7 @@ def get_supplier_data(request):
 def payment_voucher_delete(request, pk):
     """Delete payment voucher - limited to Super Admin and Admin only"""
     # Check permissions
-    if not (request.user.is_superuser or request.user.is_staff):
+    if not (request.user.has_perm('payments.can_delete_payments') or request.user.has_perm('payments.delete_paymentvoucher')):
         messages.error(request, _('You do not have permission to delete payment vouchers'))
         return redirect('payments:voucher_list')
     

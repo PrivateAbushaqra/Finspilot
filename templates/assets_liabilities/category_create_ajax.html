@@ -22,22 +22,22 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="id_name" class="form-label">
-                                        Category Name <span class="text-danger">*</span>
+                                        {% trans "Category Name" %} <span class="text-danger">*</span>
                                     </label>
                                     <input type="text" class="form-control" id="id_name" name="name"
-                                           placeholder="Enter category name" required>
+                                           placeholder="{% trans "Enter category name" %}" required>
                                     <div class="invalid-feedback">
-                                        This field is required.
+                                        {% trans "This field is required." %}
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="id_description" class="form-label">
-                                        Description
+                                        {% trans "Description" %}
                                     </label>
                                     <textarea class="form-control" id="id_description" name="description"
-                                              rows="3" placeholder="Enter description (optional)"></textarea>
+                                              rows="3" placeholder="{% trans "Enter description (optional)" %}"></textarea>
                                 </div>
                             </div>
                         </div>
@@ -47,7 +47,7 @@
                                 <div class="mb-3 form-check">
                                     <input type="checkbox" class="form-check-input" id="id_is_active" name="is_active" checked>
                                     <label class="form-check-label" for="id_is_active">
-                                        Active
+                                        {% trans "Active" %}
                                     </label>
                                 </div>
                             </div>
@@ -65,7 +65,7 @@
                             </a>
                             <button type="submit" class="btn btn-primary" id="submitBtn">
                                 <i class="fas fa-save me-1"></i>
-                                Save Category
+                                {% trans "Save Category" %}
                             </button>
                         </div>
                     </form>
@@ -83,17 +83,17 @@ document.getElementById('categoryForm').addEventListener('submit', function(e) {
     const errorAlert = document.getElementById('errorAlert');
     const errorMessage = document.getElementById('errorMessage');
 
-    // إخفاء رسالة الخطأ
+    // Hide error message
     errorAlert.classList.add('d-none');
 
-    // تعطيل الزر
+    // Disable button
     submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Saving...';
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>{% trans "Saving..." %}';
 
-    // جمع البيانات
+    // Collect data
     const formData = new FormData(this);
 
-    // إرسال الطلب
+    // Send request
     fetch(window.location.href, {
         method: 'POST',
         body: formData,
@@ -104,21 +104,21 @@ document.getElementById('categoryForm').addEventListener('submit', function(e) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // إعادة توجيه إلى لوحة التحكم مع رسالة نجاح
+            // Redirect to dashboard with success message
             window.location.href = '{% url "assets_liabilities:dashboard" %}?success=' + encodeURIComponent(data.message);
         } else {
-            // عرض رسالة الخطأ
+            // Show error message
             errorMessage.textContent = data.error;
             errorAlert.classList.remove('d-none');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        errorMessage.textContent = 'An error occurred while saving the category.';
+        errorMessage.textContent = '{% trans "An error occurred while saving the category." %}';
         errorAlert.classList.remove('d-none');
     })
     .finally(() => {
-        // إعادة تفعيل الزر
+        // Re-enable button
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<i class="fas fa-save me-1"></i>{% trans "Save Category" %}';
     });

@@ -25,12 +25,12 @@ class BankAccount(models.Model):
         verbose_name = _('Bank Account')
         verbose_name_plural = _('Bank Accounts')
         ordering = ['name']
+        default_permissions = []  # No default permissions
         permissions = [
-            # Keep name in English so it can be translated in templates via {% trans perm.name %}
-            ("can_add_banks_account", "Can Add Banks Account"),
-            ("can_view_banks_account", "Can View Banks Account"),
-            ("can_edit_banks_account", "Can Edit Banks Account"),
-            ("can_delete_banks_account", "Can Delete Banks Account"),
+            ("can_view_bank_accounts", "Can View Bank Accounts"),
+            ("can_add_bank_accounts", "Can Add Bank Accounts"),
+            ("can_edit_bank_accounts", "Can Edit Bank Accounts"),
+            ("can_delete_bank_accounts", "Can Delete Bank Accounts"),
         ]
 
     def __str__(self):
@@ -120,6 +120,7 @@ class BankTransfer(models.Model):
         verbose_name = _('Bank Transfer')
         verbose_name_plural = _('Bank Transfers')
         ordering = ['-date', '-transfer_number']
+        default_permissions = []  # No permissions needed - available to everyone
 
     def __str__(self):
         return f"{self.transfer_number} - {self.from_account.name} -> {self.to_account.name}"
@@ -177,6 +178,7 @@ class BankTransaction(models.Model):
         verbose_name = _('Bank Transaction')
         verbose_name_plural = _('Bank Transactions')
         ordering = ['-date', '-created_at']
+        default_permissions = []  # No permissions needed - available to everyone
     
     def __str__(self):
         return f"{self.bank.name} - {self.get_transaction_type_display()} - {self.amount}"
@@ -224,6 +226,7 @@ class BankStatement(models.Model):
         verbose_name_plural = _('Bank Statements')
         ordering = ['-date', '-created_at']
         unique_together = ['bank_account', 'date', 'reference']
+        default_permissions = []  # No permissions needed - available to everyone
 
     def __str__(self):
         return f"{self.bank_account.name} - {self.date} - {self.description}"
@@ -265,6 +268,7 @@ class BankReconciliation(models.Model):
         verbose_name = _('Bank Reconciliation')
         verbose_name_plural = _('Bank Reconciliations')
         ordering = ['-statement_date', '-created_at']
+        default_permissions = []  # No permissions needed - available to everyone
 
     def __str__(self):
         return f"{self.bank_account.name} - {self.statement_date}"

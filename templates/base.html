@@ -609,6 +609,7 @@
 
 <!--------------------------->
                         <!-- Finance Section -->
+                        {% if user.is_superadmin or user.user_type == 'admin' or perms.revenues_expenses.can_view_sectors or perms.revenues_expenses.can_view_categories or perms.banks.can_view_bank_accounts or perms.receipts.can_view_receipts or perms.cashboxes.can_view_cashboxes or perms.payments.can_view_payments or perms.journal.can_view_journal_entries or perms.journal.can_view_accounts or perms.journal.can_perform_year_end_closing or perms.assets_liabilities.can_view_asset_categories or perms.assets_liabilities.can_view_assets or perms.assets_liabilities.can_view_liability_categories or perms.assets_liabilities.can_view_liabilities or perms.assets_liabilities.can_view_depreciation_entries %}
                         <li class="nav-item">
                             <a class="nav-link d-flex justify-content-between align-items-center" 
                             data-bs-toggle="collapse" 
@@ -633,7 +634,7 @@
                                         Chart of Accounts
                                         Year-End Closing
                                     -->
-                                    {% if perms.banks.can_view_banks_account or perms.banks.can_edit_banks_account %}
+                                    {% if perms.banks.can_view_bank_accounts %}
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'banks' %}active{% endif %}" data-bs-toggle="collapse" href="#banksMenu">
                                             <i class="fas fa-university me-2"></i>
@@ -642,11 +643,6 @@
                                         </a>
                                         <div class="collapse {% if active_menu == 'banks' %}show{% endif %}" id="banksMenu">
                                             <ul class="nav flex-column ms-3">
-                                                {% if perms.banks.add_bankaccount or perms.banks.can_add_banks_account %}
-                                                <li class="nav-item">
-                                                    <a class="nav-link" href="{% url 'banks:account_add' %}">{% trans "Add Account" %}</a>
-                                                </li>
-                                                {% endif %}
                                                 <li class="nav-item">
                                                     <a class="nav-link {% if active_menu == 'banks' and 'account_list' in request.path %}active{% endif %}" href="{% url 'banks:account_list' %}">{% trans "Accounts List" %}</a>
                                                 </li>
@@ -656,13 +652,12 @@
                                                 <li class="nav-item">
                                                     <a class="nav-link {% if active_menu == 'banks' and 'reconciliation_list' in request.path %}active{% endif %}" href="{% url 'banks:reconciliation_list' %}">{% trans "Bank Reconciliations" %}</a>
                                                 </li>
-                                                </li>
                                             </ul>
                                         </div>
                                     </li>
-                                    {% endif %} 
+                                    {% endif %}
                                     <!-- Cashboxes -->
-                                    {% if user.has_cashboxes_permission %}
+                                    {% if perms.cashboxes.can_view_cashboxes %}
                                     <li class="nav-item">
                                         <a class="nav-link" data-bs-toggle="collapse" href="#cashboxesMenu">
                                             <i class="fas fa-cash-register me-2"></i>
@@ -682,8 +677,8 @@
                                     </li>
                                     {% endif %}
 
-                                     {% if user.has_receipts_permission %}
                                     <li class="nav-item">
+                                        {% if user.is_superadmin or user.user_type == 'admin' or perms.receipts.can_view_receipts %}
                                         <a class="nav-link" data-bs-toggle="collapse" href="#receiptsMenu">
                                             <i class="fas fa-receipt me-2"></i>
                                             {% trans "Receipt Vouchers List" %}
@@ -691,9 +686,9 @@
                                         </a>
                                         <div class="collapse {% if active_menu == 'receipts' %}show{% endif %}" id="receiptsMenu">
                                             <ul class="nav flex-column ms-3">
-                                                <li class="nav-item">
+                                                <!--<li class="nav-item">
                                                     <a class="nav-link {% if active_menu == 'receipts' and 'receipt_add' in request.path %}active{% endif %}" href="{% url 'receipts:receipt_add' %}">{% trans "Add Payment Receipt" %}</a>
-                                                </li>
+                                                </li>-->
                                                 <li class="nav-item">
                                                     <a class="nav-link {% if active_menu == 'receipts' and 'receipt_list' in request.path %}active{% endif %}" href="{% url 'receipts:receipt_list' %}">{% trans "Receipt Vouchers List" %}</a>
                                                 </li>
@@ -706,7 +701,7 @@
                                     {% endif %}
 
                                     <!-- Payment Vouchers -->
-                                    {% if user.is_superadmin or user.user_type == 'admin' or perms.payments.can_access_payments %}
+                                    {% if user.is_superadmin or user.user_type == 'admin' or perms.payments.can_view_payments %}
                                     <li class="nav-item">
                                         <a class="nav-link" data-bs-toggle="collapse" href="#paymentsMenu">
                                             <i class="fas fa-money-bill-wave me-2"></i>
@@ -715,11 +710,11 @@
                                         </a>
                                         <div class="collapse {% if active_menu == 'payments' %}show{% endif %}" id="paymentsMenu">
                                             <ul class="nav flex-column ms-3">
-                                                {% if perms.payments.add_paymentvoucher %}
+                                                <!--{% if perms.payments.can_add_payments %}
                                                 <li class="nav-item">
                                                     <a class="nav-link {% if active_menu == 'payments' and 'voucher_create' in request.path %}active{% endif %}" href="{% url 'payments:voucher_create' %}">{% trans "Add Payment Voucher" %}</a>
                                                 </li>
-                                                {% endif %}
+                                                {% endif %}-->
                                                     <li class="nav-item">
                                                         <a class="nav-link {% if active_menu == 'payments' and 'voucher_list' in request.path %}active{% endif %}" href="{% url 'payments:voucher_list' %}">{% trans "Vouchers List" %}</a>
                                                     </li>
@@ -727,7 +722,7 @@
                                         </div>
                                     </li>
                                     {% endif %}
-                                    {% if perms.journal.view_journalentry or perms.journal.add_journalentry or perms.journal.change_journalentry or perms.journal.delete_journalentry or perms.journal.view_journalaccount or perms.journal.add_journalaccount or perms.journal.change_journalaccount or perms.journal.delete_journalaccount %}
+                                    {% if perms.journal.can_view_journal_entries or perms.journal.can_add_journal_entries or perms.journal.can_edit_journal_entries or perms.journal.can_delete_journal_entries or perms.journal.can_view_accounts or perms.journal.can_add_accounts or perms.journal.can_edit_accounts or perms.journal.can_delete_accounts %}
                                     <!-- القيود اليومية -->
                                     <li class="nav-item">
                                         <a class="nav-link" data-bs-toggle="collapse" href="#journalEntriesMenu">
@@ -737,33 +732,33 @@
                                         </a>
                                         <div class="collapse {% if active_menu == 'journal' %}show{% endif %}" id="journalEntriesMenu">
                                             <ul class="nav flex-column ms-3">
-                                                {% if perms.journal.view_journalentry %}
+                                                {% if perms.journal.can_view_journal_entries %}
                                                 <li class="nav-item">
                                                     <a class="nav-link" href="{% url 'journal:entry_list' %}">{% trans "Journal Entries List" %}</a>
                                                 </li>
                                                 {% endif %}
-                                                {% if perms.journal.view_account %}
+                                                {% if perms.journal.can_view_accounts %}
                                                 <li class="nav-item">
                                                     <a class="nav-link" href="{% url 'journal:account_list' %}">{% trans "Chart of Accounts" %}</a>
                                                 </li>
                                                 {% endif %}
-                                                {% if perms.journal.add_journalentry %}
+                                                <!--{% if perms.journal.can_add_journal_entries %}
                                                 <li class="nav-item">
                                                     <a class="nav-link" href="{% url 'journal:entry_create' %}">{% trans "Add Journal Entry" %}</a>
                                                 </li>
-                                                {% endif %}
+                                                {% endif %}-->
                                                 {# إصلاح: لا تظهر روابط التعديل والحذف بدون معرف صالح #}
-                                                {% if perms.journal.change_journalentry and journal_entry_id %}
+                                                {% if perms.journal.can_edit_journal_entries and journal_entry_id %}
                                                 <li class="nav-item">
                                                     <a class="nav-link" href="{% url 'journal:entry_detail' journal_entry_id %}">{% trans "Edit Journal Entry" %}</a>
                                                 </li>
                                                 {% endif %}
-                                                {% if perms.journal.delete_journalentry and journal_entry_id %}
+                                                {% if perms.journal.can_delete_journal_entries and journal_entry_id %}
                                                 <li class="nav-item">
                                                     <a class="nav-link" href="{% url 'journal:entry_delete' journal_entry_id %}">{% trans "Delete Journal Entry" %}</a>
                                                 </li>
                                                 {% endif %}
-                                                {% if perms.journal.add_account %}
+                                                {% if perms.journal.can_add_accounts %}
                                                 <li class="nav-item">
                                                     <a class="nav-link" href="{% url 'journal:account_create' %}">{% trans "Add Account" %}</a>
                                                 </li>
@@ -772,7 +767,7 @@
                                         </div>
                                     </li>
                                     {% endif %}
-                                    {% if user.has_revenues_expenses_permission %}
+                                    {% if perms.revenues_expenses.can_view_sectors or perms.revenues_expenses.can_view_categories or perms.revenues_expenses.can_view_entries %}
                                     <!-- Revenues & Expenses -->
                                     <li class="nav-item">
                                         <a class="nav-link" data-bs-toggle="collapse" href="#revenuesExpensesMenu">
@@ -785,33 +780,35 @@
                                                 <li class="nav-item">
                                                     <a class="nav-link {% if active_menu == 'revenues_expenses' and 'dashboard' in request.path %}active{% endif %}" href="{% url 'revenues_expenses:dashboard' %}">{% trans "Dashboard" %}</a>
                                                 </li>
-                                                {% if user.has_revenueexpensecategory_view_permission %}
+                                                {% if perms.revenues_expenses.can_view_categories %}
                                                 <li class="nav-item">
-                                                    {% if user.has_revenueexpensecategory_view_permission %}
+                                                    {% if perms.revenues_expenses.can_view_categories %}
                                                         <a class="nav-link {% if active_menu == 'revenues_expenses' and 'category_list' in request.path %}active{% endif %}" href="{% url 'revenues_expenses:category_list' %}">{% trans "Manage Categories" %}</a>
                                                     {% else %}
                                                         <span class="nav-link disabled">{% trans "Manage Categories" %}</span>
                                                     {% endif %}
                                                 </li>
                                                 {% endif %}
-                                                {% if user.has_revenueexpenseentry_view_permission %}
+                                                {% if perms.revenues_expenses.can_view_entries %}
                                                 <li class="nav-item">
                                                     <a class="nav-link {% if active_menu == 'revenues_expenses' and 'entry_list' in request.path %}active{% endif %}" href="{% url 'revenues_expenses:entry_list' %}">{% trans "Entries List" %}</a>
                                                 </li>
                                                 {% endif %}
-                                                {% if user.has_revenueexpenseentry_add_permission %}
+                                                {% if perms.revenues_expenses.can_add_entries %}
                                                 <li class="nav-item">
                                                     <a class="nav-link {% if active_menu == 'revenues_expenses' and 'entry_create' in request.path %}active{% endif %}" href="{% url 'revenues_expenses:entry_create' %}">{% trans "Add New Entry" %}</a>
                                                 </li>
                                                 {% endif %}
+                                                {% if perms.revenues_expenses.can_view_recurring %}
                                                 <li class="nav-item">
                                                     <a class="nav-link {% if active_menu == 'revenues_expenses' and 'recurring_list' in request.path %}active{% endif %}" href="{% url 'revenues_expenses:recurring_list' %}">{% trans "Recurring Revenue" %}</a>
                                                 </li>
+                                                {% endif %}
                                             </ul>
                                         </div>
                                     </li>
                                     {% endif %}
-                                    {% if user.is_superadmin or user.user_type == 'admin' or perms.assets_liabilities.view_asset or perms.assets_liabilities.add_asset or perms.assets_liabilities.change_asset or perms.assets_liabilities.delete_asset or perms.assets_liabilities.view_liability or perms.assets_liabilities.add_liability or perms.assets_liabilities.change_liability or perms.assets_liabilities.delete_liability %}
+                                    {% if perms.assets_liabilities.can_view_asset_categories or perms.assets_liabilities.can_view_assets or perms.assets_liabilities.can_view_liability_categories or perms.assets_liabilities.can_view_liabilities or perms.assets_liabilities.can_view_depreciation_entries %}
                                     <!-- Assets & Liabilities -->
                                     <li class="nav-item">
                                         <a class="nav-link" data-bs-toggle="collapse" href="#assetsLiabilitiesMenu">
@@ -821,17 +818,17 @@
                                         </a>
                                         <div class="collapse {% if active_menu == 'assets_liabilities' %}show{% endif %}" id="assetsLiabilitiesMenu">
                                             <ul class="nav flex-column ms-3">
-                                                {% if perms.assets_liabilities.view_asset or perms.assets_liabilities.view_liability %}
+                                                {% if perms.assets_liabilities.can_view_assets or perms.assets_liabilities.can_view_liabilities or perms.assets_liabilities.can_view_depreciation_entries %}
                                                 <li class="nav-item">
                                                     <a class="nav-link {% if active_menu == 'assets_liabilities' and 'dashboard' in request.path %}active{% endif %}" href="{% url 'assets_liabilities:dashboard' %}">{% trans "Dashboard" %}</a>
                                                 </li>
                                                 {% endif %}
-                                                {% if perms.assets_liabilities.view_asset %}
+                                                {% if perms.assets_liabilities.can_view_assets %}
                                                 <li class="nav-item">
                                                     <a class="nav-link {% if active_menu == 'assets_liabilities' and 'asset_list' in request.path %}active{% endif %}" href="{% url 'assets_liabilities:asset_list' %}">{% trans "Assets List" %}</a>
                                                 </li>
                                                 {% endif %}
-                                                {% if perms.assets_liabilities.view_liability %}
+                                                {% if perms.assets_liabilities.can_view_liabilities %}
                                                 <li class="nav-item">
                                                     <a class="nav-link {% if active_menu == 'assets_liabilities' and 'liability_list' in request.path %}active{% endif %}" href="{% url 'assets_liabilities:liability_list' %}">{% trans "Liabilities List" %}</a>
                                                 </li>
@@ -840,16 +837,6 @@
                                         </div>
                                     </li>
                                     {% endif %}
-                                    {% if perms.journal.view_journalaccount %}
-                                    <!-- دليل الحسابات
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="{% url 'journal:account_list' %}">
-                                            <i class="fas fa-book me-2"></i>
-                                            {% trans "Chart of Accounts" %}
-                                        </a>
-                                    </li>
-                                    {% endif %}-->
-                                    
                                     {% if user.is_superadmin or user.user_type == 'admin' or perms.journal.can_perform_year_end_closing %}
                                     <!-- الإقفال السنوي -->
                                     <li class="nav-item">
@@ -864,6 +851,7 @@
                                 </ul>
                             </div>
                         </li>
+                        {% endif %}
 
 
                         <!-- Sales & Purchases Section -->
@@ -895,32 +883,32 @@
                                         </a>
                                         <div class="collapse {% if active_menu == 'purchases' %}show{% endif %}" id="purchasesMenu">
                                             <ul class="nav flex-column ms-3">
-                                                    {% if perms.purchases.add_purchaseinvoice or user.is_superuser %}
+                                                    {% if perms.purchases.can_add_purchases or user.is_superuser %}
                                                         <li class="nav-item">
                                                             <a class="nav-link {% if active_menu == 'purchases' and 'invoice_add' in request.path %}active{% endif %}" href="{% url 'purchases:invoice_add' %}">{% trans "Create Purchase Invoice" %}</a>
                                                         </li>
                                                     {% endif %}
-                                                    {% if perms.purchases.add_purchasereturn or user.is_superuser %}
+                                                    {% if perms.purchases.can_add_purchase_returns or user.is_superuser %}
                                                         <li class="nav-item">
                                                             <a class="nav-link {% if active_menu == 'purchases' and 'return_add' in request.path %}active{% endif %}" href="{% url 'purchases:return_add' %}">{% trans "Create Purchase Return" %}</a>
                                                         </li>
                                                     {% endif %}
-                                                         {% if perms.purchases.view_purchaseinvoice or user.is_superuser %}
+                                                         {% if perms.purchases.can_view_purchases or user.is_superuser %}
                                                         <li class="nav-item">
                                                             <a class="nav-link {% if active_menu == 'purchases' and 'invoice_list' in request.path %}active{% endif %}" href="{% url 'purchases:invoice_list' %}">{% trans "Purchases Invoice List" %}</a>
                                                         </li>
                                                     {% endif %}
-                                                    {% if perms.purchases.can_view_purchasereturn or perms.purchases.view_purchasereturn or user.is_superuser %}
+                                                    {% if perms.purchases.can_view_purchase_returns or user.is_superuser %}
                                                             <li class="nav-item">
                                                                 <a class="nav-link {% if active_menu == 'purchases' and 'return_list' in request.path %}active{% endif %}" href="{% url 'purchases:return_list' %}">{% trans "Purchase Returns List" %}</a>
                                                             </li>
                                                     {% endif %}
-                                                    {% if perms.purchases.can_view_debitnote %}
+                                                    {% if perms.purchases.can_view_purchases %}
                                                         <li class="nav-item">
                                                             <a class="nav-link {% if active_menu == 'purchases' and 'debitnote_list' in request.path %}active{% endif %}" href="{% url 'purchases:debitnote_list' %}">{% trans "Debit Notes" %}</a>
                                                         </li>
                                                     {% endif %}
-                                                    {% if perms.purchases.can_view_purchase_statement or user.is_superuser %}
+                                                    {% if perms.purchases.can_view_purchases or user.is_superuser %}
                                                         <li class="nav-item">
                                                             <a class="nav-link {% if active_menu == 'purchases' and 'purchase_statement' in request.path %}active{% endif %}" href="{% url 'purchases:purchase_statement' %}">{% trans "Purchase Statement" %}</a>
                                                         </li>
@@ -951,7 +939,7 @@
                                                 <li class="nav-item">
                                                     <a class="nav-link {% if active_menu == 'sales' and 'return_list' in request.path %}active{% endif %}" href="{% url 'sales:return_list' %}">{% trans "Sales Returns List" %}</a>
                                                 </li>
-                                                {% if perms.sales.can_view_creditnote %}
+                                                {% if perms.sales.can_view_sales %}
                                                 <li class="nav-item">
                                                     <a class="nav-link {% if active_menu == 'sales' and 'creditnote_list' in request.path %}active{% endif %}" href="{% url 'sales:creditnote_list' %}">{% trans "Credit Notes" %}</a>
                                                 </li>

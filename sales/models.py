@@ -50,11 +50,13 @@ class SalesInvoice(models.Model):
         verbose_name = _('Sales Invoice')
         verbose_name_plural = _('Sales Invoices')
         ordering = ['-date', '-invoice_number']
-        permissions = (
-            ('can_toggle_invoice_tax', _('Can toggle invoice tax inclusion')),
-            ('can_change_invoice_creator', _('Can change invoice creator')),
-            ('can_send_to_jofotara', _('Can send invoices to JoFotara')),
-        )
+        default_permissions = []  # No default permissions
+        permissions = [
+            ('can_view_sales', 'Can View Sales'),
+            ('can_add_sales', 'Can Add Sales'),
+            ('can_edit_sales', 'Can Edit Sales'),
+            ('can_delete_sales', 'Can Delete Sales'),
+        ]
 
     def __str__(self):
         customer_name = self.customer.name if self.customer else 'عميل نقدي'
@@ -113,6 +115,7 @@ class SalesInvoiceItem(models.Model):
     class Meta:
         verbose_name = _('Sales Invoice Item')
         verbose_name_plural = _('Sales Invoice Items')
+        default_permissions = []  # No permissions needed - available to everyone
 
     def __str__(self):
         return f"{self.invoice.invoice_number} - {self.product.name}"
@@ -151,6 +154,13 @@ class SalesReturn(models.Model):
         verbose_name = _('Sales Return')
         verbose_name_plural = _('Sales Returns')
         ordering = ['-date', '-return_number']
+        default_permissions = []  # No default permissions
+        permissions = [
+            ('can_view_sales_returns', 'Can View Sales Returns'),
+            ('can_add_sales_returns', 'Can Add Sales Returns'),
+            ('can_edit_sales_returns', 'Can Edit Sales Returns'),
+            ('can_delete_sales_returns', 'Can Delete Sales Returns'),
+        ]
 
     def __str__(self):
         return f"{self.return_number} - {self.customer.name}"
@@ -170,6 +180,7 @@ class SalesReturnItem(models.Model):
     class Meta:
         verbose_name = _('Sales Return Item')
         verbose_name_plural = _('Sales Return Items')
+        default_permissions = []  # No permissions needed - available to everyone
 
     def __str__(self):
         return f"{self.return_invoice.return_number} - {self.product.name}"
@@ -211,10 +222,7 @@ class SalesCreditNote(models.Model):
         verbose_name = _('Credit Note')
         verbose_name_plural = _('Credit Notes')
         ordering = ['-date', '-note_number']
-        permissions = (
-            ('can_view_creditnote', _('Can view Credit Note')),
-            ('can_send_to_jofotara', 'Can send credit notes to JoFotara'),
-        )
+        default_permissions = []  # No permissions needed - available to everyone
 
     def save(self, *args, **kwargs):
         # الإجمالي يساوي المجموع الفرعي (بدون ضريبة)

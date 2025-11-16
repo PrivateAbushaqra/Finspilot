@@ -144,18 +144,12 @@ class User(AbstractUser):
             ('can_view_audit_logs', _('View audit logs')),
             ('can_backup_system', _('System backup')),
             
-            # صلاحيات الوصول للأقسام
-            ('can_access_sales', _('Can access sales')),
-            ('can_access_inventory', _('Can access inventory')),
-            ('can_access_products', _('Can access products')),
-            ('can_access_banks', _('Can access banks')),
-            ('can_access_cashboxes', _('Can access cashboxes')),
+            # صلاحيات الوصول
             ('can_access_pos', _('Can access POS')),
             ('can_access_company_settings', _('Can access company settings')),
             
             # صلاحيات التحرير والحذف
             ('can_delete_invoices', _('Can delete invoices')),
-            ('can_delete_accounts', _('Can delete accounts')),
             ('can_edit_dates', _('Can edit dates')),
             ('can_edit_invoice_numbers', _('Can edit invoice numbers')),
             
@@ -298,12 +292,11 @@ class User(AbstractUser):
         )
 
     def has_cashboxes_permission(self):
+        """التحقق من صلاحية عرض الصناديق النقدية"""
         return (
             self.is_admin 
             or self.has_perm('users.can_access_cashboxes')
-            or self.has_perm('cashboxes.can_add_cashboxes')
-            or self.has_perm('cashboxes.can_edit_cashboxes')
-            or self.has_perm('cashboxes.can_delete_cashboxes')
+            or self.has_perm('cashboxes.can_view_cashboxes')
         )
 
     def has_receipts_permission(self):

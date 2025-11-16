@@ -13,12 +13,12 @@
             <div class="d-sm-flex align-items-center justify-content-between mb-4">
                 <h1 class="h3 mb-0 text-gray-800">{% trans "Accounts List" %} ({{ total_accounts }})</h1>
                 <div>
-                    {% if perms.journal.change_account %}
+                    {% if perms.journal.can_edit_accounts %}
                     <button type="button" class="btn btn-warning mr-2" onclick="fixHierarchy()">
                         <i class="fas fa-wrench"></i> {% trans "Reforming the hierarchy" %}
                     </button>
                     {% endif %}
-                    {% if perms.journal.add_account %}
+                    {% if perms.journal.can_add_accounts %}
                     <a href="{% url 'journal:account_create' %}" class="btn btn-primary">
                         <i class="fas fa-plus"></i> {% trans "New Account" %}
                     </a>
@@ -208,13 +208,13 @@
                                            class="btn btn-sm btn-info" title="{% if LANGUAGE_CODE == 'ar' %}تفاصيل{% else %}{% trans "Details" %}{% endif %}">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        {% if perms.journal.change_account %}
+                                        {% if perms.journal.can_edit_accounts %}
                                         <a href="{% url 'journal:account_edit' account.pk %}" 
                                            class="btn btn-sm btn-warning" title="{% if LANGUAGE_CODE == 'ar' %}تعديل{% else %}{% trans "Edit" %}{% endif %}">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                         {% endif %}
-                                        {% if perms.journal.delete_account %}
+                                        {% if perms.journal.can_delete_accounts %}
                                         <button type="button" class="btn btn-sm btn-danger" 
                                             title="{% if LANGUAGE_CODE == 'ar' %}حذف{% else %}{% trans "Delete" %}{% endif %}"
                                             data-name="{{ account.name|escapejs }}"
@@ -270,12 +270,11 @@
                     <i class="fas fa-list fa-3x mb-3"></i>
                     <h5>{% trans "لا توجد حسابات" %}</h5>
                     <p>{% if LANGUAGE_CODE == 'ar' %}لم يتم العثور على حسابات تطابق معايير البحث{% else %}{% trans "No accounts found matching the search criteria" %}{% endif %}</p>
+                    {% if perms.journal.can_add_accounts %}
                     <a href="{% url 'journal:account_create' %}" class="btn btn-primary">
-                        {% if perms.journal.add_journalaccount %}
-                        <a href="{% url 'journal:account_create' %}" class="btn btn-primary">
-                            {% if LANGUAGE_CODE == 'ar' %}إنشاء حساب جديد{% else %}{% trans "Create New Account" %}{% endif %}
-                        </a>
-                        {% endif %}
+                        {% if LANGUAGE_CODE == 'ar' %}إنشاء حساب جديد{% else %}{% trans "Create New Account" %}{% endif %}
+                    </a>
+                    {% endif %}
                 </div>
             {% endif %}
         </div>

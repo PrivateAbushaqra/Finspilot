@@ -11,108 +11,112 @@ User = get_user_model()
 
 
 class PaymentReceipt(models.Model):
-    """سند قبض من العميل"""
+    """Customer Payment Receipt"""
     PAYMENT_TYPES = [
-        ('cash', _('نقدي')),
-        ('check', _('شيك')),
-        ('bank_transfer', _('تحويل بنكي')),
+        ('cash', _('Cash')),
+        ('check', _('Check')),
+        ('bank_transfer', _('Bank Transfer')),
     ]
     
     CHECK_STATUS = [
-        ('pending', _('في الانتظار')),
-        ('collected', _('تم التحصيل')),
-        ('bounced', _('مرتد')),
-        ('cancelled', _('ملغي')),
+        ('pending', _('Pending')),
+        ('collected', _('Collected')),
+        ('bounced', _('Bounced')),
+        ('cancelled', _('Cancelled')),
     ]
     
-    receipt_number = models.CharField(_('رقم السند'), max_length=50, unique=True)
-    date = models.DateField(_('تاريخ السند'))
+    receipt_number = models.CharField(_('Receipt Number'), max_length=50, unique=True)
+    date = models.DateField(_('Receipt Date'))
     customer = models.ForeignKey(CustomerSupplier, on_delete=models.PROTECT, 
                                verbose_name=_('Customer'), related_name='payment_receipts')
-    payment_type = models.CharField(_('نوع الدفع'), max_length=20, choices=PAYMENT_TYPES)
+    payment_type = models.CharField(_('Payment Type'), max_length=20, choices=PAYMENT_TYPES)
     amount = models.DecimalField(_('Amount'), max_digits=15, decimal_places=3)
     
-    # للدفع النقدي
+    # For cash payments
     cashbox = models.ForeignKey(Cashbox, on_delete=models.PROTECT, null=True, blank=True,
-                              verbose_name=_('الصندوق النقدي'), related_name='payment_receipts')
+                              verbose_name=_('Cashbox'), related_name='payment_receipts')
     
-    # للتحويل البنكي
+    # For bank transfers
     bank_account = models.ForeignKey('banks.BankAccount', on_delete=models.PROTECT, null=True, blank=True,
-                                   verbose_name=_('الحساب البنكي'), related_name='payment_receipts')
-    bank_transfer_reference = models.CharField(_('رقم مرجع التحويل'), max_length=100, blank=True,
-                                             help_text=_('رقم مرجع التحويل البنكي أو رقم العملية'))
-    bank_transfer_date = models.DateField(_('تاريخ التحويل البنكي'), null=True, blank=True)
-    bank_transfer_notes = models.TextField(_('ملاحظات التحويل البنكي'), blank=True)
+                                   verbose_name=_('Bank Account'), related_name='payment_receipts')
+    bank_transfer_reference = models.CharField(_('Bank Transfer Reference'), max_length=100, blank=True,
+                                             help_text=_('Bank transfer reference or transaction id'))
+    bank_transfer_date = models.DateField(_('Bank Transfer Date'), null=True, blank=True)
+    bank_transfer_notes = models.TextField(_('Bank Transfer Notes'), blank=True)
     
-    # للشيكات
-    check_number = models.CharField(_('رقم الشيك'), max_length=50, blank=True)
-    check_date = models.DateField(_('تاريخ الشيك'), null=True, blank=True)
-    check_due_date = models.DateField(_('تاريخ استحقاق الشيك'), null=True, blank=True)
+    # For checks
+    check_number = models.CharField(_('Check Number'), max_length=50, blank=True)
+    check_date = models.DateField(_('Check Date'), null=True, blank=True)
+    check_due_date = models.DateField(_('Check Due Date'), null=True, blank=True)
     bank_name = models.CharField(_('Bank Name'), max_length=200, blank=True)
     check_cashbox = models.ForeignKey(Cashbox, on_delete=models.PROTECT, null=True, blank=True,
-                                    verbose_name=_('صندوق الشيك'), related_name='check_receipts')
-    check_status = models.CharField(_('حالة الشيك'), max_length=20, choices=CHECK_STATUS, 
+                                    verbose_name=_('Check Cashbox'), related_name='check_receipts')
+    check_status = models.CharField(_('Check Status'), max_length=20, choices=CHECK_STATUS, 
                                   default='pending', blank=True)
-    bounce_reason = models.CharField(_('سبب الارتداد'), max_length=100, blank=True, 
-                                   help_text=_('سبب ارتداد الشيك (رصيد غير كافٍ، توقيع غير صحيح، إيقاف من البنك...)'))
+    bounce_reason = models.CharField(_('Bounce Reason'), max_length=100, blank=True, 
+                                   help_text=_('Reason for cheque bounce (insufficient funds, signature mismatch, bank stop payment...)'))
     
-    # IFRS 9 - خسائر الائتمان المتوقعة
-    expected_credit_loss = models.DecimalField(_('خسائر الائتمان المتوقعة (ECL)'), max_digits=15, decimal_places=3, 
-                                            default=0, help_text=_('قيمة الخسارة المتوقعة وفق IFRS 9'))
-    ecl_calculation_date = models.DateTimeField(_('تاريخ حساب ECL'), null=True, blank=True)
-    ecl_calculation_method = models.CharField(_('طريقة حساب ECL'), max_length=50, blank=True,
-                                           help_text=_('طريقة حساب الخسارة المتوقعة (مرتد، متأخر، إلخ)'))
+    # IFRS 9 - Expected Credit Loss (ECL)
+    expected_credit_loss = models.DecimalField(_('Expected Credit Loss (ECL)'), max_digits=15, decimal_places=3, 
+                                            default=0, help_text=_('Value of expected credit loss (ECL)'))
+    ecl_calculation_date = models.DateTimeField(_('ECL Calculation Date'), null=True, blank=True)
+    ecl_calculation_method = models.CharField(_('ECL Calculation Method'), max_length=50, blank=True,
+                                           help_text=_('Method used to calculate expected credit loss (reversal, overdue, etc)'))
     
-    # معلومات عامة
+    # General information
     description = models.TextField(_('Description'), blank=True)
     notes = models.TextField(_('Notes'), blank=True)
     
-    # معلومات النظام
+    # System information
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name=_('Created By'))
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
     updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
     
-    # حالة السند
+    # Voucher status
     is_active = models.BooleanField(_('Active'), default=True)
-    is_reversed = models.BooleanField(_('مُعكوس'), default=False)
+    is_reversed = models.BooleanField(_('Reversed'), default=False)
     reversed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
-                                  verbose_name=_('عُكس بواسطة'), related_name='reversed_receipts')
-    reversed_at = models.DateTimeField(_('تاريخ العكس'), null=True, blank=True)
-    reversal_reason = models.TextField(_('سبب العكس'), blank=True)
+                                  verbose_name=_('Reversed By'), related_name='reversed_receipts')
+    reversed_at = models.DateTimeField(_('Reversal Date'), null=True, blank=True)
+    reversal_reason = models.TextField(_('Reversal Reason'), blank=True)
 
     class Meta:
-        verbose_name = _('سند قبض')
-        verbose_name_plural = _('سندات القبض')
+        verbose_name = _('Receipt Voucher')
+        verbose_name_plural = _('Receipt Vouchers')
         ordering = ['-date', '-receipt_number']
+        default_permissions = []  # No default permissions
         permissions = [
-                ('can_access_receipts', _('يمكن الوصول إلى سندات القبض')),
+            ("can_view_receipts", "Can View Receipt Vouchers"),
+            ("can_add_receipts", "Can Add Receipt Vouchers"),
+            ("can_edit_receipts", "Can Edit Receipt Vouchers"),
+            ("can_delete_receipts", "Can Delete Receipt Vouchers"),
         ]
 
     def __str__(self):
         return f"{self.receipt_number} - {self.customer.name} - {self.amount}"
     
     def clean(self):
-        """التحقق من صحة البيانات"""
+        """Validate basic data"""
         if self.payment_type == 'cash' and not self.cashbox:
-            raise ValidationError(_('يجب تحديد الصندوق النقدي للدفع النقدي'))
+            raise ValidationError(_('Cashbox must be specified for cash payment'))
         
         if self.payment_type == 'bank_transfer':
             if not self.bank_account:
-                raise ValidationError(_('يجب تحديد الحساب البنكي للتحويل البنكي'))
+                raise ValidationError(_('Bank account must be specified for bank transfer'))
             if not self.bank_transfer_reference:
-                raise ValidationError(_('رقم مرجع التحويل مطلوب'))
+                raise ValidationError(_('Bank transfer reference is required'))
             if not self.bank_transfer_date:
-                raise ValidationError(_('تاريخ التحويل البنكي مطلوب'))
+                raise ValidationError(_('Bank transfer date is required'))
         
         if self.payment_type == 'check':
             if not self.check_number:
-                raise ValidationError(_('رقم الشيك مطلوب'))
+                raise ValidationError(_('Check number is required'))
             if not self.check_date:
-                raise ValidationError(_('تاريخ الشيك مطلوب'))
+                raise ValidationError(_('Check date is required'))
             if not self.check_due_date:
-                raise ValidationError(_('تاريخ استحقاق الشيك مطلوب'))
+                raise ValidationError(_('Check due date is required'))
             if not self.bank_name:
-                raise ValidationError(_('اسم البنك مطلوب'))
+                raise ValidationError(_('Bank name is required'))
     
     def save(self, *args, **kwargs):
         self.clean()
@@ -120,13 +124,13 @@ class PaymentReceipt(models.Model):
     
     @property
     def can_be_reversed(self):
-        """التحقق من إمكانية عكس السند"""
+        """Check if voucher can be reversed"""
         return self.is_active and not self.is_reversed
     
     def calculate_expected_credit_loss(self):
         """
-        حساب خسائر الائتمان المتوقعة وفق IFRS 9
-        محسن ليشمل تقييم مخاطر العميل وسجله الائتماني
+        Calculate expected credit loss according to IFRS 9
+        Enhanced to include customer risk evaluation and credit history
         """
         from datetime import datetime, timedelta
         
@@ -136,23 +140,23 @@ class PaymentReceipt(models.Model):
         current_date = datetime.now().date()
         ecl_amount = Decimal('0.000')
         
-        # تقييم مخاطر العميل بناءً على سجله
+        # Assess customer risk based on payment records
         customer_risk_factor = self._calculate_customer_risk_factor()
         
         if self.check_status == 'bounced':
-            # شيك مرتد - خسارة كاملة
+            # bounced cheque - full loss
             ecl_amount = self.amount
-            self.ecl_calculation_method = 'شيك مرتد - خسارة كاملة'
+            self.ecl_calculation_method = 'Bounced check - full loss'
             
         elif self.check_status == 'collected':
-            # شيك محصل - تحقق من التأخير
+            # Cheque collected - check delay
             collection = self.collections.filter(status='collected').first()
             if collection:
                 days_late = (collection.collection_date - self.check_due_date).days
                 
                 if days_late > 0:
-                    # شيك متأخر - حساب خسارة جزئية حسب مدة التأخير ومخاطر العميل
-                    base_percentage = Decimal('0.05')  # 5% أساسي
+                    # Late cheque - partial loss calculation based on delay and customer risk
+                    base_percentage = Decimal('0.05')  # base 5%
                     
                     if days_late <= 30:
                         ecl_percentage = base_percentage
@@ -163,44 +167,44 @@ class PaymentReceipt(models.Model):
                     else:
                         ecl_percentage = Decimal('0.50')
                     
-                    # تطبيق عامل مخاطر العميل
+                    # Apply customer risk factor
                     ecl_percentage *= customer_risk_factor
                     
                     ecl_amount = self.amount * ecl_percentage
-                    self.ecl_calculation_method = f'متأخر {days_late}يوم - {ecl_percentage*100:.1f}%'
+                    self.ecl_calculation_method = f'Late {days_late} days - {ecl_percentage*100:.1f}%'
                 else:
-                    # شيك محصل في الموعد أو مبكراً - لا خسارة
+                    # cheque collected on time or earlier - no loss
                     ecl_amount = Decimal('0.000')
-                    self.ecl_calculation_method = 'محصل في الموعد'
+                    self.ecl_calculation_method = 'Collected on time'
             else:
-                # شيك مودع لكن غير محصل - خسارة محتملة
+                # cheque deposited but not collected - potential loss
                 days_since_deposit = (current_date - self.check_due_date).days
                 if days_since_deposit > 0:
                     base_percentage = min(Decimal('0.10'), Decimal(days_since_deposit) / Decimal('365') * Decimal('0.20'))
                     ecl_percentage = base_percentage * customer_risk_factor
                     ecl_amount = self.amount * ecl_percentage
-                    self.ecl_calculation_method = f'مودع متأخر {days_since_deposit}يوم'
+                    self.ecl_calculation_method = f'Deposited late {days_since_deposit} days'
                 else:
                     ecl_amount = Decimal('0.000')
-                    self.ecl_calculation_method = 'مودع في الموعد'
+                    self.ecl_calculation_method = 'Deposited on time'
                     
         elif self.check_status in ['new', 'deposited']:
-            # شيك جديد أو مودع - تقييم أولي للمخاطر
+            # New or deposited cheque - initial risk assessment
             days_to_due = (self.check_due_date - current_date).days
-            
+
             if days_to_due < 0:
-                # شيك متأخر في الاستحقاق
+                # Overdue cheque at due date
                 days_overdue = abs(days_to_due)
                 base_percentage = min(Decimal('0.20'), Decimal(days_overdue) / Decimal('365') * Decimal('0.30'))
                 ecl_percentage = base_percentage * customer_risk_factor
                 ecl_amount = self.amount * ecl_percentage
-                self.ecl_calculation_method = f'متأخر {days_overdue}يوم'
+                self.ecl_calculation_method = f'Overdue {days_overdue} days'
             else:
-                # شيك في الموعد - خسارة منخفضة مع مراعاة مخاطر العميل
-                base_percentage = Decimal('0.01')  # 1% أساسي
+                # Cheque on time - low loss considering customer risk
+                base_percentage = Decimal('0.01')  # base 1%
                 ecl_percentage = base_percentage * customer_risk_factor
                 ecl_amount = self.amount * ecl_percentage
-                self.ecl_calculation_method = f'في الموعد {ecl_percentage*100:.1f}%'
+                self.ecl_calculation_method = f'On-time {ecl_percentage*100:.1f}%'
         
         self.expected_credit_loss = ecl_amount
         self.ecl_calculation_date = timezone.now()
@@ -210,87 +214,89 @@ class PaymentReceipt(models.Model):
     
     def _calculate_customer_risk_factor(self):
         """
-        حساب معامل مخاطر العميل بناءً على سجله الائتماني
+        Calculate customer risk factor based on credit history
         """
-        # حساب عدد الشيكات المرتدة للعميل
+        # Count bounced cheques for the customer
         bounced_cheques = PaymentReceipt.objects.filter(
             customer=self.customer,
             payment_type='check',
             check_status='bounced'
         ).count()
         
-        # حساب إجمالي الشيكات للعميل
+        # Count total cheques for the customer
         total_cheques = PaymentReceipt.objects.filter(
             customer=self.customer,
             payment_type='check'
         ).count()
         
         if total_cheques == 0:
-            return Decimal('1.0')  # عميل جديد
+            return Decimal('1.0')  # New customer
         
-        # حساب نسبة الارتداد
+        # Calculate bounce rate
         bounce_rate = bounced_cheques / total_cheques
         
-        # تحديد معامل المخاطر
+        # Determine risk factor
         if bounce_rate == 0:
-            risk_factor = Decimal('0.8')  # عميل موثوق
+            risk_factor = Decimal('0.8')  # Trusted customer
         elif bounce_rate <= 0.1:
-            risk_factor = Decimal('1.0')  # مخاطر متوسطة
+            risk_factor = Decimal('1.0')  # Medium risk
         elif bounce_rate <= 0.25:
-            risk_factor = Decimal('1.3')  # مخاطر عالية
+            risk_factor = Decimal('1.3')  # High risk
         else:
-            risk_factor = Decimal('1.5')  # مخاطر عالية جداً
+            risk_factor = Decimal('1.5')  # Very high risk
         
         return risk_factor
     
     @property
     def effective_amount(self):
-        """المبلغ الفعلي (سالب إذا كان معكوساً)"""
+        """Effective amount (negative if reversed)"""
         return -self.amount if self.is_reversed else self.amount
 
 
 class CheckCollection(models.Model):
-    """تحصيل الشيك"""
+    """Check Collection"""
     COLLECTION_STATUS = [
-        ('collected', _('تم التحصيل')),
-        ('bounced', _('مرتد')),
+        ('collected', _('Collected')),
+        ('bounced', _('Bounced')),
     ]
     
     receipt = models.ForeignKey(PaymentReceipt, on_delete=models.PROTECT, 
-                              verbose_name=_('سند القبض'), related_name='collections')
-    collection_date = models.DateField(_('تاريخ التحصيل'))
-    status = models.CharField(_('حالة التحصيل'), max_length=20, choices=COLLECTION_STATUS)
+                              verbose_name=_('Receipt Voucher'), related_name='collections')
+    collection_date = models.DateField(_('Collection Date'))
+    status = models.CharField(_('Collection Status'), max_length=20, choices=COLLECTION_STATUS)
     cashbox = models.ForeignKey(Cashbox, on_delete=models.PROTECT, null=True, blank=True,
-                              verbose_name=_('الصندوق النقدي'))
+                              verbose_name=_('Cashbox'))
     notes = models.TextField(_('Notes'), blank=True)
     
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name=_('Created By'))
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
 
     class Meta:
-        verbose_name = _('تحصيل شيك')
-        verbose_name_plural = _('تحصيل الشيكات')
+        verbose_name = _('Check Collection')
+        verbose_name_plural = _('Check Collections')
         ordering = ['-collection_date']
+        default_permissions = []  # No default permissions
 
     def __str__(self):
-        return f"تحصيل {self.receipt.receipt_number} - {self.get_status_display()}"
+        return f"Check collection {self.receipt.receipt_number} - {self.get_status_display()}"
 
 
 class ReceiptReversal(models.Model):
-    """عكس سند القبض"""
+    """Receipt Reversal"""
     original_receipt = models.OneToOneField(PaymentReceipt, on_delete=models.PROTECT,
-                                          verbose_name=_('السند الأصلي'), related_name='reversal')
-    reversal_date = models.DateField(_('تاريخ العكس'))
-    reason = models.TextField(_('سبب العكس'))
+                                          verbose_name=_('Original Receipt'), related_name='reversal')
+    reversal_date = models.DateField(_('Reversal Date'))
+    reason = models.TextField(_('Reversal Reason'))
     notes = models.TextField(_('Notes'), blank=True)
     
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name=_('Created By'))
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
 
     class Meta:
-        verbose_name = _('عكس سند قبض')
-        verbose_name_plural = _('عكس سندات القبض')
+        verbose_name = _('Receipt Reversal')
+        verbose_name_plural = _('Receipt Reversals')
         ordering = ['-reversal_date']
+        default_permissions = []  # No default permissions
 
     def __str__(self):
-        return f"عكس {self.original_receipt.receipt_number}"
+        return f"Reversal {self.original_receipt.receipt_number}"

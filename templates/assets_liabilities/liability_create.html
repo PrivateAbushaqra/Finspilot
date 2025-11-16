@@ -423,17 +423,17 @@
 
 {% block extra_js %}
 <script>
-// إظهار modal إضافة فئة
+// Show add category modal
 function showAddCategoryModal() {
     $('#addCategoryModal').modal('show');
 }
 
-// إضافة فئة جديدة
+// Add new category
 function addCategory() {
     const form = document.getElementById('categoryForm');
     const formData = new FormData(form);
     
-    // إضافة نوع الفئة (liability)
+    // Add category type (liability)
     formData.append('category_type', 'liability');
     
     fetch('{% url "assets_liabilities:liability_category_create_ajax" %}', {
@@ -446,21 +446,21 @@ function addCategory() {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // إضافة الفئة الجديدة إلى قائمة الفئات
+            // Add new category to the category list
             const categorySelect = document.getElementById('{{ form.category.id_for_label }}');
             const newOption = new Option(data.category.name, data.category.id, true, true);
             categorySelect.add(newOption);
             
-            // إغلاق modal
+            // Close modal
             $('#addCategoryModal').modal('hide');
             
-            // إعادة تعيين النموذج
+            // Reset form
             form.reset();
             
-            // إظهار رسالة نجاح
+            // Show success message
             showSuccessMessage('{% trans "Category added successfully!" %}');
         } else {
-            // إظهار رسالة خطأ
+            // Show error message
             showErrorMessage(data.error || '{% trans "An error occurred while adding the category." %}');
         }
     })
@@ -470,7 +470,7 @@ function addCategory() {
     });
 }
 
-// إظهار رسالة نجاح
+// Show success message
 function showSuccessMessage(message) {
     const alertDiv = document.createElement('div');
     alertDiv.className = 'alert alert-success alert-dismissible fade show';
@@ -483,13 +483,13 @@ function showSuccessMessage(message) {
     const container = document.querySelector('.container-fluid');
     container.insertBefore(alertDiv, container.firstChild);
     
-    // إزالة الرسالة بعد 5 ثوان
+    // Remove message after 5 seconds
     setTimeout(() => {
         alertDiv.remove();
     }, 5000);
 }
 
-// إظهار رسالة خطأ
+// Show error message
 function showErrorMessage(message) {
     const alertDiv = document.createElement('div');
     alertDiv.className = 'alert alert-danger alert-dismissible fade show';
@@ -502,13 +502,13 @@ function showErrorMessage(message) {
     const container = document.querySelector('.container-fluid');
     container.insertBefore(alertDiv, container.firstChild);
     
-    // إزالة الرسالة بعد 5 ثوان
+    // Remove message after 5 seconds
     setTimeout(() => {
         alertDiv.remove();
     }, 5000);
 }
 
-// تحديد التاريخ الافتراضي لتاريخ البداية (اليوم)
+// Set default start date (today)
 document.addEventListener('DOMContentLoaded', function() {
     const startDateField = document.getElementById('{{ form.start_date.id_for_label }}');
     if (startDateField && !startDateField.value) {

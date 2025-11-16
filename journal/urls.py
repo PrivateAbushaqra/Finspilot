@@ -31,6 +31,7 @@ urlpatterns = [
     
     # الإقفال السنوي
     path('year-end-closing/', views.year_end_closing, name='year_end_closing'),
+    path('open-fiscal-year/', views.open_new_fiscal_year, name='open_new_fiscal_year'),
     
     # APIs
     path('api/accounts/', views.accounts_api, name='accounts_api'),

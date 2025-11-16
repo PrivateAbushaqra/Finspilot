@@ -525,10 +525,8 @@ def sales_invoice_create(request):
         context['products'] = products  # إضافة المنتجات للـ modal
 
         # التحقق من صلاحيات المستخدم
-        context['can_edit_invoice_number'] = user.is_superuser or user.is_staff or user.has_perm('sales.change_salesinvoice_number')
-        context['can_edit_date'] = user.is_superuser or user.is_staff or user.has_perm('sales.change_salesinvoice_date')
-        # صلاحية تعديل خيار شمول الضريبة - استخدم في القالب لتجنّب استدعاءات دوال داخل قوالب
-        context['can_toggle_invoice_tax'] = user.is_superuser or user.has_perm('sales.can_toggle_invoice_tax')
+        context['can_edit_invoice_number'] = user.is_superuser or user.is_staff
+        context['can_edit_date'] = user.is_superuser or user.is_staff
         
         # التحقق من صلاحية الوصول لنقطة البيع
         context['has_pos_access'] = user.has_perm('users.can_access_pos')
@@ -543,7 +541,7 @@ def sales_invoice_create(request):
         context['creator_full_name'] = creator_full
         # صلاحية تغيير منشئ الفاتورة وقائمة المستخدمين
         try:
-            can_change_creator = user.is_superuser or user.has_perm('sales.can_change_invoice_creator')
+            can_change_creator = user.is_superuser
         except Exception:
             can_change_creator = False
         context['can_change_creator'] = can_change_creator
@@ -645,7 +643,7 @@ def sales_invoice_create(request):
 
                         # التحقق من صلاحية تعديل رقم الفاتورة
                         manual_invoice = request.POST.get('invoice_number') if allow_manual else None
-                        if manual_invoice and (user.is_superuser or user.is_staff or user.has_perm('sales.change_salesinvoice_number')):
+                        if manual_invoice and (user.is_superuser or user.is_staff):
                             invoice_number = manual_invoice
                         else:
                             invoice_number = None
@@ -660,7 +658,7 @@ def sales_invoice_create(request):
                                 errors.append(_('Sales invoice sequence not configured. Please configure it in settings first.'))
 
                         # التحقق من صلاحية تعديل التاريخ
-                        if user.is_superuser or user.is_staff or user.has_perm('sales.change_salesinvoice_date'):
+                        if user.is_superuser or user.is_staff:
                             invoice_date = request.POST.get('date', date.today())
                         else:
                             invoice_date = date.today()
@@ -766,10 +764,7 @@ def sales_invoice_create(request):
                         total_tax_amount = Decimal('0')
                         
                         # determine inclusive_tax flag
-                        if user.is_superuser or user.has_perm('sales.can_toggle_invoice_tax'):
-                            inclusive_tax_flag = 'inclusive_tax' in request.POST
-                        else:
-                            inclusive_tax_flag = True
+                        inclusive_tax_flag = 'inclusive_tax' in request.POST
 
                         # حساب المجاميع المؤقتة
                         stock_warnings = {}  # قاموس التحذيرات للكميات الزائدة
@@ -907,7 +902,7 @@ def sales_invoice_create(request):
 
                         # إذا كان المستخدم له صلاحية تغيير منشئ الفاتورة، تحقق من وجود حقل creator_user_id
                         try:
-                            if user.is_superuser or user.has_perm('sales.can_change_invoice_creator'):
+                            if user.is_superuser:
                                 creator_user_id = request.POST.get('creator_user')
                                 if creator_user_id:
                                     from django.contrib.auth import get_user_model
@@ -1099,21 +1094,6 @@ def sales_invoice_create(request):
                                 invoice,
                                 activity_desc
                             )
-                        except Exception:
-                            pass
-
-                        # Log inclusive_tax value if the user had permission to toggle it (include both checked and unchecked)
-                        try:
-                            if user.is_superuser or user.has_perm('sales.can_toggle_invoice_tax'):
-                                from core.signals import log_user_activity
-                                log_user_activity(
-                                    request,
-                                    'update',
-                                    invoice,
-                                    _('تعيين خيار شامل ضريبة: %(value)s لفاتورة %(number)s') % {
-                                        'value': str(invoice.inclusive_tax), 'number': invoice.invoice_number
-                                    }
-                                )
                         except Exception:
                             pass
 
@@ -2007,7 +1987,7 @@ def sales_return_create(request):
                         manual_return_number = request.POST.get('return_number')
                         
                         # في المحاولة الأولى فقط، نسمح بالرقم اليدوي
-                        if allow_manual and manual_return_number and (user.is_superuser or user.is_staff or user.has_perm('sales.change_salesreturn_number')):
+                        if allow_manual and manual_return_number and (user.is_superuser or user.is_staff):
                             # التحقق من عدم وجود رقم مكرر
                             if not SalesReturn.objects.filter(return_number=manual_return_number).exists():
                                 return_number = manual_return_number
@@ -2282,7 +2262,7 @@ class SalesCreditNoteListView(LoginRequiredMixin, UserPassesTestMixin, ListView)
 
     def test_func(self):
         return (
-            self.request.user.has_perm('sales.can_view_creditnote') or
+            self.request.user.has_perm('sales.can_view_sales') or
             self.request.user.is_superuser
         )
 
@@ -2323,8 +2303,7 @@ class SalesCreditNoteListView(LoginRequiredMixin, UserPassesTestMixin, ListView)
 
 def sales_creditnote_create(request):
     if not (
-        request.user.has_perm('sales.can_view_creditnote') or
-        request.user.has_perm('sales.add_salescreditnote') or
+        request.user.has_perm('sales.can_add_sales') or
         request.user.is_superuser
     ):
         messages.error(request, _('ليس لديك صلاحية لإنشاء إشعار دائن'))

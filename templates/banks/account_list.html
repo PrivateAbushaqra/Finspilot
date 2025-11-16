@@ -240,7 +240,7 @@
                     </nav>
                 </div>
                 <div>
-                    {% if perms.banks.add_bankaccount %}
+                    {% if perms.banks.can_add_bank_accounts %}
                     <a href="{% url 'banks:account_add' %}" class="btn btn-add text-white">
                         <i class="fas fa-plus me-1"></i>
                         {% trans "Add New Account" %}
@@ -347,30 +347,23 @@
                                                 <a href="{% url 'banks:account_transactions' account.pk %}" class="btn btn-outline-info" title="{% trans 'View Account Transactions' %}">
                                                     <i class="fas fa-list"></i>
                                                 </a>
-                                                {% if perms.banks.change_bankaccount or request.user.is_superuser %}
+                                                    {% if perms.banks.can_edit_bank_accounts %}
                                                     <a href="{% url 'banks:account_edit' account.pk %}" class="btn btn-outline-warning" title="{% trans 'Edit Account' %}">
                                                         <i class="fas fa-edit"></i>
                                                     </a>
-                                                {% elif perms.banks.can_edit_banks_account %}
-                                                    <a href="{% url 'banks:account_edit' account.pk %}" class="btn btn-outline-warning" title="{% trans 'Edit Account' %}">
-                                                        <i class="fas fa-edit"></i>
-                                                    </a>
-                                                {% endif %}
+                                                    {% endif %}
                                                 {% if account.is_active %}
                                                 <a href="{% url 'banks:transfer_add' %}" class="btn btn-outline-info" title="{% trans 'Transfer From/To Account' %}">
                                                     <i class="fas fa-exchange-alt"></i>
                                                 </a>
                                                 {% endif %}
-                                                {% if perms.banks.change_bankaccount %}
                                                 <button class="btn btn-outline-{% if account.is_active %}secondary{% else %}success{% endif %} toggle-status-btn" 
                                                         data-account-id="{{ account.pk }}" 
                                                         data-account-name="{{ account.name }}"
                                                         data-current-status="{% if account.is_active %}active{% else %}inactive{% endif %}"
                                                         title="{% if account.is_active %}{% trans 'Deactivate' %}{% else %}{% trans 'Activate' %}{% endif %} {% trans 'Account' %}">
                                                     <i class="fas fa-{% if account.is_active %}pause{% else %}play{% endif %}"></i>
-                                                </button>
-                                                {% endif %}
-                                                
+                                                </button>                                                
                                                 {% if user.is_superuser %}
                                                 <button class="btn btn-outline-warning clear-transactions-btn" 
                                                         data-account-id="{{ account.pk }}" 
@@ -380,16 +373,15 @@
                                                 </button>
                                                 {% endif %}
                                                 
-                                                {% if perms.banks.delete_bankaccount or perms.banks.can_delete_banks_account or perms.users.can_delete_accounts %}
+                                                {% if perms.banks.can_delete_bank_accounts %}
                                                 <button class="btn btn-outline-danger delete-account-btn" 
                                                         data-account-id="{{ account.pk }}" 
                                                         data-account-name="{{ account.name }}" 
                                                         data-account-balance="{{ account.actual_balance }}"
                                                         title="{% trans 'Delete Account' %}">
                                                     <i class="fas fa-trash"></i>
-                                                </button>
+                                                </button>                                                
                                                 {% endif %}
-                                                
                                                 {% if user.is_superuser %}
                                                 <button class="btn btn-danger superadmin-delete-btn" 
                                                         data-account-id="{{ account.pk }}" 

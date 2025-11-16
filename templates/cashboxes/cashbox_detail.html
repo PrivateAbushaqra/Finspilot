@@ -53,6 +53,7 @@ table.dataTable thead th.sorting:after {
                         <a href="{% url 'cashboxes:cashbox_list' %}" class="btn btn-secondary">
                             <i class="fas fa-arrow-left"></i> {% trans "Back to List" %}
                         </a>
+                        {% if not perms.users.can_access_cashboxes or user.is_superuser or user.user_type in 'superadmin,admin' %}
                         <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editCashboxModal">
                             <i class="fas fa-edit"></i> {% trans "Edit" %}
                         </button>
@@ -69,6 +70,7 @@ table.dataTable thead th.sorting:after {
                                 <i class="fas fa-trash"></i> {% trans "Delete" %}
                             </button>
                             {% endif %}
+                        {% endif %}
                         {% endif %}
                     </div>
                 </div>

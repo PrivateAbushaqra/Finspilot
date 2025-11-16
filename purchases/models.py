@@ -50,12 +50,13 @@ class PurchaseInvoice(models.Model):
         verbose_name = _('Purchase Invoice')
         verbose_name_plural = _('Purchase Invoices')
         ordering = ['-date', '-invoice_number']
+        default_permissions = []  # No default permissions
         permissions = [
-            ('can_view_purchases', _('Can View Purchase')),
-            ('can_view_purchase_statement', _('Can View Purchase Statement')),
-            ('can_toggle_purchase_tax', _('Can Toggle Purchase Tax Inclusive')),
+            ('can_view_purchases', 'Can View Purchases'),
+            ('can_add_purchases', 'Can Add Purchases'),
+            ('can_edit_purchases', 'Can Edit Purchases'),
+            ('can_delete_purchases', 'Can Delete Purchases'),
         ]
-    # لا يجب تعريف صلاحية view_purchaseinvoice هنا لأنها افتراضية من Django
 
     def __str__(self):
         return f"{self.supplier_invoice_number} - {self.supplier.name}"
@@ -188,6 +189,7 @@ class PurchaseInvoiceItem(models.Model):
     class Meta:
         verbose_name = _('Purchase Invoice Item')
         verbose_name_plural = _('Purchase Invoice Items')
+        default_permissions = []  # No permissions needed - available to everyone
 
     def __str__(self):
         return f"{self.invoice.supplier_invoice_number} - {self.product.name}"
@@ -259,9 +261,13 @@ class PurchaseReturn(models.Model):
         verbose_name = _('Purchase Return')
         verbose_name_plural = _('Purchase Returns')
         ordering = ['-date', '-return_number']
-        permissions = (
-            ('can_view_purchasereturn', _('Can view purchase returns')),
-        )
+        default_permissions = []  # No default permissions
+        permissions = [
+            ('can_view_purchase_returns', 'Can View Purchase Returns'),
+            ('can_add_purchase_returns', 'Can Add Purchase Returns'),
+            ('can_edit_purchase_returns', 'Can Edit Purchase Returns'),
+            ('can_delete_purchase_returns', 'Can Delete Purchase Returns'),
+        ]
 
     def __str__(self):
         return f"{self.return_number} - {self.original_invoice.supplier.name}"
@@ -297,6 +303,7 @@ class PurchaseReturnItem(models.Model):
     class Meta:
         verbose_name = _('Purchase Return Item')
         verbose_name_plural = _('Purchase Return Items')
+        default_permissions = []  # No permissions needed - available to everyone
 
     def __str__(self):
         return f"{self.product.name} - {self.returned_quantity}"
@@ -358,10 +365,7 @@ class PurchaseDebitNote(models.Model):
         verbose_name = _('Debit Note')
         verbose_name_plural = _('Debit Notes')
         ordering = ['-date', '-note_number']
-        permissions = (
-            ('can_send_to_jofotara', 'Can send debit notes to JoFotara'),
-            ('can_view_debitnote', _('Can view debit notes')),
-        )
+        default_permissions = []  # No permissions needed - available to everyone
 
     def save(self, *args, **kwargs):
         # في إشعار الخصم، لا يوجد ضريبة - المبلغ الإجمالي = المجموع الفرعي

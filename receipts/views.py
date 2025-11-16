@@ -22,7 +22,7 @@ from journal.models import JournalEntry
 
 def process_cheque_errors_warnings():
     """
-    معالجة الأخطاء والتحذيرات في الشيكات تلقائياً وفق IFRS 9
+    Automatically process cheque errors and warnings according to IFRS 9
     """
     from datetime import datetime
     from django.utils import timezone
@@ -50,17 +50,17 @@ def process_cheque_errors_warnings():
 
                     # تحديث سبب الارتداد إذا لم يكن محدد
                     if not cheque.bounce_reason:
-                        cheque.bounce_reason = 'تم اكتشاف الارتداد أثناء التدقيق - تم إنشاء القيد اليومية تلقائياً'
+                        cheque.bounce_reason = _('Bounce detected during audit - journal entry created automatically')
                         cheque.save()
 
                     processed_errors.append({
                         'cheque': cheque,
-                        'action': 'تم إنشاء قيد يومية تلقائي للشيك المرتد',
-                        'details': f'قيد من ذمم مدينة إلى شيكات تحت التحصيل بمبلغ {cheque.amount}'
+                        'action': _('Automatically created journal entry for bounced check'),
+                        'details': _('Journal entry transferring the amount from Accounts Receivable to Checks in collection for amount %(amount)s') % {'amount': cheque.amount}
                     })
 
                 except Exception as e:
-                    print(f"خطأ في إنشاء قيد يومية للشيك {cheque.check_number}: {e}")
+                    logger.error(_('Error creating journal entry for bounced check %(num)s: %(error)s') % {'num': cheque.check_number, 'error': e})
 
         # معالجة التحذيرات: الشيكات المحصلة
         elif cheque.check_status == 'collected':
@@ -76,10 +76,10 @@ def process_cheque_errors_warnings():
                     # تحصيل متأخر
                     processed_warnings.append({
                         'cheque': cheque,
-                        'type': 'تحصيل متأخر',
+                        'type': _('Late collection'),
                         'days_late': days_difference,
-                        'action': 'تم تسجيل التحذير - يرجى متابعة مخاطر التحصيل',
-                        'ifrs_note': 'قد يؤثر على توقيت الإيرادات وفق IFRS 9'
+                        'action': _('Warning recorded - please follow up collection risks'),
+                        'ifrs_note': _('May affect revenue timing under IFRS 9')
                     })
 
                 elif days_difference < 0:
@@ -95,23 +95,23 @@ def process_cheque_errors_warnings():
                         if invoice:
                             processed_warnings.append({
                                 'cheque': cheque,
-                                'type': 'تحصيل مبكر',
+                                'type': _('Early collection'),
                                 'days_early': abs(days_difference),
-                                'action': 'تم ربط الشيك بالفاتورة ومراجعة الإيراد',
-                                'ifrs_note': 'تمت مراجعة الإيراد - لا تأثير على IFRS 9',
+                                'action': _('Check linked with invoice and revenue reviewed'),
+                                'ifrs_note': _('Revenue reviewed - no IFRS 9 impact'),
                                 'invoice': invoice.invoice_number
                             })
                         else:
                             processed_warnings.append({
                                 'cheque': cheque,
-                                'type': 'تحصيل مبكر',
+                                'type': _('Early collection'),
                                 'days_early': abs(days_difference),
-                                'action': 'لم يتم العثور على فاتورة مرتبطة',
-                                'ifrs_note': 'يرجى التأكد من عدم الاعتراف المبكر بالإيراد'
+                                'action': _('No related invoice found'),
+                                'ifrs_note': _('Please ensure there is no premature revenue recognition')
                             })
 
                     except Exception as e:
-                        print(f"خطأ في فحص الفاتورة للشيك {cheque.check_number}: {e}")
+                        logger.error(_('Error checking linked invoice for check %(num)s: %(error)s') % {'num': cheque.check_number, 'error': e})
 
     return {
         'processed_errors': processed_errors,
@@ -133,6 +133,11 @@ def create_receipt_journal_entry(receipt, user):
 @login_required
 def receipt_list(request):
     """Receipt vouchers list"""
+    if not (request.user.has_perm('receipts.can_view_receipts') or request.user.has_perm('receipts.view_paymentreceipt')):
+        from django.core.exceptions import PermissionDenied
+        messages.error(request, _('You do not have permission to view receipt vouchers'))
+        raise PermissionDenied(_('You do not have permission to view receipt vouchers'))
+    
     receipts = PaymentReceipt.objects.all().select_related(
         'customer', 'cashbox', 'created_by'
     ).order_by('-date', '-receipt_number')
@@ -184,6 +189,11 @@ def receipt_list(request):
 @login_required
 def receipt_add(request):
     """Add new receipt voucher"""
+    if not (request.user.has_perm('receipts.can_add_receipts') or request.user.has_perm('receipts.add_paymentreceipt')):
+        from django.core.exceptions import PermissionDenied
+        messages.error(request, _('You do not have permission to add receipt vouchers'))
+        raise PermissionDenied(_('You do not have permission to add receipt vouchers'))
+    
     if request.method == 'POST':
         receipt_number = request.POST.get('receipt_number', '').strip()
         customer_id = request.POST.get('customer')
@@ -214,18 +224,18 @@ def receipt_add(request):
         
         # Validate basic data
         if not all([receipt_number, customer_id, payment_type, amount, date]):
-            messages.error(request, _('جميع الحقول مطلوبة'))
+            messages.error(request, _('All fields are required'))
             return redirect('receipts:receipt_add')
         
         # Check for duplicate receipt number
         if PaymentReceipt.objects.filter(receipt_number=receipt_number).exists():
-            messages.error(request, _('رقم السند موجود مسبقاً، يرجى اختيار رقم آخر'))
+            messages.error(request, _('Receipt number already exists, please choose another'))
             return redirect('receipts:receipt_add')
         
         try:
             amount = Decimal(amount)
             if amount <= 0:
-                messages.error(request, _('المبلغ يجب أن يكون أكبر من صفر'))
+                messages.error(request, _('Amount must be greater than zero'))
                 return redirect('receipts:receipt_add')
             
             customer = get_object_or_404(
@@ -310,14 +320,14 @@ def receipt_add(request):
                             request,
                             'create',
                             receipt,
-                            _('تحويل بنكي لسند قبض رقم %(number)s - الحساب البنكي: %(account)s - المبلغ: %(amount)s') % {
+                            _('Bank transfer for receipt voucher %(number)s - Bank: %(account)s - Amount: %(amount)s') % {
                                 'number': receipt.receipt_number,
                                 'account': bank_account.name,
                                 'amount': amount
                             }
                         )
                     except Exception as e:
-                        logger.error(f"خطأ في تسجيل النشاط للتحويل البنكي في سند القبض {receipt.receipt_number}: {e}")
+                        logger.error(_('Error logging bank transfer activity for receipt %(num)s: %(error)s') % {'num': receipt.receipt_number, 'error': e})
                 
                 # For checks: update check status only (no cashbox update until collection)
                 if payment_type == 'check':
@@ -335,7 +345,12 @@ def receipt_add(request):
                     action_type='create',
                     content_type='PaymentReceipt',
                     object_id=receipt.id,
-                    description=f'إنشاء سند قبض رقم {receipt.receipt_number} - العميل: {customer.name} - المبلغ: {amount} - نوع الدفع: {payment_type_display}'
+                    description=_('Create receipt voucher %(number)s - Customer: %(customer)s - Amount: %(amount)s - Payment type: %(ptype)s') % {
+                        'number': receipt.receipt_number,
+                        'customer': customer.name,
+                        'amount': amount,
+                        'ptype': payment_type_display
+                    }
                 )
                 
                 messages.success(request, _('Receipt voucher {} created successfully').format(receipt.receipt_number))
@@ -367,7 +382,12 @@ def receipt_add(request):
 
 @login_required
 def receipt_detail(request, receipt_id):
-    """Receipt voucher details"""
+    """Receipt voucher detail"""
+    if not (request.user.has_perm('receipts.can_view_receipts') or request.user.has_perm('receipts.view_paymentreceipt')):
+        from django.core.exceptions import PermissionDenied
+        messages.error(request, _('You do not have permission to view receipt voucher details'))
+        raise PermissionDenied(_('You do not have permission to view receipt voucher details'))
+    
     receipt = get_object_or_404(PaymentReceipt, id=receipt_id)
     
     # Get related account movements
@@ -391,11 +411,16 @@ def receipt_detail(request, receipt_id):
 @login_required
 def receipt_edit(request, receipt_id):
     """Edit receipt voucher"""
+    if not (request.user.has_perm('receipts.can_edit_receipts') or request.user.has_perm('receipts.change_paymentreceipt')):
+        from django.core.exceptions import PermissionDenied
+        messages.error(request, _('You do not have permission to edit receipt vouchers'))
+        raise PermissionDenied(_('You do not have permission to edit receipt vouchers'))
+    
     receipt = get_object_or_404(PaymentReceipt, id=receipt_id)
     
     # Check edit permission
     if receipt.is_reversed:
-        messages.error(request, _('لا يمكن تعديل سند معكوس'))
+        messages.error(request, _('Cannot edit a reversed receipt voucher'))
         return redirect('receipts:receipt_detail', receipt_id=receipt_id)
     
     if request.method == 'POST':
@@ -411,7 +436,7 @@ def receipt_edit(request, receipt_id):
             return redirect('receipts:receipt_detail', receipt_id=receipt_id)
             
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء التحديث: {str(e)}')
+            messages.error(request, _('Error occurred while updating: %(error)s') % {'error': str(e)})
     
     return redirect('receipts:receipt_detail', receipt_id=receipt_id)
 
@@ -419,11 +444,16 @@ def receipt_edit(request, receipt_id):
 @login_required
 def receipt_reverse(request, receipt_id):
     """Reverse receipt voucher"""
+    if not (request.user.has_perm('receipts.can_delete_receipts') or request.user.has_perm('receipts.delete_paymentreceipt')):
+        from django.core.exceptions import PermissionDenied
+        messages.error(request, _('You do not have permission to reverse receipt vouchers'))
+        raise PermissionDenied(_('You do not have permission to reverse receipt vouchers'))
+    
     receipt = get_object_or_404(PaymentReceipt, id=receipt_id)
     
     # Check reversal permission
     if not receipt.can_be_reversed:
-        messages.error(request, _('لا يمكن عكس هذا السند'))
+        messages.error(request, _('This voucher cannot be reversed'))
         return redirect('receipts:receipt_detail', receipt_id=receipt_id)
     
     if request.method == 'POST':
@@ -431,7 +461,7 @@ def receipt_reverse(request, receipt_id):
         notes = request.POST.get('notes', '')
         
         if not reason:
-            messages.error(request, _('سبب العكس مطلوب'))
+            messages.error(request, _('Reversal reason is required'))
             return redirect('receipts:receipt_detail', receipt_id=receipt_id)
         
         try:
@@ -495,7 +525,12 @@ def receipt_reverse(request, receipt_id):
 
 @login_required
 def check_list(request):
-    """قائمة الشيكات"""
+    """Checks list"""
+    if not (request.user.has_perm('receipts.can_view_receipts') or request.user.has_perm('receipts.view_paymentreceipt')):
+        from django.core.exceptions import PermissionDenied
+        messages.error(request, _('You do not have permission to view receipt vouchers'))
+        raise PermissionDenied(_('You do not have permission to view receipt vouchers'))
+    
     checks = PaymentReceipt.objects.filter(
         payment_type='check'
     ).select_related('customer', 'created_by', 'check_cashbox').order_by('-check_due_date')
@@ -520,21 +555,21 @@ def check_list(request):
     
     context = {
         'checks': page_obj,
-        'page_title': _('الشيكات'),
+        'page_title': _('Checks'),
     }
     return render(request, 'receipts/check_list.html', context)
 
 
 @login_required
 def check_list_export_excel(request):
-    """تصدير قائمة الشيكات إلى Excel"""
+    """Export checks list to Excel"""
     # محاولة استيراد openpyxl
     try:
         from openpyxl import Workbook
         from openpyxl.styles import Font, PatternFill, Alignment
     except ImportError:
         from django.http import HttpResponse
-        return HttpResponse("OpenPyXL غير متوفر", status=500)
+        return HttpResponse(_('OpenPyXL is not available'), status=500)
 
     # الحصول على نفس البيانات المعروضة في القائمة
     checks = PaymentReceipt.objects.filter(
@@ -632,7 +667,7 @@ def check_list_export_excel(request):
 
 @login_required
 def check_collect(request, receipt_id):
-    """تحصيل الشيك مع معالجة تلقائية للأخطاء والتحذيرات وفق IFRS 9"""
+    """Check collection with automatic handling of errors and warnings per IFRS 9"""
     receipt = get_object_or_404(PaymentReceipt, id=receipt_id, payment_type='check')
     
     if request.method == 'POST':
@@ -643,7 +678,7 @@ def check_collect(request, receipt_id):
         bounce_reason = request.POST.get('bounce_reason', '')  # سبب الارتداد
         
         if not all([collection_date, status]):
-            messages.error(request, _('جميع الحقول مطلوبة'))
+            messages.error(request, _('All fields are required'))
             return redirect('receipts:receipt_detail', receipt_id=receipt_id)
         
         try:
@@ -674,16 +709,16 @@ def check_collect(request, receipt_id):
                     
                     # إضافة ملاحظة ECL في سجل التحصيل
                     if ecl_amount > 0:
-                        collection.notes += f'\n💰 تم حساب ECL بمبلغ {ecl_amount} ({ecl_method})'
+                        collection.notes += '\n' + (_('💰 ECL calculated: %(amount)s (%(method)s)') % {'amount': ecl_amount, 'method': ecl_method})
                         collection.save()
                         
                         # تسجيل في السجل للمراجعة
                         import logging
                         logger = logging.getLogger(__name__)
-                        logger.info(f'تم حساب ECL للشيك {receipt.check_number}: {ecl_amount} ({ecl_method})')
+                        logger.info(_('ECL calculated for check %(num)s: %(amount)s (%(method)s)') % {'num': receipt.check_number, 'amount': ecl_amount, 'method': ecl_method})
                         
                 except Exception as e:
-                    print(f"خطأ في حساب ECL للشيك {receipt.check_number}: {e}")
+                    logger.error(_('Error calculating ECL for check %(num)s: %(error)s') % {'num': receipt.check_number, 'error': e})
                 
                 # إذا تم التحصيل بنجاح
                 if status == 'collected' and cashbox_id:
@@ -712,16 +747,19 @@ def check_collect(request, receipt_id):
                         # إضافة تنبيه في السجل
                         import logging
                         logger = logging.getLogger(__name__)
-                        logger.warning(f'تم تحصيل الشيك {receipt.check_number} بعد تاريخ الاستحقاق بـ {days_late} يوماً. '
-                                     f'تاريخ الاستحقاق: {receipt.check_due_date}, تاريخ التحصيل: {collection_date}. '
-                                     f'قد يؤثر هذا على توقيت الإيرادات وفق IFRS 9.')
+                        logger.warning(_('Check %(num)s collected past due date by %(days)s days. Due date: %(due)s, Collection date: %(coll)s. May affect revenue timing under IFRS 9.') % {
+                            'num': receipt.check_number,
+                            'days': days_late,
+                            'due': receipt.check_due_date,
+                            'coll': collection_date
+                        })
                         
                         # إضافة ملاحظة في سجل التحصيل
-                        collection.notes += f'\n⚠️ تحذير IFRS 9: تم التحصيل بعد تاريخ الاستحقاق بـ {days_late} يوماً ({receipt.check_due_date})'
+                        collection.notes += '\n' + (_('⚠️ IFRS 9 warning: collected %(days)s days after due date (%(due)s)') % {'days': days_late, 'due': receipt.check_due_date})
                         collection.save()
                         
                         # توصية بمتابعة العميل
-                        collection.notes += f'\n📋 توصية: متابعة العميل ومراقبة مخاطر التحصيل'
+                        collection.notes += '\n' + _('📋 Recommendation: follow up the customer and monitor collection risks')
                         collection.save()
                     
                     elif collection_date_obj < receipt.check_due_date:
@@ -749,13 +787,12 @@ def check_collect(request, receipt_id):
                                             receipt, collection_date_obj, is_invoice_complete=False, user=request.user
                                         )
                                     except Exception as je:
-                                        logger.error(f'خطأ في إنشاء قيد التحصيل المبكر للشيك {receipt.check_number}: {je}')
+                                        logger.error(_('Error creating early collection journal entry for check %(num)s: %(error)s') % {'num': receipt.check_number, 'error': je})
                                     
                                     # إضافة تنبيه
-                                    logger.info(f'تم تسجيل تحصيل الشيك {receipt.check_number} كدفعة مقدمة '
-                                              f'بسبب عدم اكتمال الفاتورة المرتبطة.')
+                                    logger.info(_('Recorded check %(num)s as an advance payment due to incomplete invoice') % {'num': receipt.check_number})
                                     
-                                    collection.notes += f'\nℹ️ تم تسجيل المبلغ كدفعة مقدمة من العملاء (فاتورة غير مكتملة)'
+                                    collection.notes += '\n' + _('ℹ️ Amount recorded as an advance from customers (invoice not completed)')
                                     collection.save()
                                 else:
                                     # الفاتورة مكتملة - اعتراف طبيعي
@@ -764,10 +801,10 @@ def check_collect(request, receipt_id):
                                             receipt, collection_date_obj, is_invoice_complete=True, user=request.user
                                         )
                                     except Exception as je:
-                                        logger.error(f'خطأ في إنشاء قيد التحصيل المبكر للشيك {receipt.check_number}: {je}')
+                                        logger.error(_('Error creating early collection journal entry for check %(num)s: %(error)s') % {'num': receipt.check_number, 'error': je})
                                     
                                     # إضافة ملاحظة
-                                    collection.notes += f'\n✅ تمت مراجعة الإيراد - لا تأثير على IFRS 9 (فاتورة مكتملة)'
+                                    collection.notes += '\n' + _('✅ Revenue reviewed - no IFRS 9 impact (invoice complete)')
                                     collection.save()
                             else:
                                 # لم يتم العثور على فاتورة مرتبطة - اعتراف طبيعي
@@ -775,20 +812,20 @@ def check_collect(request, receipt_id):
                                     JournalService.create_check_early_collection_entry(
                                         receipt, collection_date_obj, is_invoice_complete=True, user=request.user
                                     )
-                                except Exception as je:
-                                    logger.error(f'خطأ في إنشاء قيد التحصيل المبكر للشيك {receipt.check_number}: {je}')
-                                
-                                collection.notes += f'\n⚠️ لم يتم العثور على فاتورة مرتبطة - يرجى التأكد من عدم الاعتراف المبكر بالإيراد'
+                                except Exception as e:
+                                    # Error searching for linked invoice - treat as normal receipt
+                                    logger.error(_('Error searching for linked invoice: %(error)s') % {'error': e})
+                                collection.notes += '\n' + _('⚠️ No related invoice found - please ensure no premature revenue recognition')
                                 collection.save()
                         except Exception as e:
-                            # في حالة خطأ في البحث عن الفاتورة - اعتراف طبيعي
-                            logger.error(f"خطأ في البحث عن الفاتورة المرتبطة: {e}")
+                            # Error searching for the linked invoice - treat as normal collection
+                            logger.error(_('Error searching for linked invoice: %(error)s') % {'error': e})
                             try:
                                 JournalService.create_check_early_collection_entry(
                                     receipt, collection_date_obj, is_invoice_complete=True, user=request.user
                                 )
                             except Exception as je:
-                                logger.error(f'خطأ في إنشاء قيد التحصيل المبكر للشيك {receipt.check_number}: {je}')
+                                logger.error(_('Error creating early collection journal entry for check %(num)s: %(error)s') % {'num': receipt.check_number, 'error': je})
                 
                 # إذا ارتد الشيك - معالجة الأخطاء تلقائياً IFRS 9 متوافق
                 elif status == 'bounced':
@@ -801,45 +838,46 @@ def check_collect(request, receipt_id):
                             receipt, collection_date_obj, user=request.user
                         )
                     except Exception as e:
-                        logger.error(f'خطأ في إنشاء قيد يومية للشيك المرتد {receipt.check_number}: {e}')
+                        logger.error(_('Error creating bounced check journal entry for check %(num)s: %(error)s') % {'num': receipt.check_number, 'error': e})
                     
                     # إضافة تنبيه في السجل
-                    logger.warning(f'ارتداد شيك رقم {receipt.check_number} - تم إنشاء قيد يومية أوتوماتيكي '
-                                 f'لنقل المبلغ من شيكات تحت التحصيل إلى ذمم مدينة وفق IFRS 9. '
-                                 f'سبب الارتداد: {bounce_reason or "غير محدد"}')
+                    logger.warning(_('Check bounce %(num)s - automatic journal entry created to transfer the amount from checks in collection to accounts receivable under IFRS 9. Bounce reason: %(reason)s') % {
+                        'num': receipt.check_number,
+                        'reason': bounce_reason or _('Unspecified')
+                    })
                     
                     # إضافة ملاحظة في سجل التحصيل
-                    collection.notes += f'\n❌ تم إنشاء قيد يومية للارتداد وفق IFRS 9'
+                    collection.notes += '\n' + _('❌ Bounced check journal entry created under IFRS 9')
                     if bounce_reason:
-                        collection.notes += f'\n📝 سبب الارتداد: {bounce_reason}'
+                        collection.notes += '\n' + _('📝 Bounce reason: %(reason)s') % {'reason': bounce_reason}
                     collection.save()
                 
-                status_text = 'تم التحصيل' if status == 'collected' else 'ارتد'
-                messages.success(request, f'تم تسجيل {status_text} للشيك {receipt.check_number} مع المعالجة التلقائية')
+                status_text = _('Collected') if status == 'collected' else _('Bounced')
+                messages.success(request, _('Recorded %(status)s for check %(num)s with automatic processing') % {'status': status_text, 'num': receipt.check_number})
                 return redirect('receipts:receipt_detail', receipt_id=receipt_id)
                 
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء التحصيل: {str(e)}')
+            messages.error(request, _('Error occurred while collecting the check: %(error)s') % {'error': str(e)})
     
     # البيانات المساعدة
     cashboxes = Cashbox.objects.filter(is_active=True).order_by('name')
     
     # أسباب الارتداد المحتملة
     bounce_reasons = [
-        'رصيد غير كافٍ',
-        'توقيع غير صحيح',
-        'إيقاف من البنك',
-        'تاريخ غير صحيح',
-        'رقم حساب خاطئ',
-        'شيك مزور',
-        'أسباب أخرى'
+        _('Insufficient funds'),
+        _('Invalid signature'),
+        _('Bank stop'),
+        _('Invalid date'),
+        _('Incorrect account number'),
+        _('Forged check'),
+        _('Other reasons')
     ]
     
     context = {
         'receipt': receipt,
         'cashboxes': cashboxes,
         'bounce_reasons': bounce_reasons,
-        'page_title': f'{_("تحصيل الشيك")} - {receipt.check_number}',
+        'page_title': f'{_("Check Collection")} - {receipt.check_number}',
         'today': timezone.now().date(),
     }
     return render(request, 'receipts/check_collect.html', context)

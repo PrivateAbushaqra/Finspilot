@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Open New Fiscal Year" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-calendar-plus"></i>
+                        {% trans "Open New Fiscal Year" %}
+                    </h3>
+                    <div class="card-tools">
+                        <a href="{% url 'journal:year_end_closing' %}" class="btn btn-sm btn-secondary">
+                            <i class="fas fa-arrow-left"></i>
+                            {% trans "Back to Year-End Closing" %}
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Current Fiscal Year Info -->
+                    {% if current_fiscal_year %}
+                    <div class="alert alert-info">
+                        <h5><i class="fas fa-info-circle"></i> {% trans "Current Fiscal Year" %}</h5>
+                        <p class="mb-0">
+                            {% trans "Year" %}: <strong>{{ current_fiscal_year.year }}</strong> | 
+                            {% trans "Period" %}: {{ current_fiscal_year.start_date|date:"d/m/Y" }} - {{ current_fiscal_year.end_date|date:"d/m/Y" }} |
+                            {% trans "Status" %}: <span class="badge badge-{% if current_fiscal_year.status == 'active' %}success{% else %}secondary{% endif %}">{{ current_fiscal_year.get_status_display }}</span>
+                        </p>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Opening Form -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-header bg-primary">
+                                    <h5 class="card-title text-white">
+                                        <i class="fas fa-plus-circle"></i>
+                                        {% trans "Create New Fiscal Year" %}
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <form method="post" id="openFiscalYearForm">
+                                        {% csrf_token %}
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label for="year">{% trans "Fiscal Year" %} <span class="text-danger">*</span></label>
+                                                    <input type="number" name="year" id="year" class="form-control" value="{{ suggested_year }}" min="2000" max="2100" required>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label for="start_date">{% trans "Start Date" %} <span class="text-danger">*</span></label>
+                                                    <input type="date" name="start_date" id="start_date" class="form-control" required>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label for="end_date">{% trans "End Date" %} <span class="text-danger">*</span></label>
+                                                    <input type="date" name="end_date" id="end_date" class="form-control" required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="alert alert-warning">
+                                            <h6><i class="fas fa-exclamation-triangle"></i> {% trans "Important Notes" %}</h6>
+                                            <ul class="mb-0">
+                                                <li>{% trans "Opening a new fiscal year will make it the current active year" %}</li>
+                                                <li>{% trans "Opening balances will be automatically created from the previous year" %}</li>
+                                                <li>{% trans "All users will be switched to work in the new fiscal year" %}</li>
+                                                <li>{% trans "Only superadmin users can access closed fiscal years" %}</li>
+                                            </ul>
+                                        </div>
+                                        
+                                        <button type="submit" class="btn btn-primary btn-lg">
+                                            <i class="fas fa-check"></i>
+                                            {% trans "Open New Fiscal Year" %}
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Opening Balances Preview -->
+                    {% if opening_balances %}
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header bg-success">
+                                    <h5 class="card-title text-white">
+                                        <i class="fas fa-balance-scale"></i>
+                                        {% trans "Expected Opening Balances for New Year" %}
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="alert alert-info">
+                                        <strong>{% trans "Total Debits" %}:</strong> {{ total_debit|floatformat:3 }} {{ base_currency.symbol }} | 
+                                        <strong>{% trans "Total Credits" %}:</strong> {{ total_credit|floatformat:3 }} {{ base_currency.symbol }}
+                                        {% if total_debit == total_credit %}
+                                            <span class="badge badge-success ml-2"><i class="fas fa-check"></i> {% trans "Balanced" %}</span>
+                                        {% else %}
+                                            <span class="badge badge-danger ml-2"><i class="fas fa-times"></i> {% trans "Not Balanced" %}</span>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <!-- Tabs for categories -->
+                                    <ul class="nav nav-tabs" id="balanceTabs" role="tablist">
+                                        {% if customers_balances %}
+                                        <li class="nav-item">
+                                            <a class="nav-link active" id="customers-tab" data-bs-toggle="tab" data-bs-target="#customers" role="tab" aria-controls="customers" aria-selected="true">
+                                                <i class="fas fa-users"></i> {% trans "Customers" %} ({{ customers_balances|length }})
+                                            </a>
+                                        </li>
+                                        {% endif %}
+                                        {% if suppliers_balances %}
+                                        <li class="nav-item">
+                                            <a class="nav-link {% if not customers_balances %}active{% endif %}" id="suppliers-tab" data-bs-toggle="tab" data-bs-target="#suppliers" role="tab" aria-controls="suppliers" aria-selected="{% if not customers_balances %}true{% else %}false{% endif %}">
+                                                <i class="fas fa-truck"></i> {% trans "Suppliers" %} ({{ suppliers_balances|length }})
+                                            </a>
+                                        </li>
+                                        {% endif %}
+                                        {% if banks_balances %}
+                                        <li class="nav-item">
+                                            <a class="nav-link {% if not customers_balances and not suppliers_balances %}active{% endif %}" id="banks-tab" data-bs-toggle="tab" data-bs-target="#banks" role="tab" aria-controls="banks" aria-selected="{% if not customers_balances and not suppliers_balances %}true{% else %}false{% endif %}">
+                                                <i class="fas fa-university"></i> {% trans "Banks" %} ({{ banks_balances|length }})
+                                            </a>
+                                        </li>
+                                        {% endif %}
+                                        {% if cashboxes_balances %}
+                                        <li class="nav-item">
+                                            <a class="nav-link {% if not customers_balances and not suppliers_balances and not banks_balances %}active{% endif %}" id="cashboxes-tab" data-bs-toggle="tab" data-bs-target="#cashboxes" role="tab" aria-controls="cashboxes" aria-selected="{% if not customers_balances and not suppliers_balances and not banks_balances %}true{% else %}false{% endif %}">
+                                                <i class="fas fa-cash-register"></i> {% trans "Cashboxes" %} ({{ cashboxes_balances|length }})
+                                            </a>
+                                        </li>
+                                        {% endif %}
+                                        {% if inventory_balances %}
+                                        <li class="nav-item">
+                                            <a class="nav-link" id="inventory-tab" data-bs-toggle="tab" data-bs-target="#inventory" role="tab" aria-controls="inventory" aria-selected="false">
+                                                <i class="fas fa-boxes"></i> {% trans "Inventory" %} ({{ inventory_balances|length }})
+                                            </a>
+                                        </li>
+                                        {% endif %}
+                                        {% if other_balances %}
+                                        <li class="nav-item">
+                                            <a class="nav-link" id="other-tab" data-bs-toggle="tab" data-bs-target="#other" role="tab" aria-controls="other" aria-selected="false">
+                                                <i class="fas fa-list"></i> {% trans "Other Accounts" %} ({{ other_balances|length }})
+                                            </a>
+                                        </li>
+                                        {% endif %}
+                                    </ul>
+                                    
+                                    <div class="tab-content mt-3" id="balanceTabsContent">
+                                        {% if customers_balances %}
+                                        <div class="tab-pane fade show active" id="customers" role="tabpanel">
+                                            {% include 'journal/partials/opening_balance_table.html' with balances=customers_balances %}
+                                        </div>
+                                        {% endif %}
+                                        
+                                        {% if suppliers_balances %}
+                                        <div class="tab-pane fade {% if not customers_balances %}show active{% endif %}" id="suppliers" role="tabpanel">
+                                            {% include 'journal/partials/opening_balance_table.html' with balances=suppliers_balances %}
+                                        </div>
+                                        {% endif %}
+                                        
+                                        {% if banks_balances %}
+                                        <div class="tab-pane fade {% if not customers_balances and not suppliers_balances %}show active{% endif %}" id="banks" role="tabpanel">
+                                            {% include 'journal/partials/opening_balance_table.html' with balances=banks_balances %}
+                                        </div>
+                                        {% endif %}
+                                        
+                                        {% if cashboxes_balances %}
+                                        <div class="tab-pane fade {% if not customers_balances and not suppliers_balances and not banks_balances %}show active{% endif %}" id="cashboxes" role="tabpanel">
+                                            {% include 'journal/partials/opening_balance_table.html' with balances=cashboxes_balances %}
+                                        </div>
+                                        {% endif %}
+                                        
+                                        {% if inventory_balances %}
+                                        <div class="tab-pane fade" id="inventory" role="tabpanel">
+                                            {% include 'journal/partials/opening_balance_table.html' with balances=inventory_balances %}
+                                        </div>
+                                        {% endif %}
+                                        
+                                        {% if other_balances %}
+                                        <div class="tab-pane fade" id="other" role="tabpanel">
+                                            {% include 'journal/partials/opening_balance_table.html' with balances=other_balances %}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-warning mt-4">
+                        <i class="fas fa-info-circle"></i>
+                        {% trans "No previous closing found. This will be the first fiscal year with no opening balances." %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Auto-fill dates based on year
+    $('#year').on('change', function() {
+        var year = $(this).val();
+        $('#start_date').val(year + '-01-01');
+        $('#end_date').val(year + '-12-31');
+    }).trigger('change');
+    
+    // Confirm opening
+    $('#openFiscalYearForm').on('submit', function(e) {
+        if (!confirm('{% trans "Are you sure you want to open a new fiscal year? This will make it the current active year and all users will work in it." %}')) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}
