@@ -56,6 +56,12 @@ class SalesInvoice(models.Model):
             ('can_add_sales', 'Can Add Sales'),
             ('can_edit_sales', 'Can Edit Sales'),
             ('can_delete_sales', 'Can Delete Sales'),
+            ('can_view_sales_statement', 'Can View Sales Statement'),
+            ('can_view_sales_returns_statement', 'Can View Sales Returns Statement'),
+            ('can_view_pos', 'Can View POS'),
+            ('can_access_pos', 'Can Access POS'),
+            ('can_edit_pos', 'Can Edit POS'),
+            ('can_delete_pos', 'Can Delete POS'),
         ]
 
     def __str__(self):
@@ -222,7 +228,13 @@ class SalesCreditNote(models.Model):
         verbose_name = _('Credit Note')
         verbose_name_plural = _('Credit Notes')
         ordering = ['-date', '-note_number']
-        default_permissions = []  # No permissions needed - available to everyone
+        default_permissions = []  # No default permissions
+        permissions = [
+            ('can_view_credit_notes', 'Can View Credit Notes'),
+            ('can_add_credit_notes', 'Can Add Credit Notes'),
+            ('can_edit_credit_notes', 'Can Edit Credit Notes'),
+            ('can_delete_credit_notes', 'Can Delete Credit Notes'),
+        ]
 
     def save(self, *args, **kwargs):
         # الإجمالي يساوي المجموع الفرعي (بدون ضريبة)

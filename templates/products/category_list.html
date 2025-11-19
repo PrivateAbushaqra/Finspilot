@@ -184,10 +184,12 @@
                         <i class="fas fa-file-excel me-1"></i>
                         {% trans "Export Excel" %}
                     </button>
+                    {% if user.is_superuser or perms.products.can_add_product_categories %} 
                     <a href="{% url 'products:category_add' %}" class="btn btn-add text-white">
                         <i class="fas fa-plus me-2"></i>
                         {% trans "Add New Category" %}
                     </a>
+                    {% endif %}
                 </div>
             </div>
 
@@ -381,13 +383,13 @@
                                     </td>
                                     <td class="text-center">
                                         <div class="btn-group btn-group-sm">
-                                            {% if user.is_superuser or user.user_type == 'superadmin' or user.user_type == 'admin' or perms.products.can_edit_categories %}
+                                            {% if user.is_superuser or user.user_type == 'superadmin' or user.user_type == 'admin' or perms.products.can_edit_product_categories %}
                                             <a href="{% url 'products:category_edit' category.pk %}" class="btn btn-outline-warning" title="{% trans "Edit" %}">
                                                 <i class="fas fa-edit me-1"></i>
                                                 <span>{% trans "Edit" %}</span>
                                             </a>
                                             {% endif %}
-                                            {% if user.is_superuser or user.user_type == 'superadmin' or user.user_type == 'admin' or perms.products.can_delete_categories %}
+                                            {% if user.is_superuser or user.user_type == 'superadmin' or user.user_type == 'admin' or perms.products.can_delete_product_categories %}
                                             {% trans "Are you sure you want to delete this category?" as delete_msg %}
                                             <a href="{% url 'products:category_delete' category.pk %}" 
                                                class="btn btn-outline-danger" 
@@ -408,11 +410,13 @@
                         <div class="empty-state">
                             <i class="fas fa-tags"></i>
                             <h4>{% trans "No categories found" %}</h4>
+                            {% if user.is_superuser or perms.products.can_add_product_categories %} 
                             <p>{% blocktrans %}No categories have been created yet. Click "Add New Category" to start creating categories.{% endblocktrans %}</p>
                             <a href="{% url 'products:category_add' %}" class="btn btn-primary">
                                 <i class="fas fa-plus me-2"></i>
                                 {% trans "Add New Category" %}
                             </a>
+                            {% endif %}
                         </div>
                     {% endif %}
                 </div>

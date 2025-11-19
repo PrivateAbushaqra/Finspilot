@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView, View, DetailView
 from django.db.models import Sum, Count, Q
@@ -12,12 +12,10 @@ from django.utils.translation import gettext as _
 from .models import Warehouse, InventoryMovement, WarehouseTransfer, WarehouseTransferItem
 from products.models import Product
 from core.models import AuditLog
+from .permissions import CanViewInventoryMixin, CanAddInventoryMixin, CanEditInventoryMixin, CanDeleteInventoryMixin
 
-class InventoryListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
+class InventoryListView(CanViewInventoryMixin, LoginRequiredMixin, TemplateView):
     template_name = 'inventory/list.html'
-    
-    def test_func(self):
-        return self.request.user.has_inventory_permission()
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -164,7 +162,7 @@ class InventoryListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
                 'value': float(value),
                 'unit_price': float(value / current_stock) if current_stock > 0 else 0,
                 'sale_price': float(product.sale_price),
-                'warehouse_name': selected_warehouse.name if selected_warehouse else 'المستودع الرئيسي',
+                'warehouse_name': selected_warehouse.name if selected_warehouse else _('Main Warehouse'),
                 'stock_level': stock_level
             })
         
@@ -255,13 +253,10 @@ class InventoryListView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
 
         return context
 
-class WarehouseListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+class WarehouseListView(CanViewInventoryMixin, LoginRequiredMixin, ListView):
     model = Warehouse
     template_name = 'inventory/warehouse_list.html'
     context_object_name = 'warehouses'
-    
-    def test_func(self):
-        return self.request.user.has_inventory_permission()
     
     def get_queryset(self):
         # استثناء المستودع الافتراضي للنظام
@@ -359,14 +354,11 @@ class WarehouseListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         
         return total_value, total_quantity
 
-class WarehouseCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+class WarehouseCreateView(CanAddInventoryMixin, LoginRequiredMixin, CreateView):
     model = Warehouse
     template_name = 'inventory/warehouse_add.html'
     fields = ['name', 'code', 'address', 'parent', 'manager', 'is_active', 'is_default']
     success_url = reverse_lazy('inventory:warehouse_list')
-    
-    def test_func(self):
-        return self.request.user.has_inventory_permission()
     
     def form_valid(self, form):
         # تسجيل النشاط
@@ -378,14 +370,11 @@ class WarehouseCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
             obj=warehouse,
             description=f'تم إنشاء المستودع: {warehouse.name}'
         )
-        messages.success(self.request, 'تم إنشاء المستودع بنجاح')
+        messages.success(self.request, _('Warehouse created successfully'))
         return super().form_valid(form)
 
-class WarehouseDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
+class WarehouseDeleteView(CanDeleteInventoryMixin, LoginRequiredMixin, View):
     template_name = 'inventory/warehouse_delete.html'
-    
-    def test_func(self):
-        return self.request.user.has_inventory_permission()
     
     def get(self, request, pk, *args, **kwargs):
         warehouse = get_object_or_404(Warehouse, pk=pk)
@@ -437,7 +426,7 @@ class WarehouseDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
             # التحقق من تأكيد الحذف
             confirm = request.POST.get('confirm_delete')
             if confirm != 'DELETE':
-                messages.error(request, 'يجب كتابة "DELETE" للتأكيد!')
+                messages.error(request, _('You must type "DELETE" to confirm!'))
                 return redirect('inventory:warehouse_delete', pk=pk)
             
             # التحقق من وجود بيانات مرتبطة
@@ -445,8 +434,8 @@ class WarehouseDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
             if movements_count > 0:
                 messages.error(
                     request, 
-                    f'لا يمكن حذف المستودع "{warehouse.name}" لأنه يحتوي على {movements_count} حركة مخزون. '
-                    'يجب حذف جميع الحركات المرتبطة أولاً.'
+                    _(f'Cannot delete warehouse "{warehouse.name}" because it contains {movements_count} inventory movements. ')
+                    + _('You must delete all related movements first.')
                 )
                 return redirect('inventory:warehouse_delete', pk=pk)
             
@@ -455,8 +444,8 @@ class WarehouseDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
                 sub_count = warehouse.sub_warehouses.count()
                 messages.error(
                     request, 
-                    f'لا يمكن حذف المستودع "{warehouse.name}" لأنه يحتوي على {sub_count} مستودع فرعي. '
-                    'يجب حذف أو نقل المستودعات الفرعية أولاً.'
+                    _(f'Cannot delete warehouse "{warehouse.name}" because it contains {sub_count} sub-warehouses. ')
+                    + _('You must delete or move the sub-warehouses first.')
                 )
                 return redirect('inventory:warehouse_delete', pk=pk)
             
@@ -477,18 +466,15 @@ class WarehouseDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
             return redirect('inventory:warehouse_list')
             
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء حذف المستودع: {str(e)}')
+            messages.error(request, _(f'Error deleting warehouse: {str(e)}'))
             return redirect('inventory:warehouse_delete', pk=pk)
 
-class MovementListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+class MovementListView(CanViewInventoryMixin, LoginRequiredMixin, ListView):
     model = InventoryMovement
     template_name = 'inventory/movement_list.html'
     context_object_name = 'movements'
     paginate_by = 20
     ordering = ['-date', '-created_at']
-    
-    def test_func(self):
-        return self.request.user.has_inventory_permission()
     
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -560,22 +546,16 @@ class MovementListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
         
         return context
 
-class TransferListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
+class TransferListView(CanViewInventoryMixin, LoginRequiredMixin, ListView):
     model = WarehouseTransfer
     template_name = 'inventory/transfer_list.html'
     context_object_name = 'transfers'
     
-    def test_func(self):
-        return self.request.user.has_inventory_permission()
-    
     def get_queryset(self):
         return WarehouseTransfer.objects.select_related('from_warehouse', 'to_warehouse', 'created_by').order_by('-date', '-id')
 
-class TransferCreateView(LoginRequiredMixin, UserPassesTestMixin, View):
+class TransferCreateView(CanAddInventoryMixin, LoginRequiredMixin, View):
     template_name = 'inventory/transfer_add.html'
-    
-    def test_func(self):
-        return self.request.user.has_inventory_permission()
     
     def get(self, request, *args, **kwargs):
         # التحقق من وجود تسلسل المستندات
@@ -584,7 +564,7 @@ class TransferCreateView(LoginRequiredMixin, UserPassesTestMixin, View):
             sequence = DocumentSequence.objects.get(document_type='warehouse_transfer')
             next_transfer_number = sequence.peek_next_number()
         except DocumentSequence.DoesNotExist:
-            messages.error(request, _('يجب إعداد تسلسل "التحويل بين المستودعات" في الإعدادات قبل إنشاء أي تحويل.'))
+            messages.error(request, _('You must setup "Warehouse Transfer" sequence in settings before creating any transfer.'))
             return redirect('inventory:transfer_list')
         
         context = {
@@ -614,7 +594,7 @@ class TransferCreateView(LoginRequiredMixin, UserPassesTestMixin, View):
                 return self.get(request)
             
             if from_warehouse_id == to_warehouse_id:
-                messages.error(request, 'لا يمكن التحويل من وإلى نفس المستودع!')
+                messages.error(request, _('Cannot transfer from and to the same warehouse!'))
                 return self.get(request)
             
             from_warehouse = get_object_or_404(Warehouse, id=from_warehouse_id, is_active=True)
@@ -642,7 +622,7 @@ class TransferCreateView(LoginRequiredMixin, UserPassesTestMixin, View):
                     # التحقق من توفر الكمية في المستودع المصدر
                     current_stock = product.get_stock_in_warehouse(from_warehouse)
                     if current_stock < quantity:
-                        messages.error(request, f'الكمية المتاحة للمنتج {product.name} في المستودع {from_warehouse.name} هي {current_stock}')
+                        messages.error(request, _(f'Available quantity for product {product.name} in warehouse {from_warehouse.name} is {current_stock}'))
                         transfer.delete()  # حذف التحويل إذا فشل
                         return self.get(request)
                     
@@ -713,14 +693,14 @@ class TransferCreateView(LoginRequiredMixin, UserPassesTestMixin, View):
             except (DocumentSequence.DoesNotExist, ValueError, IndexError):
                 pass  # تجاهل الأخطاء في تحديث التسلسل
             
-            messages.success(request, f'تم إنشاء التحويل بنجاح!')
+            messages.success(request, _(f'Transfer created successfully!'))
             return redirect('inventory:transfer_list')
             
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء إنشاء التحويل: {str(e)}')
+            messages.error(request, _(f'Error creating transfer: {str(e)}'))
             return self.get(request)
 
-class LowStockView(LoginRequiredMixin, TemplateView):
+class LowStockView(CanViewInventoryMixin, LoginRequiredMixin, TemplateView):
     template_name = 'inventory/low_stock.html'
     
     def get_context_data(self, **kwargs):
@@ -821,7 +801,7 @@ def full_transfer_ajax(request):
         notes = request.POST.get('notes', '')
         
         if from_warehouse_id == to_warehouse_id:
-            return JsonResponse({'error': 'لا يمكن التحويل من وإلى نفس المستودع!'}, status=400)
+            return JsonResponse({'error': _('Cannot transfer from and to the same warehouse!')}, status=400)
         
         from_warehouse = get_object_or_404(Warehouse, id=from_warehouse_id, is_active=True)
         to_warehouse = get_object_or_404(Warehouse, id=to_warehouse_id, is_active=True)
@@ -834,7 +814,7 @@ def full_transfer_ajax(request):
                 products_with_stock.append((product, stock))
         
         if not products_with_stock:
-            return JsonResponse({'error': 'لا توجد منتجات في المستودع المصدر'}, status=400)
+            return JsonResponse({'error': _('No products in source warehouse')}, status=400)
         
         # إنشاء رقم التحويل
         from core.models import DocumentSequence
@@ -936,7 +916,7 @@ def full_transfer_ajax(request):
         })
         
     except Exception as e:
-        return JsonResponse({'error': f'حدث خطأ: {str(e)}'}, status=500)
+        return JsonResponse({'error': _(f'An error occurred: {str(e)}')}, status=500)
 
 
 class ProductInventoryDetailView(LoginRequiredMixin, TemplateView):
@@ -1063,7 +1043,7 @@ def get_product_inventory_ajax(request):
     product_id = request.GET.get('product_id')
     
     if not product_id:
-        return JsonResponse({'error': 'معرف المنتج مطلوب'}, status=400)
+        return JsonResponse({'error': _('Product ID is required')}, status=400)
     
     try:
         product = Product.objects.get(id=product_id, is_active=True)
@@ -1104,9 +1084,9 @@ def get_product_inventory_ajax(request):
         for movement in recent_movements:
             movements_data.append({
                 'type': movement.movement_type,
-                'type_text': 'وارد' if movement.movement_type == 'in' else 'صادر' if movement.movement_type == 'out' else 'تحويل',
+                'type_text': _('In') if movement.movement_type == 'in' else _('Out') if movement.movement_type == 'out' else _('Transfer'),
                 'quantity': movement.quantity,
-                'warehouse': movement.warehouse.name if movement.warehouse else 'غير محدد',
+                'warehouse': movement.warehouse.name if movement.warehouse else _('Not Specified'),
                 'date': movement.created_at.strftime('%Y-%m-%d %H:%M'),
                 'notes': movement.notes or ''
             })
@@ -1127,7 +1107,7 @@ def get_product_inventory_ajax(request):
         return JsonResponse(data)
         
     except Product.DoesNotExist:
-        return JsonResponse({'error': 'المنتج غير موجود'}, status=404)
+        return JsonResponse({'error': _('Product not found')}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
@@ -1154,13 +1134,13 @@ class MovementBulkDeleteView(LoginRequiredMixin, View):
             total_count = InventoryMovement.objects.count()
             
             if total_count == 0:
-                messages.warning(request, 'لا توجد حركات مخزون للحذف!')
+                messages.warning(request, _('No inventory movements to delete!'))
                 return redirect('inventory:movement_list')
             
             # التحقق من تأكيد المستخدم
             confirm = request.POST.get('confirm_delete')
             if confirm != 'DELETE_ALL_MOVEMENTS':
-                messages.error(request, 'يجب كتابة "DELETE_ALL_MOVEMENTS" للتأكيد!')
+                messages.error(request, _('You must type "DELETE_ALL_MOVEMENTS" to confirm!'))
                 return redirect('inventory:movement_bulk_delete')
             
             # حذف جميع حركات المخزون
@@ -1174,7 +1154,7 @@ class MovementBulkDeleteView(LoginRequiredMixin, View):
             )
             
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء حذف حركات المخزون: {str(e)}')
+            messages.error(request, _(f'Error deleting inventory movements: {str(e)}'))
         
         return redirect('inventory:movement_list')
 
@@ -1215,14 +1195,11 @@ class WarehouseDetailView(LoginRequiredMixin, DetailView):
         return context
 
 
-class WarehouseEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+class WarehouseEditView(CanEditInventoryMixin, LoginRequiredMixin, UpdateView):
     model = Warehouse
     fields = ['name', 'code', 'address', 'is_active', 'is_default']
     template_name = 'inventory/warehouse_edit.html'
     success_url = '/ar/inventory/warehouses/'
-    
-    def test_func(self):
-        return self.request.user.has_inventory_permission()
     
     def form_valid(self, form):
         # تسجيل النشاط
@@ -1234,19 +1211,16 @@ class WarehouseEditView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
             obj=warehouse,
             description=f'تم تحديث المستودع: {warehouse.name}'
         )
-        messages.success(self.request, f'تم تحديث المستودع "{form.instance.name}" بنجاح!')
+        messages.success(self.request, _(f'Warehouse "{form.instance.name}" updated successfully!'))
         return super().form_valid(form)
     
     def form_invalid(self, form):
-        messages.error(self.request, 'حدث خطأ أثناء تحديث المستودع. يرجى المحاولة مرة أخرى.')
+        messages.error(self.request, _('Error updating warehouse. Please try again.'))
         return super().form_invalid(form)
 
 
-class MovementDeleteView(LoginRequiredMixin, UserPassesTestMixin, View):
+class MovementDeleteView(CanDeleteInventoryMixin, LoginRequiredMixin, View):
     """حذف حركة مخزون واحدة"""
-    
-    def test_func(self):
-        return self.request.user.has_inventory_permission()
     
     def post(self, request, pk, *args, **kwargs):
         """حذف حركة المخزون"""
@@ -1305,7 +1279,7 @@ def export_inventory_excel(request):
     if not request.user.has_inventory_permission() and not request.user.is_superuser:
         from django.contrib import messages
         from django.shortcuts import redirect
-        messages.error(request, 'ليس لديك صلاحية لعرض المخزون')
+        messages.error(request, _('You do not have permission to view inventory'))
         return redirect('/')
 
     # الحصول على معايير البحث والترتيب من الطلب

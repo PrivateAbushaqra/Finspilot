@@ -59,6 +59,7 @@ class Warehouse(models.Model):
         verbose_name = _('Warehouse')
         verbose_name_plural = _('Warehouses')
         ordering = ['name']
+        default_permissions = []  # No default permissions
         permissions = [
             ('can_view_inventory', _('Can access inventory')),
             ('can_add_inventory', _('Can add inventory')),

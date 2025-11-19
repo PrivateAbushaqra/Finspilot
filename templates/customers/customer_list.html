@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% load i18n %}
 {% load currency_tags %}
 
@@ -121,7 +121,7 @@
                         <i class="fas fa-print me-1"></i>
                         {% trans "Print Full Report" %}
                     </button>
-                    {% if perms.customers.can_add_customers_suppliers %}
+                    {% if perms.customers.can_add_customers %}
                     <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
                         <i class="fas fa-plus me-2"></i>
                         {% trans "Add New Customer" %}
@@ -255,7 +255,7 @@
                                 <div class="d-flex justify-content-between align-items-start mb-3">
                                     <h6 class="card-title mb-0">{{ customer.name }}</h6>
                                     <span class="customer-type-badge type-{{ customer.type }}">
-                                        <a href="{% url 'customers:transactions' customer.pk %}" class="text-decoration-none" title="كشف حساب العميل">
+                                        <a href="{% url 'customers:transactions' customer.pk %}" class="text-decoration-none" title="{% trans 'Account Statement' %}">
                                             {{ customer.get_type_display }}
                                         </a>
                                     </span>
@@ -263,12 +263,12 @@
                                 
                                 <div class="mb-2">
                                     <small class="text-muted">{% trans "Phone" %}:</small>
-                                    <span>{{ customer.phone|default:"غير محدد" }}</span>
+                                    <span>{{ customer.phone|default:"{% trans 'Not Specified' %}" }}</span>
                                 </div>
                                 
                                 <div class="mb-2">
                                     <small class="text-muted">{% trans "Email" %}:</small>
-                                    <span>{{ customer.email|default:"غير محدد" }}</span>
+                                    <span>{{ customer.email|default:"{% trans 'Not Specified' %}" }}</span>
                                 </div>
                                 
                                 <div class="mb-3">
@@ -280,18 +280,18 @@
                                 
                                 <div class="d-flex justify-content-between align-items-center">
                                     <span class="badge {% if customer.is_active %}bg-success{% else %}bg-secondary{% endif %}">
-                                        {% if customer.is_active %}{% trans "Active" %}{% else %}غير {% trans "Active" %}{% endif %}
+                                        {% if customer.is_active %}{% trans "Active" %}{% else %} {% trans "Active" %}{% endif %}
                                     </span>
                                     <div class="btn-group btn-group-sm">
-                                        {% if perms.customers.can_edit_customers_suppliers %}
+                                        {% if perms.customers.can_edit_customers %}
                                         <a href="{% url 'customers:edit' customer.pk %}" class="btn btn-outline-warning" title="{% trans "Edit" %}">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                         {% endif %}
-                                        <a href="{% url 'customers:transactions' customer.pk %}" class="btn btn-outline-info" title="كشف الحساب">
+                                        <a href="{% url 'customers:transactions' customer.pk %}" class="btn btn-outline-info" title="{% trans 'Account Statement' %}">
                                             <i class="fas fa-receipt"></i>
                                         </a>
-                                        {% if perms.customers.can_delete_customers_suppliers and perms.customers.can_add_customers_suppliers and perms.customers.can_edit_customers_suppliers and perms.customers.can_view_customers_suppliers %}
+                                        {% if perms.customers.can_delete_customers %}
                                         <a href="{% url 'customers:delete' customer.pk %}" class="btn btn-outline-danger" title="{% trans "Delete" %}">
                                             <i class="fas fa-trash"></i>
                                         </a>
@@ -308,7 +308,7 @@
                         <table class="table table-hover">
                             <thead class="table-light">
                                 <tr>
-                                    <th>الاسم</th>
+                                    <th>{% trans "Name" %}</th>
                                     <th>{% trans "Type" %}</th>
                                     <th>{% trans "Phone" %}</th>
                                     <th>{% trans "Email" %}</th>
@@ -323,32 +323,32 @@
                                     <td><strong>{{ customer.name }}</strong></td>
                                     <td>
                                         <span class="customer-type-badge type-{{ customer.type }}">
-                                            <a href="{% url 'customers:transactions' customer.pk %}" class="text-decoration-none" title="كشف حساب العميل">
+                                            <a href="{% url 'customers:transactions' customer.pk %}" class="text-decoration-none" title="{% trans 'Account Statement' %}">
                                                 {{ customer.get_type_display }}
                                             </a>
                                         </span>
                                     </td>
-                                    <td>{{ customer.phone|default:"غير محدد" }}</td>
-                                    <td>{{ customer.email|default:"غير محدد" }}</td>
+                                    <td>{{ customer.phone|default:"{% trans 'Not Specified' %}" }}</td>
+                                    <td>{{ customer.email|default:"{% trans 'Not Specified' %}" }}</td>
                                     <td class="{% if customer.current_balance > 0 %}text-success{% elif customer.current_balance < 0 %}text-danger{% endif %}">
                                         {{ customer.current_balance|currency_format }}
                                     </td>
                                     <td>
                                         <span class="badge {% if customer.is_active %}bg-success{% else %}bg-secondary{% endif %}">
-                                            {% if customer.is_active %}{% trans "Active" %}{% else %}غير {% trans "Active" %}{% endif %}
+                                            {% if customer.is_active %}{% trans "Active" %}{% else %}{% trans "Inactive" %}{% endif %}
                                         </span>
                                     </td>
                                     <td>
                                         <div class="btn-group btn-group-sm">
-                                            {% if perms.customers.can_edit_customers_suppliers %}
+                                            {% if perms.customers.can_edit_customers %}
                                             <a href="{% url 'customers:edit' customer.pk %}" class="btn btn-outline-warning" title="{% trans "Edit" %}">
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                             {% endif %}
-                                            <a href="{% url 'customers:transactions' customer.pk %}" class="btn btn-outline-info" title="كشف الحساب">
+                                            <a href="{% url 'customers:transactions' customer.pk %}" class="btn btn-outline-info" title="{% trans "Transactions" %}">
                                                 <i class="fas fa-receipt"></i>
                                             </a>
-                                            {% if perms.customers.can_delete_customers_suppliers and perms.customers.can_add_customers_suppliers and perms.customers.can_edit_customers_suppliers and perms.customers.can_view_customers_suppliers %}
+                                            {% if perms.customers.can_delete_customers %}
                                             <a href="{% url 'customers:delete' customer.pk %}" class="btn btn-outline-danger" title="{% trans "Delete" %}">
                                                 <i class="fas fa-trash"></i>
                                             </a>
@@ -366,11 +366,11 @@
                         <div class="mb-4">
                             <i class="fas fa-users fa-5x text-muted"></i>
                         </div>
-                        <h5 class="text-muted">لا توجد عملاء حالياً</h5>
-                        <p class="text-muted">يمكنك إضافة عميل جديد من خلال الضغط على زر "إضافة عميل جديد"</p>
+                        <h5 class="text-muted">{% trans "No Customers Currently" %}</h5>
+                        <p class="text-muted">{% trans "You can add a new customer by clicking the Add New Customer button" %}</p>
                         <a href="{% url 'customers:add' %}" class="btn btn-primary">
                             <i class="fas fa-plus me-2"></i>
-                            إضافة أول عميل
+                            {% trans "Add First Customer" %}
                         </a>
                     </div>
                     {% endif %}
@@ -383,29 +383,29 @@
     {% if is_paginated %}
     <div class="row mt-4">
         <div class="col-12">
-            <nav aria-label="صفحات العملاء">
+            <nav aria-label="{% trans 'Customer Pages' %}">
                 <ul class="pagination justify-content-center">
                     {% if page_obj.has_previous %}
                         <li class="page-item">
-                            <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.balance %}&balance={{ request.GET.balance }}{% endif %}">الأولى</a>
+                            <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.balance %}&balance={{ request.GET.balance }}{% endif %}">{% trans "First" %}</a>
                         </li>
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.balance %}&balance={{ request.GET.balance }}{% endif %}">السابقة</a>
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.balance %}&balance={{ request.GET.balance }}{% endif %}">{% trans "Previous" %}</a>
                         </li>
                     {% endif %}
                     
                     <li class="page-item active">
                         <span class="page-link">
-                            صفحة {{ page_obj.number }} من {{ page_obj.paginator.num_pages }}
+                            {% trans "Page" %} {{ page_obj.number }} {% trans "of" %} {{ page_obj.paginator.num_pages }}
                         </span>
                     </li>
                     
                     {% if page_obj.has_next %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.balance %}&balance={{ request.GET.balance }}{% endif %}">التالية</a>
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.balance %}&balance={{ request.GET.balance }}{% endif %}">{% trans "Next" %}</a>
                         </li>
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.balance %}&balance={{ request.GET.balance }}{% endif %}">الأخيرة</a>
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.balance %}&balance={{ request.GET.balance }}{% endif %}">{% trans "Last" %}</a>
                         </li>
                     {% endif %}
                 </ul>
@@ -424,21 +424,21 @@
                     <i class="fas fa-user-plus me-2"></i>
                     {% trans "Add New Customer" %}
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
             </div>
             <div class="modal-body">
                 <form id="customerForm">
                     {% csrf_token %}
                     
-                    <!-- المعلومات الأساسية -->
+                    <!-- Basic Information -->
                     <div class="mb-4">
                         <h6 class="text-success border-bottom pb-2 mb-3">
-                            <i class="fas fa-user me-2"></i>المعلومات الأساسية
+                            <i class="fas fa-user me-2"></i>{% trans "Basic Information" %}
                         </h6>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">اسم العميل *</label>
+                                    <label class="form-label">{% trans "Customer Name" %} *</label>
                                     <input type="text" class="form-control" name="name" required>
                                 </div>
                             </div>
@@ -458,7 +458,7 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">الرقم الضريبي</label>
+                                    <label class="form-label">{% trans "Tax Number" %}</label>
                                     <input type="text" class="form-control" name="tax_number">
                                 </div>
                             </div>
@@ -468,58 +468,58 @@
                             <textarea class="form-control" name="address" rows="2"></textarea>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">المدينة <span class="text-danger">*</span></label>
+                            <label class="form-label">{% trans "City" %} <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" name="city" required>
                         </div>
                     </div>
                     
-                    <!-- المعلومات المالية -->
+                    <!-- Financial Information -->
                     <div class="mb-4">
                         <h6 class="text-primary border-bottom pb-2 mb-3">
-                            <i class="fas fa-money-bill-wave me-2"></i>المعلومات المالية
+                            <i class="fas fa-money-bill-wave me-2"></i>{% trans "Financial Information" %}
                         </h6>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">حد الائتمان</label>
+                                    <label class="form-label">{% trans "Credit Limit" %}</label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" name="credit_limit" 
                                                value="0" step="0.001" min="0">
                                         <span class="input-group-text">{% get_currency_symbol %}</span>
                                     </div>
-                                    <div class="form-text">أقصى مبلغ يمكن للعميل أن يكون مديناً به</div>
+                                    <div class="form-text">{% trans "Maximum amount the customer can owe" %}</div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label class="form-label">الرصيد الابتدائي</label>
+                                    <label class="form-label">{% trans "Opening Balance" %}</label>
                                     <div class="input-group">
                                         <input type="number" class="form-control" name="balance" 
                                                value="0" step="0.001">
                                         <span class="input-group-text">{% get_currency_symbol %}</span>
                                     </div>
-                                    <div class="form-text">الرصيد الحالي (موجب: له، سالب: عليه)</div>
+                                    <div class="form-text">{% trans "Current balance (positive: owed to us, negative: we owe)" %}</div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- معلومات إضافية -->
+                    <!-- Ù…Ø¹Ù„ÙˆÙ…Ø§Øª Ø¥Ø¶Ø§ÙÙŠØ© -->
                     <div class="mb-3">
                         <h6 class="text-info border-bottom pb-2 mb-3">
-                            <i class="fas fa-sticky-note me-2"></i>معلومات إضافية
+                            <i class="fas fa-sticky-note me-2"></i>Ù…Ø¹Ù„ÙˆÙ…Ø§Øª Ø¥Ø¶Ø§ÙÙŠØ©
                         </h6>
                         <div class="mb-3">
-                            <label class="form-label">ملاحظات</label>
+                            <label class="form-label">Ù…Ù„Ø§Ø­Ø¸Ø§Øª</label>
                             <textarea class="form-control" name="notes" rows="2"></textarea>
-                            <div class="form-text">أي ملاحظات أو معلومات إضافية</div>
+                            <div class="form-text">Ø£ÙŠ Ù…Ù„Ø§Ø­Ø¸Ø§Øª Ø£Ùˆ Ù…Ø¹Ù„ÙˆÙ…Ø§Øª Ø¥Ø¶Ø§ÙÙŠØ©</div>
                         </div>
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" name="is_active" id="customerIsActive" checked>
                             <label class="form-check-label" for="customerIsActive">
-                                عميل نشط
+                                {% trans "Active Customer" %}
                             </label>
-                            <div class="form-text">إلغاء التفعيل يخفي العميل من القوائم</div>
+                            <div class="form-text">{% trans "Deactivating hides the customer from lists" %}</div>
                         </div>
                     </div>
                     
@@ -527,10 +527,10 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
                 <button type="button" class="btn btn-success" onclick="saveCustomer()">
                     <i class="fas fa-save me-2"></i>
-                    حفظ العميل
+                    {% trans "Save Customer" %}
                 </button>
             </div>
         </div>
@@ -657,15 +657,15 @@
 
     // Save customer function
     function saveCustomer() {
-        console.log('بدء حفظ العميل الجديد');
+        console.log('Starting to save new customer');
         const form = document.getElementById('customerForm');
         const formData = new FormData(form);
         
-        // إضافة CSRF token
+        // Add CSRF token
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
         formData.append('csrfmiddlewaretoken', csrfToken);
         
-        console.log('إرسال البيانات إلى الخادم...');
+        console.log('Sending data to server...');
         
         fetch('{% url "customers:ajax_add_customer" %}', {
             method: 'POST',
@@ -675,30 +675,30 @@
             }
         })
         .then(response => {
-            console.log('استجابة من الخادم:', response.status);
+            console.log('Response from server:', response.status);
             return response.json();
         })
         .then(data => {
-            console.log('البيانات المستلمة:', data);
+            console.log('Received data:', data);
             if (data.success) {
-                // إغلاق النافذة وإعادة تعيين النموذج
+                // Close modal and reset form
                 const modal = bootstrap.Modal.getInstance(document.getElementById('addCustomerModal'));
                 modal.hide();
                 form.reset();
                 
-                alert('تم إنشاء العميل بنجاح!');
-                console.log('تم حفظ العميل بنجاح');
+                alert('{% trans "Customer created successfully!" %}');
+                console.log('Customer saved successfully');
                 
-                // إعادة تحميل الصفحة لعرض العميل الجديد
+                // Reload page to show new customer
                 location.reload();
             } else {
-                console.error('خطأ من الخادم:', data.message);
-                alert('خطأ: ' + (data.message || 'حدث خطأ أثناء إنشاء العميل'));
+                console.error('Error from server:', data.message);
+                alert('{% trans "Error" %}: ' + (data.message || '{% trans "An error occurred while creating customer" %}'));
             }
         })
         .catch(error => {
-            console.error('خطأ في الشبكة:', error);
-            alert('حدث خطأ أثناء إنشاء العميل. يرجى المحاولة مرة أخرى.');
+            console.error('Network error:', error);
+            alert('{% trans "An error occurred while creating customer. Please try again." %}');
         });
     }
 
@@ -725,24 +725,24 @@
     // Custom print function for customers report
     function printPage() {
         try {
-            // إنشاء نافذة طباعة جديدة
+            // Create new print window
             var printWindow = window.open('', '_blank');
             
-            // الحصول على البيانات من الجدول المخفي
+            // Get data from hidden table
             var table = document.querySelector('.print-only-table');
             if (!table) {
-                alert('جدول البيانات غير موجود');
+                alert('{% trans "Data table not found" %}');
                 return;
             }
             
             var rows = table.querySelectorAll('tbody tr');
             if (rows.length === 0) {
-                alert('لا توجد بيانات للطباعة');
+                alert('{% trans "No data to print" %}');
                 printWindow.close();
                 return;
             }
             
-            // إنشاء محتوى الطباعة
+            // Create print content
             var printContent = `
                 <html>
                 <head>
@@ -793,7 +793,7 @@
                         </thead>
                         <tbody>`;
             
-            // إضافة صفوف البيانات
+            // Add data rows
             rows.forEach(function(row) {
                 var cells = row.querySelectorAll('td');
                 printContent += '<tr>';
@@ -813,17 +813,17 @@
                 </body>
                 </html>`;
             
-            // كتابة المحتوى في نافذة الطباعة
+            // Write content to print window
             printWindow.document.write(printContent);
             printWindow.document.close();
             
-            // انتظار تحميل المحتوى ثم الطباعة
+            // Wait for content to load then print
             printWindow.onload = function() {
                 printWindow.print();
                 printWindow.close();
             };
         } catch (error) {
-            alert('حدث خطأ أثناء الطباعة: ' + error.message);
+            alert('{% trans "An error occurred while printing" %}: ' + error.message);
             console.error('Print error:', error);
         }
     }
@@ -846,8 +846,8 @@
         <tr>
             <td>{{ customer.name }}</td>
             <td>{{ customer.get_type_display }}</td>
-            <td>{{ customer.phone|default:"غير محدد" }}</td>
-            <td>{{ customer.email|default:"غير محدد" }}</td>
+            <td>{{ customer.phone|default:"{% trans 'Not Specified' %}" }}</td>
+            <td>{{ customer.email|default:"{% trans 'Not Specified' %}" }}</td>
             <td>{{ customer.current_balance|currency_format }}</td>
             <td>{% if customer.is_active %}{% trans "Active" %}{% else %}{% trans "Inactive" %}{% endif %}</td>
         </tr>

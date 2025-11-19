@@ -676,7 +676,7 @@ $(document).ready(function() {
         $.get('{% url "products:category_add_ajax" %}', function(data) {
             var select = $('#categoryParent');
             select.empty();
-            select.append('<option value="">بدون تصنيف أساسي</option>');
+            select.append('<option value="">{% trans "No Parent Category" %}</option>');
             
             if (data.categories) {
                 data.categories.forEach(function(category) {

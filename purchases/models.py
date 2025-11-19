@@ -56,6 +56,7 @@ class PurchaseInvoice(models.Model):
             ('can_add_purchases', 'Can Add Purchases'),
             ('can_edit_purchases', 'Can Edit Purchases'),
             ('can_delete_purchases', 'Can Delete Purchases'),
+            ('can_view_purchase_statement', 'Can View Purchase Statement'),
         ]
 
     def __str__(self):
@@ -365,7 +366,13 @@ class PurchaseDebitNote(models.Model):
         verbose_name = _('Debit Note')
         verbose_name_plural = _('Debit Notes')
         ordering = ['-date', '-note_number']
-        default_permissions = []  # No permissions needed - available to everyone
+        default_permissions = []  # No default permissions
+        permissions = [
+            ('can_view_debit_notes', 'Can View Debit Notes'),
+            ('can_add_debit_notes', 'Can Add Debit Notes'),
+            ('can_edit_debit_notes', 'Can Edit Debit Notes'),
+            ('can_delete_debit_notes', 'Can Delete Debit Notes'),
+        ]
 
     def save(self, *args, **kwargs):
         # في إشعار الخصم، لا يوجد ضريبة - المبلغ الإجمالي = المجموع الفرعي

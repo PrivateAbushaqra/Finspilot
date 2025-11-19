@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load i18n %}
 
-{% block title %}حذف مذكرة الدين{% endblock %}
+{% block title %}{% trans "Delete Debit Note" %}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -11,7 +11,7 @@
                 <div class="card-header bg-danger text-white">
                     <h3 class="card-title mb-0">
                         <i class="fas fa-trash me-2"></i>
-                        تأكيد حذف مذكرة الدين
+                        {% trans "Confirm Delete Debit Note" %}
                     </h3>
                 </div>
                 
@@ -19,32 +19,32 @@
                     <div class="alert alert-warning" role="alert">
                         <h4 class="alert-heading">
                             <i class="fas fa-exclamation-triangle me-2"></i>
-                            تحذير!
+                            {% trans "Warning!" %}
                         </h4>
-                        <p>هل أنت متأكد من رغبتك في حذف مذكرة الدين التالية؟</p>
+                        <p>{% trans "Are you sure you want to delete the following debit note?" %}</p>
                         <hr>
-                        <p class="mb-0">هذا الإجراء لا يمكن التراجع عنه!</p>
+                        <p class="mb-0">{% trans "This action cannot be undone!" %}</p>
                     </div>
                     
                     <div class="card mt-3">
                         <div class="card-body">
-                            <h5 class="card-title">تفاصيل مذكرة الدين:</h5>
+                            <h5 class="card-title">{% trans "Debit Note Details:" %}</h5>
                             <div class="row">
                                 <div class="col-md-6">
-                                    <p><strong>رقم المذكرة:</strong> {{ debitnote.note_number }}</p>
-                                    <p><strong>المورد:</strong> {{ debitnote.supplier.name }}</p>
-                                    <p><strong>التاريخ:</strong> {{ debitnote.date }}</p>
+                                    <p><strong>{% trans "Note Number:" %}</strong> {{ debitnote.note_number }}</p>
+                                    <p><strong>{% trans "Supplier:" %}</strong> {{ debitnote.supplier.name }}</p>
+                                    <p><strong>{% trans "Date:" %}</strong> {{ debitnote.date }}</p>
                                 </div>
                                 <div class="col-md-6">
-                                    <p><strong>المجموع الفرعي:</strong> {{ debitnote.subtotal }}</p>
-                                    <p><strong>الضريبة:</strong> {{ debitnote.tax_amount }}</p>
-                                    <p><strong>المجموع الإجمالي:</strong> <span class="fw-bold text-primary">{{ debitnote.total_amount }}</span></p>
+                                    <p><strong>{% trans "Subtotal:" %}</strong> {{ debitnote.subtotal }}</p>
+                                    <p><strong>{% trans "Tax:" %}</strong> {{ debitnote.tax_amount }}</p>
+                                    <p><strong>{% trans "Total Amount:" %}</strong> <span class="fw-bold text-primary">{{ debitnote.total_amount }}</span></p>
                                 </div>
                             </div>
                             {% if debitnote.description %}
                             <div class="row">
                                 <div class="col-12">
-                                    <p><strong>الوصف:</strong> {{ debitnote.description }}</p>
+                                    <p><strong>{% trans "Description:" %}</strong> {{ debitnote.description }}</p>
                                 </div>
                             </div>
                             {% endif %}
@@ -56,15 +56,15 @@
                         <div class="d-flex justify-content-between">
                             <div>
                                 <button type="submit" class="btn btn-danger">
-                                    <i class="fas fa-trash me-2"></i>نعم، احذف مذكرة الدين
+                                    <i class="fas fa-trash me-2"></i>{% trans "Yes, Delete Debit Note" %}
                                 </button>
                             </div>
                             <div>
                                 <a href="{% url 'purchases:debitnote_detail' debitnote.pk %}" class="btn btn-secondary me-2">
-                                    <i class="fas fa-arrow-left me-2"></i>العودة للتفاصيل
+                                    <i class="fas fa-arrow-left me-2"></i>{% trans "Back to Details" %}
                                 </a>
                                 <a href="{% url 'purchases:debitnote_list' %}" class="btn btn-outline-secondary">
-                                    <i class="fas fa-list me-2"></i>العودة للقائمة
+                                    <i class="fas fa-list me-2"></i>{% trans "Back to List" %}
                                 </a>
                             </div>
                         </div>

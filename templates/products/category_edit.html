@@ -14,14 +14,14 @@
                 <div>
                     <h1 class="h3 mb-0 text-gray-800">
                         <i class="fas fa-edit text-primary me-2"></i>
-                        {% trans "Edit" %} التصنيف
+                        {% trans "Edit Category" %}
                     </h1>
-                    <p class="mb-0 text-muted">{% trans "Edit" %} بيانات التصنيف</p>
+                    <p class="mb-0 text-muted">{% trans "Edit category information" %}</p>
                 </div>
                 <div>
                     <a href="{% url 'products:category_list' %}" class="btn btn-secondary">
                         <i class="fas fa-arrow-left me-2"></i>
-                        العودة لل{% trans "List" %}
+                        {% trans "Back to List" %}
                     </a>
                 </div>
             </div>
@@ -31,7 +31,7 @@
                 <div class="card-header">
                     <h5 class="mb-0">
                         <i class="fas fa-tag me-2"></i>
-                        {% trans "Information" %} التصنيف
+                        {% trans "Category Information" %}
                     </h5>
                 </div>
                 <div class="card-body">
@@ -40,13 +40,13 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="name" class="form-label">اسم التصنيف <span class="text-danger">*</span></label>
+                                    <label for="name" class="form-label">{% trans "Category Name" %} <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="name" name="name" value="{{ category.name|default:'' }}" required>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="name_en" class="form-label">اسم بالإنجليزية</label>
+                                    <label for="name_en" class="form-label">{% trans "English Name" %}</label>
                                     <input type="text" class="form-control" id="name_en" name="name_en" value="{{ category.name_en|default:'' }}">
                                 </div>
                             </div>
@@ -55,15 +55,15 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="code" class="form-label">رمز التصنيف</label>
+                                    <label for="code" class="form-label">{% trans "Category Code" %}</label>
                                     <input type="text" class="form-control" id="code" name="code" value="{{ category.code|default:'' }}">
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="parent" class="form-label">التصنيف الأب</label>
+                                    <label for="parent" class="form-label">{% trans "Parent Category" %}</label>
                                     <select class="form-select" id="parent" name="parent">
-                                        <option value="">تصنيف رئيسي</option>
+                                        <option value="">{% trans "Main Category" %}</option>
                                         {% for cat in categories %}
                                             <option value="{{ cat.id }}" {% if category.parent_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
                                         {% endfor %}
@@ -80,7 +80,7 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
-                                    <label for="sort_order" class="form-label">{% trans "Sort" %} ال{% trans "View" %}</label>
+                                    <label for="sort_order" class="form-label">{% trans "Sort Order" %}</label>
                                     <input type="number" class="form-control" id="sort_order" name="sort_order" value="0">
                                 </div>
                             </div>
@@ -99,11 +99,11 @@
                         <div class="d-flex justify-content-end gap-2">
                             <a href="{% url 'products:category_list' %}" class="btn btn-secondary">
                                 <i class="fas fa-times me-2"></i>
-                                إلغاء
+                                {% trans "Cancel" %}
                             </a>
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-save me-2"></i>
-                                {% trans "Save" %} التعديلات
+                                {% trans "Save Changes" %}
                             </button>
                         </div>
                     </form>

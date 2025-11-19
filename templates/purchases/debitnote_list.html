@@ -14,12 +14,12 @@
                         {% trans "Debit Notes" %}
                     </h3>
                     <div class="float-end">
-                        {% if perms.purchases.can_add_purchases or user.is_superuser %}
+                        {% if perms.purchases.can_add_debit_notes or user.is_superuser %}
                         <a href="{% url 'purchases:debitnote_add' %}" class="btn btn-success btn-sm">
                             <i class="fas fa-plus me-2"></i>{% trans "Create Debit Note" %}
                         </a>
                         {% endif %}
-                        {% if perms.purchases.can_view_purchases or user.is_superuser %}
+                        {% if perms.purchases.can_view_debit_notes or user.is_superuser %}
                         <a href="{% url 'purchases:debitnote_report' %}" class="btn btn-info btn-sm">
                             <i class="fas fa-chart-line me-2"></i>{% trans "Debit Notes Report" %}
                         </a>
@@ -64,12 +64,14 @@
                                                title="عرض التفاصيل">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            {% if perms.purchases.can_edit_purchases or perms.purchases.can_delete_purchases or user.is_superuser %}
+                                            {% if perms.purchases.can_edit_debit_notes or perms.purchases.can_delete_debit_notes or user.is_superuser %}
                                             <a href="{% url 'purchases:debitnote_edit' debitnote.pk %}" 
                                                class="btn btn-sm btn-outline-warning"
                                                title="تحديث">
                                                 <i class="fas fa-edit"></i>
                                             </a>
+                                            {% endif %}
+                                            {% if perms.purchases.can_delete_debit_notes or user.is_superuser %}
                                             <a href="{% url 'purchases:debitnote_delete' debitnote.pk %}" 
                                                class="btn btn-sm btn-outline-danger"
                                                title="حذف"
@@ -120,7 +122,7 @@
                     <div class="text-center py-5">
                         <i class="fas fa-file-invoice-dollar fa-3x text-muted mb-3"></i>
                         <h5 class="text-muted">{% trans "No Debit Notes" %}</h5>
-                        {% if perms.purchases.add_purchasedebitnote or user.is_superuser %}
+                        {% if perms.purchases.can_add_debit_notes or user.is_superuser %}
                         <p class="text-muted">{% trans "You can create a new debit note by clicking the button above." %}</p>
                         <a href="{% url 'purchases:debitnote_add' %}" class="btn btn-primary">
                             <i class="fas fa-plus me-2"></i>{% trans "Create First Debit Note" %}

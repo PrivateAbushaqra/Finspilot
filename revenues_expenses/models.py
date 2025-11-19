@@ -17,13 +17,7 @@ class Sector(models.Model):
         verbose_name = _('Sector')
         verbose_name_plural = _('Sectors')
         ordering = ['name']
-        default_permissions = []  # No default permissions
-        permissions = [
-            ("can_view_sectors", _("View Sectors")),
-            ("can_add_sectors", _("Add Sectors")),
-            ("can_edit_sectors", _("Edit Sectors")),
-            ("can_delete_sectors", _("Delete Sectors")),
-        ]
+        default_permissions = []
     
     def __str__(self):
         return self.name
@@ -49,13 +43,7 @@ class RevenueExpenseCategory(models.Model):
         verbose_name = _('Revenue/Expense Category')
         verbose_name_plural = _('Revenue/Expense Categories')
         ordering = ['type', 'name']
-        default_permissions = []  # No default permissions
-        permissions = [
-            ("can_view_categories", _("View Revenue/Expense Categories")),
-            ("can_add_categories", _("Add Revenue/Expense Categories")),
-            ("can_edit_categories", _("Edit Revenue/Expense Categories")),
-            ("can_delete_categories", _("Delete Revenue/Expense Categories")),
-        ]
+        default_permissions = []
     
     def __str__(self):
         return f"{self.get_type_display()} - {self.name}"
@@ -107,12 +95,12 @@ class RevenueExpenseEntry(models.Model):
         verbose_name = _('Revenue/Expense Entry')
         verbose_name_plural = _('Revenue/Expense Entries')
         ordering = ['-date', '-created_at']
-        default_permissions = []  # No default permissions
+        default_permissions = []
         permissions = [
-            ("can_view_entries", _("View Revenue/Expense Entries")),
-            ("can_add_entries", _("Add Revenue/Expense Entries")),
-            ("can_edit_entries", _("Edit Revenue/Expense Entries")),
-            ("can_delete_entries", _("Delete Revenue/Expense Entries")),
+            ("can_view_revenues_expenses", _("Can View Revenues/Expenses")),
+            ("can_add_revenues_expenses", _("Can Add Revenues/Expenses")),
+            ("can_edit_revenues_expenses", _("Can Edit Revenues/Expenses")),
+            ("can_delete_revenues_expenses", _("Can Delete Revenues/Expenses")),
         ]
     
     def __str__(self):
@@ -204,13 +192,7 @@ class RecurringRevenueExpense(models.Model):
         verbose_name = _('Recurring Revenue/Expense')
         verbose_name_plural = _('Recurring revenues and expenses')
         ordering = ['next_due_date']
-        default_permissions = []  # No default permissions
-        permissions = [
-            ("can_view_recurring", _("View Recurring Revenue/Expense")),
-            ("can_add_recurring", _("Add Recurring Revenue/Expense")),
-            ("can_edit_recurring", _("Edit Recurring Revenue/Expense")),
-            ("can_delete_recurring", _("Delete Recurring Revenue/Expense")),
-        ]
+        default_permissions = []
     
     def __str__(self):
         return f"{self.name} - {self.get_frequency_display()}"

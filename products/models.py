@@ -5,31 +5,32 @@ from django.db.models import Max
 
 
 class Category(models.Model):
-    """فئة المنتجات"""
-    sequence_number = models.IntegerField(_('الرقم التسلسلي'), unique=True, null=True, blank=True)
-    name = models.CharField(_('اسم الفئة'), max_length=100, unique=True)
+    """Product Category"""
+    sequence_number = models.IntegerField(_('Sequence Number'), unique=True, null=True, blank=True)
+    name = models.CharField(_('Category Name'), max_length=100, unique=True)
     name_en = models.CharField(_('Name in English'), max_length=100, blank=True)
     code = models.CharField(_('Classification code'), max_length=20, blank=True, unique=True, null=True)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, 
-                              verbose_name=_('الفئة الأساسية'), related_name='subcategories')
-    description = models.TextField(_('الوصف'), blank=True)
-    is_active = models.BooleanField(_('نشط'), default=True)
-    created_at = models.DateTimeField(_('تاريخ الإنشاء'), auto_now_add=True)
-    updated_at = models.DateTimeField(_('تاريخ التحديث'), auto_now=True)
+                              verbose_name=_('Parent Category'), related_name='subcategories')
+    description = models.TextField(_('Description'), blank=True)
+    is_active = models.BooleanField(_('Active'), default=True)
+    created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
+    updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
 
     class Meta:
-        verbose_name = _('فئة')
-        verbose_name_plural = _('الفئات')
+        verbose_name = _('Category')
+        verbose_name_plural = _('Categories')
         ordering = ['sequence_number']
+        default_permissions = []  # No default permissions
         permissions = [
-            ('can_view_products', _('يمكن عرض الفئات والمنتجات')),
-            ('can_add_products', _('يمكن إضافة المنتجات')),
-            ('can_edit_products', _('يمكن تعديل المنتجات')),
-            ('can_delete_products', _('يمكن حذف المنتجات')),
-            ('can_add_categories', _('يمكن إضافة الفئات')),
-            ('can_add_categories_inline', _('يمكن إضافة الفئات من خلال النوافذ المنبثقة')),
-            ('can_edit_categories', _('يمكن تعديل الفئات')),
-            ('can_delete_categories', _('يمكن حذف الفئات')),
+            ('can_view_products', _('Can View Products')),
+            ('can_add_products', _('Can Add Products')),
+            ('can_edit_products', _('Can Edit Products')),
+            ('can_delete_products', _('Can Delete Products')),
+            ('can_view_product_categories', _('Can View Product Categories')),
+            ('can_add_product_categories', _('Can Add Product Categories')),
+            ('can_edit_product_categories', _('Can Edit Product Categories')),
+            ('can_delete_product_categories', _('Can Delete Product Categories')),
         ]
 
     def save(self, *args, **kwargs):
@@ -38,15 +39,15 @@ class Category(models.Model):
         super().save(*args, **kwargs)
 
     def _get_next_sequence_number(self):
-        """الحصول على أول رقم تسلسلي متاح بدءاً من 10000"""
+        """Get the first available sequence number starting from 10000"""
         existing_numbers = set(Category.objects.values_list('sequence_number', flat=True))
         
-        # البداية من 10000
+        # Start from 10000
         for num in range(10000, 99999):
             if num not in existing_numbers:
                 return num
         
-        # في حالة نادرة جداً إذا امتلأت جميع الأرقام
+        # In a very rare case if all numbers are filled
         max_num = Category.objects.aggregate(Max('sequence_number'))['sequence_number__max']
         return (max_num or 9999) + 1
 
@@ -57,23 +58,23 @@ class Category(models.Model):
 
     @property
     def full_path(self):
-        """المسار الكامل للفئة"""
+        """Full path of the category"""
         if self.parent:
             return f"{self.parent.full_path} -> {self.name}"
         return self.name
 
     @property
     def total_available_quantity(self):
-        """إجمالي الكمية المتوفرة لجميع المنتجات في الفئة"""
+        """Total available quantity for all products in the category"""
         from django.db.models import Sum
         from inventory.models import InventoryMovement
         
-        # حساب الكمية الواردة ناقص الكمية الصادرة للمنتجات في هذه الفئة
+        # Calculate incoming quantity minus outgoing quantity for products in this category
         products = self.product_set.filter(is_active=True)
         
         total_quantity = 0
         for product in products:
-            # استخدام نفس منطق current_stock
+            # Use the same logic as current_stock
             incoming = InventoryMovement.objects.filter(
                 product=product,
                 movement_type='in'
@@ -84,7 +85,7 @@ class Category(models.Model):
                 movement_type='out'
             ).aggregate(total=Sum('quantity'))['total'] or 0
             
-            # إضافة الرصيد الافتتاحي
+            # Add opening balance
             product_stock = (incoming - outgoing) + product.opening_balance_quantity
             total_quantity += product_stock
         
@@ -92,7 +93,7 @@ class Category(models.Model):
 
     @property
     def total_available_cost(self):
-        """إجمالي تكلفة الكمية المتوفرة لجميع المنتجات في الفئة"""
+        """Total cost of available quantity for all products in the category"""
         from django.db.models import Sum
         from inventory.models import InventoryMovement
         
@@ -100,7 +101,7 @@ class Category(models.Model):
         
         total_cost = 0
         for product in products:
-            # حساب الكمية المتوفرة
+            # Calculate available quantity
             incoming = InventoryMovement.objects.filter(
                 product=product,
                 movement_type='in'
@@ -113,9 +114,9 @@ class Category(models.Model):
             
             available_quantity = (incoming - outgoing) + product.opening_balance_quantity
             
-            # حساب التكلفة باستخدام متوسط التكلفة المرجح
+            # Calculate cost using weighted average cost
             if available_quantity > 0:
-                # استخدام تكلفة المنتج الحالية أو حساب متوسط مرجح
+                # Use current product cost or calculate weighted average
                 product_cost = product.calculate_weighted_average_cost() if hasattr(product, 'calculate_weighted_average_cost') else product.cost_price
                 total_cost += available_quantity * product_cost
         
@@ -123,53 +124,53 @@ class Category(models.Model):
 
     @property
     def products_count(self):
-        """عدد المنتجات في الفئة"""
+        """Number of products in the category"""
         return self.product_set.filter(is_active=True).count()
 
 
 class Product(models.Model):
-    """المنتج"""
+    """Product"""
     PRODUCT_TYPE_CHOICES = [
-        ('physical', _('سلعة')),
-        ('service', _('خدمة')),
+        ('physical', _('Goods')),
+        ('service', _('Service')),
     ]
     
-    code = models.CharField(_('رقم المنتج'), max_length=50, unique=True)
-    name = models.CharField(_('اسم المنتج'), max_length=200)
+    code = models.CharField(_('Product Code'), max_length=50, unique=True)
+    name = models.CharField(_('Product Name'), max_length=200)
     name_en = models.CharField(_('Name in English'), max_length=200, blank=True)
-    product_type = models.CharField(_('نوع المنتج'), max_length=20, choices=PRODUCT_TYPE_CHOICES, default='physical')
-    barcode = models.CharField(_('الباركود'), max_length=100, blank=True)
-    serial_number = models.CharField(_('الرقم التسلسلي'), max_length=100, blank=True, 
-                                   help_text=_('للمنتجات التي تُباع بالقطعة وتحتاج كفالة'))
-    category = models.ForeignKey(Category, on_delete=models.PROTECT, verbose_name=_('الفئة'))
-    description = models.TextField(_('الوصف'), blank=True)
-    image = models.ImageField(_('صورة المنتج'), upload_to='products/', blank=True, null=True)
-    cost_price = models.DecimalField(_('سعر التكلفة'), max_digits=15, decimal_places=3, 
+    product_type = models.CharField(_('Product Type'), max_length=20, choices=PRODUCT_TYPE_CHOICES, default='physical')
+    barcode = models.CharField(_('Barcode'), max_length=100, blank=True)
+    serial_number = models.CharField(_('Serial Number'), max_length=100, blank=True, 
+                                   help_text=_('For products sold individually and requiring warranty'))
+    category = models.ForeignKey(Category, on_delete=models.PROTECT, verbose_name=_('Category'))
+    description = models.TextField(_('Description'), blank=True)
+    image = models.ImageField(_('Product Image'), upload_to='products/', blank=True, null=True)
+    cost_price = models.DecimalField(_('Cost Price'), max_digits=15, decimal_places=3, 
                                    validators=[MinValueValidator(0)], default=0, blank=True)
-    minimum_quantity = models.DecimalField(_('الحد الأدنى للكمية'), max_digits=10, decimal_places=3, 
+    minimum_quantity = models.DecimalField(_('Minimum Quantity'), max_digits=10, decimal_places=3, 
                                          validators=[MinValueValidator(0)], default=0)
-    maximum_quantity = models.DecimalField(_('الحد الأقصى للكمية'), max_digits=10, decimal_places=3, 
+    maximum_quantity = models.DecimalField(_('Maximum Quantity'), max_digits=10, decimal_places=3, 
                                          validators=[MinValueValidator(0)], default=0, blank=True)
-    sale_price = models.DecimalField(_('سعر البيع'), max_digits=15, decimal_places=3, 
+    sale_price = models.DecimalField(_('Sale Price'), max_digits=15, decimal_places=3, 
                                    validators=[MinValueValidator(0)])
-    wholesale_price = models.DecimalField(_('سعر الجملة'), max_digits=15, decimal_places=3, 
+    wholesale_price = models.DecimalField(_('Wholesale Price'), max_digits=15, decimal_places=3, 
                                         validators=[MinValueValidator(0)], default=0, blank=True)
-    tax_rate = models.DecimalField(_('نسبة الضريبة'), max_digits=5, decimal_places=2, 
+    tax_rate = models.DecimalField(_('Tax Rate'), max_digits=5, decimal_places=2, 
                                  validators=[MinValueValidator(0), MaxValueValidator(100)], default=0)
-    opening_balance_quantity = models.DecimalField(_('كمية الرصيد الافتتاحي'), max_digits=10, decimal_places=3, 
+    opening_balance_quantity = models.DecimalField(_('Opening Balance Quantity'), max_digits=10, decimal_places=3, 
                                                  validators=[MinValueValidator(0)], default=0, blank=True)
-    opening_balance_cost = models.DecimalField(_('تكلفة الرصيد الافتتاحي'), max_digits=15, decimal_places=3, 
+    opening_balance_cost = models.DecimalField(_('Opening Balance Cost'), max_digits=15, decimal_places=3, 
                                              validators=[MinValueValidator(0)], default=0, blank=True)
     opening_balance_warehouse = models.ForeignKey('inventory.Warehouse', on_delete=models.SET_NULL, 
-                                                verbose_name=_('مستودع الرصيد الافتتاحي'), null=True, blank=True)
-    enable_alerts = models.BooleanField(_('تفعيل التنبيهات'), default=True)
-    is_active = models.BooleanField(_('نشط'), default=True)
-    created_at = models.DateTimeField(_('تاريخ الإنشاء'), auto_now_add=True)
-    updated_at = models.DateTimeField(_('تاريخ التحديث'), auto_now=True)
+                                                verbose_name=_('Opening Balance Warehouse'), null=True, blank=True)
+    enable_alerts = models.BooleanField(_('Enable Alerts'), default=True)
+    is_active = models.BooleanField(_('Active'), default=True)
+    created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
+    updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
 
     class Meta:
-        verbose_name = _('منتج')
-        verbose_name_plural = _('المنتجات')
+        verbose_name = _('Product')
+        verbose_name_plural = _('Products')
         ordering = ['code', 'name']
         default_permissions = []
 
@@ -178,20 +179,20 @@ class Product(models.Model):
 
     @property
     def product_type_display(self):
-        """عرض نوع المنتج"""
-        return dict(self.PRODUCT_TYPE_CHOICES).get(self.product_type, _('سلعة'))
+        """Display product type"""
+        return dict(self.PRODUCT_TYPE_CHOICES).get(self.product_type, _('Goods'))
 
     @property
     def is_service(self):
-        """هل المنتج خدمة"""
+        """Is the product a service"""
         return self.product_type == 'service'
 
     @property
     def current_stock(self):
-        """الكمية الحالية في المخزون (مجموع جميع المستودعات)"""
+        """Current quantity in stock (sum of all warehouses)"""
         from inventory.models import InventoryMovement
         
-        # حساب الكمية الواردة (in) ناقص الكمية الصادرة (out)، مع استثناء حركات الرصيد الافتتاحي لتجنب المضاعفة
+        # Calculate incoming quantity (in) minus outgoing quantity (out), excluding opening balance movements to avoid duplication
         incoming = InventoryMovement.objects.filter(
             product=self,
             movement_type='in'
@@ -202,14 +203,14 @@ class Product(models.Model):
             movement_type='out'
         ).aggregate(total=models.Sum('quantity'))['total'] or 0
         
-        # إضافة الرصيد الافتتاحي
+        # Add opening balance
         return (incoming - outgoing) + self.opening_balance_quantity
 
     def get_stock_in_warehouse(self, warehouse):
-        """الحصول على الكمية الحالية في مستودع معين"""
+        """Get current quantity in a specific warehouse"""
         from inventory.models import InventoryMovement
         
-        # حساب الكمية الواردة (in) ناقص الكمية الصادرة (out) في المستودع المحدد
+        # Calculate incoming quantity (in) minus outgoing quantity (out) in the specified warehouse
         incoming = InventoryMovement.objects.filter(
             product=self,
             warehouse=warehouse,
@@ -222,18 +223,18 @@ class Product(models.Model):
             movement_type='out'
         ).aggregate(total=models.Sum('quantity'))['total'] or 0
         
-        # إضافة الرصيد الافتتاحي إذا كان المستودع هو مستودع الرصيد الافتتاحي
+        # Add opening balance if the warehouse is the opening balance warehouse
         opening_balance = self.opening_balance_quantity if self.opening_balance_warehouse == warehouse else 0
         
         return (incoming - outgoing) + opening_balance
 
     @property
     def is_low_stock(self):
-        """هل المنتج منخفض المخزون"""
+        """Is the product low in stock"""
         return self.enable_alerts and self.current_stock <= self.minimum_quantity
 
     def get_price_with_tax(self):
-        """السعر مع الضريبة"""
+        """Price with tax"""
         from decimal import Decimal
         sale_price_decimal = Decimal(str(self.sale_price))
         tax_rate_decimal = Decimal(str(self.tax_rate))
@@ -241,7 +242,7 @@ class Product(models.Model):
         return sale_price_decimal + tax_amount
 
     def get_wholesale_price_with_tax(self):
-        """سعر الجملة مع الضريبة"""
+        """Wholesale price with tax"""
         from decimal import Decimal
         if self.wholesale_price > 0:
             wholesale_price_decimal = Decimal(str(self.wholesale_price))
@@ -251,7 +252,7 @@ class Product(models.Model):
         return Decimal('0')
 
     def get_last_purchase_price(self):
-        """آخر سعر شراء للمنتج"""
+        """Last purchase price of the product"""
         from purchases.models import PurchaseInvoiceItem
         
         last_item = PurchaseInvoiceItem.objects.filter(
@@ -263,11 +264,11 @@ class Product(models.Model):
         return self.cost_price if self.cost_price > 0 else 0
 
     def calculate_weighted_average_cost(self):
-        """حساب متوسط سعر التكلفة المرجح"""
+        """Calculate weighted average cost price"""
         from inventory.models import InventoryMovement
         from decimal import Decimal
         
-        # جمع جميع حركات الإدخال (المشتريات والرصيد الافتتاحي)
+        # Collect all incoming movements (purchases and opening balance)
         incoming_movements = InventoryMovement.objects.filter(
             product=self,
             movement_type='in'
@@ -290,12 +291,12 @@ class Product(models.Model):
         return self.cost_price if self.cost_price > 0 else Decimal('0')
 
     def get_opening_balance(self):
-        """الحصول على الرصيد الافتتاحي الحالي"""
+        """Get current opening balance"""
         return self.opening_balance_quantity
 
     @property
     def has_movements(self):
-        """التحقق من وجود حركات على المنتج (باستثناء الرصيد الافتتاحي)"""
+        """Check if there are movements on the product (excluding opening balance)"""
         from inventory.models import InventoryMovement
         return InventoryMovement.objects.filter(
             product=self

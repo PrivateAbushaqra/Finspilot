@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% load i18n %}
 {% load currency_tags %}
 
@@ -104,10 +104,10 @@
                         <i class="fas fa-print me-1"></i>
                         {% trans "Print Full Report" %}
                     </button>
-                    {% if perms.customers.can_add_customers_suppliers %}
+                    {% if perms.customers.can_add_suppliers %}
                     <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#addSupplierModal">
                         <i class="fas fa-plus me-2"></i>
-                        {% trans "Add" %} {% trans "Supplier" %} {% trans "New" %}
+                        {% trans "Add New Supplier" %}
                     </button>
                     {% endif %}
                     <a href="{% url 'customers:list' %}" class="btn btn-outline-light">
@@ -166,7 +166,7 @@
                 <div class="card-header">
                     <h6 class="mb-0">
                         <i class="fas fa-filter me-2"></i>
-                        {% trans "Filter" %} {% trans "Suppliers" %}
+                        {% trans "Filter Suppliers" %}
                     </h6>
                 </div>
                 <div class="card-body">
@@ -238,7 +238,7 @@
                                 <div class="d-flex justify-content-between align-items-start mb-3">
                                     <h6 class="card-title mb-0">{{ supplier.name }}</h6>
                                     <span class="supplier-type-badge type-{{ supplier.type }}">
-                                        <a href="{% url 'customers:transactions' supplier.pk %}" class="text-decoration-none" title="كشف حساب المورد">
+                                        <a href="{% url 'customers:transactions' supplier.pk %}" class="text-decoration-none" title="{% trans 'Supplier Account Statement' %}">
                                             {{ supplier.get_type_display }}
                                         </a>
                                     </span>
@@ -266,7 +266,7 @@
                                         {% if supplier.is_active %}{% trans "Active" %}{% else %}{% trans "Not" %} {% trans "Active" %}{% endif %}
                                     </span>
                                     <div class="btn-group btn-group-sm">
-                                        {% if perms.customers.can_edit_customers_suppliers %}
+                                        {% if perms.customers.can_edit_suppliers %}
                                         <a href="{% url 'customers:edit' supplier.pk %}" class="btn btn-outline-warning" title="{% trans "Edit" %}">
                                             <i class="fas fa-edit"></i>
                                         </a>
@@ -274,7 +274,7 @@
                                         <a href="{% url 'customers:transactions' supplier.pk %}" class="btn btn-outline-info" title="{% trans 'Account statement' %}">
                                             <i class="fas fa-receipt"></i>
                                         </a>
-                                        {% if perms.customers.can_delete_customers_suppliers and perms.customers.can_add_customers_suppliers and perms.customers.can_edit_customers_suppliers and perms.customers.can_view_customers_suppliers %}
+                                        {% if perms.customers.can_delete_suppliers %}
                                         <a href="{% url 'customers:delete' supplier.pk %}" class="btn btn-outline-danger" title="{% trans "Delete" %}">
                                             <i class="fas fa-trash"></i>
                                         </a>
@@ -307,32 +307,32 @@
                                     <td><strong>{{ supplier.name }}</strong></td>
                                     <td>
                                         <span class="supplier-type-badge type-{{ supplier.type }}">
-                                            <a href="{% url 'customers:transactions' supplier.pk %}" class="text-decoration-none" title="كشف حساب المورد">
+                                            <a href="{% url 'customers:transactions' supplier.pk %}" class="text-decoration-none" title="{% trans 'Supplier Account Statement' %}">
                                                 {{ supplier.get_type_display }}
                                             </a>
                                         </span>
                                     </td>
-                                    <td>{{ supplier.phone|default:"غير محدد" }}</td>
-                                    <td>{{ supplier.email|default:"غير محدد" }}</td>
+                                    <td>{{ supplier.phone|default:"{% trans 'Not Specified' %}" }}</td>
+                                    <td>{{ supplier.email|default:"{% trans 'Not Specified' %}" }}</td>
                                     <td class="{% if supplier.current_balance > 0 %}text-success{% elif supplier.current_balance < 0 %}text-danger{% endif %}">
                                         {{ supplier.current_balance|currency_format }}
                                     </td>
                                     <td>
                                         <span class="badge {% if supplier.is_active %}bg-success{% else %}bg-secondary{% endif %}">
-                                            {% if supplier.is_active %}{% trans "Active" %}{% else %}غير {% trans "Active" %}{% endif %}
+                                            {% if supplier.is_active %}{% trans "Active" %}{% else %}{% trans "Inactive" %}{% endif %}
                                         </span>
                                     </td>
                                     <td>
                                         <div class="btn-group btn-group-sm">
-                                            {% if perms.customers.can_edit_customers_suppliers %}
+                                            {% if perms.customers.can_edit_suppliers %}
                                             <a href="{% url 'customers:edit' supplier.pk %}" class="btn btn-outline-warning" title="{% trans "Edit" %}">
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                             {% endif %}
-                                            <a href="{% url 'customers:transactions' supplier.pk %}" class="btn btn-outline-info" title="كشف الحساب">
+                                            <a href="{% url 'customers:transactions' supplier.pk %}" class="btn btn-outline-info" title="{% trans 'Account Statement' %}">
                                                 <i class="fas fa-receipt"></i>
                                             </a>
-                                            {% if perms.customers.can_delete_customers_suppliers and perms.customers.can_add_customers_suppliers and perms.customers.can_edit_customers_suppliers and perms.customers.can_view_customers_suppliers %}
+                                            {% if perms.customers.can_delete_suppliers %}
                                             <a href="{% url 'customers:delete' supplier.pk %}" class="btn btn-outline-danger" title="{% trans "Delete" %}">
                                                 <i class="fas fa-trash"></i>
                                             </a>
@@ -414,7 +414,7 @@
                 <form id="supplierForm">
                     {% csrf_token %}
                     
-                    <!-- {% trans "The" %}{% trans "Information" %} الأساسية -->
+                    <!-- Basic Information -->
                     <div class="mb-4">
                         <h6 class="text-primary border-bottom pb-2 mb-3">
                             <i class="fas fa-user me-2"></i>{% trans "Basic Information" %}
@@ -457,7 +457,7 @@
                         </div>
                     </div>
                     
-                    <!-- {% trans "The" %}{% trans "Information" %} المالية -->
+                    <!-- Financial Information -->
                     <div class="mb-4">
                         <h6 class="text-success border-bottom pb-2 mb-3">
                             <i class="fas fa-money-bill-wave me-2"></i>{% trans "The" %}{% trans "Information" %} {% trans "Financial" %}
@@ -488,7 +488,7 @@
                         </div>
                     </div>
                     
-                    <!-- {% trans "Information" %} إضافية -->
+                    <!-- {% trans "Information" %} Ø¥Ø¶Ø§ÙÙŠØ© -->
                     <div class="mb-3">
                         <h6 class="text-info border-bottom pb-2 mb-3">
                             <i class="fas fa-sticky-note me-2"></i>{% trans "Information" %} {% trans "Additional" %}
@@ -676,12 +676,12 @@
                 // {% trans "Reload" %} {% trans "The" %} {% trans "page" %} {% trans "to" %} {% trans "View" %} {% trans "The" %}{% trans "Supplier" %} {% trans "New" %}
                 location.reload();
             } else {
-                console.error('{% trans "Error" %} من الخادم:', data.message);
+                console.error('Error from server:', data.message);
                 alert('{% trans "Error" %}: ' + (data.message || '{% trans "Happened" %} {% trans "Error" %} {% trans "during" %} {% trans "creation" %} {% trans "The" %}{% trans "Supplier" %}'));
             }
         })
         .catch(error => {
-            console.error('{% trans "Error" %} في الشبكة:', error);
+            console.error('Network error:', error);
             alert('{% trans "Happened" %} {% trans "Error" %} {% trans "during" %} {% trans "creation" %} {% trans "The" %}{% trans "Supplier" %}. {% trans "Try again" %}.');
         });
     }
@@ -701,24 +701,24 @@
     // Custom print function for suppliers report
     function printPage() {
         try {
-            // إنشاء نافذة طباعة جديدة
+            // Ø¥Ù†Ø´Ø§Ø¡ Ù†Ø§ÙØ°Ø© Ø·Ø¨Ø§Ø¹Ø© Ø¬Ø¯ÙŠØ¯Ø©
             var printWindow = window.open('', '_blank');
             
-            // الحصول على البيانات من الجدول المخفي
+            // Get data from hidden table
             var table = document.querySelector('.print-only-table');
             if (!table) {
-                alert('جدول البيانات غير موجود');
+                alert('{% trans "Data table not found" %}');
                 return;
             }
             
             var rows = table.querySelectorAll('tbody tr');
             if (rows.length === 0) {
-                alert('لا توجد بيانات للطباعة');
+                alert('Ù„Ø§ ØªÙˆØ¬Ø¯ Ø¨ÙŠØ§Ù†Ø§Øª Ù„Ù„Ø·Ø¨Ø§Ø¹Ø©');
                 printWindow.close();
                 return;
             }
             
-            // إنشاء محتوى الطباعة
+            // Create print content
             var printContent = `
                 <html>
                 <head>
@@ -769,7 +769,7 @@
                         </thead>
                         <tbody>`;
             
-            // إضافة صفوف البيانات
+            // Add data rows
             rows.forEach(function(row) {
                 var cells = row.querySelectorAll('td');
                 printContent += '<tr>';
@@ -789,17 +789,17 @@
                 </body>
                 </html>`;
             
-            // كتابة المحتوى في نافذة الطباعة
+            // Write content to print window
             printWindow.document.write(printContent);
             printWindow.document.close();
             
-            // انتظار تحميل المحتوى ثم الطباعة
+            // Wait for content to load then print
             printWindow.onload = function() {
                 printWindow.print();
                 printWindow.close();
             };
         } catch (error) {
-            alert('حدث خطأ أثناء الطباعة: ' + error.message);
+            alert('{% trans "An error occurred while printing" %}: ' + error.message);
             console.error('Print error:', error);
         }
     }
@@ -830,8 +830,8 @@
         <tr>
             <td>{{ supplier.name }}</td>
             <td>{{ supplier.get_type_display }}</td>
-            <td>{{ supplier.phone|default:"غير محدد" }}</td>
-            <td>{{ supplier.email|default:"غير محدد" }}</td>
+            <td>{{ supplier.phone|default:"{% trans 'Not Specified' %}" }}</td>
+            <td>{{ supplier.email|default:"{% trans 'Not Specified' %}" }}</td>
             <td>{{ supplier.current_balance|currency_format }}</td>
             <td>{% if supplier.is_active %}{% trans "Active" %}{% else %}{% trans "Inactive" %}{% endif %}</td>
         </tr>

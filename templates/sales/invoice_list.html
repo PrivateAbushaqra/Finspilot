@@ -286,17 +286,19 @@
             <p class="text-muted mb-0">{% trans "Manage All Sales Invoices" %}</p>
         </div>
         <div>
+            {% if user.is_superuser or perms.sales.can_add_sales %}
             <a href="{% url 'sales:invoice_add' %}" class="btn btn-primary">
                 <i class="fas fa-plus me-1"></i>
                 {% trans "Create New Invoice" %}
             </a>
+            {% endif %}
             <a href="{% url 'sales:invoice_export' %}?{{ request.GET.urlencode }}" class="btn btn-success ms-2">
                 <i class="fas fa-file-excel me-1"></i>
                 {% trans "Export to Excel" %}
             </a>
             <button type="button" onclick="printPage()" class="btn btn-outline-secondary ms-2">
                 <i class="fas fa-print me-1"></i>
-                {% trans "Print" %} {% trans "the list" %}
+                {% trans "Print the list" %}
             </button>
         </div>
     </div>
@@ -583,19 +585,25 @@
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm" role="group">
+                                        {% if user.is_superuser or perms.sales.can_view_sales %}
                                         <a href="{% url 'sales:invoice_detail' invoice.pk %}" 
                                            class="btn btn-outline-primary" title="{% trans "View" %}">
                                             <i class="fas fa-eye"></i>
                                         </a>
+                                        {% endif %}
+                                        {% if user.is_superuser or perms.sales.can_edit_sales %}
                                         <a href="{% url 'sales:invoice_edit' invoice.pk %}" 
                                            class="btn btn-outline-warning" title="{% trans "Edit" %}">
                                             <i class="fas fa-edit"></i>
                                         </a>
+                                        {% endif %}
+                                        {% if user.is_superuser or perms.sales.can_delete_sales %}
                                         <a href="{% url 'sales:invoice_delete' invoice.pk %}" 
                                            class="btn btn-outline-danger" title="{% trans "Delete" %}"
                                            onclick="return confirm('{% trans "Are you sure you want to delete this invoice?" %}')">
                                             <i class="fas fa-trash"></i>
                                         </a>
+                                        {% endif %}
                                     </div>
                                 </td>
                             </tr>
@@ -641,7 +649,7 @@
                     <p class="text-muted">{% trans "Start by creating a new sales invoice" %}</p>
                     <a href="{% url 'sales:invoice_add' %}" class="btn btn-primary">
                         <i class="fas fa-plus me-1"></i>
-                        {% trans "Add" %} {% trans "Create New Invoice" %}
+                        {% trans "Create New Invoice" %}
                     </a>
                 </div>
             {% endif %}

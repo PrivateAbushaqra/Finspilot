@@ -174,10 +174,12 @@
             <p class="text-muted mb-0">{% trans "Manage All Purchase Invoices" %}</p>
         </div>
         <div>
+            {% if user.is_superuser or perms.purchases.can_add_purchases %}
             <a href="{% url 'purchases:invoice_add' %}" class="btn btn-primary">
                 <i class="fas fa-plus me-1"></i>
                 {% trans "Create New Invoice" %}
             </a>
+            {% endif %}
             <button type="button" onclick="printPage()" class="btn btn-outline-secondary ms-2">
                 <i class="fas fa-print me-1"></i>
                 {% trans "Print The List" %}
@@ -262,7 +264,7 @@
             <div class="col-md-3">
                 <label for="search" class="form-label">{% trans "Search" %}</label>
                 <input type="text" class="form-control" id="search" name="search" 
-                       value="{{ request.GET.search }}" placeholder="{% trans "Invoice Number" %} أو اسم {% trans "Supplier" %}">
+                       value="{{ request.GET.search }}" placeholder="{% trans "Invoice Number or Supplier" %}">
             </div>
             
             <div class="col-md-2">
@@ -454,7 +456,7 @@
                                        class="btn btn-outline-primary" title="{% trans "View" %}">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    {% if perms.purchases.can_edit_purchases or perms.purchases.can_delete_purchases or user.is_superuser %}
+                                    {% if user.is_superuser or perms.purchases.can_edit_purchases %}
                                         {% if perms.purchases.can_edit_purchases or user.is_superuser %}
                                             <a href="{% url 'purchases:invoice_edit' invoice.id %}" 
                                                class="btn btn-outline-warning" title="{% trans "Edit" %}">

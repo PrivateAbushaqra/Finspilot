@@ -2262,7 +2262,7 @@ class SalesCreditNoteListView(LoginRequiredMixin, UserPassesTestMixin, ListView)
 
     def test_func(self):
         return (
-            self.request.user.has_perm('sales.can_view_sales') or
+            self.request.user.has_perm('sales.can_view_credit_notes') or
             self.request.user.is_superuser
         )
 
@@ -2547,7 +2547,7 @@ def print_pos_invoice(request, pk):
 def pos_view(request):
     """شاشة نقطة البيع"""
     # التحقق من صلاحية الوصول لنقطة البيع
-    if not request.user.has_pos_permission():
+    if not (request.user.has_perm('sales.can_access_pos') or request.user.has_perm('sales.can_view_pos') or request.user.is_superuser):
         messages.error(request, 'ليس لديك صلاحية للوصول إلى نقطة البيع')
         return redirect('core:dashboard')
     
@@ -3093,7 +3093,7 @@ class SalesStatementView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     template_name = 'sales/sales_statement.html'
     
     def test_func(self):
-        return self.request.user.has_sales_permission()
+        return self.request.user.has_perm('sales.can_view_sales_statement') or self.request.user.is_superuser
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -3147,7 +3147,7 @@ class SalesReturnStatementView(LoginRequiredMixin, UserPassesTestMixin, Template
     template_name = 'sales/sales_return_statement.html'
     
     def test_func(self):
-        return self.request.user.has_sales_permission()
+        return self.request.user.has_perm('sales.can_view_sales_returns_statement') or self.request.user.is_superuser
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

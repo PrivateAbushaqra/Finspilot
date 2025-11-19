@@ -13,21 +13,21 @@
                 <div class="card-header bg-danger text-white">
                     <h5 class="mb-0">
                         <i class="fas fa-trash me-2"></i>
-                        {% trans "Confirmation" %} {% trans "Delete" %} التصنيف
+                        {% trans "Delete Category Confirmation" %}
                     </h5>
                 </div>
                 <div class="card-body">
                     <div class="alert alert-warning">
                         <i class="fas fa-exclamation-triangle me-2"></i>
-                        <strong>{% trans "Warning" %}:</strong> هذا الإجراء لا يمكن التراجع عنه!
+                        <strong>{% trans "Warning" %}:</strong> {% trans "This action cannot be undone!" %}
                     </div>
                     
-                    <p>هل أنت متأكد من {% trans "Delete" %} التصنيف {% trans "Next" %}؟</p>
+                    <p>{% trans "Are you sure you want to delete the following category?" %}</p>
                     
                     <div class="bg-light p-3 rounded mb-3">
-                        <h6><strong>اسم التصنيف:</strong> {{ category.name }}</h6>
-                        <p class="mb-1"><strong>عدد المنتجات المرتبطة:</strong> {{ products_count|default:0 }}</p>
-                        <p class="mb-0"><strong>عدد التصنيفات الفرعية:</strong> {{ subcategories_count|default:0 }}</p>
+                        <h6><strong>{% trans "Category Name" %}:</strong> {{ category.name }}</h6>
+                        <p class="mb-1"><strong>{% trans "Number of Related Products" %}:</strong> {{ products_count|default:0 }}</p>
+                        <p class="mb-0"><strong>{% trans "Number of Subcategories" %}:</strong> {{ subcategories_count|default:0 }}</p>
                     </div>
                     
                     {% if products_count > 0 or subcategories_count > 0 %}
@@ -35,13 +35,13 @@
                         <i class="fas fa-exclamation-triangle me-2"></i>
                         <strong>{% trans "Warning" %}:</strong> 
                         {% if products_count > 0 and subcategories_count > 0 %}
-                            لا يمكن {% trans "Delete" %} هذا التصنيف لوجود {{ products_count }} منتج و {{ subcategories_count }} تصنيف فرعي مرتبط به!
+                            {% trans "Cannot delete this category because it has" %} {{ products_count }} {% trans "products and" %} {{ subcategories_count }} {% trans "subcategories linked to it!" %}
                         {% elif products_count > 0 %}
-                            لا يمكن {% trans "Delete" %} هذا التصنيف لوجود {{ products_count }} منتج مرتبط به!
+                            {% trans "Cannot delete this category because it has" %} {{ products_count }} {% trans "products linked to it!" %}
                         {% elif subcategories_count > 0 %}
-                            لا يمكن {% trans "Delete" %} هذا التصنيف لوجود {{ subcategories_count }} تصنيف فرعي!
+                            {% trans "Cannot delete this category because it has" %} {{ subcategories_count }} {% trans "subcategories!" %}
                         {% endif %}
-                        <br>يجب {% trans "Delete" %} أو نقل المرتبطات أو{% trans "No" %}ً.
+                        <br>{% trans "You must delete or move the related items first." %}
                     </div>
                     {% endif %}
                     
@@ -49,18 +49,18 @@
                         {% csrf_token %}
                         <a href="{% url 'products:category_list' %}" class="btn btn-secondary">
                             <i class="fas fa-times me-2"></i>
-                            {% if products_count > 0 or subcategories_count > 0 %}عودة{% else %}إلغاء{% endif %}
+                            {% if products_count > 0 or subcategories_count > 0 %}{% trans "Back" %}{% else %}{% trans "Cancel" %}{% endif %}
                         </a>
                         {% if products_count == 0 and subcategories_count == 0 %}
                         <button type="submit" class="btn btn-danger" 
-                                onclick="return confirm('هل أنت متأكد من {% trans "Delete" %} التصنيف {{ category.name }}؟')">
+                                onclick="return confirm('{% trans "Are you sure you want to delete category" %} {{ category.name }}?')">
                             <i class="fas fa-trash me-2"></i>
-                            {% trans "Delete" %} التصنيف
+                            {% trans "Delete Category" %}
                         </button>
                         {% else %}
                         <button type="button" class="btn btn-danger" disabled>
                             <i class="fas fa-ban me-2"></i>
-                            لا يمكن الحذف
+                            {% trans "Cannot Delete" %}
                         </button>
                         {% endif %}
                     </form>

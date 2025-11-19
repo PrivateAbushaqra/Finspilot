@@ -650,8 +650,11 @@ class FiscalYear(models.Model):
         ordering = ['-year']
         default_permissions = []  # No default permissions
         permissions = [
+            ("can_view_fiscal_years", _("View Fiscal Years")),
+            ("can_add_fiscal_years", _("Add Fiscal Years")),
+            ("can_edit_fiscal_years", _("Edit Fiscal Years")),
+            ("can_delete_fiscal_years", _("Delete Fiscal Years")),
             ("can_open_fiscal_year", _("Open Fiscal Year")),
-            ("can_access_closed_years", _("Access Closed Fiscal Years")),
         ]
     
     def __str__(self):

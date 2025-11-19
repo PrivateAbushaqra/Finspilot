@@ -795,7 +795,7 @@ class PurchaseInvoiceCreateView(LoginRequiredMixin, View):
 
 class PurchaseDebitNoteListView(LoginRequiredMixin, ListView):
     def dispatch(self, request, *args, **kwargs):
-        if not (request.user.has_perm('purchases.can_view_purchases') or request.user.is_superuser):
+        if not (request.user.has_perm('purchases.can_view_debit_notes') or request.user.is_superuser):
             from django.contrib import messages
             from django.shortcuts import redirect
             messages.error(request, _('You do not have permission to view debit notes'))
@@ -1754,7 +1754,7 @@ class PurchaseReportView(LoginRequiredMixin, TemplateView):
 
 class PurchaseStatementView(LoginRequiredMixin, TemplateView):
     def dispatch(self, request, *args, **kwargs):
-        if not request.user.has_perm('purchases.can_view_purchases') and not request.user.is_superuser:
+        if not request.user.has_perm('purchases.can_view_purchase_statement') and not request.user.is_superuser:
             from django.contrib import messages
             from django.shortcuts import redirect
             messages.error(request, 'ليس لديك صلاحية لعرض كشف المشتريات')

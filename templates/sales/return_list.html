@@ -47,10 +47,12 @@
             <p class="text-muted mb-0">{% trans "Manage All Sales Returns" %}</p>
         </div>
         <div>
+            {% if perms.sales.can_add_sales_returns %}
             <a href="{% url 'sales:return_add' %}" class="btn btn-success">
                 <i class="fas fa-plus me-1"></i>
                 {% trans "Create New Return" %}
             </a>
+            {% endif %}
         </div>
     </div>
 
@@ -301,16 +303,20 @@
                                                    title="{% trans "View" %} ال{% trans "Details" %}">
                                                     <i class="fas fa-eye"></i>
                                                 </a>
+                                                {% if user.is_superuser or perms.sales.can_edit_sales_returns %}
                                                 <a href="{% url 'sales:return_edit' return.pk %}" 
                                                    class="btn btn-sm btn-outline-warning" 
                                                    title="{% trans "Edit" %}">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
+                                                {% endif %}
+                                                {% if user.is_superuser or perms.sales.can_delete_sales_returns %}
                                                 <a href="{% url 'sales:return_delete' return.pk %}" 
                                                    class="btn btn-sm btn-outline-danger" 
                                                    title="{% trans "Delete" %}">
                                                     <i class="fas fa-trash"></i>
                                                 </a>
+                                                {% endif %}
                                             </div>
                                         </td>
                                     </tr>

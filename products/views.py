@@ -12,9 +12,14 @@ from django.utils.decorators import method_decorator
 from .models import Category, Product
 from core.models import AuditLog
 from inventory.models import InventoryMovement, Warehouse
+from .permissions import (
+    CanViewProductsMixin, CanAddProductsMixin, CanEditProductsMixin, CanDeleteProductsMixin,
+    CanViewProductCategoriesMixin, CanAddProductCategoriesMixin, 
+    CanEditProductCategoriesMixin, CanDeleteProductCategoriesMixin
+)
 
 # Category Views
-class CategoryListView(LoginRequiredMixin, TemplateView):
+class CategoryListView(CanViewProductCategoriesMixin, LoginRequiredMixin, TemplateView):
     template_name = 'products/category_list.html'
     
     def get_context_data(self, **kwargs):
@@ -26,7 +31,7 @@ class CategoryListView(LoginRequiredMixin, TemplateView):
         context['inactive_categories'] = categories.filter(is_active=False).count()
         return context
 
-class CategoryCreateView(LoginRequiredMixin, View):
+class CategoryCreateView(CanAddProductCategoriesMixin, LoginRequiredMixin, View):
     template_name = 'products/category_add.html'
     
     def get(self, request, *args, **kwargs):
@@ -48,12 +53,12 @@ class CategoryCreateView(LoginRequiredMixin, View):
             
             # التحقق من صحة البيانات
             if not name:
-                messages.error(request, 'اسم التصنيف مطلوب!')
+                messages.error(request, _('Category name is required!'))
                 return self.get(request)
             
             # التحقق من عدم تكرار الرمز
             if code and Category.objects.filter(code=code).exists():
-                messages.error(request, 'رمز التصنيف موجود مسبقاً!')
+                messages.error(request, _('Category code already exists!'))
                 return self.get(request)
             
             # معالجة التصنيف الأب
@@ -84,11 +89,11 @@ class CategoryCreateView(LoginRequiredMixin, View):
                 ip_address=self.get_client_ip(request)
             )
             
-            messages.success(request, f'تم إنشاء التصنيف "{category.name}" بنجاح!')
+            messages.success(request, _(f'Category "{category.name}" created successfully!'))
             return redirect('products:category_list')
             
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء إنشاء التصنيف: {str(e)}')
+            messages.error(request, _(f'Error creating category: {str(e)}'))
             return self.get(request)
     
     def get_client_ip(self, request):
@@ -126,7 +131,7 @@ class CategoryUpdateView(LoginRequiredMixin, View):
             
             # التحقق من صحة البيانات
             if not name:
-                messages.error(request, 'اسم التصنيف مطلوب!')
+                messages.error(request, _('Category name is required!'))
                 return self.get(request, pk)
             
             # معالجة التصنيف الأب
@@ -136,7 +141,7 @@ class CategoryUpdateView(LoginRequiredMixin, View):
                     parent = Category.objects.get(id=parent_id)
                     # التأكد من عدم جعل التصنيف أب لنفسه
                     if parent.id == category.id:
-                        messages.error(request, 'لا يمكن جعل التصنيف أب لنفسه!')
+                        messages.error(request, _('Cannot make category parent of itself!'))
                         return self.get(request, pk)
                 except Category.DoesNotExist:
                     parent = None
@@ -150,11 +155,11 @@ class CategoryUpdateView(LoginRequiredMixin, View):
             category.is_active = is_active
             category.save()
             
-            messages.success(request, f'تم تحديث التصنيف "{category.name}" بنجاح!')
+            messages.success(request, _(f'Category "{category.name}" updated successfully!'))
             return redirect('products:category_list')
             
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء تحديث التصنيف: {str(e)}')
+            messages.error(request, _(f'Error updating category: {str(e)}'))
             return self.get(request, pk)
 
 class CategoryDeleteView(LoginRequiredMixin, View):
@@ -181,8 +186,8 @@ class CategoryDeleteView(LoginRequiredMixin, View):
             if products_count > 0:
                 messages.error(
                     request, 
-                    f'لا يمكن حذف التصنيف "{category_name}" لوجود {products_count} منتج مرتبط به! '
-                    f'يجب حذف أو نقل المنتجات أولاً.'
+                    _(f'Cannot delete category "{category_name}" because it has {products_count} linked products! ')
+                    + _('You must delete or move the products first.')
                 )
                 return redirect('products:category_list')
             
@@ -191,8 +196,8 @@ class CategoryDeleteView(LoginRequiredMixin, View):
             if subcategories_count > 0:
                 messages.error(
                     request, 
-                    f'لا يمكن حذف التصنيف "{category_name}" لوجود {subcategories_count} تصنيف فرعي! '
-                    f'يجب حذف أو نقل التصنيفات الفرعية أولاً.'
+                    _(f'Cannot delete category "{category_name}" because it has {subcategories_count} subcategories! ')
+                    + _('You must delete or move the subcategories first.')
                 )
                 return redirect('products:category_list')
             
@@ -209,17 +214,17 @@ class CategoryDeleteView(LoginRequiredMixin, View):
                 ip_address=request.META.get('REMOTE_ADDR')
             )
             
-            messages.success(request, f'تم حذف التصنيف "{category_name}" بنجاح!')
+            messages.success(request, _(f'Category "{category_name}" deleted successfully!'))
             
         except Category.DoesNotExist:
-            messages.error(request, 'التصنيف المحدد غير موجود!')
+            messages.error(request, _('Selected category does not exist!'))
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء حذف التصنيف: {str(e)}')
+            messages.error(request, _(f'Error deleting category: {str(e)}'))
         
         return redirect('products:category_list')
 
 # Product Views
-class ProductListView(LoginRequiredMixin, ListView):
+class ProductListView(CanViewProductsMixin, LoginRequiredMixin, ListView):
     model = Product
     template_name = 'products/product_list.html'
     context_object_name = 'products'
@@ -281,7 +286,7 @@ class ProductListView(LoginRequiredMixin, ListView):
         
         return context
 
-class ProductCreateView(LoginRequiredMixin, View):
+class ProductCreateView(CanAddProductsMixin, LoginRequiredMixin, View):
     template_name = 'products/product_add.html'
     
     def get(self, request, *args, **kwargs):
@@ -316,37 +321,37 @@ class ProductCreateView(LoginRequiredMixin, View):
             
             # التحقق من صحة البيانات
             if not name:
-                messages.error(request, 'اسم المنتج مطلوب!')
+                messages.error(request, _('Product name is required!'))
                 return self.get(request)
             
             if not sale_price or float(sale_price) <= 0:
-                messages.error(request, 'سعر البيع مطلوب ويجب أن يكون أكبر من صفر!')
+                messages.error(request, _('Sale price is required and must be greater than zero!'))
                 return self.get(request)
             
             # التحقق من التصنيف
             if not category_id:
-                messages.error(request, 'التصنيف مطلوب!')
+                messages.error(request, _('Category is required!'))
                 return self.get(request)
             
             try:
                 category = Category.objects.get(id=category_id)
             except Category.DoesNotExist:
-                messages.error(request, 'التصنيف المحدد غير موجود!')
+                messages.error(request, _('Selected category does not exist!'))
                 return self.get(request)
             
             # التحقق من عدم تكرار رمز المنتج
             if sku and Product.objects.filter(code=sku).exists():
-                messages.error(request, 'رمز المنتج موجود مسبقاً!')
+                messages.error(request, _('Product code already exists!'))
                 return self.get(request)
             
             # التحقق من عدم تكرار الباركود
             if barcode and Product.objects.filter(barcode=barcode).exists():
-                messages.error(request, 'الباركود موجود مسبقاً!')
+                messages.error(request, _('Barcode already exists!'))
                 return self.get(request)
             
             # التحقق من عدم تكرار الرقم التسلسلي
             if serial_number and Product.objects.filter(serial_number=serial_number).exists():
-                messages.error(request, 'الرقم التسلسلي موجود مسبقاً!')
+                messages.error(request, _('Serial number already exists!'))
                 return self.get(request)
             
             # إنشاء رمز تلقائي إذا لم يُدخل
@@ -371,21 +376,21 @@ class ProductCreateView(LoginRequiredMixin, View):
                 
                 # التحقق من صحة نسبة الضريبة
                 if tax_rate < 0 or tax_rate > 100:
-                    messages.error(request, 'نسبة الضريبة يجب أن تكون بين 0 و 100!')
+                    messages.error(request, _('Tax rate must be between 0 and 100!'))
                     return self.get(request)
                 
                 # التحقق من صحة رصيد بداية المدة
                 if opening_balance < 0:
-                    messages.error(request, 'رصيد بداية المدة يجب أن يكون صفر أو أكبر!')
+                    messages.error(request, _('Opening balance must be zero or greater!'))
                     return self.get(request)
                 
                 # التحقق من تكلفة الرصيد الافتتاحي إذا كان الرصيد أكبر من صفر
                 if opening_balance > 0 and not opening_balance_warehouse_id:
-                    messages.error(request, 'مستودع الرصيد الافتتاحي مطلوب عند وجود رصيد افتتاحي!')
+                    messages.error(request, _('Opening balance warehouse is required when there is an opening balance!'))
                     return self.get(request)
                 
             except ValueError:
-                messages.error(request, 'يرجى إدخال أسعار ونسبة ضريبة صحيحة!')
+                messages.error(request, _('Please enter valid prices and tax rate!'))
                 return self.get(request)
             
             # الحصول على مستودع الرصيد الافتتاحي
@@ -394,7 +399,7 @@ class ProductCreateView(LoginRequiredMixin, View):
                 try:
                     opening_balance_warehouse = Warehouse.objects.get(id=opening_balance_warehouse_id, is_active=True)
                 except Warehouse.DoesNotExist:
-                    messages.error(request, 'مستودع الرصيد الافتتاحي المحدد غير موجود!')
+                    messages.error(request, _('Selected opening balance warehouse does not exist!'))
                     return self.get(request)
             
             # إنشاء المنتج
@@ -596,7 +601,7 @@ class ProductCreateView(LoginRequiredMixin, View):
             logger = logging.getLogger(__name__)
             logger.error(f"خطأ في إنشاء المنتج: {str(e)}")
             
-            messages.error(request, f'حدث خطأ أثناء إنشاء المنتج: {str(e)}')
+            messages.error(request, _(f'Error creating product: {str(e)}'))
             
             # إذا كان الطلب AJAX، إرسال JSON response للخطأ
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -608,7 +613,7 @@ class ProductCreateView(LoginRequiredMixin, View):
             
             return self.get(request)
 
-class ProductUpdateView(LoginRequiredMixin, View):
+class ProductUpdateView(CanEditProductsMixin, LoginRequiredMixin, View):
     template_name = 'products/product_edit.html'
     
     def get(self, request, pk, *args, **kwargs):
@@ -659,16 +664,16 @@ class ProductUpdateView(LoginRequiredMixin, View):
                 
                 if (float(opening_balance) != old_opening_balance or 
                     float(opening_balance_cost) != old_opening_balance_cost):
-                    messages.error(request, _('لا يمكنك تعديل الرصيد الافتتاحي لوجود حركات على هذا المنتج'))
+                    messages.error(request, _('Cannot edit opening balance as there are movements for this product'))
                     return self.get(request, pk)
             
             # التحقق من صحة البيانات
             if not name:
-                messages.error(request, 'اسم المنتج مطلوب!')
+                messages.error(request, _('Product name is required!'))
                 return self.get(request, pk)
             
             if not sale_price or float(sale_price) <= 0:
-                messages.error(request, 'سعر البيع مطلوب ويجب أن يكون أكبر من صفر!')
+                messages.error(request, _('Sale price is required and must be greater than zero!'))
                 return self.get(request, pk)
             
             # التحقق من التصنيف
@@ -677,17 +682,17 @@ class ProductUpdateView(LoginRequiredMixin, View):
                     category = Category.objects.get(id=category_id)
                     product.category = category
                 except Category.DoesNotExist:
-                    messages.error(request, 'التصنيف المحدد غير موجود!')
+                    messages.error(request, _('Selected category does not exist!'))
                     return self.get(request, pk)
             
             # التحقق من عدم تكرار الباركود
             if barcode and Product.objects.filter(barcode=barcode).exclude(pk=pk).exists():
-                messages.error(request, 'الباركود موجود مسبقاً!')
+                messages.error(request, _('Barcode already exists!'))
                 return self.get(request, pk)
             
             # التحقق من عدم تكرار الرقم التسلسلي
             if serial_number and Product.objects.filter(serial_number=serial_number).exclude(pk=pk).exists():
-                messages.error(request, 'الرقم التسلسلي موجود مسبقاً!')
+                messages.error(request, _('Serial number already exists!'))
                 return self.get(request, pk)
             
             # تحويل الأسعار إلى أرقام
@@ -711,21 +716,21 @@ class ProductUpdateView(LoginRequiredMixin, View):
                 
                 # التحقق من صحة نسبة الضريبة
                 if tax_rate < 0 or tax_rate > 100:
-                    messages.error(request, 'نسبة الضريبة يجب أن تكون بين 0 و 100!')
+                    messages.error(request, _('Tax rate must be between 0 and 100!'))
                     return self.get(request, pk)
                 
                 # التحقق من صحة رصيد بداية المدة
                 if opening_balance < 0:
-                    messages.error(request, 'رصيد بداية المدة يجب أن يكون صفر أو أكبر!')
+                    messages.error(request, _('Opening balance must be zero or greater!'))
                     return self.get(request, pk)
                 
                 # التحقق من مستودع الرصيد الافتتاحي إذا كان الرصيد أكبر من صفر
                 if opening_balance > 0 and not opening_balance_warehouse_id:
-                    messages.error(request, 'مستودع الرصيد الافتتاحي مطلوب عند وجود رصيد افتتاحي!')
+                    messages.error(request, _('Opening balance warehouse is required when there is an opening balance!'))
                     return self.get(request, pk)
                 
             except ValueError:
-                messages.error(request, 'يرجى إدخال أسعار ونسبة ضريبة صحيحة!')
+                messages.error(request, _('Please enter valid prices and tax rate!'))
                 return self.get(request, pk)
             
             # الحصول على مستودع الرصيد الافتتاحي
@@ -734,7 +739,7 @@ class ProductUpdateView(LoginRequiredMixin, View):
                 try:
                     opening_balance_warehouse = Warehouse.objects.get(id=opening_balance_warehouse_id, is_active=True)
                 except Warehouse.DoesNotExist:
-                    messages.error(request, 'مستودع الرصيد الافتتاحي المحدد غير موجود!')
+                    messages.error(request, _('Selected opening balance warehouse does not exist!'))
                     return self.get(request, pk)
             
             # التعامل مع تعديل الرصيد الافتتاحي
@@ -1023,7 +1028,7 @@ class ProductUpdateView(LoginRequiredMixin, View):
             logger = logging.getLogger(__name__)
             logger.error(f"خطأ في تحديث المنتج {pk}: {str(e)}")
             
-            messages.error(request, f'حدث خطأ أثناء تحديث المنتج: {str(e)}')
+            messages.error(request, _(f'Error updating product: {str(e)}'))
             
             # إذا كان الطلب AJAX، إرسال JSON response للخطأ
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -1035,7 +1040,7 @@ class ProductUpdateView(LoginRequiredMixin, View):
             
             return self.get(request, pk)
 
-class ProductDeleteView(LoginRequiredMixin, View):
+class ProductDeleteView(CanDeleteProductsMixin, LoginRequiredMixin, View):
     template_name = 'products/product_delete.html'
     
     def get(self, request, pk, *args, **kwargs):
@@ -1159,7 +1164,7 @@ class ProductDeleteView(LoginRequiredMixin, View):
                 ip_address=request.META.get('REMOTE_ADDR')
             )
             
-            messages.success(request, f'تم حذف المنتج "{product_name}" بنجاح!')
+            messages.success(request, _(f'Product "{product_name}" deleted successfully!'))
             
         except Exception as e:
             # معالجة أخطاء أخرى غير متوقعة
@@ -1177,7 +1182,7 @@ class ProductDeleteView(LoginRequiredMixin, View):
                 ip_address=request.META.get('REMOTE_ADDR')
             )
             
-            messages.error(request, f'حدث خطأ غير متوقع أثناء حذف المنتج: {str(e)}')
+            messages.error(request, _(f'Unexpected error while deleting product: {str(e)}'))
         
         return redirect('products:product_list')
     

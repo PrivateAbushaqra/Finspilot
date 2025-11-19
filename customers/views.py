@@ -180,6 +180,14 @@ class SupplierListView(LoginRequiredMixin, ListView):
     context_object_name = 'suppliers'
     paginate_by = 20
     
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.has_perm('customers.can_view_suppliers'):
+            from core.signals import log_view_activity
+            log_view_activity(request, 'denied', None, _('Attempt to access supplier list without permission'))
+            messages.error(request, _('You do not have permission to view suppliers'))
+            return redirect('core:dashboard')
+        return super().dispatch(request, *args, **kwargs)
+    
     def get_queryset(self):
         # فلتر الحسابات النشطة فقط بشكل افتراضي (IFRS Compliant)
         queryset = CustomerSupplier.objects.filter(type__in=['supplier', 'both'])
@@ -247,11 +255,15 @@ class CustomerSupplierCreateView(LoginRequiredMixin, View):
     template_name = 'customers/add.html'
     
     def get(self, request, *args, **kwargs):
-        if not request.user.has_perm('customers.can_add_customers_suppliers'):
+        # التحقق من الصلاحيات - يحتاج صلاحية واحدة على الأقل
+        has_customer_perm = request.user.has_perm('customers.can_add_customers')
+        has_supplier_perm = request.user.has_perm('customers.can_add_suppliers')
+        
+        if not (has_customer_perm or has_supplier_perm):
             from core.signals import log_view_activity
             log_view_activity(request, 'denied', None, _('Attempt to access add customer/supplier page without permission'))
             messages.error(request, _('You do not have permission to add customer/supplier'))
-            return redirect('customers:customer_list')
+            return redirect('core:dashboard')
         return render(request, self.template_name)
     
     def post(self, request, *args, **kwargs):
@@ -259,6 +271,17 @@ class CustomerSupplierCreateView(LoginRequiredMixin, View):
             # الحصول على البيانات من النموذج
             name = request.POST.get('name', '').strip()
             type_value = request.POST.get('type', 'customer')
+            
+            # التحقق من الصلاحيات بناءً على النوع
+            if type_value in ['customer', 'both']:
+                if not request.user.has_perm('customers.can_add_customers'):
+                    messages.error(request, _('You do not have permission to add customers'))
+                    return redirect('core:dashboard')
+            if type_value in ['supplier', 'both']:
+                if not request.user.has_perm('customers.can_add_suppliers'):
+                    messages.error(request, _('You do not have permission to add suppliers'))
+                    return redirect('core:dashboard')
+            
             email = request.POST.get('email', '').strip()
             phone = request.POST.get('phone', '').strip()
             address = request.POST.get('address', '').strip()
@@ -358,6 +381,16 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
     def get(self, request, pk, *args, **kwargs):
         customer_supplier = get_object_or_404(CustomerSupplier, pk=pk)
         
+        # التحقق من الصلاحيات بناءً على النوع
+        if customer_supplier.type in ['customer', 'both']:
+            if not request.user.has_perm('customers.can_edit_customers'):
+                messages.error(request, _('You do not have permission to edit customers'))
+                return redirect('core:dashboard')
+        if customer_supplier.type in ['supplier', 'both']:
+            if not request.user.has_perm('customers.can_edit_suppliers'):
+                messages.error(request, _('You do not have permission to edit suppliers'))
+                return redirect('core:dashboard')
+        
         # حساب الائتمان المتاح بناءً على الرصيد الحالي المحسوب من المعاملات
         current_balance = customer_supplier.current_balance
         available_credit = customer_supplier.credit_limit - abs(current_balance) if current_balance < 0 else customer_supplier.credit_limit
@@ -371,6 +404,16 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
     def post(self, request, pk, *args, **kwargs):
         customer_supplier = get_object_or_404(CustomerSupplier, pk=pk)
         
+        # التحقق من الصلاحيات بناءً على النوع القديم
+        if customer_supplier.type in ['customer', 'both']:
+            if not request.user.has_perm('customers.can_edit_customers'):
+                messages.error(request, _('You do not have permission to edit customers'))
+                return redirect('core:dashboard')
+        if customer_supplier.type in ['supplier', 'both']:
+            if not request.user.has_perm('customers.can_edit_suppliers'):
+                messages.error(request, _('You do not have permission to edit suppliers'))
+                return redirect('core:dashboard')
+        
         try:
             # حساب الرصيد الحالي قبل التعديل
             old_current_balance = customer_supplier.current_balance
@@ -378,6 +421,18 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
             # الحصول على البيانات من النموذج
             name = request.POST.get('name', '').strip()
             type_value = request.POST.get('type', customer_supplier.type)  # النوع الجديد أو القديم
+            
+            # التحقق من الصلاحيات للنوع الجديد إذا تم تغييره
+            if type_value != customer_supplier.type:
+                if type_value in ['customer', 'both']:
+                    if not request.user.has_perm('customers.can_edit_customers'):
+                        messages.error(request, _('You do not have permission to change type to customer'))
+                        return redirect('customers:edit', pk=pk)
+                if type_value in ['supplier', 'both']:
+                    if not request.user.has_perm('customers.can_edit_suppliers'):
+                        messages.error(request, _('You do not have permission to change type to supplier'))
+                        return redirect('customers:edit', pk=pk)
+            
             email = request.POST.get('email', '').strip()
             phone = request.POST.get('phone', '').strip()
             address = request.POST.get('address', '').strip()
@@ -633,6 +688,16 @@ class CustomerSupplierDeleteView(LoginRequiredMixin, View):
     def get(self, request, pk, *args, **kwargs):
         customer_supplier = get_object_or_404(CustomerSupplier, pk=pk)
         
+        # التحقق من الصلاحيات بناءً على النوع
+        if customer_supplier.type in ['customer', 'both']:
+            if not request.user.has_perm('customers.can_delete_customers'):
+                messages.error(request, _('You do not have permission to delete customers'))
+                return redirect('core:dashboard')
+        if customer_supplier.type in ['supplier', 'both']:
+            if not request.user.has_perm('customers.can_delete_suppliers'):
+                messages.error(request, _('You do not have permission to delete suppliers'))
+                return redirect('core:dashboard')
+        
         # التحقق من الصلاحيات - فقط للسوبر أدمين
         if not request.user.is_superuser:
             messages.error(request, _('You do not have permission to delete customers/suppliers'))
@@ -681,6 +746,16 @@ class CustomerSupplierDeleteView(LoginRequiredMixin, View):
     
     def post(self, request, pk, *args, **kwargs):
         customer_supplier = get_object_or_404(CustomerSupplier, pk=pk)
+        
+        # التحقق من الصلاحيات بناءً على النوع
+        if customer_supplier.type in ['customer', 'both']:
+            if not request.user.has_perm('customers.can_delete_customers'):
+                messages.error(request, _('You do not have permission to delete customers'))
+                return redirect('core:dashboard')
+        if customer_supplier.type in ['supplier', 'both']:
+            if not request.user.has_perm('customers.can_delete_suppliers'):
+                messages.error(request, _('You do not have permission to delete suppliers'))
+                return redirect('core:dashboard')
         
         try:
             # التحقق من الصلاحيات - فقط للسوبر أدمين
@@ -1463,6 +1538,13 @@ def ajax_add_supplier(request):
             'message': 'طريقة الطلب غير صحيحة'
         })
     
+    # التحقق من الصلاحيات
+    if not request.user.has_perm('customers.can_add_suppliers'):
+        return JsonResponse({
+            'success': False,
+            'message': 'ليس لديك صلاحية لإضافة موردين'
+        })
+    
     try:
         with transaction.atomic():
             # استلام البيانات
@@ -1557,6 +1639,13 @@ def ajax_add_customer(request):
         return JsonResponse({
             'success': False,
             'message': 'طريقة الطلب غير صحيحة'
+        })
+    
+    # التحقق من الصلاحيات
+    if not request.user.has_perm('customers.can_add_customers'):
+        return JsonResponse({
+            'success': False,
+            'message': 'ليس لديك صلاحية لإضافة عملاء'
         })
     
     try:
