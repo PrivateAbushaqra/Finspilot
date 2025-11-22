@@ -3025,7 +3025,12 @@ class SalesReportView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     template_name = 'sales/sales_report.html'
     
     def test_func(self):
-        return self.request.user.has_sales_permission()
+        # التحقق من صلاحية عرض تقارير المبيعات
+        return (
+            self.request.user.is_superuser or 
+            self.request.user.has_perm('reports.can_view_sales_reports') or
+            self.request.user.has_sales_permission()
+        )
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -3064,8 +3069,8 @@ class SalesReportView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             'total_discount': sales_invoices.aggregate(total=Sum('discount_amount'))['total'] or 0,
         }
         
-        # مبيعات حسب العملاء
-        customer_sales = sales_invoices.values('customer__name').annotate(
+        # مبيعات حسب العملاء (استبعاد الفواتير بدون عميل)
+        customer_sales = sales_invoices.filter(customer__isnull=False).values('customer__name').annotate(
             total_amount=Sum('total_amount'),
             invoice_count=Count('id')
         ).order_by('-total_amount')[:10]  # أفضل 10 عملاء
@@ -3448,7 +3453,12 @@ class SalesCreditNoteReportView(LoginRequiredMixin, UserPassesTestMixin, ListVie
     paginate_by = 50
     
     def test_func(self):
-        return self.request.user.has_sales_permission()
+        # التحقق من صلاحية عرض تقارير المبيعات
+        return (
+            self.request.user.is_superuser or 
+            self.request.user.has_perm('reports.can_view_sales_reports') or
+            self.request.user.has_sales_permission()
+        )
     
     def get(self, request, *args, **kwargs):
         # تسجيل النشاط

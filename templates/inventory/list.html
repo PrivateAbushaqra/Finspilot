@@ -260,6 +260,7 @@
             <div class="row mb-4">
                 <div class="col-12">
                     <div class="card">
+                        {% if user.is_superuser or perms.inventory.can_view_warehouses or perms.inventory.can_view_inventory_movements or perms.inventory.can_view_warehouse_transfers or perms.inventory.can_view_stock_alerts %}
                         <div class="card-header">
                             <h5 class="mb-0">
                                 <i class="fas fa-bolt me-2"></i>
@@ -269,31 +270,40 @@
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-md-3">
+                                    {% if user.is_superuser or perms.inventory.can_view_warehouses %}
                                     <a href="{% url 'inventory:warehouse_list' %}" class="action-btn action-btn-primary w-100 text-center">
                                         <i class="fas fa-warehouse me-2"></i>
                                         {% trans "Warehouse Management" %}
                                     </a>
+                                    {% endif %}
                                 </div>
                                 <div class="col-md-3">
+                                    {% if user.is_superuser or perms.inventory.can_view_inventory_movements %}
                                     <a href="{% url 'inventory:movement_list' %}" class="action-btn action-btn-success w-100 text-center">
                                         <i class="fas fa-exchange-alt me-2"></i>
                                         {% trans "Inventory Movements" %}
                                     </a>
+                                    {% endif %}
                                 </div>
                                 <div class="col-md-3">
+                                    {% if user.is_superuser or perms.inventory.can_view_warehouse_transfers %}
                                     <a href="{% url 'inventory:transfer_list' %}" class="action-btn action-btn-warning w-100 text-center">
                                         <i class="fas fa-truck me-2"></i>
                                         {% trans "Inventory Transfer" %}
                                     </a>
+                                    {% endif %}
                                 </div>
                                 <div class="col-md-3">
+                                    {% if user.is_superuser or perms.inventory.can_view_stock_alerts %}
                                     <a href="{% url 'inventory:low_stock' %}" class="action-btn action-btn-info w-100 text-center">
                                         <i class="fas fa-exclamation-triangle me-2"></i>
                                         {% trans "Low Stock" %}
                                     </a>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>

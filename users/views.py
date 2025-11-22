@@ -998,6 +998,60 @@ class UserGroupCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
             'delete_category': _('Delete Category'),
             'view_category': _('View Category'),
             
+            # صلاحيات الإيرادات والمصروفات
+            'can_add_sectors': _('Add Sectors'),
+            'can_edit_sectors': _('Edit Sectors'),
+            'can_delete_sectors': _('Delete Sectors'),
+            'can_view_sectors': _('View Sectors'),
+            'can_add_categories': _('Add Revenue/Expense Categories'),
+            'can_edit_categories': _('Edit Revenue/Expense Categories'),
+            'can_delete_categories': _('Delete Revenue/Expense Categories'),
+            'can_view_categories': _('View Revenue/Expense Categories'),
+            'can_add_entries': _('Add Revenue/Expense Entries'),
+            'can_edit_entries': _('Edit Revenue/Expense Entries'),
+            'can_delete_entries': _('Delete Revenue/Expense Entries'),
+            'can_view_entries': _('View Revenue/Expense Entries'),
+            'can_add_recurring': _('Add Recurring Revenue/Expense'),
+            'can_edit_recurring': _('Edit Recurring Revenue/Expense'),
+            'can_delete_recurring': _('Delete Recurring Revenue/Expense'),
+            'can_view_recurring': _('View Recurring Revenue/Expense'),
+            
+            # صلاحيات المبيعات
+            'add_salesinvoice': _('Add Sales Invoice'),
+            'change_salesinvoice': _('Change Sales Invoice'),
+            'delete_salesinvoice': _('Delete Sales Invoice'),
+            'view_salesinvoice': _('View Sales Invoice'),
+            'add_salesinvoiceitem': _('Add Sales Invoice Item'),
+            'change_salesinvoiceitem': _('Change Sales Invoice Item'),
+            'delete_salesinvoiceitem': _('Delete Sales Invoice Item'),
+            'view_salesinvoiceitem': _('View Sales Invoice Item'),
+            
+            # صلاحيات المشتريات
+            'add_purchaseinvoice': _('Add Purchase Invoice'),
+            'change_purchaseinvoice': _('Change Purchase Invoice'),
+            'delete_purchaseinvoice': _('Delete Purchase Invoice'),
+            'view_purchaseinvoice': _('View Purchase Invoice'),
+            'add_purchaseinvoiceitem': _('Add Purchase Invoice Item'),
+            'change_purchaseinvoiceitem': _('Change Purchase Invoice Item'),
+            'delete_purchaseinvoiceitem': _('Delete Purchase Invoice Item'),
+            'view_purchaseinvoiceitem': _('View Purchase Invoice Item'),
+            
+            # صلاحيات العملاء والموردين
+            'add_customersupplier': _('Add Customer/Supplier'),
+            'change_customersupplier': _('Change Customer/Supplier'),
+            'delete_customersupplier': _('Delete Customer/Supplier'),
+            'view_customersupplier': _('View Customer/Supplier'),
+            
+            # صلاحيات المنتجات
+            'add_product': _('Add Product'),
+            'change_product': _('Change Product'),
+            'delete_product': _('Delete Product'),
+            'view_product': _('View Product'),
+            'add_category': _('Add Category'),
+            'change_category': _('Change Category'),
+            'delete_category': _('Delete Category'),
+            'view_category': _('View Category'),
+            
             # صلاحيات المخزون
             'add_warehouse': _('Add Warehouse'),
             'change_warehouse': _('Change Warehouse'),
@@ -1096,20 +1150,20 @@ class UserGroupCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
             'sales': _('Sales'),
             'purchases': _('Purchases'),
             'customers': _('Customers and Suppliers'),
-            'products': _('Products'),
-            'inventory': _('Inventory'),
+            'products': _('Categories and Products'),
+            'inventory': _('Inventory Management'),
             'assets_liabilities': _('Assets & Liabilities'),
             'revenues_expenses': _('Revenues & Expenses'),
             'banks': _('Banks'),
             'cashboxes': _('Cashboxes'),
             'payments': _('Payments'),
             'receipts': _('Receipts'),
-            'users': _('Users'),
+            'users': _('System Management'),
             'core': _('Core'),
             'backup': _('Backups'),
             'hr': _('Human Resources'),
             'reports': _('Reports'),
-            'settings': _('Settings'),
+            'settings': _('Advanced System Settings'),
         }
 
 
@@ -1436,6 +1490,61 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
             'change_category': _('Change Category'),
             'delete_category': _('Delete Category'),
             'view_category': _('View Category'),
+            'view_account': _('View Account'),
+            
+            # صلاحيات الإيرادات والمصروفات
+            'can_add_sectors': _('Add Sectors'),
+            'can_edit_sectors': _('Edit Sectors'),
+            'can_delete_sectors': _('Delete Sectors'),
+            'can_view_sectors': _('View Sectors'),
+            'can_add_categories': _('Add Revenue/Expense Categories'),
+            'can_edit_categories': _('Edit Revenue/Expense Categories'),
+            'can_delete_categories': _('Delete Revenue/Expense Categories'),
+            'can_view_categories': _('View Revenue/Expense Categories'),
+            'can_add_entries': _('Add Revenue/Expense Entries'),
+            'can_edit_entries': _('Edit Revenue/Expense Entries'),
+            'can_delete_entries': _('Delete Revenue/Expense Entries'),
+            'can_view_entries': _('View Revenue/Expense Entries'),
+            'can_add_recurring': _('Add Recurring Revenue/Expense'),
+            'can_edit_recurring': _('Edit Recurring Revenue/Expense'),
+            'can_delete_recurring': _('Delete Recurring Revenue/Expense'),
+            'can_view_recurring': _('View Recurring Revenue/Expense'),
+            
+            # صلاحيات المبيعات
+            'add_salesinvoice': _('Add Sales Invoice'),
+            'change_salesinvoice': _('Change Sales Invoice'),
+            'delete_salesinvoice': _('Delete Sales Invoice'),
+            'view_salesinvoice': _('View Sales Invoice'),
+            'add_salesinvoiceitem': _('Add Sales Invoice Item'),
+            'change_salesinvoiceitem': _('Change Sales Invoice Item'),
+            'delete_salesinvoiceitem': _('Delete Sales Invoice Item'),
+            'view_salesinvoiceitem': _('View Sales Invoice Item'),
+            
+            # صلاحيات المشتريات
+            'add_purchaseinvoice': _('Add Purchase Invoice'),
+            'change_purchaseinvoice': _('Change Purchase Invoice'),
+            'delete_purchaseinvoice': _('Delete Purchase Invoice'),
+            'view_purchaseinvoice': _('View Purchase Invoice'),
+            'add_purchaseinvoiceitem': _('Add Purchase Invoice Item'),
+            'change_purchaseinvoiceitem': _('Change Purchase Invoice Item'),
+            'delete_purchaseinvoiceitem': _('Delete Purchase Invoice Item'),
+            'view_purchaseinvoiceitem': _('View Purchase Invoice Item'),
+            
+            # صلاحيات العملاء والموردين
+            'add_customersupplier': _('Add Customer/Supplier'),
+            'change_customersupplier': _('Change Customer/Supplier'),
+            'delete_customersupplier': _('Delete Customer/Supplier'),
+            'view_customersupplier': _('View Customer/Supplier'),
+            
+            # صلاحيات المنتجات
+            'add_product': _('Add Product'),
+            'change_product': _('Change Product'),
+            'delete_product': _('Delete Product'),
+            'view_product': _('View Product'),
+            'add_category': _('Add Category'),
+            'change_category': _('Change Category'),
+            'delete_category': _('Delete Category'),
+            'view_category': _('View Category'),
             
             # صلاحيات المخزون
             'add_warehouse': _('Add Warehouse'),
@@ -1524,6 +1633,22 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
             'delete_backup': _('Delete Backup Files'),
             'can_delete_advanced_data': _('Delete Advanced Data'),
             'can_backup_system': _('Create System Backups'),
+            
+            # ??????? ????????
+            'can_view_sales_reports': _('Can View Sales Reports'),
+            'can_view_sales_by_representative_report': _('Can View Sales By Representative Report'),
+            'can_view_purchase_reports': _('Can View Purchase Reports'),
+            'can_view_profit_loss_report': _('Can View Profit and Loss Report'),
+            'can_view_balance_sheet': _('Can View Balance Sheet'),
+            'can_view_trial_balance': _('Can View Trial Balance'),
+            'can_view_income_statement': _('Can View Income Statement'),
+            'can_view_cash_flow_statement': _('Can View Cash Flow Statement'),
+            'can_view_financial_ratios': _('Can View Financial Ratios'),
+            'can_view_aging_report': _('Can View Aging Report'),
+            'can_view_tax_report': _('Can View Tax Report'),
+            'can_view_stock_balance_report': _('Can View Stock Balance Report'),
+            'can_view_customer_statement': _('Can View Customer Statement'),
+            'can_view_documents_report': _('Can View Documents Report'),
         }
         
         return translations.get(permission.codename, permission.name)
@@ -1535,20 +1660,20 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
             'sales': _('Sales'),
             'purchases': _('Purchases'),
             'customers': _('Customers and Suppliers'),
-            'products': _('Products'),
-            'inventory': _('Inventory'),
+            'products': _('Categories and Products'),
+            'inventory': _('Inventory Management'),
             'assets_liabilities': _('Assets & Liabilities'),
             'revenues_expenses': _('Revenues & Expenses'),
             'banks': _('Banks'),
             'cashboxes': _('Cashboxes'),
             'payments': _('Payments'),
             'receipts': _('Receipts'),
-            'users': _('Users'),
+            'users': _('System Management'),
             'core': _('Core'),
             'backup': _('Backups'),
             'hr': _('Human Resources'),
             'reports': _('Reports'),
-            'settings': _('Settings'),
+            'settings': _('Advanced System Settings'),
         }
 
 

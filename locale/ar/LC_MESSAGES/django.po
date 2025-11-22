@@ -2464,6 +2464,8 @@ msgstr "تعديل"
 #: .\templates\sales\return_add.html:25
 #: .\templates\sales\return_delete.html:176 .\templates\users\group_add.html:21
 #: .\templates\users\group_delete.html:20 .\templates\users\group_edit.html:21
+#: .\templates\products\product_delete.html:99
+#: .\templates\products\product_movements.html:115
 msgid "Back to List"
 msgstr "العودة إلى القائمة"
 
@@ -3496,8 +3498,6 @@ msgstr "دفعة"
 #: .\templates\inventory\movement_list.html:331
 #: .\templates\inventory\movement_list.html:485
 #: .\templates\inventory\product_detail.html:339
-#: .\templates\inventory\transfer_add.html:4
-#: .\templates\inventory\transfer_add.html:13
 #: .\templates\inventory\transfer_add.html:98
 #: .\templates\inventory\transfer_list.html:18
 #: .\templates\inventory\transfer_list.html:90
@@ -4082,12 +4082,6 @@ msgstr "تحديث"
 #: .\templates\hr\payroll_period_list.html:86
 #: .\templates\hr\position_confirm_delete.html:14
 #: .\templates\hr\position_detail.html:35 .\templates\hr\position_list.html:69
-#: .\templates\inventory\movement_bulk_delete.html:4
-#: .\templates\inventory\movement_bulk_delete.html:14
-#: .\templates\inventory\movement_bulk_delete.html:20
-#: .\templates\inventory\movement_bulk_delete.html:58
-#: .\templates\inventory\movement_bulk_delete.html:98
-#: .\templates\inventory\movement_bulk_delete.html:107
 #: .\templates\inventory\transfer_list.html:72
 #: .\templates\inventory\warehouse_delete.html:4
 #: .\templates\inventory\warehouse_delete.html:75
@@ -6443,7 +6437,7 @@ msgstr ""
 #: .\templates\journal\entry_detail.html:124
 #: .\templates\reports\balance_sheet.html:186
 msgid "الحساب"
-msgstr ""
+msgstr "الحساب"
 
 #: .\journal\forms.py:339
 msgid "جميع الحسابات"
@@ -6928,7 +6922,7 @@ msgstr "الحساب الرئيسي"
 #: .\templates\journal\account_list.html:352
 #: .\templates\reports\balance_sheet.html:187
 msgid "الرصيد"
-msgstr ""
+msgstr "الرصيد"
 
 #: .\journal\views.py:177 .\templates\journal\account_detail.html:60
 #: .\templates\journal\account_list.html:353
@@ -7634,13 +7628,15 @@ msgstr "يمكن عرض المنتجات"
 
 #: .\products\models.py:27
 msgid "Can Add Products"
-msgstr "يمكن إضافة المنتجات"
+msgstr "يستطيع إضافة المنتجات"
 
 #: .\products\models.py:28
 msgid "Can Edit Products"
 msgstr "يمكن تعديل المنتجات"
 
 #: .\products\models.py:29
+#: .\templates\products\product_delete.html:16
+#: .\templates\products\product_detail.html:468
 msgid "Can Delete Products"
 msgstr "يمكن حذف المنتجات"
 
@@ -11481,7 +11477,6 @@ msgstr "الأصول والخصوم"
 #: .\templates\assets_liabilities\dashboard.html:19
 #: .\templates\hr\department_detail.html:63
 #: .\templates\hr\position_detail.html:126
-#: .\templates\inventory\movement_bulk_delete.html:25
 #: .\templates\journal\dashboard.html:17
 #: .\templates\revenues_expenses\dashboard.html:17
 #: .\templates\search\search.html:217 .\templates\search\search.html:308
@@ -11533,8 +11528,6 @@ msgstr "إدارة الأصول"
 #: .\templates\financial_reports\balance_sheet.html:8
 #: .\templates\financial_reports\cash_flow.html:8
 #: .\templates\hr\payroll_period_form.html:416
-#: .\templates\inventory\transfer_add.html:4
-#: .\templates\inventory\transfer_add.html:13
 #: .\templates\inventory\transfer_add.html:144
 #: .\templates\inventory\transfer_list.html:18
 #: .\templates\inventory\transfer_list.html:90
@@ -11658,7 +11651,6 @@ msgstr "لم يتم إضافة خصوم بعد"
 #: .\templates\customers\supplier_list.html:409
 #: .\templates\customers\supplier_list.html:644
 #: .\templates\customers\supplier_list.html:676
-#: .\templates\inventory\transfer_add.html:4
 #: .\templates\inventory\transfer_list.html:18
 #: .\templates\inventory\transfer_list.html:90
 #: .\templates\inventory\warehouse_add.html:14
@@ -12927,7 +12919,6 @@ msgstr "إلى"
 #: .\templates\banks\bank_cashbox_transfer_add.html:164
 #: .\templates\banks\cashbox_transfer_detail.html:126
 #: .\templates\customers\edit.html:117
-#: .\templates\inventory\movement_bulk_delete.html:112
 #: .\templates\inventory\transfer_add.html:17
 #: .\templates\inventory\warehouse_add.html:18
 #: .\templates\journal\account_form.html:138
@@ -13224,7 +13215,6 @@ msgid "Please fill"
 msgstr "يرجى ملء"
 
 #: .\templates\banks\account_edit.html:443
-#: .\templates\inventory\movement_bulk_delete.html:58
 msgid "all"
 msgstr "جميع"
 
@@ -13489,7 +13479,6 @@ msgstr "اضغط مسح جميع المعاملات ثم حذف الحساب"
 
 #: .\templates\banks\account_list.html:846
 #: .\templates\banks\account_list.html:887
-#: .\templates\inventory\movement_bulk_delete.html:14
 #: .\templates\inventory\movement_bulk_delete.html:86
 #: .\templates\inventory\warehouse_delete.html:75
 #: .\templates\purchases\invoice_delete.html:32
@@ -13612,7 +13601,6 @@ msgstr "تأكيد حذف المعاملة"
 #: .\templates\banks\cashbox_transfer_edit.html:439
 #: .\templates\customers\delete.html:218
 #: .\templates\hr\position_confirm_delete.html:97
-#: .\templates\inventory\movement_bulk_delete.html:20
 #: .\templates\inventory\warehouse_delete.html:159
 #: .\templates\journal\account_form.html:467
 #: .\templates\products\category_delete.html:22
@@ -14363,6 +14351,7 @@ msgid "Save Changes"
 msgstr "حفظ التغييرات"
 
 #: .\templates\banks\transfer_list.html:314
+#: .\templates\inventory\transfer_add.html:4
 msgid "Add New Transfer"
 msgstr "إضافة تحويل جديد"
 
@@ -16520,7 +16509,7 @@ msgstr "السابق"
 #: .\templates\financial_reports\trial_balance.html:53
 #: .\templates\reports\trial_balance.html:41
 msgid "Generate Report"
-msgstr "تم إنشاؤه في"
+msgstr "إنشاء التقرير"
 
 #: .\templates\financial_reports\income_statement.html:66
 msgid "Income Statement for the period from"
@@ -18693,10 +18682,8 @@ msgid "Stock Level"
 msgstr "مستوى المخزون"
 
 #: .\templates\inventory\low_stock.html:293
-#, fuzzy
-#| msgid "Critical Stock"
 msgid "Critical"
-msgstr "مخزون حرج"
+msgstr "حرج"
 
 #: .\templates\inventory\low_stock.html:294
 msgid "Low"
@@ -18712,47 +18699,43 @@ msgstr "الحركة الأخيرة"
 
 #: .\templates\inventory\low_stock.html:350
 msgid "All Products Are at Safe Levels"
-msgstr ""
+msgstr "جميع المنتجات في مستويات آمنة"
 
 #: .\templates\inventory\low_stock.html:351
 msgid "No products need replenishment at this time."
-msgstr ""
+msgstr "لا توجد منتجات تحتاج إلى تجديد في هذا الوقت."
 
 #: .\templates\inventory\low_stock.html:354
-#, fuzzy
-#| msgid "Inventory Movement"
 msgid "Back to Inventory Management"
-msgstr "حركة المخزون"
+msgstr "العودة إلى إدارة المخزون"
 
 #: .\templates\inventory\low_stock.html:369
 msgid "Replenish Stock"
-msgstr ""
+msgstr "تجديد المخزون"
 
 #: .\templates\inventory\low_stock.html:375
 msgid "Replenish Quantity"
-msgstr "الكمية المرتجعة"
+msgstr "تجديد الكمية"
 
 #: .\templates\inventory\low_stock.html:391
-#, fuzzy
-#| msgid "Low Stock"
 msgid "Add to Stock"
-msgstr "مخزون منخفض"
+msgstr "أضف إلى المخزون"
 
 #: .\templates\inventory\low_stock.html:420
 msgid "Do you want to replenish all low stock products?"
-msgstr ""
+msgstr "هل تريد تجديد جميع المنتجات ذات المخزون المنخفض؟"
 
 #: .\templates\inventory\low_stock.html:438
 msgid "Starting to print low stock report..."
-msgstr ""
+msgstr "بدء طباعة تقرير المخزون المنخفض..."
 
 #: .\templates\inventory\low_stock.html:461
 msgid "Number of low stock cards found"
-msgstr ""
+msgstr "عدد البطاقات ذات المخزون المنخفض التي تم العثور عليها"
 
 #: .\templates\inventory\low_stock.html:465
 msgid "No low stock products found"
-msgstr "لم يتم العثور على نسخ احتياطية"
+msgstr "لم يتم العثور على منتجات مخزون منخفض"
 
 #: .\templates\inventory\low_stock.html:483
 #: .\templates\inventory\warehouse_list.html:286
@@ -18768,62 +18751,57 @@ msgstr "مخزون منخفض"
 
 #: .\templates\inventory\low_stock.html:550
 msgid "Quantity added to stock successfully"
-msgstr "تم إضافة الفئة بنجاح!"
+msgstr "تم إضافة الكمية إلى المخزون بنجاح"
 
 #: .\templates\inventory\movement_bulk_delete.html:4
+msgid "Delete All Inventory Movements"
+msgstr "حذف جميع حركات الجرد"
+
 #: .\templates\inventory\movement_bulk_delete.html:14
-msgid "All Inventory Movements"
-msgstr "حركات الجرد"
+msgid "Confirm Delete All Inventory Movements"
+msgstr "تأكيد حذف جميع حركات المخزون"
 
 #: .\templates\inventory\movement_bulk_delete.html:20
-#, fuzzy
-#| msgid "Danger Zone"
-msgid "Dangerous"
-msgstr "منطقة الخطر"
+msgid "Warning Dangerous"
+msgstr "تحذير خطير"
 
 #: .\templates\inventory\movement_bulk_delete.html:20
-msgid "This action will"
-msgstr "قائمة المعاملات"
-
-#: .\templates\inventory\movement_bulk_delete.html:20
-msgid "all inventory movements permanently and cannot be undone"
-msgstr ""
+msgid "This action will Delete all inventory movements permanently and cannot be undone"
+msgstr "سيؤدي هذا الإجراء إلى حذف جميع حركات المخزون بشكل دائم ولا يمكن التراجع عنه"
 
 #: .\templates\inventory\movement_bulk_delete.html:25
-#, fuzzy
-#| msgid "Inventory Movements"
-msgid "Current Inventory Movements"
-msgstr "حركات الجرد"
+msgid "Statistics Current Inventory Movements"
+msgstr "إحصائيات حركة المخزون الحالية"
 
 #: .\templates\inventory\movement_bulk_delete.html:30
 #: .\templates\inventory\warehouse_detail.html:167
 #: .\templates\products\product_movements.html:158
 msgid "Total Movements"
-msgstr "كشف الحساب"
+msgstr "إجمالي الحركات"
 
 #: .\templates\inventory\movement_bulk_delete.html:34
 #: .\templates\inventory\warehouse_detail.html:178
 msgid "Incoming Movements"
-msgstr "كشف الحساب"
+msgstr "الحركات الواردة"
 
 #: .\templates\inventory\movement_bulk_delete.html:38
 #: .\templates\inventory\warehouse_detail.html:189
-#, fuzzy
-#| msgid "Account Statement"
 msgid "Outgoing Movements"
-msgstr "كشف الحساب"
+msgstr "الحركات الصادرة"
 
 #: .\templates\inventory\movement_bulk_delete.html:42
 msgid "Transfer Movements"
-msgstr "تفاصيل التحويل"
+msgstr "حركات التحويل"
 
 #: .\templates\inventory\movement_bulk_delete.html:53
 msgid "What will happen when deleting"
-msgstr ""
+msgstr "ماذا سيحدث عند الحذف"
 
 #: .\templates\inventory\movement_bulk_delete.html:58
-#, fuzzy
-#| msgid "Inventory Movement"
+msgid "Delete all"
+msgstr "حذف جميع"
+
+#: .\templates\inventory\movement_bulk_delete.html:58
 msgid "inventory movement"
 msgstr "حركة المخزون"
 
@@ -18853,26 +18831,27 @@ msgid "Write DELETE_ALL_MOVEMENTS for"
 msgstr "اكتب DELETE_ALL_MOVEMENTS لـ"
 
 #: .\templates\inventory\movement_bulk_delete.html:94
-#, fuzzy
-#| msgid "Can view purchase returns"
 msgid "Cancel and return"
-msgstr "يمكن عرض مردودات المشتريات"
+msgstr "الغاء و العودة"
 
 #: .\templates\inventory\movement_bulk_delete.html:98
+#: .\templates\inventory\movement_list.html:156
+msgid "Delete All Movements"
+msgstr "حذف جميع الحركات"
+
 #: .\templates\inventory\movement_list.html:176
 #: .\templates\inventory\product_detail.html:390
 msgid "All Movements"
 msgstr "جميع الحركات"
 
 #: .\templates\inventory\movement_bulk_delete.html:107
-msgid "No inventory movements to"
-msgstr "حركات الجرد"
+msgid "No inventory movements to Delete"
+msgstr "لا توجد حركات مخزون لحذفها"
 
 #: .\templates\inventory\movement_bulk_delete.html:112
-msgid "Return to"
-msgstr "تاريخ المرتجع"
+msgid "Return to Movements List"
+msgstr "العودة إلى قائمة الحركات"
 
-#: .\templates\inventory\movement_bulk_delete.html:112
 #: .\templates\inventory\product_detail.html:289
 msgid "Movements"
 msgstr "الحركات"
@@ -18884,11 +18863,7 @@ msgstr "طباعة التقرير الكامل"
 #: .\templates\inventory\movement_list.html:152
 #: .\templates\inventory\movement_list.html:444
 msgid "Add New Movement"
-msgstr "إضافة حساب جديد"
-
-#: .\templates\inventory\movement_list.html:156
-msgid "Delete All Movements"
-msgstr "حذف الحساب"
+msgstr "إضافة حركة مخزون جديدة"
 
 #: .\templates\inventory\movement_list.html:174
 #: .\templates\inventory\movement_list.html:480
@@ -19034,46 +19009,38 @@ msgid "Product in Inventory"
 msgstr "المنتج في المخزون"
 
 #: .\templates\inventory\product_detail.html:242
-#, fuzzy
-#| msgid "Warehouses"
 msgid "Warehouse Distribution"
-msgstr "المستودعات"
+msgstr "توزيع المستودعات"
 
 #: .\templates\inventory\product_detail.html:264
 msgid "Stock Available"
-msgstr "متاح"
+msgstr "المخزون متوفر"
 
 #: .\templates\inventory\product_detail.html:265
 msgid "Stock Available for this Product in any Warehouse"
-msgstr ""
+msgstr "المخزون المتوفر لهذا المنتج في أي مستودع"
 
 #: .\templates\inventory\product_detail.html:308
 msgid "Recent Movements"
-msgstr "كشف الحساب"
+msgstr "الحركات الأخيرة"
 
 #: .\templates\inventory\product_detail.html:396
-#, fuzzy
-#| msgid "No departments found"
 msgid "No Movements Found"
-msgstr "لم يتم العثور على أقسام"
+msgstr "لم يتم العثور على أي حركات"
 
 #: .\templates\inventory\product_detail.html:397
 msgid "No movements have been recorded for this product yet"
-msgstr ""
+msgstr "لم يتم تسجيل أي حركات لهذا المنتج حتى الآن"
 
 #: .\templates\inventory\transfer_add.html:13
-msgid "Between Warehouses"
-msgstr "التحويل بين المستودعات"
+msgid "Add Transfer Between Warehouses"
+msgstr "إضافة تحويل بين المستودعات"
 
 #: .\templates\inventory\transfer_add.html:34
-#, fuzzy
-#| msgid "Default Warehouse"
 msgid "Select Source Warehouse"
-msgstr "تعيين كمستودع مبيعات افتراضي"
+msgstr "اختر مستودع المصدر"
 
 #: .\templates\inventory\transfer_add.html:45
-#, fuzzy
-#| msgid "Default Warehouse"
 msgid "Select Destination Warehouse"
 msgstr "تعيين كمستودع مبيعات افتراضي"
 
@@ -19082,33 +19049,27 @@ msgstr "تعيين كمستودع مبيعات افتراضي"
 #: .\templates\inventory\transfer_add.html:344
 #: .\templates\inventory\transfer_add.html:352
 #: .\templates\inventory\transfer_add.html:362
-#, fuzzy
-#| msgid "Transfer In"
 msgid "Transfer ALL Inventory"
-msgstr "تحويل وارد"
+msgstr "تحويل جميع المخزون"
 
 #: .\templates\inventory\transfer_add.html:75
 msgid ""
 "This will transfer all products from the source warehouse to the destination "
 "warehouse"
-msgstr ""
+msgstr "سيؤدي هذا إلى نقل جميع المنتجات من المستودع المصدر إلى المستودع الوجهة"
 
 #: .\templates\inventory\transfer_add.html:90
 #: .\templates\inventory\transfer_add.html:263
-#, fuzzy
-#| msgid "Preparing..."
 msgid "Preparing transfer..."
-msgstr "جاري التحضير..."
+msgstr "جاري التحويل..."
 
 #: .\templates\inventory\transfer_add.html:98
 msgid "Notes about the"
-msgstr ""
+msgstr "ملاحظات حول"
 
 #: .\templates\inventory\transfer_add.html:104
-#, fuzzy
-#| msgid "Product Code"
 msgid "Products to be"
-msgstr "رمز المنتج"
+msgstr "المنتجات التي"
 
 #: .\templates\inventory\transfer_add.html:119
 msgid "Available Qty"
@@ -19744,12 +19705,12 @@ msgstr "إحصائيات المبيعات"
 #: .\templates\journal\dashboard.html:61
 #: .\templates\reports\balance_sheet.html:180
 msgid "الأصول"
-msgstr ""
+msgstr "الأصول"
 
 #: .\templates\journal\dashboard.html:81
 #: .\templates\reports\balance_sheet.html:217
 msgid "المطلوبات"
-msgstr ""
+msgstr "المطلوبات"
 
 #: .\templates\journal\dashboard.html:101
 msgid "إجراءات سريعة"
@@ -21005,12 +20966,6 @@ msgstr "منتج معيب"
 msgid "Delete Product Confirmation"
 msgstr "تأكيد الحذف"
 
-#: .\templates\products\product_delete.html:16
-#, fuzzy
-#| msgid "Can Delete Products"
-msgid "Cannot Delete Product"
-msgstr "يمكن حذف المنتجات"
-
 #: .\templates\products\product_delete.html:23
 msgid ""
 "This product cannot be deleted because it is linked to other data in the "
@@ -21041,11 +20996,6 @@ msgid ""
 "You must delete or edit this related data first before deleting the product."
 msgstr "يجب حذف جميع البيانات ذات الصلة أو نقلها قبل حذف هذا المستودع."
 
-#: .\templates\products\product_delete.html:99
-#, fuzzy
-#| msgid "Back to List"
-msgid "Back to Products List"
-msgstr "العودة إلى القائمة"
 
 #: .\templates\products\product_delete.html:113
 #, fuzzy
@@ -21174,12 +21124,6 @@ msgstr "تعديل"
 #| msgid "No departments found"
 msgid "No movements for this product"
 msgstr "لم يتم العثور على أقسام"
-
-#: .\templates\products\product_detail.html:468
-#, fuzzy
-#| msgid "Can Delete Products"
-msgid "Confirm Delete Product"
-msgstr "يمكن حذف المنتجات"
 
 #: .\templates\products\product_detail.html:472
 #, fuzzy
@@ -21399,31 +21343,25 @@ msgid "Sort"
 msgstr "ترتيب"
 
 #: .\templates\products\product_list.html:1363
-#, fuzzy
-#| msgid "Choose asset category"
 msgid "Choose Category"
-msgstr "اختر فئة الأصل"
+msgstr "اختر الفئة"
 
 #: .\templates\products\product_list.html:1628
-#, fuzzy
-#| msgid "A network error occurred"
 msgid "Network error occurred. Please try again."
-msgstr "حدث خطأ في الشبكة"
+msgstr "حدث خطأ في الشبكة. يُرجى المحاولة مرة أخرى."
 
 #: .\templates\products\product_list.html:1700
 msgid "Error: Cannot select product to delete"
-msgstr ""
+msgstr "خطأ: لا يمكن تحديد المنتج الذي تريد حذفه"
 
 #: .\templates\products\product_list.html:1748
 msgid "Error: Delete URL was not selected correctly"
-msgstr ""
+msgstr "خطأ: لم يتم تحديد حذف عنوان URL بشكل صحيح"
 
 #: .\templates\products\product_list.html:1778
 #: .\templates\products\product_list.html:1811
-#, fuzzy
-#| msgid "Product Name"
 msgid "Products Report"
-msgstr "اسم المنتج"
+msgstr "تقرير المنتجات"
 
 #: .\templates\products\product_list.html:1933
 msgid "Product List"
@@ -21440,46 +21378,30 @@ msgid "Movement history for"
 msgstr ""
 
 #: .\templates\products\product_movements.html:111
-#, fuzzy
-#| msgid "View Account Details"
 msgid "View Product Details"
-msgstr "عرض تفاصيل الحساب"
-
-#: .\templates\products\product_movements.html:115
-#, fuzzy
-#| msgid "Back to List"
-msgid "Back to Products"
-msgstr "العودة إلى القائمة"
+msgstr "عرض تفاصيل المنتج"
 
 #: .\templates\products\product_movements.html:212
-#, fuzzy
-#| msgid "Movement Number"
 msgid "Movement History"
-msgstr "رقم الحركة"
+msgstr "تاريخ الحركة"
 
 #: .\templates\products\product_movements.html:319
-#, fuzzy
-#| msgid "No departments found"
 msgid "No movements found"
-msgstr "لم يتم العثور على أقسام"
+msgstr "لم يتم العثور على أي حركات"
 
 #: .\templates\products\product_movements.html:320
 msgid "This product has no recorded movements yet."
-msgstr ""
+msgstr "لم يتم تسجيل أي حركات لهذا المنتج حتى الآن."
 
 #: .\templates\provisions\provision_confirm_delete.html:5
 #: .\templates\provisions\provision_confirm_delete.html:14
 #: .\templates\provisions\provision_confirm_delete.html:61
-#, fuzzy
-#| msgid "Permissions"
 msgid "Delete Provision"
-msgstr "الصلاحيات"
+msgstr "حذف البند"
 
 #: .\templates\provisions\provision_confirm_delete.html:15
-#, fuzzy
-#| msgid "Confirm Deletion"
 msgid "Confirm deletion of provision"
-msgstr "تأكيد الحذف"
+msgstr "تأكيد حذف البند"
 
 #: .\templates\provisions\provision_confirm_delete.html:18
 #: .\templates\provisions\provision_entry_confirm_delete.html:18
@@ -23350,27 +23272,27 @@ msgstr "كشف الحساب"
 
 #: .\templates\reports\aging_report.html:110
 msgid "تقرير أعمار الذمم المدينة"
-msgstr ""
+msgstr "تقرير أعمار الذمم المدينة"
 
 #: .\templates\reports\aging_report.html:111
 #: .\templates\reports\cash_flow.html:101
 #: .\templates\reports\income_statement.html:101
 msgid "الفترة"
-msgstr ""
+msgstr "الفترة"
 
 #: .\templates\reports\aging_report.html:111
 #: .\templates\reports\cash_flow.html:101
 #: .\templates\reports\cash_flow.html:112
 #: .\templates\reports\income_statement.html:101
 msgid "من"
-msgstr ""
+msgstr "من"
 
 #: .\templates\reports\aging_report.html:111
 #: .\templates\reports\cash_flow.html:101
 #: .\templates\reports\cash_flow.html:112
 #: .\templates\reports\income_statement.html:101
 msgid "إلى"
-msgstr ""
+msgstr "إلى"
 
 #: .\templates\reports\aging_report.html:131
 #: .\templates\reports\balance_sheet.html:150
@@ -23383,7 +23305,7 @@ msgstr "تصدير Excel"
 
 #: .\templates\reports\aging_report.html:182
 msgid "مديونيات العملاء"
-msgstr ""
+msgstr "مديونيات العملاء"
 
 #: .\templates\reports\aging_report.html:198
 #: .\templates\reports\aging_report.html:202
@@ -23392,188 +23314,156 @@ msgstr ""
 #: .\templates\reports\aging_report.html:267
 #: .\templates\reports\aging_report.html:271
 msgid "يوم"
-msgstr ""
+msgstr "يوم"
 
 #: .\templates\reports\aging_report.html:210
 #: .\templates\reports\aging_report.html:275
 msgid "أكثر من 90 يوم"
-msgstr ""
+msgstr "أكثر من 90 يوم"
 
 #: .\templates\reports\aging_report.html:247
-#, fuzzy
-#| msgid "أرصدة البنوك والصناديق النقدية"
 msgid "مديونيات الموردين"
-msgstr "أرصدة البنوك والصناديق النقدية"
+msgstr "مديونيات الموردين"
 
 #: .\templates\reports\aging_report.html:311
 msgid "No Debts in the Specified Period"
-msgstr ""
+msgstr "لا توجد ديون في الفترة المحددة"
 
 #: .\templates\reports\balance_sheet.html:5
 #: .\templates\reports\balance_sheet.html:129
 #: .\templates\reports\balance_sheet.html:139
-#, fuzzy
-#| msgid "إحصائيات المبيعات"
 msgid "الميزانية العمومية"
-msgstr "إحصائيات المبيعات"
+msgstr "الميزانية العمومية"
 
 #: .\templates\reports\balance_sheet.html:130
 #: .\templates\reports\financial_ratios.html:121
 #: .\templates\reports\inventory_report.html:104
 msgid "كما في تاريخ"
-msgstr ""
+msgstr "كما في تاريخ"
 
 #: .\templates\reports\balance_sheet.html:200
 msgid "إجمالي الأصول"
-msgstr ""
+msgstr "إجمالي الأصول"
 
 #: .\templates\reports\balance_sheet.html:213
 msgid "المطلوبات وحقوق الملكية"
-msgstr ""
+msgstr "المطلوبات وحقوق الملكية"
 
 #: .\templates\reports\balance_sheet.html:229
-#, fuzzy
-#| msgid "إحصائيات المبيعات"
 msgid "إجمالي المطلوبات"
-msgstr "إحصائيات المبيعات"
+msgstr "إجمالي المطلوبات"
 
 #: .\templates\reports\balance_sheet.html:236
-#, fuzzy
-#| msgid "إحصائيات المبيعات"
 msgid "حقوق الملكية"
-msgstr "إحصائيات المبيعات"
+msgstr "حقوق الملكية"
 
 #: .\templates\reports\balance_sheet.html:248
-#, fuzzy
-#| msgid "إحصائيات المبيعات"
 msgid "إجمالي حقوق الملكية"
-msgstr "إحصائيات المبيعات"
+msgstr "إجمالي حقوق الملكية"
 
 #: .\templates\reports\balance_sheet.html:258
 msgid "إجمالي المطلوبات وحقوق الملكية"
-msgstr ""
+msgstr "إجمالي المطلوبات وحقوق الملكية"
 
 #: .\templates\reports\cash_flow.html:5
 msgid "التدفقات النقدية"
-msgstr ""
+msgstr "التدفقات النقدية"
 
 #: .\templates\reports\cash_flow.html:100
 #: .\templates\reports\cash_flow.html:110
-#, fuzzy
-#| msgid "إحصائيات المبيعات"
 msgid "قائمة التدفقات النقدية"
-msgstr "إحصائيات المبيعات"
+msgstr "قائمة التدفقات النقدية"
 
 #: .\templates\reports\cash_flow.html:157
 msgid "التدفقات النقدية من الأنشطة التشغيلية"
-msgstr ""
+msgstr "التدفقات النقدية من الأنشطة التشغيلية"
 
 #: .\templates\reports\cash_flow.html:162
 msgid "صافي الربح"
-msgstr ""
+msgstr "صافي الربح"
 
 #: .\templates\reports\cash_flow.html:166
-#, fuzzy
-#| msgid "أرصدة البنوك والصناديق النقدية"
 msgid "صافي التدفقات النقدية من الأنشطة التشغيلية"
-msgstr "أرصدة البنوك والصناديق النقدية"
+msgstr "صافي التدفقات النقدية من الأنشطة التشغيلية"
 
 #: .\templates\reports\cash_flow.html:174
-#, fuzzy
-#| msgid "أرصدة البنوك والصناديق النقدية"
 msgid "التدفقات النقدية من الأنشطة الاستثمارية"
-msgstr "أرصدة البنوك والصناديق النقدية"
+msgstr "التدفقات النقدية من الأنشطة الاستثمارية"
 
 #: .\templates\reports\cash_flow.html:179
-#, fuzzy
-#| msgid "أرصدة البنوك والصناديق النقدية"
 msgid "صافي التدفقات النقدية من الأنشطة الاستثمارية"
-msgstr "أرصدة البنوك والصناديق النقدية"
+msgstr "صافي التدفقات النقدية من الأنشطة الاستثمارية"
 
 #: .\templates\reports\cash_flow.html:187
 msgid "التدفقات النقدية من الأنشطة التمويلية"
-msgstr ""
+msgstr "التدفقات النقدية من الأنشطة التمويلية"
 
 #: .\templates\reports\cash_flow.html:192
-#, fuzzy
-#| msgid "أرصدة البنوك والصناديق النقدية"
 msgid "صافي التدفقات النقدية من الأنشطة التمويلية"
-msgstr "أرصدة البنوك والصناديق النقدية"
+msgstr "صافي التدفقات النقدية من الأنشطة التمويلية"
 
 #: .\templates\reports\cash_flow.html:200
-#, fuzzy
-#| msgid "أرصدة البنوك والصناديق النقدية"
 msgid "صافي التدفق النقدي"
-msgstr "أرصدة البنوك والصناديق النقدية"
+msgstr "صافي التدفق النقدي"
 
 #: .\templates\reports\customer_statement.html:13
 #: .\templates\reports\sales_by_salesperson.html:58
-#, fuzzy
-#| msgid "Export"
 msgid "Export CSV"
-msgstr "تصدير"
+msgstr "تصدير CSV"
 
 #: .\templates\reports\customer_statement.html:103
 msgid "No data for this period"
-msgstr ""
+msgstr "لا توجد بيانات لهذه الفترة"
 
 #: .\templates\reports\customer_statement.html:131
-#, fuzzy
-#| msgid "Search"
 msgid "Search query"
-msgstr "بحث"
+msgstr "استعلام البحث"
 
 #: .\templates\reports\financial_ratios.html:5
 #: .\templates\reports\financial_ratios.html:120
 #: .\templates\reports\financial_ratios.html:130
-#, fuzzy
-#| msgid "إحصائيات المبيعات"
 msgid "المؤشرات المالية"
-msgstr "إحصائيات المبيعات"
+msgstr "المؤشرات المالية"
 
 #: .\templates\reports\financial_ratios.html:170
 msgid "مؤشرات الربحية"
-msgstr ""
+msgstr "مؤشرات الربحية"
 
 #: .\templates\reports\financial_ratios.html:174
 msgid "هامش الربح (Profit Margin)"
-msgstr ""
+msgstr "هامش الربح (Profit Margin)"
 
 #: .\templates\reports\financial_ratios.html:176
 msgid "نسبة صافي الربح إلى الإيرادات"
-msgstr ""
+msgstr "نسبة صافي الربح إلى الإيرادات"
 
 #: .\templates\reports\financial_ratios.html:179
 msgid "العائد على الأصول (ROA)"
-msgstr ""
+msgstr "العائد على الأصول (ROA)"
 
 #: .\templates\reports\financial_ratios.html:181
 msgid "نسبة صافي الربح إلى إجمالي الأصول"
-msgstr ""
+msgstr "نسبة صافي الربح إلى إجمالي الأصول"
 
 #: .\templates\reports\financial_ratios.html:190
-#, fuzzy
-#| msgid "أرصدة البنوك والصناديق النقدية"
 msgid "مؤشرات السيولة والدين"
-msgstr "أرصدة البنوك والصناديق النقدية"
+msgstr "مؤشرات السيولة والدين"
 
 #: .\templates\reports\financial_ratios.html:194
 msgid "نسبة السيولة (Current Ratio)"
-msgstr ""
+msgstr "نسبة السيولة (Current Ratio)"
 
 #: .\templates\reports\financial_ratios.html:196
-#, fuzzy
-#| msgid "أرصدة البنوك والصناديق النقدية"
 msgid "نسبة الأصول إلى المطلوبات"
-msgstr "أرصدة البنوك والصناديق النقدية"
+msgstr "نسبة الأصول إلى المطلوبات"
 
 #: .\templates\reports\financial_ratios.html:199
 msgid "نسبة الدين إلى رأس المال (Debt-to-Equity)"
-msgstr ""
+msgstr "نسبة الدين إلى رأس المال (Debt-to-Equity)"
 
 #: .\templates\reports\financial_ratios.html:201
 msgid "نسبة المطلوبات إلى حقوق الملكية"
-msgstr ""
+msgstr "نسبة المطلوبات إلى حقوق الملكية"
 
 #: .\templates\reports\financial_ratios.html:211
 msgid "دليل التفسير"
@@ -23617,7 +23507,7 @@ msgstr ""
 
 #: .\templates\reports\income_statement.html:100
 msgid "قائمة الدخل"
-msgstr "إحصائيات المبيعات"
+msgstr "قائمة الدخل"
 
 #: .\templates\reports\income_statement.html:110
 msgid "Income statement"
@@ -23709,7 +23599,7 @@ msgstr "عرض المبيعات حسب تقرير البائع"
 
 #: .\templates\reports\inventory_report.html:103
 msgid "تقرير أرصدة المخزون"
-msgstr "إحصائيات المشتريات"
+msgstr "تقرير أرصدة المخزون"
 
 #: .\templates\reports\inventory_report.html:190
 msgid "Inventory Balances"
@@ -23717,25 +23607,23 @@ msgstr "أرصدة المخزون"
 
 #: .\templates\reports\inventory_report.html:202
 msgid "الكود"
-msgstr ""
+msgstr "الكود"
 
 #: .\templates\reports\inventory_report.html:213
 msgid "القيمة"
-msgstr ""
+msgstr "القيمة"
 
 #: .\templates\reports\inventory_report.html:244
 msgid "لا توجد منتجات في المخزون في الفترة المحددة"
-msgstr ""
+msgstr "لا توجد منتجات في المخزون في الفترة المحددة"
 
 #: .\templates\reports\sales_by_salesperson.html:21
 msgid "Select Sales Person"
 msgstr "إختر مندوب المبيعات"
 
 #: .\templates\reports\sales_by_salesperson.html:54
-#, fuzzy
-#| msgid "Sales Report"
 msgid "Sales for"
-msgstr "تقرير المبيعات"
+msgstr "مبيعات"
 
 #: .\templates\reports\sales_by_salesperson.html:130
 #, fuzzy
@@ -23744,10 +23632,8 @@ msgid "No sales invoices found for the selected period."
 msgstr "لم يتم العثور على فواتير مبيعات"
 
 #: .\templates\reports\trial_balance.html:12
-#, fuzzy
-#| msgid "Report Date"
 msgid "Export PDF"
-msgstr "تاريخ التقرير"
+msgstr "تصدير PDF"
 
 #: .\templates\revenues_expenses\category_confirm_delete.html:7
 #, fuzzy
@@ -28507,29 +28393,8 @@ msgstr ""
 #~ msgid "Access Closed Fiscal Years"
 #~ msgstr "إغلاق السنة المالية"
 
-#~ msgid "يمكن عرض الفئات والمنتجات"
-#~ msgstr "Can View Products"
-
-#~ msgid "يمكن إضافة المنتجات"
-#~ msgstr "Can Add Products"
-
-#~ msgid "يمكن تعديل المنتجات"
-#~ msgstr "Can Edit Products"
-
-#~ msgid "يمكن حذف المنتجات"
-#~ msgstr "Can Delete Products"
-
-#~ msgid "يمكن إضافة الفئات"
-#~ msgstr "Can Add Product Categories"
-
 #~ msgid "يمكن إضافة الفئات من خلال النوافذ المنبثقة"
 #~ msgstr "Can Add Product Categories via Popups"
-
-#~ msgid "يمكن تعديل الفئات"
-#~ msgstr "Can Edit Product Categories"
-
-#~ msgid "يمكن حذف الفئات"
-#~ msgstr "Can Delete Product Categories"
 
 #~ msgid "Inventory & Categories & Products"
 #~ msgstr "المخزون والفئات والمنتجات"
@@ -28560,3 +28425,119 @@ msgstr ""
 
 #~ msgid "Can Delete Suppliers"
 #~ msgstr "يمكن حذف الموردين"
+
+#: .\inventory\permissions.py:15
+msgid "You do not have permission to view inventory stock"
+msgstr "ليس لديك صلاحية لعرض المخزون"
+
+#: .\inventory\permissions.py:24
+msgid "You do not have permission to view warehouses"
+msgstr "ليس لديك صلاحية لعرض المستودعات"
+
+#: .\inventory\permissions.py:33
+msgid "You do not have permission to add warehouses"
+msgstr "ليس لديك صلاحية لإضافة المستودعات"
+
+#: .\inventory\permissions.py:42
+msgid "You do not have permission to edit warehouses"
+msgstr "ليس لديك صلاحية لتعديل المستودعات"
+
+#: .\inventory\permissions.py:51
+msgid "You do not have permission to delete warehouses"
+msgstr "ليس لديك صلاحية لحذف المستودعات"
+
+#: .\inventory\permissions.py:60
+msgid "You do not have permission to view inventory movements"
+msgstr "ليس لديك صلاحية لعرض حركات المخزون"
+
+#: .\inventory\permissions.py:69
+msgid "You do not have permission to add inventory movements"
+msgstr "ليس لديك صلاحية لإضافة حركات المخزون"
+
+#: .\inventory\permissions.py:78
+msgid "You do not have permission to edit inventory movements"
+msgstr "ليس لديك صلاحية لتعديل حركات المخزون"
+
+#: .\inventory\permissions.py:87
+msgid "You do not have permission to delete inventory movements"
+msgstr "ليس لديك صلاحية لحذف حركات المخزون"
+
+#: .\inventory\permissions.py:96
+msgid "You do not have permission to view warehouse transfers"
+msgstr "ليس لديك صلاحية لعرض تحويلات المستودعات"
+
+#: .\inventory\permissions.py:105
+msgid "You do not have permission to add warehouse transfers"
+msgstr "ليس لديك صلاحية لإضافة تحويلات المستودعات"
+
+#: .\inventory\permissions.py:114
+msgid "You do not have permission to edit warehouse transfers"
+msgstr "ليس لديك صلاحية لتعديل تحويلات المستودعات"
+
+#: .\inventory\permissions.py:123
+msgid "You do not have permission to delete warehouse transfers"
+msgstr "ليس لديك صلاحية لحذف تحويلات المستودعات"
+
+#: .\inventory\permissions.py:132
+msgid "You do not have permission to view stock alerts"
+msgstr "ليس لديك صلاحية لعرض تنبيهات المخزون"
+
+#: .\templates\inventory\transfer_list.html:57
+msgid "Not specified Not specified"
+msgstr "غير محدد غير محدد"
+
+#: .\reports\models.py:14
+msgid "Can View Sales Reports"
+msgstr "يمكن عرض تقارير المبيعات"
+
+#: .\reports\models.py:15
+msgid "Can View Sales By Representative Report"
+msgstr "يمكن عرض تقرير المبيعات حسب مندوب المبيعات"
+
+#: .\reports\models.py:16
+msgid "Can View Purchase Reports"
+msgstr "يمكن عرض تقارير المشتريات"
+
+#: .\reports\models.py:17
+msgid "Can View Tax Report"
+msgstr "يمكن عرض تقرير الضرائب"
+
+#: .\reports\models.py:18
+msgid "Can View Profit and Loss Report"
+msgstr "يمكن عرض تقرير الأرباح والخسائر"
+
+#: .\reports\models.py:19
+msgid "Can View Customer Statement"
+msgstr "يمكن عرض كشف حساب العميل"
+
+#: .\reports\models.py:20
+msgid "Can View Trial Balance"
+msgstr "يمكن عرض ميزان المراجعة"
+
+#: .\reports\models.py:21
+msgid "Can View Balance Sheet"
+msgstr "يمكن عرض الميزانية العمومية"
+
+#: .\reports\models.py:22
+msgid "Can View Income Statement"
+msgstr "يمكن عرض قائمة الدخل"
+
+#: .\reports\models.py:23
+msgid "Can View Cash Flow Statement"
+msgstr "يمكن عرض قائمة التدفقات النقدية"
+
+#: .\reports\models.py:24
+msgid "Can View Aging Report"
+msgstr "يمكن عرض تقرير أعمار الديون"
+
+#: .\reports\models.py:25
+msgid "Can View Stock Balance Report"
+msgstr "يمكن عرض تقرير أرصدة المخزون"
+
+#: .\reports\models.py:26
+msgid "Can View Financial Ratios"
+msgstr "يمكن عرض النسب المالية"
+
+#: .\reports\models.py:27
+msgid "Can View Documents Report"
+msgstr "يمكن عرض تقرير المستندات"

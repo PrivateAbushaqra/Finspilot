@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.decorators import login_required
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView, DetailView, View
 from django.db.models import Sum, Count, Q
@@ -1669,8 +1669,15 @@ def get_invoice_items(request, invoice_id):
             'message': f'حدث خطأ: {str(e)}'
         })
 
-class PurchaseReportView(LoginRequiredMixin, TemplateView):
+class PurchaseReportView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     template_name = 'purchases/purchase_report.html'
+    
+    def test_func(self):
+        # التحقق من صلاحية عرض تقارير المشتريات
+        return (
+            self.request.user.is_superuser or 
+            self.request.user.has_perm('reports.can_view_purchase_reports')
+        )
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1942,12 +1949,19 @@ def send_debitnote_to_jofotara(request, pk):
         })
 
 
-class PurchaseDebitNoteReportView(LoginRequiredMixin, ListView):
+class PurchaseDebitNoteReportView(LoginRequiredMixin, UserPassesTestMixin, ListView):
     """كشف مذكرات الدين"""
     model = PurchaseDebitNote
     template_name = 'purchases/debitnote_report.html'
     context_object_name = 'debitnotes'
     paginate_by = 50
+    
+    def test_func(self):
+        # التحقق من صلاحية عرض تقارير المشتريات
+        return (
+            self.request.user.is_superuser or 
+            self.request.user.has_perm('reports.can_view_purchase_reports')
+        )
     
     def get_queryset(self):
         queryset = PurchaseDebitNote.objects.select_related('supplier', 'created_by').all()

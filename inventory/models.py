@@ -61,10 +61,20 @@ class Warehouse(models.Model):
         ordering = ['name']
         default_permissions = []  # No default permissions
         permissions = [
-            ('can_view_inventory', _('Can access inventory')),
-            ('can_add_inventory', _('Can add inventory')),
-            ('can_edit_inventory', _('Can edit inventory')),
-            ('can_delete_inventory', _('Can delete inventory')),
+            ('can_view_inventory_stock', _('Can View Inventory Stock')),
+            ('can_view_warehouses', _('Can View Warehouses')),
+            ('can_add_warehouses', _('Can Add Warehouses')),
+            ('can_edit_warehouses', _('Can Edit Warehouses')),
+            ('can_delete_warehouses', _('Can Delete Warehouses')),
+            ('can_view_inventory_movements', _('Can View Inventory Movements')),
+            ('can_add_inventory_movements', _('Can Add Inventory Movements')),
+            ('can_edit_inventory_movements', _('Can Edit Inventory Movements')),
+            ('can_delete_inventory_movements', _('Can Delete Inventory Movements')),
+            ('can_view_warehouse_transfers', _('Can View Warehouse Transfers')),
+            ('can_add_warehouse_transfers', _('Can Add Warehouse Transfers')),
+            ('can_edit_warehouse_transfers', _('Can Edit Warehouse Transfers')),
+            ('can_delete_warehouse_transfers', _('Can Delete Warehouse Transfers')),
+            ('can_view_stock_alerts', _('Can View Stock Alerts')),
         ]
 
     def __str__(self):

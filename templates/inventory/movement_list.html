@@ -389,7 +389,7 @@
                                             <span class="text-muted">-</span>
                                         {% endif %}
                                     </td>
-                                    {% if request.user.user_type == 'superadmin' or request.user.is_superuser %}
+                                    {% if request.user.user_type == 'superadmin' or request.user.is_superuser or perms.inventory.can_delete_inventory_movements%}
                                     <td>
                                         <button class="btn btn-danger btn-sm" 
                                                 onclick="deleteMovement({{ movement.id }}, '{{ movement.movement_number }}')"

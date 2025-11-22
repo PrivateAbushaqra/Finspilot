@@ -1081,7 +1081,7 @@
                         {% endif %}<!-- 1052 -->
                         
                         <!-- Inventory Section -->
-                        {% if user.is_superuser or perms.inventory.can_view_inventory %}<!-- 1125 -->
+                        {% if user.is_superuser or perms.inventory.can_view_inventory_stock or perms.inventory.can_view_warehouses or perms.inventory.can_view_inventory_movements or perms.inventory.can_view_warehouse_transfers or perms.inventory.can_view_stock_alerts %}<!-- 1125 -->
                         <li class="nav-item">
                                     <a class="nav-link d-flex justify-content-between align-items-center"
                                     data-bs-toggle="collapse"
@@ -1097,26 +1097,36 @@
                                     </a>
                             <div class="collapse {% if active_menu == 'View Inventory' or active_menu == 'Warehouses' or active_menu == 'Inventory Movement' or active_menu == 'Warehouse Transfers' or active_menu == 'Stock Alerts' %}show{% endif %}" id="inventoryMenu">
                                 <ul class="nav flex-column ms-3">
+                                    {% if user.is_superuser or perms.inventory.can_view_inventory_stock %}
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'inventory' and 'list' in request.path and 'warehouse_list' not in request.path and 'movement_list' not in request.path %}active{% endif %}" href="{% url 'inventory:list' %}">
                                             {% trans "View Inventory" %}</a>
                                     </li>
+                                    {% endif %}
+                                    {% if user.is_superuser or perms.inventory.can_view_warehouses %}
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'inventory' and 'warehouse_list' in request.path %}active{% endif %}" href="{% url 'inventory:warehouse_list' %}">
                                             {% trans "Warehouses" %}</a>
                                     </li>
+                                    {% endif %}
+                                    {% if user.is_superuser or perms.inventory.can_view_inventory_movements %}
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'inventory' and 'movement_list' in request.path %}active{% endif %}" href="{% url 'inventory:movement_list' %}">
                                             {% trans "Inventory Movement" %}</a>
                                     </li>
+                                    {% endif %}
+                                    {% if user.is_superuser or perms.inventory.can_view_warehouse_transfers %}
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'inventory' and 'transfer_list' in request.path %}active{% endif %}" href="{% url 'inventory:transfer_list' %}">
                                             {% trans "Warehouse Transfers" %}</a>
                                     </li>
+                                    {% endif %}
+                                    {% if user.is_superuser or perms.inventory.can_view_stock_alerts %}
                                     <li class="nav-item">
                                         <a class="nav-link {% if active_menu == 'inventory' and 'low_stock' in request.path %}active{% endif %}" href="{% url 'inventory:low_stock' %}">
                                             {% trans "Stock Alerts" %}</a>
                                     </li>
+                                    {% endif %}
                                 </ul>
                             </div>
                         </li>
@@ -1125,62 +1135,108 @@
 
 
                         <!-- Reports -->
-                        {% if user.has_reports_permission %}<!--1184-->
+                        {% if user.is_superadmin or user.user_type == 'admin' or perms.reports.can_view_sales_reports or perms.reports.can_view_sales_by_representative_report or perms.reports.can_view_purchase_reports or perms.reports.can_view_tax_report or perms.reports.can_view_cash_flow_statement or perms.reports.can_view_aging_report or perms.reports.can_view_stock_balance_report or perms.reports.can_view_financial_ratios or perms.reports.can_view_documents_report %}
                         <li class="nav-item">
+                            {% if user.is_superadmin or user.user_type == 'admin' or perms.reports.can_view_sales_reports or perms.reports.can_view_sales_by_representative_report or perms.reports.can_view_purchase_reports or perms.reports.can_view_tax_report or perms.reports.can_view_cash_flow_statement or perms.reports.can_view_aging_report or perms.reports.can_view_stock_balance_report or perms.reports.can_view_financial_ratios or perms.reports.can_view_documents_report %}
                             <a class="nav-link" data-bs-toggle="collapse" href="#reportsMenu">
                                 <i class="fas fa-chart-bar me-2"></i>
                                 {% trans "Reports" %}
                                 <i class="fas fa-chevron-down small"></i>
                             </a>
+                            {% endif %}
                             <div class="collapse {% if active_menu == 'reports' %}show{% endif %}" id="reportsMenu">
                                 <ul class="nav flex-column ms-3">
+                                    {% if user.is_superadmin or user.user_type == 'admin' or perms.reports.can_view_sales_reports %}
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'sales_report' in request.path %}active{% endif %}" href="{% url 'sales:sales_report' %}">{% trans "Sales Reports" %}</a>
+                                        <a class="nav-link {% if active_menu == 'reports' and 'sales_report' in request.path %}active{% endif %}" href="{% url 'sales:sales_report' %}">
+                                            {% trans "Sales Reports" %}</a>
                                     </li>
+                                    {% endif %}
+                                    {% if user.is_superuser or perms.reports.can_view_sales_by_representative_report %}
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'sales_by_salesperson' in request.path %}active{% endif %}" href="{% url 'reports:sales_by_salesperson' %}">{% trans "Sales Report By Sales Person" %}</a>
+                                        <a class="nav-link {% if active_menu == 'reports' and 'sales_by_salesperson' in request.path %}active{% endif %}" href="{% url 'reports:sales_by_salesperson' %}">
+                                            {% trans "Sales Report By Sales Person" %}</a>
                                     </li>
+                                    {% endif %}
+                                    {% if user.is_superuser or perms.reports.can_view_purchase_reports %}
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'purchase_report' in request.path %}active{% endif %}" href="{% url 'purchases:purchase_report' %}">{% trans "Purchase Reports" %}</a>
-                                    </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'tax_report' in request.path %}active{% endif %}" href="{% url 'core:tax_report' %}">{% trans "Tax Report" %}</a>
+                                        <a class="nav-link {% if active_menu == 'reports' and 'purchase_report' in request.path %}active{% endif %}" href="{% url 'purchases:purchase_report' %}">
+                                            {% trans "Purchase Reports" %}</a>
                                     </li>
+                                    {% endif %}
+                                    {% if user.is_superuser or perms.reports.can_view_tax_report %}
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'profit_loss_report' in request.path %}active{% endif %}" href="{% url 'core:profit_loss_report' %}">{% trans "Profit and Loss" %}</a>
-                                    </li>
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'customer_statement' in request.path %}active{% endif %}" href="{% url 'reports:customer_statement' %}">{% trans "Customer Statement" %}</a>
+                                        <a class="nav-link {% if active_menu == 'reports' and 'tax_report' in request.path %}active{% endif %}" href="{% url 'core:tax_report' %}">
+                                            {% trans "Tax Report" %}</a>
                                     </li>
+                                    {% endif %}
+                                    {% if user.is_superuser or perms.reports.can_view_profit_loss_report %}
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'trial_balance' in request.path %}active{% endif %}" href="{% url 'reports:trial_balance' %}">{% trans "Trial Balance" %}</a>
+                                        <a class="nav-link {% if active_menu == 'reports' and 'profit_loss_report' in request.path %}active{% endif %}" href="{% url 'core:profit_loss_report' %}">
+                                            {% trans "Profit and Loss" %}</a>
                                     </li>
+                                    {% endif %}
+                                    {% if user.is_superuser or perms.reports.can_view_customer_statement %}
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'balance_sheet' in request.path %}active{% endif %}" href="{% url 'reports:balance_sheet' %}">{% trans "Balance Sheet" %}</a>
+                                        <a class="nav-link {% if active_menu == 'reports' and 'customer_statement' in request.path %}active{% endif %}" href="{% url 'reports:customer_statement' %}">
+                                            {% trans "Customer Statement" %}</a>
                                     </li>
+                                    {% endif %}
+                                    {% if user.is_superuser or perms.reports.can_view_trial_balance %}
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'income_statement' in request.path %}active{% endif %}" href="{% url 'reports:income_statement' %}">{% trans "Income Statement" %}</a>
+                                        <a class="nav-link {% if active_menu == 'reports' and 'trial_balance' in request.path %}active{% endif %}" href="{% url 'reports:trial_balance' %}">
+                                            {% trans "Trial Balance" %}</a>
                                     </li>
+                                    {% endif %}
+                                    {% if user.is_superuser or perms.reports.can_view_balance_sheet %}
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'cash_flow' in request.path %}active{% endif %}" href="{% url 'reports:cash_flow' %}">{% trans "Cash Flow Statement" %}</a>
+                                        <a class="nav-link {% if active_menu == 'reports' and 'balance_sheet' in request.path %}active{% endif %}" href="{% url 'reports:balance_sheet' %}">
+                                            {% trans "Balance Sheet" %}</a>
                                     </li>
+                                    {% endif %}
+                                    {% if user.is_superuser or perms.reports.can_view_income_statement %}
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'aging_report' in request.path %}active{% endif %}" href="{% url 'reports:aging_report' %}">{% trans "Accounts Receivable Aging Report" %}</a>
+                                        <a class="nav-link {% if active_menu == 'reports' and 'income_statement' in request.path %}active{% endif %}" href="{% url 'reports:income_statement' %}">
+                                            {% trans "Income Statement" %}</a>
                                     </li>
+                                    {% endif %}
+                                    {% if user.is_superuser or perms.reports.can_view_cash_flow_statement %}
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'inventory_report' in request.path %}active{% endif %}" href="{% url 'reports:inventory_report' %}">{% trans "Inventory Balances Report" %}</a>
+                                        <a class="nav-link {% if active_menu == 'reports' and 'cash_flow' in request.path %}active{% endif %}" href="{% url 'reports:cash_flow' %}">
+                                            {% trans "Cash Flow Statement" %}</a>
                                     </li>
+                                    {% endif %}
+                                    {% if user.is_superuser or perms.reports.can_view_aging_report %}
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'financial_ratios' in request.path %}active{% endif %}" href="{% url 'reports:financial_ratios' %}">{% trans "Financial Ratios" %}</a>
+                                        <a class="nav-link {% if active_menu == 'reports' and 'aging_report' in request.path %}active{% endif %}" href="{% url 'reports:aging_report' %}">
+                                            {% trans "Accounts Receivable Aging Report" %}</a>
                                     </li>
+                                    {% endif %}
+                                    {% if user.is_superuser or perms.reports.can_view_stock_balance_report %}
                                     <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'documents' and 'report' in request.path %}active{% endif %}" href="{% url 'documents:report' %}">{% trans "Documents Report" %}</a>
+                                        <a class="nav-link {% if active_menu == 'reports' and 'inventory_report' in request.path %}active{% endif %}" href="{% url 'reports:inventory_report' %}">
+                                            {% trans "Inventory Balances Report" %}</a>
                                     </li>
+                                    {% endif %}
+                                    {% if user.is_superuser or perms.reports.can_view_financial_ratios %}
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if active_menu == 'reports' and 'financial_ratios' in request.path %}active{% endif %}" href="{% url 'reports:financial_ratios' %}">
+                                            {% trans "Financial Ratios" %}</a>
+                                    </li>
+                                    {% endif %}
+                                    {% if user.is_superuser or perms.reports.can_view_documents_report %}
+                                    <li class="nav-item">
+                                        <a class="nav-link {% if active_menu == 'documents' and 'report' in request.path %}active{% endif %}" href="{% url 'documents:report' %}">
+                                            {% trans "Documents Report" %}</a>
+                                    </li>
+                                    {% endif %}
                                 </ul>
                             </div>
                         </li>
-                        {% endif %}<!--1130-->
-                        
+                        {% endif %}
+                                               
                         <!-- Human Resources
                         {% if user.is_superadmin or user.user_type == 'admin' or perms.hr.can_view_hr %}
                         <li class="nav-item">

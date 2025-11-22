@@ -13,10 +13,12 @@
                     {% trans "Transfers Between Warehouses" %}
                 </h2>
                 <div class="btn-group">
+                    {% if user.is_superuser or perms.inventory.can_add_warehouse_transfers %}
                     <a href="{% url 'inventory:transfer_add' %}" class="btn btn-success">
                         <i class="fas fa-plus me-2"></i>
-                        {% trans "Add" %} {% trans "Transfer" %} {% trans "New" %}
+                        {% trans "Add New Transfer" %}
                     </a>
+                    {% endif %}
                     <a href="{% url 'inventory:list' %}" class="btn btn-outline-primary">
                         <i class="fas fa-arrow-left me-2"></i>
                         {% trans "Back to Inventory" %}
@@ -51,8 +53,9 @@
                                     <td>{{ transfer.from_warehouse.name }}</td>
                                     <td>{{ transfer.to_warehouse.name }}</td>
                                     <td>
+                                        {% trans "Not specified Not specified" as not_specified %}
                                         {% if transfer.created_by %}
-                                            {% if transfer.created_by.get_full_name and transfer.created_by.get_full_name != 'غير محدد غير محدد' %}
+                                            {% if transfer.created_by.get_full_name and transfer.created_by.get_full_name != not_specified %}
                                                 {{ transfer.created_by.get_full_name }}
                                             {% else %}
                                                 {{ transfer.created_by.username }}
@@ -66,12 +69,16 @@
                                             <a href="#" class="btn btn-sm btn-outline-primary" title="{% trans 'View Details' %}">
                                                 <i class="fas fa-eye"></i>
                                             </a>
+                                            {% if user.is_superuser or perms.inventory.can_edit_warehouse_transfers %}
                                             <a href="#" class="btn btn-sm btn-outline-warning" title="{% trans 'Edit' %}">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <a href="#" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}" onclick="return confirm('هل أنت متأكد من حذف هذا التحويل؟')">
+                                            {% endif %}
+                                            {% if user.is_superuser or perms.inventory.can_delete_warehouse_transfers %}
+                                            <a href="#" class="btn btn-sm btn-outline-danger" title="{% trans 'Delete' %}" onclick="return confirm('Are you sure you want to delete this transfer?')">
                                                 <i class="fas fa-trash"></i>
                                             </a>
+                                            {% endif %}
                                         </div>
                                         <span class="badge badge-info ms-2">{% trans "Completed" %}</span>
                                     </td>
@@ -85,10 +92,12 @@
                         <i class="fas fa-exchange-alt fa-4x text-muted mb-3"></i>
                         <h4>{% trans "No Transfers Found" %}</h4>
                         <p class="text-muted">{% trans "No Transfers Between Warehouses Have Been Recorded Yet." %}</p>
+                        {% if user.is_superuser or perms.inventory.can_add_warehouse_transfers %}
                         <a href="{% url 'inventory:transfer_add' %}" class="btn btn-success">
                             <i class="fas fa-plus me-2"></i>
-                            {% trans "Add" %} {% trans "Transfer" %} {% trans "New" %}
+                            {% trans "Add New Transfer" %}
                         </a>
+                        {% endif %}
                     </div>
                     {% endif %}
                 </div>

@@ -139,25 +139,39 @@ class User(AbstractUser):
         verbose_name_plural = _('Users')
         permissions = [
             # إدارة النظام
+            ('can_view_users_list', _('Can View Users List')),
+            ('can_add_users', _('Can Add Users')),
+            ('can_edit_users', _('Can Edit Users')),
+            ('can_delete_users', _('Can Delete Users')),
+            ('can_view_groups_permissions', _('Can View Groups and Permissions')),
+            ('can_add_groups_permissions', _('Can Add Groups and Permissions')),
+            ('can_edit_groups_permissions', _('Can Edit Groups and Permissions')),
+            ('can_delete_groups_permissions', _('Can Delete Groups and Permissions')),
+            ('can_view_document_sequences', _('Can View Document Sequences')),
+            ('can_edit_document_sequences', _('Can Edit Document Sequences')),
+            ('can_view_system_settings', _('Can View System Settings')),
+            ('can_edit_system_settings', _('Can Edit System Settings')),
+            
+            # الخيارات المتقدمة
+            ('can_access_print_design', _('Can Access Print Design')),
+            ('can_access_jofotara_settings', _('Can Access JoFotara Settings')),
+            ('can_access_backup_system', _('Can Access Backup System')),
+            
+            # صلاحيات قديمة للتوافقية
             ('can_access_system_management', _('Can access system management')),
             ('can_manage_users', _('Manage users')),
             ('can_view_audit_logs', _('View audit logs')),
             ('can_backup_system', _('System backup')),
-            
-            # صلاحيات الوصول
             ('can_access_pos', _('Can access POS')),
             ('can_access_company_settings', _('Can access company settings')),
-            
-            # صلاحيات التحرير والحذف
             ('can_delete_invoices', _('Can delete invoices')),
             ('can_edit_dates', _('Can edit dates')),
             ('can_edit_invoice_numbers', _('Can edit invoice numbers')),
-            
-            # صلاحيات خاصة
             ('can_see_low_stock_alerts', _('Can see low stock alerts')),
             ('cash_only', _('Cash only')),
             ('credit_only', _('Credit only')),
             ('pos_only', _('POS only')),
+            ('can_delete_accounts', _('Can delete accounts')),
         ]
 
     def __str__(self):

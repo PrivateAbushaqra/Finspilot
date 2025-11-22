@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load i18n %}
 
-{% block title %}{% trans "Delete" %} {% trans "All Inventory Movements" %} - {{ block.super }}{% endblock %}
+{% block title %}{% trans "Delete All Inventory Movements" %} - {{ block.super }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
@@ -11,18 +11,18 @@
                 <div class="card-header bg-danger text-white">
                     <h5 class="mb-0">
                         <i class="fas fa-exclamation-triangle me-2"></i>
-                        {% trans "Confirmation" %} {% trans "Delete" %} {% trans "All Inventory Movements" %}
+                        {% trans "Confirm Delete All Inventory Movements" %}
                     </h5>
                 </div>
                 <div class="card-body">
                     <div class="alert alert-danger">
                         <i class="fas fa-ban me-2"></i>
-                        <strong>{% trans "Warning" %} {% trans "Dangerous" %}:</strong> {% trans "This action will" %} {% trans "Delete" %} {% trans "all inventory movements permanently and cannot be undone" %}!
+                        <strong>{% trans "Warning Dangerous" %}:</strong> {% trans "This action will Delete all inventory movements permanently and cannot be undone" %}!
                     </div>
                     
                     <div class="row">
                         <div class="col-md-6">
-                            <h6>{% trans "Statistics" %} {% trans "Current Inventory Movements" %}:</h6>
+                            <h6>{% trans "Statistics Current Inventory Movements" %}:</h6>
                             <div class="bg-light p-3 rounded mb-3">
                                 <div class="row text-center">
                                     <div class="col-6 mb-2">
@@ -55,7 +55,7 @@
                                 <ul class="mb-0">
                                     <li class="mb-2">
                                         <i class="fas fa-times text-danger me-2"></i>
-                                        {% trans "Delete" %} {% trans "all" %} {{ total_movements }} {% trans "inventory movement" %}
+                                        {% trans "Delete all" %} {{ total_movements }} {% trans "inventory movement" %}
                                     </li>
                                     <li class="mb-2">
                                         <i class="fas fa-times text-danger me-2"></i>
@@ -95,7 +95,7 @@
                                 </a>
                                 <button type="submit" class="btn btn-danger">
                                     <i class="fas fa-trash me-2"></i>
-                                    {% trans "Delete" %} {% trans "All Movements" %}
+                                    {% trans "Delete All Movements" %}
                                 </button>
                             </div>
                         </form>
@@ -104,12 +104,12 @@
                     <div class="mt-4">
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle me-2"></i>
-                            {% trans "No inventory movements to" %} {% trans "Delete" %}.
+                            {% trans "No inventory movements to Delete" %}.
                         </div>
                         <div class="d-flex justify-content-end">
                             <a href="{% url 'inventory:movement_list' %}" class="btn btn-primary">
                                 <i class="fas fa-arrow-left me-2"></i>
-                                {% trans "Return to" %} {% trans "List" %} {% trans "Movements" %}
+                                {% trans "Return to Movements List" %}
                             </a>
                         </div>
                     </div>

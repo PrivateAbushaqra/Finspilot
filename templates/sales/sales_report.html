@@ -264,6 +264,12 @@
                 <div class="col-lg-6">
                     <div class="chart-container">
                         <h5 class="mb-3">{% trans "Top Customers" %}</h5>
+                        <!-- Debug: Customer Sales Data -->
+                        {% comment %}
+                        {% for customer in customer_sales %}
+                            {{ customer.customer__name }}: {{ customer.total_amount }}
+                        {% endfor %}
+                        {% endcomment %}
                         <canvas id="customerChart" height="300"></canvas>
                     </div>
                 </div>
@@ -334,6 +340,9 @@
 </div>
 
 <script>
+// تحديد ما إذا كانت اللغة عربية
+const isRTL = document.documentElement.dir === 'rtl';
+
 // Customer Sales Chart
 const customerCtx = document.getElementById('customerChart').getContext('2d');
 new Chart(customerCtx, {
@@ -358,9 +367,27 @@ new Chart(customerCtx, {
     },
     options: {
         responsive: true,
+        maintainAspectRatio: true,
         plugins: {
             legend: {
-                position: 'bottom'
+                position: 'bottom',
+                rtl: isRTL,
+                textDirection: isRTL ? 'rtl' : 'ltr',
+                labels: {
+                    font: {
+                        family: isRTL ? "'Cairo', 'Tajawal', sans-serif" : "'Segoe UI', sans-serif"
+                    }
+                }
+            },
+            tooltip: {
+                rtl: isRTL,
+                textDirection: isRTL ? 'rtl' : 'ltr',
+                bodyFont: {
+                    family: isRTL ? "'Cairo', 'Tajawal', sans-serif" : "'Segoe UI', sans-serif"
+                },
+                titleFont: {
+                    family: isRTL ? "'Cairo', 'Tajawal', sans-serif" : "'Segoe UI', sans-serif"
+                }
             }
         }
     }
@@ -391,9 +418,45 @@ new Chart(dailyCtx, {
     },
     options: {
         responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                rtl: isRTL,
+                textDirection: isRTL ? 'rtl' : 'ltr',
+                labels: {
+                    font: {
+                        family: isRTL ? "'Cairo', 'Tajawal', sans-serif" : "'Segoe UI', sans-serif"
+                    }
+                }
+            },
+            tooltip: {
+                rtl: isRTL,
+                textDirection: isRTL ? 'rtl' : 'ltr',
+                bodyFont: {
+                    family: isRTL ? "'Cairo', 'Tajawal', sans-serif" : "'Segoe UI', sans-serif"
+                },
+                titleFont: {
+                    family: isRTL ? "'Cairo', 'Tajawal', sans-serif" : "'Segoe UI', sans-serif"
+                }
+            }
+        },
         scales: {
+            x: {
+                reverse: isRTL,
+                ticks: {
+                    font: {
+                        family: isRTL ? "'Cairo', 'Tajawal', sans-serif" : "'Segoe UI', sans-serif"
+                    }
+                }
+            },
             y: {
-                beginAtZero: true
+                beginAtZero: true,
+                position: isRTL ? 'right' : 'left',
+                ticks: {
+                    font: {
+                        family: isRTL ? "'Cairo', 'Tajawal', sans-serif" : "'Segoe UI', sans-serif"
+                    }
+                }
             }
         }
     }

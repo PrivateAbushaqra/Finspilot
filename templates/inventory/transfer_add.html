@@ -1,20 +1,22 @@
 {% extends 'base.html' %}
 {% load i18n %}
 
-{% block title %}{% trans "Add" %} {% trans "Transfer" %} {% trans "New" %} - {{ block.super }}{% endblock %}
+{% block title %}{% trans "Add New Transfer" %} - {{ block.super }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
+                {% if user.is_superuser or perms.inventory.can_add_warehouse_transfers %}
                 <h2>
                     <i class="fas fa-plus-circle me-2"></i>
-                    {% trans "Add" %} {% trans "Transfer" %} {% trans "Between Warehouses" %}
+                    {% trans "Add Transfer Between Warehouses" %}
                 </h2>
+                {% endif %}
                 <a href="{% url 'inventory:transfer_list' %}" class="btn btn-secondary">
                     <i class="fas fa-arrow-left me-2"></i>
-                    {% trans "Back to" %} {% trans "List" %}
+                    {% trans "Back to List" %}
                 </a>
             </div>
         </div>
