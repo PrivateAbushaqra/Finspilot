@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load currency_tags %}
 
-{% block title %}{% trans "المؤشرات المالية" %} - {{ block.super }}{% endblock %}
+{% block title %}{% trans "Financial Ratios" %} - {{ block.super }}{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -117,9 +117,9 @@
 <div class="container-fluid">
     <!-- Print Header (hidden on screen) -->
     <div class="print-header">
-        <h3>{% trans "المؤشرات المالية" %}</h3>
-        <p>{% trans "كما في تاريخ" %}: {{ as_of_date|date:"Y-m-d" }}</p>
-        <p>{% trans "تاريخ الطباعة" %}: {% now "Y-m-d H:i" %}</p>
+        <h3>{% trans "Financial Ratios" %}</h3>
+        <p>{% trans "As of Date" %}: {{ as_of_date|date:"Y-m-d" }}</p>
+        <p>{% trans "Print Date" %}: {% now "Y-m-d H:i" %}</p>
     </div>
     
     <!-- Page Header -->
@@ -127,18 +127,18 @@
         <div>
             <h2 class="mb-0">
                 <i class="fas fa-chart-pie text-primary me-2"></i>
-                {% trans "المؤشرات المالية" %}
+                {% trans "Financial Ratios" %}
             </h2>
             <p class="text-muted mb-0">{% trans "As of Date" %}: {{ as_of_date|date:"Y-m-d" }}</p>
         </div>
         <div class="no-print">
             <button onclick="window.print()" class="btn btn-primary me-2">
                 <i class="fas fa-print me-1"></i>
-                {% trans "طباعة" %}
+                {% trans "Print" %}
             </button>
             <a href="?{{ request.GET.urlencode }}&export=excel" class="btn btn-success">
                 <i class="fas fa-file-excel me-1"></i>
-                {% trans "تصدير Excel" %}
+                {% trans "Export Excel" %}
             </a>
         </div>
     </div>
@@ -167,18 +167,18 @@
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">{% trans "مؤشرات الربحية" %}</h5>
+                    <h5 class="mb-0">{% trans "Profitability Ratios" %}</h5>
                 </div>
                 <div class="card-body">
                     <div class="ratio-item mb-3">
-                        <h6>{% trans "هامش الربح (Profit Margin)" %}</h6>
+                        <h6>{% trans "Profit Margin" %}</h6>
                         <div class="h4 text-success">{{ ratios.profit_margin|floatformat:2 }}%</div>
-                        <small class="text-muted">{% trans "نسبة صافي الربح إلى الإيرادات" %}</small>
+                        <small class="text-muted">{% trans "Ratio of net profit to revenues" %}</small>
                     </div>
                     <div class="ratio-item">
-                        <h6>{% trans "العائد على الأصول (ROA)" %}</h6>
+                        <h6>{% trans "Return on Assets (ROA)" %}</h6>
                         <div class="h4 text-info">{{ ratios.return_on_assets|floatformat:2 }}%</div>
-                        <small class="text-muted">{% trans "نسبة صافي الربح إلى إجمالي الأصول" %}</small>
+                        <small class="text-muted">{% trans "Ratio of net profit to total assets" %}</small>
                     </div>
                 </div>
             </div>
@@ -187,18 +187,18 @@
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header bg-warning text-white">
-                    <h5 class="mb-0">{% trans "مؤشرات السيولة والدين" %}</h5>
+                    <h5 class="mb-0">{% trans "Liquidity and Debt Ratios" %}</h5>
                 </div>
                 <div class="card-body">
                     <div class="ratio-item mb-3">
-                        <h6>{% trans "نسبة السيولة (Current Ratio)" %}</h6>
+                        <h6>{% trans "Current Ratio" %}</h6>
                         <div class="h4 text-primary">{{ ratios.liquidity_ratio|floatformat:2 }}</div>
-                        <small class="text-muted">{% trans "نسبة الأصول إلى المطلوبات" %}</small>
+                        <small class="text-muted">{% trans "Ratio of assets to liabilities" %}</small>
                     </div>
                     <div class="ratio-item">
-                        <h6>{% trans "نسبة الدين إلى رأس المال (Debt-to-Equity)" %}</h6>
+                        <h6>{% trans "Debt-to-Equity Ratio" %}</h6>
                         <div class="h4 text-danger">{{ ratios.debt_to_equity|floatformat:2 }}</div>
-                        <small class="text-muted">{% trans "نسبة المطلوبات إلى حقوق الملكية" %}</small>
+                        <small class="text-muted">{% trans "Ratio of liabilities to equity" %}</small>
                     </div>
                 </div>
             </div>
@@ -208,24 +208,24 @@
     <!-- Interpretation Guide -->
     <div class="card mt-4">
         <div class="card-header bg-info text-white">
-            <h5 class="mb-0">{% trans "دليل التفسير" %}</h5>
+            <h5 class="mb-0">{% trans "Interpretation Guide" %}</h5>
         </div>
         <div class="card-body">
             <div class="row">
                 <div class="col-md-6">
-                    <h6>{% trans "هامش الربح" %}</h6>
+                    <h6>{% trans "Profit Margin" %}</h6>
                     <ul class="list-unstyled">
-                        <li><span class="badge bg-success">> 20%</span> {% trans "ممتاز" %}</li>
-                        <li><span class="badge bg-warning">10-20%</span> {% trans "جيد" %}</li>
-                        <li><span class="badge bg-danger">< 10%</span> {% trans "يحتاج تحسين" %}</li>
+                        <li><span class="badge bg-success">> 20%</span> {% trans "Excellent" %}</li>
+                        <li><span class="badge bg-warning">10-20%</span> {% trans "Good" %}</li>
+                        <li><span class="badge bg-danger">< 10%</span> {% trans "Needs Improvement" %}</li>
                     </ul>
                 </div>
                 <div class="col-md-6">
-                    <h6>{% trans "نسبة السيولة" %}</h6>
+                    <h6>{% trans "Liquidity Ratio" %}</h6>
                     <ul class="list-unstyled">
-                        <li><span class="badge bg-success">> 2.0</span> {% trans "سيولة عالية" %}</li>
-                        <li><span class="badge bg-warning">1.0-2.0</span> {% trans "سيولة مناسبة" %}</li>
-                        <li><span class="badge bg-danger">< 1.0</span> {% trans "مشاكل سيولة" %}</li>
+                        <li><span class="badge bg-success">> 2.0</span> {% trans "High Liquidity" %}</li>
+                        <li><span class="badge bg-warning">1.0-2.0</span> {% trans "Adequate Liquidity" %}</li>
+                        <li><span class="badge bg-danger">< 1.0</span> {% trans "Liquidity Problems" %}</li>
                     </ul>
                 </div>
             </div>

@@ -546,6 +546,13 @@ class BackupRestoreView(LoginRequiredMixin, TemplateView):
     """صفحة إدارة النسخ الاحتياطية والاستعادة"""
     template_name = 'backup/backup_restore.html'
     
+    def dispatch(self, request, *args, **kwargs):
+        # التحقق من الصلاحيات - يجب أن يكون لديه على الأقل صلاحية عرض النسخ الاحتياطي
+        if not request.user.is_superuser and not request.user.has_perm('users.can_view_backup'):
+            messages.error(request, _('ليس لديك صلاحية للوصول إلى صفحة النسخ الاحتياطي'))
+            return redirect('core:dashboard')
+        return super().dispatch(request, *args, **kwargs)
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
@@ -3084,6 +3091,12 @@ def perform_clear_all_data(user):
 @login_required
 def create_backup(request):
     """إنشاء نسخة احتياطية مع تتبع التقدم وتسجيل الأنشطة"""
+    # التحقق من الصلاحيات
+    if not request.user.is_superuser and not request.user.has_perm('users.can_make_backup'):
+        messages.error(request, _('ليس لديك صلاحية لإنشاء النسخ الاحتياطية'))
+        log_audit(request.user, 'denied', 'محاولة وصول مرفوضة لإنشاء نسخة احتياطية')
+        return redirect('backup:backup_restore')
+    
     if request.method != 'POST':
         logger.warning(f"❌ طريقة طلب غير صحيحة: {request.method}")
         if AUDIT_AVAILABLE:
@@ -3361,13 +3374,14 @@ def delete_backup(request, filename):
 @login_required
 def restore_backup(request):
     """استعادة النسخة الاحتياطية"""
+    # التحقق من الصلاحيات
+    if not request.user.is_superuser and not request.user.has_perm('users.can_restore_backup'):
+        messages.error(request, _('ليس لديك صلاحية لاستعادة النسخ الاحتياطية'))
+        log_audit(request.user, 'denied', 'محاولة وصول مرفوضة لاستعادة نسخة احتياطية')
+        return redirect('backup:backup_restore')
     
     if request.method != 'POST':
         messages.error(request, _("طريقة طلب غير صحيحة"))
-        return redirect('backup:backup_restore')
-    
-    if not request.user.is_superuser:
-        messages.error(request, _("غير مسموح لك بإجراء هذه العملية"))
         return redirect('backup:backup_restore')
     
     if 'backup_file' not in request.FILES and not request.POST.get('filename'):
@@ -3738,12 +3752,12 @@ def list_backups(request):
 
 
 @login_required
-@permission_required('backup.can_restore_backup', raise_exception=True)
-@login_required
 def clear_all_data(request):
     """مسح جميع البيانات من قاعدة البيانات (للاستخدام المنفصل)"""
-    if not request.user.is_superuser:
-        messages.error(request, 'ليس لديك صلاحية لمسح البيانات.')
+    # التحقق من الصلاحيات
+    if not request.user.is_superuser and not request.user.has_perm('users.can_delete_all_data'):
+        messages.error(request, _('ليس لديك صلاحية لمسح جميع البيانات'))
+        log_audit(request.user, 'denied', 'محاولة وصول مرفوضة لمسح جميع البيانات')
         return redirect('backup:backup_restore')
     
     if request.method != 'POST':

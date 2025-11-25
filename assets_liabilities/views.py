@@ -25,6 +25,10 @@ User = get_user_model()
 @login_required
 def assets_liabilities_dashboard(request):
     """Assets and Liabilities Dashboard"""
+    # Access control by permission
+    if not request.user.has_perm('assets_liabilities.can_view_assets_liabilities'):
+        messages.error(request, _('You do not have permission to view assets/liabilities'))
+        return redirect('core:dashboard')
     # الحصول على العملة الأساسية
     company_settings = CompanySettings.objects.first()
     base_currency = company_settings.base_currency if company_settings else None
@@ -86,8 +90,8 @@ def assets_liabilities_dashboard(request):
 def asset_list(request):
     """Asset list"""
     # Check permission
-    if not request.user.has_perm('assets_liabilities.can_view_assets'):
-        messages.error(request, _('You do not have permission to view assets'))
+    if not request.user.has_perm('assets_liabilities.can_view_assets_liabilities'):
+        messages.error(request, _('You do not have permission to view assets/liabilities'))
         return redirect('core:dashboard')
     
     assets = Asset.objects.select_related(
@@ -139,8 +143,8 @@ def asset_list(request):
 def liability_list(request):
     """Liabilities list"""
     # Check permission
-    if not request.user.has_perm('assets_liabilities.can_view_liabilities'):
-        messages.error(request, _('You do not have permission to view liabilities'))
+    if not request.user.has_perm('assets_liabilities.can_view_assets_liabilities'):
+        messages.error(request, _('You do not have permission to view assets/liabilities'))
         return redirect('core:dashboard')
     
     liabilities = Liability.objects.select_related(

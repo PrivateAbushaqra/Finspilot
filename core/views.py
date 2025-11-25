@@ -29,11 +29,11 @@ from .models import SystemNotification, CompanySettings, AuditLog
 
 
 class DashboardView(LoginRequiredMixin, TemplateView):
-    """الشاشة الرئيسية"""
+    """Dashboard main screen"""
     template_name = 'core/dashboard.html'
 
     def dispatch(self, request, *args, **kwargs):
-        """توجيه مستخدمي POS إلى نقطة البيع مباشرة"""
+        """Redirect POS users directly to point of sale"""
         if request.user.is_authenticated and request.user.user_type == 'pos_user':
             from django.shortcuts import redirect
             from django.urls import reverse
@@ -178,7 +178,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         return context
 
     def get_sales_statistics(self, today, start_of_month, start_of_quarter, start_of_half_year, start_of_year):
-        """حساب إحصائيات المبيعات"""
+        """Calculate sales statistics"""
         try:
             from sales.models import SalesInvoice
             
@@ -232,7 +232,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             }
 
     def get_purchase_statistics(self, today, start_of_month, start_of_quarter, start_of_half_year, start_of_year):
-        """حساب إحصائيات المشتريات"""
+        """Calculate purchase statistics"""
         try:
             from purchases.models import PurchaseInvoice
             
@@ -287,7 +287,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         
 
 class NotificationListView(LoginRequiredMixin, ListView):
-    """قائمة الإشعارات"""
+    """Notifications list"""
     model = SystemNotification
     template_name = 'core/notifications.html'
     context_object_name = 'notifications'
@@ -307,7 +307,7 @@ def mark_notification_read(request, pk):
     
     # التحقق من الصلاحيات
     if not request.user.is_superuser and notification.user != request.user:
-        return JsonResponse({'error': 'ليس لديك صلاحية'}, status=403)
+        return JsonResponse({'error': 'You do not have permission'}, status=403)
     
     notification.is_read = True
     notification.save()
@@ -331,7 +331,7 @@ def mark_all_notifications_read(request):
     return JsonResponse({
         'success': True, 
         'count': count,
-        'message': f'تم وضع علامة قراءة على {count} إشعار'
+        'message': f'Marked {count} notifications as read'
     })
 
 
@@ -400,8 +400,8 @@ class TaxReportView(LoginRequiredMixin, TemplateView):
                 if total_tax > 0:
                     tax_data.append({
                         'document_number': invoice.invoice_number,
-                        'document_type': 'فاتورة مبيعات',
-                        'customer_supplier': invoice.customer.name if invoice.customer else 'عميل نقدي',
+                        'document_type': 'Sales Invoice',
+                        'customer_supplier': invoice.customer.name if invoice.customer else 'Cash Customer',
                         'date': invoice.date,
                         'tax_breakdown': tax_breakdown,
                         'total_tax': total_tax,
@@ -444,8 +444,8 @@ class TaxReportView(LoginRequiredMixin, TemplateView):
                 if total_tax > 0:
                     tax_data.append({
                         'document_number': invoice.invoice_number,
-                        'document_type': 'فاتورة مشتريات',
-                        'customer_supplier': invoice.supplier.name if invoice.supplier else 'غير محدد',
+                        'document_type': 'Purchase Invoice',
+                        'customer_supplier': invoice.supplier.name if invoice.supplier else 'Not specified',
                         'date': invoice.date,
                         'tax_breakdown': tax_breakdown,
                         'total_tax': -total_tax,  # المشتريات سالبة
@@ -491,8 +491,8 @@ class TaxReportView(LoginRequiredMixin, TemplateView):
                 if total_tax > 0:
                     tax_data.append({
                         'document_number': return_invoice.return_number,
-                        'document_type': 'مردود مبيعات',
-                        'customer_supplier': return_invoice.customer.name if return_invoice.customer else 'غير محدد',
+                        'document_type': 'Sales Return',
+                        'customer_supplier': return_invoice.customer.name if return_invoice.customer else 'Not specified',
                         'date': return_invoice.date,
                         'tax_breakdown': tax_breakdown,
                         'total_tax': -total_tax,  # مردود المبيعات سالب
@@ -538,8 +538,8 @@ class TaxReportView(LoginRequiredMixin, TemplateView):
                 if total_tax > 0:
                     tax_data.append({
                         'document_number': return_invoice.return_number,
-                        'document_type': 'مردود مشتريات',
-                        'customer_supplier': return_invoice.supplier.name if hasattr(return_invoice, 'supplier') and return_invoice.supplier else 'غير محدد',
+                        'document_type': 'Purchase Return',
+                        'customer_supplier': return_invoice.supplier.name if hasattr(return_invoice, 'supplier') and return_invoice.supplier else 'Not specified',
                         'date': return_invoice.date,
                         'tax_breakdown': tax_breakdown,
                         'total_tax': total_tax,  # مردود المشتريات موجب
@@ -791,7 +791,7 @@ class ProfitLossReportView(LoginRequiredMixin, TemplateView):
             from journal.models import JournalEntry, Account
             from decimal import Decimal
         except ImportError as e:
-            context['error'] = _("حدث خطأ في استيراد النماذج المطلوبة: {}").format(str(e))
+            context['error'] = _("An error occurred while importing required models: {}").format(str(e))
             return context
             
         # ==========================================
@@ -832,10 +832,10 @@ class ProfitLossReportView(LoginRequiredMixin, TemplateView):
         
         # تفاصيل الإيرادات للعرض
         revenues = {
-            _('إيرادات المبيعات'): sales_revenue,
-            _('مردودات المبيعات'): -sales_returns_total,
-            _('إشعارات الدائن'): -credit_notes_total,
-            _('الإيرادات الأخرى'): other_revenues_total,
+            _('Sales Revenue'): sales_revenue,
+            _('Sales Returns'): -sales_returns_total,
+            _('Credit Notes'): -credit_notes_total,
+            _('Other Revenues'): other_revenues_total,
         }
         
         # ==========================================
@@ -872,9 +872,9 @@ class ProfitLossReportView(LoginRequiredMixin, TemplateView):
         
         # تفاصيل التكاليف للعرض
         costs = {
-            _('تكلفة المشتريات'): purchase_costs,
-            _('مردودات المشتريات'): -purchase_returns_total,
-            _('إشعارات مدين'): -debit_notes_total,
+            _('Purchase Costs'): purchase_costs,
+            _('Purchase Returns'): -purchase_returns_total,
+            _('Debit Notes'): -debit_notes_total,
         }
         
         # ==========================================
@@ -928,7 +928,7 @@ class ProfitLossReportView(LoginRequiredMixin, TemplateView):
         
         # إذا لم توجد مصاريف، أضف صف فارغ
         if not operating_expenses:
-            operating_expenses = {_('لا توجد مصاريف تشغيلية'): Decimal('0')}
+            operating_expenses = {_('No operating expenses'): Decimal('0')}
         
         # ==========================================
         # 5. صافي الربح/الخسارة (NET PROFIT/LOSS) - حسب IFRS
@@ -1011,9 +1011,9 @@ class AuditLogListView(LoginRequiredMixin, ListView):
             from django.contrib.auth.views import redirect_to_login
             return redirect_to_login(request.get_full_path())
         
-        if not (getattr(request.user, 'is_admin', False) or request.user.has_perm('core.view_audit_log')):
-            from django.core.exceptions import PermissionDenied
-            raise PermissionDenied(_('ليس لديك صلاحية للوصول إلى سجل الأنشطة'))
+        if not request.user.has_perm('users.can_view_activity_log'):
+            messages.error(request, _('You do not have permission to view activity log'))
+            return redirect('core:dashboard')
         return super().dispatch(request, *args, **kwargs)
     
     def get_queryset(self):
@@ -1089,7 +1089,7 @@ def sync_balances_view(request):
     """مزامنة أرصدة البنوك والصناديق"""
     # التحقق من صلاحيات المستخدم
     if not request.user.is_superuser:
-        return JsonResponse({'success': False, 'error': 'غير مصرح لك بهذه العملية'})
+        return JsonResponse({'success': False, 'error': 'You are not authorized for this operation'})
     
     try:
         from banks.models import BankAccount
@@ -1135,13 +1135,13 @@ def extend_session_api(request):
         
         return JsonResponse({
             'success': True,
-            'message': 'تم تمديد الجلسة بنجاح',
+            'message': 'Session extended successfully',
             'timestamp': django_timezone.now().isoformat()
         })
     except Exception as e:
         return JsonResponse({
             'success': False,
-            'error': f'خطأ في تمديد الجلسة: {str(e)}'
+            'error': f'Error extending session: {str(e)}'
         }, status=500)
 
 
@@ -1150,7 +1150,7 @@ def extend_session_api(request):
 def audit_log_export_excel(request):
     """تصدير سجل الأنشطة إلى ملف Excel"""
     if not (getattr(request.user, 'is_superuser', False) or getattr(request.user, 'user_type', None) == 'superadmin'):
-        raise PermissionDenied('غير مصرح لك')
+        raise PermissionDenied('You are not authorized')
     from .models import AuditLog
     queryset = AuditLog.objects.select_related('user').order_by('-timestamp')
     # تطبيق نفس الفلاتر الموجودة في AuditLogListView
@@ -1186,7 +1186,7 @@ def audit_log_export_excel(request):
         import csv, io
         output = io.StringIO()
         writer = csv.writer(output)
-        writer.writerow(['الوقت', 'المستخدم', 'نوع العملية', 'نوع المحتوى', 'الوصف', 'عنوان IP'])
+        writer.writerow(['Time', 'User', 'Action Type', 'Content Type', 'Description', 'IP Address'])
         for log in queryset:
             writer.writerow([
                 log.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
@@ -1262,7 +1262,7 @@ class SalesBySalespersonReportView(LoginRequiredMixin, TemplateView):
             from django.contrib.auth import get_user_model
             User = get_user_model()
         except ImportError:
-            context['error'] = _("حدث خطأ في استيراد النماذج المطلوبة")
+            context['error'] = _("An error occurred while importing required models")
             return context
             
         # الحصول على قائمة البائعين (المستخدمين الذين أنشأوا فواتير مبيعات)
@@ -1308,7 +1308,7 @@ class SalesBySalespersonReportView(LoginRequiredMixin, TemplateView):
             self.request, 
             'view', 
             self, 
-            _('عرض تقرير المبيعات حسب البائع')
+            _('View Sales Report by Salesperson')
         )
         
         return context
@@ -1324,27 +1324,27 @@ def database_info_view(request):
     # معلومات قاعدة البيانات
     db_info = {
         'database_type': connection.vendor,
-        'database_name': connection.settings_dict.get('NAME', 'غير محدد'),
-        'database_host': connection.settings_dict.get('HOST', 'غير محدد'),
-        'database_port': connection.settings_dict.get('PORT', 'غير محدد'),
-        'database_engine': connection.settings_dict.get('ENGINE', 'غير محدد'),
+        'database_name': connection.settings_dict.get('NAME', 'Not specified'),
+        'database_host': connection.settings_dict.get('HOST', 'Not specified'),
+        'database_port': connection.settings_dict.get('PORT', 'Not specified'),
+        'database_engine': connection.settings_dict.get('ENGINE', 'Not specified'),
         'is_postgresql': connection.vendor.lower() == 'postgresql',
         'is_sqlite': connection.vendor.lower() == 'sqlite',
-        'connection_status': 'متصل' if connection.ensure_connection() is None else 'غير متصل',
+        'connection_status': 'Connected' if connection.ensure_connection() is None else 'Not connected',
     }
 
     # معلومات Django
     django_info = {
         'django_version': '4.2.7',
         'python_version': '3.11.9',
-        'debug_mode': 'تشغيل' if getattr(connection, '_settings_dict', {}).get('DEBUG', False) else 'إيقاف',
-        'render_deployment': 'نعم' if request.META.get('HTTP_HOST', '').endswith('onrender.com') else 'لا',
+        'debug_mode': 'On' if getattr(connection, '_settings_dict', {}).get('DEBUG', False) else 'Off',
+        'render_deployment': 'Yes' if request.META.get('HTTP_HOST', '').endswith('onrender.com') else 'No',
     }
 
     context = {
         'db_info': db_info,
         'django_info': django_info,
-        'title': 'معلومات قاعدة البيانات - إثبات استخدام PostgreSQL',
+        'title': 'Database Information - Proof of PostgreSQL Usage',
     }
 
     return render(request, 'core/database_info.html', context)
@@ -1373,7 +1373,7 @@ def language_switch_view(request):
             request,
             'update',
             None,
-            f'تبديل اللغة إلى: {language}'
+            f'Language switched to: {language}'
         )
 
     # إعادة التوجيه - استخدام next_url إذا كان موجوداً، وإلا حسب اللغة

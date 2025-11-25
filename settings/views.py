@@ -27,6 +27,13 @@ class SettingsView(LoginRequiredMixin, TemplateView):
 class DocumentSequenceView(LoginRequiredMixin, TemplateView):
     template_name = 'settings/document_sequences.html'
     
+    def dispatch(self, request, *args, **kwargs):
+        """التحقق من صلاحية عرض إدارة أرقام المستندات"""
+        if not request.user.has_perm('users.can_view_document_number_management'):
+            messages.error(request, _('You do not have permission to view document number management'))
+            return redirect('core:dashboard')
+        return super().dispatch(request, *args, **kwargs)
+    
     def get_context_data(self, **kwargs):
         from core.models import DocumentSequence
         
@@ -43,6 +50,13 @@ class DocumentSequenceView(LoginRequiredMixin, TemplateView):
 
 class CompanySettingsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     template_name = 'settings/company.html'
+    
+    def dispatch(self, request, *args, **kwargs):
+        """التحقق من صلاحية عرض إعدادات النظام"""
+        if not request.user.has_perm('users.can_view_system_settings'):
+            messages.error(request, _('You do not have permission to view system settings'))
+            return redirect('core:dashboard')
+        return super().dispatch(request, *args, **kwargs)
     
     def test_func(self):
         """التحقق من أن المستخدم لديه صلاحية الوصول لإعدادات الشركة"""
@@ -411,8 +425,8 @@ class DocumentSequenceEditView(LoginRequiredMixin, View):
     
     def dispatch(self, request, *args, **kwargs):
         """التحقق من الصلاحيات قبل السماح بالوصول"""
-        if not (request.user.has_perm('core.change_documentsequence') or request.user.is_superuser):
-            messages.error(request, _('ليس لديك صلاحية لتعديل تسلسل المستندات!'))
+        if not request.user.has_perm('users.can_edit_document_sequence'):
+            messages.error(request, _('You do not have permission to edit document sequences'))
             return redirect('settings:document_sequences')
         return super().dispatch(request, *args, **kwargs)
     
@@ -528,8 +542,8 @@ class DocumentSequenceAddView(LoginRequiredMixin, View):
     
     def dispatch(self, request, *args, **kwargs):
         """التحقق من الصلاحيات قبل السماح بالوصول"""
-        if not (request.user.has_perm('core.add_documentsequence') or request.user.is_superuser):
-            messages.error(request, _('ليس لديك صلاحية لإضافة تسلسل مستندات جديد!'))
+        if not request.user.has_perm('users.can_add_document_sequence'):
+            messages.error(request, _('You do not have permission to add document sequences'))
             return redirect('settings:document_sequences')
         return super().dispatch(request, *args, **kwargs)
     
@@ -618,8 +632,8 @@ class DocumentSequenceDeleteView(LoginRequiredMixin, View):
     
     def dispatch(self, request, *args, **kwargs):
         """التحقق من الصلاحيات قبل السماح بالوصول"""
-        if not (request.user.has_perm('core.delete_documentsequence') or request.user.is_superuser):
-            messages.error(request, _('ليس لديك صلاحية لحذف تسلسل المستندات!'))
+        if not request.user.has_perm('users.can_delete_document_sequence'):
+            messages.error(request, _('You do not have permission to delete document sequences'))
             return redirect('settings:document_sequences')
         return super().dispatch(request, *args, **kwargs)
     

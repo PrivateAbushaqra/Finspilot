@@ -53,13 +53,17 @@
                                             <td>{{ sequence.current_number|unlocalize }}</td>
                                             <td>{{ sequence.get_formatted_number }}</td>
                                             <td>
+                                                {% if user.is_superuser or perms.users.can_edit_document_sequence %}
                                                 <a href="{% url 'settings:document_sequence_edit' seq_id=sequence.id %}" class="btn btn-sm btn-primary">
                                                     <i class="fas fa-edit"></i> {% trans "Edit" %}
                                                 </a>
+                                                {% endif %}
+                                                {% if user.is_superuser or perms.users.can_delete_document_sequence %}
                                                 <button type="button" class="btn btn-sm btn-danger ml-1" 
                                                         onclick="confirmDelete({{ sequence.id }}, '{{ sequence.get_document_type_display }}')">
                                                     <i class="fas fa-trash"></i> {% trans "Delete" %}
                                                 </button>
+                                                {% endif %}
                                             </td>
                                         </tr>
                                         {% empty %}
@@ -74,9 +78,11 @@
                             </div>
                             
                             <div class="mt-4">
+                                {% if user.is_superuser or perms.users.can_add_document_sequence %}
                                 <a href="{% url 'settings:document_sequence_add' %}" class="btn btn-success">
                                     <i class="fas fa-plus"></i> {% trans "Add New Sequence" %}
                                 </a>
+                                {% endif %}
                             </div>
                         </div>
                     </div>

@@ -225,7 +225,7 @@ class BankAccountCreateView(LoginRequiredMixin, View):
                     ).exists()
                     
                     if existing_entry:
-                        print(f"⚠ قيد الرصيد الافتتاحي موجود بالفعل للحساب {account.name}، تم تخطي الإنشاء")
+                        print(f"⚠ Opening balance entry already exists for account {account.name}, creation skipped")
                     else:
                         try:
                             from journal.models import Account
@@ -258,10 +258,10 @@ class BankAccountCreateView(LoginRequiredMixin, View):
                                     lines_data=lines_data,
                                     user=request.user
                                 )
-                                print(f"✓ تم إنشاء قيد الرصيد الافتتاحي {journal_entry.entry_number} للحساب {account.name}")
+                                print(f"✓ Opening balance journal entry created {journal_entry.entry_number} for account {account.name}")
                         except Exception as e:
                             # لا نريد إيقاف العملية إذا فشل إنشاء القيد
-                            print(f"خطأ في إنشاء القيد المحاسبي للرصيد الافتتاحي: {e}")
+                            print(f"Error creating journal entry for opening balance: {e}")
                             import traceback
                             traceback.print_exc()
 
@@ -270,7 +270,7 @@ class BankAccountCreateView(LoginRequiredMixin, View):
                 request.user,
                 'CREATE',
                 account,
-                f'تم إنشاء حساب بنكي جديد: {account.name} - الرصيد الأولي: {balance} {currency_code}'
+                f'Created new bank account: {account.name} - Initial balance: {balance} {currency_code}'
             )
 
             messages.success(request, f'Bank account "{account.name}" created successfully!')
@@ -456,13 +456,13 @@ class BankAccountUpdateView(LoginRequiredMixin, View):
                                     'account_id': bank_account_obj.id,
                                     'debit': abs(balance_difference),
                                     'credit': Decimal('0'),
-                                    'description': f'{_("Increase in balance")}: {account.name} ({dict(BankTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "تعديل")})'
+                                    'description': f'{_("Increase in balance")}: {account.name} ({dict(BankTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "Adjustment")})'
                                 },
                                 {
                                     'account_id': adjustment_account.id,
                                     'debit': Decimal('0'),
                                     'credit': abs(balance_difference),
-                                    'description': f'{adjustment_account.name} - {dict(BankTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "تعديل")}'
+                                    'description': f'{adjustment_account.name} - {dict(BankTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "Adjustment")}'
                                 }
                             ]
                         else:
@@ -472,19 +472,19 @@ class BankAccountUpdateView(LoginRequiredMixin, View):
                                     'account_id': adjustment_account.id,
                                     'debit': abs(balance_difference),
                                     'credit': Decimal('0'),
-                                    'description': f'{adjustment_account.name} - {dict(BankTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "تعديل")}'
+                                    'description': f'{adjustment_account.name} - {dict(BankTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "Adjustment")}'
                                 },
                                 {
                                     'account_id': bank_account_obj.id,
                                     'debit': Decimal('0'),
                                     'credit': abs(balance_difference),
-                                    'description': f'{_("Decrease in balance")}: {account.name} ({dict(BankTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "تعديل")})'
+                                    'description': f'{_("Decrease in balance")}: {account.name} ({dict(BankTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "Adjustment")})'
                                 }
                             ]
                         
                         journal_entry = JournalService.create_journal_entry(
                             entry_date=timezone.now().date(),
-                            description=f'{_("Adjustment of Bank Balance")}: {account.name} - {dict(BankTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "تعديل")}',
+                            description=f'{_("Adjustment of Bank Balance")}: {account.name} - {dict(BankTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "Adjustment")}',
                             reference_type='bank_adjustment',
                             reference_id=account.id,
                             lines_data=lines_data,
@@ -492,7 +492,7 @@ class BankAccountUpdateView(LoginRequiredMixin, View):
                         )
                 except Exception as e:
                     # لا نريد إيقاف العملية إذا فشل إنشاء القيد
-                    print(f"خطأ في إنشاء القيد المحاسبي للتعديل: {e}")
+                    print(f"Error creating journal entry for adjustment: {e}")
                 
                 # تسجيل في سجل الأنشطة
                 from core.models import AuditLog
@@ -501,7 +501,7 @@ class BankAccountUpdateView(LoginRequiredMixin, View):
                     action_type='update',
                     content_type='BankAccount',
                     object_id=account.id,
-                    description=_('تعديل رصيد الحساب البنكي: %(name)s من %(old)s إلى %(new)s (فرق: %(diff)s)') % {
+                    description=_('Bank account balance adjustment: %(name)s from %(old)s to %(new)s (difference: %(diff)s)') % {
                         'name': name,
                         'old': old_balance,
                         'new': new_balance,
@@ -653,7 +653,7 @@ class BankAccountDeleteView(LoginRequiredMixin, View):
             # التعامل مع أخطاء المفاتيح الخارجية المحمية
             error_message = str(e)
             if "Cannot delete some instances" in error_message and "protected foreign keys" in error_message:
-                messages.error(request, f'لا يمكن حذف الحساب "{account_name}" لأن هناك بيانات مرتبطة به في النظام. يُنصح بإلغاء تفعيل الحساب بدلاً من حذفه.')
+                messages.error(request, f'Cannot delete account "{account_name}" because there are related data in the system. It is recommended to deactivate the account instead of deleting it.')
             else:
                 messages.error(request, f'Error occurred while deleting account: {error_message}')
         
@@ -869,7 +869,7 @@ class BankTransferCreateView(View):
             # التحقق من كفاية الرصيد
             total_amount = amount + fees
             if from_account.balance < total_amount:
-                messages.error(request, f'رصيد الحساب "{from_account.name}" غير كافي! الرصيد الحالي: {from_account.balance:.3f}, المبلغ المطلوب: {total_amount:.3f}')
+                messages.error(request, f'Account balance "{from_account.name}" is insufficient! Current balance: {from_account.balance:.3f}, Required amount: {total_amount:.3f}')
                 return render(request, self.template_name, context)
             
             # إنشاء التحويل البنكي داخل معاملة
@@ -905,7 +905,7 @@ class BankTransferCreateView(View):
                     bank=from_account,
                     transaction_type='withdrawal',
                     amount=total_amount,
-                    description=f'تحويل إلى حساب {to_account.name} - رقم التحويل: {transfer_number}',
+                    description=f'Transfer to account {to_account.name} - Transfer number: {transfer_number}',
                     reference_number=transfer_number,
                     date=date,
                     created_by=request.user
@@ -919,7 +919,7 @@ class BankTransferCreateView(View):
                     bank=to_account,
                     transaction_type='deposit',
                     amount=amount * exchange_rate,
-                    description=f'تحويل من حساب {from_account.name} - رقم التحويل: {transfer_number}',
+                    description=f'Transfer from account {from_account.name} - Transfer number: {transfer_number}',
                     reference_number=transfer_number,
                     date=date,
                     created_by=request.user
@@ -1081,10 +1081,10 @@ class BankCashboxTransferCreateView(LoginRequiredMixin, View):
             # التحقق من كفاية الرصيد
             total_amount = amount + fees
             if transfer_type == 'bank_to_cashbox' and bank.balance < total_amount:
-                messages.error(request, f'رصيد البنك "{bank.name}" غير كافي! الرصيد الحالي: {bank.balance:.3f}, المبلغ المطلوب: {total_amount:.3f}')
+                messages.error(request, f'Bank balance "{bank.name}" is insufficient! Current balance: {bank.balance:.3f}, Required amount: {total_amount:.3f}')
                 return render(request, self.template_name, context)
             elif transfer_type == 'cashbox_to_bank' and cashbox.balance < total_amount:
-                messages.error(request, f'رصيد الصندوق "{cashbox.name}" غير كافي! الرصيد الحالي: {cashbox.balance:.3f}, المبلغ المطلوب: {total_amount:.3f}')
+                messages.error(request, f'Cashbox balance "{cashbox.name}" is insufficient! Current balance: {cashbox.balance:.3f}, Required amount: {total_amount:.3f}')
                 return render(request, self.template_name, context)
             
             # إنشاء التحويل
@@ -1141,9 +1141,9 @@ class BankCashboxTransferCreateView(LoginRequiredMixin, View):
                 try:
                     from journal.services import JournalService
                     journal_entry = JournalService.create_cashbox_transfer_entry(transfer, request.user)
-                    print(f"تم إنشاء القيد المحاسبي للتحويل: {journal_entry.entry_number}")
+                    print(f"Journal entry created for transfer: {journal_entry.entry_number}")
                 except Exception as e:
-                    print(f"خطأ في إنشاء القيد المحاسبي: {e}")
+                    print(f"Error creating journal entry: {e}")
                     # يمكن الاستمرار لأن التحويل تم بنجاح
             
             messages.success(request, f'Transfer "{transfer.transfer_number}" created successfully!')
@@ -1155,7 +1155,7 @@ class BankCashboxTransferCreateView(LoginRequiredMixin, View):
                 action_type='create',
                 content_type='CashboxTransfer',
                 object_id=transfer.id,
-                description=f'إنشاء تحويل {transfer.transfer_type} رقم {transfer.transfer_number} - المبلغ: {amount} - رسوم: {fees}'
+                description=f'Created transfer {transfer.transfer_type} number {transfer.transfer_number} - Amount: {amount} - Fees: {fees}'
             )
             
             return redirect('banks:transfer_list')
@@ -1299,7 +1299,7 @@ class BankTransferUpdateView(UpdateView):
                 bank=transfer.from_account,
                 transaction_type='withdrawal',
                 amount=total_amount,
-                description=f'تحويل إلى حساب {transfer.to_account.name} - رقم التحويل: {transfer.transfer_number}',
+                description=f'Transfer to account {transfer.to_account.name} - Transfer number: {transfer.transfer_number}',
                 reference_number=transfer.transfer_number,
                 date=transfer.date,
                 created_by=self.request.user
@@ -1310,7 +1310,7 @@ class BankTransferUpdateView(UpdateView):
                 bank=transfer.to_account,
                 transaction_type='deposit',
                 amount=transfer.amount * transfer.exchange_rate,
-                description=f'تحويل من حساب {transfer.from_account.name} - رقم التحويل: {transfer.transfer_number}',
+                description=f'Transfer from account {transfer.from_account.name} - Transfer number: {transfer.transfer_number}',
                 reference_number=transfer.transfer_number,
                 date=transfer.date,
                 created_by=self.request.user
@@ -1332,7 +1332,7 @@ class BankTransferUpdateView(UpdateView):
                 self.request,
                 'UPDATE',
                 transfer,
-                f'تم تحديث التحويل البنكي رقم {transfer.transfer_number} من {transfer.from_account.name} إلى {transfer.to_account.name} بمبلغ {transfer.amount:.3f}'
+                f'Updated bank transfer number {transfer.transfer_number} from {transfer.from_account.name} to {transfer.to_account.name} with amount {transfer.amount:.3f}'
             )
         
         messages.success(self.request, 'تم تحديث التحويل بنجاح!')
@@ -1419,7 +1419,7 @@ class BankTransferDeleteView(View):
                 from_account.sync_balance()
                 to_account.sync_balance()
             
-            messages.success(request, f'تم حذف التحويل "{transfer_number}" بنجاح وتم إعادة ضبط الأرصدة.')
+            messages.success(request, f'Transfer "{transfer_number}" deleted successfully and balances reset.')
             return JsonResponse({'success': True})
             
         except BankTransfer.DoesNotExist:
@@ -1486,7 +1486,7 @@ class CashboxTransferDeleteView(LoginRequiredMixin, View):
                     cashbox = transfer.from_cashbox
                     cashbox.save()  # سيؤدي لإعادة حساب الرصيد إذا كان مطبقاً
             
-            messages.success(request, f'تم حذف التحويل "{transfer_number}" بنجاح وتم إعادة ضبط الأرصدة.')
+            messages.success(request, f'Transfer "{transfer_number}" deleted successfully and balances reset.')
             return JsonResponse({'success': True})
             
         except CashboxTransfer.DoesNotExist:
@@ -1506,9 +1506,9 @@ class BankAccountToggleStatusView(View):
             account.save()
             
             if account.is_active:
-                messages.success(request, f'تم تفعيل الحساب البنكي "{account_name}" بنجاح!')
+                messages.success(request, f'Bank account "{account_name}" activated successfully!')
             else:
-                messages.success(request, f'تم إلغاء تفعيل الحساب البنكي "{account_name}" بنجاح!')
+                messages.success(request, f'Bank account "{account_name}" deactivated successfully!')
             
         except BankAccount.DoesNotExist:
             messages.error(request, 'Bank account not found!')
@@ -1690,7 +1690,7 @@ class BankTransactionDeleteView(LoginRequiredMixin, View):
             
             return JsonResponse({
                 'success': True, 
-                'message': f'تم حذف المعاملة ({transaction_info["type"]} - {transaction_info["amount"]}) بنجاح وتم إعادة ضبط الرصيد.',
+                'message': f'Transaction ({transaction_info["type"]} - {transaction_info["amount"]}) deleted successfully and balance reset.',
                 'new_balance': float(bank_account.balance)
             })
             
@@ -1736,7 +1736,7 @@ class BankAccountSuperAdminDeleteView(View):
                 log_activity(
                     action_type='delete',
                     obj=None,  # Object deleted
-                    description=f'حذف مطلق للحساب البنكي "{account_name}" مع جميع حركاته وتحويلاته (superadmin)',
+                    description=f'Absolute deletion of bank account "{account_name}" with all its transactions and transfers (superadmin)',
                     user=request.user
                 )
                 

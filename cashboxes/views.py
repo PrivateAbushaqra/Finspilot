@@ -49,7 +49,7 @@ def get_transaction_document_url(transaction):
         
         # البحث برقم الفاتورة
         try:
-            if 'فاتورة' in transaction.description.lower():
+            if 'invoice' in transaction.description.lower():
                 # فاتورة مبيعات
                 invoice = SalesInvoice.objects.filter(invoice_number=doc_num).first()
                 if invoice:
@@ -83,19 +83,19 @@ def get_document_number_from_description(description):
     
     # أنماط شائعة لأرقام المستندات
     patterns = [
-        r'فاتورة رقم\s*([A-Za-z0-9\-]+)',  # فاتورة رقم INV-001
-        r'رقم\s*([A-Za-z0-9\-]+)',  # رقم INV-001
+        r'invoice number\s*([A-Za-z0-9\-]+)',  # فاتورة رقم INV-001
+        r'number\s*([A-Za-z0-9\-]+)',  # رقم INV-001
         r'#([A-Za-z0-9\-]+)',  # #INV-001
         r'([A-Za-z]{2,}-[0-9]+)',  # INV-001, REC-001, PAY-001
         r'([A-Za-z]{3,}[0-9]+)',  # INV001, REC001
-        r'سند\s+(قبض|دفع|صرف)\s+([A-Za-z0-9\-]+)',  # سند قبض REC-001
+        r'voucher\s+(receipt|payment|expense)\s+([A-Za-z0-9\-]+)',  # سند قبض REC-001
         r'([0-9]{3,}-?[0-9]*)',  # أرقام مثل 001, 001-1, 12345
     ]
     
     for pattern in patterns:
         match = re.search(pattern, description)
         if match:
-            if 'سند' in pattern:
+            if 'voucher' in pattern:
                 result = match.group(2)
             else:
                 result = match.group(1)
@@ -111,18 +111,18 @@ def get_transaction_short_description(transaction):
     """الحصول على وصف مختصر للحركة بناءً على نوع المستند"""
     if transaction.reference_type:
         if transaction.reference_type == 'sales_invoice':
-            return 'فاتورة مبيعات-نقدية'
+            return _('Sales Invoice - Cash')
         elif transaction.reference_type == 'purchase_invoice':
-            return 'فاتورة مشتريات'
+            return _('Purchase Invoice')
         elif transaction.reference_type == 'receipt':
-            return 'إيصال قبض'
+            return _('Payment Receipt')
         elif transaction.reference_type == 'payment':
-            return 'سند صرف'
+            return _('Payment Voucher')
         elif transaction.reference_type == 'transfer':
-            return 'تحويل'
+            return _('Transfer')
     
     # للحركات التي لا تحتوي على reference_type، نستخدم الوصف الأصلي
-    return transaction.description or 'حركة نقدية'
+    return transaction.description or _('Cash Transaction')
 
 
 def get_transaction_document_number(transaction):
@@ -386,7 +386,7 @@ def cashbox_create(request):
                     ).exists()
                     
                     if existing_entry:
-                        print(f"⚠ قيد الرصيد الافتتاحي موجود بالفعل للصندوق {cashbox.name}، تم تخطي الإنشاء")
+                        print(f"⚠ Opening balance entry already exists for cashbox {cashbox.name}, creation skipped")
                     else:
                         # إنشاء حركة الرصيد الافتتاحي
                         CashboxTransaction.objects.create(
@@ -429,7 +429,7 @@ def cashbox_create(request):
                             )
                             
                             if journal_entry:
-                                print(f"✓ تم إنشاء قيد الرصيد الافتتاحي للصندوق {cashbox.name}: {journal_entry.entry_number}")
+                                print(f"✓ Opening balance journal entry created for cashbox {cashbox.name}: {journal_entry.entry_number}")
                         
                         # مزامنة رصيد الصندوق من المعاملات
                         cashbox.sync_balance()
@@ -440,7 +440,7 @@ def cashbox_create(request):
                     action_type='create',
                     content_type='Cashbox',
                     object_id=cashbox.id,
-                    description=f'إنشاء صندوق نقدي جديد: {name}',
+                    description=f'Created new cashbox: {name}',
                     ip_address=request.META.get('REMOTE_ADDR')
                 )
                 
@@ -449,8 +449,8 @@ def cashbox_create(request):
         except Exception as e:
             import traceback
             error_trace = traceback.format_exc()
-            print(f"خطأ في إنشاء الصندوق: {e}")
-            print(f"تفاصيل الخطأ:\n{error_trace}")
+            print(f"Error creating cashbox: {e}")
+            print(f"Error details:\n{error_trace}")
             
             # رسالة خطأ أكثر تفصيلاً
             error_message = str(e) if str(e) else _('An error occurred while creating the cashbox')
@@ -612,14 +612,14 @@ def cashbox_edit(request, cashbox_id):
                     action_type='update',
                     content_type='Cashbox',
                     object_id=cashbox_id,
-                    description=f'تعديل الصندوق: {name}',
+                    description=f'Updated cashbox: {name}',
                     ip_address=request.META.get('REMOTE_ADDR')
                 )
                 
                 messages.success(request, _('Cashbox updated successfully'))
                 return redirect('cashboxes:cashbox_list')
         except Exception as e:
-            print(f"خطأ في تحديث الصندوق: {e}")
+            print(f"Error updating cashbox: {e}")
             messages.error(request, _('An error occurred while updating the cashbox'))
             return redirect('cashboxes:cashbox_list')
     
@@ -841,7 +841,7 @@ def transfer_create(request):
                     action_type='create',
                     content_type='CashboxTransfer',
                     object_id=transfer.id,
-                    description=f'إنشاء تحويل {transfer.transfer_number} من {transfer.get_from_display_name()} إلى {transfer.get_to_display_name()} - المبلغ: {transfer.amount}'
+                    description=f'Created transfer {transfer.transfer_number} from {transfer.get_from_display_name()} to {transfer.get_to_display_name()} - Amount: {transfer.amount}'
                 )
                 
                 # تحديث التسلسل بعد نجاح التحويل

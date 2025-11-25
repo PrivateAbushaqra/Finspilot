@@ -150,6 +150,10 @@ def create_journal_entry_for_revenue_expense(entry, user):
 @login_required
 def revenue_expense_dashboard(request):
     """{% trans "Revenues and Expenses Dashboard" %}"""
+    # Access control by permission
+    if not request.user.has_perm('revenues_expenses.can_view_revenues_expenses'):
+        messages.error(request, _('You do not have permission to view revenues/expenses'))
+        return redirect('core:dashboard')
     # Get base currency
     company_settings = CompanySettings.objects.first()
     base_currency = company_settings.base_currency if company_settings else None
@@ -235,8 +239,8 @@ def revenue_expense_dashboard(request):
 def category_list(request):
     """{% trans "Revenue/Expense Categories List" %}"""
     # Access control by permission
-    if not request.user.has_perm('revenues_expenses.can_view_categories'):
-        messages.error(request, _('You do not have permission to view revenue/expense category'))
+    if not request.user.has_perm('revenues_expenses.can_view_revenues_expenses'):
+        messages.error(request, _('You do not have permission to view revenues/expenses'))
         return redirect('core:dashboard')
     categories = RevenueExpenseCategory.objects.filter(is_active=True).select_related('created_by')
     # Filtering
@@ -265,7 +269,7 @@ def category_list(request):
 def category_create(request):
     """{% trans "Add New Category" %}"""
     # Access control by permission
-    if not request.user.has_perm('revenues_expenses.can_add_categories'):
+    if not request.user.has_perm('revenues_expenses.can_add_revenues_expenses'):
         messages.error(request, _('You do not have permission to add revenue/expense category'))
         return redirect('revenues_expenses:category_list')
     if request.method == 'POST':
@@ -323,8 +327,8 @@ def category_delete(request, category_id):
 def entry_create(request):
     """{% trans "Add New Entry" %}"""
     # Access control by permission
-    if not request.user.has_perm('revenues_expenses.can_add_entries'):
-        messages.error(request, _('You do not have permission to add revenue/expense entry'))
+    if not request.user.has_perm('revenues_expenses.can_add_revenues_expenses'):
+        messages.error(request, _('You do not have permission to add revenues/expenses'))
         return redirect('core:dashboard')
     if request.method == 'POST':
         form = RevenueExpenseEntryForm(request.POST)
@@ -349,7 +353,7 @@ def entry_create(request):
 def entry_delete(request, entry_id):
     """Delete Revenue/Expense Entry"""
     entry = get_object_or_404(RevenueExpenseEntry, id=entry_id)
-    if not request.user.has_perm('revenues_expenses.can_delete_entries'):
+    if not request.user.has_perm('revenues_expenses.can_delete_revenues_expenses'):
         messages.error(request, _('You do not have permission to delete revenue/expense entry'))
         return redirect('core:dashboard')
     if request.method == 'POST':
@@ -367,7 +371,7 @@ def entry_delete(request, entry_id):
 def entry_edit(request, entry_id):
     """Edit Revenue/Expense Entry"""
     entry = get_object_or_404(RevenueExpenseEntry, id=entry_id)
-    if not request.user.has_perm('revenues_expenses.can_edit_entries'):
+    if not request.user.has_perm('revenues_expenses.can_edit_revenues_expenses'):
         messages.error(request, _('You do not have permission to edit revenue/expense entry'))
         return redirect('core:dashboard')
     if request.method == 'POST':
@@ -710,8 +714,8 @@ def entry_detail(request, entry_id):
 def entry_list(request):
     """Revenue/Expense Entries List"""
     # Permission check
-    if not request.user.has_perm('revenues_expenses.can_view_entries'):
-        messages.error(request, _('You do not have permission to view revenue and expense entries'))
+    if not request.user.has_perm('revenues_expenses.can_view_revenues_expenses'):
+        messages.error(request, _('You do not have permission to view revenues/expenses'))
         return redirect('core:dashboard')
     
     # Fetch entries
@@ -1061,6 +1065,10 @@ def dashboard_recent_entries_export_excel(request):
 @login_required
 def entry_create(request):
     """Add Revenue/Expense Entry"""
+    # Access control by permission
+    if not request.user.has_perm('revenues_expenses.can_add_revenues_expenses'):
+        messages.error(request, _('You do not have permission to add revenues/expenses'))
+        return redirect('core:dashboard')
     if request.method == 'POST':
         form = RevenueExpenseEntryForm(request.POST)
         if form.is_valid():
@@ -1221,7 +1229,7 @@ def entry_approve(request, entry_id):
 @login_required
 def entry_list(request):
     # Protect access by permission
-    if not request.user.has_perm('revenues_expenses.can_view_entries'):
+    if not request.user.has_perm('revenues_expenses.can_view_revenues_expenses'):
         messages.error(request, _('You do not have permission to view revenue/expense entry'))
         return redirect('core:dashboard')
     """Revenue and Expense Entries List"""

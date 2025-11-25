@@ -137,7 +137,7 @@ class EmployeeCreateView(HRMixin, PermissionRequiredMixin, CreateView):
             'CREATE',
             Employee,
             self.object.id,
-            f'تم إنشاء موظف جديد: {self.object.full_name}'
+            f'Created new employee: {self.object.full_name}'
         )
         
         messages.success(self.request, _('Employee created successfully.'))
@@ -160,7 +160,7 @@ class EmployeeUpdateView(HRMixin, PermissionRequiredMixin, UpdateView):
             'UPDATE',
             Employee,
             self.object.id,
-            f'تم تحديث بيانات الموظف: {self.object.full_name}'
+            f'Updated employee data: {self.object.full_name}'
         )
         
         messages.success(self.request, _('Employee updated successfully.'))
@@ -183,7 +183,7 @@ class EmployeeDeleteView(HRMixin, PermissionRequiredMixin, DeleteView):
             'DELETE',
             Employee,
             employee.id,
-            f'تم حذف الموظف: {employee_name}'
+            f'Deleted employee: {employee_name}'
         )
         
         response = super().delete(request, *args, **kwargs)
@@ -283,13 +283,13 @@ def attendance_upload(request):
                 'UPLOAD',
                 Attendance,
                 None,
-                f'تم رفع ملف الحضور: {created_count} سجل جديد، {error_count} خطأ'
+                f'Uploaded attendance file: {created_count} new records, {error_count} errors'
             )
             
             if created_count > 0:
-                messages.success(request, f'تم رفع {created_count} سجل حضور بنجاح.')
+                messages.success(request, _(f'Successfully uploaded {created_count} attendance records.'))
             if error_count > 0:
-                messages.warning(request, f'فشل في رفع {error_count} سجل.')
+                messages.warning(request, _(f'Failed to upload {error_count} records.'))
                 
             return redirect('hr:attendance_list')
     else:
@@ -337,7 +337,7 @@ def approve_leave_request(request, pk):
                 'APPROVE',
                 LeaveRequest,
                 leave_request.id,
-                f'تمت الموافقة على طلب إجازة: {leave_request}'
+                f'Approved leave request: {leave_request}'
             )
             
             messages.success(request, _('Leave request approved successfully.'))
@@ -353,7 +353,7 @@ def approve_leave_request(request, pk):
                 'REJECT',
                 LeaveRequest,
                 leave_request.id,
-                f'تم رفض طلب إجازة: {leave_request}'
+                f'Rejected leave request: {leave_request}'
             )
             
             messages.success(request, _('Leave request rejected.'))
@@ -440,10 +440,10 @@ def process_payroll(request, pk):
             'PROCESS',
             PayrollPeriod,
             payroll_period.id,
-            f'تم معالجة الرواتب للفترة: {payroll_period.name} ({created_count} موظف)'
+            f'Processed payroll for period: {payroll_period.name} ({created_count} employees)'
         )
         
-        messages.success(request, f'تم معالجة الرواتب لـ {created_count} موظف بنجاح.')
+        messages.success(request, _(f'Successfully processed payroll for {created_count} employees.'))
         return redirect('hr:payroll_period_list')
     
     # عرض معاينة الموظفين
@@ -469,9 +469,9 @@ def create_payroll_journal_entries(request, pk):
     
     # البحث عن الحسابات المطلوبة
     try:
-        salaries_expense_account = Account.objects.get(name__icontains='رواتب')
-        social_security_payable_account = Account.objects.get(name__icontains='ضمان اجتماعي')
-        salaries_payable_account = Account.objects.get(name__icontains='رواتب مستحقة')
+        salaries_expense_account = Account.objects.get(name__icontains='salaries')
+        social_security_payable_account = Account.objects.get(name__icontains='social security')
+        salaries_payable_account = Account.objects.get(name__icontains='salaries payable')
     except Account.DoesNotExist:
         messages.error(request, _('Required accounts not found. Please create salary related accounts first.'))
         return redirect('hr:payroll_period_list')
@@ -485,7 +485,7 @@ def create_payroll_journal_entries(request, pk):
     # إنشاء القيد
     journal_entry = JournalEntry.objects.create(
         date=payroll_period.end_date,
-        description=f'قيد الرواتب للفترة: {payroll_period.name}',
+        description=f'Payroll entry for period: {payroll_period.name}',
         reference=f'PAYROLL-{payroll_period.id}',
         created_by=request.user
     )
@@ -496,7 +496,7 @@ def create_payroll_journal_entries(request, pk):
         account=salaries_expense_account,
         debit=total_gross_salary,
         credit=Decimal('0'),
-        description='إجمالي الرواتب'
+        description='Total salaries'
     )
     
     # خط القيد: الضمان الاجتماعي المستحق (دائن)
@@ -506,7 +506,7 @@ def create_payroll_journal_entries(request, pk):
             account=social_security_payable_account,
             debit=Decimal('0'),
             credit=total_social_security,
-            description='الضمان الاجتماعي المستحق'
+            description='Social security payable'
         )
     
     # خط القيد: الرواتب المستحقة (دائن)
@@ -515,7 +515,7 @@ def create_payroll_journal_entries(request, pk):
         account=salaries_payable_account,
         debit=Decimal('0'),
         credit=total_net_salary,
-        description='صافي الرواتب المستحقة'
+        description='Net salaries payable'
     )
     
     # ربط القيد مع قيود الرواتب
@@ -529,7 +529,7 @@ def create_payroll_journal_entries(request, pk):
         'CREATE',
         PayrollPeriod,
         journal_entry.id,
-        f'تم إنشاء قيد الرواتب للفترة: {payroll_period.name}'
+        f'Created payroll journal entry for period: {payroll_period.name}'
     )
     
     messages.success(request, _('Payroll journal entries created successfully.'))
@@ -705,7 +705,7 @@ class ContractCreateView(HRMixin, PermissionRequiredMixin, CreateView):
             self.request,
             'create',
             form.instance,
-            f'تم إنشاء عقد جديد: {form.instance.contract_number} للموظف {form.instance.employee.full_name}'
+            f'Created new contract: {form.instance.contract_number} for employee {form.instance.employee.full_name}'
         )
         
         return response
@@ -727,7 +727,7 @@ class ContractUpdateView(HRMixin, PermissionRequiredMixin, UpdateView):
             self.request,
             'update',
             form.instance,
-            f'تم تحديث العقد: {form.instance.contract_number} للموظف {form.instance.employee.full_name}'
+            f'Updated contract: {form.instance.contract_number} for employee {form.instance.employee.full_name}'
         )
         
         return response
@@ -747,7 +747,7 @@ class ContractDeleteView(HRMixin, PermissionRequiredMixin, DeleteView):
             request,
             'delete',
             contract,
-            f'تم حذف العقد: {contract.contract_number} للموظف {contract.employee.full_name}'
+            f'Deleted contract: {contract.contract_number} for employee {contract.employee.full_name}'
         )
         return super().delete(request, *args, **kwargs)
 
@@ -788,12 +788,12 @@ class AttendanceCreateView(HRMixin, PermissionRequiredMixin, CreateView):
             'CREATE',
             Attendance,
             self.object.id,
-            f'تم إنشاء سجل حضور وانصراف للموظف {self.object.employee.full_name} بتاريخ {self.object.date}'
+            f'Created attendance record for employee {self.object.employee.full_name} on {self.object.date}'
         )
         
         messages.success(
             self.request, 
-            _('تم إنشاء سجل الحضور والانصراف بنجاح')
+            _('Attendance record created successfully')
         )
         return response
 
@@ -814,12 +814,12 @@ class AttendanceUpdateView(HRMixin, PermissionRequiredMixin, UpdateView):
             'UPDATE',
             Attendance,
             self.object.id,
-            f'تم تعديل سجل حضور وانصراف للموظف {self.object.employee.full_name} بتاريخ {self.object.date}'
+            f'Updated attendance record for employee {self.object.employee.full_name} on {self.object.date}'
         )
         
         messages.success(
             self.request, 
-            _('تم تعديل سجل الحضور والانصراف بنجاح')
+            _('Attendance record updated successfully')
         )
         return response
 
@@ -841,14 +841,14 @@ class AttendanceDeleteView(HRMixin, PermissionRequiredMixin, DeleteView):
             'DELETE',
             Attendance,
             self.object.id,
-            f'تم حذف سجل حضور وانصراف للموظف {employee_name} بتاريخ {attendance_date}'
+            f'Deleted attendance record for employee {employee_name} on {attendance_date}'
         )
         
         response = super().delete(request, *args, **kwargs)
         
         messages.success(
             request, 
-            _('تم حذف سجل الحضور والانصراف بنجاح')
+            _('Attendance record deleted successfully')
         )
         return response
 
@@ -888,7 +888,7 @@ class LeaveRequestCreateView(HRMixin, CreateView):
             self.request,
             'create',
             form.instance,
-            f'تم إنشاء طلب إجازة للموظف {form.instance.employee.full_name} من نوع {form.instance.leave_type.name}'
+            f'Created leave request for employee {form.instance.employee.full_name} of type {form.instance.leave_type.name}'
         )
         
         return response
@@ -909,7 +909,7 @@ class LeaveRequestUpdateView(HRMixin, UpdateView):
             self.request,
             'update',
             form.instance,
-            f'تم تحديث طلب إجازة للموظف {form.instance.employee.full_name}'
+            f'Updated leave request for employee {form.instance.employee.full_name}'
         )
         
         return response
@@ -928,7 +928,7 @@ class LeaveRequestDeleteView(HRMixin, DeleteView):
             request,
             'delete',
             leave_request,
-            f'تم حذف طلب إجازة للموظف {leave_request.employee.full_name}'
+            f'Deleted leave request for employee {leave_request.employee.full_name}'
         )
         return super().delete(request, *args, **kwargs)
 
@@ -1730,10 +1730,10 @@ def contract_types_report(request):
     
     # إحصائيات أنواع العقود (بيانات وهمية)
     contract_types_data = [
-        {'type': 'دائم', 'count': Employee.objects.filter(status='active').count() // 2},
-        {'type': 'مؤقت', 'count': Employee.objects.filter(status='active').count() // 3},
-        {'type': 'تجربة', 'count': Employee.objects.filter(status='active').count() // 6},
-        {'type': 'جزئي', 'count': Employee.objects.filter(status='active').count() // 10},
+        {'type': 'Permanent', 'count': Employee.objects.filter(status='active').count() // 2},
+        {'type': 'Temporary', 'count': Employee.objects.filter(status='active').count() // 3},
+        {'type': 'Probation', 'count': Employee.objects.filter(status='active').count() // 6},
+        {'type': 'Part-time', 'count': Employee.objects.filter(status='active').count() // 10},
     ]
     
     total_contracts = sum(item['count'] for item in contract_types_data)

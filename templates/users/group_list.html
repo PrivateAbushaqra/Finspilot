@@ -16,14 +16,18 @@
                         <small class="text-muted">({{ groups|length }})</small>
                     </h3>
                     <div>
+                        {% if user.is_superuser or perms.users.can_add_group %}
                         <a href="{% url 'users:group_add' %}" class="btn btn-primary">
                             <i class="fas fa-plus me-2"></i>
                             {% trans "Add Group" %}
                         </a>
+                        {% endif %}
+                        {% if user.is_superuser or perms.users.can_view_users_list %}
                         <a href="{% url 'users:user_list' %}" class="btn btn-secondary">
                             <i class="fas fa-users me-2"></i>
                             {% trans 'Users' %}
                         </a>
+                        {% endif %}
                     </div>
                 </div>
                 <div class="card-body">
@@ -70,11 +74,14 @@
                                         </td>
                                         <td>
                                             <div class="btn-group" role="group">
+                                                {% if user.is_superuser or perms.users.can_edit_group %}
                                                 <a href="{% url 'users:group_edit' group.pk %}" 
                                                    class="btn btn-sm btn-outline-primary" 
                                                    title="{% trans "Edit" %}">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
+                                                {% endif %}
+                                                {% if user.is_superuser or perms.users.can_delete_group %}
                                                 {% if group.is_system_group and not user.is_superuser and user.user_type != 'superadmin' %}
                                                     <button class="btn btn-sm btn-outline-secondary" 
                                                             disabled 
@@ -91,6 +98,7 @@
                                                         <i class="fas fa-trash"></i>
                                                     </a>
                                                 {% endif %}
+                                                {% endif %}
                                             </div>
                                         </td>
                                     </tr>
@@ -103,10 +111,12 @@
                             <i class="fas fa-layer-group fa-3x text-muted mb-3"></i>
                             <h4>{% trans "No groups found" %}</h4>
                             <p class="text-muted">{% trans 'No groups have been created yet' %}</p>
+                            {% if user.is_superuser or perms.users.can_add_group %}
                             <a href="{% url 'users:group_add' %}" class="btn btn-primary">
                                 <i class="fas fa-plus me-2"></i>
                                 {% trans 'Create first group' %}
                             </a>
+                            {% endif %}
                         </div>
                     {% endif %}
                 </div>

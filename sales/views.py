@@ -68,7 +68,7 @@ from django.utils.translation import gettext_lazy as _
 
 
 def create_sales_invoice_journal_entry(invoice, user):
-    """إنشاء قيد محاسبي لفاتورة المبيعات"""
+    """Create journal entry for sales invoice"""
     try:
         # إنشاء قيد الإيراد (المبيعات)
         sales_entry = JournalService.create_sales_invoice_entry(invoice, user)
@@ -93,7 +93,7 @@ def create_sales_invoice_journal_entry(invoice, user):
         # لكن نسجل الخطأ بشكل واضح
 
 def create_sales_return_journal_entry(sales_return, user):
-    """إنشاء قيود محاسبية لمردود المبيعات"""
+    """Create journal entries for sales return"""
     try:
         # القيد الأول: عكس قيد الإيراد
         JournalService.create_sales_return_entry(sales_return, user)
@@ -107,7 +107,7 @@ def create_sales_return_journal_entry(sales_return, user):
 
 
 def create_sales_invoice_account_transaction(invoice, user):
-    """إنشاء حركة حساب للعميل عند إنشاء فاتورة مبيعات"""
+    """Create customer account transaction when creating sales invoice"""
     try:
         from accounts.models import AccountTransaction
         import uuid
@@ -151,7 +151,7 @@ def create_sales_invoice_account_transaction(invoice, user):
 
 
 def create_sales_return_account_transaction(return_invoice, user):
-    """إنشاء حركة حساب للعميل عند إنشاء مردود مبيعات"""
+    """Create customer account transaction when creating sales return"""
     try:
         from accounts.models import AccountTransaction
         import uuid
@@ -195,7 +195,7 @@ def create_sales_return_account_transaction(return_invoice, user):
 
 
 def create_sales_return_inventory_movements(return_invoice, user):
-    """إنشاء حركات مخزون لمردود المبيعات"""
+    """Create inventory movements for sales return"""
     try:
         from inventory.models import InventoryMovement, Warehouse
         import uuid
@@ -340,7 +340,7 @@ class SalesInvoiceListView(LoginRequiredMixin, UserPassesTestMixin, ListView):
 
 @login_required
 def export_invoices_to_xlsx(request):
-    """تصدير قائمة الفواتير إلى ملف Excel"""
+    """Export invoice list to Excel file"""
     from core.utils import get_client_ip
     
     # بناء queryset بنفس التصفية المستخدمة في SalesInvoiceListView
@@ -438,10 +438,10 @@ def export_invoices_to_xlsx(request):
 
 @login_required
 def sales_invoice_create(request):
-    """إنشاء فاتورة مبيعات جديدة"""
+    """Create new sales invoice"""
     
     def get_invoice_create_context(request, form_data=None):
-        """إعداد سياق صفحة إنشاء الفاتورة مع البيانات المُدخلة إن وجدت"""
+        """Prepare invoice creation page context with entered data if any"""
         user = request.user
         context = {
             'customers': CustomerSupplier.objects.filter(type__in=['customer', 'both']),
@@ -1896,7 +1896,7 @@ class SalesReturnUpdateView(LoginRequiredMixin, UpdateView):
 
 @login_required
 def sales_return_create(request):
-    """إنشاء مردود مبيعات جديدة"""
+    """Create new sales return"""
     
     # دالة مساعدة لتحويل القيم النصية إلى Decimal بشكل آمن
     def parse_decimal_input(val, name='value', default=Decimal('0')):
@@ -1922,7 +1922,7 @@ def sales_return_create(request):
             return default
     
     def get_return_create_context(request, form_data=None):
-        """إعداد سياق صفحة إنشاء المردود مع البيانات المُدخلة إن وجدت"""
+        """Prepare return creation page context with entered data if any"""
         user = request.user
         context = {
             'customers': CustomerSupplier.objects.filter(type__in=['customer', 'both']),
@@ -2508,7 +2508,7 @@ class SalesReturnDeleteView(LoginRequiredMixin, DeleteView):
 
 
 def print_sales_invoice(request, pk):
-    """طباعة فاتورة المبيعات"""
+    """Print sales invoice"""
     invoice = get_object_or_404(SalesInvoice, pk=pk)
     
     # تسجيل نشاط الطباعة
@@ -2526,7 +2526,7 @@ def print_sales_invoice(request, pk):
 
 
 def print_pos_invoice(request, pk):
-    """طباعة فاتورة POS (للطابعات الخاصة بـ POS)"""
+    """Print POS invoice (for POS printers)"""
     invoice = get_object_or_404(SalesInvoice, pk=pk)
     
     # تسجيل نشاط الطباعة
@@ -2545,7 +2545,7 @@ def print_pos_invoice(request, pk):
 
 @login_required
 def pos_view(request):
-    """شاشة نقطة البيع"""
+    """Point of Sale screen"""
     # التحقق من صلاحية الوصول لنقطة البيع
     if not (request.user.has_perm('sales.can_access_pos') or request.user.has_perm('sales.can_view_pos') or request.user.is_superuser):
         messages.error(request, 'ليس لديك صلاحية للوصول إلى نقطة البيع')
@@ -2658,7 +2658,7 @@ def pos_view(request):
 @login_required
 @require_http_methods(['POST'])
 def pos_create_invoice(request):
-    """إنشاء فاتورة من نقطة البيع"""
+    """Create invoice from point of sale"""
     try:
         # التحقق من صلاحية نقطة البيع
         if not hasattr(request.user, 'has_pos_permission') or not request.user.has_pos_permission():
@@ -2934,7 +2934,7 @@ def pos_create_invoice(request):
 
 @login_required
 def pos_get_product(request, product_id):
-    """الحصول على بيانات المنتج لنقطة البيع"""
+    """Get product data for point of sale"""
     if not request.user.has_pos_permission():
         return JsonResponse({'success': False, 'message': 'ليس لديك صلاحية للوصول إلى نقطة البيع'})
     
@@ -2985,7 +2985,7 @@ def pos_get_product(request, product_id):
 
 @login_required
 def pos_search_products(request):
-    """البحث عن المنتجات في نقطة البيع"""
+    """Search for products in point of sale"""
     if not request.user.has_pos_permission():
         return JsonResponse({'success': False, 'message': 'ليس لديك صلاحية للوصول إلى نقطة البيع'})
     
@@ -3094,7 +3094,7 @@ class SalesReportView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
 
 
 class SalesStatementView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
-    """عرض كشف المبيعات"""
+    """View sales statement"""
     template_name = 'sales/sales_statement.html'
     
     def test_func(self):
@@ -3148,7 +3148,7 @@ class SalesStatementView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
 
 
 class SalesReturnStatementView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
-    """عرض كشف مردودات المبيعات"""
+    """View sales returns statement"""
     template_name = 'sales/sales_return_statement.html'
     
     def test_func(self):
@@ -3204,7 +3204,7 @@ class SalesReturnStatementView(LoginRequiredMixin, UserPassesTestMixin, Template
 @login_required
 @require_POST
 def send_invoice_to_jofotara(request, pk):
-    """إرسال فاتورة المبيعات إلى JoFotara"""
+    """Send sales invoice to JoFotara"""
     # للطلبات AJAX، نتحقق من الـ header ونعيد JSON response
     is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
     
@@ -3257,7 +3257,7 @@ def send_invoice_to_jofotara(request, pk):
 @login_required
 @require_POST
 def send_creditnote_to_jofotara(request, pk):
-    """إرسال إشعار دائن إلى JoFotara"""
+    """Send credit note to JoFotara"""
     # للطلبات AJAX، نتحقق من الـ header ونعيد JSON response
     is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
     
@@ -3381,7 +3381,7 @@ def get_invoices_for_returns(request):
 
 
 def get_invoice_items(request, invoice_id):
-    """جلب عناصر الفاتورة عبر AJAX للمرتجعات"""
+    """Fetch invoice items via AJAX for returns"""
     try:
         print(f"طلب جلب عناصر الفاتورة رقم: {invoice_id}")
         
@@ -3446,7 +3446,7 @@ def get_invoice_items(request, invoice_id):
 
 
 class SalesCreditNoteReportView(LoginRequiredMixin, UserPassesTestMixin, ListView):
-    """كشف مذكرات الدائن"""
+    """Credit notes statement"""
     model = SalesCreditNote
     template_name = 'sales/creditnote_report.html'
     context_object_name = 'creditnotes'
@@ -3531,7 +3531,7 @@ class SalesCreditNoteReportView(LoginRequiredMixin, UserPassesTestMixin, ListVie
 @login_required
 @require_POST
 def invoice_add_item(request, invoice_id):
-    """إضافة عنصر جديد لفاتورة المبيعات عبر AJAX"""
+    """Add new item to sales invoice via AJAX"""
     import logging
     logger = logging.getLogger(__name__)
     
@@ -3638,7 +3638,7 @@ def invoice_add_item(request, invoice_id):
 @login_required
 @require_POST
 def invoice_update_item(request, invoice_id, item_id):
-    """تحديث عنصر فاتورة المبيعات عبر AJAX"""
+    """Update sales invoice item via AJAX"""
     try:
         invoice = get_object_or_404(SalesInvoice, pk=invoice_id)
         item = get_object_or_404(SalesInvoiceItem, pk=item_id, invoice=invoice)
@@ -3767,7 +3767,7 @@ def invoice_update_item(request, invoice_id, item_id):
 @login_required
 @require_POST
 def invoice_delete_item(request, invoice_id, item_id):
-    """حذف عنصر من فاتورة المبيعات عبر AJAX"""
+    """Delete item from sales invoice via AJAX"""
     try:
         invoice = get_object_or_404(SalesInvoice, pk=invoice_id)
         item = get_object_or_404(SalesInvoiceItem, pk=item_id, invoice=invoice)

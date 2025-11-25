@@ -7,7 +7,7 @@ User = get_user_model()
 
 
 class SalesInvoice(models.Model):
-    """فاتورة المبيعات"""
+    """Sales Invoice"""
     PAYMENT_TYPES = [
         ('cash', _('Cash')),
         ('credit', _('Credit')),
@@ -65,11 +65,11 @@ class SalesInvoice(models.Model):
         ]
 
     def __str__(self):
-        customer_name = self.customer.name if self.customer else 'عميل نقدي'
+        customer_name = self.customer.name if self.customer else _('Cash Customer')
         return f"{self.invoice_number} - {customer_name}"
 
     def update_totals(self):
-        """تحديث مجاميع الفاتورة بناءً على العناصر"""
+        """Update invoice totals based on items"""
         from decimal import Decimal
         
         items = self.items.all()
@@ -96,19 +96,19 @@ class SalesInvoice(models.Model):
         self.save(update_fields=['subtotal', 'tax_amount', 'total_amount'])
 
     def clean(self):
-        """التحقق من صحة البيانات"""
+        """Validate data"""
         from django.core.exceptions import ValidationError
         
         # التحقق من أن الصندوق مطلوب للفواتير النقدية
         if self.payment_type == 'cash' and not self.cashbox:
-            raise ValidationError(_('يجب تحديد الصندوق النقدي للفواتير النقدية'))
+            raise ValidationError(_('Cashbox is required for cash invoices'))
         
         # استدعاء التحقق الأساسي
         super().clean()
 
 
 class SalesInvoiceItem(models.Model):
-    """عنصر فاتورة المبيعات"""
+    """Sales Invoice Item"""
     invoice = models.ForeignKey(SalesInvoice, on_delete=models.CASCADE, 
                               verbose_name=_('Invoice'), related_name='items')
     product = models.ForeignKey('products.Product', on_delete=models.PROTECT, verbose_name=_('Product'))
@@ -142,7 +142,7 @@ class SalesInvoiceItem(models.Model):
 
 
 class SalesReturn(models.Model):
-    """مردود المبيعات"""
+    """Sales Return"""
     return_number = models.CharField(_('Sales Return Number'), max_length=50, unique=True)
     date = models.DateField(_('Date'))
     original_invoice = models.ForeignKey(SalesInvoice, on_delete=models.CASCADE, 
@@ -173,7 +173,7 @@ class SalesReturn(models.Model):
 
 
 class SalesReturnItem(models.Model):
-    """عنصر مردود المبيعات"""
+    """Sales Return Item"""
     return_invoice = models.ForeignKey(SalesReturn, on_delete=models.CASCADE, 
                                      verbose_name=_('Sales Return'), related_name='items')
     product = models.ForeignKey('products.Product', on_delete=models.PROTECT, verbose_name=_('Product'))
@@ -205,7 +205,7 @@ class SalesReturnItem(models.Model):
 
 
 class SalesCreditNote(models.Model):
-    """اشعار دائن لمبيعات"""
+    """Sales Credit Note"""
     note_number = models.CharField(_('Credit Note Number'), max_length=50, unique=True)
     date = models.DateField(_('Date'))
     customer = models.ForeignKey(CustomerSupplier, on_delete=models.PROTECT, verbose_name=_('Customer'))

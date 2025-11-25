@@ -279,6 +279,13 @@ class UserListView(LoginRequiredMixin, ListView):
     context_object_name = 'users'
     paginate_by = 20
     
+    def dispatch(self, request, *args, **kwargs):
+        """التحقق من صلاحية عرض قائمة المستخدمين"""
+        if not request.user.has_perm('users.can_view_users_list'):
+            messages.error(request, _('You do not have permission to view users list'))
+            return redirect('core:dashboard')
+        return super().dispatch(request, *args, **kwargs)
+    
     def get_queryset(self):
         queryset = User.objects.all().order_by('-created_at')
         
@@ -346,15 +353,18 @@ class UserListView(LoginRequiredMixin, ListView):
             
         return context
 
-class UserCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+class UserCreateView(LoginRequiredMixin, CreateView):
     model = User
     form_class = UserCreateForm
     template_name = 'users/user_add.html'
     success_url = reverse_lazy('users:user_list')
     
-    def test_func(self):
-        """التحقق من صلاحية المستخدم لإنشاء المستخدمين"""
-        return self.request.user.is_admin
+    def dispatch(self, request, *args, **kwargs):
+        """التحقق من صلاحية إضافة مستخدم"""
+        if not request.user.has_perm('users.can_add_user'):
+            messages.error(request, _('You do not have permission to add users'))
+            return redirect('users:user_list')
+        return super().dispatch(request, *args, **kwargs)
     
     def get_form_kwargs(self):
         """إضافة request للنموذج"""
@@ -406,16 +416,19 @@ class UserCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         
         return context
 
-class UserUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+class UserUpdateView(LoginRequiredMixin, UpdateView):
     model = User
     form_class = UserEditForm
     template_name = 'users/user_edit.html'
     success_url = reverse_lazy('users:user_list')
     context_object_name = 'user_to_edit'
     
-    def test_func(self):
-        """التحقق من صلاحية المستخدم لتعديل المستخدمين"""
-        return self.request.user.is_admin
+    def dispatch(self, request, *args, **kwargs):
+        """التحقق من صلاحية تعديل مستخدم"""
+        if not request.user.has_perm('users.can_edit_user'):
+            messages.error(request, _('You do not have permission to edit users'))
+            return redirect('users:user_list')
+        return super().dispatch(request, *args, **kwargs)
     
     def get_form_kwargs(self):
         """إضافة request للنموذج"""
@@ -462,17 +475,18 @@ class UserUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
             
         return context
 
-class UserDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+class UserDeleteView(LoginRequiredMixin, DeleteView):
     model = User
     template_name = 'users/user_delete.html'
     success_url = reverse_lazy('users:user_list')
     context_object_name = 'user_to_delete'
     
-    def test_func(self):
-        """التحقق من صلاحية المستخدم لحذف المستخدمين"""
-        # السماح فقط لمن لديه صلاحية حذف المستخدمين أو سوبرأدمين
-        user = self.request.user
-        return user.is_superuser or user.has_perm('users.delete_user')
+    def dispatch(self, request, *args, **kwargs):
+        """التحقق من صلاحية حذف مستخدم"""
+        if not request.user.has_perm('users.can_delete_user'):
+            messages.error(request, _('You do not have permission to delete users'))
+            return redirect('users:user_list')
+        return super().dispatch(request, *args, **kwargs)
     
     def get_object(self, queryset=None):
         """الحصول على المستخدم المراد حذفه"""
@@ -619,6 +633,13 @@ class UserGroupListView(LoginRequiredMixin, ListView):
     model = Group
     template_name = 'users/group_list.html'
     context_object_name = 'groups'
+    
+    def dispatch(self, request, *args, **kwargs):
+        """التحقق من صلاحية عرض المجموعات والصلاحيات"""
+        if not request.user.has_perm('users.can_view_groups_permissions'):
+            messages.error(request, _('You do not have permission to view groups and permissions'))
+            return redirect('core:dashboard')
+        return super().dispatch(request, *args, **kwargs)
     
     def test_func(self):
         user = self.request.user
@@ -828,16 +849,19 @@ class UserGroupEditForm(forms.ModelForm):
             self.fields['dashboard_sections'].initial = self.instance.dashboard_sections or []
 
 
-class UserGroupCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
+class UserGroupCreateView(LoginRequiredMixin, CreateView):
     """عرض إنشاء مجموعة جديدة"""
     model = Group
     form_class = GroupCreateForm
     template_name = 'users/group_add.html'
     success_url = reverse_lazy('users:group_list')
     
-    def test_func(self):
-        user = self.request.user
-        return user.is_staff or user.is_superuser or getattr(user, 'user_type', None) in ['admin', 'superadmin']
+    def dispatch(self, request, *args, **kwargs):
+        """التحقق من صلاحية إضافة مجموعة"""
+        if not request.user.has_perm('users.can_add_group'):
+            messages.error(request, _('You do not have permission to add groups'))
+            return redirect('users:group_list')
+        return super().dispatch(request, *args, **kwargs)
     
     def get_form_kwargs(self):
         """تمرير المستخدم للنموذج لتصفية الصلاحيات"""
@@ -905,8 +929,42 @@ class UserGroupCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
             
             # تنظيم الصلاحيات حسب التطبيق
             permissions_by_app = {}
+            # الأقسام المسموح بها فقط
+            allowed_apps = ['journal', 'sales', 'purchases', 'customers', 'products', 'inventory', 
+                          'assets_liabilities', 'revenues_expenses', 'banks', 'cashboxes', 
+                          'payments', 'receipts', 'reports', 'users']
+            
             for permission in queryset:
                 app_label = permission.content_type.app_label
+                # تخطي التطبيقات غير المسموح بها
+                if app_label not in allowed_apps:
+                    continue
+                
+                # فلترة صلاحيات users: إظهار الصلاحيات المخصصة فقط
+                if app_label == 'users':
+                    allowed_users_perms = [
+                        'can_view_users_list',
+                        'can_view_groups_permissions',
+                        'can_view_activity_log',
+                        'can_view_document_number_management',
+                        'can_view_system_settings',
+                        'can_add_user',
+                        'can_add_group',
+                        'can_add_document_sequence',
+                        'can_edit_user',
+                        'can_edit_group',
+                        'can_edit_document_sequence',
+                        'can_delete_user',
+                        'can_delete_group',
+                        'can_delete_document_sequence',
+                        'can_view_backup',
+                        'can_make_backup',
+                        'can_restore_backup',
+                        'can_delete_all_data'
+                    ]
+                    if permission.codename not in allowed_users_perms:
+                        continue
+                    
                 if app_label not in permissions_by_app:
                     permissions_by_app[app_label] = []
                 
@@ -937,6 +995,146 @@ class UserGroupCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
             'add_journalentry': _('Add Journal Entry'),
             'change_journalentry': _('Change Journal Entry'),
             'delete_journalentry': _('Delete Journal Entry'),
+            'view_journalentry': _('View Journal Entry'),
+            'change_journalentry_entry_number': _('Change Journal Entry Number'),
+            'add_account': _('Add Account'),
+            'change_account': _('Change Account'),
+            'delete_account': _('Delete Account'),
+            'view_account': _('View Account'),
+            
+            # صلاحيات الإيرادات والمصروفات
+            'can_add_sectors': _('Add Sectors'),
+            'can_edit_sectors': _('Edit Sectors'),
+            'can_delete_sectors': _('Delete Sectors'),
+            'can_view_sectors': _('View Sectors'),
+            'can_add_categories': _('Add Revenue/Expense Categories'),
+            'can_edit_categories': _('Edit Revenue/Expense Categories'),
+            'can_delete_categories': _('Delete Revenue/Expense Categories'),
+            'can_view_categories': _('View Revenue/Expense Categories'),
+            'can_add_entries': _('Add Revenue/Expense Entries'),
+            'can_edit_entries': _('Edit Revenue/Expense Entries'),
+            'can_delete_entries': _('Delete Revenue/Expense Entries'),
+            'can_view_entries': _('View Revenue/Expense Entries'),
+            'can_add_recurring': _('Add Recurring Revenue/Expense'),
+            'can_edit_recurring': _('Edit Recurring Revenue/Expense'),
+            'can_delete_recurring': _('Delete Recurring Revenue/Expense'),
+            'can_view_recurring': _('View Recurring Revenue/Expense'),
+            'can_add_revenues_expenses': _('Can Add Revenues/Expenses'),
+            'can_edit_revenues_expenses': _('Can Edit Revenues/Expenses'),
+            'can_delete_revenues_expenses': _('Can Delete Revenues/Expenses'),
+            'can_view_revenues_expenses': _('Can View Revenues/Expenses'),
+            
+            # صلاحيات المبيعات
+            'add_salesinvoice': _('Add Sales Invoice'),
+            'change_salesinvoice': _('Change Sales Invoice'),
+            'delete_salesinvoice': _('Delete Sales Invoice'),
+            'view_salesinvoice': _('View Sales Invoice'),
+            'add_salesinvoiceitem': _('Add Sales Invoice Item'),
+            'change_salesinvoiceitem': _('Change Sales Invoice Item'),
+            'delete_salesinvoiceitem': _('Delete Sales Invoice Item'),
+            'view_salesinvoiceitem': _('View Sales Invoice Item'),
+            
+            # صلاحيات المشتريات
+            'add_purchaseinvoice': _('Add Purchase Invoice'),
+            'change_purchaseinvoice': _('Change Purchase Invoice'),
+            'delete_purchaseinvoice': _('Delete Purchase Invoice'),
+            'view_purchaseinvoice': _('View Purchase Invoice'),
+            'add_purchaseinvoiceitem': _('Add Purchase Invoice Item'),
+            'change_purchaseinvoiceitem': _('Change Purchase Invoice Item'),
+            'delete_purchaseinvoiceitem': _('Delete Purchase Invoice Item'),
+            'view_purchaseinvoiceitem': _('View Purchase Invoice Item'),
+            
+            # صلاحيات العملاء والموردين
+            'add_customersupplier': _('Add Customer/Supplier'),
+            'change_customersupplier': _('Change Customer/Supplier'),
+            'delete_customersupplier': _('Delete Customer/Supplier'),
+            'view_customersupplier': _('View Customer/Supplier'),
+            
+            # صلاحيات المنتجات
+            'add_product': _('Add Product'),
+            'change_product': _('Change Product'),
+            'delete_product': _('Delete Product'),
+            'view_product': _('View Product'),
+            'add_category': _('Add Category'),
+            'change_category': _('Change Category'),
+            'delete_category': _('Delete Category'),
+            'view_category': _('View Category'),
+            
+            # صلاحيات المخزون
+            'add_warehouse': _('Add Warehouse'),
+            'change_warehouse': _('Change Warehouse'),
+            'delete_warehouse': _('Delete Warehouse'),
+            'view_warehouse': _('View Warehouse'),
+            'add_inventorymovement': _('Add Inventory Movement'),
+            'change_inventorymovement': _('Change Inventory Movement'),
+            'delete_inventorymovement': _('Delete Inventory Movement'),
+            'view_inventorymovement': _('View Inventory Movement'),
+            
+            # صلاحيات الأصول والخصوم
+            'can_view_assets_liabilities': _('Can View Assets/Liabilities'),
+            'can_add_assets_liabilities': _('Can Add Assets/Liabilities'),
+            'can_edit_assets_liabilities': _('Can Edit Assets/Liabilities'),
+            'can_delete_assets_liabilities': _('Can Delete Assets/Liabilities'),
+            'can_view_asset_categories': _('View Asset Categories'),
+            'can_add_asset_categories': _('Add Asset Categories'),
+            'can_edit_asset_categories': _('Edit Asset Categories'),
+            'can_delete_asset_categories': _('Delete Asset Categories'),
+            'can_view_assets': _('View Assets'),
+            'can_add_assets': _('Add Assets'),
+            'can_edit_assets': _('Edit Assets'),
+            'can_delete_assets': _('Delete Assets'),
+            'can_view_liability_categories': _('View Liability Categories'),
+            'can_add_liability_categories': _('Add Liability Categories'),
+            'can_edit_liability_categories': _('Edit Liability Categories'),
+            'can_delete_liability_categories': _('Delete Liability Categories'),
+            'can_view_liabilities': _('View Liabilities'),
+            'can_add_liabilities': _('Add Liabilities'),
+            'can_edit_liabilities': _('Edit Liabilities'),
+            'can_delete_liabilities': _('Delete Liabilities'),
+            'can_view_depreciation_entries': _('View Depreciation Entries'),
+            'can_add_depreciation_entries': _('Add Depreciation Entries'),
+            'can_edit_depreciation_entries': _('Edit Depreciation Entries'),
+            'can_delete_depreciation_entries': _('Delete Depreciation Entries'),
+            
+            # صلاحيات البنوك
+            'add_bank': _('Add Bank'),
+            'change_bank': _('Change Bank'),
+            'delete_bank': _('Delete Bank'),
+            'view_bank': _('View Bank'),
+            'add_bankaccount': _('Add Bank Account'),
+            'change_bankaccount': _('Change Bank Account'),
+            'delete_bankaccount': _('Delete Bank Account'),
+            'view_bankaccount': _('View Bank Account'),
+            'can_view_bank_accounts': _('Can View Bank Accounts'),
+            'can_add_bank_accounts': _('Can Add Bank Accounts'),
+            'can_edit_bank_accounts': _('Can Edit Bank Accounts'),
+            'can_delete_bank_accounts': _('Can Delete Bank Accounts'),
+            
+            # صلاحيات الصناديق
+            'add_cashbox': _('Add Cashbox'),
+            'change_cashbox': _('Change Cashbox'),
+            'delete_cashbox': _('Delete Cashbox'),
+            'view_cashbox': _('View Cashbox'),
+            
+            # صلاحيات المدفوعات والمقبوضات
+            'add_payment': _('Add Payment'),
+            'change_payment': _('Change Payment'),
+            'delete_payment': _('Delete Payment'),
+            'view_payment': _('View Payment'),
+            'add_receipt': _('Add Receipt'),
+            'change_receipt': _('Change Receipt'),
+            'delete_receipt': _('Delete Receipt'),
+            'view_receipt': _('View Receipt'),
+            
+            # صلاحيات المستخدمين
+            'add_user': _('Add User'),
+            'change_user': _('Change User'),
+            'delete_user': _('Delete User'),
+            'view_user': _('View User'),
+            'add_group': _('Add Group'),
+            'change_group': _('Change Group'),
+            'delete_group': _('Delete Group'),
+            'view_group': _('View Group'),
             'view_journalentry': _('View Journal Entry'),
             'change_journalentry_entry_number': _('Change Journal Entry Number'),
             'add_account': _('Add Account'),
@@ -1133,12 +1331,6 @@ class UserGroupCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
             'change_auditlog': _('Change Audit Log'),
             'delete_auditlog': _('Delete Audit Log'),
             'view_auditlog': _('View Audit Log'),
-            
-            # صلاحيات النسخ الاحتياطية
-            'can_restore_backup': _('Restore Backups'),
-            'delete_backup': _('Delete Backup Files'),
-            'can_delete_advanced_data': _('Delete Advanced Data'),
-            'can_backup_system': _('Create System Backups'),
         }
         
         return translations.get(permission.codename, permission.name)
@@ -1158,12 +1350,8 @@ class UserGroupCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
             'cashboxes': _('Cashboxes'),
             'payments': _('Payments'),
             'receipts': _('Receipts'),
-            'users': _('System Management'),
-            'core': _('Core'),
-            'backup': _('Backups'),
-            'hr': _('Human Resources'),
             'reports': _('Reports'),
-            'settings': _('Advanced System Settings'),
+            'users': _('System Management (Basic)'),
         }
 
 
@@ -1272,16 +1460,19 @@ class GroupEditForm(forms.ModelForm):
         return group
 
 
-class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+class UserGroupUpdateView(LoginRequiredMixin, UpdateView):
     """عرض تعديل مجموعة"""
     model = Group
     form_class = GroupEditForm
     template_name = 'users/group_edit.html'
     success_url = reverse_lazy('users:group_list')
     
-    def test_func(self):
-        user = self.request.user
-        return user.is_staff or user.is_superuser or getattr(user, 'user_type', None) in ['admin', 'superadmin']
+    def dispatch(self, request, *args, **kwargs):
+        """التحقق من صلاحية تعديل مجموعة"""
+        if not request.user.has_perm('users.can_edit_group'):
+            messages.error(request, _('You do not have permission to edit groups'))
+            return redirect('users:group_list')
+        return super().dispatch(request, *args, **kwargs)
     
     def get_form_kwargs(self):
         """تمرير المستخدم للنموذج لتصفية الصلاحيات"""
@@ -1307,8 +1498,42 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
         # تنظيم الصلاحيات حسب التطبيق
         permissions_by_app = {}
+        # الأقسام المسموح بها فقط
+        allowed_apps = ['journal', 'sales', 'purchases', 'customers', 'products', 'inventory', 
+                      'assets_liabilities', 'revenues_expenses', 'banks', 'cashboxes', 
+                      'payments', 'receipts', 'reports', 'users']
+        
         for permission in queryset:
             app_label = permission.content_type.app_label
+            # تخطي التطبيقات غير المسموح بها
+            if app_label not in allowed_apps:
+                continue
+            
+            # فلترة صلاحيات users: إظهار الصلاحيات المخصصة فقط
+            if app_label == 'users':
+                allowed_users_perms = [
+                    'can_view_users_list',
+                    'can_view_groups_permissions',
+                    'can_view_activity_log',
+                    'can_view_document_number_management',
+                    'can_view_system_settings',
+                    'can_add_user',
+                    'can_add_group',
+                    'can_add_document_sequence',
+                    'can_edit_user',
+                    'can_edit_group',
+                    'can_edit_document_sequence',
+                    'can_delete_user',
+                    'can_delete_group',
+                    'can_delete_document_sequence',
+                    'can_view_backup',
+                    'can_make_backup',
+                    'can_restore_backup',
+                    'can_delete_all_data'
+                ]
+                if permission.codename not in allowed_users_perms:
+                    continue
+                
             if app_label not in permissions_by_app:
                 permissions_by_app[app_label] = []
 
@@ -1490,61 +1715,6 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
             'change_category': _('Change Category'),
             'delete_category': _('Delete Category'),
             'view_category': _('View Category'),
-            'view_account': _('View Account'),
-            
-            # صلاحيات الإيرادات والمصروفات
-            'can_add_sectors': _('Add Sectors'),
-            'can_edit_sectors': _('Edit Sectors'),
-            'can_delete_sectors': _('Delete Sectors'),
-            'can_view_sectors': _('View Sectors'),
-            'can_add_categories': _('Add Revenue/Expense Categories'),
-            'can_edit_categories': _('Edit Revenue/Expense Categories'),
-            'can_delete_categories': _('Delete Revenue/Expense Categories'),
-            'can_view_categories': _('View Revenue/Expense Categories'),
-            'can_add_entries': _('Add Revenue/Expense Entries'),
-            'can_edit_entries': _('Edit Revenue/Expense Entries'),
-            'can_delete_entries': _('Delete Revenue/Expense Entries'),
-            'can_view_entries': _('View Revenue/Expense Entries'),
-            'can_add_recurring': _('Add Recurring Revenue/Expense'),
-            'can_edit_recurring': _('Edit Recurring Revenue/Expense'),
-            'can_delete_recurring': _('Delete Recurring Revenue/Expense'),
-            'can_view_recurring': _('View Recurring Revenue/Expense'),
-            
-            # صلاحيات المبيعات
-            'add_salesinvoice': _('Add Sales Invoice'),
-            'change_salesinvoice': _('Change Sales Invoice'),
-            'delete_salesinvoice': _('Delete Sales Invoice'),
-            'view_salesinvoice': _('View Sales Invoice'),
-            'add_salesinvoiceitem': _('Add Sales Invoice Item'),
-            'change_salesinvoiceitem': _('Change Sales Invoice Item'),
-            'delete_salesinvoiceitem': _('Delete Sales Invoice Item'),
-            'view_salesinvoiceitem': _('View Sales Invoice Item'),
-            
-            # صلاحيات المشتريات
-            'add_purchaseinvoice': _('Add Purchase Invoice'),
-            'change_purchaseinvoice': _('Change Purchase Invoice'),
-            'delete_purchaseinvoice': _('Delete Purchase Invoice'),
-            'view_purchaseinvoice': _('View Purchase Invoice'),
-            'add_purchaseinvoiceitem': _('Add Purchase Invoice Item'),
-            'change_purchaseinvoiceitem': _('Change Purchase Invoice Item'),
-            'delete_purchaseinvoiceitem': _('Delete Purchase Invoice Item'),
-            'view_purchaseinvoiceitem': _('View Purchase Invoice Item'),
-            
-            # صلاحيات العملاء والموردين
-            'add_customersupplier': _('Add Customer/Supplier'),
-            'change_customersupplier': _('Change Customer/Supplier'),
-            'delete_customersupplier': _('Delete Customer/Supplier'),
-            'view_customersupplier': _('View Customer/Supplier'),
-            
-            # صلاحيات المنتجات
-            'add_product': _('Add Product'),
-            'change_product': _('Change Product'),
-            'delete_product': _('Delete Product'),
-            'view_product': _('View Product'),
-            'add_category': _('Add Category'),
-            'change_category': _('Change Category'),
-            'delete_category': _('Delete Category'),
-            'view_category': _('View Category'),
             
             # صلاحيات المخزون
             'add_warehouse': _('Add Warehouse'),
@@ -1608,31 +1778,33 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
             'delete_receipt': _('Delete Receipt'),
             'view_receipt': _('View Receipt'),
             
-            # صلاحيات المستخدمين
-            'add_user': _('Add User'),
-            'change_user': _('Change User'),
-            'delete_user': _('Delete User'),
-            'view_user': _('View User'),
-            'add_group': _('Add Group'),
-            'change_group': _('Change Group'),
-            'delete_group': _('Delete Group'),
-            'view_group': _('View Group'),
+            # إدارة النظام (الأساسية) - عرض
+            'can_view_users_list': _('View Users List'),
+            'can_view_groups_permissions': _('View Groups & Permissions'),
+            'can_view_activity_log': _('View Activity Log'),
+            'can_view_document_number_management': _('View Document Number Management'),
+            'can_view_system_settings': _('View System Settings'),
             
-            # صلاحيات النظام الأساسي
-            'add_companysettings': _('Add Company Settings'),
-            'change_companysettings': _('Change Company Settings'),
-            'delete_companysettings': _('Delete Company Settings'),
-            'view_companysettings': _('View Company Settings'),
-            'add_auditlog': _('Add Audit Log'),
-            'change_auditlog': _('Change Audit Log'),
-            'delete_auditlog': _('Delete Audit Log'),
-            'view_auditlog': _('View Audit Log'),
+            # إدارة النظام (الأساسية) - إضافة
+            'can_add_user': _('Add User'),
+            'can_add_group': _('Add Group'),
+            'can_add_document_sequence': _('Add Document Sequence'),
             
-            # صلاحيات النسخ الاحتياطية
-            'can_restore_backup': _('Restore Backups'),
-            'delete_backup': _('Delete Backup Files'),
-            'can_delete_advanced_data': _('Delete Advanced Data'),
-            'can_backup_system': _('Create System Backups'),
+            # إدارة النظام (الأساسية) - تعديل
+            'can_edit_user': _('Edit User'),
+            'can_edit_group': _('Edit Group'),
+            'can_edit_document_sequence': _('Edit Document Sequence'),
+            
+            # إدارة النظام (الأساسية) - حذف
+            'can_delete_user': _('Delete User'),
+            'can_delete_group': _('Delete Group'),
+            'can_delete_document_sequence': _('Delete Document Sequence'),
+            
+            # صلاحيات النسخ الاحتياطي (الأساسية)
+            'can_view_backup': _('View Backup and Restore'),
+            'can_make_backup': _('Make Backup'),
+            'can_restore_backup': _('Make Restore'),
+            'can_delete_all_data': _('Delete All Data'),
             
             # ??????? ????????
             'can_view_sales_reports': _('Can View Sales Reports'),
@@ -1668,26 +1840,24 @@ class UserGroupUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
             'cashboxes': _('Cashboxes'),
             'payments': _('Payments'),
             'receipts': _('Receipts'),
-            'users': _('System Management'),
-            'core': _('Core'),
-            'backup': _('Backups'),
-            'hr': _('Human Resources'),
             'reports': _('Reports'),
-            'settings': _('Advanced System Settings'),
+            'users': _('System Management (Basic)'),
         }
 
 
-class UserGroupDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+class UserGroupDeleteView(LoginRequiredMixin, DeleteView):
     """عرض حذف مجموعة"""
     model = Group
     template_name = 'users/group_delete.html'
     success_url = reverse_lazy('users:group_list')
     
-    def test_func(self):
-        user = self.request.user
-        return user.is_staff or user.is_superuser or getattr(user, 'user_type', None) in ['admin', 'superadmin']
-    
     def dispatch(self, request, *args, **kwargs):
+        """التحقق من الصلاحيات والحماية ضد حذف المجموعات المحمية"""
+        # التحقق من صلاحية حذف مجموعة
+        if not request.user.has_perm('users.can_delete_group'):
+            messages.error(request, _('You do not have permission to delete groups'))
+            return redirect('users:group_list')
+        
         self.object = self.get_object()
         
         # منع حذف مجموعات النظام المحمية إلا للسوبر أدمين
@@ -1696,7 +1866,7 @@ class UserGroupDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
             return redirect('users:group_list')
         
         # منع المستخدمين غير superadmin من حذف المجموعات التي تحتوي على صلاحيات superadmin
-        if not (request.user.user_type == 'superadmin' or request.user.is_superuser):
+        if not (getattr(request.user, 'user_type', None) == 'superadmin' or request.user.is_superuser):
             superadmin_permissions_in_group = self.object.permissions.filter(
                 codename__in=[
                     'can_access_system_management',

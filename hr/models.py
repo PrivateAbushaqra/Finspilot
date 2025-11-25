@@ -469,7 +469,7 @@ class PayrollEntry(models.Model):
             return existing_period
         
         # إنشاء فترة جديدة
-        period_name = f"رواتب {today.strftime('%B %Y')}"
+        period_name = f"Payroll {today.strftime('%B %Y')}"
         if user:
             created_by = user
         else:
@@ -481,7 +481,7 @@ class PayrollEntry(models.Model):
                 created_by = User.objects.filter(is_staff=True).first()
         
         if not created_by:
-            raise ValueError(_("لا يمكن إنشاء فترة رواتب بدون مستخدم"))
+            raise ValueError(_('Cannot create payroll period without user'))
         
         new_period = PayrollPeriod.objects.create(
             name=period_name,

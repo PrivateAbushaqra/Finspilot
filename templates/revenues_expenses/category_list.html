@@ -11,12 +11,13 @@
         <i class="fas fa-tags me-2"></i>
         {% trans "Revenue and Expense Categories" %}
     </h1>
-    {% if user.has_revenueexpensecategory_add_permission %}
     <div class="btn-toolbar mb-2 mb-md-0">
+        {% if user.is_superadmin or user.user_type == 'admin' or perms.revenues_expenses.can_add_revenues_expenses %}
         <a href="{% url 'revenues_expenses:category_create' %}" class="btn btn-primary">
             <i class="fas fa-plus me-1"></i>
             {% trans "Add New Category" %}
         </a>
+        {% endif %}
         <div class="btn-group ms-2">
             <a href="{% url 'revenues_expenses:category_list_export_excel' %}" class="btn btn-success btn-sm" title="{% trans 'Export to Excel' %}">
                 <i class="fas fa-file-excel me-1"></i>
@@ -28,7 +29,7 @@
             </button>
         </div>
     </div>
-    {% endif %}
+    
 </div>
 
 <div class="card">
@@ -76,12 +77,12 @@
                         </td>
                         <td>
                             <div class="btn-group btn-group-sm">
-                                {% if perms.revenues_expenses.change_revenueexpensecategory %}
+                                {% if user.is_superadmin or user.user_type == 'admin' or perms.revenues_expenses.can_edit_revenues_expenses %}
                                     <a href="{% url 'revenues_expenses:category_edit' category.id %}" class="btn btn-outline-primary" title="{% trans "Edit" %}">
                                         <i class="fas fa-edit"></i>
                                     </a>
                                 {% endif %}
-                                {% if perms.revenues_expenses.delete_revenueexpensecategory %}
+                                {% if user.is_superadmin or user.user_type == 'admin' or perms.revenues_expenses.can_delete_revenues_expenses %}
                                     <a href="{% url 'revenues_expenses:category_delete' category.id %}"
                                        class="btn btn-outline-danger"
                                        title="{% trans 'Delete' %}"
@@ -110,7 +111,7 @@
             <i class="fas fa-tags fa-3x text-muted mb-3"></i>
             <h4 class="text-muted">{% trans "No Categories Found" %}</h4>
             <p class="text-muted">{% trans "No revenue and expense categories have been created yet" %}</p>
-            {% if user.has_revenueexpensecategory_add_permission %}
+            {% if user.is_superadmin or user.user_type == 'admin' or perms.revenues_expenses.can_add_revenues_expenses %}
             <a href="{% url 'revenues_expenses:category_create' %}" class="btn btn-primary">
                 <i class="fas fa-plus me-1"></i>
                 {% trans "Add First Category" %}

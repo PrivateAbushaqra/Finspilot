@@ -19,7 +19,7 @@
                 
                 <div class="card-body">
                     <!-- إنشاء نسخة احتياطية -->
-                    {% if perms.users.can_backup_system %}
+                    {% if user.is_superuser or perms.users.can_make_backup %}
                     <div class="row mb-4">
                         <div class="col-md-6">
                             <div class="card border-success">
@@ -67,7 +67,9 @@
                                 </div>
                             </div>
                         </div>
+                        {% endif %}
                         
+                        {% if user.is_superuser or perms.users.can_restore_backup %}
                         <div class="col-md-6">
                             <div class="card border-warning">
                                 <div class="card-header bg-warning text-dark">
@@ -96,7 +98,7 @@
                                         </button>
                                     </form>
                                     <hr class="my-3">
-                                    {% if user.is_superuser %}
+                                    {% if user.is_superuser or perms.users.can_delete_all_data %}
                                     <div class="text-center">
                                         <p class="text-muted small mb-2">{% trans "Clear all data from database" %}</p>
                                         <button type="button" class="btn btn-outline-danger w-100 clear-data-btn" onclick="clearAllData()">
@@ -109,13 +111,14 @@
                                 </div>
                             </div>
                         </div>
+                        {% endif %}
                     </div>
-                    {% else %}
+                    {% if not user.is_superuser and not perms.users.can_make_backup and not perms.users.can_restore_backup %}
                     <div class="row mb-4">
                         <div class="col-12">
                             <div class="alert alert-warning">
                                 <i class="fas fa-exclamation-triangle me-2"></i>
-                                {% trans "You don't have permission to create backups. Contact your administrator to get 'System backup' permission." %}
+                                {% trans "You don't have permission to create backups or restore. Contact your administrator." %}
                             </div>
                         </div>
                     </div>

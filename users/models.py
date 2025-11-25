@@ -138,40 +138,39 @@ class User(AbstractUser):
         verbose_name = _('User')
         verbose_name_plural = _('Users')
         permissions = [
-            # إدارة النظام
-            ('can_view_users_list', _('Can View Users List')),
-            ('can_add_users', _('Can Add Users')),
-            ('can_edit_users', _('Can Edit Users')),
-            ('can_delete_users', _('Can Delete Users')),
-            ('can_view_groups_permissions', _('Can View Groups and Permissions')),
-            ('can_add_groups_permissions', _('Can Add Groups and Permissions')),
-            ('can_edit_groups_permissions', _('Can Edit Groups and Permissions')),
-            ('can_delete_groups_permissions', _('Can Delete Groups and Permissions')),
-            ('can_view_document_sequences', _('Can View Document Sequences')),
-            ('can_edit_document_sequences', _('Can Edit Document Sequences')),
-            ('can_view_system_settings', _('Can View System Settings')),
-            ('can_edit_system_settings', _('Can Edit System Settings')),
+            # إدارة النظام (الأساسية) - عرض
+            ('can_view_users_list', _('View Users List')),
+            ('can_view_groups_permissions', _('View Groups & Permissions')),
+            ('can_view_activity_log', _('View Activity Log')),
+            ('can_view_document_number_management', _('View Document Number Management')),
+            ('can_view_system_settings', _('View System Settings')),
             
-            # الخيارات المتقدمة
-            ('can_access_print_design', _('Can Access Print Design')),
-            ('can_access_jofotara_settings', _('Can Access JoFotara Settings')),
-            ('can_access_backup_system', _('Can Access Backup System')),
+            # إدارة النظام (الأساسية) - إضافة
+            ('can_add_user', _('Add User')),
+            ('can_add_group', _('Add Group')),
+            ('can_add_document_sequence', _('Add Document Sequence')),
             
-            # صلاحيات قديمة للتوافقية
-            ('can_access_system_management', _('Can access system management')),
-            ('can_manage_users', _('Manage users')),
-            ('can_view_audit_logs', _('View audit logs')),
-            ('can_backup_system', _('System backup')),
+            # إدارة النظام (الأساسية) - تعديل
+            ('can_edit_user', _('Edit User')),
+            ('can_edit_group', _('Edit Group')),
+            ('can_edit_document_sequence', _('Edit Document Sequence')),
+            
+            # إدارة النظام (الأساسية) - حذف
+            ('can_delete_user', _('Delete User')),
+            ('can_delete_group', _('Delete Group')),
+            ('can_delete_document_sequence', _('Delete Document Sequence')),
+            
+            # صلاحيات النسخ الاحتياطي (الأساسية)
+            ('can_view_backup', _('View Backup and Restore')),
+            ('can_make_backup', _('Make Backup')),
+            ('can_restore_backup', _('Make Restore')),
+            ('can_delete_all_data', _('Delete All Data')),
+            
+            # صلاحيات النظام الأساسية
             ('can_access_pos', _('Can access POS')),
-            ('can_access_company_settings', _('Can access company settings')),
             ('can_delete_invoices', _('Can delete invoices')),
             ('can_edit_dates', _('Can edit dates')),
             ('can_edit_invoice_numbers', _('Can edit invoice numbers')),
-            ('can_see_low_stock_alerts', _('Can see low stock alerts')),
-            ('cash_only', _('Cash only')),
-            ('credit_only', _('Credit only')),
-            ('pos_only', _('POS only')),
-            ('can_delete_accounts', _('Can delete accounts')),
         ]
 
     def __str__(self):
@@ -261,8 +260,6 @@ class User(AbstractUser):
         """
         if self.is_admin:
             return True
-        if self.has_perm('users.can_access_inventory'):
-            return True
         # تحقق من صلاحيات inventory المفصلة
         from django.contrib.auth.models import Permission
         from django.contrib.contenttypes.models import ContentType
@@ -293,7 +290,6 @@ class User(AbstractUser):
     def has_products_permission(self):
         return (
             self.is_admin
-            or self.has_perm('users.can_access_products')
             or self.has_perm('products.can_view_products')
             or self.has_perm('products.can_edit_products')
         )
@@ -301,7 +297,6 @@ class User(AbstractUser):
     def has_banks_permission(self):
         return (
             self.is_admin
-            or self.has_perm('users.can_access_banks')
             or self.has_perm('banks.can_view_banks_account')
         )
 
@@ -309,7 +304,6 @@ class User(AbstractUser):
         """التحقق من صلاحية عرض الصناديق النقدية"""
         return (
             self.is_admin 
-            or self.has_perm('users.can_access_cashboxes')
             or self.has_perm('cashboxes.can_view_cashboxes')
         )
 
@@ -344,7 +338,8 @@ class User(AbstractUser):
             for group in UserGroup.objects.filter(id__in=group_ids):
                 group_perms = group.permissions or {}
                 for perms_list in group_perms.values():
-                    if 'view_reports' in perms_list or 'add_reportaccesscontrol' in perms_list or 'change_reportaccesscontrol' in perms_list or 'delete_reportaccesscontrol' in perms_list:
+                    # Check for any reports-related custom permissions
+                    if 'view_reports' in perms_list or any(perm.startswith('can_view_') and 'report' in perm for perm in perms_list):
                         return True
         except Exception:
             pass
@@ -397,16 +392,15 @@ class User(AbstractUser):
         return self.is_admin or self.user_type == 'pos_user' or self.has_perm('users.can_access_pos')
 
     def is_pos_only_user(self):
-        return self.has_perm('users.pos_only_access')
+        return False  # تم إزالة الصلاحية غير المستخدمة
 
     def has_company_settings_permission(self):
         return (self.user_type in ['superadmin', 'user'] or 
                 self.is_superuser or 
-                self.has_perm('users.can_access_company_settings') or
                 self.has_settings_permission())
 
     def has_system_management_permission(self):
-        return self.is_admin or self.has_perm('users.can_access_system_management') or self.has_settings_permission()
+        return self.is_admin or self.has_settings_permission()
 
     def has_revenues_expenses_permission(self):
         """

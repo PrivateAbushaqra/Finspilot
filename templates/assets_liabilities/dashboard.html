@@ -90,19 +90,19 @@
                     {% trans "Asset Management" %}
                 </h5>
                 <div class="d-flex gap-2">
-                    {% if perms.assets_liabilities.can_add_assets %}
+                    {% if perms.assets_liabilities.can_add_assets_liabilities %}
                     <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addAssetModal">
                         <i class="fas fa-plus me-1"></i>
-                        {% trans "Add" %} {% trans "Asset" %}
+                        {% trans "Add Asset" %}
                     </button>
                     {% endif %}
-                    {% if perms.assets_liabilities.can_add_asset_categories %}
+                    {% if perms.assets_liabilities.can_add_assets_liabilities %}
                     <a href="{% url 'assets_liabilities:category_create_ajax' %}" class="btn btn-primary btn-sm">
                         <i class="fas fa-folder-plus me-1"></i>
                         {% trans "Add" %} {% trans "Asset Category" %}
                     </a>
                     {% endif %}
-                    {% if perms.assets_liabilities.can_add_depreciation_entries %}
+                    {% if perms.assets_liabilities.can_add_assets_liabilities %}
                     <a href="#" class="btn btn-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#depreciationModal">
                         <i class="fas fa-percentage me-1"></i>
                         {% trans "Add" %} {% trans "Depreciation Entry" %}
@@ -119,14 +119,14 @@
                         {% trans "All Assets" %}
                         {% endif %}
                     </a>
-                    {% if perms.assets_liabilities.can_add_assets %}
+                    {% if perms.assets_liabilities.can_add_assets_liabilities %}
                     <a href="#" class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#addAssetModal">
                         <i class="fas fa-plus me-2"></i>
                         {% trans "Add" %} 
                         {% trans "New Asset" %}
                         {% endif %}
                     </a>
-                    {% if perms.assets_liabilities.can_add_depreciation_entries %}
+                    {% if perms.assets_liabilities.can_add_assets_liabilities %}
                     <a href="#" class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#depreciationModal">
                         <i class="fas fa-percentage me-2"></i>
                         {% trans "Add" %} 
@@ -146,14 +146,14 @@
                     {% trans "Liability Management" %}
                 </h5>
                 <div class="d-flex gap-2">
-                    {% if perms.assets_liabilities.can_add_liabilities %}
+                    {% if perms.assets_liabilities.can_add_assets_liabilities %}
                     <button class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#addDeductionModal">
                         <i class="fas fa-plus me-1"></i>
                         {% trans "Add" %} 
                         {% trans "Liability" %}
                     </button>
                     {% endif %}
-                    {% if perms.assets_liabilities.can_add_liability_categories %}
+                    {% if perms.assets_liabilities.can_add_assets_liabilities %}
                     <a href="{% url 'assets_liabilities:liability_category_create_ajax' %}" class="btn btn-primary btn-sm">
                         <i class="fas fa-folder-plus me-1"></i>
                         {% trans "Add" %} 
@@ -171,7 +171,7 @@
                         {% trans "All Liabilities" %}
                     </a>
                     {% endif %}
-                    {% if perms.assets_liabilities.can_add_depreciation_entries %}
+                    {% if perms.assets_liabilities.can_add_assets_liabilities %}
                     <a href="#" class="list-group-item list-group-item-action" data-bs-toggle="modal" data-bs-target="#addDeductionModal">
                         <i class="fas fa-plus me-2"></i>
                         {% trans "Add" %} 
@@ -311,8 +311,10 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
-                    <i class="fas fa-minus-circle text-warning"></i>
-                    {% trans "Add" %} {% trans "New" %} {% trans "Deduction" %}
+                    {% if perms.assets_liabilities.can_add_assets_liabilities %}
+                        <i class="fas fa-minus-circle text-warning"></i>
+                        {% trans "Add" %} {% trans "New" %} {% trans "Deduction" %}
+                    {% endif %}
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
@@ -436,8 +438,10 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
-                    <i class="fas fa-plus-circle text-success"></i>
-                    {% trans "Add" %} {% trans "New" %} {% trans "Asset" %}
+                    {% if perms.assets_liabilities.can_add_assets_liabilities %}
+                        <i class="fas fa-plus-circle text-success"></i>
+                        {% trans "Add" %} {% trans "New" %} {% trans "Asset" %}
+                    {% endif %}
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>

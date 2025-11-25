@@ -8,7 +8,7 @@ User = get_user_model()
 
 
 class CompanySettings(models.Model):
-    """إعدادات الشركة"""
+    """Company Settings"""
     company_name = models.CharField(_('Company Name'), max_length=200, default='FinsPilot')
     logo = models.ImageField(_('Company Logo'), upload_to='company/', blank=True, null=True)
     currency = models.CharField(_('Currency'), max_length=10, default='JOD')
@@ -23,29 +23,29 @@ class CompanySettings(models.Model):
     session_timeout_minutes = models.PositiveIntegerField(
         _('Session Timeout (Minutes)'), 
         default=30,
-        help_text=_('مدة عدم النشاط قبل إنهاء الجلسة تلقائياً (بالدقائق)')
+        help_text=_('Inactivity duration before automatic session termination (in minutes)')
     )
     enable_session_timeout = models.BooleanField(
         _('Enable Automatic Session Timeout'),
         default=True,
-        help_text=_('تفعيل إنهاء الجلسة تلقائياً عند عدم النشاط')
+        help_text=_('Enable automatic session termination on inactivity')
     )
     logout_on_browser_close = models.BooleanField(
         _('Logout on Browser Close'),
         default=True,
-        help_text=_('إنهاء الجلسة تلقائياً عند إغلاق المتصفح')
+        help_text=_('Automatic session termination when browser is closed')
     )
     
     # إعدادات سلامة البيانات
     enable_integrity_checks = models.BooleanField(
         _('Enable Data Integrity Checks'),
         default=True,
-        help_text=_('تفعيل الفحوصات التلقائية لسلامة البيانات المحاسبية')
+        help_text=_('Enable automatic checks for accounting data integrity')
     )
     integrity_check_frequency = models.PositiveIntegerField(
         _('Integrity Check Frequency (Hours)'),
         default=24,
-        help_text=_('عدد الساعات بين كل فحص لسلامة البيانات')
+        help_text=_('Number of hours between each data integrity check')
     )
     
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
@@ -60,13 +60,13 @@ class CompanySettings(models.Model):
 
     @classmethod
     def get_settings(cls):
-        """الحصول على إعدادات الشركة"""
+        """Get company settings"""
         settings, created = cls.objects.get_or_create(pk=1)
         return settings
 
 
 class DocumentSequence(models.Model):
-    """تسلسل أرقام المستندات"""
+    """Document Sequence"""
     DOCUMENT_TYPES = [
         ('sales_invoice', _('Sales Invoice')),
         ('pos_invoice', _('POS Invoice')),

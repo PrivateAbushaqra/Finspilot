@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.http import HttpResponseForbidden
 from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
+from django.utils.translation import gettext_lazy as _
 from core.signals import log_view_activity, log_export_activity
 
 from .models import Document
@@ -17,7 +18,7 @@ def upload_document(request, content_type_id, object_id):
 
     # Check permissions
     if not request.user.has_perm(f'{content_type.app_label}.view_{content_type.model}'):
-        return HttpResponseForbidden("ليس لديك صلاحية للوصول إلى هذا الكائن")
+        return HttpResponseForbidden(_("You do not have permission to access this object"))
 
     if request.method == 'POST':
         form = DocumentForm(request.POST, request.FILES)
@@ -30,11 +31,11 @@ def upload_document(request, content_type_id, object_id):
 
             # Log activity
             try:
-                log_view_activity(request, 'add', document, f'رفع مستند: {document.title}')
+                log_view_activity(request, 'add', document, _('Document uploaded: %(title)s') % {'title': document.title})
             except:
                 pass
 
-            messages.success(request, 'تم رفع المستند بنجاح')
+            messages.success(request, _('Document uploaded successfully'))
             return redirect(request.META.get('HTTP_REFERER', reverse('core:dashboard')))
     else:
         form = DocumentForm()
@@ -54,13 +55,13 @@ def document_list(request, content_type_id, object_id):
 
     # Check permissions
     if not request.user.has_perm(f'{content_type.app_label}.view_{content_type.model}'):
-        return HttpResponseForbidden("ليس لديك صلاحية للوصول إلى هذا الكائن")
+        return HttpResponseForbidden(_("You do not have permission to access this object"))
 
     documents = Document.objects.filter(content_type=content_type, object_id=object_id)
 
     # Log activity
     try:
-        log_view_activity(request, 'view', obj, f'عرض المستندات المرتبطة بـ {obj}')
+        log_view_activity(request, 'view', obj, _('Viewing documents related to %(obj)s') % {'obj': obj})
     except:
         pass
 
@@ -77,17 +78,17 @@ def delete_document(request, document_id):
 
     # Check if user can delete
     if document.uploaded_by != request.user and not request.user.is_superuser:
-        return HttpResponseForbidden("لا يمكنك حذف هذا المستند")
+        return HttpResponseForbidden(_("You cannot delete this document"))
 
     if request.method == 'POST':
         # Log activity
         try:
-            log_view_activity(request, 'delete', document, f'حذف مستند: {document.title}')
+            log_view_activity(request, 'delete', document, _('Document deleted: %(title)s') % {'title': document.title})
         except:
             pass
 
         document.delete()
-        messages.success(request, 'تم حذف المستند بنجاح')
+        messages.success(request, _('Document deleted successfully'))
         return redirect(request.META.get('HTTP_REFERER', reverse('core:dashboard')))
 
     context = {
@@ -98,8 +99,8 @@ def delete_document(request, document_id):
 @login_required
 def document_report(request):
     # Check permissions
-    if not request.user.has_perm('documents.view_document'):
-        return HttpResponseForbidden("ليس لديك صلاحية لعرض تقرير المستندات")
+    if not request.user.has_perm('reports.can_view_documents_report'):
+        return HttpResponseForbidden(_("You do not have permission to view documents report"))
 
     documents = Document.objects.select_related('content_type', 'uploaded_by').order_by('-uploaded_at')
 
@@ -109,8 +110,8 @@ def document_report(request):
             id = 0
             pk = 0
             def __str__(self):
-                return 'تقرير المستندات'
-        log_view_activity(request, 'view', ReportObj(), 'عرض تقرير المستندات')
+                return _('Documents Report')
+        log_view_activity(request, 'view', ReportObj(), _('Viewing documents report'))
     except:
         pass
 

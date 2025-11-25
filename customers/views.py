@@ -294,16 +294,16 @@ class CustomerSupplierCreateView(LoginRequiredMixin, View):
             
             # التحقق من البيانات المطلوبة
             if not name:
-                messages.error(request, 'اسم العميل/المورد مطلوب!')
+                messages.error(request, 'Customer/Supplier name is required!')
                 return render(request, self.template_name)
             
             if not city:
-                messages.error(request, 'المدينة مطلوبة!')
+                messages.error(request, 'City is required!')
                 return render(request, self.template_name)
             
             # التحقق من عدم وجود اسم مكرر
             if CustomerSupplier.objects.filter(name=name).exists():
-                messages.error(request, f'يوجد عميل/مورد بنفس الاسم "{name}" مسبقاً!')
+                messages.error(request, f'A customer/supplier with the same name "{name}" already exists!')
                 return render(request, self.template_name)
             
             # تحويل الأرقام المالية
@@ -312,7 +312,7 @@ class CustomerSupplierCreateView(LoginRequiredMixin, View):
                 credit_limit = Decimal(str(credit_limit)) if credit_limit else Decimal('0')
                 balance = Decimal(str(balance)) if balance else Decimal('0')
             except (ValueError, Exception):
-                messages.error(request, 'قيم المبالغ المالية غير صحيحة!')
+                messages.error(request, 'Invalid financial values!')
                 return render(request, self.template_name)
             
             # إنشاء العميل/المورد الجديد
@@ -358,9 +358,9 @@ class CustomerSupplierCreateView(LoginRequiredMixin, View):
             
             messages.success(
                 request, 
-                f'تم إنشاء {type_display} "{name}" بنجاح!\n'
-                f'رقم الحساب: {customer_supplier.id}\n'
-                f'الرصيد الابتدائي: {balance:.3f} {currency_symbol}'
+                f'{type_display} "{name}" created successfully!\n'
+                f'Account number: {customer_supplier.id}\n'
+                f'Opening balance: {balance:.3f} {currency_symbol}'
             )
             
             # إعادة توجيه حسب النوع
@@ -372,7 +372,7 @@ class CustomerSupplierCreateView(LoginRequiredMixin, View):
                 return redirect('customers:list')
             
         except Exception as e:
-            messages.error(request, f'حدث خطأ أثناء حفظ البيانات: {str(e)}')
+            messages.error(request, f'An error occurred while saving data: {str(e)}')
             return render(request, self.template_name)
 
 class CustomerSupplierUpdateView(LoginRequiredMixin, View):
@@ -511,14 +511,14 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
                     direction = 'debit'
                     description = _('Manual balance adjustment - increase: %(amount)s - type: %(type)s') % {
                         'amount': abs(balance_difference),
-                        'type': dict(AccountTransaction.ADJUSTMENT_TYPES).get(adjustment_type, 'غير محدد')
+                        'type': dict(AccountTransaction.ADJUSTMENT_TYPES).get(adjustment_type, 'Not specified')
                     }
                 else:
                     # نقص في الرصيد = دائن للعميل/مورد
                     direction = 'credit'
                     description = _('Manual balance adjustment - decrease: %(amount)s - type: %(type)s') % {
                         'amount': abs(balance_difference),
-                        'type': dict(AccountTransaction.ADJUSTMENT_TYPES).get(adjustment_type, 'غير محدد')
+                        'type': dict(AccountTransaction.ADJUSTMENT_TYPES).get(adjustment_type, 'Not specified')
                     }
                 
                 # إنشاء الحركة مع نوع التعديل
@@ -577,13 +577,13 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
                                     'account_id': account_obj.id,
                                     'debit': abs(balance_difference),
                                     'credit': Decimal('0'),
-                                    'description': f'{_("Increase in balance")}: {name} ({dict(AccountTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "تعديل")})'
+                                    'description': f'{_("Increase in balance")}: {name} ({dict(AccountTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "Adjustment")})'
                                 },
                                 {
                                     'account_id': adjustment_account.id,
                                     'debit': Decimal('0'),
                                     'credit': abs(balance_difference),
-                                    'description': f'{adjustment_account.name} - {dict(AccountTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "تعديل")}'
+                                    'description': f'{adjustment_account.name} - {dict(AccountTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "Adjustment")}'
                                 }
                             ]
                         else:
@@ -593,19 +593,19 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
                                     'account_id': adjustment_account.id,
                                     'debit': abs(balance_difference),
                                     'credit': Decimal('0'),
-                                    'description': f'{adjustment_account.name} - {dict(AccountTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "تعديل")}'
+                                    'description': f'{adjustment_account.name} - {dict(AccountTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "Adjustment")}'
                                 },
                                 {
                                     'account_id': account_obj.id,
                                     'debit': Decimal('0'),
                                     'credit': abs(balance_difference),
-                                    'description': f'{_("Decrease in balance")}: {name} ({dict(AccountTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "تعديل")})'
+                                    'description': f'{_("Decrease in balance")}: {name} ({dict(AccountTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "Adjustment")})'
                                 }
                             ]
                         
                         journal_entry = JournalService.create_journal_entry(
                             entry_date=timezone.now().date(),
-                            description=f'{_("Adjustment of Customer/Supplier Balance")}: {name} - {dict(AccountTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "تعديل")}',
+                            description=f'{_("Adjustment of Customer/Supplier Balance")}: {name} - {dict(AccountTransaction.ADJUSTMENT_TYPES).get(adjustment_type, "Adjustment")}',
                             reference_type='adjustment',
                             reference_id=customer_supplier.id,
                             lines_data=lines_data,
@@ -626,7 +626,7 @@ class CustomerSupplierUpdateView(LoginRequiredMixin, View):
                         'old': old_balance,
                         'new': new_balance,
                         'diff': balance_difference,
-                        'type': dict(AccountTransaction.ADJUSTMENT_TYPES).get(adjustment_type, 'غير محدد')
+                        'type': dict(AccountTransaction.ADJUSTMENT_TYPES).get(adjustment_type, 'Not specified')
                     },
                     ip_address=request.META.get('REMOTE_ADDR')
                 )
@@ -760,7 +760,7 @@ class CustomerSupplierDeleteView(LoginRequiredMixin, View):
         try:
             # التحقق من الصلاحيات - فقط للسوبر أدمين
             if not request.user.is_superuser:
-                messages.error(request, _('ليس لديك صلاحية لحذف العملاء/الموردين'))
+                messages.error(request, _('You do not have permission to delete customers/suppliers'))
                 return redirect('customers:delete', pk=pk)
             
             # حفظ البيانات للرسالة والتدقيق
@@ -815,7 +815,7 @@ class CustomerSupplierDeleteView(LoginRequiredMixin, View):
                     # عرض رسالة تحذيرية مع خيار التعطيل
                     messages.error(
                         request,
-                        _('⚠️ لا يمكن حذف %(type)s "%(name)s" لأنه يحتوي على معاملات مرتبطة:\n• %(invoices)s فاتورة\n• %(returns)s مرتجع\n• %(transactions)s معاملة مالية\n\n✅ يمكنك تعطيل الحساب بدلاً من حذفه للحفاظ على السجلات المحاسبية (متوافق مع IFRS).') % {
+                        _('⚠️ Cannot delete %(type)s "%(name)s" because it has related transactions:\n• %(invoices)s invoices\n• %(returns)s returns\n• %(transactions)s financial transactions\n\n✅ You can disable the account instead of deleting it to preserve accounting records (IFRS compliant).') % {
                             'type': type_display,
                             'name': name,
                             'invoices': related_count['invoices'],
@@ -831,7 +831,7 @@ class CustomerSupplierDeleteView(LoginRequiredMixin, View):
                 # لا توجد حركات - السماح بالحذف النهائي
                 confirm = request.POST.get('confirm_delete')
                 if confirm != 'DELETE':
-                    messages.error(request, _('يجب كتابة "DELETE" للتأكيد!'))
+                    messages.error(request, _('You must type "DELETE" to confirm!'))
                     return redirect('customers:delete', pk=pk)
                 
                 # حذف نهائي
@@ -873,7 +873,7 @@ class CustomerSupplierDeleteView(LoginRequiredMixin, View):
                 ip_address=self.get_client_ip(request)
             )
             
-            messages.error(request, _('حدث خطأ أثناء العملية: %(error)s') % {'error': str(e)})
+            messages.error(request, _('An error occurred during the operation: %(error)s') % {'error': str(e)})
             return redirect('customers:delete', pk=pk)
     
     def get_client_ip(self, request):
@@ -1339,7 +1339,7 @@ class CustomerSupplierTransactionsView(LoginRequiredMixin, TemplateView):
                 'total_transactions': 0,
                 'date_from': date_from,
                 'date_to': date_to,
-                'error_message': 'نموذج الحسابات غير متوفر',
+                'error_message': 'Accounts model not available',
                 # إضافة المستندات حتى في حالة الخطأ
                 'sales_invoices': SalesInvoice.objects.filter(customer=customer_supplier),
                 'purchase_invoices': PurchaseInvoice.objects.filter(supplier=customer_supplier),
@@ -1365,7 +1365,7 @@ class CustomerSupplierTransactionsView(LoginRequiredMixin, TemplateView):
                 'total_transactions': 0,
                 'date_from': date_from,
                 'date_to': date_to,
-                'error_message': f'خطأ في تحميل البيانات: {str(e)}',
+                'error_message': f'Error loading data: {str(e)}',
                 # إضافة المستندات حتى في حالة الخطأ
                 'sales_invoices': SalesInvoice.objects.filter(customer=customer_supplier),
                 'purchase_invoices': PurchaseInvoice.objects.filter(supplier=customer_supplier),
@@ -1382,7 +1382,7 @@ class CustomerSupplierTransactionsView(LoginRequiredMixin, TemplateView):
             user=self.request.user,
             action_type='view',
             content_type='customer_supplier_transactions',
-            description=f'عرض معاملات العميل/المورد: {customer_supplier.name} ({total_transactions_count} معاملة)',
+            description=f'View customer/supplier transactions: {customer_supplier.name} ({total_transactions_count} transactions)',
             ip_address=self.request.META.get('REMOTE_ADDR')
         )
         
@@ -1391,7 +1391,7 @@ class CustomerSupplierTransactionsView(LoginRequiredMixin, TemplateView):
 # API للحصول على بيانات العميل/المورد عبر AJAX
 def get_customer_supplier_ajax(request, customer_id):
     if not customer_id:
-        return JsonResponse({'error': 'معرف العميل/المورد مطلوب'}, status=400)
+        return JsonResponse({'error': 'Customer/Supplier ID required'}, status=400)
     
     try:
         customer_supplier = CustomerSupplier.objects.get(id=customer_id)
@@ -1416,7 +1416,7 @@ def get_customer_supplier_ajax(request, customer_id):
         return JsonResponse(data)
         
     except CustomerSupplier.DoesNotExist:
-        return JsonResponse({'error': 'العميل/المورد غير موجود'}, status=404)
+        return JsonResponse({'error': 'Customer/Supplier not found'}, status=404)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
@@ -1467,7 +1467,7 @@ def report_balance_issue(request, customer_pk):
     if not request.user.is_superuser:
         return JsonResponse({
             'success': False,
-            'error': 'غير مسموح لك بحذف الحركات'
+            'error': 'You are not allowed to delete transactions'
         }, status=403)
     
     try:
@@ -1512,19 +1512,19 @@ def report_balance_issue(request, customer_pk):
         
         return JsonResponse({
             'success': True,
-            'message': f'تم حذف الحركة {transaction_number} بنجاح'
+            'message': f'Transaction {transaction_number} deleted successfully'
         })
         
     except AccountTransaction.DoesNotExist:
         return JsonResponse({
             'success': False,
-            'error': 'الحركة غير موجودة'
+            'error': 'Transaction not found'
         }, status=404)
         
     except Exception as e:
         return JsonResponse({
             'success': False,
-            'error': f'خطأ في حذف الحركة: {str(e)}'
+            'error': f'Error deleting transaction: {str(e)}'
         }, status=500)
 
 
@@ -1542,7 +1542,7 @@ def ajax_add_supplier(request):
     if not request.user.has_perm('customers.can_add_suppliers'):
         return JsonResponse({
             'success': False,
-            'message': 'ليس لديك صلاحية لإضافة موردين'
+            'message': 'You do not have permission to add suppliers'
         })
     
     try:
@@ -1579,7 +1579,7 @@ def ajax_add_supplier(request):
             if not name:
                 return JsonResponse({
                     'success': False,
-                    'message': 'اسم المورد مطلوب'
+                    'message': 'Supplier name is required'
                 })
             
             if not city:
@@ -1592,7 +1592,7 @@ def ajax_add_supplier(request):
             if CustomerSupplier.objects.filter(name=name).exists():
                 return JsonResponse({
                     'success': False,
-                    'message': 'مورد بهذا الاسم موجود بالفعل'
+                    'message': 'A supplier with this name already exists'
                 })
             
             # إنشاء المورد الجديد
@@ -1614,7 +1614,7 @@ def ajax_add_supplier(request):
             
             return JsonResponse({
                 'success': True,
-                'message': 'تم إنشاء المورد بنجاح',
+                'message': 'Supplier created successfully',
                 'supplier': {
                     'id': supplier.id,
                     'name': supplier.name,
@@ -1627,7 +1627,7 @@ def ajax_add_supplier(request):
         print(f"خطأ في إنشاء المورد: {str(e)}")
         return JsonResponse({
             'success': False,
-            'message': f'حدث خطأ أثناء إنشاء المورد: {str(e)}'
+            'message': f'An error occurred while creating supplier: {str(e)}'
         })
 
 
@@ -1638,7 +1638,7 @@ def ajax_add_customer(request):
     if request.method != 'POST':
         return JsonResponse({
             'success': False,
-            'message': 'طريقة الطلب غير صحيحة'
+            'message': 'Request method is incorrect'
         })
     
     # التحقق من الصلاحيات
@@ -1736,13 +1736,13 @@ def ajax_add_customer(request):
         try:
             return JsonResponse({
                 'success': False,
-                'message': f'حدث خطأ أثناء إنشاء العميل: {str(e)}'
+                'message': f'An error occurred while creating customer: {str(e)}'
             }, status=500)
         except Exception as json_error:
             # في حالة فشل إنشاء JSON، أرجع response نصي
             print(f"خطأ في إنشاء JSON response: {json_error}")
             from django.http import HttpResponse
-            return HttpResponse('{"success": false, "message": "خطأ داخلي في الخادم"}', 
+            return HttpResponse('{"success": false, "message": "Internal server error"}', 
                               content_type='application/json', status=500)
 
 
@@ -1766,16 +1766,16 @@ def preview_transaction_document(request, customer_pk, transaction_id):
             action_type='view',
             content_type='AccountTransaction',
             object_id=transaction.id,
-            description=f'معاينة مستند المعاملة {transaction.transaction_number} للعميل/المورد {customer_supplier.name}',
+            description=f'Preview transaction document {transaction.transaction_number} for customer/supplier {customer_supplier.name}',
             ip_address=request.META.get('REMOTE_ADDR', '')
         )
         
         # التحقق من وجود مرجع صالح
         if not transaction.reference_type or not transaction.reference_id:
             if transaction.transaction_type == 'adjustment':
-                messages.info(request, f'هذه معاملة تسوية رصيد: {transaction.description}')
+                messages.info(request, f'This is a balance adjustment transaction: {transaction.description}')
             else:
-                messages.info(request, 'هذه المعاملة لا تحتوي على مستند مرتبط للمعاينة')
+                messages.info(request, _('This transaction does not have a related document to preview'))
             return redirect('customers:transactions', pk=customer_pk)
         
         # تحديد نوع المستند والمسار المناسب
@@ -1785,79 +1785,79 @@ def preview_transaction_document(request, customer_pk, transaction_id):
             from sales.models import SalesInvoice
             try:
                 invoice = SalesInvoice.objects.get(id=transaction.reference_id)
-                messages.success(request, f'تم فتح فاتورة المبيعات رقم {invoice.invoice_number}')
+                messages.success(request, f'Opened sales invoice number {invoice.invoice_number}')
                 return redirect('sales:invoice_detail', pk=invoice.id)
             except SalesInvoice.DoesNotExist:
-                messages.error(request, f'فاتورة المبيعات المرتبطة بهذه المعاملة (ID: {transaction.reference_id}) غير موجودة في النظام')
+                messages.error(request, f'Sales invoice related to this transaction (ID: {transaction.reference_id}) not found in system')
                 
         elif transaction.reference_type == 'purchase_invoice':
             from purchases.models import PurchaseInvoice
             try:
                 invoice = PurchaseInvoice.objects.get(id=transaction.reference_id)
-                messages.success(request, f'تم فتح فاتورة المشتريات رقم {invoice.invoice_number}')
+                messages.success(request, f'Opened purchase invoice number {invoice.invoice_number}')
                 return redirect('purchases:invoice_detail', pk=invoice.id)
             except PurchaseInvoice.DoesNotExist:
-                messages.error(request, f'فاتورة المشتريات المرتبطة بهذه المعاملة (ID: {transaction.reference_id}) غير موجودة في النظام')
+                messages.error(request, f'Purchase invoice related to this transaction (ID: {transaction.reference_id}) not found in system')
                 
         elif transaction.reference_type == 'sales_return':
             from sales.models import SalesReturn
             try:
                 return_doc = SalesReturn.objects.get(id=transaction.reference_id)
-                messages.success(request, f'تم فتح مردود المبيعات رقم {return_doc.return_number}')
+                messages.success(request, f'Opened sales return number {return_doc.return_number}')
                 return redirect('sales:return_detail', pk=return_doc.id)
             except SalesReturn.DoesNotExist:
-                messages.error(request, f'مردود المبيعات المرتبط بهذه المعاملة (ID: {transaction.reference_id}) غير موجود في النظام')
+                messages.error(request, f'Sales return related to this transaction (ID: {transaction.reference_id}) not found in system')
                 
         elif transaction.reference_type == 'purchase_return':
             from purchases.models import PurchaseReturn
             try:
                 return_doc = PurchaseReturn.objects.get(id=transaction.reference_id)
-                messages.success(request, f'تم فتح مردود المشتريات رقم {return_doc.return_number}')
+                messages.success(request, f'Opened purchase return number {return_doc.return_number}')
                 return redirect('purchases:return_detail', pk=return_doc.id)
             except PurchaseReturn.DoesNotExist:
-                messages.error(request, f'مردود المشتريات المرتبط بهذه المعاملة (ID: {transaction.reference_id}) غير موجود في النظام')
+                messages.error(request, f'Purchase return related to this transaction (ID: {transaction.reference_id}) not found in system')
                 
         elif transaction.reference_type == 'debit_note':
             from purchases.models import PurchaseDebitNote
             try:
                 debit_note = PurchaseDebitNote.objects.get(id=transaction.reference_id)
-                messages.success(request, f'تم فتح مذكرة الدين رقم {debit_note.note_number}')
+                messages.success(request, f'Opened debit note number {debit_note.note_number}')
                 return redirect('purchases:debitnote_detail', pk=debit_note.id)
             except PurchaseDebitNote.DoesNotExist:
-                messages.error(request, f'مذكرة الدين المرتبطة بهذه المعاملة (ID: {transaction.reference_id}) غير موجودة في النظام')
+                messages.error(request, f'Debit note related to this transaction (ID: {transaction.reference_id}) not found in system')
                 
         elif transaction.reference_type == 'credit_note':
             from sales.models import SalesCreditNote
             try:
                 credit_note = SalesCreditNote.objects.get(id=transaction.reference_id)
-                messages.success(request, f'تم فتح مذكرة ائتمان رقم {credit_note.note_number}')
+                messages.success(request, f'Opened credit note number {credit_note.note_number}')
                 return redirect('sales:creditnote_detail', pk=credit_note.id)
             except SalesCreditNote.DoesNotExist:
-                messages.error(request, f'مذكرة الائتمان المرتبطة بهذه المعاملة (ID: {transaction.reference_id}) غير موجودة في النظام')
+                messages.error(request, f'Credit note related to this transaction (ID: {transaction.reference_id}) not found in system')
                 
         elif transaction.reference_type == 'payment':
             from payments.models import PaymentVoucher
             try:
                 payment = PaymentVoucher.objects.get(id=transaction.reference_id)
-                messages.success(request, f'تم فتح سند الدفع رقم {payment.voucher_number}')
+                messages.success(request, f'Opened payment voucher number {payment.voucher_number}')
                 return redirect('payments:detail', pk=payment.id)
             except PaymentVoucher.DoesNotExist:
-                messages.error(request, f'سند الدفع المرتبط بهذه المعاملة (ID: {transaction.reference_id}) غير موجود في النظام')
+                messages.error(request, f'Payment voucher related to this transaction (ID: {transaction.reference_id}) not found in system')
                 
         elif transaction.reference_type == 'receipt':
             from receipts.models import PaymentReceipt
             try:
                 receipt = PaymentReceipt.objects.get(id=transaction.reference_id)
-                messages.success(request, f'تم فتح سند القبض رقم {receipt.receipt_number}')
+                messages.success(request, f'Opened payment receipt number {receipt.receipt_number}')
                 return redirect('receipts:detail', pk=receipt.id)
             except PaymentReceipt.DoesNotExist:
-                messages.error(request, f'سند القبض المرتبط بهذه المعاملة (ID: {transaction.reference_id}) غير موجود في النظام')
+                messages.error(request, f'Payment receipt related to this transaction (ID: {transaction.reference_id}) not found in system')
                 
         else:
-            messages.warning(request, f'نوع المستند "{transaction.reference_type}" غير مدعوم للمعاينة حالياً')
+            messages.warning(request, f'Document type "{transaction.reference_type}" not currently supported for preview')
             
     except Exception as e:
-        messages.error(request, f'حدث خطأ أثناء محاولة معاينة المستند: {str(e)}')
+        messages.error(request, f'An error occurred while trying to preview document: {str(e)}')
         # تسجيل الخطأ في سجل الأنشطة
         try:
             from core.models import AuditLog
@@ -1866,7 +1866,7 @@ def preview_transaction_document(request, customer_pk, transaction_id):
                 action_type='error',
                 content_type='AccountTransaction',
                 object_id=transaction_id,
-                description=f'خطأ في معاينة مستند المعاملة {transaction_id}: {str(e)}',
+                description=f'Error previewing transaction document {transaction_id}: {str(e)}',
                 ip_address=request.META.get('REMOTE_ADDR', '')
             )
         except:
@@ -1880,11 +1880,11 @@ def preview_transaction_document(request, customer_pk, transaction_id):
 def delete_transaction(request, customer_pk, transaction_id):
     """حذف معاملة فردية"""
     if request.method != 'POST':
-        return JsonResponse({'success': False, 'error': 'طريقة غير مسموحة'}, status=405)
+        return JsonResponse({'success': False, 'error': _('Method not allowed')}, status=405)
     
     # التحقق من الصلاحيات - فقط للسوبر أدمين
     if not request.user.is_superuser:
-        return JsonResponse({'success': False, 'error': 'ليس لديك صلاحية لحذف المعاملات'}, status=403)
+        return JsonResponse({'success': False, 'error': _('You do not have permission to delete transactions')}, status=403)
     
     try:
         # التحقق من صحة العميل/المورد والمعاملة
@@ -1913,13 +1913,13 @@ def delete_transaction(request, customer_pk, transaction_id):
             action_type='delete',
             content_type='AccountTransaction',
             object_id=transaction_id,
-            description=f'حذف المعاملة {transaction_data["number"]} للعميل/المورد {customer_supplier.name} - المبلغ: {transaction_data["amount"]} - النوع: {transaction_data["type"]}',
+            description=f'Delete transaction {transaction_data["number"]} for customer/supplier {customer_supplier.name} - Amount: {transaction_data["amount"]} - Type: {transaction_data["type"]}',
             ip_address=request.META.get('REMOTE_ADDR', '')
         )
         
         return JsonResponse({
             'success': True, 
-            'message': f'تم حذف المعاملة {transaction_data["number"]} بنجاح'
+            'message': f'Transaction {transaction_data["number"]} deleted successfully'
         })
         
     except Exception as e:
@@ -1931,10 +1931,10 @@ def delete_transaction(request, customer_pk, transaction_id):
                 action_type='error',
                 content_type='AccountTransaction',
                 object_id=transaction_id,
-                description=f'خطأ في حذف المعاملة {transaction_id}: {str(e)}',
+                description=f'Error deleting transaction {transaction_id}: {str(e)}',
                 ip_address=request.META.get('REMOTE_ADDR', '')
             )
         except:
             pass  # تجاهل الأخطاء في تسجيل الخطأ
         
-        return JsonResponse({'success': False, 'error': f'حدث خطأ أثناء حذف المعاملة: {str(e)}'}, status=500)
+        return JsonResponse({'success': False, 'error': f'An error occurred while deleting transaction: {str(e)}'}, status=500)

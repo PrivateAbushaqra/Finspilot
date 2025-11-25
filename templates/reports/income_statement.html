@@ -97,9 +97,9 @@
 <div class="container-fluid">
     <!-- Print Header (hidden on screen) -->
     <div class="print-header">
-        <h3>{% trans "قائمة الدخل" %}</h3>
-        <p>{% trans "الفترة" %}: {% trans "من" %} {{ start_date|date:"Y-m-d" }} {% trans "إلى" %} {{ end_date|date:"Y-m-d" }}</p>
-        <p>{% trans "تاريخ الطباعة" %}: {% now "Y-m-d H:i" %}</p>
+        <h3>{% trans "Income Statement" %}</h3>
+        <p>{% trans "Period" %}: {% trans "From" %} {{ start_date|date:"Y-m-d" }} {% trans "To" %} {{ end_date|date:"Y-m-d" }}</p>
+        <p>{% trans "Print Date" %}: {% now "Y-m-d H:i" %}</p>
     </div>
     
     <!-- Page Header -->
@@ -114,11 +114,11 @@
         <div class="no-print">
             <button onclick="window.print()" class="btn btn-primary me-2">
                 <i class="fas fa-print me-1"></i>
-                {% trans "طباعة" %}
+                {% trans "Print" %}
             </button>
             <a href="?{{ request.GET.urlencode }}&export=excel" class="btn btn-success">
                 <i class="fas fa-file-excel me-1"></i>
-                {% trans "تصدير Excel" %}
+                {% trans "Export Excel" %}
             </a>
         </div>
     </div>

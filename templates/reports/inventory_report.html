@@ -100,9 +100,9 @@
 <div class="container-fluid">
     <!-- Print Header (hidden on screen) -->
     <div class="print-header">
-        <h3>{% trans "تقرير أرصدة المخزون" %}</h3>
-        <p>{% trans "كما في تاريخ" %}: {{ as_of_date|date:"Y-m-d" }}</p>
-        <p>{% trans "تاريخ الطباعة" %}: {% now "Y-m-d H:i" %}</p>
+        <h3>{% trans "Inventory Balances Report" %}</h3>
+        <p>{% trans "As of Date" %}: {{ as_of_date|date:"Y-m-d" }}</p>
+        <p>{% trans "Print Date" %}: {% now "Y-m-d H:i" %}</p>
     </div>
     
     <!-- Page Header -->
@@ -117,11 +117,11 @@
         <div class="no-print">
             <button onclick="window.print()" class="btn btn-primary me-2">
                 <i class="fas fa-print me-1"></i>
-                {% trans "طباعة" %}
+                {% trans "Print" %}
             </button>
             <a href="?{{ request.GET.urlencode }}&export=excel" class="btn btn-success">
                 <i class="fas fa-file-excel me-1"></i>
-                {% trans "تصدير Excel" %}
+                {% trans "Export Excel" %}
             </a>
         </div>
     </div>
@@ -199,7 +199,7 @@
                                 <i class="fas fa-sort ms-1"></i>
                             </th>
                             <th class="sortable" data-column="1" style="cursor: pointer;">
-                                {% trans "الكود" %}
+                                {% trans "Code" %}
                                 <i class="fas fa-sort ms-1"></i>
                             </th>
                             {% for warehouse in warehouses %}
@@ -210,7 +210,7 @@
                                 <i class="fas fa-sort ms-1"></i>
                             </th>
                             <th class="sortable text-center" data-column="value" style="cursor: pointer;">
-                                {% trans "القيمة" %}
+                                {% trans "Value" %}
                                 <i class="fas fa-sort ms-1"></i>
                             </th>
                         </tr>
@@ -241,7 +241,7 @@
     {% else %}
     <div class="alert alert-info">
         <i class="fas fa-info-circle me-2"></i>
-        {% trans "لا توجد منتجات في المخزون في الفترة المحددة" %}
+        {% trans "No inventory products found for the specified period" %}
     </div>
     {% endif %}
 </div>
