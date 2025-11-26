@@ -135,11 +135,11 @@ class Employee(models.Model):
         verbose_name_plural = _('Employees')
         ordering = ['first_name', 'last_name']
         permissions = [
-            ("can_view_hr", "Can View HR"),
-            ("can_manage_employees", "Can Manage Employees"),
-            ("can_manage_attendance", "Can Manage Attendance"),
-            ("can_manage_payroll", "Can Manage Payroll"),
-            ("can_approve_leaves", "Can Approve Leaves"),
+            ("can_view_hr", _("Can View HR")),
+            ("can_manage_employees", _("Can Manage Employees")),
+            ("can_manage_attendance", _("Can Manage Attendance")),
+            ("can_manage_payroll", _("Can Manage Payroll")),
+            ("can_approve_leaves", _("Can Approve Leaves")),
         ]
 
     def __str__(self):

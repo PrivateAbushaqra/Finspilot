@@ -67,7 +67,7 @@ def active_menu_context(request):
     elif '/cashboxes/' in path:
         active_menu = 'cashboxes'
     elif '/receipts/checks/' in path:
-        active_menu = 'receipts'
+        active_menu = 'checks'
     elif '/receipts/' in path:
         active_menu = 'receipts'
     elif '/payments/create/' in path:

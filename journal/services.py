@@ -645,7 +645,18 @@ class JournalService:
     
     @staticmethod
     def create_payment_voucher_entry(payment, user=None):
-        """إنشاء قيد سند الصرف"""
+        """
+        إنشاء قيد سند الصرف
+        
+        IFRS Compliance:
+        - IAS 7: Statement of Cash Flows
+        - IFRS 9: Financial Instruments
+        - IAS 32: Financial Instruments: Presentation
+        
+        للشيكات:
+        - عند الإصدار: مدين حساب المورد/المصروف، دائن حساب الشيكات تحت الصرف
+        - عند الصرف: مدين حساب الشيكات تحت الصرف، دائن حساب البنك
+        """
         lines_data = []
         
         # حساب المورد أو المصروف (مدين)
@@ -667,7 +678,7 @@ class JournalService:
                 'description': f'مصروف - سند رقم {payment.voucher_number}'
             })
         
-        # حساب الصندوق أو البنك (دائن)
+        # حساب الصندوق أو البنك أو الشيكات (دائن)
         if payment.payment_type == 'cash':
             if payment.cashbox:
                 cashbox_account = JournalService.get_cashbox_account(payment.cashbox)
@@ -705,6 +716,20 @@ class JournalService:
                     'credit': payment.amount,
                     'description': f'تحويل بنكي - سند رقم {payment.voucher_number}'
                 })
+        elif payment.payment_type == 'check':
+            # للشيكات - استخدام حساب الشيكات تحت الصرف
+            # IFRS 9: الشيك المصدر هو التزام مالي حتى يتم صرفه
+            checks_account = JournalService.get_or_create_checks_payable_account()
+            check_info = f'شيك رقم {payment.check_number}' if payment.check_number else 'شيك'
+            if payment.check_bank_name:
+                check_info += f' - {payment.check_bank_name}'
+            
+            lines_data.append({
+                'account_id': checks_account.id,
+                'debit': 0,
+                'credit': payment.amount,
+                'description': f'دفع بموجب {check_info} - سند رقم {payment.voucher_number}'
+            })
         
         return JournalService.create_journal_entry(
             entry_date=payment.date,
@@ -1398,6 +1423,37 @@ class JournalService:
                 'account_type': 'asset',
                 'parent': parent_account,  # ✅ إضافة الحساب الأب - متوافق مع IFRS
                 'description': 'حساب الشيكات المستلمة من العملاء وتحت التحصيل'
+            }
+        )
+        return account
+    
+    @staticmethod
+    def get_or_create_checks_payable_account():
+        """
+        الحصول على حساب الشيكات تحت الصرف - متوافق مع IFRS
+        
+        IFRS Compliance:
+        - IAS 32: Financial Instruments: Presentation
+        - IFRS 9: Financial Instruments
+        - الشيكات المصدرة تُعامل كالتزامات متداولة حتى يتم صرفها
+        """
+        # التأكد من وجود الحساب الأب (الالتزامات المتداولة الأخرى)
+        parent_account, _ = Account.objects.get_or_create(
+            code='22',
+            defaults={
+                'name': 'التزامات متداولة أخرى',
+                'account_type': 'liability',
+                'description': 'حساب رئيسي للالتزامات المتداولة الأخرى - حسب IFRS'
+            }
+        )
+        
+        account, created = Account.objects.get_or_create(
+            code='2201',
+            defaults={
+                'name': 'شيكات تحت الصرف',
+                'account_type': 'liability',
+                'parent': parent_account,
+                'description': 'حساب الشيكات المصدرة للموردين وتحت الصرف - التزام مالي حسب IFRS 9'
             }
         )
         return account

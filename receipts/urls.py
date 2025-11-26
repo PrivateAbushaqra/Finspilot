@@ -14,6 +14,7 @@ urlpatterns = [
     # تحصيل الشيكات
     path('checks/', views.check_list, name='check_list'),
     path('checks/export/excel/', views.check_list_export_excel, name='check_list_export_excel'),
+    path('checks/balance-forecast/', views.check_balance_forecast, name='check_balance_forecast'),
     path('checks/<int:receipt_id>/collect/', views.check_collect, name='check_collect'),
     
     # Ajax APIs

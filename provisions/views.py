@@ -28,7 +28,7 @@ class ProvisionTypeCreateView(CreateView):
     success_url = reverse_lazy('provision_type_list')
 
     def form_valid(self, form):
-        messages.success(self.request, _('تم إنشاء نوع المخصص بنجاح'))
+        messages.success(self.request, _('Provision type created successfully'))
         log_audit(self.request.user, 'CREATE', 'ProvisionType', form.instance.id, f'Created provision type: {form.instance.name}')
         return super().form_valid(form)
 
@@ -40,7 +40,7 @@ class ProvisionTypeUpdateView(UpdateView):
     success_url = reverse_lazy('provision_type_list')
 
     def form_valid(self, form):
-        messages.success(self.request, _('تم تحديث نوع المخصص بنجاح'))
+        messages.success(self.request, _('Provision type updated successfully'))
         log_audit(self.request.user, 'UPDATE', 'ProvisionType', form.instance.id, f'Updated provision type: {form.instance.name}')
         return super().form_valid(form)
 
@@ -53,7 +53,7 @@ class ProvisionTypeDeleteView(DeleteView):
     def delete(self, request, *args, **kwargs):
         obj = self.get_object()
         log_audit(request.user, 'DELETE', 'ProvisionType', obj.id, f'Deleted provision type: {obj.name}')
-        messages.success(request, _('تم حذف نوع المخصص بنجاح'))
+        messages.success(request, _('Provision type deleted successfully'))
         return super().delete(request, *args, **kwargs)
 
 
@@ -86,7 +86,7 @@ class ProvisionCreateView(CreateView):
     success_url = reverse_lazy('provision_list')
 
     def form_valid(self, form):
-        messages.success(self.request, _('تم إنشاء المخصص بنجاح'))
+        messages.success(self.request, _('Provision created successfully'))
         log_audit(self.request.user, 'CREATE', 'Provision', form.instance.id, f'Created provision: {form.instance.name}')
         return super().form_valid(form)
 
@@ -98,7 +98,7 @@ class ProvisionUpdateView(UpdateView):
     success_url = reverse_lazy('provision_list')
 
     def form_valid(self, form):
-        messages.success(self.request, _('تم تحديث المخصص بنجاح'))
+        messages.success(self.request, _('Provision updated successfully'))
         log_audit(self.request.user, 'UPDATE', 'Provision', form.instance.id, f'Updated provision: {form.instance.name}')
         return super().form_valid(form)
 
@@ -111,7 +111,7 @@ class ProvisionDeleteView(DeleteView):
     def delete(self, request, *args, **kwargs):
         obj = self.get_object()
         log_audit(request.user, 'DELETE', 'Provision', obj.id, f'Deleted provision: {obj.name}')
-        messages.success(request, _('تم حذف المخصص بنجاح'))
+        messages.success(request, _('Provision deleted successfully'))
         return super().delete(request, *args, **kwargs)
 
 
@@ -124,7 +124,7 @@ def provision_entry_create(request, provision_id):
             entry = form.save(commit=False)
             entry.provision = provision
             entry.save()
-            messages.success(request, _('تم إضافة إدخال المخصص بنجاح'))
+            messages.success(request, _('Provision entry added successfully'))
             log_audit(request.user, 'CREATE', 'ProvisionEntry', entry.id, f'Created provision entry for: {provision.name}')
             return redirect('provision_detail', pk=provision_id)
     else:
@@ -139,7 +139,7 @@ def provision_entry_update(request, entry_id):
         form = ProvisionEntryForm(request.POST, instance=entry)
         if form.is_valid():
             form.save()
-            messages.success(request, _('تم تحديث إدخال المخصص بنجاح'))
+            messages.success(request, _('Provision entry updated successfully'))
             log_audit(request.user, 'UPDATE', 'ProvisionEntry', entry.id, f'Updated provision entry for: {entry.provision.name}')
             return redirect('provision_detail', pk=entry.provision.id)
     else:
@@ -154,7 +154,7 @@ def provision_entry_delete(request, entry_id):
     if request.method == 'POST':
         log_audit(request.user, 'DELETE', 'ProvisionEntry', entry.id, f'Deleted provision entry for: {entry.provision.name}')
         entry.delete()
-        messages.success(request, _('تم حذف إدخال المخصص بنجاح'))
+        messages.success(request, _('Provision entry deleted successfully'))
         return redirect('provision_detail', pk=provision_id)
     return render(request, 'provisions/provision_entry_confirm_delete.html', {'entry': entry})
 
@@ -164,19 +164,19 @@ def provision_report(request):
     provisions = Provision.objects.filter(is_active=True).select_related('provision_type', 'related_account', 'provision_account')
     total_provisions = provisions.aggregate(total=Sum('amount'))['total'] or 0
 
-    # تقرير حسب النوع
+    # Report by type
     type_report = provisions.values('provision_type__name').annotate(
         total_amount=Sum('amount'),
         count=Count('id')
     ).order_by('-total_amount')
 
-    # تقرير حسب السنة المالية
+    # Report by fiscal year
     fiscal_year_report = provisions.values('fiscal_year').annotate(
         total_amount=Sum('amount'),
         count=Count('id')
     ).order_by('-fiscal_year')
 
-    # تحويل البيانات إلى JSON للرسوم البيانية
+    # Convert data to JSON for charts
     import json
     type_report_json = json.dumps(list(type_report))
     fiscal_year_report_json = json.dumps(list(fiscal_year_report))
@@ -196,12 +196,12 @@ def provision_report(request):
 def provision_movement_report(request):
     entries = ProvisionEntry.objects.select_related('provision__provision_type').order_by('-date')
 
-    # فلترة حسب المخصص
+    # Filter by provision
     provision_id = request.GET.get('provision')
     if provision_id:
         entries = entries.filter(provision_id=provision_id)
 
-    # فلترة حسب التاريخ
+    # Filter by date
     date_from = request.GET.get('date_from')
     if date_from:
         entries = entries.filter(date__gte=date_from)
@@ -212,7 +212,7 @@ def provision_movement_report(request):
 
     total_movements = entries.aggregate(total=Sum('amount'))['total'] or 0
 
-    # الحصول على جميع المخصصات للفلترة
+    # Get all provisions for filtering
     provisions = Provision.objects.filter(is_active=True)
 
     context = {

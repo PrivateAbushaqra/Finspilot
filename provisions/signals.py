@@ -7,9 +7,9 @@ from journal.models import JournalEntry, JournalLine
 
 @receiver(post_save, sender=Provision)
 def create_provision_journal_entry(sender, instance, created, **kwargs):
-    """إنشاء قيد محاسبي عند إنشاء أو تحديث مخصص"""
+    """Create journal entry when creating or updating a provision"""
     if created:
-        # إنشاء قيد محاسبي للمخصص
+        # Create journal entry for provision
         entry = JournalEntry(
             entry_date=instance.start_date,
             reference_type='provision',
@@ -19,7 +19,7 @@ def create_provision_journal_entry(sender, instance, created, **kwargs):
         entry.entry_number = entry.generate_entry_number()
         entry.save()
 
-        # إدخال في حساب المخصص (مدين)
+        # Debit entry in provision account
         JournalLine.objects.create(
             journal_entry=entry,
             account=instance.provision_account,
@@ -28,7 +28,7 @@ def create_provision_journal_entry(sender, instance, created, **kwargs):
             description=f'{_("Provision")}: {instance.name}'
         )
 
-        # إدخال في الحساب المرتبط (دائن)
+        # Credit entry in related account
         JournalLine.objects.create(
             journal_entry=entry,
             account=instance.related_account,
@@ -40,9 +40,9 @@ def create_provision_journal_entry(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=ProvisionEntry)
 def create_provision_entry_journal_entry(sender, instance, created, **kwargs):
-    """إنشاء قيد محاسبي عند إضافة إدخال مخصص"""
+    """Create journal entry when adding a provision entry"""
     if created:
-        # إنشاء قيد محاسبي لإدخال المخصص
+        # Create journal entry for provision entry
         entry = JournalEntry(
             entry_date=instance.date,
             reference_type='provision_entry',
@@ -52,17 +52,17 @@ def create_provision_entry_journal_entry(sender, instance, created, **kwargs):
         entry.entry_number = entry.generate_entry_number()
         entry.save()
 
-        # تحديد نوع الحركة حسب نوع المخصص
+        # Determine transaction type based on provision type
         if instance.provision.provision_type.name in [_('Bad Debt'), _('Depreciation'), _('Inventory Provision')]:
-            # للمخصصات التي تقلل من الأصول أو تزيد من المصاريف
-            debit_account = instance.provision.provision_account  # حساب المخصص
-            credit_account = instance.provision.related_account  # الحساب المرتبط
+            # For provisions that reduce assets or increase expenses
+            debit_account = instance.provision.provision_account  # Provision account
+            credit_account = instance.provision.related_account  # Related accountt
         else:
-            # للمخصصات الأخرى
+            # For other provisions
             debit_account = instance.provision.related_account
             credit_account = instance.provision.provision_account
 
-        # إدخال في حساب المدين
+        # Debit entry
         JournalLine.objects.create(
             journal_entry=entry,
             account=debit_account,
@@ -71,7 +71,7 @@ def create_provision_entry_journal_entry(sender, instance, created, **kwargs):
             description=f'{_("Provision Entry")}: {instance.description}'
         )
 
-        # إدخال في حساب الدائن
+        # Credit entry
         JournalLine.objects.create(
             journal_entry=entry,
             account=credit_account,
@@ -83,14 +83,14 @@ def create_provision_entry_journal_entry(sender, instance, created, **kwargs):
 
 @receiver(post_delete, sender=Provision)
 def delete_provision_journal_entries(sender, instance, **kwargs):
-    """حذف القيود المحاسبية عند حذف مخصص"""
-    # حذف جميع القيود المتعلقة بالمخصص
+    """Delete journal entries when deleting a provision"""
+    # Delete all journal entries related to the provision
     JournalEntry.objects.filter(
         reference_type='provision',
         reference_id=instance.id
     ).delete()
 
-    # حذف قيود الإدخالات
+    # Delete entry entries
     for entry in instance.provisionentry_set.all():
         JournalEntry.objects.filter(
             reference_type='provision_entry',
@@ -100,7 +100,7 @@ def delete_provision_journal_entries(sender, instance, **kwargs):
 
 @receiver(post_delete, sender=ProvisionEntry)
 def delete_provision_entry_journal_entry(sender, instance, **kwargs):
-    """حذف القيد المحاسبي عند حذف إدخال مخصص"""
+    """Delete journal entry when deleting a provision entry"""
     JournalEntry.objects.filter(
         reference_type='provision_entry',
         reference_id=instance.id

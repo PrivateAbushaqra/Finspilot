@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title">
+                        <i class="fas fa-chart-line"></i> {{ page_title }}
+                    </h3>
+                    <div>
+                        <button type="button" class="btn btn-info btn-sm me-2" onclick="window.print()">
+                            <i class="fas fa-print"></i> {% trans "Print" %}
+                        </button>
+                        <a href="{% url 'receipts:check_list' %}" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-arrow-left"></i> {% trans "Back to Checks" %}
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Current Balance Summary -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <i class="fas fa-wallet"></i> {% trans "Current Cash Balance" %}
+                                    </h5>
+                                    <h3 class="mb-0">{{ cash_balance|floatformat:3 }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <i class="fas fa-university"></i> {% trans "Current Bank Balance" %}
+                                    </h5>
+                                    <h3 class="mb-0">{{ bank_balance|floatformat:3 }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <i class="fas fa-coins"></i> {% trans "Total Current Balance" %}
+                                    </h5>
+                                    <h3 class="mb-0">{{ current_balance|floatformat:3 }}</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- IFRS 9 Compliance Notice -->
+                    <div class="alert alert-info" role="alert">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>{% trans "IFRS 9 Compliance:" %}</strong>
+                        {% trans "This forecast shows expected cash flows from pending checks. Receivable checks increase balance, while payable checks decrease it. All amounts are shown at face value without discounting." %}
+                    </div>
+
+                    <!-- Checks Forecast Table -->
+                    {% if checks_forecast %}
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>{% trans "Due Date" %}</th>
+                                        <th>{% trans "Type" %}</th>
+                                        <th>{% trans "Check Number" %}</th>
+                                        <th>{% trans "Party" %}</th>
+                                        <th>{% trans "Bank" %}</th>
+                                        <th class="text-end">{% trans "Amount" %}</th>
+                                        <th class="text-end">{% trans "Balance After" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in checks_forecast %}
+                                    <tr class="{% if item.type == 'receivable' %}table-success{% else %}table-warning{% endif %}">
+                                        <td>
+                                            {{ item.due_date|date:"Y-m-d" }}
+                                            {% now "Y-m-d" as today %}
+                                            {% if item.due_date|date:"Y-m-d" < today %}
+                                                <span class="badge bg-danger ms-2">{% trans "Overdue" %}</span>
+                                            {% elif item.due_date|date:"Y-m-d" == today %}
+                                                <span class="badge bg-warning ms-2">{% trans "Due Today" %}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if item.type == 'receivable' %}
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-arrow-down"></i> {% trans "Receivable" %}
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-warning">
+                                                    <i class="fas fa-arrow-up"></i> {% trans "Payable" %}
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td><strong>{{ item.check_number }}</strong></td>
+                                        <td>{{ item.party }}</td>
+                                        <td>{{ item.bank_name }}</td>
+                                        <td class="text-end">
+                                            {% if item.type == 'receivable' %}
+                                                <span class="text-success fw-bold">+{{ item.amount|floatformat:3 }}</span>
+                                            {% else %}
+                                                <span class="text-danger fw-bold">-{{ item.amount|floatformat:3 }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-end">
+                                            <strong class="{% if item.balance_after < 0 %}text-danger{% else %}text-success{% endif %}">
+                                                {{ item.balance_after|floatformat:3 }}
+                                            </strong>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot class="table-dark">
+                                    <tr>
+                                        <td colspan="6" class="text-end fw-bold">{% trans "Final Projected Balance:" %}</td>
+                                        <td class="text-end">
+                                            <strong class="{% if final_balance < 0 %}text-danger{% else %}text-success{% endif %}">
+                                                {{ final_balance|floatformat:3 }}
+                                            </strong>
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                        <!-- Summary Statistics -->
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <div class="card border-success">
+                                    <div class="card-header bg-success text-white">
+                                        <i class="fas fa-arrow-down"></i> {% trans "Receivable Checks Summary" %}
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="mb-2">
+                                            <strong>{% trans "Total Checks:" %}</strong> {{ receivable_count }}
+                                        </p>
+                                        <p class="mb-0">
+                                            <strong>{% trans "Total Amount:" %}</strong>
+                                            <span class="text-success fw-bold">{{ receivable_total|floatformat:3 }}</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card border-warning">
+                                    <div class="card-header bg-warning">
+                                        <i class="fas fa-arrow-up"></i> {% trans "Payable Checks Summary" %}
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="mb-2">
+                                            <strong>{% trans "Total Checks:" %}</strong> {{ payable_count }}
+                                        </p>
+                                        <p class="mb-0">
+                                            <strong>{% trans "Total Amount:" %}</strong>
+                                            <span class="text-danger fw-bold">{{ payable_total|floatformat:3 }}</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning" role="alert">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            {% trans "No pending checks found. All checks have been collected or cleared." %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    .btn, .card-header .btn-group {
+        display: none !important;
+    }
+    
+    .card {
+        border: 1px solid #000 !important;
+    }
+    
+    .table {
+        font-size: 12px;
+    }
+}
+</style>
+{% endblock %}

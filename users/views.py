@@ -965,12 +965,18 @@ class UserGroupCreateView(LoginRequiredMixin, CreateView):
                     if permission.codename not in allowed_users_perms:
                         continue
                     
-                if app_label not in permissions_by_app:
-                    permissions_by_app[app_label] = []
+                # فصل صلاحيات إدارة الشيكات عن صلاحيات السندات
+                if app_label == 'receipts' and permission.codename in ['can_view_check_management', 'can_collect_checks']:
+                    app_key = 'check_management'
+                else:
+                    app_key = app_label
+                
+                if app_key not in permissions_by_app:
+                    permissions_by_app[app_key] = []
                 
                 # إضافة ترجمة للصلاحية
                 permission.translated_name = self._get_permission_translation(permission)
-                permissions_by_app[app_label].append(permission)
+                permissions_by_app[app_key].append(permission)
             
             context['permissions_by_app'] = permissions_by_app
             
@@ -1001,6 +1007,14 @@ class UserGroupCreateView(LoginRequiredMixin, CreateView):
             'change_account': _('Change Account'),
             'delete_account': _('Delete Account'),
             'view_account': _('View Account'),
+            'can_view_accounts': _('View Chart of Accounts'),
+            'can_add_accounts': _('Add Account'),
+            'can_edit_accounts': _('Edit Account'),
+            'can_delete_accounts': _('Delete Account'),
+            'can_view_journal_entries': _('View Journal Entries'),
+            'can_add_journal_entries': _('Add Journal Entry'),
+            'can_edit_journal_entries': _('Edit Journal Entry'),
+            'can_delete_journal_entries': _('Delete Journal Entry'),
             
             # صلاحيات الإيرادات والمصروفات
             'can_add_sectors': _('Add Sectors'),
@@ -1033,6 +1047,23 @@ class UserGroupCreateView(LoginRequiredMixin, CreateView):
             'change_salesinvoiceitem': _('Change Sales Invoice Item'),
             'delete_salesinvoiceitem': _('Delete Sales Invoice Item'),
             'view_salesinvoiceitem': _('View Sales Invoice Item'),
+            'can_view_sales': _('Can View Sales'),
+            'can_add_sales': _('Can Add Sales'),
+            'can_edit_sales': _('Can Edit Sales'),
+            'can_delete_sales': _('Can Delete Sales'),
+            'can_view_sales_statement': _('Can View Sales Statement'),
+            'can_view_sales_returns_statement': _('Can View Sales Returns Statement'),
+            'can_view_pos': _('Can View POS'),
+            'can_edit_pos': _('Can Edit POS'),
+            'can_delete_pos': _('Can Delete POS'),
+            'can_view_sales_returns': _('Can View Sales Returns'),
+            'can_add_sales_returns': _('Can Add Sales Returns'),
+            'can_edit_sales_returns': _('Can Edit Sales Returns'),
+            'can_delete_sales_returns': _('Can Delete Sales Returns'),
+            'can_view_credit_notes': _('Can View Credit Notes'),
+            'can_add_credit_notes': _('Can Add Credit Notes'),
+            'can_edit_credit_notes': _('Can Edit Credit Notes'),
+            'can_delete_credit_notes': _('Can Delete Credit Notes'),
             
             # صلاحيات المشتريات
             'add_purchaseinvoice': _('Add Purchase Invoice'),
@@ -1043,6 +1074,19 @@ class UserGroupCreateView(LoginRequiredMixin, CreateView):
             'change_purchaseinvoiceitem': _('Change Purchase Invoice Item'),
             'delete_purchaseinvoiceitem': _('Delete Purchase Invoice Item'),
             'view_purchaseinvoiceitem': _('View Purchase Invoice Item'),
+            'can_view_purchases': _('Can View Purchases'),
+            'can_add_purchases': _('Can Add Purchases'),
+            'can_edit_purchases': _('Can Edit Purchases'),
+            'can_delete_purchases': _('Can Delete Purchases'),
+            'can_view_purchase_statement': _('Can View Purchase Statement'),
+            'can_view_purchase_returns': _('Can View Purchase Returns'),
+            'can_add_purchase_returns': _('Can Add Purchase Returns'),
+            'can_edit_purchase_returns': _('Can Edit Purchase Returns'),
+            'can_delete_purchase_returns': _('Can Delete Purchase Returns'),
+            'can_view_debit_notes': _('Can View Debit Notes'),
+            'can_add_debit_notes': _('Can Add Debit Notes'),
+            'can_edit_debit_notes': _('Can Edit Debit Notes'),
+            'can_delete_debit_notes': _('Can Delete Debit Notes'),
             
             # صلاحيات العملاء والموردين
             'add_customersupplier': _('Add Customer/Supplier'),
@@ -1059,6 +1103,14 @@ class UserGroupCreateView(LoginRequiredMixin, CreateView):
             'change_category': _('Change Category'),
             'delete_category': _('Delete Category'),
             'view_category': _('View Category'),
+            'can_view_products': _('Can View Products'),
+            'can_add_products': _('Can Add Products'),
+            'can_edit_products': _('Can Edit Products'),
+            'can_delete_products': _('Can Delete Products'),
+            'can_view_product_categories': _('Can View Product Categories'),
+            'can_add_product_categories': _('Can Add Product Categories'),
+            'can_edit_product_categories': _('Can Edit Product Categories'),
+            'can_delete_product_categories': _('Can Delete Product Categories'),
             
             # صلاحيات المخزون
             'add_warehouse': _('Add Warehouse'),
@@ -1125,6 +1177,16 @@ class UserGroupCreateView(LoginRequiredMixin, CreateView):
             'change_receipt': _('Change Receipt'),
             'delete_receipt': _('Delete Receipt'),
             'view_receipt': _('View Receipt'),
+            'can_view_receipts': _('Can View Receipt Vouchers'),
+            'can_add_receipts': _('Can Add Receipt Vouchers'),
+            'can_edit_receipts': _('Can Edit Receipt Vouchers'),
+            'can_delete_receipts': _('Can Delete Receipt Vouchers'),
+            'can_view_check_management': _('Can View Cheque Management'),
+            'can_collect_checks': _('Can Collect Cheques'),
+            'can_view_hr': _('Can View HR'),
+            'can_manage_employees': _('Can Manage Employees'),
+            'can_manage_attendance': _('Can Manage Attendance'),
+            'can_access_print_design': _('Can access print design settings'),
             
             # صلاحيات المستخدمين
             'add_user': _('Add User'),
@@ -1331,6 +1393,34 @@ class UserGroupCreateView(LoginRequiredMixin, CreateView):
             'change_auditlog': _('Change Audit Log'),
             'delete_auditlog': _('Delete Audit Log'),
             'view_auditlog': _('View Audit Log'),
+            
+            # صلاحيات السنوات المالية
+            'can_view_fiscal_years': _('View Fiscal Years'),
+            'can_add_fiscal_years': _('Add Fiscal Years'),
+            'can_edit_fiscal_years': _('Edit Fiscal Years'),
+            'can_delete_fiscal_years': _('Delete Fiscal Years'),
+            'can_open_fiscal_year': _('Open Fiscal Year'),
+            
+            # صلاحيات إقفال السنة المالية
+            'can_perform_year_end_closing': _('Perform Year End Closing'),
+            
+            # صلاحيات حركة المخزون
+            'can_view_inventory_movements': _('View Inventory Movements'),
+            'can_add_inventory_movements': _('Add Inventory Movements'),
+            'can_edit_inventory_movements': _('Edit Inventory Movements'),
+            'can_delete_inventory_movements': _('Delete Inventory Movements'),
+            
+            # صلاحيات التحويلات بين المستودعات
+            'can_view_warehouse_transfers': _('View Warehouse Transfers'),
+            'can_add_warehouse_transfers': _('Add Warehouse Transfers'),
+            'can_edit_warehouse_transfers': _('Edit Warehouse Transfers'),
+            'can_delete_warehouse_transfers': _('Delete Warehouse Transfers'),
+            
+            # صلاحيات تنبيهات المخزون
+            'can_view_stock_alerts': _('View Stock Alerts'),
+            
+            # صلاحيات التحويلات بين الصناديق
+            'can_create_cashboxes_transfers': _('Create Cashbox Transfers'),
         }
         
         return translations.get(permission.codename, permission.name)
@@ -1350,6 +1440,7 @@ class UserGroupCreateView(LoginRequiredMixin, CreateView):
             'cashboxes': _('Cashboxes'),
             'payments': _('Payments'),
             'receipts': _('Receipts'),
+            'check_management': _('Cheque Management'),
             'reports': _('Reports'),
             'users': _('System Management (Basic)'),
         }
@@ -1533,13 +1624,19 @@ class UserGroupUpdateView(LoginRequiredMixin, UpdateView):
                 ]
                 if permission.codename not in allowed_users_perms:
                     continue
+            
+            # فصل صلاحيات إدارة الشيكات عن صلاحيات السندات
+            if app_label == 'receipts' and permission.codename in ['can_view_check_management', 'can_collect_checks']:
+                app_key = 'check_management'
+            else:
+                app_key = app_label
                 
-            if app_label not in permissions_by_app:
-                permissions_by_app[app_label] = []
+            if app_key not in permissions_by_app:
+                permissions_by_app[app_key] = []
 
             # إضافة ترجمة للصلاحية
             permission.translated_name = self._get_permission_translation(permission)
-            permissions_by_app[app_label].append(permission)
+            permissions_by_app[app_key].append(permission)
 
         context['permissions_by_app'] = permissions_by_app
 
@@ -1661,6 +1758,14 @@ class UserGroupUpdateView(LoginRequiredMixin, UpdateView):
             'change_account': _('Change Account'),
             'delete_account': _('Delete Account'),
             'view_account': _('View Account'),
+            'can_view_accounts': _('View Chart of Accounts'),
+            'can_add_accounts': _('Add Account'),
+            'can_edit_accounts': _('Edit Account'),
+            'can_delete_accounts': _('Delete Account'),
+            'can_view_journal_entries': _('View Journal Entries'),
+            'can_add_journal_entries': _('Add Journal Entry'),
+            'can_edit_journal_entries': _('Edit Journal Entry'),
+            'can_delete_journal_entries': _('Delete Journal Entry'),
             
             # صلاحيات الإيرادات والمصروفات
             'can_add_sectors': _('Add Sectors'),
@@ -1777,6 +1882,16 @@ class UserGroupUpdateView(LoginRequiredMixin, UpdateView):
             'change_receipt': _('Change Receipt'),
             'delete_receipt': _('Delete Receipt'),
             'view_receipt': _('View Receipt'),
+            'can_view_receipts': _('Can View Receipt Vouchers'),
+            'can_add_receipts': _('Can Add Receipt Vouchers'),
+            'can_edit_receipts': _('Can Edit Receipt Vouchers'),
+            'can_delete_receipts': _('Can Delete Receipt Vouchers'),
+            'can_view_check_management': _('Can View Cheque Management'),
+            'can_collect_checks': _('Can Collect Cheques'),
+            'can_view_hr': _('Can View HR'),
+            'can_manage_employees': _('Can Manage Employees'),
+            'can_manage_attendance': _('Can Manage Attendance'),
+            'can_access_print_design': _('Can access print design settings'),
             
             # إدارة النظام (الأساسية) - عرض
             'can_view_users_list': _('View Users List'),
@@ -1821,6 +1936,34 @@ class UserGroupUpdateView(LoginRequiredMixin, UpdateView):
             'can_view_stock_balance_report': _('Can View Stock Balance Report'),
             'can_view_customer_statement': _('Can View Customer Statement'),
             'can_view_documents_report': _('Can View Documents Report'),
+            
+            # صلاحيات السنوات المالية
+            'can_view_fiscal_years': _('View Fiscal Years'),
+            'can_add_fiscal_years': _('Add Fiscal Years'),
+            'can_edit_fiscal_years': _('Edit Fiscal Years'),
+            'can_delete_fiscal_years': _('Delete Fiscal Years'),
+            'can_open_fiscal_year': _('Open Fiscal Year'),
+            
+            # صلاحيات إقفال السنة المالية
+            'can_perform_year_end_closing': _('Perform Year End Closing'),
+            
+            # صلاحيات حركة المخزون
+            'can_view_inventory_movements': _('View Inventory Movements'),
+            'can_add_inventory_movements': _('Add Inventory Movements'),
+            'can_edit_inventory_movements': _('Edit Inventory Movements'),
+            'can_delete_inventory_movements': _('Delete Inventory Movements'),
+            
+            # صلاحيات التحويلات بين المستودعات
+            'can_view_warehouse_transfers': _('View Warehouse Transfers'),
+            'can_add_warehouse_transfers': _('Add Warehouse Transfers'),
+            'can_edit_warehouse_transfers': _('Edit Warehouse Transfers'),
+            'can_delete_warehouse_transfers': _('Delete Warehouse Transfers'),
+            
+            # صلاحيات تنبيهات المخزون
+            'can_view_stock_alerts': _('View Stock Alerts'),
+            
+            # صلاحيات التحويلات بين الصناديق
+            'can_create_cashboxes_transfers': _('Create Cashbox Transfers'),
         }
         
         return translations.get(permission.codename, permission.name)
@@ -1840,6 +1983,7 @@ class UserGroupUpdateView(LoginRequiredMixin, UpdateView):
             'cashboxes': _('Cashboxes'),
             'payments': _('Payments'),
             'receipts': _('Receipts'),
+            'check_management': _('Cheque Management'),
             'reports': _('Reports'),
             'users': _('System Management (Basic)'),
         }

@@ -258,3 +258,38 @@ def handle_receipt_reversal(sender, instance, **kwargs):
             pass
         except Exception as e:
             print(f"خطأ في معالجة عكس سند القبض: {e}")
+
+
+@receiver(post_save, sender=PaymentReceipt)
+def create_journal_entry_on_receipt(sender, instance, created, **kwargs):
+    """
+    إنشاء قيد محاسبي تلقائياً عند إنشاء سند قبض
+    Create journal entry automatically when receipt voucher is created
+    
+    IFRS Compliance:
+    - IAS 1: Presentation of Financial Statements
+    - IAS 7: Statement of Cash Flows
+    - IFRS 7: Financial Instruments: Disclosures
+    - IFRS 9: Financial Instruments (للشيكات)
+    """
+    # تطبيق فقط عند الإنشاء الجديد
+    if created:
+        try:
+            from journal.models import JournalEntry
+            
+            # التحقق من عدم وجود قيد مسبقاً
+            existing = JournalEntry.objects.filter(
+                reference_type='receipt_voucher',
+                reference_id=instance.id
+            ).exists()
+            
+            if not existing:
+                from journal.services import JournalService
+                
+                # إنشاء القيد المحاسبي
+                JournalService.create_receipt_voucher_entry(instance, instance.created_by)
+                print(f"✓ تم إنشاء قيد محاسبي لسند القبض {instance.receipt_number}")
+        except Exception as e:
+            print(f"خطأ في إنشاء القيد المحاسبي لسند القبض: {e}")
+            import traceback
+            traceback.print_exc()

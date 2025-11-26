@@ -13,6 +13,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from .models import PaymentReceipt, CheckCollection, ReceiptReversal
+from payments.models import PaymentVoucher
 from customers.models import CustomerSupplier
 from cashboxes.models import Cashbox, CashboxTransaction
 from accounts.models import AccountTransaction
@@ -525,31 +526,69 @@ def receipt_reverse(request, receipt_id):
 
 @login_required
 def check_list(request):
-    """Checks list"""
-    if not (request.user.has_perm('receipts.can_view_receipts') or request.user.has_perm('receipts.view_paymentreceipt')):
+    """Checks list - displays checks from both receipts and payments"""
+    if not (request.user.has_perm('receipts.can_view_check_management') or request.user.is_superadmin or request.user.user_type == 'admin'):
         from django.core.exceptions import PermissionDenied
-        messages.error(request, _('You do not have permission to view receipt vouchers'))
-        raise PermissionDenied(_('You do not have permission to view receipt vouchers'))
+        messages.error(request, _('You do not have permission to view cheque management'))
+        raise PermissionDenied(_('You do not have permission to view cheque management'))
     
-    checks = PaymentReceipt.objects.filter(
+    # جمع الشيكات من سندات القبض (checks receivable - أصول)
+    receipt_checks = PaymentReceipt.objects.filter(
         payment_type='check'
     ).select_related('customer', 'created_by', 'check_cashbox').order_by('-check_due_date')
+    
+    # جمع الشيكات من سندات الصرف (checks payable - مطلوبات)
+    payment_checks = PaymentVoucher.objects.filter(
+        payment_type='check'
+    ).select_related('supplier', 'created_by', 'cashbox').order_by('-check_due_date')
     
     # فلترة حسب الحالة
     status = request.GET.get('status')
     if status:
-        checks = checks.filter(check_status=status)
+        receipt_checks = receipt_checks.filter(check_status=status)
+        payment_checks = payment_checks.filter(check_status=status)
     
     # فلترة حسب تاريخ الاستحقاق
     due_date_from = request.GET.get('due_date_from')
     due_date_to = request.GET.get('due_date_to')
     if due_date_from:
-        checks = checks.filter(check_due_date__gte=due_date_from)
+        receipt_checks = receipt_checks.filter(check_due_date__gte=due_date_from)
+        payment_checks = payment_checks.filter(check_due_date__gte=due_date_from)
     if due_date_to:
-        checks = checks.filter(check_due_date__lte=due_date_to)
+        receipt_checks = receipt_checks.filter(check_due_date__lte=due_date_to)
+        payment_checks = payment_checks.filter(check_due_date__lte=due_date_to)
+    
+    # دمج القوائم وإضافة نوع الشيك
+    checks_list = []
+    for check in receipt_checks:
+        check.check_type = 'receipt'  # شيك قبض (أصل - receivable)
+        check.check_type_display = _('Receivable Check')
+        # إضافة خصائص موحدة للعرض
+        check.document_number = check.receipt_number
+        check.party_name = check.customer.name if check.customer else '-'
+        check.display_bank_name = check.bank_name
+        check.display_cashbox = check.check_cashbox
+        check.display_ecl = check.expected_credit_loss if hasattr(check, 'expected_credit_loss') else Decimal('0.000')
+        check.display_ecl_method = check.ecl_calculation_method if hasattr(check, 'ecl_calculation_method') else ''
+        checks_list.append(check)
+    
+    for check in payment_checks:
+        check.check_type = 'payment'  # شيك صرف (مطلوب - payable)
+        check.check_type_display = _('Payable Check')
+        # إضافة خصائص موحدة للعرض
+        check.document_number = check.voucher_number
+        check.party_name = check.supplier.name if check.supplier else (check.beneficiary_name or '-')
+        check.display_bank_name = check.check_bank_name
+        check.display_cashbox = check.cashbox
+        check.display_ecl = Decimal('0.000')  # شيكات الصرف ليس لها ECL
+        check.display_ecl_method = ''
+        checks_list.append(check)
+    
+    # ترتيب حسب تاريخ الاستحقاق
+    checks_list.sort(key=lambda x: x.check_due_date or timezone.now().date(), reverse=True)
     
     # التقسيم لصفحات
-    paginator = Paginator(checks, 20)
+    paginator = Paginator(checks_list, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
@@ -562,7 +601,7 @@ def check_list(request):
 
 @login_required
 def check_list_export_excel(request):
-    """Export checks list to Excel"""
+    """Export checks list to Excel - includes both receivable and payable checks"""
     # محاولة استيراد openpyxl
     try:
         from openpyxl import Workbook
@@ -571,23 +610,46 @@ def check_list_export_excel(request):
         from django.http import HttpResponse
         return HttpResponse(_('OpenPyXL is not available'), status=500)
 
-    # الحصول على نفس البيانات المعروضة في القائمة
-    checks = PaymentReceipt.objects.filter(
+    # جمع الشيكات من سندات القبض (checks receivable)
+    receipt_checks = PaymentReceipt.objects.filter(
         payment_type='check'
     ).select_related('customer', 'created_by', 'check_cashbox').order_by('-check_due_date')
+
+    # جمع الشيكات من سندات الصرف (checks payable)
+    payment_checks = PaymentVoucher.objects.filter(
+        payment_type='check'
+    ).select_related('supplier', 'created_by', 'cashbox').order_by('-check_due_date')
 
     # فلترة حسب الحالة
     status = request.GET.get('status')
     if status:
-        checks = checks.filter(check_status=status)
+        receipt_checks = receipt_checks.filter(check_status=status)
+        payment_checks = payment_checks.filter(check_status=status)
 
     # فلترة حسب تاريخ الاستحقاق
     due_date_from = request.GET.get('due_date_from')
     due_date_to = request.GET.get('due_date_to')
     if due_date_from:
-        checks = checks.filter(check_due_date__gte=due_date_from)
+        receipt_checks = receipt_checks.filter(check_due_date__gte=due_date_from)
+        payment_checks = payment_checks.filter(check_due_date__gte=due_date_from)
     if due_date_to:
-        checks = checks.filter(check_due_date__lte=due_date_to)
+        receipt_checks = receipt_checks.filter(check_due_date__lte=due_date_to)
+        payment_checks = payment_checks.filter(check_due_date__lte=due_date_to)
+
+    # دمج القوائم
+    checks_list = []
+    for check in receipt_checks:
+        check.check_type = 'receipt'
+        check.check_type_display = _('Receivable Check')
+        checks_list.append(check)
+    
+    for check in payment_checks:
+        check.check_type = 'payment'
+        check.check_type_display = _('Payable Check')
+        checks_list.append(check)
+    
+    # ترتيب حسب تاريخ الاستحقاق
+    checks_list.sort(key=lambda x: x.check_due_date or timezone.now().date(), reverse=True)
 
     # إنشاء ملف Excel
     wb = Workbook()
@@ -600,14 +662,14 @@ def check_list_export_excel(request):
 
     # العناوين
     headers = [
-        str(_('Receipt Number')),
+        str(_('Type')),  # نوع الشيك
+        str(_('Voucher Number')),
         str(_('Check Number')),
-        str(_('Customer')),
+        str(_('Customer/Supplier')),
         str(_('Amount')),
         str(_('Check Date')),
         str(_('Due Date')),
         str(_('Bank Name')),
-        str(_('Check Cashbox')),
         str(_('Status')),
         str(_('ECL'))
     ]
@@ -620,17 +682,30 @@ def check_list_export_excel(request):
 
     # البيانات
     row = 2
-    for check in checks:
-        ws.cell(row=row, column=1, value=check.receipt_number)
-        ws.cell(row=row, column=2, value=check.check_number)
-        ws.cell(row=row, column=3, value=check.customer.name)
-        ws.cell(row=row, column=4, value=float(check.amount))
-        ws.cell(row=row, column=5, value=check.check_date.strftime('%Y-%m-%d') if check.check_date else '')
-        ws.cell(row=row, column=6, value=check.check_due_date.strftime('%Y-%m-%d') if check.check_due_date else '')
-        ws.cell(row=row, column=7, value=check.bank_name)
-        ws.cell(row=row, column=8, value=check.check_cashbox.name if check.check_cashbox else '')
+    for check in checks_list:
+        ws.cell(row=row, column=1, value=str(check.check_type_display))
+        
+        # رقم السند
+        if check.check_type == 'receipt':
+            ws.cell(row=row, column=2, value=check.receipt_number)
+            ws.cell(row=row, column=4, value=check.customer.name if check.customer else '')
+        else:  # payment
+            ws.cell(row=row, column=2, value=check.voucher_number)
+            ws.cell(row=row, column=4, value=check.supplier.name if check.supplier else check.beneficiary_name)
+        
+        ws.cell(row=row, column=3, value=check.check_number)
+        ws.cell(row=row, column=5, value=float(check.amount))
+        ws.cell(row=row, column=6, value=check.check_date.strftime('%Y-%m-%d') if check.check_date else '')
+        ws.cell(row=row, column=7, value=check.check_due_date.strftime('%Y-%m-%d') if check.check_due_date else '')
+        ws.cell(row=row, column=8, value=check.check_bank_name if hasattr(check, 'check_bank_name') else (check.bank_name if hasattr(check, 'bank_name') else ''))
         ws.cell(row=row, column=9, value=str(check.get_check_status_display()))
-        ws.cell(row=row, column=10, value=float(check.expected_credit_loss) if check.expected_credit_loss else 0)
+        
+        # ECL للشيكات المستلمة فقط (receivable)
+        if check.check_type == 'receipt':
+            ws.cell(row=row, column=10, value=float(check.expected_credit_loss) if hasattr(check, 'expected_credit_loss') and check.expected_credit_loss else 0)
+        else:
+            ws.cell(row=row, column=10, value='N/A')
+        
         row += 1
 
     # تعديل عرض الأعمدة
@@ -668,6 +743,12 @@ def check_list_export_excel(request):
 @login_required
 def check_collect(request, receipt_id):
     """Check collection with automatic handling of errors and warnings per IFRS 9"""
+    # التحقق من الصلاحيات
+    if not (request.user.has_perm('receipts.can_collect_checks') or request.user.is_superadmin or request.user.user_type == 'admin'):
+        from django.core.exceptions import PermissionDenied
+        messages.error(request, _('You do not have permission to collect cheques'))
+        raise PermissionDenied(_('You do not have permission to collect cheques'))
+    
     receipt = get_object_or_404(PaymentReceipt, id=receipt_id, payment_type='check')
     
     if request.method == 'POST':
@@ -881,6 +962,115 @@ def check_collect(request, receipt_id):
         'today': timezone.now().date(),
     }
     return render(request, 'receipts/check_collect.html', context)
+
+
+@login_required
+def check_balance_forecast(request):
+    """
+    Check Balance Forecast - Shows pending and upcoming checks with balance forecast
+    Compliant with IFRS 9 - Financial Instruments
+    """
+    if not (request.user.has_perm('receipts.can_view_check_balance_forecast') or request.user.is_superadmin or request.user.user_type == 'admin'):
+        from django.core.exceptions import PermissionDenied
+        messages.error(request, _('You do not have permission to view check balance forecast'))
+        raise PermissionDenied(_('You do not have permission to view check balance forecast'))
+    
+    # Get current cashbox balances
+    from cashboxes.models import Cashbox
+    from banks.models import BankAccount
+    from django.db.models import Sum
+    
+    # Get total cash balance
+    cash_balance = Cashbox.objects.aggregate(total=Sum('balance'))['total'] or Decimal('0.000')
+    
+    # Get total bank balance
+    bank_balance = BankAccount.objects.aggregate(total=Sum('balance'))['total'] or Decimal('0.000')
+    
+    # Current total balance
+    current_balance = cash_balance + bank_balance
+    
+    # Get receivable checks (pending and not collected)
+    receivable_checks = PaymentReceipt.objects.filter(
+        payment_type='check',
+        check_status='pending',
+        is_active=True,
+        is_reversed=False
+    ).select_related('customer', 'check_cashbox').order_by('check_due_date')
+    
+    # Get payable checks (pending and not cleared)
+    from payments.models import PaymentVoucher
+    payable_checks = PaymentVoucher.objects.filter(
+        payment_type='check',
+        check_status='pending',
+        is_active=True,
+        is_reversed=False
+    ).select_related('supplier', 'cashbox').order_by('check_due_date')
+    
+    # Combine all checks with balance forecast
+    checks_forecast = []
+    running_balance = current_balance
+    
+    # Combine and sort by due date
+    all_checks = []
+    
+    for check in receivable_checks:
+        all_checks.append({
+            'type': 'receivable',
+            'check': check,
+            'due_date': check.check_due_date,
+            'amount': check.amount,
+            'party': check.customer.name if check.customer else '-',
+            'check_number': check.check_number,
+            'bank_name': check.bank_name,
+        })
+    
+    for check in payable_checks:
+        all_checks.append({
+            'type': 'payable',
+            'check': check,
+            'due_date': check.check_due_date,
+            'amount': check.amount,
+            'party': check.supplier.name if check.supplier else check.beneficiary_name,
+            'check_number': check.check_number,
+            'bank_name': check.check_bank_name,
+        })
+    
+    # Sort by due date
+    all_checks.sort(key=lambda x: x['due_date'] if x['due_date'] else timezone.now().date())
+    
+    # Calculate running balance
+    for check_info in all_checks:
+        if check_info['type'] == 'receivable':
+            running_balance += check_info['amount']
+        else:  # payable
+            running_balance -= check_info['amount']
+        
+        check_info['balance_after'] = running_balance
+        checks_forecast.append(check_info)
+    
+    # Calculate final projected balance
+    final_balance = running_balance if checks_forecast else current_balance
+    
+    # Calculate statistics
+    receivable_count = sum(1 for item in checks_forecast if item['type'] == 'receivable')
+    receivable_total = sum(item['amount'] for item in checks_forecast if item['type'] == 'receivable')
+    payable_count = sum(1 for item in checks_forecast if item['type'] == 'payable')
+    payable_total = sum(item['amount'] for item in checks_forecast if item['type'] == 'payable')
+    
+    context = {
+        'page_title': _('Check Balance Forecast'),
+        'current_balance': current_balance,
+        'cash_balance': cash_balance,
+        'bank_balance': bank_balance,
+        'checks_forecast': checks_forecast,
+        'final_balance': final_balance,
+        'receivable_count': receivable_count,
+        'receivable_total': receivable_total,
+        'payable_count': payable_count,
+        'payable_total': payable_total,
+    }
+    
+    return render(request, 'receipts/check_balance_forecast.html', context)
 
 
 @login_required

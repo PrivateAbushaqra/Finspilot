@@ -24,11 +24,11 @@ class Cashbox(models.Model):
         ordering = ['name']
         default_permissions = []  # No default permissions
         permissions = [
-            ("can_view_cashboxes", "Can View Cash Boxes"),
-            ("can_add_cashboxes", "Can Add Cash Boxes"),
-            ("can_create_cashboxes_transfers", "Can Create Cashbox Transfera"),
-            ("can_edit_cashboxes", "Can Edit Cash Boxes"),
-            ("can_delete_cashboxes", "Can Delete Cash Boxes"),
+            ("can_view_cashboxes", _("Can View Cash Boxes")),
+            ("can_add_cashboxes", _("Can Add Cash Boxes")),
+            ("can_create_cashboxes_transfers", _("Can Create Cashbox Transfers")),
+            ("can_edit_cashboxes", _("Can Edit Cash Boxes")),
+            ("can_delete_cashboxes", _("Can Delete Cash Boxes")),
         ]
 
     def __str__(self):

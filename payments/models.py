@@ -85,10 +85,10 @@ class PaymentVoucher(models.Model):
         ordering = ['-date', '-voucher_number']
         default_permissions = []  # No default permissions
         permissions = [
-            ("can_view_payments", "Can View Payment Vouchers"),
-            ("can_add_payments", "Can Add Payment Vouchers"),
-            ("can_edit_payments", "Can Edit Payment Vouchers"),
-            ("can_delete_payments", "Can Delete Payment Vouchers"),
+            ("can_view_payments", _("Can View Payment Vouchers")),
+            ("can_add_payments", _("Can Add Payment Vouchers")),
+            ("can_edit_payments", _("Can Edit Payment Vouchers")),
+            ("can_delete_payments", _("Can Delete Payment Vouchers")),
         ]
 
     def __str__(self):
@@ -106,6 +106,11 @@ class PaymentVoucher(models.Model):
         # Generate voucher number automatically if not present
         if not self.voucher_number:
             self.voucher_number = self.generate_voucher_number()
+        
+        # Set default check_status for check payments if not set
+        # IFRS Compliance: IAS 32 - Proper tracking of financial instrument status
+        if self.payment_type == 'check' and not self.check_status:
+            self.check_status = 'pending'
         
         super().save(*args, **kwargs)
     

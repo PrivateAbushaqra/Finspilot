@@ -14,6 +14,11 @@
                         <i class="fas fa-money-check"></i> {{ page_title }}
                     </h3>
                     <div>
+                        {% if perms.receipts.can_view_check_balance_forecast or user.is_superadmin or user.user_type == 'admin' %}
+                        <a href="{% url 'receipts:check_balance_forecast' %}" class="btn btn-primary btn-sm me-2">
+                            <i class="fas fa-chart-line"></i> {% trans "Balance Forecast" %}
+                        </a>
+                        {% endif %}
                         <a href="{% url 'receipts:check_list_export_excel' %}" class="btn btn-success btn-sm me-2">
                             <i class="fas fa-file-excel"></i> {% trans "Export XLSX" %}
                         </a>
@@ -86,14 +91,18 @@
                                 </thead>
                                 <tbody>
                                     {% for check in checks %}
-                                    <tr class="{% if check.check_status == 'bounced' %}table-danger{% elif check.check_status == 'collected' %}table-success{% endif %}">
+                                    <tr class="{% if check.check_status == 'bounced' %}table-danger{% elif check.check_status == 'collected' or check.check_status == 'cleared' %}table-success{% endif %}">
                                         <td>
+                                            {% if check.check_type == 'receipt' %}
                                             <a href="{% url 'receipts:receipt_detail' check.id %}" class="text-decoration-none">
-                                                {{ check.receipt_number }}
+                                                {{ check.document_number }}
                                             </a>
+                                            {% else %}
+                                                {{ check.document_number }}
+                                            {% endif %}
                                         </td>
                                         <td>{{ check.check_number }}</td>
-                                        <td>{{ check.customer.name }}</td>
+                                        <td>{{ check.party_name }}</td>
                                         <td>{{ check.amount|floatformat:3 }}</td>
                                         <td>{{ check.check_date|date:"Y-m-d" }}</td>
                                         <td>
@@ -103,30 +112,34 @@
                                                 <span class="badge bg-warning">{% trans "Overdue" %}</span>
                                             {% endif %}
                                         </td>
-                                        <td>{{ check.bank_name }}</td>
-                                        <td>{{ check.check_cashbox.name|default:"-" }}</td>
+                                        <td>{{ check.display_bank_name }}</td>
+                                        <td>{{ check.display_cashbox.name|default:"-" }}</td>
                                         <td>
-                                            <span class="badge bg-{% if check.check_status == 'pending' %}warning{% elif check.check_status == 'collected' %}success{% elif check.check_status == 'bounced' %}danger{% else %}secondary{% endif %}">
+                                            <span class="badge bg-{% if check.check_status == 'pending' %}warning{% elif check.check_status == 'collected' or check.check_status == 'cleared' %}success{% elif check.check_status == 'bounced' %}danger{% else %}secondary{% endif %}">
                                                 {{ check.get_check_status_display }}
                                             </span>
                                         </td>
                                         <td>
-                                            {% if check.expected_credit_loss > 0 %}
-                                                <span class="text-danger fw-bold">{{ check.expected_credit_loss|floatformat:3 }}</span>
+                                            {% if check.display_ecl > 0 %}
+                                                <span class="text-danger fw-bold">{{ check.display_ecl|floatformat:3 }}</span>
                                                 <br>
-                                                <small class="text-muted">{{ check.ecl_calculation_method }}</small>
+                                                <small class="text-muted">{{ check.display_ecl_method }}</small>
                                             {% else %}
                                                 <span class="text-success">0.000</span>
                                             {% endif %}
                                         </td>
                                         <td>
+                                            {% if check.check_type == 'receipt' %}
                                             <a href="{% url 'receipts:receipt_detail' check.id %}" class="btn btn-sm btn-info" title="{% trans 'View Details' %}">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            {% if check.check_status == 'pending' %}
+                                            {% if check.check_status == 'pending' and perms.receipts.can_collect_checks %}
                                             <a href="{% url 'receipts:check_collect' check.id %}" class="btn btn-sm btn-success" title="{% trans 'Collect Check' %}">
                                                 <i class="fas fa-check"></i>
                                             </a>
+                                            {% endif %}
+                                            {% else %}
+                                            <span class="text-muted">-</span>
                                             {% endif %}
                                         </td>
                                     </tr>

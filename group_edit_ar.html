@@ -1,51 +1,41 @@
-{% load i18n %}
-{% load custom_i18n %}
+
+
 <!DOCTYPE html>
-<html lang="{{ LANGUAGE_CODE }}" dir="{% if LANGUAGE_CODE == 'ar' %}rtl{% else %}ltr{% endif %}">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{% if superadmin_settings and superadmin_settings.system_title %}{{ superadmin_settings.system_title }}{% else %}Finspilot - النظام المحاسبي{% endif %}{% endblock %}</title>
+    <title>تسجيل الدخول - Finspilot</title>
     
     <!-- Bootstrap CSS -->
-    {% if LANGUAGE_CODE == 'ar' %}
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-    {% else %}
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    {% endif %}
+    
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <!-- Favicon -->
-    {% load static %}
-    <link rel="shortcut icon" type="image/png" href="{% static 'FinsPiloticn.png' %}">
+    
+    <link rel="shortcut icon" type="image/png" href="/static/FinsPiloticn.png">
     
     <!-- Responsive CSS -->
-    <link rel="stylesheet" href="{% static 'core/css/responsive.css' %}">
-    <link rel="stylesheet" href="{% static 'core/css/table-responsive.css' %}">
+    <link rel="stylesheet" href="/static/core/css/responsive.css">
+    <link rel="stylesheet" href="/static/core/css/table-responsive.css">
     
     <!-- Session Management CSS -->
-    {% if user.is_authenticated %}
-    <link rel="stylesheet" href="{% static 'core/css/session-management.css' %}">
-    {% endif %}
+    
     
     <!-- Session settings for JavaScript -->
-    {% if user.is_authenticated %}
-        {% load settings_tags %}
-        {% get_session_settings as session_settings %}
-        <meta name="session-timeout" content="{{ session_settings.timeout_minutes }}">
-        <meta name="session-timeout-enabled" content="{{ session_settings.enable_timeout|yesno:'true,false' }}">
-        <meta name="logout-on-browser-close" content="{{ session_settings.logout_on_browser_close|yesno:'true,false' }}">
-    {% endif %}
+    
     
     <style>
         :root {
             /* fallbacks kept intentionally; values overridden if superadmin_settings provided */
-            --primary-color: {{ superadmin_settings.primary_color|default:'#007bff' }};
-            --secondary-color: {{ superadmin_settings.secondary_color|default:'#6c757d' }};
-            --accent-color: {{ superadmin_settings.accent_color|default:'#28a745' }};
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --accent-color: #28a745;
         }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -490,10 +480,212 @@
         }
     </style>
     
-    {% block extra_css %}{% endblock %}
+    
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        overflow-x: hidden;
+    }
+
+    .login-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+
+    /* Animation Scene */
+    .animation-scene {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        z-index: 1;
+    }
+
+    /* نموذج تسجيل الدخول */
+    .login-form {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        max-width: 400px;
+        width: 90%;
+        transform: translateY(0);
+        opacity: 1;
+        animation: showForm 1s ease-out forwards;
+        z-index: 3;
+        position: relative;
+    }
+
+    .login-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .login-header h2 {
+        color: #333;
+        margin-bottom: 0.5rem;
+        font-weight: 700;
+    }
+
+    .login-header p {
+        color: #666;
+        margin: 0;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+        opacity: 1;
+        transform: translateY(0);
+        animation: slideInForm 0.6s ease-out forwards;
+    }
+
+    .form-group:nth-child(1) { animation-delay: 0.2s; }
+    .form-group:nth-child(2) { animation-delay: 0.4s; }
+    .form-group:nth-child(3) { animation-delay: 0.6s; }
+
+    .form-control {
+        background: rgba(255, 255, 255, 0.9);
+        border: 2px solid #e1e5e9;
+        border-radius: 10px;
+        padding: 12px 15px;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+
+    .form-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        background: rgba(255, 255, 255, 1);
+    }
+
+    .form-label {
+        color: #333;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .btn-login {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 12px 30px;
+        color: white;
+        font-size: 16px;
+        font-weight: 600;
+        width: 100%;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .btn-login:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-login:active {
+        transform: translateY(0);
+    }
+
+    /* Floating Elements */
+    .floating-element {
+        position: absolute;
+        animation: float 6s ease-in-out infinite;
+    }
+
+    .floating-element:nth-child(1) {
+        top: 20%;
+        left: 10%;
+        animation-delay: 0s;
+    }
+
+    .floating-element:nth-child(2) {
+        top: 60%;
+        right: 15%;
+        animation-delay: 2s;
+    }
+
+    .floating-element:nth-child(3) {
+        top: 40%;
+        left: 80%;
+        animation-delay: 4s;
+    }
+
+    /* Keyframe Animations */
+    @keyframes showForm {
+        0% {
+            transform: translateY(50px);
+            opacity: 0;
+        }
+        100% {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes slideInForm {
+        0% {
+            transform: translateY(20px);
+            opacity: 0;
+        }
+        100% {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+    }
+
+    /* Error Messages */
+    .error-message {
+        background: rgba(220, 53, 69, 0.1);
+        border: 1px solid rgba(220, 53, 69, 0.3);
+        color: #dc3545;
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+
+    /* Footer */
+    .login-footer {
+        text-align: center;
+        margin-top: 2rem;
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .login-form {
+            padding: 1.5rem;
+            margin: 1rem;
+        }
+    }
+
+    /* Hide navbar on login page */
+    .navbar, .sidebar {
+        display: none !important;
+    }
+</style>
+
 </head>
 <body>
-    {% if LANGUAGE_CODE == 'ar' %}
+    
         <style>
             /* Arabic override for print page counters */
             @page {
@@ -505,11 +697,9 @@
                 }
             }
         </style>
-    {% endif %}
+    
     <!-- Company Logo Background -->
-    {% if company_settings.logo %}
-        <img src="{{ company_settings.logo.url }}" class="company-logo" alt="{% trans 'Company Logo' %}">
-    {% endif %}
+    
     
     <!-- Top Navigation -->
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -519,9 +709,9 @@
                     class="navbar-toggler-icon">
                 </span>
             </button>
-            <a class="navbar-brand fw-bold" href="{% url 'core:dashboard' %}">
+            <a class="navbar-brand fw-bold" href="/ar/">
                 <i class="fas fa-chart-line me-2"></i>
-                {{ company_settings.company_name }} - {% trans "Home" %}
+                 - الرئيسية
             </a>
             
             <div class="navbar-nav ms-auto">
@@ -529,29 +719,29 @@
                     <div class="nav-item dropdown me-3">
                         <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-globe me-1"></i>
-                            {% get_current_language as LANGUAGE_CODE %}
-                            {% if LANGUAGE_CODE == 'ar' %}{% trans "Arabic" %}{% else %}{% trans "English" %}{% endif %}
+                            
+                            العربيّة
                         </a>
                         <ul class="dropdown-menu">
                             <li>
-                                <form action="{% url 'set_language' %}" method="post" style="display: inline;" class="language-form" data-target-lang="ar">
-                                    {% csrf_token %}
-                                    <input name="next" type="hidden" value="{{ request.get_full_path }}" class="next-field" />
+                                <form action="/i18n/setlang/" method="post" style="display: inline;" class="language-form" data-target-lang="ar">
+                                    <input type="hidden" name="csrfmiddlewaretoken" value="nddkKpq2q6QssMXZmXVtBpX43S1NhN4wKbpVOj2HzjQxYIAfpWHDTZ6tzy9RGCLR">
+                                    <input name="next" type="hidden" value="/ar/auth/login/?next=/ar/users/groups/edit/6/" class="next-field" />
                                     <input name="language" type="hidden" value="ar" />
-                                    <button type="submit" class="dropdown-item {% if LANGUAGE_CODE == 'ar' %}active{% endif %}">
-                                        <i class="fas fa-check me-2" {% if LANGUAGE_CODE != 'ar' %}style="visibility: hidden;"{% endif %}></i>
-                                        {% trans "Arabic" %}
+                                    <button type="submit" class="dropdown-item active">
+                                        <i class="fas fa-check me-2" ></i>
+                                        العربيّة
                                     </button>
                                 </form>
                             </li>
                             <li>
-                                <form action="{% url 'set_language' %}" method="post" style="display: inline;" class="language-form" data-target-lang="en">
-                                    {% csrf_token %}
-                                    <input name="next" type="hidden" value="{{ request.get_full_path }}" class="next-field" />
+                                <form action="/i18n/setlang/" method="post" style="display: inline;" class="language-form" data-target-lang="en">
+                                    <input type="hidden" name="csrfmiddlewaretoken" value="nddkKpq2q6QssMXZmXVtBpX43S1NhN4wKbpVOj2HzjQxYIAfpWHDTZ6tzy9RGCLR">
+                                    <input name="next" type="hidden" value="/ar/auth/login/?next=/ar/users/groups/edit/6/" class="next-field" />
                                     <input name="language" type="hidden" value="en" />
-                                    <button type="submit" class="dropdown-item {% if LANGUAGE_CODE == 'en' %}active{% endif %}">
-                                        <i class="fas fa-check me-2" {% if LANGUAGE_CODE != 'en' %}style="visibility: hidden;"{% endif %}></i>
-                                        {% trans "English" %}
+                                    <button type="submit" class="dropdown-item ">
+                                        <i class="fas fa-check me-2" style="visibility: hidden;"></i>
+                                        الإنجليزية
                                     </button>
                                 </form>
                             </li>
@@ -559,40 +749,7 @@
                     </div>
                 
                 <!-- Notifications -->
-                {% if user.is_authenticated %}
-                        <div class="nav-item dropdown me-3">
-                            <a class="nav-link position-relative" href="{% url 'core:notifications' %}" id="notificationDropdown">
-                                <i class="fas fa-bell fa-lg"></i>
-                                {% if unread_notifications_count > 0 %}
-                                    <span class="notification-badge">{{ unread_notifications_count }}</span>
-                                {% endif %}
-                            </a>
-                        </div>
-                        <!-- User Menu -->
-                        <div class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-user me-1"></i>
-                                {{ user.get_full_name|default:user.username }}
-                            </a>
-                            <ul class="dropdown-menu">
-                                    <li>
-                                        <a class="dropdown-item" href="{% url 'settings:index' %}">
-                                            <i class="fas fa-cog me-2"></i>
-                                            {% trans "Settings" %}
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <hr class="dropdown-divider">
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{% url 'auth:logout' %}">
-                                            <i class="fas fa-sign-out-alt me-2"></i>
-                                            {% trans "Logout" %}
-                                        </a>
-                                    </li>
-                            </ul>
-                        </div>
-                {% endif %}
+                
             </div>
         </div>
     </nav>
@@ -600,795 +757,165 @@
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            {% if user.is_authenticated and user.user_type != 'pos_user' %}
-            <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block sidebar collapse">
-                <div class="position-sticky pt-3">
-                    <ul class="nav flex-column">
-
-                        <!-- {% trans "Comprehensive Search" %} -->
-                        <li class="nav-item">
-                            <a class="nav-link {% if active_menu == 'search' %}active{% endif %}" href="{% url 'search:search' %}">
-                                <i class="fas fa-search me-2"></i>
-                                {% trans "Global Search" %}
-                            </a>
-                        </li>
-                        <!-- Dashboard -->
-                        <li class="nav-item">
-                            <a class="nav-link {% if active_menu == 'dashboard' %}active{% endif %}" href="{% url 'core:dashboard' %}">
-                                <i class="fas fa-home me-2"></i>
-                                {% trans "Dashboard" %}
-                            </a>
-                        </li>       
-<!--------------------------->
-                        <!-- Finance Section -->
-                        {% if user.is_superadmin or user.user_type == 'admin' or perms.revenues_expenses.can_view_revenues_expenses or perms.banks.can_view_bank_accounts or perms.receipts.can_view_receipts or perms.cashboxes.can_view_cashboxes or perms.payments.can_view_payments or perms.journal.can_view_journal_entries or perms.journal.can_view_accounts or perms.journal.can_perform_year_end_closing or perms.assets_liabilities.can_view_assets_liabilities or perms.assets_liabilities.can_add_assets_liabilities or perms.assets_liabilities.can_edit_assets_liabilities or perms.assets_liabilities.can_delete_assets_liabilities or perms.receipts.can_view_check_management  %}
-                        <li class="nav-item">
-                            <a class="nav-link d-flex justify-content-between align-items-center" 
-                            data-bs-toggle="collapse" 
-                            href="#financeMenu" 
-                            role="button" 
-                            aria-expanded="false" 
-                            aria-controls="financeMenu">
-                                <span>
-                                    <i class="fas fa-wallet me-2"></i>
-                                    {% trans "Finance" %}
-                                </span>
-                                <i class="fas fa-chevron-down small"></i>
-                            </a>
-                            <div class="collapse {% if active_menu == 'banks' or active_menu == 'cashboxes' or active_menu == 'receipts' or active_menu == 'payments' or active_menu == 'journal' or active_menu == 'revenues_expenses' or active_menu == 'assets_liabilities' %}show{% endif %}" id="financeMenu">
-                                <ul class="nav flex-column ms-3">
-                                    {% if perms.banks.can_view_bank_accounts %}
-                                            <li class="nav-item">
-                                                <a class="nav-link {% if active_menu == 'banks' %}active{% endif %}" data-bs-toggle="collapse" href="#banksMenu">
-                                                    <i class="fas fa-university me-2"></i>
-                                                    {% trans "Bank Accounts" %}
-                                                    <i class="fas fa-chevron-down small"></i>
-                                                </a>
-                                                <div class="collapse {% if active_menu == 'banks' %}show{% endif %}" id="banksMenu">
-                                                    <ul class="nav flex-column ms-3">
-                                                        <li class="nav-item">
-                                                            <a class="nav-link {% if active_menu == 'banks' and 'account_list' in request.path %}active{% endif %}" href="{% url 'banks:account_list' %}">{% trans "Accounts List" %}</a>
-                                                        </li>
-                                                        <li class="nav-item">
-                                                            <a class="nav-link {% if active_menu == 'banks' and 'transfer_list' in request.path %}active{% endif %}" href="{% url 'banks:transfer_list' %}">{% trans "Transfers List" %}</a>
-                                                        </li>
-                                                        <li class="nav-item">
-                                                            <a class="nav-link {% if active_menu == 'banks' and 'reconciliation_list' in request.path %}active{% endif %}" href="{% url 'banks:reconciliation_list' %}">{% trans "Bank Reconciliations" %}</a>
-                                                        </li>
-                                                    </ul>
-                                                </div>
-                                            </li>
-                                    {% endif %}
-                                    <!-- Cashboxes -->
-                                    {% if perms.cashboxes.can_view_cashboxes %}
-                                            <li class="nav-item">
-                                                <a class="nav-link" data-bs-toggle="collapse" href="#cashboxesMenu">
-                                                    <i class="fas fa-cash-register me-2"></i>
-                                                    {% trans "Cash Boxes" %}
-                                                    <i class="fas fa-chevron-down small"></i>
-                                                </a>
-                                                <div class="collapse {% if active_menu == 'cashboxes' %}show{% endif %}" id="cashboxesMenu">
-                                                    <ul class="nav flex-column ms-3">
-                                                        <li class="nav-item">
-                                                            <a class="nav-link {% if active_menu == 'cashboxes' and 'cashbox_list' in request.path %}active{% endif %}" href="{% url 'cashboxes:cashbox_list' %}">{% trans "Cashboxes List" %}</a>
-                                                        </li>
-                                                        <li class="nav-item">
-                                                            <a class="nav-link {% if active_menu == 'cashboxes' and 'transfer_list' in request.path %}active{% endif %}" href="{% url 'cashboxes:transfer_list' %}">{% trans "Transfers List" %}</a>
-                                                        </li>
-                                                    </ul>
-                                                </div>
-                                            </li>
-                                    {% endif %}
-
-                                    <li class="nav-item">
-                                    {% if user.is_superadmin or user.user_type == 'admin' or perms.receipts.can_view_receipts %}
-                                            <a class="nav-link" data-bs-toggle="collapse" href="#receiptsMenu">
-                                                <i class="fas fa-receipt me-2"></i>
-                                                {% trans "Receipt Vouchers List" %}
-                                                <i class="fas fa-chevron-down small"></i>
-                                            </a>
-                                            <div class="collapse {% if active_menu == 'receipts' %}show{% endif %}" id="receiptsMenu">
-                                                <ul class="nav flex-column ms-3">
-                                                    <!--<li class="nav-item">
-                                                        <a class="nav-link {% if active_menu == 'receipts' and 'receipt_add' in request.path %}active{% endif %}" href="{% url 'receipts:receipt_add' %}">{% trans "Add Payment Receipt" %}</a>
-                                                    </li>-->
-                                                    <li class="nav-item">
-                                                        <a class="nav-link {% if active_menu == 'receipts' and 'receipt_list' in request.path %}active{% endif %}" href="{% url 'receipts:receipt_list' %}">
-                                                            {% trans "Receipt Vouchers List" %}</a>
-                                                    </li>
-                                                </ul>
-                                            </div>
-                                        </li>
-                                    {% endif %}
-
-                                    <!-- Cheque Management -->
-                                    {% if user.is_superadmin or user.user_type == 'admin' or perms.receipts.can_view_check_management %}
-                                            <li class="nav-item">
-                                                <a class="nav-link {% if active_menu == 'checks' or 'check_list' in request.path %}active{% endif %}" href="{% url 'receipts:check_list' %}">
-                                                    <i class="fas fa-money-check me-2"></i>
-                                                    {% trans "Cheque Management" %}
-                                                </a>
-                                            </li>
-                                    {% endif %}
-
-                                    <!-- Payment Vouchers -->
-                                    {% if user.is_superadmin or user.user_type == 'admin' or perms.payments.can_view_payments %}
-                                            <li class="nav-item">
-                                                <a class="nav-link" data-bs-toggle="collapse" href="#paymentsMenu">
-                                                    <i class="fas fa-money-bill-wave me-2"></i>
-                                                    {% trans "Payment Vouchers" %}
-                                                    <i class="fas fa-chevron-down small"></i>
-                                                </a>
-                                                <div class="collapse {% if active_menu == 'payments' %}show{% endif %}" id="paymentsMenu">
-                                                    <ul class="nav flex-column ms-3">
-                                                        <!--{% if perms.payments.can_add_payments %}
-                                                        <li class="nav-item">
-                                                            <a class="nav-link {% if active_menu == 'payments' and 'voucher_create' in request.path %}active{% endif %}" href="{% url 'payments:voucher_create' %}">{% trans "Add Payment Voucher" %}</a>
-                                                        </li>
-                                                        {% endif %}-->
-                                                            <li class="nav-item">
-                                                                <a class="nav-link {% if active_menu == 'payments' and 'voucher_list' in request.path %}active{% endif %}" href="{% url 'payments:voucher_list' %}">{% trans "Vouchers List" %}</a>
-                                                            </li>
-                                                    </ul>
-                                                </div>
-                                            </li>
-                                    {% endif %}
-                                    {% if perms.journal.can_view_journal_entries or perms.journal.can_add_journal_entries or perms.journal.can_edit_journal_entries or perms.journal.can_delete_journal_entries or perms.journal.can_view_accounts or perms.journal.can_add_accounts or perms.journal.can_edit_accounts or perms.journal.can_delete_accounts %}
-                                            <!-- القيود اليومية -->
-                                            <li class="nav-item">
-                                                        <a class="nav-link" data-bs-toggle="collapse" href="#journalEntriesMenu">
-                                                            <i class="fas fa-book me-2"></i>
-                                                            {% trans "Journal Entries" %}
-                                                            <i class="fas fa-chevron-down small"></i>
-                                                        </a>
-                                                <div class="collapse {% if active_menu == 'journal' %}show{% endif %}" id="journalEntriesMenu">
-                                                    <ul class="nav flex-column ms-3">
-                                                        {% if perms.journal.can_view_journal_entries %}
-                                                            <li class="nav-item">
-                                                                <a class="nav-link" href="{% url 'journal:entry_list' %}">{% trans "Journal Entries List" %}</a>
-                                                            </li>
-                                                        {% endif %}
-                                                        {% if perms.journal.can_view_accounts %}
-                                                            <li class="nav-item">
-                                                                <a class="nav-link" href="{% url 'journal:account_list' %}">{% trans "Chart of Accounts" %}</a>
-                                                            </li>
-                                                        {% endif %}
-                                                        <!--{% if perms.journal.can_add_journal_entries %}
-                                                            <li class="nav-item">
-                                                                <a class="nav-link" href="{% url 'journal:entry_create' %}">{% trans "Add Journal Entry" %}</a>
-                                                            </li>
-                                                        {% endif %}-->
-                                                        {# إصلاح: لا تظهر روابط التعديل والحذف بدون معرف صالح #}
-                                                        {% if perms.journal.can_edit_journal_entries and journal_entry_id %}
-                                                            <li class="nav-item">
-                                                                <a class="nav-link" href="{% url 'journal:entry_detail' journal_entry_id %}">{% trans "Edit Journal Entry" %}</a>
-                                                            </li>
-                                                        {% endif %}
-                                                        {% if perms.journal.can_delete_journal_entries and journal_entry_id %}
-                                                            <li class="nav-item">
-                                                                <a class="nav-link" href="{% url 'journal:entry_delete' journal_entry_id %}">{% trans "Delete Journal Entry" %}</a>
-                                                            </li>
-                                                        {% endif %}
-                                                        {% if perms.journal.can_add_accounts %}
-                                                            <li class="nav-item">
-                                                                <a class="nav-link" href="{% url 'journal:account_create' %}">{% trans "Add Account" %}</a>
-                                                            </li>
-                                                        {% endif %}
-                                                    </ul>
-                                                </div>
-                                            </li>
-                                    {% endif %}
-                                    {% if perms.revenues_expenses.can_view_revenues_expenses or perms.revenues_expenses.can_add_revenues_expenses or perms.revenues_expenses.can_edit_revenues_expenses or perms.revenues_expenses.can_delete_revenues_expenses %}
-                                    <!-- Revenues & Expenses -->
-                                            <li class="nav-item">
-                                                <a class="nav-link" data-bs-toggle="collapse" href="#revenuesExpensesMenu">
-                                                    <i class="fas fa-chart-line me-2"></i>
-                                                    {% trans "Revenues & Expenses" %}
-                                                    <i class="fas fa-chevron-down small"></i>
-                                                </a>
-                                                <div class="collapse {% if active_menu == 'revenues_expenses' %}show{% endif %}" id="revenuesExpensesMenu">
-                                                    <ul class="nav flex-column ms-3">
-                                                        <li class="nav-item">
-                                                            <a class="nav-link {% if active_menu == 'revenues_expenses' and 'dashboard' in request.path %}active{% endif %}" href="{% url 'revenues_expenses:dashboard' %}">
-                                                                {% trans "Dashboard" %}
-                                                            </a>
-                                                        </li>
-                                                        {% if perms.revenues_expenses.can_view_revenues_expenses %}
-                                                        <li class="nav-item">
-                                                            {% if perms.revenues_expenses.can_view_revenues_expenses %}
-                                                                <a class="nav-link {% if active_menu == 'revenues_expenses' and 'category_list' in request.path %}active{% endif %}" href="{% url 'revenues_expenses:category_list' %}">
-                                                                    {% trans "Manage Categories" %}</a>
-                                                            {% else %}
-                                                                <span class="nav-link disabled">{% trans "Manage Categories" %}</span>
-                                                            {% endif %}
-                                                        </li>
-                                                        {% endif %}
-                                                        {% if perms.revenues_expenses.can_view_revenues_expenses %}
-                                                        <li class="nav-item">
-                                                            <a class="nav-link {% if active_menu == 'revenues_expenses' and 'entry_list' in request.path %}active{% endif %}" href="{% url 'revenues_expenses:entry_list' %}">
-                                                                {% trans "Entries List" %}</a>
-                                                        </li>
-                                                        {% endif %}
-                                                        {% if perms.revenues_expenses.can_add_revenues_expenses %}
-                                                        <li class="nav-item">
-                                                            <a class="nav-link {% if active_menu == 'revenues_expenses' and 'entry_create' in request.path %}active{% endif %}" href="{% url 'revenues_expenses:entry_create' %}">
-                                                                {% trans "Add New Entry" %}</a>
-                                                        </li>
-                                                        {% endif %}
-                                                        {% if perms.revenues_expenses.can_view_recurring %}
-                                                        <li class="nav-item">
-                                                            <a class="nav-link {% if active_menu == 'revenues_expenses' and 'recurring_list' in request.path %}active{% endif %}" href="{% url 'revenues_expenses:recurring_list' %}">
-                                                                {% trans "Recurring Revenue" %}</a>
-                                                        </li>
-                                                        {% endif %}
-                                                    </ul>
-                                                </div>
-                                            </li>
-                                    {% endif %}
-                                    {% if perms.assets_liabilities.can_view_assets_liabilities %}
-                                        <!-- Assets & Liabilities -->
-                                        <li class="nav-item">
-                                            <a class="nav-link" data-bs-toggle="collapse" href="#assetsLiabilitiesMenu">
-                                                <i class="fas fa-balance-scale me-2"></i>
-                                                {% trans "Assets & Liabilities" %}
-                                                <i class="fas fa-chevron-down small"></i>
-                                            </a>
-                                            <div class="collapse {% if active_menu == 'assets_liabilities' %}show{% endif %}" id="assetsLiabilitiesMenu">
-                                                <ul class="nav flex-column ms-3">
-                                                    {% if perms.assets_liabilities.can_view_assets_liabilities or perms.assets_liabilities.can_add_assets_liabilities or perms.assets_liabilities.can_edit_assets_liabilities or perms.assets_liabilities.can_delete_assets_liabilities %}
-                                                    <li class="nav-item">
-                                                        <a class="nav-link {% if active_menu == 'assets_liabilities' and 'dashboard' in request.path %}active{% endif %}" href="{% url 'assets_liabilities:dashboard' %}">{% trans "Dashboard" %}</a>
-                                                    </li>
-                                                    {% endif %}
-                                                    {% if perms.assets_liabilities.can_view_assets_liabilities or perms.assets_liabilities.can_add_assets_liabilities or perms.assets_liabilities.can_edit_assets_liabilities or perms.assets_liabilities.can_delete_assets_liabilities %}
-                                                    <li class="nav-item">
-                                                        <a class="nav-link {% if active_menu == 'assets_liabilities' and 'asset_list' in request.path %}active{% endif %}" href="{% url 'assets_liabilities:asset_list' %}">{% trans "Assets List" %}</a>
-                                                    </li>
-                                                    {% endif %}
-                                                    {% if perms.assets_liabilities.can_view_assets_liabilities or perms.assets_liabilities.can_add_assets_liabilities or perms.assets_liabilities.can_edit_assets_liabilities or perms.assets_liabilities.can_delete_assets_liabilities %}
-                                                    <li class="nav-item">
-                                                        <a class="nav-link {% if active_menu == 'assets_liabilities' and 'liability_list' in request.path %}active{% endif %}" href="{% url 'assets_liabilities:liability_list' %}">{% trans "Liabilities List" %}</a>
-                                                    </li>
-                                                    {% endif %}
-                                                </ul>
-                                            </div>
-                                        </li>
-                                    {% endif %}
-                                    {% if user.is_superadmin or user.user_type == 'admin' or perms.journal.can_perform_year_end_closing %}
-                                            <!-- الإقفال السنوي -->
-                                            <li class="nav-item">
-                                                <a class="nav-link {% if active_menu == 'journal' and 'year_end_closing' in request.path %}active{% endif %}" href="{% url 'journal:year_end_closing' %}">
-                                                    <i class="fas fa-calendar-check me-2"></i>
-                                                    {% trans "Closing the Fiscal Year" %}
-                                                </a>
-                                            </li>
-                                    {% endif %}                        
-                                </ul>
-                            </div>
-                        </li>
-                        {% endif %}
-
-        <!--861-->      {% if user.is_superuser or perms.sales.can_view_sales or perms.sales.can_view_sales_returns or perms.sales.can_view_credit_notes or perms.purchases.can_view_purchases or perms.purchases.can_view_purchase_returns or perms.purchases.can_view_debit_notes or perms.purchases.can_view_purchase_statement %}
-                            <!-- Sales & Purchases Section -->
-                            <li class="nav-item">
-                                        <a class="nav-link d-flex justify-content-between align-items-center"
-                                        data-bs-toggle="collapse"
-                                        href="#salesPurchasesMenu"
-                                        role="button"
-                                        aria-expanded="false"
-                                        aria-controls="salesPurchasesMenu">                                
-                                            <span>
-                                                <i class="fas fa-shopping-cart me-2"></i>
-                                                {% trans "Sales & Purchases" %}
-                                            </span>
-                                            <i class="fas fa-chevron-down small"></i>
-                                        </a>
-
-                                <div class="collapse {% if active_menu == 'purchases' or active_menu == 'sales' or active_menu == 'customers' %}show{% endif %}" id="salesPurchasesMenu">
-                                    <ul class="nav flex-column ms-3">
-                                        <!-- Purchases -->
-                           <!--928-->             {% if user.is_superuser or perms.purchases.can_view_purchases or perms.purchases.can_view_purchase_returns or perms.purchases.can_view_debit_notes or perms.purchases.can_view_purchase_statement %}
-                                            <li class="nav-item">
-                                                    <a class="nav-link" data-bs-toggle="collapse" href="#purchasesMenu">
-                                                        <i class="fas fa-shopping-cart me-2"></i>
-                                                        {% trans "Purchases" %}
-                                                        <i class="fas fa-chevron-down small"></i>
-                                                    </a>
-                                                <div class="collapse {% if active_menu == 'purchases' %}show{% endif %}" id="purchasesMenu">
-                                                    <ul class="nav flex-column ms-3">
-                                                            <!--{% if user.is_superuser or perms.purchases.can_view_purchases or perms.purchases.can_add_purchases or perms.purchases.can_edit_purchases %}
-                                                                <li class="nav-item">
-                                                                    <a class="nav-link {% if active_menu == 'purchases' and 'invoice_add' in request.path %}active{% endif %}" href="{% url 'purchases:invoice_add' %}">
-                                                                        {% trans "Create Purchase Invoice" %}</a>
-                                                                </li>
-                                                            {% endif %}
-                                                            {% if user.is_superuser or perms.purchases.can_add_purchase_returns  %}
-                                                                <li class="nav-item">
-                                                                    <a class="nav-link {% if active_menu == 'purchases' and 'return_add' in request.path %}active{% endif %}" href="{% url 'purchases:return_add' %}">
-                                                                        {% trans "Create Purchase Return" %}</a>
-                                                                </li>
-                                                            {% endif %}-->
-                                                                {% if perms.purchases.can_view_purchases or user.is_superuser %}
-                                                                    <li class="nav-item">
-                                                                        <a class="nav-link {% if active_menu == 'purchases' and 'invoice_list' in request.path %}active{% endif %}" href="{% url 'purchases:invoice_list' %}">
-                                                                            {% trans "Purchases Invoice List" %}</a>
-                                                                    </li>
-                                                                {% endif %}
-                                                                {% if user.is_superuser or perms.purchases.can_view_purchase_returns %}
-                                                                    <li class="nav-item">
-                                                                        <a class="nav-link {% if active_menu == 'purchases' and 'return_list' in request.path %}active{% endif %}" href="{% url 'purchases:return_list' %}">
-                                                                            {% trans "Purchase Returns List" %}</a>
-                                                                    </li>
-                                                                {% endif %}
-                                                                {% if user.is_superuser or perms.purchases.can_view_debit_notes %}
-                                                                    <li class="nav-item">
-                                                                        <a class="nav-link {% if active_menu == 'purchases' and 'debitnote_list' in request.path %}active{% endif %}" href="{% url 'purchases:debitnote_list' %}">
-                                                                            {% trans "Debit Notes" %}</a>
-                                                                    </li>
-                                                                {% endif %}
-                                                                {% if user.is_superuser or perms.purchases.can_view_purchase_statement %}
-                                                                    <li class="nav-item">
-                                                                        <a class="nav-link {% if active_menu == 'purchases' and 'purchase_statement' in request.path %}active{% endif %}" href="{% url 'purchases:purchase_statement' %}">
-                                                                            {% trans "Purchase Statement" %}</a>
-                                                                    </li>
-                                                                {% endif %}
-                                                    </ul>
-                                                </div>
-                                            </li>
-                                        {% endif %}<!--880-->
-                                        <!-- Sales -->
-                              <!--988-->{% if user.is_superuser or perms.sales.can_view_sales or perms.sales.can_view_sales_returns or perms.sales.can_view_credit_notes %}
-                                            <li class="nav-item">
-                                                <a class="nav-link" data-bs-toggle="collapse" href="#salesMenu">
-                                                    <i class="fas fa-cash-register me-2"></i>
-                                                    {% trans "Sales" %}
-                                                    <i class="fas fa-chevron-down small"></i>
-                                                </a>
-                                                <div class="collapse {% if active_menu == 'sales' %}show{% endif %}" id="salesMenu">
-                                                    <ul class="nav flex-column ms-3">
-                                                        <!--{% if user.is_superuser or perms.sales.can_view_sales %}
-                                                        <li class="nav-item">
-                                                            <a class="nav-link {% if active_menu == 'sales' and 'invoice_add' in request.path %}active{% endif %}" href="{% url 'sales:invoice_add' %}">{% trans "Create Sales Invoice" %}</a>
-                                                        </li>
-                                                        {% endif %}
-                                                        {% if user.is_superuser or perms.sales.can_add_sales_returns %}
-                                                        <li class="nav-item">
-                                                            <a class="nav-link {% if active_menu == 'sales' and 'return_add' in request.path %}active{% endif %}" href="{% url 'sales:return_add' %}">{% trans "Create Sales Return" %}</a>
-                                                        </li>
-                                                        {% endif %}-->
-                                                        {% if user.is_superuser or perms.sales.can_view_sales %}
-                                                        <li class="nav-item">
-                                                            <a class="nav-link {% if active_menu == 'sales' and 'invoice_list' in request.path %}active{% endif %}" href="{% url 'sales:invoice_list' %}">
-                                                                {% trans "Sales Invoices List" %}</a>
-                                                        </li>
-                                                        {% endif %}
-                                                        {% if user.is_superuser or perms.sales.can_view_sales_returns %}
-                                                        <li class="nav-item">
-                                                            <a class="nav-link {% if active_menu == 'sales' and 'return_list' in request.path %}active{% endif %}" href="{% url 'sales:return_list' %}">
-                                                                {% trans "Sales Returns List" %}</a>
-                                                        </li>
-                                                        {% endif %}
-                                                        {% if user.is_superuser or perms.sales.can_view_credit_notes %}
-                                                        <li class="nav-item">
-                                                            <a class="nav-link {% if active_menu == 'sales' and 'creditnote_list' in request.path %}active{% endif %}" href="{% url 'sales:creditnote_list' %}">
-                                                                {% trans "Credit Notes" %}</a>
-                                                        </li>
-                                                        {% endif %}
-                                                        {% if user.is_superuser or perms.sales.can_view_sales_statement %}
-                                                        <li class="nav-item">
-                                                            <a class="nav-link {% if active_menu == 'sales' and 'sales_statement' in request.path %}active{% endif %}" href="{% url 'sales:sales_statement' %}">
-                                                                {% trans "Sales Statement" %}</a>
-                                                        </li>
-                                                        {% endif %}
-                                                        {% if user.is_superuser or perms.sales.can_view_sales_returns_statement %}
-                                                        <li class="nav-item">
-                                                            <a class="nav-link {% if active_menu == 'sales' and 'sales_return_statement' in request.path %}active{% endif %}" href="{% url 'sales:sales_return_statement' %}">
-                                                                {% trans "Sales Returns Statement" %}</a>
-                                                        </li>
-                                                        {% endif %}
-                                                        {% if user.is_superuser or perms.sales.can_view_pos %}
-                                                        <li class="nav-item">
-                                                            <a class="nav-link {% if active_menu == 'sales' and 'pos' in request.path %}active{% endif %}" href="{% url 'sales:pos' %}">
-                                                                {% trans "Point of Sale" %}</a>
-                                                        </li>
-                                                        {% endif %}
-                                                    </ul>
-                                                </div>
-                                            </li>
-                                        {% endif %}<!--930-->
-                                    </ul>
-                                </div>
-                            </li>
-                        {% endif %}<!--861-->
-<!----------------------------------------------------------------------------------------------------------------------------------------->                                    
-                            {% if user.is_superuser or perms.customers.can_view_customers %} <!-- 1047 -->
-                            <li class="nav-item">
-                            <a class="nav-link d-flex justify-content-between align-items-center"
-                            data-bs-toggle="collapse"
-                            href="#CustomersSuppliersMenu"
-                            role="button"
-                            aria-expanded="false"
-                            aria-controls="CustomersSuppliersMenu">                                
-                                <span>
-                                    <i class="fas fa-shopping-cart me-2"></i>
-                                    {% trans "Customers & Suppliers" %}
-                                </span>
-                                <i class="fas fa-chevron-down small"></i>
-                            </a>
-
-                            <div class="collapse {% if active_menu == 'Customers List' or active_menu == 'Suppliers List' or active_menu == 'All Customers & Suppliers' %}show{% endif %}" id="CustomersSuppliersMenu">
-                                <ul class="nav flex-column ms-3">
-<!----------------------------------------------------------------------------------------------------------------------------------------->
-                                    <!-- Customers & Suppliers 
-                                    {% if user.is_superuser or perms.customers.can_view_customers %}
-                                        <li class="nav-item">
-                                        <a class="nav-link" data-bs-toggle="collapse" href="#customersMenu">
-                                            <i class="fas fa-users me-2"></i>
-                                            {% trans "Customers & Suppliers" %}
-                                            <i class="fas fa-chevron-down small"></i>
-                                        </a>
-                                        <div class="collapse {% if active_menu == 'customers' %}show{% endif %}" id="customersMenu">
-                                            <ul class="nav flex-column ms-3">
-                                                {% if perms.customers.can_add_customers_suppliers %}
-                                                <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'customers' and 'add' in request.path %}active{% endif %}" href="{% url 'customers:add' %}">{% trans "Add Customer/Supplier" %}</a>
-                                                </li>
-                                    {% endif %}-->
-                                    {% if user.is_superuser or user.is_admin or perms.customers.can_view_customers %}
-                                        <li class="nav-item">
-                                            <a class="nav-link {% if active_menu == 'customers' and 'customer_list' in request.path %}active{% endif %}" href="{% url 'customers:customer_list' %}">
-                                                {% trans "Customers List" %}</a>
-                                        </li>
-                                    {% endif %}
-                                    {% if user.is_superuser or user.is_admin or perms.customers.can_view_suppliers %}
-                                        <li class="nav-item">
-                                            <a class="nav-link {% if active_menu == 'customers' and 'supplier_list' in request.path %}active{% endif %}" href="{% url 'customers:supplier_list' %}">
-                                                {% trans "Suppliers List" %}</a>
-                                        </li>
-                                    {% endif %}
-                                    {% if user.is_superuser or user.is_admin or perms.customers.can_view_customers and perms.customers.can_view_suppliers %}
-                                        <li class="nav-item">
-                                            <a class="nav-link {% if active_menu == 'customers' and 'list' in request.path and 'customer_list' not in request.path and 'supplier_list' not in request.path %}active{% endif %}" href="{% url 'customers:list' %}">
-                                                {% trans "All Customers & Suppliers" %}</a>
-                                        </li>
-                                    {% endif %}
-                                </ul>
-                            </div>
-                            {% endif %}<!-- 994 -->
-                        </li>
-
-                        {% endif %}
-                        <!-- Categories & Products Section -->
-                        {% if user.is_superuser or perms.products.can_view_products or perms.products.can_view_product_categories %} <!-- 1083 -->
-                                <li class="nav-item">
-                                    <a class="nav-link d-flex justify-content-between align-items-center"
-                                    data-bs-toggle="collapse"
-                                    href="#CatogiresProductMenu"
-                                    role="button"
-                                    aria-expanded="false"
-                                    aria-controls="CatogiresProductMenu">
-                                        <span>
-                                            <i class="fas fa-boxes me-2"></i>
-                                            {% trans "Categories & Products" %}
-                                        </span>
-                                        <i class="fas fa-chevron-down small"></i>
-                                    </a>
-                                    <div class="collapse {% if active_menu == 'Category List' or active_menu == 'Product List' %}show{% endif %}" id="CatogiresProductMenu">
-                                        <ul class="nav flex-column ms-3">
-                                            {% if user.is_superuser or perms.products.can_view_product_categories %}
-                                            <li class="nav-item">
-                                                <a class="nav-link {% if active_menu == 'products' and 'category_list' in request.path %}active{% endif %}" href="{% url 'products:category_list' %}">
-                                                    {% trans "Categories List" %}</a>
-                                            </li>
-                                            {% endif %}
-                                            {% if user.is_superuser or perms.products.can_view_products %}
-                                            <li class="nav-item">
-                                                <a class="nav-link {% if active_menu == 'products' and 'product_list' in request.path %}active{% endif %}" href="{% url 'products:product_list' %}">
-                                                    {% trans "Products List" %}</a>
-                                            </li>
-                                            {% endif %}
-                                        </ul>
-                                    </div>
-                                </li>
-                        {% endif %}<!-- 1052 -->
-                        
-                        <!-- Inventory Section -->
-                        {% if user.is_superuser or perms.inventory.can_view_inventory_stock or perms.inventory.can_view_warehouses or perms.inventory.can_view_inventory_movements or perms.inventory.can_view_warehouse_transfers or perms.inventory.can_view_stock_alerts %}<!-- 1125 -->
-                        <li class="nav-item">
-                                    <a class="nav-link d-flex justify-content-between align-items-center"
-                                    data-bs-toggle="collapse"
-                                    href="#inventoryMenu"
-                                    role="button"
-                                    aria-expanded="false"
-                                    aria-controls="inventoryMenu">
-                                        <span>
-                                            <i class="fas fa-boxes me-2"></i>
-                                            {% trans "Inventory" %}
-                                        </span>
-                                        <i class="fas fa-chevron-down small"></i>
-                                    </a>
-                            <div class="collapse {% if active_menu == 'View Inventory' or active_menu == 'Warehouses' or active_menu == 'Inventory Movement' or active_menu == 'Warehouse Transfers' or active_menu == 'Stock Alerts' %}show{% endif %}" id="inventoryMenu">
-                                <ul class="nav flex-column ms-3">
-                                    {% if user.is_superuser or perms.inventory.can_view_inventory_stock %}
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'inventory' and 'list' in request.path and 'warehouse_list' not in request.path and 'movement_list' not in request.path %}active{% endif %}" href="{% url 'inventory:list' %}">
-                                            {% trans "View Inventory" %}</a>
-                                    </li>
-                                    {% endif %}
-                                    {% if user.is_superuser or perms.inventory.can_view_warehouses %}
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'inventory' and 'warehouse_list' in request.path %}active{% endif %}" href="{% url 'inventory:warehouse_list' %}">
-                                            {% trans "Warehouses" %}</a>
-                                    </li>
-                                    {% endif %}
-                                    {% if user.is_superuser or perms.inventory.can_view_inventory_movements %}
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'inventory' and 'movement_list' in request.path %}active{% endif %}" href="{% url 'inventory:movement_list' %}">
-                                            {% trans "Inventory Movement" %}</a>
-                                    </li>
-                                    {% endif %}
-                                    {% if user.is_superuser or perms.inventory.can_view_warehouse_transfers %}
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'inventory' and 'transfer_list' in request.path %}active{% endif %}" href="{% url 'inventory:transfer_list' %}">
-                                            {% trans "Warehouse Transfers" %}</a>
-                                    </li>
-                                    {% endif %}
-                                    {% if user.is_superuser or perms.inventory.can_view_stock_alerts %}
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'inventory' and 'low_stock' in request.path %}active{% endif %}" href="{% url 'inventory:low_stock' %}">
-                                            {% trans "Stock Alerts" %}</a>
-                                    </li>
-                                    {% endif %}
-                                </ul>
-                            </div>
-                        </li>
-                        {% endif %}<!-- 1086 -->
-                        
-
-
-                        <!-- Reports -->
-                        <li class="nav-item">
-                            {% if user.is_superadmin or user.user_type == 'admin' or perms.reports.can_view_sales_reports or perms.reports.can_view_sales_by_representative_report or perms.reports.can_view_purchase_reports or perms.reports.can_view_tax_report or perms.reports.can_view_profit_loss_report or perms.reports.can_view_customer_statement or perms.reports.can_view_trial_balance or perms.reports.can_view_balance_sheet or perms.reports.can_view_income_statement or perms.reports.can_view_cash_flow_statement or perms.reports.can_view_aging_report or perms.reports.can_view_stock_balance_report or perms.reports.can_view_financial_ratios or perms.reports.can_view_documents_report %}
-                            <a class="nav-link" data-bs-toggle="collapse" href="#reportsMenu">
-                                <i class="fas fa-chart-bar me-2"></i>
-                                {% trans "Reports" %}
-                                <i class="fas fa-chevron-down small"></i>
-                            </a>
-                            {% endif %}
-                            <div class="collapse {% if active_menu == 'reports' %}show{% endif %}" id="reportsMenu">
-                                <ul class="nav flex-column ms-3">
-                                    {% if user.is_superadmin or user.user_type == 'admin' or perms.reports.can_view_sales_reports %}
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'sales_report' in request.path %}active{% endif %}" href="{% url 'sales:sales_report' %}">
-                                            {% trans "Sales Reports" %}</a>
-                                    </li>
-                                    {% endif %}
-                                    {% if user.is_superuser or perms.reports.can_view_sales_by_representative_report %}
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'sales_by_salesperson' in request.path %}active{% endif %}" href="{% url 'reports:sales_by_salesperson' %}">
-                                            {% trans "Sales Report By Sales Person" %}</a>
-                                    </li>
-                                    {% endif %}
-                                    {% if user.is_superuser or perms.reports.can_view_purchase_reports %}
-                                    <li class="nav-item">
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'purchase_report' in request.path %}active{% endif %}" href="{% url 'purchases:purchase_report' %}">
-                                            {% trans "Purchase Reports" %}</a>
-                                    </li>
-                                    {% endif %}
-                                    {% if user.is_superuser or perms.reports.can_view_tax_report %}
-                                    <li class="nav-item">
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'tax_report' in request.path %}active{% endif %}" href="{% url 'core:tax_report' %}">
-                                            {% trans "Tax Report" %}</a>
-                                    </li>
-                                    {% endif %}
-                                    {% if user.is_superuser or perms.reports.can_view_profit_loss_report %}
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'profit_loss_report' in request.path %}active{% endif %}" href="{% url 'core:profit_loss_report' %}">
-                                            {% trans "Profit and Loss" %}</a>
-                                    </li>
-                                    {% endif %}
-                                    {% if user.is_superuser or perms.reports.can_view_customer_statement %}
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'customer_statement' in request.path %}active{% endif %}" href="{% url 'reports:customer_statement' %}">
-                                            {% trans "Customer Statement" %}</a>
-                                    </li>
-                                    {% endif %}
-                                    {% if user.is_superuser or perms.reports.can_view_trial_balance %}
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'trial_balance' in request.path %}active{% endif %}" href="{% url 'reports:trial_balance' %}">
-                                            {% trans "Trial Balance" %}</a>
-                                    </li>
-                                    {% endif %}
-                                    {% if user.is_superuser or perms.reports.can_view_balance_sheet %}
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'balance_sheet' in request.path %}active{% endif %}" href="{% url 'reports:balance_sheet' %}">
-                                            {% trans "Balance Sheet" %}</a>
-                                    </li>
-                                    {% endif %}
-                                    {% if user.is_superuser or perms.reports.can_view_income_statement %}
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'income_statement' in request.path %}active{% endif %}" href="{% url 'reports:income_statement' %}">
-                                            {% trans "Income Statement" %}</a>
-                                    </li>
-                                    {% endif %}
-                                    {% if user.is_superuser or perms.reports.can_view_cash_flow_statement %}
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'cash_flow' in request.path %}active{% endif %}" href="{% url 'reports:cash_flow' %}">
-                                            {% trans "Cash Flow Statement" %}</a>
-                                    </li>
-                                    {% endif %}
-                                    {% if user.is_superuser or perms.reports.can_view_aging_report %}
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'aging_report' in request.path %}active{% endif %}" href="{% url 'reports:aging_report' %}">
-                                            {% trans "Accounts Receivable Aging Report" %}</a>
-                                    </li>
-                                    {% endif %}
-                                    {% if user.is_superuser or perms.reports.can_view_stock_balance_report %}
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'inventory_report' in request.path %}active{% endif %}" href="{% url 'reports:inventory_report' %}">
-                                            {% trans "Inventory Balances Report" %}</a>
-                                    </li>
-                                    {% endif %}
-                                    {% if user.is_superuser or perms.reports.can_view_financial_ratios %}
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'reports' and 'financial_ratios' in request.path %}active{% endif %}" href="{% url 'reports:financial_ratios' %}">
-                                            {% trans "Financial Ratios" %}</a>
-                                    </li>
-                                    {% endif %}
-                                    {% if user.is_superuser or perms.reports.can_view_documents_report %}
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'documents' and 'report' in request.path %}active{% endif %}" href="{% url 'documents:report' %}">
-                                            {% trans "Documents Report" %}</a>
-                                    </li>
-                                    {% endif %}
-                                </ul>
-                            </div>
-                        </li>
-                    
-                                               
-                        <!-- Human Resources
-                        {% if user.is_superadmin or user.user_type == 'admin' or perms.hr.can_view_hr %}
-                        <li class="nav-item">
-                            <a class="nav-link" data-bs-toggle="collapse" href="#hrMenu">
-                                <i class="fas fa-users-cog me-2"></i>
-                                {% trans "Human Resources" %}
-                                <i class="fas fa-chevron-down small"></i>
-                            </a>
-                            <div class="collapse {% if active_menu == 'hr' %}show{% endif %}" id="hrMenu">
-                                <ul class="nav flex-column ms-3">
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'hr' and 'dashboard' in request.path %}active{% endif %}" href="{% url 'hr:dashboard' %}">{% trans "HR Dashboard" %}</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'hr' and 'employee_list' in request.path %}active{% endif %}" href="{% url 'hr:employee_list' %}">{% trans "Employees" %}</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'hr' and 'department_list' in request.path %}active{% endif %}" href="{% url 'hr:department_list' %}">{% trans "Departments" %}</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'hr' and 'position_list' in request.path %}active{% endif %}" href="{% url 'hr:position_list' %}">{% trans "Positions" %}</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'hr' and 'attendance_list' in request.path %}active{% endif %}" href="{% url 'hr:attendance_list' %}">{% trans "Attendance" %}</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'hr' and 'leave_request_list' in request.path %}active{% endif %}" href="{% url 'hr:leave_request_list' %}">{% trans "Leave Requests" %}</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'hr' and 'payroll_period_list' in request.path %}active{% endif %}" href="{% url 'hr:payroll_period_list' %}">{% trans "Payroll" %}</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link {% if active_menu == 'hr' and 'hr_reports' in request.path %}active{% endif %}" href="{% url 'hr:hr_reports' %}">{% trans "HR Reports" %}</a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </li>
-                        {% endif %}-->
-                        
-                        <!-- System Management -->
-                            <li class="nav-item">
-                                {% if user.is_superuser or perms.users.can_view_users_list or perms.users.can_view_groups_permissions or perms.users.can_view_activity_log or perms.users.can_view_document_number_management or perms.users.can_view_system_settings %}
-                                <a class="nav-link" data-bs-toggle="collapse" href="#systemMenu">
-                                    <i class="fas fa-cogs me-2"></i>
-                                    {% trans "System Management" %}
-                                    <i class="fas fa-chevron-down small"></i>
-                                </a>
-                                <div class="collapse {% if active_menu == 'users' or active_menu == 'audit_log' or active_menu == 'settings' %}show{% endif %}" id="systemMenu">
-                                    <ul class="nav flex-column ms-3">
-                                        <!--<li class="nav-item">
-                                            <a class="nav-link {% if active_menu == 'users' and 'add' in request.path %}active{% endif %}" href="{% url 'users:user_add' %}">
-                                                {% trans "Add User" %}</a>
-                                        </li>-->
-                                        {% if user.is_superuser or perms.users.can_view_users_list %}
-                                        <li class="nav-item">
-                                            <a class="nav-link {% if active_menu == 'users' and 'list' in request.path %}active{% endif %}" href="{% url 'users:user_list' %}">
-                                                {% trans "Users List" %}</a>
-                                        </li>
-                                        {% endif %}
-                                        {% if user.is_superuser or perms.users.can_view_groups_permissions %}
-                                        <li class="nav-item">
-                                            <a class="nav-link {% if active_menu == 'users' and 'group' in request.path %}active{% endif %}" href="{% url 'users:group_list' %}">
-                                                {% trans "Groups & Permissions" %}</a>
-                                        </li>
-                                        {% endif %}
-                                        {% if user.is_superuser or perms.users.can_view_activity_log %}
-                                        <li class="nav-item">
-                                            <a class="nav-link {% if active_menu == 'audit_log' %}active{% endif %}" href="{% url 'core:audit_log' %}">
-                                                <i class="fas fa-history me-2"></i>
-                                                {% trans "Activity Log" %}
-                                            </a>
-                                        </li>
-                                        {% endif %}
-                                        {% if user.is_superuser or perms.users.can_view_document_number_management %}
-                                        <li class="nav-item">
-                                            <a class="nav-link {% if active_menu == 'settings' and 'document_sequences' in request.path %}active{% endif %}" href="{% url 'settings:document_sequences' %}">{% trans "Document Number Management" %}</a>
-                                        </li>
-                                        {% endif %}
-                                        {% if user.is_superuser or perms.users.can_view_system_settings %}
-                                        <li class="nav-item">
-                                            <a class="nav-link {% if active_menu == 'settings' and 'company' in request.path %}active{% endif %}" href="{% url 'settings:company' %}">{% trans "System Settings" %}</a>
-                                        </li>
-                                        {% endif %}
-                                        <!-- Backup and Restore -->
-                                        {% if user.is_superuser or perms.users.can_view_backup %}
-                                        <li class="nav-item">
-                                            <a class="nav-link {% if active_menu == 'backup' %}active{% endif %}" href="{% url 'backup:backup_restore' %}">
-                                                <i class="fas fa-database me-2 text-info"></i>
-                                                {% trans "Backup" %}
-                                            </a>
-                                        </li>
-                                        {% endif %}
-                                        
-                                        <!-- System Management - For Super Admin Only -->
-                                        {% if user.is_superuser %}
-                                        <li class="nav-item">
-                                            <a class="nav-link {% if active_menu == 'settings' and 'superadmin_management' in request.path %}active{% endif %}" href="{% url 'settings:superadmin_management' %}">
-                                                <i class="fas fa-crown me-2 text-warning"></i>
-                                                {% trans "System Management" %}
-                                                <span class="badge bg-danger ms-1">{% trans "Advanced" %}</span>
-                                            </a>
-                                        </li>
-                                        <!-- Print Design Settings -->
-                                        <li class="nav-item">
-                                            <a class="nav-link {% if active_menu == 'settings' and 'print_design' in request.path %}active{% endif %}" href="{% url 'settings:print_design' %}">
-                                                <i class="fas fa-paint-brush me-2 text-success"></i>
-                                                {% trans "Print Design" %}
-                                            </a>
-                                        </li>
-                                        <!-- JoFotara Settings -->
-                                        <li class="nav-item">
-                                            <a class="nav-link {% if active_menu == 'settings' and 'jofotara_settings' in request.path %}active{% endif %}" href="{% url 'settings:jofotara_settings' %}">
-                                                <i class="fas fa-link me-2 text-info"></i>
-                                                {% trans "JoFotara Settings" %}
-                                            </a>
-                                        </li>
-                                        {% endif %}
-
-
-                                    </ul>
-                                </div>
-                            {% endif %}
-                            </li>
-                    </ul>
-                </div>
-            </nav>
-            {% endif %}
+            
             
             <!-- Main Content -->
-            <main class="{% if user.is_authenticated and user.user_type != 'pos_user' %}col-md-9 ms-sm-auto col-lg-10{% else %}col-12{% endif %} px-md-4">
+            <main class="col-12 px-md-4">
                 <div class="main-content" id="main-content">
-                    {% if messages %}
-                        {% for message in messages %}
-                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                        {% endfor %}
-                    {% endif %}
                     
-                    {% block content %}{% endblock %}
+                    
+                    
+<div class="login-container">
+    <!-- Animation Scene -->
+    <div class="animation-scene">
+        <!-- Floating Elements -->
+        <div class="floating-element">💼</div>
+        <div class="floating-element">📊</div>
+        <div class="floating-element">💰</div>
+    </div>
+
+    <!-- نموذج تسجيل الدخول -->
+    <div class="login-form">
+        <div class="login-header">
+            <h2>
+                <i class="fas fa-chart-line me-2"></i>
+                Finspilot
+            </h2>
+            <p>نظام المحاسبة المتكامل</p>
+        </div>
+
+        <div class="form-group">
+            <label for="id_language" class="form-label">
+                <i class="fas fa-globe me-1"></i>
+                اللغة
+            </label>
+            <select class="form-control" id="id_language" name="language" onchange="changeLanguage(this.value)">
+                <option value="ar" selected>العربية</option>
+                <option value="en" >الإنجليزية</option>
+            </select>
+        </div>
+
+        
+
+        
+
+        <form method="post" class="needs-validation" novalidate>
+            <input type="hidden" name="csrfmiddlewaretoken" value="nddkKpq2q6QssMXZmXVtBpX43S1NhN4wKbpVOj2HzjQxYIAfpWHDTZ6tzy9RGCLR">
+            <div class="form-group">
+                <label for="id_username" class="form-label">
+                    <i class="fas fa-user me-1"></i>
+                    اسم المستخدم
+                </label>
+                <input type="text" 
+                       class="form-control" 
+                       id="id_username" 
+                       name="username" 
+                       placeholder="أدخل اسم المستخدم"
+                       required>
+            </div>
+            
+            <div class="form-group">
+                <label for="id_password" class="form-label">
+                    <i class="fas fa-lock me-1"></i>
+                    كلمة المرور
+                </label>
+                <input type="password" 
+                       class="form-control" 
+                       id="id_password" 
+                       name="password" 
+                       placeholder="أدخل كلمة المرور"
+                       required>
+            </div>
+            
+            <div class="form-group">
+                <button type="submit" class="btn-login">
+                    <i class="fas fa-sign-in-alt me-2"></i>
+                    تسجيل الدخول
+                </button>
+            </div>
+        </form>
+
+        <div class="login-footer">
+            <small>© 2025 Finspilot</small>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add smooth entrance animation for form
+    const form = document.querySelector('.login-form');
+    
+    // Show form with animation
+    setTimeout(() => {
+        form.style.display = 'block';
+    }, 500);
+
+    // Form validation
+    const forms = document.querySelectorAll('.needs-validation');
+    Array.prototype.slice.call(forms).forEach(function(form) {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+    });
+
+    // Focus animation
+    const inputs = document.querySelectorAll('.form-control');
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.classList.add('focused');
+        });
+        
+        input.addEventListener('blur', function() {
+            if (!this.value) {
+                this.parentElement.classList.remove('focused');
+            }
+        });
+    });
+});
+
+// Function to change language
+function changeLanguage(lang) {
+    // إنشاء form لإرسال طلب تغيير اللغة
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/language-switch/';
+    
+    // إضافة CSRF token
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrfmiddlewaretoken';
+    csrfInput.value = csrfToken;
+    form.appendChild(csrfInput);
+    
+    // إضافة اللغة المختارة
+    const langInput = document.createElement('input');
+    langInput.type = 'hidden';
+    langInput.name = 'language';
+    langInput.value = lang;
+    form.appendChild(langInput);
+    
+    // إضافة next URL لصفحة تسجيل الدخول الصحيحة
+    const nextInput = document.createElement('input');
+    nextInput.type = 'hidden';
+    nextInput.name = 'next';
+    nextInput.value = '/' + lang + '/auth/login/';
+    form.appendChild(nextInput);
+    
+    // إضافة الفورم للصفحة وإرساله
+    document.body.appendChild(form);
+    form.submit();
+}
+</script>
+
+
+
+
                 </div>
             </main>
         </div>
@@ -1558,16 +1085,16 @@
                     return;
                 }
                 
-                // {% trans "Add" %} loading indicator
+                // إضافة loading indicator
                 this.classList.add('loading');
                 mainContent.style.opacity = '0.5';
                 
-                // {% trans "Add" %} spinner
+                // إضافة spinner
                 const loadingDiv = document.createElement('div');
                 loadingDiv.className = 'position-absolute top-50 start-50 translate-middle';
                 loadingDiv.innerHTML = `
                     <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">{% trans "Loading..." %}</span>
+                        <span class="visually-hidden">جاري التحميل</span>
                     </div>
                 `;
                 mainContent.style.position = 'relative';
@@ -1781,9 +1308,9 @@
             minute: '2-digit'
         });
         
-    const pageTitle = document.querySelector('h1, h2, h3, h4, .card-title, .page-title')?.textContent?.trim() || '{% trans "Report" %}';
+    const pageTitle = document.querySelector('h1, h2, h3, h4, .card-title, .page-title')?.textContent?.trim() || 'تقرير';
         
-    const printDateLabel = '{% trans "Print Date:" %}';
+    const printDateLabel = 'تاريخ الطباعة:';
         printHeader.innerHTML = `
             <div class="print-company-info">
                 Finspilot - النظام المحاسبي
@@ -1838,7 +1365,7 @@
                     header.querySelector('.btn, button, a[href]')) {
                     header.style.display = 'none';
                     
-                    // {% trans "Hide" %} الخ{% trans "No" %}يا المقابلة في كل صف
+                    // Hide الخلايا المقابلة في كل صف
                     rows.forEach(row => {
                         const cell = row.children[index];
                         if (cell) {
@@ -1848,12 +1375,12 @@
                 }
             });
             
-            // {% trans "Add" %} فئات CSS للبيانات {% trans "Number" %}ية
+            // إضافة فئات CSS للبيانات رقمية
             rows.forEach(row => {
                 Array.from(row.children).forEach(cell => {
                     const text = cell.textContent.trim();
                     
-                    // التحقق من البيانات {% trans "Number" %}ية
+                    // التحقق من البيانات رقمية
                     if (/^\d+([.,]\d+)*\s*(ريال|ر\.س|SAR|$)?$/.test(text)) {
                         cell.classList.add('numeric-data');
                     }
@@ -1877,14 +1404,14 @@
         tables.forEach(table => {
             table.classList.remove('print-optimized');
             
-            // استعادة ال{% trans "View" %} الأصلي
+            // استعادة العرض الأصلي
             const originalWidth = table.getAttribute('data-original-width');
             if (originalWidth) {
                 table.style.width = originalWidth;
                 table.removeAttribute('data-original-width');
             }
             
-            // إظهار الأعمدة ال{% trans "Hidden" %}ة
+            // إظهار الأعمدة المخفية
             const hiddenElements = table.querySelectorAll('[style*="display: none"]');
             hiddenElements.forEach(element => {
                 element.style.display = '';
@@ -1892,7 +1419,7 @@
         });
     }
     
-    // {% trans "Add" %} معالج لل{% trans "Print" %} بالكيبورد (Ctrl+P)
+    // إضافة معالج للطباعة بالكيبورد (Ctrl+P)
     document.addEventListener('keydown', function(e) {
         if (e.ctrlKey && e.key === 'p') {
             e.preventDefault();
@@ -1902,23 +1429,20 @@
     </script>
     
     <!-- Session Management JavaScript -->
-    {% if user.is_authenticated %}
-    {% load static %}
-    <script src="{% static 'core/js/session-manager.js' %}?v=20251017-final"></script>
-    {% endif %}
+    
     
     <!-- Auto Translation JavaScript for Arabic Page -->
-    {% if LANGUAGE_CODE == 'ar' %}
-    {% load static %}
-    <script src="{% static 'core/js/arabic-auto-translate.js' %}"></script>
-    {% endif %}
+    
+    
+    <script src="/static/core/js/arabic-auto-translate.js"></script>
+    
     
     <!-- Auto Translation JavaScript -->
     <script>
     // Define TRANSLATIONS as global variable
     var TRANSLATIONS = {};
     
-    if ('{{ LANGUAGE_CODE }}' === 'en') {
+    if ('ar' === 'en') {
     // Auto Translation for English - Extended Dictionary
     TRANSLATIONS = {
         // Main Navigation (Arabic to English)
@@ -2082,7 +1606,7 @@
         'البيانات': 'Data',
         'القائمة': 'List',
         'القوائم': 'Lists',
-        'ال{% trans "Table" %}': 'Table',
+        'الجدول': 'Table',
         'الجداول': 'Tables',
         'الصفحة': 'Page',
         'الصفحات': 'Pages',
@@ -2153,7 +1677,7 @@
         // User Interface
         'تسجيل الدخول': 'تسجيل الدخول',
         'Logout': '',
-        '{% trans "Exit" %}': '',
+        'Exit': '',
         'تسجيل': 'Register',
         'User': 'User',
         'المستخدمون': 'Users',
@@ -2161,7 +1685,7 @@
         'كلمة السر': 'Password',
         'Username': 'Username',
         'البروفايل': 'Profile',
-        '{% trans "Profile" %}': 'Profile',
+        'Profile': 'Profile',
         'الصلاحيات': 'Permissions',
         'الأدوار': 'Roles',
         'مجموعة': 'Group',
@@ -2348,7 +1872,7 @@
         'الدفاتر': 'Books',
         'سجل': 'Record',
         'السجل': 'Record',
-        'سج{% trans "No" %}ت': 'Records',
+        'سجلات': 'Records',
         'السجلات': 'Records',
         'ميزانية': 'Budget',
         'الميزانية': 'Budget',
@@ -2384,7 +1908,7 @@
         'القيود المحاسبية': 'Journal Entries',
         'Assets & Liabilities': 'Assets & Liabilities',
         'Revenues & Expenses': 'Revenues & Expenses',
-        'إدارة السوبر أدمين': '{% trans "إدارة السوبر أدمين" %}',
+        'إدارة السوبر أدمين': 'إدارة السوبر أدمين',
         'إدارة النظام': 'System Management',
         'متقدم': 'Advanced',
         'المجموعات والصلاحيات': 'Groups & Permissions',
@@ -2422,12 +1946,12 @@
         // Form Labels
         'اسم المستخدم': 'Username',
         'كلمة المرور': 'Password',
-        'البريد ا{% trans "No" %}لكتروني': 'Email',
-        'رقم {% trans "Phone" %}': 'Phone Number',
-        '{% trans "Address" %} الالكامل': 'Full Address',
-        'تاريخ المي{% trans "No" %}د': 'Date of Birth',
+        'البريد الالكتروني': 'Email',
+        'رقم الهاتف': 'Phone Number',
+        'العنوان الالكامل': 'Full Address',
+        'تاريخ الميلاد': 'Date of Birth',
         'الجنسية': 'Nationality',
-        '{% trans "City" %}': 'City',
+        'المدينة': 'City',
         'البلد': 'Country',
         'الرمز البريدي': 'Postal Code',
         'نوع الحساب': 'Account Type',
@@ -2445,30 +1969,30 @@
         'تم الاستلام': 'Received',
         'تم التأكيد': 'Confirmed',
         'تم الإلغاء': 'Cancelled',
-        'في ا{% trans "No" %}نتظار': 'Pending',
+        'في الانتظار': 'Pending',
         'قيد المراجعة': 'Under Review',
-        '{% trans "Rejected" %}': 'Rejected',
+        'مرفوض': 'Rejected',
         'مقبول': 'Accepted',
-        '{% trans "OK" %} عليه': 'Approved',
+        'OK عليه': 'Approved',
         
         // Error Messages
-        '{% trans "Error" %} في النظام': 'System Error',
-        '{% trans "Error" %} في قاعدة البيانات': 'Database Error',
-        '{% trans "Error" %} في ا{% trans "No" %}تصال': 'Connection Error',
+        'خطأ في النظام': 'System Error',
+        'خطأ في قاعدة البيانات': 'Database Error',
+        'خطأ في الاتصال': 'Connection Error',
         'بيانات غير صحيحة': 'Invalid Data',
         'حقل مطلوب': 'Required Field',
         'تم تجاوز الحد المسموح': 'Limit Exceeded',
         'غير مصرح': 'Unauthorized',
         'منتهي الصلاحية': 'Expired',
         'غير موجود': 'Not Found',
-        'غير {% trans "Available" %}': 'Not Available',
+        'غير متوفر': 'Not Available',
         
         // Financial Terms
         'ريال سعودي': 'Saudi Riyal',
         'ريال': 'Riyal',
         'ر.س': 'SAR',
         'جنيه مصري': 'Egyptian Pound',
-        'دو{% trans "No" %}ر أمريكي': 'US Dollar',
+        'دولار أمريكي': 'US Dollar',
         'يورو': 'Euro',
         'دينار كويتي': 'Kuwaiti Dinar',
         'درهم إماراتي': 'UAE Dirham',
@@ -2491,7 +2015,7 @@
         'استمارة': 'Form',
         'الاستمارة': 'Form',
         'استمارات': 'Forms',
-        'ا{% trans "No" %}ستمارات': 'Forms',
+        'الاستمارات': 'Forms',
         'نموذج': 'Form',
         'النموذج': 'Form',
         'نماذج': 'Forms',
@@ -2511,9 +2035,9 @@
         'شبكات': 'Networks',
         'الشبكات': 'Networks',
         'اتصال': 'Connection',
-        'ا{% trans "No" %}تصال': 'Connection',
-        'اتصا{% trans "No" %}ت': 'Connections',
-        'ا{% trans "No" %}تصا{% trans "No" %}ت': 'Connections',
+        'الاتصال': 'Connection',
+        'اتصالات': 'Connections',
+        'الاتصالات': 'Connections',
         
         // Action Words
         'تشغيل': 'Run',
@@ -2523,15 +2047,15 @@
         'بدء': 'Start',
         'البدء': 'Start',
         'انتهاء': 'End',
-        'ا{% trans "No" %}نتهاء': 'End',
+        'الانتهاء': 'End',
         'استكمال': 'Complete',
-        'ا{% trans "No" %}ستكمال': 'Complete',
+        'الاستكمال': 'Complete',
         'متابعة': 'Continue',
         'المتابعة': 'Continue',
         'توقف': 'Pause',
         'التوقف': 'Pause',
         'استئناف': 'Resume',
-        'ا{% trans "No" %}ستئناف': 'Resume',
+        'الاستئناف': 'Resume',
         
         // UI Elements
         'شاشة': 'Screen',
@@ -2542,10 +2066,10 @@
         'الرمز': 'Icon',
         'رموز': 'Icons',
         'الرموز': 'Icons',
-        'ع{% trans "No" %}مة': 'Mark',
-        'الع{% trans "No" %}مة': 'Mark',
-        'ع{% trans "No" %}مات': 'Marks',
-        'الع{% trans "No" %}مات': 'Marks',
+        'علامة': 'Mark',
+        'العلامة': 'Mark',
+        'علامات': 'Marks',
+        'العلامات': 'Marks',
         'إشارة': 'Sign',
         'الإشارة': 'Sign',
         'إشارات': 'Signs',
@@ -2561,9 +2085,9 @@
         'نصوص': 'Texts',
         'النصوص': 'Texts',
         'كلمة': 'Word',
-        '{% trans "All" %}مة': 'Word',
+        'الكلمة': 'Word',
         'كلمات': 'Words',
-        '{% trans "All" %}مات': 'Words',
+        'الكلمات': 'Words',
         'جملة': 'Sentence',
         'الجملة': 'Sentence',
         'جمل': 'Sentences',
@@ -2594,10 +2118,10 @@
         'الفرق': 'Teams',
         
         // More Financial Terms
-        '{% trans "Payment" %}ة': 'Payment',
-        'ال{% trans "Payment" %}ة': 'Payment',
-        '{% trans "Payment" %}ات': 'Payments',
-        'ال{% trans "Payment" %}ات': 'Payments',
+        'دفعةة': 'Payment',
+        'الدفعةة': 'Payment',
+        'دفعةات': 'Payments',
+        'الدفعةات': 'Payments',
         'قسط': 'Installment',
         'القسط': 'Installment',
         'أقساط': 'Installments',
@@ -2608,8 +2132,8 @@
         'الفوائد': 'Interests',
         'عمولة': 'Commission',
         'العمولة': 'Commission',
-        'عمو{% trans "No" %}ت': 'Commissions',
-        'العمو{% trans "No" %}ت': 'Commissions',
+        'عمولات': 'Commissions',
+        'العمولات': 'Commissions',
         'رسوم': 'Fees',
         'الرسوم': 'Fees',
         'رسم': 'Fee',
@@ -2618,8 +2142,8 @@
         // Transaction Terms
         'معاملة': 'Transaction',
         'المعاملة': 'Transaction',
-        'معام{% trans "No" %}ت': 'Transactions',
-        'المعام{% trans "No" %}ت': 'Transactions',
+        'معاملات': 'Transactions',
+        'المعاملات': 'Transactions',
         'عملية': 'Operation',
         'العملية': 'Operation',
         'عمليات': 'Operations',
@@ -2635,7 +2159,7 @@
         
         // Time and Date Terms
         'يوم': 'Day',
-        '{% trans "Today" %}': 'Day',
+        'اليوم': 'Day',
         'أيام': 'Days',
         'الأيام': 'Days',
         'شهر': 'Month',
@@ -2655,7 +2179,7 @@
         'دقائق': 'Minutes',
         'الدقائق': 'Minutes',
         'ثانية': 'Second',
-        '{% trans "Second" %}ة': 'Second',
+        'ثانيةة': 'Second',
         'ثوان': 'Seconds',
         'الثوان': 'Seconds',
         
@@ -2684,7 +2208,7 @@
         'غرب': 'West',
         
         // More Common Verbs
-        'ي{% trans "Open" %}': 'Opens',
+        'يOpen': 'Opens',
         'يغلق': 'Closes',
         'يظهر': 'Shows',
         'يخفي': 'Hides',
@@ -2694,8 +2218,8 @@
         'يكتب': 'Writes',
         'يطبع': 'Prints',
         'يحمل': 'Loads',
-        'ي{% trans "Save" %}': 'Saves',
-        'ي{% trans "Delete" %}': 'Deletes',
+        'يحفظ': 'Saves',
+        'يحذف': 'Deletes',
         'يعدل': 'Edits',
         'ينشئ': 'Creates',
         'يضيف': 'Adds',
@@ -3533,8 +3057,8 @@
     </script>
     
     <!-- Responsive JavaScript -->
-    <script src="{% static 'core/js/responsive.js' %}"></script>
-    <script src="{% static 'core/js/table-responsive.js' %}"></script>
+    <script src="/static/core/js/responsive.js"></script>
+    <script src="/static/core/js/table-responsive.js"></script>
     
     <!-- Language Switching Enhancement -->
     <script>
@@ -3604,6 +3128,7 @@
     });
     </script>
     
-    {% block extra_js %}{% endblock %}
+    
+
 </body>
 </html>

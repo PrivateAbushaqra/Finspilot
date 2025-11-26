@@ -35,7 +35,7 @@ class ProvisionForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # تصفية الحسابات النشطة
+        # Filter active accounts
         self.fields['related_account'].queryset = Account.objects.filter(is_active=True)
         self.fields['provision_account'].queryset = Account.objects.filter(is_active=True)
 

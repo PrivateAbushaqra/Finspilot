@@ -86,10 +86,13 @@ class PaymentReceipt(models.Model):
         ordering = ['-date', '-receipt_number']
         default_permissions = []  # No default permissions
         permissions = [
-            ("can_view_receipts", "Can View Receipt Vouchers"),
-            ("can_add_receipts", "Can Add Receipt Vouchers"),
-            ("can_edit_receipts", "Can Edit Receipt Vouchers"),
-            ("can_delete_receipts", "Can Delete Receipt Vouchers"),
+            ("can_view_receipts", _("Can View Receipt Vouchers")),
+            ("can_add_receipts", _("Can Add Receipt Vouchers")),
+            ("can_edit_receipts", _("Can Edit Receipt Vouchers")),
+            ("can_delete_receipts", _("Can Delete Receipt Vouchers")),
+            ("can_view_check_management", _("Can View Cheque Management")),
+            ("can_collect_checks", _("Can Collect Cheques")),
+            ("can_view_check_balance_forecast", _("Can View Check Balance Forecast")),
         ]
 
     def __str__(self):
@@ -119,6 +122,10 @@ class PaymentReceipt(models.Model):
                 raise ValidationError(_('Bank name is required'))
     
     def save(self, *args, **kwargs):
+        # Set default check_status for checks
+        if self.payment_type == 'check' and not self.check_status:
+            self.check_status = 'pending'
+        
         self.clean()
         super().save(*args, **kwargs)
     
