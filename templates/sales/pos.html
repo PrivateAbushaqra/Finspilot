@@ -1027,9 +1027,7 @@
                 <h5><i class="fas fa-boxes"></i> {% trans "Products" %}</h5>
                 <div class="search-container">
                     <i class="fas fa-search search-icon"></i>
-                    <input type="text" class="search-input" id="product-search" placeholder="Search for products by name or barcode...">
-                           <!--placeholder={% trans "Search for products by name or barcode..." %}>-->
-                           <!--placeholder="ابحث عن المنتجات باسم أو الباركود..."> -->
+                    <input type="text" class="search-input" id="product-search" placeholder="{% trans 'Search for products by name or barcode...' %}">
                     <button class="clear-search" type="button" onclick="clearSearch()">
                         <i class="fas fa-times"></i>
                     </button>
@@ -1264,7 +1262,10 @@ const POS_PRINT_URL_BASE = '{% url "sales:print_pos_invoice" pk=0 %}'.replace('/
 // تحديث {% trans "Time" %}
 function updateTime() {
     const now = new Date();
-    document.getElementById('current-time').textContent = now.toLocaleString('ar-SA');
+    // استخدام التقويم الميلادي بدلاً من الهجري
+    const currentLang = document.documentElement.lang || 'ar';
+    const locale = currentLang === 'ar' ? 'ar-EG' : 'en-GB';
+    document.getElementById('current-time').textContent = now.toLocaleString(locale);
 }
 setInterval(updateTime, 1000);
 updateTime();

@@ -371,10 +371,25 @@ class POSUserMiddleware:
             hasattr(request.user, 'user_type') and 
             request.user.user_type == 'pos_user'):
             
+            # التحقق من وجود المستخدم في مجموعات
+            # إذا كان في مجموعة، نسمح له بالوصول حسب صلاحيات المجموعة
+            user_has_groups = request.user.groups.exists()
+            
+            # إذا كان المستخدم في مجموعة، لا نقيده بمسارات POS فقط
+            if user_has_groups:
+                # السماح له بالوصول لأي صفحة حسب صلاحيات مجموعته
+                response = self.get_response(request)
+                return response
+            
+            # إذا لم يكن في مجموعة، نطبق القيود العادية لمستخدم POS
             # المسارات المسموحة لمستخدم نقطة البيع
             allowed_paths = [
                 '/ar/sales/pos/',
                 '/en/sales/pos/',
+                '/ar/',  # السماح بالصفحة الرئيسية لأن DashboardView سيوجهه تلقائياً
+                '/en/',  # السماح بالصفحة الرئيسية لأن DashboardView سيوجهه تلقائياً
+                '/language-switch/',  # السماح بتبديل اللغة
+                '/i18n/',  # Django's i18n URLs
                 '/ar/logout/',
                 '/logout/',
                 '/ar/accounts/logout/',
@@ -408,8 +423,24 @@ class POSUserMiddleware:
             is_allowed = any(current_path.startswith(path) for path in allowed_paths + pos_api_paths)
             
             if not is_allowed:
-                # توجيه المستخدم إلى صفحة نقطة البيع
-                return redirect('/ar/sales/pos/')
+                # توجيه المستخدم إلى صفحة نقطة البيع مع الحفاظ على اللغة
+                from django.utils import translation
+                current_language = translation.get_language() or 'ar'
+                pos_url = f'/{current_language}/sales/pos/'
+                return redirect(pos_url)
+            
+            # التأكد من استخدام اللغة الصحيحة من الجلسة
+            # إذا كان المستخدم يصل إلى POS بلغة مختلفة عن الجلسة، احترم اللغة من المسار
+            if current_path.startswith('/ar/sales/pos/') or current_path.startswith('/en/sales/pos/'):
+                # استخرج اللغة من المسار
+                path_lang = 'ar' if current_path.startswith('/ar/') else 'en'
+                session_lang = request.session.get('_language', 'ar')
+                
+                # إذا كانت اللغة في المسار مختلفة عن الجلسة، حدّث الجلسة
+                if path_lang != session_lang:
+                    from django.utils import translation
+                    translation.activate(path_lang)
+                    request.session['_language'] = path_lang
 
         response = self.get_response(request)
         return response

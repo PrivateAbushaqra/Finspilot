@@ -15,6 +15,9 @@ import json
 import csv
 import io
 import traceback
+import sys
+
+print("DEBUG: core/views.py loaded!", file=sys.stderr)
 
 # محاولة استيراد openpyxl للتصدير بصيغة Excel
 try:
@@ -1376,8 +1379,17 @@ def language_switch_view(request):
             f'Language switched to: {language}'
         )
 
-    # إعادة التوجيه - استخدام next_url إذا كان موجوداً، وإلا حسب اللغة
+    # إعادة التوجيه - تحويل مسار اللغة في next_url
     if next_url:
+        # تحويل بادئة اللغة في المسار
+        if language == 'en' and next_url.startswith('/ar/'):
+            next_url = '/en/' + next_url[4:]  # إزالة /ar/ واستبدالها بـ /en/
+        elif language == 'ar' and next_url.startswith('/en/'):
+            next_url = '/ar/' + next_url[4:]  # إزالة /en/ واستبدالها بـ /ar/
+        elif not next_url.startswith(f'/{language}/'):
+            # إضافة بادئة اللغة إذا لم تكن موجودة
+            next_url = f'/{language}{next_url}' if next_url.startswith('/') else f'/{language}/{next_url}'
+        
         return redirect(next_url)
     elif language == 'en':
         return redirect('/en/')

@@ -273,6 +273,30 @@ class UserEditForm(forms.ModelForm):
         # تم إزالة التحقق من الحقول المحذوفة
         return cleaned_data
 
+class UserPasswordChangeForm(forms.Form):
+    """نموذج تغيير كلمة المرور للمستخدم"""
+    new_password1 = forms.CharField(
+        label=_("New password"),
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': _('Enter new password')}),
+        help_text=_('Password must be at least 8 characters'),
+        min_length=8
+    )
+    new_password2 = forms.CharField(
+        label=_("Confirm new password"),
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': _('Confirm new password')}),
+        min_length=8
+    )
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        password1 = cleaned_data.get('new_password1')
+        password2 = cleaned_data.get('new_password2')
+        
+        if password1 and password2 and password1 != password2:
+            raise forms.ValidationError(_("The two password fields didn't match."))
+        
+        return cleaned_data
+
 class UserListView(LoginRequiredMixin, ListView):
     model = User
     template_name = 'users/user_list.html'
@@ -2076,3 +2100,81 @@ def toggle_superuser_visibility(request):
         'hide_superusers': new_state,
         'message': _('High privileged users are hidden') if new_state else _('High privileged users are shown.')
     })
+
+
+@login_required
+@require_POST
+def change_user_password(request, pk):
+    """Change user password via AJAX"""
+    from django.contrib.auth import get_user_model
+    from core.models import AuditLog
+    import json
+    
+    User = get_user_model()
+    
+    # Check if user has permission to edit users
+    if not request.user.has_perm('users.change_user'):
+        return JsonResponse({
+            'success': False,
+            'error': _('You do not have permission to change user passwords.')
+        }, status=403)
+    
+    # Get user to edit
+    try:
+        user_to_edit = User.objects.get(pk=pk)
+    except User.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': _('User not found.')
+        }, status=404)
+    
+    # Parse JSON data
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': _('Invalid request data.')
+        }, status=400)
+    
+    # Create form with data
+    form = UserPasswordChangeForm(data)
+    
+    if form.is_valid():
+        new_password = form.cleaned_data['new_password1']
+        
+        # Set new password
+        user_to_edit.set_password(new_password)
+        user_to_edit.save()
+        
+        # Get IP address
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip_address = x_forwarded_for.split(',')[0]
+        else:
+            ip_address = request.META.get('REMOTE_ADDR')
+        
+        # Log the activity
+        AuditLog.objects.create(
+            user=request.user,
+            action_type='update',
+            content_type='User Password',
+            object_id=user_to_edit.id,
+            description=f"تغيير كلمة المرور للمستخدم: {user_to_edit.username}" if request.LANGUAGE_CODE == 'ar' else f"Changed password for user: {user_to_edit.username}",
+            ip_address=ip_address
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': _('Password changed successfully.')
+        })
+    else:
+        # Return form errors
+        errors = {}
+        for field, error_list in form.errors.items():
+            errors[field] = [str(e) for e in error_list]
+        
+        return JsonResponse({
+            'success': False,
+            'errors': errors
+        }, status=400)

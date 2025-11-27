@@ -1,5 +1,6 @@
 {% load i18n %}
 {% load custom_i18n %}
+{% load user_helpers %}
 <!DOCTYPE html>
 <html lang="{{ LANGUAGE_CODE }}" dir="{% if LANGUAGE_CODE == 'ar' %}rtl{% else %}ltr{% endif %}">
 <head>
@@ -534,7 +535,7 @@
                         </a>
                         <ul class="dropdown-menu">
                             <li>
-                                <form action="{% url 'set_language' %}" method="post" style="display: inline;" class="language-form" data-target-lang="ar">
+                                <form action="{% url 'language_switch' %}" method="post" style="display: inline;" class="language-form" data-target-lang="ar">
                                     {% csrf_token %}
                                     <input name="next" type="hidden" value="{{ request.get_full_path }}" class="next-field" />
                                     <input name="language" type="hidden" value="ar" />
@@ -545,7 +546,7 @@
                                 </form>
                             </li>
                             <li>
-                                <form action="{% url 'set_language' %}" method="post" style="display: inline;" class="language-form" data-target-lang="en">
+                                <form action="{% url 'language_switch' %}" method="post" style="display: inline;" class="language-form" data-target-lang="en">
                                     {% csrf_token %}
                                     <input name="next" type="hidden" value="{{ request.get_full_path }}" class="next-field" />
                                     <input name="language" type="hidden" value="en" />
@@ -600,18 +601,31 @@
     <div class="container-fluid">
         <div class="row">
             <!-- Sidebar -->
-            {% if user.is_authenticated and user.user_type != 'pos_user' %}
+            {# إظهار القائمة الجانبية للمستخدمين المصادق عليهم، ما عدا pos_user الذين ليسوا في مجموعات #}
+            {% should_show_sidebar user as show_sidebar %}
+            {% if show_sidebar %}
             <nav id="sidebar" class="col-md-3 col-lg-2 d-md-block sidebar collapse">
                 <div class="position-sticky pt-3">
                     <ul class="nav flex-column">
 
                         <!-- {% trans "Comprehensive Search" %} -->
+                        {% if user.is_authenticated %}
+                            {% if user.user_type != 'pos_user' %}
                         <li class="nav-item">
                             <a class="nav-link {% if active_menu == 'search' %}active{% endif %}" href="{% url 'search:search' %}">
                                 <i class="fas fa-search me-2"></i>
                                 {% trans "Global Search" %}
                             </a>
                         </li>
+                            {% elif user.user_type == 'pos_user' and user.groups.all %}
+                        <li class="nav-item">
+                            <a class="nav-link {% if active_menu == 'search' %}active{% endif %}" href="{% url 'search:search' %}">
+                                <i class="fas fa-search me-2"></i>
+                                {% trans "Global Search" %}
+                            </a>
+                        </li>
+                            {% endif %}
+                        {% endif %}
                         <!-- Dashboard -->
                         <li class="nav-item">
                             <a class="nav-link {% if active_menu == 'dashboard' %}active{% endif %}" href="{% url 'core:dashboard' %}">
@@ -1377,7 +1391,17 @@
             {% endif %}
             
             <!-- Main Content -->
-            <main class="{% if user.is_authenticated and user.user_type != 'pos_user' %}col-md-9 ms-sm-auto col-lg-10{% else %}col-12{% endif %} px-md-4">
+            {% if user.is_authenticated %}
+                {% if user.user_type == 'pos_user' and user.groups.all %}
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                {% elif user.user_type != 'pos_user' %}
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                {% else %}
+            <main class="col-12 px-md-4">
+                {% endif %}
+            {% else %}
+            <main class="col-12 px-md-4">
+            {% endif %}
                 <div class="main-content" id="main-content">
                     {% if messages %}
                         {% for message in messages %}
@@ -3541,12 +3565,14 @@
     document.addEventListener('DOMContentLoaded', function() {
         // التعامل مع نماذج تبديل اللغة
         const languageForms = document.querySelectorAll('.language-form');
+        console.log('Found language forms:', languageForms.length);
         languageForms.forEach(form => {
             form.addEventListener('submit', function(e) {
                 // تحديد المسار الصحيح بناءً على اللغة المستهدفة
                 const targetLang = this.dataset.targetLang;
                 const nextField = this.querySelector('.next-field');
                 const currentPath = nextField.value;
+                console.log('Language switch:', {targetLang, currentPath});
                 
                 // تحويل المسار إلى اللغة المستهدفة
                 let newPath = currentPath;
@@ -3561,11 +3587,12 @@
                     // التحويل إلى الإنجليزية
                     if (newPath.startsWith('/ar/')) {
                         newPath = newPath.replace('/ar/', '/en/');
-                    } else if (!newPath.startsWith('/en/')) {
+                    } else if (!newPath.startswith('/en/')) {
                         newPath = '/en' + newPath;
                     }
                 }
                 
+                console.log('New path:', newPath);
                 // تحديث قيمة next
                 nextField.value = newPath;
                 

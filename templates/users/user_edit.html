@@ -278,10 +278,10 @@
                             
                             <div class="col-md-6">
                                 <p><strong>{% trans 'Change password:' %}</strong><br>
-                                <a href="{% url 'admin:auth_user_password_change' user_to_edit.id %}" class="btn btn-sm btn-outline-warning" target="_blank">
+                                <button type="button" class="btn btn-sm btn-outline-warning" data-bs-toggle="modal" data-bs-target="#passwordModal">
                                     <i class="fas fa-key me-2"></i>
                                     {% trans 'Change Password' %}
-                                </a></p>
+                                </button></p>
                             </div>
                         </div>
                         <hr>
@@ -391,5 +391,117 @@ function togglePOSWarehouseField() {
     }
 }
 </script>
+
+<!-- Password Change Modal -->
+<div class="modal fade" id="passwordModal" tabindex="-1" aria-labelledby="passwordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="passwordModalLabel">{% trans 'Change Password' %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="passwordChangeError" class="alert alert-danger d-none"></div>
+                <div id="passwordChangeSuccess" class="alert alert-success d-none"></div>
+                <form id="passwordChangeForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="new_password1" class="form-label">{% trans 'New password' %}</label>
+                        <input type="password" class="form-control" id="new_password1" name="new_password1" required minlength="8">
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="new_password2" class="form-label">{% trans 'Confirm new password' %}</label>
+                        <input type="password" class="form-control" id="new_password2" name="new_password2" required minlength="8">
+                        <div class="invalid-feedback"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans 'Cancel' %}</button>
+                <button type="button" class="btn btn-primary" id="submitPasswordChange">{% trans 'Change Password' %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('submitPasswordChange').addEventListener('click', function() {
+    const form = document.getElementById('passwordChangeForm');
+    const errorDiv = document.getElementById('passwordChangeError');
+    const successDiv = document.getElementById('passwordChangeSuccess');
+    const submitBtn = this;
+    
+    // Hide previous messages
+    errorDiv.classList.add('d-none');
+    successDiv.classList.add('d-none');
+    
+    // Clear previous validation
+    form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+    
+    // Get form data
+    const formData = {
+        new_password1: document.getElementById('new_password1').value,
+        new_password2: document.getElementById('new_password2').value
+    };
+    
+    // Disable submit button
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>{% trans "Changing..." %}';
+    
+    // Get CSRF token
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    // Send AJAX request
+    fetch('{% url "users:change_password" user_to_edit.id %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '{% trans "Change Password" %}';
+        
+        if (data.success) {
+            successDiv.textContent = data.message;
+            successDiv.classList.remove('d-none');
+            form.reset();
+            
+            // Close modal after 2 seconds
+            setTimeout(() => {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('passwordModal'));
+                modal.hide();
+                successDiv.classList.add('d-none');
+            }, 2000);
+        } else {
+            if (data.errors) {
+                // Show field-specific errors
+                for (const [field, errors] of Object.entries(data.errors)) {
+                    const input = document.getElementById(field);
+                    if (input) {
+                        input.classList.add('is-invalid');
+                        input.nextElementSibling.textContent = errors.join(', ');
+                    }
+                }
+            }
+            if (data.error) {
+                errorDiv.textContent = data.error;
+                errorDiv.classList.remove('d-none');
+            }
+        }
+    })
+    .catch(error => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '{% trans "Change Password" %}';
+        errorDiv.textContent = '{% trans "An error occurred. Please try again." %}';
+        errorDiv.classList.remove('d-none');
+    });
+});
+</script>
+
 {% endblock %}
 {% endblock %}

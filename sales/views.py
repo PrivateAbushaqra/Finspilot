@@ -2547,7 +2547,11 @@ def print_pos_invoice(request, pk):
 def pos_view(request):
     """Point of Sale screen"""
     # التحقق من صلاحية الوصول لنقطة البيع
-    if not (request.user.has_perm('sales.can_access_pos') or request.user.has_perm('sales.can_view_pos') or request.user.is_superuser):
+    # السماح للمستخدمين من نوع pos_user بالوصول تلقائياً
+    is_pos_user_type = hasattr(request.user, 'user_type') and request.user.user_type == 'pos_user'
+    has_pos_permission = request.user.has_perm('sales.can_access_pos') or request.user.has_perm('sales.can_view_pos')
+    
+    if not (is_pos_user_type or has_pos_permission or request.user.is_superuser):
         messages.error(request, 'ليس لديك صلاحية للوصول إلى نقطة البيع')
         return redirect('core:dashboard')
     
