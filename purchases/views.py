@@ -2055,3 +2055,248 @@ class PurchaseDebitNoteDeleteView(LoginRequiredMixin, DeleteView):
         
         messages.success(request, 'تم حذف مذكرة الدين بنجاح')
         return super().delete(request, *args, **kwargs)
+
+
+@login_required
+@csrf_exempt
+def send_purchase_invoice_to_jofotara(request, pk):
+    """Send purchase invoice to JoFotara"""
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    
+    if not is_ajax:
+        return JsonResponse({
+            'success': False,
+            'error': 'هذه الدالة تستخدم للطلبات AJAX فقط'
+        }, status=400)
+    
+    try:
+        purchase_invoice = get_object_or_404(PurchaseInvoice, pk=pk)
+        
+        # Check permissions
+        if not request.user.has_perm('purchases.can_edit_purchases'):
+            return JsonResponse({
+                'success': False,
+                'error': 'ليس لديك صلاحية إرسال فواتير المشتريات إلى JoFotara'
+            })
+        
+        from settings.utils import send_purchase_invoice_to_jofotara as send_invoice_api
+        
+        result = send_invoice_api(purchase_invoice, request.user)
+        
+        if result['success']:
+            if 'uuid' in result:
+                purchase_invoice.jofotara_uuid = result['uuid']
+                purchase_invoice.jofotara_sent_at = timezone.now()
+                purchase_invoice.jofotara_verification_url = result.get('verification_url')
+                purchase_invoice.jofotara_qr_code = result.get('qr_code')
+                purchase_invoice.is_posted_to_tax = True
+                purchase_invoice.save()
+                
+                try:
+                    from core.models import AuditLog
+                    AuditLog.objects.create(
+                        user=request.user,
+                        action_type='post_to_tax',
+                        content_type='PurchaseInvoice',
+                        object_id=purchase_invoice.id,
+                        description=f'تم إرسال فاتورة المشتريات {purchase_invoice.invoice_number} إلى JoFotara بنجاح - UUID: {result["uuid"]}',
+                        ip_address=request.META.get('REMOTE_ADDR')
+                    )
+                except Exception:
+                    pass
+            
+            if not result.get('qr_code'):
+                messages.warning(request, f'تم إرسال الفاتورة {purchase_invoice.invoice_number} إلى JoFotara لكن لم يتم استلام رمز QR.')
+            else:
+                messages.success(request, f'تم إرسال الفاتورة {purchase_invoice.invoice_number} إلى JoFotara بنجاح')
+        else:
+            purchase_invoice.is_posted_to_tax = False
+            purchase_invoice.save()
+            
+            try:
+                from core.models import AuditLog
+                AuditLog.objects.create(
+                    user=request.user,
+                    action_type='error',
+                    content_type='PurchaseInvoice',
+                    object_id=purchase_invoice.id,
+                    description=f'فشل إرسال فاتورة المشتريات {purchase_invoice.invoice_number} إلى JoFotara: {result.get("error", "خطأ غير معروف")}',
+                    ip_address=request.META.get('REMOTE_ADDR')
+                )
+            except Exception:
+                pass
+            
+            messages.error(request, f'فشل في إرسال الفاتورة: {result.get("error", "خطأ غير معروف")}')
+        
+        return JsonResponse(result)
+        
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error sending purchase invoice to JoFotara: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': f'خطأ في النظام: {str(e)}'
+        })
+
+
+@login_required
+@csrf_exempt
+def send_purchase_return_to_jofotara(request, pk):
+    """Send purchase return to JoFotara"""
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    
+    if not is_ajax:
+        return JsonResponse({
+            'success': False,
+            'error': 'هذه الدالة تستخدم للطلبات AJAX فقط'
+        }, status=400)
+    
+    try:
+        purchase_return = get_object_or_404(PurchaseReturn, pk=pk)
+        
+        if not request.user.has_perm('purchases.can_edit_purchases'):
+            return JsonResponse({
+                'success': False,
+                'error': 'ليس لديك صلاحية إرسال مردودات المشتريات إلى JoFotara'
+            })
+        
+        from settings.utils import send_purchase_return_to_jofotara as send_return_api
+        
+        result = send_return_api(purchase_return, request.user)
+        
+        if result['success']:
+            if 'uuid' in result:
+                purchase_return.jofotara_uuid = result['uuid']
+                purchase_return.jofotara_sent_at = timezone.now()
+                purchase_return.jofotara_verification_url = result.get('verification_url')
+                purchase_return.jofotara_qr_code = result.get('qr_code')
+                purchase_return.is_posted_to_tax = True
+                purchase_return.save()
+                
+                try:
+                    from core.models import AuditLog
+                    AuditLog.objects.create(
+                        user=request.user,
+                        action_type='post_to_tax',
+                        content_type='PurchaseReturn',
+                        object_id=purchase_return.id,
+                        description=f'تم إرسال مردود المشتريات {purchase_return.return_number} إلى JoFotara بنجاح - UUID: {result["uuid"]}',
+                        ip_address=request.META.get('REMOTE_ADDR')
+                    )
+                except Exception:
+                    pass
+            
+            if not result.get('qr_code'):
+                messages.warning(request, f'تم إرسال المردود {purchase_return.return_number} إلى JoFotara لكن لم يتم استلام رمز QR.')
+            else:
+                messages.success(request, f'تم إرسال المردود {purchase_return.return_number} إلى JoFotara بنجاح')
+        else:
+            purchase_return.is_posted_to_tax = False
+            purchase_return.save()
+            
+            try:
+                from core.models import AuditLog
+                AuditLog.objects.create(
+                    user=request.user,
+                    action_type='error',
+                    content_type='PurchaseReturn',
+                    object_id=purchase_return.id,
+                    description=f'فشل إرسال مردود المشتريات {purchase_return.return_number} إلى JoFotara: {result.get("error", "خطأ غير معروف")}',
+                    ip_address=request.META.get('REMOTE_ADDR')
+                )
+            except Exception:
+                pass
+            
+            messages.error(request, f'فشل في إرسال المردود: {result.get("error", "خطأ غير معروف")}')
+        
+        return JsonResponse(result)
+        
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error sending purchase return to JoFotara: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': f'خطأ في النظام: {str(e)}'
+        })
+
+
+@login_required
+@csrf_exempt
+def send_debit_note_to_jofotara(request, pk):
+    """Send debit note to JoFotara"""
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    
+    if not is_ajax:
+        return JsonResponse({
+            'success': False,
+            'error': 'هذه الدالة تستخدم للطلبات AJAX فقط'
+        }, status=400)
+    
+    try:
+        debit_note = get_object_or_404(PurchaseDebitNote, pk=pk)
+        
+        if not request.user.has_perm('purchases.can_edit_debit_notes'):
+            return JsonResponse({
+                'success': False,
+                'error': 'ليس لديك صلاحية إرسال الإشعارات المدينة إلى JoFotara'
+            })
+        
+        from settings.utils import send_purchase_debit_note_to_jofotara as send_debit_api
+        
+        result = send_debit_api(debit_note, request.user)
+        
+        if result['success']:
+            if 'uuid' in result:
+                debit_note.jofotara_uuid = result['uuid']
+                debit_note.jofotara_sent_at = timezone.now()
+                debit_note.jofotara_verification_url = result.get('verification_url')
+                debit_note.jofotara_qr_code = result.get('qr_code')
+                debit_note.is_posted_to_tax = True
+                debit_note.save()
+                
+                try:
+                    from core.models import AuditLog
+                    AuditLog.objects.create(
+                        user=request.user,
+                        action_type='post_to_tax',
+                        content_type='PurchaseDebitNote',
+                        object_id=debit_note.id,
+                        description=f'تم إرسال الإشعار المدين {debit_note.note_number} إلى JoFotara بنجاح - UUID: {result["uuid"]}',
+                        ip_address=request.META.get('REMOTE_ADDR')
+                    )
+                except Exception:
+                    pass
+            
+            if not result.get('qr_code'):
+                messages.warning(request, f'تم إرسال الإشعار {debit_note.note_number} إلى JoFotara لكن لم يتم استلام رمز QR.')
+            else:
+                messages.success(request, f'تم إرسال الإشعار {debit_note.note_number} إلى JoFotara بنجاح')
+        else:
+            debit_note.is_posted_to_tax = False
+            debit_note.save()
+            
+            try:
+                from core.models import AuditLog
+                AuditLog.objects.create(
+                    user=request.user,
+                    action_type='error',
+                    content_type='PurchaseDebitNote',
+                    object_id=debit_note.id,
+                    description=f'فشل إرسال الإشعار المدين {debit_note.note_number} إلى JoFotara: {result.get("error", "خطأ غير معروف")}',
+                    ip_address=request.META.get('REMOTE_ADDR')
+                )
+            except Exception:
+                pass
+            
+            messages.error(request, f'فشل في إرسال الإشعار: {result.get("error", "خطأ غير معروف")}')
+        
+        return JsonResponse(result)
+        
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error sending debit note to JoFotara: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': f'خطأ في النظام: {str(e)}'
+        })
+

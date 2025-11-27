@@ -17,6 +17,12 @@
                         {% trans "Details" %} مردود المشتريات
                     </h3>
                     <div>
+                        {% if not return_invoice.is_posted_to_tax %}
+                        <button class="btn btn-info" onclick="sendToJofotara({{ return_invoice.pk }})" id="sendToJofotaraBtn">
+                            <i class="fas fa-paper-plane me-2"></i>
+                            {% trans "Send to JoFotara" %}
+                        </button>
+                        {% endif %}
                         <a href="{% url 'purchases:return_edit' return_invoice.pk %}" class="btn btn-outline-primary">
                             <i class="fas fa-edit me-2"></i>
                             {% trans "Edit" %}
@@ -105,6 +111,72 @@
                                     <div class="row">
                                         <div class="col-5"><strong>إجمالي ال{% trans "Invoice" %}:</strong></div>
                                         <div class="col-7">{{ return_invoice.original_invoice.total_amount|currency_format }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- JoFotara Status -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-link me-2"></i>
+                                        {% trans "Electronic Link Status with Tax Authority" %}
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="row mb-2">
+                                                <div class="col-5"><strong>{% trans "Sending Status" %}:</strong></div>
+                                                <div class="col-7">
+                                                    {% if return_invoice.jofotara_sent_at %}
+                                                        <span class="badge bg-success">
+                                                            <i class="fas fa-check-circle me-1"></i>
+                                                            {% trans "Sent" %}
+                                                        </span>
+                                                    {% else %}
+                                                        <span class="badge bg-warning">
+                                                            <i class="fas fa-clock me-1"></i>
+                                                            {% trans "Not Sent" %}
+                                                        </span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            {% if return_invoice.jofotara_sent_at %}
+                                            <div class="row mb-2">
+                                                <div class="col-5"><strong>{% trans "Sending Date" %}:</strong></div>
+                                                <div class="col-7">{{ return_invoice.jofotara_sent_at|date:"Y-m-d H:i" }}</div>
+                                            </div>
+                                            {% endif %}
+                                            {% if return_invoice.jofotara_uuid %}
+                                            <div class="row mb-2">
+                                                <div class="col-5"><strong>{% trans "Tracking Number (UUID)" %}:</strong></div>
+                                                <div class="col-7">
+                                                    <code style="font-size: 0.8rem;">{{ return_invoice.jofotara_uuid }}</code>
+                                                </div>
+                                            </div>
+                                            {% if return_invoice.jofotara_verification_url %}
+                                            <div class="row">
+                                                <div class="col-5"><strong>{% trans "Verification Link" %}:</strong></div>
+                                                <div class="col-7">
+                                                    <a href="{{ return_invoice.jofotara_verification_url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-external-link-alt me-1"></i>{% trans "Verify Invoice" %}
+                                                    </a>
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                            {% endif %}
+                                        </div>
+                                        {% if return_invoice.jofotara_qr_code %}
+                                        <div class="col-md-6 text-center">
+                                            <strong>{% trans "QR Code" %}:</strong><br>
+                                            <img src="{{ return_invoice.jofotara_qr_code }}" alt="JoFotara QR Code" style="max-width: 150px; max-height: 150px;" class="border p-2 mt-2">
+                                        </div>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
@@ -295,3 +367,43 @@
 }
 </style>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+function sendToJofotara(returnId) {
+    const btn = document.getElementById('sendToJofotaraBtn');
+    const originalContent = btn.innerHTML;
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>{% trans "Sending..." %}';
+    
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    fetch(`/ar/purchases/returns/${returnId}/send-to-jofotara/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+            alert('{% trans "Error" %}: ' + (data.error || '{% trans "Unknown error" %}'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        btn.disabled = false;
+        btn.innerHTML = originalContent;
+        alert('{% trans "Failed to send return" %}');
+    });
+}
+</script>
+{% endblock %}
+

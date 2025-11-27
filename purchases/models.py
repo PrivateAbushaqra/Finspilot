@@ -45,6 +45,18 @@ class PurchaseInvoice(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name=_('Created By'))
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
     updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
+    
+    # JoFotara integration fields
+    jofotara_uuid = models.CharField(_('JoFotara UUID'), max_length=100, blank=True, null=True,
+                                   help_text=_('UUID returned from JoFotara API'))
+    jofotara_qr_code = models.TextField(_('JoFotara QR Code'), blank=True, null=True,
+                                      help_text=_('QR Code image data URL from JoFotara'))
+    jofotara_sent_at = models.DateTimeField(_('Sent to JoFotara At'), blank=True, null=True,
+                                          help_text=_('Date and time when invoice was sent to JoFotara'))
+    jofotara_verification_url = models.URLField(_('JoFotara Verification URL'), blank=True, null=True,
+                                              help_text=_('URL to verify invoice on JoFotara portal'))
+    is_posted_to_tax = models.BooleanField(_('Posted to Tax Authority'), default=False,
+                                         help_text=_('Whether this invoice has been successfully posted to tax authority'))
 
     class Meta:
         verbose_name = _('Purchase Invoice')
@@ -257,6 +269,18 @@ class PurchaseReturn(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name=_('Created By'))
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
     updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
+    
+    # JoFotara integration fields
+    jofotara_uuid = models.CharField(_('JoFotara UUID'), max_length=100, blank=True, null=True,
+                                   help_text=_('UUID returned from JoFotara API'))
+    jofotara_qr_code = models.TextField(_('JoFotara QR Code'), blank=True, null=True,
+                                      help_text=_('QR Code image data URL from JoFotara'))
+    jofotara_sent_at = models.DateTimeField(_('Sent to JoFotara At'), blank=True, null=True,
+                                          help_text=_('Date and time when return was sent to JoFotara'))
+    jofotara_verification_url = models.URLField(_('JoFotara Verification URL'), blank=True, null=True,
+                                              help_text=_('URL to verify return on JoFotara portal'))
+    is_posted_to_tax = models.BooleanField(_('Posted to Tax Authority'), default=False,
+                                         help_text=_('Whether this return has been successfully posted to tax authority'))
 
     class Meta:
         verbose_name = _('Purchase Return')
@@ -357,10 +381,14 @@ class PurchaseDebitNote(models.Model):
     # JoFotara integration fields
     jofotara_uuid = models.CharField(_('JoFotara UUID'), max_length=100, blank=True, null=True, 
                                    help_text=_('UUID returned from JoFotara API'))
+    jofotara_qr_code = models.TextField(_('JoFotara QR Code'), blank=True, null=True,
+                                      help_text=_('QR Code image data URL from JoFotara'))
     jofotara_sent_at = models.DateTimeField(_('Sent to JoFotara At'), blank=True, null=True,
                                           help_text=_('Date and time when debit note was sent to JoFotara'))
     jofotara_verification_url = models.URLField(_('JoFotara Verification URL'), blank=True, null=True,
                                               help_text=_('URL to verify debit note on JoFotara portal'))
+    is_posted_to_tax = models.BooleanField(_('Posted to Tax Authority'), default=False,
+                                         help_text=_('Whether this debit note has been successfully posted to tax authority'))
 
     class Meta:
         verbose_name = _('Debit Note')

@@ -888,3 +888,164 @@ def send_return_to_jofotara(sales_return, user=None):
             'error': str(e)
         }
 
+
+def send_purchase_invoice_to_jofotara(purchase_invoice, user=None):
+    """Send purchase invoice to JoFotara"""
+    try:
+        from settings.models import CompanySettings
+        company = CompanySettings.objects.first()
+        
+        # Prepare invoice data
+        invoice_data = {
+            'invoice_number': purchase_invoice.invoice_number,
+            'issue_date': purchase_invoice.date.isoformat(),
+            'issue_time': purchase_invoice.created_at.time().isoformat() if hasattr(purchase_invoice, 'created_at') else datetime.now().time().isoformat(),
+            'seller': {
+                'name': purchase_invoice.supplier.name,
+                'tax_number': getattr(purchase_invoice.supplier, 'tax_number', ''),
+            },
+            'buyer': {
+                'name': company.company_name if company else 'Test Company',
+                'tax_number': company.tax_number if company else '123456789',
+            },
+            'lines': [
+                {
+                    'product_name': item.product.name,
+                    'quantity': float(item.quantity),
+                    'unit_price': float(item.unit_price),
+                    'tax_percent': float(item.tax_rate) if hasattr(item, 'tax_rate') else 0,
+                    'total': float(item.total_amount),
+                } for item in purchase_invoice.items.all()
+            ],
+            'currency': 'JOD',
+        }
+        
+        result = send_invoice_to_jofotara(invoice_data, 'purchase')
+
+        if user:
+            from core.models import AuditLog
+            AuditLog.objects.create(
+                user=user,
+                action_type='export',
+                content_type='PurchaseInvoice',
+                object_id=purchase_invoice.id,
+                description=f'إرسال فاتورة مشتريات {purchase_invoice.invoice_number} إلى JoFotara: {"نجح" if result["success"] else "فشل"}'
+            )
+
+        return result
+
+    except Exception as e:
+        logger.error(f"Error sending purchase invoice: {str(e)}")
+        return {
+            'success': False,
+            'error': str(e)
+        }
+
+
+def send_purchase_return_to_jofotara(purchase_return, user=None):
+    """Send purchase return to JoFotara"""
+    try:
+        from settings.models import CompanySettings
+        company = CompanySettings.objects.first()
+        
+        # Prepare return data (treated as debit note)
+        invoice_data = {
+            'invoice_number': purchase_return.return_number,
+            'issue_date': purchase_return.date.isoformat(),
+            'issue_time': purchase_return.created_at.time().isoformat() if hasattr(purchase_return, 'created_at') else datetime.now().time().isoformat(),
+            'original_invoice_number': purchase_return.original_invoice.invoice_number if purchase_return.original_invoice else '',
+            'original_invoice_date': purchase_return.original_invoice.date.isoformat() if purchase_return.original_invoice else '',
+            'seller': {
+                'name': company.company_name if company else 'Test Company',
+                'tax_number': company.tax_number if company else '123456789',
+            },
+            'buyer': {
+                'name': purchase_return.original_invoice.supplier.name if purchase_return.original_invoice else '',
+                'tax_number': getattr(purchase_return.original_invoice.supplier, 'tax_number', '') if purchase_return.original_invoice else '',
+            },
+            'lines': [
+                {
+                    'product_name': item.product.name,
+                    'quantity': float(item.returned_quantity),  # Fixed: use returned_quantity
+                    'unit_price': float(item.unit_price),
+                    'tax_percent': float(item.tax_rate) if hasattr(item, 'tax_rate') else 0,
+                    'total': float(item.total_amount),
+                } for item in purchase_return.items.all()
+            ],
+            'currency': 'JOD',
+        }
+        
+        result = send_invoice_to_jofotara(invoice_data, 'debit_note')
+
+        if user:
+            from core.models import AuditLog
+            AuditLog.objects.create(
+                user=user,
+                action_type='export',
+                content_type='PurchaseReturn',
+                object_id=purchase_return.id,
+                description=f'إرسال مردود مشتريات {purchase_return.return_number} إلى JoFotara: {"نجح" if result["success"] else "فشل"}'
+            )
+
+        return result
+
+    except Exception as e:
+        logger.error(f"Error sending purchase return: {str(e)}")
+        return {
+            'success': False,
+            'error': str(e)
+        }
+
+
+def send_purchase_debit_note_to_jofotara(debit_note, user=None):
+    """Send purchase debit note to JoFotara"""
+    try:
+        from settings.models import CompanySettings
+        company = CompanySettings.objects.first()
+        
+        # Prepare debit note data
+        invoice_data = {
+            'invoice_number': debit_note.note_number,
+            'issue_date': debit_note.date.isoformat(),
+            'issue_time': debit_note.created_at.time().isoformat() if hasattr(debit_note, 'created_at') else datetime.now().time().isoformat(),
+            'seller': {
+                'name': company.company_name if company else 'Test Company',
+                'tax_number': company.tax_number if company else '123456789',
+            },
+            'buyer': {
+                'name': debit_note.supplier.name,
+                'tax_number': getattr(debit_note.supplier, 'tax_number', ''),
+            },
+            'lines': [
+                {
+                    'product_name': item.description,
+                    'quantity': 1,
+                    'unit_price': float(item.amount),
+                    'tax_percent': 0,
+                    'total': float(item.amount),
+                } for item in debit_note.items.all()
+            ],
+            'currency': 'JOD',
+        }
+        
+        result = send_invoice_to_jofotara(invoice_data, 'debit_note')
+
+        if user:
+            from core.models import AuditLog
+            AuditLog.objects.create(
+                user=user,
+                action_type='export',
+                content_type='PurchaseDebitNote',
+                object_id=debit_note.id,
+                description=f'إرسال إشعار مدين {debit_note.note_number} إلى JoFotara: {"نجح" if result["success"] else "فشل"}'
+            )
+
+        return result
+
+    except Exception as e:
+        logger.error(f"Error sending debit note: {str(e)}")
+        return {
+            'success': False,
+            'error': str(e)
+        }
+

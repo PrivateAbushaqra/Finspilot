@@ -314,6 +314,12 @@
                         <i class="fas fa-edit me-2"></i>
                         {% trans "Edit" %}
                     </a>
+                    {% if not invoice.is_posted_to_tax %}
+                    <button class="btn btn-info" onclick="sendToJofotara({{ invoice.pk }})" id="sendToJofotaraBtn">
+                        <i class="fas fa-paper-plane me-2"></i>
+                        {% trans "Send to JoFotara" %}
+                    </button>
+                    {% endif %}
                     <button class="btn btn-outline-primary" onclick="window.print()">
                         <i class="fas fa-print me-2"></i>
                         {% trans "Print" %}
@@ -401,6 +407,63 @@
                                         <td><strong>أنشئت بواسطة:</strong></td>
                                         <td>{{ invoice.created_by.get_full_name|default:invoice.created_by.username }}</td>
                                     </tr>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- JoFotara Status -->
+                        <div class="col-md-6">
+                            <div class="info-card">
+                                <h6 class="mb-3"><i class="fas fa-link me-2"></i> {% trans "Electronic Link Status with Tax Authority" %}</h6>
+                                <table class="table table-borderless mb-0">
+                                    <tr>
+                                        <td><strong>{% trans "Sending Status" %}:</strong></td>
+                                        <td>
+                                            {% if invoice.jofotara_sent_at %}
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check-circle me-1"></i>
+                                                    {% trans "Sent" %}
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-warning">
+                                                    <i class="fas fa-clock me-1"></i>
+                                                    {% trans "Not Sent" %}
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% if invoice.jofotara_sent_at %}
+                                    <tr>
+                                        <td><strong>{% trans "Sending Date" %}:</strong></td>
+                                        <td>{{ invoice.jofotara_sent_at|date:"Y-m-d H:i" }}</td>
+                                    </tr>
+                                    {% endif %}
+                                    {% if invoice.jofotara_uuid %}
+                                    <tr>
+                                        <td><strong>{% trans "Tracking Number (UUID)" %}:</strong></td>
+                                        <td>
+                                            <code style="font-size: 0.8rem;">{{ invoice.jofotara_uuid }}</code>
+                                        </td>
+                                    </tr>
+                                    {% if invoice.jofotara_verification_url %}
+                                    <tr>
+                                        <td><strong>{% trans "Verification Link" %}:</strong></td>
+                                        <td>
+                                            <a href="{{ invoice.jofotara_verification_url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-external-link-alt me-1"></i>{% trans "Verify Invoice" %}
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                    {% if invoice.jofotara_qr_code %}
+                                    <tr>
+                                        <td colspan="2" class="text-center">
+                                            <strong>{% trans "QR Code" %}:</strong><br>
+                                            <img src="{{ invoice.jofotara_qr_code }}" alt="JoFotara QR Code" style="max-width: 150px; max-height: 150px;" class="border p-2 mt-2">
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                    {% endif %}
                                 </table>
                             </div>
                         </div>
@@ -553,4 +616,59 @@
 <!-- Document Creator Information -->
 {% include 'partials/document_creator_info.html' with document=invoice %}
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function sendToJofotara(invoiceId) {
+    const btn = document.getElementById('sendToJofotaraBtn');
+    const originalContent = btn.innerHTML;
+    
+    // Disable button and show loading
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>{% trans "Sending..." %}';
+    
+    // Get CSRF token
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    fetch(`/ar/purchases/invoices/${invoiceId}/send-to-jofotara/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
+            errorDiv.innerHTML = `
+                <strong>{% trans "Error" %}!</strong> ${data.error || '{% trans "Unknown error" %}'}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            btn.parentElement.parentElement.insertBefore(errorDiv, btn.parentElement);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        btn.disabled = false;
+        btn.innerHTML = originalContent;
+        
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
+        errorDiv.innerHTML = `
+            <strong>{% trans "Error" %}!</strong> {% trans "Failed to send invoice" %}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        btn.parentElement.parentElement.insertBefore(errorDiv, btn.parentElement);
+    });
+}
+</script>
 {% endblock %}

@@ -20,6 +20,11 @@ urlpatterns = [
     # AJAX endpoints for returns
     path('ajax/get-invoice-items/<int:invoice_id>/', views.get_invoice_items, name='get_invoice_items'),
     
+    # JoFotara integration endpoints
+    path('invoices/<int:pk>/send-to-jofotara/', views.send_purchase_invoice_to_jofotara, name='send_invoice_to_jofotara'),
+    path('returns/<int:pk>/send-to-jofotara/', views.send_purchase_return_to_jofotara, name='send_return_to_jofotara'),
+    path('debit-notes/<int:pk>/send-to-jofotara/', views.send_debit_note_to_jofotara, name='send_debitnote_to_jofotara'),
+    
     # Reports
     path('reports/', views.PurchaseReportView.as_view(), name='purchase_report'),
     path('statement/', views.PurchaseStatementView.as_view(), name='purchase_statement'),
@@ -31,5 +36,4 @@ urlpatterns = [
     path('debit-notes/edit/<int:pk>/', views.PurchaseDebitNoteUpdateView.as_view(), name='debitnote_edit'),
     path('debit-notes/delete/<int:pk>/', views.PurchaseDebitNoteDeleteView.as_view(), name='debitnote_delete'),
     path('debit-notes/report/', views.PurchaseDebitNoteReportView.as_view(), name='debitnote_report'),
-    path('debit-notes/<int:pk>/send-to-jofotara/', views.send_debitnote_to_jofotara, name='send_debitnote_to_jofotara'),
 ]

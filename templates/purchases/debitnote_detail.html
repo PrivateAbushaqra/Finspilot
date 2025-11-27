@@ -17,6 +17,12 @@
             <p class="text-muted mb-0">{% trans "Note Number" %}: {{ debitnote.note_number }}</p>
         </div>
         <div>
+            {% if not debitnote.is_posted_to_tax %}
+            <button class="btn btn-success me-2" id="sendToJofotaraBtn" onclick="sendToJofotara({{ debitnote.pk }})">
+                <i class="fas fa-paper-plane me-1"></i>
+                {% trans "Send to JoFotara" %}
+            </button>
+            {% endif %}
             <a href="{% url 'purchases:debitnote_list' %}" class="btn btn-secondary">
                 <i class="fas fa-arrow-left me-1"></i>
                 {% trans "Back to List" %}
@@ -129,6 +135,14 @@
                             </td>
                         </tr>
                         {% endif %}
+                        {% if debitnote.jofotara_qr_code %}
+                        <tr>
+                            <td><strong>رمز الاستجابة السريع (QR Code):</strong></td>
+                            <td>
+                                <img src="{{ debitnote.jofotara_qr_code }}" alt="QR Code" class="img-thumbnail" style="max-width: 200px;">
+                            </td>
+                        </tr>
+                        {% endif %}
                         {% endif %}
                     </table>
                 </div>
@@ -223,73 +237,39 @@
 
 {% block extra_js %}
 <script>
-function sendToJofotara(debitnoteId) {
-    console.log('Starting sendToJofotara for debit note:', debitnoteId);
-    if (confirm("هل أنت متأكد من إرسال هذا الإشعار الخصم إلى JoFotara؟")) {
-        const btn = document.getElementById("sendToJofotaraBtn");
-        const originalText = btn.innerHTML;
-        
-        // Show loading state
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جاري الإرسال...';
-        
-        // Get CSRF token
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
-        console.log('CSRF token element:', csrfToken);
-        console.log('CSRF token value:', csrfToken ? csrfToken.value : 'NOT FOUND');
-        
-        // Send AJAX request
-        // احصل على مسار اللغة الحالي من URL
-        const currentPath = window.location.pathname;
-        const langPrefix = currentPath.match(/^\/(ar|en)\//)?.[0] || '/ar/';
-        const url = `${langPrefix}purchases/debit-notes/${debitnoteId}/send-to-jofotara/`;
-        console.log('Sending POST request to:', url);
-        
-        // Send AJAX request
-        fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken ? csrfToken.value : '',
-                'X-Requested-With': 'XMLHttpRequest'  // إضافة هذا الـ header لتحديد AJAX request
-            }
-        })
-        .then(response => {
-            console.log('Response status:', response.status);
-            console.log('Response redirected:', response.redirected);
-            console.log('Response url:', response.url);
-            
-            if (response.redirected || response.status === 302) {
-                console.error('Request was redirected, probably session expired');
-                alert('انتهت صلاحية الجلسة. يرجى إعادة تسجيل الدخول وإعادة المحاولة.');
-                window.location.href = '/ar/auth/login/';
-                throw new Error('Session expired');
-            }
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                alert('تم إرسال الإشعار الخصم إلى JoFotara بنجاح!\nUUID: ' + (data.uuid || 'غير محدد'));
-                location.reload();
-            } else {
-                alert('فشل في إرسال الإشعار الخصم: ' + (data.error || 'خطأ غير معروف'));
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('حدث خطأ في الاتصال بالخادم');
-        })
-        .finally(() => {
-            // Reset button state
+function sendToJofotara(debitNoteId) {
+    const btn = document.getElementById('sendToJofotaraBtn');
+    const originalContent = btn.innerHTML;
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>{% trans "Sending..." %}';
+    
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    fetch(`/ar/purchases/debit-notes/${debitNoteId}/send-to-jofotara/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
             btn.disabled = false;
-            btn.innerHTML = originalText;
-        });
-    }
+            btn.innerHTML = originalContent;
+            alert('{% trans "Error" %}: ' + (data.error || '{% trans "Unknown error" %}'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        btn.disabled = false;
+        btn.innerHTML = originalContent;
+        alert('{% trans "Failed to send debit note" %}');
+    });
 }
 
 function copyToClipboard(text) {
