@@ -243,6 +243,14 @@
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                             {% endif %}
+                                            {% if user.is_superuser or perms.purchases.can_post_purchases %}
+                                            <button type="button"
+                                                    class="btn btn-sm {% if return.is_posted_to_tax %}btn-secondary{% else %}btn-success{% endif %}"
+                                                    title="{% if return.is_posted_to_tax %}{% trans 'Posted to JoFotara' %}{% else %}{% trans 'Send to JoFotara' %}{% endif %}"
+                                                    {% if not return.is_posted_to_tax %}onclick="sendToJoFotara({{ return.pk }}, 'return')"{% else %}disabled{% endif %}>
+                                                <i class="fas fa-paper-plane"></i>
+                                            </button>
+                                            {% endif %}
                                             {% if user.is_superuser or perms.purchases.can_delete_purchase_returns %}
                                             <a href="{% url 'purchases:return_delete' return.pk %}" 
                                                class="btn btn-sm btn-outline-danger" title="{% trans "Delete" %}">
@@ -304,4 +312,48 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Send to JoFotara function
+function sendToJoFotara(returnId, docType) {
+    if (!confirm('{% trans "هل أنت متأكد من إرسال هذا المرتجع إلى جوفوتارا؟" %}')) {
+        return;
+    }
+
+    const btn = event.target.closest('button');
+    const originalContent = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+    let url = `/ar/purchases/returns/${returnId}/send-to-jofotara/`;
+
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('{% trans "تم الترحيل بنجاح إلى جوفوتارا" %}');
+            location.reload();
+        } else {
+            alert('{% trans "فشل الترحيل: " %}' + (data.error || '{% trans "خطأ غير معروف" %}'));
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('{% trans "حدث خطأ أثناء الترحيل" %}');
+        btn.disabled = false;
+        btn.innerHTML = originalContent;
+    });
+}
+</script>
 {% endblock %}

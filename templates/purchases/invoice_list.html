@@ -463,6 +463,14 @@
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                         {% endif %}
+                                        {% if user.is_superuser or perms.purchases.can_post_purchases %}
+                                            <button type="button"
+                                                    class="btn {% if invoice.is_posted_to_tax %}btn-secondary{% else %}btn-success{% endif %}"
+                                                    title="{% if invoice.is_posted_to_tax %}{% trans 'Posted to JoFotara' %}{% else %}{% trans 'Send to JoFotara' %}{% endif %}"
+                                                    {% if not invoice.is_posted_to_tax %}onclick="sendToJoFotara({{ invoice.id }}, 'invoice')"{% else %}disabled{% endif %}>
+                                                <i class="fas fa-paper-plane"></i>
+                                            </button>
+                                        {% endif %}
                                         {% if perms.purchases.can_delete_purchases or user.is_superuser %}
                                             <a href="{% url 'purchases:invoice_delete' invoice.id %}" 
                                                class="btn btn-outline-danger" title="{% trans "Delete" %}"
@@ -560,5 +568,51 @@ window.addEventListener('beforeprint', function() {
     const printDate = now.toLocaleDateString('ar-SA') + ' ' + now.toLocaleTimeString('ar-SA');
     document.querySelector('.card').setAttribute('data-print-date', printDate);
 });
+
+// Send to JoFotara function
+function sendToJoFotara(invoiceId, docType) {
+    if (!confirm('{% trans "هل أنت متأكد من إرسال هذه الفاتورة إلى جوفوتارا؟" %}')) {
+        return;
+    }
+
+    const btn = event.target.closest('button');
+    const originalContent = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+    let url = `/ar/purchases/invoices/${invoiceId}/send-to-jofotara/`;
+    if (docType === 'return') {
+        url = `/ar/purchases/returns/${invoiceId}/send-to-jofotara/`;
+    } else if (docType === 'debitnote') {
+        url = `/ar/purchases/debit-notes/${invoiceId}/send-to-jofotara/`;
+    }
+
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('{% trans "تم الترحيل بنجاح إلى جوفوتارا" %}');
+            location.reload();
+        } else {
+            alert('{% trans "فشل الترحيل: " %}' + (data.error || '{% trans "خطأ غير معروف" %}'));
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('{% trans "حدث خطأ أثناء الترحيل" %}');
+        btn.disabled = false;
+        btn.innerHTML = originalContent;
+    });
+}
+
 </script>
 {% endblock %}

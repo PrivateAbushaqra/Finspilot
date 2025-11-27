@@ -71,6 +71,14 @@
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                             {% endif %}
+                                            {% if user.is_superuser or perms.purchases.can_post_purchases %}
+                                            <button type="button"
+                                                    class="btn btn-sm {% if debitnote.is_posted_to_tax %}btn-secondary{% else %}btn-success{% endif %}"
+                                                    title="{% if debitnote.is_posted_to_tax %}تم الترحيل إلى جوفوتارا{% else %}إرسال إلى جوفوتارا{% endif %}"
+                                                    {% if not debitnote.is_posted_to_tax %}onclick="sendToJoFotara({{ debitnote.pk }}, 'debitnote')"{% else %}disabled{% endif %}>
+                                                <i class="fas fa-paper-plane"></i>
+                                            </button>
+                                            {% endif %}
                                             {% if perms.purchases.can_delete_debit_notes or user.is_superuser %}
                                             <a href="{% url 'purchases:debitnote_delete' debitnote.pk %}" 
                                                class="btn btn-sm btn-outline-danger"
@@ -135,4 +143,48 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Send to JoFotara function
+function sendToJoFotara(debitnoteId, docType) {
+    if (!confirm('هل أنت متأكد من إرسال هذه المذكرة إلى جوفوتارا؟')) {
+        return;
+    }
+
+    const btn = event.target.closest('button');
+    const originalContent = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+    let url = `/ar/purchases/debit-notes/${debitnoteId}/send-to-jofotara/`;
+
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('تم الترحيل بنجاح إلى جوفوتارا');
+            location.reload();
+        } else {
+            alert('فشل الترحيل: ' + (data.error || 'خطأ غير معروف'));
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ أثناء الترحيل');
+        btn.disabled = false;
+        btn.innerHTML = originalContent;
+    });
+}
+</script>
 {% endblock %}
