@@ -45,6 +45,10 @@ class SalesInvoice(models.Model):
                                           help_text=_('Date and time when invoice was sent to JoFotara'))
     jofotara_verification_url = models.URLField(_('JoFotara Verification URL'), blank=True, null=True,
                                               help_text=_('URL to verify invoice on JoFotara portal'))
+    jofotara_qr_code = models.TextField(_('JoFotara QR Code'), blank=True, null=True,
+                                       help_text=_('QR Code image data from JoFotara (base64 or URL)'))
+    is_posted_to_tax = models.BooleanField(_('Posted to Tax Authority'), default=False,
+                                          help_text=_('Whether this invoice has been posted to Income and Sales Tax Department'))
 
     class Meta:
         verbose_name = _('Sales Invoice')
@@ -56,6 +60,7 @@ class SalesInvoice(models.Model):
             ('can_add_sales', 'Can Add Sales'),
             ('can_edit_sales', 'Can Edit Sales'),
             ('can_delete_sales', 'Can Delete Sales'),
+            ('can_post_sales', 'Can Post Sales to Tax Authority'),
             ('can_view_sales_statement', 'Can View Sales Statement'),
             ('can_view_sales_returns_statement', 'Can View Sales Returns Statement'),
             ('can_view_pos', 'Can View POS'),
@@ -156,6 +161,18 @@ class SalesReturn(models.Model):
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
     updated_at = models.DateTimeField(_('Updated At'), auto_now=True)
 
+    # JoFotara integration fields
+    jofotara_uuid = models.CharField(_('JoFotara UUID'), max_length=100, blank=True, null=True, 
+                                   help_text=_('UUID returned from JoFotara API'))
+    jofotara_sent_at = models.DateTimeField(_('Sent to JoFotara At'), blank=True, null=True,
+                                          help_text=_('Date and time when return was sent to JoFotara'))
+    jofotara_verification_url = models.URLField(_('JoFotara Verification URL'), blank=True, null=True,
+                                              help_text=_('URL to verify return on JoFotara portal'))
+    jofotara_qr_code = models.TextField(_('JoFotara QR Code'), blank=True, null=True,
+                                       help_text=_('QR Code image data from JoFotara (base64 or URL)'))
+    is_posted_to_tax = models.BooleanField(_('Posted to Tax Authority'), default=False,
+                                          help_text=_('Whether this return has been posted to Income and Sales Tax Department'))
+
     class Meta:
         verbose_name = _('Sales Return')
         verbose_name_plural = _('Sales Returns')
@@ -166,6 +183,7 @@ class SalesReturn(models.Model):
             ('can_add_sales_returns', 'Can Add Sales Returns'),
             ('can_edit_sales_returns', 'Can Edit Sales Returns'),
             ('can_delete_sales_returns', 'Can Delete Sales Returns'),
+            ('can_post_sales_returns', 'Can Post Sales Returns to Tax Authority'),
         ]
 
     def __str__(self):
@@ -223,6 +241,10 @@ class SalesCreditNote(models.Model):
                                           help_text=_('Date and time when credit note was sent to JoFotara'))
     jofotara_verification_url = models.URLField(_('JoFotara Verification URL'), blank=True, null=True,
                                               help_text=_('URL to verify credit note on JoFotara portal'))
+    jofotara_qr_code = models.TextField(_('JoFotara QR Code'), blank=True, null=True,
+                                       help_text=_('QR Code image data from JoFotara (base64 or URL)'))
+    is_posted_to_tax = models.BooleanField(_('Posted to Tax Authority'), default=False,
+                                          help_text=_('Whether this credit note has been posted to Income and Sales Tax Department'))
 
     class Meta:
         verbose_name = _('Credit Note')
@@ -234,6 +256,7 @@ class SalesCreditNote(models.Model):
             ('can_add_credit_notes', 'Can Add Credit Notes'),
             ('can_edit_credit_notes', 'Can Edit Credit Notes'),
             ('can_delete_credit_notes', 'Can Delete Credit Notes'),
+            ('can_post_credit_notes', 'Can Post Credit Notes to Tax Authority'),
         ]
 
     def save(self, *args, **kwargs):

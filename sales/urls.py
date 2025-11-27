@@ -12,6 +12,7 @@ urlpatterns = [
     path('invoices/edit/<int:pk>/', views.SalesInvoiceUpdateView.as_view(), name='invoice_edit'),
     path('invoices/delete/<int:pk>/', views.SalesInvoiceDeleteView.as_view(), name='invoice_delete'),
     path('invoices/<int:pk>/send-to-jofotara/', views.send_invoice_to_jofotara, name='send_invoice_to_jofotara'),
+    path('invoices/<int:pk>/post/', views.invoice_post_to_tax, name='invoice_post'),
     
     # Print Invoice
     path('invoices/print/<int:pk>/', views.print_sales_invoice, name='print_invoice'),
@@ -28,6 +29,8 @@ urlpatterns = [
     path('returns/<int:pk>/', views.SalesReturnDetailView.as_view(), name='return_detail'),
     path('returns/edit/<int:pk>/', views.SalesReturnUpdateView.as_view(), name='return_edit'),
     path('returns/delete/<int:pk>/', views.SalesReturnDeleteView.as_view(), name='return_delete'),
+    path('returns/<int:pk>/send-to-jofotara/', views.send_return_to_jofotara, name='send_return_to_jofotara'),
+    path('returns/<int:pk>/post/', views.return_post_to_tax, name='return_post'),
     
     # API endpoints
     path('api/invoices-for-returns/', views.get_invoices_for_returns, name='api_invoices_for_returns'),
@@ -50,4 +53,5 @@ urlpatterns = [
     path('credit-notes/delete/<int:pk>/', views.SalesCreditNoteDeleteView.as_view(), name='creditnote_delete'),
     path('credit-notes/report/', views.SalesCreditNoteReportView.as_view(), name='creditnote_report'),
     path('credit-notes/<int:pk>/send-to-jofotara/', views.send_creditnote_to_jofotara, name='send_creditnote_to_jofotara'),
+    path('credit-notes/<int:pk>/post/', views.creditnote_post_to_tax, name='creditnote_post'),
 ]

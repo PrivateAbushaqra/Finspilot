@@ -129,6 +129,14 @@
                             </td>
                         </tr>
                         {% endif %}
+                        {% if creditnote.jofotara_qr_code %}
+                        <tr>
+                            <td><strong>{% trans "QR Code" %}:</strong></td>
+                            <td>
+                                <img src="{{ creditnote.jofotara_qr_code }}" alt="JoFotara QR Code" style="max-width: 200px; max-height: 200px;" class="border p-2">
+                            </td>
+                        </tr>
+                        {% endif %}
                         {% endif %}
                     </table>
                 </div>

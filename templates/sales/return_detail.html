@@ -174,6 +174,64 @@
                     {% endif %}
                 </div>
 
+                <!-- JoFotara Status -->
+                {% if return.is_posted_to_tax %}
+                <div class="info-section">
+                    <h5 class="mb-3">
+                        <i class="fas fa-file-invoice text-primary me-2"></i>
+                        {% trans "JoFotara Status" %}
+                        <span class="badge bg-success">{% trans "Sent" %}</span>
+                    </h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-sm">
+                                {% if return.jofotara_sent_at %}
+                                <tr>
+                                    <td><strong>{% trans "Sent Date" %}:</strong></td>
+                                    <td>{{ return.jofotara_sent_at|date:"Y-m-d H:i" }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if return.jofotara_uuid %}
+                                <tr>
+                                    <td><strong>{% trans "UUID" %}:</strong></td>
+                                    <td>
+                                        <code>{{ return.jofotara_uuid }}</code>
+                                        <button class="btn btn-sm btn-outline-secondary ms-2" onclick="copyToClipboard('{{ return.jofotara_uuid }}')">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                {% if return.jofotara_verification_url %}
+                                <tr>
+                                    <td><strong>{% trans "Verification Link" %}:</strong></td>
+                                    <td>
+                                        <a href="{{ return.jofotara_verification_url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-external-link-alt me-1"></i>{% trans "Verify Return" %}
+                                        </a>
+                                        <button class="btn btn-sm btn-outline-secondary ms-2" onclick="copyToClipboard('{{ return.jofotara_verification_url }}')">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            {% if return.jofotara_qr_code %}
+                            <div class="text-center">
+                                <label class="form-label text-muted"><strong>{% trans "QR Code" %}</strong></label>
+                                <div>
+                                    <img src="{{ return.jofotara_qr_code }}" alt="JoFotara QR Code" style="max-width: 200px; max-height: 200px;" class="border p-2">
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
                 <!-- Return Items -->
                 {% if return.items.exists %}
                 <div class="items-section">

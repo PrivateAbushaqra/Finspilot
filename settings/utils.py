@@ -827,3 +827,57 @@ def send_debit_note_to_jofotara(debit_note, user=None):
             'success': False,
             'error': str(e)
         }
+
+
+def send_return_to_jofotara(sales_return, user=None):
+    """Send sales return to JoFotara"""
+    try:
+        # Prepare return data similar to credit note (returns are treated as credit notes)
+        invoice_data = {
+            'invoice_number': sales_return.return_number,
+            'issue_date': sales_return.return_date.isoformat(),
+            'issue_time': sales_return.created_at.time().isoformat() if hasattr(sales_return, 'created_at') else datetime.now().time().isoformat(),
+            'original_invoice_number': sales_return.invoice.invoice_number if sales_return.invoice else '',
+            'original_invoice_date': sales_return.invoice.invoice_date.isoformat() if sales_return.invoice else '',
+            'seller': {
+                'name': sales_return.company.name if hasattr(sales_return, 'company') else '',
+                'tax_number': sales_return.company.tax_number if hasattr(sales_return, 'company') else '',
+            },
+            'buyer': {
+                'name': sales_return.customer.name,
+                'tax_number': getattr(sales_return.customer, 'tax_number', ''),
+            },
+            'lines': [
+                {
+                    'product_name': item.product.name,
+                    'quantity': item.quantity,
+                    'unit_price': float(item.unit_price),
+                    'tax_percent': float(item.tax_rate) if hasattr(item, 'tax_rate') else 0,
+                    'total': float(item.total),
+                } for item in sales_return.items.all()
+            ],
+            'currency': 'JOD',
+        }
+        
+        result = send_invoice_to_jofotara(invoice_data, 'credit_note')
+
+        # Log the result only if user is provided
+        if user:
+            from core.models import AuditLog
+            AuditLog.objects.create(
+                user=user,
+                action_type='send_return',
+                content_type='SalesReturn',
+                object_id=sales_return.id,
+                description=f'إرسال مرتجع مبيعات {sales_return.return_number} إلى JoFotara: {"نجح" if result["success"] else "فشل"}'
+            )
+
+        return result
+
+    except Exception as e:
+        logger.error(f"Error sending return: {str(e)}")
+        return {
+            'success': False,
+            'error': str(e)
+        }
+

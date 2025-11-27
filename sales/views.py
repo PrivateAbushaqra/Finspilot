@@ -3232,15 +3232,53 @@ def send_invoice_to_jofotara(request, pk):
         result = send_sales_invoice_to_jofotara(invoice, request.user)
         
         if result['success']:
-            # Update invoice with JoFotara UUID if available
+            # Update invoice with JoFotara data
             if 'uuid' in result:
                 invoice.jofotara_uuid = result['uuid']
                 invoice.jofotara_sent_at = timezone.now()
                 invoice.jofotara_verification_url = result.get('verification_url')
+                invoice.jofotara_qr_code = result.get('qr_code')  # حفظ QR Code
+                invoice.is_posted_to_tax = True  # تم الترحيل بنجاح
                 invoice.save()
+                
+                # تسجيل في سجل الأنشطة
+                try:
+                    from core.models import AuditLog
+                    AuditLog.objects.create(
+                        user=request.user,
+                        action_type='post_to_tax',
+                        content_type='SalesInvoice',
+                        object_id=invoice.id,
+                        description=f'تم إرسال الفاتورة {invoice.invoice_number} إلى JoFotara بنجاح - UUID: {result["uuid"]}',
+                        ip_address=request.META.get('REMOTE_ADDR')
+                    )
+                except Exception:
+                    pass
             
-            messages.success(request, f'تم إرسال الفاتورة {invoice.invoice_number} إلى JoFotara بنجاح')
+            # تحقق من وجود QR Code في الاستجابة
+            if not result.get('qr_code'):
+                messages.warning(request, f'تم إرسال الفاتورة {invoice.invoice_number} إلى JoFotara لكن لم يتم استلام رمز QR. يرجى التحقق من إعدادات JoFotara.')
+            else:
+                messages.success(request, f'تم إرسال الفاتورة {invoice.invoice_number} إلى JoFotara بنجاح وحفظ رمز QR')
         else:
+            # فشل الإرسال
+            invoice.is_posted_to_tax = False
+            invoice.save()
+            
+            # تسجيل الفشل في سجل الأنشطة
+            try:
+                from core.models import AuditLog
+                AuditLog.objects.create(
+                    user=request.user,
+                    action_type='error',
+                    content_type='SalesInvoice',
+                    object_id=invoice.id,
+                    description=f'فشل إرسال الفاتورة {invoice.invoice_number} إلى JoFotara: {result.get("error", "خطأ غير معروف")}',
+                    ip_address=request.META.get('REMOTE_ADDR')
+                )
+            except Exception:
+                pass
+            
             messages.error(request, f'فشل في إرسال الفاتورة: {result.get("error", "خطأ غير معروف")}')
         
         return JsonResponse(result)
@@ -3285,15 +3323,53 @@ def send_creditnote_to_jofotara(request, pk):
         result = send_credit_note_to_jofotara(credit_note, request.user)
         
         if result['success']:
-            # Update credit note with JoFotara UUID if available
+            # Update credit note with JoFotara data
             if 'uuid' in result:
                 credit_note.jofotara_uuid = result['uuid']
                 credit_note.jofotara_sent_at = timezone.now()
                 credit_note.jofotara_verification_url = result.get('verification_url')
+                credit_note.jofotara_qr_code = result.get('qr_code')  # حفظ QR Code
+                credit_note.is_posted_to_tax = True  # تم الترحيل بنجاح
                 credit_note.save()
+                
+                # تسجيل في سجل الأنشطة
+                try:
+                    from core.models import AuditLog
+                    AuditLog.objects.create(
+                        user=request.user,
+                        action_type='post_to_tax',
+                        content_type='SalesCreditNote',
+                        object_id=credit_note.id,
+                        description=f'تم إرسال الإشعار الدائن {credit_note.note_number} إلى JoFotara بنجاح - UUID: {result["uuid"]}',
+                        ip_address=request.META.get('REMOTE_ADDR')
+                    )
+                except Exception:
+                    pass
             
-            messages.success(request, f'تم إرسال الإشعار الدائن {credit_note.note_number} إلى JoFotara بنجاح')
+            # تحقق من وجود QR Code في الاستجابة
+            if not result.get('qr_code'):
+                messages.warning(request, f'تم إرسال الإشعار الدائن {credit_note.note_number} إلى JoFotara لكن لم يتم استلام رمز QR. يرجى التحقق من إعدادات JoFotara.')
+            else:
+                messages.success(request, f'تم إرسال الإشعار الدائن {credit_note.note_number} إلى JoFotara بنجاح وحفظ رمز QR')
         else:
+            # فشل الإرسال
+            credit_note.is_posted_to_tax = False
+            credit_note.save()
+            
+            # تسجيل الفشل في سجل الأنشطة
+            try:
+                from core.models import AuditLog
+                AuditLog.objects.create(
+                    user=request.user,
+                    action_type='error',
+                    content_type='SalesCreditNote',
+                    object_id=credit_note.id,
+                    description=f'فشل إرسال الإشعار الدائن {credit_note.note_number} إلى JoFotara: {result.get("error", "خطأ غير معروف")}',
+                    ip_address=request.META.get('REMOTE_ADDR')
+                )
+            except Exception:
+                pass
+            
             messages.error(request, f'فشل في إرسال الإشعار الدائن: {result.get("error", "خطأ غير معروف")}')
         
         return JsonResponse(result)
@@ -3301,6 +3377,97 @@ def send_creditnote_to_jofotara(request, pk):
     except Exception as e:
         logger = logging.getLogger(__name__)
         logger.error(f"Error sending credit note to JoFotara: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': f'خطأ في النظام: {str(e)}'
+        })
+
+
+@login_required
+@require_POST
+def send_return_to_jofotara(request, pk):
+    """Send sales return to JoFotara"""
+    # للطلبات AJAX، نتحقق من الـ header ونعيد JSON response
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    
+    if not is_ajax:
+        return JsonResponse({
+            'success': False,
+            'error': 'هذه الدالة تستخدم للطلبات AJAX فقط'
+        }, status=400)
+    
+    try:
+        # Get the return
+        sales_return = get_object_or_404(SalesReturn, pk=pk)
+        
+        # Check if user has permission to send returns
+        if not request.user.has_perm('sales.can_send_to_jofotara'):
+            return JsonResponse({
+                'success': False,
+                'error': 'ليس لديك صلاحية إرسال المرتجعات إلى JoFotara'
+            })
+        
+        # Import the utility function
+        from settings.utils import send_return_to_jofotara as send_return_api
+        
+        # Send the return
+        result = send_return_api(sales_return, request.user)
+        
+        if result['success']:
+            # Update return with JoFotara data
+            if 'uuid' in result:
+                sales_return.jofotara_uuid = result['uuid']
+                sales_return.jofotara_sent_at = timezone.now()
+                sales_return.jofotara_verification_url = result.get('verification_url')
+                sales_return.jofotara_qr_code = result.get('qr_code')  # حفظ QR Code
+                sales_return.is_posted_to_tax = True  # تم الترحيل بنجاح
+                sales_return.save()
+                
+                # تسجيل في سجل الأنشطة
+                try:
+                    from core.models import AuditLog
+                    AuditLog.objects.create(
+                        user=request.user,
+                        action_type='post_to_tax',
+                        content_type='SalesReturn',
+                        object_id=sales_return.id,
+                        description=f'تم إرسال المرتجع {sales_return.return_number} إلى JoFotara بنجاح - UUID: {result["uuid"]}',
+                        ip_address=request.META.get('REMOTE_ADDR')
+                    )
+                except Exception:
+                    pass
+            
+            # تحقق من وجود QR Code في الاستجابة
+            if not result.get('qr_code'):
+                messages.warning(request, f'تم إرسال المرتجع {sales_return.return_number} إلى JoFotara لكن لم يتم استلام رمز QR. يرجى التحقق من إعدادات JoFotara.')
+            else:
+                messages.success(request, f'تم إرسال المرتجع {sales_return.return_number} إلى JoFotara بنجاح وحفظ رمز QR')
+        else:
+            # فشل الإرسال
+            sales_return.is_posted_to_tax = False
+            sales_return.save()
+            
+            # تسجيل الفشل في سجل الأنشطة
+            try:
+                from core.models import AuditLog
+                AuditLog.objects.create(
+                    user=request.user,
+                    action_type='error',
+                    content_type='SalesReturn',
+                    object_id=sales_return.id,
+                    description=f'فشل إرسال المرتجع {sales_return.return_number} إلى JoFotara: {result.get("error", "خطأ غير معروف")}',
+                    ip_address=request.META.get('REMOTE_ADDR')
+                )
+            except Exception:
+                pass
+            
+            messages.error(request, f'فشل في إرسال المرتجع: {result.get("error", "خطأ غير معروف")}')
+        
+        return JsonResponse(result)
+        
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error sending return to JoFotara: {str(e)}")
         return JsonResponse({
             'success': False,
             'error': f'خطأ في النظام: {str(e)}'
@@ -3827,3 +3994,139 @@ def invoice_delete_item(request, invoice_id, item_id):
         
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'خطأ: {str(e)}'})
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def invoice_post_to_tax(request, pk):
+    """
+    Post sales invoice to tax authority (JoFotara)
+    """
+    invoice = get_object_or_404(SalesInvoice, pk=pk)
+    
+    # Check permissions
+    if not (request.user.is_superuser or request.user.has_perm('sales.can_post_sales')):
+        messages.error(request, _('You do not have permission to post invoices to tax authority'))
+        return redirect('sales:invoice_list')
+    
+    # Check if already posted
+    if invoice.is_posted_to_tax:
+        messages.warning(request, _('This invoice has already been posted to tax authority'))
+        return redirect('sales:invoice_list')
+    
+    try:
+        with transaction.atomic():
+            # Update invoice status
+            invoice.is_posted_to_tax = True
+            invoice.jofotara_sent_at = timezone.now()
+            invoice.save(update_fields=['is_posted_to_tax', 'jofotara_sent_at'])
+            
+            # Log activity
+            try:
+                from core.signals import log_user_activity
+                log_user_activity(
+                    request,
+                    'update',
+                    invoice,
+                    f'تم ترحيل فاتورة المبيعات {invoice.invoice_number} إلى إدارة الضريبة'
+                )
+            except Exception:
+                pass
+            
+            messages.success(request, _('Invoice has been successfully posted to tax authority'))
+            
+    except Exception as e:
+        messages.error(request, f'خطأ في ترحيل الفاتورة: {str(e)}')
+    
+    return redirect('sales:invoice_list')
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def return_post_to_tax(request, pk):
+    """
+    Post sales return to tax authority (JoFotara)
+    """
+    sales_return = get_object_or_404(SalesReturn, pk=pk)
+    
+    # Check permissions
+    if not (request.user.is_superuser or request.user.has_perm('sales.can_post_sales_returns')):
+        messages.error(request, _('You do not have permission to post returns to tax authority'))
+        return redirect('sales:return_list')
+    
+    # Check if already posted
+    if sales_return.is_posted_to_tax:
+        messages.warning(request, _('This return has already been posted to tax authority'))
+        return redirect('sales:return_list')
+    
+    try:
+        with transaction.atomic():
+            # Update return status
+            sales_return.is_posted_to_tax = True
+            sales_return.jofotara_sent_at = timezone.now()
+            sales_return.save(update_fields=['is_posted_to_tax', 'jofotara_sent_at'])
+            
+            # Log activity
+            try:
+                from core.signals import log_user_activity
+                log_user_activity(
+                    request,
+                    'update',
+                    sales_return,
+                    f'تم ترحيل مرتجع المبيعات {sales_return.return_number} إلى إدارة الضريبة'
+                )
+            except Exception:
+                pass
+            
+            messages.success(request, _('Sales return has been successfully posted to tax authority'))
+            
+    except Exception as e:
+        messages.error(request, f'خطأ في ترحيل المرتجع: {str(e)}')
+    
+    return redirect('sales:return_list')
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def creditnote_post_to_tax(request, pk):
+    """
+    Post credit note to tax authority (JoFotara)
+    """
+    creditnote = get_object_or_404(SalesCreditNote, pk=pk)
+    
+    # Check permissions
+    if not (request.user.is_superuser or request.user.has_perm('sales.can_post_credit_notes')):
+        messages.error(request, _('You do not have permission to post credit notes to tax authority'))
+        return redirect('sales:creditnote_list')
+    
+    # Check if already posted
+    if creditnote.is_posted_to_tax:
+        messages.warning(request, _('This credit note has already been posted to tax authority'))
+        return redirect('sales:creditnote_list')
+    
+    try:
+        with transaction.atomic():
+            # Update credit note status
+            creditnote.is_posted_to_tax = True
+            creditnote.jofotara_sent_at = timezone.now()
+            creditnote.save(update_fields=['is_posted_to_tax', 'jofotara_sent_at'])
+            
+            # Log activity
+            try:
+                from core.signals import log_user_activity
+                log_user_activity(
+                    request,
+                    'update',
+                    creditnote,
+                    f'تم ترحيل إشعار دائن {creditnote.note_number} إلى إدارة الضريبة'
+                )
+            except Exception:
+                pass
+            
+            messages.success(request, _('Credit note has been successfully posted to tax authority'))
+            
+    except Exception as e:
+        messages.error(request, f'خطأ في ترحيل الإشعار الدائن: {str(e)}')
+    
+    return redirect('sales:creditnote_list')
+

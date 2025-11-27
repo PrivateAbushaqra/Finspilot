@@ -262,6 +262,7 @@
                                                 {% endif %}
                                             </a>
                                         </th>
+                                        <th>JoFotara</th>
                                         <th>{% trans "Actions" %}</th>
                                     </tr>
                                 </thead>
@@ -296,6 +297,19 @@
                                                 {{ return.created_by.get_full_name|default:return.created_by.username }}
                                             </small>
                                         </td>
+                                        <td class="text-center">
+                                            {% if return.is_posted_to_tax %}
+                                                <span class="badge bg-secondary" title="{% trans 'Posted to Tax Authority' %}">
+                                                    <i class="fas fa-check-circle me-1"></i>
+                                                    {% trans "Posted" %}
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-danger" title="{% trans 'Not posted yet' %}">
+                                                    <i class="fas fa-times-circle me-1"></i>
+                                                    {% trans "Not Posted" %}
+                                                </span>
+                                            {% endif %}
+                                        </td>
                                         <td>
                                             <div class="btn-group" role="group">
                                                 <a href="{% url 'sales:return_detail' return.pk %}" 
@@ -308,6 +322,14 @@
                                                    class="btn btn-sm btn-outline-warning" 
                                                    title="{% trans "Edit" %}">
                                                     <i class="fas fa-edit"></i>
+                                                </a>
+                                                {% endif %}
+                                                {% if user.is_superuser or perms.sales.can_post_sales_returns %}
+                                                <a href="{% url 'sales:return_post' return.pk %}" 
+                                                   class="btn btn-sm {% if return.is_posted_to_tax %}btn-secondary{% else %}btn-success{% endif %}" 
+                                                   title="{% if return.is_posted_to_tax %}{% trans 'Posted to Tax Authority' %}{% else %}{% trans 'Post to Tax Authority' %}{% endif %}"
+                                                   {% if not return.is_posted_to_tax %}onclick="return confirm('{% trans "Are you sure you want to post this return to tax authority?" %}')"{% endif %}>
+                                                    <i class="fas fa-paper-plane"></i>
                                                 </a>
                                                 {% endif %}
                                                 {% if user.is_superuser or perms.sales.can_delete_sales_returns %}
