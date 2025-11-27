@@ -67,6 +67,12 @@
                 {% trans "Back to" %} {% trans "List" %}
             </a>
             <div class="btn-group">
+                {% if not return.is_posted_to_tax %}
+                <button class="btn btn-info me-2" id="sendToJofotaraBtn" onclick="sendToJofotara({{ return.pk }})">
+                    <i class="fas fa-paper-plane me-1"></i>
+                    {% trans "Send to JoFotara" %}
+                </button>
+                {% endif %}
                 <a href="{% url 'sales:return_edit' return.pk %}" class="btn btn-warning">
                     <i class="fas fa-edit me-1"></i>
                     {% trans "Edit" %}
@@ -379,6 +385,104 @@
 
 {% block extra_js %}
 <script>
+// Send return to JoFotara
+function sendToJofotara(returnId) {
+    console.log('Starting sendToJofotara for return:', returnId);
+    if (confirm("{% trans 'Are you sure you want to send this return to JoFotara?' %}")) {
+        const btn = document.getElementById("sendToJofotaraBtn");
+        const originalText = btn.innerHTML;
+        
+        // Show loading state
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>{% trans "Sending..." %}';
+        
+        // Get CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+        
+        // Send AJAX request
+        const currentPath = window.location.pathname;
+        const langPrefix = currentPath.match(/^\/(ar|en)\//)?.[0] || '/ar/';
+        const url = `${langPrefix}sales/returns/${returnId}/send-to-jofotara/`;
+        console.log('Sending POST request to:', url);
+        
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken ? csrfToken.value : '',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response data:', data);
+            
+            if (data.success) {
+                // إعادة تحميل الصفحة فوراً - الرسائل ستظهر من Django messages
+                location.reload();
+            } else {
+                // إعادة تعيين الزر
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                
+                // عرض رسالة الخطأ
+                const errorMsg = data.error || '{% trans "Unknown error" %}';
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
+                alertDiv.innerHTML = `
+                    <strong>{% trans "Error" %}!</strong> ${errorMsg}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.querySelector('.detail-container').prepend(alertDiv);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            
+            // إعادة تعيين الزر
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            
+            // عرض رسالة خطأ الاتصال
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
+            alertDiv.innerHTML = `
+                <strong>{% trans "Connection Error" %}!</strong> {% trans "Could not connect to server. Please try again." %}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.querySelector('.detail-container').prepend(alertDiv);
+        });
+    }
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        const notification = document.createElement('div');
+        notification.className = 'alert alert-success alert-dismissible fade show position-fixed';
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        notification.innerHTML = `
+            <i class="fas fa-check-circle me-2"></i>
+            {% trans "Copied to clipboard" %}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(notification);
+        
+        setTimeout(function() {
+            notification.remove();
+        }, 3000);
+    }, function(err) {
+        console.error('Could not copy text: ', err);
+    });
+}
+
 $(document).ready(function() {
     // Add tooltips to action buttons
     $('[title]').tooltip();

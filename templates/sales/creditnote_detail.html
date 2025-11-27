@@ -277,21 +277,42 @@ function sendToJofotara(creditnoteId) {
             return response.json();
         })
         .then(data => {
+            console.log('Response data:', data);
+            
             if (data.success) {
-                alert('{% trans "Credit note sent to JoFotara successfully!" %}\nUUID: ' + (data.uuid || '{% trans "Not specified" %}'));
+                // إعادة تحميل الصفحة فوراً - الرسائل ستظهر من Django messages
                 location.reload();
             } else {
-                alert('{% trans "Failed to send credit note" %}: ' + (data.error || '{% trans "Unknown error" %}'));
+                // إعادة تعيين الزر
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                
+                // عرض رسالة الخطأ
+                const errorMsg = data.error || '{% trans "Unknown error" %}';
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
+                alertDiv.innerHTML = `
+                    <strong>{% trans "Error" %}!</strong> ${errorMsg}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.querySelector('.detail-container').prepend(alertDiv);
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('{% trans "Error connecting to server" %}');
-        })
-        .finally(() => {
-            // Reset button state
+            
+            // إعادة تعيين الزر
             btn.disabled = false;
             btn.innerHTML = originalText;
+            
+            // عرض رسالة خطأ الاتصال
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
+            alertDiv.innerHTML = `
+                <strong>{% trans "Connection Error" %}!</strong> {% trans "Could not connect to server. Please try again." %}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.querySelector('.detail-container').prepend(alertDiv);
         });
     }
 }

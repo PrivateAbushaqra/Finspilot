@@ -469,8 +469,11 @@ class JoFotaraAPI:
             # Generate fake UUID
             fake_uuid = str(uuid.uuid4())
 
-            # Generate fake QR code (base64 encoded image)
-            fake_qr = base64.b64encode(b"Mock QR Code Data").decode()
+            # Generate fake QR code as Data URL (ready to display in <img> tag)
+            # Create a simple PNG QR code data URL for testing
+            fake_qr_base64 = base64.b64encode(b"Mock QR Code Data").decode()
+            # Format as data URL so it can be used directly in <img src="">
+            fake_qr_data_url = f"data:image/png;base64,{fake_qr_base64}"
 
             # Save XML file locally
             file_name = f"invoice_{json_data.get('InvoiceID', fake_uuid)}.xml"
@@ -482,7 +485,7 @@ class JoFotaraAPI:
             return {
                 'success': True,
                 'uuid': fake_uuid,
-                'qr_code': fake_qr,
+                'qr_code': fake_qr_data_url,  # Return as data URL
                 'verification_url': f"https://mock.jofotara.gov.jo/verify/{fake_uuid}",
                 'xml_content': xml_content,
                 'saved_file': file_path
