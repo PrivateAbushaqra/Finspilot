@@ -835,16 +835,20 @@ def send_debit_note_to_jofotara(debit_note, user=None):
 def send_return_to_jofotara(sales_return, user=None):
     """Send sales return to JoFotara"""
     try:
+        # Get company settings
+        from settings.models import CompanySettings
+        company = CompanySettings.objects.first()
+        
         # Prepare return data similar to credit note (returns are treated as credit notes)
         invoice_data = {
             'invoice_number': sales_return.return_number,
-            'issue_date': sales_return.return_date.isoformat(),
+            'issue_date': sales_return.date.isoformat(),  # Fixed: use 'date' not 'return_date'
             'issue_time': sales_return.created_at.time().isoformat() if hasattr(sales_return, 'created_at') else datetime.now().time().isoformat(),
-            'original_invoice_number': sales_return.invoice.invoice_number if sales_return.invoice else '',
-            'original_invoice_date': sales_return.invoice.invoice_date.isoformat() if sales_return.invoice else '',
+            'original_invoice_number': sales_return.original_invoice.invoice_number if sales_return.original_invoice else '',  # Fixed: use 'original_invoice'
+            'original_invoice_date': sales_return.original_invoice.date.isoformat() if sales_return.original_invoice else '',  # Fixed: use 'date'
             'seller': {
-                'name': sales_return.company.name if hasattr(sales_return, 'company') else '',
-                'tax_number': sales_return.company.tax_number if hasattr(sales_return, 'company') else '',
+                'name': company.company_name if company else 'Test Company',  # Fixed: use CompanySettings
+                'tax_number': company.tax_number if company else '123456789',
             },
             'buyer': {
                 'name': sales_return.customer.name,
@@ -853,10 +857,10 @@ def send_return_to_jofotara(sales_return, user=None):
             'lines': [
                 {
                     'product_name': item.product.name,
-                    'quantity': item.quantity,
+                    'quantity': float(item.quantity),
                     'unit_price': float(item.unit_price),
                     'tax_percent': float(item.tax_rate) if hasattr(item, 'tax_rate') else 0,
-                    'total': float(item.total),
+                    'total': float(item.total_amount),  # Fixed: use 'total_amount'
                 } for item in sales_return.items.all()
             ],
             'currency': 'JOD',
