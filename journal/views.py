@@ -159,7 +159,7 @@ def export_accounts_excel(request):
     # إنشاء ملف Excel
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = _("قائمة الحسابات")
+    ws.title = _("Accounts List")
     
     # تنسيق العناوين
     header_font = Font(bold=True, color="FFFFFF")
@@ -169,12 +169,12 @@ def export_accounts_excel(request):
     
     # إضافة العناوين
     headers = [
-        _("كود الحساب"),
-        _("اسم الحساب"),
-        _("النوع"),
+        _("Account Code"),
+        _("Account Name"),
+        _("Type"),
         _("Main Account"),
-        _("الرصيد"),
-        _("الحالة")
+        _("Balance"),
+        _("Status")
     ]
     
     for col_num, header in enumerate(headers, 1):
@@ -192,7 +192,7 @@ def export_accounts_excel(request):
         ws.cell(row=row_num, column=3, value=str(account.get_account_type_display())).border = border
         ws.cell(row=row_num, column=4, value=account.parent.name if account.parent else "").border = border
         ws.cell(row=row_num, column=5, value=float(account.get_balance())).border = border
-        ws.cell(row=row_num, column=6, value=_("نشط") if account.is_active else _("غير نشط")).border = border
+        ws.cell(row=row_num, column=6, value=_("Active") if account.is_active else _("Inactive")).border = border
     
     # إنشاء الاستجابة
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')

@@ -2,14 +2,14 @@
 {% load i18n %}
 {% load humanize %}
 
-{% block title %}{% trans "القيود المحاسبية" %}{% endblock %}
+{% block title %}{% trans "Journal Entries" %}{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
             <div class="d-sm-flex align-items-center justify-content-between mb-4">
-                <h1 class="h3 mb-0 text-gray-800">{% trans "لوحة تحكم القيود المحاسبية" %}</h1>
+                <h1 class="h3 mb-0 text-gray-800">{% trans "Journal Entries Dashboard" %}</h1>
             </div>
         </div>
     </div>
@@ -22,7 +22,7 @@
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                {% trans "إجمالي القيود" %}
+                                {% trans "Total Entries" %}
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_entries|intcomma }}</div>
                         </div>
@@ -40,7 +40,7 @@
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                {% trans "عدد الحسابات" %}
+                                {% trans "Number of Accounts" %}
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_accounts|intcomma }}</div>
                         </div>
@@ -58,7 +58,7 @@
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                {% trans "الأصول" %}
+                                {% trans "Assets" %}
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
                                 {{ account_types_count.asset|intcomma }}
@@ -78,7 +78,7 @@
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                {% trans "المطلوبات" %}
+                                {% trans "Liabilities" %}
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
                                 {{ account_types_count.liability|intcomma }}
@@ -98,33 +98,33 @@
         <div class="col-lg-6">
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">{% trans "إجراءات سريعة" %}</h6>
+                    <h6 class="m-0 font-weight-bold text-primary">{% trans "Quick Actions" %}</h6>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-6 mb-3">
                             <a href="{% url 'journal:entry_create' %}" class="btn btn-primary btn-block">
-                                <i class="fas fa-plus"></i> {% trans "قيد New" %}
+                                <i class="fas fa-plus"></i> {% trans "New Entry" %}
                             </a>
                         </div>
                         <div class="col-6 mb-3">
                             <a href="{% url 'journal:account_create' %}" class="btn btn-success btn-block">
-                                <i class="fas fa-plus"></i> {% trans "حساب New" %}
+                                <i class="fas fa-plus"></i> {% trans "New Account" %}
                             </a>
                         </div>
                         <div class="col-6 mb-3">
                             <a href="{% url 'journal:entry_list' %}" class="btn btn-info btn-block">
-                                <i class="fas fa-list"></i> {% trans "القيود" %}
+                                <i class="fas fa-list"></i> {% trans "Entries" %}
                             </a>
                         </div>
                         <div class="col-6 mb-3">
                             <a href="{% url 'journal:account_list' %}" class="btn btn-warning btn-block">
-                                <i class="fas fa-list"></i> {% trans "الحسابات" %}
+                                <i class="fas fa-list"></i> {% trans "Accounts" %}
                             </a>
                         </div>
                         <div class="col-12">
                             <a href="{% url 'journal:trial_balance' %}" class="btn btn-secondary btn-block">
-                                <i class="fas fa-balance-scale"></i> {% trans "ميزان المراجعة" %}
+                                <i class="fas fa-balance-scale"></i> {% trans "Trial Balance" %}
                             </a>
                         </div>
                     </div>
@@ -135,7 +135,7 @@
         <div class="col-lg-6">
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">{% trans "آخر القيود" %}</h6>
+                    <h6 class="m-0 font-weight-bold text-primary">{% trans "Recent Entries" %}</h6>
                 </div>
                 <div class="card-body">
                     {% if recent_entries %}
@@ -143,7 +143,7 @@
                             <table class="table table-sm">
                                 <thead>
                                     <tr>
-                                        <th>{% trans "رقم القيد" %}</th>
+                                        <th>{% trans "Entry Number" %}</th>
                                         <th>{% trans "Date" %}</th>
                                         <th>{% trans "Amount" %}</th>
                                     </tr>
@@ -165,15 +165,15 @@
                         </div>
                         <div class="text-center mt-3">
                             <a href="{% url 'journal:entry_list' %}" class="btn btn-sm btn-outline-primary">
-                                {% trans "View جميع القيود" %}
+                                {% trans "View All Entries" %}
                             </a>
                         </div>
                     {% else %}
                         <div class="text-center text-muted">
                             <i class="fas fa-book fa-3x mb-3"></i>
-                            <p>{% trans "لا توجد قيود محاسبية حتى الآن" %}</p>
+                            <p>{% trans "No journal entries yet" %}</p>
                             <a href="{% url 'journal:entry_create' %}" class="btn btn-primary">
-                                {% trans "إنشاء أول قيد" %}
+                                {% trans "Create First Entry" %}
                             </a>
                         </div>
                     {% endif %}

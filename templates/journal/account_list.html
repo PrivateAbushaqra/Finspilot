@@ -272,7 +272,9 @@
                     <p>{% if LANGUAGE_CODE == 'ar' %}لم يتم العثور على حسابات تطابق معايير البحث{% else %}{% trans "No accounts found matching the search criteria" %}{% endif %}</p>
                     {% if perms.journal.can_add_accounts %}
                     <a href="{% url 'journal:account_create' %}" class="btn btn-primary">
-                        {% if LANGUAGE_CODE == 'ar' %}إنشاء حساب جديد{% else %}{% trans "Create New Account" %}{% endif %}
+                        {% if LANGUAGE_CODE == 'ar' %}
+                        إنشاء حساب جديد{% else %}
+                        {% trans "Create New Account" %}{% endif %}
                     </a>
                     {% endif %}
                 </div>

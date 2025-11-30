@@ -20,4 +20,8 @@ urlpatterns = [
     path('api/search/', views.product_search_api, name='product_search_api'),
     path('api/category/add/', views.CategoryAddAjaxView.as_view(), name='category_add_ajax'),
     path('api/product/add/', views.ProductAddAjaxView.as_view(), name='product_add_ajax'),
+    
+    # Linked Units API
+    path('api/check-package-conversion/', views.check_package_conversion, name='check_package_conversion'),
+    path('api/linked-products/<int:product_id>/', views.get_linked_products, name='get_linked_products'),
 ]

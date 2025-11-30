@@ -260,7 +260,7 @@ TRANSLATIONS = {
     "Create transactions for existing invoices": "إنشاء معاملات للفواتير الموجودة",
     "Transaction number, customer, description...": "رقم الحركة، العميل، الوصف...",
     "Transaction Type": "نوع المعاملة",
-    "All": "الكل",
+    #"All": "الكل",
     
     # Button titles and placeholders
     "View": "عرض",

@@ -115,6 +115,18 @@
                                            autocomplete="off" data-form-type="other" spellcheck="false" required>
                                 </div>
                             </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="sequence_number" class="form-label">{% trans "Sequence Number" %}</label>
+                                    <input type="number" class="form-control" id="sequence_number" name="sequence_number" 
+                                           value="" placeholder="{% trans "Will be auto-generated" %}" 
+                                           {% if not user.is_superuser and not perms.products.can_edit_product_sequence_number %}readonly{% endif %}>
+                                    <div class="form-text">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        {% trans "Auto-calculated based on category (Category Number + 100, 101, ...)" %}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         
                         <div class="row">
@@ -273,6 +285,67 @@
                                         <span>{% trans "Price Including Tax" %}:</span>
                                         <span id="price-with-tax">0.00</span>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Linked Units Section -->
+                        <h6 class="mt-4 mb-3">
+                            <i class="fas fa-link text-primary me-2"></i>
+                            {% trans "Linked Units Settings" %}
+                        </h6>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            {% trans "Link this product with another unit (single/package) for flexible sales" %}
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="unit_type" class="form-label">
+                                        <i class="fas fa-boxes text-primary me-1"></i>
+                                        {% trans "Unit Type" %}
+                                    </label>
+                                    <select class="form-select" id="unit_type" name="unit_type">
+                                        <option value="standalone">{% trans "Standalone" %}</option>
+                                        <option value="single">{% trans "Single Unit" %}</option>
+                                        <option value="package">{% trans "Package" %}</option>
+                                    </select>
+                                    <small class="form-text text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        {% trans "Select unit type for linking" %}
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-md-4" id="linked_product_container" style="display: none;">
+                                <div class="mb-3">
+                                    <label for="linked_product" class="form-label">
+                                        <i class="fas fa-exchange-alt text-success me-1"></i>
+                                        {% trans "Linked Product" %}
+                                    </label>
+                                    <select class="form-select" id="linked_product" name="linked_product">
+                                        <option value="">-- {% trans "Select Product" %} --</option>
+                                        {% for prod in products %}
+                                            <option value="{{ prod.id }}">{{ prod.name }} ({{ prod.code }})</option>
+                                        {% endfor %}
+                                    </select>
+                                    <small class="form-text text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        {% trans "The linked product (single or package)" %}
+                                    </small>
+                                </div>
+                            </div>
+                            <div class="col-md-4" id="conversion_factor_container" style="display: none;">
+                                <div class="mb-3">
+                                    <label for="conversion_factor" class="form-label">
+                                        <i class="fas fa-calculator text-warning me-1"></i>
+                                        {% trans "Conversion Factor" %}
+                                    </label>
+                                    <input type="number" class="form-control" id="conversion_factor" name="conversion_factor" 
+                                           step="0.001" min="0" value="0">
+                                    <small class="form-text text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        {% trans "Number of single units in one package" %}
+                                    </small>
                                 </div>
                             </div>
                         </div>
@@ -1071,6 +1144,28 @@ function filterCategoriesInModal() {
         }
     });
 }
+    
+    // Linked Units Control
+    $('#unit_type').on('change', function() {
+        const unitType = $(this).val();
+        
+        if (unitType === 'standalone') {
+            $('#linked_product_container').hide();
+            $('#conversion_factor_container').hide();
+            $('#linked_product').val('');
+            $('#conversion_factor').val('0');
+        } else if (unitType === 'single') {
+            $('#linked_product_container').show();
+            $('#conversion_factor_container').hide();
+            $('#conversion_factor').val('0');
+        } else if (unitType === 'package') {
+            $('#linked_product_container').show();
+            $('#conversion_factor_container').show();
+        }
+    });
+    
+    // Initialize unit type visibility
+    $('#unit_type').trigger('change');
 </script>
 
 <!-- Category Search Modal -->

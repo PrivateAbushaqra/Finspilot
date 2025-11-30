@@ -3,7 +3,7 @@
 {% load humanize %}
 {% load currency_tags %}
 
-{% block title %}{% trans "تفاصيل القيد" %} - {{ entry.entry_number }}{% endblock %}
+{% block title %}{% trans "Entry Details" %} - {{ entry.entry_number }}{% endblock %}
 
 {% block content %}
 <div class="print-info" style="display: none;">
@@ -17,55 +17,55 @@
         <div class="col-12">
             <div class="d-sm-flex align-items-center justify-content-between mb-4">
                 <h1 class="h3 mb-0 text-gray-800">
-                    {% trans "تفاصيل القيد" %}: {{ entry.entry_number }}
+                    {% trans "Entry Details" %}: {{ entry.entry_number }}
                 </h1>
                 <div>
                     <a href="{% url 'journal:entry_list' %}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-right me-2"></i>{% trans "العودة للقائمة" %}
+                        <i class="fas fa-arrow-right me-2"></i>{% trans "Back to List" %}
                     </a>
                     {% if entry.reference_type == 'manual' %}
                               <a href="{% url 'journal:entry_delete' entry.pk %}" 
                                   class="btn btn-danger"
                                   onclick="return confirm('{% blocktrans %}هل أنت متأكد من حذف هذا القيد؟{% endblocktrans %}')">
-                        <i class="fas fa-trash me-2"></i>{% trans "حذف القيد" %}
+                        <i class="fas fa-trash me-2"></i>{% trans "Delete Entry" %}
                     </a>
                     {% endif %}
                     <button onclick="window.print()" class="btn btn-primary">
-                        <i class="fas fa-print me-2"></i>{% trans "طباعة" %}
+                        <i class="fas fa-print me-2"></i>{% trans "Print" %}
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- {% trans "المعلومات" %} القيد الأساسية -->
+    <!-- {% trans "Information" %} القيد الأساسية -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card shadow">
                 <div class="card-header">
-                    <h6 class="m-0 font-weight-bold text-primary">{% trans "معلومات القيد" %}</h6>
+                    <h6 class="m-0 font-weight-bold text-primary">{% trans "Entry Information" %}</h6>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
                             <table class="table table-borderless">
                                 <tr>
-                                    <td class="fw-bold">{% trans "رقم القيد" %}:</td>
+                                    <td class="fw-bold">{% trans "Entry Number" %}:</td>
                                     <td>{{ entry.entry_number }}</td>
                                 </tr>
                                 <tr>
-                                    <td class="fw-bold">{% trans "تاريخ القيد" %}:</td>
+                                    <td class="fw-bold">{% trans "Entry Date" %}:</td>
                                     <td>{{ entry.entry_date|date:"l, j F Y" }}</td>
                                 </tr>
                                 <tr>
-                                    <td class="fw-bold">{% trans "نوع العملية" %}:</td>
+                                    <td class="fw-bold">{% trans "Operation Type" %}:</td>
                                     <td>
                                         <span class="badge bg-info">{{ entry.get_reference_type_display }}</span>
                                     </td>
                                 </tr>
                                 {% if entry.reference_id %}
                                 <tr>
-                                    <td class="fw-bold">{% trans "رقم العملية المرتبطة" %}:</td>
+                                    <td class="fw-bold">{% trans "Related Operation Number" %}:</td>
                                     <td>{{ entry.reference_id }}</td>
                                 </tr>
                                 {% endif %}
@@ -74,22 +74,22 @@
                         <div class="col-md-6">
                             <table class="table table-borderless">
                                 <tr>
-                                    <td class="fw-bold">{% trans "إجمالي المبلغ" %}:</td>
+                                    <td class="fw-bold">{% trans "Total Amount" %}:</td>
                                     <td class="text-success">
                                         <strong>{{ entry.total_amount|format_currency }} {% get_currency_symbol %}</strong>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td class="fw-bold">{% trans "أنشئ بواسطة" %}:</td>
+                                    <td class="fw-bold">{% trans "Created By" %}:</td>
                                     <td>{{ entry.created_by.get_full_name|default:entry.created_by.username }}</td>
                                 </tr>
                                 <tr>
-                                    <td class="fw-bold">{% trans "تاريخ الإنشاء" %}:</td>
+                                    <td class="fw-bold">{% trans "Creation Date" %}:</td>
                                     <td>{{ entry.created_at|date:"j/n/Y H:i" }}</td>
                                 </tr>
                                 {% if entry.updated_at != entry.created_at %}
                                 <tr>
-                                    <td class="fw-bold">{% trans "آخر تحديث" %}:</td>
+                                    <td class="fw-bold">{% trans "Last Update" %}:</td>
                                     <td>{{ entry.updated_at|date:"j/n/Y H:i" }}</td>
                                 </tr>
                                 {% endif %}
@@ -99,7 +99,7 @@
                     {% if entry.description %}
                     <div class="row mt-3">
                         <div class="col-12">
-                            <h6 class="fw-bold">{% trans "وصف القيد" %}:</h6>
+                            <h6 class="fw-bold">{% trans "Entry Description" %}:</h6>
                             <p class="text-muted">{{ entry.description }}</p>
                         </div>
                     </div>
@@ -114,18 +114,18 @@
         <div class="col-12">
             <div class="card shadow">
                 <div class="card-header">
-                    <h6 class="m-0 font-weight-bold text-primary">{% trans "بنود القيد المحاسبي" %}</h6>
+                    <h6 class="m-0 font-weight-bold text-primary">{% trans "Journal Entry Items" %}</h6>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-bordered">
                             <thead class="table-light">
                                 <tr>
-                                    <th>{% trans "الحساب" %}</th>
-                                    <th>{% trans "كود الحساب" %}</th>
-                                    <th class="text-center">{% trans "مدين" %}</th>
-                                    <th class="text-center">{% trans "دائن" %}</th>
-                                    <th>{% trans "التفاصيل" %}</th>
+                                    <th>{% trans "Account" %}</th>
+                                    <th>{% trans "Account Code" %}</th>
+                                    <th class="text-center">{% trans "Debit" %}</th>
+                                    <th class="text-center">{% trans "Credit" %}</th>
+                                    <th>{% trans "Details" %}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -161,7 +161,7 @@
                                         {% if line.line_description %}
                                             {{ line.line_description }}
                                         {% else %}
-                                            <span class="text-muted">{% trans "لا توجد تفاصيل" %}</span>
+                                            <span class="text-muted">{% trans "No Details" %}</span>
                                         {% endif %}
                                     </td>
                                 </tr>
@@ -178,11 +178,11 @@
                                     <td class="text-center">
                                         {% if totals.total_debit == totals.total_credit %}
                                             <span class="badge bg-success">
-                                                <i class="fas fa-check me-1"></i>{% trans "متوازن" %}
+                                                <i class="fas fa-check me-1"></i>{% trans "Balanced" %}
                                             </span>
                                         {% else %}
                                             <span class="badge bg-danger">
-                                                <i class="fas fa-times me-1"></i>{% trans "غير متوازن" %}
+                                                <i class="fas fa-times me-1"></i>{% trans "Unbalanced" %}
                                             </span>
                                         {% endif %}
                                     </td>
@@ -195,7 +195,7 @@
         </div>
     </div>
 
-    <!-- {% trans "إحصائيات" %} إضافية -->
+    <!-- {% trans "Statistics" %} إضافية -->
     <div class="row">
         <div class="col-md-4">
             <div class="card border-left-success shadow h-100 py-2">
@@ -203,7 +203,7 @@
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                {% trans "إجمالي المدين" %}
+                                {% trans "Total Debit" %}
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
                                 {{ totals.total_debit|default:0|format_currency }} {% get_currency_symbol %}
@@ -222,7 +222,7 @@
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
-                                {% trans "إجمالي الدائن" %}
+                                {% trans "Total Credit" %}
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
                                 {{ totals.total_credit|default:0|format_currency }} {% get_currency_symbol %}
@@ -241,10 +241,10 @@
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                {% trans "عدد البنود" %}
+                                {% trans "Number of Items" %}
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ entry.lines.count }} {% trans "بند" %}
+                                {{ entry.lines.count }} {% trans "Item" %}
                             </div>
                         </div>
                         <div class="col-auto">

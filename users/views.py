@@ -1135,6 +1135,8 @@ class UserGroupCreateView(LoginRequiredMixin, CreateView):
             'can_add_product_categories': _('Can Add Product Categories'),
             'can_edit_product_categories': _('Can Edit Product Categories'),
             'can_delete_product_categories': _('Can Delete Product Categories'),
+            'can_edit_category_sequence_number': _('Can Edit Category Sequence Number'),
+            'can_edit_product_sequence_number': _('Can Edit Product Sequence Number'),
             
             # صلاحيات المخزون
             'add_warehouse': _('Add Warehouse'),
@@ -1281,6 +1283,16 @@ class UserGroupCreateView(LoginRequiredMixin, CreateView):
             'change_category': _('Change Category'),
             'delete_category': _('Delete Category'),
             'view_category': _('View Category'),
+            'can_view_products': _('Can View Products'),
+            'can_add_products': _('Can Add Products'),
+            'can_edit_products': _('Can Edit Products'),
+            'can_delete_products': _('Can Delete Products'),
+            'can_view_product_categories': _('Can View Product Categories'),
+            'can_add_product_categories': _('Can Add Product Categories'),
+            'can_edit_product_categories': _('Can Edit Product Categories'),
+            'can_delete_product_categories': _('Can Delete Product Categories'),
+            'can_edit_category_sequence_number': _('Can Edit Category Sequence Number'),
+            'can_edit_product_sequence_number': _('Can Edit Product Sequence Number'),
             
             # صلاحيات الإيرادات والمصروفات
             'can_add_sectors': _('Add Sectors'),

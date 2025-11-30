@@ -45,7 +45,7 @@
                             <td>{{ account.get_account_type_display }}</td>
                         </tr>
                         <tr>
-                            <th>{% trans "الحساب الأب" %}:</th>
+                            <th>{% trans "Parent Account" %}:</th>
                             <td>{{ account.parent|default:"-" }}</td>
                         </tr>
                     </table>
@@ -53,26 +53,26 @@
                 <div class="col-md-6">
                     <table class="table table-borderless">
                         <tr>
-                            <th width="30%">{% trans "الرصيد الحالي" %}:</th>
+                            <th width="30%">{% trans "Current Balance" %}:</th>
                             <td>{{ balance|default:"0.00"|floatformat:2 }}</td>
                         </tr>
                         <tr>
-                            <th>{% trans "الحالة" %}:</th>
+                            <th>{% trans "Status" %}:</th>
                             <td>
                                 {% if account.is_active %}
-                                    {% trans "نشط" %}
+                                    {% trans "Active" %}
                                 {% else %}
-                                    {% trans "غير نشط" %}
+                                    {% trans "Inactive" %}
                                 {% endif %}
                             </td>
                         </tr>
                         <tr>
-                            <th>{% trans "تاريخ الإنشاء" %}:</th>
+                            <th>{% trans "Creation Date" %}:</th>
                             <td>{{ account.created_at|date:"d/m/Y H:i" }}</td>
                         </tr>
                         {% if account.description %}
                         <tr>
-                            <th>{% trans "الوصف" %}:</th>
+                            <th>{% trans "Description" %}:</th>
                             <td>{{ account.description }}</td>
                         </tr>
                         {% endif %}
@@ -96,10 +96,10 @@
                 </div>
                 <div class="col-md-4 d-flex align-items-end">
                     <button type="submit" class="btn btn-primary mr-2">
-                        <i class="fas fa-filter"></i> {% trans "تصفية" %}
+                        <i class="fas fa-filter"></i> {% trans "Filter" %}
                     </button>
                     <a href="{% url 'journal:account_detail' account.pk %}" class="btn btn-secondary">
-                        <i class="fas fa-refresh"></i> {% trans "إعادة تعيين" %}
+                        <i class="fas fa-refresh"></i> {% trans "Reset" %}
                     </a>
                 </div>
             </form>
@@ -113,10 +113,10 @@
                 <h6 class="m-0 font-weight-bold">{% trans "Account Transactions" %}</h6>
                 <div>
                     <span class="badge badge-light mr-2">
-                        {% trans "إجمالي المدين" %}: {{ totals.total_debit|default:0|floatformat:2 }}
+                        {% trans "Total Debit" %}: {{ totals.total_debit|default:0|floatformat:2 }}
                     </span>
                     <span class="badge badge-light">
-                        {% trans "إجمالي الدائن" %}: {{ totals.total_credit|default:0|floatformat:2 }}
+                        {% trans "Total Credit" %}: {{ totals.total_credit|default:0|floatformat:2 }}
                     </span>
                 </div>
             </div>
@@ -128,16 +128,16 @@
                         <thead class="thead-light">
                             <tr>
                                 <th>{% trans "Date" %}</th>
-                                <th>{% trans "رقم القيد" %}</th>
-                                <th>{% trans "البيان" %}</th>
-                                <th>{% trans "النوع" %}</th>
+                                <th>{% trans "Entry Number" %}</th>
+                                <th>{% trans "Statement" %}</th>
+                                <th>{% trans "Type" %}</th>
                                 {% if account.children.all|length > 0 and not page_obj.0.account == account %}
-                                <th>{% trans "الحساب" %}</th>
+                                <th>{% trans "Account" %}</th>
                                 {% endif %}
-                                <th>{% trans "مدين" %}</th>
-                                <th>{% trans "دائن" %}</th>
-                                <th>{% trans "الرصيد" %}</th>
-                                <th>{% trans "الإجراءات" %}</th>
+                                <th>{% trans "Debit" %}</th>
+                                <th>{% trans "Credit" %}</th>
+                                <th>{% trans "Balance" %}</th>
+                                <th>{% trans "Actions" %}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -193,7 +193,7 @@
                             {% empty %}
                                 <tr>
                                     <td colspan="8" class="text-center text-muted">
-                                        {% trans "لا توجد حركات لهذا الحساب" %}
+                                        {% trans "No transactions for this account" %}
                                     </td>
                                 </tr>
                             {% endfor %}
@@ -216,12 +216,12 @@
                                 {% if page_obj.has_previous %}
                                     <li class="page-item">
                                         <a class="page-link" href="?page=1{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">
-                                            {% trans "الأولى" %}
+                                            {% trans "First" %}
                                         </a>
                                     </li>
                                     <li class="page-item">
                                         <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">
-                                            {% trans "السابقة" %}
+                                            {% trans "Previous" %}
                                         </a>
                                     </li>
                                 {% endif %}
@@ -233,12 +233,12 @@
                                 {% if page_obj.has_next %}
                                     <li class="page-item">
                                         <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">
-                                            {% trans "التالية" %}
+                                            {% trans "Next" %}
                                         </a>
                                     </li>
                                     <li class="page-item">
                                         <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">
-                                            {% trans "الأخيرة" %}
+                                            {% trans "Last" %}
                                         </a>
                                     </li>
                                 {% endif %}
@@ -249,8 +249,8 @@
             {% else %}
                 <div class="text-center text-muted py-5">
                     <i class="fas fa-inbox fa-3x mb-3"></i>
-                    <h5>{% trans "لا توجد حركات" %}</h5>
-                    <p>{% trans "لا توجد حركات لهذا الحساب حتى الآن" %}</p>
+                    <h5>{% trans "No Transactions" %}</h5>
+                    <p>{% trans "No transactions for this account yet" %}</p>
                 </div>
             {% endif %}
         </div>

@@ -13,7 +13,9 @@ class ProductForm(forms.ModelForm):
             'code', 'name', 'name_en', 'product_type', 'barcode', 'serial_number', 
             'category', 'description', 'image', 'cost_price', 
             'minimum_quantity', 'maximum_quantity', 'sale_price', 'wholesale_price', 
-            'tax_rate', 'opening_balance_quantity', 'opening_balance_cost', 'opening_balance_warehouse', 'enable_alerts', 'is_active'
+            'tax_rate', 'opening_balance_quantity', 'opening_balance_cost', 'opening_balance_warehouse', 
+            'unit_type', 'linked_product', 'conversion_factor',
+            'enable_alerts', 'is_active'
         ]
         widgets = {
             'code': forms.TextInput(attrs={'class': 'form-control', 'placeholder': _('Product Code')}),
@@ -34,6 +36,9 @@ class ProductForm(forms.ModelForm):
             'opening_balance_quantity': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001', 'min': '0'}),
             'opening_balance_cost': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001', 'min': '0'}),
             'opening_balance_warehouse': forms.Select(attrs={'class': 'form-control'}),
+            'unit_type': forms.Select(attrs={'class': 'form-control', 'id': 'id_unit_type'}),
+            'linked_product': forms.Select(attrs={'class': 'form-control', 'id': 'id_linked_product'}),
+            'conversion_factor': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001', 'min': '0', 'id': 'id_conversion_factor'}),
             'enable_alerts': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
@@ -42,6 +47,11 @@ class ProductForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['category'].queryset = Category.objects.filter(is_active=True)
         self.fields['opening_balance_warehouse'].queryset = Warehouse.objects.filter(is_active=True).exclude(code='MAIN')
+        # Only show active products for linking (exclude self if editing)
+        if self.instance and self.instance.pk:
+            self.fields['linked_product'].queryset = Product.objects.filter(is_active=True).exclude(pk=self.instance.pk)
+        else:
+            self.fields['linked_product'].queryset = Product.objects.filter(is_active=True)
 
 
 class CategoryForm(forms.ModelForm):

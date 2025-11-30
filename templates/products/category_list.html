@@ -368,7 +368,8 @@
                                     <td>
                                         <!--{% trans "No description available" as no_desc %}
                                         {{ category.description|default:no_desc|truncatewords:10 }}-->
-                                        {{ category.description|default:"No description available"|truncatewords:10 }}
+                                        {% trans "No description available" as no_desc %}
+                                        {{ category.description|default:no_desc|truncatechars:100 }}
                                     </td>
                                     <td class="text-center">
                                         <span class="badge bg-info text-dark">{{ category.total_available_quantity|floatformat:0 }}</span>

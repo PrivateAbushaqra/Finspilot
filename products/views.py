@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView, View
 from django.db.models import Q
 from django.http import JsonResponse
@@ -35,8 +36,17 @@ class CategoryCreateView(CanAddProductCategoriesMixin, LoginRequiredMixin, View)
     template_name = 'products/category_add.html'
     
     def get(self, request, *args, **kwargs):
+        # حساب الرقم التسلسلي التالي
+        from django.db.models import Max
+        max_seq = Category.objects.aggregate(Max('sequence_number'))['sequence_number__max']
+        if max_seq:
+            next_seq = max_seq + 1
+        else:
+            next_seq = 10000
+            
         context = {
-            'categories': Category.objects.filter(parent__isnull=True)  # فقط الفئات الرئيسية
+            'categories': Category.objects.filter(parent__isnull=True),  # فقط الفئات الرئيسية
+            'next_sequence_number': next_seq
         }
         return render(request, self.template_name, context)
     
@@ -50,6 +60,7 @@ class CategoryCreateView(CanAddProductCategoriesMixin, LoginRequiredMixin, View)
             description = request.POST.get('description', '').strip()
             sort_order = request.POST.get('sort_order', '0')
             is_active = request.POST.get('is_active') == 'on'
+            sequence_number = request.POST.get('sequence_number', '').strip()
             
             # التحقق من صحة البيانات
             if not name:
@@ -70,14 +81,26 @@ class CategoryCreateView(CanAddProductCategoriesMixin, LoginRequiredMixin, View)
                     parent = None
             
             # إنشاء التصنيف
-            category = Category.objects.create(
-                name=name,
-                name_en=name_en,
-                code=code if code else None,
-                parent=parent,
-                description=description,
-                is_active=is_active
-            )
+            category = Category()
+            category.name = name
+            category.name_en = name_en
+            category.code = code if code else None
+            category.parent = parent
+            category.description = description
+            category.is_active = is_active
+            
+            # معالجة الرقم التسلسلي
+            if sequence_number and sequence_number.isdigit():
+                # التحقق من الصلاحية
+                if request.user.is_superuser or request.user.has_perm('products.can_edit_category_sequence_number'):
+                    seq_num = int(sequence_number)
+                    # التحقق من عدم تكرار الرقم
+                    if Category.objects.filter(sequence_number=seq_num).exists():
+                        messages.error(request, _('Sequence number already exists!'))
+                        return self.get(request)
+                    category.sequence_number = seq_num
+            
+            category.save()
             
             # تسجيل النشاط في سجل المراجعة
             AuditLog.objects.create(
@@ -85,7 +108,7 @@ class CategoryCreateView(CanAddProductCategoriesMixin, LoginRequiredMixin, View)
                 action_type='create',
                 content_type='Category',
                 object_id=category.id,
-                description=f'تم إنشاء فئة جديدة: {category.name}',
+                description=f'تم إنشاء فئة جديدة: {category.name} - رقم التسلسل: {category.sequence_number}',
                 ip_address=self.get_client_ip(request)
             )
             
@@ -128,11 +151,33 @@ class CategoryUpdateView(LoginRequiredMixin, View):
             description = request.POST.get('description', '').strip()
             sort_order = request.POST.get('sort_order', '0')
             is_active = request.POST.get('is_active') == 'on'
+            sequence_number = request.POST.get('sequence_number', '').strip()
             
             # التحقق من صحة البيانات
             if not name:
                 messages.error(request, _('Category name is required!'))
                 return self.get(request, pk)
+            
+            # معالجة رقم التسلسل
+            if sequence_number:
+                try:
+                    sequence_number = int(sequence_number)
+                    
+                    # التحقق من الصلاحية - يجب أن يكون المستخدم مسؤول أو لديه صلاحية تعديل رقم التسلسل
+                    if not request.user.is_superuser and not request.user.has_perm('products.can_edit_category_sequence_number'):
+                        messages.error(request, _('You do not have permission to edit the sequence number!'))
+                        return self.get(request, pk)
+                    
+                    # التحقق من أن رقم التسلسل فريد
+                    existing_category = Category.objects.filter(sequence_number=sequence_number).exclude(id=category.id).first()
+                    if existing_category:
+                        messages.error(request, _(f'Sequence number {sequence_number} is already used by category "{existing_category.name}"!'))
+                        return self.get(request, pk)
+                    
+                    category.sequence_number = sequence_number
+                except ValueError:
+                    messages.error(request, _('Invalid sequence number!'))
+                    return self.get(request, pk)
             
             # معالجة التصنيف الأب
             parent = None
@@ -154,6 +199,17 @@ class CategoryUpdateView(LoginRequiredMixin, View):
             category.description = description
             category.is_active = is_active
             category.save()
+            
+            # تسجيل النشاط
+            sequence_info = f' - رقم التسلسل: {category.sequence_number}' if sequence_number else ''
+            AuditLog.objects.create(
+                user=request.user,
+                action_type='update',
+                content_type='Category',
+                object_id=category.id,
+                description=f'تعديل الفئة: {category.name}{sequence_info}',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
             
             messages.success(request, _(f'Category "{category.name}" updated successfully!'))
             return redirect('products:category_list')
@@ -292,7 +348,8 @@ class ProductCreateView(CanAddProductsMixin, LoginRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         context = {
             'categories': Category.objects.filter(is_active=True).order_by('name'),
-            'warehouses': Warehouse.objects.filter(is_active=True).exclude(code='MAIN')
+            'warehouses': Warehouse.objects.filter(is_active=True).exclude(code='MAIN'),
+            'products': Product.objects.filter(is_active=True).order_by('name')  # للربط
         }
         return render(request, self.template_name, context)
     
@@ -318,6 +375,12 @@ class ProductCreateView(CanAddProductsMixin, LoginRequiredMixin, View):
             is_active = request.POST.get('is_active') == 'on'
             track_stock = request.POST.get('track_stock') == 'on'
             opening_balance_warehouse_id = request.POST.get('opening_balance_warehouse')
+            sequence_number = request.POST.get('sequence_number', '').strip()
+            
+            # Linked Units fields
+            unit_type = request.POST.get('unit_type', 'standalone')
+            linked_product_id = request.POST.get('linked_product', '')
+            conversion_factor = request.POST.get('conversion_factor', '0')
             
             # التحقق من صحة البيانات
             if not name:
@@ -402,6 +465,48 @@ class ProductCreateView(CanAddProductsMixin, LoginRequiredMixin, View):
                     messages.error(request, _('Selected opening balance warehouse does not exist!'))
                     return self.get(request)
             
+            # معالجة رقم التسلسل
+            final_sequence_number = None
+            if sequence_number:
+                try:
+                    final_sequence_number = int(sequence_number)
+                    
+                    # التحقق من الصلاحية - يجب أن يكون المستخدم مسؤول أو لديه صلاحية تعديل رقم التسلسل
+                    if not request.user.is_superuser and not request.user.has_perm('products.can_edit_product_sequence_number'):
+                        messages.error(request, _('You do not have permission to edit the sequence number!'))
+                        return self.get(request)
+                    
+                    # التحقق من أن رقم التسلسل فريد
+                    existing_product = Product.objects.filter(sequence_number=final_sequence_number).first()
+                    if existing_product:
+                        messages.error(request, _(f'Sequence number {final_sequence_number} is already used by product "{existing_product.name}"!'))
+                        return self.get(request)
+                    
+                except ValueError:
+                    messages.error(request, _('Invalid sequence number!'))
+                    return self.get(request)
+            
+            # معالجة المنتج المرتبط
+            linked_product = None
+            if linked_product_id and unit_type in ['single', 'package']:
+                try:
+                    linked_product = Product.objects.get(id=linked_product_id, is_active=True)
+                except Product.DoesNotExist:
+                    messages.error(request, _('Linked product not found!'))
+                    return self.get(request)
+            
+            # التحقق من معامل التحويل للبكج
+            conversion_factor_value = 0
+            if unit_type == 'package' and conversion_factor:
+                try:
+                    conversion_factor_value = float(conversion_factor)
+                    if conversion_factor_value <= 0:
+                        messages.error(request, _('Conversion factor must be greater than zero for package products!'))
+                        return self.get(request)
+                except ValueError:
+                    messages.error(request, _('Invalid conversion factor!'))
+                    return self.get(request)
+            
             # إنشاء المنتج
             product = Product.objects.create(
                 code=sku,
@@ -420,7 +525,23 @@ class ProductCreateView(CanAddProductsMixin, LoginRequiredMixin, View):
                 opening_balance_quantity=opening_balance,
                 opening_balance_cost=opening_balance_cost,
                 opening_balance_warehouse=opening_balance_warehouse,
-                is_active=is_active
+                is_active=is_active,
+                sequence_number=final_sequence_number,  # رقم التسلسل
+                # Linked Units fields
+                unit_type=unit_type,
+                linked_product=linked_product,
+                conversion_factor=conversion_factor_value
+            )
+            
+            # تسجيل النشاط
+            sequence_info = f' - رقم التسلسل: {product.sequence_number}' if product.sequence_number else ''
+            AuditLog.objects.create(
+                user=request.user,
+                action_type='create',
+                content_type='Product',
+                object_id=product.id,
+                description=f'إضافة منتج جديد: {product.name}{sequence_info}',
+                ip_address=request.META.get('REMOTE_ADDR')
             )
             
             # إنشاء حركة مخزون للرصيد الافتتاحي إذا كان أكبر من صفر
@@ -626,6 +747,7 @@ class ProductUpdateView(CanEditProductsMixin, LoginRequiredMixin, View):
             'product': product,
             'categories': Category.objects.filter(is_active=True),
             'warehouses': Warehouse.objects.filter(is_active=True).exclude(code='MAIN'),
+            'products': Product.objects.filter(is_active=True).exclude(pk=pk).order_by('name'),  # للربط (استبعاد المنتج الحالي)
             'current_opening_balance': current_opening_balance,
             'current_stock': product.current_stock,
             'maximum_quantity': product.maximum_quantity,
@@ -655,6 +777,12 @@ class ProductUpdateView(CanEditProductsMixin, LoginRequiredMixin, View):
             is_active = request.POST.get('is_active') == 'on'
             image = request.FILES.get('image')
             opening_balance_warehouse_id = request.POST.get('opening_balance_warehouse')
+            sequence_number = request.POST.get('sequence_number', '').strip()
+            
+            # Linked Units fields
+            unit_type = request.POST.get('unit_type', 'standalone')
+            linked_product_id = request.POST.get('linked_product', '')
+            conversion_factor = request.POST.get('conversion_factor', '0')
             
             # التحقق من وجود حركات على المنتج
             if product.has_movements:
@@ -665,6 +793,27 @@ class ProductUpdateView(CanEditProductsMixin, LoginRequiredMixin, View):
                 if (float(opening_balance) != old_opening_balance or 
                     float(opening_balance_cost) != old_opening_balance_cost):
                     messages.error(request, _('Cannot edit opening balance as there are movements for this product'))
+                    return self.get(request, pk)
+            
+            # معالجة رقم التسلسل
+            if sequence_number:
+                try:
+                    sequence_number = int(sequence_number)
+                    
+                    # التحقق من الصلاحية - يجب أن يكون المستخدم مسؤول أو لديه صلاحية تعديل رقم التسلسل
+                    if not request.user.is_superuser and not request.user.has_perm('products.can_edit_product_sequence_number'):
+                        messages.error(request, _('You do not have permission to edit the sequence number!'))
+                        return self.get(request, pk)
+                    
+                    # التحقق من أن رقم التسلسل فريد
+                    existing_product = Product.objects.filter(sequence_number=sequence_number).exclude(id=product.id).first()
+                    if existing_product:
+                        messages.error(request, _(f'Sequence number {sequence_number} is already used by product "{existing_product.name}"!'))
+                        return self.get(request, pk)
+                    
+                    product.sequence_number = sequence_number
+                except ValueError:
+                    messages.error(request, _('Invalid sequence number!'))
                     return self.get(request, pk)
             
             # التحقق من صحة البيانات
@@ -742,6 +891,31 @@ class ProductUpdateView(CanEditProductsMixin, LoginRequiredMixin, View):
                     messages.error(request, _('Selected opening balance warehouse does not exist!'))
                     return self.get(request, pk)
             
+            # معالجة المنتج المرتبط
+            linked_product = None
+            if linked_product_id and unit_type in ['single', 'package']:
+                try:
+                    linked_product = Product.objects.get(id=linked_product_id, is_active=True)
+                    # التأكد من عدم ربط المنتج بنفسه
+                    if linked_product.id == product.id:
+                        messages.error(request, _('Cannot link product to itself!'))
+                        return self.get(request, pk)
+                except Product.DoesNotExist:
+                    messages.error(request, _('Linked product not found!'))
+                    return self.get(request, pk)
+            
+            # التحقق من معامل التحويل للبكج
+            conversion_factor_value = 0
+            if unit_type == 'package' and conversion_factor:
+                try:
+                    conversion_factor_value = float(conversion_factor)
+                    if conversion_factor_value <= 0:
+                        messages.error(request, _('Conversion factor must be greater than zero for package products!'))
+                        return self.get(request, pk)
+                except ValueError:
+                    messages.error(request, _('Invalid conversion factor!'))
+                    return self.get(request, pk)
+            
             # التعامل مع تعديل الرصيد الافتتاحي
             from decimal import Decimal
             from inventory.models import InventoryMovement
@@ -771,9 +945,24 @@ class ProductUpdateView(CanEditProductsMixin, LoginRequiredMixin, View):
             product.opening_balance_cost = opening_balance_cost
             product.is_active = is_active
             product.opening_balance_warehouse = opening_balance_warehouse
+            # Linked Units fields
+            product.unit_type = unit_type
+            product.linked_product = linked_product
+            product.conversion_factor = conversion_factor_value
             if image:
                 product.image = image
             product.save()
+            
+            # تسجيل النشاط
+            sequence_info = f' - رقم التسلسل: {product.sequence_number}' if product.sequence_number else ''
+            AuditLog.objects.create(
+                user=request.user,
+                action_type='update',
+                content_type='Product',
+                object_id=product.id,
+                description=f'تعديل المنتج: {product.name}{sequence_info}',
+                ip_address=request.META.get('REMOTE_ADDR')
+            )
             
             new_opening_balance_quantity = Decimal(str(opening_balance))
             new_opening_balance_cost = Decimal(str(opening_balance_cost))
@@ -2259,3 +2448,141 @@ class ProductMovementsView(LoginRequiredMixin, ListView):
         )
         
         return context
+
+
+# Linked Units API Endpoints
+@csrf_exempt
+@login_required
+def check_package_conversion(request):
+    """
+    API endpoint to check if quantity can be converted to package
+    Used in sales invoice to suggest package conversion
+    """
+    if request.method == 'POST':
+        try:
+            import json
+            from decimal import Decimal
+            
+            data = json.loads(request.body)
+            product_id = data.get('product_id')
+            quantity = data.get('quantity', 0)
+            
+            if not product_id:
+                return JsonResponse({
+                    'success': False,
+                    'error': _('Product ID is required')
+                })
+            
+            product = Product.objects.get(id=product_id, is_active=True)
+            
+            # Check if this is a single unit product
+            if product.unit_type != 'single':
+                return JsonResponse({
+                    'success': True,
+                    'can_convert': False,
+                    'message': _('This product is not a single unit')
+                })
+            
+            # Get conversion suggestion
+            suggestion = product.suggest_package_conversion(quantity)
+            
+            if suggestion:
+                return JsonResponse({
+                    'success': True,
+                    'can_convert': True,
+                    'suggestion': {
+                        'single_product_id': suggestion['single_product'].id,
+                        'single_product_name': suggestion['single_product'].name,
+                        'package_product_id': suggestion['package_product'].id,
+                        'package_product_name': suggestion['package_product'].name,
+                        'quantity_singles': float(suggestion['quantity_singles']),
+                        'conversion_factor': float(suggestion['conversion_factor']),
+                        'packages': float(suggestion['packages']),
+                        'remaining_singles': float(suggestion['remaining_singles']),
+                        'single_unit_price': float(suggestion['single_unit_price']),
+                        'package_unit_price': float(suggestion['package_unit_price']),
+                        'total_as_singles': float(suggestion['total_as_singles']),
+                        'total_as_packages': float(suggestion['total_as_packages'])
+                    }
+                })
+            else:
+                return JsonResponse({
+                    'success': True,
+                    'can_convert': False,
+                    'message': _('Quantity does not reach package size')
+                })
+                
+        except Product.DoesNotExist:
+            return JsonResponse({
+                'success': False,
+                'error': _('Product not found')
+            })
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error in check_package_conversion: {str(e)}")
+            
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            })
+    
+    return JsonResponse({
+        'success': False,
+        'error': _('Invalid request method')
+    })
+
+
+@csrf_exempt
+@login_required
+def get_linked_products(request, product_id):
+    """
+    API endpoint to get linked products (single and package)
+    """
+    try:
+        product = Product.objects.get(id=product_id, is_active=True)
+        
+        result = {
+            'success': True,
+            'product': {
+                'id': product.id,
+                'name': product.name,
+                'code': product.code,
+                'unit_type': product.unit_type,
+                'sale_price': float(product.sale_price)
+            }
+        }
+        
+        if product.unit_type == 'single':
+            package = product.get_linked_package_unit()
+            if package:
+                result['linked_package'] = {
+                    'id': package.id,
+                    'name': package.name,
+                    'code': package.code,
+                    'sale_price': float(package.sale_price),
+                    'conversion_factor': float(package.conversion_factor)
+                }
+        elif product.unit_type == 'package':
+            single = product.get_linked_single_unit()
+            if single:
+                result['linked_single'] = {
+                    'id': single.id,
+                    'name': single.name,
+                    'code': single.code,
+                    'sale_price': float(single.sale_price)
+                }
+                result['conversion_factor'] = float(product.conversion_factor)
+        
+        return JsonResponse(result)
+        
+    except Product.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': _('Product not found')
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })

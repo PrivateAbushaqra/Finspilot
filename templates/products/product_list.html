@@ -394,10 +394,10 @@
                     </button>
                     {% endif %}
                     {% if user.is_superuser or perms.products.can_add_products %} 
-                    <button type="button" class="btn btn-add text-white" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                    <a href="{% url 'products:product_add' %}" class="btn btn-add text-white">
                         <i class="fas fa-plus me-2"></i>
                         {% trans "Create New Product" %}
-                    </button>
+                    </a>
                     {% endif %}
                 </div>
             </div>

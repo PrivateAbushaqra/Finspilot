@@ -694,6 +694,16 @@
                                             </li>
                                     {% endif %}
 
+                                    <!-- Cheque Management -->
+                                    {% if user.is_superadmin or user.user_type == 'admin' or perms.receipts.can_view_check_management %}
+                                            <li class="nav-item">
+                                                <a class="nav-link {% if active_menu == 'checks' or 'check_list' in request.path %}active{% endif %}" href="{% url 'receipts:check_list' %}">
+                                                    <i class="fas fa-money-check me-2"></i>
+                                                    {% trans "Cheque Management" %}
+                                                </a>
+                                            </li>
+                                    {% endif %}
+
                                     <li class="nav-item">
                                     {% if user.is_superadmin or user.user_type == 'admin' or perms.receipts.can_view_receipts %}
                                             <a class="nav-link" data-bs-toggle="collapse" href="#receiptsMenu">
@@ -713,16 +723,6 @@
                                                 </ul>
                                             </div>
                                         </li>
-                                    {% endif %}
-
-                                    <!-- Cheque Management -->
-                                    {% if user.is_superadmin or user.user_type == 'admin' or perms.receipts.can_view_check_management %}
-                                            <li class="nav-item">
-                                                <a class="nav-link {% if active_menu == 'checks' or 'check_list' in request.path %}active{% endif %}" href="{% url 'receipts:check_list' %}">
-                                                    <i class="fas fa-money-check me-2"></i>
-                                                    {% trans "Cheque Management" %}
-                                                </a>
-                                            </li>
                                     {% endif %}
 
                                     <!-- Payment Vouchers -->
@@ -881,7 +881,100 @@
                             </div>
                         </li>
                         {% endif %}
+                      <!-- Categories & Products Section -->
+                        {% if user.is_superuser or perms.products.can_view_products or perms.products.can_view_product_categories %} <!-- 1083 -->
+                                <li class="nav-item">
+                                    <a class="nav-link d-flex justify-content-between align-items-center"
+                                    data-bs-toggle="collapse"
+                                    href="#CatogiresProductMenu"
+                                    role="button"
+                                    aria-expanded="false"
+                                    aria-controls="CatogiresProductMenu">
+                                        <span>
+                                            <i class="fas fa-boxes me-2"></i>
+                                            {% trans "Categories & Products" %}
+                                        </span>
+                                        <i class="fas fa-chevron-down small"></i>
+                                    </a>
+                                    <div class="collapse {% if active_menu == 'Category List' or active_menu == 'Product List' %}show{% endif %}" id="CatogiresProductMenu">
+                                        <ul class="nav flex-column ms-3">
+                                                <!--<li class="nav-item">
+                                                    <a class="nav-link {% if active_menu == 'products' and 'product_add' in request.path %}active{% endif %}" href="{% url 'products:product_add' %}">{% trans "Add Product" %}</a>
+                                                </li>-->
+                                            {% if user.is_superuser or perms.products.can_view_product_categories %}
+                                            <li class="nav-item">
+                                                <a class="nav-link {% if active_menu == 'products' and 'category_list' in request.path %}active{% endif %}" href="{% url 'products:category_list' %}">
+                                                    {% trans "Categories List" %}</a>
+                                            </li>
+                                            {% endif %}
+                                            {% if user.is_superuser or perms.products.can_view_products %}
+                                            <li class="nav-item">
+                                                <a class="nav-link {% if active_menu == 'products' and 'product_list' in request.path %}active{% endif %}" href="{% url 'products:product_list' %}">
+                                                    {% trans "Products List" %}</a>
+                                            </li>
+                                            {% endif %}
+                                        </ul>
+                                    </div>
+                                </li>
+                        {% endif %}<!-- 1052 -->
+<!----------------------------------------------------------------------------------------------------------------------------------------->                                    
+                            {% if user.is_superuser or perms.customers.can_view_customers %} <!-- 1047 -->
+                            <li class="nav-item">
+                            <a class="nav-link d-flex justify-content-between align-items-center"
+                            data-bs-toggle="collapse"
+                            href="#CustomersSuppliersMenu"
+                            role="button"
+                            aria-expanded="false"
+                            aria-controls="CustomersSuppliersMenu">                                
+                                <span>
+                                    <i class="fas fa-shopping-cart me-2"></i>
+                                    {% trans "Customers & Suppliers" %}
+                                </span>
+                                <i class="fas fa-chevron-down small"></i>
+                            </a>
 
+                            <div class="collapse {% if active_menu == 'Customers List' or active_menu == 'Suppliers List' or active_menu == 'All Customers & Suppliers' %}show{% endif %}" id="CustomersSuppliersMenu">
+                                <ul class="nav flex-column ms-3">
+<!----------------------------------------------------------------------------------------------------------------------------------------->
+                                    <!-- Customers & Suppliers 
+                                    {% if user.is_superuser or perms.customers.can_view_customers %}
+                                        <li class="nav-item">
+                                        <a class="nav-link" data-bs-toggle="collapse" href="#customersMenu">
+                                            <i class="fas fa-users me-2"></i>
+                                            {% trans "Customers & Suppliers" %}
+                                            <i class="fas fa-chevron-down small"></i>
+                                        </a>
+                                        <div class="collapse {% if active_menu == 'customers' %}show{% endif %}" id="customersMenu">
+                                            <ul class="nav flex-column ms-3">
+                                                {% if perms.customers.can_add_customers_suppliers %}
+                                                <li class="nav-item">
+                                                    <a class="nav-link {% if active_menu == 'customers' and 'add' in request.path %}active{% endif %}" href="{% url 'customers:add' %}">{% trans "Add Customer/Supplier" %}</a>
+                                                </li>
+                                    {% endif %}-->
+                                    {% if user.is_superuser or user.is_admin or perms.customers.can_view_customers %}
+                                        <li class="nav-item">
+                                            <a class="nav-link {% if active_menu == 'customers' and 'customer_list' in request.path %}active{% endif %}" href="{% url 'customers:customer_list' %}">
+                                                {% trans "Customers List" %}</a>
+                                        </li>
+                                    {% endif %}
+                                    {% if user.is_superuser or user.is_admin or perms.customers.can_view_suppliers %}
+                                        <li class="nav-item">
+                                            <a class="nav-link {% if active_menu == 'customers' and 'supplier_list' in request.path %}active{% endif %}" href="{% url 'customers:supplier_list' %}">
+                                                {% trans "Suppliers List" %}</a>
+                                        </li>
+                                    {% endif %}
+                                    {% if user.is_superuser or user.is_admin or perms.customers.can_view_customers and perms.customers.can_view_suppliers %}
+                                        <li class="nav-item">
+                                            <a class="nav-link {% if active_menu == 'customers' and 'list' in request.path and 'customer_list' not in request.path and 'supplier_list' not in request.path %}active{% endif %}" href="{% url 'customers:list' %}">
+                                                {% trans "All Customers & Suppliers" %}</a>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                            {% endif %}<!-- 994 -->
+                        </li>
+
+                        {% endif %}   
         <!--861-->      {% if user.is_superuser or perms.sales.can_view_sales or perms.sales.can_view_sales_returns or perms.sales.can_view_credit_notes or perms.purchases.can_view_purchases or perms.purchases.can_view_purchase_returns or perms.purchases.can_view_debit_notes or perms.purchases.can_view_purchase_statement %}
                             <!-- Sales & Purchases Section -->
                             <li class="nav-item">
@@ -1014,98 +1107,7 @@
                                 </div>
                             </li>
                         {% endif %}<!--861-->
-<!----------------------------------------------------------------------------------------------------------------------------------------->                                    
-                            {% if user.is_superuser or perms.customers.can_view_customers %} <!-- 1047 -->
-                            <li class="nav-item">
-                            <a class="nav-link d-flex justify-content-between align-items-center"
-                            data-bs-toggle="collapse"
-                            href="#CustomersSuppliersMenu"
-                            role="button"
-                            aria-expanded="false"
-                            aria-controls="CustomersSuppliersMenu">                                
-                                <span>
-                                    <i class="fas fa-shopping-cart me-2"></i>
-                                    {% trans "Customers & Suppliers" %}
-                                </span>
-                                <i class="fas fa-chevron-down small"></i>
-                            </a>
-
-                            <div class="collapse {% if active_menu == 'Customers List' or active_menu == 'Suppliers List' or active_menu == 'All Customers & Suppliers' %}show{% endif %}" id="CustomersSuppliersMenu">
-                                <ul class="nav flex-column ms-3">
-<!----------------------------------------------------------------------------------------------------------------------------------------->
-                                    <!-- Customers & Suppliers 
-                                    {% if user.is_superuser or perms.customers.can_view_customers %}
-                                        <li class="nav-item">
-                                        <a class="nav-link" data-bs-toggle="collapse" href="#customersMenu">
-                                            <i class="fas fa-users me-2"></i>
-                                            {% trans "Customers & Suppliers" %}
-                                            <i class="fas fa-chevron-down small"></i>
-                                        </a>
-                                        <div class="collapse {% if active_menu == 'customers' %}show{% endif %}" id="customersMenu">
-                                            <ul class="nav flex-column ms-3">
-                                                {% if perms.customers.can_add_customers_suppliers %}
-                                                <li class="nav-item">
-                                                    <a class="nav-link {% if active_menu == 'customers' and 'add' in request.path %}active{% endif %}" href="{% url 'customers:add' %}">{% trans "Add Customer/Supplier" %}</a>
-                                                </li>
-                                    {% endif %}-->
-                                    {% if user.is_superuser or user.is_admin or perms.customers.can_view_customers %}
-                                        <li class="nav-item">
-                                            <a class="nav-link {% if active_menu == 'customers' and 'customer_list' in request.path %}active{% endif %}" href="{% url 'customers:customer_list' %}">
-                                                {% trans "Customers List" %}</a>
-                                        </li>
-                                    {% endif %}
-                                    {% if user.is_superuser or user.is_admin or perms.customers.can_view_suppliers %}
-                                        <li class="nav-item">
-                                            <a class="nav-link {% if active_menu == 'customers' and 'supplier_list' in request.path %}active{% endif %}" href="{% url 'customers:supplier_list' %}">
-                                                {% trans "Suppliers List" %}</a>
-                                        </li>
-                                    {% endif %}
-                                    {% if user.is_superuser or user.is_admin or perms.customers.can_view_customers and perms.customers.can_view_suppliers %}
-                                        <li class="nav-item">
-                                            <a class="nav-link {% if active_menu == 'customers' and 'list' in request.path and 'customer_list' not in request.path and 'supplier_list' not in request.path %}active{% endif %}" href="{% url 'customers:list' %}">
-                                                {% trans "All Customers & Suppliers" %}</a>
-                                        </li>
-                                    {% endif %}
-                                </ul>
-                            </div>
-                            {% endif %}<!-- 994 -->
-                        </li>
-
-                        {% endif %}
-                        <!-- Categories & Products Section -->
-                        {% if user.is_superuser or perms.products.can_view_products or perms.products.can_view_product_categories %} <!-- 1083 -->
-                                <li class="nav-item">
-                                    <a class="nav-link d-flex justify-content-between align-items-center"
-                                    data-bs-toggle="collapse"
-                                    href="#CatogiresProductMenu"
-                                    role="button"
-                                    aria-expanded="false"
-                                    aria-controls="CatogiresProductMenu">
-                                        <span>
-                                            <i class="fas fa-boxes me-2"></i>
-                                            {% trans "Categories & Products" %}
-                                        </span>
-                                        <i class="fas fa-chevron-down small"></i>
-                                    </a>
-                                    <div class="collapse {% if active_menu == 'Category List' or active_menu == 'Product List' %}show{% endif %}" id="CatogiresProductMenu">
-                                        <ul class="nav flex-column ms-3">
-                                            {% if user.is_superuser or perms.products.can_view_product_categories %}
-                                            <li class="nav-item">
-                                                <a class="nav-link {% if active_menu == 'products' and 'category_list' in request.path %}active{% endif %}" href="{% url 'products:category_list' %}">
-                                                    {% trans "Categories List" %}</a>
-                                            </li>
-                                            {% endif %}
-                                            {% if user.is_superuser or perms.products.can_view_products %}
-                                            <li class="nav-item">
-                                                <a class="nav-link {% if active_menu == 'products' and 'product_list' in request.path %}active{% endif %}" href="{% url 'products:product_list' %}">
-                                                    {% trans "Products List" %}</a>
-                                            </li>
-                                            {% endif %}
-                                        </ul>
-                                    </div>
-                                </li>
-                        {% endif %}<!-- 1052 -->
-                        
+                     
                         <!-- Inventory Section -->
                         {% if user.is_superuser or perms.inventory.can_view_inventory_stock or perms.inventory.can_view_warehouses or perms.inventory.can_view_inventory_movements or perms.inventory.can_view_warehouse_transfers or perms.inventory.can_view_stock_alerts %}<!-- 1125 -->
                         <li class="nav-item">

@@ -31,6 +31,7 @@ class Category(models.Model):
             ('can_add_product_categories', _('Can Add Product Categories')),
             ('can_edit_product_categories', _('Can Edit Product Categories')),
             ('can_delete_product_categories', _('Can Delete Product Categories')),
+            ('can_edit_category_sequence_number', _('Can Edit Category Sequence Number')),
         ]
 
     def save(self, *args, **kwargs):
@@ -135,6 +136,13 @@ class Product(models.Model):
         ('service', _('Service')),
     ]
     
+    UNIT_TYPE_CHOICES = [
+        ('single', _('Single Unit')),
+        ('package', _('Package')),
+        ('standalone', _('Standalone')),
+    ]
+    
+    sequence_number = models.IntegerField(_('Sequence Number'), unique=True, null=True, blank=True)
     code = models.CharField(_('Product Code'), max_length=50, unique=True)
     name = models.CharField(_('Product Name'), max_length=200)
     name_en = models.CharField(_('Name in English'), max_length=200, blank=True)
@@ -163,6 +171,17 @@ class Product(models.Model):
                                              validators=[MinValueValidator(0)], default=0, blank=True)
     opening_balance_warehouse = models.ForeignKey('inventory.Warehouse', on_delete=models.SET_NULL, 
                                                 verbose_name=_('Opening Balance Warehouse'), null=True, blank=True)
+    
+    # Linked Units Fields
+    unit_type = models.CharField(_('Unit Type'), max_length=20, choices=UNIT_TYPE_CHOICES, default='standalone',
+                                help_text=_('Type of unit: single (individual), package (bulk), or standalone (not linked)'))
+    linked_product = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True,
+                                      verbose_name=_('Linked Product'), related_name='linked_units',
+                                      help_text=_('The linked product (single or package)'))
+    conversion_factor = models.DecimalField(_('Conversion Factor'), max_digits=10, decimal_places=3,
+                                          validators=[MinValueValidator(0)], default=0, blank=True,
+                                          help_text=_('Number of single units in one package'))
+    
     enable_alerts = models.BooleanField(_('Enable Alerts'), default=True)
     is_active = models.BooleanField(_('Active'), default=True)
     created_at = models.DateTimeField(_('Created At'), auto_now_add=True)
@@ -171,8 +190,48 @@ class Product(models.Model):
     class Meta:
         verbose_name = _('Product')
         verbose_name_plural = _('Products')
-        ordering = ['code', 'name']
+        ordering = ['sequence_number', 'code', 'name']
         default_permissions = []
+        permissions = [
+            ('can_edit_product_sequence_number', _('Can Edit Product Sequence Number')),
+        ]
+
+    def save(self, *args, **kwargs):
+        if not self.sequence_number and self.category_id:
+            self.sequence_number = self._get_next_sequence_number()
+        super().save(*args, **kwargs)
+
+    def _get_next_sequence_number(self):
+        """Get the next sequence number for this product based on category"""
+        if not self.category:
+            return None
+        
+        # Get category sequence number
+        category_seq = self.category.sequence_number or 10000
+        
+        # Find all products in this category
+        existing_products = Product.objects.filter(category=self.category).exclude(pk=self.pk if self.pk else None)
+        
+        # Extract product sequence numbers that start with the category number
+        category_prefix = str(category_seq)
+        existing_numbers = set()
+        
+        for product in existing_products:
+            if product.sequence_number:
+                seq_str = str(product.sequence_number)
+                if seq_str.startswith(category_prefix):
+                    # Extract the product part (after category number)
+                    product_part = seq_str[len(category_prefix):]
+                    if product_part.isdigit():
+                        existing_numbers.add(int(product_part))
+        
+        # Start from 100 and find first available number
+        for num in range(100, 999999):
+            if num not in existing_numbers:
+                return int(f"{category_seq}{num}")
+        
+        # Fallback
+        return int(f"{category_seq}{len(existing_numbers) + 100}")
 
     def __str__(self):
         return f"{self.code} - {self.name}"
@@ -301,3 +360,162 @@ class Product(models.Model):
         return InventoryMovement.objects.filter(
             product=self
         ).exclude(reference_type='opening_balance').exists()
+    
+    # Linked Units Methods
+    def is_linked_unit(self):
+        """Check if this product is part of a linked unit system"""
+        return self.unit_type in ['single', 'package'] and self.linked_product is not None
+    
+    def get_linked_single_unit(self):
+        """Get the single unit product if this is a package"""
+        if self.unit_type == 'package' and self.linked_product:
+            if self.linked_product.unit_type == 'single':
+                return self.linked_product
+        return None
+    
+    def get_linked_package_unit(self):
+        """Get the package unit product if this is a single"""
+        if self.unit_type == 'single':
+            # Try to find the linked package
+            if self.linked_product and self.linked_product.unit_type == 'package':
+                return self.linked_product
+            # Or search for a package that links to this product
+            package = Product.objects.filter(
+                unit_type='package',
+                linked_product=self,
+                is_active=True
+            ).first()
+            return package
+        return None
+    
+    def convert_to_single_units(self, package_quantity):
+        """
+        Convert package quantity to single units
+        Returns: Decimal quantity of single units
+        """
+        from decimal import Decimal
+        if self.unit_type != 'package' or not self.conversion_factor:
+            return Decimal('0')
+        
+        package_qty = Decimal(str(package_quantity))
+        conversion = Decimal(str(self.conversion_factor))
+        return package_qty * conversion
+    
+    def convert_to_packages(self, single_quantity):
+        """
+        Convert single units to packages
+        Returns: tuple (package_quantity, remaining_singles)
+        """
+        from decimal import Decimal
+        if self.unit_type != 'single':
+            package_product = self.get_linked_package_unit()
+            if not package_product or not package_product.conversion_factor:
+                return (Decimal('0'), Decimal(str(single_quantity)))
+            conversion = package_product.conversion_factor
+        else:
+            package_product = self.get_linked_package_unit()
+            if not package_product or not package_product.conversion_factor:
+                return (Decimal('0'), Decimal(str(single_quantity)))
+            conversion = package_product.conversion_factor
+        
+        single_qty = Decimal(str(single_quantity))
+        conversion_decimal = Decimal(str(conversion))
+        
+        if conversion_decimal == 0:
+            return (Decimal('0'), single_qty)
+        
+        packages = single_qty // conversion_decimal
+        remaining = single_qty % conversion_decimal
+        
+        return (packages, remaining)
+    
+    def get_combined_stock(self):
+        """
+        Get combined stock for linked units (all expressed in single units)
+        Returns total stock in single units
+        """
+        from decimal import Decimal
+        
+        if not self.is_linked_unit():
+            return self.current_stock
+        
+        # If this is a single unit
+        if self.unit_type == 'single':
+            single_stock = self.current_stock
+            package_product = self.get_linked_package_unit()
+            if package_product:
+                # Convert package stock to single units
+                package_stock_in_singles = package_product.convert_to_single_units(package_product.current_stock)
+                return single_stock + package_stock_in_singles
+            return single_stock
+        
+        # If this is a package
+        elif self.unit_type == 'package':
+            package_stock_in_singles = self.convert_to_single_units(self.current_stock)
+            single_product = self.get_linked_single_unit()
+            if single_product:
+                return package_stock_in_singles + single_product.current_stock
+            return package_stock_in_singles
+        
+        return self.current_stock
+    
+    def can_convert_to_package(self, quantity):
+        """
+        Check if given quantity of singles can form complete packages
+        Returns: boolean
+        """
+        from decimal import Decimal
+        
+        if self.unit_type != 'single':
+            return False
+        
+        package_product = self.get_linked_package_unit()
+        if not package_product or not package_product.conversion_factor:
+            return False
+        
+        qty = Decimal(str(quantity))
+        conversion = Decimal(str(package_product.conversion_factor))
+        
+        if conversion == 0:
+            return False
+        
+        return qty >= conversion
+    
+    def suggest_package_conversion(self, quantity):
+        """
+        Suggest conversion to package if quantity reaches conversion factor
+        Returns: dict with suggestion details or None
+        """
+        from decimal import Decimal
+        
+        if self.unit_type != 'single':
+            return None
+        
+        package_product = self.get_linked_package_unit()
+        if not package_product or not package_product.conversion_factor:
+            return None
+        
+        qty = Decimal(str(quantity))
+        conversion = Decimal(str(package_product.conversion_factor))
+        
+        if conversion == 0 or qty < conversion:
+            return None
+        
+        packages, remaining = self.convert_to_packages(qty)
+        
+        if packages >= 1:
+            return {
+                'can_convert': True,
+                'single_product': self,
+                'package_product': package_product,
+                'quantity_singles': qty,
+                'conversion_factor': conversion,
+                'packages': packages,
+                'remaining_singles': remaining,
+                'single_unit_price': self.sale_price,
+                'package_unit_price': package_product.sale_price,
+                'total_as_singles': qty * self.sale_price,
+                'total_as_packages': (packages * package_product.sale_price) + (remaining * self.sale_price) if remaining > 0 else packages * package_product.sale_price
+            }
+        
+        return None

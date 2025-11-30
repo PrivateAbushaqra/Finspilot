@@ -126,8 +126,8 @@
                     <nav aria-label="breadcrumb" class="mt-2">
                         <ol class="breadcrumb">
                             <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">{% trans "Dashboard" %}</a></li>
-                            <li class="breadcrumb-item"><a href="{% url 'journal:dashboard' %}">القيود المحاسبية</a></li>
-                            <li class="breadcrumb-item"><a href="{% url 'journal:account_list' %}">دليل الحسابات</a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'journal:dashboard' %}">Journal Entries</a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'journal:account_list' %}">Chart of Accounts</a></li>
                             <li class="breadcrumb-item active">{{ title }}</li>
                         </ol>
                     </nav>
@@ -135,7 +135,7 @@
                 <div>
                     <a href="{% url 'journal:account_list' %}" class="btn btn-outline-secondary">
                         <i class="fas fa-arrow-right me-2"></i>
-                        العودة لل{% trans "List" %}
+                        {% trans "Back to List" %}
                     </a>
                 </div>
             </div>
@@ -150,7 +150,7 @@
                                     <i class="fas fa-file-invoice me-2"></i>
                                     {{ title }}
                                 </h4>
-                                <p class="mb-0 mt-2 opacity-75">أدخل بيانات الحساب ال{% trans "New" %} في دليل الحسابات</p>
+                                <p class="mb-0 mt-2 opacity-75">{% trans "Enter the account data in the New Chart of Accounts" %}</p>
                             </div>
                         </div>
                         
@@ -181,7 +181,7 @@
                                             </div>
                                             <div class="validation-message text-success" id="codeSuccessMsg">
                                                 <i class="fas fa-check me-1"></i>
-                                                كود الحساب {% trans "Available" %}
+                                                {% trans "Account Code Available" %}
                                             </div>
                                             <div class="validation-message text-danger" id="codeErrorMsg"></div>
                                             {% if form.code.errors %}
@@ -191,7 +191,7 @@
                                                 </div>
                                             {% endif %}
                                             <div class="help-text">
-                                                أدخل كود فريد للحساب (مثال: 1001, 2001, 3001)
+                                                {% trans "Enter a unique account code (example: 1001, 2001, 3001)" %}
                                             </div>
                                         </div>
                                     </div>
@@ -212,7 +212,7 @@
                                                 </div>
                                             {% endif %}
                                             <div class="help-text">
-                                                أدخل اسم واضح ومفهوم للحساب
+                                                {% trans "Enter a clear and understandable account name" %}
                                             </div>
                                         </div>
                                     </div>
@@ -235,19 +235,19 @@
                                                 </div>
                                             {% endif %}
                                             <div class="help-text">
-                                                اختر نوع الحساب حسب طبيعته المحاسبية
+                                                {% trans "Choose the account type according to its accounting nature" %}
                                             </div>
                                             
                                             <!-- Account Types Reference -->
                                             <div class="mt-2">
-                                                <small class="text-muted">أنواع الحسابات:</small><br>
-                                                <span class="account-type-badge asset">أصول</span>
-                                                <span class="account-type-badge liability">مطلوبات</span>
-                                                <span class="account-type-badge equity">حقوق ملكية</span>
-                                                <span class="account-type-badge revenue">إيرادات</span>
-                                                <span class="account-type-badge expense">مصاريف</span>
-                                                <span class="account-type-badge purchases">مشتريات</span>
-                                                <span class="account-type-badge sales">مبيعات</span>
+                                                <small class="text-muted">{% trans "Account Types:" %}</small><br>
+                                                <span class="account-type-badge asset">{% trans "Assets" %}</span>
+                                                <span class="account-type-badge liability">{% trans "Liabilities" %}</span>
+                                                <span class="account-type-badge equity">{% trans "Equity" %}</span>
+                                                <span class="account-type-badge revenue">{% trans "Revenues" %}</span>
+                                                <span class="account-type-badge expense">{% trans "Expenses" %}</span>
+                                                <span class="account-type-badge purchases">{% trans "Purchases" %}</span>
+                                                <span class="account-type-badge sales">{% trans "Sales" %}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -267,7 +267,7 @@
                                                 </div>
                                             {% endif %}
                                             <div class="help-text">
-                                                اختر الحساب الرئيسي إذا كان هذا حساب فرعي (اختياري)
+                                                {% trans "Select the main account if this is a sub-account (optional)" %}
                                             </div>
                                         </div>
                                     </div>
@@ -287,7 +287,7 @@
                                         </div>
                                     {% endif %}
                                     <div class="help-text">
-                                        أدخل وصف مفصل للحساب وطبيعة العمليات التي ستسجل عليه (اختياري)
+                                        {% trans "Enter a detailed description of the account and the nature of operations that will be recorded on it (optional)" %}
                                     </div>
                                 </div>
                                 
@@ -307,7 +307,7 @@
                                         </div>
                                     {% endif %}
                                     <div class="help-text">
-                                        الحسابات ال{% trans "Active" %}ة فقط تظهر في القوائم والتقارير
+                                        {% trans "Only active accounts appear in lists and reports" %}
                                     </div>
                                 </div>
                                 
@@ -315,11 +315,11 @@
                                 <div class="d-flex justify-content-center gap-3 mt-4 pt-3 border-top">
                                     <button type="submit" class="btn btn-save text-white">
                                         <i class="fas fa-save me-2"></i>
-                                        {% trans "Save" %} الحساب
+                                        {% trans "Save Account" %}
                                     </button>
                                     <a href="{% url 'journal:account_list' %}" class="btn btn-cancel text-white">
                                         <i class="fas fa-times me-2"></i>
-                                        إلغاء
+                                        {% trans "Cancel" %}
                                     </a>
                                 </div>
                             </form>
@@ -340,14 +340,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const accountTypeSelect = document.getElementById('{{ form.account_type.id_for_label }}');
     const form = document.getElementById('accountForm');
     
-    // تحقق من صحة كود الحساب
+    // Validate Account Code
     if (codeInput) {
         codeInput.addEventListener('input', function() {
             validateAccountCode(this.value);
         });
     }
     
-    // تحديث لون check box {% trans "Status" %} ال{% trans "Active" %}ة
+    // Update active checkbox color
     const isActiveCheckbox = document.getElementById('{{ form.is_active.id_for_label }}');
     if (isActiveCheckbox) {
         isActiveCheckbox.addEventListener('change', function() {
@@ -362,18 +362,18 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
-        // {% trans "Select" %} {% trans "Status" %} {% trans "First" %}ية
+        // Set initial status
         isActiveCheckbox.dispatchEvent(new Event('change'));
     }
     
-    // التحقق من صحة النموذج قبل الإرسال
+    // Validate form before submission
     form.addEventListener('submit', function(e) {
         if (!validateForm()) {
             e.preventDefault();
         }
     });
     
-    // {% trans "Add" %} تلميحات للحقول المطلوبة
+    // Add tooltips for required fields
     const requiredFields = form.querySelectorAll('[required]');
     requiredFields.forEach(function(field) {
         field.addEventListener('blur', function() {
@@ -388,32 +388,32 @@ function validateAccountCode(code) {
     const codeSuccessMsg = document.getElementById('codeSuccessMsg');
     const codeErrorMsg = document.getElementById('codeErrorMsg');
     
-    // {% trans "Hide" %} جميع الرسائل أو{% trans "No" %}ً
+    // Hide all validation messages first
     hideValidationMessages();
     
     if (!code) {
         return false;
     }
     
-    // التحقق من تنسيق {% trans "Code" %} (أرقام فقط أو أرقام مع نقاط)
+    // Check code format (numbers only or numbers with dots)
     const codePattern = /^[0-9]+(\.[0-9]+)*$/;
     if (!codePattern.test(code)) {
-        showValidationError('كود الحساب يجب أن يحتوي على أرقام فقط');
+        showValidationError('{% trans "Account code must contain numbers only" %}');
         return false;
     }
     
-    // التحقق من طول {% trans "Code" %}
+    // Check code length
     if (code.length < 2) {
-        showValidationError('كود الحساب يجب أن يكون أكثر من رقم واحد');
+        showValidationError('{% trans "Account code must be more than one digit" %}');
         return false;
     }
     
     if (code.length > 20) {
-        showValidationError('كود الحساب طويل جداً');
+        showValidationError('{% trans "Account code is too long" %}');
         return false;
     }
     
-    // إظهار رسالة النجاح
+    // Show success message
     showValidationSuccess();
     return true;
 }
@@ -457,33 +457,33 @@ function validateForm() {
         }
     });
     
-    // التحقق من كود الحساب
+    // Verify Account Code
     const codeInput = document.getElementById('{{ form.code.id_for_label }}');
     if (codeInput && !validateAccountCode(codeInput.value)) {
         isValid = false;
     }
     
     if (!isValid) {
-        // {% trans "View" %} رسالة {% trans "Warning" %}
+        // Show warning message
         const alert = document.createElement('div');
         alert.className = 'alert alert-danger alert-dismissible fade show';
         alert.innerHTML = `
             <i class="fas fa-exclamation-triangle me-2"></i>
-            يرجى تصحيح الأخطاء في النموذج قبل ال{% trans "Save" %}
+            {% trans "Please correct the errors in the form before saving" %}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         `;
         
         const form = document.getElementById('accountForm');
         form.insertBefore(alert, form.firstChild);
         
-        // التمرير إلى أعلى النموذج
+        // Scroll to top of form
         form.scrollIntoView({ behavior: 'smooth' });
     }
     
     return isValid;
 }
 
-// {% trans "Add" %} تأثيرات بصرية للأزرار
+// Add visual effects to buttons
 document.querySelectorAll('.btn-save, .btn-cancel').forEach(function(btn) {
     btn.addEventListener('mouseenter', function() {
         this.style.transform = 'translateY(-2px)';
